@@ -1,13 +1,21 @@
-<div *ngIf="isVisible" class="dialog-overlay">
-  <div class="dialog-container" [ngClass]="getDialogClass()">
-    <div class="dialog-header">
-      <h2 class="dialog-title">{{ title }}</h2>
+<div *ngIf="isVisible" class="toast-wrapper">
+  <div class="dialog-container" [ngClass]="getDialogClass()" (click)="ok()">
+    
+    <div class="dialog-icon">
+      <ng-container [ngSwitch]="type">
+        <span *ngSwitchCase="'success'">✔️</span>
+        <span *ngSwitchCase="'warning'">⚠️</span>
+        <span *ngSwitchCase="'danger'">❌</span>
+        <span *ngSwitchCase="'info'">ℹ️</span>
+      </ng-container>
     </div>
-    <div class="dialog-body">
+
+    <div class="dialog-content">
+      <h2 class="dialog-title">{{ title || (type | titlecase) }}</h2>
       <p class="dialog-message">{{ message }}</p>
     </div>
-    <div class="dialog-footer">
-      <button (click)="ok()" class="confirm_button">OK</button>
-    </div>
+
+    <button class="close-x-btn" (click)="closeClick(); $event.stopPropagation()">✕</button>
+
   </div>
 </div>

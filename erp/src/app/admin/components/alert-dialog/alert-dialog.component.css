@@ -1,75 +1,127 @@
-.dialog-overlay {
+/* Obal pro pozicování v pravém horním rohu */
+.toast-wrapper {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 30000; 
+  top: 24px;
+  right: 24px;
+  z-index: 40000;
+  pointer-events: none;
 }
 
+/* Hlavní kontejner toastu */
 .dialog-container {
-  background-color: white;
+  display: flex;
+  align-items: center; /* DOKONALÉ HORIZONTÁLNÍ VYCENTROVÁNÍ VŠECH PRVKŮ NA STŘED VÝŠKY */
+  gap: 16px;
+  width: 420px;
+  max-width: 90vw;
+  padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  width: 450px;
-  max-width: 90%; 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  position: relative;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  /* Animace vyjetí zprava */
+  animation: slideInRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Hover efekt */
+.dialog-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Levý blok s ikonou - vycentrovaný */
+.dialog-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  min-width: 32px;
+  height: 32px;
+}
+
+/* Středový textový blok - roztáhne se a vyplní střed */
+.dialog-content {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  animation: popIn 0.2s ease-out;
-}
-
-.dialog-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid #eee;
+  gap: 4px;
+  flex-grow: 1; /* Donutí křížek odskočit úplně doprava */
 }
 
 .dialog-title {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.dialog-body {
-  padding: 20px;
-  color: #444;
-  line-height: 1.4;
-}
-
-.dialog-footer {
-  padding: 12px 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.confirm_button {
-  padding: 8px 24px;
-  background-color: #444;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  font-size: 1.05rem;
   font-weight: 600;
+  line-height: 1.2;
+}
+
+.dialog-message {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+/* Pravý křížek - nyní se centruje sám díky flexboxu kontejneru */
+.close-x-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
   cursor: pointer;
-  transition: background 0.2s;
+  opacity: 0.5;
+  transition: opacity 0.2s, transform 0.2s;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
 }
 
-.confirm_button:hover {
-  background-color: #222;
+.close-x-btn:hover {
+  opacity: 1;
+  transform: scale(1.2);
 }
 
-.info-dialog .dialog-header { background-color: #eef6ff; color: #0056b3; }
-.warning-dialog .dialog-header { background-color: #fff8e6; color: #856404; }
-.danger-dialog .dialog-header { background-color: #fff0f0; color: #721c24; }
-.success-dialog .dialog-header { background-color: #f0fff4; color: #155724; }
+/* ==========================================================================
+   BAREVNÉ VARIANTY
+   ========================================================================== */
 
+/* SUCCESS (Zelená) */
+.success-dialog {
+  background-color: #c2f0d5;
+  color: #0f5132;
+}
 
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+/* INFO (Modrá) */
+.info-dialog {
+  background-color: #cbebf6;
+  color: #084298;
+}
+
+/* WARNING (Žlutá / Oranžová) */
+.warning-dialog {
+  background-color: #fcecd6;
+  color: #664d03;
+}
+
+/* DANGER (Červená) */
+.danger-dialog {
+  background-color: #fccbc7;
+  color: #842029;
+}
+
+/* Kód animace pro vyjetí z pravé strany */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }

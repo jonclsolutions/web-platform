@@ -16,17 +16,32 @@ export class AlertDialogComponent implements OnDestroy {
   @Input() type: AlertType = 'info';
 
   @Output() onOk = new EventEmitter<void>();
+  @Output() onClose = new EventEmitter<void>(); // PŘIDÁNO: Událost pro úplné smazání z paměti
 
   isVisible: boolean = false;
+  private autoHideTimeout: any;
 
   show(): void {
     this.isVisible = true;
-    document.body.style.overflow = 'hidden';
+    
+    if (this.autoHideTimeout) {
+      clearTimeout(this.autoHideTimeout);
+    }
+
+    // Success a info zmizí za 5s, danger a warning nezmizí vůbec
+    if (this.type === 'success' || this.type === 'info') {
+      this.autoHideTimeout = setTimeout(() => {
+        this.hide();
+      }, 5000); 
+    }
   }
 
   public hide(): void {
     this.isVisible = false;
-    document.body.style.overflow = 'auto';
+    this.onClose.emit(); // PŘIDÁNO: Řekneme rodiči, že se může komponenty zbavit
+    if (this.autoHideTimeout) {
+      clearTimeout(this.autoHideTimeout);
+    }
   }
 
   ok(): void {
@@ -34,8 +49,14 @@ export class AlertDialogComponent implements OnDestroy {
     this.hide();
   }
 
+  closeClick(): void {
+    this.hide();
+  }
+
   ngOnDestroy(): void {
-    document.body.style.overflow = 'auto';
+    if (this.autoHideTimeout) {
+      clearTimeout(this.autoHideTimeout);
+    }
   }
 
   getDialogClass(): string {
