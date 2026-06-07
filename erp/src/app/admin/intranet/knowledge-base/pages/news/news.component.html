@@ -10,52 +10,66 @@
   <hr class="section-divider">
 
   <section class="kb-section">
-    <div *ngFor="let item of accumulatedNews" 
-         class="news-node" 
-         [class.highlighted]="item.thema === 'Milník'">
-      
-      <div class="node-sidebar">
-        <div class="node-date">{{ item.created_at | date:'dd. MM. yyyy' }}</div>
-        <div class="node-tag" 
+    @for (item of accumulatedNews; track item) {
+      <div
+        class="news-node"
+        [class.highlighted]="item.thema === 'Milník'">
+        <div class="node-sidebar">
+          <div class="node-date">{{ item.created_at | date:'dd. MM. yyyy' }}</div>
+          <div class="node-tag"
              [ngClass]="{
                'milestone': item.thema === 'Milník',
                'update': item.thema === 'Update' || item.thema === 'Novinka' || item.thema === 'Info',
                'fix': item.thema === 'Error' || item.thema === 'Upozornění'
              }">
-          {{ item.thema }}
+            {{ item.thema }}
+          </div>
+          <div class="node-author">
+            <div class="author-label">Autor:</div>
+            <div class="author-name">{{ item.author }}</div>
+          </div>
         </div>
-        
-        <div class="node-author">
-          <div class="author-label">Autor:</div>
-          <div class="author-name">{{ item.author }}</div>
+        <div class="node-content">
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.message }}</p>
+          <div class="node-details">
+            @if (item.bullet_1) {
+              <div class="detail-item"><span class="accent">•</span> {{ item.bullet_1 }}</div>
+            }
+            @if (item.bullet_2) {
+              <div class="detail-item"><span class="accent">•</span> {{ item.bullet_2 }}</div>
+            }
+            @if (item.bullet_3) {
+              <div class="detail-item"><span class="accent">•</span> {{ item.bullet_3 }}</div>
+            }
+            @if (item.bullet_4) {
+              <div class="detail-item"><span class="accent">•</span> {{ item.bullet_4 }}</div>
+            }
+          </div>
         </div>
       </div>
-      
-      <div class="node-content">
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.message }}</p>
-        
-        <div class="node-details">
-          <div class="detail-item" *ngIf="item.bullet_1"><span class="accent">•</span> {{ item.bullet_1 }}</div>
-          <div class="detail-item" *ngIf="item.bullet_2"><span class="accent">•</span> {{ item.bullet_2 }}</div>
-          <div class="detail-item" *ngIf="item.bullet_3"><span class="accent">•</span> {{ item.bullet_3 }}</div>
-          <div class="detail-item" *ngIf="item.bullet_4"><span class="accent">•</span> {{ item.bullet_4 }}</div>
-        </div>
+    }
+
+    @if (hasMore) {
+      <div class="load-more-container">
+        <button (click)="loadMore()"
+          [disabled]="loadingService.isLoading$ | async"
+          class="load-more-btn">
+          @if (!(loadingService.isLoading$ | async)) {
+            <span>ZOBRAZIT STARŠÍ AKTUALIZACE ↓</span>
+          }
+          @if (loadingService.isLoading$ | async) {
+            <span>NAČÍTÁM DALŠÍ...</span>
+          }
+        </button>
       </div>
-    </div>
+    }
 
-    <div class="load-more-container" *ngIf="hasMore">
-      <button (click)="loadMore()" 
-              [disabled]="loadingService.isLoading$ | async" 
-              class="load-more-btn">
-        <span *ngIf="!(loadingService.isLoading$ | async)">ZOBRAZIT STARŠÍ AKTUALIZACE ↓</span>
-        <span *ngIf="loadingService.isLoading$ | async">NAČÍTÁM DALŠÍ...</span>
-      </button>
-    </div>
-
-    <div *ngIf="accumulatedNews.length === 0 && !(loadingService.isLoading$ | async)" 
-         style="text-align: center; color: #52525b; padding: 20px;">
-      Momentálně nejsou k dispozici žádné novinky.
-    </div>
+    @if (accumulatedNews.length === 0 && !(loadingService.isLoading$ | async)) {
+      <div
+        style="text-align: center; color: #52525b; padding: 20px;">
+        Momentálně nejsou k dispozici žádné novinky.
+      </div>
+    }
   </section>
 </div>

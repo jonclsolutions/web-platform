@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { FilterColumns } from '../../../../shared/interfaces/filter-columns';
 
@@ -7,9 +7,8 @@ import { FilterColumns } from '../../../../shared/interfaces/filter-columns';
   selector: 'app-filter-form-builder',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule
-  ],
+],
   templateUrl: './filter-form-builder.component.html',
   styleUrl: './filter-form-builder.component.css'
 })

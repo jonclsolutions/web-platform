@@ -1,6 +1,6 @@
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
   <div class="form-container wide-style" (click)="$event.stopPropagation()">
-    
+
     <div class="form-header">
       <h2 class="header-title">{{ headerText }}</h2>
       <button class="close-button" (click)="onCancel()" aria-label="Zavřít">&times;</button>
@@ -9,54 +9,74 @@
     <div class="details-content">
       <form #genericForm="ngForm" (ngSubmit)="onSubmit(genericForm, $event)" novalidate>
         <div class="form-grid-layout">
-          <div *ngFor="let input of visibleInputDefinitions" class="form-row-item" [class.full-width]="input.type === 'textarea'">
-            
-            <label [for]="input.column_name" class="field-label">
-              {{ input.label }}
-              <span *ngIf="input.required" class="required-star">*</span>
-            </label>
-
-            <div class="field-value">
-              <ng-container [ngSwitch]="input.type">
-                
-                <input *ngSwitchCase="'password'" [type]="input.type" [id]="input.column_name" [placeholder]="input.placeholder"
-                  [required]="!!input.required" [pattern]="input.pattern || ''" [name]="input.column_name"
-                  [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
-
-                <input *ngSwitchCase="'file'" type="file" [id]="input.column_name" (change)="onFileChange($event, input.column_name)" class="custom-input" [disabled]="input.editable === false" />
-                <input *ngSwitchCase="'text'" type="text" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
-                <input *ngSwitchCase="'email'" type="email" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
-                <input *ngSwitchCase="'tel'" type="tel" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
-
-                <select *ngSwitchCase="'select'" [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false">
-                  <option value="" disabled selected>-- Vyberte --</option>
-                  <option *ngFor="let option of input.options" [value]="option.value">{{ option.label }}</option>
-                </select>
-
-                <textarea *ngSwitchCase="'textarea'" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input textarea" [disabled]="input.editable === false"></textarea>
-
-                <div *ngSwitchCase="'checkbox'" class="checkbox-wrapper">
-                  <input type="checkbox" [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" [disabled]="input.editable === false" />
-                  <label [for]="input.column_name">Aktivní / Souhlasím</label>
-                </div>
-
-                <ng-container *ngSwitchCase="'confirm-password'">
-                  <div class="confirm-password-container">
-                    <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || 'Zadejte heslo'" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" (ngModelChange)="checkPasswordMatch(input.column_name)" />
-                    <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">Potvrzení hesla <span *ngIf="input.required" class="required-star">*</span></label>
-                    <input type="password" [id]="input.column_name + '_confirm'" placeholder="Zadejte heslo znovu" [required]="!!input.required" [name]="input.column_name + '_confirm'" [(ngModel)]="confirmPasswordData[input.column_name]" class="custom-input" [disabled]="input.editable === false" (ngModelChange)="checkPasswordMatch(input.column_name)" />
+          @for (input of visibleInputDefinitions; track input) {
+            <div class="form-row-item" [class.full-width]="input.type === 'textarea'">
+              <label [for]="input.column_name" class="field-label">
+                {{ input.label }}
+                @if (input.required) {
+                  <span class="required-star">*</span>
+                }
+              </label>
+              <div class="field-value">
+                @switch (input.type) {
+                  @case ('password') {
+                    <input [type]="input.type" [id]="input.column_name" [placeholder]="input.placeholder"
+                      [required]="!!input.required" [pattern]="input.pattern || ''" [name]="input.column_name"
+                      [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                  }
+                  @case ('file') {
+                    <input type="file" [id]="input.column_name" (change)="onFileChange($event, input.column_name)" class="custom-input" [disabled]="input.editable === false" />
+                  }
+                  @case ('text') {
+                    <input type="text" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                  }
+                  @case ('email') {
+                    <input type="email" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                  }
+                  @case ('tel') {
+                    <input type="tel" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                  }
+                  @case ('select') {
+                    <select [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false">
+                      <option value="" disabled selected>-- Vyberte --</option>
+                      @for (option of input.options; track option) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  }
+                  @case ('textarea') {
+                    <textarea [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input textarea" [disabled]="input.editable === false"></textarea>
+                  }
+                  @case ('checkbox') {
+                    <div class="checkbox-wrapper">
+                      <input type="checkbox" [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" [disabled]="input.editable === false" />
+                      <label [for]="input.column_name">Aktivní / Souhlasím</label>
+                    </div>
+                  }
+                  @case ('confirm-password') {
+                    <div class="confirm-password-container">
+                      <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || 'Zadejte heslo'" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" (ngModelChange)="checkPasswordMatch(input.column_name)" />
+                      <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">Potvrzení hesla @if (input.required) {
+                        <span class="required-star">*</span>
+                      }</label>
+                      <input type="password" [id]="input.column_name + '_confirm'" placeholder="Zadejte heslo znovu" [required]="!!input.required" [name]="input.column_name + '_confirm'" [(ngModel)]="confirmPasswordData[input.column_name]" class="custom-input" [disabled]="input.editable === false" (ngModelChange)="checkPasswordMatch(input.column_name)" />
+                    </div>
+                    @if (passwordsNotMatching && confirmPasswordData[input.column_name]) {
+                      <div class="error-text">Hesla se neshodují.</div>
+                    }
+                  }
+                  @default {
+                    <input [type]="input.type" [id]="input.column_name" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                  }
+                }
+                @if (getControl(input.column_name)?.invalid && (getControl(input.column_name)?.dirty || getControl(input.column_name)?.touched)) {
+                  <div class="error-text">
+                    {{ getValidationErrorMessage(getControl(input.column_name), input) }}
                   </div>
-                  <div *ngIf="passwordsNotMatching && confirmPasswordData[input.column_name]" class="error-text">Hesla se neshodují.</div>
-                </ng-container>
-                
-                <input *ngSwitchDefault [type]="input.type" [id]="input.column_name" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
-              </ng-container>
-
-              <div *ngIf="getControl(input.column_name)?.invalid && (getControl(input.column_name)?.dirty || getControl(input.column_name)?.touched)" class="error-text">
-                {{ getValidationErrorMessage(getControl(input.column_name), input) }}
+                }
               </div>
             </div>
-          </div>
+          }
         </div>
 
         <div class="form-footer-actions">

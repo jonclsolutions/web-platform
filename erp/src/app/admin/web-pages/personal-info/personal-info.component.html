@@ -1,67 +1,66 @@
 <div class="personal-info-container">
-  
-  <div class="info-card" *ngIf="userData">
-    <div class="card-header-clean">
-      <h2 class="card-title">Osobní profil</h2>
-      <span class="admin-note">Pro změnu údajů kontaktujte administrátora</span>
-    </div>
-    
-    <div class="card-content-minimal">
-      <div class="info-group">
-        <h3 class="group-title">Základní údaje</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <label>Celé jméno</label>
-            <div class="value">{{ userData.full_name || '—' }}</div>
-          </div>
-          <div class="info-item">
-            <label>Datum narození</label>
-            <div class="value">{{ userData.birth_date ? (userData.birth_date | date:'d. M. yyyy') : '—' }}</div>
-          </div>
-          <div class="info-item">
-            <label>Rodné číslo</label>
-            <div class="value">{{ userData.personal_id_num || '—' }}</div>
-          </div>
-          <div class="info-item">
-            <label>Pojišťovna</label>
-            <div class="value">{{ userData.health_insurance || '—' }}</div>
-          </div>
-        </div>
-      </div>
 
-      <div class="info-group">
-        <h3 class="group-title">Kontakt a adresa</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <label>Přihlašovací e-mail</label>
-            <div class="value muted">{{ userData.user_email || '—' }}</div>
-          </div>
-          <div class="info-item">
-            <label>Kontaktní e-mail</label>
-            <div class="value">{{ userData.contact_email || '—' }}</div>
-          </div>
-          <div class="info-item">
-            <label>Telefon</label>
-            <div class="value">{{ userData.phone_number || '—' }}</div>
-          </div>
-          <div class="info-item full-width">
-            <label>Adresa trvalého bydliště</label>
-            <div class="value">{{ userData.address || '—' }}</div>
+  @if (userData) {
+    <div class="info-card">
+      <div class="card-header-clean">
+        <h2 class="card-title">Osobní profil</h2>
+        <span class="admin-note">Pro změnu údajů kontaktujte administrátora</span>
+      </div>
+      <div class="card-content-minimal">
+        <div class="info-group">
+          <h3 class="group-title">Základní údaje</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Celé jméno</label>
+              <div class="value">{{ userData.full_name || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Datum narození</label>
+              <div class="value">{{ userData.birth_date ? (userData.birth_date | date:'d. M. yyyy') : '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Rodné číslo</label>
+              <div class="value">{{ userData.personal_id_num || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Pojišťovna</label>
+              <div class="value">{{ userData.health_insurance || '—' }}</div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div class="info-group">
-        <h3 class="group-title">Ostatní</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <label>Bankovní účet</label>
-            <div class="value">{{ userData.bank_account || '—' }}</div>
+        <div class="info-group">
+          <h3 class="group-title">Kontakt a adresa</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Přihlašovací e-mail</label>
+              <div class="value muted">{{ userData.user_email || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Kontaktní e-mail</label>
+              <div class="value">{{ userData.contact_email || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Telefon</label>
+              <div class="value">{{ userData.phone_number || '—' }}</div>
+            </div>
+            <div class="info-item full-width">
+              <label>Adresa trvalého bydliště</label>
+              <div class="value">{{ userData.address || '—' }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="info-group">
+          <h3 class="group-title">Ostatní</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Bankovní účet</label>
+              <div class="value">{{ userData.bank_account || '—' }}</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  }
 
   <div class="password-card-minimal">
     <div class="card-header-clean">
@@ -69,32 +68,35 @@
     </div>
     <div class="card-content">
       <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="minimal-form">
-        <div *ngIf="errorMessage" class="error-banner">
-          {{ errorMessage }}
-        </div>
-        
+        @if (errorMessage) {
+          <div class="error-banner">
+            {{ errorMessage }}
+          </div>
+        }
+
         <div class="form-field-minimal">
           <label for="old_password">Staré heslo</label>
           <input id="old_password" type="password" formControlName="old_password" placeholder="••••••••">
         </div>
-        
+
         <div class="form-field-minimal">
           <label for="new_password">Nové heslo</label>
           <input id="new_password" type="password" formControlName="new_password" placeholder="Min. 8 znaků">
         </div>
-        
+
         <div class="form-field-minimal">
           <label for="new_password_confirmation">Potvrzení hesla</label>
           <input id="new_password_confirmation" type="password" formControlName="new_password_confirmation" placeholder="Zopakujte heslo">
         </div>
 
-        <button class="action_button" 
-                type="submit" 
-                [disabled]="passwordForm.invalid || (loadingService.isLoading$ | async)">
-          <ng-container *ngIf="(loadingService.isLoading$ | async); else btnText">
+        <button class="action_button"
+          type="submit"
+          [disabled]="passwordForm.invalid || (loadingService.isLoading$ | async)">
+          @if ((loadingService.isLoading$ | async)) {
             Ukládání...
-          </ng-container>
-          <ng-template #btnText>Aktualizovat heslo</ng-template>
+          } @else {
+            Aktualizovat heslo
+          }
         </button>
       </form>
     </div>

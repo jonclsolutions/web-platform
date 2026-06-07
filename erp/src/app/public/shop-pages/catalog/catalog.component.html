@@ -1,5 +1,5 @@
 <div class="catalog-container">
-  
+
   <header class="catalog-header">
     <div class="title-group">
       <button class="filter-toggle" (click)="toggleFilters()" [class.active]="showFilters()">
@@ -10,59 +10,64 @@
       </button>
 
       <!-- Filtrační lišta vložená vedle tlačítka -->
-      <div class="filter-bar-inline" *ngIf="showFilters()">
-        <div class="filter-group">
-          <div class="filter-item">
-            <input type="text" placeholder="Hledat..." [(ngModel)]="filters.search" (keyup.enter)="applyFilters()">
-          </div>
-          
-          <div class="filter-item">
-            <select [(ngModel)]="filters.category_id" (change)="applyFilters()">
-              <option value="">Kategorie</option>
-              <option *ngFor="let cat of categories()" [value]="cat.id">{{ cat.name }}</option>
-            </select>
-          </div>
-
-          <div class="filter-item">
-            <select [(ngModel)]="filters.sort_by" (change)="applyFilters()">
-              <option value="name">Název</option>
-              <option value="price">Cena</option>
-              <option value="created_at">Nejnovější</option>
-            </select>
-          </div>
-
-          <div class="filter-item sort-dir">
-            <select [(ngModel)]="filters.sort_direction" (change)="applyFilters()">
-              <option value="asc">↑</option>
-              <option value="desc">↓</option>
-            </select>
+      @if (showFilters()) {
+        <div class="filter-bar-inline">
+          <div class="filter-group">
+            <div class="filter-item">
+              <input type="text" placeholder="Hledat..." [(ngModel)]="filters.search" (keyup.enter)="applyFilters()">
+            </div>
+            <div class="filter-item">
+              <select [(ngModel)]="filters.category_id" (change)="applyFilters()">
+                <option value="">Kategorie</option>
+                @for (cat of categories(); track cat) {
+                  <option [value]="cat.id">{{ cat.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="filter-item">
+              <select [(ngModel)]="filters.sort_by" (change)="applyFilters()">
+                <option value="name">Název</option>
+                <option value="price">Cena</option>
+                <option value="created_at">Nejnovější</option>
+              </select>
+            </div>
+            <div class="filter-item sort-dir">
+              <select [(ngModel)]="filters.sort_direction" (change)="applyFilters()">
+                <option value="asc">↑</option>
+                <option value="desc">↓</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
+      }
     </div>
   </header>
 
   <!-- Mřížka s produkty -->
   <div class="products-grid" [class.opacity-30]="isLoading()">
-    <ng-container *ngFor="let product of products()">
+    @for (product of products(); track product) {
       <a [routerLink]="[config.ENDPOINTS.PRODUCT_DETAIL_BASE, product.slug]" class="product-card">
         <app-product-builder [product]="product"></app-product-builder>
       </a>
-    </ng-container>
+    }
   </div>
 
   <!-- Empty State -->
-  <div *ngIf="products().length === 0 && !isLoading()" class="empty-state">
-    <p>{{ config.TEXTS.EMPTY_STATE }}</p>
-  </div>
+  @if (products().length === 0 && !isLoading()) {
+    <div class="empty-state">
+      <p>{{ config.TEXTS.EMPTY_STATE }}</p>
+    </div>
+  }
 
   <!-- Paginace (Zjednodušené volání) -->
-  <div class="pagination-wrapper" *ngIf="products().length > 0">
-    <app-pagination-buttons-builder
-      [currentPage]="filters.page"
-      [totalPages]="totalPages()"
-      (pageChange)="onPageChange($event)">
-    </app-pagination-buttons-builder>
-  </div>
+  @if (products().length > 0) {
+    <div class="pagination-wrapper">
+      <app-pagination-buttons-builder
+        [currentPage]="filters.page"
+        [totalPages]="totalPages()"
+        (pageChange)="onPageChange($event)">
+      </app-pagination-buttons-builder>
+    </div>
+  }
 
 </div>

@@ -1,33 +1,37 @@
-<div class="main-content" *ngIf="r">
-  <div class="projects-section">
-    <div class="header-1">{{ r?.header_1 }}</div>
-    <div class="projects-container">
-      <div class="projects-header animated-project-item" [style.animation-delay]="'0s'">
-        <div class="project-title-header">{{ r?.table_header_title }}</div>
-        <div class="project-duration-header">{{ r?.table_header_duration }}</div>
-        <div class="project-client-header">{{ r?.table_header_client }}</div>
-      </div>
-      <ng-container *ngFor="let item of r | keyvalue; let i = index">
-        <div *ngIf="item.key.toString().startsWith('project_')"
-          class="project-item animated-project-item"
-          [ngClass]="{'active': item?.value?.isActive}"
-          [style.animation-delay]="(i + 1) * 0.1 + 's'">
-          <div class="project-overview" (click)="toggleProject(item?.value)">
-            <div class="project-title">{{ item?.value?.name }}</div>
-            <div class="project-duration">{{ item?.value?.duration }}</div>
-            <div class="project-client">{{ item?.value?.client }}</div>
-            <div class="project-toggle-icon">
-              <span class="arrow" [ngClass]="{'rotated': item?.value?.isActive}">&gt;</span>
-            </div>
-          </div>
-          <div class="project-description" (click)="toggleProject(item?.value)">
-            <p [innerHTML]="item?.value?.description"></p>
-          </div>
+@if (r) {
+  <div class="main-content">
+    <div class="projects-section">
+      <div class="header-1">{{ r?.header_1 }}</div>
+      <div class="projects-container">
+        <div class="projects-header animated-project-item" [style.animation-delay]="'0s'">
+          <div class="project-title-header">{{ r?.table_header_title }}</div>
+          <div class="project-duration-header">{{ r?.table_header_duration }}</div>
+          <div class="project-client-header">{{ r?.table_header_client }}</div>
         </div>
-      </ng-container>
-      <div class="more-projects-info" style="margin-top: 2rem; text-align: center;">
-        <p>{{ r?.more_button_prompt }} <a target="_blank" href="https://www.regiopartner.cz/archiv-ukoncenych-projektu-1404041473.html">{{ r?.more_button_link_text }}</a></p>
+        @for (item of r | keyvalue; track item; let i = $index) {
+          @if (item.key.toString().startsWith('project_')) {
+            <div
+              class="project-item animated-project-item"
+              [ngClass]="{'active': item?.value?.isActive}"
+              [style.animation-delay]="(i + 1) * 0.1 + 's'">
+              <div class="project-overview" (click)="toggleProject(item?.value)">
+                <div class="project-title">{{ item?.value?.name }}</div>
+                <div class="project-duration">{{ item?.value?.duration }}</div>
+                <div class="project-client">{{ item?.value?.client }}</div>
+                <div class="project-toggle-icon">
+                  <span class="arrow" [ngClass]="{'rotated': item?.value?.isActive}">&gt;</span>
+                </div>
+              </div>
+              <div class="project-description" (click)="toggleProject(item?.value)">
+                <p [innerHTML]="item?.value?.description"></p>
+              </div>
+            </div>
+          }
+        }
+        <div class="more-projects-info" style="margin-top: 2rem; text-align: center;">
+          <p>{{ r?.more_button_prompt }} <a target="_blank" href="https://www.regiopartner.cz/archiv-ukoncenych-projektu-1404041473.html">{{ r?.more_button_link_text }}</a></p>
+        </div>
       </div>
     </div>
   </div>
-</div>
+}

@@ -8,13 +8,13 @@
     </button>
 
     <!-- Čísla stránek -->
-    <ng-container *ngFor="let page of pagesArray">
-      <button class="page-btn" 
-              [class.active]="page === currentPage" 
-              (click)="onPageClick(page)">
+    @for (page of pagesArray; track page) {
+      <button class="page-btn"
+        [class.active]="page === currentPage"
+        (click)="onPageClick(page)">
         {{ page }}
       </button>
-    </ng-container>
+    }
 
     <!-- Další -->
     <button class="nav-btn" (click)="onPageClick(currentPage + 1)" [disabled]="currentPage === totalPages">

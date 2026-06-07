@@ -1,6 +1,6 @@
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
   <div class="form-container wide-style" (click)="$event.stopPropagation()">
-    
+
     <div class="form-header">
       <h2 class="header-title">Detaily záznamu</h2>
       <button class="close-button" (click)="onClose()" aria-label="Zavřít">
@@ -9,47 +9,54 @@
     </div>
 
     <div class="details-content">
-      <div *ngIf="itemData" class="details-grid">
-        <div *ngFor="let column of itemDetailColumns" class="details-row">
-          <div class="label-cell">
-            {{ column.displayName }}
-          </div>
-          <div class="value-cell">
-            <ng-container [ngSwitch]="column.type">
-              
-              <div *ngSwitchCase="'file'">
-                <div *ngIf="getValueByPath(itemData, column.key) as fileUrl; else noFile">
-                  <div class="file-actions">
-                    <a [href]="fileUrl" target="_blank" class="btn-action view">📄 Zobrazit</a>
-                    <button type="button" (click)="downloadFile(fileUrl)" class="btn-action download">
-                      📥 Stáhnout
-                    </button>
-                  </div>
-                </div>
-                <ng-template #noFile><span class="text-muted">Není přiložena</span></ng-template>
+      @if (itemData) {
+        <div class="details-grid">
+          @for (column of itemDetailColumns; track column) {
+            <div class="details-row">
+              <div class="label-cell">
+                {{ column.displayName }}
               </div>
-
-              <div *ngSwitchDefault>
-                <div *ngIf="getValueByPath(itemData, column.key) as val; else emptyVal">
-                  
-                  <ng-container *ngIf="isObject(val); else simpleValue">
-                    <pre class="json-block">{{ getJsonValue(val) | json }}</pre>
-                  </ng-container>
-
-                  <ng-template #simpleValue>
-                    {{ getFormattedValue(itemData, column.key, column) || '-' }}
-                  </ng-template>
-
-                </div>
-                <ng-template #emptyVal>-</ng-template>
+              <div class="value-cell">
+                @switch (column.type) {
+                  @case ('file') {
+                    <div>
+                      @if (getValueByPath(itemData, column.key); as fileUrl) {
+                        <div>
+                          <div class="file-actions">
+                            <a [href]="fileUrl" target="_blank" class="btn-action view">📄 Zobrazit</a>
+                            <button type="button" (click)="downloadFile(fileUrl)" class="btn-action download">
+                              📥 Stáhnout
+                            </button>
+                          </div>
+                        </div>
+                      } @else {
+                        <span class="text-muted">Není přiložena</span>
+                      }
+                    </div>
+                  }
+                  @default {
+                    <div>
+                      @if (getValueByPath(itemData, column.key); as val) {
+                        <div>
+                          @if (isObject(val)) {
+                            <pre class="json-block">{{ getJsonValue(val) | json }}</pre>
+                          } @else {
+                            {{ getFormattedValue(itemData, column.key, column) || '-' }}
+                          }
+                        </div>
+                      } @else {
+                        -
+                      }
+                    </div>
+                  }
+                }
               </div>
-              
-            </ng-container>
-          </div>
+            </div>
+          }
         </div>
-      </div>
+      }
     </div>
-    
+
     <div class="form-footer">
       <button class="btn-close-flat" (click)="onClose()">Zavřít</button>
     </div>

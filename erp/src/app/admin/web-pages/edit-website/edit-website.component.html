@@ -10,21 +10,23 @@
   <div class="editor-controls">
     <div class="search-group">
       <div class="input-container">
-        <input 
-          type="text" 
-          [(ngModel)]="searchQuery" 
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
           (keyup.enter)="applyFilter()"
-          placeholder="Vyhledat klíč nebo text..." 
+          placeholder="Vyhledat klíč nebo text..."
           class="search-input">
-        <button *ngIf="searchQuery && searchQuery.length > 0" class="reset-icon-btn" (click)="resetFilter()" type="button">✕</button>
+        @if (searchQuery && searchQuery.length > 0) {
+          <button class="reset-icon-btn" (click)="resetFilter()" type="button">✕</button>
+        }
       </div>
       <button class="search-btn" (click)="applyFilter()">Vyhledat</button>
     </div>
-      
-    <button 
-      type="button" 
-      class="save-btn" 
-      (click)="onSubmit()" 
+
+    <button
+      type="button"
+      class="save-btn"
+      (click)="onSubmit()"
       [disabled]="loadingService.isLoading$ | async">
       {{ (loadingService.isLoading$ | async) ? 'Ukládám...' : 'Uložit změny' }}
     </button>
@@ -39,24 +41,28 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let item of filteredKeys; trackBy: trackByPath">
-          <td class="key-cell">
-            <span class="key-text">{{ item.path }}</span>
-          </td>
-          <td class="edit-cell">
-            <textarea 
-              [(ngModel)]="item.value" 
-              (ngModelChange)="updateValue(item.path, $event)"
-              (input)="adjustHeight($event)"
-              class="edit-input"
-              rows="1"
-              spellcheck="false">
-            </textarea>
-          </td>
-        </tr>
-        <tr *ngIf="filteredKeys.length === 0 && !(loadingService.isLoading$ | async)">
-          <td colspan="2" class="empty-results">Žádné výsledky</td>
-        </tr>
+        @for (item of filteredKeys; track trackByPath($index, item)) {
+          <tr>
+            <td class="key-cell">
+              <span class="key-text">{{ item.path }}</span>
+            </td>
+            <td class="edit-cell">
+              <textarea
+                [(ngModel)]="item.value"
+                (ngModelChange)="updateValue(item.path, $event)"
+                (input)="adjustHeight($event)"
+                class="edit-input"
+                rows="1"
+                spellcheck="false">
+              </textarea>
+            </td>
+          </tr>
+        }
+        @if (filteredKeys.length === 0 && !(loadingService.isLoading$ | async)) {
+          <tr>
+            <td colspan="2" class="empty-results">Žádné výsledky</td>
+          </tr>
+        }
       </tbody>
     </table>
   </div>

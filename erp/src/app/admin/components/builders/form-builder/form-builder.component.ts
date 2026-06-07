@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule, NgForm, FormControl } from '@angular/forms';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
@@ -7,7 +7,7 @@ import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 @Component({
   selector: 'app-form-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './form-builder.component.html',
   styleUrl: './form-builder.component.css',
 })

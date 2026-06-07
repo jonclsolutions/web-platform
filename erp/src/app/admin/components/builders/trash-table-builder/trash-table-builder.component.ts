@@ -1,5 +1,5 @@
 import { Component, Input, ChangeDetectionStrategy, Output, EventEmitter } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 // Import tvého Core namespace
@@ -16,10 +16,9 @@ import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builder
   selector: 'app-trash-table-builder',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     SHARED_UI_BUILDERS
-  ],
+],
   templateUrl: './trash-table-builder.component.html',
   styleUrls: ['../table-style.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

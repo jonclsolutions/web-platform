@@ -1,110 +1,130 @@
-<div class="main-content" *ngIf="t">
-  <div class="container-width-fix">
-    <div class="header-1" *ngIf="job">{{ job?.title }}</div>
-    <div class="header-1" *ngIf="!job">{{ t?.not_found }}</div>
-    <div class="content-display" *ngIf="job">
-      <a routerLink="/jobs" class="back-link">{{ t?.back_link }}</a>
-      <div class="paragraph-node" [innerHTML]="job?.fullContent"></div>
-      <div class="application-form-wrapper">
-        <ng-container *ngIf="!isSubmitted; else thankYouMessage">
-          <h2>Mám zájem o tuto pozici</h2>
-          <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()">
-            <div class="grid-layout">
-              <div class="form-group">
-                <label>Jméno <span class="required-asterisk">*</span></label>
-                <input type="text" formControlName="first_name"
-                  [class.error-input]="applicationForm.get('first_name')?.invalid && applicationForm.get('first_name')?.touched">
-                <small class="error-msg" *ngIf="applicationForm.get('first_name')?.errors?.['required'] && applicationForm.get('first_name')?.touched">
-                  Jméno je povinné.
-                </small>
-              </div>
-              <div class="form-group">
-                <label>Příjmení <span class="required-asterisk">*</span></label>
-                <input type="text" formControlName="last_name"
-                  [class.error-input]="applicationForm.get('last_name')?.invalid && applicationForm.get('last_name')?.touched">
-                <small class="error-msg" *ngIf="applicationForm.get('last_name')?.errors?.['required'] && applicationForm.get('last_name')?.touched">
-                  Příjmení je povinné.
-                </small>
-              </div>
-            </div>
-            <div class="grid-layout mt-10">
-              <div class="form-group">
-                <label>E-mail <span class="required-asterisk">*</span></label>
-                <input type="email" formControlName="email"
-                  [class.error-input]="applicationForm.get('email')?.invalid && applicationForm.get('email')?.touched">
-                <small class="error-msg" *ngIf="applicationForm.get('email')?.errors?.['email'] && applicationForm.get('email')?.touched">
-                  Zadejte platnou e-mailovou adresu.
-                </small>
-                <small class="error-msg" *ngIf="applicationForm.get('email')?.errors?.['required'] && applicationForm.get('email')?.touched">
-                  E-mail je povinný.
-                </small>
-              </div>
-              <div class="form-group">
-                <label>Telefon</label>
-                <input type="tel" formControlName="phone">
-              </div>
-            </div>
-            <div class="form-group mt-10">
-              <label>Zpráva / Průvodní dopis</label>
-              <textarea formControlName="message" rows="4"></textarea>
-            </div>
-            <div class="form-group mt-15">
-              <label>Životopis (libovolný soubor) <span class="required-asterisk">*</span></label>
-              <div class="file-drop-area" [class.has-file]="selectedFile">
-                <input type="file" (change)="onFileSelected($event)" class="file-input-styled">
-                <div class="file-msg">
-                  <div class="upload-icon">{{ selectedFile ? '✓' : '+' }}</div>
-                  <div class="file-text">
-                    {{ selectedFile ? selectedFile.name : 'Klikněte nebo přetáhněte soubor sem' }}
+@if (t) {
+  <div class="main-content">
+    <div class="container-width-fix">
+      @if (job) {
+        <div class="header-1">{{ job?.title }}</div>
+      }
+      @if (!job) {
+        <div class="header-1">{{ t?.not_found }}</div>
+      }
+      @if (job) {
+        <div class="content-display">
+          <a routerLink="/jobs" class="back-link">{{ t?.back_link }}</a>
+          <div class="paragraph-node" [innerHTML]="job?.fullContent"></div>
+          <div class="application-form-wrapper">
+            @if (!isSubmitted) {
+              <h2>Mám zájem o tuto pozici</h2>
+              <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()">
+                <div class="grid-layout">
+                  <div class="form-group">
+                    <label>Jméno <span class="required-asterisk">*</span></label>
+                    <input type="text" formControlName="first_name"
+                      [class.error-input]="applicationForm.get('first_name')?.invalid && applicationForm.get('first_name')?.touched">
+                    @if (applicationForm.get('first_name')?.errors?.['required'] && applicationForm.get('first_name')?.touched) {
+                      <small class="error-msg">
+                        Jméno je povinné.
+                      </small>
+                    }
+                  </div>
+                  <div class="form-group">
+                    <label>Příjmení <span class="required-asterisk">*</span></label>
+                    <input type="text" formControlName="last_name"
+                      [class.error-input]="applicationForm.get('last_name')?.invalid && applicationForm.get('last_name')?.touched">
+                    @if (applicationForm.get('last_name')?.errors?.['required'] && applicationForm.get('last_name')?.touched) {
+                      <small class="error-msg">
+                        Příjmení je povinné.
+                      </small>
+                    }
                   </div>
                 </div>
+                <div class="grid-layout mt-10">
+                  <div class="form-group">
+                    <label>E-mail <span class="required-asterisk">*</span></label>
+                    <input type="email" formControlName="email"
+                      [class.error-input]="applicationForm.get('email')?.invalid && applicationForm.get('email')?.touched">
+                    @if (applicationForm.get('email')?.errors?.['email'] && applicationForm.get('email')?.touched) {
+                      <small class="error-msg">
+                        Zadejte platnou e-mailovou adresu.
+                      </small>
+                    }
+                    @if (applicationForm.get('email')?.errors?.['required'] && applicationForm.get('email')?.touched) {
+                      <small class="error-msg">
+                        E-mail je povinný.
+                      </small>
+                    }
+                  </div>
+                  <div class="form-group">
+                    <label>Telefon</label>
+                    <input type="tel" formControlName="phone">
+                  </div>
+                </div>
+                <div class="form-group mt-10">
+                  <label>Zpráva / Průvodní dopis</label>
+                  <textarea formControlName="message" rows="4"></textarea>
+                </div>
+                <div class="form-group mt-15">
+                  <label>Životopis (libovolný soubor) <span class="required-asterisk">*</span></label>
+                  <div class="file-drop-area" [class.has-file]="selectedFile">
+                    <input type="file" (change)="onFileSelected($event)" class="file-input-styled">
+                    <div class="file-msg">
+                      <div class="upload-icon">{{ selectedFile ? '✓' : '+' }}</div>
+                      <div class="file-text">
+                        {{ selectedFile ? selectedFile.name : 'Klikněte nebo přetáhněte soubor sem' }}
+                      </div>
+                    </div>
+                  </div>
+                  @if (!selectedFile && applicationForm.touched) {
+                    <small class="error-msg">
+                      Prosím, přiložte svůj životopis.
+                    </small>
+                  }
+                </div>
+                <div class="checkbox-container">
+                  <div class="checkbox-group">
+                    <input id="gdpr" type="checkbox" formControlName="dataProcessingAgreement">
+                    <label for="gdpr">
+                      Souhlasím se <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">zpracováním osobních údajů</a> *
+                    </label>
+                  </div>
+                </div>
+                <p class="required-info">* Označuje povinné pole</p>
+                <button type="submit"
+                  [disabled]="applicationForm.invalid || !selectedFile || (loadingService.isLoading$ | async)"
+                  class="submit-btn-skew">
+                  <span>
+                    @if ((loadingService.isLoading$ | async)) {
+                      Odesílám...
+                    } @else {
+                      Odeslat přihlášku
+                    }
+                  </span>
+                </button>
+                @if (errorMessage) {
+                  <div class="message-box error-msg">{{ errorMessage }}</div>
+                }
+              </form>
+            } @else {
+              <div class="success-container" style="text-align: center; padding: 40px 0;">
+                <div class="success-icon" style="font-size: 48px; color: #4caf50; margin-bottom: 20px;">✓</div>
+                <h2 style="margin-bottom: 10px;">Děkujeme za váš zájem!</h2>
+                <p class="success-text" style="margin-bottom: 30px;">
+                  Vaše přihláška na pozici <strong>{{ job?.title }}</strong> byla úspěšně odeslána. <br>
+                  Budeme vás kontaktovat co nejdříve.
+                </p>
+                <button class="submit-btn-skew" routerLink="/jobs">
+                  <span>Zpět na výpis pozic</span>
+                </button>
               </div>
-              <small class="error-msg" *ngIf="!selectedFile && applicationForm.touched">
-                Prosím, přiložte svůj životopis.
-              </small>
-            </div>
-            <div class="checkbox-container">
-              <div class="checkbox-group">
-                <input id="gdpr" type="checkbox" formControlName="dataProcessingAgreement">
-                <label for="gdpr">
-                  Souhlasím se <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">zpracováním osobních údajů</a> *
-                </label>
-              </div>
-            </div>
-            <p class="required-info">* Označuje povinné pole</p>
-            <button type="submit"
-              [disabled]="applicationForm.invalid || !selectedFile || (loadingService.isLoading$ | async)"
-              class="submit-btn-skew">
-              <span>
-                <ng-container *ngIf="(loadingService.isLoading$ | async); else btnNormal">
-                  Odesílám...
-                </ng-container>
-                <ng-template #btnNormal>Odeslat přihlášku</ng-template>
-              </span>
-            </button>
-            <div *ngIf="errorMessage" class="message-box error-msg">{{ errorMessage }}</div>
-          </form>
-        </ng-container>
-        <ng-template #thankYouMessage>
-          <div class="success-container" style="text-align: center; padding: 40px 0;">
-            <div class="success-icon" style="font-size: 48px; color: #4caf50; margin-bottom: 20px;">✓</div>
-            <h2 style="margin-bottom: 10px;">Děkujeme za váš zájem!</h2>
-            <p class="success-text" style="margin-bottom: 30px;">
-              Vaše přihláška na pozici <strong>{{ job?.title }}</strong> byla úspěšně odeslána. <br>
-              Budeme vás kontaktovat co nejdříve.
-            </p>
-            <button class="submit-btn-skew" routerLink="/jobs">
-              <span>Zpět na výpis pozic</span>
-            </button>
+            }
           </div>
-        </ng-template>
-      </div>
-      <div class="minimal-contact-box mt-10">
-        <span class="contact-label">Máte dotaz?</span>
-        <a href="tel:+420733188328">733 188 328</a>
-        <span class="sep">•</span>
-        <a href="mailto:info@rpsw.cz">info@rpsw.cz</a>
-      </div>
+          <div class="minimal-contact-box mt-10">
+            <span class="contact-label">Máte dotaz?</span>
+            <a href="tel:+420733188328">733 188 328</a>
+            <span class="sep">•</span>
+            <a href="mailto:info@rpsw.cz">info@rpsw.cz</a>
+          </div>
+        </div>
+      }
     </div>
   </div>
-</div>
+}

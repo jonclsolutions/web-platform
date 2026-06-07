@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ShopPublicService } from '../components/services/public-data.service';
@@ -20,12 +20,11 @@ const CATALOG_CONFIG = {
   selector: 'app-catalog',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     FormsModule,
     ProductBuilderComponent,
     PaginationButtonsBuilderComponent
-  ],
+],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.css',
 })

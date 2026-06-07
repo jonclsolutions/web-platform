@@ -1,140 +1,165 @@
-<div *ngIf="s">
-  <div class="header-1">
-    {{ s?.header_1_text }}
-  </div>
-  <div class="main-content">
-    <div class="main-content-inner">
-      <div class="tech-buttons">
-        <button
-          *ngFor="let tech of technologies"
-          class="tech-button" [class]="tech.id"
-          [class.active]="currentTech === tech.id"
-          (click)="selectTech(tech.id)">
-          {{ tech?.name }}
-        </button>
-      </div>
-      <div class="content-display">
-        <div class="content-wrapper visible">
-          <div class="content-item">
-            <div class="content-top-section">
-              <div class="services-info-text">
-                <div class="ser-h">
-                  <ng-container [ngSwitch]="currentTech">
-                    <span *ngSwitchCase="'web-dev'">{{ s?.info_header_web }}</span>
-                    <span *ngSwitchCase="'desktop-dev'">{{ s?.info_header_desktop }}</span>
-                    <span *ngSwitchCase="'mobile-dev'">{{ s?.info_header_mobile }}</span>
-                    <span *ngSwitchCase="'ai-dev'">{{ s?.info_header_ai }}</span>
-                  </ng-container>
-                </div>
+@if (s) {
+  <div>
+    <div class="header-1">
+      {{ s?.header_1_text }}
+    </div>
+    <div class="main-content">
+      <div class="main-content-inner">
+        <div class="tech-buttons">
+          @for (tech of technologies; track tech) {
+            <button
+              class="tech-button" [class]="tech.id"
+              [class.active]="currentTech === tech.id"
+              (click)="selectTech(tech.id)">
+              {{ tech?.name }}
+            </button>
+          }
+        </div>
+        <div class="content-display">
+          <div class="content-wrapper visible">
+            <div class="content-item">
+              <div class="content-top-section">
+                <div class="services-info-text">
+                  <div class="ser-h">
+                    @switch (currentTech) {
+                      @case ('web-dev') {
+                        <span>{{ s?.info_header_web }}</span>
+                      }
+                      @case ('desktop-dev') {
+                        <span>{{ s?.info_header_desktop }}</span>
+                      }
+                      @case ('mobile-dev') {
+                        <span>{{ s?.info_header_mobile }}</span>
+                      }
+                      @case ('ai-dev') {
+                        <span>{{ s?.info_header_ai }}</span>
+                      }
+                    }
+                  </div>
                 <div class="services-info-text-2" [innerHTML]="
                   currentTech === 'web-dev' ? s?.service_main_text_1 :
                   currentTech === 'desktop-dev' ? s?.service_main_text_2 :
                   currentTech === 'mobile-dev' ? s?.service_main_text_3 :
                   s?.service_main_text_4
                 "></div>
-              </div>
-              <div class="services-icons-sidebar">
-                <div class="services-header">{{ s?.info_header_1 }}</div>
-                <div class="services-header-2">{{ s?.info_header_2 }}</div>
-                <div class="tech-grid">
-                  <div *ngFor="let item of (
-                    currentTech === 'web-dev' ? webTechImages :
-                    currentTech === 'desktop-dev' ? desktopTechImages :
-                    currentTech === 'mobile-dev' ? mobileTechImages :
-                    aiTechImages
-                  )" class="tech-item">
-                    <img [src]="item?.path" [alt]="item?.name">
-                    <span>{{ item?.name }}</span>
+                </div>
+                <div class="services-icons-sidebar">
+                  <div class="services-header">{{ s?.info_header_1 }}</div>
+                  <div class="services-header-2">{{ s?.info_header_2 }}</div>
+                  <div class="tech-grid">
+                    @for (item of (
+                      currentTech === 'web-dev' ? webTechImages :
+                      currentTech === 'desktop-dev' ? desktopTechImages :
+                      currentTech === 'mobile-dev' ? mobileTechImages :
+                      aiTechImages
+                      ); track item) {
+                      <div class="tech-item">
+                        <img [src]="item?.path" [alt]="item?.name">
+                        <span>{{ item?.name }}</span>
+                      </div>
+                    }
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="get-h-wrp">
-              <div class="get-h">{{ s?.info_header_3 }}</div>
-            </div>
-            <div class="faq-container">
-              <div *ngFor="let item of (
-                currentTech === 'web-dev' ? (s?.webServices | keyvalue) :
-                currentTech === 'desktop-dev' ? (s?.desktopServices | keyvalue) :
-                currentTech === 'mobile-dev' ? (s?.mobileServices | keyvalue) :
-                (s?.aiServices | keyvalue)
-              ); let i = index"
-                class="faq-item animated-faq-item"
-                [ngClass]="{'active': item?.value?.isActive}"
-                [style.animation-delay]="i * 0.1 + 's'">
-                <div class="faq-question" (click)="toggleFaq(item?.value)">
-                  <h3>{{ item?.value?.question }}</h3>
-                  <div class="faq-indicator">
-                    <span class="faq-arrow" [ngClass]="{'rotated': item?.value?.isActive}">></span>
+              <div class="get-h-wrp">
+                <div class="get-h">{{ s?.info_header_3 }}</div>
+              </div>
+              <div class="faq-container">
+                @for (item of (
+                  currentTech === 'web-dev' ? (s?.webServices | keyvalue) :
+                  currentTech === 'desktop-dev' ? (s?.desktopServices | keyvalue) :
+                  currentTech === 'mobile-dev' ? (s?.mobileServices | keyvalue) :
+                  (s?.aiServices | keyvalue)
+                  ); track item; let i = $index) {
+                  <div
+                    class="faq-item animated-faq-item"
+                    [ngClass]="{'active': item?.value?.isActive}"
+                    [style.animation-delay]="i * 0.1 + 's'">
+                    <div class="faq-question" (click)="toggleFaq(item?.value)">
+                      <h3>{{ item?.value?.question }}</h3>
+                      <div class="faq-indicator">
+                        <span class="faq-arrow" [ngClass]="{'rotated': item?.value?.isActive}">></span>
+                      </div>
+                    </div>
+                    <div class="faq-answer" (click)="toggleFaq(item?.value)">
+                      <p>{{ item?.value?.answer }}</p>
+                    </div>
                   </div>
-                </div>
-                <div class="faq-answer" (click)="toggleFaq(item?.value)">
-                  <p>{{ item?.value?.answer }}</p>
-                </div>
+                }
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="header-2 colab-specific-header">{{ s?.colab?.colab_procces_header }}</div>
-  <div class="cop-wrp">
-    <div class="cop">
-      <div class="workflow-diagram">
-        <div *ngFor="let step of [s?.colab?.item_1, s?.colab?.item_2, s?.colab?.item_3, s?.colab?.item_4]; let last = last"
-          class="workflow-container" style="display: flex; align-items: center;">
-          <div class="workflow-step">
-            <div class="icon-circle"><svg></svg></div>
-            <h3>{{ step?.header }}</h3>
-            <p>{{ step?.text }}</p>
-          </div>
-          <div *ngIf="!last" class="svg-arrow-container">
-            <svg class="workflow-arrow wavy-single-wing" viewBox="0 0 100 40" fill="none">
-              <path d="M5 20C20 5 40 35 50 20C60 5 80 35 95 20" stroke="#6b2e91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M95 20L88 12" stroke="#6b2e91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
+    <div class="header-2 colab-specific-header">{{ s?.colab?.colab_procces_header }}</div>
+    <div class="cop-wrp">
+      <div class="cop">
+        <div class="workflow-diagram">
+          @for (step of [s?.colab?.item_1, s?.colab?.item_2, s?.colab?.item_3, s?.colab?.item_4]; track step; let last = $last) {
+            <div
+              class="workflow-container" style="display: flex; align-items: center;">
+              <div class="workflow-step">
+                <div class="icon-circle"><svg></svg></div>
+                <h3>{{ step?.header }}</h3>
+                <p>{{ step?.text }}</p>
+              </div>
+              @if (!last) {
+                <div class="svg-arrow-container">
+                  <svg class="workflow-arrow wavy-single-wing" viewBox="0 0 100 40" fill="none">
+                    <path d="M5 20C20 5 40 35 50 20C60 5 80 35 95 20" stroke="#6b2e91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M95 20L88 12" stroke="#6b2e91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              }
+            </div>
+          }
         </div>
       </div>
     </div>
-  </div>
-  <div class="header-2 prices-specific-header">{{ s?.services?.prices_header }}</div>
-  <div class="prices-wrp">
-    <div class="prices-wrp-1">
-      <div *ngFor="let item of [s?.services?.item_1, s?.services?.item_2, s?.services?.item_3, s?.services?.item_4, s?.services?.item_5, s?.services?.item_6]"
-        class="price-card">
-        <div class="price-header-strip">{{ item?.header }}</div>
-        <div class="price-content">
-          <div class="price-amount">
-            <span *ngIf="item?.price !== 'Variabilní cena'" class="prefix">{{ s?.services?.text_preffix }}</span>
-            {{ item?.price }}
-            <span *ngIf="item?.price !== 'Variabilní cena'" class="currency">{{ s?.services?.currency }}</span>
+    <div class="header-2 prices-specific-header">{{ s?.services?.prices_header }}</div>
+    <div class="prices-wrp">
+      <div class="prices-wrp-1">
+        @for (item of [s?.services?.item_1, s?.services?.item_2, s?.services?.item_3, s?.services?.item_4, s?.services?.item_5, s?.services?.item_6]; track item) {
+          <div
+            class="price-card">
+            <div class="price-header-strip">{{ item?.header }}</div>
+            <div class="price-content">
+              <div class="price-amount">
+                @if (item?.price !== 'Variabilní cena') {
+                  <span class="prefix">{{ s?.services?.text_preffix }}</span>
+                }
+                {{ item?.price }}
+                @if (item?.price !== 'Variabilní cena') {
+                  <span class="currency">{{ s?.services?.currency }}</span>
+                }
+              </div>
+              <div class="price-note">{{ item?.message }}</div>
+            </div>
           </div>
-          <div class="price-note">{{ item?.message }}</div>
-        </div>
+        }
+      </div>
+    </div>
+    <section class="references-section">
+      <div class="references-content">
+        <p class="ref-text">{{ s?.show_projects_header }}</p>
+        <a routerLink="/references" class="ref-button">{{ s?.projects_button_text }}</a>
+      </div>
+    </section>
+    <div class="gradient-seep-wrp">
+      <div class="gradient-line-separator"></div>
+    </div>
+    <div class="form-wrp">
+      <div class="form">
+        <app-generic-form
+          [formConfig]="contactFormConfig"
+          [form_header]="s?.form_header"
+          [form_description]="s?.form_description"
+          [form_button]="s?.form_button"
+          (formSubmitted)="handleFormSubmission($event)"
+          (formReset)="handleFormReset()">
+        </app-generic-form>
       </div>
     </div>
   </div>
-  <section class="references-section">
-    <div class="references-content">
-      <p class="ref-text">{{ s?.show_projects_header }}</p>
-      <a routerLink="/references" class="ref-button">{{ s?.projects_button_text }}</a>
-    </div>
-  </section>
-  <div class="gradient-seep-wrp">
-    <div class="gradient-line-separator"></div>
-  </div>
-  <div class="form-wrp">
-    <div class="form">
-      <app-generic-form
-        [formConfig]="contactFormConfig"
-        [form_header]="s?.form_header"
-        [form_description]="s?.form_description"
-        [form_button]="s?.form_button"
-        (formSubmitted)="handleFormSubmission($event)"
-        (formReset)="handleFormReset()">
-      </app-generic-form>
-    </div>
-  </div>
-</div>
+}

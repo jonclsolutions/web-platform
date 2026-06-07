@@ -1,34 +1,38 @@
-<div class="main-content" *ngIf="t">
-  <div class="jobs-section">
-    <div class="header-1">{{ t?.careers?.header_1 }}</div>
-    <div class="jobs-container">
-      <div *ngFor="let job of availableJobs; let i = index"
-        class="job-item animated-job-item"
-        [style.animation-delay]="i * 0.1 + 's'"
-        [routerLink]="['/jobs', job.id]">
-        <div class="job-info">
-          <div class="job-text-content">
-            <h3>{{ job?.title }}</h3>
-            <p class="job-short-desc">{{ job?.shortDescription }}</p>
+@if (t) {
+  <div class="main-content">
+    <div class="jobs-section">
+      <div class="header-1">{{ t?.careers?.header_1 }}</div>
+      <div class="jobs-container">
+        @for (job of availableJobs; track job; let i = $index) {
+          <div
+            class="job-item animated-job-item"
+            [style.animation-delay]="i * 0.1 + 's'"
+            [routerLink]="['/jobs', job.id]">
+            <div class="job-info">
+              <div class="job-text-content">
+                <h3>{{ job?.title }}</h3>
+                <p class="job-short-desc">{{ job?.shortDescription }}</p>
+              </div>
+              <div class="job-indicator">
+                <span class="job-arrow">&gt;</span>
+              </div>
+            </div>
           </div>
-          <div class="job-indicator">
-            <span class="job-arrow">&gt;</span>
-          </div>
-        </div>
+        }
+      </div>
+    </div>
+    <div class="write-us-wrp">
+      <div class="write-us-text">
+        {{ t?.careers?.write_us_prompt }}
+      </div>
+      <div class="write-us-icons">
+        <a href="https://www.instagram.com/rpsw.cz" target="_blank" class="icon-wrp">
+          <img [src]="ig_icon" alt="Instagram">
+        </a>
+        <a href="mailto:info@rpsw.cz" class="icon-wrp">
+          <img [src]="email_icon" alt="Email">
+        </a>
       </div>
     </div>
   </div>
-  <div class="write-us-wrp">
-    <div class="write-us-text">
-      {{ t?.careers?.write_us_prompt }}
-    </div>
-    <div class="write-us-icons">
-      <a href="https://www.instagram.com/rpsw.cz" target="_blank" class="icon-wrp">
-        <img [src]="ig_icon" alt="Instagram">
-      </a>
-      <a href="mailto:info@rpsw.cz" class="icon-wrp">
-        <img [src]="email_icon" alt="Email">
-      </a>
-    </div>
-  </div>
-</div>
+}

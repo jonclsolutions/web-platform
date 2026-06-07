@@ -1,7 +1,7 @@
 <div class="pagination-controls-wrapper">
   <div class="pagination-info text-sm text-gray-700 p-b-10">
-    Zobrazuji {{ (currentPage - 1) * itemsPerPage + 1 }} - 
-    {{ (currentPage - 1) * itemsPerPage + dataLength }} 
+    Zobrazuji {{ (currentPage - 1) * itemsPerPage + 1 }} -
+    {{ (currentPage - 1) * itemsPerPage + dataLength }}
     z celkem {{ totalItems }} záznamů.
   </div>
 
@@ -9,7 +9,7 @@
     <div class="items-per-page-container flex items-center space-x-2 pg-m p-b-10">
       <label for="itemsPerPage" class="text-sm text-gray-700">Položek na stránku:</label>
       <select id="itemsPerPage" (change)="onItemsPerPageSelect($event)"
-              class="items-per-page-select" [ngModel]="itemsPerPage">
+        class="items-per-page-select" [ngModel]="itemsPerPage">
         <option [value]="5">5</option>
         <option [value]="10">10</option>
         <option [value]="15">15</option>
@@ -19,25 +19,25 @@
     </div>
 
     <nav class="pagination-nav" aria-label="Pagination Navigation">
-      <button (click)="onPageClick(currentPage - 1)" 
-              [disabled]="currentPage === 1" 
-              class="pagination-button nav-arrow">
+      <button (click)="onPageClick(currentPage - 1)"
+        [disabled]="currentPage === 1"
+        class="pagination-button nav-arrow">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
         </svg>
       </button>
 
-      <ng-container *ngFor="let page of pagesArray">
-        <button (click)="onPageClick(page)" 
-                [class.active-page]="page === currentPage" 
-                class="pagination-button">
+      @for (page of pagesArray; track page) {
+        <button (click)="onPageClick(page)"
+          [class.active-page]="page === currentPage"
+          class="pagination-button">
           {{ page }}
         </button>
-      </ng-container>
+      }
 
-      <button (click)="onPageClick(currentPage + 1)" 
-              [disabled]="currentPage === totalPages" 
-              class="pagination-button nav-arrow">
+      <button (click)="onPageClick(currentPage + 1)"
+        [disabled]="currentPage === totalPages"
+        class="pagination-button nav-arrow">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>

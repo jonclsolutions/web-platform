@@ -1,16 +1,18 @@
-<div class="dialog-overlay" *ngIf="isVisible" [class.visible]="isVisible">
-  <div class="dialog-container">
-    <div class="dialog-header">
-      <h2 class="dialog-title">{{ title }}</h2>
-    </div>
-    <div class="dialog-body">
-      <p>{{ message }}</p>
-    </div>
-    <div class="dialog-footer">
-      <div class="dialog-actions">
-        <button class="neutral_button" (click)="cancel()">Zrušit</button>
-        <button class="confirm_button" (click)="confirm()">Potvrdit</button>
+@if (isVisible) {
+  <div class="dialog-overlay" [class.visible]="isVisible">
+    <div class="dialog-container">
+      <div class="dialog-header">
+        <h2 class="dialog-title">{{ title }}</h2>
+      </div>
+      <div class="dialog-body">
+        <p>{{ message }}</p>
+      </div>
+      <div class="dialog-footer">
+        <div class="dialog-actions">
+          <button class="neutral_button" (click)="cancel()">Zrušit</button>
+          <button class="confirm_button" (click)="confirm()">Potvrdit</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
+}

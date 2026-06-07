@@ -1,192 +1,197 @@
 <div class="checkout-container">
   <h1>{{ currentStep() === 5 ? '' : 'Zabezpečená pokladna' }}</h1>
 
-  <div class="checkout-step success" *ngIf="currentStep() === 5">
-    <div class="success-box">
-      <h2>✓ Děkujeme za vaši objednávku!</h2>
-      <p>Vaše objednávka byla úspěšně přijata a momentálně ji zpracováváme.</p>
-      
-      <div class="order-number">
-        <strong>Číslo objednávky:</strong> <span>{{ orderNumber() }}</span>
+  @if (currentStep() === 5) {
+    <div class="checkout-step success">
+      <div class="success-box">
+        <h2>✓ Děkujeme za vaši objednávku!</h2>
+        <p>Vaše objednávka byla úspěšně přijata a momentálně ji zpracováváme.</p>
+        <div class="order-number">
+          <strong>Číslo objednávky:</strong> <span>{{ orderNumber() }}</span>
+        </div>
+        <p class="confirmation-message">
+          Potvrzení objednávky jsme odeslali na e-mail <strong>{{ formData.email }}</strong>.
+        </p>
+        <button (click)="finishCheckout()" class="btn-primary">
+          <span>Pokračovat v nákupu</span>
+        </button>
       </div>
-
-      <p class="confirmation-message">
-        Potvrzení objednávky jsme odeslali na e-mail <strong>{{ formData.email }}</strong>.
-      </p>
-
-      <button (click)="finishCheckout()" class="btn-primary">
-        <span>Pokračovat v nákupu</span>
-      </button>
     </div>
-  </div>
+  }
 
-  <div class="instant-checkout-grid" *ngIf="currentStep() !== 5">
-    
-    <div class="checkout-form-column">
-      
-      <form (ngSubmit)="$event.preventDefault()">
-        <div class="checkout-section">
-          <h3>Kontaktní údaje</h3>
-          <div class="form-grid compact">
-            <div class="form-group">
-              <label>E-mailová adresa *</label>
-              <input type="email" [(ngModel)]="formData.email" name="email" placeholder="vas@email.cz" required>
-            </div>
-            <div class="form-group">
-              <label>Telefonní číslo *</label>
-              <input type="tel" [(ngModel)]="formData.phone" name="phone" placeholder="+420 777 111 222" required>
-            </div>
-          </div>
-        </div>
-
-        <div class="checkout-section">
-          <h3>Doručovací adresa</h3>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Jméno *</label>
-              <input type="text" [(ngModel)]="formData.firstName" name="firstName" placeholder="Jan" required>
-            </div>
-            <div class="form-group">
-              <label>Příjmení *</label>
-              <input type="text" [(ngModel)]="formData.lastName" name="lastName" placeholder="Novák" required>
-            </div>
-            <div class="form-group full">
-              <label>Ulice a číslo popisné *</label>
-              <input type="text" [(ngModel)]="formData.address" name="address" placeholder="Kybernetická 123" required>
-            </div>
-            <div class="form-group">
-              <label>Město *</label>
-              <input type="text" [(ngModel)]="formData.city" name="city" placeholder="Praha" required>
-            </div>
-            <div class="form-group">
-              <label>PSČ *</label>
-              <input type="text" [(ngModel)]="formData.postalCode" name="postalCode" placeholder="110 00" required>
-            </div>
-          </div>
-        </div>
-
-        <div class="checkout-section">
-          <h3>Způsob dopravy</h3>
-          <div class="shipping-methods-list">
-            <div 
-              class="selectable-option shipping" 
-              *ngFor="let method of shippingMethods()"
-              [class.selected]="formData.shippingMethodId === method.id"
-              (click)="selectShippingMethod(method.id)"
-            >
-              <div class="option-info">
-                <span class="option-title">{{ method.name }}</span>
-                <span class="option-desc" *ngIf="method.description">{{ method.description }}</span>
+  @if (currentStep() !== 5) {
+    <div class="instant-checkout-grid">
+      <div class="checkout-form-column">
+        <form (ngSubmit)="$event.preventDefault()">
+          <div class="checkout-section">
+            <h3>Kontaktní údaje</h3>
+            <div class="form-grid compact">
+              <div class="form-group">
+                <label>E-mailová adresa *</label>
+                <input type="email" [(ngModel)]="formData.email" name="email" placeholder="vas@email.cz" required>
               </div>
-              <span class="option-price">{{ formatPrice(method.base_price) }}</span>
+              <div class="form-group">
+                <label>Telefonní číslo *</label>
+                <input type="tel" [(ngModel)]="formData.phone" name="phone" placeholder="+420 777 111 222" required>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div class="checkout-section">
-          <h3>Způsob platby</h3>
-          <div class="payment-methods-list-vertical">
-            <label 
-              class="payment-list-item" 
-              *ngFor="let method of paymentMethods()"
-              [class.selected]="formData.paymentMethodId === method.id"
-              (click)="selectPaymentMethod(method.id)"
-            >
-              <div class="payment-item-left">
-                <input 
-                  type="radio" 
-                  name="paymentMethod" 
-                  [value]="method.id" 
-                  [checked]="formData.paymentMethodId === method.id"
-                  class="payment-radio"
-                >
-                <span class="payment-title">{{ method.name }}</span>
+          <div class="checkout-section">
+            <h3>Doručovací adresa</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Jméno *</label>
+                <input type="text" [(ngModel)]="formData.firstName" name="firstName" placeholder="Jan" required>
               </div>
-              
-              <span class="payment-method-icon-wrapper">
-                <img [src]="method.image_url || 'assets/images/icons/generic-cash.svg'" [alt]="method.name" class="payment-method-img">
+              <div class="form-group">
+                <label>Příjmení *</label>
+                <input type="text" [(ngModel)]="formData.lastName" name="lastName" placeholder="Novák" required>
+              </div>
+              <div class="form-group full">
+                <label>Ulice a číslo popisné *</label>
+                <input type="text" [(ngModel)]="formData.address" name="address" placeholder="Kybernetická 123" required>
+              </div>
+              <div class="form-group">
+                <label>Město *</label>
+                <input type="text" [(ngModel)]="formData.city" name="city" placeholder="Praha" required>
+              </div>
+              <div class="form-group">
+                <label>PSČ *</label>
+                <input type="text" [(ngModel)]="formData.postalCode" name="postalCode" placeholder="110 00" required>
+              </div>
+            </div>
+          </div>
+          <div class="checkout-section">
+            <h3>Způsob dopravy</h3>
+            <div class="shipping-methods-list">
+              @for (method of shippingMethods(); track method) {
+                <div
+                  class="selectable-option shipping"
+                  [class.selected]="formData.shippingMethodId === method.id"
+                  (click)="selectShippingMethod(method.id)"
+                  >
+                  <div class="option-info">
+                    <span class="option-title">{{ method.name }}</span>
+                    @if (method.description) {
+                      <span class="option-desc">{{ method.description }}</span>
+                    }
+                  </div>
+                  <span class="option-price">{{ formatPrice(method.base_price) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+          <div class="checkout-section">
+            <h3>Způsob platby</h3>
+            <div class="payment-methods-list-vertical">
+              @for (method of paymentMethods(); track method) {
+                <label
+                  class="payment-list-item"
+                  [class.selected]="formData.paymentMethodId === method.id"
+                  (click)="selectPaymentMethod(method.id)"
+                  >
+                  <div class="payment-item-left">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      [value]="method.id"
+                      [checked]="formData.paymentMethodId === method.id"
+                      class="payment-radio"
+                      >
+                    <span class="payment-title">{{ method.name }}</span>
+                  </div>
+                  <span class="payment-method-icon-wrapper">
+                    <img [src]="method.image_url || 'assets/images/icons/generic-cash.svg'" [alt]="method.name" class="payment-method-img">
+                  </span>
+                </label>
+              }
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="checkout-summary-column">
+        <div class="static-summary">
+          <h3>Rekapitulace objednávky</h3>
+          <div class="cart-items-preview">
+            @for (item of cartService.cartItems(); track item) {
+              <div class="preview-item">
+                <div class="preview-image-wrapper">
+                  <img [src]="item.product_image || 'assets/images/placeholder-product.png'" [alt]="item.product_name">
+                  <span class="preview-quantity">{{ item.quantity }}</span>
+                </div>
+                <div class="preview-details">
+                  <strong class="product-title">{{ item.product_name }}</strong>
+                  @if (item.variant_name) {
+                    <div class="variant-badge">{{ item.variant_name }}</div>
+                  }
+                </div>
+                <div class="preview-price">{{ formatPrice(item.total_price) }}</div>
+              </div>
+            }
+          </div>
+          <div class="coupon-box">
+            <div class="coupon-input-group">
+              <input type="text" [(ngModel)]="couponCode" placeholder="Slevový kód" [disabled]="!!appliedCoupon()">
+              <button type="button" (click)="applyCoupon()" [disabled]="!!appliedCoupon()">Použít</button>
+            </div>
+            @if (couponStatus()) {
+              <p class="coupon-msg">{{ couponStatus() }}</p>
+            }
+          </div>
+          <div class="summary-calculations">
+            <div class="calc-row">
+              <span>Mezisoučet</span>
+              <span>{{ formatPrice(orderSummary().productsTotal) }}</span>
+            </div>
+            @if (orderSummary().discountAmount > 0) {
+              <div class="calc-row discount">
+                <span>Sleva ({{ appliedCoupon()?.code }})</span>
+                <span>-{{ formatPrice(orderSummary().discountAmount) }}</span>
+              </div>
+            }
+            <div class="calc-row">
+              <span>Doprava</span>
+              <span>{{ formData.shippingMethodId ? formatPrice(orderSummary().shippingAmount) : 'Bude vypočtena' }}</span>
+            </div>
+            @if (orderSummary().vatGroups.length > 0) {
+              <div class="tax-breakdown">
+                @for (vat of orderSummary().vatGroups; track vat) {
+                  <div class="calc-row tax-detail">
+                    <span>Cena bez DPH ({{ vat.rate }}%)</span>
+                    <span>{{ formatPrice(vat.baseAmount) }}</span>
+                  </div>
+                }
+              </div>
+            }
+            <div class="calc-row total-final">
+              <span>Celkem k úhradě</span>
+              <strong>{{ formatPrice(orderSummary().finalAmount) }}</strong>
+            </div>
+          </div>
+          <div class="checkout-terms-agreement">
+            <label class="terms-checkbox-label">
+              <input type="checkbox" [(ngModel)]="formData.agreeToTerms" name="agreeToTerms" class="terms-checkbox">
+              <span class="terms-text">
+                Souhlasím s <a routerLink="/tos" target="_blank">obchodními podmínkami</a> and beru na vědomí <a routerLink="/privacy-policy" target="_blank">zásady ochrany osobních údajů</a>. *
               </span>
             </label>
           </div>
+          <button
+            type="button"
+            class="btn-pay-instant"
+            (click)="simulatePayment()"
+            [disabled]="isProcessing() || !isFormValid()"
+            >
+            @if (!isProcessing()) {
+              <span>Dokončit objednávku — {{ formatPrice(orderSummary().finalAmount) }}</span>
+            }
+            @if (isProcessing()) {
+              <span>Zpracovávám objednávku...</span>
+            }
+          </button>
+          <p class="security-note">🔒 Zabezpečená 256-bit SSL pokladna</p>
         </div>
-      </form>
-    </div>
-
-    <div class="checkout-summary-column">
-      <div class="static-summary">
-        <h3>Rekapitulace objednávky</h3>
-        
-        <div class="cart-items-preview">
-          <div class="preview-item" *ngFor="let item of cartService.cartItems()">
-            <div class="preview-image-wrapper">
-              <img [src]="item.product_image || 'assets/images/placeholder-product.png'" [alt]="item.product_name">
-              <span class="preview-quantity">{{ item.quantity }}</span>
-            </div>
-            <div class="preview-details">
-              <strong class="product-title">{{ item.product_name }}</strong>
-              <div *ngIf="item.variant_name" class="variant-badge">{{ item.variant_name }}</div>
-            </div>
-            <div class="preview-price">{{ formatPrice(item.total_price) }}</div>
-          </div>
-        </div>
-
-        <div class="coupon-box">
-          <div class="coupon-input-group">
-            <input type="text" [(ngModel)]="couponCode" placeholder="Slevový kód" [disabled]="!!appliedCoupon()">
-            <button type="button" (click)="applyCoupon()" [disabled]="!!appliedCoupon()">Použít</button>
-          </div>
-          <p class="coupon-msg" *ngIf="couponStatus()">{{ couponStatus() }}</p>
-        </div>
-
-        <div class="summary-calculations">
-          <div class="calc-row">
-            <span>Mezisoučet</span>
-            <span>{{ formatPrice(orderSummary().productsTotal) }}</span>
-          </div>
-          <div class="calc-row discount" *ngIf="orderSummary().discountAmount > 0">
-            <span>Sleva ({{ appliedCoupon()?.code }})</span>
-            <span>-{{ formatPrice(orderSummary().discountAmount) }}</span>
-          </div>
-          <div class="calc-row">
-            <span>Doprava</span>
-            <span>{{ formData.shippingMethodId ? formatPrice(orderSummary().shippingAmount) : 'Bude vypočtena' }}</span>
-          </div>
-          
-          <div class="tax-breakdown" *ngIf="orderSummary().vatGroups.length > 0">
-            <div class="calc-row tax-detail" *ngFor="let vat of orderSummary().vatGroups">
-              <span>Cena bez DPH ({{ vat.rate }}%)</span>
-              <span>{{ formatPrice(vat.baseAmount) }}</span>
-            </div>
-          </div>
-
-          <div class="calc-row total-final">
-            <span>Celkem k úhradě</span>
-            <strong>{{ formatPrice(orderSummary().finalAmount) }}</strong>
-          </div>
-        </div>
-
-        <div class="checkout-terms-agreement">
-          <label class="terms-checkbox-label">
-            <input type="checkbox" [(ngModel)]="formData.agreeToTerms" name="agreeToTerms" class="terms-checkbox">
-            <span class="terms-text">
-            Souhlasím s <a routerLink="/tos" target="_blank">obchodními podmínkami</a> and beru na vědomí <a routerLink="/privacy-policy" target="_blank">zásady ochrany osobních údajů</a>. *
-            </span>
-          </label>
-        </div>
-
-        <button 
-          type="button" 
-          class="btn-pay-instant" 
-          (click)="simulatePayment()" 
-          [disabled]="isProcessing() || !isFormValid()"
-        >
-          <span *ngIf="!isProcessing()">Dokončit objednávku — {{ formatPrice(orderSummary().finalAmount) }}</span>
-          <span *ngIf="isProcessing()">Zpracovávám objednávku...</span>
-        </button>
-        
-        <p class="security-note">🔒 Zabezpečená 256-bit SSL pokladna</p>
       </div>
     </div>
-
-  </div>
+  }
 </div>

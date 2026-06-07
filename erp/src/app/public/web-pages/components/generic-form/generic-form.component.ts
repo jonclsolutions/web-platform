@@ -2,7 +2,7 @@ import {
   Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy,
   ChangeDetectorRef, OnChanges, SimpleChanges
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule, NgForm } from '@angular/forms';
 import { FormFieldConfig, FormFieldOption } from '../../../../shared/interfaces/form-field-config';
 import { LocalizationService } from '../../../../shared/services/localization.service';
@@ -13,7 +13,7 @@ import { RouterModule } from '@angular/router';
 @Component({
   selector: 'app-generic-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './generic-form.component.html',
   styleUrl: './generic-form.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

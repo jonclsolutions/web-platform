@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { LocalizationService } from '../../../../shared/services/localization.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -16,7 +16,7 @@ interface FooterNavLink {
   standalone: true,
   templateUrl: './public-footer.component.html',
   styleUrls: ['./public-footer.component.css'],
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PublicFooterComponent implements OnInit, OnDestroy {

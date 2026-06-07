@@ -2,112 +2,106 @@
   <div class="cart-title">Nákupní košík</div>
 
   <!-- PRÁZDNÝ KOŠÍK -->
-  <div class="empty-cart" *ngIf="cartService.cartCount() === 0">
-    <div class="empty-cart-icon">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="8" cy="21" r="1"/>
-        <circle cx="19" cy="21" r="1"/>
-        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-      </svg>
+  @if (cartService.cartCount() === 0) {
+    <div class="empty-cart">
+      <div class="empty-cart-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="21" r="1"/>
+          <circle cx="19" cy="21" r="1"/>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+        </svg>
+      </div>
+      <p>Váš alokační prostor je prázdný.</p>
+      <a routerLink="/shop" class="btn-buy" style="display: inline-block; text-decoration: none; text-align: center; width: auto; padding: 1rem 2rem;">Prohlížet terminál</a>
     </div>
-    <p>Váš alokační prostor je prázdný.</p>
-    <a routerLink="/shop" class="btn-buy" style="display: inline-block; text-decoration: none; text-align: center; width: auto; padding: 1rem 2rem;">Prohlížet terminál</a>
-  </div>
+  }
 
   <!-- OBSAH KOŠÍKU -->
-  <div class="cart-content" *ngIf="cartService.cartCount() > 0">
-    
-    <!-- POLOŽKY -->
-    <div class="cart-items">
-      <!-- Klikatelný celý řádek položky -->
-      <div 
-        *ngFor="let item of cartService.cartItems()" 
-        [routerLink]="['/shop/products', item.product_slug]" 
-        class="cart-item"
-      >
-        
-        <!-- Fotografie položky -->
-        <div class="item-image-wrapper">
-          <img [src]="item.product_image || 'assets/images/placeholder-product.png'" [alt]="item.product_name" class="item-image">
-        </div>
-
-        <!-- Informace o produktu -->
-        <div class="item-info">
-          <h3>{{ item.product_name }}</h3>
-          <span class="variant-tag" *ngIf="item.variant_name">{{ item.variant_name }}</span>
-          <p class="item-price">{{ formatPrice(item.unit_price) }} / ks</p>
-        </div>
-
-        <!-- Množství ($event.stopPropagation brání prokliku do detailu) -->
-        <div class="quantity-selector" (click)="$event.stopPropagation()">
-          <div class="quantity-controls">
-            <button 
-              (click)="decreaseQuantity(item.id)" 
-              class="qty-btn" 
-              [disabled]="item.quantity <= 1"
-            >−</button>
-            
-            <input 
-              type="number" 
-              [value]="item.quantity" 
-              readonly
-              class="qty-display"
+  @if (cartService.cartCount() > 0) {
+    <div class="cart-content">
+      <!-- POLOŽKY -->
+      <div class="cart-items">
+        <!-- Klikatelný celý řádek položky -->
+        @for (item of cartService.cartItems(); track item) {
+          <div
+            [routerLink]="['/shop/products', item.product_slug]"
+            class="cart-item"
             >
-            
-            <button 
-              (click)="increaseQuantity(item.id)" 
-              *ngIf="!isMaxStockReached(item)" 
-              class="qty-btn"
-            >+</button>
-
-            <button 
-              disabled 
-              *ngIf="isMaxStockReached(item)" 
-              class="qty-btn disabled-max"
-            >✕</button>
+            <!-- Fotografie položky -->
+            <div class="item-image-wrapper">
+              <img [src]="item.product_image || 'assets/images/placeholder-product.png'" [alt]="item.product_name" class="item-image">
+            </div>
+            <!-- Informace o produktu -->
+            <div class="item-info">
+              <h3>{{ item.product_name }}</h3>
+              @if (item.variant_name) {
+                <span class="variant-tag">{{ item.variant_name }}</span>
+              }
+              <p class="item-price">{{ formatPrice(item.unit_price) }} / ks</p>
+            </div>
+            <!-- Množství ($event.stopPropagation brání prokliku do detailu) -->
+            <div class="quantity-selector" (click)="$event.stopPropagation()">
+              <div class="quantity-controls">
+                <button
+                  (click)="decreaseQuantity(item.id)"
+                  class="qty-btn"
+                  [disabled]="item.quantity <= 1"
+                >−</button>
+                <input
+                  type="number"
+                  [value]="item.quantity"
+                  readonly
+                  class="qty-display"
+                  >
+                @if (!isMaxStockReached(item)) {
+                  <button
+                    (click)="increaseQuantity(item.id)"
+                    class="qty-btn"
+                  >+</button>
+                }
+                @if (isMaxStockReached(item)) {
+                  <button
+                    disabled
+                    class="qty-btn disabled-max"
+                  >✕</button>
+                }
+              </div>
+            </div>
+            <!-- Celková cena položky -->
+            <div class="item-total">
+              <span>{{ formatPrice(item.total_price) }}</span>
+            </div>
+            <!-- Tlačítko odstranit ($event.stopPropagation brání prokliku do detailu) -->
+            <button (click)="removeItem(item.id); $event.stopPropagation()" class="btn-remove" title="Odstranit">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+              </svg>
+            </button>
           </div>
+        }
+      </div>
+      <!-- SOUHRN -->
+      <div class="cart-summary-card">
+        <h2 class="summary-title">Rekapitulace transakce</h2>
+        <div class="summary-row">
+          <span>Mezisoučet core:</span>
+          <strong>{{ formatPrice(cartService.subtotal()) }}</strong>
         </div>
-
-        <!-- Celková cena položky -->
-        <div class="item-total">
-          <span>{{ formatPrice(item.total_price) }}</span>
+        <div class="summary-row">
+          <span>Cena bez DPH:</span>
+          <span class="tax-value">{{ formatPrice(totalPriceWithoutTax()) }}</span>
         </div>
-
-        <!-- Tlačítko odstranit ($event.stopPropagation brání prokliku do detailu) -->
-        <button (click)="removeItem(item.id); $event.stopPropagation()" class="btn-remove" title="Odstranit">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-          </svg>
-        </button>
+        <div class="price-main-wrapper">
+          <div class="price-main">{{ formatPrice(cartService.totalPrice()) }}</div>
+          <div class="price-subtext">Celková cena košíku</div>
+        </div>
+        <div class="cart-actions">
+          <button (click)="proceedToCheckout()" class="btn-buy">
+            Zahájit checkout ⇾
+          </button>
+          <a routerLink="/shop" class="btn-view-cart">← Návrat do hlavní nabídky</a>
+        </div>
       </div>
     </div>
-
-    <!-- SOUHRN -->
-    <div class="cart-summary-card">
-      <h2 class="summary-title">Rekapitulace transakce</h2>
-      
-      <div class="summary-row">
-        <span>Mezisoučet core:</span>
-        <strong>{{ formatPrice(cartService.subtotal()) }}</strong>
-      </div>
-      
-      <div class="summary-row">
-        <span>Cena bez DPH:</span>
-        <span class="tax-value">{{ formatPrice(totalPriceWithoutTax()) }}</span>
-      </div>
-      
-      <div class="price-main-wrapper">
-        <div class="price-main">{{ formatPrice(cartService.totalPrice()) }}</div>
-        <div class="price-subtext">Celková cena košíku</div>
-      </div>
-
-      <div class="cart-actions">
-        <button (click)="proceedToCheckout()" class="btn-buy">
-          Zahájit checkout ⇾
-        </button>
-        <a routerLink="/shop" class="btn-view-cart">← Návrat do hlavní nabídky</a>
-      </div>
-    </div>
-
-  </div>
+  }
 </div>

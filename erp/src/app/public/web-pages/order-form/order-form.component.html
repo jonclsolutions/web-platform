@@ -1,96 +1,107 @@
-<div class="form-wrp" *ngIf="f">
-  <div class="contact-form">
-    <ng-container *ngIf="!isSubmitted; else thankYouMessage">
-      <h2>{{ f?.header }}</h2>
-      <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
-        <input type="hidden" formControlName="lead_id">
-        <div class="form-group">
-          <label>{{ f?.labels?.name }} <span class="required-asterisk">*</span></label>
-          <input type="text" formControlName="client_name">
-        </div>
-        <div class="form-group">
-          <label>{{ f?.labels?.ico }}</label>
-          <input type="text" formControlName="ico"
-            [class.error-input]="orderForm.get('ico')?.invalid && orderForm.get('ico')?.dirty">
-          <small class="error-msg" *ngIf="orderForm.get('ico')?.errors?.['pattern']">
-            {{ f?.errors?.ico_pattern }}
-          </small>
-        </div>
-        <div class="form-group">
-          <label>{{ f?.labels?.address }}</label>
-          <input type="text" formControlName="client_address">
-        </div>
-        <div class="mobile-flex-stack">
-          <div class="form-group flex-1">
-            <label>{{ f?.labels?.phone }}</label>
-            <input type="text" formControlName="client_phone"
-              [placeholder]="f?.placeholders?.phone"
-              maxlength="20"
-              [class.error-input]="orderForm.get('client_phone')?.invalid && orderForm.get('client_phone')?.dirty">
-            <small class="error-msg" *ngIf="orderForm.get('client_phone')?.errors?.['pattern']">
-              {{ f?.errors?.phone_pattern }}
-            </small>
-            <small class="error-msg" *ngIf="orderForm.get('client_phone')?.errors?.['maxlength']">
-              {{ f?.errors?.phone_max }}
-            </small>
+@if (f) {
+  <div class="form-wrp">
+    <div class="contact-form">
+      @if (!isSubmitted) {
+        <h2>{{ f?.header }}</h2>
+        <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
+          <input type="hidden" formControlName="lead_id">
+          <div class="form-group">
+            <label>{{ f?.labels?.name }} <span class="required-asterisk">*</span></label>
+            <input type="text" formControlName="client_name">
           </div>
-          <div class="form-group flex-1">
-            <label>{{ f?.labels?.email }} <span class="required-asterisk">*</span></label>
-            <input type="email" formControlName="client_email"
-              [class.error-input]="orderForm.get('client_email')?.invalid && orderForm.get('client_email')?.dirty">
-            <small class="error-msg" *ngIf="orderForm.get('client_email')?.errors?.['email'] && orderForm.get('client_email')?.dirty">
-              {{ f?.errors?.email_invalid }}
-            </small>
+          <div class="form-group">
+            <label>{{ f?.labels?.ico }}</label>
+            <input type="text" formControlName="ico"
+              [class.error-input]="orderForm.get('ico')?.invalid && orderForm.get('ico')?.dirty">
+            @if (orderForm.get('ico')?.errors?.['pattern']) {
+              <small class="error-msg">
+                {{ f?.errors?.ico_pattern }}
+              </small>
+            }
           </div>
-        </div>
-        <div class="form-group">
-          <label>{{ f?.labels?.description }} <span class="required-asterisk">*</span></label>
-          <textarea formControlName="order_description" rows="4"></textarea>
-        </div>
-        <div class="form-group">
-          <label>{{ f?.labels?.attachment }}</label>
-          <div class="file-drop-area" [class.has-file]="selectedFile">
-            <span class="file-msg">
-              <span class="upload-icon">{{ selectedFile ? '✓' : '+' }}</span>
-              <span class="file-text">{{ selectedFile ? selectedFile.name : f?.placeholders?.file_drop }}</span>
-            </span>
-            <input type="file" class="file-input" (change)="onFileSelected($event)">
+          <div class="form-group">
+            <label>{{ f?.labels?.address }}</label>
+            <input type="text" formControlName="client_address">
           </div>
-        </div>
-        <div class="checkbox-container">
-          <div class="checkbox-group">
-            <input type="checkbox" id="dataProcessingAgreement" formControlName="dataProcessingAgreement">
-            <label for="dataProcessingAgreement">
-              {{ f?.labels?.gdpr_consent }} <span class="required-asterisk">*</span>
-            </label>
+          <div class="mobile-flex-stack">
+            <div class="form-group flex-1">
+              <label>{{ f?.labels?.phone }}</label>
+              <input type="text" formControlName="client_phone"
+                [placeholder]="f?.placeholders?.phone"
+                maxlength="20"
+                [class.error-input]="orderForm.get('client_phone')?.invalid && orderForm.get('client_phone')?.dirty">
+              @if (orderForm.get('client_phone')?.errors?.['pattern']) {
+                <small class="error-msg">
+                  {{ f?.errors?.phone_pattern }}
+                </small>
+              }
+              @if (orderForm.get('client_phone')?.errors?.['maxlength']) {
+                <small class="error-msg">
+                  {{ f?.errors?.phone_max }}
+                </small>
+              }
+            </div>
+            <div class="form-group flex-1">
+              <label>{{ f?.labels?.email }} <span class="required-asterisk">*</span></label>
+              <input type="email" formControlName="client_email"
+                [class.error-input]="orderForm.get('client_email')?.invalid && orderForm.get('client_email')?.dirty">
+              @if (orderForm.get('client_email')?.errors?.['email'] && orderForm.get('client_email')?.dirty) {
+                <small class="error-msg">
+                  {{ f?.errors?.email_invalid }}
+                </small>
+              }
+            </div>
           </div>
-          <a routerLink="/privacy-policy" target="_blank" class="privacy-policy-link">{{ f?.labels?.gdpr_link }}</a>
-          <div class="checkbox-group mt-15">
-            <input type="checkbox" id="tosAgreement" formControlName="tosAgreement">
-            <label for="tosAgreement">
-              {{ f?.labels?.tos_consent }} <span class="required-asterisk">*</span>
-            </label>
+          <div class="form-group">
+            <label>{{ f?.labels?.description }} <span class="required-asterisk">*</span></label>
+            <textarea formControlName="order_description" rows="4"></textarea>
           </div>
-          <a routerLink="/tos" target="_blank" class="privacy-policy-link">{{ f?.labels?.tos_link }}</a>
+          <div class="form-group">
+            <label>{{ f?.labels?.attachment }}</label>
+            <div class="file-drop-area" [class.has-file]="selectedFile">
+              <span class="file-msg">
+                <span class="upload-icon">{{ selectedFile ? '✓' : '+' }}</span>
+                <span class="file-text">{{ selectedFile ? selectedFile.name : f?.placeholders?.file_drop }}</span>
+              </span>
+              <input type="file" class="file-input" (change)="onFileSelected($event)">
+            </div>
+          </div>
+          <div class="checkbox-container">
+            <div class="checkbox-group">
+              <input type="checkbox" id="dataProcessingAgreement" formControlName="dataProcessingAgreement">
+              <label for="dataProcessingAgreement">
+                {{ f?.labels?.gdpr_consent }} <span class="required-asterisk">*</span>
+              </label>
+            </div>
+            <a routerLink="/privacy-policy" target="_blank" class="privacy-policy-link">{{ f?.labels?.gdpr_link }}</a>
+            <div class="checkbox-group mt-15">
+              <input type="checkbox" id="tosAgreement" formControlName="tosAgreement">
+              <label for="tosAgreement">
+                {{ f?.labels?.tos_consent }} <span class="required-asterisk">*</span>
+              </label>
+            </div>
+            <a routerLink="/tos" target="_blank" class="privacy-policy-link">{{ f?.labels?.tos_link }}</a>
+          </div>
+          <p class="required-info">{{ f?.labels?.required_info }}</p>
+          @if (errorMessage) {
+            <div class="error-msg-main">{{ errorMessage }}</div>
+          }
+          <button type="submit" class="submit-btn" [disabled]="orderForm.invalid || isLoading">
+            <span>{{ btnText }}</span>
+          </button>
+        </form>
+      } @else {
+        <div class="success-container">
+          <div class="success-icon">✓</div>
+          <h2>{{ f?.thank_you?.title }}</h2>
+          <p class="success-text">
+            {{ f?.thank_you?.text }}
+          </p>
+          <button class="submit-btn" routerLink="/home">
+            <span>{{ f?.buttons?.go_home }}</span>
+          </button>
         </div>
-        <p class="required-info">{{ f?.labels?.required_info }}</p>
-        <div *ngIf="errorMessage" class="error-msg-main">{{ errorMessage }}</div>
-        <button type="submit" class="submit-btn" [disabled]="orderForm.invalid || isLoading">
-          <span>{{ btnText }}</span>
-        </button>
-      </form>
-    </ng-container>
-    <ng-template #thankYouMessage>
-      <div class="success-container">
-        <div class="success-icon">✓</div>
-        <h2>{{ f?.thank_you?.title }}</h2>
-        <p class="success-text">
-          {{ f?.thank_you?.text }}
-        </p>
-        <button class="submit-btn" routerLink="/home">
-          <span>{{ f?.buttons?.go_home }}</span>
-        </button>
-      </div>
-    </ng-template>
+      }
+    </div>
   </div>
-</div>
+}

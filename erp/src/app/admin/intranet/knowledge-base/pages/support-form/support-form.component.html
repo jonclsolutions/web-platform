@@ -1,13 +1,11 @@
 <div class="kb-form-container">
-  <ng-container *ngIf="!isSubmitted; else thankYouMessage">
+  @if (!isSubmitted) {
     <div class="kb-form-header">
       <span class="doc-code">SUPPORT_TICKET_SYSTEM</span>
       <h1>Vytvořit servisní požadavek</h1>
       <p>Vyplňte prosím podrobnosti vašeho požadavku. Naši technici se mu budou věnovat.</p>
     </div>
-
     <form [formGroup]="supportForm" (ngSubmit)="onSubmit()" class="kb-form-body">
-      
       <div class="kb-form-row">
         <div class="form-group flex-1">
           <label>Kategorie <span class="req">*</span></label>
@@ -18,7 +16,6 @@
             <option value="ostatni">Ostatní</option>
           </select>
         </div>
-
         <div class="form-group flex-1">
           <label>Priorita <span class="req">*</span></label>
           <select formControlName="priority">
@@ -28,17 +25,14 @@
           </select>
         </div>
       </div>
-
       <div class="form-group">
         <label>Předmět požadavku <span class="req">*</span></label>
         <input type="text" formControlName="subject" placeholder="Stručný titulek problému">
       </div>
-
       <div class="form-group">
         <label>Detailní popis <span class="req">*</span></label>
         <textarea formControlName="description" rows="4" placeholder="Popište podrobně, co potřebujete vyřešit..."></textarea>
       </div>
-
       <div class="form-group">
         <label>Příloha (Screenshot / Log)</label>
         <div class="kb-file-upload" [class.has-file]="selectedFile">
@@ -49,21 +43,19 @@
           </label>
         </div>
       </div>
-
       <div class="kb-form-actions">
         <button type="submit" class="kb-btn-primary" [disabled]="supportForm.invalid || (loadingService.isLoading$ | async)">
           <span>
-            <ng-container *ngIf="(loadingService.isLoading$ | async); else normalText">
+            @if ((loadingService.isLoading$ | async)) {
               ODESÍLÁM...
-            </ng-container>
-            <ng-template #normalText>ODESLAT POŽADAVEK</ng-template>
+            } @else {
+              ODESLAT POŽADAVEK
+            }
           </span>
         </button>
       </div>
     </form>
-  </ng-container>
-
-  <ng-template #thankYouMessage>
+  } @else {
     <div class="kb-success-state">
       <div class="success-check">✓</div>
       <h2>Požadavek byl odeslán</h2>
@@ -72,5 +64,6 @@
         Vytvořit další požadavek
       </button>
     </div>
-  </ng-template>
+  }
+
 </div>

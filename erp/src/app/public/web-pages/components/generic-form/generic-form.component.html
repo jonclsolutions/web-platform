@@ -1,148 +1,162 @@
-<form class="generic-form-container" (ngSubmit)="onSubmit()" #dynamicForm="ngForm" *ngIf="t">
-  <div class="form-blur-wrapper" [class.blurred]="!isOpen">
-    <div class="form-header">
-      <h2>{{form_header}}</h2>
-      <h4>{{form_description}}</h4>
-    </div>
-
-    <div *ngIf="successMessage" class="success-message-in-form">
-      <h2 class="success-message-title">{{ t.success_title }}</h2>
-      <p class="success-message-text">{{ successMessage }}</p>
-      <button type="button" class="back-to-form-button" (click)="onReset()">{{ t.reset_button_text }}</button>
-    </div>
-
-    <div *ngIf="!successMessage">
-      <div *ngFor="let field of translatedFormConfig" class="form-group">
-        <label [for]="field.name">
-          {{ field.label }}
-          <span *ngIf="field.required" class="required-asterisk">*</span>
-        </label>
-
-        <ng-container *ngIf="['text', 'email', 'tel', 'password', 'number'].includes(field.type)">
-          <input
-            [type]="field.type"
-            [id]="field.name"
-            [name]="field.name"
-            [(ngModel)]="formData[field.name]"
-            [required]="field.required ?? false"
-            [pattern]="field.pattern ?? ''"
-            [placeholder]="field.placeholder ?? ''"
-            [minlength]="field.minLength ?? null"
-            [maxlength]="field.maxLength ?? null"
-            [min]="field.min ?? null"
-            [max]="field.max ?? null"
-            [disabled]="(field.disabled ?? false) || isLoading || !isOpen"
-            [attr.aria-describedby]="field.name + '-error'" >
-        </ng-container>
-
-        <ng-container *ngIf="field.type === 'textarea'">
-          <textarea
-            [id]="field.name"
-            [name]="field.name"
-            [(ngModel)]="formData[field.name]"
-            [required]="field.required ?? false"
-            [placeholder]="field.placeholder ?? ''"
-            [rows]="field.rows || 5"
-            [minlength]="field.minLength ?? null"
-            [maxlength]="field.maxLength ?? null"
-            [disabled]="(field.disabled ?? false) || isLoading || !isOpen"
-            [attr.aria-describedby]="field.name + '-error'" ></textarea>
-        </ng-container>
-
-        <ng-container *ngIf="field.type === 'select'">
-          <select
-            [id]="field.name"
-            [name]="field.name"
-            [(ngModel)]="formData[field.name]"
-            [required]="field.required ?? false"
-            [disabled]="(field.disabled ?? false) || isLoading || !isOpen">
-            <option *ngIf="!field.required" [value]="null">{{ t.select_default_option }}</option>
-            <option *ngFor="let option of field.options" [value]="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-        </ng-container>
-
-        <ng-container *ngIf="field.type === 'radio'">
-          <div class="radio-group">
-            <div *ngFor="let option of field.options" class="radio-option">
-              <input
-                type="radio"
-                [id]="field.name + '_' + option.value"
-                [name]="field.name"
-                [value]="option.value"
-                [(ngModel)]="formData[field.name]"
-                [required]="field.required ?? false"
-                [disabled]="(field.disabled ?? false) || isLoading || !isOpen">
-              <label [for]="field.name + '_' + option.value">{{ option.label }}</label>
+@if (t) {
+  <form class="generic-form-container" (ngSubmit)="onSubmit()" #dynamicForm="ngForm">
+    <div class="form-blur-wrapper" [class.blurred]="!isOpen">
+      <div class="form-header">
+        <h2>{{form_header}}</h2>
+        <h4>{{form_description}}</h4>
+      </div>
+      @if (successMessage) {
+        <div class="success-message-in-form">
+          <h2 class="success-message-title">{{ t.success_title }}</h2>
+          <p class="success-message-text">{{ successMessage }}</p>
+          <button type="button" class="back-to-form-button" (click)="onReset()">{{ t.reset_button_text }}</button>
+        </div>
+      }
+      @if (!successMessage) {
+        <div>
+          @for (field of translatedFormConfig; track field) {
+            <div class="form-group">
+              <label [for]="field.name">
+                {{ field.label }}
+                @if (field.required) {
+                  <span class="required-asterisk">*</span>
+                }
+              </label>
+              @if (['text', 'email', 'tel', 'password', 'number'].includes(field.type)) {
+                <input
+                  [type]="field.type"
+                  [id]="field.name"
+                  [name]="field.name"
+                  [(ngModel)]="formData[field.name]"
+                  [required]="field.required ?? false"
+                  [pattern]="field.pattern ?? ''"
+                  [placeholder]="field.placeholder ?? ''"
+                  [minlength]="field.minLength ?? null"
+                  [maxlength]="field.maxLength ?? null"
+                  [min]="field.min ?? null"
+                  [max]="field.max ?? null"
+                  [disabled]="(field.disabled ?? false) || isLoading || !isOpen"
+                  [attr.aria-describedby]="field.name + '-error'" >
+              }
+              @if (field.type === 'textarea') {
+                <textarea
+                  [id]="field.name"
+                  [name]="field.name"
+                  [(ngModel)]="formData[field.name]"
+                  [required]="field.required ?? false"
+                  [placeholder]="field.placeholder ?? ''"
+                  [rows]="field.rows || 5"
+                  [minlength]="field.minLength ?? null"
+                  [maxlength]="field.maxLength ?? null"
+                  [disabled]="(field.disabled ?? false) || isLoading || !isOpen"
+                [attr.aria-describedby]="field.name + '-error'" ></textarea>
+              }
+              @if (field.type === 'select') {
+                <select
+                  [id]="field.name"
+                  [name]="field.name"
+                  [(ngModel)]="formData[field.name]"
+                  [required]="field.required ?? false"
+                  [disabled]="(field.disabled ?? false) || isLoading || !isOpen">
+                  @if (!field.required) {
+                    <option [value]="null">{{ t.select_default_option }}</option>
+                  }
+                  @for (option of field.options; track option) {
+                    <option [value]="option.value">
+                      {{ option.label }}
+                    </option>
+                  }
+                </select>
+              }
+              @if (field.type === 'radio') {
+                <div class="radio-group">
+                  @for (option of field.options; track option) {
+                    <div class="radio-option">
+                      <input
+                        type="radio"
+                        [id]="field.name + '_' + option.value"
+                        [name]="field.name"
+                        [value]="option.value"
+                        [(ngModel)]="formData[field.name]"
+                        [required]="field.required ?? false"
+                        [disabled]="(field.disabled ?? false) || isLoading || !isOpen">
+                      <label [for]="field.name + '_' + option.value">{{ option.label }}</label>
+                    </div>
+                  }
+                </div>
+              }
+              @if (field.type === 'checkbox') {
+                <div class="checkbox-group">
+                  <input
+                    type="checkbox"
+                    [id]="field.name"
+                    [name]="field.name"
+                    [(ngModel)]="formData[field.name]"
+                    [required]="field.required ?? false"
+                    [disabled]="(field.disabled ?? false) || isLoading || !isOpen">
+                  <label [for]="field.name">{{ field.placeholder || field.label }}</label>
+                </div>
+              }
+              @if (dynamicForm.controls[field.name]?.invalid && (dynamicForm.controls[field.name]?.dirty || dynamicForm.controls[field.name]?.touched)) {
+                <div
+                  class="validation-error"
+                  [id]="field.name + '-error'"
+                  >
+                  {{ getValidationErrors(field.name) }}
+                </div>
+              }
             </div>
+          }
+          <div class="form-group">
+            <div class="checkbox-group">
+              <input
+                type="checkbox"
+                id="dataProcessingAgreement"
+                name="dataProcessingAgreement"
+                [(ngModel)]="formData['dataProcessingAgreement']"
+                required
+                [disabled]="isLoading || !isOpen"
+                >
+              <label for="dataProcessingAgreement">
+                {{ t.consent }} <span class="required-asterisk">*</span>
+              </label>
+            </div>
+            <a routerLink="/privacy-policy" target="_blank" class="privacy-policy-link">
+              {{ t.privacy_policy_link }}
+            </a>
+            @if (dynamicForm.controls['dataProcessingAgreement']?.invalid && (dynamicForm.controls['dataProcessingAgreement']?.dirty || dynamicForm.controls['dataProcessingAgreement']?.touched)) {
+              <div
+                class="validation-error"
+                >
+                {{ t.validation_required }}
+              </div>
+            }
           </div>
-        </ng-container>
-
-        <ng-container *ngIf="field.type === 'checkbox'">
-          <div class="checkbox-group">
-            <input
-              type="checkbox"
-              [id]="field.name"
-              [name]="field.name"
-              [(ngModel)]="formData[field.name]"
-              [required]="field.required ?? false"
-              [disabled]="(field.disabled ?? false) || isLoading || !isOpen">
-            <label [for]="field.name">{{ field.placeholder || field.label }}</label>
+          @if (errorMessage) {
+            <div class="error-message">
+              {{ errorMessage }}
+            </div>
+          }
+          <div class="form-buttons">
+            <button type="submit" [disabled]="!dynamicForm.form.valid || isLoading || !isOpen">
+              @if (!isLoading) {
+                <span>{{ form_button }}</span>
+              }
+              @if (isLoading) {
+                <span>{{ t.sending_text }}</span>
+              }
+            </button>
           </div>
-        </ng-container>
-
-        <div
-          *ngIf="dynamicForm.controls[field.name]?.invalid && (dynamicForm.controls[field.name]?.dirty || dynamicForm.controls[field.name]?.touched)"
-          class="validation-error"
-          [id]="field.name + '-error'"
-        >
-          {{ getValidationErrors(field.name) }}
         </div>
-      </div>
-
-      <div class="form-group">
-        <div class="checkbox-group">
-          <input
-            type="checkbox"
-            id="dataProcessingAgreement"
-            name="dataProcessingAgreement"
-            [(ngModel)]="formData['dataProcessingAgreement']"
-            required
-            [disabled]="isLoading || !isOpen"
-          >
-          <label for="dataProcessingAgreement">
-            {{ t.consent }} <span class="required-asterisk">*</span>
-          </label>
-        </div>
-        <a routerLink="/privacy-policy" target="_blank" class="privacy-policy-link">
-            {{ t.privacy_policy_link }}
-        </a>
-        <div
-          *ngIf="dynamicForm.controls['dataProcessingAgreement']?.invalid && (dynamicForm.controls['dataProcessingAgreement']?.dirty || dynamicForm.controls['dataProcessingAgreement']?.touched)"
-          class="validation-error"
-        >
-          {{ t.validation_required }}
-        </div>
-      </div>
-
-      <div *ngIf="errorMessage" class="error-message">
-        {{ errorMessage }}
-      </div>
-
-      <div class="form-buttons">
-        <button type="submit" [disabled]="!dynamicForm.form.valid || isLoading || !isOpen">
-          <span *ngIf="!isLoading">{{ form_button }}</span>
-          <span *ngIf="isLoading">{{ t.sending_text }}</span>
-        </button>
-      </div>
+      }
     </div>
-  </div>
-
-  <div *ngIf="!isOpen && !successMessage" class="closed-message-overlay">
-    <div class="closed-message-content">
-      <h2 class="closed-title">{{ closedTitle }}</h2>
-      <p class="closed-message-text">{{ closedMessage }}</p>
-    </div>
-  </div>
-</form>
+    @if (!isOpen && !successMessage) {
+      <div class="closed-message-overlay">
+        <div class="closed-message-content">
+          <h2 class="closed-title">{{ closedTitle }}</h2>
+          <p class="closed-message-text">{{ closedMessage }}</p>
+        </div>
+      </div>
+    }
+  </form>
+}

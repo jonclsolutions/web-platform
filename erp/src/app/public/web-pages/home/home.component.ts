@@ -1,5 +1,5 @@
 import { Component, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import * as Web from '../../../shared/imports/web-providers';
@@ -11,11 +11,10 @@ import { GenericFormComponent } from '../components/generic-form/generic-form.co
   styleUrls: ['./home.component.css'],
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     FormsModule,
     GenericFormComponent
-  ]
+]
 })
 export class HomeComponent implements Web.OnInit, Web.OnDestroy {
   // --- Překlady ---

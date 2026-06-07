@@ -1,9 +1,11 @@
-<div class="main-content" *ngIf="t">
-  <div class="header-1">{{ t?.header }}</div>
-  <div class="content-display">
-    <div class="paragraph-node">{{ t?.paragraph_1 }}</div>
-    <div class="paragraph-node">{{ t?.paragraph_2 }}</div>
-    <div class="paragraph-node">{{ t?.paragraph_3 }}</div>
-    <div class="paragraph-node">{{ t?.paragraph_4 }}</div>
+@if (t) {
+  <div class="main-content">
+    <div class="header-1">{{ t?.header }}</div>
+    <div class="content-display">
+      <div class="paragraph-node">{{ t?.paragraph_1 }}</div>
+      <div class="paragraph-node">{{ t?.paragraph_2 }}</div>
+      <div class="paragraph-node">{{ t?.paragraph_3 }}</div>
+      <div class="paragraph-node">{{ t?.paragraph_4 }}</div>
+    </div>
   </div>
-</div>
+}

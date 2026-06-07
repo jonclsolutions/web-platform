@@ -1,76 +1,86 @@
 <div class="user-request-container container mx-auto p-4">
-    <div *ngIf="errorMessage" class="error-banner">
-    ⚠️ {{ errorMessage }}
-  </div>
-  <div *ngIf="!errorMessage">
-    <div class="toolbar-actions m-b-t-5">
-      <div class="table-header">Nábor: Pracovní nabídky</div>
-      <div class="toolbar-actions-in">
-        <app-button-builder 
-          [configs]="toolbarButtons" 
-          (actionTriggered)="handleToolbarAction($event)">
-        </app-button-builder>
-      </div>
+  @if (errorMessage) {
+    <div class="error-banner">
+      ⚠️ {{ errorMessage }}
     </div>
-    <div class="main-content-layout">
-      <div class="filter-side-panel" [class.active]="isFilterVisible">
-        <app-filter-form-builder
-          [filterColumns]="filterColumns"
-          [initialFilters]="filters"
-          (filtersApplied)="applyFilters($event)"
-          (filtersCleared)="clearFilters()">
-        </app-filter-form-builder>
-      </div>
-      <div class="table-and-pagination-container">
-        <div class="info-banner m-b-15">
-          <strong>HR Tip:</strong> Zde spravujete příchozí reakce. Změnou <strong>Stavu</strong> informujete interní tým o postupu náboru.
-        </div>
-        <app-table-builder #activeTable *ngIf="!showTrashTable"
-          [buttons]="buttons"
-          [data]="data"
-          [currentFilters]="filters"
-          [columns]="columns"
-          [inputDefinitions]="formFields"
-          [isFullWidth]="isTableFullWidth"
-          [tableCaption]="'Seznam aktivních uchazečů'"
-          [apiEndpoint]="apiEndpoint"
-          (itemDeleted)="refreshData()"
-          (editFormOpened)="handleEditFormOpened($event)"
-          (viewDetailsOpened)="handleViewDetails($event)">
-        </app-table-builder>
-        <app-trash-table-builder *ngIf="showTrashTable"
-          [data]="trashData"
-          [columns]="trashColumns"
-          [tableCaption]="'Koš smazaných žádostí'"
-          [apiEndpoint]="apiEndpoint"
-          (itemRestored)="refreshData()">
-        </app-trash-table-builder>
-        <div class="flex justify-between items-center mt-4">
-          <app-pagination-buttons-builder
-            [currentPage]="showTrashTable ? trashCurrentPage : currentPage"
-            [totalPages]="showTrashTable ? trashTotalPages : totalPages"
-            [totalItems]="showTrashTable ? trashTotalItems : totalItems"
-            [itemsPerPage]="showTrashTable ? trashItemsPerPage : itemsPerPage"
-            [dataLength]="showTrashTable ? trashData.length : data.length"
-            (pageChange)="handlePageChange($event)"
-            (itemsPerPageChange)="handleItemsPerPageChange($event)">
-          </app-pagination-buttons-builder>
+  }
+  @if (!errorMessage) {
+    <div>
+      <div class="toolbar-actions m-b-t-5">
+        <div class="table-header">Nábor: Pracovní nabídky</div>
+        <div class="toolbar-actions-in">
+          <app-button-builder
+            [configs]="toolbarButtons"
+            (actionTriggered)="handleToolbarAction($event)">
+          </app-button-builder>
         </div>
       </div>
+      <div class="main-content-layout">
+        <div class="filter-side-panel" [class.active]="isFilterVisible">
+          <app-filter-form-builder
+            [filterColumns]="filterColumns"
+            [initialFilters]="filters"
+            (filtersApplied)="applyFilters($event)"
+            (filtersCleared)="clearFilters()">
+          </app-filter-form-builder>
+        </div>
+        <div class="table-and-pagination-container">
+          <div class="info-banner m-b-15">
+            <strong>HR Tip:</strong> Zde spravujete příchozí reakce. Změnou <strong>Stavu</strong> informujete interní tým o postupu náboru.
+          </div>
+          @if (!showTrashTable) {
+            <app-table-builder #activeTable
+              [buttons]="buttons"
+              [data]="data"
+              [currentFilters]="filters"
+              [columns]="columns"
+              [inputDefinitions]="formFields"
+              [isFullWidth]="isTableFullWidth"
+              [tableCaption]="'Seznam aktivních uchazečů'"
+              [apiEndpoint]="apiEndpoint"
+              (itemDeleted)="refreshData()"
+              (editFormOpened)="handleEditFormOpened($event)"
+              (viewDetailsOpened)="handleViewDetails($event)">
+            </app-table-builder>
+          }
+          @if (showTrashTable) {
+            <app-trash-table-builder
+              [data]="trashData"
+              [columns]="trashColumns"
+              [tableCaption]="'Koš smazaných žádostí'"
+              [apiEndpoint]="apiEndpoint"
+              (itemRestored)="refreshData()">
+            </app-trash-table-builder>
+          }
+          <div class="flex justify-between items-center mt-4">
+            <app-pagination-buttons-builder
+              [currentPage]="showTrashTable ? trashCurrentPage : currentPage"
+              [totalPages]="showTrashTable ? trashTotalPages : totalPages"
+              [totalItems]="showTrashTable ? trashTotalItems : totalItems"
+              [itemsPerPage]="showTrashTable ? trashItemsPerPage : itemsPerPage"
+              [dataLength]="showTrashTable ? trashData.length : data.length"
+              (pageChange)="handlePageChange($event)"
+              (itemsPerPageChange)="handleItemsPerPageChange($event)">
+            </app-pagination-buttons-builder>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  }
 </div>
-<app-form-builder 
-  *ngIf="showCreateForm" 
-  [inputDefinitions]="formFields" 
-  [formDataToEdit]="selectedItemForEdit"
-  (formSubmitted)="handleFormSubmitted($event)"
-  (formCanceled)="onCancelForm()">
-</app-form-builder>
-<app-details-builder 
-  *ngIf="showDetails" 
-  [itemDetailColumns]="detailsColumns"
-  [itemData]="selectedItemForDetails"
-  [inputDefinitions]="formFields"
-  (closeDetails)="showDetails = false">
-</app-details-builder>
+@if (showCreateForm) {
+  <app-form-builder
+    [inputDefinitions]="formFields"
+    [formDataToEdit]="selectedItemForEdit"
+    (formSubmitted)="handleFormSubmitted($event)"
+    (formCanceled)="onCancelForm()">
+  </app-form-builder>
+}
+@if (showDetails) {
+  <app-details-builder
+    [itemDetailColumns]="detailsColumns"
+    [itemData]="selectedItemForDetails"
+    [inputDefinitions]="formFields"
+    (closeDetails)="showDetails = false">
+  </app-details-builder>
+}

@@ -2,12 +2,14 @@
   <!-- Image Wrapper -->
   <div class="product-image-container" [routerLink]="['/eshop/produkt', product?.slug]">
     <img [src]="getThumbnailUrl()" [alt]="product?.name" class="product-img">
-    
+
     <!-- Ostrý fialový badge -->
-    <div class="badge-overlay" *ngIf="product?.is_featured">
-      <span class="badge featured">Tip</span>
-    </div>
-    
+    @if (product?.is_featured) {
+      <div class="badge-overlay">
+        <span class="badge featured">Tip</span>
+      </div>
+    }
+
     <!-- Overlay "Vyprodáno" byl odstraněn pro čistší vzhled -->
   </div>
 
@@ -17,7 +19,7 @@
       <h3 class="product-title" [routerLink]="['/eshop/produkt', product?.slug]">
         {{ product?.name }}
       </h3>
-      
+
       <!-- DYNAMICKÝ STAV SKLADU -->
       <div class="product-stock">
         <span class="stock-badge" [ngClass]="{
@@ -25,15 +27,15 @@
           'low-stock': product?.stock_quantity > 0 && product?.stock_quantity < 5,
           'out-of-stock': product?.stock_quantity <= 0
         }">
-          <ng-container *ngIf="product?.stock_quantity >= 5">
+          @if (product?.stock_quantity >= 5) {
             ● Skladem > 5 ks
-          </ng-container>
-          <ng-container *ngIf="product?.stock_quantity > 0 && product?.stock_quantity < 5">
+          }
+          @if (product?.stock_quantity > 0 && product?.stock_quantity < 5) {
             ● Skladem pouze {{ product?.stock_quantity }} ks
-          </ng-container>
-          <ng-container *ngIf="product?.stock_quantity <= 0">
+          }
+          @if (product?.stock_quantity <= 0) {
             ● Skladem 0 ks
-          </ng-container>
+          }
         </span>
       </div>
     </div>
@@ -42,9 +44,9 @@
       <div class="price-box">
         <span class="price-value">{{ getFormattedPrice() }}</span>
       </div>
-      
-      <button class="btn-detail" 
-              [routerLink]="['/eshop/produkt', product?.slug]">
+
+      <button class="btn-detail"
+        [routerLink]="['/eshop/produkt', product?.slug]">
         <span>Detail</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3">
           <polyline points="9 18 15 12 9 6"></polyline>

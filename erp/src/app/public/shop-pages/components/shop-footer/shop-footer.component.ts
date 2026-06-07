@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 import { LocalizationService } from '../../../../shared/services/localization.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 import { Subject } from 'rxjs';
@@ -22,7 +22,7 @@ interface PaymentMethod {
   standalone: true,
   templateUrl: './shop-footer.component.html',
   styleUrls: ['./shop-footer.component.css'],
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShopFooterComponent implements OnInit, OnDestroy {

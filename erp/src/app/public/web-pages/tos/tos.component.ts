@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router'; // Důležité pro funkční linky uvnitř HTML
 
 import * as Web from '../../../shared/imports/web-providers';
@@ -7,7 +7,7 @@ import * as Web from '../../../shared/imports/web-providers';
 @Component({
   selector: 'app-tos',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './tos.component.html',
   styleUrl: './tos.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

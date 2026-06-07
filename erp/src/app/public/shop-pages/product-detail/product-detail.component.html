@@ -1,149 +1,178 @@
-<div class="product-detail-container" *ngIf="!isLoading() && product(); else loadingTpl">
-  <div class="product-main">
-    
-    <div class="product-gallery">
-      <div class="main-image-wrapper">
-        <img [src]="activeImage()" [alt]="product()?.name">
-        <div class="badge-float" *ngIf="product()?.is_featured">TOP PRODUKT</div>
-      </div>
-      
-      <div class="gallery-section" *ngIf="variantImages().length > 0">
-        <span class="gallery-label">Barva / Provedení: {{ selectedVariant()?.variant_name }}</span>
-        <div class="image-thumbnails">
-          <div 
-            class="thumb-item variant-specific" 
-            *ngFor="let vImg of variantImages()" 
-            [class.active]="activeImage() === vImg.url"
-            (click)="setActiveImage(vImg.url)">
-            <img [src]="vImg.url" [alt]="selectedVariant()?.variant_name">
-          </div>
+@if (!isLoading() && product()) {
+  <div class="product-detail-container">
+    <div class="product-main">
+      <div class="product-gallery">
+        <div class="main-image-wrapper">
+          <img [src]="activeImage()" [alt]="product()?.name">
+          @if (product()?.is_featured) {
+            <div class="badge-float">TOP PRODUKT</div>
+          }
         </div>
-      </div>
-
-      <div class="gallery-section" *ngIf="generalImages().length > 0">
-        <span class="gallery-label">Produktové náhledy</span>
-        <div class="image-thumbnails">
-          <div 
-            class="thumb-item" 
-            *ngFor="let img of generalImages()" 
-            [class.active]="activeImage() === img.url"
-            (click)="setActiveImage(img.url)">
-            <img [src]="img.url" [alt]="product()?.name">
+        @if (variantImages().length > 0) {
+          <div class="gallery-section">
+            <span class="gallery-label">Barva / Provedení: {{ selectedVariant()?.variant_name }}</span>
+            <div class="image-thumbnails">
+              @for (vImg of variantImages(); track vImg) {
+                <div
+                  class="thumb-item variant-specific"
+                  [class.active]="activeImage() === vImg.url"
+                  (click)="setActiveImage(vImg.url)">
+                  <img [src]="vImg.url" [alt]="selectedVariant()?.variant_name">
+                </div>
+              }
+            </div>
           </div>
+        }
+        @if (generalImages().length > 0) {
+          <div class="gallery-section">
+            <span class="gallery-label">Produktové náhledy</span>
+            <div class="image-thumbnails">
+              @for (img of generalImages(); track img) {
+                <div
+                  class="thumb-item"
+                  [class.active]="activeImage() === img.url"
+                  (click)="setActiveImage(img.url)">
+                  <img [src]="img.url" [alt]="product()?.name">
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+      <div class="product-purchase-zone">
+        <div class="sticky-content">
+          <nav class="breadcrumb-trail">
+            <span [routerLink]="['/shop']">E-shop</span> / <span>{{ product()?.category?.name }}</span>
+          </nav>
+          <h1 class="product-name">{{ product()?.name }}</h1>
+          <div class="product-meta">
+            <span class="product-stock" [class.in-stock]="isAvailable()" [class.low-stock]="currentStock() > 0 && currentStock() < 5">
+              @if (currentStock() >= 5) {
+                ● Skladem > 5 ks
+              }
+              @if (currentStock() > 0 && currentStock() < 5) {
+                ● Skladem pouze {{ currentStock() }} ks
+              }
+              @if (currentStock() <= 0) {
+                ○ Momentálně nedostupné
+              }
+            </span>
+          </div>
+          @if (product()?.variants?.length > 0) {
+            <div class="variant-select-wrapper">
+              <label for="variantSelect" class="section-label">Konfigurace:</label>
+              <select
+                id="variantSelect"
+                class="variant-dropdown"
+                (change)="onVariantChange($event)"
+                [value]="selectedVariant()?.id">
+                @for (v of product().variants; track v) {
+                  <option [value]="v.id">
+                    {{ v.variant_name }} — ({{ getFormattedPrice(v.prices?.price_czk_with_vat || 0) }})
+                  </option>
+                }
+              </select>
+              @if (selectedVariant()) {
+                <div class="selected-attributes-box">
+                  @if (selectedVariant().attribute_1_name) {
+                    <div class="attr-row">
+                      <span class="attr-label">{{ selectedVariant().attribute_1_name }}:</span>
+                      <span class="attr-val">{{ selectedVariant().attribute_1_value }}</span>
+                    </div>
+                  }
+                  @if (selectedVariant().attribute_2_name) {
+                    <div class="attr-row">
+                      <span class="attr-label">{{ selectedVariant().attribute_2_name }}:</span>
+                      <span class="attr-val">{{ selectedVariant().attribute_2_value }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          <div class="purchase-card">
+            <div class="price-section">
+              <div class="price-main">{{ getFormattedPrice(currentPrice()) }}</div>
+              <div class="price-no-vat">
+                Bez DPH: {{ getFormattedPrice(selectedVariant() ? (selectedVariant()?.prices?.price_czk_without_vat || 0) : (product()?.prices?.price_czk_without_vat || 0)) }}
+              </div>
+            </div>
+            <div class="delivery-status">
+              <div class="status-badge" [class.ready]="isAvailable()">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 10L12 15L2 10M22 6L12 11L2 6M12 19V11" />
+                </svg>
+                <span>{{ isAvailable() ? 'K odeslání' : 'Vyprodáno' }}</span>
+              </div>
+              @if (isAvailable()) {
+                <p class="status-subtext">Expedujeme do 24h z centrálního skladu.</p>
+              }
+            </div>
+            @if (isAvailable()) {
+              <div class="quantity-selector">
+                <label>Počet kusů:</label>
+                <div class="quantity-controls">
+                  <button (click)="decreaseQuantity()" [disabled]="selectedQuantity() <= 1" class="qty-btn">−</button>
+                  <input type="number" [value]="selectedQuantity()" readonly class="qty-display">
+                  @if (selectedQuantity() < currentStock()) {
+                    <button (click)="increaseQuantity()" class="qty-btn">+</button>
+                  }
+                  @if (selectedQuantity() >= currentStock()) {
+                    <button disabled class="qty-btn disabled-max">✕</button>
+                  }
+                </div>
+                @if (selectedQuantity() >= currentStock()) {
+                  <small class="max-stock-info">Max. dostupné množství</small>
+                }
+              </div>
+            }
+            <div class="action-buttons">
+              <button
+                class="btn-buy"
+                [disabled]="!isAvailable()"
+                (click)="addToCart()"
+                >
+                @if (!isInCart()) {
+                  @if (!addedToCart()) {
+                    <span>🛒 PŘIDAT DO KOŠÍKU</span>
+                  }
+                  @if (addedToCart()) {
+                    <span>✓ Přidáno v košíku!</span>
+                  }
+                }
+                @if (isInCart()) {
+                  @if (!addedToCart()) {
+                    <span>AKTUALIZOVAT MNOŽSTVÍ</span>
+                  }
+                  @if (addedToCart()) {
+                    <span>✓ Množství upraveno!</span>
+                  }
+                }
+              </button>
+            </div>
+            <a routerLink="/shop/cart" class="btn-view-cart">
+              Jít na košík ({{ cartService.cartCount() }})
+            </a>
+          </div>
+          @if (product()?.short_description) {
+            <div class="quick-description">
+              <h3>Popis</h3>
+              <p>{{ product()?.short_description }}</p>
+            </div>
+          }
         </div>
       </div>
     </div>
-
-    <div class="product-purchase-zone">
-      <div class="sticky-content">
-        <nav class="breadcrumb-trail">
-          <span [routerLink]="['/shop']">E-shop</span> / <span>{{ product()?.category?.name }}</span>
-        </nav>
-
-        <h1 class="product-name">{{ product()?.name }}</h1>
-        
-        <div class="product-meta">
-          <span class="product-stock" [class.in-stock]="isAvailable()" [class.low-stock]="currentStock() > 0 && currentStock() < 5">
-            <ng-container *ngIf="currentStock() >= 5">● Skladem > 5 ks</ng-container>
-            <ng-container *ngIf="currentStock() > 0 && currentStock() < 5">● Skladem pouze {{ currentStock() }} ks</ng-container>
-            <ng-container *ngIf="currentStock() <= 0">○ Momentálně nedostupné</ng-container>
-          </span>
-        </div>
-
-        <div class="variant-select-wrapper" *ngIf="product()?.variants?.length > 0">
-          <label for="variantSelect" class="section-label">Konfigurace:</label>
-          <select 
-            id="variantSelect" 
-            class="variant-dropdown" 
-            (change)="onVariantChange($event)"
-            [value]="selectedVariant()?.id">
-            <option *ngFor="let v of product().variants" [value]="v.id">
-              {{ v.variant_name }} — ({{ getFormattedPrice(v.prices?.price_czk_with_vat || 0) }})
-            </option>
-          </select>
-
-          <div class="selected-attributes-box" *ngIf="selectedVariant()">
-            <div class="attr-row" *ngIf="selectedVariant().attribute_1_name">
-              <span class="attr-label">{{ selectedVariant().attribute_1_name }}:</span>
-              <span class="attr-val">{{ selectedVariant().attribute_1_value }}</span>
-            </div>
-            <div class="attr-row" *ngIf="selectedVariant().attribute_2_name">
-              <span class="attr-label">{{ selectedVariant().attribute_2_name }}:</span>
-              <span class="attr-val">{{ selectedVariant().attribute_2_value }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="purchase-card">
-          <div class="price-section">
-            <div class="price-main">{{ getFormattedPrice(currentPrice()) }}</div>
-            
-            <div class="price-no-vat">
-              Bez DPH: {{ getFormattedPrice(selectedVariant() ? (selectedVariant()?.prices?.price_czk_without_vat || 0) : (product()?.prices?.price_czk_without_vat || 0)) }}
-            </div>
-          </div>
-
-          <div class="delivery-status">
-            <div class="status-badge" [class.ready]="isAvailable()">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 10L12 15L2 10M22 6L12 11L2 6M12 19V11" />
-              </svg>
-              <span>{{ isAvailable() ? 'K odeslání' : 'Vyprodáno' }}</span>
-            </div>
-            <p class="status-subtext" *ngIf="isAvailable()">Expedujeme do 24h z centrálního skladu.</p>
-          </div>
-
-          <div class="quantity-selector" *ngIf="isAvailable()">
-            <label>Počet kusů:</label>
-            <div class="quantity-controls">
-              <button (click)="decreaseQuantity()" [disabled]="selectedQuantity() <= 1" class="qty-btn">−</button>
-              <input type="number" [value]="selectedQuantity()" readonly class="qty-display">
-              <button (click)="increaseQuantity()" *ngIf="selectedQuantity() < currentStock()" class="qty-btn">+</button>
-              <button disabled *ngIf="selectedQuantity() >= currentStock()" class="qty-btn disabled-max">✕</button>
-            </div>
-            <small class="max-stock-info" *ngIf="selectedQuantity() >= currentStock()">Max. dostupné množství</small>
-          </div>
-
-          <div class="action-buttons">
-            <button 
-              class="btn-buy" 
-              [disabled]="!isAvailable()"
-              (click)="addToCart()"
-            >
-              <ng-container *ngIf="!isInCart()">
-                <span *ngIf="!addedToCart()">🛒 PŘIDAT DO KOŠÍKU</span>
-                <span *ngIf="addedToCart()">✓ Přidáno v košíku!</span>
-              </ng-container>
-              <ng-container *ngIf="isInCart()">
-                <span *ngIf="!addedToCart()">AKTUALIZOVAT MNOŽSTVÍ</span>
-                <span *ngIf="addedToCart()">✓ Množství upraveno!</span>
-              </ng-container>
-            </button>
-          </div>
-
-          <a routerLink="/shop/cart" class="btn-view-cart">
-            Jít na košík ({{ cartService.cartCount() }})
-          </a>
-        </div>
-
-        <div class="quick-description" *ngIf="product()?.short_description">
-          <h3>Popis</h3>
-          <p>{{ product()?.short_description }}</p>
-        </div>
+    <div class="product-tabs">
+      <div class="tab-header">
+        <button class="active">Kompletní specifikace</button>
+      </div>
+      <div class="tab-content">
+        <div class="description-rich-text" [innerHTML]="product()?.description"></div>
       </div>
     </div>
   </div>
-
-  <div class="product-tabs">
-    <div class="tab-header">
-      <button class="active">Kompletní specifikace</button>
-    </div>
-    <div class="tab-content">
-      <div class="description-rich-text" [innerHTML]="product()?.description"></div>
-    </div>
-  </div>
-</div>
-
-<ng-template #loadingTpl>
+} @else {
   <div class="loading-state">Načítám detail produktu...</div>
-</ng-template>
+}
+

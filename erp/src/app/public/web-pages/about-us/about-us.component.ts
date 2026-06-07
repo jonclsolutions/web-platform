@@ -1,5 +1,5 @@
 import { Component, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 // Tvůj hromadný import pro služby, RxJS a typy
 import * as Web from '../../../shared/imports/web-providers';
@@ -7,7 +7,7 @@ import * as Web from '../../../shared/imports/web-providers';
 @Component({
   selector: 'app-about-us',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './about-us.component.html',
   styleUrl: './about-us.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

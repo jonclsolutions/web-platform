@@ -1,6 +1,6 @@
 // public/web-pages/web-layout/web-layout.component.ts
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterOutlet } from '@angular/router';
 import { PublicHeaderComponent } from '../components/public-header/public-header.component';
 import { PublicFooterComponent } from '../components/public-footer/public-footer.component';
@@ -9,11 +9,10 @@ import { PublicFooterComponent } from '../components/public-footer/public-footer
   selector: 'app-web-layout',
   standalone: true,
   imports: [
-    CommonModule, 
-    RouterOutlet, 
-    PublicHeaderComponent, 
+    RouterOutlet,
+    PublicHeaderComponent,
     PublicFooterComponent
-  ],
+],
   templateUrl: './web-layout.component.html',
   styleUrls: ['./web-layout.component.css']
 })

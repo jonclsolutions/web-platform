@@ -1,14 +1,17 @@
 <div class="toolbar-actions-in">
-  <ng-container *ngFor="let btn of configs">
-    <button 
-      *ngIf="btn.showIf !== false"
-      type="button"
-      (click)="onBtnClick(btn.action)" 
-      [class]="btn.class"
-      [class.active]="btn.isActive"
-      class="small-btn">
-      <span *ngIf="btn.icon" class="btn-icon">{{ btn.icon }}</span>
-      <span class="btn-label">{{ btn.label }}</span>
-    </button>
-  </ng-container>
+  @for (btn of configs; track btn) {
+    @if (btn.showIf !== false) {
+      <button
+        type="button"
+        (click)="onBtnClick(btn.action)"
+        [class]="btn.class"
+        [class.active]="btn.isActive"
+        class="small-btn">
+        @if (btn.icon) {
+          <span class="btn-icon">{{ btn.icon }}</span>
+        }
+        <span class="btn-label">{{ btn.label }}</span>
+      </button>
+    }
+  }
 </div>

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule } from '@angular/router';
 
 // Tvůj hromadný import pro služby a RxJS nástroje
@@ -10,7 +10,7 @@ import { JobItem } from '../../components/interfaces/job-item';
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './jobs-list.component.html',
   styleUrls: ['./jobs-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

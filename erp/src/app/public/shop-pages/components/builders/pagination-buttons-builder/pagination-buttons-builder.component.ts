@@ -1,10 +1,10 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-pagination-buttons-builder',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './pagination-buttons-builder.component.html',
   styleUrl: './pagination-buttons-builder.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

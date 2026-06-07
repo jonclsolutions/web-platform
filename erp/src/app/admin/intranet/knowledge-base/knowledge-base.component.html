@@ -43,17 +43,21 @@
       </nav>
     </aside>
 
-    <div class="kb-overlay" *ngIf="isMenuOpen" (click)="closeMenu()"></div>
+    @if (isMenuOpen) {
+      <div class="kb-overlay" (click)="closeMenu()"></div>
+    }
 
     <main class="kb-main-content">
       <div class="content-wrapper">
         <router-outlet></router-outlet>
-        
-        <div class="welcome-view" *ngIf="isRootPath()">
-          <span class="doc-code">SYSTEM_READY</span>
-          <h1>Documentation</h1>
-          <p>Vyberte kapitolu z menu pro pokračování.</p>
-        </div>
+
+        @if (isRootPath()) {
+          <div class="welcome-view">
+            <span class="doc-code">SYSTEM_READY</span>
+            <h1>Documentation</h1>
+            <p>Vyberte kapitolu z menu pro pokračování.</p>
+          </div>
+        }
 
         <app-kb-footer></app-kb-footer>
       </div>

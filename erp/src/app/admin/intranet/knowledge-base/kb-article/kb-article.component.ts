@@ -1,18 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-kb-article',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
-    <div class="article-container" *ngIf="article">
-      <h1>{{ article.title }}</h1>
-      <hr class="kb-divider">
-      <div class="article-body" [innerHTML]="article.content"></div>
-    </div>
-  `,
+    @if (article) {
+      <div class="article-container">
+        <h1>{{ article.title }}</h1>
+        <hr class="kb-divider">
+        <div class="article-body" [innerHTML]="article.content"></div>
+      </div>
+    }
+    `,
   styles: [`
     .article-container { animation: fadeIn 0.4s ease-out; }
     h1 { color: #a67dff; font-size: 2rem; margin-bottom: 10px; }

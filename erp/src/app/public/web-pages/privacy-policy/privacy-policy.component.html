@@ -1,20 +1,30 @@
-<div class="container" *ngIf="p">
-  <h1>{{ p?.header_main }}</h1>
-  <p class="last-update">
-    <strong>{{ p?.last_update_text }}</strong> {{ p?.last_update_date }}
-  </p>
-  <div *ngFor="let section of p?.sections | keyvalue" class="policy-section">
-    <h2>{{ section?.value?.title }}</h2>
-    <div [innerHTML]="section?.value?.content"></div>
-    <div *ngIf="section?.value?.subsections">
-      <div *ngFor="let sub of section?.value?.subsections" class="subsection">
-        <h3>{{ sub?.title }}</h3>
-        <p>{{ sub?.text }}</p>
-        <ul>
-          <li *ngFor="let bullet of sub?.list" [innerHTML]="bullet"></li>
-        </ul>
+@if (p) {
+  <div class="container">
+    <h1>{{ p?.header_main }}</h1>
+    <p class="last-update">
+      <strong>{{ p?.last_update_text }}</strong> {{ p?.last_update_date }}
+    </p>
+    @for (section of p?.sections | keyvalue; track section) {
+      <div class="policy-section">
+        <h2>{{ section?.value?.title }}</h2>
+        <div [innerHTML]="section?.value?.content"></div>
+        @if (section?.value?.subsections) {
+          <div>
+            @for (sub of section?.value?.subsections; track sub) {
+              <div class="subsection">
+                <h3>{{ sub?.title }}</h3>
+                <p>{{ sub?.text }}</p>
+                <ul>
+                  @for (bullet of sub?.list; track bullet) {
+                    <li [innerHTML]="bullet"></li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        }
       </div>
-    </div>
+    }
+    <p class="last-update" style="margin-top: 40px;">{{ p?.footer_effective }}</p>
   </div>
-  <p class="last-update" style="margin-top: 40px;">{{ p?.footer_effective }}</p>
-</div>
+}

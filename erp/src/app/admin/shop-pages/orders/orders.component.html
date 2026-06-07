@@ -1,87 +1,87 @@
 <div class="orders-container">
-  <div *ngIf="errorMessage" class="error-banner">⚠️ {{ errorMessage }}</div>
+  @if (errorMessage) {
+    <div class="error-banner">⚠️ {{ errorMessage }}</div>
+  }
 
-  <div *ngIf="!errorMessage">
-    <div class="toolbar-section">
-      <div class="toolbar-header">
-        <h1>Objednávky</h1>
-        <div class="toolbar-actions">
-          <app-button-builder 
-            [configs]="showTrashTable ? getTrashToolbarButtons() : toolbarButtons" 
-            (actionTriggered)="handleToolbarAction($event)">
-          </app-button-builder>
+  @if (!errorMessage) {
+    <div>
+      <div class="toolbar-section">
+        <div class="toolbar-header">
+          <h1>Objednávky</h1>
+          <div class="toolbar-actions">
+            <app-button-builder
+              [configs]="showTrashTable ? getTrashToolbarButtons() : toolbarButtons"
+              (actionTriggered)="handleToolbarAction($event)">
+            </app-button-builder>
+          </div>
+        </div>
+      </div>
+      <div class="table-mode-tabs">
+        <app-button-builder
+          [configs]="tabButtonsConfigs"
+          (actionTriggered)="setTableMode($event)">
+        </app-button-builder>
+      </div>
+      <div class="main-content-layout">
+        <div class="filter-side-panel" [class.active]="showFiltersPanel">
+          <app-filter-form-builder
+            [filterColumns]="filterColumns"
+            [initialFilters]="filters"
+            [filterFormTitle]="'Filtry objednávek'"
+            (filtersApplied)="applyFilters($event)"
+            (filtersCleared)="clearFilters()">
+          </app-filter-form-builder>
+        </div>
+        <div class="table-and-pagination-container">
+          @if (currentMode !== 'trash') {
+            <app-table-builder #activeTable
+              [buttons]="buttons"
+              [data]="data"
+              [columns]="orderColumns"
+              [currentFilters]="filters"
+              [isFullWidth]="true"
+              [tableCaption]="currentMode === 'pending_tasks' ? 'Objednávky k vyřízení' : 'Seznam objednávek'"
+              [apiEndpoint]="apiEndpoint"
+              (itemDeleted)="refreshData()"
+              (createFormOpened)="handleCreateFormOpened()"
+              (editFormOpened)="handleEditFormOpened($event)"
+              (viewDetailsOpened)="handleViewDetails($event)">
+            </app-table-builder>
+          }
+          @if (currentMode === 'trash') {
+            <app-trash-table-builder
+              [data]="trashData"
+              [columns]="trashOrderColumns"
+              [tableCaption]="'Archiv smazaných objednávek'"
+              [apiEndpoint]="apiEndpoint"
+              (itemRestored)="refreshData()"
+              (itemPermanentlyDeleted)="refreshData()">
+            </app-trash-table-builder>
+          }
+          <div class="pagination-container">
+            <app-pagination-buttons-builder
+              [currentPage]="currentMode === 'trash' ? trashCurrentPage : currentPage"
+              [totalPages]="currentMode === 'trash' ? trashTotalPages : totalPages"
+              [totalItems]="currentMode === 'trash' ? trashTotalItems : totalItems"
+              [itemsPerPage]="currentMode === 'trash' ? trashItemsPerPage : itemsPerPage"
+              [dataLength]="currentMode === 'trash' ? trashData.length : data.length"
+              (pageChange)="handlePageChange($event)"
+              (itemsPerPageChange)="handleItemsPerPageChange($event)">
+            </app-pagination-buttons-builder>
+          </div>
         </div>
       </div>
     </div>
-
-<div class="table-mode-tabs">
-  <app-button-builder 
-    [configs]="tabButtonsConfigs" 
-    (actionTriggered)="setTableMode($event)">
-  </app-button-builder>
+  }
 </div>
 
-    <div class="main-content-layout">
-      <div class="filter-side-panel" [class.active]="showFiltersPanel">
-        <app-filter-form-builder
-          [filterColumns]="filterColumns"
-          [initialFilters]="filters"
-          [filterFormTitle]="'Filtry objednávek'"
-          (filtersApplied)="applyFilters($event)"
-          (filtersCleared)="clearFilters()">
-        </app-filter-form-builder>
-      </div>
-
-      <div class="table-and-pagination-container">
-        <app-table-builder #activeTable 
-          *ngIf="currentMode !== 'trash'"
-          [buttons]="buttons"
-          [data]="data"
-          [columns]="orderColumns"
-          [currentFilters]="filters"
-          [isFullWidth]="true"
-          [tableCaption]="currentMode === 'pending_tasks' ? 'Objednávky k vyřízení' : 'Seznam objednávek'"
-          [apiEndpoint]="apiEndpoint"
-          (itemDeleted)="refreshData()"
-          (createFormOpened)="handleCreateFormOpened()"
-          (editFormOpened)="handleEditFormOpened($event)"
-          (viewDetailsOpened)="handleViewDetails($event)">
-        </app-table-builder>
-
-        <app-trash-table-builder 
-          *ngIf="currentMode === 'trash'"
-          [data]="trashData"
-          [columns]="trashOrderColumns"
-          [tableCaption]="'Archiv smazaných objednávek'"
-          [apiEndpoint]="apiEndpoint"
-          (itemRestored)="refreshData()"
-          (itemPermanentlyDeleted)="refreshData()">
-        </app-trash-table-builder>
-
-        <div class="pagination-container">
-          <app-pagination-buttons-builder
-            [currentPage]="currentMode === 'trash' ? trashCurrentPage : currentPage"
-            [totalPages]="currentMode === 'trash' ? trashTotalPages : totalPages"
-            [totalItems]="currentMode === 'trash' ? trashTotalItems : totalItems"
-            [itemsPerPage]="currentMode === 'trash' ? trashItemsPerPage : itemsPerPage"
-            [dataLength]="currentMode === 'trash' ? trashData.length : data.length"
-            (pageChange)="handlePageChange($event)"
-            (itemsPerPageChange)="handleItemsPerPageChange($event)">
-          </app-pagination-buttons-builder>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<ng-container *ngIf="showDetailsModal && selectedOrderForDetail">
+@if (showDetailsModal && selectedOrderForDetail) {
   <div class="modal-overlay" (click)="closeDetailsModal()">
     <div class="modal-content modal-detail" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>📋 Objednávka: {{ selectedOrderForDetail.order_number }}</h2>
         <button class="close-btn" (click)="closeDetailsModal()">✕</button>
       </div>
-
       <div class="modal-body">
         <div class="detail-section">
           <h3>Zákazník</h3>
@@ -104,7 +104,6 @@
             </div>
           </div>
         </div>
-
         <div class="detail-section">
           <h3>Stav objednávky</h3>
           <div class="info-grid">
@@ -130,7 +129,6 @@
             </div>
           </div>
         </div>
-
         <div class="detail-section">
           <h3>Částky</h3>
           <div class="amount-grid">
@@ -142,35 +140,39 @@
               <label>Doprava:</label>
               <span class="amount">{{ formatCurrency(selectedOrderForDetail.shipping_amount) }}</span>
             </div>
-            <div class="amount-row" *ngIf="selectedOrderForDetail.discount_amount > 0">
-              <label>Sleva:</label>
-              <span class="amount discount">-{{ formatCurrency(selectedOrderForDetail.discount_amount) }}</span>
-            </div>
+            @if (selectedOrderForDetail.discount_amount > 0) {
+              <div class="amount-row">
+                <label>Sleva:</label>
+                <span class="amount discount">-{{ formatCurrency(selectedOrderForDetail.discount_amount) }}</span>
+              </div>
+            }
             <div class="amount-row total">
               <label>Celkem:</label>
               <span class="amount total">{{ formatCurrency(selectedOrderForDetail.final_amount) }}</span>
             </div>
           </div>
         </div>
-
-        <div class="detail-section" *ngIf="getVisibleItems(selectedOrderForDetail).length > 0">
-          <h3>Položky ({{ getVisibleItems(selectedOrderForDetail).length }})</h3>
-          <div class="items-table">
-            <div class="items-header">
-              <div class="col-product">Produkt</div>
-              <div class="col-qty">Ks</div>
-              <div class="col-price">Cena</div>
-              <div class="col-total">Celkem</div>
-            </div>
-            <div *ngFor="let item of getVisibleItems(selectedOrderForDetail)" class="items-row">
-              <div class="col-product">{{ item.product_name }}</div>
-              <div class="col-qty">{{ item.quantity }}</div>
-              <div class="col-price">{{ formatCurrency(item.unit_price) }}</div>
-              <div class="col-total">{{ formatCurrency(item.total_price) }}</div>
+        @if (getVisibleItems(selectedOrderForDetail).length > 0) {
+          <div class="detail-section">
+            <h3>Položky ({{ getVisibleItems(selectedOrderForDetail).length }})</h3>
+            <div class="items-table">
+              <div class="items-header">
+                <div class="col-product">Produkt</div>
+                <div class="col-qty">Ks</div>
+                <div class="col-price">Cena</div>
+                <div class="col-total">Celkem</div>
+              </div>
+              @for (item of getVisibleItems(selectedOrderForDetail); track item) {
+                <div class="items-row">
+                  <div class="col-product">{{ item.product_name }}</div>
+                  <div class="col-qty">{{ item.quantity }}</div>
+                  <div class="col-price">{{ formatCurrency(item.unit_price) }}</div>
+                  <div class="col-total">{{ formatCurrency(item.total_price) }}</div>
+                </div>
+              }
             </div>
           </div>
-        </div>
-
+        }
         <div class="detail-section">
           <h3>Adresa doručení</h3>
           <div class="address-box">
@@ -179,12 +181,12 @@
             <p>{{ selectedOrderForDetail.shipping_country }}</p>
           </div>
         </div>
-
-        <div class="detail-section" *ngIf="selectedOrderForDetail.notes">
-          <h3>Poznámky</h3>
-          <p class="notes-text">{{ selectedOrderForDetail.notes }}</p>
-        </div>
-
+        @if (selectedOrderForDetail.notes) {
+          <div class="detail-section">
+            <h3>Poznámky</h3>
+            <p class="notes-text">{{ selectedOrderForDetail.notes }}</p>
+          </div>
+        }
         <div class="detail-section">
           <h3>Metadata</h3>
           <div class="info-grid">
@@ -192,38 +194,42 @@
               <label>Vytvořeno:</label>
               <span>{{ selectedOrderForDetail.created_at | date: 'medium' }}</span>
             </div>
-            <div class="info-row" *ngIf="selectedOrderForDetail.paid_at">
-              <label>Zaplaceno:</label>
-              <span>{{ selectedOrderForDetail.paid_at | date: 'medium' }}</span>
-            </div>
-            <div class="info-row" *ngIf="selectedOrderForDetail.shipped_at">
-              <label>Odeslano:</label>
-              <span>{{ selectedOrderForDetail.shipped_at | date: 'medium' }}</span>
-            </div>
-            <div class="info-row" *ngIf="selectedOrderForDetail.delivered_at">
-              <label>Doručeno:</label>
-              <span>{{ selectedOrderForDetail.delivered_at | date: 'medium' }}</span>
-            </div>
+            @if (selectedOrderForDetail.paid_at) {
+              <div class="info-row">
+                <label>Zaplaceno:</label>
+                <span>{{ selectedOrderForDetail.paid_at | date: 'medium' }}</span>
+              </div>
+            }
+            @if (selectedOrderForDetail.shipped_at) {
+              <div class="info-row">
+                <label>Odeslano:</label>
+                <span>{{ selectedOrderForDetail.shipped_at | date: 'medium' }}</span>
+              </div>
+            }
+            @if (selectedOrderForDetail.delivered_at) {
+              <div class="info-row">
+                <label>Doručeno:</label>
+                <span>{{ selectedOrderForDetail.delivered_at | date: 'medium' }}</span>
+              </div>
+            }
           </div>
         </div>
       </div>
-
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeDetailsModal()">Zavřít</button>
         <button class="btn btn-primary" (click)="openEditOrderForm(selectedOrderForDetail)">✏️ Editovat</button>
       </div>
     </div>
   </div>
-</ng-container>
+}
 
-<ng-container *ngIf="showOrderForm && editingOrder">
+@if (showOrderForm && editingOrder) {
   <div class="modal-overlay" (click)="closeOrderForm()">
     <div class="modal-content modal-form" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ editingOrder.id ? '✏️ Editace objednávky' : '➕ Nová objednávka' }}</h2>
         <button class="close-btn" (click)="closeOrderForm()">✕</button>
       </div>
-
       <div class="modal-body">
         <form class="order-form">
           <fieldset>
@@ -233,82 +239,92 @@
                 <label>Zákazník *</label>
                 <select [(ngModel)]="editingOrder.customer_id" name="customer_id" required>
                   <option value="">-- Vybrat --</option>
-                  <option *ngFor="let cust of customers" [value]="cust.id">{{ cust.full_name }} ({{ cust.email }})</option>
+                  @for (cust of customers; track cust) {
+                    <option [value]="cust.id">{{ cust.full_name }} ({{ cust.email }})</option>
+                  }
                 </select>
               </div>
               <div class="form-group">
                 <label>Způsob platby *</label>
                 <select [(ngModel)]="editingOrder.payment_method_id" name="payment_method_id" required (change)="recalculateTotals()">
                   <option [value]="0">-- Vybrat --</option>
-                  <option *ngFor="let pm of paymentMethods" [value]="pm.id">
-                    {{ pm.name }} 
-                    <ng-container *ngIf="pm.price > 0">
-                      ({{ formatCurrency(pm.price) }})
-                    </ng-container>
-                  </option>
+                  @for (pm of paymentMethods; track pm) {
+                    <option [value]="pm.id">
+                      {{ pm.name }}
+                      @if (pm.price > 0) {
+                        ({{ formatCurrency(pm.price) }})
+                      }
+                    </option>
+                  }
                 </select>
               </div>
             </div>
-
             <div class="form-row-2">
               <div class="form-group">
                 <label>Způsob dopravy *</label>
                 <select [(ngModel)]="editingOrder.shipping_method_id" name="shipping_method_id" required (change)="recalculateTotals()">
                   <option value="">-- Vybrat --</option>
-                  <option *ngFor="let sm of shippingMethods" [value]="sm.id">{{ sm.name }} ({{ formatCurrency(sm.base_price) }})</option>
+                  @for (sm of shippingMethods; track sm) {
+                    <option [value]="sm.id">{{ sm.name }} ({{ formatCurrency(sm.base_price) }})</option>
+                  }
                 </select>
               </div>
               <div class="form-group">
                 <label>Slevový kupón</label>
-                <select [(ngModel)]="editingOrder.coupon_id" 
-                        name="coupon_id" 
-                        (change)="recalculateTotals()"
-                        [ngClass]="getCouponValidationClass()"
-                        [disabled]="!!editingOrder.id"
-                        class="form-control"
-                        [class.disabled-coupon]="editingOrder.id">
+                <select [(ngModel)]="editingOrder.coupon_id"
+                  name="coupon_id"
+                  (change)="recalculateTotals()"
+                  [ngClass]="getCouponValidationClass()"
+                  [disabled]="!!editingOrder.id"
+                  class="form-control"
+                  [class.disabled-coupon]="editingOrder.id">
                   <option value="">-- Bez kupónu --</option>
-                  <option *ngFor="let coup of coupons" [value]="coup.id">
-                    {{ coup.code }} ({{ getCouponDisplayValue(coup) }})
-                  </option>
+                  @for (coup of coupons; track coup) {
+                    <option [value]="coup.id">
+                      {{ coup.code }} ({{ getCouponDisplayValue(coup) }})
+                    </option>
+                  }
                 </select>
-
-                <div *ngIf="editingOrder.id && editingOrder.coupon_id" class="text-muted small mt-1">
-                  ℹ️ Kupón u existující objednávky již nelze měnit.
-                </div>
-
-                <div *ngIf="editingOrder.coupon_id && !couponValidation.valid" class="coupon-error-msg">
-                  ⚠️ {{ couponValidation.error }}
-                </div>
+                @if (editingOrder.id && editingOrder.coupon_id) {
+                  <div class="text-muted small mt-1">
+                    ℹ️ Kupón u existující objednávky již nelze měnit.
+                  </div>
+                }
+                @if (editingOrder.coupon_id && !couponValidation.valid) {
+                  <div class="coupon-error-msg">
+                    ⚠️ {{ couponValidation.error }}
+                  </div>
+                }
               </div>
             </div>
           </fieldset>
-
           <fieldset>
             <legend>Stavy objednávky</legend>
             <div class="form-row-2">
               <div class="form-group">
                 <label>Stav objednávky *</label>
                 <select [(ngModel)]="editingOrder.status" name="status" required>
-                  <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+                  @for (opt of statusOptions; track opt) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
                 </select>
               </div>
               <div class="form-group">
                 <label>Stav platby *</label>
                 <select [(ngModel)]="editingOrder.payment_status" name="payment_status" required>
-                  <option *ngFor="let opt of paymentStatusOptions" [value]="opt.value">{{ opt.label }}</option>
+                  @for (opt of paymentStatusOptions; track opt) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
                 </select>
               </div>
             </div>
           </fieldset>
-
           <fieldset>
             <legend>Adresa doručení</legend>
             <div class="form-group">
               <label>Ulice a číslo popisné *</label>
               <input type="text" [(ngModel)]="editingOrder.shipping_address" name="shipping_address" required>
             </div>
-
             <div class="form-row-2">
               <div class="form-group">
                 <label>Město *</label>
@@ -319,77 +335,77 @@
                 <input type="text" [(ngModel)]="editingOrder.shipping_postal_code" name="shipping_postal_code" required>
               </div>
             </div>
-
             <div class="form-group">
               <label>Země *</label>
               <input type="text" [(ngModel)]="editingOrder.shipping_country" name="shipping_country" required>
             </div>
           </fieldset>
-
           <fieldset>
             <legend>Položky objednávky</legend>
-            <div *ngIf="getVisibleItems(editingOrder).length === 0" class="empty-state">Žádné položky</div>
-
-            <div *ngFor="let item of editingOrder.items; let i = index" class="order-item" [class.deleted]="item._delete">
-              <div class="item-header">
-                <h4>Položka {{ i + 1 }}</h4>
-                <button type="button" class="btn-icon danger" (click)="deleteOrderItem(i)">🗑️</button>
-              </div>
-
-              <div class="item-form">
-                <div class="form-row-3">
-                  <div class="form-group">
-                    <label>Varianta produktu *</label>
-                    <select [(ngModel)]="item.product_variant_id" [name]="'variant_' + i" 
-                            (change)="onVariantSelected(item, i)" [disabled]="!!item._delete">
-                      <option value="">-- Vybrat variantu --</option>
-                      <option *ngFor="let v of variants" [value]="v.id">
-                        {{ v.product_name }} - {{ v.variant_name }}
-                      </option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label>Počet *</label>
-                    <input type="number" [(ngModel)]="item.quantity" [name]="'qty_' + i" 
-                           (change)="onItemQuantityChange(item)" min="1" [disabled]="!!item._delete">
-                  </div>
-                  <div class="form-group">
-                    <label>Cena za kus (s DPH)*</label>
-                    <input type="number" [(ngModel)]="item.unit_price" [name]="'price_' + i" 
-                           (change)="onItemPriceChange(item)" min="0" step="0.01" [disabled]="!!item._delete">
-                  </div>
+            @if (getVisibleItems(editingOrder).length === 0) {
+              <div class="empty-state">Žádné položky</div>
+            }
+            @for (item of editingOrder.items; track item; let i = $index) {
+              <div class="order-item" [class.deleted]="item._delete">
+                <div class="item-header">
+                  <h4>Položka {{ i + 1 }}</h4>
+                  <button type="button" class="btn-icon danger" (click)="deleteOrderItem(i)">🗑️</button>
                 </div>
-
-                <div class="item-total">
-                  <label>Celkem za položku:</label>
-                  <span class="amount">{{ formatCurrency(item.total_price) }}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div *ngIf="editingOrder.coupon_id && couponValidation.valid && editingOrder.discount_amount > 0" class="order-item coupon-row">
-              <div class="item-header">
-                <h4>🎫 Aplikovaný kupón</h4>
-              </div>
-              <div class="item-form">
-                <div class="coupon-display-flex">
-                  <div class="coupon-info">
-                    <strong>{{ getCouponCode(editingOrder.coupon_id) }}</strong>
-                    <span class="coupon-type-badge">
-                      (Sleva {{ getCouponTypeLabel(editingOrder.coupon_id) }})
-                    </span>
+                <div class="item-form">
+                  <div class="form-row-3">
+                    <div class="form-group">
+                      <label>Varianta produktu *</label>
+                      <select [(ngModel)]="item.product_variant_id" [name]="'variant_' + i"
+                        (change)="onVariantSelected(item, i)" [disabled]="!!item._delete">
+                        <option value="">-- Vybrat variantu --</option>
+                        @for (v of variants; track v) {
+                          <option [value]="v.id">
+                            {{ v.product_name }} - {{ v.variant_name }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Počet *</label>
+                      <input type="number" [(ngModel)]="item.quantity" [name]="'qty_' + i"
+                        (change)="onItemQuantityChange(item)" min="1" [disabled]="!!item._delete">
+                    </div>
+                    <div class="form-group">
+                      <label>Cena za kus (s DPH)*</label>
+                      <input type="number" [(ngModel)]="item.unit_price" [name]="'price_' + i"
+                        (change)="onItemPriceChange(item)" min="0" step="0.01" [disabled]="!!item._delete">
+                    </div>
                   </div>
                   <div class="item-total">
-                    <label>Sleva:</label>
-                    <span class="amount discount-text">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
+                    <label>Celkem za položku:</label>
+                    <span class="amount">{{ formatCurrency(item.total_price) }}</span>
                   </div>
                 </div>
               </div>
-            </div>
-            
+            }
+            @if (editingOrder.coupon_id && couponValidation.valid && editingOrder.discount_amount > 0) {
+              <div class="order-item coupon-row">
+                <div class="item-header">
+                  <h4>🎫 Aplikovaný kupón</h4>
+                </div>
+                <div class="item-form">
+                  <div class="coupon-display-flex">
+                    <div class="coupon-info">
+                      <strong>{{ getCouponCode(editingOrder.coupon_id) }}</strong>
+                      <span class="coupon-type-badge">
+                        (Sleva {{ getCouponTypeLabel(editingOrder.coupon_id) }})
+                      </span>
+                    </div>
+                    <div class="item-total">
+                      <label>Sleva:</label>
+                      <span class="amount discount-text">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
             <button type="button" class="btn btn-secondary" (click)="addOrderItem()">➕ Přidat položku</button>
           </fieldset>
-
           <fieldset class="summary-section">
             <legend>Souhrn cen</legend>
             <div class="summary-grid">
@@ -397,42 +413,41 @@
                 <label>Součet BEZ DPH:</label>
                 <span>{{ formatCurrency(calculateSummaryTotals().baseAmount) }}</span>
               </div>
-              
-              <div *ngFor="let group of calculateSummaryTotals().vatGroups" class="summary-row">
-                <label>DPH {{ group.rate }}%:</label>
-                <span class="vat">{{ formatCurrency(group.amount) }}</span>
-              </div>
-
+              @for (group of calculateSummaryTotals().vatGroups; track group) {
+                <div class="summary-row">
+                  <label>DPH {{ group.rate }}%:</label>
+                  <span class="vat">{{ formatCurrency(group.amount) }}</span>
+                </div>
+              }
               <div class="summary-row">
                 <label>Součet S DPH:</label>
                 <span>{{ formatCurrency(calculateSummaryTotals().withVat) }}</span>
               </div>
-              
               <div class="summary-row">
                 <label>Cena za dopravu:</label>
                 <span>{{ formatCurrency(editingOrder.shipping_amount) }}</span>
               </div>
-
-              <div class="summary-row" *ngIf="getPaymentMethodPrice(editingOrder.payment_method_id) > 0">
-                <label>Poplatek za platbu: ({{ getPaymentMethodName(editingOrder.payment_method_id) }})</label>
-                <span>{{ formatCurrency(getPaymentMethodPrice(editingOrder.payment_method_id)) }}</span>
-              </div>
-
-              <div class="summary-row" *ngIf="editingOrder.discount_amount > 0 && couponValidation.valid">
-                <label>
-                  Slevový kupón: <span>{{ getCouponCode(editingOrder.coupon_id) }}</span> 
-                  ({{ getCouponDisplayValue(editingOrder.coupon_id) }})
-                </label>
-                <span class="discount">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
-              </div>
-              
+              @if (getPaymentMethodPrice(editingOrder.payment_method_id) > 0) {
+                <div class="summary-row">
+                  <label>Poplatek za platbu: ({{ getPaymentMethodName(editingOrder.payment_method_id) }})</label>
+                  <span>{{ formatCurrency(getPaymentMethodPrice(editingOrder.payment_method_id)) }}</span>
+                </div>
+              }
+              @if (editingOrder.discount_amount > 0 && couponValidation.valid) {
+                <div class="summary-row">
+                  <label>
+                    Slevový kupón: <span>{{ getCouponCode(editingOrder.coupon_id) }}</span>
+                    ({{ getCouponDisplayValue(editingOrder.coupon_id) }})
+                  </label>
+                  <span class="discount">-{{ formatCurrency(editingOrder.discount_amount) }}</span>
+                </div>
+              }
               <div class="summary-row total">
                 <label>CELKEM K ÚHRADĚ:</label>
                 <span class="total-amount">{{ formatCurrency(editingOrder.final_amount) }}</span>
               </div>
             </div>
           </fieldset>
-
           <fieldset>
             <legend>Poznámky</legend>
             <div class="form-group">
@@ -440,7 +455,6 @@
               <textarea [(ngModel)]="editingOrder.notes" name="notes" rows="3" placeholder="Růzené poznámky k objednávce..."></textarea>
             </div>
           </fieldset>
-
           <div class="modal-footer-inline">
             <button type="button" class="btn btn-secondary" (click)="closeOrderForm()">Zrušit</button>
             <button type="button" class="btn btn-primary" (click)="saveOrder()" [class.btn-warning]="editingOrder.coupon_id && !couponValidation.valid">
@@ -451,4 +465,4 @@
       </div>
     </div>
   </div>
-</ng-container>
+}

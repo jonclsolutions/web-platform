@@ -1,34 +1,38 @@
-<div class="main-content" *ngIf="t">
-  <div class="faq-section">
-    <div class="header-1">{{ t?.header_1 }}</div>
-    <div class="faq-container">
-      <div *ngFor="let item of faqItems; let i = index"
-        class="faq-item animated-faq-item"
-        [ngClass]="{'active': item.isActive}"
-        [style.animation-delay]="i * 0.1 + 's'">
-        <div class="faq-question" (click)="toggleFaq(item)">
-          <h3>{{ item.question }}</h3>
-          <div class="faq-indicator">
-            <span class="faq-arrow" [ngClass]="{'rotated': item.isActive}">&gt;</span>
+@if (t) {
+  <div class="main-content">
+    <div class="faq-section">
+      <div class="header-1">{{ t?.header_1 }}</div>
+      <div class="faq-container">
+        @for (item of faqItems; track item; let i = $index) {
+          <div
+            class="faq-item animated-faq-item"
+            [ngClass]="{'active': item.isActive}"
+            [style.animation-delay]="i * 0.1 + 's'">
+            <div class="faq-question" (click)="toggleFaq(item)">
+              <h3>{{ item.question }}</h3>
+              <div class="faq-indicator">
+                <span class="faq-arrow" [ngClass]="{'rotated': item.isActive}">&gt;</span>
+              </div>
+            </div>
+            <div class="faq-answer" (click)="toggleFaq(item)">
+              <p [innerHTML]="item.answer"></p>
+            </div>
           </div>
-        </div>
-        <div class="faq-answer" (click)="toggleFaq(item)">
-          <p [innerHTML]="item.answer"></p>
-        </div>
+        }
+      </div>
+    </div>
+    <div class="write-us-wrp">
+      <div class="write-us-text">
+        {{ t?.write_us_prompt }}
+      </div>
+      <div class="write-us-icons">
+        <a href="https://www.instagram.com/rpsw.cz" target="_blank" class="icon-wrp">
+          <img [src]="ig_icon" alt="Instagram">
+        </a>
+        <a href="mailto:info@rpsw.cz" class="icon-wrp">
+          <img [src]="email_icon" alt="Email">
+        </a>
       </div>
     </div>
   </div>
-  <div class="write-us-wrp">
-    <div class="write-us-text">
-      {{ t?.write_us_prompt }}
-    </div>
-    <div class="write-us-icons">
-      <a href="https://www.instagram.com/rpsw.cz" target="_blank" class="icon-wrp">
-        <img [src]="ig_icon" alt="Instagram">
-      </a>
-      <a href="mailto:info@rpsw.cz" class="icon-wrp">
-        <img [src]="email_icon" alt="Email">
-      </a>
-    </div>
-  </div>
-</div>
+}

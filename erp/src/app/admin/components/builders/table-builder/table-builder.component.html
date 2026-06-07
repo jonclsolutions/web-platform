@@ -1,66 +1,81 @@
 <div class="table-responsive">
   <table [class.fit-content-table]="!isFullWidth">
-    <caption *ngIf="tableCaption">
-      <div class="caption-content-wrapper">
-        <div class="caption-text">
-          {{ tableCaption }}
+    @if (tableCaption) {
+      <caption>
+        <div class="caption-content-wrapper">
+          <div class="caption-text">
+            {{ tableCaption }}
+          </div>
         </div>
-      </div>
-    </caption>
+      </caption>
+    }
     <thead>
       <tr>
-        <th *ngFor="let col of columnDefinitions">
-          <ng-container>
-            <span class="header-content">
-              {{ col.header }}
-            </span>
-          </ng-container>
-        </th>
-        <ng-container *ngFor="let button of buttons">
-          <th *ngIf="button.isActive" class="button-header">
-            {{ button.header_name }}
+        @for (col of columnDefinitions; track col) {
+          <th>
+            <ng-container>
+              <span class="header-content">
+                {{ col.header }}
+              </span>
+            </ng-container>
           </th>
-        </ng-container>
+        }
+        @for (button of buttons; track button) {
+          @if (button.isActive) {
+            <th class="button-header">
+              {{ button.header_name }}
+            </th>
+          }
+        }
       </tr>
     </thead>
     <tbody>
-      <ng-container *ngIf="data && data.length > 0; else noDataContent">
-        <tr *ngFor="let item of data">
-          <ng-container *ngFor="let col of columnDefinitions">
-            <td *ngIf="!col.hidden">
-              <ng-container [ngSwitch]="col.type">
-                <ng-container *ngSwitchCase="'image'">
-                  <img [src]="getCellValue(item, col)" alt="Obrázek" class="table-cell-image" *ngIf="getCellValue(item, col)">
-                  <span *ngIf="!getCellValue(item, col)">Není obrázek</span>
-                </ng-container>
-                <ng-container *ngSwitchCase="'link'">
-                  <a [href]="getCellValue(item, col)" target="_blank">{{ getCellValue(item, col) }}</a>
-                </ng-container>
-                <ng-container *ngSwitchDefault>
-                  {{ getCellValue(item, col) }}
-                </ng-container>
-              </ng-container>
-            </td>
-          </ng-container>
-          <ng-container *ngFor="let button of buttons">
-            <td *ngIf="button.isActive" class="action-button-cell">
-              <button
-                [class]="button.type"
-                [disabled]="button.type === 'delete_button' && item.id == authService.getUserId() && isAdminTable == true"
-                (click)="handleAction(item, button.action)">
-                {{ button.display_name }}
-              </button>
-            </td>
-          </ng-container>
-        </tr>
-      </ng-container>
-      <ng-template #noDataContent>
+      @if (data && data.length > 0) {
+        @for (item of data; track item) {
+          <tr>
+            @for (col of columnDefinitions; track col) {
+              @if (!col.hidden) {
+                <td>
+                  @switch (col.type) {
+                    @case ('image') {
+                      @if (getCellValue(item, col)) {
+                        <img [src]="getCellValue(item, col)" alt="Obrázek" class="table-cell-image">
+                      }
+                      @if (!getCellValue(item, col)) {
+                        <span>Není obrázek</span>
+                      }
+                    }
+                    @case ('link') {
+                      <a [href]="getCellValue(item, col)" target="_blank">{{ getCellValue(item, col) }}</a>
+                    }
+                    @default {
+                      {{ getCellValue(item, col) }}
+                    }
+                  }
+                </td>
+              }
+            }
+            @for (button of buttons; track button) {
+              @if (button.isActive) {
+                <td class="action-button-cell">
+                  <button
+                    [class]="button.type"
+                    [disabled]="button.type === 'delete_button' && item.id == authService.getUserId() && isAdminTable == true"
+                    (click)="handleAction(item, button.action)">
+                    {{ button.display_name }}
+                  </button>
+                </td>
+              }
+            }
+          </tr>
+        }
+      } @else {
         <tr>
           <td [attr.colspan]="colspanValue" class="no-data-msg">
             Nebyla nalezena žádná data.
           </td>
         </tr>
-      </ng-template>
+      }
     </tbody>
   </table>
 </div>

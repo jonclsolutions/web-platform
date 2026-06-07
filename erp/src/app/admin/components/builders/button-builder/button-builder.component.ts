@@ -1,11 +1,11 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Button } from '../../../../shared/interfaces/button';
 
 @Component({
   selector: 'app-button-builder',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './button-builder.component.html',
   styleUrl: './button-builder.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

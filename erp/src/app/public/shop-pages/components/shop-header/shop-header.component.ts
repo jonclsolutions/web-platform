@@ -1,11 +1,11 @@
 import { Component, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule, Router } from '@angular/router';
 import { CartService } from '../services/cart.service';
 @Component({
   selector: 'app-shop-header',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './shop-header.component.html',
   styleUrls: ['./shop-header.component.css']
 })
