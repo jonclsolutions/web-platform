@@ -2,37 +2,169 @@
   <div class="toolbar-actions">
     <div class="table-header">Správa kategorií</div>
     <div class="toolbar-actions-in">
-      <app-button-builder 
-        [configs]="toolbarButtons" 
+      <app-button-builder
+        [configs]="toolbarButtons"
         (actionTriggered)="handleToolbarAction($event)">
       </app-button-builder>
     </div>
   </div>
 
-  <div class="tree-wrapper bg-white border rounded-xl shadow-sm overflow-hidden mt-4">
-    <div class="p-3">
-      @if (categories.length > 0) {
-        <ng-container *ngTemplateOutlet="treeRef; context:{ $implicit: categories }"></ng-container>
-      } @else {
-        <div class="p-10 text-center text-gray-400">Žádné kategorie k zobrazení.</div>
-      }
+  <div class="layout-wrapper" [class.has-panel]="selectedCategory">
+
+    <!-- STROM KATEGORIÍ -->
+    <div class="tree-wrapper bg-white border rounded-xl shadow-sm overflow-hidden mt-4">
+      <div class="p-3">
+        @if (categories.length > 0) {
+          <ng-container *ngTemplateOutlet="treeRef; context:{ $implicit: categories }"></ng-container>
+        } @else {
+          <div class="p-10 text-center text-gray-400">Žádné kategorie k zobrazení.</div>
+        }
+      </div>
     </div>
+
+    <!-- PRODUKT PANEL -->
+    @if (selectedCategory) {
+      <div class="product-panel mt-4">
+        <div class="product-panel-header">
+          <div class="product-panel-title">
+            <span class="product-panel-icon">📦</span>
+            <div>
+              <div class="product-panel-name">{{ selectedCategory.name }}</div>
+              <div class="product-panel-sub">Produkty v kategorii</div>
+            </div>
+          </div>
+          <button class="panel-close-btn" (click)="closeProductPanel()" title="Zavřít">✕</button>
+        </div>
+
+        <!-- Hledání v produktech kategorie -->
+        <div class="panel-search-row">
+          <div class="panel-search-wrap">
+            <span class="panel-search-icon">🔍</span>
+            <input
+              class="panel-search-input"
+              [(ngModel)]="productSearch"
+              placeholder="Hledat produkt…"
+              type="text">
+          </div>
+          <button class="btn-add-product" (click)="openAddProductSearch()">
+            <span>＋</span> Přidat produkt
+          </button>
+        </div>
+
+        <!-- Přidat produkt - vyhledávání -->
+        @if (showAddProduct) {
+          <div class="add-product-section">
+            <div class="add-product-header">
+              <span class="add-product-title">Přidat produkt do kategorie</span>
+              <button class="add-product-close" (click)="showAddProduct = false">✕</button>
+            </div>
+            <div class="panel-search-wrap mb-2">
+              <span class="panel-search-icon">🔍</span>
+              <input
+                class="panel-search-input"
+                [(ngModel)]="addProductSearch"
+                placeholder="Hledat produkt ke přidání…"
+                type="text"
+                autofocus>
+            </div>
+            <div class="add-product-list">
+              @if (filteredAllProducts.length === 0) {
+                <div class="empty-add-list">
+                  @if (allProducts.length === 0) {
+                    <span class="loading-dots">Načítání…</span>
+                  } @else {
+                    Žádné další produkty k přidání.
+                  }
+                </div>
+              }
+              @for (product of filteredAllProducts; track product.id) {
+                <div class="add-product-item">
+                  <div class="product-item-info">
+                    <span class="product-item-name">{{ product.name }}</span>
+                    @if (product.sku) {
+                      <span class="product-item-sku">{{ product.sku }}</span>
+                    }
+                    @if (product.category?.name) {
+                      <span class="product-item-cat">📁 {{ product.category.name }}</span>
+                    }
+                  </div>
+                  <button class="btn-item-add" (click)="addProductToCategory(product)">Přidat</button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Seznam produktů v kategorii -->
+        <div class="product-list">
+          @if (loadingProducts) {
+            <div class="product-list-loading">
+              <span class="loading-dots">Načítání produktů…</span>
+            </div>
+          } @else if (filteredCategoryProducts.length === 0) {
+            <div class="product-list-empty">
+              @if (productSearch) {
+                Žádné produkty neodpovídají hledání.
+              } @else {
+                Kategorie neobsahuje žádné produkty.
+              }
+            </div>
+          } @else {
+            @for (product of filteredCategoryProducts; track product.id) {
+              <div class="product-item">
+                <div class="product-item-thumb">
+                  @if (product.primary_image?.image_path) {
+                    <img [src]="product.primary_image.url" [alt]="product.name" class="thumb-img">
+                  } @else {
+                    <span class="thumb-placeholder">🖼</span>
+                  }
+                </div>
+                <div class="product-item-info">
+                  <span class="product-item-name">{{ product.name }}</span>
+                  @if (product.sku) {
+                    <span class="product-item-sku">SKU: {{ product.sku }}</span>
+                  }
+                  <span class="product-item-status" [class.active]="product.is_active">
+                    {{ product.is_active ? '🟢 Aktivní' : '⚪ Neaktivní' }}
+                  </span>
+                </div>
+                <button
+                  class="btn-remove-product"
+                  (click)="removeProductFromCategory(product)"
+                  title="Odebrat z kategorie">
+                  ✕
+                </button>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="panel-footer">
+          Celkem: <strong>{{ filteredCategoryProducts.length }}</strong>
+          @if (productSearch) { z {{ categoryProducts.length }} }
+          produktů
+        </div>
+      </div>
+    }
+
   </div>
 </div>
 
+<!-- TEMPLATE STROMU -->
 <ng-template #treeRef let-list>
   <ul class="tree-list">
     @for (node of list; track node.id) {
       <li class="tree-node">
-        <div class="category-row" 
-          [class.is-editing]="node.isEditing" 
+        <div class="category-row"
+          [class.is-editing]="node.isEditing"
           [class.is-new]="node.id === 0"
+          [class.is-selected]="selectedCategory?.id === node.id"
           [style.cursor]="node.children?.length ? 'pointer' : 'default'"
           (click)="toggleExpanded(node)">
-          
-          <button 
-            (click)="toggleExpanded(node, $event)" 
-            class="expand-trigger" 
+
+          <button
+            (click)="toggleExpanded(node, $event)"
+            class="expand-trigger"
             [style.visibility]="node.children?.length ? 'visible' : 'hidden'">
             {{ node.isExpanded ? '⌄' : '›' }}
           </button>
@@ -45,12 +177,12 @@
             @if (node.isEditing) {
               <div class="edit-wrapper" (click)="$event.stopPropagation()">
                 <div class="input-container">
-                  <input 
-                    [(ngModel)]="node.name" 
-                    (keyup.enter)="handleEditAction('submit', node)" 
-                    (keyup.escape)="handleEditAction('cancel', node)" 
-                    class="edit-input" 
-                    [class.error]="isDuplicateName(node) || (node.name.length === 0)" 
+                  <input
+                    [(ngModel)]="node.name"
+                    (keyup.enter)="handleEditAction('submit', node)"
+                    (keyup.escape)="handleEditAction('cancel', node)"
+                    class="edit-input"
+                    [class.error]="isDuplicateName(node) || (node.name.length === 0)"
                     #editInput>
                   @if (isDuplicateName(node)) {
                     <span class="error-msg">Název již existuje</span>
@@ -58,8 +190,8 @@
                     <span class="error-msg">Název nesmí být prázdný</span>
                   }
                 </div>
-                <app-button-builder 
-                  [configs]="getEditButtons(node)" 
+                <app-button-builder
+                  [configs]="getEditButtons(node)"
                   (actionTriggered)="handleEditAction($event, node)">
                 </app-button-builder>
               </div>
@@ -71,13 +203,23 @@
               @if (node.children?.length) {
                 <span class="count-badge">{{ node.directChildrenCount }} / {{ node.totalRecursiveCount }}</span>
               }
+              <!-- Tlačítko pro otevření panelu produktů -->
+              @if (node.id !== 0 && !node.isEditing) {
+                <button
+                  class="btn-products-count"
+                  (click)="openProductPanel(node, $event)"
+                  [class.active]="selectedCategory?.id === node.id"
+                  title="Zobrazit produkty v kategorii">
+                  📦 {{ (node.products_count ?? 0) }}
+                </button>
+              }
             }
           </div>
 
           <div class="actions" (click)="$event.stopPropagation()">
             @for (btnConfig of getRowButtons(node); track btnConfig.action) {
-              <app-button-builder 
-                [configs]="[btnConfig]" 
+              <app-button-builder
+                [configs]="[btnConfig]"
                 (actionTriggered)="handleRowAction($event, node)">
               </app-button-builder>
             }

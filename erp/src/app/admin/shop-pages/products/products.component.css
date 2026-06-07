@@ -203,17 +203,20 @@
   display: flex;
   flex-direction: column;
   background: white;
-  border-radius: 12px;
+  border-radius: 6px; /* Přísnější ERP zaoblení */
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
   max-width: 500px;
   width: 95%;
-  max-height: 90vh; /* Omezení výšky na 90% obrazovky */
-  overflow: hidden; /* DŮLEŽITÉ: Samotný kontejner nesmí scrollovat */
-  animation: slideUp 0.3s ease-out;
+  max-height: 90vh; 
+  overflow: hidden; 
+  animation: slideUp 0.15s ease-out;
 }
 
+/* Masivní roztažení pouze pro detail na velkou část plochy */
 .modal-detail {
-  max-width: 700px;
+  max-width: 1400px;
+  width: 98%;
+  max-height: 92vh;
 }
 
 .modal-form {
@@ -230,7 +233,7 @@
 
 @keyframes slideUp {
   from {
-    transform: translateY(20px);
+    transform: translateY(15px);
     opacity: 0;
   }
   to {
@@ -240,21 +243,22 @@
 }
 
 .modal-header {
-  flex-shrink: 0; /* Header se nikdy nezmenší */
+  flex-shrink: 0; 
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 25px;
-  border-bottom: 1px solid #dee2e6;
-  background: #f8f9fa;
+  padding: 14px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
   z-index: 10;
+  min-height: 45px;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   font-weight: 600;
-  color: #222;
+  color: #0f172a;
 }
 
 .close-btn {
@@ -263,9 +267,9 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 1.8rem;
-  color: #999;
-  transition: color 0.2s ease;
+  font-size: 1.5rem;
+  color: #94a3b8;
+  transition: color 0.1s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,17 +283,23 @@
 
 /* ========== MODAL BODY (Oprava scrollování) ========== */
 .modal-body {
-  flex: 1 1 auto; /* Povolí růst, ale i základní velikost podle obsahu */
-  min-height: 0;   /* KLÍČOVÉ: Umožňuje flex-itemu (body) se zmenšit a aktivovat scrollbar */
+  flex: 1 1 auto; 
+  min-height: 0;   
   padding: 25px;
-  overflow-y: auto; /* Zde se odehrává scroll */
+  overflow-y: auto; 
   display: flex;
   flex-direction: column;
 }
 
+/* Vyčištění paddingu těla specificky pro detail - data sahají až ke krajům */
+.modal-detail .modal-body {
+  padding: 10px 0;
+  background: #ffffff;
+}
+
 /* ========== IMAGE CARDS (Zajištění fixní výšky karet) ========== */
 .image-card {
-  flex-shrink: 0; /* Zabrání Flexboxu, aby karty "mačkal" (zmenšoval) pod jejich obsah */
+  flex-shrink: 0; 
   border: 1px solid #dee2e6;
   border-radius: 6px;
   padding: 0;
@@ -300,16 +310,181 @@
 
 .modal-footer {
   flex-shrink: 0;
-  padding: 16px 25px;
-  border-top: 1px solid #dee2e6;
+  padding: 14px 24px;
+  border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  background: #f8f9fa;
-  /* Odebereme zbytečné overflow/positioning, pokud by tam byly */
+  background: #ffffff;
 }
 
-/* ========== DETAIL SECTIONS ========== */
+/* ========== NOVÝ PROFESIONÁLNÍ STYL PRO DETAIL SECTIONS ========== */
+.modal-detail .detail-section {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.modal-detail .detail-section h3 {
+  margin: 0;
+  padding: 12px 24px 6px 24px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4F46E5; /* Korporátní barva sekce */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f8fafc; /* Velmi jemný podklad pod nadpisem sekce */
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-detail .detail-section:first-child h3 {
+  border-top: none;
+}
+
+/* Přetvoření gridu v detailu na jednolité řádky bez ohraničení a okna v okně */
+.modal-detail .info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.modal-detail .info-row {
+  display: flex;
+  flex-direction: row; /* Změna z column na row pro tabulkový vzhled */
+  align-items: baseline;
+  padding: 8px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 0;
+}
+
+.modal-detail .info-row:last-child {
+  border-bottom: none;
+}
+
+/* Decentní střídání řádků pro rychlou orientaci očí */
+.modal-detail .info-row:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.modal-detail .info-row label {
+  flex: 0 0 250px; /* Pevný sloupec pro štítky */
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.modal-detail .info-row span {
+  flex: 1;
+  font-size: 0.88rem;
+  color: #1e293b;
+}
+
+/* Úprava vizuálních prvků uvnitř detailu */
+.modal-detail .price {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.modal-detail .stock-warning {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.modal-detail .mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.82rem;
+  color: #0f172a;
+}
+
+.modal-detail .badge-yes {
+  color: #16a34a;
+  font-weight: 500;
+}
+
+.modal-detail .badge-no {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+/* Úprava seznamu variant uvnitř detailu (Lineární ERP vzhled) */
+.modal-detail .variants-list {
+  gap: 0;
+}
+
+.modal-detail .variant-item {
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 0;
+  padding: 12px 24px;
+  background: #ffffff;
+  display: grid;
+  grid-template-columns: 200px 200px 1fr 120px; /* Čisté sloupcové uspořádání */
+  align-items: center;
+  gap: 15px;
+  font-size: 0.85rem;
+}
+
+.modal-detail .variant-item:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.modal-detail .variant-name {
+  margin-bottom: 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.modal-detail .variant-details {
+  margin-bottom: 0;
+  color: #64748b;
+}
+
+.modal-detail .variant-pricing {
+  margin-bottom: 0;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.modal-detail .variant-pricing .row {
+  display: inline-flex;
+  gap: 4px;
+  padding-bottom: 0;
+}
+
+.modal-detail .variant-stock {
+  text-align: right;
+  color: #334155;
+}
+
+/* Úprava galerie obrázků uvnitř detailu */
+.modal-detail .images-grid {
+  padding: 16px 24px;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+}
+
+.modal-detail .image-item {
+  border-radius: 4px;
+  border-color: #e2e8f0;
+}
+
+.modal-detail .thumbnail {
+  height: 90px;
+}
+
+.modal-detail .primary-badge {
+  top: 4px;
+  left: 4px;
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* Takhle vypadaly původní obecné styly pro detail (Zůstávají jako fallback pro ostatní moduly) */
 .detail-section {
   margin-bottom: 20px;
   padding-bottom: 20px;
@@ -872,18 +1047,20 @@ legend {
   color: #adb5bd;
   padding: 30px 20px;
 }
+
 @media (min-width: 1024px) {
   .filter-side-panel {
     width: 0;
-    max-height: none; /* Na desktopu neomezujeme výšku */
+    max-height: none; 
     margin-bottom: 0;
   }
   
   .filter-side-panel.active {
-    width: 280px; /* Šířka bočního panelu */
+    width: 280px; 
     opacity: 1;
   }
 }
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
   .products-container {
@@ -910,6 +1087,32 @@ legend {
   .multi-currency-grid,
   .multi-currency-variant-paths {
     grid-template-columns: 1fr;
+  }
+
+  /* Mobilní zobrazení pro upravený detail */
+  .modal-detail .info-row {
+    flex-direction: column;
+    padding: 10px 16px;
+    gap: 4px;
+  }
+  
+  .modal-detail .info-row label {
+    flex: none;
+    width: 100%;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .modal-detail .variant-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  
+  .modal-detail .variant-stock {
+    text-align: left;
   }
 
   .info-grid {
@@ -952,7 +1155,6 @@ legend {
     flex-wrap: wrap;
     gap: 8px;
   }
-
 }
 
 @media (max-width: 480px) {

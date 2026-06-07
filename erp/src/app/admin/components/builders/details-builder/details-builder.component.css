@@ -1,3 +1,4 @@
+/* --- HLAVNÍ OVERLAY --- */
 .popup-overlay {
     position: fixed;
     top: 0; left: 0;
@@ -9,266 +10,207 @@
     z-index: 10000;
 }
 
+/* --- JEDNOTNÝ POPUP KONTEJNER --- */
 .form-container.wide-style {
     background: #ffffff;
-    color: #333;
-    border-radius: 12px;
-    width: 95%;
-    max-width: 900px;
-    max-height: 90vh;
+    color: #1e293b;
+    border-radius: 6px;
+    width: 98%;
+    max-width: 1400px;
+    max-height: 92vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     position: relative;
-    animation: slideUp 0.3s ease-out; 
+    animation: slideUp 0.15s ease-out;
 }
+
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
+  from { transform: translateY(15px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* --- HLAVIČKA --- */
 .form-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 25px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #eee;
-    min-height: 60px;
+    padding: 14px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    min-height: 45px;
 }
 
 .header-title {
     margin: 0;
-    font-size: 1.4rem;
-    color: #222;
+    font-size: 1.15rem;
+    color: #0f172a;
     font-weight: 600;
 }
 
 .close-button {
     background: transparent;
     border: none;
-    color: #999;
-    font-size: 2.5rem;
+    color: #94a3b8;
+    font-size: 1.75rem;
     line-height: 1;
     cursor: pointer;
-    padding: 0 10px;
+    padding: 0 5px;
     margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: color 0.1s ease;
     outline: none;
 }
 
 .close-button:hover {
-    color: #ff4d4d;
+    color: #ef4444;
 }
 
+/* --- ČISTÝ OBSAH (Žádné okno v okně) --- */
 .details-content {
-    padding: 25px;
+    padding: 10px 0; /* Odstraněno boční odsazení, aby řádky lícovaly s okrajem */
     overflow-y: auto;
     flex: 1;
+    background: #ffffff; /* Sjednoceno s pozadím popupu */
 }
 
+/* Zrušen vnitřní border a ohraničení gridu */
+.details-grid {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+}
+
+/* Řádky nyní sahají od kraje ke kraji a tvoří jeden celek s popupem */
 .details-row {
     display: flex;
-    padding: 12px 0;
-    border-bottom: 1px solid #f5f5f5;
+    align-items: baseline;
+    padding: 8px 24px; /* Boční padding drží linku s hlavičkou */
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.88rem;
+}
+
+.details-row:last-child {
+    border-bottom: none;
+}
+
+/* Velmi decentní zebra pro přehlednost širokých dat */
+.details-row:nth-child(even) {
+    background-color: #f8fafc;
 }
 
 .label-cell {
-    flex: 0 0 220px;
-    font-weight: 600;
-    color: #555;
+    flex: 0 0 250px; /* Pevný sloupec pro popisky */
+    font-weight: 500;
+    color: #64748b;
+    user-select: none;
 }
 
 .value-cell {
     flex: 1;
-    color: #111;
+    color: #1e293b;
+    word-break: break-word;
 }
 
-.file-actions { display: flex; gap: 10px; margin-top: 5px; }
-.btn-action { padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; border: 1px solid #ddd; }
-.btn-action.view { background: #eef6ff; color: #007bff; }
-.btn-action.download { background: #f0fff4; color: #28a745; }
+/* --- SOUBORY --- */
+.file-actions { 
+    display: flex; 
+    gap: 6px; 
+    margin-top: 2px; 
+}
 
+.btn-action { 
+    padding: 3px 8px; 
+    border-radius: 4px; 
+    text-decoration: none; 
+    font-size: 0.78rem; 
+    font-weight: 500;
+    border: 1px solid #cbd5e1; 
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-action.view { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+.btn-action.view:hover { background: #dcfce7; }
+
+.btn-action.download { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; }
+.btn-action.download:hover { background: #e0f2fe; }
+
+/* --- ZÁPATÍ --- */
 .form-footer {
-    padding: 15px 25px;
-    background: #f8f9fa;
-    border-top: 1px solid #eee;
+    padding: 14px 24px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
     display: flex;
     justify-content: flex-end;
 }
 
 .btn-close-flat {
-    background: #444;
+    background: #1e293b;
     color: #fff;
     border: none;
-    padding: 10px 25px;
-    border-radius: 6px;
+    padding: 6px 18px;
+    border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
+    font-size: 0.82rem;
 }
-/* ... tvé stávající CSS ... */
 
+.btn-close-flat:hover {
+    background: #0f172a;
+}
+
+/* --- KÓDOVÝ BLOK (JSON) --- */
 .json-block {
-    background: #2d2d2d; /* Tmavé pozadí pro lepší kontrast kódu */
-    color: #a9dc76;    /* Hezká "kódovací" zelená */
-    padding: 12px;
-    border-radius: 6px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 0.85rem;
+    background: #0f172a;
+    color: #38bdf8;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.78rem;
     line-height: 1.4;
-    border: 1px solid #1a1a1a;
-    max-height: 400px;
+    border: 1px solid #1e293b;
+    max-height: 450px;
     overflow: auto;
-    margin: 0;
+    margin: 4px 0 0 0;
     white-space: pre-wrap;
     word-break: break-all;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* Úprava scrollování uvnitř JSON bloku pro hezčí vzhled */
 .json-block::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+    height: 6px;
 }
 .json-block::-webkit-scrollbar-thumb {
-    background: #555;
-    border-radius: 4px;
-}
-.json-block::-webkit-scrollbar-thumb:hover {
-    background: #777;
+    background: #334155;
+    border-radius: 3px;
 }
 
-/* Ostatní tvoje styly zůstávají stejné */
-.popup-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-}
-
-.form-container.wide-style {
-    background: #ffffff;
-    color: #333;
-    border-radius: 12px;
-    width: 95%;
-    max-width: 900px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-    position: relative;
-    animation: slideUp 0.3s ease-out; 
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.form-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 25px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #eee;
-    min-height: 60px;
-}
-
-.header-title {
-    margin: 0;
-    font-size: 1.4rem;
-    color: #222;
-    font-weight: 600;
-}
-
-.close-button {
-    background: transparent;
-    border: none;
-    color: #999;
-    font-size: 2.5rem;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0 10px;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    outline: none;
-}
-
-.close-button:hover {
-    color: #ff4d4d;
-}
-
-.details-content {
-    padding: 25px;
-    overflow-y: auto;
-    flex: 1;
-}
-
-.details-row {
-    display: flex;
-    padding: 12px 0;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.label-cell {
-    flex: 0 0 220px;
-    font-weight: 600;
-    color: #555;
-}
-
-.value-cell {
-    flex: 1;
-    color: #111;
-}
-
-.file-actions { display: flex; gap: 10px; margin-top: 5px; }
-.btn-action { padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; border: 1px solid #ddd; }
-.btn-action.view { background: #eef6ff; color: #007bff; }
-.btn-action.download { background: #f0fff4; color: #28a745; }
-
-.form-footer {
-    padding: 15px 25px;
-    background: #f8f9fa;
-    border-top: 1px solid #eee;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn-close-flat {
-    background: #444;
-    color: #fff;
-    border: none;
-    padding: 10px 25px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-}
-
+/* --- RESPONZIVITA --- */
 @media (max-width: 768px) {
     .form-container.wide-style {
         width: 100%; height: 100%;
         max-height: 100vh; border-radius: 0;
     }
-    .details-row { flex-direction: column; padding: 15px 0; }
-    .label-cell { flex: none; width: 100%; color: #888; font-size: 0.8rem; }
-}
-@media (max-width: 768px) {
-    .form-container.wide-style {
-        width: 100%; height: 100%;
-        max-height: 100vh; border-radius: 0;
+    .details-content {
+        padding: 0;
     }
-    .details-row { flex-direction: column; padding: 15px 0; }
-    .label-cell { flex: none; width: 100%; color: #888; font-size: 0.8rem; }
-    .close-button { font-size: 2rem; }
+    .details-row { 
+        flex-direction: column; 
+        padding: 12px 16px; 
+        gap: 2px;
+    }
+    .label-cell { 
+        flex: none; 
+        width: 100%; 
+        color: #94a3b8; 
+        font-size: 0.75rem; 
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .close-button { font-size: 1.75rem; }
 }

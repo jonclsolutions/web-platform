@@ -22,7 +22,16 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
 
   override apiEndpoint = 'shop/categories';
   categories: CategoryNode[] = [];
-  
+
+  // Produkt panel
+  selectedCategory: CategoryNode | null = null;
+  categoryProducts: any[] = [];
+  allProducts: any[] = [];
+  loadingProducts = false;
+  showAddProduct = false;
+  productSearch = '';
+  addProductSearch = '';
+
   private backupNames: Map<number, string> = new Map();
   private expandedStates: Set<number> = new Set();
 
@@ -42,9 +51,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.initWithAuthCheck(this.router);
   }
 
-  /**
-   * Refresh dat volaný automaticky z BaseDataComponent po ověření přihlášení
-   */
   override refreshData(): void {
     this.loadTree();
   }
@@ -102,7 +108,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
 
   handleEditAction(action: string, node: CategoryNode): void {
     if (action === 'submit') {
-      if (!node.name || node.name.trim().length === 0 || this.isDuplicateName(node)) return; 
+      if (!node.name || node.name.trim().length === 0 || this.isDuplicateName(node)) return;
       if (node.id === 0) this.confirmAdd(node); else this.saveNode(node);
     } else {
       if (node.id === 0) this.loadTree(); else this.cancelEdit(node);
@@ -131,7 +137,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   confirmAdd(node: CategoryNode): void {
-    // Optimistická aktualizace - odstranit nový uzel z UI během odesílání
     const parentId = node.parent_id;
     if (!parentId) {
       this.categories = this.categories.filter(c => c.id !== 0);
@@ -180,16 +185,22 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.cd.markForCheck();
   }
 
-  loadTree(forceExpandId?: number | null): void {
-    this.loadingService.show();
+  loadTree(forceExpandId?: number | null, silent: boolean = false): void {
+    if (!silent) {
+      this.loadingService.show();
+    }
     this.loadAllData().subscribe({
       next: (res) => {
         this.categories = this.buildTree(res, null, forceExpandId);
         this.cd.markForCheck();
-        this.loadingService.hide();
+        if (!silent) {
+          this.loadingService.hide();
+        }
       },
       error: () => {
-        this.loadingService.hide();
+        if (!silent) {
+          this.loadingService.hide();
+        }
       }
     });
   }
@@ -227,7 +238,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   saveNode(node: CategoryNode): void {
-    // Optimistická aktualizace - okamžitě skrýt edit mode
     node.isEditing = false;
     this.cd.markForCheck();
 
@@ -236,118 +246,74 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
         next: () => {
           this.alertDialogService.open('Aktualizováno', 'Změny byly uloženy.', 'success');
           this.backupNames.delete(node.id);
-          this.cd.markForCheck(); 
+          this.cd.markForCheck();
         },
         error: (err) => {
-          // Vrátit do edit módu v případě chyby
           node.isEditing = true;
           this.cd.markForCheck();
-          this.alertDialogService.open('Chyba', err.error?.message || 'Uložení selhalo.', 'danger')
+          this.alertDialogService.open('Chyba', err.error?.message || 'Uložení selhalo.', 'danger');
         }
       });
   }
 
   toggleStatus(node: CategoryNode): void {
     const newStatus = !node.is_active;
-    // Optimistická aktualizace - okamžitě změnit UI
     node.is_active = newStatus;
     this.cd.markForCheck();
 
     this.updateData(node.id, { ...node, is_active: newStatus })
       .subscribe({
-        next: () => {
-          // UI je už aktuální, stačí jen potvrzení
-        },
+        next: () => {},
         error: () => {
-          // Vrátit do původního stavu v případě chyby
           node.is_active = !newStatus;
           this.cd.markForCheck();
-          this.alertDialogService.open('Chyba', 'Změna stavu selhala.', 'danger')
+          this.alertDialogService.open('Chyba', 'Změna stavu selhala.', 'danger');
         }
       });
   }
 
-  // async deleteCategory(node: CategoryNode): Promise<void> {
-  //   if (node.children?.length) {
-  //     await this.alertDialogService.open('Nelze smazat', 'Smažte nejdříve podkategorie.', 'warning');
-  //     return;
-  //   }
-
-  //   const confirmed = await this.confirmDialogService.open(
-  //     'Potvrdit smazání', 
-  //     `Opravdu si přejete smazat kategorii "${node.name}"?`
-  //   );
-
-  //   if (confirmed) {
-  //     // Optimistická aktualizace - okamžitě odstranit z UI
-  //     this.removeNodeFromTree(node.id);
-  //     this.expandedStates.delete(node.id);
-  //     this.cd.markForCheck();
-
-  //     this.deleteData(node.id).subscribe({
-  //       next: () => {
-  //         this.alertDialogService.open('Smazáno', 'Kategorie byla odstraněna.', 'success');
-  //         this.saveExpandedStates();
-  //       },
-  //       error: (err) => {
-  //         // Vrátit kompletní strom v případě chyby
-  //         this.alertDialogService.open('Chyba', err.error?.message || 'Smazání selhalo.', 'danger');
-  //         this.loadTree();
-  //       }
-  //     });
-  //   }
-  // }
   async deleteCategory(node: CategoryNode): Promise<void> {
-  // 1. Kontrola na podkategorie (tu už tam máš)
-  if (node.children?.length) {
-    await this.alertDialogService.open(
-      'Nelze smazat', 
-      'Smažte nejdříve podkategorie.', 
-      'warning'
+    if (node.children?.length) {
+      await this.alertDialogService.open('Nelze smazat', 'Smažte nejdříve podkategorie.', 'warning');
+      return;
+    }
+
+    if (node.products_count && node.products_count > 0) {
+      await this.alertDialogService.open(
+        'Nelze smazat',
+        `Kategorii "${node.name}" nelze smazat, protože obsahuje přiřazené produkty (${node.products_count}). Nejdříve produkty přesuňte nebo smažte.`,
+        'warning'
+      );
+      return;
+    }
+
+    const confirmed = await this.confirmDialogService.open(
+      'Potvrdit smazání',
+      `Opravdu si přejete smazat kategorii "${node.name}"?`
     );
-    return;
+
+    if (confirmed) {
+      this.removeNodeFromTree(node.id);
+      this.expandedStates.delete(node.id);
+      this.cd.markForCheck();
+
+      this.deleteData(node.id).subscribe({
+        next: () => {
+          this.alertDialogService.open('Smazáno', 'Kategorie byla odstraněna.', 'success');
+          this.saveExpandedStates();
+          // Zavřít panel pokud byla smazána aktuálně vybraná kategorie
+          if (this.selectedCategory?.id === node.id) {
+            this.closeProductPanel();
+          }
+        },
+        error: (err) => {
+          this.alertDialogService.open('Chyba', err.error?.message || 'Smazání selhalo.', 'danger');
+          this.loadTree();
+        }
+      });
+    }
   }
 
-  // 2. NOVÉ: Kontrola na produkty (pokud tvé API vrací products_count)
-  // Poznámka: Pokud tvůj interface CategoryNode toto pole nemá, přidej si ho do něj
-  if (node.products_count && node.products_count > 0) {
-    await this.alertDialogService.open(
-      'Nelze smazat', 
-      `Kategorii "${node.name}" nelze smazat, protože obsahuje přiřazené produkty (${node.products_count}). Nejdříve produkty přesuňte nebo smažte.`, 
-      'warning'
-    );
-    return;
-  }
-
-  const confirmed = await this.confirmDialogService.open(
-    'Potvrdit smazání', 
-    `Opravdu si přejete smazat kategorii "${node.name}"?`
-  );
-
-  if (confirmed) {
-    // Optimistická aktualizace - okamžitě odstranit z UI
-    this.removeNodeFromTree(node.id);
-    this.expandedStates.delete(node.id);
-    this.cd.markForCheck();
-
-    this.deleteData(node.id).subscribe({
-      next: () => {
-        this.alertDialogService.open('Smazáno', 'Kategorie byla odstraněna.', 'success');
-        this.saveExpandedStates();
-      },
-      error: (err) => {
-        // Pokud backend vrátí chybu (např. tu 422 o produktech, kterou jsme v PHP přidali),
-        // tak se loadTree() postará o navrácení kategorie zpět do UI a zobrazí se zpráva z backendu.
-        this.alertDialogService.open(
-          'Chyba', 
-          err.error?.message || 'Smazání selhalo.', 
-          'danger'
-        );
-        this.loadTree();
-      }
-    });
-  }
-}
   private removeNodeFromTree(nodeId: number): void {
     const removeRecursive = (nodes: CategoryNode[]): boolean => {
       for (let i = 0; i < nodes.length; i++) {
@@ -367,15 +333,15 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   toggleExpanded(node: CategoryNode, event?: Event): void {
     if (event) event.stopPropagation();
     if (!node.children?.length) return;
-    
+
     node.isExpanded = !node.isExpanded;
-    
+
     if (node.isExpanded) {
       this.expandedStates.add(node.id);
     } else {
       this.expandedStates.delete(node.id);
     }
-    
+
     this.saveExpandedStates();
     this.cd.markForCheck();
   }
@@ -389,5 +355,156 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     if (saved) {
       this.expandedStates = new Set(JSON.parse(saved));
     }
+  }
+
+  // =====================
+  // PRODUKT PANEL
+  // =====================
+
+  openProductPanel(node: CategoryNode, event: Event): void {
+    event.stopPropagation();
+    if (node.id === 0) return;
+    this.selectedCategory = node;
+    this.showAddProduct = false;
+    this.productSearch = '';
+    this.addProductSearch = '';
+    this.loadCategoryProducts(node.id);
+    this.cd.markForCheck();
+  }
+
+  closeProductPanel(): void {
+    this.selectedCategory = null;
+    this.categoryProducts = [];
+    this.allProducts = [];
+    this.showAddProduct = false;
+    this.productSearch = '';
+    this.addProductSearch = '';
+    this.cd.markForCheck();
+  }
+
+  loadCategoryProducts(categoryId: number): void {
+    this.loadingProducts = true;
+    this.cd.markForCheck();
+
+    const url = `shop/products?no_pagination=true&category_id=${categoryId}`;
+    this.dataHandler.getCollection<any>(url).subscribe({
+      next: (products) => {
+        this.categoryProducts = products;
+        this.loadingProducts = false;
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.loadingProducts = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  get filteredCategoryProducts(): any[] {
+    if (!this.productSearch.trim()) return this.categoryProducts;
+    const s = this.productSearch.toLowerCase();
+    return this.categoryProducts.filter(p =>
+      p.name?.toLowerCase().includes(s) || p.sku?.toLowerCase().includes(s)
+    );
+  }
+
+  get filteredAllProducts(): any[] {
+    const categoryProductIds = new Set(this.categoryProducts.map(p => p.id));
+    let products = this.allProducts.filter(p => !categoryProductIds.has(p.id));
+    if (this.addProductSearch.trim()) {
+      const s = this.addProductSearch.toLowerCase();
+      products = products.filter(p =>
+        p.name?.toLowerCase().includes(s) || p.sku?.toLowerCase().includes(s)
+      );
+    }
+    return products;
+  }
+
+  openAddProductSearch(): void {
+    this.showAddProduct = true;
+    this.addProductSearch = '';
+
+    if (this.allProducts.length === 0) {
+      this.dataHandler.getCollection<any>('shop/products?no_pagination=true').subscribe({
+        next: (products) => {
+          this.allProducts = products;
+          this.cd.markForCheck();
+        },
+        error: () => {
+          this.cd.markForCheck();
+        }
+      });
+    }
+
+    this.cd.markForCheck();
+  }
+
+  async removeProductFromCategory(product: any): Promise<void> {
+    const confirmed = await this.confirmDialogService.open(
+      'Odebrat produkt',
+      `Odebrat produkt "${product.name}" z kategorie "${this.selectedCategory?.name}"?`
+    );
+
+    if (!confirmed || !this.selectedCategory) return;
+
+    this.loadingProducts = true;
+    this.cd.markForCheck();
+
+    const currentCategoryIds = product.categories ? product.categories.map((c: any) => c.id) : [];
+    const updatedCategoryIds = currentCategoryIds.filter((id: number) => id !== this.selectedCategory!.id);
+
+    const newPrimaryCategoryId = updatedCategoryIds.length > 0 ? updatedCategoryIds[0] : null;
+
+    const url = `shop/products/${product.id}/category`;
+    const payload = { 
+      category_id: newPrimaryCategoryId, 
+      category_ids: updatedCategoryIds 
+    };
+
+    this.dataHandler.patch<any>(url, payload).subscribe({
+      next: () => {
+        this.alertDialogService.open('Hotovo', 'Produkt byl odebrán z kategorie.', 'success');
+        
+        this.loadTree(this.selectedCategory?.id, true);
+        if (this.selectedCategory) {
+          this.loadCategoryProducts(this.selectedCategory.id);
+        }
+      },
+      error: (error) => {
+        console.error(`Odebrání produktu SELHALO!`, error);
+        this.loadingProducts = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  addProductToCategory(product: any): void {
+    if (!this.selectedCategory) return;
+
+    this.loadingProducts = true;
+    this.cd.markForCheck();
+
+    const currentCategoryIds = product.categories ? product.categories.map((c: any) => c.id) : [];
+    const updatedCategoryIds = Array.from(new Set([...currentCategoryIds, this.selectedCategory.id]));
+
+    const url = `shop/products/${product.id}/category`;
+    const payload = { 
+      category_id: this.selectedCategory.id,
+      category_ids: updatedCategoryIds       
+    };
+
+    this.dataHandler.patch<any>(url, payload).subscribe({
+      next: () => {
+        this.alertDialogService.open('Hotovo', `Produkt byl přidán do kategorie.`, 'success');
+        
+        this.loadTree(this.selectedCategory?.id, true);
+        this.loadCategoryProducts(this.selectedCategory!.id);
+      },
+      error: (error) => {
+        console.error(`Přidání produktu SELHALO!`, error);
+        this.loadingProducts = false;
+        this.cd.markForCheck();
+      }
+    });
   }
 }

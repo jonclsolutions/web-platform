@@ -22,6 +22,10 @@ export class AlertDialogService {
       environmentInjector: this.environmentInjector
     });
 
+    if (!this.componentRef) {
+      return Promise.resolve();
+    }
+
     const domElem = (this.componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
     this.appRef.attachView(this.componentRef.hostView);
     document.body.appendChild(domElem);
@@ -33,31 +37,51 @@ export class AlertDialogService {
     this.componentRef.instance.show();
 
     return new Promise<void>((resolve) => {
+      let isResolved = false;
+
+      // Pomocná funkce, která garantuje, že se úklid a vyřešení Promise provede pouze jednou
+      const handleClose = () => {
+        if (isResolved) return;
+        isResolved = true;
+        this.closeDialog();
+        resolve();
+      };
+
       if (!this.componentRef) return;
 
-      // KLÍČOVÉ: Posloucháme onClose událost (vyvolá se křížkem, časovačem nebo po kliku na OK)
-      // Jakmile se odpálí, vyčistíme DOM a vyřešíme Promise
+      // KLÍČOVÉ: Obě události (onClose i onOk) směřují do bezpečné obalové funkce.
+      // Pokud komponenta odpálí obě události naráz, handleClose druhotný pokus odfiltruje.
       this.componentRef.instance.onClose.pipe(first()).subscribe(() => {
-        this.closeDialog();
-        resolve();
+        handleClose();
       });
 
-      // Původní chování pro onOk (stále zachováno pro případ, že kód na Promise závisí)
       this.componentRef.instance.onOk.pipe(first()).subscribe(() => {
-        this.closeDialog();
-        resolve();
+        handleClose();
       });
     });
   }
 
   private closeDialog(): void {
-    if (this.componentRef) {
+    // Bezpečnostní pojistka: pokud instance neexistuje, ihned skončíme a neházíme chybu
+    if (!this.componentRef) {
+      return;
+    }
+
+    try {
       // Bezpečně schováme časovače v komponentě
       this.componentRef.instance.hide();
       
-      // Kompletní odříznutí z Angular Application Tree a z fyzického DOMu
-      this.appRef.detachView(this.componentRef.hostView);
+      // Prověříme, zda hostView stále existuje a nebyl již zničen
+      if (this.componentRef.hostView && !this.componentRef.hostView.destroyed) {
+        this.appRef.detachView(this.componentRef.hostView);
+      }
+      
+      // Kompletní destrukce komponenty
       this.componentRef.destroy();
+    } catch (error) {
+      console.warn('[AlertDialogService] Upozornění při uzavírání dialogu:', error);
+    } finally {
+      // V každém případě vyčistíme referenci, aby byla služba připravena na další volání open()
       this.componentRef = undefined;
     }
   }

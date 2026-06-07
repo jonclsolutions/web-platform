@@ -141,8 +141,10 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     */
     Route::prefix('shop')->group(function () {
 
-        // Products (Produkty) 📦
+// Products (Produkty) 📦
         Route::prefix('products')->group(function () {
+            // 🔥 TATO ROUTA ZAJISTÍ BEZPEČNÝ PATCH UPDATE POUZE PRO KATEGORII
+            Route::patch('/{id}/category', [ShopProductController::class, 'updateCategory']);
             Route::get('/{id}', [ShopProductController::class, 'show']);
             Route::post('/{id}/restore', [ShopProductController::class, 'restore']);
             Route::delete('/force-delete-all', [ShopProductController::class, 'forceDeleteAllTrashed']);

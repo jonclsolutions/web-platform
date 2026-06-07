@@ -5,6 +5,7 @@ namespace App\Models\Shop;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ShopCategory extends Model
 {
@@ -41,12 +42,16 @@ class ShopCategory extends Model
     }
 
     /**
-     * ⚠️ DOPLNĚNO: Relace na produkty v této kategorii.
-     * Umožňuje controlleru kontrolovat, zda kategorie není prázdná před smazáním.
+     * ✅ OPRAVENO: Relace na produkty v této kategorii přes pivot tabulku (M:N).
+     * Zajišťuje správný počet produktů (products_count) pro hlavní i sekundární kategorie.
      */
-    public function products(): HasMany
+    public function products(): BelongsToMany
     {
-        // Předpokládáme, že model produktu se jmenuje ShopProduct
-        return $this->hasMany(ShopProduct::class, 'category_id');
+        return $this->belongsToMany(
+            ShopProduct::class,
+            'shop_product_categories', // tvá pivotní tabulka
+            'category_id',
+            'product_id'
+        )->withPivot(['is_primary', 'sort_order'])->withTimestamps();
     }
 }

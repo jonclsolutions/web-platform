@@ -76,26 +76,6 @@ class ShopCategoryController extends Controller
         }
     }
 
-    // public function destroy(Request $request, $id): JsonResponse
-    // {
-    //     try {
-    //         $item = ShopCategory::findOrFail($id);
-
-    //         // Kontrola existence podkategorií
-    //         if ($item->children()->exists()) {
-    //             return response()->json([
-    //                 'message' => "Kategorii '{$item->name}' nelze smazat, protože obsahuje podkategorie. Nejdříve je odstraňte nebo přesuňte."
-    //             ], 422);
-    //         }
-
-    //         $item->delete();
-    //         $this->logAction($request, 'delete', 'ShopCategory', "Smazána kategorie: {$item->name}", $id);
-    //         return response()->json(null, 204);
-            
-    //     } catch (\Exception $e) {
-    //         return response()->json(['message' => 'Smazání se nezdařilo.'], 500);
-    //     }
-    // }
     public function destroy(Request $request, $id): JsonResponse
 {
     try {
