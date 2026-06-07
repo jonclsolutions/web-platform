@@ -149,7 +149,7 @@ export const SUPPLIER_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'name', header: 'Název firmy', type: 'text' },
   { key: 'ico', header: 'IČO', type: 'text' },
   { key: 'email', header: 'Email', type: 'text' },
-  { key: 'is_active', header: 'Aktivní', type: 'text' },
+  { key: 'is_active', header: 'Aktivní', type: 'boolean' },
   { key: 'created_at', header: 'Vytvořeno', type: 'date', format: 'short' }
 ];
 

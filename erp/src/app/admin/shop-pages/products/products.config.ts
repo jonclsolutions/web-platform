@@ -183,8 +183,14 @@ export const PRODUCT_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'name', header: 'Produkt', type: 'text' },
   { key: 'sku', header: 'SKU', type: 'text' },
   { key: 'category_name', header: 'Kategorie', type: 'text' }, 
-  { key: 'price_czk', header: 'Cena CZK', type: 'currency' }, 
-  { key: 'price_eur', header: 'Cena EUR', type: 'currency' }, 
+  
+  // 🌟 Konfigurace s dynamickou měnou:
+  { key: 'price_czk', header: 'Cena CZK', type: 'currency', currencyCode: 'CZK' }, 
+  { key: 'price_eur', header: 'Cena EUR', type: 'currency', currencyCode: 'EUR' }, 
+  
+  // Do budoucna velmi snadno rozšíříš o:
+  // { key: 'price_usd', header: 'Cena USD', type: 'currency', currencyCode: 'USD' }, 
+
   { key: 'stock_quantity', header: 'Skladem', type: 'text' },
   { key: 'is_active', header: 'Aktivní', type: 'boolean' }
 ];

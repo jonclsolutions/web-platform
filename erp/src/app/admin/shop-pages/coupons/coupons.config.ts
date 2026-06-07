@@ -109,7 +109,7 @@ export const COUPON_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'discount_type', header: 'Typ', type: 'text' },
   { key: 'discount_value', header: 'Sleva', type: 'text' },
   { key: 'usage_count', header: 'Použito', type: 'text' },
-  { key: 'is_active', header: 'Aktivní', type: 'text' },
+  { key: 'is_active', header: 'Aktivní', type: 'boolean' },
   { key: 'valid_until', header: 'Platí do', type: 'date', format: 'short' }
 ];
 

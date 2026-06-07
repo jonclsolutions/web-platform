@@ -79,9 +79,26 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
   getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
     const value = keys.reduce((obj, key) => obj?.[key], item);
-    switch (column.type) {
-      case 'currency':
-        return value ? (new CurrencyPipe('cs-CZ')).transform(value, 'CZK', 'symbol-narrow', '1.2-2') : '';
+    
+    // 🌟 Používáme přetypování na 'any', aby TS nehlásil chybu u 'array' a 'object'
+    switch (column.type as any) {
+      case 'currency': {
+        if (value === undefined || value === null || value === '') return '';
+        
+        // 🌟 Dynamické získání kódu měny (např. 'CZK', 'EUR'), výchozí je 'CZK'
+        const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'CZK';
+        
+        // Formátování: pro CZK české (100 Kč), pro EUR evropské standardy (100 €)
+        const locale = currency === 'CZK' ? 'cs-CZ' : 'de-DE';
+
+        try {
+          return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
+        } catch (e) {
+          // Fallback, pokud by se v datech objevila nepodporovaná měna
+          return `${value} ${currency}`;
+        }
+      }
+      
       case 'date':
         return value ? (new DatePipe('cs-CZ')).transform(value, column.format || 'shortDate') : '';
       case 'boolean':

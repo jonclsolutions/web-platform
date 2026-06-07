@@ -105,7 +105,7 @@ export const CUSTOMER_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'email', header: 'Email', type: 'text' },
   { key: 'phone', header: 'Telefon', type: 'text' },
   { key: 'total_spent', header: 'Celkem utraceno', type: 'text' }, // Formátováno přes Resource
-  { key: 'is_active', header: 'Aktivní', type: 'text' }
+  { key: 'is_active', header: 'Aktivní', type: 'boolean' }
 ];
 
 export const CUSTOMER_TRASH_COLUMNS: Core.ColumnDefinition[] = [

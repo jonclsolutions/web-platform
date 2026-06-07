@@ -60,13 +60,29 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     super.ngOnChanges(changes); 
   }
 
-  getCellValue(item: any, column: ColumnDefinition): any {
+getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
     const value = keys.reduce((obj, key) => obj?.[key], item);
     
     switch (column.type) {
-      case 'currency':
-        return value ? (new CurrencyPipe('cs-CZ')).transform(value, 'CZK', 'symbol-narrow', '1.2-2') : '';
+      case 'currency': {
+        if (value === undefined || value === null || value === '') return '';
+        
+        // 🌟 Získání kódu měny z konfigurace sloupce, výchozí je CZK
+        const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'CZK';
+        
+        // 🌟 Volba lokalizace podle měny, aby symboly a mezery vypadaly přirozeně
+        // de-DE formátuje EUR správně se symbolem na konci a mezerou (např. 50,00 €)
+        const locale = currency === 'CZK' ? 'cs-CZ' : 'de-DE';
+
+        try {
+          return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
+        } catch (e) {
+          // Záložní zobrazení, pokud by selhal CurrencyPipe (neznámá měna nebo chybějící lokalizace)
+          return `${value} ${currency}`;
+        }
+      }
+      
       case 'date':
         return value ? (new DatePipe('cs-CZ')).transform(value, column.format || 'd.M.yyyy') : '';
       case 'boolean':
