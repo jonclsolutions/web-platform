@@ -18,23 +18,25 @@ export class AlertDialogService {
     this.closeDialog();
 
     // 2. Dynamicky vytvoříme instanci komponenty toastu
-    this.componentRef = createComponent(AlertDialogComponent, {
+    const ref = createComponent(AlertDialogComponent, {
       environmentInjector: this.environmentInjector
     });
 
-    if (!this.componentRef) {
+    this.componentRef = ref;
+
+    if (!ref) {
       return Promise.resolve();
     }
 
-    const domElem = (this.componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
-    this.appRef.attachView(this.componentRef.hostView);
+    const domElem = (ref.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
+    this.appRef.attachView(ref.hostView);
     document.body.appendChild(domElem);
 
     // 3. Předáme data do vstupů komponenty
-    this.componentRef.instance.title = title;
-    this.componentRef.instance.message = message;
-    this.componentRef.instance.type = type;
-    this.componentRef.instance.show();
+    ref.instance.title = title;
+    ref.instance.message = message;
+    ref.instance.type = type;
+    ref.instance.show();
 
     return new Promise<void>((resolve) => {
       let isResolved = false;
@@ -47,42 +49,43 @@ export class AlertDialogService {
         resolve();
       };
 
-      if (!this.componentRef) return;
-
       // KLÍČOVÉ: Obě události (onClose i onOk) směřují do bezpečné obalové funkce.
-      // Pokud komponenta odpálí obě události naráz, handleClose druhotný pokus odfiltruje.
-      this.componentRef.instance.onClose.pipe(first()).subscribe(() => {
+      ref.instance.onClose.pipe(first()).subscribe(() => {
         handleClose();
       });
 
-      this.componentRef.instance.onOk.pipe(first()).subscribe(() => {
+      ref.instance.onOk.pipe(first()).subscribe(() => {
         handleClose();
       });
     });
   }
 
   private closeDialog(): void {
-    // Bezpečnostní pojistka: pokud instance neexistuje, ihned skončíme a neházíme chybu
+    // Bezpečnostní pojistka: pokud instance neexistuje, ihned skončíme
     if (!this.componentRef) {
       return;
     }
 
+    // Uložíme si referenci do lokální proměnné, aby nám ji asynchronní volání "nepodtrhlo" nastavením na undefined
+    const refToDestroy = this.componentRef;
+    // Okamžitě vyčistíme globální referenci, aby případná další asynchronní volání closeDialog() skončila hned na první pojistce nahoře
+    this.componentRef = undefined;
+
     try {
       // Bezpečně schováme časovače v komponentě
-      this.componentRef.instance.hide();
+      if (refToDestroy.instance) {
+        refToDestroy.instance.hide();
+      }
       
       // Prověříme, zda hostView stále existuje a nebyl již zničen
-      if (this.componentRef.hostView && !this.componentRef.hostView.destroyed) {
-        this.appRef.detachView(this.componentRef.hostView);
+      if (refToDestroy.hostView && !refToDestroy.hostView.destroyed) {
+        this.appRef.detachView(refToDestroy.hostView);
       }
       
       // Kompletní destrukce komponenty
-      this.componentRef.destroy();
+      refToDestroy.destroy();
     } catch (error) {
       console.warn('[AlertDialogService] Upozornění při uzavírání dialogu:', error);
-    } finally {
-      // V každém případě vyčistíme referenci, aby byla služba připravena na další volání open()
-      this.componentRef = undefined;
     }
   }
 }

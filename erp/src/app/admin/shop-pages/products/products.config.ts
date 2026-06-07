@@ -68,7 +68,7 @@ export const PRODUCT_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'select',
     options: [], 
     required: true,
-    errorMessage: 'Vyberte kategorii.',
+    errorMessage: 'Vyberte kategorie.',
     editable: true,
     show_in_edit: true,
     show_in_create: true,
@@ -103,16 +103,29 @@ export const PRODUCT_FORM_FIELDS: Core.InputDefinition[] = [
     show_in_edit: true,
     show_in_create: true,
   },
+
+  // 🌟 PŘIDEJ TYTO DVA BLOKY SEM:
   {
-    column_name: 'price_usd',
-    label: 'Cena USD (s DPH)',
+    column_name: 'cost_price_czk',
+    label: 'Pořizovací cena CZK',
+    placeholder: 'Např. nákupní cena od dodavatele',
     type: 'number',
-    required: true,
-    errorMessage: 'Zadejte cenu v USD.',
+    required: false, // nemusí být povinná
     editable: true,
     show_in_edit: true,
     show_in_create: true,
   },
+  {
+    column_name: 'cost_price_eur',
+    label: 'Pořizovací cena EUR',
+    placeholder: 'Např. nákupní cena od dodavatele',
+    type: 'number',
+    required: false,
+    editable: true,
+    show_in_edit: true,
+    show_in_create: true,
+  },
+
   {
     column_name: 'stock_quantity',
     label: 'Skladové množství',
@@ -165,7 +178,6 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'is_active', header: 'Pouze aktivní', type: 'checkbox', canSort: true, placeholder: '' }
 ];
 
-// Sjednoceno s USD
 export const PRODUCT_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'id', header: 'ID', type: 'text' },
   { key: 'name', header: 'Produkt', type: 'text' },
@@ -173,12 +185,10 @@ export const PRODUCT_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'category_name', header: 'Kategorie', type: 'text' }, 
   { key: 'price_czk', header: 'Cena CZK', type: 'currency' }, 
   { key: 'price_eur', header: 'Cena EUR', type: 'currency' }, 
-  { key: 'price_usd', header: 'Cena USD', type: 'currency' }, 
   { key: 'stock_quantity', header: 'Skladem', type: 'text' },
   { key: 'is_active', header: 'Aktivní', type: 'boolean' }
 ];
 
-// Sjednoceno s USD
 export const PRODUCT_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID produktu', type: 'text' },
   { key: 'name', displayName: 'Název', type: 'text' },
@@ -188,7 +198,6 @@ export const PRODUCT_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'supplier_name', displayName: 'Dodavatel', type: 'text' },
   { key: 'price_czk', displayName: 'Cena CZK (s DPH)', type: 'text' },
   { key: 'price_eur', displayName: 'Cena EUR (s DPH)', type: 'text' },
-  { key: 'price_usd', displayName: 'Cena USD (s DPH)', type: 'text' },
   { key: 'stock_quantity', displayName: 'Celkový sklad', type: 'text' },
   { key: 'description', displayName: 'Popis', type: 'text' },
   { key: 'is_active', displayName: 'Stav aktivace', type: 'boolean' },

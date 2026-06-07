@@ -26,8 +26,6 @@ class ShopProductVariantResource extends JsonResource
                 'price_czk_with_vat' => $this->prices ? (float)$this->prices->price_czk_with_vat : 0.0,
                 'price_eur_without_vat' => $this->prices?->price_eur_without_vat ? (float)$this->prices->price_eur_without_vat : null,
                 'price_eur_with_vat' => $this->prices?->price_eur_with_vat ? (float)$this->prices->price_eur_with_vat : null,
-                'price_usd_without_vat' => $this->prices?->price_usd_without_vat ? (float)$this->prices->price_usd_without_vat : null,
-                'price_usd_with_vat' => $this->prices?->price_usd_with_vat ? (float)$this->prices->price_usd_with_vat : null,
             ] : null,
 
             'images' => $this->whenLoaded('images', ShopProductImageResource::collection($this->images)),

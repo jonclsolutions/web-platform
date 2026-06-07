@@ -16,12 +16,15 @@ class ShopProduct extends Model
     protected $table = 'shop_products';
 
     protected $fillable = [
-        'category_id',      // zachováno jako "primární kategorie" (mirror pivot)
+        'category_id',            // nullable — produkt může existovat bez kategorie
         'supplier_id',
         'name',
+        'name_en',                // anglický název
         'slug',
         'description',
+        'description_en',         // anglický popis
         'short_description',
+        'short_description_en',   // anglický krátký popis
         'sku',
         'stock_quantity',
         'stock_warning_level',
@@ -40,20 +43,27 @@ class ShopProduct extends Model
     ];
 
     // =========================================================
+    // BOOT — automatická deaktivace produktu bez kategorie
+    // =========================================================
+
+    protected static function booted(): void
+    {
+        static::saving(function (ShopProduct $product) {
+            if (empty($product->category_id)) {
+                $product->is_active = false;
+            }
+        });
+    }
+
+    // =========================================================
     // RELACE
     // =========================================================
 
-    /**
-     * Primární kategorie (zpětná kompatibilita — přímý FK).
-     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(ShopCategory::class, 'category_id');
     }
 
-    /**
-     * Všechny kategorie produktu přes pivot tabulku (M:N).
-     */
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -67,9 +77,6 @@ class ShopProduct extends Model
         ->orderByPivot('sort_order', 'asc');
     }
 
-    /**
-     * Primární kategorie přes pivot (is_primary = 1).
-     */
     public function primaryCategory(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -82,33 +89,21 @@ class ShopProduct extends Model
         ->wherePivot('is_primary', 1);
     }
 
-    /**
-     * Ceny hlavního produktu (variant_id IS NULL).
-     */
     public function prices(): HasOne
     {
         return $this->hasOne(ShopProductPrice::class, 'product_id')->whereNull('variant_id');
     }
 
-    /**
-     * Dodavatel.
-     */
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(ShopSupplier::class, 'supplier_id');
     }
 
-    /**
-     * Obrázky produktu.
-     */
     public function images(): HasMany
     {
         return $this->hasMany(ShopProductImage::class, 'product_id');
     }
 
-    /**
-     * Primární obrázek.
-     */
     public function primaryImage(): HasOne
     {
         return $this->hasOne(ShopProductImage::class, 'product_id')
@@ -116,25 +111,16 @@ class ShopProduct extends Model
             ->orderBy('sort_order');
     }
 
-    /**
-     * Varianty produktu.
-     */
     public function variants(): HasMany
     {
         return $this->hasMany(ShopProductVariant::class, 'product_id');
     }
 
-    /**
-     * Recenze.
-     */
     public function reviews(): HasMany
     {
         return $this->hasMany(ShopReview::class, 'product_id');
     }
 
-    /**
-     * Položky objednávek.
-     */
     public function orderItems(): HasMany
     {
         return $this->hasMany(ShopOrderItem::class, 'product_id');
@@ -159,9 +145,6 @@ class ShopProduct extends Model
         return $query->whereRaw('stock_quantity <= stock_warning_level');
     }
 
-    /**
-     * Scope: filtrování přes pivot tabulku (pro kategorii a všechny pod-kategorie).
-     */
     public function scopeInCategory($query, int $categoryId)
     {
         return $query->whereHas('categories', function ($q) use ($categoryId) {
@@ -184,14 +167,20 @@ class ShopProduct extends Model
     }
 
     /**
-     * Synchronizuje pivot tabulku a zároveň udržuje category_id jako mirror primární kategorie.
-     *
-     * @param  array<int>  $categoryIds   Pole ID kategorií, které má produkt mít
-     * @param  int         $primaryId     ID primární kategorie (musí být obsaženo v $categoryIds)
+     * Synchronizuje pivot tabulku a udržuje category_id jako mirror primární kategorie.
+     * Pokud je $categoryIds prázdné, produkt se automaticky deaktivuje.
      */
-    public function syncCategories(array $categoryIds, int $primaryId): void
+    public function syncCategories(array $categoryIds, ?int $primaryId): void
     {
-        // Sestavíme pivot data: každá kategorie dostane is_primary a sort_order
+        if (empty($categoryIds)) {
+            $this->categories()->detach();
+            $this->updateQuietly([
+                'category_id' => null,
+                'is_active'   => false,
+            ]);
+            return;
+        }
+
         $pivotData = [];
         foreach (array_values($categoryIds) as $idx => $catId) {
             $pivotData[$catId] = [
@@ -200,12 +189,11 @@ class ShopProduct extends Model
             ];
         }
 
-        // Sync pivot (přidá nové, odebere chybějící, aktualizuje existující)
         $this->categories()->sync($pivotData);
 
-        // Zrcadlení primární kategorie do přímého FK
-        if ($this->category_id !== $primaryId) {
-            $this->update(['category_id' => $primaryId]);
+        $newPrimary = $primaryId ?? $categoryIds[0];
+        if ($this->category_id !== $newPrimary) {
+            $this->updateQuietly(['category_id' => $newPrimary]);
         }
     }
 }

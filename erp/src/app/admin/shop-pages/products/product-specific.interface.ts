@@ -1,5 +1,3 @@
-
-
 export interface ProductImage {
   [key: string]: any;
   id?: number;
@@ -24,6 +22,28 @@ export interface Supplier {
   id: number;
   name: string;
 }
+
+// 🌟 NOVÝ INTERFACE: Mapování zanořeného objektu cen přicházejícího z API (Laravel relace)
+export interface ProductPrices {
+  id?: number;
+  product_id?: number;
+  variant_id?: number | null;
+  vat_rate: number;
+  
+  price_czk_with_vat: number;
+  price_czk_without_vat?: number;
+  
+  price_eur_with_vat: number;
+  price_eur_without_vat?: number;
+  
+  price_gbp_with_vat?: number;
+  price_gbp_without_vat?: number;
+
+  cost_price_czk?: number; // Nákupní cena CZK z DB
+  cost_price_eur?: number; // Nákupní cena EUR z DB
+  cost_price_gbp?: number; // Nákupní cena GBP z DB
+}
+
 export interface Variant {
   id?: number;
   variant_name: string;
@@ -36,23 +56,27 @@ export interface Variant {
   stock_quantity: number;
   images?: ProductImage[];
   _delete?: boolean;
+  
+  // 🌟 Přidána relace cen i pro varianty (pokud je API vrací zanořené)
+  prices?: ProductPrices;
 
-  // Ceny pro varianty (s DPH i bez) pro všechny měny
+  // Ceny pro varianty (s DPH i bez) pro všechny měny (ploché klíče)
   price_with_vat_czk?: number;
   price_without_vat_czk?: number;
   
   price_with_vat_eur?: number;
   price_without_vat_eur?: number;
   
-  price_with_vat_usd?: number;
-  price_without_vat_usd?: number;
-  
   price_with_vat_gbp?: number;
   price_without_vat_gbp?: number;
+
+  cost_price_czk?: number;
+  cost_price_eur?: number;
 }
 
 export interface Product {
   id?: number;
+  categories?: Category[];
   category_id: number;
   supplier_id?: number;
   name: string;
@@ -71,15 +95,16 @@ export interface Product {
   created_at?: string;
   updated_at?: string;
 
-  // Prodejní ceny hlavního produktu
+  // 🌟 RELACE Z BACKENDU: Propojení s novým interfacem cen, aby TypeScript věděl o `item.prices`
+  prices?: ProductPrices;
+
+  // Prodejní ceny hlavního produktu (ploché klíče)
   price_czk?: number;
   price_eur?: number;
-  price_usd?: number;
   price_gbp?: number;
 
-  // Nákupní ceny hlavního produktu
+  // Nákupní ceny hlavního produktu (ploché klíče)
   cost_price_czk?: number;
   cost_price_eur?: number;
-  cost_price_usd?: number;
   cost_price_gbp?: number;
 }
