@@ -3,6 +3,8 @@ import * as Core from '../../../shared/imports/core-providers';
 export const CUSTOMER_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔍', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
   { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
+  // 🌟 NOVÉ TLAČÍTKO PRO ZOBRAZENÍ OBJEDNÁVEK:
+  { display_name: '📦', header_name: 'Orders', isActive: true, type: 'neutral_button', action: 'customer_orders' },
   { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
 ];
 

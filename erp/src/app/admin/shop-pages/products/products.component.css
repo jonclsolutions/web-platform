@@ -5,11 +5,13 @@
   font-family: Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #333;
 }
-.row{
+
+.row {
   display: flex;
-  gap:5px;
+  gap: 5px;
   padding-bottom: 4px;
 }
+
 /* ========== TOOLBAR ========== */
 .toolbar-section {
   background: #ffffff;
@@ -26,7 +28,7 @@
 .toolbar-header h1 {
   margin: 0;
   font-size: 1.4rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #222;
 }
 
@@ -35,7 +37,7 @@
   gap: 8px;
 }
 
-/* ========== MAIN LAYOUT ==========*/
+/* ========== MAIN LAYOUT ========== */
 .main-content-layout {
   display: flex;
   flex-direction: column;
@@ -43,37 +45,38 @@
   width: 100%;
   gap: 0;
 }
+
 @media (min-width: 1024px) {
   .main-content-layout {
     flex-direction: row;
     gap: 5px;
   }
 }
+
 .filter-side-panel {
   width: 100%;
   max-height: 0;
   opacity: 0;
   overflow: hidden;
   flex-shrink: 0;
-  transition: 
-    max-height 0.3s ease-out,
-    width 0.3s ease-out,
-    opacity 0.2s ease,
-    margin 0.3s ease;
+  transition: max-height 0.3s ease-out, width 0.3s ease-out, opacity 0.2s ease;
 }
 
-/* Mobilní / Vertikální zobrazení */
 .filter-side-panel.active {
-  max-height: 1000px; /* Dostatečná výška pro obsah filtrů */
+  max-height: 1000px;
   opacity: 1;
   margin-bottom: 15px;
+}
+
+@media (min-width: 1024px) {
+  .filter-side-panel { width: 0; max-height: none; }
+  .filter-side-panel.active { width: 280px; }
 }
 
 .table-and-pagination-container {
   flex: 1;
   min-width: 0;
   display: block;
-  overflow-x: auto;
 }
 
 .pagination-container {
@@ -82,104 +85,7 @@
   padding: 20px;
 }
 
-/* ========== BUTTON STYLES ==========*/
-.btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  margin-right: 10px;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #4F46E5;
-  color: white;
-  border: 1px solid transparent;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #4338CA;
-}
-
-.btn-secondary {
-  background: #ffffff;
-  color: #555;
-  border: 1px solid #dee2e6;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #f8f9fa;
-  border-color: #adb5bd;
-}
-
-.btn-small {
-  padding: 8px 12px;
-  font-size: 0.8rem;
-}
-
-.btn.danger {
-  background: #dc2626;
-  color: white;
-  border: 1px solid transparent;
-}
-
-.btn.danger:hover:not(:disabled) {
-  background: #b91c1c;
-}
-
-.btn-icon {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  background: #f8f9fa;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  border: 1px solid #dee2e6;
-}
-
-.btn-icon:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-  transform: scale(1.05);
-}
-
-.btn-icon.danger {
-  background: #fee;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
-.btn-icon.danger:hover {
-  background: #fdd;
-  border-color: #dc2626;
-}
-
-.btn-icon.small {
-  width: 32px;
-  height: 32px;
-  font-size: 0.9rem;
-}
-
-/* ========== MODAL STYLES ========== */
+/* ========== ZÁKLADNÍ MODAL SYSTÉM ========== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -194,473 +100,213 @@
   animation: fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .modal-content {
   display: flex;
   flex-direction: column;
   background: white;
-  border-radius: 6px; /* Přísnější ERP zaoblení */
+  border-radius: 12px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-  max-width: 500px;
   width: 95%;
-  max-height: 90vh; 
-  overflow: hidden; 
-  animation: slideUp 0.15s ease-out;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
 }
 
-/* Masivní roztažení pouze pro detail na velkou část plochy */
-.modal-detail {
-  max-width: 1400px;
-  width: 98%;
-  max-height: 92vh;
-}
+/* Velikosti modalů */
+.modal-detail   { max-width: 850px; background: #ffffff; }
+.modal-form     { max-width: 950px; }
+.modal-variants { max-width: 700px; }
+.modal-images   { max-width: 700px; }
 
-.modal-form {
-  max-width: 550px;
-}
-
-.modal-variants {
-  max-width: 650px;
-}
-
-.modal-images {
-  max-width: 650px;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(15px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
+/* ========== MODAL HEADER ========== */
 .modal-header {
-  flex-shrink: 0; 
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #ffffff;
-  z-index: 10;
-  min-height: 45px;
+  padding: 15px 25px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #0f172a;
 }
 
 .close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
   width: 32px;
   height: 32px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 1.5rem;
-  color: #94a3b8;
-  transition: color 0.1s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
   padding: 0;
 }
 
-.close-btn:hover {
-  color: #dc2626;
-}
+.close-btn:hover { color: #dc2626; }
 
-/* ========== MODAL BODY (Oprava scrollování) ========== */
+/* ========== MODAL BODY ========== */
 .modal-body {
-  flex: 1 1 auto; 
-  min-height: 0;   
   padding: 25px;
-  overflow-y: auto; 
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  flex: 1;
 }
 
-/* Vyčištění paddingu těla specificky pro detail - data sahají až ke krajům */
-.modal-detail .modal-body {
-  padding: 10px 0;
-  background: #ffffff;
-}
-
-/* ========== IMAGE CARDS (Zajištění fixní výšky karet) ========== */
-.image-card {
-  flex-shrink: 0; 
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  padding: 0;
-  margin-bottom: 12px;
-  background: white;
-  overflow: hidden;
-}
-
-.modal-footer {
-  flex-shrink: 0;
-  padding: 14px 24px;
-  border-top: 1px solid #e2e8f0;
+/* ========== MODAL FOOTER ========== */
+.modal-footer,
+.modal-footer-inline {
+  padding: 15px 25px;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  background: #ffffff;
+  flex-shrink: 0;
 }
 
-/* ========== NOVÝ PROFESIONÁLNÍ STYL PRO DETAIL SECTIONS ========== */
-.modal-detail .detail-section {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.modal-detail .detail-section h3 {
-  margin: 0;
-  padding: 12px 24px 6px 24px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #4F46E5; /* Korporátní barva sekce */
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: #f8fafc; /* Velmi jemný podklad pod nadpisem sekce */
-  border-top: 1px solid #f1f5f9;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.modal-detail .detail-section:first-child h3 {
-  border-top: none;
-}
-
-/* Přetvoření gridu v detailu na jednolité řádky bez ohraničení a okna v okně */
-.modal-detail .info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.modal-detail .info-row {
-  display: flex;
-  flex-direction: row; /* Změna z column na row pro tabulkový vzhled */
-  align-items: baseline;
-  padding: 8px 24px;
-  border-bottom: 1px solid #f1f5f9;
-  gap: 0;
-}
-
-.modal-detail .info-row:last-child {
-  border-bottom: none;
-}
-
-/* Decentní střídání řádků pro rychlou orientaci očí */
-.modal-detail .info-row:nth-child(even) {
-  background-color: #f8fafc;
-}
-
-.modal-detail .info-row label {
-  flex: 0 0 250px; /* Pevný sloupec pro štítky */
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: #64748b;
-  text-transform: none;
-  letter-spacing: normal;
-}
-
-.modal-detail .info-row span {
-  flex: 1;
-  font-size: 0.88rem;
-  color: #1e293b;
-}
-
-/* Úprava vizuálních prvků uvnitř detailu */
-.modal-detail .price {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.modal-detail .stock-warning {
-  color: #ef4444;
-  font-weight: 600;
-}
-
-.modal-detail .mono {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  font-size: 0.82rem;
-  color: #0f172a;
-}
-
-.modal-detail .badge-yes {
-  color: #16a34a;
-  font-weight: 500;
-}
-
-.modal-detail .badge-no {
-  color: #ef4444;
-  font-weight: 500;
-}
-
-/* Úprava seznamu variant uvnitř detailu (Lineární ERP vzhled) */
-.modal-detail .variants-list {
-  gap: 0;
-}
-
-.modal-detail .variant-item {
+/* ========== BUTTONS ========== */
+.btn {
+  padding: 10px 16px;
   border: none;
-  border-bottom: 1px solid #f1f5f9;
-  border-radius: 0;
-  padding: 12px 24px;
-  background: #ffffff;
-  display: grid;
-  grid-template-columns: 200px 200px 1fr 120px; /* Čisté sloupcové uspořádání */
-  align-items: center;
-  gap: 15px;
-  font-size: 0.85rem;
-}
-
-.modal-detail .variant-item:nth-child(even) {
-  background-color: #f8fafc;
-}
-
-.modal-detail .variant-name {
-  margin-bottom: 0;
+  border-radius: 8px;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #0f172a;
-}
-
-.modal-detail .variant-details {
-  margin-bottom: 0;
-  color: #64748b;
-}
-
-.modal-detail .variant-pricing {
-  margin-bottom: 0;
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.modal-detail .variant-pricing .row {
+  cursor: pointer;
+  transition: all 0.2s ease;
   display: inline-flex;
-  gap: 4px;
-  padding-bottom: 0;
-}
-
-.modal-detail .variant-stock {
-  text-align: right;
-  color: #334155;
-}
-
-/* Úprava galerie obrázků uvnitř detailu */
-.modal-detail .images-grid {
-  padding: 16px 24px;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 10px;
-}
-
-.modal-detail .image-item {
-  border-radius: 4px;
-  border-color: #e2e8f0;
-}
-
-.modal-detail .thumbnail {
-  height: 90px;
-}
-
-.modal-detail .primary-badge {
-  top: 4px;
-  left: 4px;
-  font-size: 0.65rem;
-  padding: 2px 4px;
-  border-radius: 2px;
-}
-
-/* Takhle vypadaly původní obecné styly pro detail (Zůstávají jako fallback pro ostatní moduly) */
-.detail-section {
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.detail-section h3 {
-  margin: 0 0 15px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
-}
-
-.detail-section:last-child {
-  border-bottom: none;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.info-row {
-  display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-.info-row label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.info-row span {
-  font-size: 0.95rem;
-  color: #333;
-  word-break: break-word;
-}
-
-.price {
-  font-weight: 600;
-  color: #4F46E5;
-}
-
-.stock-warning {
-  color: #dc2626;
-  font-weight: 600;
-}
-
-.mono {
-  font-family: 'Courier New', monospace;
-  font-size: 0.8rem;
-}
-
-.badge-yes {
-  color: #28a745;
-  font-weight: 600;
-}
-
-.badge-no {
-  color: #dc2626;
-  font-weight: 600;
-}
-
-/* ========== VARIANTS LIST ========== */
-.variants-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.variant-item {
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  padding: 12px;
-  background: #f8f9fa;
-}
-
-.variant-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #333;
-  margin-bottom: 6px;
-}
-
-.variant-details {
-  font-size: 0.8rem;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.variant-details .separator {
-  margin: 0 8px;
-}
-
-.variant-pricing {
-  font-size: 0.8rem;
-  margin-bottom: 8px;
-}
-
-.variant-pricing .label {
-  font-weight: 600;
-  color: #666;
-}
-
-.variant-stock {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-/* ========== IMAGES GRID ========== */
-.images-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 12px;
-}
-
-.image-item {
-  position: relative;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-}
-
-.thumbnail {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-}
-
-.primary-badge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  font-size: 0.7rem;
-  padding: 3px 6px;
-  background: #28a745;
+.btn-primary {
+  background: #4F46E5;
   color: white;
-  border-radius: 3px;
-  font-weight: 600;
+  border: 1px solid transparent;
 }
 
-/* ========== FORMS ========== */
-.product-form,
-.variant-form,
-.image-form {
+.btn-primary:hover:not(:disabled) { background: #4338CA; }
+
+.btn-secondary {
+  background: #ffffff;
+  color: #555;
+  border: 1px solid #dee2e6;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #dee2e6;
+  background: #f8f9fa;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.btn-icon:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: scale(1.05);
+}
+
+.btn-icon.danger {
+  background: #fff0f0;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-icon.danger:hover {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.btn-icon.small {
+  width: 32px;
+  height: 32px;
+  font-size: 0.9rem;
+}
+
+/* ========== BADGES ========== */
+.badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.badge-yes { color: #16a34a; font-weight: 600; }
+.badge-no  { color: #ef4444; font-weight: 600; }
+
+.cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin: 2px;
+}
+
+.detail-categories-list {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
+/* ========== FORMULÁŘE ========== */
 fieldset {
   border: 1px solid #dee2e6;
   border-radius: 6px;
   padding: 16px;
-  margin-bottom: 0;
+  margin-bottom: 15px;
   background: #f8f9fa;
 }
 
 legend {
   font-weight: 600;
-  font-size: 0.95rem;
-  color: #333;
+  color: #4b5563;
   padding: 0 8px;
-  margin-left: -8px;
+  font-size: 0.95rem;
 }
+
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.form-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
 .form-group label {
@@ -679,14 +325,14 @@ legend {
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 10px 12px;
+  padding: 10px;
   border: 1px solid #dee2e6;
   border-radius: 6px;
   font-size: 0.9rem;
-  font-family: Arial, sans-serif;
-  transition: all 0.15s ease;
+  font-family: inherit;
   background: white;
   box-sizing: border-box;
+  transition: all 0.15s ease;
 }
 
 .form-group input:focus,
@@ -705,90 +351,10 @@ legend {
   cursor: not-allowed;
 }
 
-/* --- NOVÉ / UPRAVENÉ CSS PRO MULTIKATEGORIE (ČIPY A DROPDOWN) --- */
-.selected-categories-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 6px;
-  min-height: 42px;
-  align-items: center;
-}
-
-.category-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  padding: 4px 10px;
-  border-radius: 16px;
-  font-size: 0.85rem;
-  color: #334155;
-  transition: all 0.15s ease;
-}
-
-.category-chip.is-primary {
-  background: #e0e7ff;
-  border-color: #818cf8;
-  color: #4338ca;
-  font-weight: 600;
-}
-
-.category-chip-name {
-  cursor: pointer;
-  user-select: none;
-}
-
-.category-chip-name:hover {
-  text-decoration: underline;
-}
-
-.category-chip-remove {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #94a3b8;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: bold;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.category-chip-remove:hover {
-  color: #ef4444;
-}
-
-.add-category-row {
-  margin-top: 10px;
-  max-width: 400px;
-}
-/* ----------------------------------------------------------------- */
-
-/* Automaticky kalkulované ceny bez DPH */
-.auto-calculated {
-  background-color: #f0f7ff !important;
-  color: #1976d2 !important;
-  font-weight: 500;
-}
-
-.form-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.form-row-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 15px;
+.form-hint {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 4px 0 0 0;
 }
 
 .checkbox-group {
@@ -813,29 +379,92 @@ legend {
   cursor: pointer;
   margin: 0;
   accent-color: #4F46E5;
-  border-radius: 3px;
 }
 
-/* ========== MULTI-CURRENCY GRIDS ========== */
+/* ========== KATEGORIE — CHIPY ========== */
+.category-manager-block {
+  margin-bottom: 5px;
+}
+
+.selected-categories-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  min-height: 40px;
+  align-items: center;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.category-chip.is-primary {
+  background: #e0e7ff;
+  border-color: #818cf8;
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.chip-title {
+  cursor: pointer;
+  user-select: none;
+}
+
+.chip-title:hover { text-decoration: underline; }
+
+.chip-remove-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.chip-remove-btn:hover { color: #ef4444; }
+
+.add-category-row {
+  margin-top: 10px;
+  max-width: 400px;
+}
+
+/* ========== MULTI-CURRENCY ========== */
 .multi-currency-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  gap: 15px;
 }
 
 .currency-row-inputs {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 14px;
   background: white;
-  border: 1px solid #e9ecef;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
 }
 
 .currency-indicator-label {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #4F46E5;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -844,7 +473,7 @@ legend {
 .multi-currency-variant-paths {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .variant-currency-row {
@@ -853,16 +482,16 @@ legend {
   gap: 10px;
   padding: 12px;
   background: white;
-  border: 1px solid #e9ecef;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
 }
 
 .currency-badge-static {
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: white;
   background: #4F46E5;
-  padding: 4px 8px;
+  padding: 3px 8px;
   border-radius: 4px;
   text-align: center;
   text-transform: uppercase;
@@ -870,47 +499,75 @@ legend {
   width: fit-content;
 }
 
+/* ========== VAT KALKULÁTOR ========== */
 .vat-calculator {
-  background: linear-gradient(135deg, #eef6ff 0%, #e0f2fe 100%);
-  border: 2px solid #c7d2e8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   border-radius: 8px;
   padding: 16px;
   margin: 12px 0;
 }
 
 .vat-calculator h4 {
-  margin: 0 0 16px 0;
-  font-size: 0.95rem;
+  margin: 0 0 14px 0;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #1976d2;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
-.note {
-  font-size: 0.85rem;
-  color: #dc2626;
-  margin: 0;
-  padding: 10px 12px;
-  background: #fee;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  line-height: 1.5;
+.auto-calculated {
+  background-color: #f0f7ff !important;
+  color: #1976d2 !important;
+  font-weight: 500;
 }
 
-/* ========== VARIANT & IMAGE CARDS ========== */
+/* ========== SOUHRN CEN (stejný styl jako v orders) ========== */
+.summary-section {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.summary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 350px;
+  margin-left: auto;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.summary-row.total {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px solid #ddd;
+  font-weight: 700;
+}
+
+.total-amount {
+  font-size: 1.2rem;
+  color: #4F46E5;
+}
+
+/* ========== VARIANTY — KARTY ========== */
 .variant-card {
   border: 1px solid #dee2e6;
   border-radius: 6px;
-  padding: 16px;
+  padding: 15px;
   margin-bottom: 12px;
-  background: white;
+  background: #ffffff;
 }
 
 .variant-card.deleted {
-  opacity: 0.5;
-  background: #f5f5f5;
+  opacity: 0.4;
   border-style: dashed;
+  pointer-events: none;
 }
 
 .variant-header {
@@ -934,29 +591,46 @@ legend {
   gap: 6px;
 }
 
+/* ========== OBRÁZKY — KARTY ========== */
+.image-card {
+  flex-shrink: 0;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  background: white;
+  overflow: hidden;
+}
+
 .image-card.deleted {
-  opacity: 0.5;
-  background: #f5f5f5;
+  opacity: 0.4;
   border-style: dashed;
+  pointer-events: none;
+}
+
+.image-card.variant-image {
+  opacity: 0.7;
 }
 
 .image-card-grid {
   display: grid;
   grid-template-columns: 180px 1fr;
-  gap: 20px;
-  padding: 16px;
+  gap: 0;
 }
 
 .image-preview-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
+  background: #f8fafc;
+  border-right: 1px solid #dee2e6;
+  padding: 16px;
+  align-items: center;
 }
 
 .image-preview-box {
-  width: 180px;
-  height: 180px;
-  border: 1px solid #dee2e6;
+  width: 140px;
+  height: 140px;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   overflow: hidden;
   background: white;
@@ -972,26 +646,30 @@ legend {
 }
 
 .image-placeholder {
-  color: #999;
-  font-size: 0.9rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
   text-align: center;
+  padding: 10px;
 }
 
 .primary-badge-inline {
-  font-size: 0.75rem;
-  background: #28a745;
+  font-size: 0.72rem;
+  background: #10b981;
   color: white;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 3px;
   display: inline-block;
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .image-form-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 .image-header {
@@ -999,19 +677,26 @@ legend {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  padding: 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid #dee2e6;
   background: #f8f9fa;
 }
 
 .filename {
-  font-size: 0.8rem;
-  color: #666;
+  font-size: 0.78rem;
+  color: #64748b;
   font-family: monospace;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.image-form {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .file-input {
@@ -1021,18 +706,14 @@ legend {
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .file-input:focus {
   outline: none;
   border-color: #4F46E5;
   box-shadow: 0 0 0 1px #4F46E5, 0 0 0 3px rgba(79, 70, 229, 0.2);
-}
-
-.form-hint {
-  font-size: 0.8rem;
-  color: #666;
-  margin: 4px 0 0 0;
 }
 
 .form-input {
@@ -1043,6 +724,8 @@ legend {
   width: 100%;
   box-sizing: border-box;
   transition: all 0.15s ease;
+  font-family: inherit;
+  background: white;
 }
 
 .form-input:focus {
@@ -1051,55 +734,21 @@ legend {
   box-shadow: 0 0 0 1px #4F46E5, 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
-.variant-image-info {
-  padding: 16px;
-}
-
-.variant-image-note {
-  background: #fffbf0;
-  border: 1px solid #ffc107;
-  color: #856404;
-  padding: 12px;
-  border-radius: 6px;
+/* ========== NOTE / WARNING ========== */
+.note {
   font-size: 0.85rem;
-  line-height: 1.6;
-}
-
-.image-card.variant-image {
-  opacity: 0.7;
-}
-
-.images-grid-small {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.image-thumb {
-  width: 100px;
-  height: 100px;
-  border: 1px solid #dee2e6;
+  color: #dc2626;
+  margin: 0 0 10px 0;
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 6px;
-  overflow: hidden;
-  background: white;
+  line-height: 1.5;
 }
 
-.thumb-small {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.variant-images-preview {
-  margin-top: 12px;
-  padding: 12px 0;
-  border-top: 1px solid #dee2e6;
-}
-
-/* ========== ERROR ========== */
+/* ========== ERROR BANNER ========== */
 .error-banner {
-  background: #fee;
+  background: #fef2f2;
   border: 1px solid #fecaca;
   color: #991b1b;
   padding: 12px;
@@ -1111,42 +760,359 @@ legend {
 
 .empty-state {
   text-align: center;
-  color: #adb5bd;
+  color: #94a3b8;
   padding: 30px 20px;
+  font-style: italic;
 }
 
-@media (min-width: 1024px) {
-  .filter-side-panel {
-    width: 0;
-    max-height: none; 
-    margin-bottom: 0;
-  }
-  
-  .filter-side-panel.active {
-    width: 280px; 
-    opacity: 1;
-  }
+/* ========== DETAIL MODAL (stejný jazyk jako orders modal-detail) ========== */
+.modal-detail .modal-body {
+  padding: 16px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-/* ========== RESPONSIVE ========== */
+/* Sekce v detailu */
+.modal-detail .detail-section {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.modal-detail .detail-section h3 {
+  margin: 0;
+  padding: 10px 20px 8px 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4F46E5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-detail .detail-section:first-child h3 {
+  border-top: none;
+}
+
+/* Info řádky — tabulkový ERP styl */
+.modal-detail .info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.modal-detail .info-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  padding: 8px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 0;
+}
+
+.modal-detail .info-row:last-child {
+  border-bottom: none;
+}
+
+.modal-detail .info-row:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.modal-detail .info-row label {
+  flex: 0 0 220px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.modal-detail .info-row span {
+  flex: 1;
+  font-size: 0.84rem;
+  color: #1e293b;
+}
+
+/* Speciální hodnoty */
+.modal-detail .price {
+  font-weight: 600;
+  color: #4F46E5;
+}
+
+.modal-detail .stock-warning {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.modal-detail .mono {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #0f172a;
+}
+
+.modal-detail .badge-yes {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.modal-detail .badge-no {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ========== VARIANTY V DETAILU ========== */
+.modal-detail .variants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.modal-detail .variant-item {
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 0;
+  padding: 10px 20px;
+  background: #ffffff;
+  display: grid;
+  grid-template-columns: 180px 180px 1fr 100px;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.84rem;
+}
+
+.modal-detail .variant-item:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.modal-detail .variant-name {
+  margin-bottom: 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.modal-detail .variant-details {
+  margin-bottom: 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.modal-detail .variant-details .separator {
+  margin: 0 6px;
+}
+
+.modal-detail .variant-pricing {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.modal-detail .variant-pricing .row {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding-bottom: 0;
+  font-size: 0.82rem;
+}
+
+.modal-detail .variant-pricing .label {
+  color: #64748b;
+  font-weight: 500;
+  min-width: 130px;
+}
+
+.modal-detail .variant-stock {
+  text-align: right;
+  color: #334155;
+  font-weight: 500;
+}
+
+/* ========== OBRÁZKY V DETAILU ========== */
+.modal-detail .images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+  padding: 14px 20px;
+}
+
+.modal-detail .image-item {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.modal-detail .thumbnail {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+}
+
+.modal-detail .primary-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 0.65rem;
+  padding: 2px 5px;
+  background: #10b981;
+  color: white;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+/* Fallback obecné styly pro detail (mimo .modal-detail) */
+.detail-section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.detail-section:last-child { border-bottom: none; }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-row label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.info-row span {
+  font-size: 0.9rem;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.price    { font-weight: 600; color: #4F46E5; }
+.stock-warning { color: #dc2626; font-weight: 600; }
+.mono     { font-family: 'Courier New', monospace; font-size: 0.8rem; }
+.badge-yes { color: #16a34a; font-weight: 600; }
+.badge-no  { color: #dc2626; font-weight: 600; }
+
+/* Fallback varianty (mimo .modal-detail) */
+.variants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.variant-item {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 12px;
+  background: #f8f9fa;
+}
+
+.variant-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.variant-details {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.variant-details .separator { margin: 0 8px; }
+
+.variant-pricing {
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+
+.variant-pricing .label {
+  font-weight: 600;
+  color: #666;
+}
+
+.variant-stock {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Fallback obrázky (mimo .modal-detail) */
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.image-item {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+}
+
+.primary-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  background: #10b981;
+  color: white;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+/* ========== ANIMACE ========== */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ========== RESPONSIVITA ========== */
 @media (max-width: 768px) {
-  .products-container {
-    padding: 10px;
+  .modal-content {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
   }
+
+  .modal-body { display: block; overflow-y: auto; }
 
   .toolbar-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
   }
 
   .toolbar-actions {
     width: 100%;
     flex-wrap: wrap;
-  }
-
-  .btn {
-    font-size: 0.85rem;
-    padding: 8px 12px;
+    gap: 8px;
   }
 
   .form-row-2,
@@ -1156,96 +1122,67 @@ legend {
     grid-template-columns: 1fr;
   }
 
-  /* Mobilní zobrazení pro upravený detail */
-  .modal-detail .info-row {
-    flex-direction: column;
-    padding: 10px 16px;
-    gap: 4px;
-  }
-  
-  .modal-detail .info-row label {
-    flex: none;
-    width: 100%;
-    color: #94a3b8;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .modal-detail .variant-item {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 12px 16px;
-  }
-  
-  .modal-detail .variant-stock {
-    text-align: left;
-  }
-
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-
   .image-card-grid {
     grid-template-columns: 1fr;
   }
 
-  .variant-pricing {
-    grid-template-columns: 1fr;
+  .image-preview-section {
+    border-right: none;
+    border-bottom: 1px solid #dee2e6;
+    flex-direction: row;
+    padding: 12px 16px;
+    gap: 16px;
+    align-items: flex-start;
   }
 
-  .modal-content {
-    max-width: 100%;
-    width: 100%;
-    height: 100%;
-    max-height: 100vh;
-    border-radius: 0;
+  .image-preview-box {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
   }
-  .modal-body {
-    display: block;
-    overflow-y: auto;
-  }
-  .toolbar-header {
+
+  .modal-detail .info-row {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    padding: 8px 16px;
+    gap: 3px;
   }
-  .modal-footer {
-    position: static; 
-    border-top: 1px solid #dee2e6;
-    background: #ffffff;
-    padding-bottom: 30px;
-  }
-  .toolbar-actions {
+
+  .modal-detail .info-row label {
+    flex: none;
     width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 8px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+  }
+
+  .modal-detail .variant-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 16px;
+  }
+
+  .modal-detail .variant-stock {
+    text-align: left;
+  }
+
+  .modal-footer {
+    position: static;
+    padding-bottom: 30px;
   }
 }
 
 @media (max-width: 480px) {
-  .toolbar-header h1 {
-    font-size: 1.2rem;
-  }
+  .toolbar-header h1 { font-size: 1.2rem; }
+  .modal-header h2   { font-size: 1rem; }
+  .modal-overlay { background: white; }
 
-  .modal-header h2 {
-    font-size: 1.1rem;
-  }
-
-  .modal-content {
-    width: 100%;
-    height: 100%;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .modal-overlay {
-    background: white;
+  .image-preview-section {
+    padding: 10px;
   }
 
   .image-preview-box {
-    width: 100%;
-    max-width: 150px;
+    width: 80px;
+    height: 80px;
   }
 }

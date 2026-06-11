@@ -346,7 +346,20 @@ setTableMode(mode: any): void {
       }
     });
   }
+isStatusReached(currentStatus: string, stepKey: string): boolean {
+    const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+    
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    const stepIndex = statusOrder.indexOf(stepKey);
 
+    // Pokud stav v systému neexistuje (např. 'canceled'), krok označen jako hotový nebude
+    if (currentIndex === -1 || stepIndex === -1) {
+      return false;
+    }
+
+    // Krok je hotový, pokud je jeho pozice v poli menší nebo rovna aktuálnímu stavu
+    return stepIndex <= currentIndex;
+  }
   closeDetailsModal(): void {
     this.showDetailsModal = false;
     this.selectedOrderForDetail = null;
@@ -543,7 +556,7 @@ validateCouponRealtime(coupon: Coupon, totalAmount: number): CouponValidationRes
 
   // ========== SAVE OBJEDNÁVKA ==========
 
-  saveOrder(): void {
+saveOrder(): void {
     if (this.isProcessing || !this.editingOrder || !this.validateOrder()) return;
 
     this.isProcessing = true;
@@ -591,6 +604,26 @@ validateCouponRealtime(coupon: Coupon, totalAmount: number): CouponValidationRes
         this.editingOrder = null;
         this.toggleBodyScroll(false);
         this.refreshData();
+
+        // 🌟 AKTUALIZACE DETAILU: Pokud upravuješ objednávku z otevřeného detailu, načteme nová data ze serveru
+        if (this.showDetailsModal && this.selectedOrderForDetail?.id) {
+          this.loadingService.show();
+          this.getItemDetails(this.selectedOrderForDetail.id).pipe(
+            Core.finalize(() => {
+              this.loadingService.hide();
+              this.cd.markForCheck();
+            }),
+            Core.takeUntil(this.destroy$)
+          ).subscribe({
+            next: (updatedOrder) => {
+              this.selectedOrderForDetail = updatedOrder;
+              this.toggleBodyScroll(true); // Udržíme scroll-lock na body, protože detail modal zůstává otevřený
+            },
+            error: () => {
+              console.error('Nepodařilo se zaktualizovat data v detailu objednávky.');
+            }
+          });
+        }
       },
       error: (err) => {
         const message = err.error?.message || 'Chyba při ukládání objednávky.';

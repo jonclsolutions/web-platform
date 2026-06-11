@@ -5,13 +5,13 @@ import * as Core from '../../../shared/imports/core-providers';
  * Definováno jako objekty pro kompatibilitu s inteligentním Filter Form Builderem
  */
 export const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Čeká na potvrzení' },
-  { value: 'confirmed', label: 'Potvrzena' },
-  { value: 'processing', label: 'Zpracovávání' },
-  { value: 'shipped', label: 'Odeslána' },
-  { value: 'delivered', label: 'Doručena' },
-  { value: 'returned', label: 'Vrácena' },
-  { value: 'canceled', label: 'Zrušena' },
+  { value: 'pending',    label: 'Přijata' },
+  { value: 'confirmed',  label: 'Potvrzena' },
+  { value: 'processing', label: 'Zpracovávána' },
+  { value: 'shipped',    label: 'Odeslána' },
+  { value: 'delivered',  label: 'Doručena' },
+  { value: 'canceled',   label: 'Zruseno' },
+  { value: 'returned',   label: 'Vraceno' }
 ];
 
 export const PAYMENT_STATUS_OPTIONS = [

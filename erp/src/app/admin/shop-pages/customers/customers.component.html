@@ -1,8 +1,6 @@
 <div class="customers-container container mx-auto p-4">
   @if (errorMessage) {
-    <div class="error-banner">
-      ⚠️ {{ errorMessage }}
-    </div>
+    <div class="error-banner">⚠️ {{ errorMessage }}</div>
   }
 
   @if (!errorMessage) {
@@ -16,6 +14,7 @@
           </app-button-builder>
         </div>
       </div>
+
       <div class="main-content-layout">
         <div class="filter-side-panel" [class.active]="isFilterVisible">
           <app-filter-form-builder
@@ -25,6 +24,7 @@
             (filtersCleared)="clearFilters()">
           </app-filter-form-builder>
         </div>
+
         <div class="table-and-pagination-container">
           @if (!showTrashTable) {
             <app-table-builder #activeTable
@@ -39,9 +39,11 @@
               (itemDeleted)="handleItemDeleted()"
               (createFormOpened)="handleCreateFormOpened()"
               (editFormOpened)="handleEditFormOpened($event)"
-              (viewDetailsOpened)="handleViewDetails($event)">
+              (viewDetailsOpened)="handleViewDetails($event)"
+              (customerOrdersOpened)="showCustomerOrders($event)">
             </app-table-builder>
           }
+
           @if (showTrashTable) {
             <app-trash-table-builder
               [data]="trashData"
@@ -51,6 +53,7 @@
               (itemRestored)="handleItemRestored()">
             </app-trash-table-builder>
           }
+
           <div class="flex justify-between items-center mt-4">
             <app-pagination-buttons-builder
               [currentPage]="showTrashTable ? trashCurrentPage : currentPage"
@@ -84,4 +87,262 @@
     [itemData]="selectedItemForDetails"
     (closeDetails)="handleCloseDetails()">
   </app-details-builder>
+}
+
+<!-- ============================================================
+     MODAL: OBJEDNÁVKY ZÁKAZNÍKA
+     ============================================================ -->
+@if (showOrdersModal && selectedCustomerForOrders) {
+  <div class="orders-overlay" (click)="closeOrdersModal()">
+    <div class="orders-modal" (click)="$event.stopPropagation()">
+
+      <!-- HLAVIČKA -->
+      <div class="orders-modal-header">
+        <div class="orders-modal-header-left">
+          <div class="orders-customer-avatar">
+            {{ selectedCustomerForOrders.first_name?.[0] ?? '?' }}{{ selectedCustomerForOrders.last_name?.[0] ?? '' }}
+          </div>
+          <div class="orders-modal-title-block">
+            <h2 class="orders-modal-title">
+              {{ selectedCustomerForOrders.first_name }} {{ selectedCustomerForOrders.last_name }}
+            </h2>
+            <span class="orders-modal-subtitle">
+              {{ selectedCustomerForOrders.email }}
+              @if (selectedCustomerForOrders.phone) {
+                <span class="orders-sep">·</span> {{ selectedCustomerForOrders.phone }}
+              }
+            </span>
+          </div>
+        </div>
+
+        <div class="orders-modal-header-right">
+          <div class="orders-stats">
+            <div class="orders-stat">
+              <span class="orders-stat-value">{{ ordersTotalItems }}</span>
+              <span class="orders-stat-label">Objednávek</span>
+            </div>
+            <div class="orders-stat-divider"></div>
+            <div class="orders-stat">
+              <span class="orders-stat-value">{{ formatCurrency(selectedCustomerForOrders.total_spent ?? 0) }}</span>
+              <span class="orders-stat-label">Celková útrata</span>
+            </div>
+          </div>
+          <button class="orders-close-btn" (click)="closeOrdersModal()" title="Zavřít">✕</button>
+        </div>
+      </div>
+
+      <!-- TĚLO -->
+      <div class="orders-modal-body">
+
+        <!-- Načítání -->
+        @if (customerOrdersLoading) {
+          <div class="orders-loading">
+            <div class="orders-spinner"></div>
+            <span>Načítání objednávek…</span>
+          </div>
+        }
+
+        <!-- Chyba -->
+        @if (!customerOrdersLoading && customerOrdersError) {
+          <div class="orders-error">
+            <span class="orders-error-icon">⚠️</span>
+            {{ customerOrdersError }}
+          </div>
+        }
+
+        <!-- Prázdný stav -->
+        @if (!customerOrdersLoading && !customerOrdersError && customerOrders.length === 0) {
+          <div class="orders-empty">
+            <div class="orders-empty-icon">📦</div>
+            <p class="orders-empty-title">Zákazník zatím nemá žádné objednávky.</p>
+          </div>
+        }
+
+        <!-- SEZNAM OBJEDNÁVEK -->
+        @if (!customerOrdersLoading && customerOrders.length > 0) {
+          <div class="orders-list">
+            @for (order of customerOrders; track order.id) {
+              <div class="order-card" [class.order-card-expanded]="ordersExpandedId === order.id">
+
+                <!-- Řádek objednávky -->
+                <div class="order-row" (click)="toggleOrderExpand(order.id)">
+                  <div class="order-row-main">
+                    <div class="order-number-block">
+                      <span class="order-number">#{{ order.order_number }}</span>
+                      <span class="order-date">{{ formatDate(order.created_at) }}</span>
+                    </div>
+
+                    <div class="order-badges">
+                      <span class="order-status-badge" [class]="getStatusClass(order.status)">
+                        {{ order.status_label ?? order.status }}
+                      </span>
+                      <span class="order-pay-badge" [class]="getPaymentStatusClass(order.payment_status)">
+                        {{ order.payment_status_label ?? order.payment_status }}
+                      </span>
+                    </div>
+
+                    <div class="order-amounts">
+                      @if (order.items_count != null) {
+                        <span class="order-items-count">{{ order.items_count }} pol.</span>
+                      }
+                      <span class="order-final-amount">{{ formatCurrency(order.final_amount) }}</span>
+                    </div>
+                  </div>
+
+                  <button class="order-expand-btn" [class.order-expand-btn-open]="ordersExpandedId === order.id">
+                    ›
+                  </button>
+                </div>
+
+                <!-- Detail objednávky (rozbalený) -->
+                @if (ordersExpandedId === order.id) {
+                  <div class="order-detail">
+
+                    <!-- Info řádky -->
+                    <div class="order-detail-grid">
+                      <div class="order-detail-section">
+                        <h4 class="order-detail-section-title">Doručení</h4>
+                        @if (order.shipping_address) {
+                          <p class="order-detail-line">
+                            <span class="odl-label">Adresa</span>
+                            <span>{{ order.shipping_address }}, {{ order.shipping_city }} {{ order.shipping_postal_code }}</span>
+                          </p>
+                        }
+                        @if (order.shipping_method?.name) {
+                          <p class="order-detail-line">
+                            <span class="odl-label">Doprava</span>
+                            <span>{{ order.shipping_method.name }}</span>
+                          </p>
+                        }
+                        @if (order.payment_method?.name) {
+                          <p class="order-detail-line">
+                            <span class="odl-label">Platba</span>
+                            <span>{{ order.payment_method.name }}</span>
+                          </p>
+                        }
+                        @if (order.paid_at) {
+                          <p class="order-detail-line">
+                            <span class="odl-label">Zaplaceno</span>
+                            <span>{{ formatDate(order.paid_at) }}</span>
+                          </p>
+                        }
+                        @if (order.shipped_at) {
+                          <p class="order-detail-line">
+                            <span class="odl-label">Odesláno</span>
+                            <span>{{ formatDate(order.shipped_at) }}</span>
+                          </p>
+                        }
+                        @if (order.notes) {
+                          <p class="order-detail-line">
+                            <span class="odl-label">Poznámka</span>
+                            <span>{{ order.notes }}</span>
+                          </p>
+                        }
+                      </div>
+
+                      <div class="order-detail-section">
+                        <h4 class="order-detail-section-title">Souhrn cen</h4>
+                        <p class="order-detail-line">
+                          <span class="odl-label">Mezisoučet</span>
+                          <span>{{ formatCurrency(order.total_amount) }}</span>
+                        </p>
+                        @if (order.shipping_amount > 0) {
+                          <p class="order-detail-line">
+                            <span class="odl-label">Doprava</span>
+                            <span>{{ formatCurrency(order.shipping_amount) }}</span>
+                          </p>
+                        }
+                        @if (order.discount_amount > 0) {
+                          <p class="order-detail-line order-detail-line-discount">
+                            <span class="odl-label">Sleva</span>
+                            <span>−{{ formatCurrency(order.discount_amount) }}</span>
+                          </p>
+                        }
+                        @if (order.tax_amount > 0) {
+                          <p class="order-detail-line">
+                            <span class="odl-label">DPH</span>
+                            <span>{{ formatCurrency(order.tax_amount) }}</span>
+                          </p>
+                        }
+                        <p class="order-detail-line order-detail-line-total">
+                          <span class="odl-label">Celkem</span>
+                          <span>{{ formatCurrency(order.final_amount) }}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Položky objednávky -->
+                    @if (order.items && order.items.length > 0) {
+                      <div class="order-items-section">
+                        <h4 class="order-detail-section-title">Položky ({{ order.items.length }})</h4>
+                        <div class="order-items-table">
+                          <div class="order-items-header">
+                            <span class="oi-name">Produkt</span>
+                            <span class="oi-qty">Ks</span>
+                            <span class="oi-price">Jedn. cena</span>
+                            <span class="oi-total">Celkem</span>
+                          </div>
+                          @for (item of order.items; track item.id) {
+                            <div class="order-item-row">
+                              <span class="oi-name">
+                                {{ item.product_name }}
+                                @if (item.variant_name) {
+                                  <span class="oi-variant">— {{ item.variant_name }}</span>
+                                }
+                              </span>
+                              <span class="oi-qty">{{ item.quantity }}</span>
+                              <span class="oi-price">{{ formatCurrency(item.unit_price) }}</span>
+                              <span class="oi-total">{{ formatCurrency(item.total_price) }}</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                  </div>
+                }
+
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- PATIČKA S PAGINACÍ -->
+      @if (!customerOrdersLoading && ordersTotalPages > 1) {
+        <div class="orders-modal-footer">
+          <span class="orders-pagination-info">
+            {{ (ordersCurrentPage - 1) * ordersPerPage + 1 }}–{{ maxDisplayedOrdersCount }} z {{ ordersTotalItems }}
+          </span>
+          <div class="orders-pagination">
+            <button
+              class="opag-btn"
+              [disabled]="ordersCurrentPage === 1"
+              (click)="ordersChangePage(ordersCurrentPage - 1)">
+              ‹
+            </button>
+            @for (page of getOrderPages(); track $index) {
+              @if (page === -1) {
+                <span class="opag-ellipsis">…</span>
+              } @else {
+                <button
+                  class="opag-btn"
+                  [class.opag-btn-active]="page === ordersCurrentPage"
+                  (click)="ordersChangePage(page)">
+                  {{ page }}
+                </button>
+              }
+            }
+            <button
+              class="opag-btn"
+              [disabled]="ordersCurrentPage === ordersTotalPages"
+              (click)="ordersChangePage(ordersCurrentPage + 1)">
+              ›
+            </button>
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
 }

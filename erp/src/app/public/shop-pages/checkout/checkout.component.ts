@@ -1,5 +1,4 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
-
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../components/services/cart.service';
@@ -44,11 +43,28 @@ export class CheckoutComponent implements OnInit {
     agreeToTerms: false
   };
 
+  // Objekt pro ukládání chybových zpráv pro jednotlivá pole (Real-time validace)
+  errors: { [key: string]: string } = {
+    email: '',
+    phone: '',
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    shippingMethodId: '',
+    paymentMethodId: '',
+    agreeToTerms: ''
+  };
+
+  // Pomocný příznak, který nám řekne, zda se uživatel pokusil formulář odeslat
+  formSubmitted = false;
+
   // 🛡️ BEZPEČNÁ REKAPITULACE: Všechny finanční operace striktně izolujeme do CZK
   orderSummary = computed(() => {
     const cartItems = this.cartService.cartItems() || [];
     
-    // Výpočet mezisoučtu produktů striktně z CZK hodnoty, ignorujeme nespolehlivá globální pole
+    // Výpočet mezisoučtu produktů striktně z CZK hodnoty
     const productsTotal = cartItems.reduce((acc, item) => {
       const priceCzk = item.prices?.price_czk_with_vat ?? item.unit_price ?? 0;
       return acc + (Number(priceCzk) * Number(item.quantity || 0));
@@ -71,7 +87,6 @@ export class CheckoutComponent implements OnInit {
     const vatBreakdown: { [key: number]: { amount: number; baseAmount: number } } = {};
     
     cartItems.forEach(item => {
-      // 🛡️ Ochrana: Prioritně bereme zanořené CZK, až pak fallback
       const itemUnitPrice = Number(item.prices?.price_czk_with_vat ?? item.unit_price ?? 0);
       const itemQuantity = Number(item.quantity || 0);
       const itemVatRate = Number(item.prices?.vat_rate ?? item.vat_rate ?? 21);
@@ -151,15 +166,115 @@ export class CheckoutComponent implements OnInit {
     this.formData.shippingMethodId = id;
     const method = this.shippingMethods().find(m => m.id === id);
     this.selectedShippingPrice.set(method?.base_price || 0);
+    this.validateField('shippingMethodId');
   }
 
   selectPaymentMethod(id: number): void {
     this.formData.paymentMethodId = id;
+    this.validateField('paymentMethodId');
+  }
+
+  // Real-time validační logika pro jednotlivá pole kopírující backend požadavky
+  validateField(field: string): void {
+    switch (field) {
+      case 'email':
+        if (!this.formData.email) {
+          this.errors['email'] = 'E-mailová adresa je povinná.';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formData.email)) {
+          this.errors['email'] = 'Zadejte platný formát e-mailové adresy.';
+        } else {
+          this.errors['email'] = '';
+        }
+        break;
+
+      case 'phone':
+        if (!this.formData.phone) {
+          this.errors['phone'] = 'Telefonní číslo je povinné.';
+        } else {
+          this.errors['phone'] = '';
+        }
+        break;
+
+      case 'firstName':
+        if (!this.formData.firstName) {
+          this.errors['firstName'] = 'Jméno je povinné.';
+        } else if (/\d/.test(this.formData.firstName)) {
+          // 🚫 Kontrola: Pokud text obsahuje jakoukoli číslici (\d)
+          this.errors['firstName'] = 'Jméno nesmí obsahovat číslice.';
+        } else {
+          this.errors['firstName'] = '';
+        }
+        break;
+
+      case 'lastName':
+        if (!this.formData.lastName) {
+          this.errors['lastName'] = 'Příjmení je povinné.';
+        } else if (/\d/.test(this.formData.lastName)) {
+          // 🚫 Kontrola: Pokud text obsahuje jakoukoli číslici (\d)
+          this.errors['lastName'] = 'Příjmení nesmí obsahovat číslice.';
+        } else {
+          this.errors['lastName'] = '';
+        }
+        break;
+
+      case 'address':
+        if (!this.formData.address) {
+          this.errors['address'] = 'Ulice a číslo popisné jsou povinné.';
+        } else if (this.formData.address.length > 255) {
+          this.errors['address'] = 'Adresa může mít maximálně 255 znaků.';
+        } else {
+          this.errors['address'] = '';
+        }
+        break;
+
+      case 'city':
+        if (!this.formData.city) {
+          this.errors['city'] = 'Město je povinné.';
+        } else if (this.formData.city.length > 100) {
+          this.errors['city'] = 'Název města může mít maximálně 100 znaků.';
+        } else {
+          this.errors['city'] = '';
+        }
+        break;
+
+      case 'postalCode':
+        if (!this.formData.postalCode) {
+          this.errors['postalCode'] = 'PSČ je povinné.';
+        } else if (this.formData.postalCode.length > 10) {
+          this.errors['postalCode'] = 'PSČ může mít maximálně 10 znaků.';
+        } else if (!/^\d{3}\s?\d{2}$/.test(this.formData.postalCode.trim())) {
+          // 🔢 Kontrola: Musí to být přesně 3 čísla, volitelná mezera a 2 čísla (např. 11000 nebo 110 00)
+          this.errors['postalCode'] = 'Zadejte platné PSČ (např. 110 00 nebo 11000).';
+        } else {
+          this.errors['postalCode'] = '';
+        }
+        break;
+
+      case 'shippingMethodId':
+        this.errors['shippingMethodId'] = !this.formData.shippingMethodId ? 'Vyberte způsob dopravy.' : '';
+        break;
+
+      case 'paymentMethodId':
+        this.errors['paymentMethodId'] = !this.formData.paymentMethodId ? 'Vyberte způsob platby.' : '';
+        break;
+
+      case 'agreeToTerms':
+        this.errors['agreeToTerms'] = !this.formData.agreeToTerms ? 'Pro dokončení musíte souhlasit s obchodními podmínkami.' : '';
+        break;
+    }
+  }
+
+  // Kompletní validace celého formuláře (např. před odesláním)
+  validateAllFields(): boolean {
+    Object.keys(this.errors).forEach(field => this.validateField(field));
+    return !Object.values(this.errors).some(errorMsg => errorMsg !== '');
   }
 
   isFormValid(): boolean {
+    // Pro zakázání/povolení tlačítka bez vizuálního blikání chyb
     return !!(
       this.formData.email &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formData.email) &&
       this.formData.firstName &&
       this.formData.lastName &&
       this.formData.phone &&
@@ -175,7 +290,6 @@ export class CheckoutComponent implements OnInit {
   applyCoupon(): void {
     if (!this.couponCode.trim()) return;
 
-    // Pro validaci kupónu předáme přepočítaný bezpečný CZK mezisoučet
     this.shopPublicService.validateCoupon(this.couponCode, this.orderSummary().productsTotal).subscribe({
       next: (response) => {
         this.appliedCoupon.set(response.coupon);
@@ -190,11 +304,17 @@ export class CheckoutComponent implements OnInit {
 
   // 🛡️ EXTRA BEZPEČNÉ ODESLÁNÍ DO BANKY / BACKENDU
   simulatePayment(): void {
-    if (!this.isFormValid()) return;
+    this.formSubmitted = true;
+    
+    // Spustíme plnou validaci. Pokud neprojde, nepokračujeme.
+    if (!this.validateAllFields()) {
+      this.alertDialogService.open('Formulář je nekompletní', 'Zkontrolujte prosím červeně označená pole.', 'warning');
+      return;
+    }
+    
     this.isProcessing.set(true);
 
     const formattedItems = (this.cartService.cartItems() || []).map(item => {
-      // Tvrdošíjně vytáhneme cenu v CZK. Pokud tam není, dojde k chybě, čímž zabráníme poslání špatné měny
       const confirmedCzkPrice = item.prices?.price_czk_with_vat ?? item.unit_price;
 
       if (!confirmedCzkPrice || confirmedCzkPrice <= 0) {
@@ -206,7 +326,7 @@ export class CheckoutComponent implements OnInit {
         product_id: Number(item.product_id || item.id), 
         product_variant_id: item.product_variant_id ? Number(item.product_variant_id) : null,
         quantity: Number(item.quantity),
-        unit_price: Number(confirmedCzkPrice), // Zde posíláme explicitně ověřenou CZK cenu
+        unit_price: Number(confirmedCzkPrice),
         vat_rate: item.prices?.vat_rate ? Number(item.prices.vat_rate) : (item.vat_rate ? Number(item.vat_rate) : 21)
       };
     });
@@ -224,8 +344,8 @@ export class CheckoutComponent implements OnInit {
       payment_method_id: Number(this.formData.paymentMethodId),
       shipping_method_id: Number(this.formData.shippingMethodId),
       coupon_code: this.appliedCoupon()?.code || null,
-      currency: 'CZK', // 🛡️ Explicitní příznak měny pro backendovou kontrolu
-      total_amount: Number(this.orderSummary().finalAmount), // Kontrolní finální částka
+      currency: 'CZK', 
+      total_amount: Number(this.orderSummary().finalAmount), 
       notes: null,
       items: formattedItems
     };
@@ -237,18 +357,31 @@ export class CheckoutComponent implements OnInit {
           this.cartService.clear();
           this.currentStep.set(5);
           this.isProcessing.set(false);
+          this.formSubmitted = false;
         },
         error: (e) => {
           console.error('Chyba při vytváření objednávky:', e);
           if (e.status === 422 && e.error?.errors) {
-            const validationErrors = Object.values(e.error.errors).flat().join('\n');
-            this.alertDialogService.open('Chyba validace', validationErrors, 'danger');
+            // Mapování Laravel chyb zpět do našeho real-time chybového systému (např. chyba skladu)
+            const backendErrors = e.error.errors;
+            Object.keys(backendErrors).forEach(key => {
+              if (key.startsWith('items.')) {
+                // Pokud jde o chybu konkrétního produktu na skladě, vyhodíme ji v alertu
+                this.alertDialogService.open('Skladová zásoba', backendErrors[key][0], 'danger');
+              } else {
+                // Převod snake_case z backendu na camelCase ve formuláři
+                const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+                if (this.errors.hasOwnProperty(camelKey)) {
+                  this.errors[camelKey] = backendErrors[key][0];
+                }
+              }
+            });
           } else {
             const errorMsg = e.error?.message || 'Objednávku se nepodařilo vytvořit. Zkuste to prosím znovu.';
             this.alertDialogService.open('Chyba', errorMsg, 'danger');
           }
           this.isProcessing.set(false);
-          }
+        }
       });
   }
 

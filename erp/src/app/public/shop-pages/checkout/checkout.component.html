@@ -28,42 +28,121 @@
             <div class="form-grid compact">
               <div class="form-group">
                 <label>E-mailová adresa *</label>
-                <input type="email" [(ngModel)]="formData.email" name="email" placeholder="vas@email.cz" required>
+                <input 
+                  type="email" 
+                  [(ngModel)]="formData.email" 
+                  name="email" 
+                  placeholder="vas@email.cz" 
+                  (blur)="validateField('email')"
+                  (input)="errors['email'] ? validateField('email') : null"
+                  [class.is-invalid]="errors['email']"
+                  required>
+                @if (errors['email']) {
+                  <span class="error-message">{{ errors['email'] }}</span>
+                }
               </div>
               <div class="form-group">
                 <label>Telefonní číslo *</label>
-                <input type="tel" [(ngModel)]="formData.phone" name="phone" placeholder="+420 777 111 222" required>
+                <input 
+                  type="tel" 
+                  [(ngModel)]="formData.phone" 
+                  name="phone" 
+                  placeholder="+420 777 111 222" 
+                  (blur)="validateField('phone')"
+                  (input)="errors['phone'] ? validateField('phone') : null"
+                  [class.is-invalid]="errors['phone']"
+                  required>
+                @if (errors['phone']) {
+                  <span class="error-message">{{ errors['phone'] }}</span>
+                }
               </div>
             </div>
           </div>
+          
           <div class="checkout-section">
             <h3>Doručovací adresa</h3>
             <div class="form-grid">
               <div class="form-group">
                 <label>Jméno *</label>
-                <input type="text" [(ngModel)]="formData.firstName" name="firstName" placeholder="Jan" required>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formData.firstName" 
+                  name="firstName" 
+                  placeholder="Jan" 
+                  (blur)="validateField('firstName')"
+                  (input)="errors['firstName'] ? validateField('firstName') : null"
+                  [class.is-invalid]="errors['firstName']"
+                  required>
+                @if (errors['firstName']) {
+                  <span class="error-message">{{ errors['firstName'] }}</span>
+                }
               </div>
               <div class="form-group">
                 <label>Příjmení *</label>
-                <input type="text" [(ngModel)]="formData.lastName" name="lastName" placeholder="Novák" required>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formData.lastName" 
+                  name="lastName" 
+                  placeholder="Novák" 
+                  (blur)="validateField('lastName')"
+                  (input)="errors['lastName'] ? validateField('lastName') : null"
+                  [class.is-invalid]="errors['lastName']"
+                  required>
+                @if (errors['lastName']) {
+                  <span class="error-message">{{ errors['lastName'] }}</span>
+                }
               </div>
               <div class="form-group full">
                 <label>Ulice a číslo popisné *</label>
-                <input type="text" [(ngModel)]="formData.address" name="address" placeholder="Kybernetická 123" required>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formData.address" 
+                  name="address" 
+                  placeholder="Kybernetická 123" 
+                  (blur)="validateField('address')"
+                  (input)="errors['address'] ? validateField('address') : null"
+                  [class.is-invalid]="errors['address']"
+                  required>
+                @if (errors['address']) {
+                  <span class="error-message">{{ errors['address'] }}</span>
+                }
               </div>
               <div class="form-group">
                 <label>Město *</label>
-                <input type="text" [(ngModel)]="formData.city" name="city" placeholder="Praha" required>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formData.city" 
+                  name="city" 
+                  placeholder="Praha" 
+                  (blur)="validateField('city')"
+                  (input)="errors['city'] ? validateField('city') : null"
+                  [class.is-invalid]="errors['city']"
+                  required>
+                @if (errors['city']) {
+                  <span class="error-message">{{ errors['city'] }}</span>
+                }
               </div>
               <div class="form-group">
                 <label>PSČ *</label>
-                <input type="text" [(ngModel)]="formData.postalCode" name="postalCode" placeholder="110 00" required>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formData.postalCode" 
+                  name="postalCode" 
+                  placeholder="110 00" 
+                  (blur)="validateField('postalCode')"
+                  (input)="errors['postalCode'] ? validateField('postalCode') : null"
+                  [class.is-invalid]="errors['postalCode']"
+                  required>
+                @if (errors['postalCode']) {
+                  <span class="error-message">{{ errors['postalCode'] }}</span>
+                }
               </div>
             </div>
           </div>
+          
           <div class="checkout-section">
             <h3>Způsob dopravy</h3>
-            <div class="shipping-methods-list">
+            <div class="shipping-methods-list" [class.is-invalid-container]="errors['shippingMethodId']">
               @for (method of shippingMethods(); track method) {
                 <div
                   class="selectable-option shipping"
@@ -80,10 +159,14 @@
                 </div>
               }
             </div>
+            @if (errors['shippingMethodId']) {
+              <span class="error-message text-space">{{ errors['shippingMethodId'] }}</span>
+            }
           </div>
+          
           <div class="checkout-section">
             <h3>Způsob platby</h3>
-            <div class="payment-methods-list-vertical">
+            <div class="payment-methods-list-vertical" [class.is-invalid-container]="errors['paymentMethodId']">
               @for (method of paymentMethods(); track method) {
                 <label
                   class="payment-list-item"
@@ -106,9 +189,13 @@
                 </label>
               }
             </div>
+            @if (errors['paymentMethodId']) {
+              <span class="error-message text-space">{{ errors['paymentMethodId'] }}</span>
+            }
           </div>
         </form>
       </div>
+      
       <div class="checkout-summary-column">
         <div class="static-summary">
           <h3>Rekapitulace objednávky</h3>
@@ -168,19 +255,31 @@
               <strong>{{ formatPrice(orderSummary().finalAmount) }}</strong>
             </div>
           </div>
+          
           <div class="checkout-terms-agreement">
             <label class="terms-checkbox-label">
-              <input type="checkbox" [(ngModel)]="formData.agreeToTerms" name="agreeToTerms" class="terms-checkbox">
-              <span class="terms-text">
-                Souhlasím s <a routerLink="/tos" target="_blank">obchodními podmínkami</a> and beru na vědomí <a routerLink="/privacy-policy" target="_blank">zásady ochrany osobních údajů</a>. *
+              <input 
+                type="checkbox" 
+                [(ngModel)]="formData.agreeToTerms" 
+                name="agreeToTerms" 
+                class="terms-checkbox"
+                (change)="validateField('agreeToTerms')"
+                [class.is-invalid]="errors['agreeToTerms']"
+                >
+              <span class="terms-text" [class.text-error]="errors['agreeToTerms']">
+                Souhlasím s <a routerLink="/tos" target="_blank">obchodními podmínkami</a> a beru na vědomí <a routerLink="/privacy-policy" target="_blank">zásady ochrany osobních údajů</a>. *
               </span>
             </label>
+            @if (errors['agreeToTerms']) {
+              <span class="error-message text-space">{{ errors['agreeToTerms'] }}</span>
+            }
           </div>
+          
           <button
             type="button"
             class="btn-pay-instant"
             (click)="simulatePayment()"
-            [disabled]="isProcessing() || !isFormValid()"
+            [disabled]="isProcessing() || (!isFormValid() && formSubmitted)"
             >
             @if (!isProcessing()) {
               <span>Dokončit objednávku — {{ formatPrice(orderSummary().finalAmount) }}</span>

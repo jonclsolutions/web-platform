@@ -2,67 +2,78 @@
   <h3 class="filter-form-title">{{ filterFormTitle }}</h3>
   <div class="filter-grid">
     @for (column of filterColumns; track column) {
-      <div>
-        <label [for]="'filter' + column.key" class="filter-label">{{ column.header }}</label>
-        <!-- Přidán column.type === 'number' pro podporu ID u kupónů -->
-        @if (column.type === 'text' || column.type === 'email' || column.type === 'search' || column.type === 'number') {
-          <input
-            [type]="column.type"
-            [id]="'filter' + column.key"
-            [(ngModel)]="filterForm[column.key]"
-            (keyup.enter)="applyFilters()"
-            class="filter-input"
-            [placeholder]="column.placeholder">
-        }
-        <!-- Univerzální select pro oba typy konfigurací -->
-        @if (column.type === 'select') {
-          <select
-            [id]="'filter' + column.key"
-            [(ngModel)]="filterForm[column.key]"
-            class="filter-select">
-            <option value="">{{ column.placeholder }}</option>
-            <!-- Iterujeme přes options s ošetřením obou formátů -->
-            @for (option of $any(column.options); track option) {
-              <option
-                [value]="option?.value !== undefined ? option.value : option">
-                {{ option?.label !== undefined ? option.label : option }}
-              </option>
-            }
-          </select>
-        }
-      </div>
+      @if (column.type !== 'hidden') {
+        <div>
+          <label [for]="'filter' + column.key" class="filter-label">{{ column.header }}</label>
+          
+          @if (column.type === 'text' || column.type === 'email' || column.type === 'search' || column.type === 'number') {
+            <input
+              [type]="column.type"
+              [id]="'filter' + column.key"
+              [(ngModel)]="filterForm[column.key]"
+              (keyup.enter)="applyFilters()"
+              class="filter-input"
+              [placeholder]="column.placeholder">
+          }
+          
+          @if (column.type === 'select') {
+            <select
+              [id]="'filter' + column.key"
+              [(ngModel)]="filterForm[column.key]"
+              class="filter-select">
+              <option value="">{{ column.placeholder }}</option>
+              @for (option of $any(column.options); track option) {
+                <option
+                  [value]="option?.value !== undefined ? option.value : option">
+                  {{ option?.label !== undefined ? option.label : option }}
+                </option>
+              }
+            </select>
+          }
+
+          @if (column.type === 'checkbox') {
+            <div class="filter-checkbox-wrapper">
+              <input
+                type="checkbox"
+                [id]="'filter' + column.key"
+                [(ngModel)]="filterForm[column.key]"
+                (change)="applyFilters()"
+                class="filter-checkbox">
+            </div>
+          }
+        </div>
+      }
     }
   </div>
   <hr>
 
-    <!-- Sekce řazení - beze změny pro zachování funkčnosti -->
-    <div class="filter-grid">
-      <div>
-        <label for="filterSortBy" class="filter-label">Seřadit podle</label>
-        <select id="filterSortBy" [(ngModel)]="sortBy" class="filter-select">
-          <option value="">-- Vybrat sloupec --</option>
-          @for (column of filterColumns; track column) {
-            @if (column.canSort) {
-              <option [value]="column.key">{{ column.header }}</option>
-            }
+  <div class="filter-grid">
+    <div>
+      <label for="filterSortBy" class="filter-label">Seřadit podle</label>
+      <select id="filterSortBy" [(ngModel)]="sortBy" class="filter-select">
+        <option value="">-- Vybrat sloupec --</option>
+        @for (column of filterColumns; track column) {
+          @if (column.canSort) {
+            <option [value]="column.key">{{ column.header }}</option>
           }
-        </select>
-      </div>
-      <div>
-        <label for="filterSortDirection" class="filter-label">Směr řazení</label>
-        <select id="filterSortDirection" [(ngModel)]="sortDirection" class="filter-select">
-          <option value="asc">Vzestupně (A-Z, od nejmenšího)</option>
-          <option value="desc">Sestupně (Z-A, od největšího)</option>
-        </select>
-      </div>
+        }
+      </select>
     </div>
-
-    <div class="filter-buttons-container">
-      <button (click)="clearFilters()" class="filter-button clear">
-        Vyčistit filtry
-      </button>
-      <button (click)="applyFilters()" class="filter-button apply">
-        Použít filtry
-      </button>
+    <div>
+      <label for="filterSortDirection" class="filter-label">Směr řazení</label>
+      <select id="filterSortDirection" [(ngModel)]="sortDirection" class="filter-select">
+        <option value="asc">Vzestupně (A-Z, od nejmenšího)</option>
+        <option value="desc">Sestupně (Z-A, od největšího)</option>
+      </select>
     </div>
   </div>
+
+  <div class="filter-buttons-container">
+    <button (click)="clearFilters()" class="filter-button clear">
+      Vyčistit filtry
+    </button>
+    <button (click)="applyFilters()" class="filter-button apply">
+      Použít filtry
+    </button>
+  </div>
+</div>

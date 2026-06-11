@@ -37,10 +37,11 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
   @Output() resetPasswordFormOpened = new EventEmitter<any>(); 
   @Output() openImagesModal = new EventEmitter<any>(); 
   @Output() openVariantsModal = new EventEmitter<any>(); 
+  // 🌟 NOVÝ OUTPUT PRO OBJEDNÁVKY ZÁKAZNÍKA:
+  @Output() customerOrdersOpened = new EventEmitter<any>();
 
   web_logs_endpoint: string = 'web/logs';
   
-  // Flag k prevenci double-click a souběžných operací
   private processingItemIds = new Set<any>();
 
   constructor(
@@ -60,29 +61,21 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     super.ngOnChanges(changes); 
   }
 
-getCellValue(item: any, column: ColumnDefinition): any {
+  getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
     const value = keys.reduce((obj, key) => obj?.[key], item);
     
     switch (column.type) {
       case 'currency': {
         if (value === undefined || value === null || value === '') return '';
-        
-        // 🌟 Získání kódu měny z konfigurace sloupce, výchozí je CZK
         const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'CZK';
-        
-        // 🌟 Volba lokalizace podle měny, aby symboly a mezery vypadaly přirozeně
-        // de-DE formátuje EUR správně se symbolem na konci a mezerou (např. 50,00 €)
         const locale = currency === 'CZK' ? 'cs-CZ' : 'de-DE';
-
         try {
           return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
         } catch (e) {
-          // Záložní zobrazení, pokud by selhal CurrencyPipe (neznámá měna nebo chybějící lokalizace)
           return `${value} ${currency}`;
         }
       }
-      
       case 'date':
         return value ? (new DatePipe('cs-CZ')).transform(value, column.format || 'd.M.yyyy') : '';
       case 'boolean':
@@ -100,19 +93,15 @@ getCellValue(item: any, column: ColumnDefinition): any {
   }
 
   handleAction(item: any, buttonAction: string): void {
-    // ⚠️ DOUBLE-CLICK PREVENTION: Kontrola, jestli je položka již zpracovávána
     if (this.processingItemIds.has(item.id)) {
       console.warn(`⚠️ Akce pro položku ID ${item.id} je již zpracovávána. Ignoruji duplikát.`);
       return;
     }
 
-    // ⚠️ Označíme položku jako zpracovávanou
     this.processingItemIds.add(item.id);
 
-    // ⚠️ Async wrapper pro oddělení event loopu
     setTimeout(() => {
       try {
-        // === INLINE SWITCH - ŽÁDNÁ NOVÁ METODA ===
         switch (buttonAction) {
           case 'generate_form': 
             this.generateFormOpened.emit(item); 
@@ -135,14 +124,16 @@ getCellValue(item: any, column: ColumnDefinition): any {
           case 'custom_prod_img': 
             this.openImagesModal.emit(item); 
             break; 
+          // 🌟 NOVÝ CASE PRO EMITOVÁNÍ DO UTROB COMPONENTY:
+          case 'customer_orders':
+            this.customerOrdersOpened.emit(item);
+            break;
           default: 
             console.warn('⚠️ Neznámý typ akce:', buttonAction);
         }
         
-        // ⚠️ Zajisti update change detection
         this.cd.markForCheck();
       } finally {
-        // ⚠️ Cleanup - odstraň položku ze zpracování po určité době
         setTimeout(() => {
           this.processingItemIds.delete(item.id);
         }, 500);
@@ -161,18 +152,15 @@ getCellValue(item: any, column: ColumnDefinition): any {
               this.alertDialogService.open('Úspěch', 'Položka byla smazána.', 'success');
             },
             error: () => {
-              // ⚠️ Cleanup na error
               this.processingItemIds.delete(item.id);
               this.alertDialogService.open('Chyba', 'Smazání se nezdařilo.', 'danger');
             }
           });
         } else {
-          // ⚠️ Cleanup pokud uživatel zrušil
           this.processingItemIds.delete(item.id);
         }
       })
       .catch(() => {
-        // ⚠️ Cleanup pokud dialog selhal
         this.processingItemIds.delete(item.id);
       });
   }
