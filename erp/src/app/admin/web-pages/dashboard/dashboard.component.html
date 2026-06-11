@@ -1,30 +1,144 @@
-<div class="dashboard-container">
-  <div class="dashboard-content">
-    <div class="welcome-section">
-      <h1>Dobrý den, {{ userData?.full_name ?? userEmail ?? 'uživateli' }}</h1>
-      <p>Vítejte v administračním systému. Zde máte přehled o svém účtu.</p>
-    </div>
+<div class="core-dashboard">
 
-    <div class="dashboard-grid">
-      <div class="info-card">
-        <div class="card-header">
-          <h2 class="card-title">Váš profil</h2>
+  <!-- ===== WELCOME HEADER ===== -->
+  <div class="cd-welcome">
+    <div class="cd-welcome-left">
+      <div class="cd-welcome-date">{{ currentDateTime }}</div>
+      <h1 class="cd-welcome-title">{{ welcomeMessage }}</h1>
+      <p class="cd-welcome-sub">Administrační systém — přehled vašeho účtu a aktivit</p>
+    </div>
+    <div class="cd-welcome-right">
+      <div class="cd-role-chip">
+        <span class="cd-role-dot"></span>
+        {{ userRole ?? 'Administrátor' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PROFIL KARTY ===== -->
+  <div class="cd-section">
+    <div class="cd-profile-row">
+
+      <!-- Profil -->
+      <div class="cd-card cd-card-profile">
+        <div class="cd-card-header">
+          <span class="cd-card-icon">👤</span>
+          <span class="cd-card-title">Váš profil</span>
         </div>
-        <div class="card-content">
-          <div class="display-item">
-            <label>Přihlášen jako</label>
-            <div class="static-value">{{ userEmail }}</div>
+        <div class="cd-card-body">
+          <div class="cd-profile-avatar">
+            {{ (userData?.full_name ?? userEmail ?? 'U').charAt(0).toUpperCase() }}
           </div>
-          <div class="display-item">
-            <label>Role systému</label>
-            <div class="static-value">{{ userRole ?? 'Administrátor' }}</div>
+          <div class="cd-profile-info">
+            <div class="cd-profile-name">{{ userData?.full_name ?? '—' }}</div>
+            <div class="cd-profile-row-item">
+              <span class="cd-label">E-mail</span>
+              <span class="cd-value cd-value-mono">{{ userEmail ?? '—' }}</span>
+            </div>
+            <div class="cd-profile-row-item">
+              <span class="cd-label">Role</span>
+              <span class="cd-value">{{ userRole ?? 'Administrátor' }}</span>
+            </div>
+            @if (userData?.created_at) {
+              <div class="cd-profile-row-item">
+                <span class="cd-label">Účet vytvořen</span>
+                <span class="cd-value">{{ formatDate(userData!.created_at) }}</span>
+              </div>
+            }
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="footer-notice">
-      <p>Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému.</p>
+      <!-- Rychlé statistiky -->
+      <div class="cd-stats-grid">
+        @if (loadingStats) {
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="cd-stat-card cd-stat-skeleton"></div>
+          }
+        }
+        @if (!loadingStats) {
+          @for (stat of quickStats; track stat.label) {
+            <div class="cd-stat-card cd-stat-{{ stat.color }}">
+              <div class="cd-stat-icon">{{ stat.icon }}</div>
+              <div class="cd-stat-value">{{ stat.value }}</div>
+              <div class="cd-stat-label">{{ stat.label }}</div>
+            </div>
+          }
+        }
+      </div>
+
     </div>
   </div>
+
+  <!-- ===== NAVIGACE DO SEKCÍ ===== -->
+  <div class="cd-section">
+    <div class="cd-section-label">Rychlá navigace</div>
+    <div class="cd-nav-grid">
+      @for (section of navSections; track section.route) {
+        <a class="cd-nav-card cd-nav-{{ section.color }}" [routerLink]="section.route">
+          <div class="cd-nav-icon">{{ section.icon }}</div>
+          <div class="cd-nav-body">
+            <div class="cd-nav-title">{{ section.title }}</div>
+            <div class="cd-nav-desc">{{ section.description }}</div>
+          </div>
+          <div class="cd-nav-arrow">→</div>
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- ===== POSLEDNÍ AKTIVITA ===== -->
+  <div class="cd-section">
+    <div class="cd-section-label">Poslední aktivita v systému</div>
+    <div class="cd-card cd-card-activity">
+      <div class="cd-card-header">
+        <span class="cd-card-icon">📋</span>
+        <span class="cd-card-title">Záznamy aktivit (web logy)</span>
+        <a class="cd-card-link" routerLink="/admin/web/logs">Zobrazit vše →</a>
+      </div>
+      <div class="cd-activity-body">
+        @if (loadingActivity) {
+          <div class="cd-activity-loading">
+            <div class="cd-mini-spinner"></div>
+            <span>Načítám záznamy…</span>
+          </div>
+        }
+        @if (!loadingActivity && recentActivity.length === 0) {
+          <div class="cd-activity-empty">Zatím žádné záznamy aktivit</div>
+        }
+        @if (!loadingActivity && recentActivity.length > 0) {
+          <div class="cd-activity-list">
+            @for (log of recentActivity; track log.id) {
+              <div class="cd-activity-row">
+                <div class="cd-activity-left">
+                  <span class="cd-event-badge {{ eventTypeClass(log.event_type) }}">
+                    {{ eventTypeLabel(log.event_type) }}
+                  </span>
+                </div>
+                <div class="cd-activity-mid">
+                  <div class="cd-activity-desc">{{ log.description }}</div>
+                  <div class="cd-activity-meta">
+                    <span class="cd-activity-module">{{ log.module }}</span>
+                    <span class="cd-activity-sep">·</span>
+                    <span class="cd-activity-user">{{ log.user_plain }}</span>
+                    <span class="cd-activity-sep">·</span>
+                    <span class="cd-activity-ip">{{ log.origin }}</span>
+                  </div>
+                </div>
+                <div class="cd-activity-right">
+                  {{ formatDate(log.created_at) }}
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div class="cd-footer">
+    <span>Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému.</span>
+  </div>
+
 </div>

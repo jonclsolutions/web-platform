@@ -1,1 +1,293 @@
-<p>dashboard works!</p>
+<div class="dashboard">
+
+  <!-- ===== HEADER ===== -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Přehled</h1>
+      <span class="dash-subtitle">Aktuální stav e-shopu</span>
+    </div>
+    <div class="dash-header-right">
+      <span class="dash-refresh-label">
+        Aktualizováno: {{ lastRefreshed | date:'HH:mm:ss' }}
+      </span>
+      <button class="dash-refresh-btn" (click)="loadAll()" [disabled]="loading">
+        <span [class.spin]="loading">↻</span> Obnovit
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== LOADING / ERROR ===== -->
+  @if (loading && !kpiCards.length) {
+    <div class="dash-loading">
+      <div class="dash-spinner"></div>
+      <span>Načítám data…</span>
+    </div>
+  }
+
+  @if (loadingError) {
+    <div class="dash-error">
+      ⚠️ Nepodařilo se načíst data z API. Zkontrolujte připojení nebo se přihlaste.
+    </div>
+  }
+
+  @if (!loading || kpiCards.length) {
+
+    <!-- ===== KPI KARTY ===== -->
+    <div class="kpi-grid">
+      @for (card of kpiCards; track card.label) {
+        <div class="kpi-card kpi-{{ card.color }}">
+          <div class="kpi-icon">{{ card.icon }}</div>
+          <div class="kpi-body">
+            <div class="kpi-label">{{ card.label }}</div>
+            <div class="kpi-value">{{ card.value }}</div>
+            <div class="kpi-sub">{{ card.sub }}</div>
+          </div>
+          @if (card.trend !== 'neutral') {
+            <div class="kpi-trend kpi-trend-{{ card.trend }}">
+              {{ card.trend === 'up' ? '↑' : '↓' }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ===== HLAVNÍ SEKCE: Graf + Status ===== -->
+    <div class="dash-row dash-row-main">
+
+      <!-- GRAF TRŽEB -->
+      <div class="dash-card dash-card-chart">
+        <div class="dash-card-header">
+          <span class="dash-card-title">Tržby — posledních 30 dní</span>
+          <span class="dash-card-meta">{{ formatCurrency(totalRevenue) }} celkem</span>
+        </div>
+        <div class="chart-wrap">
+          <svg
+            [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+            class="chart-svg"
+            (mouseleave)="hideTooltip()">
+
+            <!-- Mřížka Y -->
+            @for (step of yGridLines; track step) {
+              <line
+                [attr.x1]="chartPadL"
+                [attr.y1]="yPos(step)"
+                [attr.x2]="chartWidth - chartPadR"
+                [attr.y2]="yPos(step)"
+                class="chart-grid-line"/>
+              <text
+                [attr.x]="chartPadL - 6"
+                [attr.y]="yPos(step) + 4"
+                class="chart-y-label">{{ yLabel(step) }}</text>
+            }
+
+            <!-- Oblast pod křivkou -->
+            @if (chartPoints.length) {
+              <polygon [attr.points]="areaPoints" class="chart-area"/>
+              <polyline [attr.points]="polylinePoints" class="chart-line"/>
+
+              <!-- Body + Hover zones -->
+              @for (point of chartPoints; track point.label) {
+                <circle
+                  [attr.cx]="point.x"
+                  [attr.cy]="point.y"
+                  r="3"
+                  class="chart-dot"
+                  (mouseenter)="showTooltip(point, $event)"
+                  (mouseleave)="hideTooltip()"/>
+              }
+            }
+
+            <!-- X osy popisky -->
+            @for (point of xAxisLabels; track point.label) {
+              <text
+                [attr.x]="point.x"
+                [attr.y]="chartHeight - 6"
+                class="chart-x-label">{{ point.label }}</text>
+            }
+
+            <!-- Tooltip -->
+            @if (chartTooltip.visible) {
+              <g>
+                <line
+                  [attr.x1]="chartTooltip.x"
+                  [attr.y1]="chartPadT"
+                  [attr.x2]="chartTooltip.x"
+                  [attr.y2]="chartPadT + chartInnerH"
+                  class="chart-tooltip-line"/>
+                <rect
+                  [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 8 : chartTooltip.x - 118"
+                  [attr.y]="chartTooltip.y - 28"
+                  width="110" height="36"
+                  rx="5"
+                  class="chart-tooltip-bg"/>
+                <text
+                  [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 63 : chartTooltip.x - 63"
+                  [attr.y]="chartTooltip.y - 12"
+                  class="chart-tooltip-label" text-anchor="middle">{{ chartTooltip.label }}</text>
+                <text
+                  [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 63 : chartTooltip.x - 63"
+                  [attr.y]="chartTooltip.y + 4"
+                  class="chart-tooltip-value" text-anchor="middle">{{ chartTooltip.value }}</text>
+              </g>
+            }
+          </svg>
+        </div>
+      </div>
+
+      <!-- STATUS BREAKDOWN -->
+      <div class="dash-card dash-card-status">
+        <div class="dash-card-header">
+          <span class="dash-card-title">Stavy objednávek</span>
+          <span class="dash-card-meta">{{ totalOrders }} celkem</span>
+        </div>
+        <div class="status-list">
+          @for (item of statusBreakdown; track item.label) {
+            <div class="status-row">
+              <div class="status-row-top">
+                <span class="status-dot" [style.background]="item.color"></span>
+                <span class="status-name">{{ item.label }}</span>
+                <span class="status-count">{{ item.count }}</span>
+                <span class="status-pct">{{ item.pct }}%</span>
+              </div>
+              <div class="status-bar-track">
+                <div class="status-bar-fill"
+                  [style.width.%]="item.pct"
+                  [style.background]="item.color">
+                </div>
+              </div>
+            </div>
+          }
+          @if (!statusBreakdown.length) {
+            <div class="dash-empty">Žádná data</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HLAVNÍ SEKCE: Poslední objednávky + Low stock ===== -->
+    <div class="dash-row dash-row-bottom">
+
+      <!-- POSLEDNÍ OBJEDNÁVKY -->
+      <div class="dash-card dash-card-orders">
+        <div class="dash-card-header">
+          <span class="dash-card-title">Poslední objednávky</span>
+          <span class="dash-card-meta">{{ totalOrders }} objednávek celkem</span>
+        </div>
+        <div class="orders-table-wrap">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Zákazník</th>
+                <th>Stav</th>
+                <th>Platba</th>
+                <th class="text-right">Částka</th>
+                <th>Datum</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of recentOrders; track order.id) {
+                <tr>
+                  <td>
+                    <span class="order-number-badge">#{{ order.order_number }}</span>
+                  </td>
+                  <td>
+                    <div class="customer-name">{{ order.customer?.full_name ?? '—' }}</div>
+                    <div class="customer-email">{{ order.customer?.email ?? '' }}</div>
+                  </td>
+                  <td>
+                    <span class="badge {{ statusClass(order.status) }}">
+                        {{ order.status_label }}  </span>
+                    </td>
+                    <td>
+                    <span class="badge {{ paymentClass(order.payment_status) }}">
+                        {{ order.payment_status_label }} </span>
+                    </td>
+                  <td class="text-right amount-cell">
+                    {{ formatCurrency(order.final_amount) }}
+                  </td>
+                  <td class="date-cell">
+                    {{ formatDate(order.created_at) }}
+                  </td>
+                </tr>
+              }
+              @if (!recentOrders.length && !loading) {
+                <tr>
+                  <td colspan="6" class="dash-empty">Žádné objednávky</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- LOW STOCK -->
+      <div class="dash-card dash-card-stock">
+        <div class="dash-card-header">
+          <span class="dash-card-title">⚠️ Nízký stav skladu</span>
+          <span class="dash-card-meta">{{ lowStockProducts.length }} produktů</span>
+        </div>
+        @if (lowStockProducts.length) {
+          <div class="stock-list">
+            @for (p of lowStockProducts; track p.id) {
+              <div class="stock-item">
+                <div class="stock-item-top">
+                  <span class="stock-name">{{ p.name }}</span>
+                  <span class="stock-qty" [class.stock-critical]="p.stock_quantity === 0">
+                    {{ p.stock_quantity }} ks
+                  </span>
+                </div>
+                <div class="stock-sku">{{ p.sku }}</div>
+                <div class="stock-bar-track">
+                  <div class="stock-bar-fill"
+                    [style.width.%]="stockPct(p)"
+                    [class.stock-bar-critical]="p.stock_quantity <= 2"
+                    [class.stock-bar-warning]="p.stock_quantity > 2 && p.stock_quantity <= p.stock_warning_level">
+                  </div>
+                </div>
+                <div class="stock-limit">Limit: {{ p.stock_warning_level }} ks</div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="dash-empty dash-empty-good">
+            ✅ Všechny produkty mají dostatek zásob
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ===== DOLNÍ ŘADA: Rychlé info ===== -->
+    <div class="dash-row dash-row-quick">
+      <div class="quick-stat">
+        <span class="quick-stat-icon">🎫</span>
+        <div>
+          <div class="quick-stat-value">{{ activeCoupons }}</div>
+          <div class="quick-stat-label">Aktivní kupóny</div>
+        </div>
+      </div>
+      <div class="quick-stat">
+        <span class="quick-stat-icon">📋</span>
+        <div>
+          <div class="quick-stat-value">{{ pendingOrders }}</div>
+          <div class="quick-stat-label">Čeká na vyřízení</div>
+        </div>
+      </div>
+      <div class="quick-stat">
+        <span class="quick-stat-icon">💵</span>
+        <div>
+          <div class="quick-stat-value">{{ formatCurrency(revenueThisMonth) }}</div>
+          <div class="quick-stat-label">Tržby tento měsíc</div>
+        </div>
+      </div>
+      <div class="quick-stat">
+        <span class="quick-stat-icon">🏭</span>
+        <div>
+          <div class="quick-stat-value">{{ lowStockProducts.length }}</div>
+          <div class="quick-stat-label">Produkty pod limitem</div>
+        </div>
+      </div>
+    </div>
+
+  }
+</div>
