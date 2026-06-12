@@ -1,89 +1,122 @@
 .personal-info-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
-  padding: 1.5rem;
-  background-color: #fcfcfc;
+  gap: 14px;
+  padding: 5px 5px 28px;
+  background-color: transparent;
   align-items: flex-start;
+  font-family: Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  max-width: 1400px;
+  width: 100%;
 }
 
-.info-card, .password-card-minimal {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  padding: 2rem;
-  border: none;
+/* ===== VNITŘNÍ KARTY (Přejatý styl .cd-card) ===== */
+.cd-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 20px;
 }
 
-.info-card { flex: 2; min-width: 500px; }
-.password-card-minimal { flex: 1; min-width: 300px; max-width: 400px; }
+.info-card { 
+  flex: 2; 
+  min-width: 500px; 
+}
 
+.password-card-minimal { 
+  flex: 1; 
+  min-width: 320px; 
+  max-width: 450px; 
+}
+
+/* ===== HLAVIČKY KARET ===== */
 .card-header-clean {
-  margin-bottom: 2rem;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
 }
 
 .card-title {
-  font-size: 1.4rem;
-  color: #1a202c;
-  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
   font-weight: 700;
+  color: #4F46E5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 4px 0;
 }
 
 .admin-note {
-  font-size: 0.85rem;
-  color: #718096;
+  font-size: 0.78rem;
+  color: #94a3b8;
 }
 
+/* ===== SKUPINY ÚDAJŮ ===== */
 .info-group {
-  margin-bottom: 2.5rem;
+  margin-bottom: 24px;
+}
+
+.info-group:last-child {
+  margin-bottom: 0;
 }
 
 .group-title {
-  font-size: 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #3182ce;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid #edf2f7;
-  padding-bottom: 0.5rem;
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
 }
 
 .info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem 2.5rem;
+  gap: 12px 24px;
 }
 
 .info-item label {
   display: block;
-  font-size: 0.75rem;
-  color: #a0aec0;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 2px;
 }
 
 .info-item .value {
-  font-size: 1rem;
-  color: #2d3748;
-  padding: 0.25rem 0;
-  border-bottom: 1px solid transparent;
+  font-size: 0.88rem;
+  color: #0f172a;
   font-weight: 500;
+  word-break: break-all;
 }
 
-.value.muted { color: #718096; font-weight: 400; }
-.full-width { grid-column: span 2; }
+.value.muted { 
+  color: #64748b; 
+}
 
+.cd-value-mono {
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  color: #4F46E5;
+  font-weight: 600;
+}
+
+.full-width { 
+  grid-column: span 2; 
+}
+
+/* ===== FORMULÁŘ PRO ZMĚNU HESLA ===== */
 .minimal-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 14px;
 }
 
 .form-field-minimal label {
   display: block;
-  font-size: 0.8rem;
-  color: #4a5568;
-  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  color: #1e293b;
+  margin-bottom: 4px;
   font-weight: 600;
 }
 
@@ -91,45 +124,96 @@
   width: 100%;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
-  padding: 0.75rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #0f172a;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
 }
 
 .form-field-minimal input:focus {
   outline: none;
-  border-color: #3182ce;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  border-color: #4F46E5;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
+/* ===== TLAČÍTKO (Styl podle Core Dashboardu) ===== */
 .action_button {
-  background: #3182ce;
-  color: white;
-  border: none;
-  padding: 0.85rem;
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #4F46E5;
+  color: #ffffff;
+  border: 1px solid #4F46E5;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 1rem;
-  transition: background 0.2s;
+  margin-top: 6px;
+  transition: all 0.15s ease;
 }
 
-.action_button:hover:not(:disabled) { background: #2b6cb0; }
-.action_button:disabled { background: #cbd5e0; cursor: not-allowed; }
+.action_button:hover:not(:disabled) { 
+  background: #4338ca;
+  border-color: #4338ca;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+}
 
+.action_button:disabled { 
+  background: #cbd5e1; 
+  border-color: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed; 
+}
+
+/* Mini spinner u ukládání */
+.cd-mini-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { 
+  to { transform: rotate(360deg); } 
+}
+
+/* ===== CHYBOVÝ BANNER ===== */
 .error-banner {
-  background: #fff5f5;
-  color: #c53030;
-  padding: 0.75rem;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 12px;
   border-radius: 6px;
-  font-size: 0.85rem;
-  border-left: 4px solid #c53030;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-left: 4px solid #ef4444;
 }
 
-@media (max-width: 850px) {
-  .personal-info-container { flex-direction: column; }
-  .info-card, .password-card-minimal { min-width: 100%; width: 100%; }
-  .info-grid { grid-template-columns: 1fr; }
+/* ===== RESPONSIVITA ===== */
+@media (max-width: 900px) {
+  .personal-info-container { 
+    flex-direction: column; 
+    gap: 16px;
+  }
+  .info-card, .password-card-minimal { 
+    min-width: 100%; 
+    width: 100%; 
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .info-grid { 
+    grid-template-columns: 1fr; 
+    gap: 12px;
+  }
+  .full-width { 
+    grid-column: span 1; 
+  }
 }

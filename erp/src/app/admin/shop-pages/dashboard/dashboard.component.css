@@ -369,8 +369,6 @@
   flex: 1;
 }
 
-.status-row {}
-
 .status-row-top {
   display: flex;
   align-items: center;
@@ -533,8 +531,6 @@
   flex: 1;
   max-height: 380px;
 }
-
-.stock-item {}
 
 .stock-item-top {
   display: flex;

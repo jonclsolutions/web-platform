@@ -1,7 +1,7 @@
 <div class="personal-info-container">
 
   @if (userData) {
-    <div class="info-card">
+    <div class="cd-card info-card">
       <div class="card-header-clean">
         <h2 class="card-title">Osobní profil</h2>
         <span class="admin-note">Pro změnu údajů kontaktujte administrátora</span>
@@ -20,7 +20,7 @@
             </div>
             <div class="info-item">
               <label>Rodné číslo</label>
-              <div class="value">{{ userData.personal_id_num || '—' }}</div>
+              <div class="value cd-value-mono">{{ userData.personal_id_num || '—' }}</div>
             </div>
             <div class="info-item">
               <label>Pojišťovna</label>
@@ -28,12 +28,13 @@
             </div>
           </div>
         </div>
+
         <div class="info-group">
           <h3 class="group-title">Kontakt a adresa</h3>
           <div class="info-grid">
             <div class="info-item">
               <label>Přihlašovací e-mail</label>
-              <div class="value muted">{{ userData.user_email || '—' }}</div>
+              <div class="value muted cd-value-mono">{{ userData.user_email || '—' }}</div>
             </div>
             <div class="info-item">
               <label>Kontaktní e-mail</label>
@@ -49,12 +50,13 @@
             </div>
           </div>
         </div>
+
         <div class="info-group">
           <h3 class="group-title">Ostatní</h3>
           <div class="info-grid">
             <div class="info-item">
               <label>Bankovní účet</label>
-              <div class="value">{{ userData.bank_account || '—' }}</div>
+              <div class="value cd-value-mono">{{ userData.bank_account || '—' }}</div>
             </div>
           </div>
         </div>
@@ -62,7 +64,7 @@
     </div>
   }
 
-  <div class="password-card-minimal">
+  <div class="cd-card password-card-minimal">
     <div class="card-header-clean">
       <h2 class="card-title">Změna hesla</h2>
     </div>
@@ -93,7 +95,7 @@
           type="submit"
           [disabled]="passwordForm.invalid || (loadingService.isLoading$ | async)">
           @if ((loadingService.isLoading$ | async)) {
-            Ukládání...
+            <span class="cd-mini-spinner"></span> Ukládání...
           } @else {
             Aktualizovat heslo
           }

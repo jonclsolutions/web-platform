@@ -118,32 +118,6 @@ class WebSalesOrderController extends Controller
         return response()->json(new WebSalesOrderResource($sales_order));
     }
 
-    /**
-     * Aktualizace realizace.
-     */
-    // public function update(UpdateWebSalesOrderRequest $request, WebSalesOrder $WebSalesOrder): JsonResponse
-    // {
-    //     try {
-    //         $validated = $request->validated();
-
-    //         if ($request->hasFile('attachment')) {
-    //             if ($WebSalesOrder->attachment_path) {
-    //                 Storage::disk('public')->delete($WebSalesOrder->attachment_path);
-    //             }
-    //             $validated['attachment_path'] = $request->file('attachment')->store('orders', 'public');
-    //         }
-
-    //         $WebSalesOrder->update($validated);
-            
-    //         $this->logAction($request, 'update', 'WebSalesOrder', "Aktualizace realizace ID: {$WebSalesOrder->id}", $WebSalesOrder->id);
-            
-    //         return response()->json(new WebSalesOrderResource($WebSalesOrder->load('lead')));
-    //     } catch (\Exception $e) {
-    //         $this->logAction($request, 'error', 'WebSalesOrder', "Chyba při aktualizaci realizace ID {$WebSalesOrder->id}: " . $e->getMessage(), $WebSalesOrder->id);
-    //         return response()->json(['message' => 'Aktualizace realizace selhala.'], 500);
-    //     }
-    // }
-
 /**
  * Aktualizace realizace.
  */
