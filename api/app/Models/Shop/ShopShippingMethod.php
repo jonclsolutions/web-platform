@@ -40,4 +40,9 @@ class ShopShippingMethod extends Model
         'allows_cod' => 'boolean',
         'cod_price' => 'decimal:2',
     ];
+
+    public function isHardcoded(): bool
+    {
+        return in_array($this->code, ['local_pickup', 'closest_carrier']);
+    }
 }

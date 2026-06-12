@@ -71,26 +71,42 @@ class ShopShippingMethodController extends Controller
     }
 
     public function update(UpdateShopShippingMethodRequest $request, $id): JsonResponse
-    {
-        try {
-            $method = ShopShippingMethod::withTrashed()->findOrFail($id);
-            $method->update($request->validated());
-            $this->logAction($request, 'update', 'ShopShippingMethod', "Aktualizace dopravy: {$method->name}", $method->id);
-            return response()->json(new ShopShippingMethodResource($method));
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Aktualizace selhala.'], 500);
+{
+    try {
+        $method = ShopShippingMethod::withTrashed()->findOrFail($id);
+        
+        $data = $request->validated();
+        
+        // OCHRANA: Pokud je metoda hardcoded, kód se nesmí změnit
+        if ($method->isHardcoded()) {
+            unset($data['code']); 
         }
+
+        $method->update($data);
+        $this->logAction($request, 'update', 'ShopShippingMethod', "Aktualizace dopravy: {$method->name}", $method->id);
+        return response()->json(new ShopShippingMethodResource($method));
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Aktualizace selhala.'], 500);
     }
+}
 
     public function destroy(Request $request, $id): JsonResponse
-    {
-        $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-        $item = ShopShippingMethod::withTrashed()->findOrFail($id);
-        $force ? $item->forceDelete() : $item->delete();
-        $this->logAction($request, $force ? 'hard_delete' : 'soft_delete', 'ShopShippingMethod', "Smazání dopravy ID: $id", $id);
-        return response()->json(null, 204);
+{
+    $item = ShopShippingMethod::withTrashed()->findOrFail($id);
+    
+    // OCHRANA: Zákaz mazání systémových metod
+    if ($item->isHardcoded()) {
+        return response()->json([
+            'message' => 'Tuto systémovou metodu dopravy (Osobní odběr / Nejbližší dopravce) nelze smazat.'
+        ], 403);
     }
 
+    $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
+    $force ? $item->forceDelete() : $item->delete();
+    
+    $this->logAction($request, $force ? 'hard_delete' : 'soft_delete', 'ShopShippingMethod', "Smazání dopravy ID: $id", $id);
+    return response()->json(null, 204);
+}
     public function restore(Request $request, $id): JsonResponse
     {
         $item = ShopShippingMethod::withTrashed()->findOrFail($id);
