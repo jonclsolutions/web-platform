@@ -27,16 +27,23 @@ class WebSupportTicketController extends Controller
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
         // --- FILTRACE ---
-        if ($s = $request->input('search')) {
-            $query->where(fn($q) => $q->where('subject', 'like', "%$s%")
-                ->orWhere('description', 'like', "%$s%")
-                ->orWhere('user_plain', 'like', "%$s%"));
-        }
+if ($s = $request->input('search')) {
+    $query->where(fn($q) => $q->where('subject', 'like', "%$s%")
+        ->orWhere('description', 'like', "%$s%")
+        ->orWhere('user_plain', 'like', "%$s%"));
+}
 
-        // Přesná shoda
-        foreach (['id', 'status', 'priority', 'category'] as $f) {
-            if ($request->filled($f)) $query->where($f, $request->input($f));
-        }
+// Přesná shoda (Upraveno tak, aby se frontendový 'status' správně dotazoval do DB na 'state')
+foreach (['id', 'priority', 'category'] as $f) {
+    if ($request->filled($f)) {
+        $query->where($f, $request->input($f));
+    }
+}
+
+// Speciální ošetření pro stav (Front: status -> DB: state)
+if ($request->filled('status')) {
+    $query->where('state', $request->input('status'));
+}
 
         // --- ŘAZENÍ ---
         $sortBy = $request->input('sort_by', 'created_at');

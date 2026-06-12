@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Subscription, interval, Observable } from 'rxjs';
@@ -7,6 +7,10 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { LoadingService } from '../../../core/services/loading.service';
+
+// Importy Core poskytovatelů pro komunikaci a okna
+import { DataHandler } from '../../../core/services/data-handler.service';
+import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -23,10 +27,17 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   userRole: string | null = null;
   isLoggedIn: boolean = false;
   
-  // 🆕 Aktivní modul (výchozí je 'web')
   currentModule: 'web' | 'shop' = 'web';
 
-  // Globální loading stream
+  // Lokální vlastnosti pro řízení stavu e-shopu
+  isShopActive: boolean = true;
+  maintenanceMessage: string = '';
+
+  // Vlastnosti pro ovládání schvalovacího modálu
+  showConfirmModal: boolean = false;
+  confirmPasswordValue: string = '';
+  pendingTargetState: boolean = true;
+
   isLoadingGlobal$: Observable<boolean>;
   
   currentDate$: Observable<Date> = interval(1000).pipe(
@@ -43,6 +54,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private authSubscription: Subscription | undefined;
   private userEmailSubscription: Subscription | undefined;
 
+  // Vstříknutí služeb pomocí vzoru inject()
+  private dataHandler = inject(DataHandler);
+  private alertDialogService = inject(AlertDialogService);
+
   constructor(
     private router: Router, 
     private authService: AuthService,
@@ -50,7 +65,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private loadingService: LoadingService
   ) { 
-    // Inicializace streamu loadingu
     this.isLoadingGlobal$ = this.loadingService.isLoading$;
   }
 
@@ -61,7 +75,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       
       const savedState = localStorage.getItem('admin_menu_open');
       
-      // 🆕 Načtení naposledy otevřeného modulu z paměti prohlížeče
       const savedModule = localStorage.getItem('admin_current_module') as 'web' | 'shop';
       if (savedModule) this.currentModule = savedModule;
 
@@ -75,6 +88,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.authSubscription = this.authService.isLoggedIn$.subscribe(loggedIn => {
       this.isLoggedIn = loggedIn;
       this.userRole = loggedIn ? this.authService.getUserRole() : null;
+      
+      if (loggedIn) {
+        this.loadShopSettings();
+      }
       this.cdr.markForCheck(); 
     });
 
@@ -84,12 +101,70 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     });
   }
 
-  // 🆕 Metoda pro přepnutí mezi Webem a E-Shopem
+  private loadShopSettings(): void {
+    this.dataHandler.get<any>('core/settings').subscribe({
+      next: (res) => {
+        if (res) {
+          this.isShopActive = !!res.is_shop_active;
+          this.maintenanceMessage = res.maintenance_message || '';
+          this.cdr.markForCheck();
+        }
+      }
+    });
+  }
+
+  // Pouze připraví cílový stav, vyčistí input a vyvolá HTML formulář
+  toggleShopStatus(): void {
+    this.pendingTargetState = !this.isShopActive;
+    this.confirmPasswordValue = ''; 
+    this.showConfirmModal = true;   
+    this.cdr.markForCheck();
+  }
+
+  // Skutečné bezpečné odeslání dat na API po schválení formuláře
+  submitShopStatusChange(): void {
+    if (!this.confirmPasswordValue.trim()) {
+      this.alertDialogService.open('Chyba validace', 'Musíte zadat autorizační heslo.', 'danger');
+      return;
+    }
+
+    this.dataHandler.put<any>('core/settings', {
+      is_shop_active: this.pendingTargetState,
+      maintenance_message: this.maintenanceMessage || 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.',
+      confirm_password: this.confirmPasswordValue
+    }).subscribe({
+      next: (response) => {
+        this.isShopActive = this.pendingTargetState;
+        this.showConfirmModal = false; 
+        
+        this.alertDialogService.open(
+          'Úspěšně uloženo', 
+          this.pendingTargetState ? 'E-shop byl úspěšně spuštěn do plného provozu.' : 'Režim údržby byl úspěšně aktivován.',
+          'success'
+        );
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        const errorMessage = err?.error?.message || 'Nepodařilo se změnit stav e-shopu. Zkontrolujte správnost hesla.';
+        this.alertDialogService.open(
+          'Chyba autorizace', 
+          errorMessage,
+          'danger'
+        );
+      }
+    });
+  }
+
+  cancelShopStatusChange(): void {
+    this.showConfirmModal = false;
+    this.confirmPasswordValue = '';
+    this.cdr.markForCheck();
+  }
+
   switchModule(module: 'web' | 'shop'): void {
     this.currentModule = module;
     localStorage.setItem('admin_current_module', module);
     
-    // Automatické přesměrování na dashboard příslušného modulu
     if (module === 'web') {
       this.router.navigate(['/admin/dashboard']);
     } else {

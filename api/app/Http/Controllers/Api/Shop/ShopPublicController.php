@@ -137,4 +137,14 @@ class ShopPublicController extends Controller
             'is_valid' => true
         ]);
     }
+
+    public function getStatus()
+{
+    // Načte nastavení z DB (nebo cache)
+    $settings = \App\Models\Core\CoreSiteSetting::first();
+    
+    return response()->json([
+        'is_shop_active' => (bool) ($settings->is_shop_active ?? true)
+    ]);
+}
 }

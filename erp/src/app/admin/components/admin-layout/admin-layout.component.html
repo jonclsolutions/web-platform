@@ -26,6 +26,17 @@
     <button *appHasPermission="'view-eshop'" [class.active]="currentModule === 'shop'" (click)="switchModule('shop')">
       🛒 E-Shop
     </button>
+
+    <div class="maintenance-toggle-wrapper" *appHasPermission="'shop-set-maitanance-mode'">
+      <button 
+        class="maintenance-toggle-btn" 
+        [class.shop-active]="isShopActive" 
+        [class.shop-inactive]="!isShopActive"
+        (click)="toggleShopStatus()">
+        <span class="status-indicator"></span>
+        {{ isShopActive ? '🛒 E-shop: Aktivní' : '🔧 E-shop: Údržba' }}
+      </button>
+    </div>
   </div>
 
   <div class="header-item header-right">
@@ -180,6 +191,45 @@
     <router-outlet></router-outlet>
   </main>
 </div>
+
+@if (showConfirmModal) {
+  <div class="password-modal-overlay" *appHasPermission="'shop-set-maitanance-mode'">
+    <div class="password-modal-card">
+      <div class="password-modal-header">
+        <h3>🛡️ Ověření administrátora</h3>
+        <button class="close-modal-btn" (click)="cancelShopStatusChange()">&times;</button>
+      </div>
+      
+      <div class="password-modal-body">
+        <p>Chystáte se změnit globální stav e-shopu na: 
+          <strong [style.color]="pendingTargetState ? '#2ecc71' : '#e74c3c'">
+            {{ pendingTargetState ? 'STANDARDNÍ PROVOZ' : 'REŽIM ÚDRŽBY' }}
+          </strong>.
+        </p>
+        <p class="modal-warning-text">
+          Tato akce ovlivní veřejné zákazníky. Pro uložení konfigurace zadejte své přihlašovací heslo:
+        </p>
+        
+        <div class="password-input-group">
+          <label for="admin-confirm-pwd">Aktuální heslo:</label>
+          <input 
+            id="admin-confirm-pwd"
+            type="password" 
+            placeholder="••••••••"
+            (input)="confirmPasswordValue = $any($event.target).value"
+            (keyup.enter)="submitShopStatusChange()"
+            class="form-control-password"
+            autocomplete="current-password">
+        </div>
+      </div>
+      
+      <div class="password-modal-footer">
+        <button class="btn-modal-secondary" (click)="cancelShopStatusChange()">Storno</button>
+        <button class="btn-modal-primary" (click)="submitShopStatusChange()">Potvrdit a uložit</button>
+      </div>
+    </div>
+  </div>
+}
 
 @if (isLoadingGlobal$ | async) {
   <div class="global-loading-overlay">

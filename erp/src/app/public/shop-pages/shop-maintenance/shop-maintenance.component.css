@@ -1,0 +1,49 @@
+.maintenance-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+  z-index: 9999; /* Překryje vše ostatní */
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.maintenance-content {
+  max-width: 500px;
+  padding: 20px;
+}
+
+.icon {
+  font-size: 5rem;
+  margin-bottom: 20px;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.sub-text {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.btn-home {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn-home:hover {
+  background-color: #0056b3;
+}

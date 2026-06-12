@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TranslationController;
 
 use App\Http\Controllers\Api\Core\CoreRoleController;
+use App\Http\Controllers\Api\Core\CoreSiteSettingController; // ⚙️ Nový kontroler pro globální konfiguraci
 
 use App\Http\Controllers\Api\Web\WebRawRequestCommissionController;
 use App\Http\Controllers\Api\Web\WebLogController;
@@ -37,31 +38,41 @@ use App\Http\Controllers\Api\Shop\ShopPublicController; // 🌍 Nový veřejný 
 |--------------------------------------------------------------------------
 */
 Route::prefix('shop/public')->group(function () {
-    // Produkty
-    Route::get('products', [ShopProductController::class, 'publicIndex']);
-    Route::get('products/{slugOrId}', [ShopProductController::class, 'publicShow']);
     
-    // ZABEZPEČENO: Kontrola skladu z košíku (Maximálně 15 dotazů za minutu z jedné IP adresy)
-    Route::get('products/{id}/check-stock', [ShopPublicController::class, 'checkStock'])
-        ->middleware('throttle:15,1');
-    
-    // Kategorie pro filtry a menu
-    Route::get('categories', [ShopCategoryController::class, 'index']);
+    Route::get('status', [ShopPublicController::class, 'getStatus']);
+    // ⚙️ VEŘEJNÉ NASTAVENÍ: Angular potřebuje vědět, zda je e-shop aktivní i v době údržby.
+    // Proto je tato ruta umístěna MIMO ochranný middleware 'shop.active'.
+    Route::get('settings', [CoreSiteSettingController::class, 'publicShow']);
 
-    // Dopravní a platební metody pro pokladnu
-    Route::get('shipping-methods', [ShopPublicController::class, 'getShippingMethods']);
-    Route::get('payment-methods', [ShopPublicController::class, 'getPaymentMethods']);
+    // Všechny ostatní klientské požadavky spadající pod e-shop se v případě vypnutí zablokují (503)
+    Route::middleware('shop.active')->group(function () {
+        // Produkty
+        Route::get('products', [ShopProductController::class, 'publicIndex']);
+        Route::get('products/{slugOrId}', [ShopProductController::class, 'publicShow']);
+        
+        // ZABEZPEČENO: Kontrola skladu z košíku (Maximálně 15 dotazů za minutu z jedné IP adresy)
+        Route::get('products/{id}/check-stock', [ShopPublicController::class, 'checkStock'])
+            ->middleware('throttle:15,1');
+        
+        // Kategorie pro filtry a menu
+        Route::get('categories', [ShopCategoryController::class, 'index']);
 
-    // Ověření kupónu v košíku
-    Route::post('coupons/validate', [ShopPublicController::class, 'validateCoupon']);
+        // Dopravní a platební metody pro pokladnu
+        Route::get('shipping-methods', [ShopPublicController::class, 'getShippingMethods']);
+        Route::get('payment-methods', [ShopPublicController::class, 'getPaymentMethods']);
+
+        // Ověření kupónu v košíku
+        Route::post('coupons/validate', [ShopPublicController::class, 'validateCoupon']);
+    });
 });
 
 /*
 |--------------------------------------------------------------------------
 | 💳 DOKONČENÍ OBJEDNÁVKY (Košík -> Pokladna)
 |--------------------------------------------------------------------------
+| Jistič pro nákupní proces. Pokud admin vypne shop, okamžitě se zablokuje tvorba objednávek.
 */
-Route::prefix('shop/checkout')->group(function () {
+Route::prefix('shop/checkout')->middleware('shop.active')->group(function () {
     Route::post('create-order', [ShopCheckoutController::class, 'createOrder']);
     Route::post('simulate-payment', [ShopCheckoutController::class, 'simulatePayment']);
 });
@@ -110,6 +121,12 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     */
     Route::prefix('core')->group(function () {
         
+        // ⚙️ Globální konfigurace a správa údržby e-shopu pro administrátory
+        Route::prefix('settings')->group(function () {
+            Route::get('/', [CoreSiteSettingController::class, 'show']);
+            Route::put('/', [CoreSiteSettingController::class, 'update']);
+        });
+
         // Users
         Route::prefix('users')->group(function () {
             Route::post('/', [UserController::class, 'store']);
@@ -141,7 +158,7 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     */
     Route::prefix('shop')->group(function () {
 
-// Products (Produkty) 📦
+        // Products (Produkty) 📦
         Route::prefix('products')->group(function () {
             // 🔥 TATO ROUTA ZAJISTÍ BEZPEČNÝ PATCH UPDATE POUZE PRO KATEGORII
             Route::patch('/{id}/category', [ShopProductController::class, 'updateCategory']);
@@ -214,9 +231,7 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         // Payment Methods (Platba) 💳
         Route::prefix('payment_methods')->group(function () {
             Route::get('/{id}', [ShopPaymentMethodController::class, 'show']);
-            // Odstraněny trasy pro restore a force-delete-all, protože metody nelze mazat
         });
-        // Omezení resourců: Povoleno pouze zobrazení seznamu (index) a aktualizace (update)
         Route::apiResource('payment_methods', ShopPaymentMethodController::class)
             ->only(['index', 'update'])
             ->parameters(['payment_methods' => 'id']);

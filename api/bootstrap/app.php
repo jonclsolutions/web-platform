@@ -18,13 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Ponecháváme CORS middleware pro křížové domény
         $middleware->append(HandleCors::class);
 
+        // ⚙️ REGISTRACE NAŠEHO NOVÉHO MIDDLEWARE
+        $middleware->alias([
+            'shop.active' => \App\Http\Middleware\CheckCoreShopActive::class,
+        ]);
+
         // DŮLEŽITÉ: Zde NEJSOU žádné Sanctum middleware pro API skupinu.
         // To znamená, že API routy NEBUDOU automaticky ověřovány pomocí Sanctum session.
         // Autentizace se bude spoléhat na standardní Laravel session.
-        // Pokud budete chtít později přidat Sanctum, přidáte zde:
-        // $middleware->api(prepend: [
-        //     \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        // ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Zajišťuje, že pro API požadavky (očekávající JSON)

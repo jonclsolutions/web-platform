@@ -26,10 +26,10 @@ header {
   align-items: center; 
   gap: 6px; 
   font-size: 0.8rem; 
-  color: #1e88e5; /* Příjemná modrá */
+  color: #1e88e5; 
   text-decoration: none; 
   font-weight: 600; 
-  border: 1px solid #1e88e5; /* Modrý rámeček */
+  border: 1px solid #1e88e5; 
   padding: 5px 12px; 
   border-radius: 4px; 
   transition: all 0.2s ease;
@@ -37,7 +37,7 @@ header {
 }
 
 .wiki-btn:hover { 
-  background-color: #1e88e5; /* Vyplnění při najetí */
+  background-color: #1e88e5; 
   color: white; 
 }
 .bug-report-btn:hover { background-color: #d32f2f; color: white; }
@@ -168,7 +168,6 @@ header {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-/* ... Tvoje původní styly ponech tak, jak jsou. Přidej pouze tyto nové třídy: */
 
 .module-switcher {
   display: flex;
@@ -204,14 +203,204 @@ header {
   background-color: #e3f2fd;
 }
 
-/* 📱 Úprava responzivity pro mobily */
 @media (max-width: 768px) {
-  .module-switcher {
-    margin-left: 5px;
-  }
-  
-  .module-switcher button {
-    padding: 0 10px;
-    font-size: 0.8rem;
-  }
+  .module-switcher { margin-left: 5px; }
+  .module-switcher button { padding: 0 10px; font-size: 0.8rem; }
+}
+
+.maintenance-toggle-wrapper {
+  margin-left: auto;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.maintenance-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid rgb(210, 210, 210);
+  cursor: pointer;
+  background-color: #fff;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.maintenance-toggle-btn.shop-active {
+  color: #2e7d32;
+  border-color: #a5d6a7;
+  background-color: #e8f5e9;
+}
+.maintenance-toggle-btn.shop-active:hover { background-color: #c8e6c9; }
+.maintenance-toggle-btn.shop-active .status-indicator {
+  background-color: #4caf50;
+  box-shadow: 0 0 8px #4caf50;
+  animation: pulse-green 2s infinite;
+}
+
+.maintenance-toggle-btn.shop-inactive {
+  color: #c62828;
+  border-color: #ef9a9a;
+  background-color: #ffebee;
+}
+.maintenance-toggle-btn.shop-inactive:hover { background-color: #ffcdd2; }
+.maintenance-toggle-btn.shop-inactive .status-indicator {
+  background-color: #f44336;
+  box-shadow: 0 0 8px #f44336;
+  animation: pulse-red 2s infinite;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(244, 67, 54, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+}
+
+@media (max-width: 768px) {
+  .maintenance-toggle-btn { padding: 8px; font-size: 0; }
+  .maintenance-toggle-btn .status-indicator { margin-right: 0; }
+}
+
+/* Modální okno pro autorizaci heslem */
+.password-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; 
+}
+
+.password-modal-card {
+  background: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: fadeInModal 0.2s ease-out;
+}
+
+.password-modal-header {
+  background: #f8f9fa;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.password-modal-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #2c3e50;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #95a5a6;
+}
+
+.close-modal-btn:hover { color: #34495e; }
+
+.password-modal-body {
+  padding: 20px;
+  color: #34495e;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.modal-warning-text {
+  background: #fff9db;
+  border-left: 4px solid #f59f00;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 15px 0;
+  font-size: 0.9rem;
+}
+
+.password-input-group { margin-top: 20px; }
+
+.password-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.form-control-password {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-control-password:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.password-modal-footer {
+  background: #f8f9fa;
+  padding: 15px 20px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-modal-secondary {
+  background: #e2e8f0;
+  color: #475569;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-modal-secondary:hover { background: #cbd5e1; }
+
+.btn-modal-primary {
+  background: #2c3e50;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-modal-primary:hover { background: #1a252f; }
+
+@keyframes fadeInModal {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
