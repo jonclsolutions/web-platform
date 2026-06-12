@@ -364,17 +364,63 @@
       <div class="modal-body">
         <form class="order-form">
           <fieldset>
-            <legend>Základní údaje</legend>
+            <legend>Základní údaje a kontakt</legend>
+            
+            <!-- Kontaktní údaje (Místo starého selectu na zákazníky) -->
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>E-mailová adresa *</label>
+                <input 
+                  type="email" 
+                  [(ngModel)]="editingOrder.email" 
+                  name="email" 
+                  placeholder="zakaznik@email.cz" 
+                  required>
+              </div>
+              <div class="form-group">
+                <label>Telefonní číslo *</label>
+                <input 
+                  type="tel" 
+                  [(ngModel)]="editingOrder.phone" 
+                  name="phone" 
+                  placeholder="+420 777 111 222" 
+                  required>
+              </div>
+              <div class="form-group">
+                <label>Firma / Společnost</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="editingOrder.company" 
+                  name="company" 
+                  placeholder="Nepovinné">
+              </div>
+            </div>
+
             <div class="form-row-2">
               <div class="form-group">
-                <label>Zákazník *</label>
-                <select [(ngModel)]="editingOrder.customer_id" name="customer_id" required>
-                  <option value="">-- Vybrat --</option>
-                  @for (cust of customers; track cust) {
-                    <option [value]="cust.id">{{ cust.full_name }} ({{ cust.email }})</option>
-                  }
-                </select>
+                <label>Jméno *</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="editingOrder.first_name" 
+                  name="first_name" 
+                  placeholder="Jan" 
+                  required>
               </div>
+              <div class="form-group">
+                <label>Příjmení *</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="editingOrder.last_name" 
+                  name="last_name" 
+                  placeholder="Novák" 
+                  required>
+              </div>
+            </div>
+
+            <hr class="form-divider" style="border: 0; border-top: 1px solid var(--border-color, #eee); margin: 15px 0;">
+
+            <!-- Výběr plateb a dopravy -->
+            <div class="form-row-2">
               <div class="form-group">
                 <label>Způsob platby *</label>
                 <select [(ngModel)]="editingOrder.payment_method_id" name="payment_method_id" required (change)="recalculateTotals()">
@@ -387,8 +433,6 @@
                   }
                 </select>
               </div>
-            </div>
-            <div class="form-row-2">
               <div class="form-group">
                 <label>Způsob dopravy *</label>
                 <select [(ngModel)]="editingOrder.shipping_method_id" name="shipping_method_id" required (change)="recalculateTotals()">
@@ -398,6 +442,9 @@
                   }
                 </select>
               </div>
+            </div>
+
+            <div class="form-row-2">
               <div class="form-group">
                 <label>Slevový kupón</label>
                 <select [(ngModel)]="editingOrder.coupon_id"
@@ -419,6 +466,8 @@
                   <div class="coupon-error-msg">⚠️ {{ couponValidation.error }}</div>
                 }
               </div>
+              <!-- Volné místo pro zachování mřížky form-row-2 -->
+              <div class="form-group"></div> 
             </div>
           </fieldset>
           <fieldset>

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Shop\ShopSupplier;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateShopSupplierRequest extends FormRequest
 {
@@ -13,11 +14,17 @@ class UpdateShopSupplierRequest extends FormRequest
 
     public function rules(): array
     {
-        $supplierId = $this->route('supplier');
+        // Bezpečné získání ID dodavatele z parametrů routy (zkouší varianty 'supplier' i 'id')
+        $supplierId = $this->route('supplier') ?? $this->route('id');
 
         return [
-            'name' => 'required|string|max:200',
-            'ico' => 'nullable|string|max:20|unique:shop_suppliers,ico,' . $supplierId,
+            'name' => 'required|string|min:2|max:200',
+            'ico' => [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique('shop_suppliers', 'ico')->ignore($supplierId), // Bezpečné ignorování aktuálního ID
+            ],
             'contact_person' => 'nullable|string|max:150',
             'email' => 'nullable|email|max:100',
             'phone' => 'nullable|string|max:20',
@@ -26,8 +33,19 @@ class UpdateShopSupplierRequest extends FormRequest
             'postal_code' => 'nullable|string|max:10',
             'country' => 'nullable|string|max:50',
             'payment_terms' => 'nullable|string|max:100',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'required|boolean', // Sjednoceno na required podle frontendu
             'notes' => 'nullable|string',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Název dodavatele je povinný.',
+            'name.min' => 'Název musí mít alespoň 2 znaky.',
+            'ico.unique' => 'Dodavatel s tímto IČO již existuje.',
+            'email.email' => 'Zadejte platnou e-mailovou adresu.',
+            'is_active.required' => 'Musíte určit, zda je dodavatel aktivní.',
         ];
     }
 }

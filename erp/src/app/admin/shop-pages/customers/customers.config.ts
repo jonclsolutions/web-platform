@@ -3,7 +3,6 @@ import * as Core from '../../../shared/imports/core-providers';
 export const CUSTOMER_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔍', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
   { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  // 🌟 NOVÉ TLAČÍTKO PRO ZOBRAZENÍ OBJEDNÁVEK:
   { display_name: '📦', header_name: 'Orders', isActive: true, type: 'neutral_button', action: 'customer_orders' },
   { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
 ];
@@ -22,6 +21,8 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Zadejte jméno',
     type: 'text',
     required: true,
+    pattern: '^.{1,100}$',
+    errorMessage: 'Jméno je povinné (max. 100 znaků).',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -30,15 +31,17 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Zadejte příjmení',
     type: 'text',
     required: true,
+    pattern: '^.{1,100}$',
+    errorMessage: 'Příjmení je povinné (max. 100 znaků).',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
     column_name: 'email',
     label: 'Email',
     placeholder: 'email@priklad.cz',
-    type: 'text',
+    type: 'email',
     required: true,
-    pattern: '^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$',
+    pattern: '[^@]+@[^@]+\\.[^@]+',
     errorMessage: 'Zadejte platný email.',
     editable: true, show_in_edit: true, show_in_create: true,
   },
@@ -46,8 +49,10 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     column_name: 'phone',
     label: 'Telefon',
     placeholder: '+420...',
-    type: 'text',
+    type: 'tel',
     required: false,
+    pattern: '^(\\+?[0-9]{1,3})?[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}$',
+    errorMessage: 'Zadejte platné telefonní číslo.',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -56,6 +61,8 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Název společnosti',
     type: 'text',
     required: false,
+    pattern: '^.{0,150}$',
+    errorMessage: 'Název firmy může mít maximálně 150 znaků.',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -64,6 +71,8 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Zadejte adresu',
     type: 'text',
     required: false,
+    pattern: '^.{0,255}$',
+    errorMessage: 'Adresa může mít maximálně 255 znaků.',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -72,6 +81,8 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Zadejte město',
     type: 'text',
     required: false,
+    pattern: '^.{0,100}$',
+    errorMessage: 'Název města může mít maximálně 100 znaků.',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -80,6 +91,8 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: '123 45',
     type: 'text',
     required: false,
+    pattern: '^.{0,10}$',
+    errorMessage: 'PSČ může mít maximálně 10 znaků.',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -88,6 +101,7 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'select',
     options: [{ value: '1', label: 'Ano' }, { value: '0', label: 'Ne' }],
     required: true,
+    errorMessage: 'Vyberte status aktivace.',
     editable: true, show_in_edit: true, show_in_create: true
   },
   {
@@ -96,8 +110,14 @@ export const CUSTOMER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Interní informace...',
     type: 'textarea',
     required: false,
+    pattern: '^.{0,1000}$',
+    errorMessage: 'Poznámka může mít maximálně 1000 znaků.',
     editable: true, show_in_edit: true, show_in_create: true
-  }
+  },
+  
+  // Skrytá systémová pole
+  { column_name: 'user_id', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
+  { column_name: 'country', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true }
 ];
 
 export const CUSTOMER_COLUMNS: Core.ColumnDefinition[] = [
@@ -106,7 +126,7 @@ export const CUSTOMER_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'first_name', header: 'Jméno', type: 'text' },
   { key: 'email', header: 'Email', type: 'text' },
   { key: 'phone', header: 'Telefon', type: 'text' },
-  { key: 'total_spent', header: 'Celkem utraceno', type: 'text' }, // Formátováno přes Resource
+  { key: 'total_spent', header: 'Celkem utraceno', type: 'text' },
   { key: 'is_active', header: 'Aktivní', type: 'boolean' }
 ];
 

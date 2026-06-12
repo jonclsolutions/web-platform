@@ -1,30 +1,53 @@
 export interface Order {
   id?: number;
-  order_number: string;
-  customer_id: number;
+  order_number?: string; // Při vytváření na frontendu číslo ještě nemáš, vygeneruje ho Laravel
+  
+  // 🔗 Zákazník / Kontakt
+  customer_id?: number;  // Změněno na VOLITELNÉ (nullable), při tvorbě nové objednávky ho neposíláš
   customer?: Customer;
+  
+  // 🌟 NOVÁ POLE pro přímý zápis kontaktu z formuláře:
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  company?: string | null;
+
+  // 📦 Stavy
   status: string;
   status_label?: string;
   payment_status: string;
   payment_status_label?: string;
+  
+  // 💰 Finance
   total_amount: number;
   shipping_amount: number;
   tax_amount: number;
   discount_amount: number;
   final_amount: number;
-  coupon_id?: number;
+  currency?: string; // Doporučuji přidat, pokud posíláš 'CZK'
+  
+  // 🎫 Vazby na metody a kupóny
+  coupon_id?: number | null;
   coupon?: Coupon;
   payment_method_id: number;
   payment_method?: PaymentMethod;
   shipping_method_id: number;
   shipping_method?: ShippingMethod;
+  coupon_code?: string | null; // Přidáno pro případ, že posíláš kód textem jako v checkoutu
+  
+  // 📍 Adresa doručení
   shipping_address: string;
   shipping_city: string;
   shipping_postal_code: string;
   shipping_country: string;
-  notes?: string;
+  
+  // 📝 Ostatní data
+  notes?: string | null;
   items: OrderItem[];
   items_count?: number;
+  
+  // 🕐 Časová razítka
   paid_at?: string;
   shipped_at?: string;
   delivered_at?: string;

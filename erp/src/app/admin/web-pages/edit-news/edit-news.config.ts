@@ -42,7 +42,6 @@ export const NEWS_TOOLBAR_BUTTONS: Core.Button[] = [
   }
 ];
 
-
 export const NEWS_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
   { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
@@ -79,7 +78,8 @@ export const NEWS_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Jméno nebo oddělení',
     type: 'text',
     required: true,
-    errorMessage: 'Autor je povinný.',
+    pattern: '^.{1,255}$',
+    errorMessage: 'Autor musí být vyplněn (max. 255 znaků).',
     editable: true,
     show_in_edit: true,
     show_in_create: true
@@ -101,6 +101,8 @@ export const NEWS_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Klíčová informace...',
     type: 'text',
     required: false,
+    pattern: '^.{0,255}$',
+    errorMessage: 'Maximální délka je 255 znaků.',
     editable: true,
     show_in_edit: true,
     show_in_create: true
@@ -110,6 +112,8 @@ export const NEWS_FORM_FIELDS: Core.InputDefinition[] = [
     label: 'Důležitý bod 2',
     type: 'text',
     required: false,
+    pattern: '^.{0,255}$',
+    errorMessage: 'Maximální délka je 255 znaků.',
     editable: true,
     show_in_edit: true,
     show_in_create: true
@@ -119,6 +123,8 @@ export const NEWS_FORM_FIELDS: Core.InputDefinition[] = [
     label: 'Důležitý bod 3',
     type: 'text',
     required: false,
+    pattern: '^.{0,255}$',
+    errorMessage: 'Maximální délka je 255 znaků.',
     editable: true,
     show_in_edit: true,
     show_in_create: true
@@ -128,6 +134,8 @@ export const NEWS_FORM_FIELDS: Core.InputDefinition[] = [
     label: 'Důležitý bod 4',
     type: 'text',
     required: false,
+    pattern: '^.{0,255}$',
+    errorMessage: 'Maximální délka je 255 znaků.',
     editable: true,
     show_in_edit: true,
     show_in_create: true

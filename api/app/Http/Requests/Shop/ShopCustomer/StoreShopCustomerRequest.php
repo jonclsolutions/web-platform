@@ -14,28 +14,34 @@ class StoreShopCustomerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'nullable|exists:users,id|unique:shop_customers',
-            'email' => 'required|email|max:150|unique:shop_customers',
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'phone' => 'nullable|string|max:20',
-            'company' => 'nullable|string|max:150',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'postal_code' => 'nullable|string|max:10',
-            'country' => 'nullable|string|max:50',
-            'is_active' => 'boolean',
-            'notes' => 'nullable|string|max:1000',
+            'user_id'     => ['nullable', 'integer', 'exists:users,id', 'unique:shop_customers,user_id'],
+            'email'       => ['required', 'email', 'max:150', 'unique:shop_customers,email'],
+            'first_name'  => ['required', 'string', 'max:100'],
+            'last_name'   => ['required', 'string', 'max:100'],
+            'phone'       => ['nullable', 'string', 'max:20', 'regex:/^(\+?[0-9]{1,3})?[\s.-]?[0-9]{3,4}[\s.-]?[0-9]{3,4}[\s.-]?[0-9]{3,4}$/'],
+            'company'     => ['nullable', 'string', 'max:150'],
+            'address'     => ['nullable', 'string', 'max:255'],
+            'city'        => ['nullable', 'string', 'max:100'],
+            'postal_code' => ['nullable', 'string', 'max:10'],
+            'country'     => ['nullable', 'string', 'max:50'],
+            'is_active'   => ['required', 'boolean'],
+            'notes'       => ['nullable', 'string', 'max:1000'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'email.required' => 'Email je povinný.',
-            'email.unique' => 'Tento email už je zaregistrován.',
+            'email.required'      => 'Email je povinný.',
+            'email.email'         => 'Zadejte platný email.',
+            'email.max'           => 'Email může mít maximálně 150 znaků.',
+            'email.unique'        => 'Tento email už je zaregistrován.',
             'first_name.required' => 'Jméno je povinné.',
-            'last_name.required' => 'Příjmení je povinné.',
+            'first_name.max'      => 'Jméno může mít maximálně 100 znaků.',
+            'last_name.required'  => 'Příjmení je povinné.',
+            'last_name.max'       => 'Příjmení může mít maximálně 100 znaků.',
+            'phone.regex'         => 'Zadejte platné telefonní číslo.',
+            'is_active.required'  => 'Status aktivace je povinný.',
         ];
     }
 }

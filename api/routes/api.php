@@ -214,10 +214,11 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         // Payment Methods (Platba) 💳
         Route::prefix('payment_methods')->group(function () {
             Route::get('/{id}', [ShopPaymentMethodController::class, 'show']);
-            Route::post('/{id}/restore', [ShopPaymentMethodController::class, 'restore']);
-            Route::delete('/force-delete-all', [ShopPaymentMethodController::class, 'forceDeleteAllTrashed']);
+            // Odstraněny trasy pro restore a force-delete-all, protože metody nelze mazat
         });
+        // Omezení resourců: Povoleno pouze zobrazení seznamu (index) a aktualizace (update)
         Route::apiResource('payment_methods', ShopPaymentMethodController::class)
+            ->only(['index', 'update'])
             ->parameters(['payment_methods' => 'id']);
     });
 

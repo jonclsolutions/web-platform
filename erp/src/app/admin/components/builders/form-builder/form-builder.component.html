@@ -28,13 +28,19 @@
                     <input type="file" [id]="input.column_name" (change)="onFileChange($event, input.column_name)" class="custom-input" [disabled]="input.editable === false" />
                   }
                   @case ('text') {
-                    <input type="text" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                    <input type="text" [id]="input.column_name" [placeholder]="input.placeholder" 
+                      [required]="!!input.required" [pattern]="input.pattern || '.*'" [name]="input.column_name" 
+                      [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
                   @case ('email') {
-                    <input type="email" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                    <input type="email" email [id]="input.column_name" [placeholder]="input.placeholder" 
+                      [required]="!!input.required" [pattern]="input.pattern || '.*'" [name]="input.column_name" 
+                      [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
                   @case ('tel') {
-                    <input type="tel" [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                    <input type="tel" [id]="input.column_name" [placeholder]="input.placeholder" 
+                      [required]="!!input.required" [pattern]="input.pattern || '.*'" [name]="input.column_name" 
+                      [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
                   @case ('select') {
                     <select [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false">
@@ -66,7 +72,9 @@
                     }
                   }
                   @default {
-                    <input [type]="input.type" [id]="input.column_name" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                    <input [type]="input.type" [id]="input.column_name" [required]="!!input.required" 
+                      [pattern]="input.pattern || '.*'" [name]="input.column_name" 
+                      [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
                 }
                 @if (getControl(input.column_name)?.invalid && (getControl(input.column_name)?.dirty || getControl(input.column_name)?.touched)) {

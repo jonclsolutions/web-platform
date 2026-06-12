@@ -14,10 +14,10 @@ class StoreWebNewsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title'    => ['required', 'string', 'max:255'],
+            'title'    => ['required', 'string', 'min:3', 'max:255'],
             'message'  => ['required', 'string'],
             'author'   => ['required', 'string', 'max:255'],
-            'thema'    => ['required', 'string', 'max:255'],
+            'thema'    => ['required', 'string', 'max:255', 'in:Milník,Update,Info,Novinka,Upozornění,Error,Údržba,Akce'],
             'bullet_1' => ['nullable', 'string', 'max:255'],
             'bullet_2' => ['nullable', 'string', 'max:255'],
             'bullet_3' => ['nullable', 'string', 'max:255'],
@@ -29,9 +29,11 @@ class StoreWebNewsRequest extends FormRequest
     {
         return [
             'title.required'   => 'Titulka novinky je povinná.',
+            'title.min'        => 'Titulek musí mít 3 až 255 znaků.',
             'message.required' => 'Obsah zprávy nesmí být prázdný.',
             'author.required'  => 'Autor musí být vyplněn.',
             'thema.required'   => 'Téma je povinné.',
+            'thema.in'         => 'Vybrané téma je neplatné.',
         ];
     }
 }

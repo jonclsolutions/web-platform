@@ -3,7 +3,7 @@ import * as Core from '../../../shared/imports/core-providers';
 export const SHIPPING_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔍', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
   { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' } // 👈 Vráceno pro možnost mazání custom metod
 ];
 
 export const SHIPPING_TOOLBAR_BUTTONS: Core.Button[] = [
@@ -141,7 +141,7 @@ export const SHIPPING_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'name', header: 'Název', type: 'text' },
   { key: 'shipping_type', header: 'Typ', type: 'text' },
   { key: 'base_price', header: 'Cena', type: 'text' },
-  { key: 'is_active', header: 'Aktivní', type: 'boolean' }, // Změněno z 'text' na 'boolean'
+  { key: 'is_active', header: 'Aktivní', type: 'boolean' },
   { key: 'sort_order', header: 'Pořadí', type: 'text' }
 ];
 
@@ -164,14 +164,14 @@ export const SHIPPING_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'description', displayName: 'Popis', type: 'text' },
   { key: 'shipping_type', displayName: 'Typ dopravy', type: 'text' },
   { key: 'base_price', displayName: 'Základní cena', type: 'text' },
-  { key: 'allows_cod', displayName: 'Podpora dobírky', type: 'boolean' }, // Změněno na boolean
+  { key: 'allows_cod', displayName: 'Podpora dobírky', type: 'boolean' },
   { key: 'cod_price', displayName: 'Cena dobírky', type: 'text' },
   { key: 'free_shipping_threshold', displayName: 'Zdarma od', type: 'text' },
   { key: 'max_weight', displayName: 'Max. váha', type: 'text' },
-  { key: 'requires_pickup_point', displayName: 'Vyžaduje výdejnu', type: 'boolean' }, // Změněno na boolean
+  { key: 'requires_pickup_point', displayName: 'Vyžaduje výdejnu', type: 'boolean' },
   { key: 'delivery_days_min', displayName: 'Min. dny', type: 'text' },
   { key: 'delivery_days_max', displayName: 'Max. dny', type: 'text' },
   { key: 'tracking_url', displayName: 'Sledovací URL', type: 'text' },
-  { key: 'is_active', displayName: 'Aktivní', type: 'boolean' }, // Změněno na boolean
+  { key: 'is_active', displayName: 'Aktivní', type: 'boolean' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
 ];

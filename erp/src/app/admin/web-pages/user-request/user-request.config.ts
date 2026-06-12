@@ -1,41 +1,18 @@
 import * as Core from '../../../shared/imports/core-providers';
 
-
 export const USER_REQUEST_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔍', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
   { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
   { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
 ];
+
 export const USER_REQUEST_TOOLBAR_BUTTONS: Core.Button[] = [
-  {
-    action: 'toggleFilters',
-    label: 'Filtry',
-    icon: '🔍',
-    class: 'btn-filter',
-    isActive: false
-  },
-  {
-    action: 'handleCreateFormOpened',
-    label: 'Přidat',
-    icon: '➕',
-    class: 'btn-create',
-    showIf: true
-  },
-  {
-    action: 'exportActiveTable',
-    label: 'Export CSV',
-    icon: '📥',
-    class: 'btn-export',
-    showIf: true
-  },
-  {
-    action: 'toggleTable',
-    label: 'Koš',
-    icon: '🗑️',
-    class: 'btn-trash',
-    permission: 'view-deleted'
-  }
+  { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
+  { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true },
+  { action: 'exportActiveTable', label: 'Export CSV', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
+
 export const USER_REQUEST_STATUS_OPTIONS: string[] = ['Nově zadané', 'Zpracovává se', 'Dokončeno', 'Zrušeno'];
 export const USER_REQUEST_PRIORITY_OPTIONS: string[] = ['Nízká', 'Neutrální', 'Vysoká'];
 export const USER_REQUEST_THEMA_OPTIONS: string[] = ['Webový vývoj', 'Desktopový vývoj', 'Mobilní vývoj', 'AI vývoj', 'Jiné'];
@@ -48,7 +25,7 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'text',
     required: true,
     pattern: '^[a-zA-Z0-9ěščřžýáíéóúůďťňĚŠČŘŽÝÁÍÉÚŮĎŤŇ\\s\\.\\-]{3,255}$',
-    errorMessage: 'Téma musí mít 3-255 znaků.',
+    errorMessage: 'Téma musí mít 3-255 znaků.', // Sjednoceno s Laravel
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -58,7 +35,7 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'email',
     required: true,
     pattern: '[^@]+@[^@]+\\.[^@]+',
-    errorMessage: 'Zadejte platnou e-mailovou adresu.',
+    errorMessage: 'Zadejte platnou e-mailovou adresu.', // Sjednoceno s Laravel
     editable: true, show_in_edit: true, show_in_create: true
   },
   {
@@ -67,7 +44,8 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: '+420 123 456 789',
     type: 'tel',
     required: false,
-    errorMessage: 'Zadejte platné telefonní číslo.',
+    pattern: '^(\\+?[0-9]{1,3})?[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}$', // Pridaný regex pasující na Laravel
+    errorMessage: 'Zadejte platné telefonní číslo.', // Sjednoceno s Laravel
     editable: true, show_in_edit: true, show_in_create: true
   },
   {
@@ -92,7 +70,7 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Zde rozepište detaily objednávky/provize...',
     type: 'textarea',
     required: true,
-    errorMessage: 'Popis je povinný pro zpracování.',
+    errorMessage: 'Popis je povinný pro zpracování.', // Sjednoceno s Laravel
     editable: true, show_in_edit: true, show_in_create: true
   },
   {
@@ -123,7 +101,7 @@ export const USER_REQUEST_TRASH_COLUMNS: Core.ColumnDefinition[] = [
 
 export const USER_REQUEST_FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'id', header: 'ID', type: 'text', placeholder: 'ID...', canSort: true },
-  { key: 'thema', header: 'Téma', type: 'select', placeholder: 'Hledat téma...',options: USER_REQUEST_THEMA_OPTIONS, canSort: true },
+  { key: 'thema', header: 'Téma', type: 'select', placeholder: 'Hledat téma...', options: USER_REQUEST_THEMA_OPTIONS, canSort: true },
   { key: 'contact_email', header: 'Email', type: 'text', placeholder: 'Hledat email...', canSort: true },
   { key: 'status', header: 'Stav', type: 'select', options: USER_REQUEST_STATUS_OPTIONS, placeholder: '-- Stav --', canSort: true },
   { key: 'priority', header: 'Priorita', type: 'select', options: USER_REQUEST_PRIORITY_OPTIONS, placeholder: '-- Priorita --', canSort: true },

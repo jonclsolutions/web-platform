@@ -7,34 +7,10 @@ export const SUPPLIER_BUTTONS: Core.TableButtons[] = [
 ];
 
 export const SUPPLIER_TOOLBAR_BUTTONS: Core.Button[] = [
-  {
-    action: 'toggleFilters',
-    label: 'Filtry',
-    icon: '🔍',
-    class: 'btn-filter',
-    isActive: false
-  },
-  {
-    action: 'handleCreateFormOpened',
-    label: 'Přidat',
-    icon: '➕',
-    class: 'btn-create',
-    showIf: true
-  },
-  {
-    action: 'exportActiveTable',
-    label: 'Export CSV',
-    icon: '📥',
-    class: 'btn-export',
-    showIf: true
-  },
-  {
-    action: 'toggleTable',
-    label: 'Koš',
-    icon: '🗑️',
-    class: 'btn-trash',
-    permission: 'view-deleted'
-  }
+  { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
+  { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true },
+  { action: 'exportActiveTable', label: 'Export CSV', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
 export const SUPPLIER_FORM_FIELDS: Core.InputDefinition[] = [
@@ -45,7 +21,7 @@ export const SUPPLIER_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'text',
     required: true,
     pattern: '^[a-zA-Z0-9ěščřžýáíéóúůďťňĚŠČŘŽÝÁÍÉÚŮĎŤŇ\\s\\.\\-]{2,200}$',
-    errorMessage: 'Název musí mít 2-200 znaků.',
+    errorMessage: 'Název je povinný a musí mít 2-200 znaků.',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -54,7 +30,7 @@ export const SUPPLIER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Zadejte IČO',
     type: 'text',
     required: false,
-    errorMessage: 'IČO musí být platné.',
+    errorMessage: 'IČO musí být platný text (max 20 znaků).',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -71,7 +47,7 @@ export const SUPPLIER_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'dodavatel@email.cz',
     type: 'email',
     required: false,
-    pattern: '[^@]+@[^@]+\\.[^@]+',
+    pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', // Opravený a spolehlivější regex pro email
     errorMessage: 'Zadejte platnou e-mailovou adresu.',
     editable: true, show_in_edit: true, show_in_create: true
   },
@@ -79,7 +55,7 @@ export const SUPPLIER_FORM_FIELDS: Core.InputDefinition[] = [
     column_name: 'phone',
     label: 'Telefon',
     placeholder: '+420 123 456 789',
-    type: 'tel',
+    type: 'text',
     required: false,
     editable: true, show_in_edit: true, show_in_create: true
   },
@@ -165,14 +141,7 @@ export const SUPPLIER_FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'name', header: 'Firma', type: 'text', placeholder: 'Hledat název...', canSort: true },
   { key: 'ico', header: 'IČO', type: 'text', placeholder: 'Hledat IČO...', canSort: true },
   { key: 'email', header: 'Email', type: 'text', placeholder: 'Hledat email...', canSort: true },
-  {
-    key: 'is_active',
-    header: 'Aktivní',
-    type: 'select',
-    options: ["1", "0"],
-    placeholder: '-- Stav --',
-    canSort: true
-  },
+  { key: 'is_active', header: 'Aktivní', type: 'select', options: ["1", "0"], placeholder: '-- Stav --', canSort: true },
 ];
 
 export const SUPPLIER_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [

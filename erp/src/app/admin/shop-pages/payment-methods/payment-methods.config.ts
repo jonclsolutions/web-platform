@@ -20,14 +20,6 @@ export const PAYMENT_FORM_FIELDS: Core.InputDefinition[] = [
     editable: true, show_in_edit: true, show_in_create: false,
   },
   {
-    column_name: 'image_path',
-    label: 'Cesta k obrázku / logu',
-    placeholder: 'payment-methods-images/nazev.svg',
-    type: 'text',
-    required: false,
-    editable: false, show_in_edit: false, show_in_create: false,
-  },
-  {
     column_name: 'price',
     label: 'Poplatek (Kč)',
     type: 'number',
@@ -78,6 +70,14 @@ export const PAYMENT_FORM_FIELDS: Core.InputDefinition[] = [
     editable: true, show_in_edit: true, show_in_create: false
   },
   {
+    column_name: 'config',
+    label: 'Konfigurace brány (JSON)',
+    placeholder: '{"sandbox_public_key": "...", "production_secret": "..."}',
+    type: 'textarea',
+    required: false,
+    editable: true, show_in_edit: true, show_in_create: false
+  },
+  {
     column_name: 'description',
     label: 'Popis pro zákazníka',
     type: 'textarea',
@@ -113,7 +113,7 @@ export const PAYMENT_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'variable_symbol_type', displayName: 'Typ VS', type: 'text' },
   { key: 'is_active', displayName: 'Aktivní', type: 'boolean' },
   { key: 'sort_order', displayName: 'Pořadí', type: 'text' },
-  { key: 'config', displayName: 'Konfigurace (JSON)', type: 'text' }, // 👈 Přidáno sem pro zobrazení API klíčů v detailu
+  { key: 'config', displayName: 'Konfigurace (JSON)', type: 'text' },
   { key: 'description', displayName: 'Popis', type: 'text' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
 ];

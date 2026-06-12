@@ -6,36 +6,14 @@ export const SALES_LEAD_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔗', header_name: 'Link', isActive: true, type: 'neutral_button', action: 'generate_form' },
   { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
 ];
+
 export const SALES_LEAD_TOOLBAR_BUTTONS: Core.Button[] = [
-  {
-    action: 'toggleFilters',
-    label: 'Filtry',
-    icon: '🔍',
-    class: 'btn-filter',
-    isActive: false
-  },
-  {
-    action: 'handleCreateFormOpened',
-    label: 'Přidat lead',
-    icon: '➕',
-    class: 'btn-create',
-    showIf: true
-  },
-  {
-    action: 'exportActiveTable',
-    label: 'Export CSV',
-    icon: '📥',
-    class: 'btn-export',
-    showIf: true
-  },
-  {
-    action: 'toggleTable',
-    label: 'Koš',
-    icon: '🗑️',
-    class: 'btn-trash',
-    permission: 'view-deleted'
-  }
+  { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
+  { action: 'handleCreateFormOpened', label: 'Přidat lead', icon: '➕', class: 'btn-create', showIf: true },
+  { action: 'exportActiveTable', label: 'Export CSV', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
+
 export const SALES_LEAD_STATUS_OPTIONS: string[] = [
   'Nové', 'Probíhá komunikace', 'Příprava nabídky', 'Nabídka odeslána', 
   'Poptávkový formulář odeslán', 'Vyjednávání', 'Pozastaveno', 'Přebírá si dev team',
@@ -64,11 +42,16 @@ export const SALES_LEAD_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Zadejte název firmy nebo jméno',
     type: 'text',
     required: true,
+    pattern: '^.{2,255}$',
+    errorMessage: 'Název subjektu musí mít alespoň 2 znaky.',
     editable: true,
     show_in_edit: true,
     show_in_create: true,
   },
   { column_name: 'user_id', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
+  { column_name: 'salesman_name', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
+  { column_name: 'contact_other', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
+  { column_name: 'source_url', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
   {
     column_name: 'first_contact_date',
     label: 'První kontakt',
@@ -95,6 +78,8 @@ export const SALES_LEAD_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'priklad@firma.cz',
     type: 'email',
     required: false,
+    pattern: '[^@]+@[^@]+\\.[^@]+',
+    errorMessage: 'Zadejte platnou e-mailovou adresu.',
     editable: true,
     show_in_edit: true,
     show_in_create: true,
@@ -103,8 +88,10 @@ export const SALES_LEAD_FORM_FIELDS: Core.InputDefinition[] = [
     column_name: 'contact_phone',
     label: 'Telefon',
     placeholder: '+420 123 456 789',
-    type: 'text',
+    type: 'tel',
     required: false,
+    pattern: '^(\\+?[0-9]{1,3})?[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}$',
+    errorMessage: 'Zadejte platné telefonní číslo.',
     editable: true,
     show_in_edit: true,
     show_in_create: true,
@@ -126,6 +113,7 @@ export const SALES_LEAD_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'select',
     options: SALES_LEAD_SOURCE_CHANNELS.map(opt => ({ value: opt, label: opt })),
     required: true,
+    errorMessage: 'Vyberte zdroj oslovení.',
     editable: true,
     show_in_edit: true,
     show_in_create: true
@@ -137,6 +125,7 @@ export const SALES_LEAD_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'select',
     options: SALES_LEAD_STATUS_OPTIONS.map(opt => ({ value: opt, label: opt })),
     required: true,
+    errorMessage: 'Vyberte aktuální stav leadu.',
     editable: true,
     show_in_edit: true,
     show_in_create: true
@@ -148,6 +137,7 @@ export const SALES_LEAD_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'select',
     options: SALES_LEAD_PRIORITY_OPTIONS.map(opt => ({ value: opt, label: opt })),
     required: true,
+    errorMessage: 'Vyberte prioritu leadu.',
     editable: true,
     show_in_edit: true,
     show_in_create: true

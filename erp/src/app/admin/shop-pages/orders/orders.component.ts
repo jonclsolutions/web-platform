@@ -14,14 +14,13 @@ import {
   STATUS_OPTIONS,
   PAYMENT_STATUS_OPTIONS
 } from './orders.config';
-import { Order, OrderItem, Customer, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './order-specific.interface';
+import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './order-specific.interface';
 
 interface CouponValidationResult {
   valid: boolean;
   error?: string;
 }
 
-// 1. PŘIDÁNO: Definice režimů
 type TableMode = 'all' | 'pending_tasks' | 'trash';
 
 @Component({
@@ -36,18 +35,15 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   override apiEndpoint: string = 'shop/orders';
   @ViewChild('activeTable') activeTable!: any;
 
-  // 2. PŘIDÁNO: Stav aktuálního tabu
   currentMode: TableMode = 'all';
 
-  // Statická konfigurace pro přepínač režimů (taby) splňující Core.Button rozhraní
   private orderTabButtons: Core.Button[] = [
     { action: 'all', label: 'Všechny objednávky', icon: '📦', class: 'btn-filter', isActive: true },
     { action: 'pending_tasks', label: 'K vyřízení', icon: '⏳', class: 'btn-filter', isActive: false },
     { action: 'trash', label: 'Koš', icon: '🗑️', class: 'btn-filter', isActive: false }
   ];
 
-  // Data
-  customers: Customer[] = [];
+  // Data (Odebráno pole pro zákazníky)
   products: Product[] = [];
   variants: ProductVariant[] = [];
   paymentMethods: PaymentMethod[] = [];
@@ -56,7 +52,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   statusOptions = STATUS_OPTIONS;
   paymentStatusOptions = PAYMENT_STATUS_OPTIONS;
 
-  // Summary calculations
   summaryTaxAmount = 0;
 
   // UI State
@@ -70,10 +65,8 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   editingOrder: Order | null = null;
   editingItemIdx: number | null = null;
 
-  // Real-time validation state
   couponValidation: CouponValidationResult = { valid: true };
 
-  // Double-click prevention
   private isProcessing = false;
 
   filters: Core.FilterParams = {
@@ -97,7 +90,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     super(dataHandler, cd, genericTableService);
   }
 
-  // Getter pro transformaci konfigurace tabů s aktuálním stavem aktivity
   get tabButtonsConfigs(): Core.Button[] {
     return this.orderTabButtons.map(btn => ({
       ...btn,
@@ -125,59 +117,41 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     }
   }
 
-  // ========== 3. PŘIDÁNO: LOGIKA PŘEPÍNÁNÍ TABŮ ==========
-
-  // Upravte metodu setTableMode následovně:
-// Změň parametr z (mode: TableMode) na (mode: any)
-setTableMode(mode: any): void {
-  this.currentMode = mode;
-  this.currentPage = 1;
-  
-  // 1. Reset filtrů na základ
-  this.filters = {
-    sort_by: 'created_at',
-    sort_direction: 'desc'
-  };
-
-  if (mode === 'trash') {
-    this.showTrashTable = true;
-    this.filters['only_trashed'] = 'true';
-  } else {
-    this.showTrashTable = false;
-    delete this.filters['only_trashed'];
+  setTableMode(mode: any): void {
+    this.currentMode = mode;
+    this.currentPage = 1;
     
-    if (mode === 'pending_tasks') {
-      this.filters['status'] = 'pending,confirmed,processing,shipped';
-    }
-  }
+    this.filters = {
+      sort_by: 'created_at',
+      sort_direction: 'desc'
+    };
 
-  // 3. KLÍČOVÉ: Explicitní vynucení refresh a detekce změn
-  this.refreshData();
-  this.cd.detectChanges();
-}
+    if (mode === 'trash') {
+      this.showTrashTable = true;
+      this.filters['only_trashed'] = 'true';
+    } else {
+      this.showTrashTable = false;
+      delete this.filters['only_trashed'];
+      
+      if (mode === 'pending_tasks') {
+        this.filters['status'] = 'pending,confirmed,processing,shipped';
+      }
+    }
+
+    this.refreshData();
+    this.cd.detectChanges();
+  }
 
   // ========== LOAD DEPENDENCIES ==========
 
   private loadDependencies(): void {
-    this.loadCustomers();
+    // Smazáno načítání zákazníků (loadCustomers)
     this.loadProducts();
     this.loadVariants();
     this.loadPaymentMethods();
     this.loadShippingMethods();
     this.loadCoupons();
     this.updateFilterOptions();
-  }
-
-  private loadCustomers(): void {
-    this.dataHandler.getCollection<Customer>('shop/customers?no_pagination=true')
-      .pipe(Core.takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => {
-          this.customers = data;
-          this.cd.markForCheck();
-        },
-        error: (err) => console.error('Chyba při načítání zákazníků:', err)
-      });
   }
 
   private loadProducts(): void {
@@ -273,7 +247,6 @@ setTableMode(mode: any): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
-      // 4. UPRAVENO: ToggleTable nyní přepíná režim Koše
       toggleTable: () => this.setTableMode(this.currentMode === 'trash' ? 'all' : 'trash'),
       exportActiveTable: () => this.exportActiveTable()
     };
@@ -292,8 +265,6 @@ setTableMode(mode: any): void {
     this.cd.markForCheck();
   }
 
-  // 5. UPRAVENO: Původní toggleTable smazáno ve prospěch setTableMode výše
-
   // ========== FILTROVÁNÍ ==========
 
   override refreshData(): void {
@@ -307,7 +278,6 @@ setTableMode(mode: any): void {
   }
 
   clearFilters(): void {
-    // 6. UPRAVENO: Reset do výchozího stavu daného tabu
     this.setTableMode(this.currentMode);
   }
 
@@ -346,20 +316,18 @@ setTableMode(mode: any): void {
       }
     });
   }
-isStatusReached(currentStatus: string, stepKey: string): boolean {
+
+  isStatusReached(currentStatus: string, stepKey: string): boolean {
     const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
-    
     const currentIndex = statusOrder.indexOf(currentStatus);
     const stepIndex = statusOrder.indexOf(stepKey);
 
-    // Pokud stav v systému neexistuje (např. 'canceled'), krok označen jako hotový nebude
     if (currentIndex === -1 || stepIndex === -1) {
       return false;
     }
-
-    // Krok je hotový, pokud je jeho pozice v poli menší nebo rovna aktuálnímu stavu
     return stepIndex <= currentIndex;
   }
+
   closeDetailsModal(): void {
     this.showDetailsModal = false;
     this.selectedOrderForDetail = null;
@@ -374,22 +342,38 @@ isStatusReached(currentStatus: string, stepKey: string): boolean {
 
     this.couponValidation = { valid: true };
     this.editingOrder = {
-      order_number: '',
-      customer_id: 0,
+      // 👤 Kontaktní údaje přidané napřímo
+      email: '',
+      first_name: '',
+      last_name: '',
+      phone: '',
+      company: '',
+
+      // 📦 Stavy
       status: 'pending',
-      payment_status: 'pending',
-      total_amount: 0,
-      shipping_amount: 0,
-      tax_amount: 0,
-      discount_amount: 0,
-      final_amount: 0,
-      payment_method_id: 0,
-      shipping_method_id: 0,
+      payment_status: 'unpaid',
+
+      // 📍 Adresa doručení
       shipping_address: '',
       shipping_city: '',
       shipping_postal_code: '',
-      shipping_country: 'Česko',
-      items: []
+      shipping_country: 'Česká republika',
+
+      // 🎫 Vazby na metody
+      payment_method_id: 0,
+      shipping_method_id: 0,
+      coupon_id: null,
+
+      // 💰 Finance
+      total_amount: 0,      
+      shipping_amount: 0,   
+      tax_amount: 0,        
+      discount_amount: 0,   
+      final_amount: 0,      
+
+      // 📦 Položky objednávky
+      items: [],
+      notes: ''
     };
 
     this.showOrderForm = true;
@@ -418,7 +402,15 @@ isStatusReached(currentStatus: string, stepKey: string): boolean {
       Core.takeUntil(this.destroy$)
     ).subscribe({
       next: (fullOrder) => {
-        this.editingOrder = { ...fullOrder };
+        // 🌟 Mapování kontaktních dat ze zákazníka zpět do plochého formuláře objednávky při editaci
+        this.editingOrder = { 
+          ...fullOrder,
+          email: fullOrder.customer?.email || '',
+          first_name: fullOrder.customer?.first_name || '',
+          last_name: fullOrder.customer?.last_name || '',
+          phone: fullOrder.customer?.phone || '',
+          company: fullOrder.customer?.company || ''
+        };
         this.showOrderForm = true;
         this.toggleBodyScroll(true);
         this.recalculateTotals(); 
@@ -491,26 +483,26 @@ isStatusReached(currentStatus: string, stepKey: string): boolean {
 
   // ========== VÝPOČTY A VALIDACE ==========
 
-validateCouponRealtime(coupon: Coupon, totalAmount: number): CouponValidationResult {
-  if (!coupon) return { valid: true };
-  if (!coupon.is_active) return { valid: false, error: 'Tento kupón není aktivní.' };
+  validateCouponRealtime(coupon: Coupon, totalAmount: number): CouponValidationResult {
+    if (!coupon) return { valid: true };
+    if (!coupon.is_active) return { valid: false, error: 'Tento kupón není aktivní.' };
 
-  const now = new Date();
-  if (coupon.valid_from && new Date(coupon.valid_from) > now) return { valid: false, error: 'Platnost kupónu ještě nezačala.' };
-  if (coupon.valid_until && new Date(coupon.valid_until) < now) return { valid: false, error: 'Platnost kupónu již vypršela.' };
+    const now = new Date();
+    if (coupon.valid_from && new Date(coupon.valid_from) > now) return { valid: false, error: 'Platnost kupónu ještě nezačala.' };
+    if (coupon.valid_until && new Date(coupon.valid_until) < now) return { valid: false, error: 'Platnost kupónu již vypršela.' };
 
-  const maxUsage = coupon.max_usage ?? 0;
-  if (maxUsage > 0 && (coupon.usage_count || 0) >= maxUsage) return { valid: false, error: 'Tento kupón již byl vyčerpán.' };
+    const maxUsage = coupon.max_usage ?? 0;
+    if (maxUsage > 0 && (coupon.usage_count || 0) >= maxUsage) return { valid: false, error: 'Tento kupón již byl vyčepan.' };
 
-  const minAmount = Number(coupon.min_order_amount ?? 0);
-  if (minAmount > 0 && totalAmount < minAmount) {
-    return { 
-      valid: false, 
-      error: `Minimální hodnota objednávky pro tento kupón je ${this.formatCurrency(minAmount)}.` 
-    };
+    const minAmount = Number(coupon.min_order_amount ?? 0);
+    if (minAmount > 0 && totalAmount < minAmount) {
+      return { 
+        valid: false, 
+        error: `Minimální hodnota objednávky pro tento kupón je ${this.formatCurrency(minAmount)}.` 
+      };
+    }
+    return { valid: true };
   }
-  return { valid: true };
-}
 
   recalculateTotals(): void {
     if (!this.editingOrder) return;
@@ -556,14 +548,21 @@ validateCouponRealtime(coupon: Coupon, totalAmount: number): CouponValidationRes
 
   // ========== SAVE OBJEDNÁVKA ==========
 
-saveOrder(): void {
+ saveOrder(): void {
     if (this.isProcessing || !this.editingOrder || !this.validateOrder()) return;
 
     this.isProcessing = true;
-    const payload = {
-      customer_id: this.editingOrder.customer_id,
-      payment_method_id: this.editingOrder.payment_method_id,
-      shipping_method_id: this.editingOrder.shipping_method_id,
+    
+    // 🌟 PŘEBUDOVANÝ PAYLOAD: Posíláme striktně plochá data zákazníka
+    const payload: any = {
+      email: this.editingOrder.email,
+      first_name: this.editingOrder.first_name,
+      last_name: this.editingOrder.last_name,
+      phone: this.editingOrder.phone,
+      company: this.editingOrder.company || null,
+      
+      payment_method_id: Number(this.editingOrder.payment_method_id),
+      shipping_method_id: Number(this.editingOrder.shipping_method_id),
       coupon_id: this.editingOrder.coupon_id || null,
       status: this.editingOrder.status,
       payment_status: this.editingOrder.payment_status,
@@ -572,21 +571,32 @@ saveOrder(): void {
       shipping_postal_code: this.editingOrder.shipping_postal_code,
       shipping_country: this.editingOrder.shipping_country,
       notes: this.editingOrder.notes,
-      items: (this.editingOrder.items || []).filter(i => !i._delete),
-      delete_items: (this.editingOrder.items || [])
-        .filter(i => i._delete && i.id)
-        .map(i => i.id!)
+      items: (this.editingOrder.items || []).filter(i => !i._delete).map(i => ({
+        id: i.id || null,
+        product_id: Number(i.product_id),
+        product_variant_id: i.product_variant_id ? Number(i.product_variant_id) : null,
+        quantity: Number(i.quantity),
+        unit_price: Number(i.unit_price),
+        vat_rate: i.vat_rate ? Number(i.vat_rate) : 21
+      }))
     };
 
     this.loadingService.show();
 
     let request;
     if (this.editingOrder.id) {
+      // Pro update přidáme delete_items a použijeme PUT spoofing přes POST
+      payload.delete_items = (this.editingOrder.items || [])
+        .filter(i => i._delete && i.id)
+        .map(i => i.id!);
+        
       request = this.dataHandler.post(`${this.apiEndpoint}/${this.editingOrder.id}`, {
         ...payload,
         _method: 'PUT'
       });
     } else {
+      // 🚨 PRO JISTOTU: Odstraníme jakýkoliv pozůstatek customer_id při zakládání
+      delete payload.customer_id;
       request = this.dataHandler.post(this.apiEndpoint, payload);
     }
 
@@ -605,7 +615,6 @@ saveOrder(): void {
         this.toggleBodyScroll(false);
         this.refreshData();
 
-        // 🌟 AKTUALIZACE DETAILU: Pokud upravuješ objednávku z otevřeného detailu, načteme nová data ze serveru
         if (this.showDetailsModal && this.selectedOrderForDetail?.id) {
           this.loadingService.show();
           this.getItemDetails(this.selectedOrderForDetail.id).pipe(
@@ -617,7 +626,7 @@ saveOrder(): void {
           ).subscribe({
             next: (updatedOrder) => {
               this.selectedOrderForDetail = updatedOrder;
-              this.toggleBodyScroll(true); // Udržíme scroll-lock na body, protože detail modal zůstává otevřený
+              this.toggleBodyScroll(true); 
             },
             error: () => {
               console.error('Nepodařilo se zaktualizovat data v detailu objednávky.');
@@ -626,6 +635,8 @@ saveOrder(): void {
         }
       },
       error: (err) => {
+        // Zde vypíšeme detailní chyby z Laravelu do konzole, abychom viděli přesný breakdown
+        console.error('Chyba validace z backendu:', err.error);
         const message = err.error?.message || 'Chyba při ukládání objednávky.';
         this.alertDialogService.open('Chyba', message, 'danger');
       }
@@ -758,8 +769,18 @@ saveOrder(): void {
       this.alertDialogService.open('Chyba kupónu', this.couponValidation.error || 'Kupón není platný.', 'warning');
       return false;
     }
-    if (!this.editingOrder.customer_id) {
-      this.alertDialogService.open('Validace', 'Vyberte zákazníka.', 'warning');
+    
+    // 🌟 UPRAVENÁ VALIDACE: Místo customer_id kontrolujeme nová textová pole
+    if (!this.editingOrder.email) {
+      this.alertDialogService.open('Validace', 'Zadejte e-mailovou adresu.', 'warning');
+      return false;
+    }
+    if (!this.editingOrder.first_name || !this.editingOrder.last_name) {
+      this.alertDialogService.open('Validace', 'Vyplňte jméno a příjmení zákazníka.', 'warning');
+      return false;
+    }
+    if (!this.editingOrder.phone) {
+      this.alertDialogService.open('Validace', 'Zadejte telefonní číslo.', 'warning');
       return false;
     }
     if (!this.editingOrder.payment_method_id) {
@@ -774,8 +795,8 @@ saveOrder(): void {
       this.alertDialogService.open('Validace', 'Objednávka musí obsahovat alespoň jednu položku.', 'warning');
       return false;
     }
-    if (!this.editingOrder.shipping_address) {
-      this.alertDialogService.open('Validace', 'Zadejte dopravní adresu.', 'warning');
+    if (!this.editingOrder.shipping_address || !this.editingOrder.shipping_city || !this.editingOrder.shipping_postal_code) {
+      this.alertDialogService.open('Validace', 'Kompletně vyplňte adresu doručení.', 'warning');
       return false;
     }
     return true;
@@ -786,11 +807,6 @@ saveOrder(): void {
     this.editingOrder = null;
     this.toggleBodyScroll(false);
     this.cd.markForCheck();
-  }
-
-  getCustomerName(customerId: number): string {
-    if (!customerId) return '-';
-    return this.customers.find(c => Number(c.id) === Number(customerId))?.full_name || 'N/A';
   }
 
   getProductName(productId: number): string {
