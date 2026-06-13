@@ -1,7 +1,7 @@
-import { Component, HostListener } from '@angular/core';
-
+import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CartService } from '../services/cart.service';
+import { PublicDataService } from '../../../../shared/services/public-data.service';
 @Component({
   selector: 'app-shop-header',
   standalone: true,
@@ -9,18 +9,32 @@ import { CartService } from '../services/cart.service';
   templateUrl: './shop-header.component.html',
   styleUrls: ['./shop-header.component.css']
 })
-export class ShopHeaderComponent {
+export class ShopHeaderComponent implements OnInit {
   isScrolled = false;
-
   showLang = false;
   showCurrency = false;
   selectedLang = 'CZ';
   selectedCurrency = 'CZK';
+  
+  // Dynamická data
+  siteSettings: any = null;
 
   constructor(
     private router: Router,
-    public cartService: CartService // <-- Zpřístupní službu pro HTML šablonu
+    public cartService: CartService,
+    private publicDataService: PublicDataService,
+    private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnInit(): void {
+    this.publicDataService.getSiteSettings().subscribe({
+      next: (data) => {
+        this.siteSettings = data.settings;
+        this.cdr.markForCheck();
+      },
+      error: (err) => console.error('Chyba při načítání dat pro header:', err)
+    });
+  }
 
   @HostListener('window:scroll', [])
   onWindowScroll() {

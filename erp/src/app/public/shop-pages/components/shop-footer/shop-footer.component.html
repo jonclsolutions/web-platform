@@ -1,60 +1,50 @@
 @if (t) {
   <footer class="public-footer">
     <div class="footer-content">
-      <!-- Sloupec 1: O firmě -->
       <div class="footer-section company-info">
-        <h3>{{ t?.company_name }}</h3>
-        <p><strong>{{ t?.address_label }}:</strong> {{ t?.address_value }}</p>
-        <p><strong>{{ t?.ico_label }}:</strong> {{ t?.ico_value }}</p>
-        <p><strong>{{ t?.dic_label }}:</strong> {{ t?.dic_value }}</p>
+        @if (siteSettings) {
+          <h3>{{ siteSettings.company_name }}</h3>
+          <p><strong>{{ t?.address_label }}:</strong> {{ siteSettings.address }}</p>
+          <p><strong>{{ t?.ico_label }}:</strong> {{ siteSettings.ico }}</p>
+          <p><strong>{{ t?.dic_label }}:</strong> {{ siteSettings.dic }}</p>
+        }
         <div class="social-links">
-          <a target="_blank" href="https://www.instagram.com/rpsw.cz" class="social-box">
-            <img [src]="ig_link" alt="Instagram">
-          </a>
-          <a target="_blank" href="https://www.tiktok.com/@rpsw.cz" class="social-box">
-            <img [src]="tt_link" alt="Tiktok">
-          </a>
+          @for (link of socialLinks; track link.url) {
+            <a [href]="link.url" target="_blank" class="social-box" [title]="link.name">
+              <img [src]="getStorageUrl(link.icon_path)" [alt]="link.name">
+            </a>
+          }
         </div>
       </div>
-      <!-- Sloupec 2: Rychlé odkazy (Pročištěné) -->
+
       <div class="footer-section quick-links">
         <h3><span>{{ t?.quick_links_header || 'Odkazy' }}</span></h3>
         <ul>
           @for (link of footerNavLinks; track link) {
             <li>
-              <a [routerLink]="link.route" [target]="link.external ? '_blank' : '_self'" class="footer-link">
-                {{ link.text }}
-                @if (link.external) {
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="external-icon">
-                    <path fill="currentColor" d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
-                  </svg>
-                }
-              </a>
+              <a [routerLink]="link.route" [target]="link.external ? '_blank' : '_self'" class="footer-link">{{ link.text }}</a>
             </li>
           }
         </ul>
       </div>
-      <!-- Sloupec 3: Kontakt / Podpora -->
+
       <div class="footer-section contact-info">
         <h3>{{ t?.contact_header }}</h3>
-        <p>
-          <strong>{{ t?.email_label }}: </strong>
-          <a href="mailto:info@rpsw.cz" class="dynamic-email">{{ t?.email_value }}</a>
-        </p>
-        <p><strong>{{ t?.phone_label }}:</strong> {{ t?.phone_value }}</p>
+        @if (siteSettings) {
+          <p><strong>{{ t?.email_label }}: </strong> <a [href]="'mailto:' + siteSettings.contact_email" class="dynamic-email">{{ siteSettings.contact_email }}</a></p>
+          <p><strong>{{ t?.phone_label }}:</strong> {{ siteSettings.contact_phone }}</p>
+        }
       </div>
-      <!-- Sloupec 4: Informace (Obchodní podmínky, GDPR, Reklamace) -->
+
       <div class="footer-section legal-info">
         <h3><span>{{ t?.legal_info_header || 'Informace' }}</span></h3>
         <ul>
           @for (link of footerLegalLinks; track link) {
-            <li>
-              <a [routerLink]="link.route" class="footer-link">{{ link.text }}</a>
-            </li>
+            <li><a [routerLink]="link.route" class="footer-link">{{ link.text }}</a></li>
           }
         </ul>
       </div>
-      <!-- Sloupec 5: Možnosti plateb (S obrázkovými ikonami) -->
+
       <div class="footer-section payment-info">
         <h3><span>Bezpečné platby</span></h3>
         <div class="payment-methods">

@@ -1,65 +1,45 @@
-
 <header [class.scrolled]="scrolled">
   <nav>
     <ul>
       <li><a routerLink="/home" #homeLink>{{ t?.home }}</a></li>
       <li><a routerLink="/services" #servicesLink>{{ t?.services }}</a></li>
       <li><a routerLink="/academy" #shopLink>{{ t?.academy }}</a></li>
-      <li><a routerLink="/shop" target="_blank" #academyLink>{{ t?.shop }}<svg class="desktop-link-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-              <path 
-                d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
-              />
-            </svg></a></li>
+      <li><a routerLink="/shop" target="_blank" #academyLink>{{ t?.shop }}<svg class="desktop-link-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></a></li>
       <div class="active-indicator" [ngStyle]="indicatorStyle"></div>
     </ul>
   </nav>
 </header>
 
-<a routerLink="/home" class="logo-wrp">
-  <img [src]="logo" alt="">
-</a>
+<a routerLink="/home" class="logo-wrp"><img [src]="logo" alt=""></a>
 
 <div class="lang-wrp">
     <a routerLink="/references" class="nav-link"> {{ t?.references }} </a>
     <a routerLink="/faq" class="nav-link"> {{ t?.faq }} </a>
-    
-    <form class="lang-form" action="">
-        <div class="lang-slider-track" #langSliderTrack>
-            <span class="lang-label" data-lang="cz" (click)="selectLanguage('cz')" [ngClass]="{'active': (currentLanguage$ | async) === 'cz'}">
-                <img [src]="cz_flag_link" [alt]="localizationService.getText('common.language_cz')">
-            </span>
-            <span class="lang-label" data-lang="en" (click)="selectLanguage('en')" [ngClass]="{'active': (currentLanguage$ | async) === 'en'}">
-                <img [src]="en_flag_link" [alt]="localizationService.getText('common.language_en')">
-            </span>
+    <form class="lang-form">
+        <div class="lang-slider-track">
+            <span class="lang-label" (click)="selectLanguage('cz')" [ngClass]="{'active': (currentLanguage$ | async) === 'cz'}"><img [src]="cz_flag_link"></span>
+            <span class="lang-label" (click)="selectLanguage('en')" [ngClass]="{'active': (currentLanguage$ | async) === 'en'}"><img [src]="en_flag_link"></span>
         </div>
     </form>
 </div>
 
 <div class="contact-wrp">
-  <div class="contact-link">
-    <div class="contact-mail-wrp">
-      <div class="mail-icon">
-        <img [src]="mail_icon" alt="">
+  @if (siteSettings) {
+    <div class="contact-link">
+      <div class="contact-mail-wrp">
+        <div class="mail-icon"><img [src]="mail_icon" alt=""></div>
+        <div class="mail-text">{{ siteSettings.contact_email }}</div>
       </div>
-      <div class="mail-text">
-        info&#64;rpsw.cz
-      </div>
-    </div>
-    <div class="contact-tel-wrp">
-      <div class="tel-icon">
-        <img [src]="tel_icon" alt="">
-      </div>
-      <div class="tel-text">
-        733 188 328
+      <div class="contact-tel-wrp">
+        <div class="tel-icon"><img [src]="tel_icon" alt=""></div>
+        <div class="tel-text">{{ siteSettings.contact_phone }}</div>
       </div>
     </div>
-  </div>
+  }
 </div>
 
 <div class="mobile-header">
-  <a routerLink="/home" class="m-logo">
-    <img [src]="logo" alt="">
-  </a>
+  <a routerLink="/home" class="m-logo"><img [src]="logo" alt=""></a>
   <div class="hamburger" (click)="toggleMenu()">
     <div class="hamburger-line" [class.open]="isMenuOpen"></div>
     <div class="hamburger-line" [class.open]="isMenuOpen"></div>
@@ -67,48 +47,27 @@
   </div>
 </div>
 
-
 <div class="mobile-menu-wrapper" [class.open]="isMenuOpen">
     <nav class="mobile-nav">
         <div class="main-links">
-            <a routerLink="/home" (click)="closeMenu()">{{ t?.home }}</a>
-            <hr>
-            <a routerLink="/services" (click)="closeMenu()">{{ t?.services }}</a>
-            <hr>
-            <a routerLink="/academy" (click)="closeMenu()">{{ t?.academy }}</a>
-            <hr>
-            <a routerLink="/shop" target="_blank" (click)="closeMenu()">{{ t?.shop }} <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-              <path 
-                fill="#9e9e9e" 
-                d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
-              />
-            </svg>
-            </a>
-            <hr>
-            <a routerLink="/references" (click)="closeMenu()">{{ t?.references }} </a>
-            <hr>
+            <a routerLink="/home" (click)="closeMenu()">{{ t?.home }}</a><hr>
+            <a routerLink="/services" (click)="closeMenu()">{{ t?.services }}</a><hr>
+            <a routerLink="/academy" (click)="closeMenu()">{{ t?.academy }}</a><hr>
+            <a routerLink="/shop" target="_blank" (click)="closeMenu()">{{ t?.shop }}</a><hr>
+            <a routerLink="/references" (click)="closeMenu()">{{ t?.references }} </a><hr>
             <a routerLink="/faq" (click)="closeMenu()">{{ t?.faq }}</a>
         </div>
         <div class="mobile-menu-bottom">
             <div class="mobile-lang-wrp">
-                <span class="mobile-lang-label" (click)="selectLanguage('cz')" [ngClass]="{'active': (currentLanguage$ | async) === 'cz'}">
-                    {{ localizationService.getText('common.language_cz_short') || 'CZ' }}
-                </span>
-                
-                <span class="mobile-lang-label" (click)="selectLanguage('en')" [ngClass]="{'active': (currentLanguage$ | async) === 'en'}">
-                    {{ localizationService.getText('common.language_en_short') || 'EN' }}
-                </span>
+                <span class="mobile-lang-label" (click)="selectLanguage('cz')" [ngClass]="{'active': (currentLanguage$ | async) === 'cz'}">CZ</span>
+                <span class="mobile-lang-label" (click)="selectLanguage('en')" [ngClass]="{'active': (currentLanguage$ | async) === 'en'}">EN</span>
             </div>
-            <div class="mobile-contact-wrp">
-                <div class="mobile-contact-link">
-                    <img [src]="tel_icon" alt="Telefon">
-                    <span>733 188 328</span>
-                </div>
-                <div class="mobile-contact-link">
-                    <img [src]="mail_icon" alt="Email">
-                    <span>info&#64;rpsw.cz</span>
-                </div>
-            </div>
+            @if (siteSettings) {
+              <div class="mobile-contact-wrp">
+                  <div class="mobile-contact-link"><img [src]="tel_icon"><span>{{ siteSettings.contact_phone }}</span></div>
+                  <div class="mobile-contact-link"><img [src]="mail_icon"><span>{{ siteSettings.contact_email }}</span></div>
+              </div>
+            }
         </div>
     </nav>
 </div>
