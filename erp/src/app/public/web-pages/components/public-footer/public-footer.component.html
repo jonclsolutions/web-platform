@@ -1,61 +1,47 @@
-@if (t) {
+@if (t && settings) {
   <footer class="public-footer">
     <div class="footer-content">
       <div class="footer-section company-info">
-        <h3>{{ t?.company_name }}</h3>
-        <p><strong>{{ t?.address_label }}:</strong> {{ t?.address_value }}</p>
-        <p><strong>{{ t?.ico_label }}:</strong> {{ t?.ico_value }}</p>
-        <p><strong>{{ t?.dic_label }}:</strong> {{ t?.dic_value }}</p>
+        <h3>{{ settings.company_name }}</h3>
+        <p><strong>{{ t.address_label }}:</strong> {{ settings.address }}</p>
+        <p><strong>{{ t.ico_label }}:</strong> {{ settings.ico }}</p>
+        <p><strong>{{ t.dic_label }}:</strong> {{ settings.dic }}</p>
         <div class="social-links">
-          <a target="_blank" href="https://www.instagram.com/rpsw.cz">
-            <img [src]="ig_link" alt="Instagram">
-          </a>
-          <a target="_blank" href="https://www.tiktok.com/@rpsw.cz">
-            <img [src]="tt_link" alt="Tiktok">
-          </a>
+          @for (link of socialLinks; track link.id) {
+            <a [href]="link.url" target="_blank" [title]="link.name">
+              <img [src]="getIconUrl(link.icon_path)" [alt]="link.name">
+            </a>
+          }
         </div>
       </div>
       <div class="footer-section quick-links">
-        <h3>{{ t?.quick_links_header }}</h3>
+        <h3>{{ t.quick_links_header }}</h3>
         <ul>
-          @for (link of footerNavLinks; track link) {
+          @for (link of footerNavLinks; track link.route) {
             <li>
               <a [routerLink]="link.route" [target]="link.external ? '_blank' : '_self'" class="footer-link">
                 {{ link.text }}
-                @if (link.external) {
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" class="external-icon">
-                    <path
-                      fill="currentColor"
-                      d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
-                      />
-                  </svg>
-                }
               </a>
             </li>
           }
         </ul>
       </div>
       <div class="footer-section contact-info">
-        <h3>{{ t?.contact_header }}</h3>
-        <p>
-          <strong>{{ t?.email_label }}: </strong>
-          <a href="mailto:info@rpsw.cz">{{ t?.email_value }}</a>
-        </p>
-        <p><strong>{{ t?.phone_label }}:</strong> {{ t?.phone_value }}</p>
+        <h3>{{ t.contact_header }}</h3>
+        <p><strong>{{ t.email_label }}: </strong> <a [href]="'mailto:' + settings.contact_email">{{ settings.contact_email }}</a></p>
+        <p><strong>{{ t.phone_label }}:</strong> {{ settings.contact_phone }}</p>
       </div>
       <div class="footer-section legal-info">
-        <h3>{{ t?.legal_info_header }}</h3>
+        <h3>{{ t.legal_info_header }}</h3>
         <ul>
-          @for (link of footerLegalLinks; track link) {
-            <li>
-              <a [routerLink]="link.route">{{ link.text }}</a>
-            </li>
+          @for (link of footerLegalLinks; track link.route) {
+            <li><a [routerLink]="link.route">{{ link.text }}</a></li>
           }
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>{{ t?.copyright_text }}</p>
+      <p>{{ settings.footer_text.replace('{year}', currentYear) }}</p>
     </div>
   </footer>
 }

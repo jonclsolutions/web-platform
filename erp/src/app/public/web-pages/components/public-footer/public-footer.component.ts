@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
 import { LocalizationService } from '../../../../shared/services/localization.service';
+import { PublicDataService } from '../../../../shared/services/public-data.service'; // PŘIDÁNO
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 interface FooterNavLink {
   route: string;
   text: string;
-  external: boolean; // Změněno na povinné pro snadnější if v šabloně
+  external: boolean;
 }
 
 @Component({
@@ -21,39 +21,47 @@ interface FooterNavLink {
 })
 export class PublicFooterComponent implements OnInit, OnDestroy {
   t: any = null;
+  settings: any = null; // PŘIDÁNO
+  socialLinks: any[] = []; // PŘIDÁNO
   currentYear: number;
   footerNavLinks: FooterNavLink[] = [];
   footerLegalLinks: FooterNavLink[] = [];
-
-  tt_link: string = 'assets/images/icons/tik-tok.png';
-  ig_link: string = 'assets/images/icons/ig.png';
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private localizationService: LocalizationService,
+    private publicDataService: PublicDataService,
     private cdr: ChangeDetectorRef
   ) {
     this.currentYear = new Date().getFullYear();
   }
 
   ngOnInit(): void {
+    // 1. Překlady
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(translations => {
         if (translations) {
           this.t = translations.footer;
-          
-          if (this.t?.copyright_text) {
-            this.t.copyright_text = this.t.copyright_text.replace('{year}', this.currentYear.toString());
-          }
-
           this.loadFooterNavLinks();
           this.loadFooterLegalLinks();
-
           this.cdr.markForCheck();
         }
       });
+
+    // 2. Data ze serveru
+    this.publicDataService.getSiteSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(res => {
+        this.settings = res.settings;
+        this.socialLinks = res.social_links;
+        this.cdr.markForCheck();
+      });
+  }
+
+  getIconUrl(path: string): string {
+    return this.publicDataService.getStorageUrl(path); // Předpokládám existenci této metody
   }
 
   private loadFooterNavLinks(): void {

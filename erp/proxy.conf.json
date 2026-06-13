@@ -2,13 +2,16 @@
   "/api": {
     "target": "http://127.0.0.1:8000",
     "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug" 
+    "changeOrigin": true
   },
   "/erp": {
     "target": "http://127.0.0.1:8000",
     "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug" 
+    "changeOrigin": true
+  },
+  "/storage": {
+    "target": "http://127.0.0.1:8000",
+    "secure": false,
+    "changeOrigin": true
   }
 }

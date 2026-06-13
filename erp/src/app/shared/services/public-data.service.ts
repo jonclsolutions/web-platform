@@ -12,7 +12,20 @@ export class PublicDataService {
 
   constructor(private http: HttpClient) { }
 
-getLegalDocument(slug: 'gdpr' | 'tos'): Observable<any> {
+  /**
+   * Pomocná metoda pro získání URL k souborům ve storage.
+   * Vzhledem k proxy nastavení v Angularu, `/storage/` cesta projde na backend.
+   */
+  getStorageUrl(path: string): string {
+    if (!path) return '';
+    // Pokud cesta již začíná http, vracíme ji tak, jak je
+    if (path.startsWith('http')) return path;
+    
+    // Jinak vracíme cestu začínající /storage/ (proxy zajistí přesměrování)
+    return `/storage/${path}`;
+  }
+
+  getLegalDocument(slug: 'gdpr' | 'tos'): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/public/legal/${slug}`)
       .pipe(catchError(this.handleError));
   }
@@ -22,9 +35,8 @@ getLegalDocument(slug: 'gdpr' | 'tos'): Observable<any> {
       .pipe(catchError(this.handleError));
   }
 
-  // public-data.service.ts
   getSiteSettings(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/shop/public/settings`)
+    return this.http.get<any>(`${this.apiUrl}/public/legal/config`)
       .pipe(catchError(this.handleError));
   }
 

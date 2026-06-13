@@ -48,7 +48,20 @@ class SiteConfigurationController extends Controller
 
         return response()->json($settings);
     }
+/**
+     * GET /api/public/legal/config
+     * Veřejná metoda pro načtení údajů do patičky.
+     */
+    public function publicShow(): JsonResponse
+    {
+        $settings = SiteSetting::first();
+        $socialLinks = SocialLink::orderBy('position', 'asc')->get();
 
+        return response()->json([
+            'settings'     => $settings,
+            'social_links' => $socialLinks,
+        ]);
+    }
     /**
      * POST /api/legal/config/social
      * Vytvoření nového odkazu. Soubor ikony je nepovinný (field: 'icon_file').
