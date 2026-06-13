@@ -1,0 +1,187 @@
+<div class="ws-container">
+
+  <!-- ===== HEADER ===== -->
+  <div class="ws-header">
+    <div>
+      <h1 class="ws-title">Nastavení webu</h1>
+      <span class="ws-subtitle">Firemní údaje a sociální sítě</span>
+    </div>
+  </div>
+
+  <!-- ===== CHYBOVÁ HLÁŠKA ===== -->
+  @if (errorMessage) {
+    <div class="ws-error">⚠️ {{ errorMessage }}</div>
+  }
+
+  <!-- ===== SEKCE 1: FIREMNÍ ÚDAJE ===== -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <span class="ws-card-icon">🏢</span>
+      <span class="ws-card-title">Firemní údaje</span>
+    </div>
+
+    @if (settingsLoading) {
+      <div class="ws-skeleton-body">
+        @for (i of [1,2,3,4,5,6,7]; track i) {
+          <div class="ws-skeleton-row"></div>
+        }
+      </div>
+    }
+
+    @if (!settingsLoading) {
+      <div class="ws-card-body">
+        <div class="ws-form-grid">
+
+          <div class="ws-field">
+            <label class="ws-label">Název firmy *</label>
+            <input class="ws-input" type="text" [(ngModel)]="settings.company_name"
+              name="company_name" placeholder="Název s.r.o.">
+          </div>
+
+          <div class="ws-field">
+            <label class="ws-label">IČO *</label>
+            <input class="ws-input" type="text" [(ngModel)]="settings.ico"
+              name="ico" placeholder="12345678">
+          </div>
+
+          <div class="ws-field">
+            <label class="ws-label">DIČ</label>
+            <input class="ws-input" type="text" [(ngModel)]="settings.dic"
+              name="dic" placeholder="CZ12345678">
+          </div>
+
+          <div class="ws-field">
+            <label class="ws-label">Kontaktní e-mail *</label>
+            <input class="ws-input" type="email" [(ngModel)]="settings.contact_email"
+              name="contact_email" placeholder="info@firma.cz">
+          </div>
+
+          <div class="ws-field">
+            <label class="ws-label">Telefon</label>
+            <input class="ws-input" type="text" [(ngModel)]="settings.contact_phone"
+              name="contact_phone" placeholder="+420 123 456 789">
+          </div>
+
+          <div class="ws-field ws-field-full">
+            <label class="ws-label">Adresa *</label>
+            <input class="ws-input" type="text" [(ngModel)]="settings.address"
+              name="address" placeholder="Ulice 1, 100 00 Praha">
+          </div>
+
+          <div class="ws-field ws-field-full">
+            <label class="ws-label">Text patičky webu</label>
+            <textarea class="ws-textarea" [(ngModel)]="settings.footer_text"
+              name="footer_text" rows="3"
+              placeholder="© 2025 Firma s.r.o. Všechna práva vyhrazena."></textarea>
+          </div>
+
+        </div>
+
+        <!-- Uložit -->
+        <div class="ws-form-footer">
+          @if (settingsSaved) {
+            <span class="ws-saved-badge">✓ Uloženo</span>
+          }
+          <button class="ws-btn ws-btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
+            @if (settingsSaving) { <span class="ws-mini-spin">↻</span> }
+            💾 Uložit firemní údaje
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ===== SEKCE 2: SOCIÁLNÍ SÍTĚ ===== -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <span class="ws-card-icon">🌐</span>
+      <span class="ws-card-title">Sociální sítě</span>
+      <span class="ws-card-count">{{ socialLinks.length }}</span>
+    </div>
+
+    @if (socialLoading) {
+      <div class="ws-skeleton-body">
+        @for (i of [1,2,3]; track i) {
+          <div class="ws-skeleton-social"></div>
+        }
+      </div>
+    }
+
+    @if (!socialLoading) {
+      <div class="ws-social-list">
+
+        @if (socialLinks.length === 0) {
+          <div class="ws-social-empty">
+            <span>📭</span>
+            <span>Zatím žádné sociální sítě. Přidejte první tlačítkem níže.</span>
+          </div>
+        }
+
+        @for (link of socialLinks; track trackByIndex($index); let i = $index) {
+          <div class="ws-social-row" [class.ws-social-new]="link._isNew" [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
+
+            <!-- Ikonka / upload -->
+            <div class="ws-social-icon-col">
+              <label class="ws-icon-upload" [title]="'Nahrát ikonku'">
+                @if (iconSrc(link)) {
+                  <img [src]="iconSrc(link)" class="ws-icon-preview" [alt]="link.name">
+                } @else {
+                  <span class="ws-icon-placeholder">🖼️</span>
+                }
+                <input type="file" accept="image/*" class="ws-icon-input"
+                  (change)="onIconSelected($event, i)">
+                <span class="ws-icon-overlay">↑</span>
+              </label>
+            </div>
+
+            <!-- Pole -->
+            <div class="ws-social-fields">
+              <input class="ws-input ws-social-input"
+                type="text"
+                [(ngModel)]="socialLinks[i].name"
+                [name]="'soc_name_' + i"
+                placeholder="Název (Facebook, Instagram…)">
+
+              <input class="ws-input ws-social-input ws-input-url"
+                type="url"
+                [(ngModel)]="socialLinks[i].url"
+                [name]="'soc_url_' + i"
+                placeholder="https://facebook.com/firma">
+            </div>
+
+            <!-- Akce -->
+            <div class="ws-social-actions">
+              <button class="ws-action-btn ws-btn-save"
+                (click)="saveSocialLink(i)"
+                [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
+                title="Uložit">
+                @if (link._saving) {
+                  <span class="ws-mini-spin">↻</span>
+                } @else {
+                  💾
+                }
+              </button>
+              <button class="ws-action-btn ws-btn-delete"
+                (click)="deleteSocialLink(i)"
+                [disabled]="link._saving"
+                title="Smazat">
+                🗑️
+              </button>
+            </div>
+
+          </div>
+        }
+
+        <!-- Tlačítko přidat -->
+        <div class="ws-social-add-row">
+          <button class="ws-add-btn" (click)="addSocialLink()">
+            <span class="ws-add-plus">+</span>
+            Přidat sociální síť
+          </button>
+        </div>
+
+      </div>
+    }
+  </div>
+
+</div>

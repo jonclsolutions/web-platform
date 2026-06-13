@@ -110,6 +110,11 @@
               <span class="nav-icon">🎫</span><span class="nav-text">Helpdesk Tikety</span>
             </a>
           </li>
+          <li *appHasPermission="'web-view-web-settings'">
+            <a routerLink="/admin/web-settings" routerLinkActive="active" (click)="onLinkClick()" title="Firemní údaje">
+              <span class="nav-icon">X</span><span class="nav-text">Firemní údaje</span>
+            </a>
+          </li>
           <li *appHasPermission="'web-view-web-logs'">
             <a routerLink="/admin/business-logs" routerLinkActive="active" (click)="onLinkClick()" title="Serverové Logy">
               <span class="nav-icon">📑</span><span class="nav-text">Serverové Logy</span>

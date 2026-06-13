@@ -34,6 +34,7 @@ import { SuppliersComponent } from './shop-pages/suppliers/suppliers.component';
 // 🆕 Nový import:
 import { PaymentMethodsComponent } from './shop-pages/payment-methods/payment-methods.component';
 import { EditLegalComponent } from './web-pages/edit-legal/edit-legal.component';
+import { WebSettingsComponent } from './web-pages/web-settings/web-settings.component';
 
 const routes: Routes = [
   {
@@ -56,6 +57,7 @@ const routes: Routes = [
       { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-view-support-tickets' } },
       { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-view-job-applications' } },
       { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'web-edit-legal' } },
+      { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'web-view-web-settings' } },
 
       // 🛒 E-SHOP STRÁNKY
       { 

@@ -22,6 +22,12 @@ getLegalDocument(slug: 'gdpr' | 'tos'): Observable<any> {
       .pipe(catchError(this.handleError));
   }
 
+  // public-data.service.ts
+  getSiteSettings(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/shop/public/settings`)
+      .pipe(catchError(this.handleError));
+  }
+
   submitContactForm(formData: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/raw_request_commissions`, formData)
       .pipe(catchError(this.handleError));

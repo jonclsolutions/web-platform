@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\Shop\ShopOrderController; // 📦 Objednávky
 use App\Http\Controllers\Api\Shop\ShopCustomerController; // 👥 Zákazníci
 use App\Http\Controllers\Api\Shop\ShopCheckoutController; // 💳 Importováno pro checkout a platbu
 use App\Http\Controllers\Api\Shop\ShopPublicController; // 🌍 Nový veřejný kontroler
+use App\Http\Controllers\Api\Legal\SiteConfigurationController; // 🌍 Nový veřejný kontroler
 
 /*
 |--------------------------------------------------------------------------
@@ -315,21 +316,83 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         Route::apiResource('sales_leads', WebSalesLeadController::class)
             ->parameters(['sales_leads' => 'id']);
     });
-    /*
+/*
     |--------------------------------------------------------------------------
-    | ⚖️ SECTION: LEGAL (Obchodní podmínky, GDPR)
+    | ⚖️ SECTION: LEGAL (Obchodnimport { Injectable } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class PublicDataService {
+  private apiUrl = environment.base_api_url;
+
+  constructor(private http: HttpClient) { }
+
+getLegalDocument(slug: 'gdpr' | 'tos'): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/public/legal/${slug}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getPaymentMethods(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/shop/public/payment-methods`)
+      .pipe(catchError(this.handleError));
+  }
+
+  submitContactForm(formData: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/raw_request_commissions`, formData)
+      .pipe(catchError(this.handleError));
+  }
+
+  submitOrder(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/sales_orders`, formData)
+      .pipe(catchError(this.handleError));
+  }
+
+  getShopStatus(): Observable<{is_shop_active: boolean}> {
+    return this.http.get<{is_shop_active: boolean}>(`${this.apiUrl}/shop/public/status`, {
+      headers: { 
+        'Cache-Control': 'no-cache, no-store, must-revalidate', 
+        'Pragma': 'no-cache', 
+        'Expires': '0' 
+      }
+    }).pipe(catchError(this.handleError));
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = 'Při komunikaci se serverem nastala chyba.';
+    if (error.error instanceof ErrorEvent) {
+      errorMessage = `Klientova chyba: ${error.error.message}`;
+    } else {
+      console.error(`Backend error: ${error.status}, URL: ${error.url}, body:`, error.error);
+      errorMessage = `Server vrátil chybu ${error.status}`;
+    }
+    return throwError(() => new Error(errorMessage));
+  }
+}í podmínky, GDPR, Konfigurace)
     |--------------------------------------------------------------------------
     */
     Route::prefix('legal')->group(function () {
-        
+
+        // Správa sekcí dokumentů
         Route::prefix('document-sections')->group(function () {
-            // Index a Store/Update/Delete
             Route::get('/', [DocumentSectionController::class, 'index']);
             Route::post('/', [DocumentSectionController::class, 'store']);
             Route::get('/{id}', [DocumentSectionController::class, 'show']);
             Route::put('/{id}', [DocumentSectionController::class, 'update']);
             Route::delete('/{id}', [DocumentSectionController::class, 'destroy']);
         });
-        
+
+        // Konfigurace webu (firemní údaje + sociální sítě)
+        Route::prefix('config')->group(function () {
+            Route::get('/', [SiteConfigurationController::class, 'index']);          // GET  /api/legal/config
+            Route::put('/settings', [SiteConfigurationController::class, 'updateSettings']); // PUT  /api/legal/config/settings
+            Route::post('/social', [SiteConfigurationController::class, 'storeSocial']);     // POST /api/legal/config/social
+            Route::put('/social/{id}', [SiteConfigurationController::class, 'updateSocial']); // PUT  /api/legal/config/social/{id}
+            Route::delete('/social/{id}', [SiteConfigurationController::class, 'destroySocial']); // DELETE /api/legal/config/social/{id}
+        });
     });
 });
