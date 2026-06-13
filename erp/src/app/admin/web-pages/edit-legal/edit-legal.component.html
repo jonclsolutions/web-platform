@@ -1,0 +1,153 @@
+<div class="legal-container">
+
+  <!-- ===== HEADER ===== -->
+  <div class="legal-header">
+    <div class="legal-header-left">
+      <h1 class="legal-title">Právní dokumenty</h1>
+      <span class="legal-subtitle">Správa sekcí dokumentů {{ tabLabel }}</span>
+    </div>
+  </div>
+
+  <!-- ===== ZÁLOŽKY ===== -->
+  <div class="legal-tabs">
+    <button
+      class="legal-tab"
+      [class.active]="activeTab === 1"
+      (click)="switchTab(1)">
+      🔒 GDPR
+    </button>
+    <button
+      class="legal-tab"
+      [class.active]="activeTab === 2"
+      (click)="switchTab(2)">
+      📄 Obchodní podmínky
+    </button>
+  </div>
+
+  <!-- ===== SEZNAM SEKCÍ ===== -->
+  <div class="legal-sections">
+
+    @if (data.length === 0) {
+      <div class="legal-empty">
+        <span class="legal-empty-icon">📭</span>
+        <div>Žádné sekce pro tento dokument.</div>
+        <div class="legal-empty-sub">Přidejte první sekci tlačítkem níže.</div>
+      </div>
+    }
+
+    @for (item of data; track trackById($index, item); let i = $index) {
+      <div class="legal-section-card" [class.is-editing]="isEditing(item.id)">
+
+        <!-- ---- Zobrazovací mód ---- -->
+        @if (!isEditing(item.id)) {
+          <div class="section-view">
+            <div class="section-view-header">
+              <div class="section-position">{{ i + 1 }}</div>
+              <div class="section-heading">{{ item.heading || '(bez nadpisu)' }}</div>
+              <div class="section-actions">
+                <button class="action-btn edit-btn" (click)="startEdit(item)" title="Upravit sekci">
+                  ✏️ Upravit
+                </button>
+                <button class="action-btn delete-btn" (click)="confirmDelete(item)" title="Smazat sekci">
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div class="section-content-preview">{{ item.content }}</div>
+          </div>
+        }
+
+        <!-- ---- Inline edit mód ---- -->
+        @if (isEditing(item.id)) {
+          <div class="section-edit">
+            <div class="section-edit-header">
+              <div class="section-position">{{ i + 1 }}</div>
+              <span class="section-edit-label">Editace sekce</span>
+              <div class="section-actions">
+                <button class="action-btn save-btn" (click)="saveEdit(item)" [disabled]="saving">
+                  💾 Uložit
+                </button>
+                <button class="action-btn cancel-btn" (click)="cancelEdit(item.id)" [disabled]="saving">
+                  ✕ Zrušit
+                </button>
+              </div>
+            </div>
+            <div class="section-edit-fields">
+              <div class="edit-field-group">
+                <label class="edit-label">Nadpis sekce</label>
+                <input
+                  class="edit-input"
+                  type="text"
+                  [(ngModel)]="editBuffer[item.id].heading"
+                  placeholder="Nadpis sekce (nepovinné)"
+                  [name]="'heading_' + item.id">
+              </div>
+              <div class="edit-field-group">
+                <label class="edit-label">Obsah sekce *</label>
+                <textarea
+                  class="edit-textarea"
+                  [(ngModel)]="editBuffer[item.id].content"
+                  placeholder="Obsah sekce…"
+                  rows="6"
+                  [name]="'content_' + item.id">
+                </textarea>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+    }
+
+    <!-- ===== FORMULÁŘ PRO PŘIDÁNÍ NOVÉ SEKCE ===== -->
+    @if (showAddForm) {
+      <div class="legal-add-card" id="add-form-anchor">
+        <div class="section-edit-header">
+          <div class="section-position">{{ data.length + 1 }}</div>
+          <span class="section-edit-label">Nová sekce — {{ tabLabel }}</span>
+          <div class="section-actions">
+            <button class="action-btn save-btn" (click)="submitAdd()" [disabled]="saving || !newContent.trim()">
+              💾 Přidat sekci
+            </button>
+            <button class="action-btn cancel-btn" (click)="cancelAdd()" [disabled]="saving">
+              ✕ Zrušit
+            </button>
+          </div>
+        </div>
+        <div class="section-edit-fields">
+          <div class="edit-field-group">
+            <label class="edit-label">Nadpis sekce</label>
+            <input
+              class="edit-input"
+              type="text"
+              [(ngModel)]="newHeading"
+              placeholder="Nadpis sekce (nepovinné)"
+              name="new_heading">
+          </div>
+          <div class="edit-field-group">
+            <label class="edit-label">Obsah sekce *</label>
+            <textarea
+              class="edit-textarea"
+              [(ngModel)]="newContent"
+              placeholder="Obsah sekce…"
+              rows="6"
+              name="new_content">
+            </textarea>
+          </div>
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- ===== TLAČÍTKO PŘIDAT ===== -->
+  @if (!showAddForm) {
+    <div class="legal-add-row">
+      <button class="add-section-btn" (click)="openAddForm()">
+        <span class="add-section-plus">+</span>
+        Přidat sekci do {{ tabLabel }}
+      </button>
+    </div>
+  }
+
+</div>

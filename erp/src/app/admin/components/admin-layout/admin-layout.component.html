@@ -90,6 +90,11 @@
               <span class="nav-icon">💻</span><span class="nav-text">Správa Webu</span>
             </a>
           </li>
+          <li *appHasPermission="'web-edit-legal'">
+            <a routerLink="/admin/edit-legal" routerLinkActive="active" (click)="onLinkClick()" title="GDPR/TOS">
+              <span class="nav-icon">X</span><span class="nav-text">GDPR/TOS</span>
+            </a>
+          </li>
           <li *appHasPermission="'web-view-news'">
             <a routerLink="/admin/edit-news" routerLinkActive="active" (click)="onLinkClick()" title="Správa Novinek">
               <span class="nav-icon">📰</span><span class="nav-text">Správa Novinek</span>

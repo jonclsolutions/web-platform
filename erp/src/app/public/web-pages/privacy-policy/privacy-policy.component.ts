@@ -1,8 +1,7 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-// Tvůj hromadný import pro služby a RxJS nástroje
 import * as Web from '../../../shared/imports/web-providers';
+import { PublicDataService } from '../../../shared/imports/web-providers';
 
 @Component({
   selector: 'app-privacy-policy',
@@ -12,23 +11,26 @@ import * as Web from '../../../shared/imports/web-providers';
   styleUrl: './privacy-policy.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PrivacyPolicyComponent implements OnInit, OnDestroy {
-  p: any = null; // Proměnná pro JSON data
+export class PrivacyPolicyComponent implements OnInit {
+  @Input() docSlug: 'gdpr' | 'tos' = 'gdpr'; // Možnost přepínat mezi stránkami
+  
+  data: any = null; 
   private destroy$ = new Web.Subject<void>();
 
   constructor(
-    private localizationService: Web.LocalizationService,
+    private publicDataService: PublicDataService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.localizationService.currentTranslations$
+    this.publicDataService.getLegalDocument(this.docSlug)
       .pipe(Web.takeUntil(this.destroy$))
-      .subscribe(translations => {
-        if (translations && translations.privacy_policy) {
-          this.p = translations.privacy_policy;
-          this.cdr.detectChanges();
-        }
+      .subscribe({
+        next: (res) => {
+          this.data = res;
+          this.cdr.markForCheck();
+        },
+        error: (err) => console.error(`Chyba při načítání ${this.docSlug}:`, err)
       });
   }
 

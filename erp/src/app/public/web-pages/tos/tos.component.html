@@ -1,57 +1,39 @@
-@if (t) {
+@if (data) {
   <div class="container">
-    <h1>{{ t?.title }}</h1>
+    <h1>{{ data.header_main }}</h1>
     <p class="last-update">
-      <strong>{{ t?.last_update_label }}</strong> {{ t?.last_update_date }}
+      <strong>{{ data.last_update_text || 'Poslední aktualizace:' }}</strong> {{ data.last_update_date }}
     </p>
-    <h2>{{ t?.section_1?.title }}</h2>
-    <p [innerHTML]="t?.section_1?.p1"></p>
-    <p>{{ t?.section_1?.p2 }}</p>
-    <p>{{ t?.section_1?.p3 }}</p>
-    <h2>{{ t?.section_2?.title }}</h2>
-    <p>{{ t?.section_2?.p1 }}</p>
-    <h2>{{ t?.section_3?.title }}</h2>
-    <p>{{ t?.section_3?.p1 }}</p>
-    <p>{{ t?.section_3?.p2 }}</p>
-    <ul>
-      <li>{{ t?.section_3?.li1 }}</li>
-      <li>{{ t?.section_3?.li2 }}</li>
-      <li>{{ t?.section_3?.li3 }}</li>
-      <li>{{ t?.section_3?.li4 }}</li>
-    </ul>
-    <p>{{ t?.section_3?.p3 }}</p>
-    <p>{{ t?.section_3?.p4 }}</p>
-    <h2>{{ t?.section_4?.title }}</h2>
-    <p>{{ t?.section_4?.p1 }}</p>
-    <p>{{ t?.section_4?.p2 }}</p>
-    <ul>
-      <li>{{ t?.section_4?.li1 }}</li>
-      <li>{{ t?.section_4?.li2 }}</li>
-    </ul>
-    <p>{{ t?.section_4?.p4 }}</p>
-    <h2>{{ t?.section_5?.title }}</h2>
-    <p>{{ t?.section_5?.p1 }}</p>
-    <p>{{ t?.section_5?.p2 }}</p>
-    <h2>{{ t?.section_6?.title }}</h2>
-    <p>{{ t?.section_6?.p1 }}</p>
-    <p>{{ t?.section_6?.p2 }}</p>
-    <p>{{ t?.section_6?.p3 }}</p>
-    <h2>{{ t?.section_7?.title }}</h2>
-    <p>{{ t?.section_7?.p1 }}</p>
-    <p>{{ t?.section_7?.p2 }}</p>
-    <p [innerHTML]="t?.section_7?.p3"></p>
-    <h2>{{ t?.section_8?.title }}</h2>
-    <p>{{ t?.section_8?.p1 }}</p>
-    <p>
-      {{ t?.section_8?.p2 }}
-      <a routerLink="../privacy-policy">Zásady ochrany osobních údajů</a>
+
+    @for (section of data.sections; track section.id) {
+      <div class="policy-section">
+        <h2>{{ section.heading }}</h2>
+        <div [innerHTML]="section.content"></div>
+
+        @if (section.subsections && section.subsections.length > 0) {
+          <div>
+            @for (sub of section.subsections; track sub.id) {
+              <div class="subsection">
+                <h3>{{ sub.heading }}</h3>
+                <p>{{ sub.text }}</p>
+                @if (sub.list) {
+                  <ul>
+                    @for (bullet of sub.list; track bullet) {
+                      <li [innerHTML]="bullet"></li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <p style="margin-top: 20px;">
+      Více informací naleznete v <a routerLink="../privacy-policy">Zásadách ochrany osobních údajů</a>.
     </p>
-    <h2>{{ t?.section_9?.title }}</h2>
-    <p>{{ t?.section_9?.p1 }}</p>
-    <p>{{ t?.section_9?.p2 }}</p>
-    <p>{{ t?.section_9?.p3 }}</p>
-    <p>{{ t?.section_9?.p4 }}</p>
-    <p [innerHTML]="t?.section_9?.p5"></p>
-    <p class="last-update">{{ t?.section_9?.effective_date }}</p>
+
+    <p class="last-update" style="margin-top: 40px;">{{ data.footer_effective }}</p>
   </div>
 }

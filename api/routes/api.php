@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\Core\CoreRoleController;
 use App\Http\Controllers\Api\Core\CoreSiteSettingController; // ⚙️ Nový kontroler pro globální konfiguraci
 
+use App\Http\Controllers\Api\Legal\DocumentSectionController;
 use App\Http\Controllers\Api\Web\WebRawRequestCommissionController;
 use App\Http\Controllers\Api\Web\WebLogController;
 use App\Http\Controllers\Api\Web\WebSalesLeadController;
@@ -77,6 +78,15 @@ Route::prefix('shop/checkout')->middleware('shop.active')->group(function () {
     Route::post('simulate-payment', [ShopCheckoutController::class, 'simulatePayment']);
 });
 
+/*
+|--------------------------------------------------------------------------
+| 🌍 VEŘEJNÉ PRÁVNÍ DOKUMENTY (Public Access)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('public/legal')->group(function () {
+    // Vrací data dle slugu: 'gdpr' nebo 'tos'
+    Route::get('/{slug}', [App\Http\Controllers\Api\Legal\DocumentSectionController::class, 'publicShow']);
+});
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -304,5 +314,22 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         });
         Route::apiResource('sales_leads', WebSalesLeadController::class)
             ->parameters(['sales_leads' => 'id']);
+    });
+    /*
+    |--------------------------------------------------------------------------
+    | ⚖️ SECTION: LEGAL (Obchodní podmínky, GDPR)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('legal')->group(function () {
+        
+        Route::prefix('document-sections')->group(function () {
+            // Index a Store/Update/Delete
+            Route::get('/', [DocumentSectionController::class, 'index']);
+            Route::post('/', [DocumentSectionController::class, 'store']);
+            Route::get('/{id}', [DocumentSectionController::class, 'show']);
+            Route::put('/{id}', [DocumentSectionController::class, 'update']);
+            Route::delete('/{id}', [DocumentSectionController::class, 'destroy']);
+        });
+        
     });
 });

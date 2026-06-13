@@ -82,7 +82,6 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
     const legalLinkKeys = [
       { route: '/tos', key: 'legal.terms_of_service' },
       { route: '/privacy-policy', key: 'legal.privacy_policy' },
-      { route: '/claims', key: 'legal.claims_policy' }
     ];
 
     this.footerLegalLinks = legalLinkKeys.map(link => ({
