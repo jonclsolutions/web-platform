@@ -71,6 +71,7 @@
   }
 </div>
 
+<!-- ===== DETAIL MODÁL ===== -->
 @if (showDetailsModal && selectedProductForDetail) {
   <div class="modal-overlay" (click)="closeDetailsModal()">
     <div class="modal-content modal-detail" (click)="$event.stopPropagation()">
@@ -87,147 +88,151 @@
               <div class="detail-categories-list">
                 @for (cat of selectedProductForDetail.categories; track cat) {
                   <span class="cat-badge">
-                    📁 {{ cat.name }} @if (cat.id === selectedProductForDetail.category_id) {
-                    <span class="text-xs opacity-60">(Hlavní)</span>
-                  }
-                </span>
-              }
-              @if (!selectedProductForDetail.categories?.length) {
-                <span>-</span>
+                    📁 {{ cat.name }}
+                    @if (cat.id === selectedProductForDetail.category_id) {
+                      <span class="text-xs opacity-60">(Hlavní)</span>
+                    }
+                  </span>
+                }
+                @if (!selectedProductForDetail.categories?.length) {
+                  <span>-</span>
+                }
+              </div>
+            </div>
+            <div class="info-row">
+              <label>Dodavatel:</label>
+              <span>{{ getSupplierName(selectedProductForDetail.supplier_id) }}</span>
+            </div>
+            <div class="info-row">
+              <label>SKU:</label>
+              <span class="mono">{{ selectedProductForDetail.sku }}</span>
+            </div>
+            <div class="info-row">
+              <label>Popis:</label>
+              <span>{{ selectedProductForDetail.short_description || '-' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Ceny produktu</h3>
+          <div class="info-grid">
+            <div class="info-row">
+              <label>Prodejní cena (EUR s DPH):</label>
+              <span class="price">{{ formatCurrency(selectedProductForDetail.price_eur || 0, 'EUR') }}</span>
+            </div>
+            <div class="info-row">
+              <label>Nákupní cena (EUR):</label>
+              <span class="price">{{ formatCurrency(selectedProductForDetail.cost_price_eur || 0, 'EUR') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Skladové zásoby</h3>
+          <div class="info-grid">
+            <div class="info-row">
+              <label>Počet na skladě:</label>
+              <span [class.stock-warning]="selectedProductForDetail.stock_quantity <= selectedProductForDetail.stock_warning_level">
+                {{ selectedProductForDetail.stock_quantity }} ks
+              </span>
+            </div>
+            <div class="info-row">
+              <label>Limit upozornění:</label>
+              <span>{{ selectedProductForDetail.stock_warning_level }} ks</span>
+            </div>
+          </div>
+        </div>
+
+        @if (getVisibleVariants(selectedProductForDetail).length > 0) {
+          <div class="detail-section">
+            <h3>Varianty ({{ getVisibleVariants(selectedProductForDetail).length }})</h3>
+            <div class="variants-list">
+              @for (v of getVisibleVariants(selectedProductForDetail); track v) {
+                <div class="variant-item">
+                  <div class="variant-name">{{ v.variant_name }}</div>
+                  <div class="variant-details">
+                    @if (v.attribute_1_name) {
+                      <span>{{ v.attribute_1_name }}: <strong>{{ v.attribute_1_value }}</strong></span>
+                    }
+                    @if (v.attribute_2_name) {
+                      <span class="separator">|</span>
+                      <span>{{ v.attribute_2_name }}: <strong>{{ v.attribute_2_value }}</strong></span>
+                    }
+                  </div>
+                  <div class="variant-pricing">
+                    <div class="row">
+                      <div class="label">EUR (s DPH / bez):</div>
+                      <div>
+                        <strong>{{ formatCurrency(v.price_with_vat_eur || 0, 'EUR') }}</strong>
+                        / {{ formatCurrency(v.price_without_vat_eur || 0, 'EUR') }}
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="label">Sazba DPH:</div>
+                      <div>{{ v.vat_rate }}%</div>
+                    </div>
+                  </div>
+                  <div class="variant-stock">
+                    <span class="label">Sklad:</span> <strong>{{ v.stock_quantity }} ks</strong>
+                  </div>
+                </div>
               }
             </div>
           </div>
-          <div class="info-row">
-            <label>Dodavatel:</label>
-            <span>{{ getSupplierName(selectedProductForDetail.supplier_id) }}</span>
+        }
+
+        @if (getVisibleImages(selectedProductForDetail).length > 0) {
+          <div class="detail-section">
+            <h3>Obrázky produktu ({{ getVisibleImages(selectedProductForDetail).length }})</h3>
+            <div class="images-grid">
+              @for (img of getVisibleImages(selectedProductForDetail); track img) {
+                <div class="image-item">
+                  <img [src]="img.url || ('storage/products/' + img.image_path)" [alt]="img.alt_text" class="thumbnail">
+                  @if (img.is_primary) {
+                    <span class="primary-badge">Primární</span>
+                  }
+                </div>
+              }
+            </div>
           </div>
-          <div class="info-row">
-            <label>SKU:</label>
-            <span class="mono">{{ selectedProductForDetail.sku }}</span>
-          </div>
-          <div class="info-row">
-            <label>Popis:</label>
-            <span>{{ selectedProductForDetail.short_description || '-' }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="detail-section">
-        <h3>Přehled cen hlavního produktu</h3>
-        <div class="info-grid">
-          <div class="info-row">
-            <label>Cena CZK:</label>
-            <span class="price">{{ formatCurrency(selectedProductForDetail.price_czk || 0, 'CZK') }}</span>
-          </div>
-          <div class="info-row">
-            <label>Cena EUR:</label>
-            <span class="price">{{ formatCurrency(selectedProductForDetail.price_eur || 0, 'EUR') }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="detail-section">
-        <h3>Skladové zásoby</h3>
-        <div class="info-grid">
-          <div class="info-row">
-            <label>Počet na skladě:</label>
-            <span [class.stock-warning]="selectedProductForDetail.stock_quantity <= selectedProductForDetail.stock_warning_level">
-              {{ selectedProductForDetail.stock_quantity }} ks
-            </span>
-          </div>
-          <div class="info-row">
-            <label>Limit upozornění:</label>
-            <span>{{ selectedProductForDetail.stock_warning_level }} ks</span>
-          </div>
-        </div>
-      </div>
-      @if (getVisibleVariants(selectedProductForDetail).length > 0) {
+        }
+
         <div class="detail-section">
-          <h3>Varianty ({{ getVisibleVariants(selectedProductForDetail).length }})</h3>
-          <div class="variants-list">
-            @for (v of getVisibleVariants(selectedProductForDetail); track v) {
-              <div class="variant-item">
-                <div class="variant-name">{{ v.variant_name }}</div>
-                <div class="variant-details">
-                  @if (v.attribute_1_name) {
-                    <span>{{ v.attribute_1_name }}: <strong>{{ v.attribute_1_value }}</strong></span>
-                  }
-                  @if (v.attribute_2_name) {
-                    <span class="separator">|</span>
-                  }
-                  @if (v.attribute_2_name) {
-                    <span>{{ v.attribute_2_name }}: <strong>{{ v.attribute_2_value }}</strong></span>
-                  }
-                </div>
-                <div class="variant-pricing">
-                  <div class="row">
-                    <div class="label">CZK (s DPH / bez):</div>
-                    <div><strong>{{ formatCurrency(v.price_with_vat_czk || 0, 'CZK') }}</strong> / {{ formatCurrency(v.price_without_vat_czk || 0, 'CZK') }}</div>
-                  </div>
-                  <div class="row">
-                    <div class="label">EUR (s DPH / bez):</div>
-                    <div><strong>{{ formatCurrency(v.price_with_vat_eur || 0, 'EUR') }}</strong> / {{ formatCurrency(v.price_without_vat_eur || 0, 'EUR') }}</div>
-                  </div>
-                  <div class="row">
-                    <div class="label">Sazba DPH:</div>
-                    <div>{{ v.vat_rate }}%</div>
-                  </div>
-                </div>
-                <div class="variant-stock">
-                  <span class="label">Sklad:</span> <strong>{{ v.stock_quantity }} ks</strong>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
-      @if (getVisibleImages(selectedProductForDetail).length > 0) {
-        <div class="detail-section">
-          <h3>Obrázky produktu ({{ getVisibleImages(selectedProductForDetail).length }})</h3>
-          <div class="images-grid">
-            @for (img of getVisibleImages(selectedProductForDetail); track img) {
-              <div class="image-item">
-                <img [src]="img.url || ('storage/products/' + img.image_path)" [alt]="img.alt_text" class="thumbnail">
-                @if (img.is_primary) {
-                  <span class="primary-badge">Primární</span>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-      <div class="detail-section">
-        <h3>Status</h3>
-        <div class="info-grid">
-          <div class="info-row">
-            <label>Aktivní:</label>
-            <span [class.badge-yes]="selectedProductForDetail.is_active" [class.badge-no]="!selectedProductForDetail.is_active">
-              {{ selectedProductForDetail.is_active ? '✓ Ano' : '✗ Ne' }}
-            </span>
-          </div>
-          <div class="info-row">
-            <label>Doporučený:</label>
-            <span [class.badge-yes]="selectedProductForDetail.is_featured" [class.badge-no]="!selectedProductForDetail.is_featured">
-              {{ selectedProductForDetail.is_featured ? '⭐ Ano' : '✗ Ne' }}
-            </span>
-          </div>
-          <div class="info-row">
-            <label>Vytvořeno:</label>
-            <span>{{ selectedProductForDetail.created_at | date: 'short' }}</span>
-          </div>
-          <div class="info-row">
-            <label>Upraveno:</label>
-            <span>{{ selectedProductForDetail.updated_at | date: 'short' }}</span>
+          <h3>Status</h3>
+          <div class="info-grid">
+            <div class="info-row">
+              <label>Aktivní:</label>
+              <span [class.badge-yes]="selectedProductForDetail.is_active" [class.badge-no]="!selectedProductForDetail.is_active">
+                {{ selectedProductForDetail.is_active ? '✓ Ano' : '✗ Ne' }}
+              </span>
+            </div>
+            <div class="info-row">
+              <label>Doporučený:</label>
+              <span [class.badge-yes]="selectedProductForDetail.is_featured" [class.badge-no]="!selectedProductForDetail.is_featured">
+                {{ selectedProductForDetail.is_featured ? '⭐ Ano' : '✗ Ne' }}
+              </span>
+            </div>
+            <div class="info-row">
+              <label>Vytvořeno:</label>
+              <span>{{ selectedProductForDetail.created_at | date: 'short' }}</span>
+            </div>
+            <div class="info-row">
+              <label>Upraveno:</label>
+              <span>{{ selectedProductForDetail.updated_at | date: 'short' }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="closeDetailsModal()">Zavřít</button>
-      <button class="btn btn-primary" (click)="openEditProductForm(selectedProductForDetail)">✏️ Editovat</button>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDetailsModal()">Zavřít</button>
+        <button class="btn btn-primary" (click)="openEditProductForm(selectedProductForDetail)">✏️ Editovat</button>
+      </div>
     </div>
   </div>
-</div>
 }
 
+<!-- ===== FORMULÁŘ PRODUKTU ===== -->
 @if (showProductForm && editingProduct) {
   <div class="modal-overlay" (click)="closeProductForm()">
     <div class="modal-content modal-form" (click)="$event.stopPropagation()">
@@ -237,127 +242,120 @@
       </div>
       <div class="modal-body">
         <form class="product-form">
+
           <fieldset>
             <legend>Základní</legend>
+
             <div class="form-group category-manager-block">
               <label>Přiřazené kategorie</label>
               <div class="selected-categories-container">
                 @for (cat of selectedFormCategories; track cat) {
                   <div class="category-chip" [class.is-primary]="cat.id === editingProduct.category_id">
-                    <span class="chip-title" (click)="setMainCategory(cat.id)" title="Kliknutím nastavíte jako hlavní kategorii">
-                      📁 {{ cat.name }} @if (cat.id === editingProduct.category_id) {
-                      <strong>(Hlavní)</strong>
-                    }
-                  </span>
-                  <button type="button" class="chip-remove-btn" (click)="removeCategoryFromForm(cat.id)" title="Odebrat z produktu">✕</button>
-                </div>
-              }
+                    <span class="chip-title" (click)="setMainCategory(cat.id)" title="Nastavit jako hlavní">
+                      📁 {{ cat.name }}
+                      @if (cat.id === editingProduct.category_id) { <strong>(Hlavní)</strong> }
+                    </span>
+                    <button type="button" class="chip-remove-btn" (click)="removeCategoryFromForm(cat.id)">✕</button>
+                  </div>
+                }
+              </div>
+              <div class="add-category-row" style="margin-top:10px;max-width:400px;">
+                <select #catSelect class="form-control" (change)="addCategoryToForm(catSelect)">
+                  <option value="0">-- Přidat do kategorie --</option>
+                  @for (cat of getAvailableCategoriesForForm(); track cat) {
+                    <option [value]="cat.id">{{ cat.name }}</option>
+                  }
+                </select>
+              </div>
+              <p class="form-hint">Kliknutím na název kategorie ji nastavíte jako primární.</p>
             </div>
-            <div class="add-category-row" style="margin-top: 10px; max-width: 400px;">
-              <select #catSelect class="form-control" (change)="addCategoryToForm(catSelect)">
-                <option value="0">-- Přidat produkt do další kategorie --</option>
-                @for (cat of getAvailableCategoriesForForm(); track cat) {
-                  <option [value]="cat.id">{{ cat.name }}</option>
+
+            <div class="form-group" style="max-width:400px;">
+              <label>Dodavatel</label>
+              <select [(ngModel)]="editingProduct.supplier_id" name="supplier_id">
+                <option [value]="null">-- Bez dodavatele --</option>
+                @for (sup of suppliers; track sup) {
+                  <option [value]="sup.id">{{ sup.name }}</option>
                 }
               </select>
             </div>
-            <p class="form-hint">Tip: Kliknutím na název kategorie uvnitř čipu ji určíte jako primární.</p>
-          </div>
-          <div class="form-group" style="max-width: 400px;">
-            <label for="supplierSelect">Dodavatel</label>
-            <select id="supplierSelect" [(ngModel)]="editingProduct.supplier_id" name="supplier_id" class="form-control">
-              <option [value]="null">-- Bez dodavatele --</option>
-              @for (sup of suppliers; track sup) {
-                <option [value]="sup.id">{{ sup.name }}</option>
-              }
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Název *</label>
-            <input type="text" [(ngModel)]="editingProduct.name" name="name" required>
-          </div>
-          <div class="form-row-2">
+
             <div class="form-group">
-              <label>Slug</label>
-              <input type="text" [(ngModel)]="editingProduct.slug" name="slug"
-                [placeholder]="generateSlug(editingProduct.name)">
+              <label>Název *</label>
+              <input type="text" [(ngModel)]="editingProduct.name" name="name" required>
             </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Slug</label>
+                <input type="text" [(ngModel)]="editingProduct.slug" name="slug"
+                  [placeholder]="generateSlug(editingProduct.name)">
+              </div>
+              <div class="form-group">
+                <label>SKU *</label>
+                <input type="text" [(ngModel)]="editingProduct.sku" name="sku" required>
+              </div>
+            </div>
+
             <div class="form-group">
-              <label>SKU *</label>
-              <input type="text" [(ngModel)]="editingProduct.sku" name="sku" required>
+              <label>Krátký popis</label>
+              <input type="text" [(ngModel)]="editingProduct.short_description" name="short_description" maxlength="500">
             </div>
-          </div>
-          <div class="form-group">
-            <label>Krátký popis</label>
-            <input type="text" [(ngModel)]="editingProduct.short_description" name="short_description" maxlength="500">
-          </div>
-          <div class="form-group">
-            <label>Podrobný popis</label>
-            <textarea [(ngModel)]="editingProduct.description" name="description" rows="3"></textarea>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Ceník produktu (CZK a EUR)</legend>
-          <div class="multi-currency-grid">
-            <div class="currency-row-inputs">
-              <span class="currency-indicator-label">CZK (Kč)</span>
-              <div class="form-group">
-                <label>Prodejní cena (s DPH)</label>
-                <input type="number" [(ngModel)]="editingProduct.price_czk" name="price_czk" min="0" step="0.01"
-                  (change)="onMainPriceWithVATChange()">
-              </div>
-              <div class="form-group">
-                <label>Nákupní cena</label>
-                <input type="number" [(ngModel)]="editingProduct.cost_price_czk" name="cost_price_czk" min="0" step="0.01">
-              </div>
+
+            <div class="form-group">
+              <label>Podrobný popis</label>
+              <textarea [(ngModel)]="editingProduct.description" name="description" rows="3"></textarea>
             </div>
-            <div class="currency-row-inputs">
-              <span class="currency-indicator-label">EUR (€)</span>
+          </fieldset>
+
+          <fieldset>
+            <legend>Ceník (EUR)</legend>
+            <div class="form-row-2">
               <div class="form-group">
-                <label>Prodejní cena (s DPH)</label>
-                <input type="number" [(ngModel)]="editingProduct.price_eur" name="price_eur" min="0" step="0.01"
-                  (change)="onMainPriceWithVATChange()">
+                <label>Prodejní cena EUR (s DPH) *</label>
+                <input type="number" [(ngModel)]="editingProduct.price_eur" name="price_eur" min="0" step="0.01">
               </div>
               <div class="form-group">
-                <label>Nákupní cena</label>
+                <label>Nákupní cena EUR</label>
                 <input type="number" [(ngModel)]="editingProduct.cost_price_eur" name="cost_price_eur" min="0" step="0.01">
               </div>
             </div>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Sklad</legend>
-          <p class="note">⚠️ Počet na skladě se počítá z variant!</p>
-          <div class="form-row-2">
-            <div class="form-group">
-              <label>Limit upozornění</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Sklad</legend>
+            <p class="note">⚠️ Počet na skladě se počítá automaticky ze součtu variant.</p>
+            <div class="form-group" style="max-width:200px;">
+              <label>Limit upozornění (ks)</label>
               <input type="number" [(ngModel)]="editingProduct.stock_warning_level" name="stock_warning_level" min="0">
             </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Status</legend>
+            <div class="checkbox-group">
+              <label>
+                <input type="checkbox" [(ngModel)]="editingProduct.is_active" name="is_active">
+                Aktivní
+              </label>
+              <label>
+                <input type="checkbox" [(ngModel)]="editingProduct.is_featured" name="is_featured">
+                Doporučený
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="modal-footer-inline">
+            <button type="button" class="btn btn-secondary" (click)="closeProductForm()">Zrušit</button>
+            <button type="button" class="btn btn-primary" (click)="saveProduct()">💾 Uložit</button>
           </div>
-        </fieldset>
-        <fieldset>
-          <legend>Status</legend>
-          <div class="checkbox-group">
-            <label>
-              <input type="checkbox" [(ngModel)]="editingProduct.is_active" name="is_active">
-              Aktivní
-            </label>
-            <label>
-              <input type="checkbox" [(ngModel)]="editingProduct.is_featured" name="is_featured">
-              Doporučený
-            </label>
-          </div>
-        </fieldset>
-        <div class="modal-footer-inline">
-          <button type="button" class="btn btn-secondary" (click)="closeProductForm()">Zrušit</button>
-          <button type="button" class="btn btn-primary" (click)="saveProduct()">💾 Uložit</button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   </div>
-</div>
 }
 
+<!-- ===== VARIANTY MODÁL ===== -->
 @if (showVariantsModal && editingProduct) {
   <div class="modal-overlay" (click)="closeVariantsModal()">
     <div class="modal-content modal-variants" (click)="$event.stopPropagation()">
@@ -367,17 +365,16 @@
       </div>
       <div class="modal-body">
         @if (getVisibleVariants(editingProduct).length === 0) {
-          <div class="empty-state">Bez variant</div>
+          <div class="empty-state">Žádné varianty — přidejte první tlačítkem níže.</div>
         }
         @for (variant of editingProduct.variants; track variant; let i = $index) {
-          <div
-            class="variant-card" [class.deleted]="variant._delete">
+          <div class="variant-card" [class.deleted]="variant._delete">
             <div class="variant-header">
               <h4>Varianta {{ i + 1 }}</h4>
               <div class="variant-header-actions">
                 @if (!variant._delete) {
                   <button type="button" class="btn-icon small" title="Obrázky varianty"
-                  (click)="editVariantImages(i, $event)">🖼️</button>
+                    (click)="editVariantImages(i, $event)">🖼️</button>
                 }
                 <button type="button" class="btn-icon danger" (click)="deleteVariant(i)">🗑️</button>
               </div>
@@ -385,76 +382,69 @@
             <div class="variant-form">
               <div class="form-group">
                 <label>Název *</label>
-                <input type="text" [(ngModel)]="variant.variant_name" placeholder="Černá - M" [disabled]="!!variant._delete">
+                <input type="text" [(ngModel)]="variant.variant_name" placeholder="Černá - M"
+                  [disabled]="!!variant._delete">
               </div>
               <div class="form-row-2">
                 <div class="form-group">
                   <label>Atribut 1</label>
-                  <input type="text" [(ngModel)]="variant.attribute_1_name" placeholder="Barva" [disabled]="!!variant._delete">
+                  <input type="text" [(ngModel)]="variant.attribute_1_name" placeholder="Barva"
+                    [disabled]="!!variant._delete">
                 </div>
                 <div class="form-group">
                   <label>Hodnota 1</label>
-                  <input type="text" [(ngModel)]="variant.attribute_1_value" placeholder="Černá" [disabled]="!!variant._delete">
+                  <input type="text" [(ngModel)]="variant.attribute_1_value" placeholder="Černá"
+                    [disabled]="!!variant._delete">
                 </div>
               </div>
               <div class="form-row-2">
                 <div class="form-group">
                   <label>Atribut 2</label>
-                  <input type="text" [(ngModel)]="variant.attribute_2_name" placeholder="Velikost" [disabled]="!!variant._delete">
+                  <input type="text" [(ngModel)]="variant.attribute_2_name" placeholder="Velikost"
+                    [disabled]="!!variant._delete">
                 </div>
                 <div class="form-group">
                   <label>Hodnota 2</label>
-                  <input type="text" [(ngModel)]="variant.attribute_2_value" placeholder="M" [disabled]="!!variant._delete">
+                  <input type="text" [(ngModel)]="variant.attribute_2_value" placeholder="M"
+                    [disabled]="!!variant._delete">
                 </div>
               </div>
               <div class="form-group">
                 <label>SKU varianty</label>
-                <input type="text" [(ngModel)]="variant.sku_variant" placeholder="SKU-BLK-M" [disabled]="!!variant._delete">
+                <input type="text" [(ngModel)]="variant.sku_variant" placeholder="SKU-BLK-M"
+                  [disabled]="!!variant._delete">
               </div>
+
               <div class="vat-calculator">
-                <h4>💰 Ceny & DPH varianty</h4>
-                <div class="form-group" style="margin-bottom: 15px; max-width: 200px;">
-                  <label>DPH (%) společné pro všechny měny</label>
+                <h4>💰 Cena & DPH (EUR)</h4>
+                <div class="form-group" style="max-width:200px;margin-bottom:12px;">
+                  <label>Sazba DPH (%)</label>
                   <input type="number" [(ngModel)]="variant.vat_rate" placeholder="21" min="0" max="100"
                     [disabled]="!!variant._delete" (change)="onVATRateChange(variant)">
                 </div>
-                <div class="multi-currency-variant-paths">
-                  <div class="variant-currency-row">
-                    <span class="currency-badge-static">CZK</span>
-                    <div class="form-group">
-                      <label>S DPH</label>
-                      <input type="number" [(ngModel)]="variant.price_with_vat_czk" placeholder="0" step="0.01"
-                        [disabled]="!!variant._delete" (change)="onPriceWithVATChange(variant)">
-                    </div>
-                    <div class="form-group">
-                      <label>Bez DPH <span class="hint">(automaticky)</span></label>
-                      <input type="number" [(ngModel)]="variant.price_without_vat_czk" placeholder="0" step="0.01"
-                        [disabled]="true" class="auto-calculated">
-                    </div>
+                <div class="form-row-2">
+                  <div class="form-group">
+                    <label>Cena s DPH (EUR) *</label>
+                    <input type="number" [(ngModel)]="variant.price_with_vat_eur" placeholder="0" step="0.01"
+                      [disabled]="!!variant._delete" (change)="onPriceWithVATChange(variant)">
                   </div>
-                  <div class="variant-currency-row">
-                    <span class="currency-badge-static">EUR</span>
-                    <div class="form-group">
-                      <label>S DPH</label>
-                      <input type="number" [(ngModel)]="variant.price_with_vat_eur" placeholder="0" step="0.01"
-                        [disabled]="!!variant._delete" (change)="onPriceWithVATChange(variant)">
-                    </div>
-                    <div class="form-group">
-                      <label>Bez DPH <span class="hint">(automaticky)</span></label>
-                      <input type="number" [(ngModel)]="variant.price_without_vat_eur" placeholder="0" step="0.01"
-                        [disabled]="true" class="auto-calculated">
-                    </div>
+                  <div class="form-group">
+                    <label>Cena bez DPH <span class="hint">(auto)</span></label>
+                    <input type="number" [(ngModel)]="variant.price_without_vat_eur" placeholder="0" step="0.01"
+                      [disabled]="true" class="auto-calculated">
                   </div>
                 </div>
               </div>
-              <div class="form-group" style="margin-top: 15px;">
+
+              <div class="form-group" style="margin-top:14px;">
                 <label>Sklad (ks)</label>
-                <input type="number" [(ngModel)]="variant.stock_quantity" placeholder="0" min="0" [disabled]="!!variant._delete">
+                <input type="number" [(ngModel)]="variant.stock_quantity" placeholder="0" min="0"
+                  [disabled]="!!variant._delete">
               </div>
             </div>
           </div>
         }
-        <button type="button" class="btn btn-secondary" (click)="addVariant()">➕ Přidat</button>
+        <button type="button" class="btn btn-secondary" (click)="addVariant()">➕ Přidat variantu</button>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeVariantsModal()">Zavřít</button>
@@ -464,6 +454,7 @@
   </div>
 }
 
+<!-- ===== OBRÁZKY VARIANTY ===== -->
 @if (editingVariantIdx !== null && editingProduct?.variants?.[editingVariantIdx]) {
   <div class="modal-overlay" (click)="editingVariantIdx = null">
     <div class="modal-content modal-images" (click)="$event.stopPropagation()">
@@ -473,7 +464,7 @@
       </div>
       <div class="modal-body">
         @if (editingVariantImages.length === 0) {
-          <div class="empty-state">Bez obrázků - klikni "➕ Přidat"</div>
+          <div class="empty-state">Bez obrázků — klikni „➕ Přidat"</div>
         }
         @for (image of editingVariantImages; track image; let i = $index) {
           <div class="image-card" [class.deleted]="image._delete">
@@ -481,7 +472,8 @@
               <div class="image-preview-section">
                 <div class="image-preview-box">
                   @if (image.url || image.image_path) {
-                    <img [src]="image.url || ('storage/products/' + image.image_path)" [alt]="image.alt_text || 'Náhled'" class="image-preview">
+                    <img [src]="image.url || ('storage/products/' + image.image_path)"
+                      [alt]="image.alt_text || 'Náhled'" class="image-preview">
                   }
                   @if (!image.url && !image.image_path) {
                     <div class="image-placeholder">Náhled obrázku</div>
@@ -490,25 +482,26 @@
               </div>
               <div class="image-form-section">
                 <div class="image-header">
-                  @if (image.image_path) {
-                    <span class="filename">{{ image.image_path }}</span>
-                  }
+                  @if (image.image_path) { <span class="filename">{{ image.image_path }}</span> }
                   <button type="button" class="btn-icon danger" (click)="deleteVariantImage(i)">🗑️</button>
                 </div>
                 <div class="image-form">
                   <div class="form-group">
-                    <label>Soubor *</label>
-                    <input type="file" accept="image/*" (change)="onVariantImageFileSelected($event, i)" [disabled]="image._delete" class="file-input">
-                    <p class="form-hint">Vyber soubor JPG/PNG (max 5MB)</p>
+                    <label>Soubor</label>
+                    <input type="file" accept="image/*" (change)="onVariantImageFileSelected($event, i)"
+                      [disabled]="image._delete" class="file-input">
+                    <p class="form-hint">JPG/PNG, max 5 MB</p>
                   </div>
                   <div class="form-row-2">
                     <div class="form-group">
-                      <label>Alt text (popis)</label>
-                      <input type="text" [(ngModel)]="image.alt_text" placeholder="Popis obrázku" [disabled]="!!image._delete" class="form-input">
+                      <label>Alt text</label>
+                      <input type="text" [(ngModel)]="image.alt_text" placeholder="Popis"
+                        [disabled]="!!image._delete" class="form-input">
                     </div>
                     <div class="form-group">
                       <label>Pořadí</label>
-                      <input type="number" [(ngModel)]="image.sort_order" placeholder="0" min="0" [disabled]="!!image._delete" class="form-input">
+                      <input type="number" [(ngModel)]="image.sort_order" placeholder="0" min="0"
+                        [disabled]="!!image._delete" class="form-input">
                     </div>
                   </div>
                 </div>
@@ -526,6 +519,7 @@
   </div>
 }
 
+<!-- ===== OBRÁZKY PRODUKTU ===== -->
 @if (showImagesModal && editingProduct) {
   <div class="modal-overlay" (click)="closeImagesModal()">
     <div class="modal-content modal-images" (click)="$event.stopPropagation()">
@@ -535,16 +529,19 @@
       </div>
       <div class="modal-body">
         @if (getVisibleImages(editingProduct).length === 0) {
-          <div class="empty-state">Bez obrázků - klikni "➕ Přidat"</div>
+          <div class="empty-state">Bez obrázků — klikni „➕ Přidat"</div>
         }
         @for (image of editingProduct.images; track image; let i = $index) {
-          <div class="image-card" [class.deleted]="image._delete || !!image.variant_id" [class.variant-image]="!!image.variant_id">
+          <div class="image-card"
+            [class.deleted]="image._delete || !!image.variant_id"
+            [class.variant-image]="!!image.variant_id">
             @if (!image.variant_id) {
               <div class="image-card-grid">
                 <div class="image-preview-section">
                   <div class="image-preview-box">
                     @if (image.url || image.image_path) {
-                      <img [src]="image.url || ('storage/products/' + image.image_path)" [alt]="image.alt_text || 'Náhled'" class="image-preview">
+                      <img [src]="image.url || ('storage/products/' + image.image_path)"
+                        [alt]="image.alt_text || 'Náhled'" class="image-preview">
                     }
                     @if (!image.url && !image.image_path) {
                       <div class="image-placeholder">Náhled obrázku</div>
@@ -556,29 +553,32 @@
                 </div>
                 <div class="image-form-section">
                   <div class="image-header">
-                    @if (image.image_path) {
-                      <span class="filename">{{ image.image_path }}</span>
-                    }
-                    <button type="button" class="btn-icon danger" (click)="deleteImage(i)" [disabled]="!!image._delete">🗑️</button>
+                    @if (image.image_path) { <span class="filename">{{ image.image_path }}</span> }
+                    <button type="button" class="btn-icon danger" (click)="deleteImage(i)"
+                      [disabled]="!!image._delete">🗑️</button>
                   </div>
                   <div class="image-form">
                     <div class="form-group">
-                      <label>Soubor *</label>
-                      <input type="file" accept="image/*" (change)="onFileSelected($event, i)" [disabled]="image._delete" class="file-input">
-                      <p class="form-hint">Vyber soubor JPG/PNG (max 5MB)</p>
+                      <label>Soubor</label>
+                      <input type="file" accept="image/*" (change)="onFileSelected($event, i)"
+                        [disabled]="image._delete" class="file-input">
+                      <p class="form-hint">JPG/PNG, max 5 MB</p>
                     </div>
                     <div class="form-row-2">
                       <div class="form-group">
-                        <label>Alt text (popis)</label>
-                        <input type="text" [(ngModel)]="image.alt_text" placeholder="Popis obrázku" [disabled]="!!image._delete" class="form-input">
+                        <label>Alt text</label>
+                        <input type="text" [(ngModel)]="image.alt_text" placeholder="Popis"
+                          [disabled]="!!image._delete" class="form-input">
                       </div>
                       <div class="form-group">
                         <label>Pořadí</label>
-                        <input type="number" [(ngModel)]="image.sort_order" placeholder="0" min="0" [disabled]="!!image._delete" class="form-input">
+                        <input type="number" [(ngModel)]="image.sort_order" placeholder="0" min="0"
+                          [disabled]="!!image._delete" class="form-input">
                       </div>
                     </div>
                     <label class="radio-label">
-                      <input type="radio" [name]="'primary-' + i" [checked]="image.is_primary" (change)="setPrimaryImage(i)" [disabled]="image._delete">
+                      <input type="radio" [name]="'primary-' + i" [checked]="image.is_primary"
+                        (change)="setPrimaryImage(i)" [disabled]="image._delete">
                       <span>Primární obrázek (hlavní náhled)</span>
                     </label>
                   </div>

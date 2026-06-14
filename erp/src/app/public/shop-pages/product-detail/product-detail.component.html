@@ -10,7 +10,7 @@
         </div>
         @if (variantImages().length > 0) {
           <div class="gallery-section">
-            <span class="gallery-label">Barva / Provedení: {{ selectedVariant()?.variant_name }}</span>
+            <span class="gallery-label">Provedení: {{ selectedVariant()?.variant_name }}</span>
             <div class="image-thumbnails">
               @for (vImg of variantImages(); track vImg) {
                 <div
@@ -39,6 +39,7 @@
           </div>
         }
       </div>
+      
       <div class="product-purchase-zone">
         <div class="sticky-content">
           <nav class="breadcrumb-trail">
@@ -47,17 +48,10 @@
           <h1 class="product-name">{{ product()?.name }}</h1>
           <div class="product-meta">
             <span class="product-stock" [class.in-stock]="isAvailable()" [class.low-stock]="currentStock() > 0 && currentStock() < 5">
-              @if (currentStock() >= 5) {
-                ● Skladem > 5 ks
-              }
-              @if (currentStock() > 0 && currentStock() < 5) {
-                ● Skladem pouze {{ currentStock() }} ks
-              }
-              @if (currentStock() <= 0) {
-                ○ Momentálně nedostupné
-              }
+              {{ currentStock() >= 5 ? '● Skladem > 5 ks' : currentStock() > 0 ? '● Skladem pouze ' + currentStock() + ' ks' : '○ Momentálně nedostupné' }}
             </span>
           </div>
+          
           @if (product()?.variants?.length > 0) {
             <div class="variant-select-wrapper">
               <label for="variantSelect" class="section-label">Konfigurace:</label>
@@ -68,10 +62,11 @@
                 [value]="selectedVariant()?.id">
                 @for (v of product().variants; track v) {
                   <option [value]="v.id">
-                    {{ v.variant_name }} — ({{ getFormattedPrice(v.prices?.price_czk_with_vat || 0) }})
+                    {{ v.variant_name }} — ({{ getVariantPrice(v) }})
                   </option>
                 }
               </select>
+              
               @if (selectedVariant()) {
                 <div class="selected-attributes-box">
                   @if (selectedVariant().attribute_1_name) {
@@ -90,13 +85,15 @@
               }
             </div>
           }
+
           <div class="purchase-card">
             <div class="price-section">
               <div class="price-main">{{ getFormattedPrice(currentPrice()) }}</div>
               <div class="price-no-vat">
-                Bez DPH: {{ getFormattedPrice(selectedVariant() ? (selectedVariant()?.prices?.price_czk_without_vat || 0) : (product()?.prices?.price_czk_without_vat || 0)) }}
+                Bez DPH: {{ getFormattedPrice(priceWithoutVat()) }}
               </div>
             </div>
+            
             <div class="delivery-status">
               <div class="status-badge" [class.ready]="isAvailable()">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -108,52 +105,35 @@
                 <p class="status-subtext">Expedujeme do 24h z centrálního skladu.</p>
               }
             </div>
+
             @if (isAvailable()) {
               <div class="quantity-selector">
                 <label>Počet kusů:</label>
                 <div class="quantity-controls">
                   <button (click)="decreaseQuantity()" [disabled]="selectedQuantity() <= 1" class="qty-btn">−</button>
                   <input type="number" [value]="selectedQuantity()" readonly class="qty-display">
-                  @if (selectedQuantity() < currentStock()) {
-                    <button (click)="increaseQuantity()" class="qty-btn">+</button>
-                  }
-                  @if (selectedQuantity() >= currentStock()) {
-                    <button disabled class="qty-btn disabled-max">✕</button>
-                  }
+                  <button (click)="increaseQuantity()" [disabled]="selectedQuantity() >= currentStock()" class="qty-btn">+</button>
                 </div>
                 @if (selectedQuantity() >= currentStock()) {
                   <small class="max-stock-info">Max. dostupné množství</small>
                 }
               </div>
             }
+
             <div class="action-buttons">
               <button
                 class="btn-buy"
                 [disabled]="!isAvailable()"
                 (click)="addToCart()"
                 >
-                @if (!isInCart()) {
-                  @if (!addedToCart()) {
-                    <span>🛒 PŘIDAT DO KOŠÍKU</span>
-                  }
-                  @if (addedToCart()) {
-                    <span>✓ Přidáno v košíku!</span>
-                  }
-                }
-                @if (isInCart()) {
-                  @if (!addedToCart()) {
-                    <span>AKTUALIZOVAT MNOŽSTVÍ</span>
-                  }
-                  @if (addedToCart()) {
-                    <span>✓ Množství upraveno!</span>
-                  }
-                }
+                {{ !isInCart() ? (addedToCart() ? '✓ Přidáno v košíku!' : '🛒 PŘIDAT DO KOŠÍKU') : (addedToCart() ? '✓ Množství upraveno!' : 'AKTUALIZOVAT MNOŽSTVÍ') }}
               </button>
             </div>
             <a routerLink="/shop/cart" class="btn-view-cart">
               Jít na košík ({{ cartService.cartCount() }})
             </a>
           </div>
+
           @if (product()?.short_description) {
             <div class="quick-description">
               <h3>Popis</h3>
@@ -163,6 +143,7 @@
         </div>
       </div>
     </div>
+    
     <div class="product-tabs">
       <div class="tab-header">
         <button class="active">Kompletní specifikace</button>
@@ -175,4 +156,3 @@
 } @else {
   <div class="loading-state">Načítám detail produktu...</div>
 }
-

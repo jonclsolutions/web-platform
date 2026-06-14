@@ -35,17 +35,12 @@ class UpdateShopProductRequest extends FormRequest
             'description_en'       => 'nullable|string',
             'short_description_en' => 'nullable|string|max:500',
 
-            // Ceny — CZK
+            // Ceny — EUR
             'prices'                       => 'required|array',
             'prices.vat_rate'              => 'required|numeric|min:0',
-            'prices.price_czk_without_vat' => 'required|numeric|gt:0',
-            'prices.price_czk_with_vat'    => 'required|numeric|gt:0',
-            'prices.cost_price_czk'        => 'nullable|numeric|min:0', // 🌟 PŘIDÁNO
-
-            // Ceny — EUR (volitelné)
-            'prices.price_eur_without_vat' => 'nullable|numeric|gt:0',
-            'prices.price_eur_with_vat'    => 'nullable|numeric|gt:0',
-            'prices.cost_price_eur'        => 'nullable|numeric|min:0', // 🌟 PŘIDÁNO
+            'prices.price_eur_without_vat' => 'required|numeric|gt:0',
+            'prices.price_eur_with_vat'    => 'required|numeric|gt:0',
+            'prices.cost_price_eur'        => 'nullable|numeric|min:0',
 
             'sku'                => 'nullable|string|max:50|unique:shop_products,sku,' . $productId,
             'stock_quantity'     => 'nullable|integer|min:0',
@@ -55,7 +50,6 @@ class UpdateShopProductRequest extends FormRequest
             'is_active' => [
                 'boolean',
                 function ($attribute, $value, $fail) {
-                    // Ověření, zda jsou v požadavku přítomny kategorie
                     $hasCategory = $this->filled('category_id') || ($this->filled('category_ids') && count((array)$this->input('category_ids')) > 0);
                     if ($value && !$hasCategory) {
                         $fail('Produkt nelze nastavit jako aktivní, pokud nemá přiřazenou žádnou kategorii.');
@@ -103,17 +97,12 @@ class UpdateShopProductRequest extends FormRequest
 
             'variants.*.stock_quantity' => 'nullable|integer|min:0',
 
-            // Ceny variant — CZK
+            // Ceny variant — EUR
             'variants.*.prices'                       => 'required_with:variants|array',
             'variants.*.prices.vat_rate'              => 'required_with:variants.*.prices|numeric|min:0',
-            'variants.*.prices.price_czk_without_vat' => 'required_with:variants.*.prices|numeric|min:0',
-            'variants.*.prices.price_czk_with_vat'    => 'required_with:variants.*.prices|numeric|min:0',
-            'variants.*.prices.cost_price_czk'        => 'nullable|numeric|min:0', // 🌟 PŘIDÁNO
-
-            // Ceny variant — EUR
-            'variants.*.prices.price_eur_without_vat' => 'nullable|numeric|min:0',
-            'variants.*.prices.price_eur_with_vat'    => 'nullable|numeric|min:0',
-            'variants.*.prices.cost_price_eur'        => 'nullable|numeric|min:0', // 🌟 PŘIDÁNO
+            'variants.*.prices.price_eur_without_vat' => 'required_with:variants.*.prices|numeric|min:0',
+            'variants.*.prices.price_eur_with_vat'    => 'required_with:variants.*.prices|numeric|min:0',
+            'variants.*.prices.cost_price_eur'        => 'nullable|numeric|min:0',
 
             'delete_variants'   => 'nullable|array',
             'delete_variants.*' => 'integer|exists:shop_product_variants,id',
@@ -145,7 +134,6 @@ class UpdateShopProductRequest extends FormRequest
             'stock_warning_level' => $this->input('stock_warning_level', 10),
         ]);
 
-        // Pokud category_id chybí ale category_ids má položky, vezměme první jako primární
         if (! $this->filled('category_id') && $this->filled('category_ids')) {
             $ids = (array) $this->input('category_ids');
             if (! empty($ids)) {

@@ -91,11 +91,12 @@ export class CartComponent {
     this.router.navigate(['/shop/checkout']);
   }
 
+  // 🛠️ UPRAVENO: Formátování na EUR
   formatPrice(price: number): string {
     return new Intl.NumberFormat('cs-CZ', {
       style: 'currency',
-      currency: 'CZK',
-      minimumFractionDigits: 0
+      currency: 'EUR',
+      minimumFractionDigits: 2
     }).format(price);
   }
 }

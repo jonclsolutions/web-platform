@@ -31,14 +31,15 @@ export class ProductBuilderComponent {
     return 'assets/images/placeholder-product.png';
   }
 
-  // 🛠️ OPRAVENO: Nyní mapuje data správně podle struktury z Laravel Resource
+  // 🛠️ UPRAVENO: Nyní správně pracuje s EUR a řeší TS4111 indexovou notací
   getFormattedPrice(): string {
-    const price = this.product?.prices?.price_czk_with_vat || 0;
+    // Přístup k ceně pomocí závorkové notace kvůli TS4111
+    const price = this.product?.prices?.['price_eur_with_vat'] || 0;
     
     return new Intl.NumberFormat('cs-CZ', { 
       style: 'currency', 
-      currency: 'CZK',
-      minimumFractionDigits: 0 // Pokud chceš koruny bez haléřů (např. 1 290 Kč)
+      currency: 'EUR',
+      minimumFractionDigits: 2 // U EUR je běžné zobrazovat 2 desetinná místa
     }).format(price);
   }
 }

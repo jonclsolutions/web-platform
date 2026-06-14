@@ -52,7 +52,7 @@ class ShopProductVariant extends Model
     }
 
     /**
-     * Ceny specifické pro tuto variantu
+     * Ceny specifické pro tuto variantu (EUR)
      */
     public function prices(): HasOne
     {
@@ -82,6 +82,13 @@ class ShopProductVariant extends Model
         }
     }
 
-    public function product(): BelongsTo { return $this->belongsTo(ShopProduct::class, 'product_id'); }
-    public function images(): HasMany { return $this->hasMany(ShopProductImage::class, 'variant_id'); }
+    public function product(): BelongsTo 
+    { 
+        return $this->belongsTo(ShopProduct::class, 'product_id'); 
+    }
+    
+    public function images(): HasMany 
+    { 
+        return $this->hasMany(ShopProductImage::class, 'variant_id'); 
+    }
 }

@@ -37,17 +37,10 @@ class ShopProductResource extends JsonResource
             'description_en'       => $this->description_en,
             'short_description_en' => $this->short_description_en,
 
-            // Uvnitř metody toArray($request) v ShopProductResource.php:
-
             'prices' => $this->prices ? [
                 'vat_rate'              => $this->prices->vat_rate,
-                'price_czk_with_vat'    => $this->prices->price_czk_with_vat,
-                'price_czk_without_vat' => $this->prices->price_czk_without_vat,
                 'price_eur_with_vat'    => $this->prices->price_eur_with_vat,
                 'price_eur_without_vat' => $this->prices->price_eur_without_vat,
-                
-                // 🌟 PŘIDEJ TYTO DVA ŘÁDKY SEM, ABY JE LARAVEL POSÍLAL DO ANGULARU:
-                'cost_price_czk'        => $this->prices->cost_price_czk,
                 'cost_price_eur'        => $this->prices->cost_price_eur,
             ] : null,
 

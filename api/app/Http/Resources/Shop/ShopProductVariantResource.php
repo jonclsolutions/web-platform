@@ -19,20 +19,19 @@ class ShopProductVariantResource extends JsonResource
             'attribute_2_value' => $this->attribute_2_value,
             'sku_variant' => $this->sku_variant,
             
-            // Nová struktura multoměnových cen pro variantu s bezpečným fallbackem
-            'prices' => $this->relationLoaded('prices') ? [
-                'vat_rate' => $this->prices ? (float)$this->prices->vat_rate : 0.0,
-                'price_czk_without_vat' => $this->prices ? (float)$this->prices->price_czk_without_vat : 0.0,
-                'price_czk_with_vat' => $this->prices ? (float)$this->prices->price_czk_with_vat : 0.0,
-                'price_eur_without_vat' => $this->prices?->price_eur_without_vat ? (float)$this->prices->price_eur_without_vat : null,
-                'price_eur_with_vat' => $this->prices?->price_eur_with_vat ? (float)$this->prices->price_eur_with_vat : null,
+            // Očištěná struktura cen pro variantu
+            'prices' => $this->relationLoaded('prices') && $this->prices ? [
+                'vat_rate'              => (float) $this->prices->vat_rate,
+                'price_eur_without_vat' => (float) $this->prices->price_eur_without_vat,
+                'price_eur_with_vat'    => (float) $this->prices->price_eur_with_vat,
+                'cost_price_eur'        => (float) $this->prices->cost_price_eur,
             ] : null,
 
             'images' => $this->whenLoaded('images', ShopProductImageResource::collection($this->images)),
             'stock_quantity' => $this->stock_quantity,
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
-            'deleted_at' => $this->deleted_at ? $this->deleted_at->toIso8601String() : null,
+            'deleted_at' => $this->deleted_at?->toIso8601String(),
         ];
     }
 }

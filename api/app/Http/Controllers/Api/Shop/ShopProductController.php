@@ -58,10 +58,10 @@ class ShopProductController extends Controller
             $query->lowStock();
         }
         if ($request->filled('price_from')) {
-            $query->whereHas('prices', fn($q) => $q->where('price_czk_with_vat', '>=', $request->input('price_from')));
+            $query->whereHas('prices', fn($q) => $q->where('price_eur_with_vat', '>=', $request->input('price_from')));
         }
         if ($request->filled('price_to')) {
-            $query->whereHas('prices', fn($q) => $q->where('price_czk_with_vat', '<=', $request->input('price_to')));
+            $query->whereHas('prices', fn($q) => $q->where('price_eur_with_vat', '<=', $request->input('price_to')));
         }
 
         $query->orderBy($request->input('sort_by', 'created_at'), $request->input('sort_direction', 'desc'));
@@ -295,10 +295,10 @@ class ShopProductController extends Controller
             $query->inCategory((int) $request->input('category_id'));
         }
         if ($request->filled('price_from')) {
-            $query->whereHas('prices', fn($q) => $q->where('price_czk_with_vat', '>=', $request->input('price_from')));
+            $query->whereHas('prices', fn($q) => $q->where('price_eur_with_vat', '>=', $request->input('price_from')));
         }
         if ($request->filled('price_to')) {
-            $query->whereHas('prices', fn($q) => $q->where('price_czk_with_vat', '<=', $request->input('price_to')));
+            $query->whereHas('prices', fn($q) => $q->where('price_eur_with_vat', '<=', $request->input('price_to')));
         }
 
         $query->orderBy($request->input('sort_by', 'created_at'), $request->input('sort_direction', 'desc'));
@@ -329,10 +329,6 @@ class ShopProductController extends Controller
 
         return response()->json(new ShopProductResource($product));
     }
-
-    // =========================================================
-    // PRIVATE HELPERS
-    // =========================================================
 
     private function defaultRelations(): array
     {
