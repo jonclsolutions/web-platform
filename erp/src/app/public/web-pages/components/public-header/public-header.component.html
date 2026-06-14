@@ -10,7 +10,9 @@
   </nav>
 </header>
 
-<a routerLink="/home" class="logo-wrp"><img [src]="logo" alt=""></a>
+<a routerLink="/home" class="logo-wrp">
+  <img [src]="siteSettings?.logo_path ? '/storage/' + siteSettings.logo_path : logo">
+</a>
 
 <div class="lang-wrp">
     <a routerLink="/references" class="nav-link"> {{ t?.references }} </a>
@@ -39,7 +41,9 @@
 </div>
 
 <div class="mobile-header">
-  <a routerLink="/home" class="m-logo"><img [src]="logo" alt=""></a>
+  <a routerLink="/home" class="m-logo">
+    <img [src]="siteSettings?.logo_path ? '/storage/' + siteSettings.logo_path : logo" alt="Logo">
+  </a>
   <div class="hamburger" (click)="toggleMenu()">
     <div class="hamburger-line" [class.open]="isMenuOpen"></div>
     <div class="hamburger-line" [class.open]="isMenuOpen"></div>

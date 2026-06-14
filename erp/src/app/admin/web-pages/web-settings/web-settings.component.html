@@ -4,16 +4,84 @@
   <div class="ws-header">
     <div>
       <h1 class="ws-title">Nastavení webu</h1>
-      <span class="ws-subtitle">Firemní údaje a sociální sítě</span>
+      <span class="ws-subtitle">Logo, firemní údaje a sociální sítě</span>
     </div>
   </div>
 
-  <!-- ===== CHYBOVÁ HLÁŠKA ===== -->
   @if (errorMessage) {
     <div class="ws-error">⚠️ {{ errorMessage }}</div>
   }
 
-  <!-- ===== SEKCE 1: FIREMNÍ ÚDAJE ===== -->
+  <!-- ===== SEKCE 1: LOGO ===== -->
+  <div class="ws-card">
+    <div class="ws-card-header">
+      <span class="ws-card-icon">🖼️</span>
+      <span class="ws-card-title">Logo webu</span>
+    </div>
+
+    @if (settingsLoading) {
+      <div class="ws-skeleton-body">
+        <div class="ws-skeleton-logo"></div>
+      </div>
+    }
+
+    @if (!settingsLoading) {
+      <div class="ws-card-body">
+        <div class="ws-logo-section">
+
+          <!-- Náhled loga -->
+          <div class="ws-logo-preview-wrap">
+            @if (hasLogo) {
+              <img [src]="logoSrc" class="ws-logo-img" alt="Logo webu">
+            } @else {
+              <div class="ws-logo-placeholder">
+                <span class="ws-logo-placeholder-icon">🏢</span>
+                <span class="ws-logo-placeholder-text">Zatím bez loga</span>
+              </div>
+            }
+          </div>
+
+          <!-- Ovládání loga -->
+          <div class="ws-logo-controls">
+            <div class="ws-logo-info">
+              @if (logoFile) {
+                <span class="ws-logo-filename">📎 {{ logoFile.name }}</span>
+                <span class="ws-logo-filesize">{{ (logoFile.size / 1024).toFixed(0) }} KB</span>
+              } @else if (settings.logo_path) {
+                <span class="ws-logo-stored">✓ Logo nahráno na serveru</span>
+              } @else {
+                <span class="ws-logo-none">Žádné logo — nahrajte soubor JPG, PNG nebo SVG (max 2 MB)</span>
+              }
+            </div>
+
+            <div class="ws-logo-buttons">
+              <!-- Výběr souboru -->
+              <label class="ws-btn ws-btn-secondary ws-btn-file">
+                {{ logoFile ? '🔄 Změnit logo' : '📁 Vybrat logo' }}
+                <input type="file" accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                  class="ws-hidden-input" (change)="onLogoSelected($event)">
+              </label>
+
+              <!-- Zrušit výběr (zobrazí se jen pokud je vybrán nový soubor) -->
+              @if (logoFile) {
+                <button class="ws-btn ws-btn-ghost" (click)="cancelLogoSelection()">
+                  ✕ Zrušit výběr
+                </button>
+              }
+            </div>
+
+            @if (logoFile) {
+              <p class="ws-logo-hint">
+                ℹ️ Logo se uloží po kliknutí na „Uložit firemní údaje" níže.
+              </p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ===== SEKCE 2: FIREMNÍ ÚDAJE ===== -->
   <div class="ws-card">
     <div class="ws-card-header">
       <span class="ws-card-icon">🏢</span>
@@ -77,21 +145,23 @@
 
         </div>
 
-        <!-- Uložit -->
         <div class="ws-form-footer">
           @if (settingsSaved) {
             <span class="ws-saved-badge">✓ Uloženo</span>
           }
+          @if (logoFile) {
+            <span class="ws-logo-pending-badge">🖼️ Nové logo připraveno k uložení</span>
+          }
           <button class="ws-btn ws-btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
             @if (settingsSaving) { <span class="ws-mini-spin">↻</span> }
-            💾 Uložit firemní údaje
+            💾 Uložit firemní údaje{{ logoFile ? ' + logo' : '' }}
           </button>
         </div>
       </div>
     }
   </div>
 
-  <!-- ===== SEKCE 2: SOCIÁLNÍ SÍTĚ ===== -->
+  <!-- ===== SEKCE 3: SOCIÁLNÍ SÍTĚ ===== -->
   <div class="ws-card">
     <div class="ws-card-header">
       <span class="ws-card-icon">🌐</span>
@@ -118,11 +188,13 @@
         }
 
         @for (link of socialLinks; track trackByIndex($index); let i = $index) {
-          <div class="ws-social-row" [class.ws-social-new]="link._isNew" [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
+          <div class="ws-social-row"
+            [class.ws-social-new]="link._isNew"
+            [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
 
-            <!-- Ikonka / upload -->
+            <!-- Ikonka -->
             <div class="ws-social-icon-col">
-              <label class="ws-icon-upload" [title]="'Nahrát ikonku'">
+              <label class="ws-icon-upload" title="Nahrát ikonku">
                 @if (iconSrc(link)) {
                   <img [src]="iconSrc(link)" class="ws-icon-preview" [alt]="link.name">
                 } @else {
@@ -141,7 +213,6 @@
                 [(ngModel)]="socialLinks[i].name"
                 [name]="'soc_name_' + i"
                 placeholder="Název (Facebook, Instagram…)">
-
               <input class="ws-input ws-social-input ws-input-url"
                 type="url"
                 [(ngModel)]="socialLinks[i].url"
@@ -155,11 +226,7 @@
                 (click)="saveSocialLink(i)"
                 [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
                 title="Uložit">
-                @if (link._saving) {
-                  <span class="ws-mini-spin">↻</span>
-                } @else {
-                  💾
-                }
+                @if (link._saving) { <span class="ws-mini-spin">↻</span> } @else { 💾 }
               </button>
               <button class="ws-action-btn ws-btn-delete"
                 (click)="deleteSocialLink(i)"
@@ -172,7 +239,6 @@
           </div>
         }
 
-        <!-- Tlačítko přidat -->
         <div class="ws-social-add-row">
           <button class="ws-add-btn" (click)="addSocialLink()">
             <span class="ws-add-plus">+</span>

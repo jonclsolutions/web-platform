@@ -2,10 +2,12 @@ import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/cor
 import { RouterModule, Router } from '@angular/router';
 import { CartService } from '../services/cart.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
+import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-shop-header',
   standalone: true,
-  imports: [RouterModule],
+  imports: [RouterModule, CommonModule],
   templateUrl: './shop-header.component.html',
   styleUrls: ['./shop-header.component.css']
 })
@@ -13,10 +15,10 @@ export class ShopHeaderComponent implements OnInit {
   isScrolled = false;
   showLang = false;
   showCurrency = false;
-  selectedLang = 'CZ';
-  selectedCurrency = 'CZK';
   
-  // Dynamická data
+  selectedLang = 'CZ';
+  selectedCurrency = 'EUR'; // Nastaveno na výchozí EUR
+  
   siteSettings: any = null;
 
   constructor(
@@ -53,6 +55,10 @@ export class ShopHeaderComponent implements OnInit {
   toggleCurrency() { this.showCurrency = !this.showCurrency; this.showLang = false; }
 
   selectLang(val: string) { this.selectedLang = val; }
-  selectCurrency(val: string) { this.selectedCurrency = val; }
+  selectCurrency(val: string) { 
+    this.selectedCurrency = val; 
+    // Zde bude logika pro přepnutí měny v aplikaci
+  }
+  
   openCart() { this.router.navigate(['/shop/cart']); }
 }

@@ -128,7 +128,7 @@ class ShopPublicController extends Controller
 
         if ($coupon->min_order_amount > 0 && $validated['order_amount'] < (float)$coupon->min_order_amount) {
             return response()->json([
-                'message' => "Minimální objednávka je " . number_format($coupon->min_order_amount, 2) . " Kč."
+                'message' => "Minimální objednávka je " . number_format($coupon->min_order_amount, 2) . "EUR."
             ], 422);
         }
 

@@ -29,7 +29,7 @@ class SiteConfigurationController extends Controller
      * PUT /api/legal/config/settings
      * Aktualizace firemních údajů (čistý JSON, bez souboru).
      */
-    public function updateSettings(Request $request): JsonResponse
+public function updateSettings(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'company_name'  => 'required|string|max:255',
@@ -39,12 +39,26 @@ class SiteConfigurationController extends Controller
             'contact_phone' => 'nullable|string|max:30',
             'address'       => 'required|string|max:500',
             'footer_text'   => 'nullable|string|max:1000',
+            'logo_file'     => 'nullable|file|image|max:2048', // Validace loga
         ]);
 
         $settings = SiteSetting::firstOrCreate([]);
-        $settings->update($validated);
+        
+        // Zpracování loga
+        $data = $request->except(['logo_file']);
+        
+        if ($request->hasFile('logo_file')) {
+            // Smazat staré logo, pokud existuje
+            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
+                Storage::disk('public')->delete($settings->logo_path);
+            }
+            // Uložit nové logo
+            $data['logo_path'] = $request->file('logo_file')->store('site-logos', 'public');
+        }
 
-        $this->logAction($request, 'update', 'Legal', 'Aktualizace firemních údajů');
+        $settings->update($data);
+
+        $this->logAction($request, 'update', 'Legal', 'Aktualizace firemních údajů a loga');
 
         return response()->json($settings);
     }
@@ -167,25 +181,18 @@ class SiteConfigurationController extends Controller
     {
         try {
             $user = $request->user() ?? auth('sanctum')->user();
-
             ShopLog::create([
-                'origin'               => $request->ip(),
-                'event_type'           => $eventType,
-                'module'               => $module,
-                'description'          => $description,
+                'origin' => $request->ip(),
+                'event_type' => $eventType,
+                'module' => $module,
+                'description' => $description,
                 'affected_entity_type' => 'SiteConfiguration',
-                'affected_entity_id'   => $affectedId,
-                'user_id'              => $user?->id,
-                // Vyloučíme binární data souboru z logu
-                'context_data'         => json_encode(
-                    $request->except(['icon_file']),
-                    JSON_UNESCAPED_UNICODE
-                ),
-                'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'           => $user ? ($user->full_name ?? $user->user_email) : 'Systém',
+                'affected_entity_id' => $affectedId,
+                'user_id' => $user?->id,
+                'context_data' => json_encode($request->except(['logo_file', 'icon_file']), JSON_UNESCAPED_UNICODE),
+                'user_id_plain' => (string)($user?->id ?? '0'),
+                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'Systém',
             ]);
-        } catch (\Exception $e) {
-            Log::error("Log error (SiteConfiguration): " . $e->getMessage());
-        }
+        } catch (\Exception $e) { Log::error("Log error: " . $e->getMessage()); }
     }
 }

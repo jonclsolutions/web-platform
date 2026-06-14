@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jun 14, 2026 at 01:14 PM
+-- Generation Time: Jun 14, 2026 at 11:06 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -40,9 +40,9 @@ CREATE TABLE `cache` (
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
 ('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1781431782),
 ('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1781431782;', 1781431782),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:7;', 1781435705),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1781435705;', 1781435705),
-('laravel-cache-site_setting_active', 'O:31:\"App\\Models\\Core\\CoreSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:18:\"core_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:5:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:10:\"updated_at\";s:19:\"2026-06-12 17:15:43\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:11:\"\0*\0original\";a:5:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:10:\"updated_at\";s:19:\"2026-06-12 17:15:43\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:14:\"is_shop_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1781432017);
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:38;', 1781471212),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1781471212;', 1781471212),
+('laravel-cache-site_setting_active', 'O:31:\"App\\Models\\Core\\CoreSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:18:\"core_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:5:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:10:\"updated_at\";s:19:\"2026-06-12 17:15:43\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:11:\"\0*\0original\";a:5:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:10:\"updated_at\";s:19:\"2026-06-12 17:15:43\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:14:\"is_shop_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1781471301);
 
 -- --------------------------------------------------------
 
@@ -300,6 +300,7 @@ CREATE TABLE `legal_site_settings` (
   `contact_phone` varchar(20) DEFAULT NULL,
   `address` text NOT NULL,
   `footer_text` varchar(255) DEFAULT '©2025 RegioPartner, s.r.o., Všechna práva vyhrazena.',
+  `logo_path` varchar(255) DEFAULT NULL,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -307,8 +308,8 @@ CREATE TABLE `legal_site_settings` (
 -- Dumping data for table `legal_site_settings`
 --
 
-INSERT INTO `legal_site_settings` (`id`, `company_name`, `ico`, `dic`, `contact_email`, `contact_phone`, `address`, `footer_text`, `updated_at`) VALUES
-(1, 'Joncletika, s.r.o.', '25133161', 'CZ25133161', 'gamber@rpsw.cz', '733 188 328', 'Kytlická 862/6, 190 00 Praha', '©2025 RegioPartner, s.r.o., Všechna práva vyhrazena.', '2026-06-13 11:53:40');
+INSERT INTO `legal_site_settings` (`id`, `company_name`, `ico`, `dic`, `contact_email`, `contact_phone`, `address`, `footer_text`, `logo_path`, `updated_at`) VALUES
+(1, 'Joncletika, s.r.o.', '25133161', 'CZ25133161', 'gamber@rpsw.cz', '733 188 328', 'Kytlická 862/6, 190 00 Praha', '©2026 RegioPartner, s.r.o., Všechna práva vyhrazena.', 'site-logos/dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png', '2026-06-14 20:59:36');
 
 -- --------------------------------------------------------
 
@@ -398,7 +399,7 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (87, 'App\\Models\\User', 59, 'access-token', 'c58f7b40a4862562dc033216ec4ba476336d5cc77af42b57e8a6721e0c735545', '[\"*\"]', '2026-02-15 22:41:38', '2026-02-15 23:11:38', '2026-02-15 22:41:38', '2026-02-15 22:41:38'),
 (134, 'App\\Models\\User', 62, 'access-token', '696da6ddfce759f43fcd6c430016ffff654238b4bd746c50642599a4b68a1cd7', '[\"*\"]', '2026-02-18 02:12:13', '2026-02-18 03:12:09', '2026-02-18 02:12:09', '2026-02-18 02:12:13'),
 (172, 'App\\Models\\User', 77, 'access-token', 'f783051fdb88711a863e9ccd4e5176a5a3f2a3606204c816754c3227d07698f8', '[\"*\"]', '2026-02-25 00:08:53', '2026-02-25 00:42:29', '2026-02-24 23:42:29', '2026-02-25 00:08:53'),
-(432, 'App\\Models\\User', 25, 'access-token', '802ea27ec57482734f6020f7c4e13fe75ded804082090d048bd888b93d979a07', '[\"*\"]', '2026-06-14 11:14:11', '2026-06-14 12:08:44', '2026-06-14 11:08:44', '2026-06-14 11:14:11');
+(437, 'App\\Models\\User', 25, 'access-token', '9919045de5fb57a1dd65bcd934c97153d4b5d5deafd29e8e2cb41a280514d68b', '[\"*\"]', '2026-06-14 21:06:06', '2026-06-14 21:29:53', '2026-06-14 20:29:53', '2026-06-14 21:06:06');
 
 -- --------------------------------------------------------
 
@@ -420,7 +421,7 @@ CREATE TABLE `refresh_tokens` (
 --
 
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`, `updated_at`) VALUES
-(431, 25, '438a4fb9198cecf8eec1772e72596c2396b0a15797b5cb743c08620cb8e4c75e', '2026-06-21 11:08:44', '2026-06-14 11:08:44', '2026-06-14 11:08:44');
+(436, 25, 'e768c01a729b4f152cd3a8648288e830267eb2a8db647af16494b979f10c263e', '2026-06-21 20:29:53', '2026-06-14 20:29:53', '2026-06-14 20:29:53');
 
 -- --------------------------------------------------------
 
@@ -519,7 +520,8 @@ CREATE TABLE `shop_customers` (
 
 INSERT INTO `shop_customers` (`id`, `user_id`, `email`, `first_name`, `last_name`, `phone`, `company`, `address`, `city`, `postal_code`, `country`, `is_active`, `total_spent`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (7, NULL, 'jonas.bucina@seznam.cz', 'Jonas', 'Fonas', '676767676', NULL, 'aksjdlaskd 7677', 'Praha', '19000', 'Česká republika', 1, 0.00, NULL, '2026-06-12 16:54:34', '2026-06-12 16:54:34', NULL),
-(8, NULL, 'joner.foner@gamba.czs', 'Lindicka', 'Trybickoa', '123456789', NULL, 'Kittiovksa 777', 'Mazlickov', '777777', 'Česká republika', 1, 0.00, NULL, '2026-06-12 16:55:29', '2026-06-14 11:13:33', NULL);
+(8, NULL, 'joner.foner@gamba.czs', 'Lindicka', 'Trybickoa', '123456789', NULL, 'Kittiovksa 777', 'Mazlickov', '777777', 'Česká republika', 1, 0.00, NULL, '2026-06-12 16:55:29', '2026-06-14 11:13:33', NULL),
+(9, NULL, 'asda@sd.cz', 'JONERFONRE', 'sdfds', '878787878', NULL, 'sdf', 'dfgfdg', '19099', 'Czechia', 1, 109.00, NULL, '2026-06-14 12:37:23', '2026-06-14 12:37:53', NULL);
 
 -- --------------------------------------------------------
 
@@ -541,73 +543,6 @@ CREATE TABLE `shop_logs` (
   `user_id_plain` varchar(255) DEFAULT NULL,
   `user_plain` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `shop_logs`
---
-
-INSERT INTO `shop_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
-(1, '2026-06-12 15:28:41', '127.0.0.1', 'create', 'ShopProduct', 'Vytvořen produkt: asdasd', 'ShopProduct', 25, 25, '\"{\\\"name\\\":\\\"asdasd\\\",\\\"slug\\\":\\\"asdasd\\\",\\\"sku\\\":\\\"sadsad\\\",\\\"short_description\\\":\\\"sds\\\",\\\"description\\\":\\\"sdfsd\\\",\\\"stock_warning_level\\\":\\\"10\\\",\\\"is_active\\\":true,\\\"is_featured\\\":false,\\\"category_id\\\":\\\"53\\\",\\\"category_ids\\\":[\\\"53\\\"],\\\"prices\\\":{\\\"vat_rate\\\":\\\"21\\\",\\\"price_czk_with_vat\\\":\\\"1099\\\",\\\"price_czk_without_vat\\\":\\\"908.26\\\",\\\"cost_price_czk\\\":\\\"1\\\",\\\"price_eur_with_vat\\\":\\\"109\\\",\\\"price_eur_without_vat\\\":\\\"90.08\\\",\\\"cost_price_eur\\\":\\\"1\\\"},\\\"stock_quantity\\\":0}\"', '25', 'Jonáš Bučina'),
-(2, '2026-06-12 18:53:48', '127.0.0.1', 'update', 'ShopProduct', 'Aktualizace produktu: asdasd', 'ShopProduct', 25, 25, '\"{\\\"name\\\":\\\"asdasd\\\",\\\"slug\\\":\\\"asdasd\\\",\\\"sku\\\":\\\"sadsad\\\",\\\"short_description\\\":\\\"sds\\\",\\\"description\\\":\\\"sdfsd\\\",\\\"stock_warning_level\\\":\\\"10\\\",\\\"is_active\\\":true,\\\"is_featured\\\":false,\\\"category_id\\\":\\\"53\\\",\\\"category_ids\\\":null,\\\"prices\\\":{\\\"vat_rate\\\":\\\"21\\\",\\\"price_czk_with_vat\\\":\\\"1099\\\",\\\"price_czk_without_vat\\\":\\\"908.26\\\",\\\"cost_price_czk\\\":\\\"1\\\",\\\"price_eur_with_vat\\\":\\\"109\\\",\\\"price_eur_without_vat\\\":\\\"90.08\\\",\\\"cost_price_eur\\\":\\\"1\\\"},\\\"variants\\\":[{\\\"variant_name\\\":\\\"Produktivek\\\",\\\"attribute_1_name\\\":\\\"asd\\\",\\\"attribute_1_value\\\":\\\"asd\\\",\\\"attribute_2_name\\\":\\\"asd\\\",\\\"attribute_2_value\\\":\\\"asd\\\",\\\"sku_variant\\\":\\\"asdasd\\\",\\\"stock_quantity\\\":\\\"12\\\",\\\"prices\\\":{\\\"vat_rate\\\":\\\"21\\\",\\\"price_czk_with_vat\\\":\\\"1099\\\",\\\"price_czk_without_vat\\\":\\\"908.26\\\",\\\"price_eur_with_vat\\\":\\\"200\\\",\\\"price_eur_without_vat\\\":\\\"165.29\\\"}}],\\\"_method\\\":\\\"PUT\\\"}\"', '25', 'Jonáš Bučina'),
-(3, '2026-06-12 18:54:34', '127.0.0.1', 'create', 'ShopOrder', 'Vytvořena objednávka: 2026060001.', 'ShopOrder', 37, 25, '\"{\\\"email\\\":\\\"jonas.bucina@seznam.cz\\\",\\\"first_name\\\":\\\"Jonas\\\",\\\"last_name\\\":\\\"Fonas\\\",\\\"phone\\\":\\\"676767676\\\",\\\"company\\\":null,\\\"payment_method_id\\\":2,\\\"shipping_method_id\\\":1,\\\"coupon_id\\\":null,\\\"status\\\":\\\"pending\\\",\\\"payment_status\\\":\\\"pending\\\",\\\"shipping_address\\\":\\\"aksjdlaskd 7677\\\",\\\"shipping_city\\\":\\\"Praha\\\",\\\"shipping_postal_code\\\":\\\"19000\\\",\\\"shipping_country\\\":\\\"\\u010cesk\\u00e1 republika\\\",\\\"notes\\\":null,\\\"items\\\":[{\\\"id\\\":null,\\\"product_id\\\":25,\\\"product_variant_id\\\":37,\\\"quantity\\\":1,\\\"unit_price\\\":1099,\\\"vat_rate\\\":21}]}\"', '25', 'Jonáš Bučina'),
-(4, '2026-06-12 18:55:29', '127.0.0.1', 'create', 'ShopOrder', 'Vytvořena objednávka: 2026060002.', 'ShopOrder', 38, 25, '\"{\\\"email\\\":\\\"joner.foner@gamba.czs\\\",\\\"first_name\\\":\\\"Lindicka\\\",\\\"last_name\\\":\\\"Trybickoa\\\",\\\"phone\\\":\\\"123456789\\\",\\\"company\\\":null,\\\"payment_method_id\\\":8,\\\"shipping_method_id\\\":2,\\\"coupon_id\\\":null,\\\"status\\\":\\\"delivered\\\",\\\"payment_status\\\":\\\"paid\\\",\\\"shipping_address\\\":\\\"Kittiovksa 777\\\",\\\"shipping_city\\\":\\\"Mazlickov\\\",\\\"shipping_postal_code\\\":\\\"777777\\\",\\\"shipping_country\\\":\\\"\\u010cesk\\u00e1 republika\\\",\\\"notes\\\":null,\\\"items\\\":[{\\\"id\\\":null,\\\"product_id\\\":25,\\\"product_variant_id\\\":37,\\\"quantity\\\":2,\\\"unit_price\\\":1099,\\\"vat_rate\\\":21}]}\"', '25', 'Jonáš Bučina'),
-(5, '2026-06-12 21:36:08', '127.0.0.1', 'update', 'Legal', 'Aktualizace sekce ID: 1', 'DocumentSection', 1, 25, '\"{\\\"heading\\\":\\\"Spr\\u00e1vce \\u00fadaj\\u016f\\\",\\\"content\\\":\\\"Spr\\u00e1vcem je na\\u0161e spole\\u010dnost, kter\\u00e1 zpracov\\u00e1v\\u00e1 \\u00fadaje za \\u00fa\\u010delem pln\\u011bn\\u00ed smlouvy.\\\",\\\"document_type_id\\\":1,\\\"position\\\":3}\"', NULL, 'Jonáš Bučina'),
-(6, '2026-06-12 21:36:14', '127.0.0.1', 'update', 'Legal', 'Aktualizace sekce ID: 2', 'DocumentSection', 2, 25, '\"{\\\"heading\\\":\\\"Va\\u0161e pr\\u00e1va!!!!!\\\",\\\"content\\\":\\\"M\\u00e1te pr\\u00e1vo na p\\u0159\\u00edstup, opravu \\u010di v\\u00fdmaz sv\\u00fdch osobn\\u00edch \\u00fadaj\\u016f.\\\",\\\"document_type_id\\\":1,\\\"position\\\":3}\"', NULL, 'Jonáš Bučina'),
-(7, '2026-06-12 21:36:23', '127.0.0.1', 'update', 'Legal', 'Aktualizace sekce ID: 1', 'DocumentSection', 1, 25, '\"{\\\"heading\\\":\\\"Spr\\u00e1vce \\u00fadaj\\u016f!!!!\\\",\\\"content\\\":\\\"Spr\\u00e1vcem je na\\u0161e spole\\u010dnost, kter\\u00e1 zpracov\\u00e1v\\u00e1 \\u00fadaje za \\u00fa\\u010delem pln\\u011bn\\u00ed smlouvy.\\\",\\\"document_type_id\\\":1,\\\"position\\\":3}\"', NULL, 'Jonáš Bučina'),
-(8, '2026-06-12 21:43:41', '127.0.0.1', 'update', 'Legal', 'Aktualizace sekce ID: 1', 'DocumentSection', 1, 25, '\"{\\\"heading\\\":\\\"Spr\\u00e1vce \\u00fadaj\\u016f\\\",\\\"content\\\":\\\"Spr\\u00e1vcem je na\\u0161e spole\\u010dnost, kter\\u00e1 zpracov\\u00e1v\\u00e1 \\u00fadaje za \\u00fa\\u010delem pln\\u011bn\\u00ed smlouvy.\\\",\\\"document_type_id\\\":1,\\\"position\\\":3}\"', NULL, 'Jonáš Bučina'),
-(9, '2026-06-12 21:43:55', '127.0.0.1', 'create', 'Legal', 'Vytvořena sekce: Foner', 'DocumentSection', 6, 25, '\"{\\\"document_type_id\\\":1,\\\"heading\\\":\\\"Foner\\\",\\\"content\\\":\\\"Jonas je buh\\\",\\\"position\\\":3}\"', NULL, 'Jonáš Bučina'),
-(10, '2026-06-12 21:44:00', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: Foner', 'DocumentSection', 6, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(11, '2026-06-12 21:55:23', '127.0.0.1', 'create', 'Legal', 'Vytvořena sekce: Velka Ochrana', 'DocumentSection', 7, 25, '\"{\\\"document_type_id\\\":1,\\\"heading\\\":\\\"Velka Ochrana\\\",\\\"content\\\":\\\"Vsechyn data ochranime !!!\\\",\\\"position\\\":3}\"', NULL, 'Jonáš Bučina'),
-(12, '2026-06-12 21:55:26', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: Velka Ochrana', 'DocumentSection', 7, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(13, '2026-06-13 07:49:38', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: Platební podmínky', 'DocumentSection', 5, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(14, '2026-06-13 07:49:41', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: Objednávka', 'DocumentSection', 4, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(15, '2026-06-13 07:49:44', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: Úvodní ustanovení', 'DocumentSection', 3, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(16, '2026-06-13 07:49:49', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: Správce údajů', 'DocumentSection', 1, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(17, '2026-06-13 07:49:51', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: Vaše práva!!!!!', 'DocumentSection', 2, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(18, '2026-06-13 07:53:02', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 1. Úvodní ustanovení', 'DocumentSection', 8, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(19, '2026-06-13 07:53:05', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 2. Správce osobních údajů', 'DocumentSection', 9, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(20, '2026-06-13 07:53:08', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 3. Jaké osobní údaje shromažďujeme a proč', 'DocumentSection', 10, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(21, '2026-06-13 07:53:11', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 4. Jak dlouho osobní údaje uchováváme', 'DocumentSection', 11, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(22, '2026-06-13 07:53:13', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 5. Komu osobní údaje předáváme (Příjemci)', 'DocumentSection', 12, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(23, '2026-06-13 07:53:15', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 6. Vaše práva v souvislosti se zpracováním osobních údajů', 'DocumentSection', 13, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(24, '2026-06-13 07:53:17', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 7. Bezpečnost osobních údajů', 'DocumentSection', 14, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(25, '2026-06-13 07:53:20', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 8. Změny těchto Zásad', 'DocumentSection', 15, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(26, '2026-06-13 07:55:01', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 1. Úvodní ustanovení', 'DocumentSection', 16, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(27, '2026-06-13 07:55:03', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 2. Správce osobních údajů', 'DocumentSection', 17, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(28, '2026-06-13 07:55:06', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 3. Jaké osobní údaje shromažďujeme a proč', 'DocumentSection', 18, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(29, '2026-06-13 07:55:07', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 4. Jak dlouho osobní údaje uchováváme', 'DocumentSection', 19, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(30, '2026-06-13 07:55:10', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 5. Komu osobní údaje předáváme (Příjemci)', 'DocumentSection', 20, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(31, '2026-06-13 07:55:12', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 6. Vaše práva v souvislosti se zpracováním osobních údajů', 'DocumentSection', 21, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(32, '2026-06-13 07:55:14', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 7. Bezpečnost osobních údajů', 'DocumentSection', 22, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(33, '2026-06-13 07:55:17', '127.0.0.1', 'delete', 'Legal', 'Smazána sekce: 8. Změny těchto Zásad', 'DocumentSection', 23, 25, '\"[]\"', NULL, 'Jonáš Bučina'),
-(34, '2026-06-13 07:56:51', '127.0.0.1', 'update', 'Legal', 'Aktualizace sekce ID: 26', 'DocumentSection', 26, 25, '\"{\\\"heading\\\":\\\"3. Jak\\u00e9 osobn\\u00ed \\u00fadaje shroma\\u017e\\u010fujeme a pro\\u010d\\\",\\\"content\\\":\\\"Shroma\\u017e\\u010fujeme a zpracov\\u00e1v\\u00e1me osobn\\u00ed \\u00fadaje pouze pro definovan\\u00e9, legitimn\\u00ed \\u00fa\\u010dely a v rozsahu nezbytn\\u00e9m pro napln\\u011bn\\u00ed t\\u011bchto \\u00fa\\u010del\\u016f. 3.1. \\u00dadaje poskytnut\\u00e9 v\\u00e1mi: M\\u016f\\u017eeme shroma\\u017e\\u010fovat osobn\\u00ed \\u00fadaje, kter\\u00e9 n\\u00e1m dobrovoln\\u011b poskytnete, nap\\u0159\\u00edklad p\\u0159i: Vytvo\\u0159en\\u00ed objedn\\u00e1vky slu\\u017eeb: Jm\\u00e9no, p\\u0159\\u00edjmen\\u00ed, e-mail, telefon. \\u00da\\u010del: Vy\\u0159\\u00edzen\\u00ed objedn\\u00e1vky a poskytnut\\u00ed sjednan\\u00e9 slu\\u017eby. Pr\\u00e1vn\\u00ed z\\u00e1klad: Pln\\u011bn\\u00ed smlouvy (\\u010dl. 6 odst. 1 p\\u00edsm. b) GDPR). Kontaktu prost\\u0159ednictv\\u00edm formul\\u00e1\\u0159e: Jm\\u00e9no, e-mail, telefon, obsah zpr\\u00e1vy. \\u00da\\u010del: Zodpov\\u011bzen\\u00ed dotazu, \\u0159e\\u0161en\\u00ed po\\u017eadavku, poskytnut\\u00ed cenov\\u00e9 nab\\u00eddky. Pr\\u00e1vn\\u00ed z\\u00e1klad: Opr\\u00e1vn\\u011bn\\u00fd z\\u00e1jem (\\u010dl. 6 odst. 1 p\\u00edsm. f) GDPR) na efektivn\\u00ed komunikaci se z\\u00e1kazn\\u00edky\\\\\\/u\\u017eivateli a p\\u0159edsmluvn\\u00ed jedn\\u00e1n\\u00ed. P\\u0159ihl\\u00e1\\u0161en\\u00ed k odb\\u011bru newsletteru: E-mail. \\u00da\\u010del: Zas\\u00edl\\u00e1n\\u00ed obchodn\\u00edch sd\\u011blen\\u00ed a informac\\u00ed o novink\\u00e1ch. Pr\\u00e1vn\\u00ed z\\u00e1klad: Souhlas (\\u010dl. 6 odst. 1 p\\u00edsm. a) GDPR). 3.2. \\u00dadaje shroma\\u017e\\u010fovan\\u00e9 automaticky: P\\u0159i pou\\u017e\\u00edv\\u00e1n\\u00ed na\\u0161ich webov\\u00fdch str\\u00e1nek m\\u016f\\u017eeme automaticky shroma\\u017e\\u010fovat n\\u011bkter\\u00e9 informace, jako jsou: IP adresa: \\u00da\\u010del: Zabezpe\\u010den\\u00ed webu, diagnostika probl\\u00e9m\\u016f, statistiky n\\u00e1v\\u0161t\\u011bvnosti. Pr\\u00e1vn\\u00ed z\\u00e1klad: Opr\\u00e1vn\\u011bn\\u00fd z\\u00e1jem (\\u010dl. 6 odst. 1 p\\u00edsm. f) GDPR). \\u00dadaje o prohl\\u00ed\\u017ee\\u010di a za\\u0159\\u00edzen\\u00ed: Typ prohl\\u00ed\\u017ee\\u010de, opera\\u010dn\\u00ed syst\\u00e9m, jazyk. \\u00da\\u010del: Zaji\\u0161t\\u011bn\\u00ed spr\\u00e1vn\\u00e9 funk\\u010dnosti webu, optimalizace zobrazen\\u00ed. Pr\\u00e1vn\\u00ed z\\u00e1klad: Opr\\u00e1vn\\u011bn\\u00fd z\\u00e1jem (\\u010dl. 6 odst. 1 p\\u00edsm. f) GDPR). \\u00dadaje o n\\u00e1v\\u0161t\\u011bvnosti webu (cookies a podobn\\u00e9 technologie): Zobrazovan\\u00e9 str\\u00e1nky, doba str\\u00e1ven\\u00e1 na str\\u00e1nce, reference na jin\\u00e9 weby. \\u00da\\u010del: Zlep\\u0161ov\\u00e1n\\u00ed funk\\u010dnosti webu, anal\\u00fdza chov\\u00e1n\\u00ed u\\u017eivatel\\u016f. Pr\\u00e1vn\\u00ed z\\u00e1klad: Souhlas (pro marketingov\\u00e9 a analytick\\u00e9 cookies, \\u010dl. 6 odst. 1 p\\u00edsm. a) GDPR), opr\\u00e1vn\\u011bn\\u00fd z\\u00e1jem (pro nezbytn\\u00e9 cookies, \\u010dl. 6 odst. 1 p\\u00edsm. f) GDPR).\\\",\\\"document_type_id\\\":1,\\\"position\\\":3}\"', NULL, 'Jonáš Bučina'),
-(35, '2026-06-13 08:25:49', '127.0.0.1', 'create', 'Legal', 'Vytvořena sekce: 10. Závěrečná ustanovení', 'DocumentSection', 41, 25, '\"{\\\"document_type_id\\\":2,\\\"heading\\\":\\\"10. Z\\u00e1v\\u011bre\\u010dn\\u00e1 ustanoven\\u00ed\\\",\\\"content\\\":\\\"Je-li n\\u011bkter\\u00e9 ustanoven\\u00ed OP neplatn\\u00e9 nebo ne\\u00fa\\u010dinn\\u00e9, nebo se takov\\u00fdm stane, nam\\u00edsto neplatn\\u00fdch ustanoven\\u00ed nastoup\\u00ed ustanoven\\u00ed, jeho\\u017e smysl se neplatn\\u00e9mu ustanoven\\u00ed co nejv\\u00edce p\\u0159ibli\\u017euje. Tyto obchodn\\u00ed podm\\u00ednky se \\u0159\\u00edd\\u00ed pr\\u00e1vn\\u00edm \\u0159\\u00e1dem \\u010cesk\\u00e9 republiky. Ve\\u0161ker\\u00e9 spory vznikaj\\u00edc\\u00ed z t\\u011bchto OP nebo v souvislosti s nimi budou \\u0159e\\u0161eny p\\u0159\\u00edslu\\u0161n\\u00fdmi soudy \\u010cesk\\u00e9 republiky. V p\\u0159\\u00edpad\\u011b, \\u017ee dojde mezi Prod\\u00e1vaj\\u00edc\\u00edm a spot\\u0159ebitelem ke vzniku spot\\u0159ebitelsk\\u00e9ho sporu z kupn\\u00ed smlouvy, kter\\u00fd se nepoda\\u0159\\u00ed vy\\u0159e\\u0161it vz\\u00e1jemnou dohodou, m\\u016f\\u017ee spot\\u0159ebitel podat n\\u00e1vrh na mimosoudn\\u00ed \\u0159e\\u0161en\\u00ed takov\\u00e9ho sporu ur\\u010den\\u00e9mu subjektu mimosoudn\\u00edho \\u0159e\\u0161en\\u00ed spot\\u0159ebitelsk\\u00fdch spor\\u016f, kter\\u00fdm je: \\u010cesk\\u00e1 obchodn\\u00ed inspekce, \\u00dast\\u0159edn\\u00ed inspektor\\u00e1t \\u2013 odd\\u011blen\\u00ed ADR, \\u0160t\\u011bp\\u00e1nsk\\u00e1 44, 110 00 Praha 1, Web: www.coi.cz. Tyto obchodn\\u00ed podm\\u00ednky nab\\u00fdvaj\\u00ed \\u00fa\\u010dinnosti dnem 22. srpna 2025.\\\",\\\"position\\\":10}\"', NULL, 'Jonáš Bučina'),
-(36, '2026-06-13 08:26:22', '127.0.0.1', 'update', 'Legal', 'Aktualizace sekce ID: 40', 'DocumentSection', 40, 25, '\"{\\\"heading\\\":\\\"9. Pr\\u00e1va z vadn\\u00e9ho pln\\u011bn\\u00ed a reklama\\u010dn\\u00ed \\u0159\\u00e1d\\\",\\\"content\\\":\\\"Kupuj\\u00edc\\u00ed je povinen p\\u0159i p\\u0159evzet\\u00ed digit\\u00e1ln\\u00edho produktu \\u010di zah\\u00e1jen\\u00ed \\u010derp\\u00e1n\\u00ed slu\\u017eby bez zbyte\\u010dn\\u00e9ho odkladu ov\\u011b\\u0159it jejich funk\\u010dnost a soulad s objedn\\u00e1vkou. Pokud digit\\u00e1ln\\u00ed produkt nebo slu\\u017eba vykazuje vady, jako je nap\\u0159\\u00edklad nefunk\\u010dn\\u00ed odkaz ke sta\\u017een\\u00ed, nesoulad se specifikac\\u00ed v objedn\\u00e1vce \\u010di nedostupnost p\\u0159\\u00edstupu k \\u010dlensk\\u00e9 sekci, m\\u00e1 Kupuj\\u00edc\\u00ed pr\\u00e1vo na reklamaci. Reklamaci je Kupuj\\u00edc\\u00ed povinen uplatnit bez zbyte\\u010dn\\u00e9ho odkladu pot\\u00e9, co vadu zjist\\u00ed, a to elektronickou po\\u0161tou na e-mailovou adresu info@rpsw.cz. Ozn\\u00e1men\\u00ed o reklamaci mus\\u00ed obsahovat identifikaci Kupuj\\u00edc\\u00edho, tedy jm\\u00e9no a e-mail pou\\u017eit\\u00fd p\\u0159i objedn\\u00e1vce, \\u010d\\u00edslo objedn\\u00e1vky, detailn\\u00ed popis vady, p\\u0159\\u00edpadn\\u011b vizu\\u00e1ln\\u00ed dokumentaci vady, a po\\u017eadovan\\u00fd zp\\u016fsob vy\\u0159\\u00edzen\\u00ed reklamace. Prod\\u00e1vaj\\u00edc\\u00ed o reklamaci rozhodne ihned, ve slo\\u017eit\\u00fdch p\\u0159\\u00edpadech do t\\u0159\\u00ed pracovn\\u00edch dn\\u016f, p\\u0159i\\u010dem\\u017e do t\\u00e9to lh\\u016fty se nezapo\\u010d\\u00edt\\u00e1v\\u00e1 doba p\\u0159im\\u011b\\u0159en\\u00e1 podle druhu digit\\u00e1ln\\u00edho obsahu \\u010di slu\\u017eby pot\\u0159ebn\\u00e1 k odborn\\u00e9mu posouzen\\u00ed vady. Reklamace v\\u010detn\\u011b odstran\\u011bn\\u00ed vady bude vy\\u0159\\u00edzena bez zbyte\\u010dn\\u00e9ho odkladu, nejpozd\\u011bji do 30 dn\\u016f ode dne uplatn\\u011bn\\u00ed reklamace, pokud se Prod\\u00e1vaj\\u00edc\\u00ed s Kupuj\\u00edc\\u00edm nedohodnou na del\\u0161\\u00ed lh\\u016ft\\u011b. Prod\\u00e1vaj\\u00edc\\u00ed odpov\\u00edd\\u00e1 Kupuj\\u00edc\\u00edmu za to, \\u017ee digit\\u00e1ln\\u00ed produkt je p\\u0159i dod\\u00e1n\\u00ed bez vad a m\\u00e1 vlastnosti, kter\\u00e9 byly ujedn\\u00e1ny nebo kter\\u00e9 lze vzhledem k povaze produktu o\\u010dek\\u00e1vat. V p\\u0159\\u00edpad\\u011b, \\u017ee vadu nelze odstranit, m\\u00e1 Kupuj\\u00edc\\u00ed pr\\u00e1vo na p\\u0159im\\u011b\\u0159enou slevu z kupn\\u00ed ceny nebo na odstoupen\\u00ed od kupn\\u00ed smlouvy v souladu s p\\u0159\\u00edslu\\u0161n\\u00fdmi ustanoven\\u00edmi ob\\u010dansk\\u00e9ho z\\u00e1kon\\u00edku.\\\",\\\"document_type_id\\\":2,\\\"position\\\":9}\"', NULL, 'Jonáš Bučina'),
-(37, '2026-06-13 11:23:38', '127.0.0.1', 'create', 'Legal', 'Přidána sociální síť: Instagram', 'SiteConfiguration', 1, 25, '\"{\\\"name\\\":\\\"Instagram\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":\\\"1\\\"}\"', '25', 'Jonáš Bučina'),
-(38, '2026-06-13 11:24:15', '127.0.0.1', 'delete', 'Legal', 'Smazána sociální síť: Instagram', 'SiteConfiguration', 1, 25, '\"[]\"', '25', 'Jonáš Bučina'),
-(39, '2026-06-13 11:24:35', '127.0.0.1', 'create', 'Legal', 'Přidána sociální síť: Instagram', 'SiteConfiguration', 2, 25, '\"{\\\"name\\\":\\\"Instagram\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":\\\"1\\\"}\"', '25', 'Jonáš Bučina'),
-(40, '2026-06-13 11:28:10', '127.0.0.1', 'create', 'Legal', 'Přidána sociální síť: TikTok', 'SiteConfiguration', 3, 25, '\"{\\\"name\\\":\\\"TikTok\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.tiktok.com\\\\\\/@rpsw.cz\\\",\\\"position\\\":\\\"2\\\"}\"', '25', 'Jonáš Bučina'),
-(41, '2026-06-13 11:28:11', '127.0.0.1', 'update', 'Legal', 'Aktualizace sociální sítě: Instagram', 'SiteConfiguration', 2, 25, '\"{\\\"name\\\":\\\"Instagram\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":1,\\\"icon_path\\\":\\\"social-icons\\\\\\/EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png\\\"}\"', '25', 'Jonáš Bučina'),
-(42, '2026-06-13 11:28:13', '127.0.0.1', 'update', 'Legal', 'Aktualizace sociální sítě: TikTok', 'SiteConfiguration', 3, 25, '\"{\\\"name\\\":\\\"TikTok\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.tiktok.com\\\\\\/@rpsw.cz\\\",\\\"position\\\":\\\"2\\\",\\\"icon_path\\\":\\\"social-icons\\\\\\/KilsM0I6Zgkup5wgwodG3oBH9Lo3rTkkiZe591RS.png\\\"}\"', '25', 'Jonáš Bučina'),
-(43, '2026-06-13 11:30:44', '127.0.0.1', 'update', 'Legal', 'Aktualizace sociální sítě: Instagram', 'SiteConfiguration', 2, 25, '\"{\\\"name\\\":\\\"Instagram\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":1,\\\"icon_path\\\":\\\"social-icons\\\\\\/EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png\\\"}\"', '25', 'Jonáš Bučina'),
-(44, '2026-06-13 11:30:54', '127.0.0.1', 'delete', 'Legal', 'Smazána sociální síť: TikTok', 'SiteConfiguration', 3, 25, '\"[]\"', '25', 'Jonáš Bučina'),
-(45, '2026-06-13 11:31:28', '127.0.0.1', 'create', 'Legal', 'Přidána sociální síť: TikTok', 'SiteConfiguration', 4, 25, '\"{\\\"name\\\":\\\"TikTok\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":\\\"2\\\"}\"', '25', 'Jonáš Bučina'),
-(46, '2026-06-13 11:31:35', '127.0.0.1', 'update', 'Legal', 'Aktualizace sociální sítě: Instagram', 'SiteConfiguration', 2, 25, '\"{\\\"name\\\":\\\"Instagram\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":1,\\\"icon_path\\\":\\\"social-icons\\\\\\/EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png\\\"}\"', '25', 'Jonáš Bučina'),
-(47, '2026-06-13 11:41:16', '127.0.0.1', 'update', 'Legal', 'Aktualizace sociální sítě: Instagram', 'SiteConfiguration', 2, 25, '\"{\\\"name\\\":\\\"Instagram\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":1,\\\"icon_path\\\":\\\"social-icons\\\\\\/EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png\\\"}\"', '25', 'Jonáš Bučina'),
-(48, '2026-06-13 11:41:23', '127.0.0.1', 'update', 'Legal', 'Aktualizace sociální sítě: Instagramer', 'SiteConfiguration', 2, 25, '\"{\\\"name\\\":\\\"Instagramer\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":1,\\\"icon_path\\\":\\\"social-icons\\\\\\/EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png\\\"}\"', '25', 'Jonáš Bučina'),
-(49, '2026-06-13 13:43:48', '127.0.0.1', 'update', 'Legal', 'Aktualizace firemních údajů', 'SiteConfiguration', NULL, 25, '\"{\\\"id\\\":1,\\\"company_name\\\":\\\"Fonetika, s.r.o.\\\",\\\"ico\\\":\\\"25133161\\\",\\\"dic\\\":\\\"CZ25133161\\\",\\\"contact_email\\\":\\\"info@rpsw.cz\\\",\\\"contact_phone\\\":\\\"+420 733 188 328\\\",\\\"address\\\":\\\"Kytlick\\u00e1 862\\\\\\/6, 190 00 Praha\\\",\\\"footer_text\\\":\\\"\\u00a92025 RegioPartner, s.r.o., V\\u0161echna pr\\u00e1va vyhrazena.\\\",\\\"updated_at\\\":\\\"2026-06-13T07:13:27.000000Z\\\"}\"', '25', 'Jonáš Bučina'),
-(50, '2026-06-13 13:44:13', '127.0.0.1', 'update', 'Legal', 'Aktualizace sociální sítě: Instagram', 'SiteConfiguration', 2, 25, '\"{\\\"name\\\":\\\"Instagram\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":1,\\\"icon_path\\\":\\\"social-icons\\\\\\/EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png\\\"}\"', '25', 'Jonáš Bučina'),
-(51, '2026-06-13 13:44:20', '127.0.0.1', 'delete', 'Legal', 'Smazána sociální síť: TikTok', 'SiteConfiguration', 4, 25, '\"[]\"', '25', 'Jonáš Bučina'),
-(52, '2026-06-13 13:44:33', '127.0.0.1', 'update', 'Legal', 'Aktualizace firemních údajů', 'SiteConfiguration', NULL, 25, '\"{\\\"id\\\":1,\\\"company_name\\\":\\\"Fonetika, s.r.o.\\\",\\\"ico\\\":\\\"25133161\\\",\\\"dic\\\":\\\"CZ25133161\\\",\\\"contact_email\\\":\\\"info@rpsw.cz\\\",\\\"contact_phone\\\":\\\"+420 733 188 328\\\",\\\"address\\\":\\\"Kytlick\\u00e1 862\\\\\\/6, 190 00 Praha\\\",\\\"footer_text\\\":\\\"\\u00a92025 RegioPartner, s.r.o., V\\u0161echna pr\\u00e1va vyhrazena.\\\",\\\"updated_at\\\":\\\"2026-06-13T11:43:48.000000Z\\\"}\"', '25', 'Jonáš Bučina'),
-(53, '2026-06-13 13:48:32', '127.0.0.1', 'create', 'Legal', 'Přidána sociální síť: TikTok', 'SiteConfiguration', 5, 25, '\"{\\\"name\\\":\\\"TikTok\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":\\\"2\\\"}\"', '25', 'Jonáš Bučina'),
-(54, '2026-06-13 13:48:34', '127.0.0.1', 'update', 'Legal', 'Aktualizace sociální sítě: TikTok', 'SiteConfiguration', 5, 25, '\"{\\\"name\\\":\\\"TikTok\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":2,\\\"icon_path\\\":\\\"social-icons\\\\\\/joOLITDC7xBdRyV7pLNwZKaR4u4ZMRYwSfdz4Yzr.png\\\"}\"', '25', 'Jonáš Bučina'),
-(55, '2026-06-13 13:48:41', '127.0.0.1', 'update', 'Legal', 'Aktualizace firemních údajů', 'SiteConfiguration', NULL, 25, '\"{\\\"id\\\":1,\\\"company_name\\\":\\\"Joncletika, s.r.o.\\\",\\\"ico\\\":\\\"25133161\\\",\\\"dic\\\":\\\"CZ25133161\\\",\\\"contact_email\\\":\\\"info@rpsw.cz\\\",\\\"contact_phone\\\":\\\"+420 733 188 328\\\",\\\"address\\\":\\\"Kytlick\\u00e1 862\\\\\\/6, 190 00 Praha\\\",\\\"footer_text\\\":\\\"\\u00a92025 RegioPartner, s.r.o., V\\u0161echna pr\\u00e1va vyhrazena.\\\",\\\"updated_at\\\":\\\"2026-06-13T11:43:48.000000Z\\\"}\"', '25', 'Jonáš Bučina'),
-(56, '2026-06-13 13:48:42', '127.0.0.1', 'update', 'Legal', 'Aktualizace firemních údajů', 'SiteConfiguration', NULL, 25, '\"{\\\"id\\\":1,\\\"company_name\\\":\\\"Joncletika, s.r.o.\\\",\\\"ico\\\":\\\"25133161\\\",\\\"dic\\\":\\\"CZ25133161\\\",\\\"contact_email\\\":\\\"info@rpsw.cz\\\",\\\"contact_phone\\\":\\\"+420 733 188 328\\\",\\\"address\\\":\\\"Kytlick\\u00e1 862\\\\\\/6, 190 00 Praha\\\",\\\"footer_text\\\":\\\"\\u00a92025 RegioPartner, s.r.o., V\\u0161echna pr\\u00e1va vyhrazena.\\\",\\\"updated_at\\\":\\\"2026-06-13T11:48:41.000000Z\\\"}\"', '25', 'Jonáš Bučina'),
-(57, '2026-06-13 13:48:44', '127.0.0.1', 'update', 'Legal', 'Aktualizace firemních údajů', 'SiteConfiguration', NULL, 25, '\"{\\\"id\\\":1,\\\"company_name\\\":\\\"Joncletika, s.r.o.\\\",\\\"ico\\\":\\\"25133161\\\",\\\"dic\\\":\\\"CZ25133161\\\",\\\"contact_email\\\":\\\"info@rpsw.cz\\\",\\\"contact_phone\\\":\\\"+420 733 188 328\\\",\\\"address\\\":\\\"Kytlick\\u00e1 862\\\\\\/6, 190 00 Praha\\\",\\\"footer_text\\\":\\\"\\u00a92025 RegioPartner, s.r.o., V\\u0161echna pr\\u00e1va vyhrazena.\\\",\\\"updated_at\\\":\\\"2026-06-13T11:48:41.000000Z\\\"}\"', '25', 'Jonáš Bučina'),
-(58, '2026-06-13 13:53:11', '127.0.0.1', 'update', 'Legal', 'Aktualizace firemních údajů', 'SiteConfiguration', NULL, 25, '\"{\\\"id\\\":1,\\\"company_name\\\":\\\"Joncletika, s.r.o.\\\",\\\"ico\\\":\\\"25133161\\\",\\\"dic\\\":\\\"CZ25133161\\\",\\\"contact_email\\\":\\\"gamber@rpsw.cz\\\",\\\"contact_phone\\\":\\\"+420 733 188 328\\\",\\\"address\\\":\\\"Kytlick\\u00e1 862\\\\\\/6, 190 00 Praha\\\",\\\"footer_text\\\":\\\"\\u00a92025 RegioPartner, s.r.o., V\\u0161echna pr\\u00e1va vyhrazena.\\\",\\\"updated_at\\\":\\\"2026-06-13T11:48:41.000000Z\\\"}\"', '25', 'Jonáš Bučina'),
-(59, '2026-06-13 13:53:15', '127.0.0.1', 'delete', 'Legal', 'Smazána sociální síť: TikTok', 'SiteConfiguration', 5, 25, '\"[]\"', '25', 'Jonáš Bučina'),
-(60, '2026-06-13 13:53:40', '127.0.0.1', 'update', 'Legal', 'Aktualizace firemních údajů', 'SiteConfiguration', NULL, 25, '\"{\\\"id\\\":1,\\\"company_name\\\":\\\"Joncletika, s.r.o.\\\",\\\"ico\\\":\\\"25133161\\\",\\\"dic\\\":\\\"CZ25133161\\\",\\\"contact_email\\\":\\\"gamber@rpsw.cz\\\",\\\"contact_phone\\\":\\\"733 188 328\\\",\\\"address\\\":\\\"Kytlick\\u00e1 862\\\\\\/6, 190 00 Praha\\\",\\\"footer_text\\\":\\\"\\u00a92025 RegioPartner, s.r.o., V\\u0161echna pr\\u00e1va vyhrazena.\\\",\\\"updated_at\\\":\\\"2026-06-13T11:53:11.000000Z\\\"}\"', '25', 'Jonáš Bučina'),
-(61, '2026-06-14 13:13:24', '127.0.0.1', 'soft_delete', 'ShopProduct', 'Smazání produktu ID: 25', 'ShopProduct', 25, 25, '\"[]\"', '25', 'Jonáš Bučina');
 
 -- --------------------------------------------------------
 
@@ -642,6 +577,13 @@ CREATE TABLE `shop_orders` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `shop_orders`
+--
+
+INSERT INTO `shop_orders` (`id`, `customer_id`, `order_number`, `status`, `payment_status`, `total_amount`, `shipping_amount`, `tax_amount`, `discount_amount`, `final_amount`, `coupon_id`, `payment_method_id`, `shipping_method_id`, `shipping_address`, `shipping_city`, `shipping_postal_code`, `shipping_country`, `notes`, `paid_at`, `shipped_at`, `delivered_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(39, 9, '2026060001', 'shipped', 'paid', 109.00, 120.00, 18.92, 0.00, 229.00, NULL, 3, 2, 'sdf', 'dfgfdg', '19099', 'Czechia', NULL, NULL, NULL, NULL, '2026-06-14 12:37:23', '2026-06-14 12:37:53', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -662,6 +604,13 @@ CREATE TABLE `shop_order_items` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `shop_order_items`
+--
+
+INSERT INTO `shop_order_items` (`id`, `order_id`, `product_id`, `product_variant_id`, `product_name`, `variant_name`, `quantity`, `unit_price`, `total_price`, `discount_amount`, `created_at`, `updated_at`) VALUES
+(33, 39, 26, 38, 'test', 'test', 1, 109.00, 109.00, 0.00, '2026-06-14 12:37:23', '2026-06-14 12:37:23');
 
 -- --------------------------------------------------------
 
@@ -732,6 +681,13 @@ CREATE TABLE `shop_products` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `shop_products`
+--
+
+INSERT INTO `shop_products` (`id`, `category_id`, `supplier_id`, `name`, `name_en`, `slug`, `description`, `description_en`, `short_description`, `short_description_en`, `sku`, `stock_quantity`, `stock_warning_level`, `is_active`, `is_featured`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(26, 53, NULL, 'test', NULL, 'jonas', NULL, NULL, NULL, NULL, 'foner', 11, 10, 1, 0, '2026-06-14 12:01:42', '2026-06-14 12:37:23', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -747,6 +703,13 @@ CREATE TABLE `shop_product_categories` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `shop_product_categories`
+--
+
+INSERT INTO `shop_product_categories` (`id`, `product_id`, `category_id`, `is_primary`, `sort_order`, `created_at`, `updated_at`) VALUES
+(37, 26, 53, 1, 0, '2026-06-14 12:01:42', '2026-06-14 12:02:06');
 
 -- --------------------------------------------------------
 
@@ -777,15 +740,20 @@ CREATE TABLE `shop_product_prices` (
   `product_id` int(10) UNSIGNED NOT NULL,
   `variant_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'NULL pokud jde o hlavní produkt',
   `vat_rate` decimal(5,2) NOT NULL DEFAULT 21.00,
-  `price_czk_without_vat` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `price_czk_with_vat` decimal(10,2) NOT NULL DEFAULT 0.00,
   `price_eur_without_vat` decimal(10,2) DEFAULT NULL,
-  `cost_price_czk` decimal(12,4) DEFAULT NULL,
   `cost_price_eur` decimal(12,4) DEFAULT NULL,
   `price_eur_with_vat` decimal(10,2) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `shop_product_prices`
+--
+
+INSERT INTO `shop_product_prices` (`id`, `product_id`, `variant_id`, `vat_rate`, `price_eur_without_vat`, `cost_price_eur`, `price_eur_with_vat`, `created_at`, `updated_at`) VALUES
+(27, 26, NULL, 21.00, 90.08, 100.0000, 109.00, '2026-06-14 12:01:42', '2026-06-14 12:01:42'),
+(28, 26, 38, 21.00, 90.08, 0.0000, 109.00, '2026-06-14 12:02:06', '2026-06-14 12:02:06');
 
 -- --------------------------------------------------------
 
@@ -807,6 +775,13 @@ CREATE TABLE `shop_product_variants` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `shop_product_variants`
+--
+
+INSERT INTO `shop_product_variants` (`id`, `product_id`, `variant_name`, `attribute_1_name`, `attribute_1_value`, `attribute_2_name`, `attribute_2_value`, `sku_variant`, `stock_quantity`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(38, 26, 'test', 'sdf', 'sdf', 'dsf', 'sdf', 'sdf', 11, '2026-06-14 12:02:06', '2026-06-14 12:37:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -990,56 +965,6 @@ CREATE TABLE `web_logs` (
   `user_id_plain` varchar(255) DEFAULT NULL,
   `user_plain` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `web_logs`
---
-
-INSERT INTO `web_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
-(1, '2026-06-12 15:06:12', '127.0.0.1', 'unauthorized_shop_toggle_attempt', 'Core', '⚠️ NEÚSPĚŠNÝ pokus o změnu stavu e-shopu uživatelem joncl. Zadáno nesprávné heslo.', 'CoreSiteSetting', NULL, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(2, '2026-06-12 15:06:21', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(3, '2026-06-12 15:10:30', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: joncl', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'joncl'),
-(4, '2026-06-12 15:10:35', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: joncl', 'User', NULL, NULL, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '0', 'joncl'),
-(5, '2026-06-12 15:10:40', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: joncl', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'joncl'),
-(6, '2026-06-12 15:10:55', '127.0.0.1', 'unauthorized_shop_toggle_attempt', 'Core', '⚠️ NEÚSPĚŠNÝ pokus o změnu stavu e-shopu uživatelem joncl. Zadáno nesprávné heslo.', 'CoreSiteSetting', NULL, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(7, '2026-06-12 15:11:03', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(8, '2026-06-12 15:14:43', '127.0.0.1', 'restore', 'WebSupportTicket', 'Obnova ticketu ID: 3', 'WebSupportTicket', 3, 25, '\"[]\"', '25', 'joncl'),
-(9, '2026-06-12 15:15:37', '127.0.0.1', 'update', 'WebSupportTicket', 'Aktualizace ticketu ID: 3', 'WebSupportTicket', 3, 25, '\"{\\\"id\\\":3,\\\"user_id\\\":25,\\\"user_name_plain\\\":\\\"Jon\\u00e1\\u0161 Bu\\u010dina\\\",\\\"user_plain\\\":\\\"joncl\\\",\\\"category\\\":\\\"it\\\",\\\"priority\\\":\\\"low\\\",\\\"state\\\":\\\"open\\\",\\\"subject\\\":\\\"asmdnasm,d\\\",\\\"description\\\":\\\"asdasd\\\",\\\"attachment_path\\\":null,\\\"attachment_url\\\":null,\\\"created_at\\\":\\\"2026-04-09 21:47:05\\\",\\\"updated_at\\\":\\\"2026-06-12 15:14:43\\\",\\\"deleted_at\\\":null}\"', '25', 'joncl'),
-(10, '2026-06-12 15:20:45', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(11, '2026-06-12 15:28:52', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(12, '2026-06-12 15:45:02', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(13, '2026-06-12 15:45:27', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(14, '2026-06-12 15:45:48', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(15, '2026-06-12 15:52:15', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(16, '2026-06-12 16:01:24', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(17, '2026-06-12 16:03:40', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(18, '2026-06-12 16:04:01', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(19, '2026-06-12 16:07:48', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(20, '2026-06-12 16:08:03', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(21, '2026-06-12 16:21:12', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(22, '2026-06-12 16:26:02', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(23, '2026-06-12 16:27:48', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(24, '2026-06-12 17:06:25', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(25, '2026-06-12 17:07:01', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(26, '2026-06-12 17:07:22', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(27, '2026-06-12 17:12:06', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(28, '2026-06-12 17:12:45', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(29, '2026-06-12 17:15:31', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: VYPNUT (Údržba).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(30, '2026-06-12 17:15:43', '127.0.0.1', 'shop_status_changed', 'Core', 'Uživatel joncl změnil stav e-shopu na: ZAPNUT (Provoz).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'joncl'),
-(31, '2026-06-12 21:24:55', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: joncl', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'joncl'),
-(32, '2026-06-12 21:24:58', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: joncl', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'joncl'),
-(33, '2026-06-13 10:41:54', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: joncl', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'joncl'),
-(34, '2026-06-13 10:44:54', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: joncl', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'joncl'),
-(35, '2026-06-13 13:28:59', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: joncl', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'joncl'),
-(36, '2026-06-14 12:08:43', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: joncl', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'joncl'),
-(37, '2026-06-14 13:12:10', '127.0.0.1', 'soft_delete', 'WebRawRequestCommission', 'Smazání požadavku na provizi ID: 5', 'WebRawRequestCommission', 5, 25, '\"[]\"', '25', 'joncl'),
-(38, '2026-06-14 13:12:16', '127.0.0.1', 'hard_delete', 'WebRawRequestCommission', 'Smazání požadavku na provizi ID: 5', 'WebRawRequestCommission', 5, 25, '\"{\\\"force_delete\\\":\\\"true\\\"}\"', '25', 'joncl'),
-(39, '2026-06-14 13:12:20', '127.0.0.1', 'soft_delete', 'WebSalesLead', 'Smazání leadu ID: 5', 'WebSalesLead', 5, 25, '\"[]\"', '25', 'joncl'),
-(40, '2026-06-14 13:12:27', '127.0.0.1', 'hard_delete', 'WebSalesLead', 'Smazání leadu ID: 5', 'WebSalesLead', 5, 25, '\"{\\\"force_delete\\\":\\\"true\\\"}\"', '25', 'joncl'),
-(41, '2026-06-14 13:12:48', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: Joner je buh', 'WebNews', 3, 25, '\"[]\"', '25', 'joncl'),
-(42, '2026-06-14 13:12:53', '127.0.0.1', 'hard_delete', 'WebNews', 'Smazání novinky: Joner je buh', 'WebNews', 3, 25, '\"{\\\"force_delete\\\":\\\"true\\\"}\"', '25', 'joncl'),
-(43, '2026-06-14 13:12:59', '127.0.0.1', 'soft_delete', 'WebSupportTicket', 'Smazání ticketu ID: 3', 'WebSupportTicket', 3, 25, '\"[]\"', '25', 'joncl'),
-(44, '2026-06-14 13:13:05', '127.0.0.1', 'force_delete_all', 'WebSupportTicket', 'Hromadné smazání koše ticketů. Počet: 2', 'WebSupportTicket', NULL, 25, '\"[]\"', '25', 'joncl');
 
 -- --------------------------------------------------------
 
@@ -1516,13 +1441,13 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=433;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=438;
 
 --
 -- AUTO_INCREMENT for table `refresh_tokens`
 --
 ALTER TABLE `refresh_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=432;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=437;
 
 --
 -- AUTO_INCREMENT for table `shop_categories`
@@ -1540,25 +1465,25 @@ ALTER TABLE `shop_coupons`
 -- AUTO_INCREMENT for table `shop_customers`
 --
 ALTER TABLE `shop_customers`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `shop_logs`
 --
 ALTER TABLE `shop_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=62;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `shop_orders`
 --
 ALTER TABLE `shop_orders`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `shop_order_items`
 --
 ALTER TABLE `shop_order_items`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `shop_payment_methods`
@@ -1570,13 +1495,13 @@ ALTER TABLE `shop_payment_methods`
 -- AUTO_INCREMENT for table `shop_products`
 --
 ALTER TABLE `shop_products`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `shop_product_categories`
 --
 ALTER TABLE `shop_product_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `shop_product_images`
@@ -1588,13 +1513,13 @@ ALTER TABLE `shop_product_images`
 -- AUTO_INCREMENT for table `shop_product_prices`
 --
 ALTER TABLE `shop_product_prices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `shop_product_variants`
 --
 ALTER TABLE `shop_product_variants`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `shop_reviews`
@@ -1630,7 +1555,7 @@ ALTER TABLE `web_job_applications`
 -- AUTO_INCREMENT for table `web_logs`
 --
 ALTER TABLE `web_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `web_news`

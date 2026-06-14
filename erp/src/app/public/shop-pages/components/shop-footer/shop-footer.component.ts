@@ -24,7 +24,6 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
   footerLegalLinks: FooterNavLink[] = [];
   paymentMethods: PaymentMethod[] = [];
   
-  // Dynamická data
   siteSettings: any = null;
   socialLinks: SocialLink[] = [];
 
@@ -45,9 +44,6 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
       .subscribe(translations => {
         if (translations) {
           this.t = translations.footer;
-          if (this.t?.copyright_text) {
-            this.t.copyright_text = this.t.copyright_text.replace('{year}', this.currentYear.toString());
-          }
           this.loadFooterNavLinks();
           this.loadFooterLegalLinks();
           this.loadPaymentMethods();
@@ -63,6 +59,12 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
         next: (data) => {
           this.siteSettings = data.settings;
           this.socialLinks = data.social_links;
+          
+          // Pokud footer_text z DB obsahuje placeholder, nahradíme jej rokem
+          if (this.siteSettings?.footer_text) {
+            this.siteSettings.footer_text = this.siteSettings.footer_text.replace('{year}', this.currentYear.toString());
+          }
+          
           this.cdr.markForCheck();
         },
         error: (err) => console.error('Chyba při načítání footer dat:', err)

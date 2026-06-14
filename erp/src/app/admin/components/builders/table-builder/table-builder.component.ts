@@ -68,8 +68,14 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     switch (column.type) {
       case 'currency': {
         if (value === undefined || value === null || value === '') return '';
-        const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'CZK';
-        const locale = currency === 'CZK' ? 'cs-CZ' : 'de-DE';
+        
+        // 🛠️ UPRAVENO: Nastaveno na EUR místo CZK
+        const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'EUR';
+        
+        // Použijeme 'de-DE' nebo 'cs-CZ' pro formátování, 
+        // ale měnu vynutíme na EUR.
+        const locale = 'cs-CZ'; 
+        
         try {
           return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
         } catch (e) {

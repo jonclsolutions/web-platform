@@ -56,8 +56,13 @@
         </div>
       </div>
     </div>
+
     <div class="footer-bottom">
-      <p>{{ t?.copyright_text }}</p>
+      @if (siteSettings?.footer_text) {
+        <p>{{ siteSettings.footer_text }}</p>
+      } @else {
+        <p>{{ t?.copyright_text?.replace('{year}', currentYear.toString()) }}</p>
+      }
     </div>
   </footer>
 }

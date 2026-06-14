@@ -814,12 +814,13 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     return this.products.find(p => Number(p.id) === Number(productId))?.name || 'N/A';
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('cs-CZ', {
-      style: 'currency',
-      currency: 'CZK'
-    }).format(value);
-  }
+formatCurrency(value: number): string {
+  return new Intl.NumberFormat('cs-CZ', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2
+  }).format(value);
+}
 
   getStatusLabel(status: string): string {
     return this.statusOptions.find(o => o.value === status)?.label || status;

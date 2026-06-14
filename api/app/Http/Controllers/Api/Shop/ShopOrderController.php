@@ -110,7 +110,7 @@ class ShopOrderController extends Controller
             if ($coupon->valid_until && $now->gt($coupon->valid_until)) { return response()->json(['message' => 'Platnost tohoto kupónu již vypršela.'], 422); }
             if ($coupon->max_usage > 0 && $coupon->usage_count >= $coupon->max_usage) { return response()->json(['message' => 'Tento kupón již byl vyčepan.'], 422); }
             if ($coupon->min_order_amount > 0 && $totalAmount < (float)$coupon->min_order_amount) {
-                return response()->json(['message' => "Minimální hodnota objednávky pro tento kupón je " . number_format($coupon->min_order_amount, 2) . " Kč."], 422);
+                return response()->json(['message' => "Minimální hodnota objednávky pro tento kupón je " . number_format($coupon->min_order_amount, 2) . " EUR."], 422);
             }
 
             $discountAmount = ($coupon->discount_type === 'percent') 

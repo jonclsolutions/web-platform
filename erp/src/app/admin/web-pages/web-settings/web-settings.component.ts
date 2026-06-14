@@ -14,6 +14,7 @@ interface SiteSetting {
   contact_phone: string;
   address: string;
   footer_text: string;
+  logo_path?: string | null;
 }
 
 interface SocialLink {
@@ -26,7 +27,7 @@ interface SocialLink {
   _iconPreview?: string | null;
   _saving?: boolean;
   _isNew?: boolean;
-  _dirty?: boolean; 
+  _dirty?: boolean;
 }
 
 @Component({
@@ -41,15 +42,23 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   override apiEndpoint = 'legal/config';
 
+  // ---- Firemní nastavení ----
   settings: SiteSetting = {
     company_name: '', ico: '', dic: '',
     contact_email: '', contact_phone: '',
     address: '', footer_text: '',
+    logo_path: null,
   };
   settingsLoading = true;
   settingsSaving  = false;
   settingsSaved   = false;
 
+  // ---- Logo ----
+  logoFile: File | null       = null;
+  logoPreview: string | null  = null;  // Blob URL pro okamžitý náhled
+  logoRemoving                = false; // Příznak mazání loga
+
+  // ---- Sociální sítě ----
   socialLinks: SocialLink[] = [];
   socialLoading = true;
 
@@ -68,6 +77,9 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.loadAll();
   }
 
+  // ============================================================
+  // NAČTENÍ  —  GET /api/legal/config
+  // ============================================================
   private loadAll(): void {
     this.settingsLoading = true;
     this.socialLoading   = true;
@@ -83,13 +95,14 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
           name:         s.name,
           url:          s.url,
           icon_path:    s.icon_path ?? '',
-          position:     s.position ?? 0,
+          position:     s.position  ?? 0,
           _iconFile:    null,
           _iconPreview: null,
           _saving:      false,
           _isNew:       false,
           _dirty:       false,
         }));
+        // Reset loga po novém načtení (blob preview zůstane dokud nerefreshneme)
         this.settingsLoading = false;
         this.socialLoading   = false;
         this.cd.markForCheck();
@@ -106,39 +119,124 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   override refreshData(): void { this.loadAll(); }
 
   // ============================================================
-  // FIREMNÍ ÚDAJE — OPRAVA: Po uložení voláme loadAll()
+  // LOGO — výběr souboru
+  // ============================================================
+  onLogoSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      this.alertDialogService.open('Příliš velký soubor', 'Logo může mít maximálně 2 MB.', 'warning');
+      (event.target as HTMLInputElement).value = '';
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      this.alertDialogService.open('Neplatný formát', 'Vyberte obrázek (JPG, PNG, SVG…).', 'warning');
+      (event.target as HTMLInputElement).value = '';
+      return;
+    }
+
+    // Uvolnit starý blob URL
+    if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
+
+    this.logoFile    = file;
+    this.logoPreview = URL.createObjectURL(file);
+    this.cd.markForCheck();
+  }
+
+  // Zrušit výběr nového loga (bez uložení)
+  cancelLogoSelection(): void {
+    if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
+    this.logoFile    = null;
+    this.logoPreview = null;
+    this.cd.markForCheck();
+  }
+
+  // ============================================================
+  // FIREMNÍ ÚDAJE + LOGO  —  PUT/POST /api/legal/config/settings
+  // Pokud je nové logo, posíláme FormData; jinak čistý JSON.
   // ============================================================
   saveSettings(): void {
     if (this.settingsSaving) return;
     this.settingsSaving = true;
     this.settingsSaved  = false;
 
-    this.dataHandler.put<SiteSetting>('legal/config/settings', this.settings as any).subscribe({
-      next: () => {
-        this.settingsSaving = false;
-        this.settingsSaved  = true;
-        this.alertDialogService.open('Uloženo', 'Firemní údaje byly úspěšně uloženy.', 'success');
-        
-        // OPRAVA: Znovu načteme data pro konzistenci
-        this.loadAll();
-        
-        setTimeout(() => { this.settingsSaved = false; this.cd.markForCheck(); }, 2500);
-        this.cd.markForCheck();
-      },
-      error: (err: any) => {
-        this.settingsSaving = false;
-        const msg = err?.error?.message ?? 'Uložení selhalo.';
-        this.alertDialogService.open('Chyba', msg, 'danger');
-        this.cd.markForCheck();
-      }
-    });
+    if (this.logoFile) {
+      // ---- Verze s logem (FormData) ----
+      const fd = new FormData();
+      fd.append('company_name',  this.settings.company_name  ?? '');
+      fd.append('ico',           this.settings.ico           ?? '');
+      fd.append('dic',           this.settings.dic           ?? '');
+      fd.append('contact_email', this.settings.contact_email ?? '');
+      fd.append('contact_phone', this.settings.contact_phone ?? '');
+      fd.append('address',       this.settings.address       ?? '');
+      fd.append('footer_text',   this.settings.footer_text   ?? '');
+      fd.append('logo_file',     this.logoFile, this.logoFile.name);
+      // Laravel method spoofing pro PUT přes multipart
+      fd.append('_method', 'PUT');
+
+      this.dataHandler.upload<SiteSetting>('legal/config/settings', fd).subscribe({
+        next: (res: any) => this.onSettingsSaved(res),
+        error: (err: any) => this.onSettingsError(err),
+      });
+    } else {
+      // ---- Verze bez loga (čistý JSON) ----
+      const payload = {
+        company_name:  this.settings.company_name,
+        ico:           this.settings.ico,
+        dic:           this.settings.dic,
+        contact_email: this.settings.contact_email,
+        contact_phone: this.settings.contact_phone,
+        address:       this.settings.address,
+        footer_text:   this.settings.footer_text,
+      };
+
+      this.dataHandler.put<SiteSetting>('legal/config/settings', payload as any).subscribe({
+        next: (res: any) => this.onSettingsSaved(res),
+        error: (err: any) => this.onSettingsError(err),
+      });
+    }
   }
 
+  private onSettingsSaved(res: any): void {
+    if (res) this.settings = { ...res };
+    // Uvolnit blob URL loga, již nepotřebujeme
+    if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
+    this.logoFile    = null;
+    this.logoPreview = null;
+    this.settingsSaving = false;
+    this.settingsSaved  = true;
+    this.alertDialogService.open('Uloženo', 'Firemní údaje byly úspěšně uloženy.', 'success');
+    setTimeout(() => { this.settingsSaved = false; this.cd.markForCheck(); }, 2500);
+    this.loadAll();
+  }
+
+  private onSettingsError(err: any): void {
+    this.settingsSaving = false;
+    const msg = err?.error?.message ?? err?.error?.errors
+      ? Object.values(err.error.errors).flat().join(', ')
+      : 'Uložení selhalo.';
+    this.alertDialogService.open('Chyba', String(msg), 'danger');
+    this.cd.markForCheck();
+  }
+
+  // ---- Helper: URL existujícího loga ze serveru ----
+  get logoSrc(): string | null {
+    if (this.logoPreview)        return this.logoPreview;
+    if (this.settings.logo_path) return `http://127.0.0.1:8000/storage/${this.settings.logo_path}`;
+    return null;
+  }
+
+  get hasLogo(): boolean {
+    return !!(this.logoPreview || this.settings.logo_path);
+  }
+
+  // ============================================================
+  // SOCIÁLNÍ SÍTĚ — přidat řádek
+  // ============================================================
   addSocialLink(): void {
     this.socialLinks = [...this.socialLinks, {
-      name:         '',
-      url:          '',
-      icon_path:    '',
+      name: '', url: '', icon_path: '',
       position:     this.socialLinks.length + 1,
       _iconFile:    null,
       _iconPreview: null,
@@ -154,6 +252,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }, 60);
   }
 
+  // ---- Výběr ikony sociální sítě ----
   onIconSelected(event: Event, index: number): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -163,9 +262,8 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       (event.target as HTMLInputElement).value = '';
       return;
     }
-
     if (!file.type.startsWith('image/')) {
-      this.alertDialogService.open('Neplatný formát', 'Vyberte prosím obrázek.', 'warning');
+      this.alertDialogService.open('Neplatný formát', 'Vyberte obrázek.', 'warning');
       (event.target as HTMLInputElement).value = '';
       return;
     }
@@ -182,12 +280,17 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
+  // ---- Uložení jednoho řádku sociální sítě ----
   saveSocialLink(index: number): void {
     const link = this.socialLinks[index];
     if (link._saving) return;
 
-    if (!link.name?.trim() || !link.url?.trim()) {
-      this.alertDialogService.open('Validace', 'Vyplňte název a URL.', 'warning');
+    if (!link.name?.trim()) {
+      this.alertDialogService.open('Validace', 'Zadejte název sociální sítě.', 'warning');
+      return;
+    }
+    if (!link.url?.trim()) {
+      this.alertDialogService.open('Validace', 'Zadejte URL odkazu.', 'warning');
       return;
     }
 
@@ -198,7 +301,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
     const onSuccess = () => {
       this.alertDialogService.open('Uloženo', `Odkaz „${link.name}" byl uložen.`, 'success');
-      this.loadAll(); 
+      this.loadAll();
     };
 
     const onError = (err: any) => {
@@ -217,20 +320,25 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       fd.append('position', String(link.position));
       if (link._iconFile) fd.append('icon_file', link._iconFile, link._iconFile.name);
 
-      const endpoint = link._isNew ? 'legal/config/social' : `legal/config/social/${link.id}`;
-      this.dataHandler.upload<SocialLink>(endpoint, fd).subscribe({ next: onSuccess, error: onError });
+      const endpoint = link._isNew
+        ? 'legal/config/social'
+        : `legal/config/social/${link.id}`;
+      this.dataHandler.upload<SocialLink>(endpoint, fd)
+        .subscribe({ next: onSuccess, error: onError });
     } else {
       this.dataHandler.put<SocialLink>(`legal/config/social/${link.id}`, {
         name:      link.name.trim(),
         url:       link.url.trim(),
         position:  link.position,
         icon_path: link.icon_path,
-      }).subscribe({ next: onSuccess, error: onError });
+      } as any).subscribe({ next: onSuccess, error: onError });
     }
   }
 
+  // ---- Smazání řádku ----
   async deleteSocialLink(index: number): Promise<void> {
     const link = this.socialLinks[index];
+
     if (link._isNew) {
       if (link._iconPreview) URL.revokeObjectURL(link._iconPreview);
       this.socialLinks = this.socialLinks.filter((_, i) => i !== index);
@@ -238,18 +346,26 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       return;
     }
 
-    const confirmed = await this.confirmDialog.open('Smazat', `Smazat „${link.name}"?`);
+    const confirmed = await this.confirmDialog.open(
+      'Smazat odkaz',
+      `Opravdu chcete smazat odkaz „${link.name}"? Bude smazána i ikonka.`
+    );
     if (!confirmed) return;
 
     this.dataHandler.delete(`legal/config/social/${link.id}`).subscribe({
       next: () => {
-        this.alertDialogService.open('Smazáno', 'Odkaz smazán.', 'success');
+        if (link._iconPreview) URL.revokeObjectURL(link._iconPreview);
+        this.alertDialogService.open('Smazáno', `Odkaz „${link.name}" byl smazán.`, 'success');
         this.loadAll();
       },
-      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message ?? 'Chyba.', 'danger')
+      error: (err: any) =>
+        this.alertDialogService.open('Chyba', err?.error?.message ?? 'Smazání selhalo.', 'danger')
     });
   }
 
+  // ============================================================
+  // HELPERS
+  // ============================================================
   markDirty(index: number): void {
     if (!this.socialLinks[index]?._dirty) {
       const updated = [...this.socialLinks];
@@ -260,7 +376,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   iconSrc(link: SocialLink): string | null {
     if (link._iconPreview) return link._iconPreview;
-    if (link.icon_path) return `http://127.0.0.1:8000/storage/${link.icon_path}`;
+    if (link.icon_path)    return `http://127.0.0.1:8000/storage/${link.icon_path}`;
     return null;
   }
 

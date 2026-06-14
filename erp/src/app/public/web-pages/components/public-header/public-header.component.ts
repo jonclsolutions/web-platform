@@ -25,14 +25,13 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   scrolled: boolean = false;
   private resizeObserver: ResizeObserver | undefined;
 
-  // Dynamická data
   siteSettings: any = null;
 
   cz_flag_link: string = 'assets/images/icons/czech-republic.png';
   en_flag_link: string = 'assets/images/icons/united-kingdom.png';
   tel_icon: string = 'assets/images/icons/call.png';
   mail_icon: string = 'assets/images/icons/mail.png';
-  logo: string = 'assets/images/logos/logo.png';
+  logo: string = 'assets/images/logos/logo.png'; // Fallback logo
 
   showIndicator: boolean = false;
   isAnimatingTransition: boolean = false;
@@ -61,7 +60,6 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Načtení dat z API
     this.publicDataService.getSiteSettings()
       .pipe(takeUntil(this.destroy$))
       .subscribe(data => {
