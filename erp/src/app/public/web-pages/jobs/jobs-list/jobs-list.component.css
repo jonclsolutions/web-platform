@@ -1,152 +1,317 @@
-.main-content {
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    box-sizing: border-box;
-    padding-bottom: 50px;
-    background: radial-gradient(ellipse at center, rgba(128, 0, 128, 0.05) 15%, rgba(128, 0, 128, 0.02) 30%, rgba(17, 17, 31, 0) 50%),
-                repeating-linear-gradient(to bottom, transparent, transparent 49px, rgba(128, 0, 128, 0.4) 50px),
-                repeating-linear-gradient(to right, transparent, transparent 49px, rgba(128, 0, 128, 0.4) 50px);
-    background-color: #11111f;
+/* ═══════════════════════════════════════════════════════════════
+   JOB LIST — sjednocen s brand systémem (Services / Contact / FAQ)
+   #0d0d1b bg · #a67dff accent · #6b2e91 accent-dark
+   ═══════════════════════════════════════════════════════════════ */
+
+:host {
+  --bg:          #0d0d1b;
+  --surface:     #111128;
+  --surface-2:   #18183a;
+  --border:      rgba(166, 125, 255, 0.1);
+  --border-mid:  rgba(166, 125, 255, 0.22);
+  --accent:      #a67dff;
+  --accent-dark: #6b2e91;
+  --accent-dim:  rgba(166, 125, 255, 0.07);
+  --text:        #e0e0f0;
+  --text-muted:  #888899;
+  --ff-display:  'Source Sans Pro', 'Segoe UI', sans-serif;
+  --ff-body:     'Segoe UI', system-ui, sans-serif;
+  --radius:      12px;
+  --radius-lg:   18px;
+  --ease:        0.25s ease;
+  --max-w:       860px;
 }
 
-.main-content::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(17, 17, 31, 0.98) 80%);
-    z-index: 1;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Stránka + čtvercové pozadí ─────────────────────────────── */
+.jobs-page {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-body);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-.header-1 {
-    text-align: center;
-    font-family: "Source Sans Pro", sans-serif;
-    color: #9e9e9e;
-    padding-top: 125px;
-    padding-bottom: 50px;
-    font-size: 4rem;
-    font-weight: 700;
-    z-index: 10;
-    text-shadow: 0 0 15px rgba(158, 158, 158, 0.5);
-    animation: fadeInSlideDown 0.8s ease-out forwards;
+.jobs-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(166, 125, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(166, 125, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.jobs-section {
-    width: 100%;
-    max-width: 900px;
-    padding: 0 20px;
-    z-index: 10;
+/* ── Hero ────────────────────────────────────────────────────── */
+.jobs-hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 120px 24px 56px;
+  animation: fadeUp 0.7s ease-out both;
 }
 
-.jobs-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.jobs-hero-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
 }
 
-.job-item {
-    background-color: rgba(26, 26, 46, 0.2);
-    border: 2px solid #2f2f2f;
-    border-radius: 12px;
-    padding: 20px 25px;
-    cursor: pointer;
-    transition: all 0.3s ease-out;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(5px);
-    display: flex;
-    flex-direction: column;
+.jobs-hero-title {
+  font-family: var(--ff-display);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+  max-width: 640px;
+  margin-bottom: 16px;
 }
 
-.job-item:hover {
-    background-color: rgba(107, 46, 145, 0.2);
-    border-color: #a67dff;
-    transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 10px rgba(166, 125, 255, 0.3);
+.jobs-hero-sub {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 480px;
+  line-height: 1.7;
 }
 
-.job-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* ── Seznam pozic ────────────────────────────────────────────── */
+.jobs-body {
+  position: relative;
+  z-index: 1;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 24px 80px;
 }
 
-.job-text-content h3 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #e0e0e0;
-    font-weight: 600;
+.jobs-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
 }
 
-.job-short-desc {
-    margin: 8px 0 0 0;
-    color: #9e9e9e;
-    font-size: 1rem;
-    line-height: 1.4;
+.jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.job-indicator {
-    width: 40px;
-    height: 40px;
-    background-color: #a67dff;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-    margin-left: 20px;
-    transition: transform 0.3s ease;
+/* Karta jedné pozice */
+.job-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color var(--ease), background var(--ease), transform 0.18s ease;
+  animation: fadeUp 0.5s ease-out both;
 }
 
-.job-item:hover .job-indicator {
-    background-color: #8a5acd;
-    transform: translateX(5px);
+.job-card:hover {
+  border-color: var(--border-mid);
+  background: var(--accent-dim);
+  transform: translateY(-3px);
 }
 
-.job-arrow {
-    font-size: 1.4rem;
-    font-weight: bold;
-    color: white;
+/* Číslo pozice */
+.job-card-num {
+  flex-shrink: 0;
+  font-family: var(--ff-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  opacity: 0.6;
+  min-width: 24px;
 }
 
-.animated-job-item {
-    opacity: 0;
-    transform: translateY(-20px);
-    animation: fadeInSlideDown 0.6s ease-out forwards;
+/* Textová část */
+.job-card-body {
+  flex: 1;
+  min-width: 0;
 }
 
-@keyframes fadeInSlideDown {
-    to { opacity: 1; transform: translateY(0); }
+.job-card-title {
+  font-family: var(--ff-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+  line-height: 1.3;
 }
 
-.write-us-wrp {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-    margin-top: 60px;
-    z-index: 10;
-    opacity: 0;
-    animation: fadeInSlideDown 0.6s ease-out 0.8s forwards;
+.job-card-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.write-us-text {
-    color: #9e9e9e;
-    font-size: 1.2rem;
-    font-weight: 600;
-    font-family: "Poppins", sans-serif;
+/* Šipka vpravo */
+.job-card-arrow {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-mid);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 0.95rem;
+  transition: background var(--ease), transform 0.18s ease;
 }
 
-.write-us-icons { display: flex; gap: 20px; }
-.write-us-icons img { width: 40px; height: 40px; transition: 0.3s; }
-.icon-wrp:hover img { 
-    filter: brightness(1.2) drop-shadow(0 0 10px #a67dff);
-    transform: translateY(-3px); 
+.job-card:hover .job-card-arrow {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+  color: #fff;
+  transform: translateX(3px);
 }
 
-@media (max-width: 905px) {
-    .header-1 { font-size: 3rem; }
-    .job-text-content h3 { font-size: 1.2rem; }
-    .write-us-wrp { flex-direction: column; gap: 15px; }
+/* Animace s posunem */
+.jobs-list .job-card:nth-child(1) { animation-delay: 0.05s; }
+.jobs-list .job-card:nth-child(2) { animation-delay: 0.10s; }
+.jobs-list .job-card:nth-child(3) { animation-delay: 0.15s; }
+.jobs-list .job-card:nth-child(4) { animation-delay: 0.20s; }
+.jobs-list .job-card:nth-child(5) { animation-delay: 0.25s; }
+.jobs-list .job-card:nth-child(6) { animation-delay: 0.30s; }
+
+/* ── CTA sekce ───────────────────────────────────────────────── */
+.jobs-cta-section {
+  position: relative;
+  z-index: 1;
+  padding: 0 24px 80px;
+  animation: fadeUp 0.6s 0.3s ease-out both;
 }
+
+.cta-panel {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.cta-panel-text-block {
+  flex: 1;
+  min-width: 200px;
+}
+
+.cta-panel-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.cta-panel-title {
+  font-family: var(--ff-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.cta-panel-sub {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.cta-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: var(--accent-dark);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--ease), transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.cta-btn:hover { background: #7d35ae; transform: translateY(-2px); }
+
+.cta-btn--ghost {
+  background: transparent;
+  border-color: var(--border-mid);
+  color: var(--text);
+}
+
+.cta-btn--ghost:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* Oddělovač */
+.jobs-divider {
+  max-width: 700px;
+  margin: 0 auto 60px;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--accent-dark) 30%,
+    var(--accent-dark) 70%,
+    transparent
+  );
+  opacity: 0.5;
+}
+
+/* ── Animace ─────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responzivita ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .jobs-hero { padding: 90px 16px 44px; }
+  .jobs-hero-title { font-size: 2rem; }
+  .jobs-body { padding: 0 16px 60px; }
+  .job-card { padding: 18px 16px; }
+  .job-card-desc { white-space: normal; }
+  .jobs-cta-section { padding-left: 16px; padding-right: 16px; }
+  .cta-panel { padding: 28px 20px; flex-direction: column; align-items: flex-start; }
+  .cta-panel-actions { flex-direction: row; flex-wrap: wrap; }
+}
+

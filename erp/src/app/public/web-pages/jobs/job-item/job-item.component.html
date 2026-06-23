@@ -1,130 +1,229 @@
 @if (t) {
-  <div class="main-content">
-    <div class="container-width-fix">
-      @if (job) {
-        <div class="header-1">{{ job?.title }}</div>
-      }
-      @if (!job) {
-        <div class="header-1">{{ t?.not_found }}</div>
-      }
-      @if (job) {
-        <div class="content-display">
-          <a routerLink="/jobs" class="back-link">{{ t?.back_link }}</a>
-          <div class="paragraph-node" [innerHTML]="job?.fullContent"></div>
-          <div class="application-form-wrapper">
-            @if (!isSubmitted) {
-              <h2>Mám zájem o tuto pozici</h2>
-              <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()">
-                <div class="grid-layout">
-                  <div class="form-group">
-                    <label>Jméno <span class="required-asterisk">*</span></label>
-                    <input type="text" formControlName="first_name"
-                      [class.error-input]="applicationForm.get('first_name')?.invalid && applicationForm.get('first_name')?.touched">
-                    @if (applicationForm.get('first_name')?.errors?.['required'] && applicationForm.get('first_name')?.touched) {
-                      <small class="error-msg">
-                        Jméno je povinné.
-                      </small>
-                    }
-                  </div>
-                  <div class="form-group">
-                    <label>Příjmení <span class="required-asterisk">*</span></label>
-                    <input type="text" formControlName="last_name"
-                      [class.error-input]="applicationForm.get('last_name')?.invalid && applicationForm.get('last_name')?.touched">
-                    @if (applicationForm.get('last_name')?.errors?.['required'] && applicationForm.get('last_name')?.touched) {
-                      <small class="error-msg">
-                        Příjmení je povinné.
-                      </small>
-                    }
-                  </div>
-                </div>
-                <div class="grid-layout mt-10">
-                  <div class="form-group">
-                    <label>E-mail <span class="required-asterisk">*</span></label>
-                    <input type="email" formControlName="email"
-                      [class.error-input]="applicationForm.get('email')?.invalid && applicationForm.get('email')?.touched">
-                    @if (applicationForm.get('email')?.errors?.['email'] && applicationForm.get('email')?.touched) {
-                      <small class="error-msg">
-                        Zadejte platnou e-mailovou adresu.
-                      </small>
-                    }
-                    @if (applicationForm.get('email')?.errors?.['required'] && applicationForm.get('email')?.touched) {
-                      <small class="error-msg">
-                        E-mail je povinný.
-                      </small>
-                    }
-                  </div>
-                  <div class="form-group">
-                    <label>Telefon</label>
-                    <input type="tel" formControlName="phone">
-                  </div>
-                </div>
-                <div class="form-group mt-10">
-                  <label>Zpráva / Průvodní dopis</label>
-                  <textarea formControlName="message" rows="4"></textarea>
-                </div>
-                <div class="form-group mt-15">
-                  <label>Životopis (libovolný soubor) <span class="required-asterisk">*</span></label>
-                  <div class="file-drop-area" [class.has-file]="selectedFile">
-                    <input type="file" (change)="onFileSelected($event)" class="file-input-styled">
-                    <div class="file-msg">
-                      <div class="upload-icon">{{ selectedFile ? '✓' : '+' }}</div>
-                      <div class="file-text">
-                        {{ selectedFile ? selectedFile.name : 'Klikněte nebo přetáhněte soubor sem' }}
-                      </div>
-                    </div>
-                  </div>
-                  @if (!selectedFile && applicationForm.touched) {
-                    <small class="error-msg">
-                      Prosím, přiložte svůj životopis.
-                    </small>
+<div class="job-page">
+
+  <!-- ── Navigace zpět ─────────────────────────────────────────── -->
+  <div class="job-back-bar">
+    <a routerLink="/jobs" class="back-link">
+      ← {{ t?.back_link || 'Zpět na výpis pozic' }}
+    </a>
+  </div>
+
+  @if (job) {
+
+    <!-- ── Hero ────────────────────────────────────────────────── -->
+    <section class="job-hero">
+      <div class="job-hero-eyebrow">Otevřená pozice</div>
+      <h1 class="job-hero-title">{{ job?.title }}</h1>
+      <div class="job-hero-meta">
+        <span class="job-meta-tag">Plný úvazek</span>
+        <span class="job-meta-tag">Praha / Remote</span>
+      </div>
+    </section>
+
+    <!-- ── Dvoupanelový layout ──────────────────────────────────── -->
+    <div class="job-layout">
+
+      <!-- Levý panel: popis pozice -->
+      <article class="job-description">
+        <div class="job-desc-label">O pozici</div>
+        <div class="job-desc-body" [innerHTML]="job?.fullContent"></div>
+
+        <div class="job-contact-strip">
+          <span class="job-contact-label">Máte dotaz?</span>
+          <a href="tel:+420733188328" class="job-contact-link">733 188 328</a>
+          <span class="job-contact-sep" aria-hidden="true">•</span>
+          <a href="mailto:info@rpsw.cz" class="job-contact-link">info@rpsw.cz</a>
+        </div>
+      </article>
+
+      <!-- Pravý panel: formulář přihlášky -->
+      <aside class="job-form-aside">
+        <div class="form-card">
+
+          @if (!isSubmitted) {
+
+            <div class="form-card-eyebrow">Přihláška</div>
+            <h2 class="form-card-title">Mám zájem o tuto pozici</h2>
+
+            <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()" novalidate>
+
+              <!-- Jméno + příjmení -->
+              <div class="field-row">
+                <div class="field-group">
+                  <label class="field-label" for="first_name">
+                    Jméno <span class="req">*</span>
+                  </label>
+                  <input
+                    id="first_name"
+                    type="text"
+                    formControlName="first_name"
+                    placeholder="Jan"
+                    class="field-input"
+                    [class.is-error]="applicationForm.get('first_name')?.invalid && applicationForm.get('first_name')?.touched">
+                  @if (applicationForm.get('first_name')?.errors?.['required'] && applicationForm.get('first_name')?.touched) {
+                    <span class="field-error">Jméno je povinné.</span>
                   }
                 </div>
-                <div class="checkbox-container">
-                  <div class="checkbox-group">
-                    <input id="gdpr" type="checkbox" formControlName="dataProcessingAgreement">
-                    <label for="gdpr">
-                      Souhlasím se <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">zpracováním osobních údajů</a> *
-                    </label>
-                  </div>
+
+                <div class="field-group">
+                  <label class="field-label" for="last_name">
+                    Příjmení <span class="req">*</span>
+                  </label>
+                  <input
+                    id="last_name"
+                    type="text"
+                    formControlName="last_name"
+                    placeholder="Novák"
+                    class="field-input"
+                    [class.is-error]="applicationForm.get('last_name')?.invalid && applicationForm.get('last_name')?.touched">
+                  @if (applicationForm.get('last_name')?.errors?.['required'] && applicationForm.get('last_name')?.touched) {
+                    <span class="field-error">Příjmení je povinné.</span>
+                  }
                 </div>
-                <p class="required-info">* Označuje povinné pole</p>
-                <button type="submit"
-                  [disabled]="applicationForm.invalid || !selectedFile || (loadingService.isLoading$ | async)"
-                  class="submit-btn-skew">
-                  <span>
-                    @if ((loadingService.isLoading$ | async)) {
-                      Odesílám...
-                    } @else {
-                      Odeslat přihlášku
-                    }
-                  </span>
-                </button>
-                @if (errorMessage) {
-                  <div class="message-box error-msg">{{ errorMessage }}</div>
-                }
-              </form>
-            } @else {
-              <div class="success-container" style="text-align: center; padding: 40px 0;">
-                <div class="success-icon" style="font-size: 48px; color: #4caf50; margin-bottom: 20px;">✓</div>
-                <h2 style="margin-bottom: 10px;">Děkujeme za váš zájem!</h2>
-                <p class="success-text" style="margin-bottom: 30px;">
-                  Vaše přihláška na pozici <strong>{{ job?.title }}</strong> byla úspěšně odeslána. <br>
-                  Budeme vás kontaktovat co nejdříve.
-                </p>
-                <button class="submit-btn-skew" routerLink="/jobs">
-                  <span>Zpět na výpis pozic</span>
-                </button>
               </div>
-            }
-          </div>
-          <div class="minimal-contact-box mt-10">
-            <span class="contact-label">Máte dotaz?</span>
-            <a href="tel:+420733188328">733 188 328</a>
-            <span class="sep">•</span>
-            <a href="mailto:info@rpsw.cz">info@rpsw.cz</a>
-          </div>
+
+              <!-- Email -->
+              <div class="field-group">
+                <label class="field-label" for="email">
+                  E-mail <span class="req">*</span>
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  placeholder="jan@priklad.cz"
+                  class="field-input"
+                  [class.is-error]="applicationForm.get('email')?.invalid && applicationForm.get('email')?.touched"
+                  autocomplete="email">
+                @if (applicationForm.get('email')?.touched) {
+                  @if (applicationForm.get('email')?.errors?.['required']) {
+                    <span class="field-error">E-mail je povinný.</span>
+                  } @else if (applicationForm.get('email')?.errors?.['email']) {
+                    <span class="field-error">Zadejte platnou e-mailovou adresu.</span>
+                  }
+                }
+              </div>
+
+              <!-- Telefon -->
+              <div class="field-group">
+                <label class="field-label" for="phone">Telefon</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  formControlName="phone"
+                  placeholder="+420 123 456 789"
+                  class="field-input"
+                  autocomplete="tel">
+              </div>
+
+              <!-- Zpráva -->
+              <div class="field-group">
+                <label class="field-label" for="message">Zpráva / průvodní dopis</label>
+                <textarea
+                  id="message"
+                  formControlName="message"
+                  rows="4"
+                  placeholder="Co vás na pozici zaujalo?"
+                  class="field-input textarea">
+                </textarea>
+              </div>
+
+              <!-- Životopis -->
+              <div class="field-group">
+                <label class="field-label">
+                  Životopis <span class="req">*</span>
+                </label>
+                <label
+                  class="file-zone"
+                  [class.file-zone--has]="selectedFile">
+                  @if (!selectedFile) {
+                    <span class="file-zone-icon" aria-hidden="true">↑</span>
+                    <span class="file-zone-text">
+                      Klikněte nebo přetáhněte soubor
+                    </span>
+                  } @else {
+                    <span class="file-zone-icon" aria-hidden="true">✓</span>
+                    <span class="file-zone-text file-zone-name">{{ selectedFile.name }}</span>
+                  }
+                  <input
+                    type="file"
+                    class="file-hidden"
+                    (change)="onFileSelected($event)"
+                    tabindex="-1"
+                    aria-hidden="true">
+                </label>
+                @if (!selectedFile && applicationForm.touched) {
+                  <span class="field-error">Prosím přiložte životopis.</span>
+                }
+              </div>
+
+              <!-- GDPR -->
+              <div class="gdpr-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="dataProcessingAgreement" class="checkbox-input">
+                  <span class="checkbox-box" aria-hidden="true"></span>
+                  <span>
+                    Souhlasím se
+                    <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">zpracováním osobních údajů</a>
+                    <span class="req"> *</span>
+                  </span>
+                </label>
+              </div>
+
+              <!-- Odeslat -->
+              <button
+                type="submit"
+                class="submit-btn"
+                [disabled]="applicationForm.invalid || !selectedFile || (loadingService.isLoading$ | async)">
+                @if (loadingService.isLoading$ | async) {
+                  <span class="spinner" aria-hidden="true"></span>
+                  <span>Odesílám…</span>
+                } @else {
+                  <span>Odeslat přihlášku</span>
+                  <span class="btn-arrow" aria-hidden="true">→</span>
+                }
+              </button>
+
+              @if (errorMessage) {
+                <p style="margin-top: 12px; font-size: 0.83rem; color: var(--clr-error); text-align: center;">
+                  {{ errorMessage }}
+                </p>
+              }
+
+            </form>
+
+          } @else {
+
+            <!-- Stav po odeslání -->
+            <div class="success-panel">
+              <div class="success-icon" aria-hidden="true">✓</div>
+              <h3 class="success-title">Děkujeme!</h3>
+              <p class="success-text">
+                Vaše přihláška na pozici <strong>{{ job?.title }}</strong> byla odeslána.
+                Budeme vás kontaktovat co nejdříve.
+              </p>
+              <a routerLink="/jobs" class="back-btn">← Zpět na výpis pozic</a>
+            </div>
+
+          }
+
         </div>
-      }
+      </aside>
+
     </div>
-  </div>
+
+  } @else {
+
+    <!-- Pozice nenalezena -->
+    <section class="job-hero">
+      <div class="job-hero-eyebrow">Chyba</div>
+      <h1 class="job-hero-title">{{ t?.not_found || 'Pozice nebyla nalezena' }}</h1>
+      <div style="margin-top: 24px;">
+        <a routerLink="/jobs" class="back-btn">← Zpět na výpis pozic</a>
+      </div>
+    </section>
+
+  }
+
+</div>
 }

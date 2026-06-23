@@ -1,11 +1,182 @@
 @if (t) {
-  <div class="main-content">
-    <div class="header-1">{{ t?.header }}</div>
-    <div class="content-display">
-      <div class="paragraph-node">{{ t?.paragraph_1 }}</div>
-      <div class="paragraph-node">{{ t?.paragraph_2 }}</div>
-      <div class="paragraph-node">{{ t?.paragraph_3 }}</div>
-      <div class="paragraph-node">{{ t?.paragraph_4 }}</div>
+<div class="about-page">
+
+  <!-- ══ HERO ══════════════════════════════════════════════════════ -->
+  <section class="about-hero">
+    <div class="about-hero-eyebrow">Kdo jsme</div>
+    <h1 class="about-hero-title">{{ t?.header }}</h1>
+    <p class="about-hero-sub">
+      Digitální studio zaměřené na tvorbu moderních produktů — od webu po AI.
+    </p>
+
+    <!-- Stat strip -->
+    <div class="about-hero-stats">
+      <div class="about-stat">
+        <span class="about-stat-num">120+</span>
+        <span class="about-stat-label">projektů</span>
+      </div>
+      <div class="about-stat-sep" aria-hidden="true"></div>
+      <div class="about-stat">
+        <span class="about-stat-num">8+</span>
+        <span class="about-stat-label">let zkušeností</span>
+      </div>
+      <div class="about-stat-sep" aria-hidden="true"></div>
+      <div class="about-stat">
+        <span class="about-stat-num">48h</span>
+        <span class="about-stat-label">max. odezva</span>
+      </div>
     </div>
+  </section>
+
+  <!-- ══ HLAVNÍ LAYOUT ══════════════════════════════════════════════ -->
+  <div class="about-layout">
+
+    <!-- ── Levý sidebar ─────────────────────────────────────────── -->
+    <aside class="about-sidebar">
+
+      <!-- Kontaktní karta -->
+      <div class="sidebar-card">
+        <div class="sidebar-eyebrow">Spojte se s námi</div>
+        <h3 class="sidebar-title">Máte projekt?</h3>
+        <p class="sidebar-text">
+          Rádi si vyslechneme váš nápad. Od prvního hovoru po spuštění produktu.
+        </p>
+        <a routerLink="/contact" class="sidebar-cta-btn">
+          Napište nám
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+
+      <!-- Sociální sítě -->
+      <div class="sidebar-card sidebar-card--social">
+        <div class="sidebar-eyebrow">Sledujte nás</div>
+        <div class="social-list">
+
+          <a href="https://linkedin.com" target="_blank" rel="noopener" class="social-item">
+            <span class="social-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                <rect x="2" y="9" width="4" height="12"/>
+                <circle cx="4" cy="4" r="2"/>
+              </svg>
+            </span>
+            <span class="social-label">LinkedIn</span>
+            <span class="social-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a href="https://github.com" target="_blank" rel="noopener" class="social-item">
+            <span class="social-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+              </svg>
+            </span>
+            <span class="social-label">GitHub</span>
+            <span class="social-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a href="https://instagram.com" target="_blank" rel="noopener" class="social-item">
+            <span class="social-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+            </span>
+            <span class="social-label">Instagram</span>
+            <span class="social-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a href="https://twitter.com" target="_blank" rel="noopener" class="social-item">
+            <span class="social-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>
+              </svg>
+            </span>
+            <span class="social-label">Twitter / X</span>
+            <span class="social-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a href="https://facebook.com" target="_blank" rel="noopener" class="social-item">
+            <span class="social-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+              </svg>
+            </span>
+            <span class="social-label">Facebook</span>
+            <span class="social-arrow" aria-hidden="true">↗</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Tip karta -->
+      <div class="sidebar-tip-card">
+        <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
+        <p class="sidebar-tip-text">
+          Každý projekt začínáme <strong>bezplatnou konzultací</strong> — 
+          přijďte s nápadem, my přijdeme s řešením.
+        </p>
+      </div>
+
+    </aside>
+
+    <!-- ── Hlavní obsah ──────────────────────────────────────────── -->
+    <main class="about-main">
+
+      <div class="about-main-eyebrow">O nás</div>
+
+      <!-- Odstavce -->
+      <div class="about-content">
+        <p class="about-paragraph">{{ t?.paragraph_1 }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_2 }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_3 }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_4 }}</p>
+      </div>
+
+      <!-- Doplňující hodnoty / pillars -->
+      <div class="about-pillars">
+        <div class="pillar-item">
+          <span class="pillar-icon" aria-hidden="true">◈</span>
+          <h4 class="pillar-title">Kvalita kódu</h4>
+          <p class="pillar-text">Píšeme čistý, udržovatelný kód s důrazem na výkon a škálovatelnost.</p>
+        </div>
+        <div class="pillar-item">
+          <span class="pillar-icon" aria-hidden="true">◎</span>
+          <h4 class="pillar-title">Transparentnost</h4>
+          <p class="pillar-text">Pravidelná komunikace a jasný přehled o průběhu každého projektu.</p>
+        </div>
+        <div class="pillar-item">
+          <span class="pillar-icon" aria-hidden="true">◐</span>
+          <h4 class="pillar-title">Inovace</h4>
+          <p class="pillar-text">Sledujeme trendy a přinášíme moderní řešení tam, kde to dává smysl.</p>
+        </div>
+      </div>
+
+    </main>
   </div>
+
+  <!-- ══ CTA SEKCE ══════════════════════════════════════════════════ -->
+  <section class="about-cta-section">
+    <div class="cta-row">
+      <div class="cta-block">
+        <p class="cta-text">Podívejte se na naše realizované projekty.</p>
+        <a routerLink="/references" class="cta-btn">
+          Reference
+          <span class="cta-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+      <div class="cta-divider" aria-hidden="true"></div>
+      <div class="cta-block">
+        <p class="cta-text">Připraveni začít spolupráci?</p>
+        <a routerLink="/contact" class="cta-btn cta-btn--accent">
+          Kontaktujte nás
+          <span class="cta-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="about-divider" aria-hidden="true"></div>
+
+</div>
 }

@@ -1,200 +1,502 @@
-.main-content {
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    min-height: 100vh;
-    box-sizing: border-box;
-    padding-bottom: 50px;
-    background: radial-gradient(ellipse at center, rgba(128, 0, 128, 0.05) 15%, rgba(128, 0, 128, 0.02) 30%, rgba(17, 17, 31, 0) 50%),
-                repeating-linear-gradient(to bottom, transparent, transparent 49px, rgba(128, 0, 128, 0.4) 50px),
-                repeating-linear-gradient(to right, transparent, transparent 49px, rgba(128, 0, 128, 0.4) 50px);
-    background-size: cover;
-    background-position: center center;
-    background-color: #11111f; 
+/* ═══════════════════════════════════════════════════════════════
+   LOGIN PAGE — redesign
+   Brand systém: #0d0d1b · #a67dff · #6b2e91
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Tokeny ─────────────────────────────────────────────────── */
+:host {
+  --bg:           #0d0d1b;
+  --surface:      #111128;
+  --surface-2:    #18183a;
+  --border:       rgba(166, 125, 255, 0.1);
+  --border-mid:   rgba(166, 125, 255, 0.22);
+  --accent:       #a67dff;
+  --accent-dark:  #6b2e91;
+  --accent-hover: #7d35ae;
+  --accent-dim:   rgba(166, 125, 255, 0.07);
+  --accent-grid:  rgba(166, 125, 255, 0.03);
+  --text:         #e0e0f0;
+  --text-muted:   #888899;
+  --white:        #ffffff;
+  --error:        #f08080;
+  --error-dim:    rgba(240, 128, 128, 0.1);
+  --error-border: rgba(240, 128, 128, 0.3);
+  --success:      #5dcaa5;
+  --success-dim:  rgba(93, 202, 165, 0.1);
+  --success-border: rgba(93, 202, 165, 0.3);
+  --ff-display:   'Source Sans Pro', 'Segoe UI', sans-serif;
+  --ff-body:      'Segoe UI', system-ui, sans-serif;
+  --radius:       10px;
+  --radius-lg:    18px;
+  --ease:         0.22s ease;
 }
 
-.main-content::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(17, 17, 31, 0.98) 80%);
-    z-index: 1;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Stránka — plná výška, tmavé pozadí + čtverce ───────────── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  background: var(--bg);
+  font-family: var(--ff-body);
+  color: var(--text);
+  position: relative;
+  overflow: hidden;
 }
 
-.header-1 {
-    position: relative;
-    z-index: 2;
-    color: #979797;
-    text-align: center;
-    font-family: "Source Sans Pro", sans-serif;
-    font-size: 3.5rem;
-    font-weight: 700;
-    text-shadow: 0 0 15px rgba(158, 158, 158, 0.5);
-    opacity: 0;
-    transform: translateY(-20px);
-    animation: fadeInSlideDown 0.8s ease-out forwards;
+/* Čtvercové pozadí */
+.login-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--accent-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-grid) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.form-wrp {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    opacity: 0;
-    transform: translateY(30px);
-    animation: fadeInSlideUp 0.8s ease-out 0.4s forwards;
+/* Radial vignette */
+.login-page::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 80% at 50% 50%,
+    rgba(107, 46, 145, 0.06) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
-.form {
-    width: 100%;
-    max-width: 450px;
-    padding: 20px;
+/* ── Centrovací wrapper ──────────────────────────────────────── */
+.login-center {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  max-width: 440px;
+  animation: fadeUp 0.6s ease-out both;
 }
 
-.contact-form {
-    background-color: rgba(26, 26, 46, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 3px solid rgba(116, 68, 128, 0.4);
-    border-radius: 20px;
-    padding: 0px 20px 40px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+/* ── Brand odkaz nahoře ──────────────────────────────────────── */
+.login-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--ff-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color var(--ease);
 }
 
-.contact-form h2 {
-    color: #a67dff;
-    font-size: 2rem;
-    text-shadow: 0 0 10px rgba(166, 125, 255, 0.3);
-    margin-bottom: 10px;
+.login-brand:hover { color: var(--accent); }
+
+.login-brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
 }
 
-.form-group label {
-    display: block;
-    font-family: "Source Sans Pro", sans-serif;
-    color: #e0e0e0;
-    margin-bottom: 8px;
+/* ── Přihlašovací karta ──────────────────────────────────────── */
+.login-card {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
+.login-card-header {
+  padding: 32px 32px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.login-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.login-title {
+  font-family: var(--ff-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.login-subtitle {
+  font-size: 0.87rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Formulář ────────────────────────────────────────────────── */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px 32px;
+}
+
+/* Pole */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.field-input {
+  width: 100%;
+  padding: 13px 15px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: var(--ff-body);
+  transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(166, 125, 255, 0.12);
+}
+
+.field-input::placeholder { color: rgba(136, 136, 153, 0.5); }
+
+/* Zapomenuté heslo — inline odkaz */
+.forgot-trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  transition: opacity var(--ease);
+  text-decoration: none;
+  font-family: var(--ff-body);
+}
+
+.forgot-trigger:hover { opacity: 0.75; }
+
+/* Password wrapper */
 .password-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.form-group input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid rgba(116, 68, 128, 0.4);
-    border-radius: 8px;
-    background-color: #131325;
-    color: #fff;
-    font-family: "Source Sans Pro", sans-serif;
-    transition: all 0.3s ease;
-}
-
-.password-wrapper input {
-    padding-right: 45px;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #a67dff;
-    box-shadow: 0 0 15px rgba(166, 125, 255, 0.4);
+.password-wrapper .field-input {
+  padding-right: 46px;
 }
 
 .toggle-password {
-    position: absolute;
-    right: 12px;
-    background: transparent;
-    border: none;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: rgba(166, 125, 255, 0.7);
-    transition: color 0.3s ease, transform 0.2s ease;
-    z-index: 5;
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(166, 125, 255, 0.6);
+  transition: color var(--ease), transform 0.15s ease;
+  z-index: 2;
 }
 
 .toggle-password svg {
-    width: 20px;
-    height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .toggle-password:hover {
-    color: #a67dff;
-    transform: scale(1.1);
+  color: var(--accent);
+  transform: scale(1.1);
 }
 
-button[type="submit"] {
-    width: 100%;
-    padding: 15px;
-    margin-top: 10px;
-    background: linear-gradient(45deg, #a67dff, #6f42c1);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-button[type="submit"]:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 20px rgba(166, 125, 255, 0.5);
-}
-
+/* Chybová hláška */
 .error-message {
-    color: #ff4d4d;
-    background: rgba(255, 77, 77, 0.1);
-    padding: 10px;
-    border-radius: 5px;
-    margin-top: 15px;
-    text-align: center;
-    font-size: 0.9rem;
-    border: 1px solid rgba(255, 77, 77, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--error);
+  background: var(--error-dim);
+  border: 1px solid var(--error-border);
+  padding: 11px 14px;
+  border-radius: var(--radius);
+  font-size: 0.86rem;
+  line-height: 1.45;
 }
 
-.back-to-home {
-    margin-top: 25px;
-    text-align: center;
+/* Submit tlačítko */
+.submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 15px 24px;
+  margin-top: 4px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  color: var(--bg);
+  font-size: 0.97rem;
+  font-weight: 700;
+  font-family: var(--ff-display);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background var(--ease), transform 0.15s ease, box-shadow var(--ease);
 }
 
-.home-link {
-    color: #979797;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.3s;
+.submit-btn:hover {
+  background: #b98fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(166, 125, 255, 0.35);
 }
 
-.home-link:hover {
-    color: #a67dff;
+.submit-btn:active { transform: translateY(0); }
+
+.submit-arrow {
+  font-size: 1.1rem;
+  transition: transform var(--ease);
 }
 
-@keyframes fadeInSlideDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+.submit-btn:hover .submit-arrow { transform: translateX(4px); }
+
+/* Footer karty */
+.login-card-footer {
+  padding: 20px 32px 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
 }
 
-@keyframes fadeInSlideUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--ease);
 }
 
+.back-link:hover { color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL — zapomenuté heslo
+   ═══════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgba(5, 5, 18, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeOverlay 0.2s ease both;
+}
+
+@keyframes fadeOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeUp 0.25s ease both;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color var(--ease), border-color var(--ease), background var(--ease);
+}
+
+.modal-close:hover {
+  color: var(--text);
+  border-color: var(--border-mid);
+  background: var(--accent-dim);
+}
+
+.modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.modal-title {
+  font-family: var(--ff-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.2;
+}
+
+.modal-subtitle {
+  font-size: 0.87rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Úspěšná hláška */
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--success);
+  background: var(--success-dim);
+  border: 1px solid var(--success-border);
+  padding: 11px 14px;
+  border-radius: var(--radius);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+/* Akční tlačítka */
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.modal-cancel-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--ff-body);
+  cursor: pointer;
+  transition: color var(--ease), border-color var(--ease), background var(--ease);
+}
+
+.modal-cancel-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.modal-submit-btn {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--accent-dark);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--white);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: var(--ff-display);
+  cursor: pointer;
+  transition: background var(--ease), transform 0.15s ease;
+}
+
+.modal-submit-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMACE
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONZIVITA
+   ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
-    .contact-form {
-        padding: 25px;
-    }
+  .login-card-header { padding: 24px 20px 20px; }
+  .login-form        { padding: 20px 20px; }
+  .login-card-footer { padding: 16px 20px 24px; }
+  .modal-card        { padding: 24px 20px; }
+  .modal-actions     { flex-direction: column; }
+  .modal-cancel-btn,
+  .modal-submit-btn  { flex: unset; width: 100%; }
 }

@@ -1,38 +1,64 @@
 @if (t) {
-  <div class="main-content">
-    <div class="jobs-section">
-      <div class="header-1">{{ t?.careers?.header_1 }}</div>
-      <div class="jobs-container">
-        @for (job of availableJobs; track job; let i = $index) {
-          <div
-            class="job-item animated-job-item"
-            [style.animation-delay]="i * 0.1 + 's'"
-            [routerLink]="['/jobs', job.id]">
-            <div class="job-info">
-              <div class="job-text-content">
-                <h3>{{ job?.title }}</h3>
-                <p class="job-short-desc">{{ job?.shortDescription }}</p>
-              </div>
-              <div class="job-indicator">
-                <span class="job-arrow">&gt;</span>
-              </div>
-            </div>
+<div class="jobs-page">
+
+  <!-- ══ HERO ══════════════════════════════════════════════════════ -->
+  <section class="jobs-hero">
+    <div class="jobs-hero-eyebrow">Kariéra</div>
+    <h1 class="jobs-hero-title">{{ t?.careers?.header_1 }}</h1>
+    <p class="jobs-hero-sub">
+      Hledáme nadšené lidi, kteří chtějí tvořit produkty, na které budou hrdí.
+    </p>
+  </section>
+
+  <!-- ══ SEZNAM POZIC ═══════════════════════════════════════════════ -->
+  <div class="jobs-body">
+    <div class="jobs-section-label">Otevřené pozice</div>
+
+    <div class="jobs-list" role="list">
+      @for (job of availableJobs; track job.id; let i = $index) {
+        <a
+          class="job-card"
+          [routerLink]="['/jobs', job.id]"
+          role="listitem">
+          <span class="job-card-num" aria-hidden="true">
+            {{ (i + 1).toString().padStart(2, '0') }}
+          </span>
+          <div class="job-card-body">
+            <div class="job-card-title">{{ job?.title }}</div>
+            <div class="job-card-desc">{{ job?.shortDescription }}</div>
           </div>
-        }
-      </div>
-    </div>
-    <div class="write-us-wrp">
-      <div class="write-us-text">
-        {{ t?.careers?.write_us_prompt }}
-      </div>
-      <div class="write-us-icons">
-        <a href="https://www.instagram.com/rpsw.cz" target="_blank" class="icon-wrp">
-          <img [src]="ig_icon" alt="Instagram">
+          <span class="job-card-arrow" aria-hidden="true">→</span>
         </a>
-        <a href="mailto:info@rpsw.cz" class="icon-wrp">
-          <img [src]="email_icon" alt="Email">
-        </a>
-      </div>
+      }
     </div>
   </div>
+
+  <!-- ══ CTA ════════════════════════════════════════════════════════ -->
+  <section class="jobs-cta-section">
+    <div class="cta-panel">
+      <div class="cta-panel-text-block">
+        <div class="cta-panel-eyebrow">Nenašli jste shodu?</div>
+        <h2 class="cta-panel-title">{{ t?.careers?.write_us_prompt }}</h2>
+        <p class="cta-panel-sub">
+          Zasílejte spontánní přihlášky — vždy rádi poznáme výjimečné lidi.
+        </p>
+      </div>
+      <div class="cta-panel-actions">
+        <a href="mailto:info@rpsw.cz" class="cta-btn">
+          ✉ Napsat e-mail
+        </a>
+        <a
+          href="https://www.instagram.com/rpsw.cz"
+          target="_blank"
+          rel="noopener"
+          class="cta-btn cta-btn--ghost">
+          ◉ Instagram
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="jobs-divider" aria-hidden="true"></div>
+
+</div>
 }
