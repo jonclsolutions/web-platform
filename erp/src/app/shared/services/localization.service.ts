@@ -30,6 +30,11 @@ export class LocalizationService {
     }
   }
 
+  // Přidejte tuto metodu do localization.service.ts
+  public getCurrentLanguage(): string {
+    return this.currentLanguageSource.getValue();
+  }
+
   private loadTranslations(languageCode: string): void {
     this.http.get(`assets/i18n/${languageCode}.json`).pipe(
       tap(data => {

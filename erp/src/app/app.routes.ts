@@ -11,7 +11,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       { path: 'home', loadComponent: () => import('./public/web-pages/home/home.component').then(m => m.HomeComponent) },
       { path: 'services', loadComponent: () => import('./public/web-pages/services/services.component').then(m => m.ServicesComponent) },
-      { path: 'academy', loadComponent: () => import('./public/web-pages/academy/academy.component').then(m => m.AcademyComponent) },
+      { path: 'contact', loadComponent: () => import('./public/web-pages/contact/contact.component').then(m => m.ContactComponent) },
       { path: 'tos', loadComponent: () => import('./public/web-pages/tos/tos.component').then(m => m.TosComponent) },
       { path: 'privacy-policy', loadComponent: () => import('./public/web-pages/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
       { path: 'references', loadComponent: () => import('./public/web-pages/references/references.component').then(m => m.ReferencesComponent) },

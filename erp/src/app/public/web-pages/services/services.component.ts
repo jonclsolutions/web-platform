@@ -1,174 +1,150 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
+import { CommonModule, KeyValuePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import * as Web from '../../../shared/imports/web-providers';
-import { GenericFormComponent } from '../components/generic-form/generic-form.component';
 import { Technology } from '../components/interfaces/technology';
 import { Item } from '../components/interfaces/item';
 
 @Component({
-    selector: 'app-main-content',
-    standalone: true,
-    imports: [CommonModule, RouterModule, GenericFormComponent, FormsModule], // přímé importy
-    templateUrl: './services.component.html',
-    styleUrls: ['./services.component.css'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-main-content',
+  standalone: true,
+  imports: [CommonModule, RouterModule, KeyValuePipe],
+  templateUrl: './services.component.html',
+  styleUrls: ['./services.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ServicesComponent implements OnInit, OnDestroy {
-    s: any = null;
+  s: any = null;
+  private destroy$ = new Web.Subject<void>();
 
-    contactFormConfig: Web.FormFieldConfig[] = [];
-    private destroy$ = new Web.Subject<void>();
+  currentTech = 'web-dev';
+  technologies: Technology[] = [];
 
-    currentTech: string = 'web-dev';
-    technologies: Technology[] = [];
+  readonly webTechImages = [
+    { name: 'C#',         path: 'assets/images/services-img/csharp.png' },
+    { name: 'TypeScript', path: 'assets/images/services-img/ts.png' },
+    { name: 'PHP',        path: 'assets/images/services-img/php.png' },
+  ];
+  readonly desktopTechImages = [
+    { name: 'C#',     path: 'assets/images/services-img/csharp.png' },
+    { name: 'C++',    path: 'assets/images/services-img/cpp.png' },
+    { name: 'Python', path: 'assets/images/services-img/py.png' },
+  ];
+  readonly mobileTechImages = [
+    { name: 'C#',         path: 'assets/images/services-img/csharp.png' },
+    { name: 'TypeScript', path: 'assets/images/services-img/ts.png' },
+    { name: 'Kotlin',     path: 'assets/images/services-img/kotlin.png' },
+  ];
+  readonly aiTechImages = [
+    { name: 'Python', path: 'assets/images/services-img/py.png' },
+    { name: 'C++',    path: 'assets/images/services-img/cpp.png' },
+  ];
 
-    webTechImages = [
-        { name: 'C#', path: 'assets/images/services-img/csharp.png' },
-        { name: 'TypeScript', path: 'assets/images/services-img/ts.png' },
-        { name: 'PHP', path: 'assets/images/services-img/php.png' },
-    ];
-    desktopTechImages = [
-        { name: 'C#', path: 'assets/images/services-img/csharp.png' },
-        { name: 'C++', path: 'assets/images/services-img/cpp.png' },
-        { name: 'Python', path: 'assets/images/services-img/py.png' },
-    ];
-    mobileTechImages = [
-        { name: 'C#', path: 'assets/images/services-img/csharp.png' },
-        { name: 'TypeScript', path: 'assets/images/services-img/ts.png' },
-        { name: 'Kotlin', path: 'assets/images/services-img/kotlin.png' },
-    ];
-    aiTechImages = [
-        { name: 'Python', path: 'assets/images/services-img/py.png' },
-        { name: 'C++', path: 'assets/images/services-img/cpp.png' },
-    ];
+  // Workflow kroky s čísly — nový designový prvek
+  readonly workflowNumbers = ['01', '02', '03', '04'];
 
-    constructor(
-        private publicDataService: Web.PublicDataService,
-        private cdr: ChangeDetectorRef,
-        private route: Web.ActivatedRoute,
-        private localizationService: Web.LocalizationService
-    ) { }
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private route: Web.ActivatedRoute,
+    private localizationService: Web.LocalizationService,
+  ) {}
 
-    ngOnInit(): void {
-        this.localizationService.currentTranslations$
-            .pipe(Web.takeUntil(this.destroy$))
-            .subscribe(translations => {
-                if (translations && translations.services) {
-                    this.s = translations.services;
-
-                    this.technologies = [
-                        { id: 'web-dev', name: this.s.web_dev_header },
-                        { id: 'desktop-dev', name: this.s.desktop_dev_header },
-                        { id: 'mobile-dev', name: this.s.mobile_dev_header },
-                        { id: 'ai-dev', name: this.s.ai_dev_header }
-                    ];
-
-                    this.buildFormConfig();
-                    this.cdr.detectChanges();
-                }
-            });
-
-        this.route.queryParams.pipe(
-            Web.takeUntil(this.destroy$)
-        ).subscribe(params => {
-            const techIdFromUrl = params['tech'];
-            if (techIdFromUrl && this.technologies.some(t => t.id === techIdFromUrl)) {
-                this.currentTech = techIdFromUrl;
-                this.updateFormThema(techIdFromUrl);
-            } else {
-                this.currentTech = 'web-dev';
-            }
-            this.cdr.detectChanges();
-        });
-    }
-
-    private buildFormConfig(): void {
-        if (!this.s) return;
-        this.contactFormConfig = [
-            {
-                label: this.s.contact_form.thema_label,
-                name: 'thema',
-                type: 'select',
-                required: true,
-                value: 'Webový vývoj',
-                options: [
-                    { value: 'Webový vývoj', label: this.s.contact_form.web_development_label },
-                    { value: 'Desktopový vývoj', label: this.s.contact_form.desktop_development_label },
-                    { value: 'Mobilní vývoj', label: this.s.contact_form.mobile_development_label },
-                    { value: 'AI vývoj', label: this.s.contact_form.ai_development_label },
-                    { value: 'Jiné', label: this.s.contact_form.other_label }
-                ]
-            },
-            {
-                label: this.s.contact_form.email_label,
-                name: 'contact_email',
-                type: 'email',
-                required: true,
-                placeholder: this.s.contact_form.email_placeholder,
-                pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$'
-            },
-            {
-                label: this.s.contact_form.phone_label,
-                name: 'contact_phone',
-                type: 'tel',
-                required: false,
-                placeholder: this.s.contact_form.phone_placeholder,
-                pattern: '^[0-9\\s\\-+\\(\\)]+$'
-            },
-            {
-                label: this.s.contact_form.order_description_label,
-                name: 'order_description',
-                type: 'textarea',
-                required: true,
-                rows: 5,
-                placeholder: this.s.contact_form.order_description_placeholder
-            }
-        ];
-    }
-
-    private updateFormThema(techId: string): void {
-        const themaField = this.contactFormConfig.find(field => field.name === 'thema');
-        if (themaField) {
-            const formValue = this.mapTechIdToFormValue(techId);
-            if (formValue) themaField.value = formValue;
+  ngOnInit(): void {
+    this.localizationService.currentTranslations$
+      .pipe(Web.takeUntil(this.destroy$))
+      .subscribe(translations => {
+        if (translations?.services) {
+          this.s = translations.services;
+          this.technologies = [
+            { id: 'web-dev',     name: this.s.web_dev_header },
+            { id: 'desktop-dev', name: this.s.desktop_dev_header },
+            { id: 'mobile-dev',  name: this.s.mobile_dev_header },
+            { id: 'ai-dev',      name: this.s.ai_dev_header },
+          ];
+          this.cdr.detectChanges();
         }
-    }
+      });
 
-    ngOnDestroy(): void {
-        this.destroy$.next();
-        this.destroy$.complete();
-    }
+    this.route.queryParams
+      .pipe(Web.takeUntil(this.destroy$))
+      .subscribe(params => {
+        const techId = params['tech'];
+        this.currentTech =
+          techId && this.technologies.some(t => t.id === techId)
+            ? techId
+            : 'web-dev';
+        this.cdr.detectChanges();
+      });
+  }
 
-    handleFormSubmission(formData: any): void {
-        this.publicDataService.submitContactForm(formData).subscribe({
-            next: () => {},
-            error: (error: Web.HttpErrorResponse) => {}
-        });
-    }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-    handleFormReset(): void {}
+  get currentTechImages() {
+    return this.currentTech === 'web-dev'     ? this.webTechImages
+         : this.currentTech === 'desktop-dev' ? this.desktopTechImages
+         : this.currentTech === 'mobile-dev'  ? this.mobileTechImages
+         : this.aiTechImages;
+  }
 
-    private mapTechIdToFormValue(techId: string): string | undefined {
-        switch (techId) {
-            case 'web-dev': return 'Webový vývoj';
-            case 'desktop-dev': return 'Desktopový vývoj';
-            case 'mobile-dev': return 'Mobilní vývoj';
-            case 'ai-dev': return 'AI vývoj';
-            default: return undefined;
-        }
-    }
+  get currentInfoHeader(): string {
+    return this.currentTech === 'web-dev'     ? this.s?.info_header_web
+         : this.currentTech === 'desktop-dev' ? this.s?.info_header_desktop
+         : this.currentTech === 'mobile-dev'  ? this.s?.info_header_mobile
+         : this.s?.info_header_ai;
+  }
 
-    toggleFaq(clickedItem: Item): void {
-        clickedItem.isActive = !clickedItem.isActive;
-    }
+  get currentMainText(): string {
+    return this.currentTech === 'web-dev'     ? this.s?.service_main_text_1
+         : this.currentTech === 'desktop-dev' ? this.s?.service_main_text_2
+         : this.currentTech === 'mobile-dev'  ? this.s?.service_main_text_3
+         : this.s?.service_main_text_4;
+  }
 
-    selectTech(techId: string): void {
-        if (this.currentTech !== techId) {
-            this.currentTech = techId;
-            this.updateFormThema(techId);
-            this.cdr.detectChanges();
-        }
+  get currentServices() {
+    return this.currentTech === 'web-dev'     ? this.s?.webServices
+         : this.currentTech === 'desktop-dev' ? this.s?.desktopServices
+         : this.currentTech === 'mobile-dev'  ? this.s?.mobileServices
+         : this.s?.aiServices;
+  }
+
+  get priceItems() {
+    return [
+      this.s?.services?.item_1,
+      this.s?.services?.item_2,
+      this.s?.services?.item_3,
+      this.s?.services?.item_4,
+      this.s?.services?.item_5,
+      this.s?.services?.item_6,
+    ];
+  }
+
+  get workflowSteps() {
+    return [
+      this.s?.colab?.item_1,
+      this.s?.colab?.item_2,
+      this.s?.colab?.item_3,
+      this.s?.colab?.item_4,
+    ];
+  }
+
+  toggleFaq(item: Item): void {
+    item.isActive = !item.isActive;
+    this.cdr.markForCheck();
+  }
+
+  selectTech(techId: string): void {
+    if (this.currentTech !== techId) {
+      this.currentTech = techId;
+      this.cdr.detectChanges();
     }
+  }
 }

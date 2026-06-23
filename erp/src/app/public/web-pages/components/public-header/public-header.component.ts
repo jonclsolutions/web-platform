@@ -1,12 +1,21 @@
-import { Component, OnInit, HostListener, AfterViewInit, QueryList, ElementRef, ViewChildren, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
+import {
+  Component, OnInit, HostListener, AfterViewInit,
+  QueryList, ElementRef, ViewChildren,
+  ChangeDetectorRef, NgZone, OnDestroy, Output, EventEmitter
+} from '@angular/core';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter, takeUntil } from 'rxjs/operators';
-import { Output, EventEmitter } from '@angular/core';
-import { LocalizationService } from '../../../../shared/services/localization.service'; 
+import { LocalizationService } from '../../../../shared/services/localization.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
-import { Observable } from 'rxjs'; 
+import { Observable } from 'rxjs';
 import * as Web from '../../../../shared/imports/web-providers';
+
+export interface Language {
+  code: string;
+  label: string;
+  flag: string;
+}
 
 @Component({
   selector: 'app-public-header',
@@ -31,7 +40,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   en_flag_link: string = 'assets/images/icons/united-kingdom.png';
   tel_icon: string = 'assets/images/icons/call.png';
   mail_icon: string = 'assets/images/icons/mail.png';
-  logo: string = 'assets/images/logos/logo.png'; // Fallback logo
+  logo: string = 'assets/images/logos/logo.png';
 
   showIndicator: boolean = false;
   isAnimatingTransition: boolean = false;
@@ -40,13 +49,26 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly LINK_WIDTH = 130;
   private readonly GAP_DEFAULT = 15;
   private readonly GAP_SCROLLED = 8;
-  private readonly INDICATOR_ANIMATION_DURATION = 400; 
+  private readonly INDICATOR_ANIMATION_DURATION = 400;
 
   private currentActiveRoute: string | null = null;
   currentLanguage$: Observable<string>;
 
   isMobileView: boolean = false;
   isMenuOpen: boolean = false;
+
+  /** Stav dropdown přepínače jazyků */
+  isLangOpen: boolean = false;
+
+  /**
+   * Dostupné jazyky — v budoucnu nahradit dynamickým načtením ze serveru.
+   * Každý objekt obsahuje: code (kód jazyka), label (název), flag (cesta k ikoně).
+   */
+  availableLanguages: Language[] = [
+    { code: 'cz', label: 'Čeština',  flag: 'assets/images/icons/czech-republic.png'  },
+    { code: 'en', label: 'English',  flag: 'assets/images/icons/united-kingdom.png'  },
+  ];
+
   private destroy$ = new Web.Subject<void>();
 
   constructor(
@@ -77,6 +99,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     this.checkMobileView();
+
     this.router.events.pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
         window.scrollTo(0, 0);
@@ -85,9 +108,10 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
     setTimeout(() => {
-        this.currentActiveRoute = this.router.url;
-        this.handleRouteChange();
+      this.currentActiveRoute = this.router.url;
+      this.handleRouteChange();
     }, 0);
+
     this.scheduleUpdate(false);
     this.initResizeObserver();
   }
@@ -96,82 +120,115 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:resize', ['$event'])
   onResize(event: Event): void {
-      this.checkMobileView();
-      if (!this.isMobileView && this.isMenuOpen) this.closeMenu();
+    this.checkMobileView();
+    if (!this.isMobileView && this.isMenuOpen) this.closeMenu();
+  }
+
+  /** Zavře dropdown při kliknutí mimo něj (používá directive nebo globální listener) */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.lang-dropdown')) {
+      this.isLangOpen = false;
+      this.cdr.markForCheck();
+    }
   }
 
   private checkMobileView(): void {
-      const newIsMobileView = window.innerWidth <= 768; 
-      if (this.isMobileView !== newIsMobileView) {
-          this.isMobileView = newIsMobileView;
-          this.cdr.detectChanges();
-          if (!this.isMobileView) this.scheduleUpdate(false);
-      }
+    const newIsMobileView = window.innerWidth <= 768;
+    if (this.isMobileView !== newIsMobileView) {
+      this.isMobileView = newIsMobileView;
+      this.cdr.detectChanges();
+      if (!this.isMobileView) this.scheduleUpdate(false);
+    }
   }
 
   toggleMenu(): void { this.isMenuOpen = !this.isMenuOpen; this.toggleScroll(this.isMenuOpen); }
-  closeMenu(): void { this.isMenuOpen = false; this.toggleScroll(false); }
-  
+  closeMenu(): void  { this.isMenuOpen = false; this.toggleScroll(false); }
+
+  /** Otevře / zavře jazykový dropdown */
+  toggleLangDropdown(): void {
+    this.isLangOpen = !this.isLangOpen;
+    this.cdr.markForCheck();
+  }
+
+  /** Zavře jazykový dropdown */
+  closeLangDropdown(): void {
+    this.isLangOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  /** Vrátí objekt aktivního jazyka nebo první z pole */
+  getActiveLang(): Language | undefined {
+    const current = this.localizationService.getCurrentLanguage?.() ?? 'cz';
+    return this.availableLanguages.find(l => l.code === current)
+        ?? this.availableLanguages[0];
+  }
+
   private toggleScroll(blockScroll: boolean): void {
-      const html = document.documentElement;
-      if (html) blockScroll ? html.classList.add('no-scroll') : html.classList.remove('no-scroll');
+    const html = document.documentElement;
+    if (html) blockScroll ? html.classList.add('no-scroll') : html.classList.remove('no-scroll');
   }
 
   private handleRouteChange(): void {
-      if (this.isMobileView) return;
-      const allLinks = this.navLinks.map(link => link.nativeElement);
-      const targetLink = allLinks.find(link => {
-          const linkRoute = link.getAttribute('routerLink');
-          return linkRoute && this.currentActiveRoute?.startsWith(linkRoute);
+    if (this.isMobileView) return;
+    const allLinks = this.navLinks.map(link => link.nativeElement);
+    const targetLink = allLinks.find(link => {
+      const linkRoute = link.getAttribute('routerLink');
+      return linkRoute && this.currentActiveRoute?.startsWith(linkRoute);
+    });
+
+    this.navLinks.forEach(link => {
+      link.nativeElement.classList.remove('active', 'highlight-text', 'is-clicked-animating');
+    });
+    this.navLinks.forEach(link => link.nativeElement.classList.add('is-clicked-animating'));
+
+    if (targetLink) targetLink.classList.add('highlight-text');
+    this.cdr.detectChanges();
+
+    this.showIndicator = true;
+    this.isAnimatingTransition = true;
+    this.scheduleUpdate(true);
+
+    clearTimeout(this.animationTimeout);
+    this.animationTimeout = setTimeout(() => {
+      this.showIndicator = false;
+      this.isAnimatingTransition = false;
+      this.navLinks.forEach(link => {
+        link.nativeElement.classList.remove('is-clicked-animating', 'highlight-text');
       });
-
-      this.navLinks.forEach(link => { link.nativeElement.classList.remove('active', 'highlight-text', 'is-clicked-animating'); });
-      this.navLinks.forEach(link => link.nativeElement.classList.add('is-clicked-animating'));
-
-      if (targetLink) targetLink.classList.add('highlight-text');
+      if (targetLink) targetLink.classList.add('active');
       this.cdr.detectChanges();
-
-      this.showIndicator = true;
-      this.isAnimatingTransition = true;
-      this.scheduleUpdate(true);
-
-      clearTimeout(this.animationTimeout);
-      this.animationTimeout = setTimeout(() => {
-          this.showIndicator = false;
-          this.isAnimatingTransition = false;
-          this.navLinks.forEach(link => { link.nativeElement.classList.remove('is-clicked-animating', 'highlight-text'); });
-          if (targetLink) targetLink.classList.add('active');
-          this.cdr.detectChanges();
-      }, this.INDICATOR_ANIMATION_DURATION);
+    }, this.INDICATOR_ANIMATION_DURATION);
   }
 
   private scheduleUpdate(forceAnimate: boolean = false): void {
-      if (this.isMobileView) return;
-      this.ngZone.runOutsideAngular(() => {
-          requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                  this.ngZone.run(() => {
-                      this.updateIndicatorPosition(forceAnimate);
-                      this.cdr.detectChanges();
-                  });
-              });
+    if (this.isMobileView) return;
+    this.ngZone.runOutsideAngular(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.ngZone.run(() => {
+            this.updateIndicatorPosition(forceAnimate);
+            this.cdr.detectChanges();
           });
+        });
       });
+    });
   }
 
   private initResizeObserver(): void {
-      const headerElement = document.querySelector('header');
-      if (headerElement) {
-          this.resizeObserver = new ResizeObserver(() => {
-              this.ngZone.run(() => {
-                  this.checkMobileView();
-                  if (!this.isMobileView) this.scheduleUpdate(false);
-              });
-          });
-          this.resizeObserver.observe(headerElement);
-      }
+    const headerElement = document.querySelector('header');
+    if (headerElement) {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.ngZone.run(() => {
+          this.checkMobileView();
+          if (!this.isMobileView) this.scheduleUpdate(false);
+        });
+      });
+      this.resizeObserver.observe(headerElement);
+    }
   }
-  
+
   ngOnDestroy(): void {
     if (this.resizeObserver) this.resizeObserver.disconnect();
     clearTimeout(this.animationTimeout);
@@ -180,38 +237,53 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   @HostListener('window:scroll', [])
-  onWindowScroll() {
-      if (this.isMobileView) return;
-      const scrollThreshold = 100;
-      if (window.scrollY > scrollThreshold !== this.scrolled) {
-          this.scrolled = window.scrollY > scrollThreshold;
-          this.scheduleUpdate(true);
-      }
+  onWindowScroll(): void {
+    if (this.isMobileView) return;
+    const scrollThreshold = 100;
+    if (window.scrollY > scrollThreshold !== this.scrolled) {
+      this.scrolled = window.scrollY > scrollThreshold;
+      this.scheduleUpdate(true);
+    }
   }
 
   updateIndicatorPosition(forceAnimate: boolean = false): void {
     if (this.isMobileView) return;
     const allLinks = this.navLinks.map(link => link.nativeElement);
-    let targetLinkElement = allLinks.find(link => (this.showIndicator || this.isAnimatingTransition) ? link.getAttribute('routerLink') && this.currentActiveRoute?.startsWith(link.getAttribute('routerLink')!) : link.classList.contains('active'));
+    let targetLinkElement = allLinks.find(link =>
+      (this.showIndicator || this.isAnimatingTransition)
+        ? link.getAttribute('routerLink') && this.currentActiveRoute?.startsWith(link.getAttribute('routerLink')!)
+        : link.classList.contains('active')
+    );
 
-    if (!targetLinkElement) targetLinkElement = allLinks.find(link => link.getAttribute('routerLink') && this.router.url.startsWith(link.getAttribute('routerLink')!));
+    if (!targetLinkElement) {
+      targetLinkElement = allLinks.find(link =>
+        link.getAttribute('routerLink') && this.router.url.startsWith(link.getAttribute('routerLink')!)
+      );
+    }
 
     if (targetLinkElement) {
-        const currentGap = this.scrolled ? this.GAP_SCROLLED : this.GAP_DEFAULT;
-        const targetLinkIndex = allLinks.indexOf(targetLinkElement);
-        if (targetLinkIndex !== -1) {
-            this.indicatorStyle = {
-                width: `${this.LINK_WIDTH}px`,
-                height: this.scrolled ? '32px' : '48px',
-                opacity: this.showIndicator ? 1 : 0,
-                transform: `translateX(${(targetLinkIndex * this.LINK_WIDTH) + (targetLinkIndex * currentGap)}px) translateY(-50%)`,
-                transition: (!forceAnimate && !this.scrolled && !this.isAnimatingTransition) ? 'none' : `all ${this.INDICATOR_ANIMATION_DURATION/1000}s cubic-bezier(0.25, 0.8, 0.25, 1)`
-            };
-        }
+      const currentGap = this.scrolled ? this.GAP_SCROLLED : this.GAP_DEFAULT;
+      const targetLinkIndex = allLinks.indexOf(targetLinkElement);
+      if (targetLinkIndex !== -1) {
+        this.indicatorStyle = {
+          width: `${this.LINK_WIDTH}px`,
+          height: this.scrolled ? '32px' : '48px',
+          opacity: this.showIndicator ? 1 : 0,
+          transform: `translateX(${(targetLinkIndex * this.LINK_WIDTH) + (targetLinkIndex * currentGap)}px) translateY(-50%)`,
+          transition: (!forceAnimate && !this.scrolled && !this.isAnimatingTransition)
+            ? 'none'
+            : `all ${this.INDICATOR_ANIMATION_DURATION / 1000}s cubic-bezier(0.25, 0.8, 0.25, 1)`
+        };
+      }
     } else {
-        this.indicatorStyle = { opacity: 0, width: '0px', height: '0px', transform: `translateX(0px) translateY(-50%)`, transition: 'none' };
+      this.indicatorStyle = {
+        opacity: 0, width: '0px', height: '0px',
+        transform: 'translateX(0px) translateY(-50%)', transition: 'none'
+      };
     }
   }
 
-  selectLanguage(languageCode: string): void { this.localizationService.setLanguage(languageCode); }
+  selectLanguage(languageCode: string): void {
+    this.localizationService.setLanguage(languageCode);
+  }
 }

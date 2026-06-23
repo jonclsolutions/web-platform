@@ -44,7 +44,13 @@ export class PublicDataService {
     return this.http.post(`${this.apiUrl}/raw_request_commissions`, formData)
       .pipe(catchError(this.handleError));
   }
-
+  /**
+   * Odeslání poptávky na zakázkovou tvorbu
+   */
+  postRawRequestCommission(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/raw_request_commissions`, formData)
+      .pipe(catchError(this.handleError));
+  }
   submitOrder(formData: FormData): Observable<any> {
     return this.http.post(`${this.apiUrl}/sales_orders`, formData)
       .pipe(catchError(this.handleError));

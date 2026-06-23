@@ -1,153 +1,419 @@
-.public-footer {
-    background-color: #1a1a2e;
-    color: #e0e0e0;
-    padding: 60px 40px 20px;
-    border-top: 3px solid rgba(116, 068, 128, 0.4);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    position: relative;
-    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+/* ═══════════════════════════════════════════════════════════════
+   PUBLIC FOOTER — redesign v2
+   Sjednocen s brand systémem: #0d0d1b · #a67dff · #6b2e91
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Tokeny ─────────────────────────────────────────────────── */
+:host {
+  --bg:          #0a0a18;
+  --surface:     #111128;
+  --surface-2:   #18183a;
+  --border:      rgba(166, 125, 255, 0.1);
+  --border-mid:  rgba(166, 125, 255, 0.22);
+  --accent:      #a67dff;
+  --accent-dark: #6b2e91;
+  --accent-dim:  rgba(166, 125, 255, 0.07);
+  --text:        #e0e0f0;
+  --text-muted:  #888899;
+  --ff-display:  'Source Sans Pro', 'Segoe UI', sans-serif;
+  --ff-body:     'Segoe UI', system-ui, sans-serif;
+  --radius:      10px;
+  --radius-lg:   16px;
+  --ease:        0.22s ease;
+  --max-w:       1200px;
 }
 
-a {
-    text-decoration: none;
-    color: #b39ddb;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Wrapper ─────────────────────────────────────────────────── */
+.footer {
+  position: relative;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-body);
+  border-top: 1px solid var(--border-mid);
+  overflow: hidden;
 }
 
-.footer-content {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    max-width: 1200px;
-    margin: 0 auto;
-    gap: 30px;
+/* Čtvercové pozadí — identické s ostatními stránkami */
+.footer-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(166, 125, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(166, 125, 255, 0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.footer-section {
-    flex: 1;
-    min-width: 220px;
-    margin-bottom: 30px;
+/* Jemný gradient vignette přes pozadí */
+.footer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 100%,
+    rgba(107, 46, 145, 0.07) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
-.footer-section h3 {
-    color: #a67dff;
-    font-size: 1.5em;
-    margin-bottom: 20px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+/* Sdílený inner wrapper */
+.footer-inner {
+  position: relative;
+  z-index: 1;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 32px;
 }
 
-.footer-section p {
-    font-size: 0.95em;
-    line-height: 1.6;
-    margin-bottom: 10px;
-    color: #c5aaff;
+/* ═══════════════════════════════════════════════════════════════
+   HORNÍ ČÁST — čtyři sloupce
+   ═══════════════════════════════════════════════════════════════ */
+.footer-top {
+  padding: 72px 0 56px;
 }
 
-.footer-section ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.footer-top .footer-inner {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 48px;
+  align-items: start;
 }
 
-.footer-section ul li {
-    margin-bottom: 10px;
+/* ── Brand sloupec ───────────────────────────────────────────── */
+.footer-col--brand {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.footer-section ul li a {
-    color: #b39ddb;
-    text-decoration: none;
-    font-size: 0.95em;
-    transition: color 0.3s ease, transform 0.3s ease;
-    font-weight: normal;
-    text-shadow: none;
+.footer-brand-name {
+  display: block;
+  font-family: var(--ff-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
 }
 
-.social-links {
-    margin-top: 15px;
-    display: flex;
-    gap: 15px;
+.footer-brand-tagline {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text-muted);
 }
 
-.social-links a {
-    display: inline-block;
-    line-height: 1;
+/* Sociální sítě */
+.footer-social {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.social-links img {
-    width: 32px;
-    height: 32px;
-    vertical-align: middle;
-    transition: filter 0.3s ease;
+.footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color var(--ease), background var(--ease), transform 0.15s ease;
 }
 
+.footer-social-link img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: brightness(0) invert(1) opacity(0.65);
+  transition: filter var(--ease), opacity var(--ease);
+}
+
+.footer-social-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  transform: translateY(-2px);
+}
+
+.footer-social-link:hover img {
+  filter: brightness(0) invert(1) opacity(1);
+}
+
+/* Firemní meta */
+.footer-company-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.footer-meta-item {
+  display: flex;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.footer-meta-label {
+  color: var(--text-muted);
+  min-width: 36px;
+}
+
+.footer-meta-val {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ── Sloupce obecně ──────────────────────────────────────────── */
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.footer-col-heading {
+  font-family: var(--ff-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Navigační seznam ────────────────────────────────────────── */
+.footer-nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--ease), transform 0.15s ease;
+}
+
+.footer-nav-link:hover {
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
+.footer-ext-icon {
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: opacity var(--ease);
+}
+
+.footer-nav-link:hover .footer-ext-icon {
+  opacity: 1;
+}
+
+/* ── Kontaktní seznam ────────────────────────────────────────── */
+.footer-contact-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.footer-contact-icon {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  color: var(--accent);
+  font-size: 0.85rem;
+  margin-top: 1px;
+  opacity: 0.8;
+}
+
+.footer-contact-link {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  line-height: 1.5;
+  transition: color var(--ease);
+}
+
+.footer-contact-link:hover { color: var(--accent); }
+
+.footer-contact-address {
+  font-style: normal;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* ── CTA blok v právním sloupci ──────────────────────────────── */
+.footer-cta-block {
+  margin-top: 8px;
+  padding: 18px 20px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-cta-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.footer-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--accent-dark);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--ease), transform 0.15s ease;
+  align-self: flex-start;
+}
+
+.footer-cta-btn:hover {
+  background: #7d35ae;
+  transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DOLNÍ ČÁST — copyright
+   ═══════════════════════════════════════════════════════════════ */
 .footer-bottom {
-    text-align: center;
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(47, 47, 47, 0.5);
-    font-size: 0.85em;
-    color: #9a9a9b;
+  border-top: 1px solid var(--border);
+  padding: 20px 0;
 }
 
-.footer-link{
-    display: flex;
-    justify-content: start;
-    align-content: center;
-    gap: 3px;
+.footer-bottom-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
-.external-icon{
-    margin-top: 2px;
+.footer-copy {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0.75;
+  line-height: 1.5;
+}
+
+.footer-bottom-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.footer-bottom-link {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  opacity: 0.65;
+  transition: color var(--ease), opacity var(--ease);
+}
+
+.footer-bottom-link:hover {
+  color: var(--accent);
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONZIVITA
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .footer-top .footer-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+
+  .footer-col--brand {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 32px;
+  }
+
+  .footer-brand { flex: 1; min-width: 200px; }
+  .footer-social { align-items: flex-start; }
+  .footer-company-meta { flex-direction: row; gap: 20px; border-top: none; padding-top: 0; }
 }
 
 @media (max-width: 768px) {
-    .footer-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
+  .footer-top {
+    padding: 56px 0 40px;
+  }
 
-    .footer-section {
-        margin-bottom: 20px;
-    }
+  .footer-top .footer-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
 
-    .footer-section ul {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+  .footer-col--brand {
+    flex-direction: column;
+    gap: 20px;
+  }
 
-    .social-links {
-        justify-content: center;
-    }
+  .footer-company-meta {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .footer-inner {
+    padding: 0 20px;
+  }
 }
 
-@media (max-width: 480px) {
-    .public-footer {
-        padding: 40px 20px 15px;
-    }
+@media (max-width: 540px) {
+  .footer-top .footer-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
 
-    .footer-section h3 {
-        font-size: 1.3em;
-    }
+  .footer-bottom-inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
 
-    .footer-section p,
-    .footer-section ul li a {
-        font-size: 0.9em;
-    }
+  .footer-bottom-links {
+    justify-content: center;
+  }
 
-    .social-links img {
-        width: 28px;
-        height: 28px;
-    }
+  .footer-inner {
+    padding: 0 16px;
+  }
 }
 
-@media (min-width: 906px) {
-    .footer-section ul li a:hover {
-        color: #a67dff;
-        transform: translateX(5px);
-    }
-    .social-links a:hover img {
-        filter: brightness(1.2) drop-shadow(0 0 10px rgba(166, 125, 255, 0.8));
-    }
+/* Hover jen na zařízeních s myší */
+@media (hover: none) {
+  .footer-nav-link:hover { transform: none; }
+  .footer-social-link:hover { transform: none; }
+  .footer-cta-btn:hover { transform: none; }
 }

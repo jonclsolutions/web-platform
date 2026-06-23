@@ -46,7 +46,7 @@ body {
     padding: 0;
     width: 100vw;
     overflow-x: hidden; 
-    background-color: #11111f;
+    background-color: #0d0d1b;
     cursor: crosshair;
 
     &::-webkit-scrollbar {

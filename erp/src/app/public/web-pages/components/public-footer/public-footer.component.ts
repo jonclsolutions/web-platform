@@ -68,7 +68,7 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     const navLinkKeys = [
       { route: '/home', key: 'navigation.home', ext: false },
       { route: '/services', key: 'navigation.services', ext: false },
-      { route: '/academy', key: 'navigation.academy', ext: false },
+      { route: '/academy', key: 'navigation.contact', ext: false },
       { route: '/shop', key: 'navigation.shop', ext: true }, 
       { route: '/references', key: 'navigation.references_full', ext: false },
       { route: '/faq', key: 'navigation.faq_full', ext: false },

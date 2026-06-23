@@ -29,7 +29,7 @@
         "home": "Domů",
         "services": "Služby",
         "shop": "E-Shop",
-        "academy": "Akademie",
+        "contact": "Kontakt",
         "references": "Projekty",
         "references_full": "Realizované projekty",
         "faq": "FAQ",
@@ -102,183 +102,6 @@
         "validation_invalid_value": "Neplatná hodnota.",
         "consent": "Souhlasím se zpracováním osobních údajů",
         "privacy_policy_link": "Zásady ochrany osobních údajů"
-    },
-    "academy": {
-        "form_closed_title": "Kapacita naplněna",
-        "form_closed_message": "Děkujeme za váš zájem o naše IT kroužky. Momentálně máme plno a nové přihlášky dočasně nepřijímáme.",
-        "header": "Naše Akademie",
-        "second_header": "Kroužky pro mládež od 9 let",
-        "intro_text": "Objevte naše kurzy programování a posuňte své dovednosti na novou úroveň.",
-        "common": {
-            "duration_header": "Doba trvání",
-            "themes_header": "Hlavní témata",
-            "new_things_header": "Co se naučíte",
-            "time_duration": "8 měsíců (1x týdně)",
-            "tuesday_time": "Úterý: 16:00 - 17:30",
-            "thursday_time": "Čtvrtek: 16:00 - 17:30",
-            "tuesday_time_desktop": "Úterý: 18:00 - 19:30",
-            "thursday_time_desktop": "Čtvrtek: 18:00 - 19:30",
-            "course_duration": "32 lekcí - 90 minut lekce",
-            "internet_basics": "Seznámení s internetem",
-            "website_creation": "Tvorba webu",
-            "web_app_creation": "Tvorba webových aplikací",
-            "database_basics": "Práce s databázi",
-            "computer_principles": "Architektura počítače",
-            "cmd_applications": "Aplikace v commandline",
-            "gui_applications": "Aplikace s grafickým rozhraním"
-        },
-        "consultation_form": {
-            "header": "Zanechte kontakt pro konzultaci",
-            "description": "Odezva do 24h",
-            "button": "Rezervovat konzultaci",
-            "fields": {
-                "theme_label": "Okruh:",
-                "theme_option_desktop": "Desktopový vývoj",
-                "theme_option_web": "Webový vývoj",
-                "diff_label": "Obtížnost:",
-                "diff_option_begginer": "Začátečník",
-                "diff_option_advanced": "Pokročilý",
-                "diff_option_expert": "Expert",
-                "age_range_begginer": "(9-17 let)",
-                "age_range_advanced": "(11-17 let)",
-                "age_range_expert": "(12-17 let)",
-                "email_label": "E-mail:",
-                "email_placeholder": "vas.email@priklad.cz",
-                "phone_label": "Telefon (nepovinné):",
-                "phone_placeholder": "např. +420 123 456 789"
-            }
-        },
-        "web_development": {
-            "title": "Webový vývoj",
-            "description": "Otevřete bránu do digitálního světa a naučte se tvořit moderní a poutavé webové stránky, které ožijí pod rukama vašich dětí. Zjistěte, jak funguje internet, a proměňte své nápady v responzivní online zážitky, které fungují na jakémkoli zařízení. Tento kurz je dokonalým startem pro budoucí webové designéry a vývojáře.",
-            "timeline": {
-                "1": {
-                    "title": "Začátečník (9-17 let)",
-                    "content": "Jste úplný nováček ve světě kódování? Nebojte se! Tento kurz je navržený tak, aby vás provedl úplnými základy. Naučíte se přemýšlet jako programátor a tvořit logické algoritmy. Začneme vizuálním programováním (třeba ve Scratchi), kde si osaháte základní principy, a plynule přejdeme k textovým příkazům. Na konci budete umět vytvořit své první interaktivní příběhy a hry a pochopíte, jak vznikají webové stránky.",
-                    "theme": {
-                        "1": "Úvod do internetu: Jak web funguje?",
-                        "2": "Co to je HTML & CSS?",
-                        "3": "Základní HTML tagy: Stavíme kostru webu",
-                        "4": "Základy CSS: Dodáváme styl a barvy",
-                        "5": "Header a Footer: Důležité části webu",
-                        "6": "Miniprojekty: Vaše první webová galerie a interaktivní semafor"
-                    },
-                    "new_thing": {
-                        "1": "HTML",
-                        "2": "CSS"
-                    }
-                },
-                "2": {
-                    "title": "Pokročilý (11-17 let)",
-                    "content": "Jste připraveni posunout své dovednosti na vyšší úroveň? V tomto kurzu se ponoříme do světa pokročilého kódování. Zaměříme se na moderní webové jazyky jako JavaScript a TypeScript. Naučíte se pracovat s datovými strukturami, vytvářet dynamický obsah a tvořit složitější projekty, jako jsou plně funkční webové aplikace a interaktivní hry. Zdokonalíte si efektivitu psaní kódu a naučíte se řešit komplexní problémy.",
-                    "theme": {
-                        "1": "Pokročilé HTML tagy a atributy: Detailní struktura webu",
-                        "2": "Styly a layout v CSS (flexbox, grid): Tvoříme profesionální design",
-                        "3": "Úvod do JavaScriptu: Přidáváme webu život",
-                        "4": "Moderní TypeScript frameworky (Angular): Programujeme na profesionální úrovni",
-                        "5": "Základy dynamického obsahu (DOM): Jak měnit web v reálném čase",
-                        "6": "Interaktivní prvky (formuláře, tlačítka): Komunikace s uživatelem",
-                        "7": "Projekty: Tvorba interaktivního formuláře, Jednoduchá hra a animovaný míč"
-                    },
-                    "new_thing": {
-                        "1": "JavaScript",
-                        "2": "TypeScript"
-                    }
-                },
-                "3": {
-                    "title": "Expert (12-17 let)",
-                    "content": "Jste připraveni stát se skutečným webovým expertem? Tento kurz je určen pro ty, kteří mají pevné základy a chtějí se věnovat vývoji na plné pecky. Budete pracovat na vlastních projektech, řešit reálné programovací výzvy a učit se pokročilé techniky, jako je práce s databázemi a verzování kódu. Na konci kurzu budete schopni samostatně tvořit full-stack aplikace, od frontendu až po backend, a připravíte se na profesionální kariéru webového vývojáře.",
-                    "theme": {
-                        "1": "Moderní TypeScript frameworky (Angular): Hlubší ponor",
-                        "2": "Základy backendového vývoje (PHP): Jak web funguje na serveru",
-                        "3": "Práce s databázemi (MySQL, PostgreSQL): Ukládání a správa dat",
-                        "4": "Vytváření full-stack aplikací: Propojení frontendu s backendem",
-                        "5": "Verzování kódu (Git): Týmová práce bez chaosu",
-                        "6": "Projekty: Vlastní chatovací aplikace a plně funkční e-commerce web"
-                    },
-                    "new_thing": {
-                        "1": "PHP",
-                        "2": "MySQL"
-                    }
-                }
-            }
-        },
-        "desktop_development": {
-            "title": "Desktopový vývoj",
-            "description": "Vdechněte život svým nápadům! Naučte se programovat aplikace s grafickým rozhraním, které fungují přímo na počítačích s různými operačními systémy. Získejte dovednosti potřebné k tvorbě vlastních her, editorů nebo užitečných nástrojů, ať už pro sebe, nebo pro celý svět. Součástí je i seznámení se s AI v moderním světě.",
-            "timeline": {
-                "1": {
-                    "title": "Začátečník (11-17 let)",
-                    "content": "Jste úplný nováček ve světě programování? Není se čeho bát. V tomto kurzu se naučíte základní stavební kameny programování. Začneme s vizuálním programováním ve Scratchi, kde si osvojíte logiku a řešení problémů. Plynule přejdeme k textovému programování a naučíte se pracovat s proměnnými, datovými typy, cykly a podmíněnými příkazy. Vaším cílem bude vytvořit první desktopové programy, jako je jednoduchá kalkulačka nebo generátor náhodných čísel.",
-                    "theme": {
-                        "1": "Úvod do programování: Jak přemýšlet jako programátor",
-                        "2": "Vizuální programování (např. Scratch): Od obrázku ke kódu",
-                        "3": "Základy datových typů a proměnných: Kde ukládáme data",
-                        "4": "Podmíněné příkazy a smyčky: Program dělá to, co chcete",
-                        "5": "Miniprojekty: Vaše první kalkulačka a generátor náhodných čísel"
-                    },
-                    "new_thing": {
-                        "1": "Scratch",
-                        "2": "Python"
-                    }
-                },
-                "2": {
-                    "title": "Pokročilý (13-17 let)",
-                    "content": "Už máte základy a chcete jít dál? Tento kurz vás provede tvorbou skutečných aplikací s grafickým rozhraním. Ponoříme se do jazyků jako Python a C# a naučíme se, jak navrhovat a programovat okna, tlačítka a formuláře. Naučíte se pracovat s událostmi, ukládat data do souborů a seznámíte se se základy objektově orientovaného programování, které je klíčové pro tvorbu složitějších systémů. A připojíme se k první databázi.",
-                    "theme": {
-                        "1": "Základy GUI programování (např. Tkinter\/WinForms): Tvoříme interaktivní okna",
-                        "2": "Práce s událostmi (kliknutí, stisky kláves): Reakce na uživatele",
-                        "3": "Ukládání a načítání dat ze souborů: Uchováváme informace",
-                        "4": "Základy objektově orientovaného programování (OOP): Chytře organizujeme kód",
-                        "5": "Miniprojekty: Jednoduchý textový editor a malovací program"
-                    },
-                    "new_thing": {
-                        "1": "C#",
-                        "2": "MSSQL"
-                    }
-                },
-                "3": {
-                    "title": "Expert (14-17 let)",
-                    "content": "Jste připraveni programovat jako profesionál? V tomto kurzu se zaměříme na tvorbu komplexních, robustních a výkonných aplikací. Budete řešit pokročilé problémy, jako je optimalizace výkonu a správa databází, a naučíte se používat moderní frameworky a pracovat s pokročilými datovými strukturami. Na konci kurzu budete schopni vytvořit plnohodnotné desktopové aplikace a nasadit je tak, aby je mohli používat i ostatní.",
-                    "theme": {
-                        "1": "Pokročilé GUI frameworky: Tvorba profesionálního designu",
-                        "2": "Databáze v desktopových aplikacích (SQLite): Efektivní správa dat",
-                        "3": "Multithreading a asynchronní programování: Jak aplikace běží plynule",
-                        "4": "Deployování aplikací: Zpřístupňujeme aplikaci světu",
-                        "5": "Pokročilé datové struktury a algoritmy: Řešení složitých problémů",
-                        "6": "Projekty: Správce úkolů s databází a jednoduchá 2D hra"
-                    },
-                    "new_thing": {
-                        "1": "C++",
-                        "2": "SQLite"
-                    }
-                }
-            }
-        },
-        "icons": {
-            "time": "Čas",
-            "online": "Online kurzy",
-            "what": "Co se naučíte",
-            "discord": "Discord komunita"
-        },
-        "prices": {
-            "header": "Ceny kurzů",
-            "monthly": {
-                "header": "Měsíční platba",
-                "amount": "1 400 Kč",
-                "note": "Při platbě měsíčně (350kč\/lekce)"
-            },
-            "quarterly": {
-                "header": "Čtvrtletní platba",
-                "amount": "3 960 Kč",
-                "note": "Při čtvrtletní platbě (330 Kč\/lekce)"
-            },
-            "yearly": {
-                "header": "Osmiměsíční platba",
-                "amount": "9 600 Kč",
-                "note": "Při osmiměsíční platbě (300 Kč\/lekce)"
-            }
-        }
     },
     "privacy_policy": {
         "header_main": "Zásady zpracování osobních údajů",
@@ -354,14 +177,16 @@
         "desktop_dev_header": "Desktopové aplikace",
         "mobile_dev_header": "Mobilní aplikace",
         "ai_dev_header": "Umělá inteligence",
-        "info_header_1": "S čím rádi pracujeme:",
+        "info_header_1": "Používáme technologie:",
         "info_header_2": "Ale umíme mnohem víc",
-        "info_header_3": "Co s námi získáte a MNOHEM VÍC:",
+        "info_header_3": "Co s námi získáte:",
         "form_description": "Navázání spolupráce do 24h",
         "form_button": "Rezervovat konzultaci",
         "form_header": "Máte nápad? My máme řešení",
         "show_projects_header": "Nahlédněte do dokončených projektů.",
+        "show_contact_header": "Nebo nás kontaktujte",
         "projects_button_text": "Realizované projekty",
+        "contact_button_text": "Kontakt",
         "colab": {
             "colab_procces_header": "Průběh spolupráce",
             "item_1": {
@@ -592,6 +417,8 @@
         }
     },
     "home": {
+        "contact_us_header":"Máte otázky? Kontaktujte nás",
+        "contact_us_button":"Kontakty",
         "header_1": "RPsoftware",
         "header_2": "víc než IT, stavíme digitální budoucnost",
         "web_header": "Webový Vývoj",
@@ -696,6 +523,35 @@
             }
         }
     },
+"contact_form": {
+    "header": "Kontaktujte nás",
+    "labels": {
+      "subject": "Předmět poptávky",
+      "email": "E-mail",
+      "phone": "Telefonní číslo",
+      "message": "Popis projektu",
+      "attachment": "Příloha",
+      "gdpr_consent": "Souhlasím se zpracováním osobních údajů",
+      "gdpr_link": "Zásady ochrany osobních údajů"
+    },
+    "options": {
+      "web": "Webový vývoj",
+      "desktop": "Desktopový vývoj",
+      "mobile": "Mobilní vývoj"
+    },
+    "placeholders": {
+      "file": "Přetáhněte soubor sem nebo klikněte"
+    },
+    "buttons": {
+      "send": "Odeslat poptávku",
+      "sending": "Odesílám...",
+      "go_home": "Zpět na hlavní stránku"
+    },
+    "thank_you": {
+      "title": "Děkujeme za vaši zprávu",
+      "text": "V nejbližší době se vám ozveme."
+    }
+  },
     "about_us": {
         "header": "Dopňující informace",
         "paragraph_1": "Společnost Regiopartner s.r.o. působí více jak 20 let v oblasti evaluací a plánování regionálního rozvoje. Zaměřujeme se na hodnocení programů a projektů financovaných z veřejných zdrojů a strategické plánování rozvoje území. Díky těmto zkušenostem jsme si vybudovali stabilní zázemí a odborné know-how, na kterém postupně stavíme i nové aktivity.",

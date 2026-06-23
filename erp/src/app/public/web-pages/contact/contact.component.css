@@ -1,0 +1,614 @@
+/* ─────────────────────────────────────────────
+   CONTACT PAGE  
+   Dvoupanelové rozvržení: identita vlevo, formulář vpravo.
+   Tmavý brand (#0d0d1b) + fialová akcent (#a67dff / #6b2e91)
+   ───────────────────────────────────────────── */
+
+/* ── Tokeny ────────────────────────────────── */
+:host {
+  --clr-bg:          #0d0d1b;
+  --clr-surface:     #11112a;
+  --clr-surface-2:   #181832;
+  --clr-border:      rgba(166, 125, 255, 0.12);
+  --clr-border-mid:  rgba(166, 125, 255, 0.25);
+  --clr-accent:      #a67dff;
+  --clr-accent-dark: #6b2e91;
+  --clr-accent-dim:  rgba(166, 125, 255, 0.08);
+  --clr-text:        #e8e8f0;
+  --clr-muted:       #8585a0;
+  --clr-error:       #f08080;
+  --clr-success:     #5dcaa5;
+  --ff-display:      'Source Sans Pro', 'Segoe UI', sans-serif;
+  --ff-body:         'Segoe UI', system-ui, sans-serif;
+  --radius:          10px;
+  --transition:      0.22s ease;
+}
+
+/* ── Stránkový grid ─────────────────────────── */
+.contact-page {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  min-height: 100vh;
+  background: var(--clr-bg);
+  font-family: var(--ff-body);
+  color: var(--clr-text);
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════
+   LEVÝ PANEL
+   ══════════════════════════════════════════════ */
+.panel-left {
+  position: relative;
+  background: var(--clr-surface);
+  border-right: 1px solid var(--clr-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Velký vertikální nápis — typografický podpis */
+.side-label {
+  position: absolute;
+  right: -28px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  font-family: var(--ff-display);
+  font-size: 7rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: rgba(166, 125, 255, 0.045);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 0;
+}
+
+.panel-left-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding: 120px 48px;
+  height: 100%;
+}
+
+/* Brand block */
+.brand-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clr-accent);
+  margin: 0 0 14px;
+}
+
+.brand-headline {
+  font-family: var(--ff-display);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 18px;
+  color: #fff;
+}
+
+.brand-sub {
+  font-size: 0.97rem;
+  line-height: 1.75;
+  color: var(--clr-muted);
+  margin: 0;
+  max-width: 320px;
+}
+
+/* Statistiky */
+.stats-row {
+  display: flex;
+  gap: 32px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-value {
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--clr-accent);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--clr-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Info list */
+.info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.info-icon {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  color: var(--clr-accent);
+  font-size: 0.95rem;
+  margin-top: 1px;
+}
+
+.info-link,
+.info-text {
+  font-size: 0.93rem;
+  color: var(--clr-text);
+  text-decoration: none;
+  line-height: 1.5;
+}
+
+.info-address {
+  font-style: normal;
+  font-size: 0.93rem;
+  color: var(--clr-text);
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.info-link:hover { color: var(--clr-accent); text-decoration: underline; }
+
+/* Sociální sítě */
+.social-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--clr-border);
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  color: var(--clr-muted);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.social-link:hover { color: var(--clr-accent); }
+
+/* ══════════════════════════════════════════════
+   PRAVÝ PANEL
+   ══════════════════════════════════════════════ */
+.panel-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 48px;
+  overflow-y: auto;
+}
+
+.form-wrapper {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Hlavička formuláře */
+.form-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clr-accent);
+  margin: 0 0 10px;
+}
+
+.form-title {
+  font-family: var(--ff-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 40px;
+}
+
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Pole */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--clr-muted);
+}
+
+.req { color: var(--clr-accent); margin-left: 2px; }
+
+.field-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgba(133, 133, 160, 0.7);
+  font-size: 0.77rem;
+}
+
+.field-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--clr-surface-2);
+  border: 1px solid var(--clr-border-mid);
+  border-radius: var(--radius);
+  color: var(--clr-text);
+  font-size: 0.95rem;
+  font-family: var(--ff-body);
+  box-sizing: border-box;
+  transition: border-color var(--transition), background var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--clr-accent);
+  background: var(--clr-surface);
+}
+
+.field-input::placeholder { color: rgba(133, 133, 160, 0.5); }
+
+.field-input.is-error { border-color: var(--clr-error); }
+
+.field-input.textarea {
+  resize: vertical;
+  min-height: 130px;
+  line-height: 1.6;
+}
+
+.field-error {
+  font-size: 0.78rem;
+  color: var(--clr-error);
+}
+
+/* Select s vlastní šipkou */
+.select-wrap {
+  position: relative;
+}
+
+.select-wrap .field-input {
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.select-wrap .field-input option {
+  background: var(--clr-surface);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--clr-accent);
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+/* Zóna pro soubor */
+.file-zone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  background: var(--clr-surface-2);
+  border: 1px dashed var(--clr-border-mid);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  position: relative;
+}
+
+.file-zone:hover {
+  border-color: var(--clr-accent);
+  background: var(--clr-accent-dim);
+}
+
+.file-zone--has {
+  border-style: solid;
+  border-color: rgba(93, 202, 165, 0.4);
+  background: rgba(93, 202, 165, 0.05);
+}
+
+.file-hidden {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.file-zone-icon {
+  font-size: 1.1rem;
+  color: var(--clr-accent);
+  flex-shrink: 0;
+}
+
+.file-zone--has .file-zone-icon {
+  color: var(--clr-success);
+}
+
+.file-zone-text {
+  font-size: 0.88rem;
+  color: var(--clr-muted);
+  flex: 1;
+}
+
+.file-zone-name {
+  color: var(--clr-text);
+  font-weight: 500;
+}
+
+.file-remove {
+  position: relative;
+  z-index: 2;
+  background: none;
+  border: none;
+  color: var(--clr-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color var(--transition);
+}
+
+.file-remove:hover { color: var(--clr-error); }
+
+/* GDPR */
+.gdpr-row { margin-top: 4px; }
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--clr-muted);
+  line-height: 1.55;
+}
+
+.checkbox-input { display: none; }
+
+.checkbox-box {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--clr-border-mid);
+  border-radius: 4px;
+  background: var(--clr-surface-2);
+  margin-top: 1px;
+  transition: background var(--transition), border-color var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-input:checked + .checkbox-box {
+  background: var(--clr-accent);
+  border-color: var(--clr-accent);
+}
+
+.checkbox-input:checked + .checkbox-box::after {
+  content: '✓';
+  font-size: 0.7rem;
+  color: #fff;
+  line-height: 1;
+}
+
+.checkbox-label.is-error .checkbox-box { border-color: var(--clr-error); }
+
+.gdpr-link {
+  color: var(--clr-accent);
+  text-decoration: none;
+}
+
+.gdpr-link:hover { text-decoration: underline; }
+
+/* Odeslat tlačítko */
+.submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 17px 24px;
+  background: var(--clr-accent);
+  border: none;
+  border-radius: var(--radius);
+  color: #0d0d1b;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--ff-display);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background var(--transition), transform 0.15s ease;
+  margin-top: 6px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #b98fff;
+  transform: translateY(-2px);
+}
+
+.submit-btn:active:not(:disabled) { transform: translateY(0); }
+
+.submit-btn:disabled {
+  background: var(--clr-surface-2);
+  color: var(--clr-muted);
+  border: 1px solid var(--clr-border);
+  cursor: not-allowed;
+}
+
+.btn-arrow { font-size: 1.15rem; transition: transform var(--transition); }
+
+.submit-btn:hover:not(:disabled) .btn-arrow { transform: translateX(4px); }
+
+/* Spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(13, 13, 27, 0.3);
+  border-top-color: #0d0d1b;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════
+   STAV ÚSPĚCHU
+   ══════════════════════════════════════════════ */
+.success-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 440px;
+  gap: 20px;
+}
+
+.success-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(93, 202, 165, 0.12);
+  border: 1px solid rgba(93, 202, 165, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: var(--clr-success);
+}
+
+.success-title {
+  font-family: var(--ff-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.success-text {
+  font-size: 0.97rem;
+  color: var(--clr-muted);
+  line-height: 1.75;
+  margin: 0;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border: 1px solid var(--clr-border-mid);
+  border-radius: var(--radius);
+  color: var(--clr-accent);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition), border-color var(--transition);
+  margin-top: 8px;
+}
+
+.back-btn:hover {
+  background: var(--clr-accent-dim);
+  border-color: var(--clr-accent);
+}
+
+/* ══════════════════════════════════════════════
+   RESPONZIVITA
+   ══════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .contact-page {
+    grid-template-columns: 360px 1fr;
+  }
+
+  .panel-left-content {
+    padding: 48px 36px;
+    gap: 36px;
+  }
+
+  .brand-headline { font-size: 2.4rem; }
+  .side-label { font-size: 5rem; }
+}
+
+@media (max-width: 768px) {
+  .contact-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* Levý panel — horizontal bar na mobilu */
+  .panel-left {
+    border-right: none;
+    border-bottom: 1px solid var(--clr-border);
+  }
+
+  .side-label { display: none; }
+
+  .panel-left-content {
+    padding: 40px 28px 36px;
+    gap: 28px;
+  }
+
+  .brand-headline { font-size: 2rem; }
+
+  .stats-row { gap: 24px; }
+
+  .stat-value { font-size: 1.6rem; }
+
+  .info-list { display: none; }
+
+  .social-row { margin-top: 0; padding-top: 0; border-top: none; }
+
+  .panel-right { padding: 40px 24px 60px; }
+
+  .field-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .panel-left-content { padding: 32px 20px 28px; }
+  .panel-right { padding: 32px 16px 48px; }
+  .brand-headline { font-size: 1.7rem; }
+  .form-title { font-size: 1.5rem; }
+}

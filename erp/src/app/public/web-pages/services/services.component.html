@@ -1,165 +1,174 @@
 @if (s) {
-  <div>
-    <div class="header-1">
-      {{ s?.header_1_text }}
+<div class="svc-page">
+
+  <!-- ══ HERO ══════════════════════════════════════════════════════ -->
+  <section class="svc-hero">
+    <div class="svc-hero-eyebrow">Naše odbornost</div>
+    <h1 class="svc-hero-title">{{ s?.header_1_text }}</h1>
+    <p class="svc-hero-sub">Vyberte oblast a zjistěte, jak vám můžeme pomoci.</p>
+
+    <!-- Tab přepínač technologií -->
+    <div class="tech-tabs" role="tablist">
+      @for (tech of technologies; track tech.id) {
+        <button
+          class="tech-tab"
+          [class]="tech.id"
+          [class.tech-tab--active]="currentTech === tech.id"
+          role="tab"
+          [attr.aria-selected]="currentTech === tech.id"
+          (click)="selectTech(tech.id)">
+          {{ tech?.name }}
+        </button>
+      }
     </div>
-    <div class="main-content">
-      <div class="main-content-inner">
-        <div class="tech-buttons">
-          @for (tech of technologies; track tech) {
-            <button
-              class="tech-button" [class]="tech.id"
-              [class.active]="currentTech === tech.id"
-              (click)="selectTech(tech.id)">
-              {{ tech?.name }}
-            </button>
-          }
+  </section>
+
+  <!-- ══ HLAVNÍ CONTENT PANEL ═══════════════════════════════════════ -->
+  <section class="svc-content-section">
+    <div class="svc-content-inner">
+
+      <!-- Levá část: text + FAQ -->
+      <div class="svc-main-col">
+
+        <div class="svc-panel-header">
+          <div class="svc-panel-tag">{{ currentTech }}</div>
+          <h2 class="svc-panel-title">{{ currentInfoHeader }}</h2>
         </div>
-        <div class="content-display">
-          <div class="content-wrapper visible">
-            <div class="content-item">
-              <div class="content-top-section">
-                <div class="services-info-text">
-                  <div class="ser-h">
-                    @switch (currentTech) {
-                      @case ('web-dev') {
-                        <span>{{ s?.info_header_web }}</span>
-                      }
-                      @case ('desktop-dev') {
-                        <span>{{ s?.info_header_desktop }}</span>
-                      }
-                      @case ('mobile-dev') {
-                        <span>{{ s?.info_header_mobile }}</span>
-                      }
-                      @case ('ai-dev') {
-                        <span>{{ s?.info_header_ai }}</span>
-                      }
-                    }
-                  </div>
-                <div class="services-info-text-2" [innerHTML]="
-                  currentTech === 'web-dev' ? s?.service_main_text_1 :
-                  currentTech === 'desktop-dev' ? s?.service_main_text_2 :
-                  currentTech === 'mobile-dev' ? s?.service_main_text_3 :
-                  s?.service_main_text_4
-                "></div>
-                </div>
-                <div class="services-icons-sidebar">
-                  <div class="services-header">{{ s?.info_header_1 }}</div>
-                  <div class="services-header-2">{{ s?.info_header_2 }}</div>
-                  <div class="tech-grid">
-                    @for (item of (
-                      currentTech === 'web-dev' ? webTechImages :
-                      currentTech === 'desktop-dev' ? desktopTechImages :
-                      currentTech === 'mobile-dev' ? mobileTechImages :
-                      aiTechImages
-                      ); track item) {
-                      <div class="tech-item">
-                        <img [src]="item?.path" [alt]="item?.name">
-                        <span>{{ item?.name }}</span>
-                      </div>
-                    }
-                  </div>
-                </div>
-              </div>
-              <div class="get-h-wrp">
-                <div class="get-h">{{ s?.info_header_3 }}</div>
-              </div>
-              <div class="faq-container">
-                @for (item of (
-                  currentTech === 'web-dev' ? (s?.webServices | keyvalue) :
-                  currentTech === 'desktop-dev' ? (s?.desktopServices | keyvalue) :
-                  currentTech === 'mobile-dev' ? (s?.mobileServices | keyvalue) :
-                  (s?.aiServices | keyvalue)
-                  ); track item; let i = $index) {
-                  <div
-                    class="faq-item animated-faq-item"
-                    [ngClass]="{'active': item?.value?.isActive}"
-                    [style.animation-delay]="i * 0.1 + 's'">
-                    <div class="faq-question" (click)="toggleFaq(item?.value)">
-                      <h3>{{ item?.value?.question }}</h3>
-                      <div class="faq-indicator">
-                        <span class="faq-arrow" [ngClass]="{'rotated': item?.value?.isActive}">></span>
-                      </div>
-                    </div>
-                    <div class="faq-answer" (click)="toggleFaq(item?.value)">
-                      <p>{{ item?.value?.answer }}</p>
-                    </div>
-                  </div>
-                }
+
+        <div class="svc-body-text" [innerHTML]="currentMainText"></div>
+
+        <!-- FAQ accordion -->
+        <div class="faq-label">{{ s?.info_header_3 }}</div>
+        <div class="faq-list" role="list">
+          @for (item of (currentServices | keyvalue); track item.key; let i = $index) {
+            <div
+              class="faq-item"
+              [class.faq-item--open]="item?.value?.isActive"
+              [style.animation-delay]="i * 0.07 + 's'"
+              role="listitem">
+              <button
+                class="faq-trigger"
+                [attr.aria-expanded]="item?.value?.isActive"
+                (click)="toggleFaq(item?.value)">
+                <span class="faq-trigger-text">{{ item?.value?.question }}</span>
+                <span class="faq-chevron" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+              <div class="faq-body">
+                <p class="faq-answer-text">{{ item?.value?.answer }}</p>
               </div>
             </div>
-          </div>
+          }
         </div>
       </div>
-    </div>
-    <div class="header-2 colab-specific-header">{{ s?.colab?.colab_procces_header }}</div>
-    <div class="cop-wrp">
-      <div class="cop">
-        <div class="workflow-diagram">
-          @for (step of [s?.colab?.item_1, s?.colab?.item_2, s?.colab?.item_3, s?.colab?.item_4]; track step; let last = $last) {
-            <div
-              class="workflow-container" style="display: flex; align-items: center;">
-              <div class="workflow-step">
-                <div class="icon-circle"><svg></svg></div>
-                <h3>{{ step?.header }}</h3>
-                <p>{{ step?.text }}</p>
-              </div>
-              @if (!last) {
-                <div class="svg-arrow-container">
-                  <svg class="workflow-arrow wavy-single-wing" viewBox="0 0 100 40" fill="none">
-                    <path d="M5 20C20 5 40 35 50 20C60 5 80 35 95 20" stroke="#6b2e91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M95 20L88 12" stroke="#6b2e91" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+
+      <!-- Pravá část: tech ikony sidebar -->
+      <aside class="svc-sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-label">{{ s?.info_header_1 }}</div>
+          @if (s?.info_header_2) {
+            <div class="sidebar-sublabel">{{ s?.info_header_2 }}</div>
+          }
+          <div class="tech-grid">
+            @for (item of currentTechImages; track item.name) {
+              <div class="tech-item">
+                <div class="tech-item-img-wrap">
+                  <img [src]="item?.path" [alt]="item?.name" loading="lazy">
                 </div>
+                <span class="tech-item-name">{{ item?.name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Dekorativní „stat" karta -->
+        <div class="sidebar-stat-card">
+          <span class="sidebar-stat-num">8+</span>
+          <span class="sidebar-stat-label">let ve vývoji</span>
+        </div>
+      </aside>
+
+    </div>
+  </section>
+
+  <!-- ══ WORKFLOW / PROCES ══════════════════════════════════════════ -->
+  <section class="svc-workflow-section">
+    <div class="svc-section-header">
+      <div class="section-eyebrow">Jak spolupracujeme</div>
+      <h2 class="section-title">{{ s?.colab?.colab_procces_header }}</h2>
+    </div>
+
+    <div class="workflow-track">
+      @for (step of workflowSteps; track step; let i = $index; let last = $last) {
+        <div class="wf-step">
+          <div class="wf-num">{{ workflowNumbers[i] }}</div>
+          <div class="wf-dot-line">
+            <div class="wf-dot"></div>
+            @if (!last) { <div class="wf-line"></div> }
+          </div>
+          <div class="wf-content">
+            <h3 class="wf-title">{{ step?.header }}</h3>
+            <p class="wf-text">{{ step?.text }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ══ CENÍK ══════════════════════════════════════════════════════ -->
+  <section class="svc-prices-section">
+    <div class="svc-section-header">
+      <div class="section-eyebrow">Transparentní ceník</div>
+      <h2 class="section-title">{{ s?.services?.prices_header }}</h2>
+    </div>
+
+    <div class="prices-grid">
+      @for (item of priceItems; track item; let i = $index) {
+        <div class="price-card" [class.price-card--variable]="item?.price === 'Variabilní cena'">
+          <div class="price-card-header">{{ item?.header }}</div>
+          <div class="price-card-body">
+            <div class="price-amount">
+              @if (item?.price !== 'Variabilní cena') {
+                <span class="price-prefix">{{ s?.services?.text_preffix }}</span>
+              }
+              <span class="price-value">{{ item?.price }}</span>
+              @if (item?.price !== 'Variabilní cena') {
+                <span class="price-currency">{{ s?.services?.currency }}</span>
               }
             </div>
-          }
-        </div>
-      </div>
-    </div>
-    <div class="header-2 prices-specific-header">{{ s?.services?.prices_header }}</div>
-    <div class="prices-wrp">
-      <div class="prices-wrp-1">
-        @for (item of [s?.services?.item_1, s?.services?.item_2, s?.services?.item_3, s?.services?.item_4, s?.services?.item_5, s?.services?.item_6]; track item) {
-          <div
-            class="price-card">
-            <div class="price-header-strip">{{ item?.header }}</div>
-            <div class="price-content">
-              <div class="price-amount">
-                @if (item?.price !== 'Variabilní cena') {
-                  <span class="prefix">{{ s?.services?.text_preffix }}</span>
-                }
-                {{ item?.price }}
-                @if (item?.price !== 'Variabilní cena') {
-                  <span class="currency">{{ s?.services?.currency }}</span>
-                }
-              </div>
-              <div class="price-note">{{ item?.message }}</div>
-            </div>
+            <p class="price-note">{{ item?.message }}</p>
           </div>
-        }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ══ CTA SEKCE ══════════════════════════════════════════════════ -->
+  <section class="svc-cta-section">
+    <div class="cta-row">
+      <div class="cta-block">
+        <p class="cta-text">{{ s?.show_projects_header }}</p>
+        <a routerLink="/references" class="cta-btn">
+          {{ s?.projects_button_text }}
+          <span class="cta-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+      <div class="cta-divider" aria-hidden="true"></div>
+      <div class="cta-block">
+        <p class="cta-text">{{ s?.show_contact_header }}</p>
+        <a routerLink="/contact" class="cta-btn cta-btn--accent">
+          {{ s?.contact_button_text }}
+          <span class="cta-arrow" aria-hidden="true">→</span>
+        </a>
       </div>
     </div>
-    <section class="references-section">
-      <div class="references-content">
-        <p class="ref-text">{{ s?.show_projects_header }}</p>
-        <a routerLink="/references" class="ref-button">{{ s?.projects_button_text }}</a>
-      </div>
-    </section>
-    <div class="gradient-seep-wrp">
-      <div class="gradient-line-separator"></div>
-    </div>
-    <div class="form-wrp">
-      <div class="form">
-        <app-generic-form
-          [formConfig]="contactFormConfig"
-          [form_header]="s?.form_header"
-          [form_description]="s?.form_description"
-          [form_button]="s?.form_button"
-          (formSubmitted)="handleFormSubmission($event)"
-          (formReset)="handleFormReset()">
-        </app-generic-form>
-      </div>
-    </div>
-  </div>
+  </section>
+
+  <!-- Oddělovač -->
+  <div class="svc-divider" aria-hidden="true"></div>
+
+</div>
 }
