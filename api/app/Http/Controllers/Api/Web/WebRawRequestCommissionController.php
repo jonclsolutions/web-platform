@@ -11,9 +11,15 @@ use App\Http\Requests\Web\WebRawRequestCommission\UpdateWebRawRequestCommissionR
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class WebRawRequestCommissionController extends Controller
 {
+    /**
+     * Složka ve storage/app/public, kam se ukládají přílohy k tomuto modulu.
+     */
+    private const ATTACHMENT_FOLDER = 'raw_request_commissions';
+
     /**
      * Seznam požadavků na provize.
      */
@@ -72,11 +78,16 @@ class WebRawRequestCommissionController extends Controller
     public function store(StoreWebRawRequestCommissionRequest $request): JsonResponse
     {
         try {
-            $validated = $request->validated();
-            $commission = WebRawRequestCommission::create($validated);
-            
+            $data = $request->validated();
+
+            if ($request->hasFile('attachment')) {
+                $data['file_path'] = $request->file('attachment')->store(self::ATTACHMENT_FOLDER, 'public');
+            }
+
+            $commission = WebRawRequestCommission::create($data);
+
             $this->logAction($request, 'create', 'WebRawRequestCommission', "Vytvořen požadavek na provizi: {$commission->thema}", $commission->id);
-            
+
             return response()->json(new WebRawRequestCommissionResource($commission), 201);
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebRawRequestCommission', "Chyba při vytváření požadavku: " . $e->getMessage());
@@ -84,7 +95,7 @@ class WebRawRequestCommissionController extends Controller
         }
     }
 
-/**
+    /**
      * Detail požadavku (včetně smazaných v koši).
      */
     public function show($id): JsonResponse
@@ -96,22 +107,29 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * Aktualizace požadavku.
-     */
-   /**
      * Aktualizace požadavku (ruční načtení podle ID).
      */
     public function update(UpdateWebRawRequestCommissionRequest $request, $id): JsonResponse
     {
         try {
-            // 🔧 Ruční vyhledání podle ID (shoduje se s {id} v api.php)
+            // 🔧 Ruční vyhledání podle ID
             $rawRequestCommission = WebRawRequestCommission::findOrFail($id);
-            
-            $rawRequestCommission->update($request->validated());
-            
+
+            $validated = $request->validated();
+
+            // Zpracování přílohy (attachment) - nahrazení staré přílohy novou
+            if ($request->hasFile('attachment')) {
+                if ($rawRequestCommission->file_path) {
+                    Storage::disk('public')->delete($rawRequestCommission->file_path);
+                }
+                $validated['file_path'] = $request->file('attachment')->store(self::ATTACHMENT_FOLDER, 'public');
+            }
+
+            $rawRequestCommission->update($validated);
+
             $this->logAction($request, 'update', 'WebRawRequestCommission', "Aktualizace požadavku ID: {$rawRequestCommission->id}", $rawRequestCommission->id);
-            
-            return response()->json(new WebRawRequestCommissionResource($rawRequestCommission));
+
+            return response()->json(new WebRawRequestCommissionResource($rawRequestCommission->fresh()));
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebRawRequestCommission', "Chyba při aktualizaci požadavku ID {$id}: " . $e->getMessage(), $id);
             return response()->json(['message' => 'Aktualizace požadavku selhala.'], 500);
@@ -126,9 +144,16 @@ class WebRawRequestCommissionController extends Controller
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
             $item = WebRawRequestCommission::withTrashed()->findOrFail($id);
-            
-            $forceDelete ? $item->forceDelete() : $item->delete();
-            
+
+            if ($forceDelete) {
+                if ($item->file_path) {
+                    Storage::disk('public')->delete($item->file_path);
+                }
+                $item->forceDelete();
+            } else {
+                $item->delete();
+            }
+
             $this->logAction($request, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebRawRequestCommission', "Smazání požadavku na provizi ID: $id", $id);
 
             return response()->json(null, 204);
@@ -162,11 +187,18 @@ class WebRawRequestCommissionController extends Controller
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
-            $count = WebRawRequestCommission::onlyTrashed()->count();
-            WebRawRequestCommission::onlyTrashed()->forceDelete();
-            
+            $trashed = WebRawRequestCommission::onlyTrashed()->get();
+            $count = $trashed->count();
+
+            foreach ($trashed as $item) {
+                if ($item->file_path) {
+                    Storage::disk('public')->delete($item->file_path);
+                }
+                $item->forceDelete();
+            }
+
             $this->logAction($request, 'force_delete_all', 'WebRawRequestCommission', "Hromadné smazání koše provizí. Počet: $count");
-            
+
             return response()->json(null, 204);
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebRawRequestCommission', "Chyba při vyprazdňování koše provizí: " . $e->getMessage());
@@ -177,10 +209,9 @@ class WebRawRequestCommissionController extends Controller
     /**
      * Sjednocené logování (WebLog).
      */
-   protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
+    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
     {
         try {
-            // TATO ÚPRAVA: Zkusíme získat uživatele přes sanctum guard manuálně
             $user = $request->user() ?? auth('sanctum')->user();
 
             WebLog::create([
@@ -191,9 +222,9 @@ class WebRawRequestCommissionController extends Controller
                 'affected_entity_type' => 'WebRawRequestCommission',
                 'affected_entity_id'   => $affectedId,
                 'user_id'              => $user?->id,
-                'context_data'         => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
+                'context_data'         => json_encode($request->except(['attachment']), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'     => $user ? $user->user_email : 'Veřejný formulář'
+                'user_plain'           => $user ? $user->user_email : 'Veřejný formulář'
             ]);
         } catch (\Exception $e) {
             Log::error("Log error (WebRawRequestCommission): " . $e->getMessage());

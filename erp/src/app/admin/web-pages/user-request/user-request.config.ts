@@ -25,7 +25,7 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'text',
     required: true,
     pattern: '^[a-zA-Z0-9ěščřžýáíéóúůďťňĚŠČŘŽÝÁÍÉÚŮĎŤŇ\\s\\.\\-]{3,255}$',
-    errorMessage: 'Téma musí mít 3-255 znaků.', // Sjednoceno s Laravel
+    errorMessage: 'Téma musí mít 3-255 znaků.',
     editable: true, show_in_edit: true, show_in_create: true,
   },
   {
@@ -35,7 +35,7 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'email',
     required: true,
     pattern: '[^@]+@[^@]+\\.[^@]+',
-    errorMessage: 'Zadejte platnou e-mailovou adresu.', // Sjednoceno s Laravel
+    errorMessage: 'Zadejte platnou e-mailovou adresu.',
     editable: true, show_in_edit: true, show_in_create: true
   },
   {
@@ -44,8 +44,8 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: '+420 123 456 789',
     type: 'tel',
     required: false,
-    pattern: '^(\\+?[0-9]{1,3})?[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}$', // Pridaný regex pasující na Laravel
-    errorMessage: 'Zadejte platné telefonní číslo.', // Sjednoceno s Laravel
+    pattern: '^(\\+?[0-9]{1,3})?[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}[\\s.-]?[0-9]{3,4}$',
+    errorMessage: 'Zadejte platné telefonní číslo.',
     editable: true, show_in_edit: true, show_in_create: true
   },
   {
@@ -70,7 +70,7 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     placeholder: 'Zde rozepište detaily objednávky/provize...',
     type: 'textarea',
     required: true,
-    errorMessage: 'Popis je povinný pro zpracování.', // Sjednoceno s Laravel
+    errorMessage: 'Popis je povinný pro zpracování.',
     editable: true, show_in_edit: true, show_in_create: true
   },
   {
@@ -80,6 +80,15 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'textarea',
     required: false,
     editable: true, show_in_edit: true, show_in_create: true
+  },
+  {
+    column_name: 'attachment',
+    label: 'Příloha',
+    type: 'file',
+    required: false,
+    editable: false, 
+    show_in_edit: false, 
+    show_in_create: true
   }
 ];
 
@@ -116,6 +125,7 @@ export const USER_REQUEST_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'priority', displayName: 'Priorita', type: 'text' },
   { key: 'order_description', displayName: 'Popis požadavku', type: 'text' },
   { key: 'note', displayName: 'Poznámka', type: 'text' },
+  { key: 'file_url', displayName: 'Příloha', type: 'file' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Naposledy změněno', type: 'date', format: 'medium' },
 ];

@@ -9,8 +9,6 @@ class WebRawRequestCommissionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
      */
     public function toArray(Request $request): array
     {
@@ -23,6 +21,9 @@ class WebRawRequestCommissionResource extends JsonResource
             'status'            => $this->status,
             'priority'          => $this->priority,
             'note'              => $this->note,
+            'file_path'         => $this->file_path,
+            // Sjednoceno: používáme asset() stejně jako u tiketu
+            'file_url'          => $this->file_path ? asset('storage/' . $this->file_path) : null,
             'created_at'        => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'        => $this->updated_at?->format('Y-m-d H:i:s'),
             'deleted_at'        => $this->deleted_at?->format('Y-m-d H:i:s'),

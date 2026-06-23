@@ -58,7 +58,7 @@ export class ContactComponent implements OnInit, OnDestroy {
       subject: ['web', Validators.required],
       email:   ['', [Validators.required, Validators.email]],
       phone:   [''],
-      message: ['', [Validators.required, Validators.minLength(10)]],
+      message: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10000)]],
       gdpr:    [false, Validators.requiredTrue],
     });
   }
