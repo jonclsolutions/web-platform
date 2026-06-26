@@ -488,7 +488,89 @@
         </div>
     </a>
     </div>
+<!-- ABOUT / SERVICES SEKCE -->
+<section class="about-section">
+  <div class="about-eyebrow">Co děláme</div>
+  <h2 class="about-heading">Vývoj na míru,<br><span class="about-heading-accent">od nápadu po nasazení</span></h2>
+  <p class="about-lead">Nejsme agentura šablon. Každý projekt stavíme od základu — přesně tak, jak to váš byznys potřebuje.</p>
 
+  <div class="about-services-grid">
+    <a routerLink="/services" [queryParams]="{ tech: 'web-dev' }" class="about-service-card">
+      <div class="about-service-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+        </svg>
+      </div>
+      <div class="about-service-name">Webové aplikace</div>
+      <div class="about-service-desc">Moderní, rychlé a bezpečné webové systémy a platformy postavené na míru vašim procesům.</div>
+    </a>
+         <a routerLink="/services" [queryParams]="{ tech: 'desktop-dev' }" class="about-service-card">
+      <div class="about-service-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 2v4M16 2v4M2 10h20"/>
+        </svg>
+      </div>
+      <div class="about-service-name">Desktopový software</div>
+      <div class="about-service-desc">Výkonné desktopové nástroje pro Windows, macOS i Linux. Integrace s firemními systémy.</div>
+    </a>
+    <a routerLink="/services" [queryParams]="{ tech: 'mobile-dev' }" class="about-service-card">
+      <div class="about-service-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+        </svg>
+      </div>
+      <div class="about-service-name">Mobilní aplikace</div>
+      <div class="about-service-desc">Nativní i cross-platform řešení pro iOS a Android. Intuitivní UX, výkon, offline podpora.</div>
+    </a>
+   
+
+    <a routerLink="/services" [queryParams]="{ tech: 'ai-dev' }" class="about-service-card">
+      <div class="about-service-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/>
+        </svg>
+      </div>
+      <div class="about-service-name">AI & automatizace</div>
+      <div class="about-service-desc">Integrujeme velké jazykové modely, computer vision a ML do vašich procesů. Méně ruční práce, víc výsledků.</div>
+    </a>
+  </div>
+
+  <div class="about-strips">
+    <a routerLink="/services" class="about-strip">
+      <div class="about-strip-line" style="--c: rgba(166,125,255,0.55)"></div>
+      <div class="about-strip-body">
+        <span class="about-strip-num">01</span>
+        <div class="about-strip-content">
+          <div class="about-strip-title">Analýza & návrh</div>
+          <div class="about-strip-text">Pochopíme váš byznys, navrhneme architekturu a řekneme vám upřímně, co má smysl stavět.</div>
+        </div>
+        <svg class="about-strip-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+    </a>
+    <a routerLink="/services" class="about-strip">
+      <div class="about-strip-line" style="--c: rgba(192,159,255,0.45)"></div>
+      <div class="about-strip-body">
+        <span class="about-strip-num">02</span>
+        <div class="about-strip-content">
+          <div class="about-strip-title">Vývoj & testování</div>
+          <div class="about-strip-text">Agilní iterace, code review, automatizované testy. Víte vždy, kde projekt stojí.</div>
+        </div>
+        <svg class="about-strip-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+    </a>
+    <a routerLink="/services" class="about-strip">
+      <div class="about-strip-line" style="--c: rgba(125,95,209,0.55)"></div>
+      <div class="about-strip-body">
+        <span class="about-strip-num">03</span>
+        <div class="about-strip-content">
+          <div class="about-strip-title">Nasazení & podpora</div>
+          <div class="about-strip-text">CI/CD pipeline, monitoring, zálohy. Po spuštění jsme stále po ruce.</div>
+        </div>
+        <svg class="about-strip-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+    </a>
+  </div>
+</section>
 <!-- VELKE LINKY KONEC -->
 <!-- PROC SI VYBRAT ZROVNA NAS  -->
  <div class="gradient-seep-wrp">
@@ -497,49 +579,77 @@
   </div>
 
 </div>
-<div class="header-0-2-t pad-0">
-            {{ t?.select_us_header }}
-        </div> 
+<div class="select-us-section_temp_new">
+  <div class="select-us-header-wrp_temp_new">
+    <div class="select-us-eyebrow_temp_new">Proč zrovna my</div>
+    <div class="header-0-2-t pad-0">{{ t?.select_us_header }}</div>
+    <div class="select-us-lead_temp_new">Nejsme jen dodavatel kódu — jsme partner, kterému záleží na výsledku.</div>
+  </div>
 
-<div class="benefits-wrapper">
-    <div class="benefit-item">
-        <div class="benefit-text-wrapper">
-            <div class="benefit-header">{{ t?.select_us?.item_1?.header }}</div>
-            <div class="benefit-points">
-                <ul>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_1 }}</li>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_2 }}</li>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_3 }}</li>
-                </ul>
-            </div>
+  <div class="benefits-wrapper_temp_new">
+    <div class="benefit-item_temp_new">
+      <div class="benefit-item-glow_temp_new"></div>
+      <div class="benefit-icon-slot_temp_new">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div class="benefit-text-wrapper_temp_new">
+        <div class="benefit-header_temp_new">{{ t?.select_us?.item_1?.header }}</div>
+        <div class="benefit-points_temp_new">
+          <ul>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_1 }}</li>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_2 }}</li>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_3 }}</li>
+          </ul>
         </div>
+      </div>
+      <div class="benefit-item-tag_temp_new">Kvalita</div>
     </div>
-    <div class="benefit-item">
-        <div class="benefit-text-wrapper">
-            <div class="benefit-header">{{ t?.select_us?.item_2?.header }}</div>
-            <div class="benefit-points">
-                <ul>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_1 }}</li>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_2 }}</li>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_3 }}</li>
-                </ul>
-            </div>
+
+    <div class="benefit-item_temp_new benefit-item--mid_temp_new">
+      <div class="benefit-item-glow_temp_new benefit-item-glow--mid_temp_new"></div>
+      <div class="benefit-icon-slot_temp_new benefit-icon-slot--mid_temp_new">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div class="benefit-text-wrapper_temp_new">
+        <div class="benefit-header_temp_new">{{ t?.select_us?.item_2?.header }}</div>
+        <div class="benefit-points_temp_new">
+          <ul>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_1 }}</li>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_2 }}</li>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_3 }}</li>
+          </ul>
         </div>
+      </div>
+      <div class="benefit-item-tag_temp_new benefit-item-tag--mid_temp_new">Rychlost</div>
     </div>
-    <div class="benefit-item">
-        <div class="benefit-text-wrapper">
-            <div class="benefit-header">{{ t?.select_us?.item_3?.header }}</div>
-            <div class="benefit-points">
-                <ul>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_1 }}</li>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_2 }}</li>
-                    <li><span class="bullet-highlight"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_3 }}</li>
-                </ul>
-            </div>
+
+    <div class="benefit-item_temp_new">
+      <div class="benefit-item-glow_temp_new"></div>
+      <div class="benefit-icon-slot_temp_new">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="benefit-text-wrapper_temp_new">
+        <div class="benefit-header_temp_new">{{ t?.select_us?.item_3?.header }}</div>
+        <div class="benefit-points_temp_new">
+          <ul>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_1 }}</li>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_2 }}</li>
+            <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_3 }}</li>
+          </ul>
         </div>
+      </div>
+      <div class="benefit-item-tag_temp_new">Partnerství</div>
     </div>
+  </div>
 </div>
- 
  <div class="gradient-seep-wrp">
   <div class="gradient-line-separator"></div>
 </div>

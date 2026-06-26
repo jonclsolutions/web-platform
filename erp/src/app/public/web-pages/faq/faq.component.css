@@ -6,14 +6,17 @@
 
 /* ── Tokeny ─────────────────────────────────────────────────── */
 :host {
-  --bg:          #0d0d1b;
+  --bg:           #0d0d1b;
   --surface:     #111128;
   --surface-2:   #18183a;
   --border:      rgba(166, 125, 255, 0.1);
   --border-mid:  rgba(166, 125, 255, 0.22);
   --accent:      #a67dff;
   --accent-dark: #6b2e91;
-  --accent-dim:  rgba(166, 125, 255, 0.07);
+  --accent-dim:   rgba(166, 125, 255, 0.07);
+  --accent-grid:  rgba(166, 125, 255, 0.03);
+  --accent-hover: #7d35ae;
+  --white:        #ffffff;
   --text:        #e0e0f0;
   --text-muted:  #888899;
   --text-dim:    #555566;
@@ -40,8 +43,8 @@
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(166, 125, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(166, 125, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(var(--accent-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-grid) 1px, transparent 1px);
   background-size: 60px 60px;
   pointer-events: none;
   z-index: 0;
@@ -74,7 +77,7 @@
   font-family: var(--ff-display);
   font-size: clamp(2.4rem, 5vw, 4rem);
   font-weight: 700;
-  color: #fff;
+  color: var(--white);
   line-height: 1.15;
   max-width: 720px;
   margin-bottom: 16px;
@@ -104,7 +107,8 @@
   border: 1px solid var(--border-mid);
   border-radius: 999px;
   padding: 6px 16px;
-  cursor: default;
+  cursor: pointer;
+  font-family: var(--ff-body);
   transition: color var(--ease), border-color var(--ease), background var(--ease);
 }
 
@@ -112,6 +116,23 @@
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-dim);
+}
+
+/* Aktivní kategorie */
+.faq-tag--active {
+  color: var(--white, #fff);
+  background: var(--accent-dark);
+  border-color: var(--accent);
+}
+
+.faq-tag--active:hover {
+  color: var(--white, #fff);
+  background: var(--accent-dark);
+}
+
+/* Mobilní extra bloky — skryté na desktopu, viditelné na mobilu uvnitř .faq-main */
+.faq-mobile-extras {
+  display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -161,7 +182,7 @@
   font-family: var(--ff-display);
   font-size: 1.15rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--white);
   line-height: 1.3;
 }
 
@@ -207,7 +228,7 @@
   background: var(--accent-dark);
   border: 1px solid var(--accent);
   border-radius: 999px;
-  color: #fff;
+  color: var(--white);
   font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none;
@@ -215,7 +236,7 @@
 }
 
 .sidebar-cta-btn:hover {
-  background: #7d35ae;
+  background: var(--accent-hover);
   transform: translateY(-2px);
 }
 
@@ -469,10 +490,10 @@
 .cta-social-btn--accent {
   background: var(--accent-dark);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--white);
 }
 
-.cta-social-btn--accent:hover { background: #7d35ae; }
+.cta-social-btn--accent:hover { background: var(--accent-hover); }
 
 .cta-btn {
   display: inline-flex;
@@ -521,31 +542,31 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    RESPONZIVITA
    ═══════════════════════════════════════════════════════════════ */
+
+/* Pod 1100px: sidebar schovat, extra bloky zobrazit za accordionem */
 @media (max-width: 1100px) {
   .faq-layout {
     grid-template-columns: 1fr;
+    grid-template-areas: "main";
   }
 
-  .faq-sidebar {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
+  .faq-sidebar { display: none; }
 
-  .sidebar-card { flex: 1; min-width: 260px; }
-  .sidebar-stats-card { min-width: 180px; }
-  .sidebar-tip-card { flex: 1; min-width: 200px; }
+  .faq-main { grid-area: main; }
+
+  .faq-mobile-extras {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 28px;
+  }
 }
 
 @media (max-width: 860px) {
   .faq-main { padding: 28px 20px; }
-
-  .faq-sidebar {
-    flex-direction: column;
-  }
 
   .cta-row { flex-direction: column; }
   .cta-divider { width: 120px; height: 1px; }

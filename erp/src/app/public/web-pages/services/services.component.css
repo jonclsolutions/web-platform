@@ -1,10 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
-   SERVICES PAGE — redesign
-   Brand: #0d0d1b bg, #a67dff accent, #6b2e91 accent-dark
-   Filozofie: grid + čistý spacing, žádné glowy efekty
+   SERVICES PAGE
+   #0d0d1b bg · #a67dff accent · #6b2e91 accent-dark
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Tokeny ─────────────────────────────────────────────────── */
 :host {
   --bg:          #0d0d1b;
   --surface:     #111128;
@@ -16,7 +14,6 @@
   --accent-dim:  rgba(166, 125, 255, 0.07);
   --text:        #e0e0f0;
   --text-muted:  #888899;
-  --text-dim:    #555566;
   --ff-display:  'Source Sans Pro', 'Segoe UI', sans-serif;
   --ff-body:     'Segoe UI', system-ui, sans-serif;
   --radius:      12px;
@@ -25,9 +22,9 @@
   --max-w:       1200px;
 }
 
-/* ── Reset & base ────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Stránka + čtvercové pozadí ─────────────────────────────── */
 .svc-page {
   background: var(--bg);
   color: var(--text);
@@ -35,7 +32,6 @@
   overflow-x: hidden;
 }
 
-/* Subtilní grid pozadí přes celou stránku */
 .svc-page::before {
   content: '';
   position: fixed;
@@ -48,9 +44,7 @@
   z-index: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   HERO
-   ═══════════════════════════════════════════════════════════════ */
+/* ── Hero ────────────────────────────────────────────────────── */
 .svc-hero {
   position: relative;
   z-index: 1;
@@ -109,7 +103,7 @@
   font-weight: 600;
   font-family: var(--ff-body);
   cursor: pointer;
-  transition: background var(--ease), color var(--ease), transform 0.15s ease;
+  transition: background var(--ease), color var(--ease);
   white-space: nowrap;
 }
 
@@ -121,15 +115,12 @@
   border: 1px solid var(--accent);
 }
 
-/* Animace vstupu jednotlivých tabů */
 .web-dev     { animation: fadeDown 0.6s 0.1s ease-out both; }
 .desktop-dev { animation: fadeDown 0.6s 0.2s ease-out both; }
 .mobile-dev  { animation: fadeDown 0.6s 0.3s ease-out both; }
 .ai-dev      { animation: fadeDown 0.6s 0.4s ease-out both; }
 
-/* ═══════════════════════════════════════════════════════════════
-   HLAVNÍ CONTENT
-   ═══════════════════════════════════════════════════════════════ */
+/* ── Content sekce ───────────────────────────────────────────── */
 .svc-content-section {
   position: relative;
   z-index: 1;
@@ -145,7 +136,6 @@
   align-items: start;
 }
 
-/* ── Levý sloupec ────────────────────────────────────────────── */
 .svc-main-col {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -154,7 +144,6 @@
   animation: fadeUp 0.6s 0.15s ease-out both;
 }
 
-/* Panel header s tagem */
 .svc-panel-header { margin-bottom: 24px; }
 
 .svc-panel-tag {
@@ -188,7 +177,6 @@
   padding-bottom: 32px;
 }
 
-/* Styly pro innerHTML paragrafů */
 .svc-body-text p {
   margin-bottom: 16px;
   font-size: 0.97rem;
@@ -235,8 +223,6 @@
   color: var(--text);
 }
 
-.faq-trigger:hover { background: rgba(255,255,255,0.025); }
-
 .faq-trigger-text {
   font-size: 0.95rem;
   font-weight: 600;
@@ -257,12 +243,10 @@
 .faq-body {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.38s ease, padding 0.38s ease;
+  transition: max-height 0.38s ease;
 }
 
-.faq-item--open .faq-body {
-  max-height: 400px;
-}
+.faq-item--open .faq-body { max-height: 400px; }
 
 .faq-answer-text {
   padding: 0 18px 16px;
@@ -271,7 +255,7 @@
   color: var(--text-muted);
 }
 
-/* ── Pravý sidebar ───────────────────────────────────────────── */
+/* ── Sidebar ─────────────────────────────────────────────────── */
 .svc-sidebar {
   display: flex;
   flex-direction: column;
@@ -321,11 +305,6 @@
   transition: border-color var(--ease), background var(--ease);
 }
 
-.tech-item:hover {
-  border-color: var(--border-mid);
-  background: var(--accent-dim);
-}
-
 .tech-item-img-wrap {
   width: 52px;
   height: 52px;
@@ -342,48 +321,48 @@
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-.tech-item:hover .tech-item-img-wrap img {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 10px rgba(166, 125, 255, 0.7));
-}
-
 .tech-item-name {
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted);
 }
 
-/* Stat karta */
+.sidebar-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .sidebar-stat-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px;
+  justify-content: center;
+  padding: 20px 12px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   text-align: center;
+  transition: border-color var(--ease), background var(--ease);
 }
 
 .sidebar-stat-num {
   font-family: var(--ff-display);
-  font-size: 2.8rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--accent);
   line-height: 1;
 }
 
 .sidebar-stat-label {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-top: 6px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SECTION HEADER (sdílený)
-   ═══════════════════════════════════════════════════════════════ */
+/* ── Sdílená hlavička sekcí ──────────────────────────────────── */
 .svc-section-header {
   text-align: center;
   margin-bottom: 60px;
@@ -405,9 +384,9 @@
   color: #fff;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   WORKFLOW / PROCES
-   ═══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   WORKFLOW SEKCE — kontejner
+   ══════════════════════════════════════════════════════════════ */
 .svc-workflow-section {
   position: relative;
   z-index: 1;
@@ -418,79 +397,166 @@
   animation: fadeUp 0.7s 0.2s ease-out both;
 }
 
-.workflow-track {
+/* ══════════════════════════════════════════════════════════════
+   WORKFLOW — DESKTOP VERZE
+   Horizontální 4-sloupový grid s linkou táhnoucí se středem
+   ══════════════════════════════════════════════════════════════ */
+.wf-desktop { display: block; }
+.wf-mobile  { display: none; }
+
+.wf-desktop-connector {
   max-width: var(--max-w);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0;
 }
 
-.wf-step {
+/* Jeden sloupec */
+.wfd-col {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 0 20px;
-  position: relative;
+  padding: 0 16px;
 }
 
-/* Číslo nad krokem */
-.wf-num {
+/* Číslo nad tečkou */
+.wfd-num {
   font-family: var(--ff-display);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   color: var(--accent);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
-/* Tečka + linka */
-.wf-dot-line {
+/* Řádek: linka-vlevo | tečka | linka-vpravo */
+.wfd-dot-wrap {
   display: flex;
   align-items: center;
   width: 100%;
   margin-bottom: 20px;
 }
 
-.wf-dot {
+.wfd-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-mid);
+}
+
+/* Skrytá linka na krajích */
+.wfd-line--hidden { background: transparent; }
+
+.wfd-dot {
   flex-shrink: 0;
   width: 14px;
   height: 14px;
   border-radius: 50%;
   background: var(--accent);
-  border: 3px solid var(--bg);
-  box-shadow: 0 0 0 2px var(--accent);
+  /* Vizuální obruba — dvojitý kruh */
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--accent);
   position: relative;
   z-index: 1;
 }
 
-.wf-line {
-  flex: 1;
-  height: 1px;
-  background: var(--border-mid);
-  margin-left: 4px;
-}
+.wfd-content { padding: 0 4px; }
 
-.wf-content { padding: 0 4px; }
-
-.wf-title {
+.wfd-title {
   font-family: var(--ff-display);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
-.wf-text {
-  font-size: 0.87rem;
+.wfd-text {
+  font-size: 0.85rem;
   line-height: 1.65;
   color: var(--text-muted);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CENÍK
-   ═══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   WORKFLOW — MOBILNÍ VERZE
+   Vertikální krok-karta: číslo + tečka + linka dolů vlevo,
+   text vpravo. Linka pokračuje spojitě přes všechny kroky.
+   ══════════════════════════════════════════════════════════════ */
+.wfm-step {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  /* Každý krok je flex řádek; rail (vlevo) + content (vpravo) */
+}
+
+/* Levý rail: 48px wide, pevná šírka */
+.wfm-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.wfm-num {
+  font-family: var(--ff-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  height: 24px;          /* Pevná výška — zarovná čísla u všech kroků */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wfm-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--accent);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Linka pod tečkou — roste aby vyplnila zbytek rail pod tečkou */
+.wfm-line {
+  width: 1px;
+  background: var(--border-mid);
+  flex: 1;               /* Zabere veškerý zbývající prostor v rail */
+  min-height: 20px;
+  margin-top: 4px;
+}
+
+/* Pravý content */
+.wfm-content {
+  padding: 20px 0 32px 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Poslední krok — menší spodní padding (žádná linka pod ním) */
+.wfm-content--last { padding-bottom: 8px; }
+
+.wfm-title {
+  font-family: var(--ff-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  margin-top: 4px;        /* Vizuální zarovnání s tečkou */
+}
+
+.wfm-text {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+/* ── Ceník ───────────────────────────────────────────────────── */
 .svc-prices-section {
   position: relative;
   z-index: 1;
@@ -520,13 +586,12 @@
   transform: translateY(-4px);
 }
 
-/* Animace karet s posunem */
 .prices-grid .price-card:nth-child(1) { animation-delay: 0.05s; }
-.prices-grid .price-card:nth-child(2) { animation-delay: 0.1s; }
+.prices-grid .price-card:nth-child(2) { animation-delay: 0.1s;  }
 .prices-grid .price-card:nth-child(3) { animation-delay: 0.15s; }
-.prices-grid .price-card:nth-child(4) { animation-delay: 0.2s; }
+.prices-grid .price-card:nth-child(4) { animation-delay: 0.2s;  }
 .prices-grid .price-card:nth-child(5) { animation-delay: 0.25s; }
-.prices-grid .price-card:nth-child(6) { animation-delay: 0.3s; }
+.prices-grid .price-card:nth-child(6) { animation-delay: 0.3s;  }
 
 .price-card-header {
   background: var(--surface-2);
@@ -574,9 +639,7 @@
   line-height: 1;
 }
 
-.price-card--variable .price-value {
-  font-size: 1.5rem;
-}
+.price-card--variable .price-value { font-size: 1.5rem; }
 
 .price-currency {
   font-size: 1rem;
@@ -591,9 +654,7 @@
   line-height: 1.55;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CTA
-   ═══════════════════════════════════════════════════════════════ */
+/* ── CTA ─────────────────────────────────────────────────────── */
 .svc-cta-section {
   position: relative;
   z-index: 1;
@@ -606,7 +667,6 @@
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -664,9 +724,7 @@
   color: #fff;
 }
 
-.cta-btn--accent:hover {
-  background: #7d35ae;
-}
+.cta-btn--accent:hover { background: #7d35ae; }
 
 .cta-arrow { font-size: 1.1rem; transition: transform var(--ease); }
 .cta-btn:hover .cta-arrow { transform: translateX(4px); }
@@ -686,9 +744,7 @@
   opacity: 0.5;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ANIMACE
-   ═══════════════════════════════════════════════════════════════ */
+/* ── Animace ─────────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -699,27 +755,38 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    RESPONZIVITA
-   ═══════════════════════════════════════════════════════════════ */
+   ══════════════════════════════════════════════════════════════ */
+
+/* 1100px – sidebar pod hlavní sloupec */
 @media (max-width: 1100px) {
-  .svc-content-inner {
-    grid-template-columns: 1fr;
-  }
+  .svc-content-inner { grid-template-columns: 1fr; }
 
   .svc-sidebar {
     position: static;
     flex-direction: row;
     align-items: stretch;
+    flex-wrap: wrap;
   }
 
-  .sidebar-card { flex: 1; }
-  .sidebar-stat-card { min-width: 140px; }
+  .sidebar-card { flex: 1; min-width: 240px; }
+
+  .sidebar-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    flex: 1;
+    min-width: 280px;
+  }
 
   .tech-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
+/* 860px – přepnutí workflow na mobilní verzi */
 @media (max-width: 860px) {
+  /* Workflow přepínač */
+  .wf-desktop { display: none; }
+  .wf-mobile  { display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; }
+
   .tech-tabs {
     border-radius: var(--radius);
     padding: 8px;
@@ -734,55 +801,20 @@
 
   .svc-main-col { padding: 28px 20px; }
 
-  .workflow-track {
-    grid-template-columns: 1fr;
-    gap: 32px;
-    max-width: 480px;
-  }
-
-  .wf-step { flex-direction: row; text-align: left; align-items: flex-start; gap: 16px; }
-
-  .wf-dot-line {
-    flex-direction: column;
-    width: auto;
-    margin-bottom: 0;
-    align-items: center;
-  }
-
-  .wf-line {
-    width: 1px;
-    height: 100%;
-    min-height: 40px;
-    margin-left: 0;
-    margin-top: 4px;
-    flex: 1;
-  }
-
-  .wf-num { margin-bottom: 0; writing-mode: initial; }
-
-  .cta-row {
-    flex-direction: column;
-  }
-
-  .cta-divider {
-    width: 120px;
-    height: 1px;
-  }
-
+  .cta-row { flex-direction: column; }
+  .cta-divider { width: 120px; height: 1px; }
   .cta-block { padding: 32px 28px; }
 
-  .svc-sidebar {
-    flex-direction: column;
-  }
+  .svc-sidebar { flex-direction: column; }
+  .sidebar-stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* 600px – malé mobily */
 @media (max-width: 600px) {
   .svc-hero { padding: 90px 16px 48px; }
-
   .svc-hero-title { font-size: 2rem; }
 
   .tech-tabs { gap: 6px; }
-
   .tech-tab { padding: 8px 14px; font-size: 0.8rem; }
 
   .prices-grid { grid-template-columns: 1fr; max-width: 380px; }
@@ -792,11 +824,14 @@
   .svc-workflow-section,
   .svc-prices-section,
   .svc-cta-section { padding-left: 16px; padding-right: 16px; }
+
+  .sidebar-stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Rail o trochu užší na malých obrazovkách */
+  .wfm-rail { width: 40px; }
 }
 
-/* Hover efekty pouze na zařízeních bez touch */
+/* Hover jen na zařízeních s myší */
 @media (hover: hover) {
   .faq-trigger:hover { background: rgba(255,255,255,0.02); }
-  .price-card:hover { border-color: var(--border-mid); }
-  .tech-item:hover .tech-item-img-wrap img { transform: scale(1.1); }
 }

@@ -1,4 +1,3 @@
-/* table-style.css */
 .table-responsive {
   overflow-x: auto;
   border: 1px solid #dee2e6;
@@ -134,28 +133,30 @@ td a:hover {
 }
 .btn-trash { background-color: #fef2f2; color: #dc2626; border-color: #fecaca; }
 
+/* Kontejner pro checkbox a text */
 .checkbox-container {
   display: flex;
   align-items: center;
-  gap: 8px; 
-  font-size: 13px;
-  color: #6c757d;
+  gap: 8px; /* Přesná mezera mezi checkem a textem */
+  font-size: 13px; /* Menší, elegantní písmo */
+  color: #6c757d; /* Šedivá barva (Bootstrap style), aby to nerušilo */
   cursor: pointer;
   user-select: none;
   font-weight: 400;
   transition: all 0.2s ease;
 }
 
+/* Hover efekt na celý label */
 .checkbox-container:hover {
   color: #333;
 }
 
+/* Stylování samotného inputu */
 .checkbox-container input[type="checkbox"] {
   cursor: pointer;
   width: 15px;
   height: 15px;
-  accent-color: #2c3e50; 
+  accent-color: #2c3e50; /* Barva zaškrtnutí ladící k tvému UI */
   margin: 0;
   border-radius: 3px;
 }
-

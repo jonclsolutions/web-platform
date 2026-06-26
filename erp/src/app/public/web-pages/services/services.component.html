@@ -6,8 +6,6 @@
     <div class="svc-hero-eyebrow">Naše odbornost</div>
     <h1 class="svc-hero-title">{{ s?.header_1_text }}</h1>
     <p class="svc-hero-sub">Vyberte oblast a zjistěte, jak vám můžeme pomoci.</p>
-
-    <!-- Tab přepínač technologií -->
     <div class="tech-tabs" role="tablist">
       @for (tech of technologies; track tech.id) {
         <button
@@ -23,21 +21,16 @@
     </div>
   </section>
 
-  <!-- ══ HLAVNÍ CONTENT PANEL ═══════════════════════════════════════ -->
+  <!-- ══ HLAVNÍ CONTENT ════════════════════════════════════════════ -->
   <section class="svc-content-section">
     <div class="svc-content-inner">
 
-      <!-- Levá část: text + FAQ -->
       <div class="svc-main-col">
-
         <div class="svc-panel-header">
           <div class="svc-panel-tag">{{ currentTech }}</div>
           <h2 class="svc-panel-title">{{ currentInfoHeader }}</h2>
         </div>
-
         <div class="svc-body-text" [innerHTML]="currentMainText"></div>
-
-        <!-- FAQ accordion -->
         <div class="faq-label">{{ s?.info_header_3 }}</div>
         <div class="faq-list" role="list">
           @for (item of (currentServices | keyvalue); track item.key; let i = $index) {
@@ -53,7 +46,8 @@
                 <span class="faq-trigger-text">{{ item?.value?.question }}</span>
                 <span class="faq-chevron" aria-hidden="true">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </span>
               </button>
@@ -65,7 +59,6 @@
         </div>
       </div>
 
-      <!-- Pravá část: tech ikony sidebar -->
       <aside class="svc-sidebar">
         <div class="sidebar-card">
           <div class="sidebar-label">{{ s?.info_header_1 }}</div>
@@ -83,35 +76,71 @@
             }
           </div>
         </div>
-
-        <!-- Dekorativní „stat" karta -->
-        <div class="sidebar-stat-card">
-          <span class="sidebar-stat-num">8+</span>
-          <span class="sidebar-stat-label">let ve vývoji</span>
+        <div class="sidebar-stats-grid">
+          <div class="sidebar-stat-card">
+            <span class="sidebar-stat-num">8+</span>
+            <span class="sidebar-stat-label">let ve vývoji</span>
+          </div>
+          <div class="sidebar-stat-card">
+            <span class="sidebar-stat-num">50+</span>
+            <span class="sidebar-stat-label">projektů</span>
+          </div>
+          <div class="sidebar-stat-card">
+            <span class="sidebar-stat-num">100%</span>
+            <span class="sidebar-stat-label">custom kód</span>
+          </div>
+          <div class="sidebar-stat-card">
+            <span class="sidebar-stat-num">24/7</span>
+            <span class="sidebar-stat-label">podpora</span>
+          </div>
         </div>
       </aside>
-
     </div>
   </section>
 
-  <!-- ══ WORKFLOW / PROCES ══════════════════════════════════════════ -->
+  <!-- ══ WORKFLOW ══════════════════════════════════════════════════ -->
   <section class="svc-workflow-section">
     <div class="svc-section-header">
       <div class="section-eyebrow">Jak spolupracujeme</div>
       <h2 class="section-title">{{ s?.colab?.colab_procces_header }}</h2>
     </div>
 
-    <div class="workflow-track">
-      @for (step of workflowSteps; track step; let i = $index; let last = $last) {
-        <div class="wf-step">
-          <div class="wf-num">{{ workflowNumbers[i] }}</div>
-          <div class="wf-dot-line">
-            <div class="wf-dot"></div>
-            @if (!last) { <div class="wf-line"></div> }
+    <!-- ▸ DESKTOP verze (4 sloupce, horizontální linka) -->
+    <div class="wf-desktop" aria-hidden="false">
+      <div class="wf-desktop-connector">
+        @for (step of workflowSteps; track step; let i = $index; let last = $last) {
+          <div class="wfd-col">
+            <div class="wfd-num">{{ workflowNumbers[i] }}</div>
+            <div class="wfd-dot-wrap">
+              <div class="wfd-line wfd-line--left"  [class.wfd-line--hidden]="i === 0"></div>
+              <div class="wfd-dot"></div>
+              <div class="wfd-line wfd-line--right" [class.wfd-line--hidden]="last"></div>
+            </div>
+            <div class="wfd-content">
+              <h3 class="wfd-title">{{ step?.header }}</h3>
+              <p  class="wfd-text">{{ step?.text }}</p>
+            </div>
           </div>
-          <div class="wf-content">
-            <h3 class="wf-title">{{ step?.header }}</h3>
-            <p class="wf-text">{{ step?.text }}</p>
+        }
+      </div>
+    </div>
+
+    <!-- ▸ MOBIL verze (vertikální karta s čísly vlevo) -->
+    <div class="wf-mobile" aria-hidden="false">
+      @for (step of workflowSteps; track step; let i = $index; let last = $last) {
+        <div class="wfm-step">
+          <!-- Levý rail: číslo + tečka + linka dolů -->
+          <div class="wfm-rail">
+            <div class="wfm-num">{{ workflowNumbers[i] }}</div>
+            <div class="wfm-dot"></div>
+            @if (!last) {
+              <div class="wfm-line"></div>
+            }
+          </div>
+          <!-- Pravý obsah -->
+          <div class="wfm-content" [class.wfm-content--last]="last">
+            <h3 class="wfm-title">{{ step?.header }}</h3>
+            <p  class="wfm-text">{{ step?.text }}</p>
           </div>
         </div>
       }
@@ -124,7 +153,6 @@
       <div class="section-eyebrow">Transparentní ceník</div>
       <h2 class="section-title">{{ s?.services?.prices_header }}</h2>
     </div>
-
     <div class="prices-grid">
       @for (item of priceItems; track item; let i = $index) {
         <div class="price-card" [class.price-card--variable]="item?.price === 'Variabilní cena'">
@@ -146,7 +174,7 @@
     </div>
   </section>
 
-  <!-- ══ CTA SEKCE ══════════════════════════════════════════════════ -->
+  <!-- ══ CTA ════════════════════════════════════════════════════════ -->
   <section class="svc-cta-section">
     <div class="cta-row">
       <div class="cta-block">
@@ -167,8 +195,7 @@
     </div>
   </section>
 
-  <!-- Oddělovač -->
   <div class="svc-divider" aria-hidden="true"></div>
-
 </div>
 }
+

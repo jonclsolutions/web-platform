@@ -34,7 +34,7 @@
         "references_full": "Realizované projekty",
         "faq": "FAQ",
         "faq_full": "Často kladené otázky",
-        "about-us": "Dopňující informace",
+        "about-us": "O Nás",
         "login": "Přihlásit se",
         "jobs": "Kariéra",
         "login_btn": "Přihlásit"
@@ -553,7 +553,7 @@
     }
   },
     "about_us": {
-        "header": "Dopňující informace",
+        "header": "O nás",
         "paragraph_1": "Společnost Regiopartner s.r.o. působí více jak 20 let v oblasti evaluací a plánování regionálního rozvoje. Zaměřujeme se na hodnocení programů a projektů financovaných z veřejných zdrojů a strategické plánování rozvoje území. Díky těmto zkušenostem jsme si vybudovali stabilní zázemí a odborné know-how, na kterém postupně stavíme i nové aktivity.",
         "paragraph_2": "V roce 2023 jsme proto založili novou divizi RPsoftware, která rozšiřuje činnost společnosti směrem k moderním technologiím. RPsoftware navazuje na předchozí IT podporu poskytovanou kmenové firmě v oblasti dotazníkových šetření, statistického zpracování dat a dalších IT produktů. Nově se zaměřuje na vývoj softwaru a poskytování digitálních řešení zejména pro menší a střední podniky a také pro jednotlivce, kteří potřebují spolehlivého partnera pro své IT projekty.",
         "paragraph_3": "Naším cílem je přinášet software, který je nejen technicky kvalitní, ale také přizpůsobený konkrétním potřebám uživatelů. Zajišťujeme kompletní služby – od analýzy a návrhy řešení přes samotný vývoj až po testování, implementaci a dlouhodobou podporu.",

@@ -1,13 +1,11 @@
 import { Component, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-
-
-// Tvůj hromadný import pro služby, RxJS a typy
+import { RouterModule } from '../../../shared/imports/web-providers';
 import * as Web from '../../../shared/imports/web-providers';
 
 @Component({
   selector: 'app-about-us',
   standalone: true,
-  imports: [],
+  imports: [RouterModule],
   templateUrl: './about-us.component.html',
   styleUrl: './about-us.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
