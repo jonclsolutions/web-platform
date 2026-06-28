@@ -130,7 +130,6 @@
   width: 18px;
   height: 18px;
   object-fit: contain;
-  filter: brightness(0) invert(1) opacity(0.65);
   transition: filter var(--ease), opacity var(--ease);
 }
 
@@ -138,10 +137,6 @@
   border-color: var(--accent);
   background: var(--accent-dim);
   transform: translateY(-2px);
-}
-
-.footer-social-link:hover img {
-  filter: brightness(0) invert(1) opacity(1);
 }
 
 /* Firemní meta */

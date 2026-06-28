@@ -1,7 +1,6 @@
 @if (t) {
 <div class="job-page">
 
-  <!-- ── Navigace zpět ─────────────────────────────────────────── -->
   <div class="job-back-bar">
     <a routerLink="/jobs" class="back-link">
       ← {{ t?.back_link || 'Zpět na výpis pozic' }}
@@ -10,7 +9,6 @@
 
   @if (job) {
 
-    <!-- ── Hero ────────────────────────────────────────────────── -->
     <section class="job-hero">
       <div class="job-hero-eyebrow">Otevřená pozice</div>
       <h1 class="job-hero-title">{{ job?.title }}</h1>
@@ -20,23 +18,22 @@
       </div>
     </section>
 
-    <!-- ── Dvoupanelový layout ──────────────────────────────────── -->
     <div class="job-layout">
 
-      <!-- Levý panel: popis pozice -->
       <article class="job-description">
         <div class="job-desc-label">O pozici</div>
         <div class="job-desc-body" [innerHTML]="job?.fullContent"></div>
 
-        <div class="job-contact-strip">
-          <span class="job-contact-label">Máte dotaz?</span>
-          <a href="tel:+420733188328" class="job-contact-link">733 188 328</a>
-          <span class="job-contact-sep" aria-hidden="true">•</span>
-          <a href="mailto:info@rpsw.cz" class="job-contact-link">info@rpsw.cz</a>
-        </div>
+        @if (settings) {
+          <div class="job-contact-strip">
+            <span class="job-contact-label">Máte dotaz?</span>
+            <a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="job-contact-link">{{ settings.contact_phone }}</a>
+            <span class="job-contact-sep" aria-hidden="true">•</span>
+            <a [href]="'mailto:' + settings.contact_email" class="job-contact-link">{{ settings.contact_email }}</a>
+          </div>
+        }
       </article>
 
-      <!-- Pravý panel: formulář přihlášky -->
       <aside class="job-form-aside">
         <div class="form-card">
 
@@ -47,7 +44,6 @@
 
             <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()" novalidate>
 
-              <!-- Jméno + příjmení -->
               <div class="field-row">
                 <div class="field-group">
                   <label class="field-label" for="first_name">
@@ -82,7 +78,6 @@
                 </div>
               </div>
 
-              <!-- Email -->
               <div class="field-group">
                 <label class="field-label" for="email">
                   E-mail <span class="req">*</span>
@@ -104,7 +99,6 @@
                 }
               </div>
 
-              <!-- Telefon -->
               <div class="field-group">
                 <label class="field-label" for="phone">Telefon</label>
                 <input
@@ -116,7 +110,6 @@
                   autocomplete="tel">
               </div>
 
-              <!-- Zpráva -->
               <div class="field-group">
                 <label class="field-label" for="message">Zpráva / průvodní dopis</label>
                 <textarea
@@ -128,7 +121,6 @@
                 </textarea>
               </div>
 
-              <!-- Životopis -->
               <div class="field-group">
                 <label class="field-label">
                   Životopis <span class="req">*</span>
@@ -157,7 +149,6 @@
                 }
               </div>
 
-              <!-- GDPR -->
               <div class="gdpr-row">
                 <label class="checkbox-label">
                   <input type="checkbox" formControlName="dataProcessingAgreement" class="checkbox-input">
@@ -170,7 +161,6 @@
                 </label>
               </div>
 
-              <!-- Odeslat -->
               <button
                 type="submit"
                 class="submit-btn"
@@ -194,7 +184,6 @@
 
           } @else {
 
-            <!-- Stav po odeslání -->
             <div class="success-panel">
               <div class="success-icon" aria-hidden="true">✓</div>
               <h3 class="success-title">Děkujeme!</h3>
@@ -214,7 +203,6 @@
 
   } @else {
 
-    <!-- Pozice nenalezena -->
     <section class="job-hero">
       <div class="job-hero-eyebrow">Chyba</div>
       <h1 class="job-hero-title">{{ t?.not_found || 'Pozice nebyla nalezena' }}</h1>

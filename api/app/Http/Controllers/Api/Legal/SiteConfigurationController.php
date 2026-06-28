@@ -35,6 +35,8 @@ public function updateSettings(Request $request): JsonResponse
             'company_name'  => 'required|string|max:255',
             'ico'           => 'required|string|max:20',
             'dic'           => 'nullable|string|max:20',
+            'brand_tagline' => 'nullable|string|max:255',
+            'copyright_text'=> 'nullable|string|max:255',
             'contact_email' => 'required|email|max:255',
             'contact_phone' => 'nullable|string|max:30',
             'address'       => 'required|string|max:500',

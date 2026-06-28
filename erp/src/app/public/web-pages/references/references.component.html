@@ -96,66 +96,40 @@
       </div>
 
       <!-- Položky projektů -->
-      <div class="ref-list" role="list">
-        @for (item of r | keyvalue; track item; let i = $index) {
-          @if (item.key.toString().startsWith('project_')) {
-            <div
-              class="ref-item"
-              [class.ref-item--open]="item?.value?.isActive"
-              [style.animation-delay]="i * 0.06 + 's'"
-              role="listitem">
+<div class="ref-list" role="list">
+  @for (project of projects; track project; let i = $index) {
+    <div
+      class="ref-item"
+      [class.ref-item--open]="project.isActive"
+      [style.animation-delay]="i * 0.06 + 's'"
+      role="listitem">
 
-              <button
-                class="ref-trigger"
-                [attr.aria-expanded]="item?.value?.isActive"
-                (click)="toggleProject(item?.value)">
-                <span class="ref-index" aria-hidden="true">
-                  {{ (i + 1).toString().padStart(2, '0') }}
-                </span>
-                <span class="ref-col-title ref-trigger-title">
-                  {{ item?.value?.name }}
-                </span>
-                <span class="ref-col-duration ref-meta">
-                  {{ item?.value?.duration }}
-                </span>
-                <span class="ref-col-client ref-meta">
-                  {{ item?.value?.client }}
-                </span>
-                <span class="ref-chevron" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8"
-                          stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </span>
-              </button>
+      <button
+        class="ref-trigger"
+        [attr.aria-expanded]="project.isActive"
+        (click)="toggleProject(project)">
+        <span class="ref-index" aria-hidden="true">
+          {{ (i + 1).toString().padStart(2, '0') }}
+        </span>
+        <span class="ref-col-title ref-trigger-title">
+          {{ project.name }}
+        </span>
+        <span class="ref-col-duration ref-meta">
+          {{ project.duration }}
+        </span>
+        <span class="ref-col-client ref-meta">
+          {{ project.client }}
+        </span>
+        </button>
 
-              <div class="ref-body">
-                <div class="ref-body-inner">
-                  <!-- Popis projektu -->
-                  <p class="ref-description" [innerHTML]="item?.value?.description"></p>
-
-                  <!-- Meta tagy projektu -->
-                  <div class="ref-meta-tags">
-                    @if (item?.value?.duration) {
-                      <span class="ref-tag">
-                        <span class="ref-tag-icon">◷</span>
-                        {{ item?.value?.duration }}
-                      </span>
-                    }
-                    @if (item?.value?.client) {
-                      <span class="ref-tag">
-                        <span class="ref-tag-icon">◎</span>
-                        {{ item?.value?.client }}
-                      </span>
-                    }
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          }
-        }
+      <div class="ref-body">
+        <div class="ref-body-inner">
+          <p class="ref-description" [innerHTML]="project.description"></p>
+          </div>
       </div>
+    </div>
+  }
+</div>
 
       <!-- Odkaz na celý archiv pod seznamem -->
       <div class="ref-more-row">

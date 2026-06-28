@@ -1,17 +1,19 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '../../../shared/imports/web-providers';
 import * as Web from '../../../shared/imports/web-providers';
 
 @Component({
   selector: 'app-references',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './references.component.html',
   styleUrl: './references.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReferencesComponent implements OnInit, OnDestroy {
   r: any = null;
+  projects: any[] = []; 
 
   private destroy$ = new Web.Subject<void>();
 
@@ -24,22 +26,27 @@ export class ReferencesComponent implements OnInit, OnDestroy {
     this.localizationService.currentTranslations$
       .pipe(Web.takeUntil(this.destroy$))
       .subscribe(translations => {
-        if (translations && translations.projects) {
+        if (translations?.projects) {
           this.r = translations.projects;
-          Object.keys(this.r).forEach(key => {
-            if (key.startsWith('project_') && typeof this.r[key] === 'object') {
-              this.r[key].isActive = false;
-            }
-          });
+          
+          // Klíčová část: vytvoříme pole pouze z projektů
+          this.projects = Object.keys(this.r)
+            .filter(key => key.startsWith('project_'))
+            .sort((a, b) => a.localeCompare(b)) // Seřadí project_1, project_2
+            .map(key => ({
+              ...this.r[key],
+              id: key,
+              isActive: false
+            }));
 
-          this.cdr.detectChanges();
+          this.cdr.markForCheck();
         }
       });
   }
 
   toggleProject(project: any): void {
     project.isActive = !project.isActive;
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
 
   ngOnDestroy(): void {

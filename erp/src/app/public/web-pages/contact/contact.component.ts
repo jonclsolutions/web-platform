@@ -15,6 +15,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { PublicDataService } from '../../../shared/services/public-data.service';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-contact',
@@ -30,16 +32,10 @@ export class ContactComponent implements OnInit, OnDestroy {
   isSubmitted = signal(false);
   isLoading   = signal(false);
   selectedFile: File | null = null;
-
-  readonly info = {
-    email:   'info@studio.cz',
-    phone:   '+420 123 456 789',
-    address: 'Václavské náměstí 1\n110 00 Praha 1',
-    hours:   'Po–Pá  9:00 – 18:00',
-    linkedin: 'https://linkedin.com',
-    github:   'https://github.com',
-    twitter:  'https://twitter.com',
-  };
+  
+  settings: any = null;
+  socialLinks: any[] = [];
+  private destroy$ = new Subject<void>();
 
   readonly stats = [
     { value: '120+', label: 'projektů' },
@@ -61,9 +57,24 @@ export class ContactComponent implements OnInit, OnDestroy {
       message: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10000)]],
       gdpr:    [false, Validators.requiredTrue],
     });
+
+    this.dataService.getSiteSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(res => {
+        this.settings = res.settings;
+        this.socialLinks = res.social_links;
+        this.cdr.markForCheck();
+      });
   }
 
-  ngOnDestroy(): void {}
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  getIconUrl(path: string): string {
+    return this.dataService.getStorageUrl(path);
+  }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -92,7 +103,6 @@ export class ContactComponent implements OnInit, OnDestroy {
     const formData = new FormData();
     const formValues = this.contactForm.value;
 
-    // Mapování formuláře na klíče očekávané backendem
     formData.append('thema', formValues.subject);
     formData.append('contact_email', formValues.email);
     formData.append('contact_phone', formValues.phone || '');
@@ -102,12 +112,6 @@ export class ContactComponent implements OnInit, OnDestroy {
       formData.append('attachment', this.selectedFile);
     }
 
-    // Logování dat před odesláním
-    console.log('--- ODESÍLANÁ DATA NA SERVER ---');
-    formData.forEach((value, key) => {
-      console.log(`${key}:`, value);
-    });
-
     this.dataService.postRawRequestCommission(formData).subscribe({
       next: () => {
         this.isLoading.set(false);
@@ -116,7 +120,6 @@ export class ContactComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Chyba při odesílání formuláře:', err);
-        // Zobrazení detailů validace z backendu, pokud jsou dostupné
         const errorMsg = err.error?.message || 'Odeslání se nezdařilo.';
         alert(errorMsg);
         this.isLoading.set(false);

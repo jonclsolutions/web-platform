@@ -569,6 +569,10 @@
     grid-template-columns: 1fr;
   }
 
+  .sidebar-archive-card{
+    display: none;
+  }
+  
   .ref-sidebar {
     position: static;
     flex-direction: row;

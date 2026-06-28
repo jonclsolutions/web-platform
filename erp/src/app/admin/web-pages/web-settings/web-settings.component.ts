@@ -8,6 +8,8 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 interface SiteSetting {
   id?: number;
   company_name: string;
+  brand_tagline: string;
+  copyright_text: string;
   ico: string;
   dic: string;
   contact_email: string;
@@ -47,7 +49,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     company_name: '', ico: '', dic: '',
     contact_email: '', contact_phone: '',
     address: '', footer_text: '',
-    logo_path: null,
+    logo_path: null,brand_tagline: '', copyright_text: ''
   };
   settingsLoading = true;
   settingsSaving  = false;
@@ -165,6 +167,8 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       // ---- Verze s logem (FormData) ----
       const fd = new FormData();
       fd.append('company_name',  this.settings.company_name  ?? '');
+      fd.append('brand_tagline', this.settings.brand_tagline ?? '');
+      fd.append('copyright_text', this.settings.brand_tagline ?? '');
       fd.append('ico',           this.settings.ico           ?? '');
       fd.append('dic',           this.settings.dic           ?? '');
       fd.append('contact_email', this.settings.contact_email ?? '');
@@ -183,6 +187,8 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       // ---- Verze bez loga (čistý JSON) ----
       const payload = {
         company_name:  this.settings.company_name,
+        brand_tagline: this.settings.brand_tagline,
+        copyright_text: this.settings.copyright_text,
         ico:           this.settings.ico,
         dic:           this.settings.dic,
         contact_email: this.settings.contact_email,

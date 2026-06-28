@@ -8,6 +8,7 @@ import { DataHandler } from '../../../../core/services/data-handler.service';
 import { GenericTableService } from '../../../../core/services/generic-table.service';
 import { LocalizationService } from '../../../../shared/services/localization.service';
 import { LoadingService } from '../../../../core/services/loading.service';
+import { PublicDataService } from '../../../../shared/services/public-data.service';
 
 @Component({
   selector: 'app-job-item',
@@ -26,6 +27,7 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
   applicationForm!: FormGroup;
   job: any = null;
   t: any = null; 
+  settings: any = null;
   isSubmitted = false;
   selectedFile: File | null = null;
 
@@ -35,13 +37,22 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
     protected override genericTableService: GenericTableService, 
     private route: ActivatedRoute,
     private fb: FormBuilder,
-    private localizationService: LocalizationService
+    private localizationService: LocalizationService,
+    private publicDataService: PublicDataService
   ) {
     super(dataHandler, cd, genericTableService);
   }
   override ngOnInit(): void {
     this.initForm();
     
+    // Načtení nastavení webu pro dynamické kontakty
+    this.publicDataService.getSiteSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(res => {
+        this.settings = res.settings;
+        this.cd.markForCheck();
+      });
+
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(translations => {

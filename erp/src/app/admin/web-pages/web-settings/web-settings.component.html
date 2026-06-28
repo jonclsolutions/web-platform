@@ -1,6 +1,5 @@
 <div class="ws-container">
 
-  <!-- ===== HEADER ===== -->
   <div class="ws-header">
     <div>
       <h1 class="ws-title">Nastavení webu</h1>
@@ -12,7 +11,6 @@
     <div class="ws-error">⚠️ {{ errorMessage }}</div>
   }
 
-  <!-- ===== SEKCE 1: LOGO ===== -->
   <div class="ws-card">
     <div class="ws-card-header">
       <span class="ws-card-icon">🖼️</span>
@@ -29,7 +27,6 @@
       <div class="ws-card-body">
         <div class="ws-logo-section">
 
-          <!-- Náhled loga -->
           <div class="ws-logo-preview-wrap">
             @if (hasLogo) {
               <img [src]="logoSrc" class="ws-logo-img" alt="Logo webu">
@@ -41,7 +38,6 @@
             }
           </div>
 
-          <!-- Ovládání loga -->
           <div class="ws-logo-controls">
             <div class="ws-logo-info">
               @if (logoFile) {
@@ -55,14 +51,12 @@
             </div>
 
             <div class="ws-logo-buttons">
-              <!-- Výběr souboru -->
               <label class="ws-btn ws-btn-secondary ws-btn-file">
                 {{ logoFile ? '🔄 Změnit logo' : '📁 Vybrat logo' }}
                 <input type="file" accept="image/jpeg,image/png,image/svg+xml,image/webp"
                   class="ws-hidden-input" (change)="onLogoSelected($event)">
               </label>
 
-              <!-- Zrušit výběr (zobrazí se jen pokud je vybrán nový soubor) -->
               @if (logoFile) {
                 <button class="ws-btn ws-btn-ghost" (click)="cancelLogoSelection()">
                   ✕ Zrušit výběr
@@ -81,7 +75,6 @@
     }
   </div>
 
-  <!-- ===== SEKCE 2: FIREMNÍ ÚDAJE ===== -->
   <div class="ws-card">
     <div class="ws-card-header">
       <span class="ws-card-icon">🏢</span>
@@ -90,7 +83,7 @@
 
     @if (settingsLoading) {
       <div class="ws-skeleton-body">
-        @for (i of [1,2,3,4,5,6,7]; track i) {
+        @for (i of [1,2,3,4,5,6,7,8]; track i) {
           <div class="ws-skeleton-row"></div>
         }
       </div>
@@ -104,6 +97,18 @@
             <label class="ws-label">Název firmy *</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.company_name"
               name="company_name" placeholder="Název s.r.o.">
+          </div>
+
+          <div class="ws-field">
+            <label class="ws-label">Brand Tagline</label>
+            <input class="ws-input" type="text" [(ngModel)]="settings.brand_tagline"
+              name="brand_tagline" placeholder="Váš slogan nebo podtitul">
+          </div>
+
+          <div class="ws-field">
+            <label class="ws-label">Copyright Text</label>
+            <input class="ws-input" type="text" [(ngModel)]="settings.copyright_text"
+              name="copyright_text" placeholder="Váš slogan nebo podtitul">
           </div>
 
           <div class="ws-field">
@@ -161,7 +166,6 @@
     }
   </div>
 
-  <!-- ===== SEKCE 3: SOCIÁLNÍ SÍTĚ ===== -->
   <div class="ws-card">
     <div class="ws-card-header">
       <span class="ws-card-icon">🌐</span>
@@ -192,7 +196,6 @@
             [class.ws-social-new]="link._isNew"
             [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
 
-            <!-- Ikonka -->
             <div class="ws-social-icon-col">
               <label class="ws-icon-upload" title="Nahrát ikonku">
                 @if (iconSrc(link)) {
@@ -206,7 +209,6 @@
               </label>
             </div>
 
-            <!-- Pole -->
             <div class="ws-social-fields">
               <input class="ws-input ws-social-input"
                 type="text"
@@ -220,7 +222,6 @@
                 placeholder="https://facebook.com/firma">
             </div>
 
-            <!-- Akce -->
             <div class="ws-social-actions">
               <button class="ws-action-btn ws-btn-save"
                 (click)="saveSocialLink(i)"

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LocalizationService } from '../../../../shared/services/localization.service';
-import { PublicDataService } from '../../../../shared/services/public-data.service'; // PŘIDÁNO
+import { PublicDataService } from '../../../../shared/services/public-data.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -21,8 +21,8 @@ interface FooterNavLink {
 })
 export class PublicFooterComponent implements OnInit, OnDestroy {
   t: any = null;
-  settings: any = null; // PŘIDÁNO
-  socialLinks: any[] = []; // PŘIDÁNO
+  settings: any = null;
+  socialLinks: any[] = [];
   currentYear: number;
   footerNavLinks: FooterNavLink[] = [];
   footerLegalLinks: FooterNavLink[] = [];
@@ -61,7 +61,17 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
   }
 
   getIconUrl(path: string): string {
-    return this.publicDataService.getStorageUrl(path); // Předpokládám existenci této metody
+    return this.publicDataService.getStorageUrl(path);
+  }
+
+  // Helper pro dynamické texty
+  getCopyright(): string {
+    const text = this.settings?.footer_text || this.t?.copyright_text || '© {year} All rights reserved.';
+    return text.replace('{year}', this.currentYear.toString());
+  }
+
+  getTagline(): string {
+    return this.settings?.brand_tagline || this.t?.brand_tagline || 'Tvoříme digitální produkty, na které jste hrdí.';
   }
 
   private loadFooterNavLinks(): void {

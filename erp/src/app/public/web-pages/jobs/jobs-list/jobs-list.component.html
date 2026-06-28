@@ -1,7 +1,6 @@
-@if (t) {
+@if (t && settings) {
 <div class="jobs-page">
 
-  <!-- ══ HERO ══════════════════════════════════════════════════════ -->
   <section class="jobs-hero">
     <div class="jobs-hero-eyebrow">Kariéra</div>
     <h1 class="jobs-hero-title">{{ t?.careers?.header_1 }}</h1>
@@ -10,19 +9,13 @@
     </p>
   </section>
 
-  <!-- ══ SEZNAM POZIC ═══════════════════════════════════════════════ -->
   <div class="jobs-body">
     <div class="jobs-section-label">Otevřené pozice</div>
 
     <div class="jobs-list" role="list">
       @for (job of availableJobs; track job.id; let i = $index) {
-        <a
-          class="job-card"
-          [routerLink]="['/jobs', job.id]"
-          role="listitem">
-          <span class="job-card-num" aria-hidden="true">
-            {{ (i + 1).toString().padStart(2, '0') }}
-          </span>
+        <a class="job-card" [routerLink]="['/jobs', job.id]" role="listitem">
+          <span class="job-card-num" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span>
           <div class="job-card-body">
             <div class="job-card-title">{{ job?.title }}</div>
             <div class="job-card-desc">{{ job?.shortDescription }}</div>
@@ -33,27 +26,25 @@
     </div>
   </div>
 
-  <!-- ══ CTA ════════════════════════════════════════════════════════ -->
   <section class="jobs-cta-section">
     <div class="cta-panel">
       <div class="cta-panel-text-block">
         <div class="cta-panel-eyebrow">Nenašli jste shodu?</div>
         <h2 class="cta-panel-title">{{ t?.careers?.write_us_prompt }}</h2>
-        <p class="cta-panel-sub">
-          Zasílejte spontánní přihlášky — vždy rádi poznáme výjimečné lidi.
-        </p>
+        <p class="cta-panel-sub">Zasílejte spontánní přihlášky — vždy rádi poznáme výjimečné lidi.</p>
       </div>
+      
       <div class="cta-panel-actions">
-        <a href="mailto:info@rpsw.cz" class="cta-btn">
+        <a [href]="'mailto:' + settings.contact_email" class="cta-btn">
           ✉ Napsat e-mail
         </a>
-        <a
-          href="https://www.instagram.com/rpsw.cz"
-          target="_blank"
-          rel="noopener"
-          class="cta-btn cta-btn--ghost">
-          ◉ Instagram
-        </a>
+        
+        @for (link of socialLinks; track link.id) {
+          <a [href]="link.url" target="_blank" rel="noopener" class="cta-btn cta-btn--ghost">
+            <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" width="16" height="16" style="margin-right: 8px;">
+            {{ link.name }}
+          </a>
+        }
       </div>
     </div>
   </section>

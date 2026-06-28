@@ -1,21 +1,17 @@
 @if (t && settings) {
 <footer class="footer">
 
-  <!-- Čtvercové pozadí -->
   <div class="footer-grid-bg" aria-hidden="true"></div>
 
-  <!-- ══ HORNÍ ČÁST ══════════════════════════════════════════════ -->
   <div class="footer-top">
     <div class="footer-inner">
 
-      <!-- Brand sloupec -->
       <div class="footer-col footer-col--brand">
         <div class="footer-brand">
           <span class="footer-brand-name">{{ settings.company_name }}</span>
-          <p class="footer-brand-tagline">{{ t.brand_tagline ?? 'Tvoříme digitální produkty, na které jste hrdí.' }}</p>
+          <p class="footer-brand-tagline">{{ getTagline() }}</p>
         </div>
 
-        <!-- Sociální sítě -->
         <div class="footer-social">
           @for (link of socialLinks; track link.id) {
             <a [href]="link.url" target="_blank" rel="noopener" [title]="link.name" class="footer-social-link">
@@ -24,7 +20,6 @@
           }
         </div>
 
-        <!-- Firemní údaje -->
         <div class="footer-company-meta">
           <span class="footer-meta-item">
             <span class="footer-meta-label">{{ t.ico_label }}</span>
@@ -37,16 +32,12 @@
         </div>
       </div>
 
-      <!-- Navigace -->
       <div class="footer-col">
         <h3 class="footer-col-heading">{{ t.quick_links_header }}</h3>
         <ul class="footer-nav-list">
           @for (link of footerNavLinks; track link.route) {
             <li>
-              <a
-                [routerLink]="link.route"
-                [target]="link.external ? '_blank' : '_self'"
-                class="footer-nav-link">
+              <a [routerLink]="link.route" [target]="link.external ? '_blank' : '_self'" class="footer-nav-link">
                 {{ link.text }}
                 @if (link.external) {
                   <svg class="footer-ext-icon" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
@@ -59,21 +50,16 @@
         </ul>
       </div>
 
-      <!-- Kontakt -->
       <div class="footer-col">
         <h3 class="footer-col-heading">{{ t.contact_header }}</h3>
         <ul class="footer-contact-list">
           <li class="footer-contact-item">
             <span class="footer-contact-icon" aria-hidden="true">✉</span>
-            <a [href]="'mailto:' + settings.contact_email" class="footer-contact-link">
-              {{ settings.contact_email }}
-            </a>
+            <a [href]="'mailto:' + settings.contact_email" class="footer-contact-link">{{ settings.contact_email }}</a>
           </li>
           <li class="footer-contact-item">
             <span class="footer-contact-icon" aria-hidden="true">✆</span>
-            <a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="footer-contact-link">
-              {{ settings.contact_phone }}
-            </a>
+            <a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="footer-contact-link">{{ settings.contact_phone }}</a>
           </li>
           <li class="footer-contact-item">
             <span class="footer-contact-icon" aria-hidden="true">⊙</span>
@@ -82,34 +68,25 @@
         </ul>
       </div>
 
-      <!-- Právní informace -->
       <div class="footer-col">
         <h3 class="footer-col-heading">{{ t.legal_info_header }}</h3>
         <ul class="footer-nav-list">
           @for (link of footerLegalLinks; track link.route) {
-            <li>
-              <a [routerLink]="link.route" class="footer-nav-link">{{ link.text }}</a>
-            </li>
+            <li><a [routerLink]="link.route" class="footer-nav-link">{{ link.text }}</a></li>
           }
         </ul>
-
-        <!-- CTA blok -->
         <div class="footer-cta-block">
           <p class="footer-cta-text">Připraveni začít projekt?</p>
-          <a routerLink="/contact" class="footer-cta-btn">
-            Kontaktujte nás
-            <span aria-hidden="true">→</span>
-          </a>
+          <a routerLink="/contact" class="footer-cta-btn">Kontaktujte nás <span>→</span></a>
         </div>
       </div>
 
     </div>
   </div>
 
-  <!-- ══ DOLNÍ ČÁST ══════════════════════════════════════════════ -->
   <div class="footer-bottom">
     <div class="footer-inner footer-bottom-inner">
-      <p class="footer-copy">{{ settings.footer_text.replace('{year}', currentYear) }}</p>
+      <p class="footer-copy">{{ getCopyright() }}</p>
       <div class="footer-bottom-links">
         @for (link of footerLegalLinks; track link.route) {
           <a [routerLink]="link.route" class="footer-bottom-link">{{ link.text }}</a>

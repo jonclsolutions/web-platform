@@ -10,6 +10,6 @@ class SiteSetting extends Model {
     // Přidáváme logo_path do fillable
     protected $fillable = [
         'company_name', 'ico', 'dic', 'contact_email', 
-        'contact_phone', 'address', 'footer_text', 'logo_path'
+        'contact_phone', 'address', 'footer_text', 'logo_path', 'brand_tagline', 'copyright_text'
     ];
 }
