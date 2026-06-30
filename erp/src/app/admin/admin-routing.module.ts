@@ -35,6 +35,7 @@ import { SuppliersComponent } from './shop-pages/suppliers/suppliers.component';
 import { PaymentMethodsComponent } from './shop-pages/payment-methods/payment-methods.component';
 import { EditLegalComponent } from './web-pages/edit-legal/edit-legal.component';
 import { WebSettingsComponent } from './web-pages/web-settings/web-settings.component';
+import { EditEshopComponent } from './shop-pages/edit-eshop/edit-eshop.component';
 
 const routes: Routes = [
   {
@@ -74,7 +75,8 @@ const routes: Routes = [
           { path: 'payment-methods', component: PaymentMethodsComponent, data: { permission: 'shop-manage-payment-methods' } },
           { path: 'suppliers', component: SuppliersComponent, data: { permission: 'shop-manage-suppliers' } },
           { path: 'coupons', component: CouponsComponent, data: { permission: 'shop-view-reports' } }, 
-          { path: 'logs', component: ShopLogsComponent, data: { permission: 'shop-view-logs' } }
+          { path: 'logs', component: ShopLogsComponent, data: { permission: 'shop-view-logs' } },
+          { path: 'edit-eshop', component: EditEshopComponent, data: { permission: 'shop-view-edit-eshop' } }
         ] 
       }
     ]

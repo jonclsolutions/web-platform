@@ -39,18 +39,18 @@ const LS_KEY = 'rpsw_languages';
   selector: 'app-edit-website',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
-  templateUrl: './edit-website.component.html',
-  styleUrls: ['./edit-website.component.css'],
+  templateUrl: './edit-eshop.component.html',
+  styleUrls: ['./edit-eshop.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EditWebsiteComponent
+export class EditEshopComponent
   extends BaseDataComponent<any>
   implements OnInit, OnDestroy {
 
   public override loadingService = inject(LoadingService);
   override apiEndpoint = 'save_translations';
 
-  private readonly MODULE = 'web';
+  private readonly MODULE = 'shop';
 
   // ── Jazyky ──────────────────────────────────────────────────
   languages: LangMeta[] = [];
@@ -463,7 +463,7 @@ export class EditWebsiteComponent
       fd.append('target_code', code);
     }
 
-    this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
+   this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {

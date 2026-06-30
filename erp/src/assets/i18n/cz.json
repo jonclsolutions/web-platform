@@ -238,7 +238,7 @@
             "item_6": {
                 "header": "ÚPRAVA STÁVAJÍCÍHO SYSTÉMU",
                 "price": "Variabilní cena",
-                "message": null
+                "message": "XX"
             }
         },
         "contact_form": {
@@ -417,10 +417,10 @@
         }
     },
     "home": {
-        "contact_us_header":"Máte otázky? Kontaktujte nás",
-        "contact_us_button":"Kontakty",
+        "contact_us_header": "Máte otázky? Kontaktujte nás",
+        "contact_us_button": "Kontakty",
         "header_1": "RPsoftware",
-        "header_2": "víc než IT, stavíme digitální budoucnost",
+        "header_2": "víc než IT, stavíme digitální budoucnost !!!",
         "web_header": "Webový Vývoj",
         "desktop_header": "Desktopový Vývoj",
         "mobile_header": "Mobilní Vývoj",
@@ -523,35 +523,35 @@
             }
         }
     },
-"contact_form": {
-    "header": "Kontaktujte nás",
-    "labels": {
-      "subject": "Předmět poptávky",
-      "email": "E-mail",
-      "phone": "Telefonní číslo",
-      "message": "Popis projektu",
-      "attachment": "Příloha",
-      "gdpr_consent": "Souhlasím se zpracováním osobních údajů",
-      "gdpr_link": "Zásady ochrany osobních údajů"
+    "contact_form": {
+        "header": "Kontaktujte nás",
+        "labels": {
+            "subject": "Předmět poptávky",
+            "email": "E-mail",
+            "phone": "Telefonní číslo",
+            "message": "Popis projektu",
+            "attachment": "Příloha",
+            "gdpr_consent": "Souhlasím se zpracováním osobních údajů",
+            "gdpr_link": "Zásady ochrany osobních údajů"
+        },
+        "options": {
+            "web": "Webový vývoj",
+            "desktop": "Desktopový vývoj",
+            "mobile": "Mobilní vývoj"
+        },
+        "placeholders": {
+            "file": "Přetáhněte soubor sem nebo klikněte"
+        },
+        "buttons": {
+            "send": "Odeslat poptávku",
+            "sending": "Odesílám...",
+            "go_home": "Zpět na hlavní stránku"
+        },
+        "thank_you": {
+            "title": "Děkujeme za vaši zprávu",
+            "text": "V nejbližší době se vám ozveme."
+        }
     },
-    "options": {
-      "web": "Webový vývoj",
-      "desktop": "Desktopový vývoj",
-      "mobile": "Mobilní vývoj"
-    },
-    "placeholders": {
-      "file": "Přetáhněte soubor sem nebo klikněte"
-    },
-    "buttons": {
-      "send": "Odeslat poptávku",
-      "sending": "Odesílám...",
-      "go_home": "Zpět na hlavní stránku"
-    },
-    "thank_you": {
-      "title": "Děkujeme za vaši zprávu",
-      "text": "V nejbližší době se vám ozveme."
-    }
-  },
     "about_us": {
         "header": "O nás",
         "paragraph_1": "Společnost Regiopartner s.r.o. působí více jak 20 let v oblasti evaluací a plánování regionálního rozvoje. Zaměřujeme se na hodnocení programů a projektů financovaných z veřejných zdrojů a strategické plánování rozvoje území. Díky těmto zkušenostem jsme si vybudovali stabilní zázemí a odborné know-how, na kterém postupně stavíme i nové aktivity.",
