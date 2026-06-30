@@ -1,75 +1,126 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs'; 
-import { catchError, tap } from 'rxjs/operators'; 
+import { BehaviorSubject, Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+
+export interface ApiLanguage {
+  code: string;
+  name: string;
+  active: boolean;
+  iconUrl?: string;
+  isBuiltIn?: boolean;
+}
+
+export interface LangMeta {
+  code: string;
+  label: string;
+  flag: string;
+  active: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
-//načítá data z cz.json nebo en.json a aktualizuje texty na verejne strance
 export class LocalizationService {
-  private defaultLanguage: string = 'cz'; 
-  private currentLanguageSource = new BehaviorSubject<string>(this.defaultLanguage);
+  private currentModule: string = 'web';
+  private readonly API_URL = environment.base_api_url;
+  
+  private translationsCache = new Map<string, any>();
+  private languagesCache: LangMeta[] = [];
+
+  private currentLanguageSource = new BehaviorSubject<string>('cz');
   public currentLanguage$ = this.currentLanguageSource.asObservable();
+
   private currentTranslationsSource = new BehaviorSubject<any>(null);
-  public currentTranslations$: Observable<any> = this.currentTranslationsSource.asObservable();
-  private translations: any = {};
+  public currentTranslations$ = this.currentTranslationsSource.asObservable();
+
   constructor(private http: HttpClient) {
-    this.loadInitialLanguage();
-    this.currentLanguage$.subscribe(lang => {
-      this.loadTranslations(lang);
-    });
+    this.init();
   }
 
-  private loadInitialLanguage(): void {
-    const storedLang = localStorage.getItem('selectedLanguage');
-    if (storedLang && ['cz', 'en'].includes(storedLang)) { 
-      this.currentLanguageSource.next(storedLang);
-    } else {
-      this.currentLanguageSource.next(this.defaultLanguage);
-    }
+  private init(): void {
+    const stored = localStorage.getItem('selectedLanguage') || 'cz';
+    console.log('[LocalizationService] Initializing, stored lang:', stored);
+    this.currentLanguageSource.next(stored);
+    // Po inicializaci ihned načteme překlady pro výchozí jazyk
+    this.loadTranslations(stored);
   }
 
-  // Přidejte tuto metodu do localization.service.ts
-  public getCurrentLanguage(): string {
-    return this.currentLanguageSource.getValue();
-  }
-
-  private loadTranslations(languageCode: string): void {
-    this.http.get(`assets/i18n/${languageCode}.json`).pipe(
-      tap(data => {
-        this.translations = data;
-        this.currentTranslationsSource.next(this.translations);
-      }),
-      catchError(error => {
-        if (languageCode !== this.defaultLanguage) {
-          this.loadTranslations(this.defaultLanguage);
-        } else {
-          this.translations = {};
-          this.currentTranslationsSource.next(this.translations);
-        }
-        return of({});
-      })
-    ).subscribe();
-  }
-
-  public setLanguage(languageCode: string): void {
-    if (this.currentLanguageSource.getValue() !== languageCode && ['cz', 'en'].includes(languageCode)) {
-      localStorage.setItem('selectedLanguage', languageCode);
-      this.currentLanguageSource.next(languageCode);
+  public setModule(module: string): void {
+    console.log(`[LocalizationService] setModule called: ${module}`);
+    if (this.currentModule !== module) {
+      this.currentModule = module;
+      this.translationsCache.clear();
+      this.fetchLanguages().subscribe(res => {
+        console.log('[LocalizationService] Languages updated after module change:', res);
+      });
     }
   }
 
   public getText(key: string): string {
-    const keys = key.split('.');
-    let current: any = this.translations;
-    for (const k of keys) {
-      if (current && typeof current === 'object' && current.hasOwnProperty(k)) {
-        current = current[k];
-      } else {
-        return key;
-      }
+    const translations = this.currentTranslationsSource.getValue();
+    if (!translations) {
+      console.warn(`[LocalizationService] Translations not loaded yet for key: ${key}`);
+      return key;
     }
-    return typeof current === 'string' ? current : key;
+    return key.split('.').reduce((acc, part) => acc && acc[part], translations) || key;
+  }
+
+  public fetchLanguages(): Observable<{ languages: LangMeta[] }> {
+    console.log(`[LocalizationService] Fetching languages from: ${this.API_URL}/languages/${this.currentModule}`);
+    return this.http.get<{ languages: ApiLanguage[] }>(`${this.API_URL}/languages/${this.currentModule}`).pipe(
+      map(res => ({
+        languages: res.languages.map((l: ApiLanguage) => ({
+          code: l.code,
+          label: l.name,
+          flag: l.iconUrl || 'assets/images/icons/default.png',
+          active: l.active
+        }))
+      })),
+      tap(res => {
+        console.log('[LocalizationService] Languages fetched successfully:', res.languages);
+        this.languagesCache = res.languages;
+      })
+    );
+  }
+
+  public loadTranslations(lang: string): void {
+    console.log(`[LocalizationService] Attempting to load translations for: ${lang}, module: ${this.currentModule}`);
+    
+    if (this.translationsCache.has(lang)) {
+      console.log(`[LocalizationService] Returning from cache for: ${lang}`);
+      this.currentTranslationsSource.next(this.translationsCache.get(lang));
+      return;
+    }
+
+    const url = `${this.API_URL}/translations/${this.currentModule}/${lang}`;
+    console.log(`[LocalizationService] Sending HTTP GET to: ${url}`);
+
+    this.http.get(url).subscribe({
+      next: (data) => {
+        console.log(`[LocalizationService] Received translations for ${lang}:`, data);
+        this.translationsCache.set(lang, data);
+        this.currentTranslationsSource.next(data);
+      },
+      error: (err) => {
+        console.error(`[LocalizationService] ERROR loading translations for ${lang}:`, err);
+        if (lang !== 'cz') {
+          console.log('[LocalizationService] Falling back to cz');
+          this.setLanguage('cz');
+        }
+      }
+    });
+  }
+
+  public setLanguage(code: string): void {
+    console.log(`[LocalizationService] setLanguage called: ${code}`);
+    localStorage.setItem('selectedLanguage', code);
+    this.currentLanguageSource.next(code);
+    this.loadTranslations(code);
+  }
+
+  public getCurrentLanguage(): string {
+    return this.currentLanguageSource.getValue();
   }
 }

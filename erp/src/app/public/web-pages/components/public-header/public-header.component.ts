@@ -6,16 +6,10 @@ import {
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter, takeUntil } from 'rxjs/operators';
-import { LocalizationService } from '../../../../shared/services/localization.service';
+import { LocalizationService, LangMeta } from '../../../../shared/services/localization.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 import { Observable } from 'rxjs';
 import * as Web from '../../../../shared/imports/web-providers';
-
-export interface Language {
-  code: string;
-  label: string;
-  flag: string;
-}
 
 @Component({
   selector: 'app-public-header',
@@ -60,14 +54,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Stav dropdown přepínače jazyků */
   isLangOpen: boolean = false;
 
-  /**
-   * Dostupné jazyky — v budoucnu nahradit dynamickým načtením ze serveru.
-   * Každý objekt obsahuje: code (kód jazyka), label (název), flag (cesta k ikoně).
-   */
-  availableLanguages: Language[] = [
-    { code: 'cz', label: 'Čeština',  flag: 'assets/images/icons/czech-republic.png'  },
-    { code: 'en', label: 'English',  flag: 'assets/images/icons/united-kingdom.png'  },
-  ];
+  availableLanguages: LangMeta[] = [];
 
   private destroy$ = new Web.Subject<void>();
 
@@ -78,24 +65,34 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     public localizationService: LocalizationService,
     private publicDataService: PublicDataService
   ) {
+    this.localizationService.setModule('web');
     this.currentLanguage$ = this.localizationService.currentLanguage$;
   }
 
   ngOnInit(): void {
-    this.publicDataService.getSiteSettings()
+    // Logování jazyků
+    this.localizationService.fetchLanguages().subscribe(res => {
+      console.log('API Languages loaded:', res.languages);
+      this.availableLanguages = res.languages;
+      this.cdr.markForCheck();
+    });
+
+    // Logování překladů
+    this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(data => {
-        this.siteSettings = data.settings;
+      .subscribe(t => {
+        console.log('API Translations loaded:', t);
+        this.t = t;
         this.cdr.markForCheck();
       });
 
-    this.localizationService.currentTranslations$
+    // Logování nastavení webu
+    this.publicDataService.getSiteSettings()
       .pipe(takeUntil(this.destroy$))
-      .subscribe(translations => {
-        if (translations) {
-          this.t = translations.navigation;
-          this.cdr.markForCheck();
-        }
+      .subscribe(data => {
+        console.log('API SiteSettings loaded:', data);
+        this.siteSettings = data.settings;
+        this.cdr.markForCheck();
       });
 
     this.checkMobileView();
@@ -124,7 +121,6 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.isMobileView && this.isMenuOpen) this.closeMenu();
   }
 
-  /** Zavře dropdown při kliknutí mimo něj (používá directive nebo globální listener) */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
@@ -146,23 +142,19 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   toggleMenu(): void { this.isMenuOpen = !this.isMenuOpen; this.toggleScroll(this.isMenuOpen); }
   closeMenu(): void  { this.isMenuOpen = false; this.toggleScroll(false); }
 
-  /** Otevře / zavře jazykový dropdown */
   toggleLangDropdown(): void {
     this.isLangOpen = !this.isLangOpen;
     this.cdr.markForCheck();
   }
 
-  /** Zavře jazykový dropdown */
   closeLangDropdown(): void {
     this.isLangOpen = false;
     this.cdr.markForCheck();
   }
 
-  /** Vrátí objekt aktivního jazyka nebo první z pole */
-  getActiveLang(): Language | undefined {
-    const current = this.localizationService.getCurrentLanguage?.() ?? 'cz';
-    return this.availableLanguages.find(l => l.code === current)
-        ?? this.availableLanguages[0];
+  getActiveLang(): LangMeta | undefined {
+    const current = this.localizationService.getCurrentLanguage();
+    return this.availableLanguages.find(l => l.code === current);
   }
 
   private toggleScroll(blockScroll: boolean): void {
@@ -283,7 +275,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  selectLanguage(languageCode: string): void {
-    this.localizationService.setLanguage(languageCode);
+  selectLanguage(code: string): void {
+    this.localizationService.setLanguage(code);
   }
 }

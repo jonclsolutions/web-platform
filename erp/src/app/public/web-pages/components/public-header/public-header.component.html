@@ -1,12 +1,12 @@
 <header [class.scrolled]="scrolled">
   <nav>
     <ul>
-      <li><a routerLink="/home" #homeLink>{{ t?.home }}</a></li>
-      <li><a routerLink="/services" #servicesLink>{{ t?.services }}</a></li>
-      <li><a routerLink="/contact" #shopLink>{{ t?.contact }}</a></li>
+      <li><a routerLink="/home" #homeLink>{{ t?.navigation?.home }}</a></li>
+      <li><a routerLink="/services" #servicesLink>{{ t?.navigation?.services }}</a></li>
+      <li><a routerLink="/contact" #shopLink>{{ t?.navigation?.contact }}</a></li>
       <li>
         <a routerLink="/shop" target="_blank" #academyLink>
-          {{ t?.shop }}
+          {{ t?.navigation?.shop }}
           <svg class="desktop-link-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
             <path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
           </svg>
@@ -17,18 +17,15 @@
   </nav>
 </header>
 
-<!-- Logo -->
 <a routerLink="/home" class="logo-wrp">
   <img [src]="siteSettings?.logo_path ? '/storage/' + siteSettings.logo_path : logo">
 </a>
 
-<!-- Pravé ovládací prvky -->
 <div class="lang-wrp">
-  <a routerLink="/references" class="nav-link">{{ t?.references }}</a>
-  <a routerLink="/faq" class="nav-link">{{ t?.faq }}</a>
+  <a routerLink="/references" class="nav-link">{{ t?.navigation?.references }}</a>
+  <a routerLink="/faq" class="nav-link">{{ t?.navigation?.faq }}</a>
 
-  <!-- Language dropdown -->
-  <div class="lang-dropdown" [class.lang-dropdown--open]="isLangOpen" (clickOutside)="closeLangDropdown()">
+  <div class="lang-dropdown" [class.lang-dropdown--open]="isLangOpen">
     <button class="lang-trigger" (click)="toggleLangDropdown()" [attr.aria-expanded]="isLangOpen" aria-haspopup="listbox">
       <img
         [src]="getActiveLang()?.flag ?? cz_flag_link"
@@ -63,7 +60,6 @@
   </div>
 </div>
 
-<!-- Mobilní header -->
 <div class="mobile-header">
   <a routerLink="/home" class="m-logo">
     <img [src]="siteSettings?.logo_path ? '/storage/' + siteSettings.logo_path : logo" alt="Logo">
@@ -75,21 +71,18 @@
   </div>
 </div>
 
-<!-- Mobilní menu -->
 <div class="mobile-menu-wrapper" [class.open]="isMenuOpen">
   <nav class="mobile-nav">
     <div class="main-links">
-      <a routerLink="/home"       (click)="closeMenu()">{{ t?.home }}</a><hr>
-      <a routerLink="/services"   (click)="closeMenu()">{{ t?.services }}</a><hr>
-      <a routerLink="/contact"    (click)="closeMenu()">{{ t?.contact }}</a><hr>
-      <a routerLink="/shop" target="_blank" (click)="closeMenu()">{{ t?.shop }}</a><hr>
-      <a routerLink="/references" (click)="closeMenu()">{{ t?.references }}</a><hr>
-      <a routerLink="/faq"        (click)="closeMenu()">{{ t?.faq }}</a>
+      <a routerLink="/home"       (click)="closeMenu()">{{ t?.navigation?.home }}</a><hr>
+      <a routerLink="/services"   (click)="closeMenu()">{{ t?.navigation?.services }}</a><hr>
+      <a routerLink="/contact"    (click)="closeMenu()">{{ t?.navigation?.contact }}</a><hr>
+      <a routerLink="/shop" target="_blank" (click)="closeMenu()">{{ t?.navigation?.shop }}</a><hr>
+      <a routerLink="/references" (click)="closeMenu()">{{ t?.navigation?.references }}</a><hr>
+      <a routerLink="/faq"        (click)="closeMenu()">{{ t?.navigation?.faq }}</a>
     </div>
 
     <div class="mobile-menu-bottom">
-
-      <!-- Mobilní lang dropdown -->
       <div class="mobile-lang-wrp">
         @for (lang of availableLanguages; track lang.code) {
           <span
@@ -114,7 +107,6 @@
           </div>
         </div>
       }
-
     </div>
   </nav>
 </div>

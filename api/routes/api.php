@@ -122,8 +122,6 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
 
 // ── Jazyky — mutace jsou chráněné ─────────────────────────
     Route::prefix('languages')->group(function () {
-        // GET načtení seznamu (v chráněné zóně)
-        Route::get('/{module}',      [TranslationController::class, 'getLanguages']);
         // POST uložení seznamu
         Route::post('/{module}',     [TranslationController::class, 'saveLanguages']);
         // Ikonky

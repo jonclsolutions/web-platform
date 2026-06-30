@@ -34,6 +34,8 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     private publicDataService: PublicDataService,
     private cdr: ChangeDetectorRef
   ) {
+    // Nastavení modulu pro footer (shodné s headerem)
+    this.localizationService.setModule('web');
     this.currentYear = new Date().getFullYear();
   }
 
@@ -64,7 +66,6 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     return this.publicDataService.getStorageUrl(path);
   }
 
-  // Helper pro dynamické texty
   getCopyright(): string {
     const text = this.settings?.footer_text || this.t?.copyright_text || '© {year} All rights reserved.';
     return text.replace('{year}', this.currentYear.toString());
