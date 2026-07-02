@@ -1,9 +1,10 @@
+<!-- faq -->
 @if (t && settings) {
 <div class="faq-page">
   <section class="faq-hero">
-    <div class="faq-hero-eyebrow">Vše, co potřebujete vědět</div>
+    <div class="faq-hero-eyebrow">{{ t?.hero_eyebrow }}</div>
     <h1 class="faq-hero-title">{{ t?.header_1 }}</h1>
-    <p class="faq-hero-sub">Nenašli jste odpověď? Napište nám — obvykle odpovídáme do 48 hodin.</p>
+    <p class="faq-hero-sub">{{ t?.hero_sub }}</p>
     <div class="faq-tags">
       @for (cat of categories; track cat.id) {
         <button class="faq-tag" [class.faq-tag--active]="activeCategory === cat.id" (click)="setCategory(cat.id)">{{ cat.label }}</button>
@@ -14,9 +15,9 @@
   <div class="faq-layout">
     <aside class="faq-sidebar">
       <div class="sidebar-card">
-        <div class="sidebar-card-eyebrow">Přímý kontakt</div>
-        <h3 class="sidebar-card-title">Nenašli jste odpověď?</h3>
-        <p class="sidebar-card-text">Naši specialisté jsou připraveni zodpovědět jakýkoli dotaz.</p>
+        <div class="sidebar-card-eyebrow">{{ t?.sidebar_eyebrow }}</div>
+        <h3 class="sidebar-card-title">{{ t?.sidebar_title }}</h3>
+        <p class="sidebar-card-text">{{ t?.sidebar_text }}</p>
           <div class="sidebar-contact-list">
             <a [href]="'mailto:' + settings.contact_email" class="sidebar-contact-item">
               <span class="sidebar-contact-icon">✉</span>
@@ -35,21 +36,21 @@
               </a>
             }
           </div>
-        <a routerLink="/contact" class="sidebar-cta-btn">Napsat zprávu <span aria-hidden="true">→</span></a>
+        <a routerLink="/contact" class="sidebar-cta-btn">{{ t?.sidebar_cta }} <span aria-hidden="true">→</span></a>
       </div>
       <div class="sidebar-stats-card">
-        <div class="sidebar-stat"><span class="sidebar-stat-num">{{ filteredItems.length }}+</span><span class="sidebar-stat-label">odpovědí</span></div>
+        <div class="sidebar-stat"><span class="sidebar-stat-num">{{ filteredItems.length }}+</span><span class="sidebar-stat-label">{{ t?.stat_answers_label }}</span></div>
         <div class="sidebar-stat-divider"></div>
-        <div class="sidebar-stat"><span class="sidebar-stat-num">48h</span><span class="sidebar-stat-label">max. odezva</span></div>
+        <div class="sidebar-stat"><span class="sidebar-stat-num">{{ t?.stat_response_value }}</span><span class="sidebar-stat-label">{{ t?.stat_response_label }}</span></div>
       </div>
       <div class="sidebar-tip-card">
         <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
-        <p class="sidebar-tip-text">Každý projekt začínáme <strong>bezplatnou konzultací</strong> — přijďte s nápadem, my přijdeme s řešením.</p>
+        <p class="sidebar-tip-text" [innerHTML]="t?.tip_text"></p>
       </div>
     </aside>
 
     <main class="faq-main">
-      <div class="faq-section-label">Časté dotazy</div>
+      <div class="faq-section-label">{{ t?.section_label }}</div>
       <div class="faq-list" role="list">
         @for (item of filteredItems; track item.question; let i = $index) {
           <div class="faq-item" [class.faq-item--open]="item.isActive" [style.animation-delay]="i * 0.06 + 's'" role="listitem">
@@ -64,10 +65,17 @@
       </div>
       
       <div class="faq-mobile-extras">
-        <div class="sidebar-stats-card">... (shodné s desktopem) ...</div>
-        <div class="sidebar-tip-card">... (shodné s desktopem) ...</div>
+        <div class="sidebar-stats-card">
+          <div class="sidebar-stat"><span class="sidebar-stat-num">{{ filteredItems.length }}+</span><span class="sidebar-stat-label">{{ t?.stat_answers_label }}</span></div>
+          <div class="sidebar-stat-divider"></div>
+          <div class="sidebar-stat"><span class="sidebar-stat-num">{{ t?.stat_response_value }}</span><span class="sidebar-stat-label">{{ t?.stat_response_label }}</span></div>
+        </div>
+        <div class="sidebar-tip-card">
+          <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
+          <p class="sidebar-tip-text" [innerHTML]="t?.tip_text"></p>
+        </div>
         <div class="sidebar-card">
-          <div class="sidebar-card-eyebrow">Přímý kontakt</div>
+          <div class="sidebar-card-eyebrow">{{ t?.sidebar_eyebrow }}</div>
             <div class="sidebar-contact-list">
               <a [href]="'mailto:' + settings.contact_email" class="sidebar-contact-item">
                 <span class="sidebar-contact-icon">✉</span>
@@ -102,8 +110,8 @@
       </div>
       <div class="cta-divider" aria-hidden="true"></div>
       <div class="cta-block">
-        <p class="cta-text">Chcete vidět naše projekty?</p>
-        <a routerLink="/references" class="cta-btn">Reference <span class="cta-arrow" aria-hidden="true">→</span></a>
+        <p class="cta-text">{{ t?.cta_projects_prompt }}</p>
+        <a routerLink="/references" class="cta-btn">{{ t?.cta_projects_btn }} <span class="cta-arrow" aria-hidden="true">→</span></a>
       </div>
     </div>
   </section>

@@ -19,14 +19,12 @@ import { PublicDataService } from '../../../../shared/services/public-data.servi
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JobItemComponent extends BaseDataComponent<any> implements OnInit, OnDestroy {
-  // Přímý přístup k loading službě pro HTML šablonu
   public override loadingService = inject(LoadingService);
-  
   override apiEndpoint: string = 'job_applications';
-  
+
   applicationForm!: FormGroup;
   job: any = null;
-  t: any = null; 
+  t: any = null;
   settings: any = null;
   isSubmitted = false;
   selectedFile: File | null = null;
@@ -34,7 +32,7 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
   constructor(
     protected override dataHandler: DataHandler,
     protected override cd: ChangeDetectorRef,
-    protected override genericTableService: GenericTableService, 
+    protected override genericTableService: GenericTableService,
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private localizationService: LocalizationService,
@@ -42,10 +40,10 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
   ) {
     super(dataHandler, cd, genericTableService);
   }
+
   override ngOnInit(): void {
     this.initForm();
-    
-    // Načtení nastavení webu pro dynamické kontakty
+
     this.publicDataService.getSiteSettings()
       .pipe(takeUntil(this.destroy$))
       .subscribe(res => {
@@ -56,8 +54,8 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(translations => {
-        if (translations?.job_detail) {
-          this.t = translations.job_detail;
+        if (translations?.jobs) {
+          this.t = translations.jobs;
           this.loadJobData();
           this.cd.markForCheck();
         }
@@ -66,11 +64,11 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
 
   private initForm(): void {
     this.applicationForm = this.fb.group({
-      first_name: ['', Validators.required],
-      last_name: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      phone: [''],
-      message: [''],
+      first_name:              ['', Validators.required],
+      last_name:               ['', Validators.required],
+      email:                   ['', [Validators.required, Validators.email]],
+      phone:                   [''],
+      message:                 [''],
       dataProcessingAgreement: [false, Validators.requiredTrue]
     });
   }
@@ -103,7 +101,6 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
     if (this.job) formData.append('position_name', this.job.title);
     formData.append('cv_file', this.selectedFile, this.selectedFile.name);
 
-    // Interceptor automaticky spustí globální loading
     this.uploadData<any>(formData).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
@@ -111,8 +108,8 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
         this.isSubmitted = true;
         this.cd.markForCheck();
       },
-      error: (err) => {
-        this.errorMessage = 'Omlouváme se, přihlášku se nepodařilo odeslat. Zkuste to prosím později.';
+      error: () => {
+        this.errorMessage = this.t?.form_error_generic ?? 'Nastala chyba. Zkuste to prosím znovu.';
         this.cd.markForCheck();
       }
     });
@@ -121,9 +118,9 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
   private loadJobData(): void {
     const jobId = this.route.snapshot.paramMap.get('id');
     if (jobId && this.t[jobId]) {
-      this.job = { 
-        title: this.t[jobId].title, 
-        fullContent: this.t[jobId].content 
+      this.job = {
+        title:       this.t[jobId].title,
+        fullContent: this.t[jobId].content
       };
     }
   }

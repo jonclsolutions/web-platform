@@ -2,17 +2,14 @@
 
   <aside class="panel-left">
 
-    <span class="side-label" aria-hidden="true">KONTAKT</span>
+    <span class="side-label" aria-hidden="true">{{ f?.side_label }}</span>
 
     <div class="panel-left-content">
 
       <div class="brand-block">
-        <p class="brand-eyebrow">Studio / Praha</p>
-        <h1 class="brand-headline">Pojďme<br>spolupracovat.</h1>
-        <p class="brand-sub">
-          Rádi si vyslechneme váš nápad — od prvního hovoru
-          po spuštění produktu.
-        </p>
+        <p class="brand-eyebrow">{{ f?.brand_eyebrow }}</p>
+        <h1 class="brand-headline" [innerHTML]="f?.brand_headline"></h1>
+        <p class="brand-sub">{{ f?.brand_sub }}</p>
       </div>
 
       <div class="stats-row">
@@ -55,21 +52,21 @@
 
       <div class="form-wrapper">
         <div class="form-header">
-          <p class="form-eyebrow">Napište nám</p>
-          <h2 class="form-title">Poptávkový formulář</h2>
+          <p class="form-eyebrow">{{ f?.form_eyebrow }}</p>
+          <h2 class="form-title">{{ f?.form_title }}</h2>
         </div>
 
         <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" novalidate class="form-body">
 
           <div class="field-group">
-            <label class="field-label" for="subject">Téma</label>
+            <label class="field-label" for="subject">{{ f?.labels?.subject }}</label>
             <div class="select-wrap">
               <select id="subject" formControlName="subject" class="field-input">
-                <option value="web">Webový vývoj</option>
-                <option value="desktop">Desktopový vývoj</option>
-                <option value="mobile">Mobilní vývoj</option>
-                <option value="ai">AI vývoj</option>
-                <option value="other">Jiné</option>
+                <option value="web">{{ f?.options?.web }}</option>
+                <option value="desktop">{{ f?.options?.desktop }}</option>
+                <option value="mobile">{{ f?.options?.mobile }}</option>
+                <option value="ai">{{ f?.options?.ai }}</option>
+                <option value="other">{{ f?.options?.other }}</option>
               </select>
               <span class="select-arrow" aria-hidden="true">↓</span>
             </div>
@@ -78,28 +75,28 @@
           <div class="field-row">
             <div class="field-group">
               <label class="field-label" for="email">
-                E-mail <span class="req">*</span>
+                {{ f?.labels?.email }} <span class="req">*</span>
               </label>
               <input
                 id="email"
                 type="email"
                 formControlName="email"
-                placeholder="vas@email.cz"
+                [placeholder]="f?.placeholders?.email"
                 class="field-input"
                 [class.is-error]="fieldInvalid('email')"
                 autocomplete="email">
               @if (fieldInvalid('email')) {
-                <span class="field-error">Zadejte platný e-mail.</span>
+                <span class="field-error">{{ f?.errors?.email_invalid }}</span>
               }
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="phone">Telefon</label>
+              <label class="field-label" for="phone">{{ f?.labels?.phone }}</label>
               <input
                 id="phone"
                 type="tel"
                 formControlName="phone"
-                placeholder="+420 123 456 789"
+                [placeholder]="f?.placeholders?.phone"
                 class="field-input"
                 autocomplete="tel">
             </div>
@@ -107,35 +104,39 @@
 
           <div class="field-group">
             <label class="field-label" for="message">
-              Zpráva <span class="req">*</span>
+              {{ f?.labels?.message }} <span class="req">*</span>
             </label>
             <textarea
               id="message"
               formControlName="message"
               rows="5"
-              placeholder="Popište váš projekt — čím více detailů, tím přesnější nabídku připravíme."
+              [placeholder]="f?.placeholders?.message"
               class="field-input textarea"
               [class.is-error]="fieldInvalid('message')">
             </textarea>
             @if (fieldInvalid('message')) {
               <span class="field-error">
-                @if (contactForm.get('message')?.hasError('required')) { Zpráva je povinná. }
-                @else if (contactForm.get('message')?.hasError('minlength')) { Zpráva musí mít alespoň 10 znaků. }
-                @else if (contactForm.get('message')?.hasError('maxlength')) { Zpráva nesmí mít více než 10 000 znaků. }
+                @if (contactForm.get('message')?.hasError('required')) { {{ f?.errors?.message_required }} }
+                @else if (contactForm.get('message')?.hasError('minlength')) { {{ f?.errors?.message_minlength }} }
+                @else if (contactForm.get('message')?.hasError('maxlength')) { {{ f?.errors?.message_maxlength }} }
               </span>
             }
           </div>
 
           <div class="field-group">
-            <label class="field-label">Příloha <span class="field-hint">(max 10 MB)</span></label>
+            <label class="field-label">
+              {{ f?.labels?.attachment }} <span class="field-hint">{{ f?.labels?.attachment_hint }}</span>
+            </label>
             <label class="file-zone" [class.file-zone--has]="selectedFile">
               @if (!selectedFile) {
                 <span class="file-zone-icon" aria-hidden="true">↑</span>
-                <span class="file-zone-text">Přetáhněte soubor sem nebo <u>klikněte pro výběr</u></span>
+                <span class="file-zone-text">{{ f?.placeholders?.file_drop }}</span>
               } @else {
                 <span class="file-zone-icon" aria-hidden="true">✓</span>
                 <span class="file-zone-text file-zone-name">{{ selectedFile.name }}</span>
-                <button type="button" class="file-remove" (click)="removeFile(); $event.stopPropagation()" aria-label="Odebrat soubor">✕</button>
+                <button type="button" class="file-remove"
+                  (click)="removeFile(); $event.stopPropagation()"
+                  [attr.aria-label]="f?.buttons?.remove_file">✕</button>
               }
               <input type="file" class="file-hidden" (change)="onFileSelected($event)" tabindex="-1" aria-hidden="true">
             </label>
@@ -146,8 +147,8 @@
               <input type="checkbox" formControlName="gdpr" class="checkbox-input">
               <span class="checkbox-box" aria-hidden="true"></span>
               <span class="checkbox-text">
-                Souhlasím se
-                <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">zpracováním osobních údajů</a>
+                {{ f?.labels?.gdpr_consent }}
+                <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">{{ f?.labels?.gdpr_link }}</a>
                 <span class="req"> *</span>
               </span>
             </label>
@@ -160,9 +161,9 @@
             [disabled]="contactForm.invalid || isLoading()">
             @if (isLoading()) {
               <span class="spinner" aria-hidden="true"></span>
-              <span>Odesílám…</span>
+              <span>{{ f?.buttons?.sending }}</span>
             } @else {
-              <span>Odeslat poptávku</span>
+              <span>{{ f?.buttons?.send }}</span>
               <span class="btn-arrow" aria-hidden="true">→</span>
             }
           </button>
@@ -174,12 +175,9 @@
 
       <div class="success-panel">
         <div class="success-icon" aria-hidden="true">✓</div>
-        <h2 class="success-title">Děkujeme!</h2>
-        <p class="success-text">
-          Vaši zprávu jsme obdrželi. Obvykle odpovídáme do 48 hodin —
-          nejpozději v příštím pracovním dni.
-        </p>
-        <a routerLink="/home" class="back-btn">← Zpět na hlavní stránku</a>
+        <h2 class="success-title">{{ f?.thank_you?.title }}</h2>
+        <p class="success-text">{{ f?.thank_you?.text }}</p>
+        <a routerLink="/home" class="back-btn">{{ f?.buttons?.go_home }}</a>
       </div>
 
     }

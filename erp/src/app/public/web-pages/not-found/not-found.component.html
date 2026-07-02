@@ -6,16 +6,18 @@
       </div>
 
       
-      <h2 class="header-0-2-t">Page Not Found</h2>
-      <p class="text-1">
-        There is nothing to see here, but our homepage has plenty to offer.
-      </p>
+      @if (t) {
+        <h2 class="header-0-2-t">{{ t.header }}</h2>
+        <p class="text-1">
+          {{ t.text }}
+        </p>
 
-      <div class="btn-wrapper">
-        <a routerLink="/home" class="home-btn-404">
-          Back to Home
-        </a>
-      </div>
+        <div class="btn-wrapper">
+          <a routerLink="/home" class="home-btn-404">
+            {{ t.button }}
+          </a>
+        </div>
+      }
     </div>
   </div>
 </div>

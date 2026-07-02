@@ -3,28 +3,25 @@
 
   <!-- ══ HERO ══════════════════════════════════════════════════════ -->
   <section class="ref-hero">
-    <div class="ref-hero-eyebrow">Portfolio & realizace</div>
+    <div class="ref-hero-eyebrow">{{ r?.hero_eyebrow }}</div>
     <h1 class="ref-hero-title">{{ r?.header_1 }}</h1>
-    <p class="ref-hero-sub">
-      Přehled projektů, na kterých jsme pracovali. Každý projekt je pro nás 
-      výzvou i příběhem.
-    </p>
+    <p class="ref-hero-sub">{{ r?.hero_sub }}</p>
 
     <!-- Souhrnné statistiky -->
     <div class="ref-hero-stats">
       <div class="ref-hero-stat">
-        <span class="ref-hero-stat-num">120+</span>
-        <span class="ref-hero-stat-label">dokončených projektů</span>
+        <span class="ref-hero-stat-num">{{ r?.stat_1_num }}</span>
+        <span class="ref-hero-stat-label">{{ r?.stat_1_label }}</span>
       </div>
       <div class="ref-stat-sep" aria-hidden="true"></div>
       <div class="ref-hero-stat">
-        <span class="ref-hero-stat-num">8+</span>
-        <span class="ref-hero-stat-label">let ve vývoji</span>
+        <span class="ref-hero-stat-num">{{ r?.stat_2_num }}</span>
+        <span class="ref-hero-stat-label">{{ r?.stat_2_label }}</span>
       </div>
       <div class="ref-stat-sep" aria-hidden="true"></div>
       <div class="ref-hero-stat">
-        <span class="ref-hero-stat-num">4</span>
-        <span class="ref-hero-stat-label">platformy</span>
+        <span class="ref-hero-stat-num">{{ r?.stat_3_num }}</span>
+        <span class="ref-hero-stat-label">{{ r?.stat_3_label }}</span>
       </div>
     </div>
   </section>
@@ -37,48 +34,42 @@
 
       <!-- Info karta -->
       <div class="sidebar-card">
-        <div class="sidebar-card-eyebrow">O portfoliu</div>
-        <h3 class="sidebar-card-title">Vybraná realizovaná díla</h3>
-        <p class="sidebar-card-text">
-          Ukázka projektů z různých oblastí — webový, desktopový, mobilní 
-          a AI vývoj. Kliknutím na projekt zobrazíte podrobnosti.
-        </p>
+        <div class="sidebar-card-eyebrow">{{ r?.sidebar_about_eyebrow }}</div>
+        <h3 class="sidebar-card-title">{{ r?.sidebar_about_title }}</h3>
+        <p class="sidebar-card-text">{{ r?.sidebar_about_text }}</p>
       </div>
 
       <!-- Legenda typů -->
       <div class="sidebar-card">
-        <div class="sidebar-card-eyebrow">Kategorie projektů</div>
+        <div class="sidebar-card-eyebrow">{{ r?.sidebar_legend_eyebrow }}</div>
         <div class="legend-list">
           <div class="legend-item">
             <span class="legend-dot legend-dot--web"></span>
-            <span class="legend-label">Webový vývoj</span>
+            <span class="legend-label">{{ r?.legend_web }}</span>
           </div>
           <div class="legend-item">
             <span class="legend-dot legend-dot--desktop"></span>
-            <span class="legend-label">Desktopový vývoj</span>
+            <span class="legend-label">{{ r?.legend_desktop }}</span>
           </div>
           <div class="legend-item">
             <span class="legend-dot legend-dot--mobile"></span>
-            <span class="legend-label">Mobilní vývoj</span>
+            <span class="legend-label">{{ r?.legend_mobile }}</span>
           </div>
           <div class="legend-item">
             <span class="legend-dot legend-dot--ai"></span>
-            <span class="legend-label">AI & automatizace</span>
+            <span class="legend-label">{{ r?.legend_ai }}</span>
           </div>
         </div>
       </div>
 
       <!-- Celý seznam odkaz -->
       <div class="sidebar-archive-card">
-        <p class="sidebar-archive-text">
-          Tato stránka zobrazuje výběr. Kompletní archiv projektů najdete 
-          na externím portálu.
-        </p>
+        <p class="sidebar-archive-text">{{ r?.sidebar_archive_text }}</p>
         <a
           target="_blank"
           href="https://www.regiopartner.cz/archiv-ukoncenych-projektu-1404041473.html"
           class="sidebar-archive-btn">
-          {{ r?.more_button_link_text ?? 'Celý archiv projektů' }}
+          {{ r?.sidebar_archive_btn }}
           <span aria-hidden="true">↗</span>
         </a>
       </div>
@@ -96,40 +87,40 @@
       </div>
 
       <!-- Položky projektů -->
-<div class="ref-list" role="list">
-  @for (project of projects; track project; let i = $index) {
-    <div
-      class="ref-item"
-      [class.ref-item--open]="project.isActive"
-      [style.animation-delay]="i * 0.06 + 's'"
-      role="listitem">
+      <div class="ref-list" role="list">
+        @for (project of projects; track project; let i = $index) {
+          <div
+            class="ref-item"
+            [class.ref-item--open]="project.isActive"
+            [style.animation-delay]="i * 0.06 + 's'"
+            role="listitem">
 
-      <button
-        class="ref-trigger"
-        [attr.aria-expanded]="project.isActive"
-        (click)="toggleProject(project)">
-        <span class="ref-index" aria-hidden="true">
-          {{ (i + 1).toString().padStart(2, '0') }}
-        </span>
-        <span class="ref-col-title ref-trigger-title">
-          {{ project.name }}
-        </span>
-        <span class="ref-col-duration ref-meta">
-          {{ project.duration }}
-        </span>
-        <span class="ref-col-client ref-meta">
-          {{ project.client }}
-        </span>
-        </button>
+            <button
+              class="ref-trigger"
+              [attr.aria-expanded]="project.isActive"
+              (click)="toggleProject(project)">
+              <span class="ref-index" aria-hidden="true">
+                {{ (i + 1).toString().padStart(2, '0') }}
+              </span>
+              <span class="ref-col-title ref-trigger-title">
+                {{ project.name }}
+              </span>
+              <span class="ref-col-duration ref-meta">
+                {{ project.duration }}
+              </span>
+              <span class="ref-col-client ref-meta">
+                {{ project.client }}
+              </span>
+            </button>
 
-      <div class="ref-body">
-        <div class="ref-body-inner">
-          <p class="ref-description" [innerHTML]="project.description"></p>
+            <div class="ref-body">
+              <div class="ref-body-inner">
+                <p class="ref-description" [innerHTML]="project.description"></p>
+              </div>
+            </div>
           </div>
+        }
       </div>
-    </div>
-  }
-</div>
 
       <!-- Odkaz na celý archiv pod seznamem -->
       <div class="ref-more-row">
@@ -138,7 +129,7 @@
           target="_blank"
           href="https://www.regiopartner.cz/archiv-ukoncenych-projektu-1404041473.html"
           class="ref-more-btn">
-          {{ r?.more_button_link_text ?? 'Celý archiv projektů' }}
+          {{ r?.more_button_link_text }}
           <span class="ref-more-arrow" aria-hidden="true">→</span>
         </a>
       </div>
@@ -150,19 +141,19 @@
   <section class="ref-cta-section">
     <div class="cta-row">
       <div class="cta-block">
-        <p class="cta-eyebrow">Zaujal vás náš přístup?</p>
-        <p class="cta-text">Podívejte se na naše služby a zjistěte, jak vám můžeme pomoci.</p>
+        <p class="cta-eyebrow">{{ r?.cta_1_eyebrow }}</p>
+        <p class="cta-text">{{ r?.cta_1_text }}</p>
         <a routerLink="/services" class="cta-btn">
-          Naše služby
+          {{ r?.cta_1_btn }}
           <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
       <div class="cta-divider" aria-hidden="true"></div>
       <div class="cta-block">
-        <p class="cta-eyebrow">Připraveni začít?</p>
-        <p class="cta-text">Kontaktujte nás a probereme váš projekt.</p>
+        <p class="cta-eyebrow">{{ r?.cta_2_eyebrow }}</p>
+        <p class="cta-text">{{ r?.cta_2_text }}</p>
         <a routerLink="/contact" class="cta-btn cta-btn--accent">
-          Kontaktovat nás
+          {{ r?.cta_2_btn }}
           <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>

@@ -28,12 +28,12 @@ export class HomeComponent implements Web.OnInit, Web.OnDestroy {
   survey_solver: string = 'assets/images/product_images/survey_solver.png';
   check_mark: string = 'assets/images/icons/check.png';
 
-  c_sharp: string = 'assets/images/services-img/csharp.png'
-  ts: string = 'assets/images/services-img/ts.png'
-  php: string = 'assets/images/services-img/php.png'
-  python: string = 'assets/images/services-img/py.png'
-  cpp: string = 'assets/images/services-img/cpp.png'
-  kotlin: string = 'assets/images/services-img/kotlin.png'
+  c_sharp: string = 'assets/images/services-img/csharp.png';
+  ts: string = 'assets/images/services-img/ts.png';
+  php: string = 'assets/images/services-img/php.png';
+  python: string = 'assets/images/services-img/py.png';
+  cpp: string = 'assets/images/services-img/cpp.png';
+  kotlin: string = 'assets/images/services-img/kotlin.png';
 
   hoverState: { [key: string]: boolean } = {
     webapp: false,
@@ -51,9 +51,11 @@ export class HomeComponent implements Web.OnInit, Web.OnDestroy {
     this.localizationService.currentTranslations$
       .pipe(Web.takeUntil(this.destroy$))
       .subscribe(translations => {
-        if (translations && Object.keys(translations).length > 0) {
+        // Kontrola, zda data skutečně existují
+        if (translations?.home) {
           this.t = translations.home;
-          this.cdr.detectChanges();
+          // Pokud je t null, nedovolíme vykreslení v šabloně díky @if
+          this.cdr.markForCheck(); 
         }
       });
   }
@@ -64,6 +66,18 @@ export class HomeComponent implements Web.OnInit, Web.OnDestroy {
   }
 
   // --- Pomocné metody pro UI ---
+
+  getTechIcon(name: string): string {
+    const icons: Record<string, string> = {
+      'C#': this.c_sharp,
+      'TypeScript': this.ts,
+      'PHP': this.php,
+      'Python': this.python,
+      'C++': this.cpp,
+      'Kotlin': this.kotlin
+    };
+    return icons[name] || '';
+  }
 
   getHeroBackground(): string {
     return `url('${this.heroBackgroundImageUrl}')`;

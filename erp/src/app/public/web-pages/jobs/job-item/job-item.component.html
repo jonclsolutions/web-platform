@@ -2,31 +2,29 @@
 <div class="job-page">
 
   <div class="job-back-bar">
-    <a routerLink="/jobs" class="back-link">
-      ← {{ t?.back_link || 'Zpět na výpis pozic' }}
-    </a>
+    <a routerLink="/jobs" class="back-link">← {{ t?.back_link }}</a>
   </div>
 
   @if (job) {
 
     <section class="job-hero">
-      <div class="job-hero-eyebrow">Otevřená pozice</div>
+      <div class="job-hero-eyebrow">{{ t?.item_hero_eyebrow }}</div>
       <h1 class="job-hero-title">{{ job?.title }}</h1>
       <div class="job-hero-meta">
-        <span class="job-meta-tag">Plný úvazek</span>
-        <span class="job-meta-tag">Praha / Remote</span>
+        <span class="job-meta-tag">{{ t?.item_meta_type }}</span>
+        <span class="job-meta-tag">{{ t?.item_meta_location }}</span>
       </div>
     </section>
 
     <div class="job-layout">
 
       <article class="job-description">
-        <div class="job-desc-label">O pozici</div>
+        <div class="job-desc-label">{{ t?.item_desc_label }}</div>
         <div class="job-desc-body" [innerHTML]="job?.fullContent"></div>
 
         @if (settings) {
           <div class="job-contact-strip">
-            <span class="job-contact-label">Máte dotaz?</span>
+            <span class="job-contact-label">{{ t?.item_contact_label }}</span>
             <a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="job-contact-link">{{ settings.contact_phone }}</a>
             <span class="job-contact-sep" aria-hidden="true">•</span>
             <a [href]="'mailto:' + settings.contact_email" class="job-contact-link">{{ settings.contact_email }}</a>
@@ -38,101 +36,96 @@
         <div class="form-card">
 
           @if (!isSubmitted) {
-
-            <div class="form-card-eyebrow">Přihláška</div>
-            <h2 class="form-card-title">Mám zájem o tuto pozici</h2>
+            <div class="form-card-eyebrow">{{ t?.form_eyebrow }}</div>
+            <h2 class="form-card-title">{{ t?.form_title }}</h2>
 
             <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()" novalidate>
 
               <div class="field-row">
                 <div class="field-group">
                   <label class="field-label" for="first_name">
-                    Jméno <span class="req">*</span>
+                    {{ t?.form_first_name_label }} <span class="req">*</span>
                   </label>
                   <input
                     id="first_name"
                     type="text"
                     formControlName="first_name"
-                    placeholder="Jan"
+                    [placeholder]="t?.form_first_name_placeholder"
                     class="field-input"
                     [class.is-error]="applicationForm.get('first_name')?.invalid && applicationForm.get('first_name')?.touched">
                   @if (applicationForm.get('first_name')?.errors?.['required'] && applicationForm.get('first_name')?.touched) {
-                    <span class="field-error">Jméno je povinné.</span>
+                    <span class="field-error">{{ t?.form_first_name_error }}</span>
                   }
                 </div>
 
                 <div class="field-group">
                   <label class="field-label" for="last_name">
-                    Příjmení <span class="req">*</span>
+                    {{ t?.form_last_name_label }} <span class="req">*</span>
                   </label>
                   <input
                     id="last_name"
                     type="text"
                     formControlName="last_name"
-                    placeholder="Novák"
+                    [placeholder]="t?.form_last_name_placeholder"
                     class="field-input"
                     [class.is-error]="applicationForm.get('last_name')?.invalid && applicationForm.get('last_name')?.touched">
                   @if (applicationForm.get('last_name')?.errors?.['required'] && applicationForm.get('last_name')?.touched) {
-                    <span class="field-error">Příjmení je povinné.</span>
+                    <span class="field-error">{{ t?.form_last_name_error }}</span>
                   }
                 </div>
               </div>
 
               <div class="field-group">
                 <label class="field-label" for="email">
-                  E-mail <span class="req">*</span>
+                  {{ t?.form_email_label }} <span class="req">*</span>
                 </label>
                 <input
                   id="email"
                   type="email"
                   formControlName="email"
-                  placeholder="jan@priklad.cz"
+                  [placeholder]="t?.form_email_placeholder"
                   class="field-input"
                   [class.is-error]="applicationForm.get('email')?.invalid && applicationForm.get('email')?.touched"
                   autocomplete="email">
                 @if (applicationForm.get('email')?.touched) {
                   @if (applicationForm.get('email')?.errors?.['required']) {
-                    <span class="field-error">E-mail je povinný.</span>
+                    <span class="field-error">{{ t?.form_email_required_error }}</span>
                   } @else if (applicationForm.get('email')?.errors?.['email']) {
-                    <span class="field-error">Zadejte platnou e-mailovou adresu.</span>
+                    <span class="field-error">{{ t?.form_email_invalid_error }}</span>
                   }
                 }
               </div>
 
               <div class="field-group">
-                <label class="field-label" for="phone">Telefon</label>
+                <label class="field-label" for="phone">{{ t?.form_phone_label }}</label>
                 <input
                   id="phone"
                   type="tel"
                   formControlName="phone"
-                  placeholder="+420 123 456 789"
+                  [placeholder]="t?.form_phone_placeholder"
                   class="field-input"
                   autocomplete="tel">
               </div>
 
               <div class="field-group">
-                <label class="field-label" for="message">Zpráva / průvodní dopis</label>
+                <label class="field-label" for="message">{{ t?.form_message_label }}</label>
                 <textarea
                   id="message"
                   formControlName="message"
                   rows="4"
-                  placeholder="Co vás na pozici zaujalo?"
+                  [placeholder]="t?.form_message_placeholder"
                   class="field-input textarea">
                 </textarea>
               </div>
 
               <div class="field-group">
                 <label class="field-label">
-                  Životopis <span class="req">*</span>
+                  {{ t?.form_cv_label }} <span class="req">*</span>
                 </label>
-                <label
-                  class="file-zone"
-                  [class.file-zone--has]="selectedFile">
+                <label class="file-zone" [class.file-zone--has]="selectedFile">
                   @if (!selectedFile) {
                     <span class="file-zone-icon" aria-hidden="true">↑</span>
-                    <span class="file-zone-text">
-                      Klikněte nebo přetáhněte soubor
-                    </span>
+                    <span class="file-zone-text">{{ t?.form_cv_placeholder }}</span>
                   } @else {
                     <span class="file-zone-icon" aria-hidden="true">✓</span>
                     <span class="file-zone-text file-zone-name">{{ selectedFile.name }}</span>
@@ -145,7 +138,7 @@
                     aria-hidden="true">
                 </label>
                 @if (!selectedFile && applicationForm.touched) {
-                  <span class="field-error">Prosím přiložte životopis.</span>
+                  <span class="field-error">{{ t?.form_cv_error }}</span>
                 }
               </div>
 
@@ -154,8 +147,8 @@
                   <input type="checkbox" formControlName="dataProcessingAgreement" class="checkbox-input">
                   <span class="checkbox-box" aria-hidden="true"></span>
                   <span>
-                    Souhlasím se
-                    <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">zpracováním osobních údajů</a>
+                    {{ t?.form_gdpr_text }}
+                    <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">{{ t?.form_gdpr_link_text }}</a>
                     <span class="req"> *</span>
                   </span>
                 </label>
@@ -167,9 +160,9 @@
                 [disabled]="applicationForm.invalid || !selectedFile || (loadingService.isLoading$ | async)">
                 @if (loadingService.isLoading$ | async) {
                   <span class="spinner" aria-hidden="true"></span>
-                  <span>Odesílám…</span>
+                  <span>{{ t?.form_submitting }}</span>
                 } @else {
-                  <span>Odeslat přihlášku</span>
+                  <span>{{ t?.form_submit_btn }}</span>
                   <span class="btn-arrow" aria-hidden="true">→</span>
                 }
               </button>
@@ -186,12 +179,11 @@
 
             <div class="success-panel">
               <div class="success-icon" aria-hidden="true">✓</div>
-              <h3 class="success-title">Děkujeme!</h3>
+              <h3 class="success-title">{{ t?.success_title }}</h3>
               <p class="success-text">
-                Vaše přihláška na pozici <strong>{{ job?.title }}</strong> byla odeslána.
-                Budeme vás kontaktovat co nejdříve.
+                {{ t?.success_text_before }} <strong>{{ job?.title }}</strong> {{ t?.success_text_after }}
               </p>
-              <a routerLink="/jobs" class="back-btn">← Zpět na výpis pozic</a>
+              <a routerLink="/jobs" class="back-btn">← {{ t?.success_back_btn }}</a>
             </div>
 
           }
@@ -204,10 +196,10 @@
   } @else {
 
     <section class="job-hero">
-      <div class="job-hero-eyebrow">Chyba</div>
-      <h1 class="job-hero-title">{{ t?.not_found || 'Pozice nebyla nalezena' }}</h1>
+      <div class="job-hero-eyebrow">{{ t?.error_eyebrow }}</div>
+      <h1 class="job-hero-title">{{ t?.not_found }}</h1>
       <div style="margin-top: 24px;">
-        <a routerLink="/jobs" class="back-btn">← Zpět na výpis pozic</a>
+        <a routerLink="/jobs" class="back-btn">← {{ t?.back_link }}</a>
       </div>
     </section>
 

@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common'; // Přidáno pro @if / @for
+import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import * as Web from '../../../../shared/imports/web-providers';
 import { JobItem } from '../../components/interfaces/job-item';
-import { PublicDataService } from '../../../../shared/services/public-data.service'; // PŘIDÁNO
+import { PublicDataService } from '../../../../shared/services/public-data.service';
 
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
-  imports: [CommonModule, RouterModule], // Přidán CommonModule
+  imports: [CommonModule, RouterModule],
   templateUrl: './jobs-list.component.html',
   styleUrls: ['./jobs-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -16,31 +16,28 @@ import { PublicDataService } from '../../../../shared/services/public-data.servi
 export class JobsListComponent implements OnInit, OnDestroy {
   t: any = null;
   availableJobs: JobItem[] = [];
-  
-  settings: any = null; // PŘIDÁNO
-  socialLinks: any[] = []; // PŘIDÁNO
+  settings: any = null;
+  socialLinks: any[] = [];
 
   private destroy$ = new Web.Subject<void>();
 
   constructor(
     private localizationService: Web.LocalizationService,
-    private publicDataService: PublicDataService, // PŘIDÁNO
-    private cdr: ChangeDetectorRef 
+    private publicDataService: PublicDataService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    // 1. Překlady
     this.localizationService.currentTranslations$
       .pipe(Web.takeUntil(this.destroy$))
       .subscribe(translations => {
-        if (translations?.careers) {
-          this.t = translations;
+        if (translations?.jobs) {
+          this.t = translations.jobs;
           this.loadJobs();
           this.cdr.markForCheck();
         }
       });
 
-    // 2. Data ze serveru
     this.publicDataService.getSiteSettings()
       .pipe(Web.takeUntil(this.destroy$))
       .subscribe(res => {
@@ -57,9 +54,9 @@ export class JobsListComponent implements OnInit, OnDestroy {
   private loadJobs(): void {
     const jobs: JobItem[] = [];
     for (let i = 1; i <= 10; i++) {
-      const id = this.t.careers[`job_${i}_id`];
-      const title = this.t.careers[`job_${i}_title`];
-      const desc = this.t.careers[`job_${i}_short_desc`];
+      const id    = this.t[`job_${i}_id`];
+      const title = this.t[`job_${i}_title`];
+      const desc  = this.t[`job_${i}_short_desc`];
       if (id && title && desc) {
         jobs.push({ id, title, shortDescription: desc });
       }

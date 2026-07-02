@@ -2,16 +2,13 @@
 <div class="jobs-page">
 
   <section class="jobs-hero">
-    <div class="jobs-hero-eyebrow">Kariéra</div>
-    <h1 class="jobs-hero-title">{{ t?.careers?.header_1 }}</h1>
-    <p class="jobs-hero-sub">
-      Hledáme nadšené lidi, kteří chtějí tvořit produkty, na které budou hrdí.
-    </p>
+    <div class="jobs-hero-eyebrow">{{ t?.list_hero_eyebrow }}</div>
+    <h1 class="jobs-hero-title">{{ t?.list_header_1 }}</h1>
+    <p class="jobs-hero-sub">{{ t?.list_hero_sub }}</p>
   </section>
 
   <div class="jobs-body">
-    <div class="jobs-section-label">Otevřené pozice</div>
-
+    <div class="jobs-section-label">{{ t?.list_section_label }}</div>
     <div class="jobs-list" role="list">
       @for (job of availableJobs; track job.id; let i = $index) {
         <a class="job-card" [routerLink]="['/jobs', job.id]" role="listitem">
@@ -29,16 +26,14 @@
   <section class="jobs-cta-section">
     <div class="cta-panel">
       <div class="cta-panel-text-block">
-        <div class="cta-panel-eyebrow">Nenašli jste shodu?</div>
-        <h2 class="cta-panel-title">{{ t?.careers?.write_us_prompt }}</h2>
-        <p class="cta-panel-sub">Zasílejte spontánní přihlášky — vždy rádi poznáme výjimečné lidi.</p>
+        <div class="cta-panel-eyebrow">{{ t?.list_cta_eyebrow }}</div>
+        <h2 class="cta-panel-title">{{ t?.list_write_us_prompt }}</h2>
+        <p class="cta-panel-sub">{{ t?.list_cta_sub }}</p>
       </div>
-      
       <div class="cta-panel-actions">
         <a [href]="'mailto:' + settings.contact_email" class="cta-btn">
-          ✉ Napsat e-mail
+          {{ t?.list_cta_email_btn }}
         </a>
-        
         @for (link of socialLinks; track link.id) {
           <a [href]="link.url" target="_blank" rel="noopener" class="cta-btn cta-btn--ghost">
             <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" width="16" height="16" style="margin-right: 8px;">

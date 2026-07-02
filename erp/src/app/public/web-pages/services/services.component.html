@@ -3,9 +3,9 @@
 
   <!-- ══ HERO ══════════════════════════════════════════════════════ -->
   <section class="svc-hero">
-    <div class="svc-hero-eyebrow">Naše odbornost</div>
+    <div class="svc-hero-eyebrow">{{ s?.small_header }}</div>
     <h1 class="svc-hero-title">{{ s?.header_1_text }}</h1>
-    <p class="svc-hero-sub">Vyberte oblast a zjistěte, jak vám můžeme pomoci.</p>
+    <p class="svc-hero-sub">{{ s?.hero_sub }}</p>
     <div class="tech-tabs" role="tablist">
       @for (tech of technologies; track tech.id) {
         <button
@@ -78,20 +78,20 @@
         </div>
         <div class="sidebar-stats-grid">
           <div class="sidebar-stat-card">
-            <span class="sidebar-stat-num">8+</span>
-            <span class="sidebar-stat-label">let ve vývoji</span>
+            <span class="sidebar-stat-num">{{ s?.sidebar_label_1 }}</span>
+            <span class="sidebar-stat-label">{{ s?.sidebar_stat_1 }}</span>
           </div>
           <div class="sidebar-stat-card">
-            <span class="sidebar-stat-num">50+</span>
-            <span class="sidebar-stat-label">projektů</span>
+            <span class="sidebar-stat-num">{{ s?.sidebar_label_2}}</span>
+            <span class="sidebar-stat-label">{{ s?.sidebar_stat_2 }}</span>
           </div>
           <div class="sidebar-stat-card">
-            <span class="sidebar-stat-num">100%</span>
-            <span class="sidebar-stat-label">custom kód</span>
+            <span class="sidebar-stat-num">{{ s?.sidebar_label_3 }}</span>
+            <span class="sidebar-stat-label">{{ s?.sidebar_stat_3 }}</span>
           </div>
           <div class="sidebar-stat-card">
-            <span class="sidebar-stat-num">24/7</span>
-            <span class="sidebar-stat-label">podpora</span>
+            <span class="sidebar-stat-num">{{ s?.sidebar_label_4 }}</span>
+            <span class="sidebar-stat-label">{{ s?.sidebar_stat_4 }}</span>
           </div>
         </div>
       </aside>
@@ -101,7 +101,7 @@
   <!-- ══ WORKFLOW ══════════════════════════════════════════════════ -->
   <section class="svc-workflow-section">
     <div class="svc-section-header">
-      <div class="section-eyebrow">Jak spolupracujeme</div>
+      <div class="section-eyebrow">{{ s?.workflow_header }}</div>
       <h2 class="section-title">{{ s?.colab?.colab_procces_header }}</h2>
     </div>
 
@@ -138,7 +138,7 @@
             }
           </div>
           <!-- Pravý obsah -->
-          <div class="wfm-content" [class.wfm-content--last]="last">
+          <div class="wfm-content" [class.wfm-content-sidebar_label_4-last]="last">
             <h3 class="wfm-title">{{ step?.header }}</h3>
             <p  class="wfm-text">{{ step?.text }}</p>
           </div>
@@ -150,7 +150,7 @@
   <!-- ══ CENÍK ══════════════════════════════════════════════════════ -->
   <section class="svc-prices-section">
     <div class="svc-section-header">
-      <div class="section-eyebrow">Transparentní ceník</div>
+      <div class="section-eyebrow">{{ s?.prices_header }}</div>
       <h2 class="section-title">{{ s?.services?.prices_header }}</h2>
     </div>
     <div class="prices-grid">

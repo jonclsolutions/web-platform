@@ -2,26 +2,24 @@
 <div class="about-page">
 
   <section class="about-hero">
-    <div class="about-hero-eyebrow">Kdo jsme</div>
+    <div class="about-hero-eyebrow">{{ t?.hero_eyebrow }}</div>
     <h1 class="about-hero-title">{{ t?.header }}</h1>
-    <p class="about-hero-sub">
-      Digitální studio zaměřené na tvorbu moderních produktů — od webu po AI.
-    </p>
+    <p class="about-hero-sub">{{ t?.hero_sub }}</p>
 
     <div class="about-hero-stats">
       <div class="about-stat">
-        <span class="about-stat-num">120+</span>
-        <span class="about-stat-label">projektů</span>
+        <span class="about-stat-num">{{ t?.stats.projects }}</span>
+        <span class="about-stat-label">{{ t?.stats.projects_label }}</span>
       </div>
       <div class="about-stat-sep" aria-hidden="true"></div>
       <div class="about-stat">
-        <span class="about-stat-num">8+</span>
-        <span class="about-stat-label">let zkušeností</span>
+        <span class="about-stat-num">{{ t?.stats.experience }}</span>
+        <span class="about-stat-label">{{ t?.stats.experience_label }}</span>
       </div>
       <div class="about-stat-sep" aria-hidden="true"></div>
       <div class="about-stat">
-        <span class="about-stat-num">48h</span>
-        <span class="about-stat-label">max. odezva</span>
+        <span class="about-stat-num">{{ t?.stats.response }}</span>
+        <span class="about-stat-label">{{ t?.stats.response_label }}</span>
       </div>
     </div>
   </section>
@@ -29,21 +27,17 @@
   <div class="about-layout">
 
     <aside class="about-sidebar">
-
       <div class="sidebar-card">
-        <div class="sidebar-eyebrow">Spojte se s námi</div>
-        <h3 class="sidebar-title">Máte projekt?</h3>
-        <p class="sidebar-text">
-          Rádi si vyslechneme váš nápad. Od prvního hovoru po spuštění produktu.
-        </p>
+        <div class="sidebar-eyebrow">{{ t?.sidebar.eyebrow }}</div>
+        <h3 class="sidebar-title">{{ t?.sidebar.title }}</h3>
+        <p class="sidebar-text">{{ t?.sidebar.text }}</p>
         <a routerLink="/contact" class="sidebar-cta-btn">
-          Napište nám
-          <span aria-hidden="true">→</span>
+          {{ t?.sidebar.btn }} <span aria-hidden="true">→</span>
         </a>
       </div>
 
       <div class="sidebar-card sidebar-card--social">
-        <div class="sidebar-eyebrow">Sledujte nás</div>
+        <div class="sidebar-eyebrow">{{ t?.sidebar.social_eyebrow }}</div>
         <div class="social-list">
           @for (link of socialLinks; track link.id) {
             <a [href]="link.url" target="_blank" rel="noopener" [title]="link.name" class="social-item">
@@ -59,17 +53,12 @@
 
       <div class="sidebar-tip-card">
         <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
-        <p class="sidebar-tip-text">
-          Každý projekt začínáme <strong>bezplatnou konzultací</strong> — 
-          přijďte s nápadem, my přijdeme s řešením.
-        </p>
+        <p class="sidebar-tip-text" [innerHTML]="t?.sidebar.tip_text"></p>
       </div>
-
     </aside>
 
     <main class="about-main">
-
-      <div class="about-main-eyebrow">O nás</div>
+      <div class="about-main-eyebrow">{{ t?.main_eyebrow }}</div>
 
       <div class="about-content">
         <p class="about-paragraph">{{ t?.paragraph_1 }}</p>
@@ -81,45 +70,41 @@
       <div class="about-pillars">
         <div class="pillar-item">
           <span class="pillar-icon" aria-hidden="true">◈</span>
-          <h4 class="pillar-title">Kvalita kódu</h4>
-          <p class="pillar-text">Píšeme čistý, udržovatelný kód s důrazem na výkon a škálovatelnost.</p>
+          <h4 class="pillar-title">{{ t?.pillars.p1.title }}</h4>
+          <p class="pillar-text">{{ t?.pillars.p1.text }}</p>
         </div>
         <div class="pillar-item">
           <span class="pillar-icon" aria-hidden="true">◎</span>
-          <h4 class="pillar-title">Transparentnost</h4>
-          <p class="pillar-text">Pravidelná komunikace a jasný přehled o průběhu každého projektu.</p>
+          <h4 class="pillar-title">{{ t?.pillars.p2.title }}</h4>
+          <p class="pillar-text">{{ t?.pillars.p2.text }}</p>
         </div>
         <div class="pillar-item">
           <span class="pillar-icon" aria-hidden="true">◐</span>
-          <h4 class="pillar-title">Inovace</h4>
-          <p class="pillar-text">Sledujeme trendy a přinášíme moderní řešení tam, kde to dává smysl.</p>
+          <h4 class="pillar-title">{{ t?.pillars.p3.title }}</h4>
+          <p class="pillar-text">{{ t?.pillars.p3.text }}</p>
         </div>
       </div>
-
     </main>
   </div>
 
   <section class="about-cta-section">
     <div class="cta-row">
       <div class="cta-block">
-        <p class="cta-text">Podívejte se na naše realizované projekty.</p>
+        <p class="cta-text">{{ t?.cta.ref_text }}</p>
         <a routerLink="/references" class="cta-btn">
-          Reference
-          <span class="cta-arrow" aria-hidden="true">→</span>
+          {{ t?.cta.ref_btn }} <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
       <div class="cta-divider" aria-hidden="true"></div>
       <div class="cta-block">
-        <p class="cta-text">Připraveni začít spolupráci?</p>
+        <p class="cta-text">{{ t?.cta.contact_text }}</p>
         <a routerLink="/contact" class="cta-btn cta-btn--accent">
-          Kontaktujte nás
-          <span class="cta-arrow" aria-hidden="true">→</span>
+          {{ t?.cta.contact_btn }} <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
     </div>
   </section>
 
   <div class="about-divider" aria-hidden="true"></div>
-
 </div>
 }

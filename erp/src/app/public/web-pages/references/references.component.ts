@@ -13,14 +13,14 @@ import * as Web from '../../../shared/imports/web-providers';
 })
 export class ReferencesComponent implements OnInit, OnDestroy {
   r: any = null;
-  projects: any[] = []; 
+  projects: any[] = [];
 
   private destroy$ = new Web.Subject<void>();
 
   constructor(
     private localizationService: Web.LocalizationService,
-    private cdr: ChangeDetectorRef 
-  ) { }
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.localizationService.currentTranslations$
@@ -28,17 +28,14 @@ export class ReferencesComponent implements OnInit, OnDestroy {
       .subscribe(translations => {
         if (translations?.projects) {
           this.r = translations.projects;
-          
-          // Klíčová část: vytvoříme pole pouze z projektů
           this.projects = Object.keys(this.r)
             .filter(key => key.startsWith('project_'))
-            .sort((a, b) => a.localeCompare(b)) // Seřadí project_1, project_2
+            .sort((a, b) => a.localeCompare(b))
             .map(key => ({
               ...this.r[key],
               id: key,
               isActive: false
             }));
-
           this.cdr.markForCheck();
         }
       });
