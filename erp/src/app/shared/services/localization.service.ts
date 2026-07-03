@@ -41,19 +41,16 @@ export class LocalizationService {
 
   private init(): void {
     const stored = localStorage.getItem('selectedLanguage') || 'cz';
-    console.log('[LocalizationService] Initializing, stored lang:', stored);
     this.currentLanguageSource.next(stored);
     // Po inicializaci ihned načteme překlady pro výchozí jazyk
     this.loadTranslations(stored);
   }
 
   public setModule(module: string): void {
-    console.log(`[LocalizationService] setModule called: ${module}`);
     if (this.currentModule !== module) {
       this.currentModule = module;
       this.translationsCache.clear();
       this.fetchLanguages().subscribe(res => {
-        console.log('[LocalizationService] Languages updated after module change:', res);
       });
     }
   }
@@ -68,7 +65,6 @@ export class LocalizationService {
   }
 
   public fetchLanguages(): Observable<{ languages: LangMeta[] }> {
-    console.log(`[LocalizationService] Fetching languages from: ${this.API_URL}/languages/${this.currentModule}`);
     return this.http.get<{ languages: ApiLanguage[] }>(`${this.API_URL}/languages/${this.currentModule}`).pipe(
       map(res => ({
         languages: res.languages.map((l: ApiLanguage) => ({
@@ -79,34 +75,28 @@ export class LocalizationService {
         }))
       })),
       tap(res => {
-        console.log('[LocalizationService] Languages fetched successfully:', res.languages);
         this.languagesCache = res.languages;
       })
     );
   }
 
   public loadTranslations(lang: string): void {
-    console.log(`[LocalizationService] Attempting to load translations for: ${lang}, module: ${this.currentModule}`);
     
     if (this.translationsCache.has(lang)) {
-      console.log(`[LocalizationService] Returning from cache for: ${lang}`);
       this.currentTranslationsSource.next(this.translationsCache.get(lang));
       return;
     }
 
     const url = `${this.API_URL}/translations/${this.currentModule}/${lang}`;
-    console.log(`[LocalizationService] Sending HTTP GET to: ${url}`);
 
     this.http.get(url).subscribe({
       next: (data) => {
-        console.log(`[LocalizationService] Received translations for ${lang}:`, data);
         this.translationsCache.set(lang, data);
         this.currentTranslationsSource.next(data);
       },
       error: (err) => {
         console.error(`[LocalizationService] ERROR loading translations for ${lang}:`, err);
         if (lang !== 'cz') {
-          console.log('[LocalizationService] Falling back to cz');
           this.setLanguage('cz');
         }
       }
@@ -114,7 +104,6 @@ export class LocalizationService {
   }
 
   public setLanguage(code: string): void {
-    console.log(`[LocalizationService] setLanguage called: ${code}`);
     localStorage.setItem('selectedLanguage', code);
     this.currentLanguageSource.next(code);
     this.loadTranslations(code);

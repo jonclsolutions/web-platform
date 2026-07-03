@@ -72,7 +72,6 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     // Logování jazyků
     this.localizationService.fetchLanguages().subscribe(res => {
-      console.log('API Languages loaded:', res.languages);
       this.availableLanguages = res.languages;
       this.cdr.markForCheck();
     });
@@ -81,7 +80,6 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(t => {
-        console.log('API Translations loaded:', t);
         this.t = t;
         this.cdr.markForCheck();
       });
@@ -90,7 +88,6 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.publicDataService.getSiteSettings()
       .pipe(takeUntil(this.destroy$))
       .subscribe(data => {
-        console.log('API SiteSettings loaded:', data);
         this.siteSettings = data.settings;
         this.cdr.markForCheck();
       });

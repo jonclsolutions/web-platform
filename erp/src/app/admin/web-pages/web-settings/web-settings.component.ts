@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
-
+import { environment } from '../../../../environments/environment';
 /** Metadata jazyka — shodné s tím, co vrací endpoint languages/{module} */
 interface LangMeta {
   code: string;
@@ -329,7 +329,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   // ---- Helper: URL existujícího loga ze serveru ----
   get logoSrc(): string | null {
     if (this.logoPreview)        return this.logoPreview;
-    if (this.settings.logo_path) return `http://127.0.0.1:8000/storage/${this.settings.logo_path}`;
+    if (this.settings.logo_path) return environment.public_storage_url+`/${this.settings.logo_path}`;
     return null;
   }
 
@@ -484,7 +484,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   iconSrc(link: SocialLink): string | null {
     if (link._iconPreview) return link._iconPreview;
-    if (link.icon_path)    return `http://127.0.0.1:8000/storage/${link.icon_path}`;
+    if (link.icon_path)    return environment.public_storage_url+`/${link.icon_path}`;
     return null;
   }
 
