@@ -16,6 +16,9 @@ class SiteConfigurationController extends Controller
     /**
      * GET /api/legal/config
      * Vrátí firemní nastavení + seznam sociálních sítí.
+     * brand_tagline_i18n / copyright_text_i18n se vrací tak, jak jsou
+     * uloženy v DB (celý objekt pro všechny jazyky) — administrace
+     * si podle zvoleného jazyka vybírá hodnotu na frontendu.
      */
     public function index(): JsonResponse
     {
@@ -28,27 +31,51 @@ class SiteConfigurationController extends Controller
     /**
      * PUT /api/legal/config/settings
      * Aktualizace firemních údajů (čistý JSON, bez souboru).
+     *
+     * brand_tagline_i18n / copyright_text_i18n mohou přijít buď jako:
+     *  - pole (běžný JSON request bez souboru), nebo
+     *  - JSON string (FormData request s logem — viz updateSettings níže,
+     *    kde se volá stejná logika přes normalizeI18nField()).
      */
-public function updateSettings(Request $request): JsonResponse
+    public function updateSettings(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'company_name'  => 'required|string|max:255',
-            'ico'           => 'required|string|max:20',
-            'dic'           => 'nullable|string|max:20',
-            'brand_tagline' => 'nullable|string|max:255',
-            'copyright_text'=> 'nullable|string|max:255',
-            'contact_email' => 'required|email|max:255',
-            'contact_phone' => 'nullable|string|max:30',
-            'address'       => 'required|string|max:500',
-            'footer_text'   => 'nullable|string|max:1000',
-            'logo_file'     => 'nullable|file|image|max:2048', // Validace loga
+            'company_name'         => 'required|string|max:255',
+            'ico'                  => 'required|string|max:20',
+            'dic'                  => 'nullable|string|max:20',
+            'brand_tagline'        => 'nullable|string|max:255',
+            'brand_tagline_i18n'   => 'nullable', // pole NEBO JSON string, viz normalizeI18nField()
+            'copyright_text'       => 'nullable|string|max:255',
+            'copyright_text_i18n'  => 'nullable', // pole NEBO JSON string
+            'contact_email'        => 'required|email|max:255',
+            'contact_phone'        => 'nullable|string|max:30',
+            'address'              => 'required|string|max:500',
+            'footer_text'          => 'nullable|string|max:1000',
+            'logo_file'            => 'nullable|file|image|max:2048', // Validace loga
         ]);
 
         $settings = SiteSetting::firstOrCreate([]);
-        
-        // Zpracování loga
-        $data = $request->except(['logo_file']);
-        
+
+        // Základní data (bez souboru a bez i18n polí — ta zpracujeme zvlášť)
+        $data = $request->except(['logo_file', 'brand_tagline_i18n', 'copyright_text_i18n']);
+
+        // ---- Zpracování vícejazyčných polí ----
+        $data['brand_tagline_i18n'] = $this->normalizeI18nField(
+            $request->input('brand_tagline_i18n'),
+            $settings->brand_tagline_i18n
+        );
+        $data['copyright_text_i18n'] = $this->normalizeI18nField(
+            $request->input('copyright_text_i18n'),
+            $settings->copyright_text_i18n
+        );
+
+        // Zpětná kompatibilita: sloupce brand_tagline / copyright_text
+        // vždy odrážejí CZ hodnotu z i18n objektu (fallback pro staré
+        // integrace a veřejné API bez ?lang parametru).
+        $data['brand_tagline']  = $data['brand_tagline_i18n']['cz']  ?? ($data['brand_tagline']  ?? $settings->brand_tagline);
+        $data['copyright_text'] = $data['copyright_text_i18n']['cz'] ?? ($data['copyright_text'] ?? $settings->copyright_text);
+
+        // ---- Zpracování loga ----
         if ($request->hasFile('logo_file')) {
             // Smazat staré logo, pokud existuje
             if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
@@ -64,24 +91,44 @@ public function updateSettings(Request $request): JsonResponse
 
         return response()->json($settings);
     }
-/**
+
+    /**
      * GET /api/public/legal/config
      * Veřejná metoda pro načtení údajů do patičky.
+     *
+     * Přijímá volitelný parametr ?lang=xx. Pokud pro daný jazyk
+     * neexistuje hodnota, spadne zpět na "cz" a nakonec na starý
+     * plochý sloupec (pro řádky vytvořené před zavedením i18n).
      */
-    public function publicShow(): JsonResponse
+    public function publicShow(Request $request): JsonResponse
     {
-        $settings = SiteSetting::first();
+        $settings    = SiteSetting::first();
+        $lang        = $request->input('lang', 'cz');
         $socialLinks = SocialLink::orderBy('position', 'asc')->get();
+
+        if ($settings) {
+            $taglineI18n   = $settings->brand_tagline_i18n ?? [];
+            $copyrightI18n = $settings->copyright_text_i18n ?? [];
+
+            $settings->brand_tagline  = $taglineI18n[$lang]
+                ?? $taglineI18n['cz']
+                ?? $settings->brand_tagline;
+
+            $settings->copyright_text = $copyrightI18n[$lang]
+                ?? $copyrightI18n['cz']
+                ?? $settings->copyright_text;
+        }
 
         return response()->json([
             'settings'     => $settings,
             'social_links' => $socialLinks,
         ]);
     }
+
     /**
      * POST /api/legal/config/social
      * Vytvoření nového odkazu. Soubor ikony je nepovinný (field: 'icon_file').
-     * Pokud je nahrán, uloží se do storage/app/public/social-icons/ 
+     * Pokud je nahrán, uloží se do storage/app/public/social-icons/
      * a cesta se zapíše do icon_path.
      */
     public function storeSocial(Request $request): JsonResponse
@@ -174,6 +221,32 @@ public function updateSettings(Request $request): JsonResponse
         $this->logAction($request, 'delete', 'Legal', "Smazána sociální síť: {$name}", $id);
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * Sjednotí vstup pro i18n pole na asociativní pole { "cz": "...", ... }.
+     *
+     * $raw může být:
+     *  - pole (klasický JSON request body) → vrátí se rovnou
+     *  - JSON string (FormData request) → dekóduje se
+     *  - null / neplatný JSON → vrátí se stávající hodnota z DB
+     */
+    private function normalizeI18nField($raw, $existing): array
+    {
+        $existing = is_array($existing) ? $existing : (json_decode($existing ?? '[]', true) ?? []);
+
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return $existing;
     }
 
     /**

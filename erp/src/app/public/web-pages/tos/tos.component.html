@@ -1,8 +1,8 @@
 @if (data) {
   <div class="container">
-    <h1>{{ data.header_main }}</h1>
+    <h1>{{ t?.header_main }}</h1>
     <p class="last-update">
-      <strong>{{ data.last_update_text || 'Poslední aktualizace:' }}</strong> {{ data.last_update_date }}
+      <strong>{{ t?.last_update_text }}</strong> {{ data.last_update_date }}
     </p>
 
     @for (section of data.sections; track section.id) {
@@ -31,7 +31,7 @@
     }
 
     <p style="margin-top: 20px;">
-      Více informací naleznete v <a routerLink="../privacy-policy">Zásadách ochrany osobních údajů</a>.
+     {{t?.more_info_text}}  <a routerLink="../privacy-policy">{{t?.more_info_link_text}}</a>.
     </p>
 
     <p class="last-update" style="margin-top: 40px;">{{ data.footer_effective }}</p>

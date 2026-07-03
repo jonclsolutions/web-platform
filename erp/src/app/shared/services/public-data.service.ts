@@ -25,10 +25,12 @@ export class PublicDataService {
     return `/storage/${path}`;
   }
 
-  getLegalDocument(slug: 'gdpr' | 'tos'): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/public/legal/${slug}`)
-      .pipe(catchError(this.handleError));
-  }
+getLegalDocument(slug: string, lang: string): Observable<any> {
+  // Přidej `${this.apiUrl}` před cestu
+  return this.http.get(`${this.apiUrl}/public/legal/${slug}`, { 
+    params: { lang: lang } 
+  }).pipe(catchError(this.handleError));
+}
 
   getPaymentMethods(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/shop/public/payment-methods`)

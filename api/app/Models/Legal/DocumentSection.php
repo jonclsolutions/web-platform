@@ -6,7 +6,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DocumentSection extends Model
 {
-    protected $fillable = ['document_type_id', 'position', 'heading', 'content'];
+    // Přidej 'lang' do tohoto pole:
+    protected $fillable = [
+        'document_type_id', 
+        'position', 
+        'heading', 
+        'content', 
+        'lang' // <--- ZDE
+    ];
 
     public function documentType(): BelongsTo
     {

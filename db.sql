@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jun 14, 2026 at 11:06 PM
+-- Generation Time: Jul 02, 2026 at 06:53 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -38,11 +38,11 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1781431782),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1781431782;', 1781431782),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:38;', 1781471212),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1781471212;', 1781471212),
-('laravel-cache-site_setting_active', 'O:31:\"App\\Models\\Core\\CoreSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:18:\"core_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:5:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:10:\"updated_at\";s:19:\"2026-06-12 17:15:43\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:11:\"\0*\0original\";a:5:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:10:\"updated_at\";s:19:\"2026-06-12 17:15:43\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:14:\"is_shop_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1781471301);
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1783011124),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1783011124;', 1783011124),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:4;', 1783011245),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1783011245;', 1783011245),
+('laravel-cache-site_setting_active', 'O:31:\"App\\Models\\Core\\CoreSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:18:\"core_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:5:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:10:\"updated_at\";s:19:\"2026-06-23 13:38:52\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:11:\"\0*\0original\";a:5:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:10:\"updated_at\";s:19:\"2026-06-23 13:38:52\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:14:\"is_shop_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1782853594);
 
 -- --------------------------------------------------------
 
@@ -89,7 +89,8 @@ INSERT INTO `core_permissions` (`id`, `permission_key`, `description`, `module`,
 (24, 'shop-manage-payment-methods', 'Zobrazit způsoby plateb.', 'core', '2026-03-27 14:49:37'),
 (26, 'shop-set-maitanance-mode', 'Může přepnout eshop do stavu údržby.', 'core', '2026-06-12 13:09:55'),
 (27, 'web-edit-legal', 'Editovat GDPR a TOS.', 'core', '2026-06-12 19:24:15'),
-(28, 'web-view-web-settings', 'Může editovat nastavení webu.', 'core', '2026-06-13 08:40:51');
+(28, 'web-view-web-settings', 'Může editovat nastavení webu.', 'core', '2026-06-13 08:40:51'),
+(29, 'shop-view-edit-eshop', 'Možnost Editovat shop texty.', 'core', '2026-06-30 10:01:32');
 
 -- --------------------------------------------------------
 
@@ -161,6 +162,7 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (1, 26),
 (1, 27),
 (1, 28),
+(1, 29),
 (2, 3),
 (2, 4),
 (2, 5),
@@ -221,7 +223,7 @@ CREATE TABLE `core_site_settings` (
 --
 
 INSERT INTO `core_site_settings` (`id`, `is_shop_active`, `maintenance_message`, `updated_at`, `created_at`) VALUES
-(1, 1, 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.', '2026-06-12 15:15:43', '2026-06-12 11:42:21');
+(1, 1, 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.', '2026-06-23 11:38:52', '2026-06-12 11:42:21');
 
 -- --------------------------------------------------------
 
@@ -296,6 +298,8 @@ CREATE TABLE `legal_site_settings` (
   `company_name` varchar(255) NOT NULL,
   `ico` varchar(20) NOT NULL,
   `dic` varchar(20) DEFAULT NULL,
+  `brand_tagline` varchar(255) NOT NULL,
+  `copyright_text` varchar(255) NOT NULL,
   `contact_email` varchar(255) NOT NULL,
   `contact_phone` varchar(20) DEFAULT NULL,
   `address` text NOT NULL,
@@ -308,8 +312,8 @@ CREATE TABLE `legal_site_settings` (
 -- Dumping data for table `legal_site_settings`
 --
 
-INSERT INTO `legal_site_settings` (`id`, `company_name`, `ico`, `dic`, `contact_email`, `contact_phone`, `address`, `footer_text`, `logo_path`, `updated_at`) VALUES
-(1, 'Joncletika, s.r.o.', '25133161', 'CZ25133161', 'gamber@rpsw.cz', '733 188 328', 'Kytlická 862/6, 190 00 Praha', '©2026 RegioPartner, s.r.o., Všechna práva vyhrazena.', 'site-logos/dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png', '2026-06-14 20:59:36');
+INSERT INTO `legal_site_settings` (`id`, `company_name`, `ico`, `dic`, `brand_tagline`, `copyright_text`, `contact_email`, `contact_phone`, `address`, `footer_text`, `logo_path`, `updated_at`) VALUES
+(1, 'Joncletika, s.r.o.', '25133161', 'CZ25133161', 'Tvoříme digitální produkty, na které jste hrdí.', '©2026 RegioPartner, s.r.o., Všechna práva vyhrazena.', 'gamber@rpsw.cz', '733 188 328', 'Kytlická 862/6, 190 00 Praha', '©2026 RegioPartner, s.r.o., Všechna práva vyhrazena.', 'site-logos/dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png', '2026-06-26 15:28:03');
 
 -- --------------------------------------------------------
 
@@ -399,7 +403,8 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (87, 'App\\Models\\User', 59, 'access-token', 'c58f7b40a4862562dc033216ec4ba476336d5cc77af42b57e8a6721e0c735545', '[\"*\"]', '2026-02-15 22:41:38', '2026-02-15 23:11:38', '2026-02-15 22:41:38', '2026-02-15 22:41:38'),
 (134, 'App\\Models\\User', 62, 'access-token', '696da6ddfce759f43fcd6c430016ffff654238b4bd746c50642599a4b68a1cd7', '[\"*\"]', '2026-02-18 02:12:13', '2026-02-18 03:12:09', '2026-02-18 02:12:09', '2026-02-18 02:12:13'),
 (172, 'App\\Models\\User', 77, 'access-token', 'f783051fdb88711a863e9ccd4e5176a5a3f2a3606204c816754c3227d07698f8', '[\"*\"]', '2026-02-25 00:08:53', '2026-02-25 00:42:29', '2026-02-24 23:42:29', '2026-02-25 00:08:53'),
-(437, 'App\\Models\\User', 25, 'access-token', '9919045de5fb57a1dd65bcd934c97153d4b5d5deafd29e8e2cb41a280514d68b', '[\"*\"]', '2026-06-14 21:06:06', '2026-06-14 21:29:53', '2026-06-14 20:29:53', '2026-06-14 21:06:06');
+(534, 'App\\Models\\User', 25, 'access-token', 'fb4581f2116e23f3cb7121bff35cedd2ad7987bea1fb0203f6eed077edc99525', '[\"*\"]', '2026-07-01 12:42:31', '2026-07-01 13:36:59', '2026-07-01 12:36:59', '2026-07-01 12:42:31'),
+(535, 'App\\Models\\User', 25, 'access-token', '29f2eb4e114e6d2bc7efdf502fa980422680268df989e2e185a6b18e37759028', '[\"*\"]', '2026-07-02 16:53:10', '2026-07-02 17:51:05', '2026-07-02 16:51:05', '2026-07-02 16:53:10');
 
 -- --------------------------------------------------------
 
@@ -421,7 +426,7 @@ CREATE TABLE `refresh_tokens` (
 --
 
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`, `updated_at`) VALUES
-(436, 25, 'e768c01a729b4f152cd3a8648288e830267eb2a8db647af16494b979f10c263e', '2026-06-21 20:29:53', '2026-06-14 20:29:53', '2026-06-14 20:29:53');
+(534, 25, '31c0422dfb83141d4946e14e08172798f6edcb55fd6b8ee9cb4d41a5f7f33289', '2026-07-09 16:51:05', '2026-07-02 16:51:05', '2026-07-02 16:51:05');
 
 -- --------------------------------------------------------
 
@@ -456,13 +461,6 @@ CREATE TABLE `shop_categories` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `shop_categories`
---
-
-INSERT INTO `shop_categories` (`id`, `name`, `slug`, `description`, `parent_id`, `image_path`, `is_active`, `sort_order`, `created_at`, `updated_at`) VALUES
-(53, 'kat_1', 'kat-1', NULL, NULL, NULL, 1, 0, '2026-06-05 21:39:57', '2026-06-07 10:49:38');
 
 -- --------------------------------------------------------
 
@@ -513,15 +511,6 @@ CREATE TABLE `shop_customers` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `shop_customers`
---
-
-INSERT INTO `shop_customers` (`id`, `user_id`, `email`, `first_name`, `last_name`, `phone`, `company`, `address`, `city`, `postal_code`, `country`, `is_active`, `total_spent`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(7, NULL, 'jonas.bucina@seznam.cz', 'Jonas', 'Fonas', '676767676', NULL, 'aksjdlaskd 7677', 'Praha', '19000', 'Česká republika', 1, 0.00, NULL, '2026-06-12 16:54:34', '2026-06-12 16:54:34', NULL),
-(8, NULL, 'joner.foner@gamba.czs', 'Lindicka', 'Trybickoa', '123456789', NULL, 'Kittiovksa 777', 'Mazlickov', '777777', 'Česká republika', 1, 0.00, NULL, '2026-06-12 16:55:29', '2026-06-14 11:13:33', NULL),
-(9, NULL, 'asda@sd.cz', 'JONERFONRE', 'sdfds', '878787878', NULL, 'sdf', 'dfgfdg', '19099', 'Czechia', 1, 109.00, NULL, '2026-06-14 12:37:23', '2026-06-14 12:37:53', NULL);
 
 -- --------------------------------------------------------
 
@@ -577,13 +566,6 @@ CREATE TABLE `shop_orders` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `shop_orders`
---
-
-INSERT INTO `shop_orders` (`id`, `customer_id`, `order_number`, `status`, `payment_status`, `total_amount`, `shipping_amount`, `tax_amount`, `discount_amount`, `final_amount`, `coupon_id`, `payment_method_id`, `shipping_method_id`, `shipping_address`, `shipping_city`, `shipping_postal_code`, `shipping_country`, `notes`, `paid_at`, `shipped_at`, `delivered_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(39, 9, '2026060001', 'shipped', 'paid', 109.00, 120.00, 18.92, 0.00, 229.00, NULL, 3, 2, 'sdf', 'dfgfdg', '19099', 'Czechia', NULL, NULL, NULL, NULL, '2026-06-14 12:37:23', '2026-06-14 12:37:53', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -605,12 +587,39 @@ CREATE TABLE `shop_order_items` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Dumping data for table `shop_order_items`
+-- Table structure for table `shop_payments`
 --
 
-INSERT INTO `shop_order_items` (`id`, `order_id`, `product_id`, `product_variant_id`, `product_name`, `variant_name`, `quantity`, `unit_price`, `total_price`, `discount_amount`, `created_at`, `updated_at`) VALUES
-(33, 39, 26, 38, 'test', 'test', 1, 109.00, 109.00, 0.00, '2026-06-14 12:37:23', '2026-06-14 12:37:23');
+CREATE TABLE `shop_payments` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `order_id` int(10) UNSIGNED NOT NULL,
+  `gateway_transaction_id` varchar(255) DEFAULT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `currency` varchar(10) DEFAULT 'EUR',
+  `status` varchar(50) DEFAULT 'pending',
+  `gateway_provider` varchar(50) DEFAULT 'stripe',
+  `gateway_response` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`gateway_response`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `shop_payment_logs`
+--
+
+CREATE TABLE `shop_payment_logs` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `payment_id` int(10) UNSIGNED NOT NULL,
+  `old_status` varchar(50) DEFAULT NULL,
+  `new_status` varchar(50) NOT NULL,
+  `gateway_response` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`gateway_response`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -648,11 +657,11 @@ INSERT INTO `shop_payment_methods` (`id`, `code`, `name`, `image_path`, `descrip
 (1, 'bank_transfer_cz', 'Bankovní převod (CZ)', 'payment-methods-images/bank-transfer-cz.png', 'Platba převodem v CZK v rámci ČR. Podklady k platbě a QR kód obdržíte v potvrzení objednávky.', 0.00, 'manual', 0, '2201992201', '2010', 'CZ6820100000002201992201', 'FIOBCZPPXXX', 'order_number', '{}', 0, 1, '2026-06-01 17:17:01', '2026-06-01 20:33:07', NULL),
 (2, 'bank_transfer_sepa', 'Bankovní převod (EUR / SEPA)', 'payment-methods-images/bank_transfer_eu.svg', 'Platba v EUR prostřednictvím SEPA platby. Vhodné pro zákazníky ze Slovenska a EU.', 0.00, 'manual', 0, NULL, NULL, 'SK1220100000002201992202', 'FIOBCZPPXXX', 'order_number', '{}', 0, 2, '2026-06-01 17:17:01', '2026-06-01 20:32:59', NULL),
 (3, 'stripe_card', 'Platba kartou online', 'payment-methods-images/stripe-card.png', 'Rychlá a bezpečná platba kartou Visa, MasterCard nebo Maestro přes bránu Stripe.', 0.00, 'stripe', 1, NULL, NULL, NULL, NULL, 'none', '{\"public_key\": \"\", \"secret_key\": \"\", \"webhook_secret\": \"\"}', 1, 3, '2026-06-01 17:17:01', '2026-06-01 20:23:08', NULL),
-(4, 'apple_pay', 'Apple Pay', 'payment-methods-images/apple-pay.png', 'Rychlá platba pomocí Apple Wallet pro zařízení Apple (iPhone, iPad, Mac).', 0.00, 'stripe', 1, NULL, NULL, NULL, NULL, 'none', '{\"public_key\": \"\", \"secret_key\": \"\", \"webhook_secret\": \"\"}', 1, 4, '2026-06-01 17:17:01', '2026-06-01 20:19:04', NULL),
-(5, 'paypal', 'PayPal', 'payment-methods-images/paypal.png', 'Platba přes celosvětový platební systém PayPal (účet nebo rychlá platba kartou).', 0.00, 'paypal', 1, NULL, NULL, NULL, NULL, 'none', '{\"client_id\": \"\", \"secret_key\": \"\", \"mode\": \"sandbox\"}', 1, 6, '2026-06-01 17:17:01', '2026-06-01 20:18:43', NULL),
+(4, 'apple_pay', 'Apple Pay', 'payment-methods-images/apple-pay.png', 'Rychlá platba pomocí Apple Wallet pro zařízení Apple (iPhone, iPad, Mac).', 0.00, 'stripe', 1, NULL, NULL, NULL, NULL, 'none', '{\"public_key\":null,\"secret_key\":null,\"webhook_secret\":null}', 1, 4, '2026-06-01 17:17:01', '2026-06-20 10:05:06', NULL),
+(5, 'paypal', 'PayPal', 'payment-methods-images/paypal.png', 'Platba přes celosvětový platební systém PayPal (účet nebo rychlá platba kartou).', 0.00, 'paypal', 1, NULL, NULL, NULL, NULL, 'none', '{\"client_id\":null,\"secret_key\":null,\"mode\":\"sandbox\"}', 0, 6, '2026-06-01 17:17:01', '2026-06-16 19:18:41', NULL),
 (6, 'cash_on_delivery', 'Platba při převzetí (Dobírka)', 'payment-methods-images/cash-on-delivery.png', 'Zaplatíte hotově nebo kartou kurýrovi při převzetí zásilky na vaší adrese.', 49.00, 'manual', 0, NULL, NULL, NULL, NULL, 'none', '{}', 0, 7, '2026-06-01 17:17:01', '2026-06-01 20:17:49', NULL),
 (7, 'cash', 'Hotovost při osobním odběru', 'payment-methods-images/cash.png', 'Platba v hotovosti na naší pobočce při vyzvednutí zboží.', 0.00, 'manual', 0, NULL, NULL, NULL, NULL, 'none', '{}', 0, 8, '2026-06-01 17:17:01', '2026-06-01 20:17:29', NULL),
-(8, 'google_pay', 'Google Pay', 'payment-methods-images/google-pay.png', 'Okamžitá platba pomocí Google peněženky pro Android zařízení a prohlížeč Chrome.', 0.00, 'stripe', 1, NULL, NULL, NULL, NULL, 'none', '{\"public_key\": \"\", \"secret_key\": \"\", \"webhook_secret\": \"\"}', 1, 5, '2026-06-01 17:17:01', '2026-06-01 20:16:49', NULL);
+(8, 'google_pay', 'Google Pay', 'payment-methods-images/google-pay.png', 'Okamžitá platba pomocí Google peněženky pro Android zařízení a prohlížeč Chrome.', 0.00, 'stripe', 1, NULL, NULL, NULL, NULL, 'none', '{\"public_key\":null,\"secret_key\":null,\"webhook_secret\":null}', 0, 5, '2026-06-01 17:17:01', '2026-06-16 19:18:32', NULL);
 
 -- --------------------------------------------------------
 
@@ -681,13 +690,6 @@ CREATE TABLE `shop_products` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `shop_products`
---
-
-INSERT INTO `shop_products` (`id`, `category_id`, `supplier_id`, `name`, `name_en`, `slug`, `description`, `description_en`, `short_description`, `short_description_en`, `sku`, `stock_quantity`, `stock_warning_level`, `is_active`, `is_featured`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(26, 53, NULL, 'test', NULL, 'jonas', NULL, NULL, NULL, NULL, 'foner', 11, 10, 1, 0, '2026-06-14 12:01:42', '2026-06-14 12:37:23', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -703,13 +705,6 @@ CREATE TABLE `shop_product_categories` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `shop_product_categories`
---
-
-INSERT INTO `shop_product_categories` (`id`, `product_id`, `category_id`, `is_primary`, `sort_order`, `created_at`, `updated_at`) VALUES
-(37, 26, 53, 1, 0, '2026-06-14 12:01:42', '2026-06-14 12:02:06');
 
 -- --------------------------------------------------------
 
@@ -747,14 +742,6 @@ CREATE TABLE `shop_product_prices` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `shop_product_prices`
---
-
-INSERT INTO `shop_product_prices` (`id`, `product_id`, `variant_id`, `vat_rate`, `price_eur_without_vat`, `cost_price_eur`, `price_eur_with_vat`, `created_at`, `updated_at`) VALUES
-(27, 26, NULL, 21.00, 90.08, 100.0000, 109.00, '2026-06-14 12:01:42', '2026-06-14 12:01:42'),
-(28, 26, 38, 21.00, 90.08, 0.0000, 109.00, '2026-06-14 12:02:06', '2026-06-14 12:02:06');
-
 -- --------------------------------------------------------
 
 --
@@ -775,13 +762,6 @@ CREATE TABLE `shop_product_variants` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `shop_product_variants`
---
-
-INSERT INTO `shop_product_variants` (`id`, `product_id`, `variant_name`, `attribute_1_name`, `attribute_1_value`, `attribute_2_name`, `attribute_2_value`, `sku_variant`, `stock_quantity`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(38, 26, 'test', 'sdf', 'sdf', 'dsf', 'sdf', 'sdf', 11, '2026-06-14 12:02:06', '2026-06-14 12:37:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -899,7 +879,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `user_email`, `contact_email`, `full_name`, `birth_date`, `personal_id_num`, `address`, `bank_account`, `health_insurance`, `commission_rate`, `dpp_hours_spent`, `has_tax_declaration`, `phone_number`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
-(25, 'joncl', 'jonasbucina@rpsw.cz', 'Jonáš Bučina', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, '733 188 328', NULL, '$2y$12$rV1ILe7YeW1L1XfWb5DrfuiCYTC.1FZsIU4wtNmA95GaUNwXAtYoa', NULL, '2026-06-14 12:08:43', '2026-02-14 08:12:31', '2026-06-14 12:08:43', NULL, 0),
+(25, 'joncl', 'jonasbucina@rpsw.cz', 'Jonáš Bučina', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, '733 188 328', NULL, '$2y$12$rV1ILe7YeW1L1XfWb5DrfuiCYTC.1FZsIU4wtNmA95GaUNwXAtYoa', NULL, '2026-07-02 18:51:05', '2026-02-14 08:12:31', '2026-07-02 18:51:05', NULL, 0),
 (30, 'prime_admin', NULL, 'Prime Admin', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, NULL, NULL, '$2y$12$NEiDrqVCChulf9S/EUPIpeOHScIM0zwswPTxIFamRDrY4XajgHQOe', NULL, NULL, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL, 0),
 (34, 'lindicka', 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, NULL, NULL, '$2y$12$xbMrIDwkEj.ZOnsLe7Glr..2qbca1i7XnSclNnGILENFKlL.Kw9.W', NULL, '2026-02-15 23:39:56', '2026-02-14 08:12:31', '2026-02-20 23:59:34', NULL, 0);
 
@@ -1004,7 +984,8 @@ CREATE TABLE `web_raw_request_commissions` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `note` text DEFAULT NULL
+  `note` text DEFAULT NULL,
+  `file_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1248,6 +1229,20 @@ ALTER TABLE `shop_order_items`
   ADD KEY `fk_shop_order_items_variant` (`product_variant_id`);
 
 --
+-- Indexes for table `shop_payments`
+--
+ALTER TABLE `shop_payments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_shop_payment_order` (`order_id`);
+
+--
+-- Indexes for table `shop_payment_logs`
+--
+ALTER TABLE `shop_payment_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_shop_payment_log_payment` (`payment_id`);
+
+--
 -- Indexes for table `shop_payment_methods`
 --
 ALTER TABLE `shop_payment_methods`
@@ -1393,7 +1388,7 @@ ALTER TABLE `web_system_logs`
 -- AUTO_INCREMENT for table `core_permissions`
 --
 ALTER TABLE `core_permissions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `core_roles`
@@ -1429,7 +1424,7 @@ ALTER TABLE `legal_site_settings`
 -- AUTO_INCREMENT for table `legal_social_links`
 --
 ALTER TABLE `legal_social_links`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `migrations`
@@ -1441,13 +1436,13 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=438;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=536;
 
 --
 -- AUTO_INCREMENT for table `refresh_tokens`
 --
 ALTER TABLE `refresh_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=437;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=535;
 
 --
 -- AUTO_INCREMENT for table `shop_categories`
@@ -1459,13 +1454,13 @@ ALTER TABLE `shop_categories`
 -- AUTO_INCREMENT for table `shop_coupons`
 --
 ALTER TABLE `shop_coupons`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `shop_customers`
 --
 ALTER TABLE `shop_customers`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `shop_logs`
@@ -1477,13 +1472,25 @@ ALTER TABLE `shop_logs`
 -- AUTO_INCREMENT for table `shop_orders`
 --
 ALTER TABLE `shop_orders`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `shop_order_items`
 --
 ALTER TABLE `shop_order_items`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+
+--
+-- AUTO_INCREMENT for table `shop_payments`
+--
+ALTER TABLE `shop_payments`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `shop_payment_logs`
+--
+ALTER TABLE `shop_payment_logs`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `shop_payment_methods`
@@ -1567,13 +1574,13 @@ ALTER TABLE `web_news`
 -- AUTO_INCREMENT for table `web_raw_request_commissions`
 --
 ALTER TABLE `web_raw_request_commissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `web_sales_leads`
 --
 ALTER TABLE `web_sales_leads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `web_sales_orders`
@@ -1585,7 +1592,7 @@ ALTER TABLE `web_sales_orders`
 -- AUTO_INCREMENT for table `web_support_tickets`
 --
 ALTER TABLE `web_support_tickets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `web_system_logs`
@@ -1650,6 +1657,18 @@ ALTER TABLE `shop_order_items`
   ADD CONSTRAINT `fk_shop_order_items_order` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_shop_order_items_product` FOREIGN KEY (`product_id`) REFERENCES `shop_products` (`id`),
   ADD CONSTRAINT `fk_shop_order_items_variant` FOREIGN KEY (`product_variant_id`) REFERENCES `shop_product_variants` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `shop_payments`
+--
+ALTER TABLE `shop_payments`
+  ADD CONSTRAINT `fk_shop_payment_order` FOREIGN KEY (`order_id`) REFERENCES `shop_orders` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `shop_payment_logs`
+--
+ALTER TABLE `shop_payment_logs`
+  ADD CONSTRAINT `fk_shop_payment_log_payment` FOREIGN KEY (`payment_id`) REFERENCES `shop_payments` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `shop_products`

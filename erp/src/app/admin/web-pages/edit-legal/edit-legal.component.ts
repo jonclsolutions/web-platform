@@ -1,6 +1,8 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
@@ -12,6 +14,7 @@ interface DocumentSection {
   position: number;
   heading: string;
   content: string;
+  lang?: string;
 }
 
 @Component({
@@ -25,18 +28,24 @@ interface DocumentSection {
 export class EditLegalComponent extends BaseDataComponent<DocumentSection> implements OnInit {
   override apiEndpoint: string = 'legal/document-sections';
 
-  // ---- Stav záložek ----
+  private readonly LANG_MODULE = 'web';
+
   activeTab: 1 | 2 = 1;
 
-  // ---- Inline edit state ----
+  languages: any[] = [];
+  activeLang: string = 'cz';
+
+  missingSummary: Record<number, string[]> = {};
+
   editingIds: Set<number> = new Set();
   editBuffer: Record<number, { heading: string; content: string }> = {};
 
-  // ---- Nová sekce ----
   showAddForm = false;
   newHeading = '';
   newContent = '';
   saving = false;
+
+  addForPosition: number | null = null;
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -52,30 +61,150 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
 
   override ngOnInit(): void {
     this.initWithAuthCheck(this.router);
-    this.refreshData();
+    this.loadLanguages();
   }
 
-  override refreshData(): void {
-    this.dataHandler.getCollection<DocumentSection>(
-      `${this.apiEndpoint}?document_type_id=${this.activeTab}`
-    ).subscribe(res => {
-      this.data = Array.isArray(res) ? res : (res as any)?.data ?? [];
-      this.cd.markForCheck();
-    });
+  // ─────────────────────────────────────────────────────────────
+  // JAZYKY
+  // ─────────────────────────────────────────────────────────────
+
+  private loadLanguages(): void {
+    console.log('[DEBUG - LOAD LANGUAGES] Požadavek na jazyky pro:', this.LANG_MODULE);
+    this.dataHandler.getCollection<any>(`languages/${this.LANG_MODULE}`)
+      .pipe(catchError(() => of({ languages: [] })))
+      .subscribe((res: any) => {
+        this.languages = (res?.languages ?? []).filter((l: any) => l.active !== false);
+        console.log('[DEBUG - LOAD LANGUAGES] Načtené jazyky:', this.languages);
+
+        if (this.languages.length > 0 && !this.languages.find(l => l.code === this.activeLang)) {
+          this.activeLang = this.languages[0].code;
+        }
+
+        this.refreshData();
+        this.cd.markForCheck();
+      });
   }
 
-  switchTab(tabId: 1 | 2): void {
-    if (this.activeTab === tabId) return;
-    this.activeTab = tabId;
+  switchLang(code: string): void {
+    if (this.activeLang === code) return;
+    console.log('[DEBUG - SWITCH LANG] Přepínám na:', code);
+    this.activeLang = code;
     this.editingIds.clear();
     this.editBuffer = {};
     this.showAddForm = false;
+    this.addForPosition = null;
     this.newHeading = '';
     this.newContent = '';
     this.refreshData();
   }
 
-  // ---- Inline edit ----
+  getLangName(code: string): string {
+    return this.languages.find(l => l.code === code)?.name ?? code.toUpperCase();
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // DATA
+  // ─────────────────────────────────────────────────────────────
+
+  override refreshData(): void {
+    const params = {
+      document_type_id: this.activeTab,
+      lang: this.activeLang
+    };
+    console.log('[DEBUG - REFRESH DATA] Načítám sekce pro parametry:', params);
+    
+    this.loadAllData(params).subscribe({
+      next: (res) => {
+        console.log('[DEBUG - REFRESH DATA] Data úspěšně přijata:', res);
+        this.data = Array.isArray(res) ? res : [];
+        this.checkCompleteness();
+        this.cd.markForCheck();
+      },
+      error: (err) => {
+        console.error('[DEBUG - REFRESH DATA] Chyba při načítání:', err);
+      }
+    });
+  }
+
+  switchTab(tabId: 1 | 2): void {
+    if (this.activeTab === tabId) return;
+    console.log('[DEBUG - SWITCH TAB] Přepínám na tab:', tabId);
+    this.activeTab = tabId;
+    this.editingIds.clear();
+    this.editBuffer = {};
+    this.showAddForm = false;
+    this.addForPosition = null;
+    this.newHeading = '';
+    this.newContent = '';
+    this.refreshData();
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // COMPLETENESS
+  // ─────────────────────────────────────────────────────────────
+
+  private checkCompleteness(): void {
+    if (this.languages.length <= 1) {
+      this.missingSummary = {};
+      this.cd.markForCheck();
+      return;
+    }
+
+    console.log('[DEBUG - COMPLETENESS] Spouštím kontrolu úplnosti pro jazyky:', this.languages);
+    const requests = this.languages.map(lang =>
+      this.loadAllData({
+        document_type_id: this.activeTab,
+        lang: lang.code
+      }).pipe(
+        map(res => ({
+          lang: lang.code,
+          positions: new Set<number>((Array.isArray(res) ? res : []).map((s: DocumentSection) => s.position))
+        })),
+        catchError(() => of({ lang: lang.code, positions: new Set<number>() }))
+      )
+    );
+
+    forkJoin(requests).subscribe(results => {
+      console.log('[DEBUG - COMPLETENESS] Výsledky kontroly:', results);
+      const allPositions = new Set<number>();
+      results.forEach(r => r.positions.forEach(p => allPositions.add(p)));
+
+      const summary: Record<number, string[]> = {};
+      allPositions.forEach(pos => {
+        const missing = results.filter(r => !r.positions.has(pos)).map(r => r.lang);
+        if (missing.length > 0) {
+          summary[pos] = missing;
+        }
+      });
+
+      this.missingSummary = summary;
+      this.cd.markForCheck();
+    });
+  }
+
+  getMissingForPosition(position: number): string[] {
+    return this.missingSummary[position] ?? [];
+  }
+
+  langHasWarning(langCode: string): boolean {
+    return Object.values(this.missingSummary).some(missing => missing.includes(langCode));
+  }
+
+  get totalWarnings(): number {
+    return Object.values(this.missingSummary).reduce((sum, arr) => sum + arr.length, 0);
+  }
+
+  get missingPositionsForCurrentLang(): number[] {
+    return Object.keys(this.missingSummary)
+      .map(Number)
+      .filter(pos => this.missingSummary[pos].includes(this.activeLang))
+      .sort((a, b) => a - b);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // INLINE EDIT
+  // ─────────────────────────────────────────────────────────────
+
   startEdit(item: DocumentSection): void {
     this.editingIds.add(item.id);
     this.editBuffer[item.id] = {
@@ -99,21 +228,24 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     }
 
     this.saving = true;
-    const payload: any = {
+    const payload: DocumentSection = {
+      ...item,
       heading: buf.heading,
       content: buf.content,
-      document_type_id: item.document_type_id,
-      position: item.position,
+      lang: this.activeLang,
     };
 
-    this.updateData(item.id, payload as DocumentSection).subscribe({
+    console.log('[DEBUG - SAVE EDIT] Odesílám update:', payload);
+    this.updateData(item.id, payload).subscribe({
       next: () => {
+        console.log('[DEBUG - SAVE EDIT] Úspěšně uloženo.');
         this.cancelEdit(item.id);
         this.saving = false;
         this.refreshData();
         this.alertDialog.open('Úspěch', 'Změny byly uloženy.', 'success');
       },
-      error: () => {
+      error: (err) => {
+        console.error('[DEBUG - SAVE EDIT] Chyba:', err);
         this.saving = false;
         this.alertDialog.open('Chyba', 'Nepodařilo se uložit změny.', 'danger');
         this.cd.markForCheck();
@@ -125,9 +257,13 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     return this.editingIds.has(id);
   }
 
-  // ---- Přidání nové sekce ----
-  openAddForm(): void {
+  // ─────────────────────────────────────────────────────────────
+  // PŘIDÁNÍ NOVÉ SEKCE
+  // ─────────────────────────────────────────────────────────────
+
+  openAddForm(position?: number): void {
     this.showAddForm = true;
+    this.addForPosition = position ?? null;
     this.newHeading = '';
     this.newContent = '';
     setTimeout(() => {
@@ -139,6 +275,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
 
   cancelAdd(): void {
     this.showAddForm = false;
+    this.addForPosition = null;
     this.newHeading = '';
     this.newContent = '';
     this.cd.markForCheck();
@@ -155,17 +292,21 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       document_type_id: this.activeTab,
       heading: this.newHeading,
       content: this.newContent,
-      position: this.data.length + 1,
+      position: this.addForPosition ?? (this.data.length + 1),
+      lang: this.activeLang,
     };
 
+    console.log('[DEBUG - SUBMIT ADD] Odesílám novou sekci:', payload);
     this.postData(payload as DocumentSection).subscribe({
       next: () => {
+        console.log('[DEBUG - SUBMIT ADD] Úspěšně přidáno.');
         this.cancelAdd();
         this.saving = false;
         this.refreshData();
         this.alertDialog.open('Úspěch', 'Sekce byla úspěšně přidána.', 'success');
       },
-      error: () => {
+      error: (err) => {
+        console.error('[DEBUG - SUBMIT ADD] Chyba:', err);
         this.saving = false;
         this.alertDialog.open('Chyba', 'Nepodařilo se přidat sekci.', 'danger');
         this.cd.markForCheck();
@@ -173,27 +314,32 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     });
   }
 
-  // ---- Smazání ----
+  // ─────────────────────────────────────────────────────────────
+  // SMAZÁNÍ
+  // ─────────────────────────────────────────────────────────────
+
   async confirmDelete(item: DocumentSection): Promise<void> {
     const confirmed = await this.confirmDialog.open(
       'Smazat sekci',
-      `Opravdu chcete smazat sekci „${item.heading}“? Tato akce je nevratná.`
+      `Opravdu chcete smazat sekci „${item.heading}" (${this.activeLang.toUpperCase()})? Tato akce je nevratná.`
     );
 
     if (confirmed) {
+      console.log('[DEBUG - DELETE] Mazání sekce s ID:', item.id);
       this.deleteData(item.id).subscribe({
         next: () => {
+          console.log('[DEBUG - DELETE] Úspěšně smazáno.');
           this.refreshData();
           this.alertDialog.open('Úspěch', 'Sekce byla smazána.', 'success');
         },
-        error: () => {
+        error: (err) => {
+          console.error('[DEBUG - DELETE] Chyba:', err);
           this.alertDialog.open('Chyba', 'Nepodařilo se smazat sekci.', 'danger');
         }
       });
     }
   }
 
-  // ---- Helpers ----
   get tabLabel(): string {
     return this.activeTab === 1 ? 'GDPR' : 'Obchodní podmínky';
   }

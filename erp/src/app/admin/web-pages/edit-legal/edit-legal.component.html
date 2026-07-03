@@ -6,9 +6,14 @@
       <h1 class="legal-title">Právní dokumenty</h1>
       <span class="legal-subtitle">Správa sekcí dokumentů {{ tabLabel }}</span>
     </div>
+    @if (totalWarnings > 0) {
+      <div class="legal-warning-badge" title="Počet chybějících překladů napříč všemi jazyky">
+        ⚠️ {{ totalWarnings }} {{ totalWarnings === 1 ? 'chybějící překlad' : 'chybějících překladů' }}
+      </div>
+    }
   </div>
 
-  <!-- ===== ZÁLOŽKY ===== -->
+  <!-- ===== ZÁLOŽKY DOKUMENTŮ ===== -->
   <div class="legal-tabs">
     <button
       class="legal-tab"
@@ -24,13 +29,56 @@
     </button>
   </div>
 
+  <!-- ===== JAZYKOVÉ ZÁLOŽKY ===== -->
+  @if (languages.length > 0) {
+    <div class="lang-tabs">
+      @for (lang of languages; track lang.code) {
+        <button
+          class="lang-tab"
+          [class.active]="activeLang === lang.code"
+          [class.has-warning]="langHasWarning(lang.code)"
+          (click)="switchLang(lang.code)">
+          @if (lang.iconUrl) {
+            <img [src]="lang.iconUrl" [alt]="lang.code" class="lang-tab-icon">
+          }
+          <span class="lang-tab-name">{{ lang.name || lang.code.toUpperCase() }}</span>
+          @if (langHasWarning(lang.code)) {
+            <span class="lang-tab-dot" title="V tomto jazyce chybí některé sekce"></span>
+          }
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ===== UPOZORNĚNÍ NA SEKCE CHYBĚJÍCÍ V AKTUÁLNÍM JAZYCE ===== -->
+  @if (missingPositionsForCurrentLang.length > 0) {
+    <div class="missing-banner">
+      <div class="missing-banner-icon">⚠️</div>
+      <div class="missing-banner-body">
+        <div class="missing-banner-text">
+          V jazyce <strong>{{ getLangName(activeLang) }}</strong> chybí
+          {{ missingPositionsForCurrentLang.length }}
+          {{ missingPositionsForCurrentLang.length === 1 ? 'sekce' : 'sekcí' }},
+          které existují v jiných jazycích.
+        </div>
+        <div class="missing-banner-actions">
+          @for (pos of missingPositionsForCurrentLang; track pos) {
+            <button class="missing-add-btn" (click)="openAddForm(pos)">
+              + Doplnit pozici {{ pos }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- ===== SEZNAM SEKCÍ ===== -->
   <div class="legal-sections">
 
     @if (data.length === 0) {
       <div class="legal-empty">
         <span class="legal-empty-icon">📭</span>
-        <div>Žádné sekce pro tento dokument.</div>
+        <div>Žádné sekce pro tento dokument v jazyce {{ getLangName(activeLang) }}.</div>
         <div class="legal-empty-sub">Přidejte první sekci tlačítkem níže.</div>
       </div>
     }
@@ -42,8 +90,15 @@
         @if (!isEditing(item.id)) {
           <div class="section-view">
             <div class="section-view-header">
-              <div class="section-position">{{ i + 1 }}</div>
+              <div class="section-position">{{ item.position }}</div>
               <div class="section-heading">{{ item.heading || '(bez nadpisu)' }}</div>
+              @if (getMissingForPosition(item.position).length > 0) {
+                <div
+                  class="section-missing-tag"
+                  [title]="'Chybí v jazycích: ' + getMissingForPosition(item.position).join(', ')">
+                  ⚠️ chybí v {{ getMissingForPosition(item.position).length }} jaz.
+                </div>
+              }
               <div class="section-actions">
                 <button class="action-btn edit-btn" (click)="startEdit(item)" title="Upravit sekci">
                   ✏️ Upravit
@@ -61,8 +116,11 @@
         @if (isEditing(item.id)) {
           <div class="section-edit">
             <div class="section-edit-header">
-              <div class="section-position">{{ i + 1 }}</div>
-              <span class="section-edit-label">Editace sekce</span>
+              <div class="section-position">{{ item.position }}</div>
+              <span class="section-edit-label">
+                Editace sekce 
+                <span class="lang-badge">{{ getLangName(activeLang) }}</span>
+              </span>
               <div class="section-actions">
                 <button class="action-btn save-btn" (click)="saveEdit(item)" [disabled]="saving">
                   💾 Uložit
@@ -103,10 +161,18 @@
     @if (showAddForm) {
       <div class="legal-add-card" id="add-form-anchor">
         <div class="section-edit-header">
-          <div class="section-position">{{ data.length + 1 }}</div>
-          <span class="section-edit-label">Nová sekce — {{ tabLabel }}</span>
+          <div class="section-position">{{ addForPosition ?? (data.length + 1) }}</div>
+          <span class="section-edit-label">
+            Nová sekce — {{ tabLabel }} ({{ getLangName(activeLang) }})
+            @if (addForPosition) {
+              <span class="add-position-tag">doplnění pozice {{ addForPosition }}</span>
+            }
+          </span>
           <div class="section-actions">
-            <button class="action-btn save-btn" (click)="submitAdd()" [disabled]="saving || !newContent.trim()">
+            <button 
+              class="action-btn save-btn" 
+              (click)="submitAdd()" 
+              [disabled]="saving || !newContent.trim() || !newHeading.trim()">
               💾 Přidat sekci
             </button>
             <button class="action-btn cancel-btn" (click)="cancelAdd()" [disabled]="saving">
@@ -145,7 +211,7 @@
     <div class="legal-add-row">
       <button class="add-section-btn" (click)="openAddForm()">
         <span class="add-section-plus">+</span>
-        Přidat sekci do {{ tabLabel }}
+        Přidat sekci do {{ tabLabel }} ({{ getLangName(activeLang) }})
       </button>
     </div>
   }

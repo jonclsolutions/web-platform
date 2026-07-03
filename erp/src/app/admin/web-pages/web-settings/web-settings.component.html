@@ -1,5 +1,4 @@
 <div class="ws-container">
-
   <div class="ws-header">
     <div>
       <h1 class="ws-title">Nastavení webu</h1>
@@ -26,7 +25,6 @@
     @if (!settingsLoading) {
       <div class="ws-card-body">
         <div class="ws-logo-section">
-
           <div class="ws-logo-preview-wrap">
             @if (hasLogo) {
               <img [src]="logoSrc" class="ws-logo-img" alt="Logo webu">
@@ -37,7 +35,6 @@
               </div>
             }
           </div>
-
           <div class="ws-logo-controls">
             <div class="ws-logo-info">
               @if (logoFile) {
@@ -49,21 +46,18 @@
                 <span class="ws-logo-none">Žádné logo — nahrajte soubor JPG, PNG nebo SVG (max 2 MB)</span>
               }
             </div>
-
             <div class="ws-logo-buttons">
               <label class="ws-btn ws-btn-secondary ws-btn-file">
                 {{ logoFile ? '🔄 Změnit logo' : '📁 Vybrat logo' }}
                 <input type="file" accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                  class="ws-hidden-input" (change)="onLogoSelected($event)">
+                       class="ws-hidden-input" (change)="onLogoSelected($event)">
               </label>
-
               @if (logoFile) {
                 <button class="ws-btn ws-btn-ghost" (click)="cancelLogoSelection()">
                   ✕ Zrušit výběr
                 </button>
               }
             </div>
-
             @if (logoFile) {
               <p class="ws-logo-hint">
                 ℹ️ Logo se uloží po kliknutí na „Uložit firemní údaje" níže.
@@ -91,63 +85,93 @@
 
     @if (!settingsLoading) {
       <div class="ws-card-body">
-        <div class="ws-form-grid">
 
+        <!-- ===== JAZYKOVÝ PŘEPÍNAČ PRO BRAND TAGLINE / COPYRIGHT TEXT ===== -->
+        @if (languages.length > 1) {
+          <div class="ws-i18n-bar">
+            <span class="ws-i18n-bar-label">🌐 Jazyk pro slogan a copyright:</span>
+            <div class="ws-mini-lang-tabs">
+              @for (lang of languages; track lang.code) {
+                <button
+                  type="button"
+                  class="ws-mini-lang-tab"
+                  [class.active]="currentLang === lang.code"
+                  (click)="switchLang(lang.code)">
+                  @if (lang.iconUrl) {
+                    <img [src]="lang.iconUrl" class="ws-mini-lang-icon" [alt]="lang.code">
+                  }
+                  {{ lang.code | uppercase }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="ws-form-grid">
           <div class="ws-field">
             <label class="ws-label">Název firmy *</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.company_name"
-              name="company_name" placeholder="Název s.r.o.">
+                   name="company_name" placeholder="Název s.r.o.">
           </div>
 
           <div class="ws-field">
-            <label class="ws-label">Brand Tagline</label>
-            <input class="ws-input" type="text" [(ngModel)]="settings.brand_tagline"
-              name="brand_tagline" placeholder="Váš slogan nebo podtitul">
+            <label class="ws-label">
+              Brand Tagline
+              <span class="ws-i18n-lang-tag">{{ currentLang | uppercase }}</span>
+            </label>
+            <input class="ws-input" type="text"
+                   [(ngModel)]="settings.brand_tagline_i18n[currentLang]"
+                   name="brand_tagline"
+                   [placeholder]="'Slogan (' + getLangName(currentLang) + ')'">
           </div>
 
           <div class="ws-field">
-            <label class="ws-label">Copyright Text</label>
-            <input class="ws-input" type="text" [(ngModel)]="settings.copyright_text"
-              name="copyright_text" placeholder="Váš slogan nebo podtitul">
+            <label class="ws-label">
+              Copyright Text
+              <span class="ws-i18n-lang-tag">{{ currentLang | uppercase }}</span>
+            </label>
+            <input class="ws-input" type="text"
+                   [(ngModel)]="settings.copyright_text_i18n[currentLang]"
+                   name="copyright_text"
+                   [placeholder]="'Copyright (' + getLangName(currentLang) + ')'">
           </div>
 
           <div class="ws-field">
             <label class="ws-label">IČO *</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.ico"
-              name="ico" placeholder="12345678">
+                   name="ico" placeholder="12345678">
           </div>
 
           <div class="ws-field">
             <label class="ws-label">DIČ</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.dic"
-              name="dic" placeholder="CZ12345678">
+                   name="dic" placeholder="CZ12345678">
           </div>
 
           <div class="ws-field">
             <label class="ws-label">Kontaktní e-mail *</label>
             <input class="ws-input" type="email" [(ngModel)]="settings.contact_email"
-              name="contact_email" placeholder="info@firma.cz">
+                   name="contact_email" placeholder="info@firma.cz">
           </div>
 
           <div class="ws-field">
             <label class="ws-label">Telefon</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.contact_phone"
-              name="contact_phone" placeholder="+420 123 456 789">
+                   name="contact_phone" placeholder="+420 123 456 789">
           </div>
 
           <div class="ws-field ws-field-full">
             <label class="ws-label">Adresa *</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.address"
-              name="address" placeholder="Ulice 1, 100 00 Praha">
+                   name="address" placeholder="Ulice 1, 100 00 Praha">
           </div>
 
           <div class="ws-field ws-field-full">
             <label class="ws-label">Text patičky webu</label>
             <textarea class="ws-textarea" [(ngModel)]="settings.footer_text"
-              name="footer_text" rows="3"
-              placeholder="© 2025 Firma s.r.o. Všechna práva vyhrazena."></textarea>
+                      name="footer_text" rows="3"
+                      placeholder="© 2025 Firma s.r.o. Všechna práva vyhrazena."></textarea>
           </div>
-
         </div>
 
         <div class="ws-form-footer">
@@ -183,19 +207,16 @@
 
     @if (!socialLoading) {
       <div class="ws-social-list">
-
         @if (socialLinks.length === 0) {
           <div class="ws-social-empty">
             <span>📭</span>
             <span>Zatím žádné sociální sítě. Přidejte první tlačítkem níže.</span>
           </div>
         }
-
         @for (link of socialLinks; track trackByIndex($index); let i = $index) {
           <div class="ws-social-row"
-            [class.ws-social-new]="link._isNew"
-            [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
-
+               [class.ws-social-new]="link._isNew"
+               [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
             <div class="ws-social-icon-col">
               <label class="ws-icon-upload" title="Nahrát ikonku">
                 @if (iconSrc(link)) {
@@ -204,51 +225,45 @@
                   <span class="ws-icon-placeholder">🖼️</span>
                 }
                 <input type="file" accept="image/*" class="ws-icon-input"
-                  (change)="onIconSelected($event, i)">
+                       (change)="onIconSelected($event, i)">
                 <span class="ws-icon-overlay">↑</span>
               </label>
             </div>
-
             <div class="ws-social-fields">
               <input class="ws-input ws-social-input"
-                type="text"
-                [(ngModel)]="socialLinks[i].name"
-                [name]="'soc_name_' + i"
-                placeholder="Název (Facebook, Instagram…)">
+                     type="text"
+                     [(ngModel)]="socialLinks[i].name"
+                     [name]="'soc_name_' + i"
+                     placeholder="Název (Facebook, Instagram…)">
               <input class="ws-input ws-social-input ws-input-url"
-                type="url"
-                [(ngModel)]="socialLinks[i].url"
-                [name]="'soc_url_' + i"
-                placeholder="https://facebook.com/firma">
+                     type="url"
+                     [(ngModel)]="socialLinks[i].url"
+                     [name]="'soc_url_' + i"
+                     placeholder="https://facebook.com/firma">
             </div>
-
             <div class="ws-social-actions">
               <button class="ws-action-btn ws-btn-save"
-                (click)="saveSocialLink(i)"
-                [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
-                title="Uložit">
+                      (click)="saveSocialLink(i)"
+                      [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
+                      title="Uložit">
                 @if (link._saving) { <span class="ws-mini-spin">↻</span> } @else { 💾 }
               </button>
               <button class="ws-action-btn ws-btn-delete"
-                (click)="deleteSocialLink(i)"
-                [disabled]="link._saving"
-                title="Smazat">
+                      (click)="deleteSocialLink(i)"
+                      [disabled]="link._saving"
+                      title="Smazat">
                 🗑️
               </button>
             </div>
-
           </div>
         }
-
         <div class="ws-social-add-row">
           <button class="ws-add-btn" (click)="addSocialLink()">
             <span class="ws-add-plus">+</span>
             Přidat sociální síť
           </button>
         </div>
-
       </div>
     }
   </div>
-
 </div>

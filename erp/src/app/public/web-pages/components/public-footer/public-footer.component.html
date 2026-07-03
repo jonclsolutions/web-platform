@@ -9,7 +9,7 @@
       <div class="footer-col footer-col--brand">
         <div class="footer-brand">
           <span class="footer-brand-name">{{ settings.company_name }}</span>
-          <p class="footer-brand-tagline">{{ getTagline() }}</p>
+          <p class="footer-brand-tagline">{{ brandTagline }}</p>
         </div>
 
         <div class="footer-social">
@@ -86,7 +86,7 @@
 
   <div class="footer-bottom">
     <div class="footer-inner footer-bottom-inner">
-      <p class="footer-copy">{{ getCopyright() }}</p>
+      <p class="footer-copy">{{ copyrightText }}</p>
       <div class="footer-bottom-links">
         @for (link of footerLegalLinks; track link.route) {
           <a [routerLink]="link.route" class="footer-bottom-link">{{ link.text }}</a>

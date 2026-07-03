@@ -25,25 +25,29 @@ class DocumentSectionController extends Controller
             $query->where('document_type_id', $typeId);
         }
 
+        // Nyní bezpečně filtruje, protože sloupec v DB již existuje
+        if ($lang = $request->input('lang')) {
+            $query->where('lang', $lang);
+        }
+
         $data = $query->orderBy('position', 'asc')->get();
         return response()->json(DocumentSectionResource::collection($data));
     }
-
     /**
      * Uložení nové sekce.
      */
-    public function store(StoreDocumentSectionRequest $request): JsonResponse
+public function store(StoreDocumentSectionRequest $request): JsonResponse
     {
         try {
+            // Ujisti se, že $request->validated() obsahuje 'lang'
             $section = DocumentSection::create($request->validated());
-            $this->logAction($request, 'create', 'Legal', "Vytvořena sekce: {$section->heading}", $section->id);
+            $this->logAction($request, 'create', 'Legal', "Vytvořena sekce: {$section->heading} ({$section->lang})", $section->id);
             return response()->json(new DocumentSectionResource($section), 201);
         } catch (\Exception $e) {
             Log::error("Legal Store Error: " . $e->getMessage());
             return response()->json(['message' => 'Chyba při vytváření sekce.'], 500);
         }
     }
-
     /**
      * Získání detailu jedné sekce.
      */
@@ -72,25 +76,36 @@ class DocumentSectionController extends Controller
 /**
      * VEŘEJNÉ ZOBRAZENÍ: Načtení dle slugu (gdpr / tos).
      */
-    public function publicShow(string $slug): JsonResponse
-    {
-        // Mapování slugu na ID v databázi
-        $typeId = ($slug === 'gdpr') ? 1 : (($slug === 'tos') ? 2 : null);
+    public function publicShow(Request $request, string $slug): JsonResponse
+{
+    $typeId = ($slug === 'gdpr') ? 1 : (($slug === 'tos') ? 2 : null);
 
-        if (!$typeId) {
-            return response()->json(['message' => 'Dokument nenalezen.'], 404);
-        }
+    if (!$typeId) {
+        return response()->json(['message' => 'Dokument nenalezen.'], 404);
+    }
 
+    $lang = $request->input('lang', 'cz');
+
+    // 1. Zkusíme načíst data pro vybraný jazyk
+    $data = DocumentSection::where('document_type_id', $typeId)
+        ->where('lang', $lang)
+        ->orderBy('position', 'asc')
+        ->get();
+
+    // 2. Pokud jsou data prázdná a není to čeština, zkusíme načíst češtinu jako fallback
+    if ($data->isEmpty() && $lang !== 'cz') {
         $data = DocumentSection::where('document_type_id', $typeId)
+            ->where('lang', 'cz')
             ->orderBy('position', 'asc')
             ->get();
-
-        return response()->json([
-            'header_main' => ($typeId === 1) ? 'GDPR' : 'Obchodní podmínky',
-            'last_update_date' => $data->max('updated_at')?->format('d.m.Y') ?? date('d.m.Y'),
-            'sections' => DocumentSectionResource::collection($data)
-        ]);
     }
+
+    return response()->json([
+        'header_main' => ($typeId === 1) ? 'GDPR' : 'Obchodní podmínky',
+        'last_update_date' => $data->max('updated_at')?->format('d.m.Y') ?? date('d.m.Y'),
+        'sections' => DocumentSectionResource::collection($data)
+    ]);
+}
     /**
      * Smazání sekce.
      */

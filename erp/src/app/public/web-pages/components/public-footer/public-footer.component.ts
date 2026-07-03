@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { LocalizationService } from '../../../../shared/services/localization.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { switchMap, takeUntil } from 'rxjs/operators';
 
 interface FooterNavLink {
   route: string;
@@ -34,13 +34,12 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     private publicDataService: PublicDataService,
     private cdr: ChangeDetectorRef
   ) {
-    // Nastavení modulu pro footer (shodné s headerem)
     this.localizationService.setModule('web');
     this.currentYear = new Date().getFullYear();
   }
 
   ngOnInit(): void {
-    // 1. Překlady
+    // 1. Překlady (reaguje na změnu jazyka díky BehaviorSubject ve službě)
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(translations => {
@@ -52,9 +51,12 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
         }
       });
 
-    // 2. Data ze serveru
-    this.publicDataService.getSiteSettings()
-      .pipe(takeUntil(this.destroy$))
+    // 2. Data ze serveru (reaguje na změnu jazyka)
+    this.localizationService.currentLanguage$
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(() => this.publicDataService.getSiteSettings())
+      )
       .subscribe(res => {
         this.settings = res.settings;
         this.socialLinks = res.social_links;
@@ -66,13 +68,26 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     return this.publicDataService.getStorageUrl(path);
   }
 
-  getCopyright(): string {
-    const text = this.settings?.footer_text || this.t?.copyright_text || '© {year} All rights reserved.';
+  // Getter využívá getCurrentLanguage() ze služby
+  get copyrightText(): string {
+    const lang = this.localizationService.getCurrentLanguage();
+    const i18n = this.settings?.copyright_text_i18n;
+    
+    const text = (i18n && i18n[lang]) 
+      ? i18n[lang] 
+      : (this.settings?.copyright_text || this.t?.copyright_text || '© {year} RegioPartner. All rights reserved.');
+    
     return text.replace('{year}', this.currentYear.toString());
   }
 
-  getTagline(): string {
-    return this.settings?.brand_tagline || this.t?.brand_tagline || 'Tvoříme digitální produkty, na které jste hrdí.';
+  // Getter využívá getCurrentLanguage() ze služby
+  get brandTagline(): string {
+    const lang = this.localizationService.getCurrentLanguage();
+    const i18n = this.settings?.brand_tagline_i18n;
+    
+    return (i18n && i18n[lang]) 
+      ? i18n[lang] 
+      : (this.settings?.brand_tagline || this.t?.brand_tagline || 'We build digital products you\'ll be proud of.');
   }
 
   private loadFooterNavLinks(): void {

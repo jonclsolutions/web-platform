@@ -5,11 +5,25 @@ import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 
+/** Metadata jazyka — shodné s tím, co vrací endpoint languages/{module} */
+interface LangMeta {
+  code: string;
+  name: string;
+  iconUrl?: string | null;
+  active: boolean;
+  isBuiltIn?: boolean;
+}
+
+/** Vícejazyčná hodnota: { "cz": "...", "en": "...", "sk": "..." } */
+type I18nMap = Record<string, string>;
+
 interface SiteSetting {
   id?: number;
   company_name: string;
   brand_tagline: string;
+  brand_tagline_i18n: I18nMap;
   copyright_text: string;
+  copyright_text_i18n: I18nMap;
   ico: string;
   dic: string;
   contact_email: string;
@@ -41,16 +55,25 @@ interface SocialLink {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WebSettingsComponent extends BaseDataComponent<any> implements OnInit {
-
   override apiEndpoint = 'legal/config';
+
+  // Modul pro načítání jazyků (shodný s překladovým systémem / edit-website)
+  private readonly LANG_MODULE = 'web';
+
+  // ---- Jazyky pro vícejazyčná pole (brand_tagline, copyright_text) ----
+  languages: LangMeta[] = [];
+  currentLang: string = 'cz';
 
   // ---- Firemní nastavení ----
   settings: SiteSetting = {
     company_name: '', ico: '', dic: '',
     contact_email: '', contact_phone: '',
     address: '', footer_text: '',
-    logo_path: null,brand_tagline: '', copyright_text: ''
+    logo_path: null,
+    brand_tagline: '', brand_tagline_i18n: {},
+    copyright_text: '', copyright_text_i18n: {},
   };
+
   settingsLoading = true;
   settingsSaving  = false;
   settingsSaved   = false;
@@ -76,12 +99,68 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   override ngOnInit(): void {
     this.initWithAuthCheck(this.router);
-    this.loadAll();
+    this.loadLanguages();
+  }
+
+  // ============================================================
+  // JAZYKY — pro přepínání brand_tagline / copyright_text
+  // ============================================================
+
+  private loadLanguages(): void {
+    this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.LANG_MODULE}`).subscribe({
+      next: (res) => {
+        this.languages = (res?.languages ?? []).filter(l => l.active !== false);
+
+        if (this.languages.length > 0 && !this.languages.find(l => l.code === this.currentLang)) {
+          this.currentLang = this.languages[0].code;
+        }
+
+        this.loadAll();
+      },
+      error: () => {
+        // Fallback — alespoň CZ, ať formulář zůstane funkční
+        this.languages = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }];
+        this.loadAll();
+      }
+    });
+  }
+
+  switchLang(code: string): void {
+    if (this.currentLang === code) return;
+    this.currentLang = code;
+    this.cd.markForCheck();
+  }
+
+  getLangName(code: string): string {
+    return this.languages.find(l => l.code === code)?.name ?? code.toUpperCase();
+  }
+
+  /**
+   * Zajistí, že settings.brand_tagline_i18n / copyright_text_i18n mají
+   * klíč pro každý načtený jazyk (jinak by [(ngModel)] neměl kam zapisovat).
+   */
+  private ensureI18nDefaults(): void {
+    if (!this.settings.brand_tagline_i18n)  this.settings.brand_tagline_i18n  = {};
+    if (!this.settings.copyright_text_i18n) this.settings.copyright_text_i18n = {};
+
+    for (const lang of this.languages) {
+      if (this.settings.brand_tagline_i18n[lang.code] === undefined) {
+        this.settings.brand_tagline_i18n[lang.code] = (lang.code === 'cz')
+          ? (this.settings.brand_tagline ?? '')
+          : '';
+      }
+      if (this.settings.copyright_text_i18n[lang.code] === undefined) {
+        this.settings.copyright_text_i18n[lang.code] = (lang.code === 'cz')
+          ? (this.settings.copyright_text ?? '')
+          : '';
+      }
+    }
   }
 
   // ============================================================
   // NAČTENÍ  —  GET /api/legal/config
   // ============================================================
+
   private loadAll(): void {
     this.settingsLoading = true;
     this.socialLoading   = true;
@@ -90,8 +169,16 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.dataHandler.get<any>('legal/config').subscribe({
       next: (res) => {
         if (res.settings) {
-          this.settings = { ...res.settings };
+          this.settings = {
+            ...this.settings,
+            ...res.settings,
+            brand_tagline_i18n:  res.settings.brand_tagline_i18n  ?? {},
+            copyright_text_i18n: res.settings.copyright_text_i18n ?? {},
+          };
         }
+
+        this.ensureI18nDefaults();
+
         this.socialLinks = (res.social_links ?? []).map((s: any) => ({
           id:           s.id,
           name:         s.name,
@@ -104,7 +191,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
           _isNew:       false,
           _dirty:       false,
         }));
-        // Reset loga po novém načtení (blob preview zůstane dokud nerefreshneme)
+
         this.settingsLoading = false;
         this.socialLoading   = false;
         this.cd.markForCheck();
@@ -123,6 +210,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   // ============================================================
   // LOGO — výběr souboru
   // ============================================================
+
   onLogoSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -138,15 +226,12 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       return;
     }
 
-    // Uvolnit starý blob URL
     if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
-
     this.logoFile    = file;
     this.logoPreview = URL.createObjectURL(file);
     this.cd.markForCheck();
   }
 
-  // Zrušit výběr nového loga (bez uložení)
   cancelLogoSelection(): void {
     if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
     this.logoFile    = null;
@@ -157,7 +242,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   // ============================================================
   // FIREMNÍ ÚDAJE + LOGO  —  PUT/POST /api/legal/config/settings
   // Pokud je nové logo, posíláme FormData; jinak čistý JSON.
+  // brand_tagline_i18n / copyright_text_i18n se posílají vždy celé
+  // (objekt pro všechny jazyky), backend si z nich odvodí CZ fallback.
   // ============================================================
+
   saveSettings(): void {
     if (this.settingsSaving) return;
     this.settingsSaving = true;
@@ -167,8 +255,8 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       // ---- Verze s logem (FormData) ----
       const fd = new FormData();
       fd.append('company_name',  this.settings.company_name  ?? '');
-      fd.append('brand_tagline', this.settings.brand_tagline ?? '');
-      fd.append('copyright_text', this.settings.brand_tagline ?? '');
+      fd.append('brand_tagline_i18n',  JSON.stringify(this.settings.brand_tagline_i18n  ?? {}));
+      fd.append('copyright_text_i18n', JSON.stringify(this.settings.copyright_text_i18n ?? {}));
       fd.append('ico',           this.settings.ico           ?? '');
       fd.append('dic',           this.settings.dic           ?? '');
       fd.append('contact_email', this.settings.contact_email ?? '');
@@ -186,15 +274,15 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     } else {
       // ---- Verze bez loga (čistý JSON) ----
       const payload = {
-        company_name:  this.settings.company_name,
-        brand_tagline: this.settings.brand_tagline,
-        copyright_text: this.settings.copyright_text,
-        ico:           this.settings.ico,
-        dic:           this.settings.dic,
-        contact_email: this.settings.contact_email,
-        contact_phone: this.settings.contact_phone,
-        address:       this.settings.address,
-        footer_text:   this.settings.footer_text,
+        company_name:         this.settings.company_name,
+        brand_tagline_i18n:   this.settings.brand_tagline_i18n  ?? {},
+        copyright_text_i18n:  this.settings.copyright_text_i18n ?? {},
+        ico:                  this.settings.ico,
+        dic:                  this.settings.dic,
+        contact_email:        this.settings.contact_email,
+        contact_phone:        this.settings.contact_phone,
+        address:              this.settings.address,
+        footer_text:          this.settings.footer_text,
       };
 
       this.dataHandler.put<SiteSetting>('legal/config/settings', payload as any).subscribe({
@@ -205,15 +293,27 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
 
   private onSettingsSaved(res: any): void {
-    if (res) this.settings = { ...res };
+    if (res) {
+      this.settings = {
+        ...this.settings,
+        ...res,
+        brand_tagline_i18n:  res.brand_tagline_i18n  ?? {},
+        copyright_text_i18n: res.copyright_text_i18n ?? {},
+      };
+      this.ensureI18nDefaults();
+    }
+
     // Uvolnit blob URL loga, již nepotřebujeme
     if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
     this.logoFile    = null;
     this.logoPreview = null;
+
     this.settingsSaving = false;
     this.settingsSaved  = true;
+
     this.alertDialogService.open('Uloženo', 'Firemní údaje byly úspěšně uloženy.', 'success');
     setTimeout(() => { this.settingsSaved = false; this.cd.markForCheck(); }, 2500);
+
     this.loadAll();
   }
 
@@ -240,6 +340,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   // ============================================================
   // SOCIÁLNÍ SÍTĚ — přidat řádek
   // ============================================================
+
   addSocialLink(): void {
     this.socialLinks = [...this.socialLinks, {
       name: '', url: '', icon_path: '',
@@ -309,7 +410,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       this.alertDialogService.open('Uloženo', `Odkaz „${link.name}" byl uložen.`, 'success');
       this.loadAll();
     };
-
     const onError = (err: any) => {
       const msg = err?.error?.message ?? 'Uložení selhalo.';
       this.alertDialogService.open('Chyba', msg, 'danger');
@@ -329,6 +429,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       const endpoint = link._isNew
         ? 'legal/config/social'
         : `legal/config/social/${link.id}`;
+
       this.dataHandler.upload<SocialLink>(endpoint, fd)
         .subscribe({ next: onSuccess, error: onError });
     } else {
@@ -372,6 +473,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   // ============================================================
   // HELPERS
   // ============================================================
+
   markDirty(index: number): void {
     if (!this.socialLinks[index]?._dirty) {
       const updated = [...this.socialLinks];
