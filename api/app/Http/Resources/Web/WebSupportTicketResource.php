@@ -1,17 +1,34 @@
 <?php
+/**
+ * @file WebSupportTicketResource.php
+ * @path app/Http/Resources/Web/WebSupportTicketResource.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Resource transformation for support tickets.
+ */
 
 namespace App\Http\Resources\Web;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @description Transforms WebSupportTicket model data, ensuring user plain identifiers and file URLs are accurately presented.
+ */
 class WebSupportTicketResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [
             'id'                => $this->id,
-            'user_id'           => $this->user_id, // Opraveno
+            'user_id'           => $this->user_id,
             'user_name_plain'   => $this->user_name_plain,
             'user_plain'        => $this->user_plain,
             'category'          => $this->category,

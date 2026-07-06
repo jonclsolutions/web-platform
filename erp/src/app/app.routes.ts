@@ -1,9 +1,27 @@
+/**
+ * @file app.routes.ts
+ * @path src/app/app.routes.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2025
+ * @description Central routing configuration for the application, managing lazy-loaded modules and route guards.
+ * @dependencies
+ * - shopMaintenanceGuard: Validates e-shop availability status.
+ * - LoginComponent: Handles administrative authentication.
+ * - AdminRoutingModule: Loads the protected administrative section.
+ */
+
 import { Routes } from '@angular/router';
 import { LoginComponent } from './admin/auth/login/login.component';
 import { shopMaintenanceGuard } from './public/shop-pages/components/guards/shop-maintenance.guard';
 
+/**
+ * @description Main application routing configuration.
+ * @usage Imported by the root application module/app config.
+ * @note All public and shop pages use lazy loading to ensure optimal bundle size and performance.
+ */
 export const routes: Routes = [
-  // --- 1. HLAVNÍ WEB ---
+  // --- 1. MAIN WEB ---
   {
     path: '',
     loadComponent: () => import('./public/web-pages/web-layout/web-layout.component').then(m => m.WebLayoutComponent),
@@ -23,7 +41,7 @@ export const routes: Routes = [
     ]
   },
 
-  // --- 2. E-SHOP SEKCE ---
+  // --- 2. E-SHOP SECTION ---
   {
     path: 'shop',
     loadComponent: () => import('./public/shop-pages/shop-layout/shop-layout.component').then(m => m.ShopLayoutComponent),
@@ -52,7 +70,7 @@ export const routes: Routes = [
     ]
   },
 
-  // --- 3. STRÁNKA ÚDRŽBY (Mimo layouty) ---
+  // --- 3. MAINTENANCE PAGE ---
   {
     path: 'shop-maintenance',
     loadComponent: () => import('./public/shop-pages/shop-maintenance/shop-maintenance.component').then(m => m.ShopMaintenanceComponent)

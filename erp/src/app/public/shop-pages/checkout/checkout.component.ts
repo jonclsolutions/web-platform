@@ -1,3 +1,16 @@
+/**
+ * @file checkout.component.ts
+ * @path src/app/shop/checkout/checkout.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the multi-step checkout process including form validation, coupon application, and final order submission.
+ * @dependencies
+ * - CartService: Provides reactive access to cart items and clearing operations.
+ * - ShopPublicService: Handles shipping/payment methods, coupon validation, and order submission.
+ * - AlertDialogService: Provides user feedback for submission or validation errors.
+ */
+
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -7,6 +20,11 @@ import { ShippingMethod } from '../components/interfaces/shipping-method.interfa
 import { PaymentMethod } from '../components/interfaces/payment-method.interface';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 
+/**
+ * @description Component for handling the e-shop checkout flow.
+ * @usage Orchestrates form entry, data validation, pricing summaries, and final API order creation.
+ * @note Implements strict financial isolation using EUR as the base currency for all calculations and order submissions.
+ */
 @Component({
   selector: 'app-checkout',
   standalone: true,
@@ -15,7 +33,7 @@ import { AlertDialogService } from '../../../core/services/alert-dialog.service'
   styleUrls: ['./checkout.component.css']
 })
 export class CheckoutComponent implements OnInit {
-  currentStep = signal(1); // 1 = Formulář, 5 = Úspěch
+  currentStep = signal(1); // 1 = Form entry, 5 = Success
   isProcessing = signal(false);
   orderNumber = signal<string | null>(null);
 
@@ -58,11 +76,14 @@ export class CheckoutComponent implements OnInit {
 
   formSubmitted = false;
 
-  // 🛡️ BEZPEČNÁ REKAPITULACE: Všechny finanční operace striktně izolujeme do EUR
+  /**
+   * @description Computes the financial summary of the cart, including VAT breakdowns and discounts.
+   * @note Ensures all calculations strictly follow EUR pricing rules derived from the cart service.
+   * @returns An object containing totals, VAT breakdowns, and the final payment amount.
+   */
   orderSummary = computed(() => {
     const cartItems = this.cartService.cartItems() || [];
     
-    // Výpočet mezisoučtu produktů striktně z EUR hodnoty
     const productsTotal = cartItems.reduce((acc, item) => {
       const priceEur = item.prices?.price_eur_with_vat ?? item.unit_price ?? 0;
       return acc + (Number(priceEur) * Number(item.quantity || 0));
@@ -134,6 +155,9 @@ export class CheckoutComponent implements OnInit {
     this.loadPaymentMethods();
   }
 
+  /**
+   * @description Fetches available shipping options and selects the default.
+   */
   loadShippingMethods(): void {
     this.shopPublicService.getShippingMethods().subscribe({
       next: (response) => {
@@ -143,10 +167,13 @@ export class CheckoutComponent implements OnInit {
           this.selectShippingMethod(methods[0].id);
         }
       },
-      error: (e) => console.error('Chyba při načítání dopravy:', e)
+      error: (e) => console.error('Error loading shipping methods:', e)
     });
   }
 
+  /**
+   * @description Fetches available payment options and selects the default.
+   */
   loadPaymentMethods(): void {
     this.shopPublicService.getPaymentMethods().subscribe({
       next: (response) => {
@@ -156,10 +183,14 @@ export class CheckoutComponent implements OnInit {
           this.selectPaymentMethod(payments[0].id);
         }
       },
-      error: (e) => console.error('Chyba při načítání platebních metod:', e)
+      error: (e) => console.error('Error loading payment methods:', e)
     });
   }
 
+  /**
+   * @description Updates selected shipping method and updates calculation state.
+   * @param id The method identifier.
+   */
   selectShippingMethod(id: number): void {
     this.formData.shippingMethodId = id;
     const method = this.shippingMethods().find(m => m.id === id);
@@ -167,11 +198,19 @@ export class CheckoutComponent implements OnInit {
     this.validateField('shippingMethodId');
   }
 
+  /**
+   * @description Updates selected payment method.
+   * @param id The method identifier.
+   */
   selectPaymentMethod(id: number): void {
     this.formData.paymentMethodId = id;
     this.validateField('paymentMethodId');
   }
 
+  /**
+   * @description Validates individual form fields for correct formatting and mandatory presence.
+   * @param field The field key to validate.
+   */
   validateField(field: string): void {
     switch (field) {
       case 'email':
@@ -279,6 +318,9 @@ export class CheckoutComponent implements OnInit {
     );
   }
 
+  /**
+   * @description Validates the coupon code via API and updates the applied coupon state.
+   */
   applyCoupon(): void {
     if (!this.couponCode.trim()) return;
 
@@ -294,7 +336,10 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
-  // 🛡️ EXTRA BEZPEČNÉ ODESLÁNÍ DO BANKY / BACKENDU
+  /**
+   * @description Submits order data to the backend API.
+   * @note Performs final sanity checks on pricing before transmission to ensure data integrity.
+   */
   simulatePayment(): void {
     this.formSubmitted = true;
     

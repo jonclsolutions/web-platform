@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file SiteConfigurationController.php
+ * @path app/Http/Controllers/Api/Legal/SiteConfigurationController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Centralized management for site-wide configuration, including company details, localized branding assets, and social media links with file handling.
+ */
 
 namespace App\Http\Controllers\Api\Legal;
 
@@ -11,14 +19,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @description Controller responsible for site metadata, branding, and social connectivity.
+ * @note Supports i18n data structures for branding fields and manages physical file uploads for logos and icons.
+ */
 class SiteConfigurationController extends Controller
 {
     /**
-     * GET /api/legal/config
-     * Vrátí firemní nastavení + seznam sociálních sítí.
-     * brand_tagline_i18n / copyright_text_i18n se vrací tak, jak jsou
-     * uloženy v DB (celý objekt pro všechny jazyky) — administrace
-     * si podle zvoleného jazyka vybírá hodnotu na frontendu.
+     * Fetches current corporate settings and social media configuration.
+     *
+     * @return JsonResponse Returns configuration settings and ordered social links.
      */
     public function index(): JsonResponse
     {
@@ -29,13 +39,10 @@ class SiteConfigurationController extends Controller
     }
 
     /**
-     * PUT /api/legal/config/settings
-     * Aktualizace firemních údajů (čistý JSON, bez souboru).
+     * Updates corporate information, branding, and site logo.
      *
-     * brand_tagline_i18n / copyright_text_i18n mohou přijít buď jako:
-     *  - pole (běžný JSON request bez souboru), nebo
-     *  - JSON string (FormData request s logem — viz updateSettings níže,
-     *    kde se volá stejná logika přes normalizeI18nField()).
+     * @param Request $request Validated request containing company info and optional logo file.
+     * @return JsonResponse Returns the updated settings object.
      */
     public function updateSettings(Request $request): JsonResponse
     {
@@ -44,22 +51,20 @@ class SiteConfigurationController extends Controller
             'ico'                  => 'required|string|max:20',
             'dic'                  => 'nullable|string|max:20',
             'brand_tagline'        => 'nullable|string|max:255',
-            'brand_tagline_i18n'   => 'nullable', // pole NEBO JSON string, viz normalizeI18nField()
+            'brand_tagline_i18n'   => 'nullable',
             'copyright_text'       => 'nullable|string|max:255',
-            'copyright_text_i18n'  => 'nullable', // pole NEBO JSON string
+            'copyright_text_i18n'  => 'nullable',
             'contact_email'        => 'required|email|max:255',
             'contact_phone'        => 'nullable|string|max:30',
             'address'              => 'required|string|max:500',
             'footer_text'          => 'nullable|string|max:1000',
-            'logo_file'            => 'nullable|file|image|max:2048', // Validace loga
+            'logo_file'            => 'nullable|file|image|max:2048',
         ]);
 
         $settings = SiteSetting::firstOrCreate([]);
-
-        // Základní data (bez souboru a bez i18n polí — ta zpracujeme zvlášť)
         $data = $request->except(['logo_file', 'brand_tagline_i18n', 'copyright_text_i18n']);
 
-        // ---- Zpracování vícejazyčných polí ----
+        // Normalize i18n fields for consistency
         $data['brand_tagline_i18n'] = $this->normalizeI18nField(
             $request->input('brand_tagline_i18n'),
             $settings->brand_tagline_i18n
@@ -69,36 +74,29 @@ class SiteConfigurationController extends Controller
             $settings->copyright_text_i18n
         );
 
-        // Zpětná kompatibilita: sloupce brand_tagline / copyright_text
-        // vždy odrážejí CZ hodnotu z i18n objektu (fallback pro staré
-        // integrace a veřejné API bez ?lang parametru).
+        // Fallback: Ensure primary columns match the Czech (cz) translation
         $data['brand_tagline']  = $data['brand_tagline_i18n']['cz']  ?? ($data['brand_tagline']  ?? $settings->brand_tagline);
         $data['copyright_text'] = $data['copyright_text_i18n']['cz'] ?? ($data['copyright_text'] ?? $settings->copyright_text);
 
-        // ---- Zpracování loga ----
+        // Logo handling
         if ($request->hasFile('logo_file')) {
-            // Smazat staré logo, pokud existuje
             if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
                 Storage::disk('public')->delete($settings->logo_path);
             }
-            // Uložit nové logo
             $data['logo_path'] = $request->file('logo_file')->store('site-logos', 'public');
         }
 
         $settings->update($data);
-
-        $this->logAction($request, 'update', 'Legal', 'Aktualizace firemních údajů a loga');
+        $this->logAction($request, 'update', 'Legal', 'Updated company details and logo');
 
         return response()->json($settings);
     }
 
     /**
-     * GET /api/public/legal/config
-     * Veřejná metoda pro načtení údajů do patičky.
+     * Delivers localized configuration for public consumption.
      *
-     * Přijímá volitelný parametr ?lang=xx. Pokud pro daný jazyk
-     * neexistuje hodnota, spadne zpět na "cz" a nakonec na starý
-     * plochý sloupec (pro řádky vytvořené před zavedením i18n).
+     * @param Request $request Optional query param ?lang=xx (defaults to 'cz').
+     * @return JsonResponse Publicly exposed settings and links.
      */
     public function publicShow(Request $request): JsonResponse
     {
@@ -110,13 +108,9 @@ class SiteConfigurationController extends Controller
             $taglineI18n   = $settings->brand_tagline_i18n ?? [];
             $copyrightI18n = $settings->copyright_text_i18n ?? [];
 
-            $settings->brand_tagline  = $taglineI18n[$lang]
-                ?? $taglineI18n['cz']
-                ?? $settings->brand_tagline;
-
-            $settings->copyright_text = $copyrightI18n[$lang]
-                ?? $copyrightI18n['cz']
-                ?? $settings->copyright_text;
+            // Apply language fallback logic: requested lang -> 'cz' -> base column
+            $settings->brand_tagline  = $taglineI18n[$lang] ?? $taglineI18n['cz'] ?? $settings->brand_tagline;
+            $settings->copyright_text = $copyrightI18n[$lang] ?? $copyrightI18n['cz'] ?? $settings->copyright_text;
         }
 
         return response()->json([
@@ -126,10 +120,10 @@ class SiteConfigurationController extends Controller
     }
 
     /**
-     * POST /api/legal/config/social
-     * Vytvoření nového odkazu. Soubor ikony je nepovinný (field: 'icon_file').
-     * Pokud je nahrán, uloží se do storage/app/public/social-icons/
-     * a cesta se zapíše do icon_path.
+     * Creates a new social media entry.
+     *
+     * @param Request $request Data for social link including optional icon file.
+     * @return JsonResponse Returns the created resource.
      */
     public function storeSocial(Request $request): JsonResponse
     {
@@ -137,17 +131,12 @@ class SiteConfigurationController extends Controller
             'name'      => 'required|string|max:100',
             'url'       => 'required|url|max:500',
             'position'  => 'nullable|integer|min:0',
-            // Soubor ikony — nepovinný, přijímáme pod klíčem 'icon_file'
             'icon_file' => 'nullable|file|image|max:2048',
         ]);
 
         $iconPath = null;
-
         if ($request->hasFile('icon_file') && $request->file('icon_file')->isValid()) {
-            $iconPath = $request->file('icon_file')
-                ->store('social-icons', 'public');
-            // Výsledek: storage/app/public/social-icons/uuid.png
-            // Veřejná URL:  /storage/social-icons/uuid.png
+            $iconPath = $request->file('icon_file')->store('social-icons', 'public');
         }
 
         $social = SocialLink::create([
@@ -157,21 +146,20 @@ class SiteConfigurationController extends Controller
             'icon_path' => $iconPath ?? '',
         ]);
 
-        $this->logAction($request, 'create', 'Legal', "Přidána sociální síť: {$social->name}", $social->id);
-
+        $this->logAction($request, 'create', 'Legal', "Added social network: {$social->name}", $social->id);
         return response()->json($social, 201);
     }
 
     /**
-     * PUT /api/legal/config/social/{id}
-     * Aktualizace existujícího odkazu.
-     * Pokud přijde nový soubor (icon_file), starý se smaže a nahradí novým.
-     * Pokud soubor nepřijde, icon_path zůstane beze změny.
+     * Updates an existing social media link.
+     *
+     * @param Request $request Data for update.
+     * @param int $id The social link ID.
+     * @return JsonResponse Returns the updated resource.
      */
     public function updateSocial(Request $request, int $id): JsonResponse
     {
         $social = SocialLink::findOrFail($id);
-
         $validated = $request->validate([
             'name'      => 'required|string|max:100',
             'url'       => 'required|url|max:500',
@@ -179,14 +167,12 @@ class SiteConfigurationController extends Controller
             'icon_file' => 'nullable|file|image|max:2048',
         ]);
 
-        $iconPath = $social->icon_path; // Zachovat stávající cestu
+        $iconPath = $social->icon_path;
 
         if ($request->hasFile('icon_file') && $request->file('icon_file')->isValid()) {
-            // Smazat starý soubor z disku (pokud existuje)
             if ($social->icon_path && Storage::disk('public')->exists($social->icon_path)) {
                 Storage::disk('public')->delete($social->icon_path);
             }
-            // Uložit nový soubor
             $iconPath = $request->file('icon_file')->store('social-icons', 'public');
         }
 
@@ -197,20 +183,21 @@ class SiteConfigurationController extends Controller
             'icon_path' => $iconPath,
         ]);
 
-        $this->logAction($request, 'update', 'Legal', "Aktualizace sociální sítě: {$social->name}", $social->id);
-
+        $this->logAction($request, 'update', 'Legal', "Updated social network: {$social->name}", $social->id);
         return response()->json($social);
     }
 
     /**
-     * DELETE /api/legal/config/social/{id}
-     * Smazání odkazu + fyzické smazání souboru ikony z disku.
+     * Deletes a social link and its associated icon file.
+     *
+     * @param int $id The social link ID.
+     * @param Request $request The request object.
+     * @return JsonResponse Returns 204 on success.
      */
     public function destroySocial(int $id, Request $request): JsonResponse
     {
         $social = SocialLink::findOrFail($id);
 
-        // Fyzicky smazat soubor ikony z public disku
         if ($social->icon_path && Storage::disk('public')->exists($social->icon_path)) {
             Storage::disk('public')->delete($social->icon_path);
         }
@@ -218,39 +205,33 @@ class SiteConfigurationController extends Controller
         $name = $social->name;
         $social->delete();
 
-        $this->logAction($request, 'delete', 'Legal', "Smazána sociální síť: {$name}", $id);
-
+        $this->logAction($request, 'delete', 'Legal', "Deleted social network: {$name}", $id);
         return response()->json(null, 204);
     }
 
     /**
-     * Sjednotí vstup pro i18n pole na asociativní pole { "cz": "...", ... }.
+     * Normalizes i18n inputs from either JSON arrays or strings.
      *
-     * $raw může být:
-     *  - pole (klasický JSON request body) → vrátí se rovnou
-     *  - JSON string (FormData request) → dekóduje se
-     *  - null / neplatný JSON → vrátí se stávající hodnota z DB
+     * @param mixed $raw The raw input.
+     * @param mixed $existing The current database value.
+     * @return array Normalized associative array.
      */
     private function normalizeI18nField($raw, $existing): array
     {
         $existing = is_array($existing) ? $existing : (json_decode($existing ?? '[]', true) ?? []);
 
-        if (is_array($raw)) {
-            return $raw;
-        }
+        if (is_array($raw)) return $raw;
 
         if (is_string($raw)) {
             $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                return $decoded;
-            }
+            if (is_array($decoded)) return $decoded;
         }
 
         return $existing;
     }
 
     /**
-     * Logování akcí do ShopLog.
+     * Logs administrative actions to the ShopLog audit table.
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
     {
@@ -266,7 +247,7 @@ class SiteConfigurationController extends Controller
                 'user_id' => $user?->id,
                 'context_data' => json_encode($request->except(['logo_file', 'icon_file']), JSON_UNESCAPED_UNICODE),
                 'user_id_plain' => (string)($user?->id ?? '0'),
-                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'Systém',
+                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'System',
             ]);
         } catch (\Exception $e) { Log::error("Log error: " . $e->getMessage()); }
     }

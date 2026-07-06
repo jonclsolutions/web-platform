@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file WebSalesLeadController.php
+ * @path app/Http/Controllers/Api/Web/WebSalesLeadController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Controller responsible for managing sales lead lifecycle, including filtering, lifecycle state management (soft-delete), and comprehensive administrative audit logging.
+ */
 
 namespace App\Http\Controllers\Api\Web;
 
@@ -11,10 +19,17 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Requests\Web\WebSalesLead\StoreWebSalesLeadRequest;
 use App\Http\Resources\Web\WebSalesLeadResource;
 
+/**
+ * @description Manages sales lead data operations within the CRM subsystem.
+ * @note Implements logging for all data mutations and export operations to ensure accountability.
+ */
 class WebSalesLeadController extends Controller
 {
     /**
-     * Seznam obchodních leadů s filtrací.
+     * Retrieves a list of sales leads based on filtering and pagination criteria.
+     *
+     * @param Request $request Filter parameters (search, status, priority, channel, dates) and sorting settings.
+     * @return JsonResponse Paginated data or full collection on export.
      */
     public function index(Request $request): JsonResponse
     {
@@ -23,10 +38,9 @@ class WebSalesLeadController extends Controller
 
         $query = WebSalesLead::query();
         
-        // Zpracování koše
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // --- FILTRACE ---
+        // Fulltext Search
         if ($s = $request->input('search')) {
             $query->where(fn($q) => $q->where('subject_name', 'like', "%$s%")
                 ->orWhere('contact_person', 'like', "%$s%")
@@ -34,10 +48,12 @@ class WebSalesLeadController extends Controller
                 ->orWhere('description', 'like', "%$s%"));
         }
 
+        // Exact match filters
         foreach (['id', 'status', 'priority', 'source_channel'] as $f) {
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
 
+        // Partial match filters
         foreach (['subject_name', 'contact_person', 'contact_email', 'contact_phone', 'location', 'salesman_name'] as $f) {
             if ($request->filled($f)) $query->where($f, 'like', '%' . $request->input($f) . '%');
         }
@@ -45,7 +61,7 @@ class WebSalesLeadController extends Controller
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
         if ($request->filled('last_contact_date')) $query->whereDate('last_contact_date', $request->last_contact_date);
 
-        // --- ŘAZENÍ ---
+        // Sorting
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDirection = in_array(strtolower($request->input('sort_direction')), ['asc', 'desc']) 
             ? $request->input('sort_direction') 
@@ -53,10 +69,9 @@ class WebSalesLeadController extends Controller
         
         $query->orderBy($sortBy, $sortDirection);
 
-        // --- EXEKUCE ---
+        // Execution
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         
-        // Logování exportu (pokud je no_pagination true)
         if ($noPagination) {
             $this->logAction($request, 'export', 'WebSalesLead', "Hromadný export obchodních leadů.");
             $data = $query->get();
@@ -75,7 +90,11 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * Uložení nového leadu.
+     * Persists a new sales lead, assigning default owner data if available.
+     *
+     * @param StoreWebSalesLeadRequest $request Validated input.
+     * @return JsonResponse Created lead resource.
+     * @throws \Exception On database failure.
      */
     public function store(StoreWebSalesLeadRequest $request): JsonResponse
     {
@@ -103,7 +122,10 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * Detail leadu.
+     * Retrieves the details of a single lead.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
@@ -112,7 +134,11 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * Aktualizace leadu.
+     * Updates an existing sales lead record.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function update(Request $request, $id): JsonResponse
     {
@@ -130,7 +156,11 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * Smazání (Soft / Hard).
+     * Deletes a lead (Soft or Hard).
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -150,7 +180,11 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * Obnova z koše.
+     * Restores a soft-deleted lead.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -168,7 +202,10 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * Vyprázdnění koše (Vysypat koš).
+     * Permanently deletes all soft-deleted records.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -184,6 +221,17 @@ class WebSalesLeadController extends Controller
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
         }
     }
+
+    /**
+     * Logs administrative actions to the central audit system.
+     *
+     * @param Request $request
+     * @param string $eventType
+     * @param string $module
+     * @param string $description
+     * @param int|null $affectedId
+     * @return void
+     */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
     {
         try {
@@ -199,14 +247,10 @@ class WebSalesLeadController extends Controller
                 'user_id'              => $user?->id,
                 'context_data'         => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'     => $user?->user_email ?? 'System/Automated'
+                'user_plain'           => $user?->user_email ?? 'System/Automated'
             ]);
         } catch (\Exception $e) {
             Log::error("Log error (WebSalesLead): " . $e->getMessage());
         }
     }
-    /**
-     * Sjednocené logování (WebLog).
-     */
-   
 }

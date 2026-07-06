@@ -1,0 +1,37 @@
+{
+  "DocumentationStandard": {
+    "FileHeader": {
+      "format": "JSDoc",
+      "required_fields": [
+        "@file",
+        "@path",
+        "@project",
+        "@author",
+        "@created (only year)",
+        "@description",
+        "@dependencies"
+      ],
+      "rules": "The header must be placed above imports and must contain the absolute or relative file path to facilitate AI context."
+    },
+    "ClassDescription": {
+      "format": "JSDoc (before the @Component decorator)",
+      "required_fields": [
+        "@description",
+        "@usage",
+        "@note"
+      ],
+      "rules": "The class description must explain the component's responsibility and its place in the application hierarchy."
+    },
+    "FunctionDescription": {
+      "format": "JSDoc (above every non-trivial function)",
+      "required_fields": [
+        "@description",
+        "@param (if it exists)",
+        "@returns (if it returns a value)",
+        "@note (optional for edge-cases)"
+      ],
+      "rules": "Describe the 'WHY' and 'HOW' (the logic), not the 'WHAT' (which is visible from the name). For getters, always describe the fallback logic."
+    }
+  },
+  "language": "All descriptions and comments must be in English only"
+}

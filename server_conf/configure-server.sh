@@ -1,43 +1,43 @@
 #!/bin/bash
 
-# --- 1. Nastavení proměnných ---
+# --- 1. Variable Configuration ---
 LARAVEL_DIR="laravel"
-echo "🚀 Startuji prvotní konfiguraci serveru..."
+echo "Starting initial server configuration..."
 
-# --- 2. Přesun do složky Laravelu ---
-cd "$LARAVEL_DIR" || { echo "❌ CHYBA: Složka $LARAVEL_DIR neexistuje!"; exit 1; }
+# --- 2. Change to Laravel directory ---
+cd "$LARAVEL_DIR" || { echo "ERROR: Directory $LARAVEL_DIR does not exist!"; exit 1; }
 
 # --- 3. Composer Install ---
-echo "📦 Instaluji závislosti..."
+echo "Installing dependencies..."
 composer install --no-dev --optimize-autoloader
 
-# --- 4. Příprava .env souboru ---
+# --- 4. .env file setup ---
 if [ ! -f ".env" ]; then
     cp .env.example .env
-    echo "✅ .env vytvořen. !!! NYNÍ JE NUTNÉ HO RUČNĚ UPRAVIT (DB, URL) !!!"
+    echo ".env file created. !!! YOU MUST EDIT IT MANUALLY (DB, URL, etc.) NOW !!!"
 fi
 
-# Zastávka na úpravu .env
-read -p "📝 Upravil jsi .env? Stiskni [Enter] pro pokračování..."
+# Pause for .env configuration
+read -p "Have you edited the .env file? Press [Enter] to continue..."
 
-# --- 5. Generování klíče a cache ---
+# --- 5. Generate key and clear cache ---
 php artisan key:generate --force
 php artisan config:clear
 php artisan cache:clear
 
-# --- 6. Storage link (uvnitř Laravelu) ---
+# --- 6. Storage link (within Laravel) ---
 php artisan storage:link --force
 
-# --- 7. NASTAVENÍ PRÁV (To, na co ses ptal) ---
-echo "🔓 Nastavuji zápisová práva pro storage a cache..."
+# --- 7. Permissions configuration ---
+echo "Setting write permissions for storage and cache..."
 chmod -R 775 storage bootstrap/cache
-# Pokud tvůj server vyžaduje vlastnictví pro www-data uživatele, odkomentuj řádek níže:
+# If your server requires www-data ownership, uncomment the line below:
 # chown -R www-data:www-data storage bootstrap/cache
 
-# --- 8. Externí Symlink (v kořenu www) ---
-echo "🔗 Vytvářím veřejný symlink pro www..."
+# --- 8. External Symlink (in web root) ---
+echo "Creating public symlink for the web root..."
 cd ..
-rm -rf storage # Smaže starý, pokud existuje
+rm -rf storage # Removes old symlink if it exists
 ln -s "$LARAVEL_DIR/storage/app/public" storage
 
-echo "✨ VŠE HOTOVO!"
+echo "COMPLETE!"

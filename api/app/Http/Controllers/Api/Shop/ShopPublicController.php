@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopPublicController.php
+ * @path app/Http/Controllers/Api/Shop/ShopPublicController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Provides public-facing API endpoints for shop storefront operations, including stock verification, payment/shipping configuration, and real-time coupon validation.
+ */
 
 namespace App\Http\Controllers\Api\Shop;
 
@@ -14,10 +22,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * @description Handles public shop storefront requests.
+ * @note Implements caching mechanisms to optimize high-traffic queries like stock availability.
+ */
 class ShopPublicController extends Controller
 {
     /**
-     * ZÍSKÁNÍ VEŘEJNÝCH DOPRAVNÍCH METOD
+     * Retrieves all active shipping methods for public selection.
+     *
+     * @param Request $request Incoming request.
+     * @return JsonResponse Collection of active shipping methods.
      */
     public function getShippingMethods(Request $request): JsonResponse
     {
@@ -29,7 +44,10 @@ class ShopPublicController extends Controller
     }
 
     /**
-     * ZÍSKÁNÍ VEŘEJNÝCH PLATEBNÍCH METOD (Filtrované a seřazené)
+     * Retrieves all active payment methods for public checkout.
+     *
+     * @param Request $request Incoming request.
+     * @return JsonResponse Collection of active payment methods.
      */
     public function getPaymentMethods(Request $request): JsonResponse
     {
@@ -37,12 +55,16 @@ class ShopPublicController extends Controller
             ->orderBy('sort_order', 'asc')
             ->get();
 
-        // Obalíme data resource třídou, která zajistí správné URL pro frontend
         return response()->json(ShopPaymentMethodResource::collection($methods));
     }
 
     /**
-     * RYCHLÉ OVĚŘENÍ DOSTUPNOSTI MNOŽSTVÍ NA SKLADĚ (S CACHE)
+     * Verifies product or variant stock availability against a requested quantity.
+     * * Uses a cache layer to minimize database load for frequent storefront inventory checks.
+     *
+     * @param Request $request Request containing optional variant_id and quantity.
+     * @param int $id The product ID.
+     * @return JsonResponse JSON object containing availability boolean.
      */
     public function checkStock(Request $request, $id): JsonResponse
     {
@@ -95,7 +117,10 @@ class ShopPublicController extends Controller
     }
 
     /**
-     * VEŘEJNÉ OVĚŘENÍ KUPÓNU V KOŠÍKU
+     * Validates a coupon code against current business rules (active status, validity dates, usage limits, and minimum order amount).
+     *
+     * @param Request $request Request containing code and order_amount.
+     * @return JsonResponse Status and coupon data if valid, error message if invalid.
      */
     public function validateCoupon(Request $request): JsonResponse
     {
@@ -138,13 +163,17 @@ class ShopPublicController extends Controller
         ]);
     }
 
+    /**
+     * Checks global shop activity status from site settings.
+     *
+     * @return JsonResponse Shop active status boolean.
+     */
     public function getStatus()
-{
-    // Načte nastavení z DB (nebo cache)
-    $settings = \App\Models\Core\CoreSiteSetting::first();
-    
-    return response()->json([
-        'is_shop_active' => (bool) ($settings->is_shop_active ?? true)
-    ]);
-}
+    {
+        $settings = \App\Models\Core\CoreSiteSetting::first();
+        
+        return response()->json([
+            'is_shop_active' => (bool) ($settings->is_shop_active ?? true)
+        ]);
+    }
 }

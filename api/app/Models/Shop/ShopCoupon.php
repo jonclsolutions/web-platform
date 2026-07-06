@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopCoupon.php
+ * @path app/Models/Shop/ShopCoupon.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Model representing discount coupons for the shop.
+ */
 
 namespace App\Models\Shop;
 
@@ -6,10 +14,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
+/**
+ * @description Manages discount codes, including validation logic for usage and time-based constraints.
+ * 
+ * @property string $code The unique coupon code.
+ * @property bool $is_active Whether the coupon is enabled.
+ */
 class ShopCoupon extends Model
 {
     use SoftDeletes;
 
+    /**
+     * @var array<int, string> The attributes that are mass assignable.
+     */
     protected $fillable = [
         'code',
         'description',
@@ -24,6 +41,9 @@ class ShopCoupon extends Model
         'is_active',
     ];
 
+    /**
+     * @var array<string, string> The attributes that should be cast to native types.
+     */
     protected $casts = [
         'is_active' => 'boolean',
         'discount_value' => 'decimal:2',
@@ -35,16 +55,17 @@ class ShopCoupon extends Model
     ];
 
     /**
-     * Komplexní kontrola platnosti kupónu
+     * Validate if the coupon is applicable based on activity, duration, usage limits, and order value.
+     *
+     * @param float $currentTotal The total amount of the current order.
+     * @return bool
      */
     public function isValid(float $currentTotal = 0): bool
     {
-        // 1. Základní kontrola aktivity
         if (!$this->is_active) {
             return false;
         }
 
-        // 2. Kontrola časové platnosti (pokud jsou data nastavena)
         $now = Carbon::now();
         if ($this->valid_from && $this->valid_from->isFuture()) {
             return false;
@@ -53,12 +74,10 @@ class ShopCoupon extends Model
             return false;
         }
 
-        // 3. Kontrola maximálního počtu použití
         if ($this->max_usage > 0 && $this->usage_count >= $this->max_usage) {
             return false;
         }
 
-        // 4. Kontrola minimální výše objednávky
         if ($this->min_order_amount > 0 && $currentTotal < (float)$this->min_order_amount) {
             return false;
         }

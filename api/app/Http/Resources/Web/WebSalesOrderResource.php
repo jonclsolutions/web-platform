@@ -1,13 +1,29 @@
 <?php
+/**
+ * @file WebSalesOrderResource.php
+ * @path app/Http/Resources/Web/WebSalesOrderResource.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Resource transformation for sales orders linked to leads.
+ */
 
 namespace App\Http\Resources\Web;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\Web\WebSalesLeadResource;
 
+/**
+ * @description Transforms WebSalesOrder model data, resolving file storage URLs and optional lead relationship.
+ */
 class WebSalesOrderResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [
@@ -24,8 +40,6 @@ class WebSalesOrderResource extends JsonResource
             'attachment_url'    => $this->attachment_path ? asset('storage/' . $this->attachment_path) : null,
             'created_at'        => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'        => $this->updated_at?->format('Y-m-d H:i:s'),
-            
-            // Vrátí lead data pouze pokud byla v controlleru použita metoda ->with('lead')
             'lead'              => new WebSalesLeadResource($this->whenLoaded('lead')),
         ];
     }

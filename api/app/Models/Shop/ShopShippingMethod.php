@@ -1,14 +1,28 @@
 <?php
+/**
+ * @file ShopShippingMethod.php
+ * @path app/Models/Shop/ShopShippingMethod.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Model representing available shipping methods for the shop.
+ */
 
 namespace App\Models\Shop;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @description Stores configuration for shipping options, including costs, weight limits, and delivery duration.
+ */
 class ShopShippingMethod extends Model
 {
     use SoftDeletes;
 
+    /**
+     * @var array<int, string> The attributes that are mass assignable.
+     */
     protected $fillable = [
         'code',
         'name',
@@ -28,6 +42,9 @@ class ShopShippingMethod extends Model
         'cod_price',
     ];
 
+    /**
+     * @var array<string, string> The attributes that should be cast to native types.
+     */
     protected $casts = [
         'base_price' => 'decimal:2',
         'free_shipping_threshold' => 'decimal:2',
@@ -41,6 +58,10 @@ class ShopShippingMethod extends Model
         'cod_price' => 'decimal:2',
     ];
 
+    /**
+     * Check if the shipping method is hardcoded system-wide.
+     * * @return bool
+     */
     public function isHardcoded(): bool
     {
         return in_array($this->code, ['local_pickup', 'closest_carrier']);

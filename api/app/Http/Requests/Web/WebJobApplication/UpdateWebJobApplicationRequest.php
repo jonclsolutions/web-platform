@@ -1,13 +1,34 @@
 <?php
+/**
+ * @file UpdateWebJobApplicationRequest.php
+ * @path app/Http/Requests/Web/WebJobApplication/UpdateWebJobApplicationRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for updating existing job application records, including status changes and notes.
+ */
 
 namespace App\Http\Requests\Web\WebJobApplication;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles request validation for updating existing job applications.
+ */
 class UpdateWebJobApplicationRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         $safeExtensions = ['pdf', 'doc', 'docx', 'odt', 'jpg', 'jpeg', 'png', 'zip', 'rar'];

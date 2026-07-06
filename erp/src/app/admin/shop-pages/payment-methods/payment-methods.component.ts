@@ -1,3 +1,16 @@
+/**
+ * @file payment-methods.component.ts
+ * @path src/app/admin/pages/shop/payment-methods/payment-methods.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the administration of store payment methods, including configuration, filtering, and data export.
+ * @dependencies
+ * - BaseDataComponent: Provides base CRUD functionality and state management for entities.
+ * - TableBuilderComponent: Used for rendering and exporting the payment method data list.
+ * - SHARED_UI_BUILDERS: Provides standard UI components like forms and tables.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -5,6 +18,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './payment-methods.config';
 
+/**
+ * @description Component for managing shop payment method settings.
+ * @usage Enables administrators to view, filter, edit, and export payment method configurations.
+ * @note Extends BaseDataComponent to leverage standard data handling routines while maintaining specific configuration mapping for payment entities.
+ */
 @Component({
   selector: 'app-payment-methods',
   standalone: true,
@@ -41,6 +59,10 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Computes the toolbar configuration dynamically.
+   * @returns Array of buttons, filtered by user permissions and current UI state (e.g., filter visibility).
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.PAYMENT_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -57,6 +79,10 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
     });
   }
 
+  /**
+   * @description Dispatches actions triggered from the toolbar.
+   * @param action The specific action identifier (e.g., 'toggleFilters', 'exportActiveTable').
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -72,12 +98,19 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
+  /**
+   * @description Updates current filters and refreshes the data table.
+   * @param newFilters The set of filter parameters to apply.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Resets filters to default sorting order and refreshes data.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'sort_order', sort_direction: 'asc' };
     this.currentPage = 1;
@@ -87,19 +120,29 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
   handlePageChange(page: number): void { this.onHandlePageChange(page, this.filters); }
   handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
 
+  /**
+   * @description Triggers the CSV export functionality on the active table component.
+   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
 
+  /**
+   * @description Prepares the form for editing an existing payment method.
+   * @param item The payment method record to edit.
+   */
   handleEditFormOpened(item: any): void {
     this.selectedItemForEdit = { ...item };
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Handles form submission by calling the API update service.
+   * @param formData The data object submitted from the edit form.
+   */
   handleFormSubmitted(formData: any): void {
     if (!formData.id) return;
     
-    // Použijeme update metodu z BaseDataComponent
     this.updateData(formData.id, formData)
       .pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); }))
       .subscribe({
@@ -108,6 +151,10 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
       });
   }
 
+  /**
+   * @description Fetches detailed information for a specific payment method.
+   * @param item The record whose details are to be viewed.
+   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({

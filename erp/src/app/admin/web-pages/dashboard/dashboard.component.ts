@@ -1,3 +1,17 @@
+/**
+ * @file dashboard.component.ts
+ * @path src/app/admin/pages/dashboard/dashboard.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Central administrative dashboard component providing a high-level overview of system metrics, recent activities, and navigation shortcuts.
+ * @dependencies
+ * - BaseDataComponent: Inherited base class for state management and API access.
+ * - LoadingService: Manages global loading states.
+ * - HttpClient: Facilitates direct API communication for non-standard dashboard endpoints.
+ * - RxJS: Handles asynchronous data aggregation using forkJoin.
+ */
+
 import { Component, ChangeDetectionStrategy, inject, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -35,6 +49,11 @@ interface NavSection {
   color: 'indigo' | 'green' | 'amber' | 'sky' | 'rose' | 'slate';
 }
 
+/**
+ * @description Serves as the primary landing page for authenticated administrators.
+ * @usage Provides immediate access to administrative sections and visualizes key performance indicators (KPIs).
+ * @note Implements component-level data aggregation from multiple API endpoints to populate the dashboard view.
+ */
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -50,20 +69,16 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   override apiEndpoint = 'core/users';
 
-  // ---- Uživatel ----
   userData: UserLogin | null = null;
   userEmail: string | null = null;
   userRole: string | null = null;
 
-  // ---- Statistiky ----
   quickStats: QuickStat[] = [];
   loadingStats = true;
 
-  // ---- Logy aktivit ----
   recentActivity: ActivityLog[] = [];
   loadingActivity = true;
 
-  // ---- Navigační sekce ----
   readonly navSections: NavSection[] = [
     {
       title: 'E-shop',
@@ -109,7 +124,6 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     },
   ];
 
-  // ---- Subscriptions ----
   private emailSub?: Subscription;
 
   constructor(
@@ -134,7 +148,9 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     this.loadRecentActivity();
   }
 
-  // ---- Profil ----
+  /**
+   * @description Fetches the currently authenticated user's profile information.
+   */
   private loadUserProfile(): void {
     const userId = this.authService.getUserId();
     if (!userId) return;
@@ -152,7 +168,10 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     });
   }
 
-  // ---- Statistiky ze všech dostupných API ----
+  /**
+   * @description Aggregates statistical data from multiple system modules concurrently using forkJoin.
+   * @note If an individual request fails, it defaults to null to ensure the rest of the dashboard remains functional.
+   */
   private loadStats(): void {
     this.loadingStats = true;
 
@@ -167,42 +186,17 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     }).subscribe({
       next: (res) => {
         this.quickStats = [
-          {
-            label: 'Uživatelé systému',
-            value: res.users?.total ?? '—',
-            icon: '👤',
-            color: 'sky',
+          { label: 'Uživatelé systému', value: res.users?.total ?? '—', icon: '👤', color: 'sky' },
+          { 
+            label: 'Otevřené tickety', 
+            value: res.openTickets?.total ?? '—', 
+            icon: '🎫', 
+            color: res.openTickets?.total > 0 ? 'amber' : 'green' 
           },
-          {
-            label: 'Otevřené tickety',
-            value: res.openTickets?.total ?? '—',
-            icon: '🎫',
-            color: res.openTickets?.total > 0 ? 'amber' : 'green',
-          },
-          {
-            label: 'Uchazeči',
-            value: res.jobApps?.total ?? '—',
-            icon: '📄',
-            color: 'green',
-          },
-          {
-            label: 'Obchodní leady',
-            value: res.leads?.total ?? '—',
-            icon: '💼',
-            color: 'indigo',
-          },
-          {
-            label: 'Novinky na webu',
-            value: res.news?.total ?? '—',
-            icon: '📰',
-            color: 'rose',
-          },
-          {
-            label: 'Záznamy v logu',
-            value: res.webLogs?.total ?? '—',
-            icon: '📋',
-            color: 'slate',
-          },
+          { label: 'Uchazeči', value: res.jobApps?.total ?? '—', icon: '📄', color: 'green' },
+          { label: 'Obchodní leady', value: res.leads?.total ?? '—', icon: '💼', color: 'indigo' },
+          { label: 'Novinky na webu', value: res.news?.total ?? '—', icon: '📰', color: 'rose' },
+          { label: 'Záznamy v logu', value: res.webLogs?.total ?? '—', icon: '📋', color: 'slate' },
         ];
         this.loadingStats = false;
         this.cd.markForCheck();
@@ -214,10 +208,11 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     });
   }
 
-  // ---- Poslední aktivita (web logy) ----
+  /**
+   * @description Fetches the latest system events for the activity feed.
+   */
   private loadRecentActivity(): void {
     this.loadingActivity = true;
-
     this.http.get<any>('/api/web/logs?per_page=8&sort_by=created_at&sort_direction=desc')
       .pipe(catchError(() => of(null)))
       .subscribe({
@@ -233,12 +228,17 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       });
   }
 
-  // ---- Helpers ----
+  /**
+   * @description Returns a personalized greeting based on user profile name or email.
+   */
   get welcomeMessage(): string {
     const name = this.userData?.full_name ?? this.userEmail ?? 'uživateli';
     return `Dobrý den, ${name}`;
   }
 
+  /**
+   * @description Formats current system date for display in the dashboard header.
+   */
   get currentDateTime(): string {
     return new Date().toLocaleDateString('cs-CZ', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'

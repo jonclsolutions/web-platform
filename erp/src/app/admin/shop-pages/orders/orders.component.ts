@@ -1,3 +1,16 @@
+/**
+ * @file orders.component.ts
+ * @path src/app/admin/pages/shop/orders/orders.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the lifecycle of customer orders, including creation, editing, status tracking, and inventory validation.
+ * @dependencies
+ * - BaseDataComponent: Inherits standard CRUD operations for order management.
+ * - ConfirmDialogService: Facilitates user confirmation for sensitive deletions.
+ * - Core Providers: Handles API communication and dependency injection.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -23,6 +36,11 @@ interface CouponValidationResult {
 
 type TableMode = 'all' | 'pending_tasks' | 'trash';
 
+/**
+ * @description Controller for the orders dashboard, providing UI for managing order statuses, financial details, and item composition.
+ * @usage Acts as the main interface for store administrators to process incoming orders and handle post-purchase support.
+ * @note Implements a custom modal-based flow for order creation and editing, requiring manual form validation and total recalculation.
+ */
 @Component({
   selector: 'app-orders',
   standalone: true,
@@ -43,7 +61,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     { action: 'trash', label: 'Koš', icon: '🗑️', class: 'btn-filter', isActive: false }
   ];
 
-  // Data (Odebráno pole pro zákazníky)
   products: Product[] = [];
   variants: ProductVariant[] = [];
   paymentMethods: PaymentMethod[] = [];
@@ -54,13 +71,11 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
 
   summaryTaxAmount = 0;
 
-  // UI State
   showOrderForm = false;
   showDetailsModal = false;
   override showTrashTable = false;
   showFiltersPanel = false;
 
-  // Data Being Edited
   selectedOrderForDetail: Order | null = null;
   editingOrder: Order | null = null;
   editingItemIdx: number | null = null;
@@ -90,6 +105,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     super(dataHandler, cd, genericTableService);
   }
 
+  /** @returns Map of tab configurations with active state synchronized to current table mode. */
   get tabButtonsConfigs(): Core.Button[] {
     return this.orderTabButtons.map(btn => ({
       ...btn,
@@ -109,6 +125,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.toggleBodyScroll(false);
   }
 
+  /**
+   * @description Locks or unlocks background scrolling when modals are active.
+   * @param lock Boolean indicating if the body should be locked.
+   */
   private toggleBodyScroll(lock: boolean): void {
     if (lock) {
       document.body.classList.add('modal-open');
@@ -117,6 +137,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     }
   }
 
+  /**
+   * @description Switches between table modes and applies corresponding API filter parameters.
+   * @param mode The selected target view (all, pending_tasks, or trash).
+   */
   setTableMode(mode: any): void {
     this.currentMode = mode;
     this.currentPage = 1;
@@ -142,10 +166,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.detectChanges();
   }
 
-  // ========== LOAD DEPENDENCIES ==========
-
+  /**
+   * @description Orchestrates the initialization of all required lookup collections.
+   */
   private loadDependencies(): void {
-    // Smazáno načítání zákazníků (loadCustomers)
     this.loadProducts();
     this.loadVariants();
     this.loadPaymentMethods();
@@ -239,8 +263,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.markForCheck();
   }
 
-  // ========== TOOLBAR ACTIONS ==========
-
+  /**
+   * @description Maps toolbar button actions to their corresponding method calls.
+   * @param action The identifier of the triggered toolbar action.
+   */
   handleToolbarAction(action: string): void {
     if (this.isProcessing) return;
 
@@ -265,8 +291,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.markForCheck();
   }
 
-  // ========== FILTROVÁNÍ ==========
-
   override refreshData(): void {
     this.forceFullRefresh(this.filters);
   }
@@ -289,8 +313,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
-  // ========== DETAIL OBJEDNÁVKY ==========
-
+  /**
+   * @description Fetches full order details for the display modal.
+   * @param item The summary order object from the table.
+   */
   handleViewDetails(item: Order): void {
     if (this.isProcessing || !item.id) return;
 
@@ -317,6 +343,12 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     });
   }
 
+  /**
+   * @description Checks if a specific status has been reached in the linear status workflow.
+   * @param currentStatus The current order status.
+   * @param stepKey The target workflow step to check against.
+   * @returns Boolean indicating if the step is reached or passed.
+   */
   isStatusReached(currentStatus: string, stepKey: string): boolean {
     const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
     const currentIndex = statusOrder.indexOf(currentStatus);
@@ -335,43 +367,38 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.markForCheck();
   }
 
-  // ========== VYTVOŘENÍ/EDITACE OBJEDNÁVKY ==========
-
+  /**
+   * @description Initializes an empty object for new order creation.
+   */
   handleCreateFormOpened(): void {
     if (this.isProcessing) return;
 
     this.couponValidation = { valid: true };
     this.editingOrder = {
-      // 👤 Kontaktní údaje přidané napřímo
       email: '',
       first_name: '',
       last_name: '',
       phone: '',
       company: '',
 
-      // 📦 Stavy
       status: 'pending',
       payment_status: 'unpaid',
 
-      // 📍 Adresa doručení
       shipping_address: '',
       shipping_city: '',
       shipping_postal_code: '',
       shipping_country: 'Česká republika',
 
-      // 🎫 Vazby na metody
       payment_method_id: 0,
       shipping_method_id: 0,
       coupon_id: null,
 
-      // 💰 Finance
       total_amount: 0,      
       shipping_amount: 0,   
       tax_amount: 0,        
       discount_amount: 0,   
       final_amount: 0,      
 
-      // 📦 Položky objednávky
       items: [],
       notes: ''
     };
@@ -387,6 +414,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.openEditOrderForm(order);
   }
 
+  /**
+   * @description Loads existing order data into the editing form, mapping complex structures back to the view model.
+   * @param order The summary order record to be edited.
+   */
   openEditOrderForm(order: Order): void {
     if (this.isProcessing || !order.id) return;
 
@@ -402,7 +433,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       Core.takeUntil(this.destroy$)
     ).subscribe({
       next: (fullOrder) => {
-        // 🌟 Mapování kontaktních dat ze zákazníka zpět do plochého formuláře objednávky při editaci
         this.editingOrder = { 
           ...fullOrder,
           email: fullOrder.customer?.email || '',
@@ -422,8 +452,9 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     });
   }
 
-  // ========== POLOŽKY OBJEDNÁVKY ==========
-
+  /**
+   * @description Appends a default new item row to the current order items list.
+   */
   addOrderItem(): void {
     if (!this.editingOrder) return;
     if (!this.editingOrder.items) {
@@ -444,6 +475,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Handles item deletion by marking items for removal or splicing them from the local list.
+   * @param index The index of the item to delete.
+   */
   async deleteOrderItem(index: number): Promise<void> {
     const confirmed = await this.confirmDialog.open(
       'Smazat položku',
@@ -481,8 +516,12 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     );
   }
 
-  // ========== VÝPOČTY A VALIDACE ==========
-
+  /**
+   * @description Performs validation checks for coupon usage limits and order thresholds.
+   * @param coupon The coupon entity.
+   * @param totalAmount The current subtotal to validate against.
+   * @returns Validation result object containing status and error messages.
+   */
   validateCouponRealtime(coupon: Coupon, totalAmount: number): CouponValidationResult {
     if (!coupon) return { valid: true };
     if (!coupon.is_active) return { valid: false, error: 'Tento kupón není aktivní.' };
@@ -504,6 +543,9 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     return { valid: true };
   }
 
+  /**
+   * @description Recalculates final order values based on line items, shipping, payment fees, and coupon discounts.
+   */
   recalculateTotals(): void {
     if (!this.editingOrder) return;
 
@@ -546,14 +588,14 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.markForCheck();
   }
 
-  // ========== SAVE OBJEDNÁVKA ==========
-
- saveOrder(): void {
+  /**
+   * @description Persists order data to the backend via POST or PUT, handling deletion of individual items.
+   */
+  saveOrder(): void {
     if (this.isProcessing || !this.editingOrder || !this.validateOrder()) return;
 
     this.isProcessing = true;
     
-    // 🌟 PŘEBUDOVANÝ PAYLOAD: Posíláme striktně plochá data zákazníka
     const payload: any = {
       email: this.editingOrder.email,
       first_name: this.editingOrder.first_name,
@@ -585,7 +627,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
 
     let request;
     if (this.editingOrder.id) {
-      // Pro update přidáme delete_items a použijeme PUT spoofing přes POST
       payload.delete_items = (this.editingOrder.items || [])
         .filter(i => i._delete && i.id)
         .map(i => i.id!);
@@ -595,7 +636,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
         _method: 'PUT'
       });
     } else {
-      // 🚨 PRO JISTOTU: Odstraníme jakýkoliv pozůstatek customer_id při zakládání
       delete payload.customer_id;
       request = this.dataHandler.post(this.apiEndpoint, payload);
     }
@@ -635,7 +675,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
         }
       },
       error: (err) => {
-        // Zde vypíšeme detailní chyby z Laravelu do konzole, abychom viděli přesný breakdown
         console.error('Chyba validace z backendu:', err.error);
         const message = err.error?.message || 'Chyba při ukládání objednávky.';
         this.alertDialogService.open('Chyba', message, 'danger');
@@ -658,6 +697,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     }
   }
 
+  /**
+   * @description Calculates summary tax information grouped by VAT rates for invoice transparency.
+   * @returns Object containing net amount, VAT breakdown, and total inclusive amount.
+   */
   calculateSummaryTotals() {
     if (!this.editingOrder || !this.editingOrder.items) {
       return { baseAmount: 0, vatGroups: [], withVat: 0 };
@@ -697,8 +740,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       withVat: totalBeforeDiscount - discountAmount
     };
   }
-
-  // ========== HELPERS ==========
 
   getCouponCode(couponId: any): string {
     if (!couponId) return '-';
@@ -762,6 +803,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     return this.couponValidation.valid ? 'is-valid' : 'is-invalid';
   }
 
+  /**
+   * @description Performs form validation for order creation/updates, ensuring required billing and shipping information is provided.
+   * @returns Boolean indicating if the order form is valid for submission.
+   */
   private validateOrder(): boolean {
     if (!this.editingOrder) return false;
 
@@ -770,7 +815,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       return false;
     }
     
-    // 🌟 UPRAVENÁ VALIDACE: Místo customer_id kontrolujeme nová textová pole
     if (!this.editingOrder.email) {
       this.alertDialogService.open('Validace', 'Zadejte e-mailovou adresu.', 'warning');
       return false;
@@ -814,13 +858,18 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     return this.products.find(p => Number(p.id) === Number(productId))?.name || 'N/A';
   }
 
-formatCurrency(value: number): string {
-  return new Intl.NumberFormat('cs-CZ', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2
-  }).format(value);
-}
+  /**
+   * @description Formats numbers to currency strings.
+   * @param value The amount to format.
+   * @returns {string} Formatted EUR currency string.
+   */
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('cs-CZ', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2
+    }).format(value);
+  }
 
   getStatusLabel(status: string): string {
     return this.statusOptions.find(o => o.value === status)?.label || status;

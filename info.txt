@@ -1,6 +1,0 @@
-ng generate @angular/core:control-flow
-//prepise na @for syntag
-
-odstranit srdicko z detailu odstranit ID a pridat cenu bez dph misto % a do dropdownu dat i ten druhy info treba vliskost atd 
-
-DO DATABAZE SE COST_PRICE_CZK A EUR VLOZI ALE NA FRONTENDU SE NEZOBRAZUJE

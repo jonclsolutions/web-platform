@@ -1,13 +1,34 @@
 <?php
+/**
+ * @file UpdateWebSupportTicketRequest.php
+ * @path app/Http/Requests/Web/WebSupportTicket/UpdateWebSupportTicketRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for updating existing support tickets.
+ */
 
 namespace App\Http\Requests\Web\WebSupportTicket;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles request validation for updating existing support ticket data and attachments.
+ */
 class UpdateWebSupportTicketRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         $safeExtensions = [
@@ -27,7 +48,7 @@ class UpdateWebSupportTicketRequest extends FormRequest
             'subject'          => ['sometimes', 'required', 'string', 'max:255'],
             'description'      => ['sometimes', 'required', 'string'],
             'user_name_plain'  => ['sometimes', 'required', 'string', 'max:255'],
-            'user_plain' => ['sometimes', 'required', 'string', 'max:255'],
+            'user_plain'       => ['sometimes', 'required', 'string', 'max:255'],
             
             'attachment'       => [
                 'nullable', 
@@ -38,6 +59,11 @@ class UpdateWebSupportTicketRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

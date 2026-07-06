@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file UserController.php
+ * @path app/Http/Controllers/Api/UserController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages user account lifecycles, including creation, role assignment, password security policies, and administrative audit logging.
+ */
 
 namespace App\Http\Controllers\Api;
 
@@ -12,10 +20,17 @@ use App\Http\Resources\UserResource;
 use Illuminate\Http\{Request, JsonResponse};
 use Illuminate\Support\Facades\{Hash, Log, DB};
 
+/**
+ * @description Controller responsible for user management operations.
+ * @note Includes robust security checks to protect 'primeadmin' accounts and enforces administrative validation for sensitive actions like password changes.
+ */
 class UserController extends Controller
 {
     /**
-     * Seznam uživatelů s filtrací a řazením.
+     * Retrieves a paginated list of users with filtering and role-based sorting.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -28,16 +43,14 @@ class UserController extends Controller
 
         $query = User::query()->withTrashed();
         
-        // Ochrana: Nikdy nevracet Prime Adminy běžným uživatelům/adminům v seznamu
+        // Exclude Prime Admins from standard lists
         $query->whereDoesntHave('roles', fn($q) => $q->where('role_name', 'primeadmin'));
         
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Vyhledávání
         if ($request->filled('full_name')) $query->where('full_name', 'like', "%{$request->full_name}%");
         if ($request->filled('user_email')) $query->where('user_email', 'like', "%{$request->user_email}%");
 
-        // Speciální řazení podle role
         if ($sortBy === 'role_name') {
             $query->select('users.*')
                 ->leftJoin('user_roles as ur', 'users.id', '=', 'ur.user_id')
@@ -68,7 +81,10 @@ class UserController extends Controller
     }
 
     /**
-     * Vytvoření uživatele a přiřazení role.
+     * Creates a new user and assigns an initial role.
+     *
+     * @param StoreUserRequest $request
+     * @return JsonResponse
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
@@ -101,31 +117,31 @@ class UserController extends Controller
     }
 
     /**
-     * Zobrazení detailu (včetně smazaných v koši a kontroly práv).
+     * Displays details for a specific user, ensuring no unauthorized access to protected roles.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        // 🔧 1. Ruční vyhledání uživatele podle ID (včetně smazaných v koši)
         $user = User::withTrashed()->findOrFail($id);
 
-        // 🛡️ 2. Bezpečnostní kontrola (blokace zobrazení primeadmina)
         if ($user->roles()->where('role_name', 'primeadmin')->exists()) {
             return response()->json(['message' => 'Zakázaný přístup.'], 403);
         }
 
-        // 🔗 3. Načtení relací a vrácení dat
         return response()->json(new UserResource($user->load('roles.permissions')));
     }
 
     /**
-     * Aktualizace uživatele.
-     */
-  /**
-     * Aktualizace uživatele (ruční načtení podle ID).
+     * Updates an existing user's information.
+     *
+     * @param UpdateUserRequest $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function update(UpdateUserRequest $request, $id): JsonResponse
     {
-        // 🔧 1. Ruční vyhledání uživatele podle ID (shoduje se s URL v api.php)
         $user = User::findOrFail($id);
 
         if ($user->roles()->where('role_name', 'primeadmin')->exists()) {
@@ -162,57 +178,56 @@ class UserController extends Controller
     }
 
     /**
-     * Změna hesla.
+     * Handles password changes with administrative validation requirements.
+     *
+     * @param PasswordChangeRequest $request
+     * @param int $id
+     * @return JsonResponse
      */
- public function changePassword(PasswordChangeRequest $request, $id): JsonResponse
-{
-    try {
-        $user = User::findOrFail($id); // Ten, komu měníme heslo
-        $validated = $request->validated();
-        $auth = $request->user() ?? auth('sanctum')->user(); // Ten, kdo sedí u PC
+    public function changePassword(PasswordChangeRequest $request, $id): JsonResponse
+    {
+        try {
+            $user = User::findOrFail($id);
+            $validated = $request->validated();
+            $auth = $request->user() ?? auth('sanctum')->user();
 
-        // 1. Ochrana Prime Admina (nikdo mu nesmí změnit heslo)
-        if ($user->roles()->where('role_name', 'primeadmin')->exists()) {
-            return response()->json(['message' => 'Heslo Prime Admina nelze měnit.'], 403);
+            if ($user->roles()->where('role_name', 'primeadmin')->exists()) {
+                return response()->json(['message' => 'Heslo Prime Admina nelze měnit.'], 403);
+            }
+
+            $isAdmin = $auth->roles()->whereIn('role_name', ['admin', 'sysadmin', 'primeadmin'])->exists();
+            $isOwner = $user->id === $auth->id;
+
+            if (!$isOwner && !$isAdmin) {
+                return response()->json(['message' => 'Nedostatečná oprávnění.'], 403);
+            }
+
+            if (!isset($validated['old_password']) || !Hash::check($validated['old_password'], $auth->user_password_hash)) {
+                return response()->json(['message' => 'Vaše potvrzovací heslo (aktuální heslo) je nesprávné.'], 403);
+            }
+
+            $user->update(['user_password_hash' => Hash::make($validated['new_password'])]);
+            
+            $this->logAction(
+                $request, 
+                'PasswordChanged', 
+                'User', 
+                "Změna hesla u: {$user->user_email} " . ($isAdmin && !$isOwner ? "(provedl admin: {$auth->user_email})" : ""), 
+                $user->id
+            );
+
+            return response()->json(['message' => 'Heslo úspěšně změněno.']);
+        } catch (\Exception $e) {
+            $this->logAction($request, 'error', 'User', "Chyba při změně hesla ID {$id}: " . $e->getMessage(), $id);
+            return response()->json(['message' => 'Změna hesla selhala.'], 500);
         }
-
-        $isAdmin = $auth->roles()->whereIn('role_name', ['admin', 'sysadmin', 'primeadmin'])->exists();
-        $isOwner = $user->id === $auth->id;
-
-        // 2. Kontrola práv: Můžu měnit heslo jen sobě nebo jsem admin
-        if (!$isOwner && !$isAdmin) {
-            return response()->json(['message' => 'Nedostatečná oprávnění.'], 403);
-        }
-
-        /**
-         * 3. BEZPEČNOSTNÍ POJISTKA
-         * Ověřujeme 'old_password' proti heslu PŘIHLÁŠENÉHO uživatele ($auth).
-         * Tím zajistíme, že i admin musí zadat SVÉ heslo, aby mohl změnit heslo někomu jinému.
-         */
-        if (!isset($validated['old_password']) || !Hash::check($validated['old_password'], $auth->user_password_hash)) {
-            return response()->json(['message' => 'Vaše potvrzovací heslo (aktuální heslo) je nesprávné.'], 403);
-        }
-
-        // 4. Samotná změna hesla u cílového uživatele
-        $user->update(['user_password_hash' => Hash::make($validated['new_password'])]);
-        
-        $this->logAction(
-            $request, 
-            'PasswordChanged', 
-            'User', 
-            "Změna hesla u: {$user->user_email} " . ($isAdmin && !$isOwner ? "(provedl admin: {$auth->user_email})" : ""), 
-            $user->id
-        );
-
-        return response()->json(['message' => 'Heslo úspěšně změněno.']);
-    } catch (\Exception $e) {
-        $this->logAction($request, 'error', 'User', "Chyba při změně hesla ID {$id}: " . $e->getMessage(), $id);
-        return response()->json(['message' => 'Změna hesla selhala.'], 500);
     }
-}
 
     /**
-     * Obnova smazaného uživatele.
+     * Restores a soft-deleted user.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
     public function restore($id): JsonResponse
     {
@@ -229,7 +244,11 @@ class UserController extends Controller
     }
 
     /**
-     * Smazání uživatele.
+     * Handles soft or hard deletion of a user.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -252,7 +271,9 @@ class UserController extends Controller
     }
 
     /**
-     * Hromadné vysypání koše.
+     * Permanently deletes all soft-deleted users (excluding Prime Admins).
+     *
+     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(): JsonResponse
     {
@@ -270,7 +291,14 @@ class UserController extends Controller
     }
 
     /**
-     * Interní logování akcí.
+     * Internal audit logging utility.
+     *
+     * @param Request $request
+     * @param string $type
+     * @param string $mod
+     * @param string $desc
+     * @param int|null $id
+     * @return void
      */
     protected function logAction(Request $request, string $type, string $mod, string $desc, ?int $id = null)
     {
@@ -297,7 +325,7 @@ class UserController extends Controller
                 'user_id'              => $user?->id,
                 'context_data'         => json_encode($request->except($sensitiveFields), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'     => $user?->user_email ?? 'system'
+                'user_plain'           => $user?->user_email ?? 'system'
             ]);
         } catch (\Exception $e) { 
             Log::error("Log error (User): " . $e->getMessage()); 

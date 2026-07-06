@@ -1,40 +1,57 @@
 <?php
+/**
+ * @file CoreRole.php
+ * @path app/Models/Core/CoreRole.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Model representing user roles within the system.
+ */
 
 namespace App\Models\Core;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany; // <--- Přidán import pro typování
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @description Defines roles that determine user access levels and permissions.
+ * 
+ * @property int $id The unique identifier for the role.
+ * @property string $role_name The display name of the role.
+ * @property string|null $description Optional details about the role's purpose.
+ */
 class CoreRole extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Pokud se sloupec v migraci jmenuje 'id', primaryKey definovat nemusíš.
-    // Pokud se jmenuje 'role_id', odkomentuj toto:
-    // protected $primaryKey = 'role_id';
-
+    /**
+     * @var array<int, string> The attributes that are mass assignable.
+     */
     protected $fillable = [
         'role_name', 
         'description'
     ];
 
     /**
-     * Vztah k uživatelům (M:N)
+     * Get the users assigned to this role.
+     *
+     * @return BelongsToMany
      */
     public function users(): BelongsToMany
     {
-        // Předpokládám tabulku user_roles jako propojovací
         return $this->belongsToMany(User::class, 'user_roles', 'role_id', 'user_id');
     }
 
     /**
-     * Vztah k oprávněním (M:N) - pokud jej používáš
+     * Get the permissions associated with this role.
+     *
+     * @return BelongsToMany
      */
     public function permissions(): BelongsToMany
     {
-        // Přidáváme pátý parametr 'id', což je název klíče v tabulce permissions
         return $this->belongsToMany(
             CorePermission::class, 
             'core_role_permissions', 

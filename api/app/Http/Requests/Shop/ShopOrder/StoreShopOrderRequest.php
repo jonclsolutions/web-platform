@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file StoreShopOrderRequest.php
+ * @path app/Http/Requests/Shop/ShopOrder/StoreShopOrderRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for creating new shop orders, including real-time stock availability verification.
+ */
 
 namespace App\Http\Requests\Shop\ShopOrder;
 
@@ -6,43 +14,52 @@ use App\Models\Shop\ShopProduct;
 use App\Models\Shop\ShopProductVariant;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles request validation for new shop orders.
+ * @note Performs stock level checks for products and product variants before order creation.
+ */
 class StoreShopOrderRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
-            // 👤 Kontaktní údaje zákazníka (místo původního customer_id)
             'email'                => ['required', 'email', 'max:150'],
             'first_name'           => ['required', 'string', 'max:100'],
             'last_name'            => ['required', 'string', 'max:100'],
             'phone'                => ['required', 'string', 'max:20'],
             'company'              => ['nullable', 'string', 'max:150'],
 
-            // 📦 Stavy & Metody
             'payment_method_id'    => ['required', 'exists:shop_payment_methods,id'],
             'shipping_method_id'   => ['required', 'exists:shop_shipping_methods,id'],
             'coupon_id'            => ['nullable', 'exists:shop_coupons,id'],
             'status'               => ['required', 'in:pending,confirmed,processing,shipped,delivered,returned,canceled'],
-            'payment_status'       => ['required', 'in:pending,paid,failed,refunded,cod,unpaid'], // Přidán 'unpaid' pro jistotu z frontendu
+            'payment_status'       => ['required', 'in:pending,paid,failed,refunded,cod,unpaid'],
             
-            // 📍 Adresa doručení
             'shipping_address'     => ['required', 'string', 'max:255'],
             'shipping_city'        => ['required', 'string', 'max:100'],
             'shipping_postal_code' => ['required', 'string', 'max:20'],
             'shipping_country'     => ['required', 'string', 'max:50'],
             'notes'                => ['nullable', 'string', 'max:1000'],
             
-            // 🛍️ Položky objednávky
             'items'                => ['required', 'array', 'min:1'],
             'items.*.product_id'   => ['required', 'exists:shop_products,id'],
             'items.*.product_variant_id' => ['nullable', 'exists:shop_product_variants,id'],
             
-            // Tvoje zachovaná logika kontroly skladu
             'items.*.quantity' => [
                 'required',
                 'integer',
@@ -73,6 +90,11 @@ class StoreShopOrderRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validator errors.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

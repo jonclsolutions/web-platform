@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file AuthController.php
+ * @path app/Http/Controllers/Api/AuthController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages user authentication, token-based session lifecycle (Access/Refresh tokens), and security-related audit logging.
+ */
 
 namespace App\Http\Controllers\Api;
 
@@ -11,8 +19,18 @@ use Illuminate\Support\Str;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * @description Handles the authentication flow for the application API.
+ * @note Implements a secure token refresh pattern and logs all authentication attempts for compliance and monitoring.
+ */
 class AuthController extends Controller
 {
+    /**
+     * Authenticates a user and issues access and refresh tokens.
+     *
+     * @param Request $request
+     * @return JsonResponse Returns user data and tokens upon success.
+     */
     public function login(Request $request): JsonResponse
     {
         $request->validate([
@@ -26,11 +44,11 @@ class AuthController extends Controller
             $user->update(['last_login_at' => now()]);
             $user->load('roles.permissions');
 
-            // Vygenerování tokenů
+            // Token generation
             $accessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
             $refreshToken = Str::random(60);
             
-            // Vyčištění starých a vytvoření nového refresh tokenu
+            // Manage Refresh Token
             RefreshToken::where('user_id', $user->id)->delete();
             RefreshToken::create([
                 'user_id'    => $user->id,
@@ -38,7 +56,6 @@ class AuthController extends Controller
                 'expires_at' => now()->addDays(7),
             ]);
 
-            // LOGOVÁNÍ ÚSPĚCHU
             $this->logAction($request, 'login_success', 'Auth', "Uživatel se úspěšně přihlásil: {$user->user_email}", $user->id, $user);
             
             return response()->json([
@@ -51,12 +68,17 @@ class AuthController extends Controller
             ], 200);
         }
 
-        // LOGOVÁNÍ NEÚSPĚCHU
         $this->logAction($request, 'login_failed', 'Auth', "Neúspěšný pokus o přihlášení na login: {$request->email}");
 
         return response()->json(['message' => 'Neplatné přihlašovací údaje.'], 401);
     }
 
+    /**
+     * Refreshes the access token using a valid refresh token.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function refresh(Request $request): JsonResponse
     {
         $refreshToken = $request->input('refreshToken');
@@ -94,12 +116,17 @@ class AuthController extends Controller
         ], 200);
     }
 
+    /**
+     * Revokes user access and refresh tokens.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function logout(Request $request): JsonResponse
     {
         $user = $request->user();
         
         if ($user) {
-            // LOGOVÁNÍ ODHLÁŠENÍ
             $this->logAction($request, 'logout', 'Auth', "Uživatel se odhlásil: {$user->user_email}", $user->id, $user);
             $user->currentAccessToken()->delete();
         }
@@ -113,12 +140,19 @@ class AuthController extends Controller
     }
 
     /**
-     * Logování akcí (Sjednocené parametry podle vzoru JobApplication).
+     * Logs authentication events to the WebLog system.
+     *
+     * @param Request $request
+     * @param string $eventType
+     * @param string $module
+     * @param string $description
+     * @param int|null $affectedId
+     * @param User|null $user
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null, ?User $user = null)
     {
         try {
-            // Pokud není uživatel předán (např. u login_failed), zkusíme ho vzít z requestu
             $activeUser = $user ?? $request->user();
 
             WebLog::create([
@@ -134,7 +168,7 @@ class AuthController extends Controller
                     'user_agent' => $request->userAgent()
                 ], JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($activeUser?->id ?? '0'),
-                'user_plain'     => $activeUser?->user_email ?? ($request->email ?? 'Neznámý/Nepřihlášený')
+                'user_plain'           => $activeUser?->user_email ?? ($request->email ?? 'Neznámý/Nepřihlášený')
             ]);
         } catch (\Exception $e) {
             Log::error("Log error (Auth): " . $e->getMessage());

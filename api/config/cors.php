@@ -1,36 +1,47 @@
 <?php
+/**
+ * @file config/cors.php
+ * @path config/cors.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Configuration for Cross-Origin Resource Sharing (CORS) settings.
+ */
 
+/**
+ * @description Defines the permitted origins, methods, and headers for cross-origin requests.
+ * This configuration manages how the application interacts with decoupled frontends,
+ * specifically enabling Laravel Sanctum's session-based authentication via cookie support.
+ */
 return [
 
     /*
-     * You can enable or disable CORS for your application.
-     * By default, it's enabled.
+     * Enable or disable CORS for your application.
      */
     'enabled' => true,
 
     /*
      * The paths that are allowed to make CORS requests.
-     * Laravel Sanctum pro SPA autentizaci potřebuje `/sanctum/csrf-cookie`.
+     * Sanctum requires `/sanctum/csrf-cookie` to initiate the session state.
      */
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     /*
      * The domains from which to allow CORS requests.
-     * ZDE NAHRAĎTE 'http://localhost:4200' URL VAŠÍ ANGULAR APLIKACE!
-     * Pro vývoj můžete použít ['*'] pro všechny domény, ale na produkci je to nebezpečné.
+     * NOTE: Using ['*'] is suitable for development; however, replace this with 
+     * specific production domains for security.
      */
-    'allowed_origins' => ['*'], // Zkuste případně i 'http://127.0.0.1:4200'
-    'supports_credentials' => true,
+    'allowed_origins' => ['*'],
 
     /*
-     * The HTTP methods that are allowed.
+     * The HTTP methods allowed for CORS requests.
      */
-    'allowed_methods' => ['*'], // Povoluje všechny metody (GET, POST, PUT, DELETE, OPTIONS, etc.)
+    'allowed_methods' => ['*'],
 
     /*
-     * The headers that are allowed.
+     * The HTTP headers allowed for CORS requests.
      */
-    'allowed_headers' => ['*'], // Povoluje všechny hlavičky
+    'allowed_headers' => ['*'],
 
     /*
      * The headers that are exposed to the browser.
@@ -44,7 +55,7 @@ return [
 
     /*
      * Whether to support credentials (cookies, HTTP authentication, etc.).
-     * TOTO JE DŮLEŽITÉ pro Laravel Sanctum SPA autentizaci!
+     * Crucial for Laravel Sanctum SPA session-based authentication.
      */
     'supports_credentials' => true,
 

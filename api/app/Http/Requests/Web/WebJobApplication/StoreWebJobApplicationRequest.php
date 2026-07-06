@@ -1,13 +1,35 @@
 <?php
+/**
+ * @file StoreWebJobApplicationRequest.php
+ * @path app/Http/Requests/Web/WebJobApplication/StoreWebJobApplicationRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for incoming job applications, including file type constraints for CVs.
+ */
 
 namespace App\Http\Requests\Web\WebJobApplication;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles request validation for new job applications from the web frontend.
+ * @note Enforces security by restricting file types and setting a maximum file size for attachments.
+ */
 class StoreWebJobApplicationRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         $safeExtensions = [
@@ -34,6 +56,11 @@ class StoreWebJobApplicationRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

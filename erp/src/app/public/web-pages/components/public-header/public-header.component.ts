@@ -1,3 +1,17 @@
+/**
+ * @file public-header.component.ts
+ * @path src/app/shared/components/public-header/public-header.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the site-wide public header, including dynamic navigation, language switching, and scroll-responsive UI animations.
+ * @dependencies
+ * - Router: Handles route state detection for active link highlighting.
+ * - LocalizationService: Manages multi-language state and translation keys.
+ * - PublicDataService: Fetches global site configuration.
+ * - Angular Signals/RxJS: Manages reactive state updates for the UI.
+ */
+
 import {
   Component, OnInit, HostListener, AfterViewInit,
   QueryList, ElementRef, ViewChildren,
@@ -11,6 +25,11 @@ import { PublicDataService } from '../../../../shared/services/public-data.servi
 import { Observable } from 'rxjs';
 import * as Web from '../../../../shared/imports/web-providers';
 
+/**
+ * @description Component for the main navigation header.
+ * @usage Provides a persistent navigation interface, language selector, and mobile-responsive menu.
+ * @note Implements advanced DOM manipulation and ResizeObservers to ensure navigation indicators remain synchronized during transitions and scroll events.
+ */
 @Component({
   selector: 'app-public-header',
   standalone: true,
@@ -30,6 +49,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   siteSettings: any = null;
 
+  // Asset paths
   cz_flag_link: string = 'assets/images/icons/czech-republic.png';
   en_flag_link: string = 'assets/images/icons/united-kingdom.png';
   tel_icon: string = 'assets/images/icons/call.png';
@@ -40,6 +60,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   isAnimatingTransition: boolean = false;
   private animationTimeout: any;
 
+  // Constants for indicator layout
   private readonly LINK_WIDTH = 130;
   private readonly GAP_DEFAULT = 15;
   private readonly GAP_SCROLLED = 8;
@@ -50,8 +71,6 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   isMobileView: boolean = false;
   isMenuOpen: boolean = false;
-
-  /** Stav dropdown přepínače jazyků */
   isLangOpen: boolean = false;
 
   availableLanguages: LangMeta[] = [];
@@ -69,14 +88,15 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentLanguage$ = this.localizationService.currentLanguage$;
   }
 
+  /**
+   * @description Initializes language fetching, translation streams, and route observation.
+   */
   ngOnInit(): void {
-    // Logování jazyků
     this.localizationService.fetchLanguages().subscribe(res => {
       this.availableLanguages = res.languages;
       this.cdr.markForCheck();
     });
 
-    // Logování překladů
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(t => {
@@ -84,7 +104,6 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    // Logování nastavení webu
     this.publicDataService.getSiteSettings()
       .pipe(takeUntil(this.destroy$))
       .subscribe(data => {
@@ -101,6 +120,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.handleRouteChange();
       });
 
+    // Initial check for current route
     setTimeout(() => {
       this.currentActiveRoute = this.router.url;
       this.handleRouteChange();
@@ -127,6 +147,9 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * @description Toggles state based on viewport width.
+   */
   private checkMobileView(): void {
     const newIsMobileView = window.innerWidth <= 768;
     if (this.isMobileView !== newIsMobileView) {
@@ -144,11 +167,14 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  closeLangDropdown(): void {
+    closeLangDropdown(): void {
     this.isLangOpen = false;
     this.cdr.markForCheck();
   }
 
+  /**
+   * @description Retrieves the currently selected language metadata.
+   */
   getActiveLang(): LangMeta | undefined {
     const current = this.localizationService.getCurrentLanguage();
     return this.availableLanguages.find(l => l.code === current);
@@ -159,6 +185,9 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     if (html) blockScroll ? html.classList.add('no-scroll') : html.classList.remove('no-scroll');
   }
 
+  /**
+   * @description Handles visual feedback for route changes, including indicator animation sequences.
+   */
   private handleRouteChange(): void {
     if (this.isMobileView) return;
     const allLinks = this.navLinks.map(link => link.nativeElement);
@@ -191,6 +220,10 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }, this.INDICATOR_ANIMATION_DURATION);
   }
 
+  /**
+   * @description Optimized loop for indicator position updates.
+   * @param forceAnimate Boolean to override transition constraints.
+   */
   private scheduleUpdate(forceAnimate: boolean = false): void {
     if (this.isMobileView) return;
     this.ngZone.runOutsideAngular(() => {
@@ -235,6 +268,10 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * @description Calculates and updates the navigation indicator styling based on current scroll and route state.
+   * @param forceAnimate Ensures CSS transitions are applied.
+   */
   updateIndicatorPosition(forceAnimate: boolean = false): void {
     if (this.isMobileView) return;
     const allLinks = this.navLinks.map(link => link.nativeElement);

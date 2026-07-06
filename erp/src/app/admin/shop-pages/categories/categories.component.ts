@@ -1,3 +1,16 @@
+/**
+ * @file categories.component.ts
+ * @path src/app/admin/pages/shop/categories/categories.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages a hierarchical tree of shop categories, including CRUD operations and product-to-category assignments.
+ * @dependencies
+ * - Core services: DataHandler, GenericTableService, LoadingService.
+ * - Shared UI: SHARED_UI_BUILDERS, ConfirmDialogService.
+ * - BaseDataComponent: Provides foundational data management for entity collections.
+ */
+
 import { Component, OnInit, ViewChildren, QueryList, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +22,11 @@ import { CATEGORY_TOOLBAR_BUTTONS, CATEGORY_ROW_BUTTONS } from './categories.con
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 
+/**
+ * @description Orchestrates the category management interface, handling recursive tree display, editing, and side-panel product associations.
+ * @usage Used in the shop administration area to structure the product catalog.
+ * @note Implements recursive tree building and maintains local state for expansion and editing modes.
+ */
 @Component({
   selector: 'app-categories',
   standalone: true,
@@ -55,10 +73,19 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.loadTree();
   }
 
+  /**
+   * @description Provides the configuration for global category management toolbar buttons.
+   * @returns {Button[]} List of toolbar buttons.
+   */
   get toolbarButtons(): Button[] {
     return CATEGORY_TOOLBAR_BUTTONS;
   }
 
+  /**
+   * @description Dynamically generates action buttons for individual category rows, adjusting labels and classes based on status.
+   * @param node The category node being rendered.
+   * @returns {Button[]} Array of action buttons.
+   */
   getRowButtons(node: CategoryNode): Button[] {
     return CATEGORY_ROW_BUTTONS.map(btn => {
       const updatedBtn = { ...btn };
@@ -70,6 +97,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     });
   }
 
+  /**
+   * @description Returns save/cancel buttons for nodes currently in editing mode.
+   * @param node The category node in edit state.
+   * @returns {Button[]} Array of edit action buttons.
+   */
   getEditButtons(node: CategoryNode): Button[] {
     const isDuplicate = this.isDuplicateName(node);
     const isEmpty = !node.name || node.name.trim().length === 0;
@@ -80,6 +112,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     ];
   }
 
+  /**
+   * @description Recursively checks the tree to ensure no two categories at the same hierarchy level share the same name.
+   * @param node The node being checked.
+   * @returns {boolean} True if a duplicate name is found.
+   */
   isDuplicateName(node: CategoryNode): boolean {
     const check = (list: CategoryNode[]): boolean => {
       for (const cat of list) {
@@ -91,12 +128,21 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     return check(this.categories);
   }
 
+  /**
+   * @description Dispatches actions triggered from the main module toolbar.
+   * @param action The requested toolbar action identifier.
+   */
   handleToolbarAction(action: string): void {
     if (action === 'expandAll') this.expandAll(true);
     if (action === 'collapseAll') this.expandAll(false);
     if (action === 'addMain') this.initAddCategory(null);
   }
 
+  /**
+   * @description Dispatches row-specific category actions.
+   * @param action The requested row action identifier.
+   * @param node The target category node.
+   */
   handleRowAction(action: string, node: CategoryNode): void {
     switch (action) {
       case 'addChild': this.initAddCategory(node.id); break;
@@ -106,6 +152,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     }
   }
 
+  /**
+   * @description Handles submission or cancellation of an active edit session.
+   * @param action The edit action identifier (submit/cancel).
+   * @param node The category node being edited.
+   */
   handleEditAction(action: string, node: CategoryNode): void {
     if (action === 'submit') {
       if (!node.name || node.name.trim().length === 0 || this.isDuplicateName(node)) return;
@@ -115,6 +166,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     }
   }
 
+  /**
+   * @description Temporarily injects a new category node into the tree display for immediate user input.
+   * @param parentId The parent ID under which the new node is placed, or null for root-level.
+   */
   initAddCategory(parentId: number | null): void {
     const newNode: any = { id: 0, name: '', parent_id: parentId, isEditing: true, is_active: false, children: [] };
     if (!parentId) {
@@ -136,6 +191,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.cd.detectChanges();
   }
 
+  /**
+   * @description Persists a newly created category node to the backend API.
+   * @param node The new node to be created.
+   */
   confirmAdd(node: CategoryNode): void {
     const parentId = node.parent_id;
     if (!parentId) {
@@ -158,6 +217,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
       });
   }
 
+  /**
+   * @description Helper to remove the temporary 'new' node if an API request fails or is canceled.
+   * @param nodes The current tree structure.
+   * @param parentId The parent node to clean up.
+   */
   private removeNewNodeFromParent(nodes: CategoryNode[], parentId: number): void {
     for (const node of nodes) {
       if (node.id === parentId) {
@@ -170,6 +234,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     }
   }
 
+  /**
+   * @description Enables editing mode for a specific category and focuses the input field.
+   * @param node The category node to edit.
+   */
   startEdit(node: CategoryNode): void {
     this.backupNames.set(node.id, node.name);
     node.isEditing = true;
@@ -177,6 +245,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     setTimeout(() => this.editInputs.last?.nativeElement.focus(), 0);
   }
 
+  /**
+   * @description Reverts name changes and exits editing mode.
+   * @param node The category node to restore.
+   */
   cancelEdit(node: CategoryNode): void {
     const originalName = this.backupNames.get(node.id);
     if (originalName !== undefined) node.name = originalName;
@@ -185,6 +257,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Fetches the full category list and builds the recursive tree structure.
+   * @param forceExpandId Optional ID to ensure specific branch remains open after refresh.
+   * @param silent If true, suppresses global loading spinner.
+   */
   loadTree(forceExpandId?: number | null, silent: boolean = false): void {
     if (!silent) {
       this.loadingService.show();
@@ -205,6 +282,13 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     });
   }
 
+  /**
+   * @description Transforms a flat list of items into a hierarchical nested tree.
+   * @param list Raw list from API.
+   * @param parentId The parent ID to map children for.
+   * @param forceExpandId The node ID to force-expand.
+   * @returns {CategoryNode[]} Nested tree structure.
+   */
   buildTree(list: CategoryNode[], parentId: number | null = null, forceExpandId?: number | null): CategoryNode[] {
     return list
       .filter(item => item.parent_id === parentId)
@@ -220,6 +304,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
       });
   }
 
+  /**
+   * @description Recursively updates expanded state for all tree nodes.
+   * @param state Boolean target state (true=expand, false=collapse).
+   */
   expandAll(state: boolean): void {
     const toggle = (nodes: CategoryNode[]) => {
       nodes.forEach(n => {
@@ -237,6 +325,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Updates an existing category's properties via the API.
+   * @param node The updated node object.
+   */
   saveNode(node: CategoryNode): void {
     node.isEditing = false;
     this.cd.markForCheck();
@@ -256,6 +348,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
       });
   }
 
+  /**
+   * @description Toggles category active status and propagates the change to the API.
+   * @param node The category to update.
+   */
   toggleStatus(node: CategoryNode): void {
     const newStatus = !node.is_active;
     node.is_active = newStatus;
@@ -272,6 +368,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
       });
   }
 
+  /**
+   * @description Validates delete conditions and removes a category node from the database.
+   * @param node The category to delete.
+   */
   async deleteCategory(node: CategoryNode): Promise<void> {
     if (node.children?.length) {
       await this.alertDialogService.open('Nelze smazat', 'Smažte nejdříve podkategorie.', 'warning');
@@ -301,7 +401,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
         next: () => {
           this.alertDialogService.open('Smazáno', 'Kategorie byla odstraněna.', 'success');
           this.saveExpandedStates();
-          // Zavřít panel pokud byla smazána aktuálně vybraná kategorie
           if (this.selectedCategory?.id === node.id) {
             this.closeProductPanel();
           }
@@ -314,6 +413,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     }
   }
 
+  /**
+   * @description Removes a node from the local memory tree.
+   * @param nodeId ID of the node to remove.
+   */
   private removeNodeFromTree(nodeId: number): void {
     const removeRecursive = (nodes: CategoryNode[]): boolean => {
       for (let i = 0; i < nodes.length; i++) {
@@ -330,6 +433,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     removeRecursive(this.categories);
   }
 
+  /**
+   * @description Toggles expansion state for a category branch.
+   * @param node The category node to toggle.
+   * @param event The mouse event to stop propagation.
+   */
   toggleExpanded(node: CategoryNode, event?: Event): void {
     if (event) event.stopPropagation();
     if (!node.children?.length) return;
@@ -346,10 +454,16 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Persists expansion states to localStorage for persistent session view.
+   */
   private saveExpandedStates(): void {
     localStorage.setItem('categoryExpandedStates', JSON.stringify(Array.from(this.expandedStates)));
   }
 
+  /**
+   * @description Loads persisted expansion states from localStorage.
+   */
   private loadExpandedStates(): void {
     const saved = localStorage.getItem('categoryExpandedStates');
     if (saved) {
@@ -361,6 +475,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   // PRODUKT PANEL
   // =====================
 
+  /**
+   * @description Opens the side panel displaying products associated with the selected category.
+   * @param node The selected category.
+   * @param event Mouse event to stop propagation.
+   */
   openProductPanel(node: CategoryNode, event: Event): void {
     event.stopPropagation();
     if (node.id === 0) return;
@@ -372,6 +491,9 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Closes the product management side panel and resets search buffers.
+   */
   closeProductPanel(): void {
     this.selectedCategory = null;
     this.categoryProducts = [];
@@ -382,6 +504,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Fetches all products currently assigned to the specific category.
+   * @param categoryId The ID of the category.
+   */
   loadCategoryProducts(categoryId: number): void {
     this.loadingProducts = true;
     this.cd.markForCheck();
@@ -400,6 +526,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     });
   }
 
+  /**
+   * @description Filtered list of products already inside the category.
+   * @returns {any[]} List of products matching the search query.
+   */
   get filteredCategoryProducts(): any[] {
     if (!this.productSearch.trim()) return this.categoryProducts;
     const s = this.productSearch.toLowerCase();
@@ -408,6 +538,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     );
   }
 
+  /**
+   * @description List of products available for addition to the selected category, filtered by exclusion of already added products.
+   * @returns {any[]} Available products.
+   */
   get filteredAllProducts(): any[] {
     const categoryProductIds = new Set(this.categoryProducts.map(p => p.id));
     let products = this.allProducts.filter(p => !categoryProductIds.has(p.id));
@@ -420,6 +554,9 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     return products;
   }
 
+  /**
+   * @description Prepares the add-product view and lazily loads all products if necessary.
+   */
   openAddProductSearch(): void {
     this.showAddProduct = true;
     this.addProductSearch = '';
@@ -439,6 +576,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Removes an existing product assignment from the selected category.
+   * @param product The product object to remove.
+   */
   async removeProductFromCategory(product: any): Promise<void> {
     const confirmed = await this.confirmDialogService.open(
       'Odebrat produkt',
@@ -478,6 +619,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     });
   }
 
+  /**
+   * @description Associates a new product with the selected category via API.
+   * @param product The product object to add.
+   */
   addProductToCategory(product: any): void {
     if (!this.selectedCategory) return;
 

@@ -1,9 +1,26 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
+/**
+ * @file form-builder.component.ts
+ * @path src/app/admin/components/form-builder/form-builder.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description A dynamic, template-driven form generator that maps field definitions to interactive UI controls.
+ * @dependencies
+ * - FormsModule: Angular template-driven form infrastructure.
+ * - AlertDialogService: Provides user feedback for submission outcomes.
+ * - InputDefinition: Interface for rendering dynamic form inputs and validation metadata.
+ */
 
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule, NgForm, FormControl } from '@angular/forms';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 
+/**
+ * @description Renders a dynamic form based on an array of field definitions.
+ * @usage Used in create and edit modals across the admin panel for data entry.
+ * @note Supports file uploads via FormData auto-detection, password matching validation, and persistent scroll locking.
+ */
 @Component({
   selector: 'app-form-builder',
   standalone: true,
@@ -12,7 +29,7 @@ import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
   styleUrl: './form-builder.component.css',
 })
 export class FormBuilderComponent implements OnInit, OnDestroy {
-  @Input() headerText: string = 'Vytvořit nový záznam';
+  @Input() headerText: string = 'Create New Record';
   @Input() inputDefinitions: InputDefinition[] = [];
   @Input() formDataToEdit: any = null;
 
@@ -32,14 +49,15 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     private alertDialogService: AlertDialogService
   ) {}
 
+  /**
+   * @description Initializes the form state based on the provided data or default settings.
+   */
   ngOnInit(): void {
     document.body.style.overflow = 'hidden';
 
     if (this.formDataToEdit) {
       this.formData = { ...this.formDataToEdit };
       this.visibleInputDefinitions = this.inputDefinitions.filter(input => input.show_in_edit !== false);
-      
-      // Čistá normalizace dat po načtení
       this.normalizeSelectValues();
     } else {
       this.formData = {};
@@ -51,16 +69,13 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Zajišťuje, aby hodnoty v formData odpovídaly typům v options (string vs number/boolean).
-   * Prochází pouze viditelné selecty a mapuje existující hodnoty na stringy, pokud je select tak definován.
+   * @description Normalizes existing data for select inputs to ensure consistent type matching.
+   * @note Prevents type mismatch issues when mapping numeric IDs to string-based option values.
    */
   private normalizeSelectValues(): void {
     this.visibleInputDefinitions.forEach(input => {
       if (input.type === 'select' && input.options) {
         const currentValue = this.formData[input.column_name];
-        
-        // Převedeme boolean/number na string pouze pokud daný string existuje v options
-        // To zabrání rozbití formulářů, které pracují s ID (čísly)
         const valueAsString = String(currentValue === true ? '1' : currentValue === false ? '0' : currentValue);
         const optionExists = input.options.some(opt => String(opt.value) === valueAsString);
 
@@ -75,12 +90,18 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     document.body.style.overflow = 'auto';
   }
 
+  /**
+   * @description Validates password confirmation inputs against original passwords.
+   */
   checkPasswordMatch(columnName: string): void {
     const original = this.formData[columnName];
     const confirmation = this.confirmPasswordData[columnName];
     this.passwordsNotMatching = (original !== confirmation) && !!confirmation;
   }
 
+  /**
+   * @description Updates form data with file inputs for multi-part submission.
+   */
   onFileChange(event: any, columnName: string): void {
     const file = event.target.files[0];
     if (file) {
@@ -93,13 +114,16 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     return this.genericForm.controls[columnName] as FormControl || null;
   }
 
+  /**
+   * @description Maps validation errors to human-readable strings based on field definition.
+   */
   getValidationErrorMessage(control: FormControl | null, fieldDefinition: InputDefinition): string | null {
     if (!control || !control.invalid || (!control.dirty && !control.touched)) {
       return null;
     }
-    if (control.errors?.['required']) return fieldDefinition.errorMessage || 'Toto pole je povinné.';
-    if (control.errors?.['pattern']) return fieldDefinition.errorMessage || 'Neplatný formát.';
-    if (control.errors?.['email']) return fieldDefinition.errorMessage || 'Neplatný formát e-mailu.';
+    if (control.errors?.['required']) return fieldDefinition.errorMessage || 'This field is required.';
+    if (control.errors?.['pattern']) return fieldDefinition.errorMessage || 'Invalid format.';
+    if (control.errors?.['email']) return fieldDefinition.errorMessage || 'Invalid email format.';
     return null;
   }
 
@@ -113,6 +137,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * @description Sanitizes and validates form data before emitting the submission event.
+   * @note Automatically serializes data into FormData if file inputs are detected.
+   */
   onSubmit(form: NgForm, event?: Event): void {
     event?.preventDefault();
     if (this.isSubmitting) return;
@@ -128,7 +156,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     });
 
     if (this.passwordsNotMatching) {
-      this.alertDialogService.open('Chyba', 'Hesla se neshodují.', 'danger');
+      this.alertDialogService.open('Error', 'Passwords do not match.', 'danger');
       return;
     }
 
@@ -154,12 +182,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
       this.formSubmitted.emit(payload);
 
-      const actionText = this.formDataToEdit ? 'aktualizován' : 'vytvořen';
-      this.alertDialogService.open('Informace', `Záznam byl úspěšně ${actionText}.`, 'success');
+      const actionText = this.formDataToEdit ? 'updated' : 'created';
+      this.alertDialogService.open('Information', `Record successfully ${actionText}.`, 'success');
       
       this.isSubmitting = false; 
     } else {
-      this.alertDialogService.open('Neplatný formulář', 'Zkontrolujte prosím všechna povinná pole.', 'warning');
+      this.alertDialogService.open('Invalid Form', 'Please check all required fields.', 'warning');
     }
   }
 }

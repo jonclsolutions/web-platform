@@ -7,12 +7,11 @@ export interface CategoryNode {
   sort_order: number;
   image_path?: string | null;
   description?: string | null;
-  children: CategoryNode[]; // Rekurzivní vazba pro podstrom
+  children: CategoryNode[];
   products_count?: number;
-  // --- UI STAVY (neukládají se do DB) ---
-  isEditing?: boolean;       // Přepíná mezi textem a inputem
-  isExpanded?: boolean;      // Řídí, zda jsou vidět děti (rolování)
-  isLoading?: boolean;       // Volitelné: pro indikaci načítání konkrétní větve
+  isEditing?: boolean;
+  isExpanded?: boolean;
+  isLoading?: boolean;
   directChildrenCount?: number;
   totalRecursiveCount?: number;
 }

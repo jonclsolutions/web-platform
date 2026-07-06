@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopLogController.php
+ * @path app/Http/Controllers/Api/Shop/ShopLogController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the retrieval and manual creation of audit trail logs for shop operations, supporting complex filtering and sorting.
+ */
 
 namespace App\Http\Controllers\Api\Shop;
 
@@ -10,8 +18,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * @description Controller for managing system audit logs.
+ * @note Provides read-only access to historical operations with advanced search capabilities across multiple log fields.
+ */
 class ShopLogController extends Controller
 {
+    /**
+     * Retrieves a paginated list of audit logs with extensive filtering and sorting capabilities.
+     *
+     * @param Request $request Incoming request containing filtering (event_type, module, text search) and sorting parameters.
+     * @return JsonResponse Paginated log collection or full list if 'no_pagination' is set.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
@@ -46,7 +64,6 @@ class ShopLogController extends Controller
         }
 
         // --- ŘAZENÍ (SORTING) ---
-        // 🔧 Defaultně řadíme podle ID, od největšího po nejmenší (DESC)
         $sortBy = $request->input('sort_by', 'id'); 
         $sortDirection = (strtolower($request->input('sort_direction')) === 'asc') ? 'asc' : 'desc';
 
@@ -75,12 +92,25 @@ class ShopLogController extends Controller
         ]);
     }
 
+    /**
+     * Retrieves specific details for an individual audit log entry.
+     *
+     * @param int $id The unique log ID.
+     * @return JsonResponse The log resource.
+     */
     public function show($id): JsonResponse
     {
         $log = ShopLog::with('user')->findOrFail($id);
         return response()->json(new ShopLogResource($log));
     }
 
+    /**
+     * Manually records a new log entry.
+     *
+     * @param StoreShopLogRequest $request Validated request data.
+     * @return JsonResponse The created log resource.
+     * @throws \Exception When logging fails due to database errors.
+     */
     public function store(StoreShopLogRequest $request): JsonResponse
     {
         try {

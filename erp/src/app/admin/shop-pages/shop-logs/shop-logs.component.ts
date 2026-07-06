@@ -1,3 +1,16 @@
+/**
+ * @file shop-logs.component.ts
+ * @path src/app/admin/pages/shop/shop-logs/shop-logs.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the display, filtering, and detailed inspection of system logs related to shop activities.
+ * @dependencies
+ * - BaseDataComponent: Provides the base logic for data fetching, pagination, and state management.
+ * - TableBuilderComponent: Used for rendering the data grid and supporting CSV exports.
+ * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -5,6 +18,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './shop-logs.config';
 
+/**
+ * @description Component for viewing shop-related logs.
+ * @usage Provides administrators with a read-only interface to monitor system events with advanced filtering and export capabilities.
+ * @note Implements standard pagination and filtering inherited from BaseDataComponent, with custom default sorting (ID descending).
+ */
 @Component({
   selector: 'app-shop-logs',
   standalone: true,
@@ -24,7 +42,9 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
   detailsColumns = Config.DETAILS_COLUMNS;
   selectedItemForDetails: any | null = null;
 
-  // 🔧 OPRAVENO: Výchozí řazení podle ID sestupně
+  /**
+   * @description Default filter settings ensuring the latest logs appear first.
+   */
   filters: Core.FilterParams = {
     sort_by: 'id',
     sort_direction: 'desc'
@@ -39,6 +59,10 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Generates toolbar buttons with dynamic state representation.
+   * @returns List of buttons with active states applied based on filter visibility.
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -52,6 +76,10 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
+  /**
+   * @description Executes toolbar actions triggered by user interaction.
+   * @param action The key of the action to be performed.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -69,13 +97,19 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Updates filter parameters and resets to the first page.
+   * @param newFilters The set of filter values to merge.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  // 🔧 OPRAVENO: I po vyčištění filtrů řadíme podle ID sestupně
+  /**
+   * @description Resets active filters to default log sorting criteria.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -90,10 +124,17 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
+  /**
+   * @description Triggers the export functionality of the internal TableBuilder.
+   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
 
+  /**
+   * @description Fetches deep information for a single log entry.
+   * @param item The log record selected for inspection.
+   */
   handleViewDetails(item: any): void {
     const logId = item.id;
     if (!logId) return;
@@ -110,6 +151,9 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
+  /**
+   * @description Closes the detail view and clears the current selection.
+   */
   handleCloseDetails(): void {
     this.selectedItemForDetails = null;
     this.showDetails = false;

@@ -1,4 +1,17 @@
-import { Component, Input, ChangeDetectionStrategy, Output, EventEmitter } from '@angular/core';
+/**
+ * @file table-builder.component.ts
+ * @path src/app/admin/components/table-builder/table-builder.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2025
+ * @description A generic, highly configurable table component for displaying datasets with built-in CRUD actions, CSV export, and localized formatting.
+ * @dependencies
+ * - BaseDataComponent: Provides foundational data management and API interaction logic.
+ * - ConfirmDialogService: Facilitates safe delete operations.
+ * - CurrencyPipe, DatePipe: Standard pipes for data formatting.
+ */
+
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -9,6 +22,11 @@ import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.s
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 
+/**
+ * @description Renders a dynamic data table with support for pagination, sorting, filtering, and custom action buttons.
+ * @usage Used across various admin modules to display entities like products, users, or orders.
+ * @note Implements OnPush change detection and a processing map to prevent duplicate API requests during user interaction.
+ */
 @Component({
   selector: 'app-table-builder',
   standalone: true,
@@ -37,7 +55,6 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
   @Output() resetPasswordFormOpened = new EventEmitter<any>(); 
   @Output() openImagesModal = new EventEmitter<any>(); 
   @Output() openVariantsModal = new EventEmitter<any>(); 
-  // 🌟 NOVÝ OUTPUT PRO OBJEDNÁVKY ZÁKAZNÍKA:
   @Output() customerOrdersOpened = new EventEmitter<any>();
 
   web_logs_endpoint: string = 'web/logs';
@@ -61,6 +78,12 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     super.ngOnChanges(changes); 
   }
 
+  /**
+   * @description Resolves cell value based on column configuration and type, applying necessary pipes (currency, date, boolean).
+   * @param item The data object representing the row.
+   * @param column Metadata defining the column rendering logic.
+   * @returns {any} The processed value to be displayed.
+   */
   getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
     const value = keys.reduce((obj, key) => obj?.[key], item);
@@ -68,14 +91,8 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     switch (column.type) {
       case 'currency': {
         if (value === undefined || value === null || value === '') return '';
-        
-        // 🛠️ UPRAVENO: Nastaveno na EUR místo CZK
         const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'EUR';
-        
-        // Použijeme 'de-DE' nebo 'cs-CZ' pro formátování, 
-        // ale měnu vynutíme na EUR.
         const locale = 'cs-CZ'; 
-        
         try {
           return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
         } catch (e) {
@@ -85,7 +102,7 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
       case 'date':
         return value ? (new DatePipe('cs-CZ')).transform(value, column.format || 'd.M.yyyy') : '';
       case 'boolean':
-        return (value == true || value === 'true' || value == 1) ? 'Ano' : 'Ne';
+        return (value == true || value === 'true' || value == 1) ? 'Yes' : 'No';
       case 'image':
         return value ? `${this.uploadsBaseUrl}${value}` : '';
       default:
@@ -98,9 +115,14 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     }
   }
 
+  /**
+   * @description Routes button actions to the corresponding event emitters.
+   * @param item The row item targeted by the action.
+   * @param buttonAction Identifier for the specific action requested.
+   */
   handleAction(item: any, buttonAction: string): void {
     if (this.processingItemIds.has(item.id)) {
-      console.warn(`⚠️ Akce pro položku ID ${item.id} je již zpracovávána. Ignoruji duplikát.`);
+      console.warn(`Action for item ID ${item.id} is already in progress.`);
       return;
     }
 
@@ -109,66 +131,46 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     setTimeout(() => {
       try {
         switch (buttonAction) {
-          case 'generate_form': 
-            this.generateFormOpened.emit(item); 
-            break;
-          case 'details': 
-            this.viewDetailsOpened.emit(item); 
-            break;
-          case 'edit': 
-            this.editFormOpened.emit(item); 
-            break;
-          case 'delete': 
-            this.onDeleteAction(item); 
-            break;
-          case 'password_reset': 
-            this.resetPasswordFormOpened.emit(item); 
-            break; 
-          case 'custom_prod_var': 
-            this.openVariantsModal.emit(item); 
-            break; 
-          case 'custom_prod_img': 
-            this.openImagesModal.emit(item); 
-            break; 
-          // 🌟 NOVÝ CASE PRO EMITOVÁNÍ DO UTROB COMPONENTY:
-          case 'customer_orders':
-            this.customerOrdersOpened.emit(item);
-            break;
-          default: 
-            console.warn('⚠️ Neznámý typ akce:', buttonAction);
+          case 'generate_form': this.generateFormOpened.emit(item); break;
+          case 'details': this.viewDetailsOpened.emit(item); break;
+          case 'edit': this.editFormOpened.emit(item); break;
+          case 'delete': this.onDeleteAction(item); break;
+          case 'password_reset': this.resetPasswordFormOpened.emit(item); break; 
+          case 'custom_prod_var': this.openVariantsModal.emit(item); break; 
+          case 'custom_prod_img': this.openImagesModal.emit(item); break; 
+          case 'customer_orders': this.customerOrdersOpened.emit(item); break;
+          default: console.warn('Unknown action type:', buttonAction);
         }
-        
         this.cd.markForCheck();
       } finally {
-        setTimeout(() => {
-          this.processingItemIds.delete(item.id);
-        }, 500);
+        setTimeout(() => { this.processingItemIds.delete(item.id); }, 500);
       }
     }, 0);
   }
 
+  /**
+   * @description Triggers a confirmation dialog before proceeding with item deletion.
+   */
   public onDeleteAction(item: any): void {
-    this.confirmDialogService.open('Potvrzení smazání', 'Opravdu si přejete smazat tuto položku?')
+    this.confirmDialogService.open('Delete Confirmation', 'Are you sure you want to delete this item?')
       .then(result => {
         if (result) {
           this.deleteData(item.id).subscribe({
             next: () => {
               this.removeItemFromLocal(item.id);
               this.itemDeleted.emit(item);
-              this.alertDialogService.open('Úspěch', 'Položka byla smazána.', 'success');
+              this.alertDialogService.open('Success', 'Item deleted.', 'success');
             },
             error: () => {
               this.processingItemIds.delete(item.id);
-              this.alertDialogService.open('Chyba', 'Smazání se nezdařilo.', 'danger');
+              this.alertDialogService.open('Error', 'Deletion failed.', 'danger');
             }
           });
         } else {
           this.processingItemIds.delete(item.id);
         }
       })
-      .catch(() => {
-        this.processingItemIds.delete(item.id);
-      });
+      .catch(() => { this.processingItemIds.delete(item.id); });
   }
 
   private removeItemFromLocal(id: any): void {
@@ -179,6 +181,9 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     }
   }
 
+  /**
+   * @description Fetches all data (ignoring pagination) to generate and download a CSV file.
+   */
   async exportToCSV() {
     try {
       this.cd.markForCheck();
@@ -196,11 +201,11 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
         link.click();
         this.logExportActivity(allData.length);
       } else {
-        this.alertDialogService.open('Export', 'Žádná data k exportu.', 'warning');
+        this.alertDialogService.open('Export', 'No data available for export.', 'warning');
       }
     } catch (error) {
       console.error('Export error:', error);
-      this.alertDialogService.open('Chyba', 'Při exportu nastala chyba.', 'danger');
+      this.alertDialogService.open('Error', 'An error occurred during export.', 'danger');
     } finally {
       this.cd.markForCheck();
     }
@@ -210,13 +215,13 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     const logData = {
       event_type: 'DATA_EXPORT',
       module: this.apiEndpoint,
-      description: `Uživatel exportoval ${rowCount} záznamů z tabulky: ${this.tableCaption || this.apiEndpoint}.`,
+      description: `User exported ${rowCount} records from table: ${this.tableCaption || this.apiEndpoint}.`,
       affected_entity_type: 'collection',
       user_id_plain: this.authService.getUserId()?.toString(),
       user_plain: this.authService.getUserEmail()
     };
     this.dataHandler.post(this.web_logs_endpoint, logData).subscribe({
-      error: (err) => console.error('Nepodařilo se zalogovat export:', err)
+      error: (err) => console.error('Failed to log export:', err)
     });
   }
 
@@ -227,6 +232,9 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     return this.dataHandler.getCollection<any>(this.apiEndpoint, params);
   }
 
+  /**
+   * @description Calculates the total number of columns including action buttons for the table layout.
+   */
   get colspanValue(): number {
     return this.columnDefinitions.length + (this.buttons?.filter(b => b.isActive).length || 0);
   }

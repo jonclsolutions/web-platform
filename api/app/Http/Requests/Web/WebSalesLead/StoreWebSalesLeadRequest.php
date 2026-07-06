@@ -1,13 +1,34 @@
 <?php
+/**
+ * @file StoreWebSalesLeadRequest.php
+ * @path app/Http/Requests/Web/WebSalesLead/StoreWebSalesLeadRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for creating new sales leads from web sources.
+ */
 
 namespace App\Http\Requests\Web\WebSalesLead;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles request validation for new sales lead acquisition, ensuring data integrity across various CRM channels.
+ */
 class StoreWebSalesLeadRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -44,6 +65,11 @@ class StoreWebSalesLeadRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

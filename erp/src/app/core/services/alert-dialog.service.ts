@@ -1,7 +1,25 @@
+/**
+ * @file alert-dialog.service.ts
+ * @path src/app/shared/services/alert-dialog.service.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2025
+ * @description Service for programmatically creating and managing dynamic AlertDialogComponent instances globally.
+ * @dependencies
+ * - AlertDialogComponent: The UI component to be dynamically rendered.
+ * - ApplicationRef: Required to manually attach/detach component views to the application tree.
+ * - EnvironmentInjector: Required for dependency injection within dynamically created components.
+ */
+
 import { Injectable, ComponentRef, ApplicationRef, EnvironmentInjector, createComponent, EmbeddedViewRef } from '@angular/core';
 import { AlertDialogComponent, AlertType } from '../../admin/components/alert-dialog/alert-dialog.component';
 import { first } from 'rxjs/operators';
 
+/**
+ * @description Provides functionality to display global alert dialogs without needing to declare them in every template.
+ * @usage Used across the application to trigger user alerts, confirmations, or notifications.
+ * @note The service manages the entire lifecycle of the dynamic component, including manual DOM attachment and cleanup.
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -13,11 +31,17 @@ export class AlertDialogService {
     private appRef: ApplicationRef
   ) {}
 
+  /**
+   * @description Opens a dynamic alert dialog and returns a Promise that resolves when the user closes it.
+   * @param title The dialog header text.
+   * @param message The content body text.
+   * @param type The alert classification (e.g., 'info', 'error').
+   * @returns {Promise<void>} Resolves when the dialog is closed.
+   * @note If another dialog is currently open, it is closed before the new one is initialized.
+   */
   open(title: string, message: string, type: AlertType = 'info'): Promise<void> {
-    // 1. Pro jistotu zavřeme jakýkoliv předchozí zobrazený toast
     this.closeDialog();
 
-    // 2. Dynamicky vytvoříme instanci komponenty toastu
     const ref = createComponent(AlertDialogComponent, {
       environmentInjector: this.environmentInjector
     });
@@ -32,7 +56,6 @@ export class AlertDialogService {
     this.appRef.attachView(ref.hostView);
     document.body.appendChild(domElem);
 
-    // 3. Předáme data do vstupů komponenty
     ref.instance.title = title;
     ref.instance.message = message;
     ref.instance.type = type;
@@ -41,7 +64,9 @@ export class AlertDialogService {
     return new Promise<void>((resolve) => {
       let isResolved = false;
 
-      // Pomocná funkce, která garantuje, že se úklid a vyřešení Promise provede pouze jednou
+      /**
+       * @description Ensures the cleanup logic and promise resolution occur exactly once.
+       */
       const handleClose = () => {
         if (isResolved) return;
         isResolved = true;
@@ -49,7 +74,6 @@ export class AlertDialogService {
         resolve();
       };
 
-      // KLÍČOVÉ: Obě události (onClose i onOk) směřují do bezpečné obalové funkce.
       ref.instance.onClose.pipe(first()).subscribe(() => {
         handleClose();
       });
@@ -60,32 +84,30 @@ export class AlertDialogService {
     });
   }
 
+  /**
+   * @description Handles the safe destruction of the active dialog component.
+   * @note Detaches the view from ApplicationRef and destroys the ComponentRef instance to prevent memory leaks.
+   */
   private closeDialog(): void {
-    // Bezpečnostní pojistka: pokud instance neexistuje, ihned skončíme
     if (!this.componentRef) {
       return;
     }
 
-    // Uložíme si referenci do lokální proměnné, aby nám ji asynchronní volání "nepodtrhlo" nastavením na undefined
     const refToDestroy = this.componentRef;
-    // Okamžitě vyčistíme globální referenci, aby případná další asynchronní volání closeDialog() skončila hned na první pojistce nahoře
     this.componentRef = undefined;
 
     try {
-      // Bezpečně schováme časovače v komponentě
       if (refToDestroy.instance) {
         refToDestroy.instance.hide();
       }
       
-      // Prověříme, zda hostView stále existuje a nebyl již zničen
       if (refToDestroy.hostView && !refToDestroy.hostView.destroyed) {
         this.appRef.detachView(refToDestroy.hostView);
       }
       
-      // Kompletní destrukce komponenty
       refToDestroy.destroy();
     } catch (error) {
-      console.warn('[AlertDialogService] Upozornění při uzavírání dialogu:', error);
+      console.warn('[AlertDialogService] Warning during dialog closure:', error);
     }
   }
 }

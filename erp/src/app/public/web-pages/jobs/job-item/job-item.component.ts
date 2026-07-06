@@ -1,3 +1,16 @@
+/**
+ * @file job-item.component.ts
+ * @path src/app/pages/jobs/job-item/job-item.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Handles the specific job application page, managing the application form, file attachments, and data submission.
+ * @dependencies
+ * - BaseDataComponent: Extends core functionality for handling API communication and state.
+ * - ReactiveFormsModule: Manages form group validation and state.
+ * - PublicDataService/LocalizationService: Provides configuration and localized content.
+ */
+
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -10,6 +23,11 @@ import { LocalizationService } from '../../../../shared/services/localization.se
 import { LoadingService } from '../../../../core/services/loading.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 
+/**
+ * @description Component for displaying a single job posting and its associated application form.
+ * @usage Used for candidates to review job details and upload their CV.
+ * @note Extends BaseDataComponent to leverage shared administrative data handling patterns while maintaining public-facing logic.
+ */
 @Component({
   selector: 'app-job-item',
   standalone: true,
@@ -41,6 +59,9 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Initializes form controls and subscribes to translation/settings streams.
+   */
   override ngOnInit(): void {
     this.initForm();
 
@@ -62,6 +83,9 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
       });
   }
 
+  /**
+   * @description Sets up the application form structure with validation.
+   */
   private initForm(): void {
     this.applicationForm = this.fb.group({
       first_name:              ['', Validators.required],
@@ -73,6 +97,10 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
     });
   }
 
+  /**
+   * @description Captures file selection from the DOM input.
+   * @param event File input event.
+   */
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
@@ -81,6 +109,9 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
     }
   }
 
+  /**
+   * @description Prepares form data and submits the application via Multipart/Form-Data.
+   */
   onSubmit(): void {
     if (this.applicationForm.invalid || !this.selectedFile) {
       this.applicationForm.markAllAsTouched();
@@ -109,12 +140,15 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
         this.cd.markForCheck();
       },
       error: () => {
-        this.errorMessage = this.t?.form_error_generic ?? 'Nastala chyba. Zkuste to prosím znovu.';
+        this.errorMessage = this.t?.form_error_generic ?? 'An error occurred. Please try again.';
         this.cd.markForCheck();
       }
     });
   }
 
+  /**
+   * @description Extracts job-specific content from translation keys based on route parameters.
+   */
   private loadJobData(): void {
     const jobId = this.route.snapshot.paramMap.get('id');
     if (jobId && this.t[jobId]) {

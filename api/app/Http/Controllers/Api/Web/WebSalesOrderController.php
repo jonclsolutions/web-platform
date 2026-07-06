@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file WebSalesOrderController.php
+ * @path app/Http/Controllers/Api/Web/WebSalesOrderController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages sales order (realizace) lifecycle, including integration with sales leads, file attachment handling, and comprehensive audit logging.
+ */
 
 namespace App\Http\Controllers\Api\Web;
 
@@ -11,10 +19,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{Log, Storage};
 
+/**
+ * @description Controller responsible for orchestrating sales order processing and tracking.
+ * @note Automates sales representative assignment based on linked lead records and manages persistent document storage.
+ */
 class WebSalesOrderController extends Controller
 {
     /**
-     * Seznam realizací (objednávek).
+     * Retrieves a paginated list of sales orders with filtering and eager-loaded lead data.
+     *
+     * @param Request $request
+     * @return JsonResponse|mixed Paginated dataset or collection.
      */
     public function index(Request $request)
     {
@@ -24,7 +39,7 @@ class WebSalesOrderController extends Controller
         $query = WebSalesOrder::query()->with('lead');
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Fulltextové vyhledávání
+        // Fulltext search
         if ($s = $request->input('search')) {
             $query->where(fn($q) => $q->where('client_name', 'like', "%$s%")
                 ->orWhere('salesman_name', 'like', "%$s%")
@@ -32,26 +47,24 @@ class WebSalesOrderController extends Controller
                 ->orWhere('client_email', 'like', "%$s%"));
         }
 
-        // Filtry na přesnou shodu
+        // Filtering
         foreach (['id', 'lead_id', 'ico'] as $f) {
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
         
-        // Filtry na částečnou shodu
         foreach (['client_name', 'salesman_name', 'client_email'] as $f) {
             if ($request->filled($f)) $query->where($f, 'like', '%' . $request->input($f) . '%');
         }
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
 
-        // Řazení
+        // Sorting
         $sortBy = $request->input('sort_by', 'id');
         $sortDirection = $request->input('sort_direction', 'desc');
         $query->orderBy($sortBy, $sortDirection);
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
-        // Logování exportu
         if ($noPagination) {
             $this->logAction($request, 'export', 'WebSalesOrder', "Hromadný export realizací.");
             $data = $query->get();
@@ -69,17 +82,22 @@ class WebSalesOrderController extends Controller
         ]);
     }
 
+    /**
+     * Stores a new sales order and links it to an existing lead.
+     *
+     * @param StoreWebSalesOrderRequest $request
+     * @return JsonResponse
+     * @throws \Exception
+     */
     public function store(StoreWebSalesOrderRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
 
-            // 1. Zpracování přílohy
             if ($request->hasFile('attachment')) {
                 $validated['attachment_path'] = $request->file('attachment')->store('orders', 'public');
             }
 
-            // 2. Automatické přiřazení obchodníka z Leadu
             if (!empty($validated['lead_id'])) {
                 $lead = WebSalesLead::find($validated['lead_id']);
                 if ($lead) {
@@ -88,7 +106,6 @@ class WebSalesOrderController extends Controller
                 }
             }
 
-            // 3. Fallback
             if (empty($validated['salesman_name'])) {
                 $validated['salesman_name'] = 'Webová poptávka (bez leadu)';
             }
@@ -104,50 +121,58 @@ class WebSalesOrderController extends Controller
         }
     }
 
-/**
-     * Detail realizace (včetně smazaných v koši a načtení Leadů).
+    /**
+     * Retrieves detailed information about a specific order, including soft-deleted ones.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        // 🔧 Ruční vyhledání podle ID (včetně smazaných)
         $sales_order = WebSalesOrder::withTrashed()->findOrFail($id);
-
-        // Pokud chceš zachovat eager loading relace Lead:
         $sales_order->load('lead');
         
         return response()->json(new WebSalesOrderResource($sales_order));
     }
 
-/**
- * Aktualizace realizace.
- */
-public function update(Request $request, $id): JsonResponse // 👈 Změna na Request a $id
-{
-    try {
-        $order = WebSalesOrder::findOrFail($id);
+    /**
+     * Updates an existing order record and replaces associated file attachments.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function update(Request $request, $id): JsonResponse
+    {
+        try {
+            $order = WebSalesOrder::findOrFail($id);
+            $data = $request->all();
 
-        $data = $request->all();
-
-        if ($request->hasFile('attachment')) {
-            if ($order->attachment_path) {
-                Storage::disk('public')->delete($order->attachment_path);
+            if ($request->hasFile('attachment')) {
+                if ($order->attachment_path) {
+                    Storage::disk('public')->delete($order->attachment_path);
+                }
+                $data['attachment_path'] = $request->file('attachment')->store('orders', 'public');
             }
-            $data['attachment_path'] = $request->file('attachment')->store('orders', 'public');
-        }
 
-        $order->update($data); // 👈 Použijeme $data namísto $validated
-        
-        $this->logAction($request, 'update', 'WebSalesOrder', "Aktualizace realizace ID: {$order->id}", $order->id);
-        
-        return response()->json(new WebSalesOrderResource($order->load('lead')));
-    } catch (\Exception $e) {
-        $this->logAction($request, 'error', 'WebSalesOrder', "Chyba při aktualizaci realizace ID {$id}: " . $e->getMessage(), $id);
-        return response()->json(['message' => 'Aktualizace realizace selhala.'], 500);
+            $order->update($data);
+            
+            $this->logAction($request, 'update', 'WebSalesOrder', "Aktualizace realizace ID: {$order->id}", $order->id);
+            
+            return response()->json(new WebSalesOrderResource($order->load('lead')));
+        } catch (\Exception $e) {
+            $this->logAction($request, 'error', 'WebSalesOrder', "Chyba při aktualizaci realizace ID {$id}: " . $e->getMessage(), $id);
+            return response()->json(['message' => 'Aktualizace realizace selhala.'], 500);
+        }
     }
-}
 
     /**
-     * Smazání (Soft i Hard delete).
+     * Handles soft or hard deletion of an order, including file cleanup.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -173,7 +198,11 @@ public function update(Request $request, $id): JsonResponse // 👈 Změna na Re
     }
 
     /**
-     * Obnova smazaného záznamu.
+     * Restores a previously soft-deleted order.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -191,7 +220,10 @@ public function update(Request $request, $id): JsonResponse // 👈 Změna na Re
     }
 
     /**
-     * Hromadné smazání koše.
+     * Permanently purges all soft-deleted orders and their associated files.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -215,12 +247,18 @@ public function update(Request $request, $id): JsonResponse // 👈 Změna na Re
     }
 
     /**
-     * Sjednocené logování do WebLog.
+     * Logs administrative or automated events to the system log.
+     *
+     * @param Request $request
+     * @param string $eventType
+     * @param string $module
+     * @param string $description
+     * @param int|null $affectedId
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
     {
         try {
-            // Použití sanctum guard pro identifikaci uživatele i mimo middleware
             $user = $request->user() ?? auth('sanctum')->user();
 
             WebLog::create([
@@ -233,7 +271,7 @@ public function update(Request $request, $id): JsonResponse // 👈 Změna na Re
                 'user_id'              => $user?->id,
                 'context_data'         => json_encode($request->except(['attachment']), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'     => $user ? $user->user_email : 'system/public'
+                'user_plain'           => $user ? $user->user_email : 'system/public'
             ]);
         } catch (\Exception $e) {
             Log::error("Log error (WebSalesOrder): " . $e->getMessage());

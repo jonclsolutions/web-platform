@@ -1,29 +1,49 @@
 <?php
+/**
+ * @file UpdateShopOrderRequest.php
+ * @path app/Http/Requests/Shop/ShopOrder/UpdateShopOrderRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for updating existing shop orders, including customer contact details, shipping info, and order line items.
+ */
 
 namespace App\Http\Requests\Shop\ShopOrder;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles validation for updating shop orders.
+ * @note Implements business logic checks for coupon validity during updates and ensures order item integrity.
+ */
 class UpdateShopOrderRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         $orderId = $this->route('id') ?? $this->route('order');
 
         return [
-            // 👤 Kontaktní údaje zákazníka (nepovinné při editaci)
             'email'                => ['sometimes', 'required', 'email', 'max:150'],
             'first_name'           => ['sometimes', 'required', 'string', 'max:100'],
             'last_name'            => ['sometimes', 'required', 'string', 'max:100'],
             'phone'                => ['sometimes', 'required', 'string', 'max:20'],
             'company'              => ['nullable', 'string', 'max:150'],
 
-            // 📦 Stavy & Metody
             'payment_method_id'    => ['sometimes', 'required', 'exists:shop_payment_methods,id'],
             'shipping_method_id'   => ['sometimes', 'required', 'exists:shop_shipping_methods,id'],
             
@@ -53,7 +73,6 @@ class UpdateShopOrderRequest extends FormRequest
             'shipping_country'     => ['sometimes', 'required', 'string', 'max:50'],
             'notes'                => ['nullable', 'string', 'max:1000'],
             
-            // 🛍️ Položky
             'items'                      => ['sometimes', 'required', 'array', 'min:1'],
             'items.*.id'                 => ['nullable', 'integer', 'exists:shop_order_items,id'],
             'items.*.product_id'         => ['required_with:items', 'exists:shop_products,id'],
@@ -70,6 +89,11 @@ class UpdateShopOrderRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validator errors.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

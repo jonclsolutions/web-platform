@@ -1,12 +1,29 @@
 <?php
+/**
+ * @file WebSalesLeadResource.php
+ * @path app/Http/Resources/Web/WebSalesLeadResource.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Resource transformation for sales leads.
+ */
 
 namespace App\Http\Resources\Web;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @description Transforms WebSalesLead model data into a structured format for sales tracking and CRM integration.
+ */
 class WebSalesLeadResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

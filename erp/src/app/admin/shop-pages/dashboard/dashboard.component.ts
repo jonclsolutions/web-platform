@@ -1,3 +1,15 @@
+/**
+ * @file dashboard.component.ts
+ * @path src/app/admin/pages/dashboard/dashboard.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Serves as the central management hub, aggregating operational KPIs, sales trends, and real-time shop status.
+ * @dependencies
+ * - HttpClient: Handles REST API communication for data fetching.
+ * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
+ */
+
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -18,9 +30,9 @@ interface RecentOrder {
   id: number;
   order_number: string;
   status: string;
-  status_label?: string;          // 🟢 PŘIDÁN OTAZNÍK: Label může chybět
+  status_label?: string;
   payment_status: string;
-  payment_status_label?: string;  // 🟢 PŘIDÁN OTAZNÍK: Label může chybět
+  payment_status_label?: string;
   final_amount: number;
   created_at: string;
   customer?: { full_name: string; email: string };
@@ -48,6 +60,11 @@ interface StatusBreakdown {
   pct: number;
 }
 
+/**
+ * @description Orchestrates the administration dashboard, visualizing key performance metrics and operational tasks.
+ * @usage Provides a high-level overview for store administrators to track sales, inventory, and pending orders.
+ * @note Implements an automatic data-polling mechanism to ensure the dashboard remains up-to-date without page reloads.
+ */
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -64,10 +81,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadingError = false;
   lastRefreshed: Date = new Date();
 
-  // ---- KPI ----
   kpiCards: KpiCard[] = [];
 
-  // ---- Graf ----
   chartPoints: ChartPoint[] = [];
   chartMax = 0;
   chartWidth = 700;
@@ -79,11 +94,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   chartTooltip: { visible: boolean; x: number; y: number; label: string; value: string } = {
     visible: false, x: 0, y: 0, label: '', value: ''
   };
+
+  /** @description Returns the width available for the chart area within the container. */
   get chartInnerW() { return this.chartWidth - this.chartPadL - this.chartPadR; }
+  /** @description Returns the height available for the chart area within the container. */
   get chartInnerH() { return this.chartHeight - this.chartPadT - this.chartPadB; }
+  /** @description Maps coordinate pairs to SVG polyline string format. */
   get polylinePoints(): string {
     return this.chartPoints.map(p => `${p.x},${p.y}`).join(' ');
   }
+  /** @description Generates path coordinates for the SVG area fill, closing the shape at the bottom axis. */
   get areaPoints(): string {
     if (!this.chartPoints.length) return '';
     const bottom = this.chartPadT + this.chartInnerH;
@@ -96,18 +116,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return Array.from({ length: steps + 1 }, (_, i) => i);
   }
 
-  // ---- Tabulka objednávek ----
   recentOrders: RecentOrder[] = [];
   totalOrders = 0;
   pendingOrders = 0;
 
-  // ---- Status breakdown (mini koláč) ----
   statusBreakdown: StatusBreakdown[] = [];
-
-  // ---- Low stock ----
   lowStockProducts: LowStockProduct[] = [];
 
-  // ---- Rychlé číselníky ----
   totalCustomers = 0;
   activeProducts = 0;
   activeCoupons = 0;
@@ -118,7 +133,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadAll();
-    // Auto-refresh každé 2 minuty
     this.refreshSub = interval(120_000).subscribe(() => this.loadAll());
   }
 
@@ -126,6 +140,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.refreshSub?.unsubscribe();
   }
 
+  /**
+   * @description Fetches all dashboard modules concurrently using forkJoin and handles global loading/error states.
+   */
   loadAll(): void {
     this.loading = true;
     this.loadingError = false;
@@ -151,18 +168,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * @description Maps API responses to component view models.
+   * @param res The collective response object from API calls.
+   */
   private processData(res: any): void {
-    // --- Poslední objednávky ---
     this.recentOrders = res.orders?.data ?? [];
     this.totalOrders = res.orders?.total ?? 0;
     this.pendingOrders = res.pendingOrders?.total ?? 0;
 
-    // --- Celkové číslice ---
     this.totalCustomers = res.customers?.total ?? 0;
     this.activeProducts = res.products?.total ?? 0;
     this.activeCoupons = res.coupons?.total ?? 0;
 
-    // --- Low stock ---
     const allProds: any[] = Array.isArray(res.lowStock) ? res.lowStock : (res.lowStock?.data ?? []);
     this.lowStockProducts = allProds.slice(0, 8).map(p => ({
       id: p.id,
@@ -172,7 +190,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       stock_warning_level: p.stock_warning_level ?? 5,
     }));
 
-    // --- Zpracování všech objednávek pro graf a revenue ---
     const allOrds: any[] = Array.isArray(res.allOrders) ? res.allOrders : (res.allOrders?.data ?? []);
     this.buildChartData(allOrds);
     this.buildStatusBreakdown(allOrds);
@@ -180,8 +197,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.buildKpiCards();
   }
 
+  /**
+   * @description Calculates 30-day revenue trends by aggregating order totals per calendar day.
+   * @param orders Full list of shop orders.
+   */
   private buildChartData(orders: any[]): void {
-    // Posledních 30 dní, seskupení po dnech
     const days: Record<string, number> = {};
     const now = new Date();
     for (let i = 29; i >= 0; i--) {
@@ -210,6 +230,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * @description Normalizes order status counts into a percentage breakdown for the status visualization.
+   * @param orders Full list of shop orders.
+   */
   private buildStatusBreakdown(orders: any[]): void {
     const map: Record<string, number> = {};
     for (const o of orders) {
@@ -239,6 +263,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }));
   }
 
+  /**
+   * @description Aggregates revenue globally and filters orders for the current calendar month.
+   * @param orders Full list of shop orders.
+   */
   private buildRevenueStats(orders: any[]): void {
     this.totalRevenue = orders.reduce((s, o) => s + parseFloat(o.final_amount ?? 0), 0);
 
@@ -249,6 +277,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .reduce((s, o) => s + parseFloat(o.final_amount ?? 0), 0);
   }
 
+  /**
+   * @description Constructs the KPI dashboard cards based on calculated revenue and order statistics.
+   */
   private buildKpiCards(): void {
     this.kpiCards = [
       {
@@ -290,18 +321,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ];
   }
 
-  // ---- Helpers ----
+  /**
+   * @description Formats numeric amounts into CZK currency strings.
+   * @param value The amount to format.
+   * @returns {string} Currency formatted string.
+   */
   formatCurrency(value: number): string {
     if (isNaN(value)) return '0 Kč';
     return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 }).format(value);
   }
 
+  /**
+   * @description Localizes date strings for display in UI tables.
+   */
   formatDate(iso: string): string {
     if (!iso) return '—';
     const d = new Date(iso);
     return d.toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
+  /**
+   * @description Returns CSS class name based on order status for dynamic styling.
+   */
   statusClass(status: string): string {
     const map: Record<string, string> = {
       pending: 'status-pending', confirmed: 'status-confirmed',
@@ -312,15 +353,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return map[status] ?? '';
   }
 
+  /**
+   * @description Determines payment status visual style.
+   */
   paymentClass(status: string): string {
     return status === 'paid' ? 'payment-paid' : 'payment-pending';
   }
 
+  /**
+   * @description Calculates stock level percentage relative to warning threshold.
+   */
   stockPct(product: LowStockProduct): number {
     const max = Math.max(product.stock_warning_level * 3, product.stock_quantity, 1);
     return Math.min(100, Math.round((product.stock_quantity / max) * 100));
   }
 
+  /**
+   * @description Activates the chart tooltip at specific mouse coordinates.
+   */
   showTooltip(point: ChartPoint, event: MouseEvent): void {
     this.chartTooltip = {
       visible: true,
@@ -335,11 +385,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.chartTooltip.visible = false;
   }
 
+  /**
+   * @description Filters xAxis points for rendering to improve visual clarity on the chart axis.
+   */
   get xAxisLabels(): ChartPoint[] {
-    // Zobraz každý 5. bod pro čitelnost
     return this.chartPoints.filter((_, i) => i % 5 === 0 || i === this.chartPoints.length - 1);
   }
 
+  /**
+   * @description Normalizes Y-axis values (e.g., converting 1000 to 1k).
+   * @param step Grid step index.
+   */
   yLabel(step: number): string {
     const val = (this.chartMax / 4) * step;
     if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;

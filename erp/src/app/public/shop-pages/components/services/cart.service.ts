@@ -1,10 +1,24 @@
+/**
+ * @file cart.service.ts
+ * @path src/app/shop/components/services/cart.service.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the e-shop shopping cart state, including item persistence, quantity management, stock reservation timers, and order creation workflows.
+ * @dependencies
+ * - Angular Core: For signals, computed properties, and effects to handle reactive state.
+ * - HttpClient: For communicating with the checkout API endpoints.
+ * - environment: Provides API configuration URLs.
+ */
+
 import { Injectable, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 
+/** Data structure for individual items within the shopping cart */
 export interface CartItem {
-  id: string; // uuid: productId_variantId
+  id: string; // Unique identifier: productId_variantId
   product_id: number;
   product_variant_id: number | null;
   product_name: string;
@@ -12,12 +26,12 @@ export interface CartItem {
   product_slug: string;
   product_image?: string;
   quantity: number;
-  unit_price: number; // 🛡️ Vždy drží striktně EUR cenu s DPH
-  total_price: number; // 🛡️ unit_price * quantity
+  unit_price: number; // Strictly enforces EUR price with VAT
+  total_price: number; // Derived as unit_price * quantity
   vat_rate: number;
   stock_quantity: number;
   reservedAt: number;
-  // 🛡️ Uchováme kompletní cenový objekt z DB pro pozdější verifikaci
+  /** Full database pricing object used for server-side verification */
   prices?: {
     price_eur_with_vat: number;
     price_eur_without_vat: number;
@@ -26,18 +40,24 @@ export interface CartItem {
   };
 }
 
+/** Root interface for the entire cart state */
 export interface Cart {
   items: CartItem[];
   expiresAt: number;
   createdAt: number;
 }
 
+/**
+ * @description Service for handling global cart operations.
+ * @usage Provides a single source of truth for the cart state accessible by multiple components.
+ * @note Utilizes Signals for reactive UI updates and persists state via LocalStorage. Implements a 15-minute reservation TTL.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
   private readonly CART_STORAGE_KEY = 'shop_cart';
-  private readonly RESERVATION_TIME = 15 * 60 * 1000; // 15 minut
+  private readonly RESERVATION_TIME = 15 * 60 * 1000; // 15 minutes in milliseconds
 
   private cartSignal = signal<Cart>({
     items: [],
@@ -52,18 +72,25 @@ export class CartService {
 
   cartItems = computed(() => this.cartSignal().items);
   cartCount = computed(() => this.cartItems().length);
+  
+  /** Sum of all quantities in the cart */
   totalQuantity = computed(() => 
     this.cartItems().reduce((sum, item) => sum + item.quantity, 0)
   );
+
+  /** Sum of all item total prices */
   subtotal = computed(() => 
     this.cartItems().reduce((sum, item) => sum + item.total_price, 0)
   );
+
+  /** Tax calculation based on item vat_rate */
   totalTax = computed(() => {
     return this.cartItems().reduce((sum, item) => {
       const priceWithoutTax = item.total_price / (1 + (item.vat_rate / 100));
       return sum + (item.total_price - priceWithoutTax);
     }, 0);
   });
+
   totalPrice = computed(() => this.subtotal());
   timeRemaining = computed(() => this.timerSignal());
   isExpired = computed(() => this.isExpiredSignal());
@@ -80,6 +107,10 @@ export class CartService {
     });
   }
 
+  /**
+   * @description Attempts to load the cart from LocalStorage on initialization.
+   * @note Checks expiry status immediately; if expired, maintains cart items but flags expiration.
+   */
   private loadCart(): void {
     const stored = localStorage.getItem(this.CART_STORAGE_KEY);
     if (stored) {
@@ -95,7 +126,7 @@ export class CartService {
           this.cartSignal.set(cart);
         }
       } catch (e) {
-        console.error('Chyba při načítání košíku:', e);
+        console.error('Error loading cart from storage:', e);
       }
     }
   }
@@ -104,26 +135,28 @@ export class CartService {
     localStorage.setItem(this.CART_STORAGE_KEY, JSON.stringify(cart));
   }
 
+  /**
+   * @description Adds a product to the cart or increments quantity if already present.
+   * @param product The base product object.
+   * @param variant Optional specific variant selected.
+   * @param quantity Quantity to add.
+   */
   addItem(product: any, variant: any | null, quantity: number = 1): void {
     const itemId = this.generateItemId(product.id, variant?.id);
     const existingItem = this.cartItems().find(i => i.id === itemId);
 
     const activePrices = variant ? variant.prices : product.prices;
-    // Fix TS4111 pomocí závorkové notace
     const unitPrice = activePrices ? activePrices['price_eur_with_vat'] : 0;
     const vatRate = activePrices ? activePrices['vat_rate'] : (variant?.vat_rate || product.vat_rate || 21);
     
     if (unitPrice <= 0) {
-      console.error('⚠️ Detekována kritická chyba! Nelze vložit produkt s nulovou nebo chybějící EUR cenou.', { product, variant });
-      alert('Omlouváme se, ale tento produkt momentálně nelze vložit do košíku (chyba nacenění).');
+      console.error('Critical Error: Product cannot be added without a valid EUR price.', { product, variant });
       return;
     }
 
     const variantName = variant ? variant.variant_name : null;
     const stockQuantity = variant ? (variant.stock_quantity ?? 2) : (product.stock_quantity ?? 2);
     
-    console.log(`[KOŠÍK SERVICE] Zabezpečené přidání v EUR: ${product.name}, Cena: ${unitPrice} €`);
-
     const productImage = variant?.images?.[0]?.url || 
                          product.images?.find((img: any) => img.is_primary)?.url || 
                          product.images?.[0]?.url || 
@@ -162,6 +195,11 @@ export class CartService {
     this.resetTimer();
   }
 
+  /**
+   * @description Updates quantity for an existing cart item and adjusts total_price.
+   * @param itemId Unique cart identifier.
+   * @param quantity New requested quantity.
+   */
   updateItemQuantity(itemId: string, quantity: number): void {
     if (quantity <= 0) {
       this.removeItem(itemId);
@@ -190,6 +228,9 @@ export class CartService {
     this.resetTimer();
   }
 
+  /**
+   * @description Removes an item from the cart and resets expiration timer if the cart becomes empty.
+   */
   removeItem(itemId: string): void {
     const cart = this.cartSignal();
     const updatedItems = cart.items.filter(item => item.id !== itemId);
@@ -203,6 +244,9 @@ export class CartService {
     this.resetTimer();
   }
 
+  /**
+   * @description Wipes cart state and storage.
+   */
   clear(): void {
     this.cartSignal.set({
       items: [],
@@ -214,6 +258,9 @@ export class CartService {
     this.timerSignal.set(0);
   }
 
+  /**
+   * @description Initializes the 1-second interval timer for tracking reservation TTL.
+   */
   private startTimer(): void {
     if (this.timerInterval) clearInterval(this.timerInterval);
 
@@ -236,6 +283,9 @@ export class CartService {
     }, 1000);
   }
 
+  /**
+   * @description Resets the reservation TTL timer whenever a cart mutation occurs.
+   */
   private resetTimer(): void {
     const cart = this.cartSignal();
     if (cart.items.length === 0) {
@@ -254,6 +304,10 @@ export class CartService {
     return `${productId}_${variantId || 'novariant'}`;
   }
 
+  /**
+   * @description Submits the current cart state and user data to the checkout API.
+   * @returns Observable containing server response of order submission.
+   */
   createOrder(
     email: string, firstName: string, lastName: string, phone: string,
     company: string | null, address: string, city: string, postalCode: string,

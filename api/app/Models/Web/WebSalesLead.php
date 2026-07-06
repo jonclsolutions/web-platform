@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file WebSalesLead.php
+ * @path app/Models/Web/WebSalesLead.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Model representing a sales lead.
+ */
 
 namespace App\Models\Web;
 
@@ -7,11 +15,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\User;
 
+/**
+ * @description Manages potential client interactions, tracking contact progress and lead status.
+ * * @property int $id Unique identifier.
+ * @property int $user_id The salesman assigned to the lead.
+ */
 class WebSalesLead extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * @var array<int, string> The attributes that are mass assignable.
+     */
     protected $fillable = [
         'user_id',
         'salesman_name',
@@ -32,6 +49,9 @@ class WebSalesLead extends Model
         'rejection_reason'
     ];
 
+    /**
+     * @var array<string, string> The attributes that should be cast to native types.
+     */
     protected $casts = [
         'first_contact_date' => 'date',
         'last_contact_date'  => 'date',
@@ -41,7 +61,8 @@ class WebSalesLead extends Model
     ];
 
     /**
-     * Relace na uživatele (obchodníka), který lead spravuje.
+     * Get the user (salesman) assigned to this lead.
+     * * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -49,7 +70,8 @@ class WebSalesLead extends Model
     }
 
     /**
-     * Relace na objednávky vytvořené z tohoto leadu.
+     * Get the sales orders derived from this lead.
+     * * @return HasMany
      */
     public function orders(): HasMany
     {

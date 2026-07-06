@@ -1,3 +1,16 @@
+/**
+ * @file products.component.ts
+ * @path src/app/admin/pages/shop/products/products.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Central management component for store inventory, handling CRUD operations for products, variants, and product imagery.
+ * @dependencies
+ * - BaseDataComponent: Provides base CRUD functionality.
+ * - ConfirmDialogService: Facilitates user confirmation for deletion actions.
+ * - Core Providers: Handles API communication and state management.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -8,6 +21,11 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { PRODUCT_BUTTONS, PRODUCT_COLUMNS, TRASH_PRODUCT_COLUMNS, FILTER_COLUMNS, TOOLBAR_BUTTONS, PRODUCT_FORM_FIELDS } from './products.config';
 import { Variant, ProductImage, Category, Supplier, Product } from './product-specific.interface';
 
+/**
+ * @description Controller for the product administration module.
+ * @usage Orchestrates product data flow, including category/supplier associations, variant management, and complex image uploads.
+ * @note Implements a multi-modal editing experience to handle nested product data (variants and images) within the main product form.
+ */
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -73,8 +91,14 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.toggleBodyScroll(false);
   }
 
-  // ========== DATA TRANSFORMACE ==========
-
+  /**
+   * @description Overrides base paginated fetch to transform raw API responses into UI-friendly product structures.
+   * @param isTrash Indicates whether to fetch from the trash endpoint.
+   * @param page Target page number.
+   * @param perPage Number of items per page.
+   * @param filters Active filter parameters.
+   * @returns Observable of paginated product data.
+   */
   override fetchPaginatedData(
     isTrash: boolean,
     page: number,
@@ -99,12 +123,18 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     );
   }
 
+  /**
+   * @description Utility to prevent background page scroll when modal overlays are displayed.
+   * @param lock Boolean flag to enable/disable modal scroll locking.
+   */
   private toggleBodyScroll(lock: boolean): void {
     document.body.classList.toggle('modal-open', lock);
   }
 
-  // ========== TOOLBAR ==========
-
+  /**
+   * @description Maps toolbar button clicks to specific component methods.
+   * @param action The string action key from the toolbar configuration.
+   */
   handleToolbarAction(action: string): void {
     if (this.isProcessing) return;
     const actions: Record<string, () => void> = {
@@ -139,8 +169,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.cd.markForCheck();
   }
 
-  // ========== FILTRY ==========
-
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
   applyFilters(newFilters: Core.FilterParams): void {
@@ -157,8 +185,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   handlePageChange(page: number): void        { this.onHandlePageChange(page, this.filters); }
   handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
 
-  // ========== KATEGORIE & DODAVATELÉ ==========
-
+  /**
+   * @description Fetches all available categories to populate dropdowns and filter selectors.
+   */
   private loadCategories(): void {
     this.dataHandler.getCollection<Category>('shop/categories?no_pagination=true')
       .pipe(Core.takeUntil(this.destroy$))
@@ -168,6 +197,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
       });
   }
 
+  /**
+   * @description Fetches all available suppliers for product assignment.
+   */
   private loadSuppliers(): void {
     this.dataHandler.getCollection<Supplier>('shop/suppliers?no_pagination=true')
       .pipe(Core.takeUntil(this.destroy$))
@@ -177,6 +209,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
       });
   }
 
+  /**
+   * @description Synchronizes categories and suppliers into dynamic form field and filter options.
+   */
   private updateFormFieldsOptions(): void {
     this.formFields.forEach(field => {
       if (field.column_name === 'category_id')
@@ -192,8 +227,10 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     });
   }
 
-  // ========== DETAIL ==========
-
+  /**
+   * @description Loads full product entity details for the detail view modal, including price/variant normalization.
+   * @param item The summary product record.
+   */
   handleViewDetails(item: any): void {
     if (this.isProcessing || !item.id) return;
     this.isProcessing = true;
@@ -234,8 +271,11 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.cd.markForCheck();
   }
 
-  // ========== EDITACE ==========
-
+  /**
+   * @description Loads a product's full data into the editor for general information updates.
+   * @param product The product summary object.
+   * @param event Mouse event to stop propagation.
+   */
   openEditProductForm(product: Product, event?: Event): void {
     if (event) event.stopPropagation();
     if (this.isProcessing || !product.id) return;
@@ -270,6 +310,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     });
   }
 
+  /**
+   * @description Initializes the variant management modal.
+   */
   openVariantsModal(product: Product, event?: Event): void {
     if (event) event.stopPropagation();
     if (this.isProcessing) return;
@@ -305,8 +348,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     });
   }
 
-  // ========== VARIANTY ==========
-
+  /**
+   * @description Appends a default variant object to the current editing product.
+   */
   addVariant(): void {
     if (!this.editingProduct) return;
     this.editingProduct.variants ??= [];
@@ -319,6 +363,10 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Removes a variant from the local editing state or flags it for server-side deletion.
+   * @param index The index of the variant to delete.
+   */
   async deleteVariant(index: number): Promise<void> {
     if (!this.editingProduct?.variants) return;
     const variant = this.editingProduct.variants[index];
@@ -333,6 +381,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     }
   }
 
+  /**
+   * @description Sets the current variant context for image editing.
+   */
   editVariantImages(index: number, event?: Event): void {
     if (event) event.stopPropagation();
     this.editingVariantIdx = index;
@@ -403,6 +454,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     return this.editingProduct.variants[this.editingVariantIdx];
   }
 
+  /**
+   * @description Persists temporary variant image changes to the product model.
+   */
   saveVariantImages(): void {
     if (this.editingVariantIdx !== null && this.editingProduct?.variants?.[this.editingVariantIdx]) {
       this.editingProduct.variants[this.editingVariantIdx].images = this.editingVariantImages.map(img => ({
@@ -423,8 +477,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.cd.markForCheck();
   }
 
-  // ========== DPH VÝPOČTY ==========
-
+  /**
+   * @description Automatically calculates the net price whenever VAT or gross price is changed.
+   */
   onVATRateChange(variant: any): void        { this.calcVariantPricesWithoutVat(variant); this.cd.markForCheck(); }
   onPriceWithVATChange(variant: any): void   { this.calcVariantPricesWithoutVat(variant); this.cd.markForCheck(); }
 
@@ -436,8 +491,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
       : 0;
   }
 
-  // ========== OBRÁZKY ==========
-
+  /**
+   * @description Initializes the modal for editing global product imagery.
+   */
   openImagesModal(product: Product, event?: Event): void {
     if (event) event.stopPropagation();
     if (this.isProcessing) return;
@@ -504,8 +560,10 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.cd.markForCheck();
   }
 
-  // ========== VALIDACE ==========
-
+  /**
+   * @description Validates the form state, ensuring required fields (name, SKU, categories) and pricing are correctly set.
+   * @returns {boolean} True if the form data is valid for submission.
+   */
   validateProduct(): boolean {
     if (!this.editingProduct) return false;
 
@@ -565,8 +623,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     return true;
   }
 
-  // ========== ULOŽENÍ ==========
-
+  /**
+   * @description Constructs FormData and submits the product (including all nested variants and media) to the API.
+   */
   saveProduct(): void {
     if (!this.editingProduct || !this.validateProduct()) return;
 
@@ -603,13 +662,11 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     else
       fd.append('category_ids', '');
 
-    // Ceny — pouze EUR
     fd.append('prices[vat_rate]',            String(vatRate));
     fd.append('prices[price_eur_with_vat]',  String(priceWithVat));
     fd.append('prices[price_eur_without_vat]', String(priceWithoutVat));
     fd.append('prices[cost_price_eur]',      String(this.editingProduct.cost_price_eur ?? 0));
 
-    // Obrázky
     (this.editingProduct.images ?? []).forEach((img: ProductImage, idx: number) => {
       if (img.id)     fd.append(`images[${idx}][id]`,         String(img.id));
       if (img.file)   fd.append(`images[${idx}][file]`,       img.file);
@@ -619,7 +676,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
       if (img._delete) fd.append('delete_images[]', String(img.id));
     });
 
-    // Varianty
     const activeVariants = (this.editingProduct.variants ?? []).filter((v: Variant) => !v._delete);
     activeVariants.forEach((v: any, idx: number) => {
       if (v.id) fd.append(`variants[${idx}][id]`, String(v.id));
@@ -675,8 +731,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     });
   }
 
-  // ========== KATEGORIE HELPERS ==========
-
   getAvailableCategoriesForForm(): Category[] {
     return this.categories.filter(cat =>
       !this.selectedFormCategories.some(s => s.id === cat.id)
@@ -706,8 +760,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   setMainCategory(categoryId: number): void {
     if (this.editingProduct) { this.editingProduct.category_id = categoryId; this.cd.markForCheck(); }
   }
-
-  // ========== FORMULÁŘ OPEN/CLOSE ==========
 
   handleCreateFormOpened(): void {
     this.selectedFormCategories = [];
@@ -744,8 +796,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.selectedFormCategories = [];
     this.cd.markForCheck();
   }
-
-  // ========== MISC HELPERS ==========
 
   public generateSlug(text: string): string {
     return text.toLowerCase()

@@ -1,3 +1,17 @@
+/**
+ * @file edit-legal.component.ts
+ * @path src/app/admin/pages/legal/edit-legal/edit-legal.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Provides a multi-language content management interface for legal document sections (e.g., GDPR, Terms of Service).
+ * @dependencies
+ * - BaseDataComponent: Manages core CRUD operations and API communication.
+ * - ConfirmDialogService: Facilitates secure deletion of content sections.
+ * - AlertDialogService: Provides feedback to users after operations.
+ * - RxJS: Used for reactive data fetching and cross-language consistency checks.
+ */
+
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormsModule } from '@angular/forms';
@@ -17,6 +31,11 @@ interface DocumentSection {
   lang?: string;
 }
 
+/**
+ * @description Manages the editing lifecycle of localized legal document content.
+ * @usage Allows administrators to toggle between document types (GDPR, TOS) and languages, ensuring content parity across translations.
+ * @note Implements an inline editing pattern with a completeness checker to warn users about missing translations.
+ */
 @Component({
   selector: 'app-edit-legal',
   standalone: true,
@@ -49,7 +68,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
 
   constructor(
     protected override dataHandler: Core.DataHandler,
-    protected override cd: Core.ChangeDetectorRef,
+    protected override cd: ChangeDetectorRef,
     protected override genericTableService: Core.GenericTableService,
     private fb: FormBuilder,
     private router: Core.Router,
@@ -64,17 +83,14 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     this.loadLanguages();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // JAZYKY
-  // ─────────────────────────────────────────────────────────────
-
+  /**
+   * @description Retrieves supported languages for the 'web' module and initializes the active language state.
+   */
   private loadLanguages(): void {
-    console.log('[DEBUG - LOAD LANGUAGES] Požadavek na jazyky pro:', this.LANG_MODULE);
     this.dataHandler.getCollection<any>(`languages/${this.LANG_MODULE}`)
       .pipe(catchError(() => of({ languages: [] })))
       .subscribe((res: any) => {
         this.languages = (res?.languages ?? []).filter((l: any) => l.active !== false);
-        console.log('[DEBUG - LOAD LANGUAGES] Načtené jazyky:', this.languages);
 
         if (this.languages.length > 0 && !this.languages.find(l => l.code === this.activeLang)) {
           this.activeLang = this.languages[0].code;
@@ -85,9 +101,12 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       });
   }
 
+  /**
+   * @description Updates the active language and resets transient UI states to prevent editing collisions.
+   * @param code The language ISO code to switch to.
+   */
   switchLang(code: string): void {
     if (this.activeLang === code) return;
-    console.log('[DEBUG - SWITCH LANG] Přepínám na:', code);
     this.activeLang = code;
     this.editingIds.clear();
     this.editBuffer = {};
@@ -102,33 +121,23 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     return this.languages.find(l => l.code === code)?.name ?? code.toUpperCase();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // DATA
-  // ─────────────────────────────────────────────────────────────
-
   override refreshData(): void {
     const params = {
       document_type_id: this.activeTab,
       lang: this.activeLang
     };
-    console.log('[DEBUG - REFRESH DATA] Načítám sekce pro parametry:', params);
     
     this.loadAllData(params).subscribe({
       next: (res) => {
-        console.log('[DEBUG - REFRESH DATA] Data úspěšně přijata:', res);
         this.data = Array.isArray(res) ? res : [];
         this.checkCompleteness();
         this.cd.markForCheck();
-      },
-      error: (err) => {
-        console.error('[DEBUG - REFRESH DATA] Chyba při načítání:', err);
       }
     });
   }
 
   switchTab(tabId: 1 | 2): void {
     if (this.activeTab === tabId) return;
-    console.log('[DEBUG - SWITCH TAB] Přepínám na tab:', tabId);
     this.activeTab = tabId;
     this.editingIds.clear();
     this.editBuffer = {};
@@ -139,10 +148,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     this.refreshData();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // COMPLETENESS
-  // ─────────────────────────────────────────────────────────────
-
+  /**
+   * @description Performs an asynchronous check across all languages to identify missing translations for existing sections.
+   * @note Uses forkJoin to aggregate data for every supported language and compares position availability.
+   */
   private checkCompleteness(): void {
     if (this.languages.length <= 1) {
       this.missingSummary = {};
@@ -150,7 +159,6 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       return;
     }
 
-    console.log('[DEBUG - COMPLETENESS] Spouštím kontrolu úplnosti pro jazyky:', this.languages);
     const requests = this.languages.map(lang =>
       this.loadAllData({
         document_type_id: this.activeTab,
@@ -165,7 +173,6 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     );
 
     forkJoin(requests).subscribe(results => {
-      console.log('[DEBUG - COMPLETENESS] Výsledky kontroly:', results);
       const allPositions = new Set<number>();
       results.forEach(r => r.positions.forEach(p => allPositions.add(p)));
 
@@ -201,10 +208,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       .sort((a, b) => a - b);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // INLINE EDIT
-  // ─────────────────────────────────────────────────────────────
-
+  /**
+   * @description Initializes the buffer for inline editing of a specific document section.
+   * @param item The section to start editing.
+   */
   startEdit(item: DocumentSection): void {
     this.editingIds.add(item.id);
     this.editBuffer[item.id] = {
@@ -220,6 +227,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Commits edited data to the API and refreshes the current view.
+   * @param item The original item containing the ID.
+   */
   saveEdit(item: DocumentSection): void {
     const buf = this.editBuffer[item.id];
     if (!buf || !buf.content?.trim()) {
@@ -235,17 +246,14 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       lang: this.activeLang,
     };
 
-    console.log('[DEBUG - SAVE EDIT] Odesílám update:', payload);
     this.updateData(item.id, payload).subscribe({
       next: () => {
-        console.log('[DEBUG - SAVE EDIT] Úspěšně uloženo.');
         this.cancelEdit(item.id);
         this.saving = false;
         this.refreshData();
         this.alertDialog.open('Úspěch', 'Změny byly uloženy.', 'success');
       },
-      error: (err) => {
-        console.error('[DEBUG - SAVE EDIT] Chyba:', err);
+      error: () => {
         this.saving = false;
         this.alertDialog.open('Chyba', 'Nepodařilo se uložit změny.', 'danger');
         this.cd.markForCheck();
@@ -257,10 +265,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     return this.editingIds.has(id);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PŘIDÁNÍ NOVÉ SEKCE
-  // ─────────────────────────────────────────────────────────────
-
+  /**
+   * @description Displays the creation form and scrolls it into view.
+   * @param position Optional numeric index for ordering.
+   */
   openAddForm(position?: number): void {
     this.showAddForm = true;
     this.addForPosition = position ?? null;
@@ -296,17 +304,14 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       lang: this.activeLang,
     };
 
-    console.log('[DEBUG - SUBMIT ADD] Odesílám novou sekci:', payload);
     this.postData(payload as DocumentSection).subscribe({
       next: () => {
-        console.log('[DEBUG - SUBMIT ADD] Úspěšně přidáno.');
         this.cancelAdd();
         this.saving = false;
         this.refreshData();
         this.alertDialog.open('Úspěch', 'Sekce byla úspěšně přidána.', 'success');
       },
-      error: (err) => {
-        console.error('[DEBUG - SUBMIT ADD] Chyba:', err);
+      error: () => {
         this.saving = false;
         this.alertDialog.open('Chyba', 'Nepodařilo se přidat sekci.', 'danger');
         this.cd.markForCheck();
@@ -314,10 +319,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     });
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // SMAZÁNÍ
-  // ─────────────────────────────────────────────────────────────
-
+  /**
+   * @description Prompts the user for confirmation before performing a hard delete of a content section.
+   * @param item The target record for deletion.
+   */
   async confirmDelete(item: DocumentSection): Promise<void> {
     const confirmed = await this.confirmDialog.open(
       'Smazat sekci',
@@ -325,15 +330,12 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     );
 
     if (confirmed) {
-      console.log('[DEBUG - DELETE] Mazání sekce s ID:', item.id);
       this.deleteData(item.id).subscribe({
         next: () => {
-          console.log('[DEBUG - DELETE] Úspěšně smazáno.');
           this.refreshData();
           this.alertDialog.open('Úspěch', 'Sekce byla smazána.', 'success');
         },
-        error: (err) => {
-          console.error('[DEBUG - DELETE] Chyba:', err);
+        error: () => {
           this.alertDialog.open('Chyba', 'Nepodařilo se smazat sekci.', 'danger');
         }
       });

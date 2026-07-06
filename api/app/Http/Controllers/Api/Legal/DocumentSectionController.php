@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file DocumentSectionController.php
+ * @path app/Http/Controllers/Api/Legal/DocumentSectionController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages CRUD operations and public delivery of legal document sections, featuring language-based fallback logic and audit logging.
+ */
 
 namespace App\Http\Controllers\Api\Legal;
 
@@ -12,10 +20,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * @description Controller handling the administration and public serving of multi-language legal document sections.
+ * @note Implements a language-fallback strategy for public viewing to ensure content availability.
+ */
 class DocumentSectionController extends Controller
 {
     /**
-     * Získání všech sekcí pro konkrétní typ dokumentu.
+     * Retrieves all sections for a specific document type and language.
+     *
+     * @param Request $request The incoming request with filtering parameters (document_type_id, lang).
+     * @return JsonResponse Collection of document sections ordered by position.
      */
     public function index(Request $request): JsonResponse
     {
@@ -25,7 +40,6 @@ class DocumentSectionController extends Controller
             $query->where('document_type_id', $typeId);
         }
 
-        // Nyní bezpečně filtruje, protože sloupec v DB již existuje
         if ($lang = $request->input('lang')) {
             $query->where('lang', $lang);
         }
@@ -33,23 +47,30 @@ class DocumentSectionController extends Controller
         $data = $query->orderBy('position', 'asc')->get();
         return response()->json(DocumentSectionResource::collection($data));
     }
+
     /**
-     * Uložení nové sekce.
+     * Stores a new legal section.
+     *
+     * @param StoreDocumentSectionRequest $request Validated request containing section data.
+     * @return JsonResponse Returns the created section resource.
      */
-public function store(StoreDocumentSectionRequest $request): JsonResponse
+    public function store(StoreDocumentSectionRequest $request): JsonResponse
     {
         try {
-            // Ujisti se, že $request->validated() obsahuje 'lang'
             $section = DocumentSection::create($request->validated());
-            $this->logAction($request, 'create', 'Legal', "Vytvořena sekce: {$section->heading} ({$section->lang})", $section->id);
+            $this->logAction($request, 'create', 'Legal', "Created section: {$section->heading} ({$section->lang})", $section->id);
             return response()->json(new DocumentSectionResource($section), 201);
         } catch (\Exception $e) {
             Log::error("Legal Store Error: " . $e->getMessage());
-            return response()->json(['message' => 'Chyba při vytváření sekce.'], 500);
+            return response()->json(['message' => 'Error creating section.'], 500);
         }
     }
+
     /**
-     * Získání detailu jedné sekce.
+     * Retrieves details for a single section.
+     *
+     * @param int|string $id The ID of the section.
+     * @return JsonResponse Returns the section resource.
      */
     public function show($id): JsonResponse
     {
@@ -58,7 +79,11 @@ public function store(StoreDocumentSectionRequest $request): JsonResponse
     }
 
     /**
-     * Aktualizace existující sekce.
+     * Updates an existing legal section.
+     *
+     * @param UpdateDocumentSectionRequest $request Validated request data.
+     * @param int|string $id The ID of the section to update.
+     * @return JsonResponse Returns the updated section resource.
      */
     public function update(UpdateDocumentSectionRequest $request, $id): JsonResponse
     {
@@ -66,48 +91,58 @@ public function store(StoreDocumentSectionRequest $request): JsonResponse
             $section = DocumentSection::findOrFail($id);
             $section->update($request->validated());
             
-            $this->logAction($request, 'update', 'Legal', "Aktualizace sekce ID: {$id}", $id);
+            $this->logAction($request, 'update', 'Legal', "Updated section ID: {$id}", $id);
             return response()->json(new DocumentSectionResource($section));
         } catch (\Exception $e) {
             Log::error("Legal Update Error: " . $e->getMessage());
-            return response()->json(['message' => 'Aktualizace selhala.'], 500);
+            return response()->json(['message' => 'Update failed.'], 500);
         }
     }
-/**
-     * VEŘEJNÉ ZOBRAZENÍ: Načtení dle slugu (gdpr / tos).
+
+    /**
+     * Serves content for public display, mapping slugs (gdpr/tos) to document types with language fallback.
+     *
+     * @param Request $request The incoming request.
+     * @param string $slug The document type identifier (e.g., 'gdpr').
+     * @return JsonResponse Document sections and metadata.
      */
     public function publicShow(Request $request, string $slug): JsonResponse
-{
-    $typeId = ($slug === 'gdpr') ? 1 : (($slug === 'tos') ? 2 : null);
+    {
+        $typeId = ($slug === 'gdpr') ? 1 : (($slug === 'tos') ? 2 : null);
 
-    if (!$typeId) {
-        return response()->json(['message' => 'Dokument nenalezen.'], 404);
-    }
+        if (!$typeId) {
+            return response()->json(['message' => 'Document not found.'], 404);
+        }
 
-    $lang = $request->input('lang', 'cz');
+        $lang = $request->input('lang', 'cz');
 
-    // 1. Zkusíme načíst data pro vybraný jazyk
-    $data = DocumentSection::where('document_type_id', $typeId)
-        ->where('lang', $lang)
-        ->orderBy('position', 'asc')
-        ->get();
-
-    // 2. Pokud jsou data prázdná a není to čeština, zkusíme načíst češtinu jako fallback
-    if ($data->isEmpty() && $lang !== 'cz') {
+        // Attempt to load requested language
         $data = DocumentSection::where('document_type_id', $typeId)
-            ->where('lang', 'cz')
+            ->where('lang', $lang)
             ->orderBy('position', 'asc')
             ->get();
+
+        // Fallback: If no content in requested language, default to 'cz'
+        if ($data->isEmpty() && $lang !== 'cz') {
+            $data = DocumentSection::where('document_type_id', $typeId)
+                ->where('lang', 'cz')
+                ->orderBy('position', 'asc')
+                ->get();
+        }
+
+        return response()->json([
+            'header_main' => ($typeId === 1) ? 'GDPR' : 'Terms of Service',
+            'last_update_date' => $data->max('updated_at')?->format('d.m.Y') ?? date('d.m.Y'),
+            'sections' => DocumentSectionResource::collection($data)
+        ]);
     }
 
-    return response()->json([
-        'header_main' => ($typeId === 1) ? 'GDPR' : 'Obchodní podmínky',
-        'last_update_date' => $data->max('updated_at')?->format('d.m.Y') ?? date('d.m.Y'),
-        'sections' => DocumentSectionResource::collection($data)
-    ]);
-}
     /**
-     * Smazání sekce.
+     * Deletes a legal section.
+     *
+     * @param Request $request The incoming request.
+     * @param int|string $id The ID of the section to delete.
+     * @return JsonResponse Returns 204 status on success.
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -116,16 +151,23 @@ public function store(StoreDocumentSectionRequest $request): JsonResponse
             $heading = $section->heading;
             $section->delete();
             
-            $this->logAction($request, 'delete', 'Legal', "Smazána sekce: {$heading}", (int)$id);
+            $this->logAction($request, 'delete', 'Legal', "Deleted section: {$heading}", (int)$id);
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error("Legal Delete Error: " . $e->getMessage());
-            return response()->json(['message' => 'Chyba při mazání sekce.'], 500);
+            return response()->json(['message' => 'Error deleting section.'], 500);
         }
     }
 
     /**
-     * Interní metoda pro logování akcí v modulu Legal.
+     * Logs administrative actions to the central audit system.
+     *
+     * @param Request $request Request object for context.
+     * @param string $eventType Action type (create, update, delete).
+     * @param string $module Module identification.
+     * @param string $description Audit log message.
+     * @param int|null $affectedId ID of the affected entity.
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
     {
@@ -140,7 +182,7 @@ public function store(StoreDocumentSectionRequest $request): JsonResponse
                 'affected_entity_id' => $affectedId,
                 'user_id' => $user?->id,
                 'context_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
-                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'Systém'
+                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'System'
             ]);
         } catch (\Exception $e) { 
             Log::error("Log error: " . $e->getMessage()); 

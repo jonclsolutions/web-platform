@@ -1,38 +1,50 @@
 <?php
+/**
+ * @file StoreWebSalesOrderRequest.php
+ * @path app/Http/Requests/Web/WebSalesOrder/StoreWebSalesOrderRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for creating new sales orders, including file attachments and required agreements.
+ */
 
 namespace App\Http\Requests\Web\WebSalesOrder;
-
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule; 
 use App\Models\Web\WebSalesLead;
 
+/**
+ * @description Handles request validation for new sales order submission.
+ * @note Implements strict file extension and size validation to ensure security.
+ */
 class StoreWebSalesOrderRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
-        // Rozsáhlý whitelist bezpečných souborů
         $safeExtensions = [
-            // Dokumenty
             'pdf', 'doc', 'docx', 'dotx', 'odt', 'pages', 'rtf', 'txt', 'csv',
-            // Tabulky a Prezentace
             'xls', 'xlsx', 'xlsm', 'xltx', 'ods', 'numbers', 'ppt', 'pptx', 'key',
-            // Obrázky
             'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff', 'tif', 'heic', 'heif', 'psd', 'ai', 'eps',
-            // Archivy (bezpečné, pokud neobsahují exe uvnitř - co kontroluje AV)
             'zip', 'rar', '7z', 'tar', 'gz',
-            // Audio
             'mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac',
-            // Video
             'mp4', 'mov', 'avi', 'wmv', 'mkv', 'webm',
-            // CAD a technické
             'dwg', 'dxf', 'stp', 'step', 'stl', 'obj'
         ];
 
         return [
-            // 👇 Opraveno: kontroluje existenci proti správnému modelu/tabulce web_sales_leads
             'lead_id'           => ['nullable', Rule::exists(WebSalesLead::class, 'id')],
             'salesman_name'     => 'sometimes|nullable|string|max:255',
             'client_name'       => 'required|string|max:255',
@@ -45,7 +57,7 @@ class StoreWebSalesOrderRequest extends FormRequest
             'attachment'        => [
                 'nullable',
                 'file',
-                'max:20480', // 20MB
+                'max:20480',
                 'mimes:' . implode(',', $safeExtensions),
             ],
             'dataProcessingAgreement' => 'required|accepted',
@@ -53,6 +65,11 @@ class StoreWebSalesOrderRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

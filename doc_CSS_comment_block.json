@@ -1,0 +1,28 @@
+{
+  "CssDocumentationStandard": {
+    "FileHeader": {
+      "format": "CSS comment block /* ... */",
+      "required_fields": [
+        "@file",
+        "@path",
+        "@project",
+        "@author",
+        "@created (only year)",
+        "@description",
+        "@dependencies (e.g., base.scss, variables.scss)"
+      ],
+      "rules": "Must be at the very top of the file. Provides context for AI and helps manage dependency chains in large stylesheets."
+    },
+    "StyleModuleBlock": {
+      "format": "CSS comment block /* ... */ before the class/selector",
+      "required_fields": [
+        "@module",
+        "@description",
+        "@usage (e.g., .class-name)",
+        "@note (optional: e.g., browser-specific hacks or overrides)"
+      ],
+      "rules": "Each major block or component in the stylesheet must be documented. Explains the intent of the styling and its application."
+    },
+    "Language": "English only"
+  }
+}

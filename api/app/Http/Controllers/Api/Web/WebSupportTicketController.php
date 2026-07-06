@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file WebSupportTicketController.php
+ * @path app/Http/Controllers/Api/Web/WebSupportTicketController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the support ticket lifecycle, including creation, status tracking, file attachment management, and audit logging.
+ */
 
 namespace App\Http\Controllers\Api\Web;
 
@@ -13,10 +21,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @description Controller responsible for processing customer support tickets.
+ * @note Supports soft-delete operations and persistent file storage for ticket attachments.
+ */
 class WebSupportTicketController extends Controller
 {
     /**
-     * Seznam tiketů s filtrací a funkčním řazením.
+     * Retrieves a paginated list of support tickets based on filters and sorting criteria.
+     *
+     * @param Request $request Search, priority, category, and pagination parameters.
+     * @return JsonResponse Paginated data or raw collection if no_pagination is true.
      */
     public function index(Request $request): JsonResponse
     {
@@ -26,36 +41,34 @@ class WebSupportTicketController extends Controller
         $query = WebSupportTicket::query();
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // --- FILTRACE ---
-if ($s = $request->input('search')) {
-    $query->where(fn($q) => $q->where('subject', 'like', "%$s%")
-        ->orWhere('description', 'like', "%$s%")
-        ->orWhere('user_plain', 'like', "%$s%"));
-}
+        // --- FILTRATION ---
+        if ($s = $request->input('search')) {
+            $query->where(fn($q) => $q->where('subject', 'like', "%$s%")
+                ->orWhere('description', 'like', "%$s%")
+                ->orWhere('user_plain', 'like', "%$s%"));
+        }
 
-// Přesná shoda (Upraveno tak, aby se frontendový 'status' správně dotazoval do DB na 'state')
-foreach (['id', 'priority', 'category'] as $f) {
-    if ($request->filled($f)) {
-        $query->where($f, $request->input($f));
-    }
-}
+        foreach (['id', 'priority', 'category'] as $f) {
+            if ($request->filled($f)) {
+                $query->where($f, $request->input($f));
+            }
+        }
 
-// Speciální ošetření pro stav (Front: status -> DB: state)
-if ($request->filled('status')) {
-    $query->where('state', $request->input('status'));
-}
+        // Map status (frontend) to state (database)
+        if ($request->filled('status')) {
+            $query->where('state', $request->input('status'));
+        }
 
-        // --- ŘAZENÍ ---
+        // --- SORTING ---
         $sortBy = $request->input('sort_by', 'created_at');
         $direction = strtolower($request->input('sort_direction', 'desc'));
         $sortDirection = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
 
         $query->orderBy($sortBy, $sortDirection);
 
-        // --- EXEKUCE ---
+        // --- EXECUTION ---
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
-        // Logování exportu
         if ($noPagination) {
             $this->logAction($request, 'export', 'WebSupportTicket', "Hromadný export support ticketů.");
             $data = $query->get();
@@ -74,7 +87,10 @@ if ($request->filled('status')) {
     }
 
     /**
-     * Vytvoření tiketu s automatickým doplněním uživatele.
+     * Stores a new support ticket and handles optional file attachments.
+     *
+     * @param StoreWebSupportTicketRequest $request
+     * @return JsonResponse
      */
     public function store(StoreWebSupportTicketRequest $request): JsonResponse
     {
@@ -104,34 +120,35 @@ if ($request->filled('status')) {
         }
     }
 
-/**
-     * Detail tiketu (včetně smazaných v koši).
+    /**
+     * Retrieves a single support ticket by ID, including soft-deleted items.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        // 🔧 Ruční vyhledání podle ID (včetně smazaných v koši)
         $supportTicket = WebSupportTicket::withTrashed()->findOrFail($id);
         
         return response()->json(new WebSupportTicketResource($supportTicket));
     }
 
-   /**
-     * Aktualizace support ticketu (ruční načtení podle ID).
+    /**
+     * Updates an existing support ticket and manages attachment replacement.
+     *
+     * @param UpdateWebSupportTicketRequest $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function update(UpdateWebSupportTicketRequest $request, $id): JsonResponse
     {
         try {
-            // 🔧 Ruční načtení podle ID (konzistentní s api.php {id})
-            // Používáme withTrashed(), aby admin mohl reagovat i na tikety v koši
-            $ticket = \App\Models\Web\WebSupportTicket::withTrashed()->findOrFail($id);
-
+            $ticket = WebSupportTicket::withTrashed()->findOrFail($id);
             $validated = $request->validated();
 
-            // Zpracování přílohy (attachment)
             if ($request->hasFile('attachment')) {
-                // Smazání staré přílohy, pokud existuje
                 if ($ticket->attachment_path) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($ticket->attachment_path);
+                    Storage::disk('public')->delete($ticket->attachment_path);
                 }
                 $path = $request->file('attachment')->store('tickets', 'public');
                 $validated['attachment_path'] = $path;
@@ -139,29 +156,21 @@ if ($request->filled('status')) {
 
             $ticket->update($validated);
 
-            $this->logAction(
-                $request, 
-                'update', 
-                'WebSupportTicket', 
-                "Aktualizace ticketu ID: {$id}", 
-                $id
-            );
+            $this->logAction($request, 'update', 'WebSupportTicket', "Aktualizace ticketu ID: {$id}", $id);
             
-            return response()->json(new \App\Http\Resources\Web\WebSupportTicketResource($ticket->fresh()));
+            return response()->json(new WebSupportTicketResource($ticket->fresh()));
         } catch (\Exception $e) {
-            $this->logAction(
-                $request, 
-                'error', 
-                'WebSupportTicket', 
-                "Chyba při aktualizaci ticketu ID {$id}: " . $e->getMessage(), 
-                $id
-            );
+            $this->logAction($request, 'error', 'WebSupportTicket', "Chyba při aktualizaci ticketu ID {$id}: " . $e->getMessage(), $id);
             return response()->json(['message' => 'Aktualizace ticketu selhala.'], 500);
         }
     }
 
     /**
-     * Smazání tiketu.
+     * Deletes a support ticket (Soft or Hard).
+     *
+     * @param Request $request Flags for force deletion.
+     * @param int $id
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -187,7 +196,11 @@ if ($request->filled('status')) {
     }
 
     /**
-     * Obnova smazaného tiketu.
+     * Restores a soft-deleted support ticket.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -204,7 +217,10 @@ if ($request->filled('status')) {
     }
 
     /**
-     * Vymazání koše.
+     * Permanently deletes all soft-deleted tickets and associated files.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -228,12 +244,18 @@ if ($request->filled('status')) {
     }
 
     /**
-     * Logování akcí do WebLog.
+     * Logs administrative actions to the audit system.
+     *
+     * @param Request $request
+     * @param string $eventType
+     * @param string $module
+     * @param string $description
+     * @param int|null $affectedId
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
     {
         try {
-            // Získání uživatele přes sanctum i pro veřejné/hybridní routy
             $user = $request->user() ?? auth('sanctum')->user();
 
             WebLog::create([
@@ -246,7 +268,7 @@ if ($request->filled('status')) {
                 'user_id'              => $user?->id,
                 'context_data'         => json_encode($request->except(['attachment']), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'     => $user ? $user->user_email : 'system/anonymous'
+                'user_plain'           => $user ? $user->user_email : 'system/anonymous'
             ]);
         } catch (\Exception $e) {
             Log::error("Log error (WebSupportTicket): " . $e->getMessage());

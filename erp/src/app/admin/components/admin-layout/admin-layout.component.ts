@@ -1,3 +1,18 @@
+/**
+ * @file admin-layout.component.ts
+ * @path src/app/admin/pages/admin-layout/admin-layout.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2025
+ * @description Main shell component for the administrative panel, managing sidebar navigation, module switching, and global UI state.
+ * @dependencies
+ * - AuthService: Manages user authentication and session status.
+ * - PermissionService: Validates access to specific administrative modules.
+ * - DataHandler: Facilitates communication with the administration API.
+ * - LoadingService: Observes global loading states for the UI.
+ * - AlertDialogService: Provides feedback for critical administrative operations.
+ */
+
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -7,11 +22,14 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { LoadingService } from '../../../core/services/loading.service';
-
-// Importy Core poskytovatelů pro komunikaci a okna
 import { DataHandler } from '../../../core/services/data-handler.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 
+/**
+ * @description The layout shell for the administration area, handling sidebar controls and system-wide settings like shop maintenance mode.
+ * @usage Used as the root component for all '/admin' routes.
+ * @note Implements persistent storage for layout preferences (sidebar width, menu state) and handles sensitive status toggles via confirmation dialogs.
+ */
 @Component({
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html',
@@ -29,11 +47,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   
   currentModule: 'web' | 'shop' = 'web';
 
-  // Lokální vlastnosti pro řízení stavu e-shopu
   isShopActive: boolean = true;
   maintenanceMessage: string = '';
 
-  // Vlastnosti pro ovládání schvalovacího modálu
   showConfirmModal: boolean = false;
   confirmPasswordValue: string = '';
   pendingTargetState: boolean = true;
@@ -54,7 +70,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private authSubscription: Subscription | undefined;
   private userEmailSubscription: Subscription | undefined;
 
-  // Vstříknutí služeb pomocí vzoru inject()
   private dataHandler = inject(DataHandler);
   private alertDialogService = inject(AlertDialogService);
 
@@ -68,13 +83,16 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.isLoadingGlobal$ = this.loadingService.isLoading$;
   }
 
+  /**
+   * @description Initializes layout state from LocalStorage and sets up authentication observation.
+   * @note Automatically adjusts sidebar visibility based on viewport width.
+   */
   ngOnInit(): void {
     if (typeof window !== 'undefined') {
       const savedWidth = localStorage.getItem('admin_sidebar_width');
       if (savedWidth) this.sidebarWidth = parseInt(savedWidth, 10);
       
       const savedState = localStorage.getItem('admin_menu_open');
-      
       const savedModule = localStorage.getItem('admin_current_module') as 'web' | 'shop';
       if (savedModule) this.currentModule = savedModule;
 
@@ -101,6 +119,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * @description Fetches system settings from the backend to determine shop status.
+   */
   private loadShopSettings(): void {
     this.dataHandler.get<any>('core/settings').subscribe({
       next: (res) => {
@@ -113,7 +134,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Pouze připraví cílový stav, vyčistí input a vyvolá HTML formulář
+  /**
+   * @description Opens the confirmation modal to initiate a status change for the shop.
+   */
   toggleShopStatus(): void {
     this.pendingTargetState = !this.isShopActive;
     this.confirmPasswordValue = ''; 
@@ -121,36 +144,34 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  // Skutečné bezpečné odeslání dat na API po schválení formuláře
+  /**
+   * @description Executes the PUT request to change the shop status, requiring a password for authorization.
+   * @note Uses AlertDialogService to provide immediate feedback on success or failure.
+   */
   submitShopStatusChange(): void {
     if (!this.confirmPasswordValue.trim()) {
-      this.alertDialogService.open('Chyba validace', 'Musíte zadat autorizační heslo.', 'danger');
+      this.alertDialogService.open('Validation Error', 'Authorization password is required.', 'danger');
       return;
     }
 
     this.dataHandler.put<any>('core/settings', {
       is_shop_active: this.pendingTargetState,
-      maintenance_message: this.maintenanceMessage || 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.',
+      maintenance_message: this.maintenanceMessage || 'System under maintenance.',
       confirm_password: this.confirmPasswordValue
     }).subscribe({
-      next: (response) => {
+      next: () => {
         this.isShopActive = this.pendingTargetState;
         this.showConfirmModal = false; 
-        
         this.alertDialogService.open(
-          'Úspěšně uloženo', 
-          this.pendingTargetState ? 'E-shop byl úspěšně spuštěn do plného provozu.' : 'Režim údržby byl úspěšně aktivován.',
+          'Success', 
+          this.pendingTargetState ? 'Shop is now active.' : 'Maintenance mode activated.',
           'success'
         );
         this.cdr.markForCheck();
       },
       error: (err) => {
-        const errorMessage = err?.error?.message || 'Nepodařilo se změnit stav e-shopu. Zkontrolujte správnost hesla.';
-        this.alertDialogService.open(
-          'Chyba autorizace', 
-          errorMessage,
-          'danger'
-        );
+        const errorMessage = err?.error?.message || 'Failed to update shop status.';
+        this.alertDialogService.open('Authorization Error', errorMessage, 'danger');
       }
     });
   }
@@ -161,16 +182,14 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /**
+   * @description Switches between main application modules ('web' vs 'shop') and updates navigation.
+   * @param module The target module to navigate into.
+   */
   switchModule(module: 'web' | 'shop'): void {
     this.currentModule = module;
     localStorage.setItem('admin_current_module', module);
-    
-    if (module === 'web') {
-      this.router.navigate(['/admin/dashboard']);
-    } else {
-      this.router.navigate(['/admin/shop/dashboard']);
-    }
-    
+    this.router.navigate([module === 'web' ? '/admin/dashboard' : '/admin/shop/dashboard']);
     this.cdr.markForCheck();
   }
 
@@ -188,6 +207,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * @description Initiates sidebar resizing.
+   * @param event The mouse interaction event.
+   */
   startResizing(event: MouseEvent): void {
     if (window.innerWidth > 768) {
       this.isResizing = true;
@@ -195,6 +218,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * @description Dynamically updates the sidebar width during resize operations.
+   */
   @HostListener('window:mousemove', ['$event'])
   onMouseMove(event: MouseEvent): void {
     if (!this.isResizing) return;
@@ -224,7 +250,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.authSubscription) this.authSubscription.unsubscribe();
-    if (this.userEmailSubscription) this.userEmailSubscription.unsubscribe();
+    this.authSubscription?.unsubscribe();
+    this.userEmailSubscription?.unsubscribe();
   }
 }

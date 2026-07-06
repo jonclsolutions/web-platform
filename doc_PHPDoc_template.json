@@ -1,0 +1,43 @@
+{
+  "PHPDocDocumentationStandard": {
+    "FileHeader": {
+      "format": "PHPDoc block",
+      "required_fields": [
+        "@file",
+        "@path",
+        "@project",
+        "@author",
+        "@created (only year)",
+        "@description"
+      ],
+      "rules": "Place at the top of the file before any imports (namespaces). Include the file path for AI context."
+    },
+    "ClassDescription": {
+      "format": "PHPDoc block (before the class definition)",
+      "required_fields": [
+        "@description",
+        "@note (optional)"
+      ],
+      "rules": "Explain the class responsibility (e.g., Service, Controller, Model) and how it integrates into the application architecture."
+    },
+    "PropertyDocumentation": {
+      "format": "PHPDoc block (above class properties)",
+      "required_fields": [
+        "@var (data type)",
+        "@description"
+      ],
+      "rules": "Crucial for Laravel Models to document database columns and relations, allowing IDEs to provide intellisense for 'magic' properties."
+    },
+    "MethodDescription": {
+      "format": "PHPDoc block (above every non-trivial method)",
+      "required_fields": [
+        "@description",
+        "@param (data type and name)",
+        "@return (data type)",
+        "@throws (if exceptions occur)"
+      ],
+      "rules": "Focus on the 'WHY' and 'HOW' of the business logic. Do not describe obvious getters/setters unless there is custom logic inside."
+    }
+  },
+  "Language": "English only"
+}

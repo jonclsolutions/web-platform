@@ -1,3 +1,16 @@
+/**
+ * @file web-settings.component.ts
+ * @path src/app/admin/pages/web-settings/web-settings.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages global web configuration including company details, localized brand assets, site branding, and social media links.
+ * @dependencies
+ * - BaseDataComponent: Provides base CRUD and state management.
+ * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
+ * - CommonModule/FormsModule: Standard Angular modules for structural directives and two-way data binding.
+ */
+
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5,7 +18,8 @@ import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { environment } from '../../../../environments/environment';
-/** Metadata jazyka — shodné s tím, co vrací endpoint languages/{module} */
+
+/** Metadata of supported languages — corresponds to the API response from languages/{module} */
 interface LangMeta {
   code: string;
   name: string;
@@ -14,9 +28,10 @@ interface LangMeta {
   isBuiltIn?: boolean;
 }
 
-/** Vícejazyčná hodnota: { "cz": "...", "en": "...", "sk": "..." } */
+/** Internationalized string map: { "cz": "...", "en": "...", "sk": "..." } */
 type I18nMap = Record<string, string>;
 
+/** Structure representing the global site settings */
 interface SiteSetting {
   id?: number;
   company_name: string;
@@ -33,6 +48,7 @@ interface SiteSetting {
   logo_path?: string | null;
 }
 
+/** Structure representing a social network reference */
 interface SocialLink {
   id?: number;
   name: string;
@@ -46,6 +62,11 @@ interface SocialLink {
   _dirty?: boolean;
 }
 
+/**
+ * @description Component for managing site-wide configuration.
+ * @usage Provides an interface to update company profile, localized site text, branding (logo), and a dynamic list of social links.
+ * @note Implements lazy loading of languages to ensure localized fields are correctly initialized for two-way binding.
+ */
 @Component({
   selector: 'app-web-settings',
   standalone: true,
@@ -57,14 +78,11 @@ interface SocialLink {
 export class WebSettingsComponent extends BaseDataComponent<any> implements OnInit {
   override apiEndpoint = 'legal/config';
 
-  // Modul pro načítání jazyků (shodný s překladovým systémem / edit-website)
   private readonly LANG_MODULE = 'web';
 
-  // ---- Jazyky pro vícejazyčná pole (brand_tagline, copyright_text) ----
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
 
-  // ---- Firemní nastavení ----
   settings: SiteSetting = {
     company_name: '', ico: '', dic: '',
     contact_email: '', contact_phone: '',
@@ -78,12 +96,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   settingsSaving  = false;
   settingsSaved   = false;
 
-  // ---- Logo ----
   logoFile: File | null       = null;
-  logoPreview: string | null  = null;  // Blob URL pro okamžitý náhled
-  logoRemoving                = false; // Příznak mazání loga
+  logoPreview: string | null  = null; 
+  logoRemoving                = false;
 
-  // ---- Sociální sítě ----
   socialLinks: SocialLink[] = [];
   socialLoading = true;
 
@@ -102,10 +118,9 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.loadLanguages();
   }
 
-  // ============================================================
-  // JAZYKY — pro přepínání brand_tagline / copyright_text
-  // ============================================================
-
+  /**
+   * @description Fetches available active languages for the module to enable localization support.
+   */
   private loadLanguages(): void {
     this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.LANG_MODULE}`).subscribe({
       next: (res) => {
@@ -118,26 +133,34 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
         this.loadAll();
       },
       error: () => {
-        // Fallback — alespoň CZ, ať formulář zůstane funkční
         this.languages = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }];
         this.loadAll();
       }
     });
   }
 
+  /**
+   * @description Updates the currently active language code for localized fields.
+   * @param code The target language code.
+   */
   switchLang(code: string): void {
     if (this.currentLang === code) return;
     this.currentLang = code;
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Resolves the display name for a specific language code.
+   * @param code The language identifier.
+   * @returns The human-readable name of the language or the uppercase code as a fallback.
+   */
   getLangName(code: string): string {
     return this.languages.find(l => l.code === code)?.name ?? code.toUpperCase();
   }
 
   /**
-   * Zajistí, že settings.brand_tagline_i18n / copyright_text_i18n mají
-   * klíč pro každý načtený jazyk (jinak by [(ngModel)] neměl kam zapisovat).
+   * @description Populates missing translation keys to avoid runtime binding errors in the template.
+   * @note Ensures every configured language has an entry in the i18n maps.
    */
   private ensureI18nDefaults(): void {
     if (!this.settings.brand_tagline_i18n)  this.settings.brand_tagline_i18n  = {};
@@ -157,10 +180,9 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }
   }
 
-  // ============================================================
-  // NAČTENÍ  —  GET /api/legal/config
-  // ============================================================
-
+  /**
+   * @description Synchronizes all site settings and social links from the server.
+   */
   private loadAll(): void {
     this.settingsLoading = true;
     this.socialLoading   = true;
@@ -207,10 +229,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   override refreshData(): void { this.loadAll(); }
 
-  // ============================================================
-  // LOGO — výběr souboru
-  // ============================================================
-
+  /**
+   * @description Handles local selection and validation of a new logo file.
+   * @param event The file input change event.
+   */
   onLogoSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -232,6 +254,9 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Discards the locally selected logo file and its temporary preview.
+   */
   cancelLogoSelection(): void {
     if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
     this.logoFile    = null;
@@ -239,20 +264,15 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
-  // ============================================================
-  // FIREMNÍ ÚDAJE + LOGO  —  PUT/POST /api/legal/config/settings
-  // Pokud je nové logo, posíláme FormData; jinak čistý JSON.
-  // brand_tagline_i18n / copyright_text_i18n se posílají vždy celé
-  // (objekt pro všechny jazyky), backend si z nich odvodí CZ fallback.
-  // ============================================================
-
+  /**
+   * @description Saves company settings. Uses FormData if a logo file is present for multi-part upload, otherwise uses JSON.
+   */
   saveSettings(): void {
     if (this.settingsSaving) return;
     this.settingsSaving = true;
     this.settingsSaved  = false;
 
     if (this.logoFile) {
-      // ---- Verze s logem (FormData) ----
       const fd = new FormData();
       fd.append('company_name',  this.settings.company_name  ?? '');
       fd.append('brand_tagline_i18n',  JSON.stringify(this.settings.brand_tagline_i18n  ?? {}));
@@ -264,7 +284,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       fd.append('address',       this.settings.address       ?? '');
       fd.append('footer_text',   this.settings.footer_text   ?? '');
       fd.append('logo_file',     this.logoFile, this.logoFile.name);
-      // Laravel method spoofing pro PUT přes multipart
       fd.append('_method', 'PUT');
 
       this.dataHandler.upload<SiteSetting>('legal/config/settings', fd).subscribe({
@@ -272,7 +291,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
         error: (err: any) => this.onSettingsError(err),
       });
     } else {
-      // ---- Verze bez loga (čistý JSON) ----
       const payload = {
         company_name:         this.settings.company_name,
         brand_tagline_i18n:   this.settings.brand_tagline_i18n  ?? {},
@@ -292,6 +310,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }
   }
 
+  /**
+   * @description Handles successful settings save and cleanup of local file states.
+   * @param res The updated settings returned by the server.
+   */
   private onSettingsSaved(res: any): void {
     if (res) {
       this.settings = {
@@ -303,7 +325,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       this.ensureI18nDefaults();
     }
 
-    // Uvolnit blob URL loga, již nepotřebujeme
     if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
     this.logoFile    = null;
     this.logoPreview = null;
@@ -317,6 +338,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.loadAll();
   }
 
+  /**
+   * @description Parses and notifies the user of server-side validation or processing errors.
+   * @param err The error response object.
+   */
   private onSettingsError(err: any): void {
     this.settingsSaving = false;
     const msg = err?.error?.message ?? err?.error?.errors
@@ -326,21 +351,25 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
-  // ---- Helper: URL existujícího loga ze serveru ----
+  /**
+   * @description Resolves the URI for the current logo; falls back to default if no file is selected.
+   */
   get logoSrc(): string | null {
     if (this.logoPreview)        return this.logoPreview;
     if (this.settings.logo_path) return environment.public_storage_url+`/${this.settings.logo_path}`;
     return null;
   }
 
+  /**
+   * @description Checks if a logo currently exists (either locally selected or saved).
+   */
   get hasLogo(): boolean {
     return !!(this.logoPreview || this.settings.logo_path);
   }
 
-  // ============================================================
-  // SOCIÁLNÍ SÍTĚ — přidat řádek
-  // ============================================================
-
+  /**
+   * @description Appends a new empty row to the social links list to allow user entry.
+   */
   addSocialLink(): void {
     this.socialLinks = [...this.socialLinks, {
       name: '', url: '', icon_path: '',
@@ -359,7 +388,11 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }, 60);
   }
 
-  // ---- Výběr ikony sociální sítě ----
+  /**
+   * @description Validates and processes a new icon file for a specific social link row.
+   * @param event The input event.
+   * @param index The index of the link within the list.
+   */
   onIconSelected(event: Event, index: number): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -387,7 +420,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
-  // ---- Uložení jednoho řádku sociální sítě ----
+  /**
+   * @description Submits a single social link row update or creation to the server.
+   * @param index The index of the row to save.
+   */
   saveSocialLink(index: number): void {
     const link = this.socialLinks[index];
     if (link._saving) return;
@@ -442,7 +478,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }
   }
 
-  // ---- Smazání řádku ----
+  /**
+   * @description Requests confirmation and deletes a social network link from the server.
+   * @param index The index of the row to delete.
+   */
   async deleteSocialLink(index: number): Promise<void> {
     const link = this.socialLinks[index];
 
@@ -470,10 +509,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     });
   }
 
-  // ============================================================
-  // HELPERS
-  // ============================================================
-
+  /**
+   * @description Marks a social link row as modified.
+   * @param index The row index.
+   */
   markDirty(index: number): void {
     if (!this.socialLinks[index]?._dirty) {
       const updated = [...this.socialLinks];
@@ -482,11 +521,21 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }
   }
 
+  /**
+   * @description Resolves the URI for a social link icon.
+   * @param link The social link object.
+   * @returns The resolved icon URL or null if undefined.
+   */
   iconSrc(link: SocialLink): string | null {
     if (link._iconPreview) return link._iconPreview;
     if (link.icon_path)    return environment.public_storage_url+`/${link.icon_path}`;
     return null;
   }
 
+  /**
+   * @description Tracks row rendering by index for optimal performance.
+   * @param index Row index.
+   * @returns The index.
+   */
   trackByIndex(index: number): number { return index; }
 }

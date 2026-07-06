@@ -1,3 +1,17 @@
+/**
+ * @file cart.component.ts
+ * @path src/app/shop/cart/cart.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the user's shopping cart interface, including item quantity adjustments, removal, and checkout navigation.
+ * @dependencies
+ * - CartService: Handles business logic for cart state management.
+ * - ConfirmDialogService: Orchestrates user confirmation for removing items.
+ * - AlertDialogService: Provides feedback for application-level alerts.
+ * - Angular Router: Manages navigation to the checkout page.
+ */
+
 import { Component } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -10,6 +24,11 @@ import { CartService, CartItem } from '../components/services/cart.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 
+/**
+ * @description Component for managing the shopping cart view.
+ * @usage Enables users to review cart items, modify quantities within stock limits, remove items, and proceed to checkout.
+ * @note Integrates with CartService to ensure reactive updates to the UI when cart state changes.
+ */
 @Component({
   selector: 'app-cart',
   standalone: true,
@@ -26,13 +45,20 @@ export class CartComponent {
     private alertDialogService: AlertDialogService
   ) {}
 
-  // Výpočet celkové ceny bez DPH
+  /**
+   * @description Calculates the total price of all items in the cart excluding tax.
+   * @returns The total sum minus the calculated tax.
+   */
   totalPriceWithoutTax(): number {
     const total = this.cartService.totalPrice();
     const tax = this.cartService.totalTax();
     return total - tax;
   }
 
+  /**
+   * @description Decrements the quantity of a specific cart item if it is above the minimum (1).
+   * @param itemId The unique identifier of the product.
+   */
   decreaseQuantity(itemId: string): void {
     const item = this.cartService.cartItems().find(i => i.id === itemId);
     if (item && Number(item.quantity) > 1) {
@@ -40,6 +66,11 @@ export class CartComponent {
     }
   }
 
+  /**
+   * @description Increments the quantity of a specific cart item, respecting inventory limits.
+   * @param itemId The unique identifier of the product.
+   * @note Logs debugging information if the item is not found or if the stock limit is reached.
+   */
   increaseQuantity(itemId: string): void {
     const item = this.cartService.cartItems().find(i => i.id === itemId);
     
@@ -65,6 +96,11 @@ export class CartComponent {
     this.cartService.updateItemQuantity(itemId, noveMnozstvi);
   }
 
+  /**
+   * @description Checks if the requested quantity for a product has reached its available stock.
+   * @param item The cart item to evaluate.
+   * @returns True if stock limit is met or exceeded, otherwise false.
+   */
   isMaxStockReached(item: CartItem): boolean {
     if (!item) return false;
     
@@ -74,6 +110,10 @@ export class CartComponent {
     return aktualniMnozstvi >= stropSkladu;
   }
 
+  /**
+   * @description Triggers a confirmation dialog before permanently removing an item from the cart.
+   * @param itemId The unique identifier of the product.
+   */
   removeItem(itemId: string): void {
     this.confirmDialogService.open(
       'Odstranit z košíku', 
@@ -87,11 +127,18 @@ export class CartComponent {
     .catch(() => {});
   }
 
+  /**
+   * @description Navigates the user to the checkout process.
+   */
   proceedToCheckout(): void {
     this.router.navigate(['/shop/checkout']);
   }
 
-  // 🛠️ UPRAVENO: Formátování na EUR
+  /**
+   * @description Formats a numeric price into a localized EUR currency string.
+   * @param price The numeric price to format.
+   * @returns Formatted currency string.
+   */
   formatPrice(price: number): string {
     return new Intl.NumberFormat('cs-CZ', {
       style: 'currency',

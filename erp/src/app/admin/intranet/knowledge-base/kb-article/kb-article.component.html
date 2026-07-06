@@ -1,1 +1,7 @@
-<p>kb-article works!</p>
+@if (article) {
+  <div class="article-container">
+    <h1>{{ article.title }}</h1>
+    <hr class="kb-divider">
+    <div class="article-body" [innerHTML]="article.content"></div>
+  </div>
+}

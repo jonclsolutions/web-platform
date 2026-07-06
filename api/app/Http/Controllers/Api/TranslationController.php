@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file TranslationController.php
+ * @path app/Http/Controllers/Api/TranslationController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages internationalization (i18n) data, including JSON translation file management, language metadata administration, and associated icon assets.
+ */
 
 namespace App\Http\Controllers\Api;
 
@@ -10,54 +18,66 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * @description Controller handling the full lifecycle of language configurations and translation strings.
+ * @note Operates on a module-based structure to ensure distinct translation sets for different application sections.
+ */
 class TranslationController extends Controller
 {
-    // Disk a složka pro ikonky jazyků
-    private const ICON_DISK   = 'public';
-    private const ICON_FOLDER = 'translation_images';
-
-    // ═══════════════════════════════════════════════════════════
-    // PŘEKLADY — uložení JSON souboru
-    // ═══════════════════════════════════════════════════════════
-
-public function save(Request $request, string $module): JsonResponse
-{
-    $request->validate([
-        'lang' => 'required|string|max:5',
-        'data' => 'required|array',
-    ]);
-
-    $lang = $request->input('lang');
-    $newData = $request->input('data');
-
-    // Cesta: storage/app/public/translations/{module}/{lang}.json
-    $directory = $this->i18nDirectory($module);
-    $filePath  = $directory . '/' . $lang . '.json';
-
-    try {
-        if (!File::isDirectory($directory)) {
-            File::makeDirectory($directory, 0755, true, true);
-        }
-
-        $oldData = File::exists($filePath) ? json_decode(File::get($filePath), true) ?? [] : [];
-        $changes = $this->getDeepDiff($oldData, $newData);
-
-        File::put($filePath, json_encode($newData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
-        $this->logAction($request, 'update', "Translation:{$module}", "Update {$lang}.json", null, $changes);
-
-        return response()->json(['status' => 'success', 'detected_changes' => count($changes)]);
-    } catch (\Exception $e) {
-        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-    }
-}
-
-    /** * Absolutní cesta ke složce s i18n JSON soubory na straně serveru
+    /**
+     * @var string Public disk for icon storage.
      */
+    private const ICON_DISK   = 'public';
 
     /**
-     * GET /api/translations/{lang}
-     * Načtení překladů pro daný jazyk.
+     * @var string Folder path for language icons.
+     */
+    private const ICON_FOLDER = 'translation_images';
+
+    /**
+     * Saves translation data to a JSON file for a specific module and language.
+     *
+     * @param Request $request
+     * @param string $module
+     * @return JsonResponse Returns status and count of detected changes.
+     */
+    public function save(Request $request, string $module): JsonResponse
+    {
+        $request->validate([
+            'lang' => 'required|string|max:5',
+            'data' => 'required|array',
+        ]);
+
+        $lang = $request->input('lang');
+        $newData = $request->input('data');
+
+        $directory = $this->i18nDirectory($module);
+        $filePath  = $directory . '/' . $lang . '.json';
+
+        try {
+            if (!File::isDirectory($directory)) {
+                File::makeDirectory($directory, 0755, true, true);
+            }
+
+            $oldData = File::exists($filePath) ? json_decode(File::get($filePath), true) ?? [] : [];
+            $changes = $this->getDeepDiff($oldData, $newData);
+
+            File::put($filePath, json_encode($newData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+            $this->logAction($request, 'update', "Translation:{$module}", "Update {$lang}.json", null, $changes);
+
+            return response()->json(['status' => 'success', 'detected_changes' => count($changes)]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Retrieves translation strings for a specific language and module.
+     *
+     * @param string $module
+     * @param string $lang
+     * @return JsonResponse JSON contents or 404 if file is missing.
      */
     public function show(string $module, string $lang): JsonResponse
     {
@@ -70,21 +90,16 @@ public function save(Request $request, string $module): JsonResponse
         return response()->json(json_decode(File::get($filePath), true));
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // JAZYKY — správa metadat + ikonek
-    // ═══════════════════════════════════════════════════════════
-
     /**
-     * GET /api/languages
-     * Vrátí seznam jazyků uložených v languages.json.
-     * Ikonky jsou dodány jako veřejné URL (ne base64), aby se
-     * neposílaly velké base64 řetězce při každém requestu.
+     * Lists available languages for a specific module with generated icon URLs.
+     *
+     * @param string $module
+     * @return JsonResponse
      */
-   public function getLanguages(string $module): JsonResponse
+    public function getLanguages(string $module): JsonResponse
     {
         $allMeta = $this->readLanguagesMeta();
         
-        // OPRAVA: Použití správné proměnné $module a filtrování
         $filtered = array_values(array_filter($allMeta, fn($l) => ($l['module'] ?? '') === $module));
 
         foreach ($filtered as &$lang) {
@@ -96,26 +111,14 @@ public function save(Request $request, string $module): JsonResponse
     }
 
     /**
-     * POST /api/languages
-     * Uložení celého seznamu jazyků (bez ikonek — ty se nahrávají přes storeLanguageIcon).
-     * Frontend posílá pole languages se záznamy bez iconBase64 (jen metadata).
+     * Updates language metadata and handles optional icon uploads for a module.
+     *
+     * @param Request $request
+     * @param string $module
+     * @return JsonResponse
      */
-
-/**
-     * POST /api/languages
-     * Uložení seznamu jazyků a volitelně ikonky.
-     * Očekává FormData: 
-     * - languages: JSON string (pole objektů)
-     * - icon: File (volitelné)
-     * - target_code: String (povinné, pokud je přiložena ikona)
-     */
-   /**
-     * POST /api/languages/{module}
-     * Uložení seznamu jazyků a volitelně ikonky.
-     */
-public function saveLanguages(Request $request, string $module): JsonResponse
+    public function saveLanguages(Request $request, string $module): JsonResponse
     {
-        // 1. Validace příchozích dat
         $request->validate([
             'languages'   => 'required|json',
             'icon'        => 'nullable|file|image|mimes:png,jpg,jpeg,webp,svg|max:512',
@@ -123,37 +126,29 @@ public function saveLanguages(Request $request, string $module): JsonResponse
         ]);
 
         $incoming = json_decode($request->input('languages'), true);
-        $allMeta  = $this->readLanguagesMeta(); // Načte všechna metadata ze souboru
+        $allMeta  = $this->readLanguagesMeta();
 
-        // 2. Oddělíme metadata ostatních modulů od toho našeho
-        // Ponecháme záznamy, které NEPATŘÍ do aktuálního modulu
         $otherModulesMeta = array_filter($allMeta, fn($l) => ($l['module'] ?? 'web') !== $module);
         
-        // Získáme stávající data pro náš modul pro zachování icon_path a isBuiltIn
         $currentModuleMeta = collect(array_filter($allMeta, fn($l) => ($l['module'] ?? 'web') === $module))
             ->keyBy('code');
 
-        // 3. Sloučení metadat pro aktuální modul
         $mergedCurrent = [];
         foreach ($incoming as $lang) {
             $code = $lang['code'];
-            // Zachováme icon_path a isBuiltIn z existujících dat modulu
             $lang['icon_path'] = $currentModuleMeta->get($code)['icon_path'] ?? null;
             $lang['isBuiltIn'] = $currentModuleMeta->get($code)['isBuiltIn'] ?? false;
-            $lang['module']    = $module; // Ujistíme se, že je nastaven modul
+            $lang['module']    = $module;
             $mergedCurrent[] = $lang;
         }
 
-        // 4. Zpracování souboru ikonky, pokud byl přiložen
         if ($request->hasFile('icon')) {
             $code = $request->input('target_code');
             $idx  = $this->findLangIndex($mergedCurrent, $code);
 
             if ($idx !== null) {
-                // Smazat starou ikonu z disku
                 $this->deleteIconFile($mergedCurrent[$idx]['icon_path']);
                 
-                // Uložit novou ikonu do: translation_images/{module}/...
                 $file      = $request->file('icon');
                 $filename  = $code . '_' . \Str::uuid() . '.' . $file->getClientOriginalExtension();
                 $path      = $file->storeAs(self::ICON_FOLDER . '/' . $module, $filename, self::ICON_DISK);
@@ -162,69 +157,65 @@ public function saveLanguages(Request $request, string $module): JsonResponse
             }
         }
 
-        // 5. Spojíme ostatní moduly a náš aktualizovaný modul a uložíme
         $finalMeta = array_merge($otherModulesMeta, $mergedCurrent);
         $this->writeLanguagesMeta($finalMeta);
         
-        // 6. Logování akce
         $this->logAction($request, 'update', "Languages:{$module}", 'Aktualizace seznamu jazyků a metadat');
 
         return response()->json(['status' => 'success']);
     }
 
     /**
-     * POST /api/languages/{code}/icon
-     * Nahrání / výměna ikonky konkrétního jazyka.
-     * Přijímá multipart/form-data s polem "icon" (soubor).
-     * Vrátí novou veřejnou URL ikonky.
+     * Uploads or replaces an icon for a specific language.
+     *
+     * @param Request $request
+     * @param string $module
+     * @param string $code
+     * @return JsonResponse
      */
-// Nová signatura metody s modulem
-public function storeLanguageIcon(Request $request, string $module, string $code): JsonResponse
-{
-    $request->validate([
-        'icon' => 'required|file|image|mimes:png,jpg,jpeg,webp,svg|max:512',
-    ]);
+    public function storeLanguageIcon(Request $request, string $module, string $code): JsonResponse
+    {
+        $request->validate([
+            'icon' => 'required|file|image|mimes:png,jpg,jpeg,webp,svg|max:512',
+        ]);
 
-    $meta = $this->readLanguagesMeta();
-    $idx  = $this->findLangIndex($meta, $code);
+        $meta = $this->readLanguagesMeta();
+        $idx  = $this->findLangIndex($meta, $code);
 
-    if ($idx === null) {
-        return response()->json(['message' => "Jazyk '{$code}' nenalezen."], 404);
+        if ($idx === null) {
+            return response()->json(['message' => "Jazyk '{$code}' nenalezen."], 404);
+        }
+
+        $this->deleteIconFile($meta[$idx]['icon_path'] ?? null);
+
+        $file      = $request->file('icon');
+        $filename  = $code . '_' . \Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $path      = self::ICON_FOLDER . '/' . $module;
+        
+        $iconPath  = $file->storeAs($path, $filename, self::ICON_DISK);
+
+        $meta[$idx]['icon_path'] = $iconPath;
+        $this->writeLanguagesMeta($meta);
+
+        $this->logAction($request, 'update', "Languages:{$module}", "Nahrána ikonka: {$code}");
+
+        return response()->json([
+            'status'   => 'success',
+            'iconUrl'  => Storage::disk(self::ICON_DISK)->url($iconPath),
+        ]);
     }
 
-    $this->deleteIconFile($meta[$idx]['icon_path'] ?? null);
-
-    // Uloží do: translation_images/{module}/{code}_{uuid}.{ext}
-    $file      = $request->file('icon');
-    $filename  = $code . '_' . \Str::uuid() . '.' . $file->getClientOriginalExtension();
-    $path      = self::ICON_FOLDER . '/' . $module;
-    
-    $iconPath  = $file->storeAs($path, $filename, self::ICON_DISK);
-
-    $meta[$idx]['icon_path'] = $iconPath;
-    $this->writeLanguagesMeta($meta);
-
-    $this->logAction($request, 'update', "Languages:{$module}", "Nahrána ikonka: {$code}");
-
-    return response()->json([
-        'status'   => 'success',
-        'iconUrl'  => Storage::disk(self::ICON_DISK)->url($iconPath),
-    ]);
-}
-
     /**
-     * DELETE /api/languages/{code}
-     * Smazání jazyka: odstraní metadata + ikonku z disku.
-     * Vestavěné jazyky (isBuiltIn = true) nelze smazat.
-     */
-/**
-     * DELETE /api/languages/{code}
-     * Smazání jazyka: odstraní metadata + ikonku z disku + JSON s překlady.
+     * Deletes a language metadata entry, its associated icon, and its JSON file.
+     *
+     * @param Request $request
+     * @param string $module
+     * @param string $code
+     * @return JsonResponse
      */
     public function destroyLanguage(Request $request, string $module, string $code): JsonResponse
     {
         $allMeta = $this->readLanguagesMeta();
-        // OPRAVA: Musíme hledat v konkrétním modulu
         $idx = null;
         foreach ($allMeta as $i => $lang) {
             if ($lang['code'] === $code && ($lang['module'] ?? '') === $module) {
@@ -242,7 +233,6 @@ public function storeLanguageIcon(Request $request, string $module, string $code
 
         $this->deleteIconFile($allMeta[$idx]['icon_path'] ?? null);
 
-        // OPRAVA: Použití parametru $module, který nyní do metody přichází
         $jsonPath = $this->i18nDirectory($module) . '/' . $code . '.json';
         
         if (File::exists($jsonPath)) {
@@ -250,46 +240,46 @@ public function storeLanguageIcon(Request $request, string $module, string $code
         }
 
         array_splice($allMeta, $idx, 1);
-        $this->writeLanguagesMeta($allMeta); // Zapíšeme upravené globální pole
+        $this->writeLanguagesMeta($allMeta);
 
         $this->logAction($request, 'delete', "Languages:{$module}", "Smazán jazyk: {$code}");
 
         return response()->json(null, 204);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // SOUKROMÉ POMOCNÉ METODY
-    // ═══════════════════════════════════════════════════════════
-
-    /** Absolutní cesta ke složce s i18n JSON soubory */
+    /**
+     * Returns absolute directory path for module translations.
+     */
     private function i18nDirectory(string $module): string
     {
-        // Cesta: storage/app/public/translations/{module}
         return storage_path('app/public/translations/' . $module);
     }
 
-    // Cesta ke GLOÁLNÍMU souboru languages.json (dle vašeho stromu)
+    /**
+     * Returns absolute path to the global languages.json metadata file.
+     */
     private function languagesMetaPath(): string
     {
         return storage_path('app/public/translations/languages.json');
     }
 
-    /** Načte pole metadat jazyků, nebo vrátí výchozí (pouze CZ) */
+    /**
+     * Reads and decodes the global language metadata file.
+     */
     private function readLanguagesMeta(): array
     {
         $path = $this->languagesMetaPath();
-
         if (File::exists($path)) {
             return json_decode(File::get($path), true) ?? $this->defaultLanguages();
         }
-
         return $this->defaultLanguages();
     }
 
-    /** Zapíše pole metadat jazyků */
+    /**
+     * Encodes and writes the global language metadata file.
+     */
     private function writeLanguagesMeta(array $meta): void
     {
-        // Cesta ke složce s languages.json (kořen translations)
         $dir = storage_path('app/public/translations'); 
         if (!File::isDirectory($dir)) {
             File::makeDirectory($dir, 0755, true, true);
@@ -300,7 +290,9 @@ public function storeLanguageIcon(Request $request, string $module, string $code
         );
     }
 
-    /** Výchozí metadata když soubor neexistuje */
+    /**
+     * Default language configuration.
+     */
     private function defaultLanguages(): array
     {
         return [
@@ -309,7 +301,9 @@ public function storeLanguageIcon(Request $request, string $module, string $code
         ];
     }
 
-    /** Najde index jazyka v poli metadat dle kódu */
+    /**
+     * Finds index of a specific language code within the metadata array.
+     */
     private function findLangIndex(array $meta, string $code): ?int
     {
         foreach ($meta as $i => $lang) {
@@ -319,28 +313,23 @@ public function storeLanguageIcon(Request $request, string $module, string $code
     }
 
     /**
-     * Smaže soubor ikonky z public storage.
-     * Bezpečně ignoruje neexistující cestu.
+     * Deletes the icon file from storage safely.
      */
     private function deleteIconFile(?string $iconPath): void
-{
-    if (empty($iconPath)) return;
-
-    // Pokud $iconPath obsahuje 'shop/' nebo 'web/', Storage to zvládne
-    try {
-        if (Storage::disk(self::ICON_DISK)->exists($iconPath)) {
-            Storage::disk(self::ICON_DISK)->delete($iconPath);
+    {
+        if (empty($iconPath)) return;
+        try {
+            if (Storage::disk(self::ICON_DISK)->exists($iconPath)) {
+                Storage::disk(self::ICON_DISK)->delete($iconPath);
+            }
+        } catch (\Exception $e) {
+            Log::warning("Nepodařilo se smazat ikonku: " . $e->getMessage());
         }
-    } catch (\Exception $e) {
-        Log::warning("Nepodařilo se smazat ikonku: " . $e->getMessage());
     }
-}
 
-    // ═══════════════════════════════════════════════════════════
-    // DIFF + LOGOVÁNÍ
-    // ═══════════════════════════════════════════════════════════
-
-    /** Rekurzivní porovnání polí pro zjištění změn v překladech */
+    /**
+     * Performs a deep recursive comparison between two translation arrays.
+     */
     private function getDeepDiff(array $old, array $new, string $path = ''): array
     {
         $diff = [];
@@ -361,7 +350,9 @@ public function storeLanguageIcon(Request $request, string $module, string $code
         return $diff;
     }
 
-    /** Sjednocené logování akcí do WebLog */
+    /**
+     * Logs translation-related actions to the audit system.
+     */
     protected function logAction(
         Request $request,
         string $eventType,

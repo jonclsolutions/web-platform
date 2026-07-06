@@ -1,12 +1,29 @@
 <?php
+/**
+ * @file ShopCouponResource.php
+ * @path app/Http/Resources/Shop/ShopCouponResource.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Resource transformation for shop discount coupons.
+ */
 
 namespace App\Http\Resources\Shop;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @description Transforms ShopCoupon model data into standardized ISO-8601 compliant JSON.
+ */
 class ShopCouponResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

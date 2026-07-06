@@ -1,13 +1,24 @@
 <?php
+/**
+ * @file ValidatesAttachmentSecurity.php
+ * @path app/Http/Requests/Web/WebRawRequestCommission/ValidatesAttachmentSecurity.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Trait providing shared security logic for validating file attachments using a blacklist approach.
+ */
+
 namespace App\Http\Requests\Web\WebRawRequestCommission;
 
 /**
- * Sdílená logika pro validaci nahrávaných příloh.
- * Blacklist přístup - zakazuje pouze potenciálně spustitelné/škodlivé typy,
- * vše ostatní (pdf, obrázky, dokumenty, archivy, text...) je povoleno.
+ * @description Provides helper methods to block dangerous file types, improving security against malicious uploads.
  */
 trait ValidatesAttachmentSecurity
 {
+    /**
+     * Returns a list of forbidden file extensions.
+     * * @return array
+     */
     public static function forbiddenExtensions(): array
     {
         return [
@@ -18,6 +29,10 @@ trait ValidatesAttachmentSecurity
         ];
     }
 
+    /**
+     * Returns a list of forbidden MIME types.
+     * * @return array
+     */
     public static function forbiddenMimes(): array
     {
         return [
@@ -36,7 +51,8 @@ trait ValidatesAttachmentSecurity
     }
 
     /**
-     * Validační closure pro pravidlo 'attachment' ve FormRequestu.
+     * Validation rule for file extensions.
+     * * @return \Closure
      */
     public function attachmentExtensionRule(): \Closure
     {
@@ -51,8 +67,9 @@ trait ValidatesAttachmentSecurity
     }
 
     /**
-     * Doplňková kontrola MIME typu - chrání i proti přejmenovanému spustitelnému souboru.
-     * Voláno z withValidator() v konkrétním FormRequestu.
+     * Validates MIME type to prevent disguise of malicious files.
+     * * @param \Illuminate\Validation\Validator $validator
+     * @return void
      */
     public function validateAttachmentMime($validator): void
     {

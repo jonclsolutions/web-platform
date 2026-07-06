@@ -5,7 +5,6 @@ use Illuminate\Support\ServiceProvider;
 
 return [
 
-   
     'name' => env('APP_NAME', 'Laravel'),
 
 
@@ -47,9 +46,7 @@ return [
          * Application Service Providers...
          */
         App\Providers\AppServiceProvider::class,
-        // App\Providers\AuthServiceProvider::class,
-        // App\Providers\EventServiceProvider::class,
-        App\Providers\RouteServiceProvider::class, // <--- TATO ŘÁDKA JE ZDE!
+        App\Providers\RouteServiceProvider::class,
     ])->toArray(),
 
 

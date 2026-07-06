@@ -1,3 +1,16 @@
+/**
+ * @file support-tickets.component.ts
+ * @path src/app/admin/pages/web/support-tickets/support-tickets.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Administrative dashboard component for managing customer support tickets, including status updates and multi-part data submission.
+ * @dependencies
+ * - BaseDataComponent: Inheritance for base CRUD and state management.
+ * - TableBuilderComponent: Used for tabular data rendering and CSV export.
+ * - SUPPORT_TICKET_* configs: Centralized definitions for UI elements and column configurations.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -5,6 +18,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './support-tickets.config';
 
+/**
+ * @description Manages the lifecycle of support tickets within the web administration module.
+ * @usage Provides an interface for tracking, creating, updating, and exporting support inquiries.
+ * @note Extends BaseDataComponent with specific logic to handle FormData uploads (for attachments) versus standard JSON payloads.
+ */
 @Component({
   selector: 'app-support-tickets',
   standalone: true,
@@ -42,6 +60,10 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Dynamically constructs toolbar buttons based on user permissions and component state.
+   * @returns Array of buttons configured for the current context (filters, export, or trash toggle).
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.SUPPORT_TICKET_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -70,6 +92,10 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     });
   }
 
+  /**
+   * @description Maps toolbar action strings to specific component methods.
+   * @param action Identifier provided by the configuration.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -81,20 +107,27 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
   }
 
   override ngOnInit(): void {
-  super.ngOnInit();
-  this.initWithAuthCheck(this.router);
-}
+    super.ngOnInit();
+    this.initWithAuthCheck(this.router);
+  }
 
   override refreshData(): void {
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Updates filtering parameters and refreshes the data set starting from page 1.
+   * @param newFilters The criteria object to apply.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Resets filtering criteria to system defaults.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -123,6 +156,10 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Fetches detailed information for a specific ticket.
+   * @param item The ticket record.
+   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -135,6 +172,10 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     });
   }
 
+  /**
+   * @description Handles submission of ticket data, detecting if the payload requires FormData (attachments) or standard JSON.
+   * @param formData The data payload (either FormData object or standard object).
+   */
   handleFormSubmitted(formData: any): void {
     const isFormData = formData instanceof FormData;
     const id = isFormData ? formData.get('id') : formData.id;
@@ -143,6 +184,7 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
 
     if (id) {
       if (isFormData) {
+        // Handle multipart updates using a PUT override if necessary by API design
         formData.append('_method', 'PUT');
         request = this.dataHandler.post(`${this.apiEndpoint}/${id}`, formData);
       } else {

@@ -1,3 +1,16 @@
+/**
+ * @file news.component.ts
+ * @path src/app/admin/pages/news/news.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Page component for displaying a scrollable list of news articles with infinite-scroll functionality.
+ * @dependencies
+ * - BaseDataComponent: Provides the base logic for paginated API requests.
+ * - LoadingService: Manages application-wide loading states to prevent redundant network calls.
+ * - GenericTableService: Handles pagination logic and response processing.
+ */
+
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GenericTableService, PaginatedResponse } from '../../../../../core/services/generic-table.service';
@@ -5,6 +18,11 @@ import { BaseDataComponent } from '../../../../components/base-data/base-data.co
 import { DataHandler } from '../../../../../core/services/data-handler.service';
 import { LoadingService } from '../../../../../core/services/loading.service';
 
+/**
+ * @description Manages the display and incremental loading of news content.
+ * @usage Used to render news streams that support infinite scrolling in the user interface.
+ * @note Extends BaseDataComponent to leverage paginated fetch logic while maintaining a local buffer (accumulatedNews) for seamless list expansion.
+ */
 @Component({
   selector: 'app-news',
   standalone: true,
@@ -14,12 +32,13 @@ import { LoadingService } from '../../../../../core/services/loading.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NewsComponent extends BaseDataComponent<any> implements OnInit {
-  // Propojení na globální loading službu
+  /** * @description Injection of global loading state service to prevent concurrent requests. */
   public override loadingService = inject(LoadingService);
 
   override apiEndpoint: string = 'web/news';
   override itemsPerPage: number = 5; 
   
+  /** * @description Buffer storing all loaded news items for the infinite scroll list. */
   accumulatedNews: any[] = [];
 
   constructor(
@@ -29,20 +48,23 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
   ) {
     super(dataHandler, cd, genericTableService);
   }
+
   override ngOnInit(): void {
     super.ngOnInit();
     this.loadMore();
   }
 
+  /**
+   * @description Fetches the next page of news articles and appends them to the existing collection.
+   * @note Prevents execution if a load is already in progress or if all pages have been exhausted.
+   */
   loadMore(): void {
-    // Přístup k aktuální hodnotě streamu bez nutnosti snapshotu v servise
     const isCurrentlyLoading = (this.loadingService.isLoading$ as any).value;
 
     if (isCurrentlyLoading || (this.currentPage > this.totalPages && this.totalPages !== 0)) {
       return;
     }
 
-    // Volání paginovaných dat přes BaseDataComponent
     this.fetchPaginatedData(
       false, 
       this.currentPage, 
@@ -51,19 +73,22 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
     ).subscribe({
       next: (response: PaginatedResponse<any>) => {
         if (response && response.data) {
-          // Přidání nových dat k existujícím (Infinite Scroll logika)
           this.accumulatedNews = [...this.accumulatedNews, ...response.data];
           this.currentPage++;
         }
         this.cd.markForCheck();
       },
       error: (err: any) => {
-        console.error('Chyba při načítání novinek:', err);
+        console.error('Error loading news articles:', err);
         this.cd.markForCheck();
       }
     });
   }
 
+  /**
+   * @description Determines if additional content is available for loading.
+   * @returns {boolean} True if there are more pages or if the total page count hasn't been determined yet.
+   */
   get hasMore(): boolean {
     return this.totalPages === 0 || this.currentPage <= this.totalPages;
   }

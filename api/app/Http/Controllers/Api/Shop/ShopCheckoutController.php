@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopCheckoutController.php
+ * @path app/Http/Controllers/Api/Shop/ShopCheckoutController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the end-to-end checkout process, including order persistence, atomic inventory stock updates, coupon validation, and payment simulation.
+ */
 
 namespace App\Http\Controllers\Api\Shop;
 
@@ -15,12 +23,20 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache; // Import Cache fasády
+use Illuminate\Support\Facades\Cache;
 
+/**
+ * @description Controller responsible for processing customer checkouts.
+ * @note Uses database transactions and row-level locking to prevent race conditions during inventory decrementation.
+ */
 class ShopCheckoutController extends Controller
 {
     /**
-     * VYTVOŘENÍ OBJEDNÁVKY Z KOŠÍKU (S ošetřením kritického stavu skladu)
+     * Orchestrates the order creation process, handling customer identification, price calculation, and inventory management.
+     *
+     * @param Request $request Validated checkout data containing customer info, cart items, and payment/shipping methods.
+     * @return JsonResponse Returns the created order resource or an error status on failure.
+     * @throws \Exception When database integrity constraints are violated or inventory is insufficient.
      */
     public function createOrder(Request $request): JsonResponse
     {
@@ -51,19 +67,15 @@ class ShopCheckoutController extends Controller
         try {
             DB::beginTransaction();
 
-        // 1. VYTVOŘENÍ NEBO NAČTENÍ ZÁKAZNÍKA (Včetně automatického oživení z koše)
             $email = trim(strtolower($validated['email']));
             
-            // Hledáme zákazníka všude – včetně smazaných v koši (Soft Deleted)
             $customer = ShopCustomer::withTrashed()->where('email', $email)->first();
 
             if ($customer) {
-                // Pokud byl zákazník smazaný (v koši), automaticky ho obnovíme
                 if ($customer->trashed()) {
                     $customer->restore();
                 }
 
-                // Aktualizujeme jeho kontaktní údaje podle aktuální objednávky
                 $customer->update([
                     'first_name'   => $validated['first_name'],
                     'last_name'    => $validated['last_name'],
@@ -75,7 +87,6 @@ class ShopCheckoutController extends Controller
                     'country'      => $validated['country'],
                 ]);
             } else {
-                // Zákazník v DB vůbec neexistuje, vytvoříme úplně nového
                 try {
                     $customer = ShopCustomer::create([
                         'email'        => $email,
@@ -90,31 +101,26 @@ class ShopCheckoutController extends Controller
                         'is_active'    => true
                     ]);
                 } catch (\Illuminate\Database\QueryException $e) {
-                    // Pojistka pro extrémní případ (Race Condition) - pokud ho jiné kliknutí zapsalo o milisekundu dříve
                     if ($e->getCode() == 23000 || $e->errorInfo[1] == 1062 || str_contains($e->getMessage(), '1062')) {
                         $customer = ShopCustomer::withTrashed()->where('email', $email)->first();
                         if ($customer && $customer->trashed()) {
                             $customer->restore();
                         }
                     } else {
-                        // Pokud jde o jinou SQL chybu (např. chybějící sloupec), vyhodíme ji dál
                         throw new \Exception("Chyba při zápisu zákazníka do DB: " . $e->getMessage());
                     }
                 }
             }
 
-            // Finální pojistka integrity před pokračováním k objednávce
             if (!$customer) {
                 throw new \Exception("Kritická chyba: Zákazníka s e-mailem {$email} se nepodařilo inicializovat.");
             }
 
-            // 2. VÝPOČET SOUČTŮ
             $totalAmount = 0;
             foreach ($validated['items'] as $itemData) {
                 $totalAmount += (float)$itemData['quantity'] * (float)$itemData['unit_price'];
             }
 
-            // 3. OVĚŘENÍ A APLIKACE KUPÓNU
             $coupon = null;
             $discountAmount = 0;
 
@@ -153,14 +159,12 @@ class ShopCheckoutController extends Controller
                     : (float)$coupon->discount_value;
             }
 
-            // 4. NAČTENÍ CENY DOPRAVY
             $shippingAmount = 0;
             if (!empty($validated['shipping_method_id'])) {
                 $shippingMethod = \App\Models\Shop\ShopShippingMethod::find($validated['shipping_method_id']);
                 $shippingAmount = $shippingMethod ? (float)$shippingMethod->base_price : 0;
             }
 
-            // 5. VYTVOŘENÍ OBJEDNÁVKY
             $finalAmount = max(0, $totalAmount + $shippingAmount - $discountAmount);
 
             $order = ShopOrder::create([
@@ -183,7 +187,6 @@ class ShopCheckoutController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
 
-            // 6. PŘIDÁNÍ POLOŽEK, HARD KONTROLA SKLADU V TRANSKACI A VÝPOČET DPH
             $discountFactor = $totalAmount > 0 ? ($totalAmount - $discountAmount) / $totalAmount : 1;
             $totalTax = 0;
 
@@ -194,11 +197,9 @@ class ShopCheckoutController extends Controller
                 $variantName = null;
                 $vatRate = $itemData['vat_rate'] ?? $product->vat_rate ?? 21;
 
-                // STAŽENÍ SKLADU + HARD SKLADOVÁ POJISTKA
                 if (!empty($itemData['product_variant_id'])) {
                     $variant = ShopProductVariant::lockForUpdate()->findOrFail($itemData['product_variant_id']);
                     
-                    // Kontrola před odečtením
                     if ($variant->stock_quantity < $quantity) {
                         DB::rollBack();
                         return response()->json([
@@ -213,12 +214,10 @@ class ShopCheckoutController extends Controller
                     }
                     ShopProductVariant::forceSyncParentStock($product->id);
                     
-                    // Vyčištění cache pro danou variantu produktu
                     Cache::forget("product_stock_{$product->id}_v{$variant->id}");
                 } else {
                     $product->lockForUpdate();
                     
-                    // Kontrola před odečtením
                     if ($product->stock_quantity < $quantity) {
                         DB::rollBack();
                         return response()->json([
@@ -229,7 +228,6 @@ class ShopCheckoutController extends Controller
                     $product->decrement('stock_quantity', $quantity);
                 }
 
-                // Vyčištění obecné cache produktu pro košíky
                 Cache::forget("product_stock_{$product->id}");
 
                 $linePrice = $quantity * (float)$itemData['unit_price'];
@@ -250,10 +248,8 @@ class ShopCheckoutController extends Controller
                 ]);
             }
 
-            // 7. AKTUALIZACE DANĚ
             $order->update(['tax_amount' => $totalTax]);
 
-            // 8. INKREMENTACE KUPÓNU
             if ($coupon) {
                 $coupon->increment('usage_count');
             }
@@ -278,27 +274,25 @@ class ShopCheckoutController extends Controller
     }
 
     /**
-     * VEŘEJNÝ ENDPOINT PRO RYCHLÉ OVĚŘENÍ DOSTUPNOSTI MNOŽSTVÍ (Zabezpečený před scrapingem, s Cache)
-     */
-/**
-     * VEŘEJNÝ ENDPOINT PRO RYCHLÉ OVĚŘENÍ DOSTUPNOSTI MNOŽSTVÍ (Zabezpečený před scrapingem, s Cache)
+     * Provides a secure stock check mechanism for public UI, utilizing cache to mitigate scraping risk.
+     *
+     * @param Request $request Request containing quantity and variant parameters.
+     * @param int $id The product ID to check.
+     * @return JsonResponse Boolean status of availability.
      */
     public function checkStock(Request $request, $id): JsonResponse
     {
         $variantId = $request->query('variant_id');
         $requestedQuantity = (int)$request->query('quantity');
 
-        // Unikátní klíč cache pro daný produkt / variantu
         $cacheKey = "product_stock_{$id}" . ($variantId ? "_v{$variantId}" : "");
 
-        // Načteme hodnotu z cache, případně z DB na 2 minuty, pokud v cache chybí
         $stockQuantity = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($id, $variantId) {
             $product = ShopProduct::find($id);
             if (!$product) return 0;
             
             if ($variantId) {
-                // 1. POKUS: Zkusíme zjistit název cizího klíče dynamicky z relace v modelu (pokud existuje metoda 'product' nebo 'shopProduct')
-                $foreignKey = 'product_id'; // Výchozí fallback
+                $foreignKey = 'product_id';
                 
                 $variantModel = new ShopProductVariant();
                 if (method_exists($variantModel, 'product')) {
@@ -311,17 +305,14 @@ class ShopCheckoutController extends Controller
                     $variant = ShopProductVariant::where($foreignKey, $id)->find($variantId);
                     return $variant ? $variant->stock_quantity : 0;
                 } catch (\Illuminate\Database\QueryException $e) {
-                    // 2. POKUS: Pokud dynamický klíč selhal, zkusíme natvrdo 'shop_product_id' nebo 'product_id' podle toho, co tam zbylo
                     $fallbackKey = ($foreignKey === 'product_id') ? 'shop_product_id' : 'product_id';
                     
                     try {
                         $variant = ShopProductVariant::where($fallbackKey, $id)->find($variantId);
                         return $variant ? $variant->stock_quantity : 0;
                     } catch (\Exception $ex) {
-                        // 3. POKUS: Poslední záchrana – najdeme variantu čistě podle jejího ID a zkontrolujeme, zda patří k produktu
                         $variant = ShopProductVariant::find($variantId);
                         if ($variant) {
-                            // Ověříme shodu ID produktu přes vlastnosti (zkusíme různé běžné názvy sloupců)
                             $pId = $variant->product_id ?? $variant->shop_product_id ?? null;
                             if ($pId == $id) {
                                 return $variant->stock_quantity;
@@ -335,14 +326,16 @@ class ShopCheckoutController extends Controller
             return $product->stock_quantity;
         });
 
-        // Vracíme čistě true/false, uživatel neví, kolik přesně zbývá kusů
         return response()->json([
             'available' => $requestedQuantity <= $stockQuantity
         ]);
     }
 
     /**
-     * OVĚŘENÍ KUPÓNU
+     * Validates a coupon code against business rules (expiration, usage limits, minimum order amounts).
+     *
+     * @param Request $request Request containing coupon code and total order amount.
+     * @return JsonResponse Status of coupon validity and the coupon object.
      */
     public function validateCoupon(Request $request): JsonResponse
     {
@@ -386,7 +379,10 @@ class ShopCheckoutController extends Controller
     }
 
     /**
-     * SIMULACE PLATBY
+     * Simulates a payment gateway response for testing purposes.
+     *
+     * @param Request $request Request containing order ID.
+     * @return JsonResponse Payment result and updated order status.
      */
     public function simulatePayment(Request $request): JsonResponse
     {
@@ -425,7 +421,14 @@ class ShopCheckoutController extends Controller
     }
 
     /**
-     * LOGOVÁNÍ
+     * Logs administrative or checkout-related events for auditing purposes.
+     *
+     * @param Request $request The original request context.
+     * @param string $eventType Category of the event.
+     * @param string $module The system module triggered.
+     * @param string $description Detailed description of the action.
+     * @param int|null $affectedId Optional ID of the entity influenced by the action.
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
     {

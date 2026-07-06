@@ -1,0 +1,28 @@
+{
+  "HtmlDocumentationStandard": {
+    "FileHeader": {
+      "format": "HTML comment block ",
+      "required_fields": [
+        "@file",
+        "@path",
+        "@project",
+        "@author",
+        "@created (only year)",
+        "@description",
+        "@dependencies"
+      ],
+      "rules": "Must be at the very top of the file. Includes file path for AI context and lists of child components."
+    },
+    "ComponentBlock": {
+      "format": "HTML comment block before the specific HTML tag",
+      "required_fields": [
+        "@component",
+        "@description",
+        "@usage",
+        "@note (optional)"
+      ],
+      "rules": "Documents individual components, their purpose, and their implementation details (inputs/outputs/events)."
+    },
+    "Language": "English only"
+  }
+}

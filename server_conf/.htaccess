@@ -2,7 +2,7 @@
     RewriteEngine On
     Options -MultiViews -Indexes
 
-    # 1. Pravidlo pro Storage - pokud existuje symlink v /www
+    # 1. Rule for Storage - if a symlink exists in /www
     RewriteCond %{REQUEST_URI} ^/storage [NC]
     RewriteRule ^storage/(.*)$ storage/$1 [L]
 
@@ -10,13 +10,11 @@
     RewriteCond %{REQUEST_URI} ^/api
     RewriteRule ^ laravel/public/index.php [L]
 
-    # 3. Pokud soubor nebo složka existuje, načti ho přímo
+    # 3. If the file or directory exists, serve it directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # 4. Vše ostatní -> Angular index.html
+    # 4. Everything else -> Angular index.html
     RewriteRule ^ index.html [L]
 </IfModule>
-
-

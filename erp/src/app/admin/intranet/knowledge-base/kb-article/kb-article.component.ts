@@ -1,27 +1,28 @@
+/**
+ * @file kb-article.component.ts
+ * @path src/app/admin/components/kb-article/kb-article.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description A detail view component for displaying Knowledge Base articles based on route identifiers.
+ * @dependencies
+ * - ActivatedRoute: Used to extract article IDs from the URL parameters.
+ */
+
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-
+/**
+ * @description Renders a specific knowledge base article by resolving an ID against an internal data store.
+ * @usage Used in the admin portal to provide employees with documentation and guidelines.
+ * @note Currently utilizes an in-memory data object; should be extended to fetch data from an API service for production use.
+ */
 @Component({
   selector: 'app-kb-article',
   standalone: true,
   imports: [],
-  template: `
-    @if (article) {
-      <div class="article-container">
-        <h1>{{ article.title }}</h1>
-        <hr class="kb-divider">
-        <div class="article-body" [innerHTML]="article.content"></div>
-      </div>
-    }
-    `,
-  styles: [`
-    .article-container { animation: fadeIn 0.4s ease-out; }
-    h1 { color: #a67dff; font-size: 2rem; margin-bottom: 10px; }
-    .kb-divider { border: 0; border-top: 1px solid #2f2f2f; margin: 20px 0; }
-    .article-body { line-height: 1.7; color: #d0d0d0; font-size: 1.1rem; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  `]
+  templateUrl: './kb-article.component.html',
+  styleUrls: ['./kb-article.component.css']
 })
 export class KbArticleComponent implements OnInit {
   article: any;
@@ -39,6 +40,9 @@ export class KbArticleComponent implements OnInit {
 
   constructor(private route: ActivatedRoute) {}
 
+  /**
+   * @description Subscribes to route parameters to identify the requested article ID and retrieve corresponding data.
+   */
   ngOnInit() {
     this.route.params.subscribe(params => {
       const id = params['id'];

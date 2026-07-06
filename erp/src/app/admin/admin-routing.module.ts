@@ -1,3 +1,16 @@
+/**
+ * @file admin-routing.module.ts
+ * @path src/app/admin/admin-routing.module.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2025
+ * @description Centralized routing configuration for the administrative module, separating Web, E-Shop, and Intranet interfaces with role-based access control.
+ * @dependencies
+ * - RouterModule: Core Angular routing service.
+ * - AuthGuard: Authentication middleware ensuring restricted access to administrative routes.
+ * - AdminLayoutComponent: Main wrapper layout for the admin section.
+ */
+
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AdminLayoutComponent } from './components/admin-layout/admin-layout.component';
@@ -21,7 +34,7 @@ import { SupportFormComponent } from './intranet/knowledge-base/pages/support-fo
 import { SupportTicketsComponent } from './web-pages/support-tickets/support-tickets.component';
 import { JobApplicationsComponent } from './web-pages/job-applications/job-applications.component';
 
-// 🛒 IMPORTY PRO E-SHOP STRÁNKY
+// Shop module components
 import { DashboardComponent as ShopDashboardComponent } from './shop-pages/dashboard/dashboard.component';
 import { ProductsComponent } from './shop-pages/products/products.component';
 import { CategoriesComponent } from './shop-pages/categories/categories.component';
@@ -31,12 +44,16 @@ import { CouponsComponent } from './shop-pages/coupons/coupons.component';
 import { ShopLogsComponent } from './shop-pages/shop-logs/shop-logs.component';
 import { ShippingMethodsComponent } from './shop-pages/shipping-methods/shipping-methods.component';
 import { SuppliersComponent } from './shop-pages/suppliers/suppliers.component';
-// 🆕 Nový import:
 import { PaymentMethodsComponent } from './shop-pages/payment-methods/payment-methods.component';
 import { EditLegalComponent } from './web-pages/edit-legal/edit-legal.component';
 import { WebSettingsComponent } from './web-pages/web-settings/web-settings.component';
 import { EditEshopComponent } from './shop-pages/edit-eshop/edit-eshop.component';
 
+/**
+ * @description Defines the navigation hierarchy and access permissions for the administration interface.
+ * @usage Acts as the master route table for the admin module, protected by AuthGuard to prevent unauthenticated access.
+ * @note Routes are grouped into Web, E-Shop, and Intranet segments for maintainability and clear logical separation.
+ */
 const routes: Routes = [
   {
     path: '',
@@ -45,7 +62,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       
-      // 🌍 WEB STRÁNKY
+      // 🌍 WEB STRÁNKY (Core website management interfaces)
       { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
       { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-view-user-requests' } },
       { path: 'administrators', component: AdministratorsComponent, data: { permission: 'web-manage-administrators' } },
@@ -60,7 +77,7 @@ const routes: Routes = [
       { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'web-edit-legal' } },
       { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'web-view-web-settings' } },
 
-      // 🛒 E-SHOP STRÁNKY
+      // 🛒 E-SHOP STRÁNKY (E-commerce administrative interfaces)
       { 
         path: 'shop', 
         children: [
@@ -71,7 +88,6 @@ const routes: Routes = [
           { path: 'orders', component: OrdersComponent, data: { permission: 'shop-view-orders' } },
           { path: 'customers', component: CustomersComponent, data: { permission: 'shop-manage-customers' } },
           { path: 'shipping-methods', component: ShippingMethodsComponent, data: { permission: 'shop-manage-shipping-methods' } },
-          // 🆕 Nová routa pro platební metody
           { path: 'payment-methods', component: PaymentMethodsComponent, data: { permission: 'shop-manage-payment-methods' } },
           { path: 'suppliers', component: SuppliersComponent, data: { permission: 'shop-manage-suppliers' } },
           { path: 'coupons', component: CouponsComponent, data: { permission: 'shop-view-reports' } }, 

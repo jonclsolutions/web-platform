@@ -1,23 +1,39 @@
+/**
+ * @file auth.service.ts
+ * @path src/app/core/auth/auth.service.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2025
+ * @description Core authentication service managing login, session persistence, token lifecycle, and user authorization state.
+ * @dependencies
+ * - HttpClient: Facilitates API communication for authentication endpoints.
+ * - PermissionService: Synchronizes user permissions within the application.
+ */
+
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError, timer, Subject } from 'rxjs';
-import { tap, catchError, switchMap, takeUntil, map } from 'rxjs/operators';
+import { tap, catchError, switchMap, takeUntil } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { PermissionService } from './services/permission.service';
 
+/**
+ * @description Handles user authentication, including JWT storage, automated token refreshing, and session cleanup.
+ * @usage Injected into components and interceptors to verify session state and secure API communication.
+ * @note Implements an automatic background refresh timer to maintain user sessions for the duration of activity.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private baseUrl = environment.base_api_url;
 
   private _isLoggedIn = new BehaviorSubject<boolean>(!!sessionStorage.getItem('accessToken'));
-  isLoggedIn$ = this._isLoggedIn.asObservable();
+  public isLoggedIn$ = this._isLoggedIn.asObservable();
   
   private _userEmailSubject = new BehaviorSubject<string | null>(sessionStorage.getItem('userEmail'));
-  userEmail$ = this._userEmailSubject.asObservable();
+  public userEmail$ = this._userEmailSubject.asObservable();
 
   private stopTokenRefresh$ = new Subject<void>();
   private readonly REFRESH_INTERVAL = 20 * 60 * 1000;
-  private intervalId: any;
 
   constructor(
     private http: HttpClient,
@@ -29,6 +45,12 @@ export class AuthService {
     }
   }
 
+  /**
+   * @description Authenticates the user and initializes the session state.
+   * @param credentials Login object containing email and password.
+   * @returns {Observable<any>} The authentication response from the API.
+   * @note Persists tokens and permission metadata into sessionStorage upon successful login.
+   */
   login(credentials: { email: string; password: string }): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/login`, credentials).pipe(
       tap((response: any) => {
@@ -56,6 +78,10 @@ export class AuthService {
     );
   }
 
+  /**
+   * @description Verifies the existence of a valid access token.
+   * @returns {Observable<boolean>} True if authorized, false otherwise.
+   */
   checkAuth(): Observable<boolean> {
     const token = this.getAccessToken();
     if (!token) {
@@ -67,11 +93,16 @@ export class AuthService {
     return of(true);
   }
 
+  /**
+   * @description Requests a new access token using the stored refresh token.
+   * @returns {Observable<any>} The new token payload.
+   * @note If refresh fails (e.g., token expired), it clears local session data.
+   */
   refreshAccessToken(): Observable<any> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
       this.clearAuthData();
-      return throwError(() => new Error('Chybí refresh token'));
+      return throwError(() => new Error('Refresh token missing'));
     }
 
     return this.http.post<any>(`${this.baseUrl}/refresh`, { refreshToken }).pipe(
@@ -87,6 +118,9 @@ export class AuthService {
     );
   }
 
+  /**
+   * @description Wipes all session storage and resets authentication state.
+   */
   public clearAuthData(): void {
     sessionStorage.clear();
     this.permissionService.clearPermissions();
@@ -104,11 +138,20 @@ export class AuthService {
   public getUserRole(): string | null { return sessionStorage.getItem('userRole'); }
   public getAccessToken(): string | null { return sessionStorage.getItem('accessToken'); }
   public getRefreshToken(): string | null { return sessionStorage.getItem('refreshToken'); }
+
+  /**
+   * @description Retrieves and deserializes user permissions from storage.
+   * @returns {string[]} An array of permission strings.
+   * @note Fallback to empty array if no permissions found.
+   */
   public getUserPermissions(): string[] {
     const perms = sessionStorage.getItem('userPermissions');
     return perms ? JSON.parse(perms) : [];
   }
 
+  /**
+   * @description Logs out the user and invalidates the session on the backend.
+   */
   logout(): Observable<any> {
     const body = { refreshToken: this.getRefreshToken() };
     return this.http.post<any>(`${this.baseUrl}/logout`, body).pipe(
@@ -120,9 +163,13 @@ export class AuthService {
     );
   }
 
+  /**
+   * @description Initializes a periodic refresh timer for the access token.
+   * @note Uses takeUntil to ensure clean termination when the user logs out.
+   */
   private startTokenRefreshTimer(): void {
     this.stopTokenRefreshTimer();
-    this.intervalId = timer(this.REFRESH_INTERVAL, this.REFRESH_INTERVAL).pipe(
+    timer(this.REFRESH_INTERVAL, this.REFRESH_INTERVAL).pipe(
       switchMap(() => this.refreshAccessToken()),
       takeUntil(this.stopTokenRefresh$)
     ).subscribe();
@@ -138,8 +185,8 @@ export class AuthService {
   }
 
   private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'Nastala chyba při přihlášení.';
-    if (error.status === 401) errorMessage = 'Neplatné jméno nebo heslo.';
+    let errorMessage = 'Login failed.';
+    if (error.status === 401) errorMessage = 'Invalid credentials.';
     return throwError(() => new Error(errorMessage));
   }
 }

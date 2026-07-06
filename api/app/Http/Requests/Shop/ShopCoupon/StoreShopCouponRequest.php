@@ -1,13 +1,34 @@
 <?php
+/**
+ * @file StoreShopCouponRequest.php
+ * @path App\Http\Requests\Shop\ShopCoupon\StoreShopCouponRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for storing new discount coupons.
+ */
 
 namespace App\Http\Requests\Shop\ShopCoupon;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles validation for coupon creation, including type casting for boolean flags.
+ */
 class StoreShopCouponRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -20,13 +41,17 @@ class StoreShopCouponRequest extends FormRequest
             'applies_to' => 'required|in:all,products,categories',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
-            'is_active' => 'required|in:0,1,true,false,boolean', // Robustní validace pro přepínač z frontendu
+            'is_active' => 'required|in:0,1,true,false,boolean',
         ];
     }
 
+    /**
+     * Prepare data for validation.
+     * 
+     * @return void
+     */
     protected function prepareForValidation()
     {
-        // Převod stringu "0"/"1" z Angular selectu na skutečný boolean
         if ($this->has('is_active')) {
             $this->merge([
                 'is_active' => filter_var($this->is_active, FILTER_VALIDATE_BOOLEAN),
@@ -34,6 +59,11 @@ class StoreShopCouponRequest extends FormRequest
         }
     }
 
+    /**
+     * Define custom error messages.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

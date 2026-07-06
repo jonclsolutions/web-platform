@@ -1,33 +1,57 @@
 <?php
+/**
+ * @file WebLog.php
+ * @path app/Models/Web/WebLog.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Model representing web module audit logs.
+ */
+
 namespace App\Models\Web;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 
+/**
+ * @description Tracks administrative and system events within the web module.
+ * * @property int $id Unique identifier.
+ * @property array $context_data JSON object containing event-specific metadata.
+ */
 class WebLog extends Model
 {
     use HasFactory;
 
-    // Pokud se sloupec jmenuje prostě 'id', tento řádek smaž nebo zakomentuj:
-    // protected $primaryKey = 'business_log_id'; 
+    /**
+     * @var bool Indicates if the model should be timestamped.
+     */
+    public $timestamps = false;
 
-    public $timestamps = false; // Necháváme, protože máš jen created_at
-
+    /**
+     * @var array<int, string> The attributes that are mass assignable.
+     */
     protected $fillable = [
         'origin', 'event_type', 'module', 'description', 
         'affected_entity_type', 'affected_entity_id', 'user_id', 
-        'context_data', 'user_id_plain', 'user_plain' // Opraveno z user_login_plain
+        'context_data', 'user_id_plain', 'user_plain'
     ];
 
+    /**
+     * @var array<string, string> The attributes that should be cast to native types.
+     */
     protected $casts = [
         'created_at' => 'datetime',
-        'context_data' => 'array', // Doporučuji castovat na array, pokud tam ukládáš JSON
+        'context_data' => 'array',
     ];
 
-    public function user()
+    /**
+     * Get the user who triggered the log event.
+     * * @return BelongsTo
+     */
+    public function user(): BelongsTo
     {
-        // Opraveno: Tabulka se jmenuje User a klíče jsou id / user_id
         return $this->belongsTo(User::class, 'user_id');
     }
 }

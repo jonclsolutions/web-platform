@@ -1,16 +1,37 @@
 <?php
+/**
+ * @file StoreShopCustomerRequest.php
+ * @path app/Http/Requests/Shop/ShopCustomer/StoreShopCustomerRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for creating new shop customer profiles.
+ */
 
 namespace App\Http\Requests\Shop\ShopCustomer;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles request validation for shop customer registration, enforcing data integrity and contact information formatting.
+ */
 class StoreShopCustomerRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -29,6 +50,11 @@ class StoreShopCustomerRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validator errors.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

@@ -1,3 +1,16 @@
+/**
+ * @file edit-eshop.component.ts
+ * @path src/app/admin/pages/shop/edit-eshop/edit-eshop.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages internationalization (i18n) settings, translation keys, and language metadata for the shop module.
+ * @dependencies
+ * - BaseDataComponent: Provides foundational CRUD state management.
+ * - LoadingService: Manages application-wide loading indicators.
+ * - HttpClient: Handles multipart/form-data and standard REST requests for language assets.
+ */
+
 import {
   Component, ChangeDetectionStrategy, ChangeDetectorRef,
   inject, OnInit, OnDestroy
@@ -10,31 +23,33 @@ import { RouterModule } from '@angular/router';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
 
-// ─── Interfaces ───────────────────────────────────────────────
-
 /**
- * Metadata jazyka vrácená serverem.
- * Server ukládá ikonky na disk a vrací iconUrl (veřejná URL).
- * iconBase64 je pouze dočasný stav při nahrávání nové ikonky v UI.
+ * @description Defines the metadata structure for supported languages including flags and activation status.
  */
 export interface LangMeta {
-  code: string;        // 'cz', 'en', 'sk' …
-  name: string;        // 'Čeština', 'English' …
-  iconUrl?: string;    // veřejná URL ikonky ze serveru (null = žádná)
+  code: string;        
+  name: string;        
+  iconUrl?: string;    
   active: boolean;
-  isBuiltIn?: boolean; // true = nelze smazat
+  isBuiltIn?: boolean; 
 }
 
+/**
+ * @description Flattens complex translation JSON objects into a linear structure for easier editing and diffing.
+ */
 export interface FlatKey {
   path: string;
   value: string;
-  missing: boolean;    // prázdná hodnota oproti CZ vzoru
+  missing: boolean;    
 }
 
-// localStorage klíč — pouze pro fallback seznam jazyků (bez ikonek)
 const LS_KEY = 'rpsw_languages';
 
-
+/**
+ * @description Serves as the primary controller for language management and key-based translation editing.
+ * @usage Provides administrators the interface to add/remove languages, upload/download JSON translation packs, and translate strings.
+ * @note Implements a recursive diffing mechanism against a 'CZ' reference language to identify untranslated keys.
+ */
 @Component({
   selector: 'app-edit-website',
   standalone: true,
@@ -52,40 +67,35 @@ export class EditEshopComponent
 
   private readonly MODULE = 'shop';
 
-  // ── Jazyky ──────────────────────────────────────────────────
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
 
-  // ── Překlady ─────────────────────────────────────────────────
   translations: any = {};
-  czTranslations: any = {};     // referenční CZ pro diff chybějících klíčů
+  czTranslations: any = {};     
   flattenedKeys: FlatKey[] = [];
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
 
-  // ── Přidání jazyka — formulář ────────────────────────────────
   showAddForm: boolean = false;
   newLangCode: string = '';
   newLangName: string = '';
   newLangActive: boolean = true;
   addFormError: string = '';
-  /** Soubor ikonky vybraný uživatelem — odešle se jako FormData */
   private newLangIconFile: File | null = null;
-  /** Preview pro UI — zobrazí se ihned po výběru souboru */
   newLangIconPreview: string = '';
 
-  // ── Upload JSON ───────────────────────────────────────────────
   showUploadModal: boolean = false;
   uploadLangCode: string = '';
   uploadError: string = '';
   uploadSuccess: string = '';
 
-  // ── Smazání jazyka ────────────────────────────────────────────
   langToDelete: LangMeta | null = null;
 
-  // ── Statistiky (gettery, vždy aktuální) ──────────────────────
+  /** @returns Count of keys currently marked as missing in the active language. */
   get missingCount(): number { return this.filteredKeys.filter(k => k.missing).length; }
+  /** @returns Total number of keys currently filtered. */
   get totalCount(): number   { return this.filteredKeys.length; }
+  /** @returns Count of translated keys currently filtered. */
   get filledCount(): number  { return this.filteredKeys.filter(k => !k.missing && k.value?.trim()).length; }
 
   constructor(
@@ -97,25 +107,14 @@ export class EditEshopComponent
     super(dataHandler, cd, genericTableService);
   }
 
-  // ════════════════════════════════════════════════════════════
-  // INIT
-  // ════════════════════════════════════════════════════════════
-
   override ngOnInit(): void {
     this.loadLanguages();
   }
 
-  // ════════════════════════════════════════════════════════════
-  // NAČTENÍ JAZYKŮ
-  // ════════════════════════════════════════════════════════════
-
   /**
-   * Načte seznam jazyků ze serveru.
-   * Server vrací iconUrl (veřejná URL), nikoliv base64.
-   * Při chybě použije localStorage nebo built-in seznam.
+   * @description Fetches language metadata from the server, falling back to local storage if necessary.
    */
   private loadLanguages(): void {
-    // Upravená URL s parametrem modulu
     this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.MODULE}`)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
@@ -125,8 +124,7 @@ export class EditEshopComponent
           this.afterLanguagesLoaded();
         },
         error: (err) => {
-          console.error('Chyba při načítání jazyků:', err);
-          // Fallback na localStorage
+          console.error('Language load error:', err);
           const cached = localStorage.getItem(LS_KEY);
           this.languages = cached ? JSON.parse(cached) : this.getBuiltInLanguages();
           this.afterLanguagesLoaded();
@@ -136,31 +134,24 @@ export class EditEshopComponent
 
   private getBuiltInLanguages(): LangMeta[] {
     return [
-      { code: 'cz', name: 'Čeština', iconUrl: undefined, active: true, isBuiltIn: true },
-      { code: 'en', name: 'English',  iconUrl: undefined, active: true, isBuiltIn: false },
+      { code: 'cz', name: 'Čeština', iconUrl: undefined, active: true, isBuiltIn: true }
     ];
   }
 
   private afterLanguagesLoaded(): void {
-    // Načti CZ jako referenci pro diff, pak načti aktuální jazyk
     this.loadCzReference(() => {
       this.loadLang(this.currentLang);
     });
   }
 
   private persistMetaToLocalStorage(): void {
-    // Ukládáme bez iconUrl — URL je server-side a může se změnit
     const stripped = this.languages.map(({ iconUrl, ...rest }) => rest);
     try { localStorage.setItem(LS_KEY, JSON.stringify(stripped)); } catch {}
   }
 
-  // ════════════════════════════════════════════════════════════
-  // NAČTENÍ PŘEKLADŮ ZE SERVERU
-  // ════════════════════════════════════════════════════════════
-
   /**
-   * Načte CZ překlady ze serveru jako referenční vzor pro diff.
-   * Endpoint: GET /api/translations/cz
+   * @description Loads CZ as the master reference structure to identify missing keys in other languages.
+   * @param callback Optional hook to trigger once the reference data is fetched.
    */
   private loadCzReference(callback?: () => void): void {
     this.dataHandler.get<any>(`translations/${this.MODULE}/cz`)
@@ -171,7 +162,6 @@ export class EditEshopComponent
           callback?.();
         },
         error: () => {
-          // Pokud CZ selže, pokračujeme bez referenčního vzoru
           this.czTranslations = {};
           callback?.();
         }
@@ -179,19 +169,15 @@ export class EditEshopComponent
   }
 
   /**
-   * Přepne na daný jazyk a načte překlady ze serveru.
-   * Endpoint: GET /api/translations/{lang}
+   * @description Switches active context to a specific language code.
+   * @param lang The ISO code of the language to load.
    */
   loadLang(lang: string): void {
-    // Pokud přepínáme na stejný jazyk a data jsou načtena, přeskočíme
     if (this.currentLang === lang && Object.keys(this.translations).length > 0) return;
     this.currentLang = lang;
     this.refreshTranslations();
   }
 
-  /**
-   * Znovu načte překlady pro currentLang ze serveru.
-   */
   public refreshTranslations(): void {
     this.errorMessage = null;
     this.cd.markForCheck();
@@ -211,30 +197,26 @@ export class EditEshopComponent
           this.applyFilter();
         },
         error: () => {
-          // JSON pro tento jazyk ještě neexistuje na serveru
-          // Inicializujeme prázdnou strukturu dle CZ vzoru
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.buildFlatList();
           this.applyFilter();
           this.alertDialogService.open(
             'Info',
-            `Překlady pro jazyk „${this.currentLang}" zatím neexistují. Zobrazeny prázdné klíče ke překladu.`,
+            `Translations for „${this.currentLang}" do not exist yet. Defaulting to empty keys.`,
             'info'
           );
         }
       });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // FLAT LIST + DIFF
-  // ════════════════════════════════════════════════════════════
-
+  /**
+   * @description Compares current language structure against the CZ master reference to identify missing content.
+   */
   private buildFlatList(): void {
     this.flattenedKeys = [];
     const czFlat  = this.flattenToMap(this.czTranslations);
     const curFlat = this.flattenToMap(this.translations);
 
-    // Projdi všechny klíče z CZ (master vzor)
     for (const [path] of czFlat.entries()) {
       const curVal = curFlat.get(path) ?? '';
       this.flattenedKeys.push({
@@ -244,7 +226,6 @@ export class EditEshopComponent
       });
     }
 
-    // Klíče které jsou v překladu ale ne v CZ vzoru (přebývající / nové)
     for (const [path, val] of curFlat.entries()) {
       if (!czFlat.has(path)) {
         this.flattenedKeys.push({ path, value: val, missing: false });
@@ -252,11 +233,7 @@ export class EditEshopComponent
     }
   }
 
-  private flattenToMap(
-    obj: any,
-    path: string = '',
-    map = new Map<string, string>()
-  ): Map<string, string> {
+  private flattenToMap(obj: any, path: string = '', map = new Map<string, string>()): Map<string, string> {
     for (const key in obj) {
       const newPath = path ? `${path}.${key}` : key;
       if (typeof obj[key] === 'object' && obj[key] !== null) {
@@ -268,7 +245,6 @@ export class EditEshopComponent
     return map;
   }
 
-  /** Vytvoří hlubokou kopii struktury objektu s prázdnými string hodnotami */
   private buildEmptyFromCz(obj: any): any {
     if (typeof obj !== 'object' || obj === null) return '';
     const result: any = {};
@@ -277,10 +253,6 @@ export class EditEshopComponent
     }
     return result;
   }
-
-  // ════════════════════════════════════════════════════════════
-  // FILTROVÁNÍ
-  // ════════════════════════════════════════════════════════════
 
   applyFilter(): void {
     const q = this.searchQuery.toLowerCase().trim();
@@ -304,10 +276,6 @@ export class EditEshopComponent
     this.applyFilter();
     setTimeout(() => this.resizeAllTextareas(), 10);
   }
-
-  // ════════════════════════════════════════════════════════════
-  // EDITACE HODNOT
-  // ════════════════════════════════════════════════════════════
 
   updateValue(path: string, newValue: string): void {
     const keys = path.split('.');
@@ -338,14 +306,6 @@ export class EditEshopComponent
     });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // ULOŽENÍ PŘEKLADŮ NA SERVER
-  // ════════════════════════════════════════════════════════════
-
-  /**
-   * POST /api/save_translations
-   * Uloží aktuální překlady pro currentLang na server.
-   */
   onSubmit(): void {
     this.dataHandler.post(`save_translations/${this.MODULE}`, {
       lang: this.currentLang,
@@ -353,8 +313,8 @@ export class EditEshopComponent
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.alertDialogService.open(
-          'Administrace',
-          `Překlady pro „${this.currentLang}" byly úspěšně uloženy.`,
+          'Admin',
+          `Translations for „${this.currentLang}" saved.`,
           'success'
         );
         this.buildFlatList();
@@ -362,14 +322,10 @@ export class EditEshopComponent
         this.cd.markForCheck();
       },
       error: () => {
-        this.alertDialogService.open('Chyba', 'Uložení na server selhalo.', 'danger');
+        this.alertDialogService.open('Error', 'Save failed.', 'danger');
       }
     });
   }
-
-  // ════════════════════════════════════════════════════════════
-  // SPRÁVA JAZYKŮ — PŘIDÁNÍ
-  // ════════════════════════════════════════════════════════════
 
   openAddForm(): void {
     this.showAddForm     = true;
@@ -388,9 +344,7 @@ export class EditEshopComponent
   }
 
   /**
-   * Uživatel vybral soubor ikonky.
-   * Vytvoříme lokální preview (base64) pro zobrazení v UI.
-   * Skutečný soubor se odešle jako FormData při confirmAddLang().
+   * @description Processes user-selected flag file, creates a local preview, and validates file size.
    */
   onIconFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -398,14 +352,13 @@ export class EditEshopComponent
     if (!file) return;
 
     if (file.size > 512 * 1024) {
-      this.addFormError = 'Ikonka je příliš velká (max 512 KB).';
+      this.addFormError = 'Icon exceeds size limit (512 KB).';
       this.cd.markForCheck();
       return;
     }
 
     this.newLangIconFile = file;
 
-    // Vytvoříme pouze lokální preview pro UI
     const reader = new FileReader();
     reader.onload = () => {
       this.newLangIconPreview = reader.result as string;
@@ -422,26 +375,24 @@ export class EditEshopComponent
   }
 
   /**
-   * Odešle nový jazyk na server jako FormData.
-   * POST /api/languages
-   * Body: languages (JSON string), icon (File, volitelné), target_code (string)
+   * @description Submits a new language definition using multipart/form-data to include flag imagery.
    */
   confirmAddLang(): void {
     const code = this.newLangCode.trim().toLowerCase();
     const name = this.newLangName.trim();
 
     if (!code || !name) {
-      this.addFormError = 'Kód i název jazyka jsou povinné.';
+      this.addFormError = 'Code and name are required.';
       this.cd.markForCheck();
       return;
     }
     if (!/^[a-z]{2,5}$/.test(code)) {
-      this.addFormError = 'Kód jazyka musí být 2–5 malých písmen (např. sk, de, fr).';
+      this.addFormError = 'Code must be 2–5 lowercase letters.';
       this.cd.markForCheck();
       return;
     }
     if (this.languages.some(l => l.code === code)) {
-      this.addFormError = `Jazyk s kódem „${code}" již existuje.`;
+      this.addFormError = `Language code „${code}" already exists.`;
       this.cd.markForCheck();
       return;
     }
@@ -453,7 +404,6 @@ export class EditEshopComponent
       isBuiltIn: false
     };
 
-    // Sestavíme FormData — server očekává 'languages' jako JSON string
     const fd = new FormData();
     fd.append('languages', JSON.stringify([...this.languages, newLang]));
     fd.append('module', this.MODULE);
@@ -469,34 +419,25 @@ export class EditEshopComponent
         next: () => {
           this.showAddForm = false;
           this.cd.markForCheck();
-          
-          // 1. Znovu načteme seznam jazyků, aby se správně propsala ikonka
           this.loadLanguages();
 
-          // 2. MÍSTO volání refreshTranslations(), které by vyvolalo 404, 
-          // nastavíme prázdnou strukturu lokálně:
           this.currentLang = code;
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.buildFlatList();
           this.applyFilter();
           
-          // Upozorníme uživatele, že je jazyk prázdný
           this.alertDialogService.open(
-            'Úspěch',
-            `Jazyk „${code}" byl vytvořen. Nyní můžete začít překládat klíče.`,
+            'Success',
+            `Language „${code}" created.`,
             'success'
           );
         },
         error: () => {
-          this.addFormError = 'Nepodařilo se uložit jazyk na server.';
+          this.addFormError = 'Failed to save language to server.';
           this.cd.markForCheck();
         }
       });
   }
-
-  // ════════════════════════════════════════════════════════════
-  // SPRÁVA JAZYKŮ — SMAZÁNÍ
-  // ════════════════════════════════════════════════════════════
 
   askDeleteLang(lang: LangMeta): void {
     this.langToDelete = lang;
@@ -508,10 +449,6 @@ export class EditEshopComponent
     this.cd.markForCheck();
   }
 
-  /**
-   * DELETE /api/languages/{code}
-   * Server smaže metadata, ikonku i JSON soubor s překlady.
-   */
   confirmDeleteLang(): void {
     if (!this.langToDelete) return;
     const code = this.langToDelete.code;
@@ -527,50 +464,39 @@ export class EditEshopComponent
             this.translations = {};
           }
 
-          // Znovu načteme seznam jazyků ze serveru
           this.loadLanguages();
           this.cd.markForCheck();
         },
         error: (err) => {
           this.langToDelete = null;
-          const msg = err?.error?.message ?? 'Nepodařilo se smazat jazyk.';
-          this.alertDialogService.open('Chyba', msg, 'danger');
+          const msg = err?.error?.message ?? 'Failed to delete language.';
+          this.alertDialogService.open('Error', msg, 'danger');
           this.cd.markForCheck();
         }
       });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // TOGGLE ACTIVE
-  // ════════════════════════════════════════════════════════════
-
   /**
-   * Přepne active flag jazyka a uloží celý seznam na server.
-   * POST /api/languages s aktualizovaným polem languages.
+   * @description Toggles language activation state by posting the full updated language metadata list to the server.
    */
   toggleLangActive(lang: LangMeta): void {
-  lang.active = !lang.active;
-  this.cd.markForCheck();
+    lang.active = !lang.active;
+    this.cd.markForCheck();
 
-  const fd = new FormData();
-  fd.append('languages', JSON.stringify(this.languages));
-  fd.append('module', this.MODULE); // PŘIDAT TOTO
+    const fd = new FormData();
+    fd.append('languages', JSON.stringify(this.languages));
+    fd.append('module', this.MODULE);
 
-  // Upravit endpoint na: /api/languages/{module}
-  this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
-    .pipe(Core.takeUntil(this.destroy$))
-    .subscribe({
-      error: () => {
-        lang.active = !lang.active;
-        this.alertDialogService.open('Chyba', 'Nepodařilo se uložit změnu.', 'danger');
-        this.cd.markForCheck();
-      }
-    });
-}
-
-  // ════════════════════════════════════════════════════════════
-  // UPLOAD JSON
-  // ════════════════════════════════════════════════════════════
+    this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
+      .pipe(Core.takeUntil(this.destroy$))
+      .subscribe({
+        error: () => {
+          lang.active = !lang.active;
+          this.alertDialogService.open('Error', 'Change could not be saved.', 'danger');
+          this.cd.markForCheck();
+        }
+      });
+  }
 
   openUploadModal(lang: string): void {
     this.uploadLangCode = lang;
@@ -585,10 +511,6 @@ export class EditEshopComponent
     this.cd.markForCheck();
   }
 
-  /**
-   * Uživatel vybral JSON soubor k nahrání.
-   * Přeloží ho a rovnou odešle na server přes POST /api/save_translations.
-   */
   onJsonFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file  = input.files?.[0];
@@ -600,7 +522,7 @@ export class EditEshopComponent
         const parsed = JSON.parse(reader.result as string);
         this.uploadJsonToServer(parsed);
       } catch {
-        this.uploadError   = 'Soubor není validní JSON.';
+        this.uploadError   = 'Invalid JSON file.';
         this.uploadSuccess = '';
         this.cd.markForCheck();
       }
@@ -614,10 +536,9 @@ export class EditEshopComponent
       data
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
-        this.uploadSuccess = `JSON pro „${this.uploadLangCode}" byl úspěšně uložen na server.`;
+        this.uploadSuccess = `JSON for „${this.uploadLangCode}" successfully uploaded.`;
         this.uploadError   = '';
 
-        // Pokud jsme nahrávali pro aktuální jazyk, znovu načteme překlady
         if (this.uploadLangCode === this.currentLang) {
           this.translations = {};
           this.refreshTranslations();
@@ -626,21 +547,13 @@ export class EditEshopComponent
         this.cd.markForCheck();
       },
       error: () => {
-        this.uploadError   = 'Upload se nezdařil. Zkontrolujte připojení nebo práva na serveru.';
+        this.uploadError   = 'Upload failed. Check server connectivity.';
         this.uploadSuccess = '';
         this.cd.markForCheck();
       }
     });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // DOWNLOAD JSON
-  // ════════════════════════════════════════════════════════════
-
-  /**
-   * Stáhne aktuálně editovaný překlad jako JSON soubor.
-   * Data jsou z in-memory stavu (ne znovu ze serveru).
-   */
   downloadJson(): void {
     const blob = new Blob(
       [JSON.stringify(this.translations, null, 2)],
@@ -652,10 +565,6 @@ export class EditEshopComponent
     a.click();
     URL.revokeObjectURL(a.href);
   }
-
-  // ════════════════════════════════════════════════════════════
-  // HELPERS
-  // ════════════════════════════════════════════════════════════
 
   trackByPath(_: number, item: FlatKey): string  { return item.path; }
   trackByCode(_: number, lang: LangMeta): string { return lang.code; }

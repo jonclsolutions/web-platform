@@ -1,17 +1,22 @@
 <?php
 
+/**
+ * @file routes/api.php
+ * @path routes/api.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Defines all application API endpoints, including public access for the frontend, checkout processes, and protected administrative routes.
+ */
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
-
-// Importy kontrolerů
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TranslationController;
-
 use App\Http\Controllers\Api\Core\CoreRoleController;
 use App\Http\Controllers\Api\Core\CoreSiteSettingController;
-
 use App\Http\Controllers\Api\Legal\DocumentSectionController;
 use App\Http\Controllers\Api\Legal\SiteConfigurationController;
 use App\Http\Controllers\Api\Web\WebRawRequestCommissionController;
@@ -21,7 +26,6 @@ use App\Http\Controllers\Api\Web\WebNewsController;
 use App\Http\Controllers\Api\Web\WebSalesOrderController;
 use App\Http\Controllers\Api\Web\WebSupportTicketController;
 use App\Http\Controllers\Api\Web\WebJobApplicationController;
-
 use App\Http\Controllers\Api\Shop\ShopLogController;
 use App\Http\Controllers\Api\Shop\ShopSupplierController;
 use App\Http\Controllers\Api\Shop\ShopCouponController;
@@ -36,16 +40,17 @@ use App\Http\Controllers\Api\Shop\ShopPublicController;
 
 /*
 |--------------------------------------------------------------------------
-| 🌐 JAZYKY — veřejné načtení (frontend nepotřebuje token)
+| LANGUAGES — public access (frontend does not require a token)
 |--------------------------------------------------------------------------
-| Jen GET seznam jazyků a překlady — žádné mutace bez autorizace.
+| Only GET for language lists and translations — no mutations without authorization.
 */
 Route::get('languages/{module}', [TranslationController::class, 'getLanguages']);
-// Nová dynamická routa pro překlady rozdělená podle modulů (např. /api/translations/web/cz)
+// New dynamic route for translations grouped by modules (e.g., /api/translations/web/cz)
 Route::get('translations/{module}/{lang}', [TranslationController::class, 'show']);
+
 /*
 |--------------------------------------------------------------------------
-| 🛒 VEŘEJNÉ E-SHOP TRASY
+| PUBLIC E-SHOP ROUTES
 |--------------------------------------------------------------------------
 */
 Route::prefix('shop/public')->group(function () {
@@ -67,7 +72,7 @@ Route::prefix('shop/public')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 💳 POKLADNA
+| CHECKOUT
 |--------------------------------------------------------------------------
 */
 Route::prefix('shop/checkout')->middleware('shop.active')->group(function () {
@@ -77,7 +82,7 @@ Route::prefix('shop/checkout')->middleware('shop.active')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| 🌍 VEŘEJNÉ PRÁVNÍ DOKUMENTY A NASTAVENÍ
+| PUBLIC LEGAL DOCUMENTS AND CONFIGURATION
 |--------------------------------------------------------------------------
 */
 Route::prefix('public/legal')->group(function () {
@@ -87,7 +92,7 @@ Route::prefix('public/legal')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Autentizace (public)
+| Authentication (public)
 |--------------------------------------------------------------------------
 */
 Route::get('/sanctum/csrf-cookie', fn(Request $r) => response()->json([], 204));
@@ -95,7 +100,7 @@ Route::get('/sanctum/csrf-cookie', fn(Request $r) => response()->json([], 204));
 Route::post('/login',   [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/refresh', [AuthController::class, 'refresh']);
 
-// Veřejné formuláře z webu
+// Public web forms
 Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store']);
 Route::post('sales_orders',            [WebSalesOrderController::class, 'store']);
 Route::post('job_applications',        [WebJobApplicationController::class, 'store']);
@@ -116,23 +121,23 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user',    [AuthController::class, 'user']);
 
-    // ── Překlady ──────────────────────────────────────────────
-    // Nyní přijímá i modul, aby věděl, kam JSON uložit
+    // ── Translations ──────────────────────────────────────────────
+    // Now accepts the module to determine where to store the JSON
     Route::post('/save_translations/{module}', [TranslationController::class, 'save']);
 
-// ── Jazyky — mutace jsou chráněné ─────────────────────────
+    // ── Languages — mutations are protected ─────────────────────────
     Route::prefix('languages')->group(function () {
-        // POST uložení seznamu
+        // POST save list
         Route::post('/{module}',     [TranslationController::class, 'saveLanguages']);
-        // Ikonky
+        // Icons
         Route::post('/{module}/{code}/icon', [TranslationController::class, 'storeLanguageIcon']);
-        // Smazání
+        // Delete
         Route::delete('/{module}/{code}',    [TranslationController::class, 'destroyLanguage']);
     });
 
     /*
     |----------------------------------------------------------------------
-    | ⚙️ CORE
+    | CORE
     |----------------------------------------------------------------------
     */
     Route::prefix('core')->group(function () {
@@ -165,7 +170,7 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | 🛒 SHOP
+    | SHOP
     |----------------------------------------------------------------------
     */
     Route::prefix('shop')->group(function () {
@@ -250,7 +255,7 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | 🌍 WEB
+    | WEB
     |----------------------------------------------------------------------
     */
     Route::prefix('web')->group(function () {

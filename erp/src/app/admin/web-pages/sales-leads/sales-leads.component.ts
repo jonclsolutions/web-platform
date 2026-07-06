@@ -1,3 +1,16 @@
+/**
+ * @file sales-leads.component.ts
+ * @path src/app/admin/pages/web/sales-leads/sales-leads.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Administrative dashboard component for managing sales leads, including link generation, logging, and CRUD operations.
+ * @dependencies
+ * - BaseDataComponent: Inheritance for base table/data handling.
+ * - TableBuilderComponent: For UI rendering of lead collections.
+ * - SalesLeads Config: Domain-specific definitions for forms, columns, and toolbar buttons.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -5,6 +18,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './sales-leads.config';
 
+/**
+ * @description Manages the Sales Leads module.
+ * @usage Provides administrative oversight for lead generation, editing, and tracking through centralized configuration.
+ * @note Implements custom logging for sensitive lead-related actions (e.g., link generation).
+ */
 @Component({
   selector: 'app-sales-leads',
   standalone: true,
@@ -17,8 +35,7 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   override apiEndpoint: string = 'web/sales_leads';
-  // Endpoint pro logy je definován zde pro metodu postData, 
-  // kterou využijeme v logAction
+  /** Endpoint for activity logging system */
   private logEndpoint: string = 'web/logs';
 
   buttons = Config.SALES_LEAD_BUTTONS;
@@ -45,6 +62,10 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Constructs the toolbar buttons based on current component state and user permissions.
+   * @returns List of buttons with conditional rendering (e.g., hiding export when trash is active).
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.SALES_LEAD_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -73,6 +94,10 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     });
   }
 
+  /**
+   * @description Maps toolbar action strings to specific component methods for execution.
+   * @param action The action identifier from configuration.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -84,12 +109,14 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
   }
 
   override ngOnInit(): void {
-    // BaseDataComponent ngOnInit inicializuje destroy$ Subject
     super.ngOnInit();
-    // Automaticky zavolá refreshData() po ověření přihlášení
     this.initWithAuthCheck(this.router);
   }
 
+  /**
+   * @description Constructs a unique order form URL for the lead and copies it to the clipboard.
+   * @param item The specific sales lead entity.
+   */
   handleGenerateFormLink(item: any): void {
     const url = `${window.location.origin}/order_form/lead_id=${item.id}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -100,6 +127,10 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     });
   }
 
+  /**
+   * @description Sends an audit log entry to the server regarding specific user actions on a lead.
+   * @param item The lead record associated with the action.
+   */
   private logAction(item: any): void {
     const logData = {
       event_type: 'LINK_GENERATED',
@@ -121,12 +152,19 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Updates current filtering parameters and resets pagination to page 1.
+   * @param f The new filter criteria.
+   */
   applyFilters(f: Core.FilterParams): void {
     this.filters = { ...this.filters, ...f };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Resets active filters to system defaults.
+   */
   clearFilters(): void {
     this.filters = { ...this.defaultFilters };
     this.refreshData();
@@ -154,6 +192,10 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Handles form submission, deciding whether to perform an update or creation based on presence of entity ID.
+   * @param formData The object submitted via the edit/create form.
+   */
   handleFormSubmitted(formData: any): void {
     const req = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     req.pipe(

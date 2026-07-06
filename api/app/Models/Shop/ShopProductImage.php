@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopProductImage.php
+ * @path app/Models/Shop/ShopProductImage.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Model for managing product and variant imagery.
+ */
 
 namespace App\Models\Shop;
 
@@ -6,14 +14,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @description Handles images linked to products or specific variants, including metadata and primary image flags.
+ */
 class ShopProductImage extends Model
 {
     use SoftDeletes;
 
+    /**
+     * @var string The table associated with the model.
+     */
     protected $table = 'shop_product_images';
 
+    /**
+     * @var bool Indicates if the model should be timestamped.
+     */
     public $timestamps = false;
 
+    /**
+     * @var array<int, string> The attributes that are mass assignable.
+     */
     protected $fillable = [
         'product_id',
         'variant_id',
@@ -23,6 +43,9 @@ class ShopProductImage extends Model
         'sort_order',
     ];
 
+    /**
+     * @var array<string, string> The attributes that should be cast to native types.
+     */
     protected $casts = [
         'is_primary' => 'boolean',
         'sort_order' => 'integer',
@@ -31,7 +54,7 @@ class ShopProductImage extends Model
     ];
 
     /**
-     * Produkt
+     * Get the product associated with this image.
      */
     public function product(): BelongsTo
     {
@@ -39,7 +62,7 @@ class ShopProductImage extends Model
     }
 
     /**
-     * Varianta (pokud je obrázek specificky k variantě)
+     * Get the variant associated with this image.
      */
     public function variant(): BelongsTo
     {
@@ -47,7 +70,7 @@ class ShopProductImage extends Model
     }
 
     /**
-     * Vrátí úplnou URL obrázku
+     * Generates the public storage URL for the image.
      */
     public function getUrl(): string
     {
@@ -55,7 +78,7 @@ class ShopProductImage extends Model
     }
 
     /**
-     * Vrátí cestu k obrázku na disku
+     * Returns the full server path for file operations.
      */
     public function getFullPath(): string
     {
@@ -63,7 +86,7 @@ class ShopProductImage extends Model
     }
 
     /**
-     * Scope pro primární obrázky produktu (ne varianty)
+     * Scope for primary product images.
      */
     public function scopePrimary($query)
     {
@@ -71,7 +94,7 @@ class ShopProductImage extends Model
     }
 
     /**
-     * Scope pro obrázky specifické produktu (bez variant)
+     * Scope for images attached to the product directly.
      */
     public function scopeProductImages($query)
     {
@@ -79,7 +102,7 @@ class ShopProductImage extends Model
     }
 
     /**
-     * Scope pro obrázky specifické variantě
+     * Scope for images attached to a specific variant.
      */
     public function scopeVariantImages($query, $variantId)
     {

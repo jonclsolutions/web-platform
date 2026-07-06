@@ -1,3 +1,17 @@
+/**
+ * @file edit-website.component.ts
+ * @path src/app/admin/pages/web/edit-website/edit-website.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages web localization, translation files, and language metadata administration.
+ * @dependencies
+ * - Angular Core/Common/Forms/Router: Standard framework utilities.
+ * - BaseDataComponent: Inheritance for base CRUD and state handling.
+ * - HttpClient: Used for multipart/form-data operations (icons/files).
+ * - LoadingService: Global UI loading state management.
+ */
+
 import {
   Component, ChangeDetectionStrategy, ChangeDetectorRef,
   inject, OnInit, OnDestroy
@@ -35,6 +49,11 @@ export interface FlatKey {
 const LS_KEY = 'rpsw_languages';
 
 
+/**
+ * @description Main controller for managing website localization (translations) and language settings.
+ * @usage Enables CRUD operations for languages, provides an inline editor for translation keys, and supports JSON-based bulk updates.
+ * @note Implements differential translation checking against the 'cz' locale to identify missing keys.
+ */
 @Component({
   selector: 'app-edit-website',
   standalone: true,
@@ -110,9 +129,8 @@ export class EditWebsiteComponent
   // ════════════════════════════════════════════════════════════
 
   /**
-   * Načte seznam jazyků ze serveru.
-   * Server vrací iconUrl (veřejná URL), nikoliv base64.
-   * Při chybě použije localStorage nebo built-in seznam.
+   * @description Fetches all available languages for the current module from the API.
+   * Falls back to local storage if the server request fails.
    */
   private loadLanguages(): void {
     // Upravená URL s parametrem modulu
@@ -134,6 +152,10 @@ export class EditWebsiteComponent
       });
   }
 
+  /**
+   * @description Provides the hardcoded fallback languages in case the API is offline.
+   * @returns An array of default LangMeta objects.
+   */
   private getBuiltInLanguages(): LangMeta[] {
     return [
       { code: 'cz', name: 'Čeština', iconUrl: undefined, active: true, isBuiltIn: true },
@@ -141,6 +163,9 @@ export class EditWebsiteComponent
     ];
   }
 
+  /**
+   * @description Chains initialization logic once language definitions are ready.
+   */
   private afterLanguagesLoaded(): void {
     // Načti CZ jako referenci pro diff, pak načti aktuální jazyk
     this.loadCzReference(() => {
@@ -148,6 +173,9 @@ export class EditWebsiteComponent
     });
   }
 
+  /**
+   * @description Caches basic language information to localStorage to allow for quick offline access.
+   */
   private persistMetaToLocalStorage(): void {
     // Ukládáme bez iconUrl — URL je server-side a může se změnit
     const stripped = this.languages.map(({ iconUrl, ...rest }) => rest);
@@ -159,8 +187,8 @@ export class EditWebsiteComponent
   // ════════════════════════════════════════════════════════════
 
   /**
-   * Načte CZ překlady ze serveru jako referenční vzor pro diff.
-   * Endpoint: GET /api/translations/cz
+   * @description Fetches the 'cz' (master) translation file to serve as a structure reference for diffing.
+   * @param callback Optional trigger to continue loading after reference data is cached.
    */
   private loadCzReference(callback?: () => void): void {
     this.dataHandler.get<any>(`translations/${this.MODULE}/cz`)
@@ -179,8 +207,8 @@ export class EditWebsiteComponent
   }
 
   /**
-   * Přepne na daný jazyk a načte překlady ze serveru.
-   * Endpoint: GET /api/translations/{lang}
+   * @description Sets the active language code and triggers the translation fetcher.
+   * @param lang The language ISO code to select.
    */
   loadLang(lang: string): void {
     // Pokud přepínáme na stejný jazyk a data jsou načtena, přeskočíme
@@ -190,7 +218,7 @@ export class EditWebsiteComponent
   }
 
   /**
-   * Znovu načte překlady pro currentLang ze serveru.
+   * @description Communicates with the server to reload translations for the currently active locale.
    */
   public refreshTranslations(): void {
     this.errorMessage = null;
@@ -229,6 +257,9 @@ export class EditWebsiteComponent
   // FLAT LIST + DIFF
   // ════════════════════════════════════════════════════════════
 
+  /**
+   * @description Flattens the hierarchical translation JSON into a list for easy filtering and UI representation.
+   */
   private buildFlatList(): void {
     this.flattenedKeys = [];
     const czFlat  = this.flattenToMap(this.czTranslations);
@@ -252,6 +283,13 @@ export class EditWebsiteComponent
     }
   }
 
+  /**
+   * @description Recursively maps nested object keys to dot-notation strings.
+   * @param obj The object tree to flatten.
+   * @param path The current path accumulator.
+   * @param map The map to collect results.
+   * @returns A Map containing dot-notation paths as keys and values as strings.
+   */
   private flattenToMap(
     obj: any,
     path: string = '',
@@ -268,7 +306,11 @@ export class EditWebsiteComponent
     return map;
   }
 
-  /** Vytvoří hlubokou kopii struktury objektu s prázdnými string hodnotami */
+  /**
+   * @description Creates a deep-copied template of the CZ translation structure with empty strings.
+   * @param obj Reference structure.
+   * @returns A structure containing the same keys but blank values.
+   */
   private buildEmptyFromCz(obj: any): any {
     if (typeof obj !== 'object' || obj === null) return '';
     const result: any = {};
@@ -282,6 +324,9 @@ export class EditWebsiteComponent
   // FILTROVÁNÍ
   // ════════════════════════════════════════════════════════════
 
+  /**
+   * @description Updates the view list based on the search query input.
+   */
   applyFilter(): void {
     const q = this.searchQuery.toLowerCase().trim();
     this.filteredKeys = q
@@ -293,12 +338,18 @@ export class EditWebsiteComponent
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Narrows the view to show only keys that currently have no translation.
+   */
   filterMissing(): void {
     this.searchQuery = '';
     this.filteredKeys = this.flattenedKeys.filter(k => k.missing);
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Resets current search and filtering criteria.
+   */
   resetFilter(): void {
     this.searchQuery = '';
     this.applyFilter();
@@ -309,6 +360,11 @@ export class EditWebsiteComponent
   // EDITACE HODNOT
   // ════════════════════════════════════════════════════════════
 
+  /**
+   * @description Updates a translation value inside the nested object structure using dot-notation.
+   * @param path The key path (e.g., "header.title").
+   * @param newValue The text content to set.
+   */
   updateValue(path: string, newValue: string): void {
     const keys = path.split('.');
     let temp = this.translations;
@@ -325,12 +381,18 @@ export class EditWebsiteComponent
     }
   }
 
+  /**
+   * @description Handles dynamic resizing of textarea inputs based on content.
+   */
   adjustHeight(event: any): void {
     const el = event.target;
     el.style.height = 'auto';
     el.style.height = el.scrollHeight + 'px';
   }
 
+  /**
+   * @description Forces all translation textareas to match their content height.
+   */
   private resizeAllTextareas(): void {
     document.querySelectorAll<HTMLTextAreaElement>('.ew-edit-input').forEach(ta => {
       ta.style.height = 'auto';
@@ -343,8 +405,7 @@ export class EditWebsiteComponent
   // ════════════════════════════════════════════════════════════
 
   /**
-   * POST /api/save_translations
-   * Uloží aktuální překlady pro currentLang na server.
+   * @description POSTs the currently edited translation tree to the server.
    */
   onSubmit(): void {
     this.dataHandler.post(`save_translations/${this.MODULE}`, {
@@ -371,6 +432,9 @@ export class EditWebsiteComponent
   // SPRÁVA JAZYKŮ — PŘIDÁNÍ
   // ════════════════════════════════════════════════════════════
 
+  /**
+   * @description Initializes the state for the 'Add New Language' modal.
+   */
   openAddForm(): void {
     this.showAddForm     = true;
     this.newLangCode     = '';
@@ -382,15 +446,17 @@ export class EditWebsiteComponent
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Closes the 'Add New Language' modal.
+   */
   closeAddForm(): void {
     this.showAddForm = false;
     this.cd.markForCheck();
   }
 
   /**
-   * Uživatel vybral soubor ikonky.
-   * Vytvoříme lokální preview (base64) pro zobrazení v UI.
-   * Skutečný soubor se odešle jako FormData při confirmAddLang().
+   * @description Handles local file selection and generates a base64 preview for the language icon.
+   * @param event The file input change event.
    */
   onIconFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -415,6 +481,9 @@ export class EditWebsiteComponent
     reader.readAsDataURL(file);
   }
 
+  /**
+   * @description Discards the selected language icon file before submission.
+   */
   clearIconSelection(): void {
     this.newLangIconFile    = null;
     this.newLangIconPreview = '';
@@ -422,9 +491,7 @@ export class EditWebsiteComponent
   }
 
   /**
-   * Odešle nový jazyk na server jako FormData.
-   * POST /api/languages
-   * Body: languages (JSON string), icon (File, volitelné), target_code (string)
+   * @description Processes form data and icon upload to create a new language entry on the server.
    */
   confirmAddLang(): void {
     const code = this.newLangCode.trim().toLowerCase();
@@ -498,19 +565,25 @@ export class EditWebsiteComponent
   // SPRÁVA JAZYKŮ — SMAZÁNÍ
   // ════════════════════════════════════════════════════════════
 
+  /**
+   * @description Sets the target language for the deletion confirmation step.
+   * @param lang The language to be deleted.
+   */
   askDeleteLang(lang: LangMeta): void {
     this.langToDelete = lang;
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Cancels the pending deletion action.
+   */
   cancelDelete(): void {
     this.langToDelete = null;
     this.cd.markForCheck();
   }
 
   /**
-   * DELETE /api/languages/{code}
-   * Server smaže metadata, ikonku i JSON soubor s překlady.
+   * @description Deletes the selected language from the server and refreshes the manifest.
    */
   confirmDeleteLang(): void {
     if (!this.langToDelete) return;
@@ -545,8 +618,8 @@ export class EditWebsiteComponent
   // ════════════════════════════════════════════════════════════
 
   /**
-   * Přepne active flag jazyka a uloží celý seznam na server.
-   * POST /api/languages s aktualizovaným polem languages.
+   * @description Updates the 'active' status of a language and syncs the entire manifest to the backend.
+   * @param lang The language item to modify.
    */
   toggleLangActive(lang: LangMeta): void {
   lang.active = !lang.active;
@@ -572,6 +645,10 @@ export class EditWebsiteComponent
   // UPLOAD JSON
   // ════════════════════════════════════════════════════════════
 
+  /**
+   * @description Opens the JSON upload modal.
+   * @param lang The target language code to override.
+   */
   openUploadModal(lang: string): void {
     this.uploadLangCode = lang;
     this.uploadError    = '';
@@ -580,14 +657,17 @@ export class EditWebsiteComponent
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Closes the JSON upload modal.
+   */
   closeUploadModal(): void {
     this.showUploadModal = false;
     this.cd.markForCheck();
   }
 
   /**
-   * Uživatel vybral JSON soubor k nahrání.
-   * Přeloží ho a rovnou odešle na server přes POST /api/save_translations.
+   * @description Processes a local JSON file selection for translation import.
+   * @param event The file input change event.
    */
   onJsonFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -608,6 +688,10 @@ export class EditWebsiteComponent
     reader.readAsText(file);
   }
 
+  /**
+   * @description Sends the parsed JSON data to the API for the current module.
+   * @param data The translation object to store.
+   */
   private uploadJsonToServer(data: any): void {
     this.dataHandler.post(`save_translations/${this.MODULE}`, {
       lang: this.uploadLangCode,
@@ -638,8 +722,7 @@ export class EditWebsiteComponent
   // ════════════════════════════════════════════════════════════
 
   /**
-   * Stáhne aktuálně editovaný překlad jako JSON soubor.
-   * Data jsou z in-memory stavu (ne znovu ze serveru).
+   * @description Triggers a browser download of the current translation set as a JSON file.
    */
   downloadJson(): void {
     const blob = new Blob(
@@ -657,9 +740,20 @@ export class EditWebsiteComponent
   // HELPERS
   // ════════════════════════════════════════════════════════════
 
+  /**
+   * @description TrackBy function for key list rendering.
+   */
   trackByPath(_: number, item: FlatKey): string  { return item.path; }
+  
+  /**
+   * @description TrackBy function for language list rendering.
+   */
   trackByCode(_: number, lang: LangMeta): string { return lang.code; }
 
+  /**
+   * @description Retrieves the metadata for the currently active language.
+   * @returns LangMeta object or undefined.
+   */
   getCurrentLangMeta(): LangMeta | undefined {
     return this.languages.find(l => l.code === this.currentLang);
   }

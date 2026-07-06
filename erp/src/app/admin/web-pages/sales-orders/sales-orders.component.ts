@@ -1,3 +1,16 @@
+/**
+ * @file sales-orders.component.ts
+ * @path src/app/admin/pages/web/sales-orders/sales-orders.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Administrative component for managing sales orders, providing capabilities for status tracking, detail viewing, and data export.
+ * @dependencies
+ * - BaseDataComponent: Standardized CRUD and state management.
+ * - TableBuilderComponent: Handling tabular views and CSV exports.
+ * - SalesOrders Config: Domain-specific definitions for UI columns, form fields, and toolbar actions.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -5,6 +18,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './sales-orders.config';
 
+/**
+ * @description Manages the lifecycle and administrative view of sales orders.
+ * @usage Provides a data-driven interface to review order submissions, edit order details, and export reports via CSV.
+ * @note Extends BaseDataComponent to maintain consistent API interactions and UI states across the web administration module.
+ */
 @Component({
   selector: 'app-sales-orders',
   standalone: true,
@@ -42,6 +60,10 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Generates the toolbar configuration dynamically based on active filters, trash visibility, and user permissions.
+   * @returns Array of configured Core.Button items.
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.SALES_ORDER_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -69,6 +91,10 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     });
   }
 
+  /**
+   * @description Maps toolbar button actions to their corresponding class methods.
+   * @param action Identifier string provided by configuration.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -79,20 +105,27 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
   }
 
   override ngOnInit(): void {
-  super.ngOnInit();
-  this.initWithAuthCheck(this.router);
-}
+    super.ngOnInit();
+    this.initWithAuthCheck(this.router);
+  }
 
   override refreshData(): void {
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Updates current view filters and resets pagination to the first page.
+   * @param newFilters Filter parameters to apply.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Reverts filters to system default sorting and refreshes the data set.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -107,15 +140,26 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
+  /**
+   * @description Invokes CSV export mechanism on the primary data table component.
+   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
 
+  /**
+   * @description Prepares the selected item for the editing modal.
+   * @param item The order record selected for modification.
+   */
   handleEditFormOpened(item: any): void {
     this.selectedItemForEdit = { ...item };
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Fetches detailed record data and displays it within a detail view modal.
+   * @param item The order record for which to view details.
+   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -128,6 +172,10 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     });
   }
 
+  /**
+   * @description Submits updated order information and refreshes the table upon success.
+   * @param formData The object containing order data to be persisted.
+   */
   handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
       Core.finalize(() => {

@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file UserResource.php
+ * @path app/Http/Resources/UserResource.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Resource transformation for system users and administrative access.
+ */
 
 namespace App\Http\Resources;
 
@@ -6,11 +14,19 @@ use App\Http\Resources\Core\CoreRoleResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @description Transforms user profiles, including role-based permissions for frontend authorization.
+ */
 class UserResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
-        // Použijeme accessor definovaný v modelu User
         $perms = $this->permissions;
 
         return [
@@ -32,13 +48,8 @@ class UserResource extends JsonResource
             'created_at'            => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'            => $this->updated_at?->format('Y-m-d H:i:s'),
             'deleted_at'            => $this->deleted_at?->format('Y-m-d H:i:s'),
-            
             'role_id'               => $this->roles->first()?->id,
-            
-            // Relace (pouze pokud jsou načtené)
             'roles'                 => CoreRoleResource::collection($this->whenLoaded('roles')),
-            
-            // Pro Angular AuthService a PermissionService
             'user_permissions'      => $perms,
             'permissions'           => $perms,
         ];

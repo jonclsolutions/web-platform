@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopProductController.php
+ * @path app/Http/Controllers/Api/Shop/ShopProductController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages complex product catalog operations, including multi-variant handling, inventory synchronization, file management for product images, and relational data integrity.
+ */
 
 namespace App\Http\Controllers\Api\Shop;
 
@@ -18,8 +26,18 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * @description Controller responsible for administrative and public product lifecycle management.
+ * @note Coordinates synchronization between product variants, pricing, and media assets.
+ */
 class ShopProductController extends Controller
 {
+    /**
+     * Retrieves a paginated list of products based on applied filters.
+     *
+     * @param Request $request The incoming request containing filter, search, and pagination parameters.
+     * @return JsonResponse Paginated list of products or the full collection.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage     = $request->input('per_page', 15);
@@ -82,6 +100,13 @@ class ShopProductController extends Controller
         ]);
     }
 
+    /**
+     * Stores a new product including nested categories, prices, variants, and media.
+     *
+     * @param StoreShopProductRequest $request The validated store request.
+     * @return JsonResponse The newly created product resource.
+     * @throws \Exception If transaction or storage operations fail.
+     */
     public function store(StoreShopProductRequest $request): JsonResponse
     {
         Log::info('ShopProduct Store started');
@@ -122,12 +147,26 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Returns details of a specific product.
+     *
+     * @param int $id The product identifier.
+     * @return JsonResponse Product resource.
+     */
     public function show($id): JsonResponse
     {
         $product = ShopProduct::with($this->defaultRelations())->findOrFail($id);
         return response()->json(new ShopProductResource($product));
     }
 
+    /**
+     * Updates an existing product and its related associations.
+     *
+     * @param UpdateShopProductRequest $request The validated update request.
+     * @param int $id The product identifier.
+     * @return JsonResponse The updated product resource.
+     * @throws \Exception If the update process fails.
+     */
     public function update(UpdateShopProductRequest $request, $id): JsonResponse
     {
         Log::info('ShopProduct Update started', ['id' => $id]);
@@ -187,6 +226,13 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Efficiently updates the category mapping for a product.
+     *
+     * @param Request $request Request containing category identifiers.
+     * @param int $id Product identifier.
+     * @return JsonResponse Updated product resource.
+     */
     public function updateCategory(Request $request, $id): JsonResponse
     {
         $request->validate([
@@ -214,6 +260,13 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Deletes a product, supporting both soft and hard delete modes.
+     *
+     * @param Request $request Request flags.
+     * @param int $id Product identifier.
+     * @return JsonResponse 204 No Content.
+     */
     public function destroy(Request $request, $id): JsonResponse
     {
         try {
@@ -245,6 +298,13 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Restores a soft-deleted product.
+     *
+     * @param Request $request The incoming request.
+     * @param int $id Product identifier.
+     * @return JsonResponse The restored product.
+     */
     public function restore(Request $request, $id): JsonResponse
     {
         try {
@@ -259,6 +319,12 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Clears all soft-deleted items from the database permanently.
+     *
+     * @param Request $request Incoming request.
+     * @return JsonResponse 204 No Content.
+     */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
@@ -283,6 +349,12 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Publicly accessible endpoint to browse active products.
+     *
+     * @param Request $request Filtering parameters.
+     * @return JsonResponse Paginated result.
+     */
     public function publicIndex(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 20);
@@ -313,6 +385,12 @@ class ShopProductController extends Controller
         ]);
     }
 
+    /**
+     * Retrieves details for a product by slug or ID for public storefront.
+     *
+     * @param string|int $slugOrId Identifier.
+     * @return JsonResponse Product resource.
+     */
     public function publicShow($slugOrId): JsonResponse
     {
         $query = ShopProduct::active()->with([
@@ -330,6 +408,11 @@ class ShopProductController extends Controller
         return response()->json(new ShopProductResource($product));
     }
 
+    /**
+     * Defines the default relations to load for standard product responses.
+     *
+     * @return array
+     */
     private function defaultRelations(): array
     {
         return [
@@ -338,6 +421,13 @@ class ShopProductController extends Controller
         ];
     }
 
+    /**
+     * Resolves category IDs, ensuring the primary category is included in the set.
+     *
+     * @param Request $request
+     * @param int|null $primaryId
+     * @return array
+     */
     private function resolveCategoryIds(Request $request, ?int $primaryId): array
     {
         if ($request->has('category_ids')) {
@@ -366,11 +456,23 @@ class ShopProductController extends Controller
         return array_values(array_unique(array_filter($existingIds)));
     }
 
+    /**
+     * Placeholder for price data normalization or validation.
+     *
+     * @param array $prices
+     * @return array
+     */
     private function filterPriceData(array $prices): array
     {
         return $prices;
     }
 
+    /**
+     * Clears cached stock levels upon product update.
+     *
+     * @param ShopProduct $product
+     * @return void
+     */
     private function clearProductCache(ShopProduct $product): void
     {
         \Illuminate\Support\Facades\Cache::forget("product_stock_{$product->id}");
@@ -379,6 +481,15 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Stores and associates uploaded images to a product or variant.
+     *
+     * @param ShopProduct $product
+     * @param array $images
+     * @param Request $request
+     * @param string $prefix
+     * @return void
+     */
     private function storeImages(ShopProduct $product, array $images, Request $request, string $prefix = 'images'): void
     {
         foreach ($images as $index => $imageData) {
@@ -416,6 +527,12 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Removes images from storage and the database.
+     *
+     * @param array $imageIds
+     * @return void
+     */
     private function deleteImages(array $imageIds): void
     {
         $images = ShopProductImage::whereIn('id', $imageIds)->get();
@@ -427,6 +544,14 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Creates new variants for a product and associates them with prices and images.
+     *
+     * @param ShopProduct $product
+     * @param array $variants
+     * @param Request|null $request
+     * @return void
+     */
     private function storeVariants(ShopProduct $product, array $variants, ?Request $request = null): void
     {
         foreach ($variants as $idx => $variantData) {
@@ -453,6 +578,14 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Updates existing product variants, including nested prices and images.
+     *
+     * @param ShopProduct $product
+     * @param array $variants
+     * @param Request $request
+     * @return void
+     */
     private function updateVariants(ShopProduct $product, array $variants, Request $request): void
     {
         foreach ($variants as $idx => $variantData) {
@@ -490,6 +623,12 @@ class ShopProductController extends Controller
         }
     }
 
+    /**
+     * Syncs the total stock quantity of a product based on its variants.
+     *
+     * @param ShopProduct $product
+     * @return void
+     */
     private function syncProductStock(ShopProduct $product): void
     {
         $totalStock = ShopProductVariant::where('product_id', $product->id)
@@ -498,6 +637,16 @@ class ShopProductController extends Controller
         $product->update(['stock_quantity' => $totalStock]);
     }
 
+    /**
+     * Logs administrative actions to the audit system.
+     *
+     * @param Request $request
+     * @param string $eventType
+     * @param string $module
+     * @param string $description
+     * @param int|null $affectedId
+     * @return void
+     */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
     {
         try {

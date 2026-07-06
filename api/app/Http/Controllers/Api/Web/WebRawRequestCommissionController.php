@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file WebRawRequestCommissionController.php
+ * @path app/Http/Controllers/Api/Web/WebRawRequestCommissionController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages raw commission request submissions, supporting file attachments, status tracking, and administrative audit logging.
+ */
 
 namespace App\Http\Controllers\Api\Web;
 
@@ -13,15 +21,22 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @description Controller responsible for processing raw commission inquiries submitted via the website.
+ * @note Implements soft-delete functionality and managed file storage for request attachments.
+ */
 class WebRawRequestCommissionController extends Controller
 {
     /**
-     * Složka ve storage/app/public, kam se ukládají přílohy k tomuto modulu.
+     * Storage folder for attachments within public disk.
      */
     private const ATTACHMENT_FOLDER = 'raw_request_commissions';
 
     /**
-     * Seznam požadavků na provize.
+     * Retrieves a paginated or full collection of commission requests with search and filtering.
+     *
+     * @param Request $request Filters (status, priority, date) and pagination settings.
+     * @return JsonResponse|mixed Returns paginated data or a collection.
      */
     public function index(Request $request)
     {
@@ -31,7 +46,7 @@ class WebRawRequestCommissionController extends Controller
         $query = WebRawRequestCommission::query();
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Fulltextové vyhledávání
+        // Fulltext-like search
         if ($s = $request->input('search')) {
             $query->where(fn($q) => $q->where('thema', 'like', "%$s%")
                 ->orWhere('order_description', 'like', "%$s%")
@@ -39,19 +54,19 @@ class WebRawRequestCommissionController extends Controller
                 ->orWhere('contact_phone', 'like', "%$s%"));
         }
 
-        // Filtry na přesnou shodu
+        // Exact match filters
         foreach (['id', 'status', 'priority'] as $f) {
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
 
-        // Filtry na LIKE vyhledávání
+        // Partial match filters
         foreach (['contact_email', 'contact_phone', 'thema', 'order_description'] as $f) {
             if ($request->filled($f)) $query->where($f, 'like', '%' . $request->input($f) . '%');
         }
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
 
-        // Řazení
+        // Sorting
         $sortBy = $request->input('sort_by', 'id');
         $sortDirection = $request->input('sort_direction', 'desc');
         $query->orderBy($sortBy, $sortDirection);
@@ -73,7 +88,11 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * Uložení nového požadavku.
+     * Stores a new commission request, handling optional file uploads.
+     *
+     * @param StoreWebRawRequestCommissionRequest $request Validated request data.
+     * @return JsonResponse Created commission resource.
+     * @throws \Exception On database or storage failure.
      */
     public function store(StoreWebRawRequestCommissionRequest $request): JsonResponse
     {
@@ -96,28 +115,32 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * Detail požadavku (včetně smazaných v koši).
+     * Retrieves a single commission request by ID, including trashed records.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        // 🔧 Ruční vyhledání podle ID (funguje i pro smazané položky v koši)
         $rawRequestCommission = WebRawRequestCommission::withTrashed()->findOrFail($id);
         
         return response()->json(new WebRawRequestCommissionResource($rawRequestCommission));
     }
 
     /**
-     * Aktualizace požadavku (ruční načtení podle ID).
+     * Updates an existing request, managing attachment replacement.
+     *
+     * @param UpdateWebRawRequestCommissionRequest $request Validated data.
+     * @param int $id Request identifier.
+     * @return JsonResponse Updated resource.
      */
     public function update(UpdateWebRawRequestCommissionRequest $request, $id): JsonResponse
     {
         try {
-            // 🔧 Ruční vyhledání podle ID
             $rawRequestCommission = WebRawRequestCommission::findOrFail($id);
 
             $validated = $request->validated();
 
-            // Zpracování přílohy (attachment) - nahrazení staré přílohy novou
             if ($request->hasFile('attachment')) {
                 if ($rawRequestCommission->file_path) {
                     Storage::disk('public')->delete($rawRequestCommission->file_path);
@@ -137,7 +160,11 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * Smazání (Soft / Hard).
+     * Deletes a request (Soft or Hard), including associated files.
+     *
+     * @param Request $request Flags (force_delete).
+     * @param int $id
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -164,7 +191,11 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * Obnova z koše.
+     * Restores a soft-deleted request.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -182,7 +213,10 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * Vyprázdnění koše.
+     * Permanently deletes all soft-deleted records and their files.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -207,7 +241,14 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * Sjednocené logování (WebLog).
+     * Logs administrative actions to the central audit system.
+     *
+     * @param Request $request
+     * @param string $eventType
+     * @param string $module
+     * @param string $description
+     * @param int|null $affectedId
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
     {

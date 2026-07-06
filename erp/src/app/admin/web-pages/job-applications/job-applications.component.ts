@@ -1,3 +1,16 @@
+/**
+ * @file job-applications.component.ts
+ * @path src/app/admin/pages/web/job-applications/job-applications.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the administration of job applications, providing filtered views, details retrieval, and status updates.
+ * @dependencies
+ * - BaseDataComponent: Core logic for data fetching, pagination, and state management.
+ * - TableBuilderComponent: Used for tabular data rendering and CSV export functionality.
+ * - JOB_APPLICATION_* configs: Centralized definition for UI columns, form fields, and toolbar actions.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -5,6 +18,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './job-applications.config';
 
+/**
+ * @description Administrative component for viewing and editing incoming job applications.
+ * @usage Provides a data-driven interface to manage candidate submissions via the administrative dashboard.
+ * @note Extends BaseDataComponent to leverage standard CRUD patterns while customizing form submission and detail viewing specific to job applications.
+ */
 @Component({
   selector: 'app-job-applications',
   standalone: true,
@@ -42,6 +60,10 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Dynamically constructs the toolbar buttons based on user permissions and current component state.
+   * @returns Array of configured buttons for the toolbar.
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.JOB_APPLICATION_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -69,6 +91,10 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
     });
   }
 
+  /**
+   * @description Orchestrates toolbar button click events by mapping actions to class methods.
+   * @param action Identifier string provided by the button configuration.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -79,20 +105,27 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
   }
 
   override ngOnInit(): void {
-  super.ngOnInit();
-  this.initWithAuthCheck(this.router);
-}
+    super.ngOnInit();
+    this.initWithAuthCheck(this.router);
+  }
 
   override refreshData(): void {
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Updates current filters and refreshes table data.
+   * @param newFilters The filter object containing sorting and filtering criteria.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Resets the filter object to default sort parameters and refreshes data.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -107,10 +140,17 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
+  /**
+   * @description Triggers the CSV export functionality on the referenced active table component.
+   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
 
+  /**
+   * @description Prepares the edit modal by deep-copying the selected item and toggling visibility.
+   * @param item The job application record selected for editing.
+   */
   handleEditFormOpened(item: any): void {
     this.selectedItemForEdit = null;
     this.showCreateForm = false;
@@ -123,6 +163,10 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
     }, 50);
   }
 
+  /**
+   * @description Fetches full details for a specific record to display in a detail view.
+   * @param item The job application to view.
+   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -135,6 +179,10 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
     });
   }
 
+  /**
+   * @description Performs a PUT/PATCH request to update existing job application data.
+   * @param formData The data object retrieved from the form.
+   */
   handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
       Core.finalize(() => {

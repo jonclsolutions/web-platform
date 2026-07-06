@@ -1,8 +1,26 @@
+/**
+ * @file product-detail.component.ts
+ * @path src/app/shop/product-detail/product-detail.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Handles the product detail page, managing state for variants, quantity selection, and cart integration.
+ * @dependencies
+ * - ShopPublicService: Fetches detailed product information from the backend API.
+ * - CartService: Manages the global shopping cart state.
+ * - Angular Signals: Used for reactive updates to stock, price, and UI state.
+ */
+
 import { Component, OnInit, signal, computed, effect } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ShopPublicService } from '../components/services/public-data.service';
 import { CartService } from '../components/services/cart.service';
 
+/**
+ * @description Component for displaying individual product details.
+ * @usage Provides a view for users to inspect products, toggle variants, adjust quantities, and add to the cart.
+ * @note Uses computed signals to derive UI states like price and stock availability reactively.
+ */
 @Component({
   selector: 'app-product-detail',
   standalone: true,
@@ -18,24 +36,29 @@ export class ProductDetailComponent implements OnInit {
   selectedQuantity = signal<number>(1);
   addedToCart = signal<boolean>(false);
 
+  /** Retrieves images specifically associated with the selected variant */
   variantImages = computed(() => this.selectedVariant()?.images || []);
 
+  /** Filters out general images that are not attached to a specific variant */
   generalImages = computed(() => {
     const allImgs = this.product()?.images || [];
     return allImgs.filter((img: any) => !img.variant_id);
   });
 
+  /** Derives the current selling price in EUR with VAT */
   currentPrice = computed(() => {
     const variant = this.selectedVariant();
     const prices = variant ? variant.prices : this.product()?.prices;
     return prices ? prices['price_eur_with_vat'] || 0 : 0;
   });
 
+  /** Derives the current net price in EUR (without VAT) */
   priceWithoutVat = computed(() => {
     const item = this.selectedVariant() || this.product();
     return item?.prices ? item.prices['price_eur_without_vat'] || 0 : 0;
   });
 
+  /** Derives the available stock based on the currently selected variant or main product */
   currentStock = computed(() => {
     const variant = this.selectedVariant();
     return variant ? variant.stock_quantity : (this.product()?.stock_quantity || 0);
@@ -43,6 +66,7 @@ export class ProductDetailComponent implements OnInit {
 
   isAvailable = computed(() => this.currentStock() > 0);
 
+  /** Generates a unique key for tracking the cart item in the global state */
   currentCartItemId = computed(() => {
     const prod = this.product();
     if (!prod) return '';
@@ -51,6 +75,7 @@ export class ProductDetailComponent implements OnInit {
     return `${prod.id}_${variantIdStr}`;
   });
 
+  /** Checks if the selected product combination already exists in the cart */
   isInCart = computed(() => {
     const itemId = this.currentCartItemId();
     return this.cartService.cartItems().some(item => item.id === itemId);
@@ -61,6 +86,7 @@ export class ProductDetailComponent implements OnInit {
     private shopService: ShopPublicService,
     public cartService: CartService
   ) {
+    /** Auto-adjusts quantity if the stock drops below the current selection */
     effect(() => {
       const stock = this.currentStock();
       if (this.selectedQuantity() > stock) {
@@ -78,6 +104,10 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  /**
+   * @description Fetches product detail and initializes variant/image state.
+   * @param id The product slug or database ID.
+   */
   loadProduct(id: string): void {
     this.isLoading.set(true);
     this.shopService.getProductDetail(id).subscribe({
@@ -92,12 +122,16 @@ export class ProductDetailComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Chyba při načítání produktu:', err);
+        console.error('Error loading product detail:', err);
         this.isLoading.set(false);
       }
     });
   }
 
+  /**
+   * @description Switches active product variant and updates UI assets.
+   * @param variant The variant configuration object.
+   */
   selectVariant(variant: any): void {
     this.selectedVariant.set(variant);
     if (variant.images && variant.images.length > 0) {
@@ -108,6 +142,9 @@ export class ProductDetailComponent implements OnInit {
     }
   }
 
+  /**
+   * @description Event handler for variant dropdown selection.
+   */
   onVariantChange(event: Event): void {
     const selectElement = event.target as HTMLSelectElement;
     const variantId = Number(selectElement.value);
@@ -117,22 +154,37 @@ export class ProductDetailComponent implements OnInit {
     }
   }
 
+  /**
+   * @description Updates the primary display image.
+   */
   setActiveImage(url: string): void {
     this.activeImage.set(url);
   }
 
+  /**
+   * @description Increments quantity, capped by available stock.
+   */
   increaseQuantity(): void {
     this.selectedQuantity.update(q => Math.min(q + 1, this.currentStock()));
   }
 
+  /**
+   * @description Decrements quantity, floored at 1.
+   */
   decreaseQuantity(): void {
     this.selectedQuantity.update(q => Math.max(1, q - 1));
   }
 
+  /**
+   * @description Helper to format variant prices.
+   */
   getVariantPrice(variant: any): string {
     return this.getFormattedPrice(variant.prices?.['price_eur_with_vat'] || 0);
   }
 
+  /**
+   * @description Localizes numeric values to EUR currency format.
+   */
   getFormattedPrice(value: number): string {
     return new Intl.NumberFormat('cs-CZ', {
       style: 'currency',
@@ -141,16 +193,19 @@ export class ProductDetailComponent implements OnInit {
     }).format(value);
   }
 
+  /**
+   * @description Adds the selected product and quantity to the CartService.
+   */
   addToCart(): void {
     if (!this.isAvailable()) {
-      alert('Produkt není dostupný');
+      alert('Product is currently unavailable.');
       return;
     }
     const product = this.product();
     const variant = this.selectedVariant();
     const quantity = this.selectedQuantity();
     if (quantity > this.currentStock()) {
-      alert(`Nelze objednat více než ${this.currentStock()} ks.`);
+      alert(`Cannot order more than ${this.currentStock()} units.`);
       return;
     }
     if (!product.slug) product.slug = this.route.snapshot.paramMap.get('slugOrId');

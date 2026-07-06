@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopCustomerController.php
+ * @path app/Http/Controllers/Api/Shop/ShopCustomerController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages CRUD operations for shop customers, including soft-delete lifecycle management, comprehensive audit logging, and bulk trash cleanup.
+ */
 
 namespace App\Http\Controllers\Api\Shop;
 
@@ -12,10 +20,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * @description Controller handling shop customer account administration.
+ * @note Implements soft-delete logic to preserve order history integrity while allowing administrative cleanup of inactive accounts.
+ */
 class ShopCustomerController extends Controller
 {
     /**
-     * Seznam zákazníků s filtrováním
+     * Retrieves a paginated list of customers with optional search and status filtering.
+     *
+     * @param Request $request Incoming request with filters (search, is_active) and pagination parameters.
+     * @return JsonResponse Paginated data or collection formatted for the frontend.
      */
     public function index(Request $request): JsonResponse
     {
@@ -25,7 +40,6 @@ class ShopCustomerController extends Controller
         $query = ShopCustomer::query();
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Vyhledávání
         if ($s = $request->input('search')) {
             $query->where(fn($q) => 
                 $q->where('email', 'like', "%$s%")
@@ -35,7 +49,6 @@ class ShopCustomerController extends Controller
             );
         }
 
-        // Filtry
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
         }
@@ -61,7 +74,10 @@ class ShopCustomerController extends Controller
     }
 
     /**
-     * Vytvoření nového zákazníka
+     * Creates a new customer account.
+     *
+     * @param StoreShopCustomerRequest $request Validated registration data.
+     * @return JsonResponse The created resource.
      */
     public function store(StoreShopCustomerRequest $request): JsonResponse
     {
@@ -71,16 +87,19 @@ class ShopCustomerController extends Controller
             $customer = ShopCustomer::create($request->validated());
             Log::info("Customer created", ['id' => $customer->id]);
             
-            $this->logAction($request, 'create', 'ShopCustomer', "Vytvořen zákazník: {$customer->getFullName()}", $customer->id);
+            $this->logAction($request, 'create', 'ShopCustomer', "Created customer: {$customer->getFullName()}", $customer->id);
             return response()->json(new ShopCustomerResource($customer), 201);
         } catch (\Exception $e) {
             Log::error("ShopCustomer creation error: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření zákazníka selhalo: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Customer creation failed: ' . $e->getMessage()], 500);
         }
     }
 
     /**
-     * Detail zákazníka
+     * Retrieves details for a specific customer.
+     *
+     * @param int $id The customer ID.
+     * @return JsonResponse Customer resource.
      */
     public function show($id): JsonResponse
     {
@@ -89,7 +108,11 @@ class ShopCustomerController extends Controller
     }
 
     /**
-     * Aktualizace zákazníka
+     * Updates an existing customer profile.
+     *
+     * @param UpdateShopCustomerRequest $request Validated profile data.
+     * @param int $id The customer ID.
+     * @return JsonResponse The updated resource.
      */
     public function update(UpdateShopCustomerRequest $request, $id): JsonResponse
     {
@@ -100,16 +123,20 @@ class ShopCustomerController extends Controller
             $customer->update($request->validated());
             
             Log::info("Customer updated", ['id' => $id]);
-            $this->logAction($request, 'update', 'ShopCustomer', "Aktualizace zákazníka: {$customer->getFullName()}", $customer->id);
+            $this->logAction($request, 'update', 'ShopCustomer', "Updated customer: {$customer->getFullName()}", $customer->id);
             return response()->json(new ShopCustomerResource($customer));
         } catch (\Exception $e) {
             Log::error("ShopCustomer update error: " . $e->getMessage());
-            return response()->json(['message' => 'Aktualizace selhala: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);
         }
     }
 
     /**
-     * Smazání zákazníka
+     * Deletes a customer account using soft or hard deletion.
+     *
+     * @param Request $request Request containing 'force_delete' flag.
+     * @param int $id The customer ID.
+     * @return JsonResponse 204 No Content.
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -125,16 +152,20 @@ class ShopCustomerController extends Controller
                 $customer->delete();
             }
 
-            $this->logAction($request, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopCustomer', "Smazání zákazníka ID: $id", $id);
+            $this->logAction($request, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopCustomer', "Deleted customer ID: $id", $id);
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error("ShopCustomer delete error: " . $e->getMessage());
-            return response()->json(['message' => 'Smazání zákazníka selhalo.'], 500);
+            return response()->json(['message' => 'Deletion failed.'], 500);
         }
     }
 
     /**
-     * Obnova z koše
+     * Restores a previously soft-deleted customer account.
+     *
+     * @param Request $request The incoming request.
+     * @param int $id The customer ID.
+     * @return JsonResponse The restored resource.
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -143,16 +174,19 @@ class ShopCustomerController extends Controller
             $customer->restore();
 
             Log::info("Customer restored", ['id' => $id]);
-            $this->logAction($request, 'restore', 'ShopCustomer', "Obnova zákazníka ID: $id", $id);
+            $this->logAction($request, 'restore', 'ShopCustomer', "Restored customer ID: $id", $id);
             return response()->json(new ShopCustomerResource($customer));
         } catch (\Exception $e) {
             Log::error("ShopCustomer restore error: " . $e->getMessage());
-            return response()->json(['message' => 'Obnova zákazníka selhala.'], 500);
+            return response()->json(['message' => 'Restoration failed.'], 500);
         }
     }
 
     /**
-     * Vyprázdnění koše
+     * Permanently purges all soft-deleted customers.
+     *
+     * @param Request $request The incoming request.
+     * @return JsonResponse 204 No Content.
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -168,12 +202,19 @@ class ShopCustomerController extends Controller
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error("ShopCustomer force delete all error: " . $e->getMessage());
-            return response()->json(['message' => 'Vyprázdnění koše selhalo.'], 500);
+            return response()->json(['message' => 'Cleanup failed.'], 500);
         }
     }
 
     /**
-     * Logování akcí
+     * Logs administrative actions to the central audit system.
+     *
+     * @param Request $request Request context.
+     * @param string $eventType Operation type.
+     * @param string $module Module identification.
+     * @param string $description Audit entry description.
+     * @param int|null $affectedId Entity ID.
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
     {
@@ -189,7 +230,7 @@ class ShopCustomerController extends Controller
                 'user_id' => $user?->id,
                 'context_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
                 'user_id_plain' => (string)($user?->id ?? '0'),
-                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'Systém'
+                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'System'
             ]);
         } catch (\Exception $e) {
             Log::error("Log action error: " . $e->getMessage());

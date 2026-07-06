@@ -1,17 +1,37 @@
 <?php
+/**
+ * @file UpdateShopCouponRequest.php
+ * @path App\Http\Requests\Shop\ShopCoupon\UpdateShopCouponRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for updating existing discount coupons.
+ */
 
 namespace App\Http\Requests\Shop\ShopCoupon;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * @description Handles validation for coupon updates, excluding current record from uniqueness constraints.
+ */
 class UpdateShopCouponRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
-        // Ošetření názvu parametru v routě (buď 'coupons' nebo 'id')
         $id = $this->route('coupon') ?? $this->route('id');
 
         return [
@@ -34,6 +54,11 @@ class UpdateShopCouponRequest extends FormRequest
         ];
     }
 
+    /**
+     * Prepare data for validation.
+     * 
+     * @return void
+     */
     protected function prepareForValidation()
     {
         if ($this->has('is_active')) {
@@ -43,6 +68,11 @@ class UpdateShopCouponRequest extends FormRequest
         }
     }
 
+    /**
+     * Define custom error messages.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

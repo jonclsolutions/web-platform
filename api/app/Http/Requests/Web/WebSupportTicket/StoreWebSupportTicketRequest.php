@@ -1,13 +1,34 @@
 <?php
+/**
+ * @file StoreWebSupportTicketRequest.php
+ * @path app/Http/Requests/Web/WebSupportTicket/StoreWebSupportTicketRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for creating new support tickets, including file attachment constraints.
+ */
 
 namespace App\Http\Requests\Web\WebSupportTicket;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles request validation for new support ticket submissions from web users.
+ */
 class StoreWebSupportTicketRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         $safeExtensions = [
@@ -22,10 +43,8 @@ class StoreWebSupportTicketRequest extends FormRequest
 
         return [
             'user_id'          => ['nullable', 'integer', 'exists:users,id'],
-            // Pole jsou nyní nepovinná, protože je doplníme v Controlleru
             'user_name_plain'  => ['nullable', 'string', 'max:255'],
-            'user_plain' => ['nullable', 'email', 'max:255'],
-            
+            'user_plain'       => ['nullable', 'email', 'max:255'],
             'category'         => ['required', 'string', 'max:100'],
             'subject'          => ['required', 'string', 'max:255'],
             'description'      => ['required', 'string'],

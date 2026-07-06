@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file WebNewsController.php
+ * @path app/Http/Controllers/Api/Web/WebNewsController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages news article lifecycle, including categorization, content management, and soft-delete administrative workflows.
+ */
 
 namespace App\Http\Controllers\Api\Web;
 
@@ -12,10 +20,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * @description Controller responsible for processing and managing news content on the website.
+ * @note Integrates with the logging system to maintain an audit trail for all content modifications.
+ */
 class WebNewsController extends Controller
 {
     /**
-     * Seznam novinek se stránkováním pro GenericTable.
+     * Retrieves a paginated list of news articles with support for search and filtering.
+     *
+     * @param Request $request Incoming request containing filters (thema, author) and pagination.
+     * @return JsonResponse|mixed Returns paginated data or a raw collection.
      */
     public function index(Request $request)
     {
@@ -25,14 +40,14 @@ class WebNewsController extends Controller
         $query = WebNews::query();
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Vyhledávání (Title, Author, Message)
+        // Search functionality
         if ($s = $request->input('search')) {
             $query->where(fn($q) => $q->where('title', 'like', "%$s%")
                 ->orWhere('author', 'like', "%$s%")
                 ->orWhere('message', 'like', "%$s%"));
         }
 
-        // Filtry na přesnou shodu
+        // Exact match and partial filters
         if ($request->filled('thema')) {
             $query->where('thema', $request->thema);
         }
@@ -41,7 +56,7 @@ class WebNewsController extends Controller
             $query->where('author', 'like', '%' . $request->author . '%');
         }
 
-        // Řazení
+        // Sorting
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDirection = $request->input('sort_direction', 'desc');
         $query->orderBy($sortBy, $sortDirection);
@@ -63,7 +78,11 @@ class WebNewsController extends Controller
     }
 
     /**
-     * Vytvoření novinky.
+     * Persists a new news article.
+     *
+     * @param StoreWebNewsRequest $request Validated input data.
+     * @return JsonResponse Returns the created resource.
+     * @throws \Exception On failure.
      */
     public function store(StoreWebNewsRequest $request): JsonResponse
     {
@@ -80,23 +99,29 @@ class WebNewsController extends Controller
     }
 
     /**
-     * Detail novinky (včetně smazaných v koši).
+     * Retrieves the details of a single news article by ID, including soft-deleted ones.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        // 🔧 Ruční vyhledání podle ID (funguje i pro smazané položky v koši)
         $news = WebNews::withTrashed()->findOrFail($id);
         
         return response()->json(new WebNewsResource($news));
     }
 
-   /**
-     * Aktualizace novinky (ruční načtení podle ID).
+    /**
+     * Updates an existing news article.
+     *
+     * @param UpdateWebNewsRequest $request Validated input data.
+     * @param int $id Article identifier.
+     * @return JsonResponse Returns the updated resource.
+     * @throws \Exception On failure.
      */
     public function update(UpdateWebNewsRequest $request, $id): JsonResponse
     {
         try {
-            // 🔧 Ruční vyhledání podle ID (shoduje se s {id} v api.php)
             $news = \App\Models\Web\WebNews::findOrFail($id);
 
             $news->update($request->validated());
@@ -111,7 +136,11 @@ class WebNewsController extends Controller
     }
 
     /**
-     * Smazání (Soft/Hard).
+     * Deletes a news article (Soft or Hard).
+     *
+     * @param Request $request Flags for force deletion.
+     * @param int $id Article identifier.
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -132,7 +161,11 @@ class WebNewsController extends Controller
     }
 
     /**
-     * Obnova z koše.
+     * Restores a soft-deleted news article.
+     *
+     * @param Request $request
+     * @param int $id Article identifier.
+     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -150,7 +183,10 @@ class WebNewsController extends Controller
     }
 
     /**
-     * Vyprázdnění koše novinek.
+     * Permanently deletes all soft-deleted news articles.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -168,7 +204,14 @@ class WebNewsController extends Controller
     }
 
     /**
-     * Sjednocené logování akcí.
+     * Logs administrative actions to the audit log table.
+     *
+     * @param Request $request Current request instance.
+     * @param string $eventType Action type (create, update, delete, etc.).
+     * @param string $module Module context.
+     * @param string $description Detailed audit message.
+     * @param int|null $affectedId Entity identifier.
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
     {

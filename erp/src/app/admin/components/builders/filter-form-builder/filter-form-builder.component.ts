@@ -1,7 +1,24 @@
+/**
+ * @file filter-form-builder.component.ts
+ * @path src/app/admin/components/filter-form-builder/filter-form-builder.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2025
+ * @description A dynamic form builder for generating filter interfaces based on column definitions.
+ * @dependencies
+ * - FormsModule: Angular template-driven form support.
+ * - FilterColumns: Interface defining the structure and metadata of filterable columns.
+ */
+
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FilterColumns } from '../../../../shared/interfaces/filter-columns';
 
+/**
+ * @description Automatically generates form controls for filtering and sorting data lists.
+ * @usage Used in admin list modules to provide advanced search and sorting capabilities.
+ * @note Implements a smart state management logic in `ngOnChanges` to preserve user-inputted filter values across component updates.
+ */
 @Component({
   selector: 'app-filter-form-builder',
   standalone: true,
@@ -14,7 +31,7 @@ import { FilterColumns } from '../../../../shared/interfaces/filter-columns';
 export class FilterFormBuilderComponent implements OnChanges {
 
   @Input() filterColumns: FilterColumns[] = [];
-  @Input() filterFormTitle: string = 'Filtrovat data';
+  @Input() filterFormTitle: string = 'Filter Data';
 
   @Input() initialFilters: any = {};
   @Input() initialSortBy: string = '';
@@ -27,9 +44,11 @@ export class FilterFormBuilderComponent implements OnChanges {
   public sortBy: string = '';
   public sortDirection: 'asc' | 'desc' = 'asc';
 
+  /**
+   * @description Synchronizes input properties with the internal form state when external data changes.
+   */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['initialFilters'] && changes['initialFilters'].currentValue) {
-      // Sloučíme stávající hodnoty formuláře s novými vstupy, aby se nesmazalo to, co uživatel naklikal
       this.filterForm = { ...this.filterForm, ...changes['initialFilters'].currentValue };
     }
     if (changes['initialSortBy']) {
@@ -41,12 +60,13 @@ export class FilterFormBuilderComponent implements OnChanges {
     this.setFilterFormValues();
   }
 
+  /**
+   * @description Populates the filter form fields.
+   * @note Prioritizes existing user-entered values in `filterForm` to maintain UX continuity, falling back to `initialFilters`.
+   */
   private setFilterFormValues(): void {
     this.filterColumns.forEach(column => {
-      // 🟢 ZMĚNA: Pokud už ve formuláři hodnota je (uživatel ji vybral), nesaháme na ni.
-      // Pokud tam není, zkusíme ji vzít z initialFilters. Pokud ani tam není, dáme prázdný string.
       if (this.filterForm[column.key] !== undefined && this.filterForm[column.key] !== '') {
-        // Ponechat stávající hodnotu zadanou uživatelem
         return;
       } else if (this.initialFilters && this.initialFilters[column.key] !== undefined) {
         this.filterForm[column.key] = this.initialFilters[column.key];
@@ -59,10 +79,12 @@ export class FilterFormBuilderComponent implements OnChanges {
     this.sortDirection = this.sortDirection || this.initialSortDirection || 'asc';
   }
 
+  /**
+   * @description Processes current form state, removes empty values, and emits the final filter object.
+   */
   applyFilters(): void {
     const rawFilters = { ...this.filterForm };
 
-    // Projdeme filtry a do eventu vymažeme ty, které uživatel nevybral (mají prázdný string '')
     this.filterColumns.forEach(column => {
       if (rawFilters[column.key] === '') {
         delete rawFilters[column.key];
@@ -78,8 +100,10 @@ export class FilterFormBuilderComponent implements OnChanges {
     this.filtersApplied.emit(filters);
   }
 
+  /**
+   * @description Resets the internal form state to initial/empty values and notifies the parent.
+   */
   clearFilters(): void {
-    // Kompletní vyčištění vnitřního stavu formuláře
     this.filterForm = {};
     
     this.filterColumns.forEach(column => {

@@ -1,3 +1,16 @@
+/**
+ * @file customers.component.ts
+ * @path src/app/admin/pages/shop/customers/customers.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the administration of shop customers, including CRUD operations, order history lookups, and data filtering.
+ * @dependencies
+ * - BaseDataComponent: Provides base CRUD functionality and pagination state management.
+ * - TableBuilderComponent: Used for rendering the primary customer data grid.
+ * - SHARED_UI_BUILDERS: Provides common UI components used throughout the module.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as Core from '../../../shared/imports/core-providers';
@@ -6,6 +19,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './customers.config';
 
+/**
+ * @description Orchestrates the customer management dashboard, handling client lists, profile details, and associated order history.
+ * @usage Used by store administrators to view and manage customer accounts.
+ * @note Supports modal-based order history viewing with specialized formatting for statuses and financial data.
+ */
 @Component({
   selector: 'app-customers',
   standalone: true,
@@ -29,7 +47,7 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
 
-  // Objednávky zákazníka
+  // Order management state
   showOrdersModal = false;
   selectedCustomerForOrders: any | null = null;
   customerOrders: any[] = [];
@@ -55,6 +73,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Configures toolbar buttons dynamically based on current module state (e.g., trash view, filter visibility).
+   * @returns {Core.Button[]} A collection of enabled and configured toolbar buttons.
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.CUSTOMER_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -78,6 +100,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     });
   }
 
+  /**
+   * @description Maps toolbar action identifiers to corresponding component methods.
+   * @param action Identifier of the clicked toolbar button.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -97,12 +123,19 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Applies user-selected filters and resets the current page to one.
+   * @param newFilters The filter parameters to merge.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Clears current filters and resets the list to default sort order.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'created_at', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -117,6 +150,9 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
+  /**
+   * @description Triggers the CSV export functionality on the active table component.
+   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
@@ -131,6 +167,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Submits customer form data and refreshes the data grid upon success.
+   * @param formData The form data to be persisted.
+   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => {
@@ -142,6 +182,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     });
   }
 
+  /**
+   * @description Fetches and displays deep-dive details for a specific customer.
+   * @param item The customer record to inspect.
+   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -155,9 +199,13 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   }
 
   // =============================================
-  // OBJEDNÁVKY ZÁKAZNÍKA
+  // ORDER HISTORY MODAL
   // =============================================
 
+  /**
+   * @description Opens the orders history modal for the specified customer.
+   * @param item The target customer record.
+   */
   showCustomerOrders(item: any): void {
     this.selectedCustomerForOrders = item;
     this.showOrdersModal = true;
@@ -170,6 +218,9 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Closes the modal and cleans up the UI/body state.
+   */
   closeOrdersModal(): void {
     this.showOrdersModal = false;
     this.selectedCustomerForOrders = null;
@@ -180,6 +231,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Loads a paginated list of orders for the currently selected customer.
+   * @param page The target page index.
+   */
   loadCustomerOrders(page: number): void {
     if (!this.selectedCustomerForOrders?.id) return;
 
@@ -219,6 +274,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Generates a pagination array for the order history view, including ellipsis logic.
+   * @returns {number[]} Array of page numbers or indicators.
+   */
   getOrderPages(): number[] {
     const pages: number[] = [];
     const total = this.ordersTotalPages;
@@ -230,11 +289,11 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     }
 
     pages.push(1);
-    if (current > 3) pages.push(-1); // ellipsis
+    if (current > 3) pages.push(-1); 
     for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
       pages.push(i);
     }
-    if (current < total - 2) pages.push(-1); // ellipsis
+    if (current < total - 2) pages.push(-1); 
     pages.push(total);
     return pages;
   }
@@ -243,6 +302,11 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     return Math.min(this.ordersCurrentPage * this.ordersPerPage, this.ordersTotalItems);
   }
 
+  /**
+   * @description Returns the CSS class for order statuses based on status type.
+   * @param status The status string from the API.
+   * @returns {string} The CSS class name.
+   */
   getStatusClass(status: string): string {
     const map: Record<string, string> = {
       pending: 'status-pending',

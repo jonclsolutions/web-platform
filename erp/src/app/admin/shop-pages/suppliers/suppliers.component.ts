@@ -1,3 +1,16 @@
+/**
+ * @file suppliers.component.ts
+ * @path src/app/admin/pages/shop/suppliers/suppliers.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the administration of store suppliers, including CRUD operations, archive management, and data filtering.
+ * @dependencies
+ * - BaseDataComponent: Provides the base logic for API interactions, pagination, and entity state management.
+ * - TableBuilderComponent: Used for displaying supplier data and handling CSV exports.
+ * - SHARED_UI_BUILDERS: Collection of reusable UI components for the dashboard.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -5,6 +18,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './suppliers.config';
 
+/**
+ * @description Component for managing business relationships with suppliers.
+ * @usage Provides a comprehensive interface for administrators to list, create, edit, and archive supplier records.
+ * @note Extends BaseDataComponent to utilize standardized service patterns for fetching and mutating data.
+ */
 @Component({
   selector: 'app-suppliers',
   standalone: true,
@@ -42,6 +60,10 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Computes the toolbar configuration.
+   * @returns List of buttons updated based on user permissions, current view state (active/trash), and UI filter state.
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.SUPPLIER_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -57,6 +79,7 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
+          // Disable context-specific actions when viewing the trash table
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
@@ -70,6 +93,10 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
     });
   }
 
+  /**
+   * @description Dispatches actions triggered by the UI toolbar.
+   * @param action Identifier of the clicked toolbar action.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -89,12 +116,19 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Applies updated filters to the data source and refreshes the current view from the first page.
+   * @param newFilters The collection of filter parameters.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Resets filter configuration to initial sorting criteria.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -109,22 +143,36 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
+  /**
+   * @description Initiates the CSV file export process for the currently active table.
+   */
   exportActiveTable(): void {
     if (this.activeTable) {
       this.activeTable.exportToCSV();
     }
   }
 
+  /**
+   * @description Resets the editing state and opens the form to create a new supplier.
+   */
   handleCreateFormOpened(): void {
     this.selectedItemForEdit = null;
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Loads existing record data into the editor and opens the form.
+   * @param item The supplier record to be edited.
+   */
   handleEditFormOpened(item: any): void {
     this.selectedItemForEdit = { ...item };
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Submits form data; determines whether to execute a create or update request based on the ID presence.
+   * @param formData The object submitted from the form.
+   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id
       ? this.updateData(formData.id, formData)
@@ -141,6 +189,10 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
     });
   }
 
+  /**
+   * @description Fetches detailed information for a specific supplier for display in a view modal.
+   * @param item The selected supplier record.
+   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -153,11 +205,17 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
     });
   }
 
+  /**
+   * @description Closes the detailed information view and clears the current selection.
+   */
   handleCloseDetails(): void {
     this.selectedItemForDetails = null;
     this.showDetails = false;
   }
 
+  /**
+   * @description Cancels form editing, resets state, and triggers a change detection cycle.
+   */
   onCancelForm(): void {
     this.showCreateForm = false;
     this.selectedItemForEdit = null;

@@ -1,16 +1,39 @@
 <?php
+/**
+ * @file StoreShopProductRequest.php
+ * @path app/Http/Requests/Shop/ShopProduct/StoreShopProductRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for creating new shop products, including support for variants, localized descriptions, and multi-category assignments.
+ */
 
 namespace App\Http\Requests\Shop\ShopProduct;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
+/**
+ * @description Handles request validation for product creation.
+ * @note Performs automated slug generation and enforces business rules like preventing active status for uncategorized products.
+ */
 class StoreShopProductRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -72,6 +95,11 @@ class StoreShopProductRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom messages for validation errors.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [
@@ -82,6 +110,11 @@ class StoreShopProductRequest extends FormRequest
         ];
     }
 
+    /**
+     * Prepare data for validation, including generating slugs and setting defaults.
+     *
+     * @return void
+     */
     protected function prepareForValidation(): void
     {
         if ($this->filled('name') && ! $this->filled('slug')) {
@@ -96,8 +129,14 @@ class StoreShopProductRequest extends FormRequest
         ]);
     }
 
+    /**
+     * Generate a URL-friendly slug.
+     *
+     * @param string $name
+     * @return string
+     */
     private function generateSlug(string $name): string
     {
-        return \Illuminate\Support\Str::slug($name, '-');
+        return Str::slug($name, '-');
     }
 }

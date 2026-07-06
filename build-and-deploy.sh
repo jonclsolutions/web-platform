@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. Nastavení cest
+# 1. Path configuration
 PROJECT_ROOT=$(pwd)
 ANGULAR_PATH="$PROJECT_ROOT/erp"
 API_PATH="$PROJECT_ROOT/api"
@@ -12,96 +12,96 @@ LARAVEL_TARGET="$WWW_PATH/laravel"
 DIST_PATH="$ANGULAR_PATH/dist/rp_website/browser"
 
 echo "------------------------------------------"
-echo "🚀 START: Komplexní Build a Deployment"
+echo "START: Complex Build and Deployment"
 echo "------------------------------------------"
 
-# 2. Příprava složky app_build
-echo "🧹 1/8: Příprava cílové složky $BUILD_DIR..."
+# 2. Prepare app_build directory
+echo "1/8: Preparing target directory $BUILD_DIR..."
 if [ -d "$BUILD_DIR" ]; then
     rm -rf "$BUILD_DIR"
-    echo "   - Starý build odstraněn."
+    echo "   - Old build removed."
 fi
 mkdir -p "$WWW_PATH"
-echo "   - Složky vytvořeny."
+echo "   - Directories created."
 
-# 3. Build Angularu
-echo "📦 2/8: Kompiluji Angular v $ANGULAR_PATH..."
+# 3. Build Angular
+echo "2/8: Compiling Angular in $ANGULAR_PATH..."
 cd "$ANGULAR_PATH" || exit
 ng build --configuration production
 
 if [ $? -ne 0 ]; then
-    echo "❌ [CHYBA] Build Angularu selhal!"
+    echo "ERROR: Angular build failed!"
     exit 1
 fi
 
 cp -r "$DIST_PATH"/. "$WWW_PATH/"
-echo "   - Angular nakopírován do app_build/www"
+echo "   - Angular files copied to app_build/www"
 
-# 4. Kopírování API (Laravel)
-echo "📂 3/8: Příprava Laravelu v $LARAVEL_TARGET..."
+# 4. Copy API (Laravel)
+echo "3/8: Preparing Laravel in $LARAVEL_TARGET..."
 mkdir -p "$LARAVEL_TARGET"
 if [ -d "$API_PATH" ]; then
     cp -r "$API_PATH"/. "$LARAVEL_TARGET/"
-    echo "   - Laravel (api) nakopírován do app_build/www/laravel"
+    echo "   - Laravel (api) copied to app_build/www/laravel"
 else
-    echo "⚠️  [VAROVÁNÍ] Složka /api neexistuje."
+    echo "WARNING: /api directory does not exist."
 fi
 
-# 5. Kopírování server_conf (Konfigurace, .htaccess, skripty)
-echo "⚙️  4/8: Kopíruji konfigurační soubory (server_conf)..."
+# 5. Copy server_conf (Config, .htaccess, scripts)
+echo "4/8: Copying configuration files (server_conf)..."
 if [ -d "$SERVER_CONF_PATH" ]; then
     cp -r "$SERVER_CONF_PATH"/. "$WWW_PATH/"
-    echo "   - Obsah server_conf nakopírován do app_build/www"
+    echo "   - server_conf contents copied to app_build/www"
 else
-    echo "⚠️  [VAROVÁNÍ] Složka /server_conf neexistuje."
+    echo "WARNING: /server_conf directory does not exist."
 fi
 
-# 6. Explicitní kopírování SQL souborů do rootu buildu
-echo "🗄️  5/8: Kopíruji SQL dumpy pro export..."
+# 6. Explicitly copy SQL files to the build root
+echo "5/8: Copying SQL dumps for export..."
 if ls "$SERVER_CONF_PATH"/*.sql &>/dev/null; then
     cp "$SERVER_CONF_PATH"/*.sql "$BUILD_DIR/"
-    echo "   - SQL soubory zkopírovány do app_build/ (pro snadný přístup)"
+    echo "   - SQL files copied to app_build/ (for easy access)"
 else
-    echo "⚠️  [INFO] Žádné .sql soubory nenalezeny."
+    echo "INFO: No .sql files found."
 fi
 
-# 7. Kopírování dokumentace (do rootu buildu i do www)
-echo "📄 6/8: Kopíruji server_setup a README do obou umístění..."
+# 7. Copy documentation (to both build root and www)
+echo "6/8: Copying server_setup and README to both locations..."
 find_server_setup() {
     if [ -f "$PROJECT_ROOT/server_setup.md" ]; then echo "$PROJECT_ROOT/server_setup.md"
     elif [ -f "$PROJECT_ROOT/server_setup.txt" ]; then echo "$PROJECT_ROOT/server_setup.txt"
     fi
 }
 
-# Kopírování server_setup
+# Copy server_setup
 server_setup_SRC=$(find_server_setup)
 if [ -n "$server_setup_SRC" ]; then
-    cp "$server_setup_SRC" "$WWW_PATH/"      # Půjde do zipu
-    cp "$server_setup_SRC" "$BUILD_DIR/"     # Pro rychlý náhled
-    echo "   - server_setup zkopírováno."
+    cp "$server_setup_SRC" "$WWW_PATH/"      # Goes into zip
+    cp "$server_setup_SRC" "$BUILD_DIR/"     # For quick preview
+    echo "   - server_setup copied."
 fi
 
-# Kopírování README (podporuje .md i .txt verzi)
+# Copy README (supports .md and .txt)
 if [ -f "$PROJECT_ROOT/README.md" ]; then
     cp "$PROJECT_ROOT/README.md" "$WWW_PATH/"
     cp "$PROJECT_ROOT/README.md" "$BUILD_DIR/"
-    echo "   - README.md zkopírováno."
+    echo "   - README.md copied."
 elif [ -f "$PROJECT_ROOT/README.txt" ]; then
     cp "$PROJECT_ROOT/README.txt" "$WWW_PATH/"
     cp "$PROJECT_ROOT/README.txt" "$BUILD_DIR/"
-    echo "   - README.txt zkopírováno."
+    echo "   - README.txt copied."
 fi
 
-# 8. Finální ZIPování (uvnitř app_build)
-echo "🗜️  7/8: Vytvářím archiv $ZIP_NAME..."
+# 8. Final ZIP archiving (within app_build)
+echo "7/8: Creating archive $ZIP_NAME..."
 cd "$BUILD_DIR" || exit
 if command -v zip &> /dev/null; then
     zip -r "$ZIP_NAME" www > /dev/null
-    echo "   - Archiv vytvořen v $BUILD_DIR/$ZIP_NAME"
+    echo "   - Archive created in $BUILD_DIR/$ZIP_NAME"
 else
-    echo "❌ [CHYBA] Příkaz 'zip' nenalezen!"
+    echo "ERROR: 'zip' command not found!"
 fi
 
 echo "------------------------------------------"
-echo "✅ [HOTOVO] Vše připraveno ve složce: /app_build"
+echo "COMPLETE: Everything prepared in folder: /app_build"
 echo "------------------------------------------"

@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopPaymentMethodController.php
+ * @path app/Http/Controllers/Api/Shop/ShopPaymentMethodController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages configuration and status of shop payment methods, with strict protections against deletion or unauthorized modification of system-critical payment logic.
+ */
 
 namespace App\Http\Controllers\Api\Shop;
 
@@ -12,8 +20,18 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * @description Controller for managing payment method configurations.
+ * @note Prevents destruction and structural changes to ensure consistency with hardcoded gateway providers.
+ */
 class ShopPaymentMethodController extends Controller
 {
+    /**
+     * Retrieves a paginated list of payment methods with optional filtering by status or provider.
+     *
+     * @param Request $request Incoming request with search, provider, or active status filters.
+     * @return JsonResponse Paginated result or full collection.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
@@ -49,26 +67,43 @@ class ShopPaymentMethodController extends Controller
             ]);
     }
 
+    /**
+     * Attempts to create a new payment method.
+     *
+     * @param StoreShopPaymentMethodRequest $request Validated request data.
+     * @return JsonResponse Error 403 as creation is restricted.
+     */
     public function store(StoreShopPaymentMethodRequest $request): JsonResponse
     {
-        // 🔒 BEZPEČNOSTNÍ POJISTKA: Zamezení vytváření nových metod přes API
         return response()->json(['message' => 'Vytváření nových platebních metod je zakázáno.'], 403);
     }
 
+    /**
+     * Retrieves details for a specific payment method.
+     *
+     * @param int $id The method ID.
+     * @return JsonResponse The payment method resource.
+     */
     public function show($id): JsonResponse
     {
         $method = ShopPaymentMethod::withTrashed()->findOrFail($id);
         return response()->json(new ShopPaymentMethodResource($method));
     }
 
+    /**
+     * Updates an existing payment method while protecting core fields.
+     *
+     * @param UpdateShopPaymentMethodRequest $request Validated update data.
+     * @param int $id The method ID.
+     * @return JsonResponse The updated resource.
+     * @throws \Exception On failure.
+     */
     public function update(UpdateShopPaymentMethodRequest $request, $id): JsonResponse
     {
         try {
             $method = ShopPaymentMethod::withTrashed()->findOrFail($id);
             $validated = $request->validated();
             
-            // 🔒 BEZPEČNOSTNÍ POJISTKA: Nedovolíme změnit unikátní kód metody a poskytovatele,
-            // protože na tyto řetězce bude navázána pevná procesní logika aplikace.
             unset($validated['code']);
             unset($validated['provider']);
 
@@ -84,12 +119,25 @@ class ShopPaymentMethodController extends Controller
         }
     }
 
+    /**
+     * Attempts to delete a payment method.
+     *
+     * @param Request $request Incoming request.
+     * @param int $id The method ID.
+     * @return JsonResponse Error 403 as deletion is prohibited.
+     */
     public function destroy(Request $request, $id): JsonResponse
     {
-        // 🔒 BEZPEČNOSTNÍ POJISTKA: Fixní metody se nesmí mazat, pouze deaktivovat přes 'is_active'
         return response()->json(['message' => 'Systémové platební metody nelze smazat, pouze deaktivovat.'], 403);
     }
 
+    /**
+     * Restores a previously soft-deleted payment method.
+     *
+     * @param Request $request Incoming request.
+     * @param int $id The method ID.
+     * @return JsonResponse The restored resource.
+     */
     public function restore(Request $request, $id): JsonResponse
     {
         $item = ShopPaymentMethod::withTrashed()->findOrFail($id);
@@ -98,6 +146,16 @@ class ShopPaymentMethodController extends Controller
         return response()->json(new ShopPaymentMethodResource($item));
     }
 
+    /**
+     * Logs administrative actions to the central audit system.
+     *
+     * @param Request $request Request context.
+     * @param string $eventType Operation type.
+     * @param string $module Module identification.
+     * @param string $description Audit entry description.
+     * @param int|null $affectedId Entity ID.
+     * @return void
+     */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
     {
         try {

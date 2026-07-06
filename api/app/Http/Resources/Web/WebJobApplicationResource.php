@@ -1,12 +1,29 @@
 <?php
+/**
+ * @file WebJobApplicationResource.php
+ * @path app/Http/Resources/Web/WebJobApplicationResource.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Resource transformation for job application submissions.
+ */
 
 namespace App\Http\Resources\Web;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @description Transforms WebJobApplication model data, including resolving file storage URLs for uploaded CVs.
+ */
 class WebJobApplicationResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

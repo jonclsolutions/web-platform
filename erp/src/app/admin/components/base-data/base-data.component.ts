@@ -1,6 +1,24 @@
+/**
+ * @file base-data.component.ts
+ * @path src/app/admin/components/base-data.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2025
+ * @description Abstract base class providing standardized CRUD operations, pagination, and caching logic for administrative data components.
+ * @dependencies
+ * - DataHandler: Facilitates HTTP communication.
+ * - GenericTableService: Manages complex pagination and caching states.
+ * - LoadingService, AlertDialogService, AuthService, PermissionService: Core infrastructure services for UI state and access control.
+ */
+
 import { Directive, inject } from '@angular/core'; 
 import * as Core from '../../../shared/imports/core-providers';
 
+/**
+ * @description Serves as a base controller for all resource management components in the admin panel.
+ * @usage Extended by specific feature components (e.g., UserComponent, ProductComponent) to eliminate boilerplate code for data fetching and manipulation.
+ * @note Implements automatic caching and state synchronization between main and trash tables.
+ */
 @Directive()
 export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: string | null }> implements Core.OnInit, Core.OnDestroy, Core.OnChanges {
   data: T[] = [];
@@ -51,11 +69,18 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   ngOnInit(): void {}
   ngOnChanges(changes: Core.SimpleChanges): void {}
   
+  /**
+   * @description Cleans up resources by completing the destroy subject to unsubscribe from all active streams.
+   */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  /**
+   * @description Initializes component state with authentication guard logic.
+   * @param router The application router used for redirection.
+   */
   protected initWithAuthCheck(router: Core.Router): void {
     this.authService.isLoggedIn$
       .pipe(Core.takeUntil(this.destroy$))
@@ -65,6 +90,14 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
       });
   }
 
+  /**
+   * @description Fetches paginated data from the API and updates local caches.
+   * @param isTrash Flag to determine if requesting active or deleted items.
+   * @param page Target page number.
+   * @param perPage Number of items per page.
+   * @param filters Active filter configuration.
+   * @returns {Core.Observable<Core.PaginatedResponse<T>>} Observable of the paginated result.
+   */
   protected fetchPaginatedData(
     isTrash: boolean, 
     page: number, 
@@ -121,6 +154,9 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     );
   }
 
+  /**
+   * @description Clears all caches and refreshes both active and trash tables to synchronize state.
+   */
   public forceFullRefresh(currentFilters: Core.FilterParams = this.defaultFilters): void {
     this.activeCache.clear();
     this.trashCache.clear();
@@ -136,6 +172,11 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     ).subscribe();
   }
 
+  /**
+   * @description Handles pagination event for either main or trash table.
+   * @param page The requested page number.
+   * @param filters The currently applied filters.
+   */
   onHandlePageChange(page: number, filters: Core.FilterParams = this.currentActiveFilters): void {
     if (this.showTrashTable) {
       if (page >= 1 && page <= this.trashTotalPages && page !== this.trashCurrentPage) {
@@ -150,6 +191,9 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     }
   }
 
+  /**
+   * @description Updates items-per-page setting and resets pagination to the first page.
+   */
   onHandleItemsPerPageChange(value: number, filters: Core.FilterParams = this.currentActiveFilters): void {
     if (this.showTrashTable) {
       this.trashItemsPerPage = value;
@@ -175,7 +219,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
 
   loadData(): void {
     if (!this.apiEndpoint) {
-      this.errorMessage = 'Chyba: API endpoint není definován.';
+      this.errorMessage = 'Error: API endpoint undefined.';
       return;
     }
     this.dataHandler.getCollection<T>(this.apiEndpoint)
@@ -187,7 +231,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   }
 
   getItemDetails(id: number | undefined): Core.Observable<T> {
-    if (!id) return Core.throwError(() => new Error('ID není definováno.'));
+    if (!id) return Core.throwError(() => new Error('ID undefined.'));
     const url = `${this.apiEndpoint}/${id}`;
     return this.dataHandler.get<T>(url).pipe(
       Core.takeUntil(this.destroy$),
@@ -203,7 +247,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   }
   
   updateData(id: number | undefined, data: T): Core.Observable<T> {
-    if (!id) return Core.throwError(() => new Error('ID není definováno.'));
+    if (!id) return Core.throwError(() => new Error('ID undefined.'));
     return this.dataHandler.put<T>(`${this.apiEndpoint}/${id}`, data).pipe(
       Core.takeUntil(this.destroy$),
       Core.finalize(() => { this.cd.markForCheck(); })
@@ -211,10 +255,9 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   }
   
   deleteData(id: number | undefined, forceDelete?: boolean | undefined, params?: any): Core.Observable<void> {
-    if (!id) return Core.throwError(() => new Error('ID není definováno.'));
+    if (!id) return Core.throwError(() => new Error('ID undefined.'));
     let url = `${this.apiEndpoint}/${id}`;
     
-    // Support pro params object (force_delete: true)
     if (params && params.force_delete === 'true') {
       url += '?force_delete=true';
     } else if (forceDelete === true) {
@@ -242,7 +285,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   }
 
   public updatePassword(id: number, data: any): Core.Observable<any> {
-    if (!id) return Core.throwError(() => new Error('ID uživatele pro změnu hesla není definováno.'));
+    if (!id) return Core.throwError(() => new Error('User ID undefined.'));
     
     this.errorMessage = null;
     const url = `${this.apiEndpoint}/${id}/change-password`;
@@ -253,7 +296,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
         this.cd.markForCheck();
       }),
       Core.catchError((err: Core.HttpErrorResponse) => {
-        this.errorMessage = err.message || 'Neznámá chyba při změně hesla.';
+        this.errorMessage = err.message || 'Error changing password.';
         this.cd.markForCheck();
         return Core.throwError(() => err);
       })
@@ -262,7 +305,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
 
   loadAllData(filters?: Core.FilterParams): Core.Observable<T[]> {
     if (!this.apiEndpoint) {
-      return Core.throwError(() => new Error('Chyba: API endpoint není definován pro načtení všech dat.'));
+      return Core.throwError(() => new Error('API endpoint undefined.'));
     }
     const params = new URLSearchParams();
     params.set('no_pagination', 'true');
@@ -287,7 +330,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
 
   public hardDeleteAllTrashedDataFromApi(): Core.Observable<void> {
     if (!this.apiEndpoint) {
-      return Core.throwError(() => new Error('Chyba: API endpoint není definován pro hromadné smazání.'));
+      return Core.throwError(() => new Error('API endpoint undefined.'));
     }
 
     const deleteUrl = `${this.apiEndpoint}/force-delete-all`;
@@ -299,7 +342,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
         this.cd.markForCheck();
       }),
       Core.catchError((err: Core.HttpErrorResponse) => {
-        this.errorMessage = err.message || 'Neznámá chyba při hromadném mazání.';
+        this.errorMessage = err.message || 'Mass delete error.';
         this.cd.markForCheck();
         return Core.throwError(() => err);
       })

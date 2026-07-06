@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopOrderController.php
+ * @path app/Http/Controllers/Api/Shop/ShopOrderController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages comprehensive shop order lifecycle operations, including creation, status tracking, inventory synchronization, and complex financial recalculations.
+ */
 
 namespace App\Http\Controllers\Api\Shop;
 
@@ -17,8 +25,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @description Controller responsible for administrative order management.
+ * @note Integrates with inventory systems and customer records to maintain data consistency across orders.
+ */
 class ShopOrderController extends Controller
 {
+    /**
+     * Retrieves a paginated list of orders with flexible filtering options.
+     *
+     * @param Request $request Incoming request with search, status, and date range filters.
+     * @return JsonResponse Paginated order data or full collection.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
@@ -87,6 +105,13 @@ class ShopOrderController extends Controller
         ]);
     }
 
+    /**
+     * Stores a new order and processes associated inventory and customer data.
+     *
+     * @param StoreShopOrderRequest $request Validated order store request.
+     * @return JsonResponse Returns the created order resource.
+     * @throws \Exception On database transaction failure.
+     */
     public function store(StoreShopOrderRequest $request): JsonResponse
     {
         Log::info("ShopOrder Store started", ['payload' => $request->all()]);
@@ -121,7 +146,6 @@ class ShopOrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // 🌟 VYTVOŘENÍ NEBO DOHLEDÁNÍ ZÁKAZNÍKA
             $customer = ShopCustomer::firstOrCreate(
                 ['email' => $validated['email']],
                 [
@@ -150,7 +174,7 @@ class ShopOrderController extends Controller
             $finalAmount = max(0, $totalAmount + $shippingAmount - $discountAmount);
 
             $order = ShopOrder::create([
-                'customer_id'          => $customer->id, // 🌟 Zde provázáno na nového/dohledaného zákazníka
+                'customer_id'          => $customer->id,
                 'order_number'         => ShopOrder::generateOrderNumber(),
                 'status'               => $validated['status'] ?? 'pending',
                 'payment_status'       => $validated['payment_status'] ?? 'pending',
@@ -222,12 +246,26 @@ class ShopOrderController extends Controller
         }
     }
 
+    /**
+     * Retrieves full order details including relations.
+     *
+     * @param int $id The order ID.
+     * @return JsonResponse Detailed order resource.
+     */
     public function show($id): JsonResponse
     {
         $order = ShopOrder::with(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items'])->findOrFail($id);
         return response()->json(new ShopOrderResource($order));
     }
 
+    /**
+     * Updates an existing order, including customer details, items, and recalculates totals.
+     *
+     * @param UpdateShopOrderRequest $request Validated update request.
+     * @param int $id The order ID.
+     * @return JsonResponse The updated order resource.
+     * @throws \Exception On database transaction failure.
+     */
     public function update(UpdateShopOrderRequest $request, $id): JsonResponse
     {
         Log::info("ShopOrder Update started", ['id' => $id, 'payload' => $request->all()]);
@@ -237,7 +275,6 @@ class ShopOrderController extends Controller
             $order = ShopOrder::findOrFail($id);
             $validated = $request->validated();
 
-            // Pokud se posílají data zákazníka, zaktualizujeme je přímo u přiřazeného zákazníka
             if ($order->customer_id && $request->hasAny(['first_name', 'last_name', 'email', 'phone', 'company'])) {
                 $customerData = collect($validated)->only(['first_name', 'last_name', 'email', 'phone', 'company'])->toArray();
                 $order->customer->update($customerData);
@@ -270,6 +307,13 @@ class ShopOrderController extends Controller
         }
     }
 
+    /**
+     * Updates the status of an order and handles stock restoration if applicable.
+     *
+     * @param Request $request Request containing the new status.
+     * @param int $id The order ID.
+     * @return JsonResponse The updated order.
+     */
     public function updateStatus(Request $request, $id)
     {
         $order = ShopOrder::with(['items', 'customer'])->findOrFail($id);
@@ -291,6 +335,14 @@ class ShopOrderController extends Controller
         return response()->json($order);
     }
 
+    /**
+     * Performs a soft or hard delete of an order, restoring stock if required.
+     *
+     * @param Request $request Request flag for hard deletion.
+     * @param int $id The order ID.
+     * @return JsonResponse No content on success.
+     * @throws \Exception On failure.
+     */
     public function destroy(Request $request, $id)
     {
         try {
@@ -318,6 +370,13 @@ class ShopOrderController extends Controller
         }
     }
 
+    /**
+     * Restores a soft-deleted order.
+     *
+     * @param Request $request Incoming request.
+     * @param int $id The order ID.
+     * @return JsonResponse The restored order resource.
+     */
     public function restore(Request $request, $id): JsonResponse
     {
         try {
@@ -336,6 +395,12 @@ class ShopOrderController extends Controller
         }
     }
 
+    /**
+     * Purges all soft-deleted orders.
+     *
+     * @param Request $request Incoming request.
+     * @return JsonResponse No content on success.
+     */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
@@ -357,6 +422,13 @@ class ShopOrderController extends Controller
         }
     }
 
+    /**
+     * Helper to update or add order items during an order update.
+     *
+     * @param ShopOrder $order The order instance.
+     * @param array $items Array of item data.
+     * @return void
+     */
     private function updateOrderItems(ShopOrder $order, array $items): void
     {
         foreach ($items as $itemData) {
@@ -387,6 +459,12 @@ class ShopOrderController extends Controller
         }
     }
 
+    /**
+     * Recalculates order financial totals based on items, coupons, and shipping.
+     *
+     * @param ShopOrder $order The order instance.
+     * @return void
+     */
     private function recalculateOrderTotals(ShopOrder $order): void
     {
         $items = $order->items;
@@ -423,6 +501,16 @@ class ShopOrderController extends Controller
         ]);
     }
 
+    /**
+     * Logs administrative actions to the central audit system.
+     *
+     * @param Request $request Request context.
+     * @param string $eventType Operation type.
+     * @param string $module Module identification.
+     * @param string $description Audit entry description.
+     * @param int|null $affectedId Entity ID.
+     * @return void
+     */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
     {
         try {

@@ -1,16 +1,37 @@
 <?php
+/**
+ * @file StoreWebNewsRequest.php
+ * @path app/Http/Requests/Web/WebNews/StoreWebNewsRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for creating new web news articles.
+ */
 
 namespace App\Http\Requests\Web\WebNews;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles request validation for new news content creation.
+ */
 class StoreWebNewsRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -25,6 +46,11 @@ class StoreWebNewsRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

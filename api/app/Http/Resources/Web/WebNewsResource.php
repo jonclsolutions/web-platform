@@ -1,12 +1,29 @@
 <?php
+/**
+ * @file WebNewsResource.php
+ * @path app/Http/Resources/Web/WebNewsResource.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Resource transformation for website news articles.
+ */
 
 namespace App\Http\Resources\Web;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @description Transforms WebNews model data into a structured format for news feed rendering.
+ */
 class WebNewsResource extends JsonResource
 {
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

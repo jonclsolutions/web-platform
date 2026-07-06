@@ -1,0 +1,26 @@
+.article-container { 
+  animation: fadeIn 0.4s ease-out; 
+}
+
+h1 { 
+  color: #a67dff; 
+  font-size: 2rem; 
+  margin-bottom: 10px; 
+}
+
+.kb-divider { 
+  border: 0; 
+  border-top: 1px solid #2f2f2f; 
+  margin: 20px 0; 
+}
+
+.article-body { 
+  line-height: 1.7; 
+  color: #d0d0d0; 
+  font-size: 1.1rem; 
+}
+
+@keyframes fadeIn { 
+  from { opacity: 0; transform: translateY(10px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}

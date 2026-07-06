@@ -1,17 +1,32 @@
+/**
+ * @file trash-table-builder.component.ts
+ * @path src/app/admin/components/trash-table-builder/trash-table-builder.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2025
+ * @description Specialized table component for managing deleted records ("trash"), allowing for permanent deletion or restoration.
+ * @dependencies
+ * - BaseDataComponent: Inherits core CRUD and data lifecycle management.
+ * - ConfirmDialogService: Ensures safe irreversible operations (permanent delete).
+ * - SHARED_UI_BUILDERS: Provides UI components like toolbars and buttons.
+ */
+
 import { Component, Input, ChangeDetectionStrategy, Output, EventEmitter } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// Import tvého Core namespace
 import * as Core from '../../../../shared/imports/core-providers';
-
-// Specifické importy
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
 import { BaseDataComponent } from '../../base-data/base-data.component';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builders';
 
+/**
+ * @description A dedicated table view for displaying soft-deleted records with utility actions to restore or purge data.
+ * @usage Used in admin modules to provide a "Trash" view for data recovery.
+ * @note Extends BaseDataComponent to leverage standard pagination and API interaction while adding specific trash-related logic.
+ */
 @Component({
   selector: 'app-trash-table-builder',
   standalone: true,
@@ -31,14 +46,14 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
   @Input() uploadsBaseUrl: string = '';
   
   buttons: TableButtons[] = [
-    { display_name: '♻️', header_name: "Obnovit", isActive: true, type: 'confirm_button', action: "restore" },
-    { display_name: '🧨', header_name: "Trvale smazat", isActive: true, type: 'delete_button', action: "delete" },
+    { display_name: '♻️', header_name: "Restore", isActive: true, type: 'confirm_button', action: "restore" },
+    { display_name: '🧨', header_name: "Delete Permanently", isActive: true, type: 'delete_button', action: "delete" },
   ];
 
   deleteAllButtonConfig: Core.Button[] = [
     {
       action: 'deleteAll',
-      label: 'Smazat vše',
+      label: 'Delete All',
       icon: '🗑️',
       class: 'btn-trash small-btn',
       isActive: false,
@@ -60,7 +75,10 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
     super(dataHandler, cd, genericTableService);
   }
 
-  // OPRAVA: parametr je nyní string, protože builder emituje jen název akce
+  /**
+   * @description Handles toolbar interactions, specifically for the bulk-delete action.
+   * @param action The triggered action identifier.
+   */
   handleToolbarAction(action: string): void {
     if (action === 'deleteAll') {
       this.deleteAll();
@@ -75,25 +93,25 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
     super.ngOnInit();
   }
 
+  /**
+   * @description Renders formatted cell content based on column definition type.
+   * @param item The source data object.
+   * @param column Configuration defining how to format the data.
+   * @returns {any} Localized/formatted string or raw value.
+   */
   getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
     const value = keys.reduce((obj, key) => obj?.[key], item);
     
-    // 🌟 Používáme přetypování na 'any', aby TS nehlásil chybu u 'array' a 'object'
     switch (column.type as any) {
       case 'currency': {
         if (value === undefined || value === null || value === '') return '';
-        
-        // 🌟 Dynamické získání kódu měny (např. 'CZK', 'EUR'), výchozí je 'CZK'
         const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'CZK';
-        
-        // Formátování: pro CZK české (100 Kč), pro EUR evropské standardy (100 €)
         const locale = currency === 'CZK' ? 'cs-CZ' : 'de-DE';
 
         try {
           return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
         } catch (e) {
-          // Fallback, pokud by se v datech objevila nepodporovaná měna
           return `${value} ${currency}`;
         }
       }
@@ -101,7 +119,7 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
       case 'date':
         return value ? (new DatePipe('cs-CZ')).transform(value, column.format || 'shortDate') : '';
       case 'boolean':
-        return value ? 'Ano' : 'Ne';
+        return value ? 'Yes' : 'No';
       case 'image':
         return value ? `${this.uploadsBaseUrl}${value}` : '';
       case 'array':
@@ -117,21 +135,26 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
     return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
   
+  /**
+   * @description Manages row-level restoration and deletion logic.
+   * @param item The target item for the action.
+   * @param action 'restore' or 'delete'.
+   */
   handleAction(item: any, action: string): void {
     if (!item.id) return;
 
     switch (action) {
       case 'restore':
-        this.confirmDialogService.open('Potvrzení obnovení', 'Opravdu chcete obnovit tuto položku?').then(result => {
+        this.confirmDialogService.open('Restore Confirmation', 'Are you sure you want to restore this item?').then(result => {
           if (result) {
             this.restoreDataFromApi(item.id).subscribe({
               next: () => {
-                this.alertDialogService.open('Úspěch', 'Položka byla úspěšně obnovena.', 'success');
+                this.alertDialogService.open('Success', 'Item successfully restored.', 'success');
                 this.removeItemFromLocalData(item.id);
                 this.itemRestored.emit();
               },
-              error: (err: any) => {
-                this.alertDialogService.open('Chyba', 'Při obnovení položky nastala chyba.', 'danger');
+              error: () => {
+                this.alertDialogService.open('Error', 'An error occurred while restoring the item.', 'danger');
               }
             });
           }
@@ -139,16 +162,16 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
         break;
 
       case 'delete':
-        this.confirmDialogService.open('Potvrzení trvalého smazání', 'Opravdu si přejete TRVALE smazat tuto položku? Tato akce je nevratná!').then(result => {
+        this.confirmDialogService.open('Permanent Delete Confirmation', 'Are you sure you want to PERMANENTLY delete this item? This action is irreversible!').then(result => {
           if (result) {
             this.deleteData(item.id, true).subscribe({
               next: () => {
-                this.alertDialogService.open('Úspěch', 'Položka byla trvale smazána.', 'success');
+                this.alertDialogService.open('Success', 'Item permanently deleted.', 'success');
                 this.removeItemFromLocalData(item.id);
                 this.itemDeletedPermanently.emit();
               },
-              error: (err: any) => {
-                this.alertDialogService.open('Chyba', 'Při trvalém mazání položky nastala chyba.', 'danger');
+              error: () => {
+                this.alertDialogService.open('Error', 'An error occurred while deleting the item.', 'danger');
               }
             });
           }
@@ -165,30 +188,36 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
     }
   }
 
+  /**
+   * @description Executes a permanent wipe of all trashed items after user confirmation.
+   */
   deleteAll(): void {
     if (this.data.length === 0) {
-      this.alertDialogService.open('Upozornění', 'Nejsou k dispozici žádné položky ke smazání.', 'warning');
+      this.alertDialogService.open('Warning', 'No items available to delete.', 'warning');
       return;
     }
     
-    this.confirmDialogService.open('Trvalé smazání všech položek', 'Opravdu si přejete TRVALE smazat VŠECHNY položky? Tato akce je nevratná!')
+    this.confirmDialogService.open('Delete All Permanently', 'Are you sure you want to PERMANENTLY delete ALL items? This action is irreversible!')
       .then(result => {
         if (result) {
           this.hardDeleteAllTrashedDataFromApi().subscribe({
             next: () => {
-              this.alertDialogService.open('Úspěch', 'Všechny položky byly trvale smazány.', 'success');
+              this.alertDialogService.open('Success', 'All items permanently deleted.', 'success');
               this.data = [];
               this.itemDeletedPermanently.emit();
               this.cd.markForCheck();
             },
-            error: (err: any) => {
-              this.alertDialogService.open('Chyba', 'Při trvalém mazání položek nastala chyba.', 'danger');
+            error: () => {
+              this.alertDialogService.open('Error', 'An error occurred during mass deletion.', 'danger');
             }
           });
         }
       });
   }
 
+  /**
+   * @description Calculates colspan for empty or error message rows.
+   */
   get colspanValue(): number {
     const activeButtonsCount = this.buttons?.filter(b => b.isActive).length || 0;
     return this.columnDefinitions.length + (activeButtonsCount > 0 ? 1 : 0);

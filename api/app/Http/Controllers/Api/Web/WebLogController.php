@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file WebLogController.php
+ * @path app/Http/Controllers/Api/Web/WebLogController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Controller providing access to system audit logs, supporting complex filtering, sorting, and manual log entry creation.
+ */
 
 namespace App\Http\Controllers\Api\Web;
 
@@ -10,20 +18,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * @description Manages audit trail records.
+ * @note Enables querying logs by various parameters including event type, module, and user identity.
+ */
 class WebLogController extends Controller
 {
+    /**
+     * Retrieves a paginated or full collection of audit logs based on search filters.
+     *
+     * @param Request $request Filters (event_type, module, text fields) and sorting/pagination parameters.
+     * @return JsonResponse Collection of log entries.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
-        // Dynamicky zjistíme název tabulky z Modelu (teď to bude 'web_logs')
         $table = (new WebLog())->getTable();
 
-        // Základní query s relací na uživatele
+        // Base query with user relation
         $query = WebLog::query()->select("$table.*")->with('user');
 
-        // --- FILTRACE ---
+        // --- FILTRATION ---
         if ($request->filled('id')) {
             $query->where("$table.id", $request->id);
         }
@@ -47,9 +64,8 @@ class WebLogController extends Controller
             }
         }
 
-        // --- ŘAZENÍ (SORTING) ---
+        // --- SORTING ---
         $sortBy = $request->input('sort_by', 'created_at'); 
-        
         $sortDirection = (strtolower($request->input('sort_direction')) === 'asc') ? 'asc' : 'desc';
 
         if ($sortBy === 'user_email' || $sortBy === 'user.user_email') {
@@ -60,7 +76,7 @@ class WebLogController extends Controller
             $query->orderBy($sortColumn, $sortDirection);
         }
 
-        // --- EXEKUCE A PAGINACE ---
+        // --- EXECUTION ---
         if ($noPagination) {
             $logs = $query->get();
             return response()->json(WebLogResource::collection($logs));
@@ -77,27 +93,24 @@ class WebLogController extends Controller
         ]);
     }
 
+    /**
+     * Retrieves a single log entry.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
     public function show($id): JsonResponse
     {
         $log = WebLog::with('user')->findOrFail($id);
         return response()->json(new WebLogResource($log));
     }
 
-    // public function store(StoreWebLogRequest $request): JsonResponse
-    // {
-    //     try {
-    //         $user = $request->user();
-    //         $logData = array_merge($request->validated(), [
-    //             'user_id' => $user?->id,
-    //             'created_at' => now(), 
-    //         ]);
-    //         $log = WebLog::create($logData);
-    //         return response()->json(new WebLogResource($log), 201);
-    //     } catch (\Exception $e) {
-    //         Log::error('Chyba při vytváření business logu: ' . $e->getMessage());
-    //         return response()->json(['message' => 'Chyba serveru'], 500);
-    //     }
-    // }
+    /**
+     * Manually creates an audit log entry.
+     *
+     * @param StoreWebLogRequest $request
+     * @return JsonResponse
+     */
     public function store(StoreWebLogRequest $request): JsonResponse
     {
         try {
@@ -105,7 +118,6 @@ class WebLogController extends Controller
             $logData = array_merge($request->validated(), [
                 'user_id' => $user?->id,
                 'created_at' => now(), 
-                // Pokud Angular neposlal origin, vezmi IP adresu z requestu
                 'origin' => $request->input('origin') ?? $request->ip(),
             ]);
             $log = WebLog::create($logData);

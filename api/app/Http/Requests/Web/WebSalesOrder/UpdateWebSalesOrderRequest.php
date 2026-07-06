@@ -1,15 +1,36 @@
 <?php
+/**
+ * @file UpdateWebSalesOrderRequest.php
+ * @path app/Http/Requests/Web/WebSalesOrder/UpdateWebSalesOrderRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for updating existing sales orders.
+ */
 
 namespace App\Http\Requests\Web\WebSalesOrder;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule; // 👈 Přidán import pro Rule
-use App\Models\Web\WebSalesLead; // 👈 Přidán import pro tvůj model
+use Illuminate\Validation\Rule;
+use App\Models\Web\WebSalesLead;
 
+/**
+ * @description Handles request validation for updating existing sales order data.
+ */
 class UpdateWebSalesOrderRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         $safeExtensions = [
@@ -17,7 +38,6 @@ class UpdateWebSalesOrderRequest extends FormRequest
         ];
 
         return [
-            // 👇 Opraveno: kontroluje existenci proti správnému modelu/tabulce web_sales_leads
             'lead_id'           => ['sometimes', 'nullable', Rule::exists(WebSalesLead::class, 'id')],
             'salesman_name'     => 'sometimes|required|string|max:255',
             'ico'               => 'nullable|string|max:20',
@@ -35,6 +55,11 @@ class UpdateWebSalesOrderRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

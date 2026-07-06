@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopOrder.php
+ * @path app/Models/Shop/ShopOrder.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Model representing a customer sales order.
+ */
 
 namespace App\Models\Shop;
 
@@ -6,13 +14,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * @description Manages order lifecycle, pricing, shipping information, and inventory interaction.
+ * * @property int $id Unique order identifier.
+ * @property string $order_number Chronological unique order number.
+ * @property string $status Current status of the order.
+ * @property float $final_amount Total price including taxes and shipping.
+ */
 class ShopOrder extends Model
 {
     use SoftDeletes;
 
+    /**
+     * @var string The table associated with the model.
+     */
     protected $table = 'shop_orders';
 
+    /**
+     * @var array<int, string> The attributes that are mass assignable.
+     */
     protected $fillable = [
         'customer_id',
         'order_number',
@@ -36,6 +58,9 @@ class ShopOrder extends Model
         'delivered_at',
     ];
 
+    /**
+     * @var array<string, string> The attributes that should be cast to native types.
+     */
     protected $casts = [
         'total_amount' => 'decimal:2',
         'shipping_amount' => 'decimal:2',
@@ -51,7 +76,7 @@ class ShopOrder extends Model
     ];
 
     /**
-     * Zákazník
+     * Get the customer associated with the order.
      */
     public function customer(): BelongsTo
     {
@@ -59,7 +84,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Položky objednávky
+     * Get the order line items.
      */
     public function items(): HasMany
     {
@@ -67,7 +92,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Slevový kupón
+     * Get the applied discount coupon.
      */
     public function coupon(): BelongsTo
     {
@@ -75,7 +100,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Způsob platby
+     * Get the payment method used.
      */
     public function paymentMethod(): BelongsTo
     {
@@ -83,7 +108,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Způsob dopravy
+     * Get the shipping method used.
      */
     public function shippingMethod(): BelongsTo
     {
@@ -91,7 +116,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Scope pro aktivní objednávky
+     * Scope to exclude canceled or returned orders.
      */
     public function scopeActive($query)
     {
@@ -99,7 +124,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Scope pro zaplacené objednávky
+     * Scope to include only paid orders.
      */
     public function scopePaid($query)
     {
@@ -107,7 +132,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Scope pro čekající na zaplacení
+     * Scope to include only pending payments.
      */
     public function scopePending($query)
     {
@@ -115,7 +140,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Vrátí dostupné stavy objednávky
+     * Returns valid order status options.
      */
     public static function getStatusOptions(): array
     {
@@ -131,7 +156,7 @@ class ShopOrder extends Model
     }
 
     /**
-     * Vrátí dostupné stavy platby
+     * Returns valid payment status options.
      */
     public static function getPaymentStatusOptions(): array
     {
@@ -144,15 +169,13 @@ class ShopOrder extends Model
         ];
     }
 
-/**
-     * Generuje číslo objednávky (bere v potaz i smazané záznamy)
+    /**
+     * Generates a new unique order number based on the current date sequence.
      */
     public static function generateOrderNumber(): string
     {
-        $prefix = date('Ym'); // Formát: 202605
+        $prefix = date('Ym'); 
         
-        // Přidáno withTrashed(), aby generátor viděl i smazané objednávky v koši
-        // Seřazeno podle order_number sestupně pro získání skutečně nejvyššího čísla
         $lastOrder = self::withTrashed()
             ->where('order_number', 'like', $prefix . '%')
             ->orderBy('order_number', 'desc')
@@ -160,16 +183,15 @@ class ShopOrder extends Model
 
         $nextNumber = 1;
         if ($lastOrder) {
-            // Získáme posledních 4 cifry z čísla (např. z 2026050001 získá 0001)
             $lastSequence = (int) substr($lastOrder->order_number, -4);
             $nextNumber = $lastSequence + 1;
         }
 
-        // Složí prefix a číslo zarovnané nulami (např. 2026050002)
         return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
+
     /**
-     * Vrátí text statusu
+     * Returns the human-readable label for the current status.
      */
     public function getStatusLabel(): string
     {
@@ -177,35 +199,35 @@ class ShopOrder extends Model
     }
 
     /**
-     * Vrátí text payment statusu
+     * Returns the human-readable label for the current payment status.
      */
     public function getPaymentStatusLabel(): string
     {
         return self::getPaymentStatusOptions()[$this->payment_status] ?? $this->payment_status;
     }
+
     /**
- * Vrátí položky z objednávky zpět na sklad
- */
-public function restoreStock(): void
-{
-    foreach ($this->items as $item) {
-        if ($item->product_variant_id) {
-            // Máme variantu - navýšíme ji a syncneme hlavní produkt
-            $variant = \App\Models\Shop\ShopProductVariant::find($item->product_variant_id);
-            if ($variant) {
-                $variant->increment('stock_quantity', $item->quantity);
-                // Zavoláme naši statickou metodu pro přepočet hlavního produktu
-                \App\Models\Shop\ShopProductVariant::forceSyncParentStock($variant->product_id);
-            }
-        } else {
-            // Nemáme variantu - navýšíme přímo hlavní produkt
-            $product = \App\Models\Shop\ShopProduct::find($item->product_id);
-            if ($product) {
-                $product->increment('stock_quantity', $item->quantity);
+     * Restores stock levels for all items in the order.
+     *
+     * @return void
+     */
+    public function restoreStock(): void
+    {
+        foreach ($this->items as $item) {
+            if ($item->product_variant_id) {
+                $variant = \App\Models\Shop\ShopProductVariant::find($item->product_variant_id);
+                if ($variant) {
+                    $variant->increment('stock_quantity', $item->quantity);
+                    \App\Models\Shop\ShopProductVariant::forceSyncParentStock($variant->product_id);
+                }
+            } else {
+                $product = \App\Models\Shop\ShopProduct::find($item->product_id);
+                if ($product) {
+                    $product->increment('stock_quantity', $item->quantity);
+                }
             }
         }
+        
+        Log::info("Stock restored for order: {$this->order_number}");
     }
-    
-    \Log::info("Stock restored for order: {$this->order_number}");
-}
 }

@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopCategory.php
+ * @path app/Models/Shop/ShopCategory.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Model representing product categories in the shop system.
+ */
 
 namespace App\Models\Shop;
 
@@ -7,8 +15,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @description Manages hierarchical product categories and their relationship to products.
+ * 
+ * @property int $id The unique identifier.
+ * @property string $name The display name of the category.
+ * @property string $slug The URL-friendly identifier.
+ * @property bool $is_active Toggle for category visibility.
+ */
 class ShopCategory extends Model
 {
+    /**
+     * @var array<int, string> The attributes that are mass assignable.
+     */
     protected $fillable = [
         'name',
         'slug',
@@ -19,6 +38,9 @@ class ShopCategory extends Model
         'sort_order',
     ];
 
+    /**
+     * @var array<string, string> The attributes that should be cast to native types.
+     */
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
@@ -26,7 +48,9 @@ class ShopCategory extends Model
     ];
 
     /**
-     * Relace na nadřazenou kategorii.
+     * Get the parent category.
+     *
+     * @return BelongsTo
      */
     public function parent(): BelongsTo
     {
@@ -34,7 +58,9 @@ class ShopCategory extends Model
     }
 
     /**
-     * Relace na podkategorie.
+     * Get the subcategories.
+     *
+     * @return HasMany
      */
     public function children(): HasMany
     {
@@ -42,14 +68,15 @@ class ShopCategory extends Model
     }
 
     /**
-     * ✅ OPRAVENO: Relace na produkty v této kategorii přes pivot tabulku (M:N).
-     * Zajišťuje správný počet produktů (products_count) pro hlavní i sekundární kategorie.
+     * Get the products associated with this category.
+     *
+     * @return BelongsToMany
      */
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(
             ShopProduct::class,
-            'shop_product_categories', // tvá pivotní tabulka
+            'shop_product_categories',
             'category_id',
             'product_id'
         )->withPivot(['is_primary', 'sort_order'])->withTimestamps();

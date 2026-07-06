@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file CoreSiteSettingController.php
+ * @path app/Http/Controllers/Api/Core/CoreSiteSettingController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages global site configuration, specifically toggling shop maintenance modes with secure password verification and cache invalidation.
+ */
 
 namespace App\Http\Controllers\Api\Core;
 
@@ -8,12 +16,18 @@ use App\Models\Web\WebLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache; // 🟢 DŮLEŽITÉ: Import pro správu cache
+use Illuminate\Support\Facades\Cache;
 
+/**
+ * @description Controller responsible for shop-wide status settings.
+ * @note Uses Redis/Cache invalidation to ensure that the `CheckCoreShopActive` middleware reacts instantly to configuration changes.
+ */
 class CoreSiteSettingController extends Controller
 {
     /**
-     * Načtení aktuálního nastavení e-shopu.
+     * Retrieves the current shop settings or creates defaults if none exist.
+     *
+     * @return JsonResponse Returns the site configuration object.
      */
     public function show()
     {
@@ -26,39 +40,38 @@ class CoreSiteSettingController extends Controller
     }
 
     /**
-     * Aktualizace stavu e-shopu s ověřením hesla.
+     * Updates shop status with mandatory password confirmation for security.
+     *
+     * @param Request $request The incoming HTTP request containing status and confirmation password.
+     * @return JsonResponse Returns status success and updated settings, or a 403 error on authentication failure.
      */
     public function update(Request $request)
     {
-        // 1. Validace vstupních dat včetně vyžadovaného potvrzovacího hesla
         $validated = $request->validate([
             'is_shop_active'       => 'required|boolean',
             'maintenance_message'  => 'nullable|string|max:500',
             'confirm_password'     => 'required|string',
         ]);
 
-        // 2. Načtení aktuálně přihlášeného uživatele
         $auth = $request->user() ?? auth('sanctum')->user();
 
         if (!$auth) {
-            return response()->json(['message' => 'Uživatel není přihlášen.'], 401);
+            return response()->json(['message' => 'User is not authenticated.'], 401);
         }
 
-        // 3. BEZPEČNOSTNÍ POJISTKA: Ověření zadaného hesla proti hash v DB
+        // Security check: Verify password against database hash
         if (!Hash::check($validated['confirm_password'], $auth->user_password_hash)) {
-            // Zalogujeme neúspěšný pokus
             $this->logAction(
                 $request, 
                 'unauthorized_shop_toggle_attempt', 
                 'Core', 
-                "⚠️ NEÚSPĚŠNÝ pokus o změnu stavu e-shopu uživatelem {$auth->user_email}. Zadáno nesprávné heslo.",
+                "⚠️ UNAUTHORIZED attempt to toggle shop status by {$auth->user_email}. Incorrect password provided.",
                 null
             );
 
-            return response()->json(['message' => 'Zadané potvrzovací heslo je nesprávné.'], 403);
+            return response()->json(['message' => 'Invalid confirmation password.'], 403);
         }
 
-        // 4. Provedení samotné změny nastavení
         $settings = CoreSiteSetting::first() ?? new CoreSiteSetting();
         $settings->is_shop_active = $validated['is_shop_active'];
         if (isset($validated['maintenance_message'])) {
@@ -66,16 +79,15 @@ class CoreSiteSettingController extends Controller
         }
         $settings->save();
 
-        // 🟢 KLÍČOVÝ KROK: Vymazání cache, aby middleware CheckCoreShopActive okamžitě viděl změnu
+        // Invalidate cache to force middleware to re-evaluate the shop state immediately
         Cache::forget('site_setting_active');
 
-        // 5. ZALOGOVÁNÍ ÚSPĚŠNÉ AKCE
-        $statusText = $settings->is_shop_active ? 'ZAPNUT (Provoz)' : 'VYPNUT (Údržba)';
+        $statusText = $settings->is_shop_active ? 'ENABLED (Operational)' : 'DISABLED (Maintenance)';
         $this->logAction(
             $request, 
             'shop_status_changed', 
             'Core', 
-            "Uživatel {$auth->user_email} změnil stav e-shopu na: {$statusText}.",
+            "User {$auth->user_email} changed shop status to: {$statusText}.",
             $settings->id
         );
 
@@ -86,7 +98,14 @@ class CoreSiteSettingController extends Controller
     }
 
     /**
-     * Interní pomocná metoda pro zápis do web_logs.
+     * Logs administrative actions to the central audit system.
+     *
+     * @param Request $request The request context.
+     * @param string $type The action category.
+     * @param string $mod The module identifier.
+     * @param string $desc The audit log description.
+     * @param int|null $id The affected entity ID.
+     * @return void
      */
     protected function logAction(Request $request, string $type, string $mod, string $desc, ?int $id = null)
     {
@@ -101,7 +120,7 @@ class CoreSiteSettingController extends Controller
                 'affected_entity_type' => 'CoreSiteSetting',
                 'affected_entity_id'   => $id,
                 'user_id'              => $user?->id,
-                // Očistíme context_data od hesel
+                // Clean context data: remove sensitive password fields
                 'context_data'         => json_encode($request->except(['confirm_password', 'password']), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
                 'user_plain'           => $user?->user_email ?? 'system'

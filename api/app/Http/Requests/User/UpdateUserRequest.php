@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file UpdateUserRequest.php
+ * @path app/Http/Requests/User/UpdateUserRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for updating existing system users, ensuring integrity of email uniqueness during modification.
+ */
 
 namespace App\Http\Requests\User;
 
@@ -6,10 +14,24 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\Core\CoreRole;
 
+/**
+ * @description Handles request validation for existing user profile updates.
+ * @note Supports partial updates using 'sometimes' rules and ignores current user ID during unique email validation.
+ */
 class UpdateUserRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool { return true; }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         $userId = $this->route('id') ?? $this->route('user');
@@ -32,12 +54,16 @@ class UpdateUserRequest extends FormRequest
             'commission_rate'     => ['nullable', 'numeric', 'min:0', 'max:100'],
             'has_tax_declaration' => ['boolean'],
             'internal_note'       => ['nullable', 'string'],
-            
             'health_insurance'    => ['nullable', 'string', 'max:10'],
             'dpp_hours_spent'     => ['nullable', 'integer', 'min:0'],
         ];
     }
 
+    /**
+     * Get custom error messages for validation rules.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file ShopSupplierController.php
+ * @path app/Http/Controllers/Api/Shop/ShopSupplierController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Controller managing supplier lifecycle, including search, filtering, CRUD operations, and administrative audit logging.
+ */
 
 namespace App\Http\Controllers\Api\Shop;
 
@@ -12,10 +20,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * @description Handles supplier management.
+ * @note Provides flexible search/filter capabilities and supports soft-delete lifecycle.
+ */
 class ShopSupplierController extends Controller
 {
     /**
-     * Seznam dodavatelů.
+     * Retrieves a paginated or full collection of suppliers based on filter criteria.
+     *
+     * @param Request $request Filtering, sorting, and pagination parameters.
+     * @return JsonResponse Paginated response or collection of suppliers.
      */
     public function index(Request $request): JsonResponse
     {
@@ -25,7 +40,7 @@ class ShopSupplierController extends Controller
         $query = ShopSupplier::query();
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Fulltextové vyhledávání (Search)
+        // Fulltext search
         if ($s = $request->input('search')) {
             $query->where(fn($q) => $q->where('name', 'like', "%$s%")
                 ->orWhere('ico', 'like', "%$s%")
@@ -34,14 +49,14 @@ class ShopSupplierController extends Controller
                 ->orWhere('city', 'like', "%$s%"));
         }
 
-        // Filtry na přesnou shodu
+        // Exact match filters
         foreach (['id', 'is_active'] as $f) {
             if ($request->filled($f)) {
                 $query->where($f, $request->input($f));
             }
         }
 
-        // Filtry na LIKE vyhledávání
+        // Partial match (LIKE) filters
         $likeFields = ['name', 'ico', 'email', 'phone', 'contact_person', 'city', 'country', 'payment_terms'];
         foreach ($likeFields as $f) {
             if ($request->filled($f)) {
@@ -53,7 +68,7 @@ class ShopSupplierController extends Controller
             $query->whereDate('created_at', $request->created_at);
         }
 
-        // Řazení
+        // Ordering
         $sortBy = $request->input('sort_by', 'id');
         $sortDirection = $request->input('sort_direction', 'desc');
         $query->orderBy($sortBy, $sortDirection);
@@ -75,7 +90,11 @@ class ShopSupplierController extends Controller
     }
 
     /**
-     * Uložení nového dodavatele.
+     * Stores a new supplier entity.
+     *
+     * @param StoreShopSupplierRequest $request Validated request data.
+     * @return JsonResponse Created supplier resource.
+     * @throws \Exception On failure.
      */
     public function store(StoreShopSupplierRequest $request): JsonResponse
     {
@@ -93,7 +112,10 @@ class ShopSupplierController extends Controller
     }
 
     /**
-     * Detail dodavatele.
+     * Displays a specific supplier by ID.
+     *
+     * @param int $id
+     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
@@ -102,7 +124,11 @@ class ShopSupplierController extends Controller
     }
 
     /**
-     * Aktualizace dodavatele.
+     * Updates an existing supplier.
+     *
+     * @param UpdateShopSupplierRequest $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function update(UpdateShopSupplierRequest $request, $id): JsonResponse
     {
@@ -120,7 +146,11 @@ class ShopSupplierController extends Controller
     }
 
     /**
-     * Smazání (Soft / Hard).
+     * Deletes a supplier (Soft or Hard).
+     *
+     * @param Request $request Request flags (force_delete).
+     * @param int $id
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -140,7 +170,11 @@ class ShopSupplierController extends Controller
     }
 
     /**
-     * Obnova z koše.
+     * Restores a soft-deleted supplier.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -158,7 +192,10 @@ class ShopSupplierController extends Controller
     }
 
     /**
-     * Vyprázdnění koše.
+     * Permanently deletes all soft-deleted suppliers.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -176,7 +213,14 @@ class ShopSupplierController extends Controller
     }
 
     /**
-     * Sjednocené logování do tabulky shop_logs.
+     * Logs administrative actions to the audit database.
+     *
+     * @param Request $request
+     * @param string $eventType
+     * @param string $module
+     * @param string $description
+     * @param int|null $affectedId
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
     {

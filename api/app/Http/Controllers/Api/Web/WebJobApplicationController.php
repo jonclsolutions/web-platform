@@ -1,4 +1,12 @@
 <?php
+/**
+ * @file WebJobApplicationController.php
+ * @path app/Http/Controllers/Api/Web/WebJobApplicationController.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the lifecycle of job applications, including document handling (CVs), status updates, and soft-delete administrative workflows.
+ */
 
 namespace App\Http\Controllers\Api\Web;
 
@@ -13,10 +21,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @description Controller responsible for processing incoming job applications and managing applicant records.
+ * @note Implements file storage logic for CV uploads and integrates with the central logging system.
+ */
 class WebJobApplicationController extends Controller
 {
     /**
-     * Seznam uchazečů se stránkováním.
+     * Retrieves a paginated list of job applications with optional search and filtering.
+     *
+     * @param Request $request Incoming request containing filters and pagination settings.
+     * @return JsonResponse|mixed Returns paginated data or a collection if no_pagination is set.
      */
     public function index(Request $request)
     {
@@ -26,7 +41,6 @@ class WebJobApplicationController extends Controller
         $query = WebJobApplication::query();
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Fulltextové vyhledávání
         if ($s = $request->input('search')) {
             $query->where(fn($q) => $q->where('first_name', 'like', "%$s%")
                 ->orWhere('last_name', 'like', "%$s%")
@@ -34,7 +48,6 @@ class WebJobApplicationController extends Controller
                 ->orWhere('position_name', 'like', "%$s%"));
         }
 
-        // Filtry na shodu
         foreach (['first_name', 'last_name', 'email', 'position_name', 'state'] as $f) {
             if ($request->filled($f)) {
                 $query->where($f, 'like', '%' . $request->input($f) . '%');
@@ -66,7 +79,11 @@ class WebJobApplicationController extends Controller
     }
 
     /**
-     * Uložení nové reakce.
+     * Persists a new job application and handles CV file storage.
+     *
+     * @param StoreWebJobApplicationRequest $request Validated applicant data.
+     * @return JsonResponse Returns the created resource.
+     * @throws \Exception On file system or database failure.
      */
     public function store(StoreWebJobApplicationRequest $request): JsonResponse
     {
@@ -90,33 +107,34 @@ class WebJobApplicationController extends Controller
     }
 
     /**
-     * Detail uchazeče (včetně smazaných v koši).
+     * Retrieves the details of a single job application by ID, including soft-deleted ones.
+     *
+     * @param int $id Application identifier.
+     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        // 🔧 Ruční vyhledání podle ID (funguje i pro smazané položky v koši)
         $jobApplication = WebJobApplication::withTrashed()->findOrFail($id);
         
         return response()->json(new WebJobApplicationResource($jobApplication));
     }
 
     /**
-     * Aktualizace uchazeče.
-     */
-    /**
-     * Aktualizace uchazeče (ruční načtení podle ID).
+     * Updates an existing application and replaces the CV file if a new one is provided.
+     *
+     * @param UpdateWebJobApplicationRequest $request Validated update data.
+     * @param int $id Application identifier.
+     * @return JsonResponse Returns the updated resource.
+     * @throws \Exception On update failure.
      */
     public function update(UpdateWebJobApplicationRequest $request, $id): JsonResponse
     {
         try {
-            // 🔧 Ruční načtení modelu (včetně smazaných, pokud bys je chtěl editovat v koši)
             $jobApplication = \App\Models\Web\WebJobApplication::withTrashed()->findOrFail($id);
 
             $validated = $request->validated();
 
-            // Zpracování souboru CV
             if ($request->hasFile('cv_file')) {
-                // Smazání starého souboru, pokud existuje
                 if ($jobApplication->cv_path) {
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($jobApplication->cv_path);
                 }
@@ -148,7 +166,11 @@ class WebJobApplicationController extends Controller
     }
 
     /**
-     * Smazání (Soft / Hard).
+     * Deletes an application, optionally performing a hard delete to remove associated files.
+     *
+     * @param Request $request Flags for force deletion.
+     * @param int $id Application identifier.
+     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -175,7 +197,11 @@ class WebJobApplicationController extends Controller
     }
 
     /**
-     * Obnova z koše.
+     * Restores a soft-deleted application.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -193,7 +219,10 @@ class WebJobApplicationController extends Controller
     }
 
     /**
-     * Vyprázdnění koše.
+     * Permanently deletes all trashed applications and their associated files.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -218,7 +247,14 @@ class WebJobApplicationController extends Controller
     }
 
     /**
-     * Logování akcí.
+     * Logs administrative or public actions to the audit log table.
+     *
+     * @param Request $request Request context.
+     * @param string $eventType Operation type (create, update, delete, etc.).
+     * @param string $module Module context.
+     * @param string $description Detailed audit message.
+     * @param int|null $affectedId Entity identifier.
+     * @return void
      */
     protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
     {
@@ -234,7 +270,7 @@ class WebJobApplicationController extends Controller
                 'user_id'              => $user?->id,
                 'context_data'         => json_encode($request->except(['cv_file']), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'     => $user?->user_email ?? 'Veřejný web (Uchazeč)'
+                'user_plain'           => $user?->user_email ?? 'Veřejný web (Uchazeč)'
             ]);
         } catch (\Exception $e) {
             Log::error("Log error (WebJobApplication): " . $e->getMessage());

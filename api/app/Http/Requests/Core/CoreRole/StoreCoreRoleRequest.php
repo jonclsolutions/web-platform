@@ -1,17 +1,38 @@
 <?php
+/**
+ * @file StoreCoreRoleRequest.php
+ * @path app/Http/Requests/Core/CoreRole/StoreCoreRoleRequest.php
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Validation logic for creating a new system role.
+ */
 
 namespace App\Http\Requests\Core\CoreRole;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @description Handles validation for role creation requests.
+ * @note Ensures that role names are unique within the system.
+ */
 class StoreCoreRoleRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
     public function authorize(): bool
     {
-        // Předpokládáme, že autorizaci řeší middleware v api.php
         return true;
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -20,6 +41,11 @@ class StoreCoreRoleRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

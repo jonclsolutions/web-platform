@@ -1,3 +1,16 @@
+/**
+ * @file public-footer.component.ts
+ * @path src/app/shared/components/public-footer/public-footer.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the public-facing footer component, handling internationalized navigation, legal links, and dynamic site settings (copyright, taglines, social links).
+ * @dependencies
+ * - LocalizationService: Manages multi-language support and translation keys.
+ * - PublicDataService: Fetches global configuration and assets from the backend.
+ * - RxJS: Handles asynchronous data streams and subscription lifecycle.
+ */
+
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LocalizationService } from '../../../../shared/services/localization.service';
@@ -11,6 +24,11 @@ interface FooterNavLink {
   external: boolean;
 }
 
+/**
+ * @description Presentational component for the site's primary footer.
+ * @usage Renders consistent site-wide navigation, legal documents, and dynamic branding.
+ * @note Implements OnPush change detection and reactive streams to handle language switching and configuration updates seamlessly.
+ */
 @Component({
   selector: 'app-public-footer',
   standalone: true,
@@ -38,8 +56,11 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     this.currentYear = new Date().getFullYear();
   }
 
+  /**
+   * @description Initializes component state by subscribing to localization changes and fetching site configuration.
+   */
   ngOnInit(): void {
-    // 1. Překlady (reaguje na změnu jazyka díky BehaviorSubject ve službě)
+    // 1. Translations stream: Triggers UI updates when the selected language changes
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(translations => {
@@ -51,7 +72,7 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
         }
       });
 
-    // 2. Data ze serveru (reaguje na změnu jazyka)
+    // 2. Settings stream: Fetches fresh configuration whenever the application language changes
     this.localizationService.currentLanguage$
       .pipe(
         takeUntil(this.destroy$),
@@ -64,11 +85,19 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * @description Resolves absolute storage paths from relative database paths.
+   * @param path The relative asset path.
+   * @returns The fully qualified URI to the asset.
+   */
   getIconUrl(path: string): string {
     return this.publicDataService.getStorageUrl(path);
   }
 
-  // Getter využívá getCurrentLanguage() ze služby
+  /**
+   * @description Computes the copyright text with dynamic year injection.
+   * @note Prioritizes localized database strings (i18n), falling back to global settings, then translation files, and finally a hardcoded default.
+   */
   get copyrightText(): string {
     const lang = this.localizationService.getCurrentLanguage();
     const i18n = this.settings?.copyright_text_i18n;
@@ -80,7 +109,10 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     return text.replace('{year}', this.currentYear.toString());
   }
 
-  // Getter využívá getCurrentLanguage() ze služby
+  /**
+   * @description Computes the brand tagline for the footer display.
+   * @note Prioritizes localized database strings (i18n), with fallbacks to settings and translation files.
+   */
   get brandTagline(): string {
     const lang = this.localizationService.getCurrentLanguage();
     const i18n = this.settings?.brand_tagline_i18n;
@@ -90,6 +122,9 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
       : (this.settings?.brand_tagline || this.t?.brand_tagline || 'We build digital products you\'ll be proud of.');
   }
 
+  /**
+   * @description Maps navigation keys to their localized labels for the footer menu.
+   */
   private loadFooterNavLinks(): void {
     const navLinkKeys = [
       { route: '/home', key: 'navigation.home', ext: false },
@@ -110,6 +145,9 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     }));
   }
 
+  /**
+   * @description Maps legal navigation keys to localized labels.
+   */
   private loadFooterLegalLinks(): void {
     const legalLinkKeys = [
       { route: '/privacy-policy', key: 'legal.privacy_policy' },
@@ -123,6 +161,9 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
     }));
   }
 
+  /**
+   * @description Unsubscribes from all reactive streams to prevent memory leaks on component destruction.
+   */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();

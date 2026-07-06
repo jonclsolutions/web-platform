@@ -1,3 +1,15 @@
+/**
+ * @file jobs-list.component.ts
+ * @path src/app/pages/jobs/jobs-list/jobs-list.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Presentational component for the careers page, listing available job openings based on dynamic content data.
+ * @dependencies
+ * - PublicDataService: Fetches global settings and storage paths.
+ * - LocalizationService: Supplies localized job metadata.
+ */
+
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -5,6 +17,11 @@ import * as Web from '../../../../shared/imports/web-providers';
 import { JobItem } from '../../components/interfaces/job-item';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 
+/**
+ * @description Component displaying a list of current career opportunities.
+ * @usage Renders a list of jobs based on translated keys and metadata.
+ * @note Implements automated translation parsing to build the job list dynamically.
+ */
 @Component({
   selector: 'app-jobs-list',
   standalone: true,
@@ -27,6 +44,9 @@ export class JobsListComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  /**
+   * @description Initializes subscriptions for localization and site settings.
+   */
   ngOnInit(): void {
     this.localizationService.currentTranslations$
       .pipe(Web.takeUntil(this.destroy$))
@@ -47,10 +67,17 @@ export class JobsListComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * @description Resolves storage asset URLs.
+   * @param path The relative path to the asset.
+   */
   getIconUrl(path: string): string {
     return this.publicDataService.getStorageUrl(path);
   }
 
+  /**
+   * @description Iterates through translation keys to build the current list of job openings.
+   */
   private loadJobs(): void {
     const jobs: JobItem[] = [];
     for (let i = 1; i <= 10; i++) {
@@ -64,6 +91,9 @@ export class JobsListComponent implements OnInit, OnDestroy {
     this.availableJobs = jobs;
   }
 
+  /**
+   * @description Cleans up RxJS subscriptions on destruction.
+   */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();

@@ -1,3 +1,16 @@
+/**
+ * @file shipping-methods.component.ts
+ * @path src/app/admin/pages/shop/shipping-methods/shipping-methods.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the lifecycle of shipping methods, including configuration, filtering, and soft-delete/restore operations.
+ * @dependencies
+ * - BaseDataComponent: Provides foundational CRUD operations and state management.
+ * - TableBuilderComponent: Used for rendering the shipping method registry.
+ * - SHARED_UI_BUILDERS: Provides UI building blocks for forms and toolbars.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -5,6 +18,11 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './shipping-methods.config';
 
+/**
+ * @description Component responsible for the CRUD operations of store shipping methods.
+ * @usage Enables administrators to create, update, and manage the visibility of shipping options, including archival via trash functionality.
+ * @note Leverages BaseDataComponent for standardized data handling and integrates specific logic for toggling between active and archived views.
+ */
 @Component({
   selector: 'app-shipping-methods',
   standalone: true,
@@ -42,6 +60,10 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Constructs the toolbar configuration.
+   * @returns List of toolbar buttons adjusted for permissions and current UI context (archive/active state).
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.SHIPPING_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -55,9 +77,11 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
+          // Hide context-dependent actions when viewing the trash table
           if (updatedBtn.showIf !== false) updatedBtn.showIf = !this.showTrashTable;
           break;
         case 'toggleTable':
+          // Toggle label based on current data view
           updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Koš';
           break;
       }
@@ -65,6 +89,10 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
     });
   }
 
+  /**
+   * @description Maps toolbar action strings to their respective handler methods.
+   * @param action Identifier for the action to execute.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -82,12 +110,19 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
+  /**
+   * @description Merges new filter criteria and triggers a data refresh from page one.
+   * @param newFilters The incoming filter parameters.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Resets filter set to default sort criteria.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'sort_order', sort_direction: 'asc' };
     this.currentPage = 1;
@@ -111,6 +146,10 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Handles form submission by either updating an existing record or creating a new one.
+   * @param formData Data captured from the form component.
+   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); })).subscribe({
@@ -119,6 +158,10 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
     });
   }
 
+  /**
+   * @description Fetches and opens detail view for a specific shipping method.
+   * @param item Target record to view.
+   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({

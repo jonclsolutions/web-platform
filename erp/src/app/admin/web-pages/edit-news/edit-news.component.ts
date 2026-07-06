@@ -1,3 +1,17 @@
+/**
+ * @file edit-news.component.ts
+ * @path src/app/admin/pages/web/news/edit-news.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages the lifecycle and administration of website news articles (for intern uses), including CRUD operations and archival functionality.
+ * @dependencies
+ * - BaseDataComponent: Provides the base logic for API interactions, pagination, and state management.
+ * - TableBuilderComponent: Used for rendering the news listing and supporting export features.
+ * - LoadingService: Manages global UI loading states.
+ * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
+ */
+
 import { Component, ViewChild, ChangeDetectionStrategy, inject } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -6,6 +20,11 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import { LoadingService } from '../../../core/services/loading.service';
 import * as Config from './edit-news.config';
 
+/**
+ * @description Component for the management of news content on the web platform.
+ * @usage Enables administrators to create, edit, filter, and archive news articles.
+ * @note Leverages BaseDataComponent for standardized data handling and integrates specific logic for toggling between active and trash views.
+ */
 @Component({
   selector: 'app-news',
   standalone: true,
@@ -30,6 +49,9 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
 
+  /**
+   * @description Default filter settings ensuring the most recent articles appear at the top.
+   */
   filters: Core.FilterParams = {
     sort_by: 'id',
     sort_direction: 'desc'
@@ -44,6 +66,10 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
     super(dataHandler, cd, genericTableService);
   }
 
+  /**
+   * @description Constructs the toolbar configuration.
+   * @returns List of toolbar buttons adjusted for permissions and current UI context (archive/active state).
+   */
   get toolbarButtons(): Core.Button[] {
     return Config.NEWS_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -59,11 +85,13 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
+          // Hide context-dependent actions when viewing the trash table
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
           break;
         case 'toggleTable':
+          // Toggle label based on current data view
           updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Smazané';
           break;
       }
@@ -72,6 +100,10 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
+  /**
+   * @description Maps toolbar action strings to their respective handler methods.
+   * @param action Identifier for the action to execute.
+   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -83,20 +115,27 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
   }
 
   override ngOnInit(): void {
-  super.ngOnInit();
-  this.initWithAuthCheck(this.router);
-}
+    super.ngOnInit();
+    this.initWithAuthCheck(this.router);
+  }
 
   override refreshData(): void {
     this.forceFullRefresh(this.filters);
   }
 
+  /**
+   * @description Merges new filter criteria and triggers a data refresh from page one.
+   * @param newFilters The incoming filter parameters.
+   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
+  /**
+   * @description Resets filter set to default sort criteria.
+   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.refreshData();
@@ -124,6 +163,10 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
     this.showCreateForm = true;
   }
 
+  /**
+   * @description Handles form submission by either updating an existing record or creating a new one.
+   * @param formData Data captured from the form component.
+   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id
       ? this.updateData(formData.id, formData)
@@ -139,6 +182,10 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
+  /**
+   * @description Fetches and opens detail view for a specific news item.
+   * @param item Target record to view.
+   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({

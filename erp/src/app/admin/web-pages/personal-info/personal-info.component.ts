@@ -1,3 +1,16 @@
+/**
+ * @file personal-info.component.ts
+ * @path src/app/admin/pages/personal-info/personal-info.component.ts
+ * @project RegioPartner Web
+ * @author RPSW
+ * @created 2026
+ * @description Manages user profile information and security settings, specifically handling password updates.
+ * @dependencies
+ * - BaseDataComponent: Provides base CRUD logic for user data retrieval.
+ * - ReactiveFormsModule: Enables form group management and validation for password change inputs.
+ * - AuthService: Used to identify the currently authenticated user for profile requests.
+ */
+
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -9,6 +22,11 @@ import { AlertDialogService } from '../../../core/services/alert-dialog.service'
 import { UserLogin } from '../../../shared/interfaces/user';
 import { GenericTableService } from '../../../core/services/generic-table.service'; 
 
+/**
+ * @description Component for managing authenticated user profile and security credentials.
+ * @usage Provides a UI to view personal user details and a form to securely update the account password.
+ * @note Uses custom cross-field validation to ensure password confirmation matches the new password.
+ */
 @Component({
   selector: 'app-personal-info',
   standalone: true,
@@ -40,11 +58,15 @@ export class PersonalInfoComponent extends BaseDataComponent<UserLogin> implemen
       validator: this.passwordsMatchValidator
     });
   }
+
   override ngOnInit(): void {
     super.ngOnInit(); 
     this.loadCurrentUserData();
   }
 
+  /**
+   * @description Retrieves the current user's details from the server using the active session ID.
+   */
   private loadCurrentUserData(): void {
     const userId = this.authService.getUserId();
     if (userId) {
@@ -62,6 +84,11 @@ export class PersonalInfoComponent extends BaseDataComponent<UserLogin> implemen
     }
   }
 
+  /**
+   * @description Validator that compares the new password and confirmation fields.
+   * @param group The FormGroup containing the password fields.
+   * @returns Null if passwords match, or a validation error object.
+   */
   private passwordsMatchValidator(group: FormGroup): { [key: string]: any } | null {
     const newPassword = group.get('new_password');
     const newPasswordConfirmation = group.get('new_password_confirmation');
@@ -76,6 +103,9 @@ export class PersonalInfoComponent extends BaseDataComponent<UserLogin> implemen
     }
   }
 
+  /**
+   * @description Submits the password change request to the server if form validation passes.
+   */
   onSubmit(): void {
     if (this.passwordForm.invalid) return;
 
