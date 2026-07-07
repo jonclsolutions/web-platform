@@ -2,7 +2,7 @@
 /**
  * @file UpdateShopOrderRequest.php
  * @path app/Http/Requests/Shop/ShopOrder/UpdateShopOrderRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing shop orders, including customer contact details, shipping info, and order line items.

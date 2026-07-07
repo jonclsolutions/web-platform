@@ -2,7 +2,7 @@
 /**
  * @file UpdateShopProductRequest.php
  * @path app/Http/Requests/Shop/ShopProduct/UpdateShopProductRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing shop products, handling dynamic associations and variant management.

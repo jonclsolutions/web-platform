@@ -2,7 +2,7 @@
 /**
  * @file ShopOrderResource.php
  * @path app/Http/Resources/Shop/ShopOrderResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for complete sales orders.

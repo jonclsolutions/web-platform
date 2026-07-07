@@ -1,9 +1,9 @@
 /**
  * @file user-request.component.ts
- * @path src/app/admin/pages/web/user-request/user-request.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/user-request/user-request.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Administrative component for managing user-submitted requests (raw commissions), handling data lifecycle, filtering, and detail views.
  * @dependencies
  * - BaseDataComponent: Core logic for API interaction and state management.

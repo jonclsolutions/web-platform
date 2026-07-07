@@ -2,9 +2,9 @@
 /**
  * @file WebSupportTicketResource.php
  * @path app/Http/Resources/Web/WebSupportTicketResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Resource transformation for support tickets.
  */
 

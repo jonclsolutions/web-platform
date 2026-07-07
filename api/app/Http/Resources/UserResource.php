@@ -2,9 +2,9 @@
 /**
  * @file UserResource.php
  * @path app/Http/Resources/UserResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Resource transformation for system users and administrative access.
  */
 

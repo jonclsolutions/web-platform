@@ -2,7 +2,7 @@
 /**
  * @file WebSupportTicketController.php
  * @path app/Http/Controllers/Api/Web/WebSupportTicketController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the support ticket lifecycle, including creation, status tracking, file attachment management, and audit logging.

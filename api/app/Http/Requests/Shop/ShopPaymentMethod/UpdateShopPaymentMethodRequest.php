@@ -2,7 +2,7 @@
 /**
  * @file UpdateShopPaymentMethodRequest.php
  * @path app/Http/Requests/Shop/ShopPaymentMethod/UpdateShopPaymentMethodRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing shop payment methods, including bank details and gateway configurations.

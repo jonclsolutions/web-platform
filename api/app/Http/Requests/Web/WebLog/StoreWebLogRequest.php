@@ -2,9 +2,9 @@
 /**
  * @file StoreWebLogRequest.php
  * @path app/Http/Requests/Web/WebLog/StoreWebLogRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Validation logic for recording system logs from web events.
  */
 

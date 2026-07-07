@@ -1,7 +1,14 @@
+<!-- 
+    @file: services.component.html
+    @path: /src/app/public/web-pages/services/services.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025 
+-->
+
 @if (s) {
 <div class="svc-page">
 
-  <!-- ══ HERO ══════════════════════════════════════════════════════ -->
   <section class="svc-hero">
     <div class="svc-hero-eyebrow">{{ s?.small_header }}</div>
     <h1 class="svc-hero-title">{{ s?.header_1_text }}</h1>
@@ -21,7 +28,6 @@
     </div>
   </section>
 
-  <!-- ══ HLAVNÍ CONTENT ════════════════════════════════════════════ -->
   <section class="svc-content-section">
     <div class="svc-content-inner">
 
@@ -98,14 +104,12 @@
     </div>
   </section>
 
-  <!-- ══ WORKFLOW ══════════════════════════════════════════════════ -->
   <section class="svc-workflow-section">
     <div class="svc-section-header">
       <div class="section-eyebrow">{{ s?.workflow_header }}</div>
       <h2 class="section-title">{{ s?.colab?.colab_procces_header }}</h2>
     </div>
 
-    <!-- ▸ DESKTOP verze (4 sloupce, horizontální linka) -->
     <div class="wf-desktop" aria-hidden="false">
       <div class="wf-desktop-connector">
         @for (step of workflowSteps; track step; let i = $index; let last = $last) {
@@ -125,11 +129,9 @@
       </div>
     </div>
 
-    <!-- ▸ MOBIL verze (vertikální karta s čísly vlevo) -->
     <div class="wf-mobile" aria-hidden="false">
       @for (step of workflowSteps; track step; let i = $index; let last = $last) {
         <div class="wfm-step">
-          <!-- Levý rail: číslo + tečka + linka dolů -->
           <div class="wfm-rail">
             <div class="wfm-num">{{ workflowNumbers[i] }}</div>
             <div class="wfm-dot"></div>
@@ -137,7 +139,6 @@
               <div class="wfm-line"></div>
             }
           </div>
-          <!-- Pravý obsah -->
           <div class="wfm-content" [class.wfm-content-sidebar_label_4-last]="last">
             <h3 class="wfm-title">{{ step?.header }}</h3>
             <p  class="wfm-text">{{ step?.text }}</p>
@@ -147,7 +148,6 @@
     </div>
   </section>
 
-  <!-- ══ CENÍK ══════════════════════════════════════════════════════ -->
   <section class="svc-prices-section">
     <div class="svc-section-header">
       <div class="section-eyebrow">{{ s?.prices_header }}</div>
@@ -174,7 +174,6 @@
     </div>
   </section>
 
-  <!-- ══ CTA ════════════════════════════════════════════════════════ -->
   <section class="svc-cta-section">
     <div class="cta-row">
       <div class="cta-block">

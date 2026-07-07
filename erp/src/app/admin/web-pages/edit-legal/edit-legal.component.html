@@ -1,6 +1,13 @@
+<!-- 
+    @file: edit-legal.component.html
+    @path: /src/app/admin/web-pages/edit-legal/edit-legal.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="legal-container">
 
-  <!-- ===== HEADER ===== -->
   <div class="legal-header">
     <div class="legal-header-left">
       <h1 class="legal-title">Právní dokumenty</h1>
@@ -13,7 +20,6 @@
     }
   </div>
 
-  <!-- ===== ZÁLOŽKY DOKUMENTŮ ===== -->
   <div class="legal-tabs">
     <button
       class="legal-tab"
@@ -29,7 +35,6 @@
     </button>
   </div>
 
-  <!-- ===== JAZYKOVÉ ZÁLOŽKY ===== -->
   @if (languages.length > 0) {
     <div class="lang-tabs">
       @for (lang of languages; track lang.code) {
@@ -50,7 +55,6 @@
     </div>
   }
 
-  <!-- ===== UPOZORNĚNÍ NA SEKCE CHYBĚJÍCÍ V AKTUÁLNÍM JAZYCE ===== -->
   @if (missingPositionsForCurrentLang.length > 0) {
     <div class="missing-banner">
       <div class="missing-banner-icon">⚠️</div>
@@ -72,7 +76,6 @@
     </div>
   }
 
-  <!-- ===== SEZNAM SEKCÍ ===== -->
   <div class="legal-sections">
 
     @if (data.length === 0) {
@@ -86,7 +89,6 @@
     @for (item of data; track trackById($index, item); let i = $index) {
       <div class="legal-section-card" [class.is-editing]="isEditing(item.id)">
 
-        <!-- ---- Zobrazovací mód ---- -->
         @if (!isEditing(item.id)) {
           <div class="section-view">
             <div class="section-view-header">
@@ -112,7 +114,6 @@
           </div>
         }
 
-        <!-- ---- Inline edit mód ---- -->
         @if (isEditing(item.id)) {
           <div class="section-edit">
             <div class="section-edit-header">
@@ -157,7 +158,6 @@
       </div>
     }
 
-    <!-- ===== FORMULÁŘ PRO PŘIDÁNÍ NOVÉ SEKCE ===== -->
     @if (showAddForm) {
       <div class="legal-add-card" id="add-form-anchor">
         <div class="section-edit-header">
@@ -206,7 +206,6 @@
 
   </div>
 
-  <!-- ===== TLAČÍTKO PŘIDAT ===== -->
   @if (!showAddForm) {
     <div class="legal-add-row">
       <button class="add-section-btn" (click)="openAddForm()">

@@ -1,7 +1,7 @@
 /**
  * @file pagination-buttons-builder.component.ts
- * @path src/app/shop/components/builders/pagination-buttons-builder/pagination-buttons-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/components/builders/pagination-buttons-builder/pagination-buttons-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Provides a reusable pagination UI component that calculates visible page ranges and emits navigation events.

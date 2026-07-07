@@ -2,7 +2,7 @@
 /**
  * @file ShopPaymentMethod.php
  * @path app/Models/Shop/ShopPaymentMethod.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model representing available payment options for the shop.

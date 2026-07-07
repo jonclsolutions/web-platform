@@ -2,9 +2,9 @@
 /**
  * @file CorePermission.php
  * @path app/Models/Core/CorePermission.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Model representing system-wide permissions.
  */
 

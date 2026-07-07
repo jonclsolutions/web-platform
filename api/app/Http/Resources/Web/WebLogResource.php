@@ -2,9 +2,9 @@
 /**
  * @file WebLogResource.php
  * @path app/Http/Resources/Web/WebLogResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Resource transformation for system audit logs within the web module.
  */
 

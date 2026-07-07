@@ -2,7 +2,7 @@
 /**
  * @file CoreSiteSetting.php
  * @path app/Models/Core/CoreSiteSetting.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model for global site configuration settings.

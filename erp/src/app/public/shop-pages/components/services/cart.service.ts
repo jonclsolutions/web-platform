@@ -1,7 +1,7 @@
 /**
  * @file cart.service.ts
- * @path src/app/shop/components/services/cart.service.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/components/services/cart.service.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the e-shop shopping cart state, including item persistence, quantity management, stock reservation timers, and order creation workflows.

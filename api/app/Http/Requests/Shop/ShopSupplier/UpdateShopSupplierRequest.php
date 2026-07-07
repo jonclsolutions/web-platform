@@ -2,7 +2,7 @@
 /**
  * @file UpdateShopSupplierRequest.php
  * @path app/Http/Requests/Shop/ShopSupplier/UpdateShopSupplierRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing shop suppliers.

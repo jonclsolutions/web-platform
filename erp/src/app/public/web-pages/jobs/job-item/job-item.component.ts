@@ -1,9 +1,9 @@
 /**
  * @file job-item.component.ts
  * @path src/app/pages/jobs/job-item/job-item.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Handles the specific job application page, managing the application form, file attachments, and data submission.
  * @dependencies
  * - BaseDataComponent: Extends core functionality for handling API communication and state.

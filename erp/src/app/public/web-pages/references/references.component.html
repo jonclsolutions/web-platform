@@ -1,13 +1,19 @@
+<!-- 
+    @file: references.component.html
+    @path: /src/app/public/web-pages/references/references.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+-->
+
 @if (r) {
 <div class="ref-page">
 
-  <!-- ══ HERO ══════════════════════════════════════════════════════ -->
   <section class="ref-hero">
     <div class="ref-hero-eyebrow">{{ r?.hero_eyebrow }}</div>
     <h1 class="ref-hero-title">{{ r?.header_1 }}</h1>
     <p class="ref-hero-sub">{{ r?.hero_sub }}</p>
 
-    <!-- Souhrnné statistiky -->
     <div class="ref-hero-stats">
       <div class="ref-hero-stat">
         <span class="ref-hero-stat-num">{{ r?.stat_1_num }}</span>
@@ -26,20 +32,16 @@
     </div>
   </section>
 
-  <!-- ══ HLAVNÍ LAYOUT ══════════════════════════════════════════════ -->
   <div class="ref-layout">
 
-    <!-- Levý sidebar — filtry + info -->
     <aside class="ref-sidebar">
 
-      <!-- Info karta -->
       <div class="sidebar-card">
         <div class="sidebar-card-eyebrow">{{ r?.sidebar_about_eyebrow }}</div>
         <h3 class="sidebar-card-title">{{ r?.sidebar_about_title }}</h3>
         <p class="sidebar-card-text">{{ r?.sidebar_about_text }}</p>
       </div>
 
-      <!-- Legenda typů -->
       <div class="sidebar-card">
         <div class="sidebar-card-eyebrow">{{ r?.sidebar_legend_eyebrow }}</div>
         <div class="legend-list">
@@ -62,7 +64,6 @@
         </div>
       </div>
 
-      <!-- Celý seznam odkaz -->
       <div class="sidebar-archive-card">
         <p class="sidebar-archive-text">{{ r?.sidebar_archive_text }}</p>
         <a
@@ -76,17 +77,14 @@
 
     </aside>
 
-    <!-- Pravá část — tabulka + accordiony -->
     <main class="ref-main">
 
-      <!-- Hlavička tabulky -->
       <div class="ref-table-header">
         <span class="ref-col-title">{{ r?.table_header_title }}</span>
         <span class="ref-col-duration">{{ r?.table_header_duration }}</span>
         <span class="ref-col-client">{{ r?.table_header_client }}</span>
       </div>
 
-      <!-- Položky projektů -->
       <div class="ref-list" role="list">
         @for (project of projects; track project; let i = $index) {
           <div
@@ -122,7 +120,6 @@
         }
       </div>
 
-      <!-- Odkaz na celý archiv pod seznamem -->
       <div class="ref-more-row">
         <p class="ref-more-text">{{ r?.more_button_prompt }}</p>
         <a
@@ -137,7 +134,6 @@
     </main>
   </div>
 
-  <!-- ══ CTA SEKCE ══════════════════════════════════════════════════ -->
   <section class="ref-cta-section">
     <div class="cta-row">
       <div class="cta-block">

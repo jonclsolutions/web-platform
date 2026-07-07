@@ -1,7 +1,7 @@
 /**
  * @file dashboard.component.ts
- * @path src/app/admin/pages/dashboard/dashboard.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/dashboard/dashboard.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Central administrative dashboard component providing a high-level overview of system metrics, recent activities, and navigation shortcuts.

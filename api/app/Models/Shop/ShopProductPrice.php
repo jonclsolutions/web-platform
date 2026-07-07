@@ -2,7 +2,7 @@
 /**
  * @file ShopProductPrice.php
  * @path app/Models/Shop/ShopProductPrice.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model for managing granular pricing data for products and variants.

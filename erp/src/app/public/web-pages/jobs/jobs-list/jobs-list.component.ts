@@ -1,9 +1,9 @@
 /**
  * @file jobs-list.component.ts
- * @path src/app/pages/jobs/jobs-list/jobs-list.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/jobs/jobs-list/jobs-list.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Presentational component for the careers page, listing available job openings based on dynamic content data.
  * @dependencies
  * - PublicDataService: Fetches global settings and storage paths.

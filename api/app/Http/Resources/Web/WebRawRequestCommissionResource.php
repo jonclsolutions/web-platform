@@ -2,9 +2,9 @@
 /**
  * @file WebRawRequestCommissionResource.php
  * @path app/Http/Resources/Web/WebRawRequestCommissionResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Resource transformation for raw commission requests.
  */
 

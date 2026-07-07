@@ -1,7 +1,7 @@
 /**
  * @file generic-table.service.ts
- * @path src/app/admin/services/generic-table.service.ts
- * @project RegioPartner Web
+ * @path src/app/core/services/generic-table.service.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Provides generic pagination, caching, and preloading logic for data-driven tables within the admin panel.

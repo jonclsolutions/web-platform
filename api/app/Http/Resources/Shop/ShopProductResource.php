@@ -2,7 +2,7 @@
 /**
  * @file ShopProductResource.php
  * @path app/Http/Resources/Shop/ShopProductResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for products including categories, suppliers, and variants.

@@ -2,9 +2,9 @@
 /**
  * @file UpdateUserRequest.php
  * @path app/Http/Requests/User/UpdateUserRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Validation logic for updating existing system users, ensuring integrity of email uniqueness during modification.
  */
 

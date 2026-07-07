@@ -2,7 +2,7 @@
 /**
  * @file ShopPaymentMethodController.php
  * @path app/Http/Controllers/Api/Shop/ShopPaymentMethodController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages configuration and status of shop payment methods, with strict protections against deletion or unauthorized modification of system-critical payment logic.

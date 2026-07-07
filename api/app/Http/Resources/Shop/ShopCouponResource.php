@@ -2,7 +2,7 @@
 /**
  * @file ShopCouponResource.php
  * @path app/Http/Resources/Shop/ShopCouponResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for shop discount coupons.

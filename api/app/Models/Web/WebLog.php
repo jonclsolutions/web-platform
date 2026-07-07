@@ -2,9 +2,9 @@
 /**
  * @file WebLog.php
  * @path app/Models/Web/WebLog.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Model representing web module audit logs.
  */
 

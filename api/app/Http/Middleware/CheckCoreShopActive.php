@@ -2,7 +2,7 @@
 /**
  * @file CheckCoreShopActive.php
  * @path app/Http/Middleware/CheckCoreShopActive.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Middleware that enforces e-shop availability by verifying the 'is_shop_active' site setting.

@@ -1,7 +1,7 @@
 /**
  * @file shop-layout.component.ts
- * @path src/app/shop/shop-layout/shop-layout.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/shop-layout/shop-layout.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Provides the structural wrapper for the e-shop section, incorporating the global header and footer components with an outlet for nested routes.

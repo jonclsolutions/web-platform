@@ -2,7 +2,7 @@
 /**
  * @file StoreShopOrderRequest.php
  * @path app/Http/Requests/Shop/ShopOrder/StoreShopOrderRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for creating new shop orders, including real-time stock availability verification.

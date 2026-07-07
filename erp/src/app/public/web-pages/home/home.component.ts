@@ -1,9 +1,9 @@
 /**
  * @file home.component.ts
- * @path src/app/pages/home/home.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/home/home.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Serves as the landing page for the website, managing the hero section, service overview, and technology stack visualization.
  * @dependencies
  * - LocalizationService: Handles multi-language content injection.

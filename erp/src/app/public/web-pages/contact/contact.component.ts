@@ -1,9 +1,9 @@
 /**
  * @file contact.component.ts
- * @path src/app/pages/contact/contact.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/contact/contact.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages the contact page, providing a secure form for user inquiries and commission requests, including file attachment support and dynamic site configuration.
  * @dependencies
  * - ReactiveFormsModule: Handles complex form state, validation, and submission logic.

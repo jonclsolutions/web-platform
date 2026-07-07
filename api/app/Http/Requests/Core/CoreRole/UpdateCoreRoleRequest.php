@@ -2,9 +2,9 @@
 /**
  * @file UpdateCoreRoleRequest.php
  * @path app/Http/Requests/Core/CoreRole/UpdateCoreRoleRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Validation logic for updating an existing system role.
  */
 

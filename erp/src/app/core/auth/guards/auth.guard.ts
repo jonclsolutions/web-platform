@@ -1,7 +1,7 @@
 /**
  * @file auth.guard.ts
- * @path src/app/core/guards/auth.guard.ts
- * @project RegioPartner Web
+ * @path src/app/core/auth/guards/auth.guard.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Route guard responsible for enforcing authentication and granular permission-based access control.

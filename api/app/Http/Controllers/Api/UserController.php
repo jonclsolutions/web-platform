@@ -2,9 +2,9 @@
 /**
  * @file UserController.php
  * @path app/Http/Controllers/Api/UserController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages user account lifecycles, including creation, role assignment, password security policies, and administrative audit logging.
  */
 

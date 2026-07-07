@@ -1,7 +1,7 @@
 /**
  * @file payment-methods.component.ts
- * @path src/app/admin/pages/shop/payment-methods/payment-methods.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/payment-methods/payment-methods.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the administration of store payment methods, including configuration, filtering, and data export.

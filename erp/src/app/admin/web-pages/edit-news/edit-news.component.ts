@@ -1,7 +1,7 @@
 /**
  * @file edit-news.component.ts
- * @path src/app/admin/pages/web/news/edit-news.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/news/edit-news.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the lifecycle and administration of website news articles (for intern uses), including CRUD operations and archival functionality.

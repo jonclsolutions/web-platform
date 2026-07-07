@@ -2,9 +2,9 @@
 /**
  * @file RouteServiceProvider.php
  * @path app/Providers/RouteServiceProvider.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Service provider responsible for application route configuration and rate limiting.
  */
 

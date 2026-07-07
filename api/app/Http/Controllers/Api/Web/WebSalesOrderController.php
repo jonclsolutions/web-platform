@@ -2,9 +2,9 @@
 /**
  * @file WebSalesOrderController.php
  * @path app/Http/Controllers/Api/Web/WebSalesOrderController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages sales order (realizace) lifecycle, including integration with sales leads, file attachment handling, and comprehensive audit logging.
  */
 

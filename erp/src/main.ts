@@ -1,7 +1,7 @@
 /**
  * @file main.ts
  * @path src/main.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Application entry point responsible for bootstrapping the Angular framework with provided configurations.

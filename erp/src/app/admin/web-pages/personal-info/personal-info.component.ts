@@ -1,9 +1,9 @@
 /**
  * @file personal-info.component.ts
- * @path src/app/admin/pages/personal-info/personal-info.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/personal-info/personal-info.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages user profile information and security settings, specifically handling password updates.
  * @dependencies
  * - BaseDataComponent: Provides base CRUD logic for user data retrieval.

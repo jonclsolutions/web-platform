@@ -2,7 +2,7 @@
 /**
  * @file StoreShopCustomerRequest.php
  * @path app/Http/Requests/Shop/ShopCustomer/StoreShopCustomerRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for creating new shop customer profiles.

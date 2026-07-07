@@ -2,7 +2,7 @@
 /**
  * @file ShopProduct.php
  * @path app/Models/Shop/ShopProduct.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model representing a product within the shop catalog.

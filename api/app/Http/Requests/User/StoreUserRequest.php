@@ -2,9 +2,9 @@
 /**
  * @file StoreUserRequest.php
  * @path app/Http/Requests/User/StoreUserRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Validation logic for creating new system users, including HR-specific fields like commissions and tax declarations.
  */
 

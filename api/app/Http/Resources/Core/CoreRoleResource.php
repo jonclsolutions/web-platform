@@ -2,9 +2,9 @@
 /**
  * @file CoreRoleResource.php
  * @path app/Http/Resources/Core/CoreRoleResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Resource transformation for system roles.
  */
 

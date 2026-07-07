@@ -2,7 +2,7 @@
 /**
  * @file ShopShippingMethodResource.php
  * @path app/Http/Resources/Shop/ShopShippingMethodResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for available shipping methods.

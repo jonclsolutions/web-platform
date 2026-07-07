@@ -2,7 +2,7 @@
 /**
  * @file SiteConfigurationController.php
  * @path app/Http/Controllers/Api/Legal/SiteConfigurationController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Centralized management for site-wide configuration, including company details, localized branding assets, and social media links with file handling.

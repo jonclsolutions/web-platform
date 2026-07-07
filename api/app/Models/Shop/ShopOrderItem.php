@@ -2,7 +2,7 @@
 /**
  * @file ShopOrderItem.php
  * @path app/Models/Shop/ShopOrderItem.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model representing an individual line item in a customer order.

@@ -1,7 +1,7 @@
 /**
  * @file categories.component.ts
- * @path src/app/admin/pages/shop/categories/categories.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/categories/categories.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages a hierarchical tree of shop categories, including CRUD operations and product-to-category assignments.

@@ -2,7 +2,7 @@
 /**
  * @file config/cors.php
  * @path config/cors.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Configuration for Cross-Origin Resource Sharing (CORS) settings.

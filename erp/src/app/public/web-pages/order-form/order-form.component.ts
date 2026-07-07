@@ -1,9 +1,9 @@
 /**
  * @file order-form.component.ts
- * @path src/app/pages/order-form/order-form.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/order-form/order-form.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages the business inquiry/order submission form, including validation, file attachments, and API communication.
  * @dependencies
  * - ReactiveFormsModule: Manages form state, complex validation, and user input.

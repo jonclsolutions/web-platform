@@ -2,7 +2,7 @@
 /**
  * @file SiteSetting.php
  * @path app/Models/Legal/SiteSetting.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model for legal and corporate site configuration.

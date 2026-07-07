@@ -2,7 +2,7 @@
 /**
  * @file ShopCustomerResource.php
  * @path app/Http/Resources/Shop/ShopCustomerResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for shop customer profiles.

@@ -1,6 +1,13 @@
+<!-- 
+    @file: dashboard.component.html
+    @path: /src/app/admin/web-pages/dashboard/dashboard.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="core-dashboard">
 
-  <!-- ===== WELCOME HEADER ===== -->
   <div class="cd-welcome">
     <div class="cd-welcome-left">
       <div class="cd-welcome-date">{{ currentDateTime }}</div>
@@ -15,11 +22,9 @@
     </div>
   </div>
 
-  <!-- ===== PROFIL KARTY ===== -->
   <div class="cd-section">
     <div class="cd-profile-row">
 
-      <!-- Profil -->
       <div class="cd-card cd-card-profile">
         <div class="cd-card-header">
           <span class="cd-card-icon">👤</span>
@@ -49,7 +54,6 @@
         </div>
       </div>
 
-      <!-- Rychlé statistiky -->
       <div class="cd-stats-grid">
         @if (loadingStats) {
           @for (i of [1,2,3,4,5,6]; track i) {
@@ -70,7 +74,6 @@
     </div>
   </div>
 
-  <!-- ===== NAVIGACE DO SEKCÍ ===== -->
   <div class="cd-section">
     <div class="cd-section-label">Rychlá navigace</div>
     <div class="cd-nav-grid">
@@ -87,7 +90,6 @@
     </div>
   </div>
 
-  <!-- ===== POSLEDNÍ AKTIVITA ===== -->
   <div class="cd-section">
     <div class="cd-section-label">Poslední aktivita v systému</div>
     <div class="cd-card cd-card-activity">
@@ -136,9 +138,7 @@
     </div>
   </div>
 
-  <!-- ===== FOOTER ===== -->
   <div class="cd-footer">
     <span>Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému.</span>
   </div>
-
 </div>

@@ -1,7 +1,7 @@
 /**
  * @file product-detail.component.ts
- * @path src/app/shop/product-detail/product-detail.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/product-detail/product-detail.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Handles the product detail page, managing state for variants, quantity selection, and cart integration.

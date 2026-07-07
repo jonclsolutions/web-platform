@@ -1,9 +1,9 @@
 /**
  * @file about-us.component.ts
- * @path src/app/pages/about-us/about-us.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/about-us/about-us.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Presentational component for the 'About Us' page, rendering static content with dynamically fetched site metadata and social media links.
  * @dependencies
  * - LocalizationService: Supplies translated content for the view.

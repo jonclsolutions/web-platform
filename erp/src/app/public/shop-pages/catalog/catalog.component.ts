@@ -1,7 +1,7 @@
 /**
  * @file catalog.component.ts
- * @path src/app/shop/catalog/catalog.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/catalog/catalog.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the public product catalog interface, including category filtering, pagination, and dynamic product listing.

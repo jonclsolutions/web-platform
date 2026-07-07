@@ -2,7 +2,7 @@
 /**
  * @file bootstrap/app.php
  * @path bootstrap/app.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Application bootstrap configuration including routing, middleware, and exception handling.

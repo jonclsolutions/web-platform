@@ -1,3 +1,11 @@
+<!-- 
+    @file: catalog.component.html
+    @path: /src/app/public/shop-pages/catalog/catalog.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="catalog-container">
 
   <header class="catalog-header">
@@ -9,7 +17,6 @@
         <span>Filtr</span>
       </button>
 
-      <!-- Filtrační lišta vložená vedle tlačítka -->
       @if (showFilters()) {
         <div class="filter-bar-inline">
           <div class="filter-group">
@@ -43,7 +50,6 @@
     </div>
   </header>
 
-  <!-- Mřížka s produkty -->
   <div class="products-grid" [class.opacity-30]="isLoading()">
     @for (product of products(); track product) {
       <a [routerLink]="[config.ENDPOINTS.PRODUCT_DETAIL_BASE, product.slug]" class="product-card">
@@ -52,14 +58,12 @@
     }
   </div>
 
-  <!-- Empty State -->
   @if (products().length === 0 && !isLoading()) {
     <div class="empty-state">
       <p>{{ config.TEXTS.EMPTY_STATE }}</p>
     </div>
   }
 
-  <!-- Paginace (Zjednodušené volání) -->
   @if (products().length > 0) {
     <div class="pagination-wrapper">
       <app-pagination-buttons-builder

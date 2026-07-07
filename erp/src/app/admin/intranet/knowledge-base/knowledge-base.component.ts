@@ -1,7 +1,7 @@
 /**
  * @file knowledge-base.component.ts
  * @path src/app/admin/pages/knowledge-base/knowledge-base.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description The main shell component for the Knowledge Base module, managing layout, navigation state, and sub-module routing.

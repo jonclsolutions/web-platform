@@ -1,9 +1,9 @@
 /**
  * @file administrators.component.ts
- * @path src/app/admin/pages/core/administrators/administrators.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/administrators/administrators.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages administrative user accounts, including CRUD operations, password resets, and audit trail viewing.
  * @dependencies
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and state management.

@@ -2,7 +2,7 @@
 /**
  * @file CoreSiteSettingController.php
  * @path app/Http/Controllers/Api/Core/CoreSiteSettingController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages global site configuration, specifically toggling shop maintenance modes with secure password verification and cache invalidation.

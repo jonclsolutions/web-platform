@@ -1,7 +1,7 @@
 /**
  * @file base-data.component.ts
- * @path src/app/admin/components/base-data.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/components/base-data/base-data.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Abstract base class providing standardized CRUD operations, pagination, and caching logic for administrative data components.

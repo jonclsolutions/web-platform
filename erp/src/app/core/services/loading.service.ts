@@ -1,7 +1,7 @@
 /**
  * @file loading.service.ts
- * @path src/app/shared/services/loading.service.ts
- * @project RegioPartner Web
+ * @path src/app/core/services/loading.service.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Global service to manage and track the application's loading state.

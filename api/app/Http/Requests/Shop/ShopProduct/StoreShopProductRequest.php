@@ -2,7 +2,7 @@
 /**
  * @file StoreShopProductRequest.php
  * @path app/Http/Requests/Shop/ShopProduct/StoreShopProductRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for creating new shop products, including support for variants, localized descriptions, and multi-category assignments.

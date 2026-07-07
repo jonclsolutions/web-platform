@@ -1,3 +1,11 @@
+<!-- 
+    @file: categories.component.html
+    @path: /src/app/admin/shop-pages/categories/categories.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="container mx-auto p-4 max-w-5xl">
   <div class="toolbar-actions">
     <div class="table-header">Správa kategorií</div>
@@ -11,7 +19,6 @@
 
   <div class="layout-wrapper" [class.has-panel]="selectedCategory">
 
-    <!-- STROM KATEGORIÍ -->
     <div class="tree-wrapper bg-white border rounded-xl shadow-sm overflow-hidden mt-4">
       <div class="p-3">
         @if (categories.length > 0) {
@@ -22,7 +29,6 @@
       </div>
     </div>
 
-    <!-- PRODUKT PANEL -->
     @if (selectedCategory) {
       <div class="product-panel mt-4">
         <div class="product-panel-header">
@@ -36,7 +42,6 @@
           <button class="panel-close-btn" (click)="closeProductPanel()" title="Zavřít">✕</button>
         </div>
 
-        <!-- Hledání v produktech kategorie -->
         <div class="panel-search-row">
           <div class="panel-search-wrap">
             <span class="panel-search-icon">🔍</span>
@@ -51,7 +56,6 @@
           </button>
         </div>
 
-        <!-- Přidat produkt - vyhledávání -->
         @if (showAddProduct) {
           <div class="add-product-section">
             <div class="add-product-header">
@@ -95,7 +99,6 @@
           </div>
         }
 
-        <!-- Seznam produktů v kategorii -->
         <div class="product-list">
           @if (loadingProducts) {
             <div class="product-list-loading">
@@ -150,7 +153,6 @@
   </div>
 </div>
 
-<!-- TEMPLATE STROMU -->
 <ng-template #treeRef let-list>
   <ul class="tree-list">
     @for (node of list; track node.id) {
@@ -203,7 +205,6 @@
               @if (node.children?.length) {
                 <span class="count-badge">{{ node.directChildrenCount }} / {{ node.totalRecursiveCount }}</span>
               }
-              <!-- Tlačítko pro otevření panelu produktů -->
               @if (node.id !== 0 && !node.isEditing) {
                 <button
                   class="btn-products-count"

@@ -1,7 +1,7 @@
 /**
  * @file admin-layout.component.ts
  * @path src/app/admin/pages/admin-layout/admin-layout.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Main shell component for the administrative panel, managing sidebar navigation, module switching, and global UI state.

@@ -1,7 +1,7 @@
 /**
  * @file confirm-dialog.component.ts
  * @path src/app/admin/components/confirm-dialog/confirm-dialog.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description A reusable modal dialog component for capturing user confirmation before executing critical or destructive actions.

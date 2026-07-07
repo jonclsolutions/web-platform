@@ -1,3 +1,11 @@
+<!-- 
+    @file: products.component.html
+    @path: /src/app/admin/shop-pages/products/products.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="products-container">
   @if (errorMessage) {
     <div class="error-banner">⚠️ {{ errorMessage }}</div>
@@ -71,7 +79,6 @@
   }
 </div>
 
-<!-- ===== DETAIL MODÁL ===== -->
 @if (showDetailsModal && selectedProductForDetail) {
   <div class="modal-overlay" (click)="closeDetailsModal()">
     <div class="modal-content modal-detail" (click)="$event.stopPropagation()">
@@ -232,7 +239,6 @@
   </div>
 }
 
-<!-- ===== FORMULÁŘ PRODUKTU ===== -->
 @if (showProductForm && editingProduct) {
   <div class="modal-overlay" (click)="closeProductForm()">
     <div class="modal-content modal-form" (click)="$event.stopPropagation()">
@@ -355,7 +361,6 @@
   </div>
 }
 
-<!-- ===== VARIANTY MODÁL ===== -->
 @if (showVariantsModal && editingProduct) {
   <div class="modal-overlay" (click)="closeVariantsModal()">
     <div class="modal-content modal-variants" (click)="$event.stopPropagation()">
@@ -454,7 +459,6 @@
   </div>
 }
 
-<!-- ===== OBRÁZKY VARIANTY ===== -->
 @if (editingVariantIdx !== null && editingProduct?.variants?.[editingVariantIdx]) {
   <div class="modal-overlay" (click)="editingVariantIdx = null">
     <div class="modal-content modal-images" (click)="$event.stopPropagation()">
@@ -519,7 +523,6 @@
   </div>
 }
 
-<!-- ===== OBRÁZKY PRODUKTU ===== -->
 @if (showImagesModal && editingProduct) {
   <div class="modal-overlay" (click)="closeImagesModal()">
     <div class="modal-content modal-images" (click)="$event.stopPropagation()">

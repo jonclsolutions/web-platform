@@ -1,7 +1,7 @@
 /**
  * @file table-builder.component.ts
- * @path src/app/admin/components/table-builder/table-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/components/builders/table-builder/table-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description A generic, highly configurable table component for displaying datasets with built-in CRUD actions, CSV export, and localized formatting.

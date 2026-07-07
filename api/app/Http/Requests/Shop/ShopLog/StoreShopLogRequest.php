@@ -2,7 +2,7 @@
 /**
  * @file StoreShopLogRequest.php
  * @path app/Http/Requests/Shop/ShopLog/StoreShopLogRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for creating new shop log entries.

@@ -2,9 +2,9 @@
 /**
  * @file TranslationController.php
  * @path app/Http/Controllers/Api/TranslationController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages internationalization (i18n) data, including JSON translation file management, language metadata administration, and associated icon assets.
  */
 

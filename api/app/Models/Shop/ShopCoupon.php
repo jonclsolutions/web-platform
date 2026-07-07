@@ -2,7 +2,7 @@
 /**
  * @file ShopCoupon.php
  * @path app/Models/Shop/ShopCoupon.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model representing discount coupons for the shop.

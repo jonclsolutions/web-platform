@@ -2,7 +2,7 @@
 /**
  * @file UpdateCoreSiteSettingRequest.php
  * @path app/Http/Requests/Core/CoreSiteSettings/UpdateCoreSiteSettingRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating core site settings, specifically managing maintenance mode status and messaging.

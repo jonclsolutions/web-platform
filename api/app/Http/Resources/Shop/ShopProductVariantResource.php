@@ -2,7 +2,7 @@
 /**
  * @file ShopProductVariantResource.php
  * @path app/Http/Resources/Shop/ShopProductVariantResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for product variants.

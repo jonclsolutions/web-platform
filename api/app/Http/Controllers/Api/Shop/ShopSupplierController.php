@@ -2,7 +2,7 @@
 /**
  * @file ShopSupplierController.php
  * @path app/Http/Controllers/Api/Shop/ShopSupplierController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Controller managing supplier lifecycle, including search, filtering, CRUD operations, and administrative audit logging.

@@ -1,7 +1,7 @@
 /**
  * @file button-builder.component.ts
- * @path src/app/admin/components/button-builder/button-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/components/builders/button-builder/button-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Presentational component that dynamically renders a group of buttons based on an input configuration array.

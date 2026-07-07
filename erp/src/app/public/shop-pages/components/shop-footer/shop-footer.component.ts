@@ -1,7 +1,7 @@
 /**
  * @file shop-footer.component.ts
- * @path src/app/shop/components/footer/shop-footer.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/components/shop-footer/shop-footer.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Presentational component for the e-shop footer, managing dynamic content such as site settings, social links, payment icons, and localized navigation.

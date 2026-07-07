@@ -1,9 +1,9 @@
 /**
  * @file faq.component.ts
- * @path src/app/pages/faq/faq.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/faq/faq.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages the FAQ page, handling category filtering, localized question-answer toggling, and site-wide metadata integration.
  * @dependencies
  * - LocalizationService: Supplies translated content for categories and FAQ items.

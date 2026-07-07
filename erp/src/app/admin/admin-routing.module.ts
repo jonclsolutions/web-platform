@@ -1,7 +1,7 @@
 /**
  * @file admin-routing.module.ts
  * @path src/app/admin/admin-routing.module.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Centralized routing configuration for the administrative module, separating Web, E-Shop, and Intranet interfaces with role-based access control.

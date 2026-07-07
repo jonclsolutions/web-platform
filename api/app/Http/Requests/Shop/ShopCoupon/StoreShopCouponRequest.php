@@ -2,7 +2,7 @@
 /**
  * @file StoreShopCouponRequest.php
  * @path App\Http\Requests\Shop\ShopCoupon\StoreShopCouponRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for storing new discount coupons.

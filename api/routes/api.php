@@ -3,9 +3,9 @@
 /**
  * @file routes/api.php
  * @path routes/api.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Defines all application API endpoints, including public access for the frontend, checkout processes, and protected administrative routes.
  */
 

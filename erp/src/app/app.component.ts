@@ -1,7 +1,7 @@
 /**
  * @file app.component.ts
  * @path src/app/app.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Root component of the application, serving as the main entry point for the component tree.

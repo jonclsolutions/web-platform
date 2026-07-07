@@ -1,7 +1,7 @@
 /**
  * @file shop-maintenance.component.ts
- * @path src/app/shop/shop-maintenance/shop-maintenance.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/shop-maintenance/shop-maintenance.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Presentational component displayed when the e-shop is in maintenance mode. Includes auto-redirection logic to return users to the shop when it comes back online.

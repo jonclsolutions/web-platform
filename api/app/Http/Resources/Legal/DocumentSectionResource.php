@@ -2,7 +2,7 @@
 /**
  * @file DocumentSectionResource.php
  * @path app/Http/Resources/Legal/DocumentSectionResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for legal document sections.

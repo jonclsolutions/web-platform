@@ -2,7 +2,7 @@
 /**
  * @file ShopShippingMethodController.php
  * @path app/Http/Controllers/Api/Shop/ShopShippingMethodController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Controller managing shipping methods, including filtering, lifecycle operations, and administrative logging. Implements safety checks to protect system-critical hardcoded shipping methods from modification or deletion.

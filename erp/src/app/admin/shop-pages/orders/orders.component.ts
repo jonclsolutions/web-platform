@@ -1,7 +1,7 @@
 /**
  * @file orders.component.ts
- * @path src/app/admin/pages/shop/orders/orders.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/orders/orders.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the lifecycle of customer orders, including creation, editing, status tracking, and inventory validation.

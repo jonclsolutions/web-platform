@@ -1,9 +1,9 @@
 /**
  * @file form-builder.component.ts
- * @path src/app/admin/components/form-builder/form-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/components/builders/form-builder/form-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description A dynamic, template-driven form generator that maps field definitions to interactive UI controls.
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.

@@ -1,7 +1,7 @@
 /**
  * @file shop-logs.component.ts
- * @path src/app/admin/pages/shop/shop-logs/shop-logs.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/shop-logs/shop-logs.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the display, filtering, and detailed inspection of system logs related to shop activities.

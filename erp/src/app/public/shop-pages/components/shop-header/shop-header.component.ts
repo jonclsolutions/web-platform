@@ -1,7 +1,7 @@
 /**
  * @file shop-header.component.ts
- * @path src/app/shop/components/header/shop-header.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/components/shop-header/shop-header.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Presentational component for the e-shop header, handling UI state for navigation, language/currency selection, and cart access.

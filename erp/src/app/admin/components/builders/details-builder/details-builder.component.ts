@@ -1,7 +1,7 @@
 /**
  * @file details-builder.component.ts
- * @path src/app/admin/components/details-builder/details-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/components/builders/details-builder/details-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description A dynamic detail viewer component that generates structured layouts from data objects and column definitions.

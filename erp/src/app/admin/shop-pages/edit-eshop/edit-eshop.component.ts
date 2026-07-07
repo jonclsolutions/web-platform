@@ -1,7 +1,7 @@
 /**
  * @file edit-eshop.component.ts
- * @path src/app/admin/pages/shop/edit-eshop/edit-eshop.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/edit-eshop/edit-eshop.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages internationalization (i18n) settings, translation keys, and language metadata for the shop module.

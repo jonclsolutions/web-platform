@@ -1,13 +1,19 @@
+<!-- 
+    @file: services.component.html
+    @path: /src/app/public/shop-pages/components/services/services.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="pagination-wrapper reveal-up">
   <nav class="pagination-nav">
-    <!-- Předchozí -->
     <button class="nav-btn" (click)="onPageClick(currentPage - 1)" [disabled]="currentPage === 1">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
         <polyline points="15 18 9 12 15 6"></polyline>
       </svg>
     </button>
 
-    <!-- Čísla stránek -->
     @for (page of pagesArray; track page) {
       <button class="page-btn"
         [class.active]="page === currentPage"
@@ -16,7 +22,6 @@
       </button>
     }
 
-    <!-- Další -->
     <button class="nav-btn" (click)="onPageClick(currentPage + 1)" [disabled]="currentPage === totalPages">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
         <polyline points="9 18 15 12 9 6"></polyline>

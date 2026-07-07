@@ -1,6 +1,13 @@
+<!-- 
+    @file: dashboard.component.html
+    @path: /src/app/admin/shop-pages/dashboard/dashboard.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="dashboard">
 
-  <!-- ===== HEADER ===== -->
   <div class="dash-header">
     <div class="dash-header-left">
       <h1 class="dash-title">Přehled</h1>
@@ -16,7 +23,6 @@
     </div>
   </div>
 
-  <!-- ===== LOADING / ERROR ===== -->
   @if (loading && !kpiCards.length) {
     <div class="dash-loading">
       <div class="dash-spinner"></div>
@@ -32,7 +38,6 @@
 
   @if (!loading || kpiCards.length) {
 
-    <!-- ===== KPI KARTY ===== -->
     <div class="kpi-grid">
       @for (card of kpiCards; track card.label) {
         <div class="kpi-card kpi-{{ card.color }}">
@@ -51,10 +56,7 @@
       }
     </div>
 
-    <!-- ===== HLAVNÍ SEKCE: Graf + Status ===== -->
     <div class="dash-row dash-row-main">
-
-      <!-- GRAF TRŽEB -->
       <div class="dash-card dash-card-chart">
         <div class="dash-card-header">
           <span class="dash-card-title">Tržby — posledních 30 dní</span>
@@ -66,7 +68,6 @@
             class="chart-svg"
             (mouseleave)="hideTooltip()">
 
-            <!-- Mřížka Y -->
             @for (step of yGridLines; track step) {
               <line
                 [attr.x1]="chartPadL"
@@ -80,12 +81,10 @@
                 class="chart-y-label">{{ yLabel(step) }}</text>
             }
 
-            <!-- Oblast pod křivkou -->
             @if (chartPoints.length) {
               <polygon [attr.points]="areaPoints" class="chart-area"/>
               <polyline [attr.points]="polylinePoints" class="chart-line"/>
 
-              <!-- Body + Hover zones -->
               @for (point of chartPoints; track point.label) {
                 <circle
                   [attr.cx]="point.x"
@@ -97,7 +96,6 @@
               }
             }
 
-            <!-- X osy popisky -->
             @for (point of xAxisLabels; track point.label) {
               <text
                 [attr.x]="point.x"
@@ -105,7 +103,6 @@
                 class="chart-x-label">{{ point.label }}</text>
             }
 
-            <!-- Tooltip -->
             @if (chartTooltip.visible) {
               <g>
                 <line
@@ -134,7 +131,6 @@
         </div>
       </div>
 
-      <!-- STATUS BREAKDOWN -->
       <div class="dash-card dash-card-status">
         <div class="dash-card-header">
           <span class="dash-card-title">Stavy objednávek</span>
@@ -164,10 +160,7 @@
       </div>
     </div>
 
-    <!-- ===== HLAVNÍ SEKCE: Poslední objednávky + Low stock ===== -->
     <div class="dash-row dash-row-bottom">
-
-      <!-- POSLEDNÍ OBJEDNÁVKY -->
       <div class="dash-card dash-card-orders">
         <div class="dash-card-header">
           <span class="dash-card-title">Poslední objednávky</span>
@@ -221,7 +214,6 @@
         </div>
       </div>
 
-      <!-- LOW STOCK -->
       <div class="dash-card dash-card-stock">
         <div class="dash-card-header">
           <span class="dash-card-title">⚠️ Nízký stav skladu</span>
@@ -257,7 +249,6 @@
       </div>
     </div>
 
-    <!-- ===== DOLNÍ ŘADA: Rychlé info ===== -->
     <div class="dash-row dash-row-quick">
       <div class="quick-stat">
         <span class="quick-stat-icon">🎫</span>

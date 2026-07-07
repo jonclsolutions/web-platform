@@ -2,7 +2,7 @@
 /**
  * @file WebNewsController.php
  * @path app/Http/Controllers/Api/Web/WebNewsController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages news article lifecycle, including categorization, content management, and soft-delete administrative workflows.

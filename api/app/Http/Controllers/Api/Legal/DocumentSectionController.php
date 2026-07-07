@@ -2,9 +2,9 @@
 /**
  * @file DocumentSectionController.php
  * @path app/Http/Controllers/Api/Legal/DocumentSectionController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages CRUD operations and public delivery of legal document sections, featuring language-based fallback logic and audit logging.
  */
 

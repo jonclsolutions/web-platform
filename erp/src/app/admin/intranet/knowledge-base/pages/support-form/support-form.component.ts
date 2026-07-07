@@ -1,7 +1,7 @@
 /**
  * @file support-form.component.ts
  * @path src/app/admin/pages/support/support-form/support-form.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description A reactive form component enabling users to submit support tickets with optional file attachments.

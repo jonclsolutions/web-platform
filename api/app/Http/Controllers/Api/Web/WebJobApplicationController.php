@@ -2,9 +2,9 @@
 /**
  * @file WebJobApplicationController.php
  * @path app/Http/Controllers/Api/Web/WebJobApplicationController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages the lifecycle of job applications, including document handling (CVs), status updates, and soft-delete administrative workflows.
  */
 

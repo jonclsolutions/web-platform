@@ -1,7 +1,7 @@
 /**
  * @file permission.service.ts
- * @path src/app/core/services/permission.service.ts
- * @project RegioPartner Web
+ * @path src/app/core/auth/services/permission.service.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages user authorization states globally, providing methods for checking access to specific application features.

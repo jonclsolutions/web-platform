@@ -1,6 +1,12 @@
-<div class="ew-root">
+<!-- 
+    @file: edit-eshop.component.html
+    @path: /src/app/admin/shop-pages/edit-eshop/edit-eshop.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
 
-  <!-- ══ HLAVNÍ HEADER ══════════════════════════════════════════ -->
+<div class="ew-root">
   <div class="ew-topbar">
     <div class="ew-topbar-left">
       <h1 class="ew-title">Editovat veřejné texty</h1>
@@ -33,10 +39,7 @@
     </div>
   </div>
 
-  <!-- ══ LANG PANEL ══════════════════════════════════════════════ -->
   <div class="ew-lang-panel">
-
-    <!-- Jazyky -->
     <div class="ew-lang-tabs">
       @for (lang of languages; track trackByCode($index, lang)) {
         <button
@@ -56,7 +59,6 @@
             <span class="ew-lang-tab-inactive-dot" title="Neaktivní"></span>
           }
 
-          <!-- Akce na tabu -->
           @if (!lang.isBuiltIn) {
             <span class="ew-lang-tab-actions" (click)="$event.stopPropagation()">
               <button
@@ -86,14 +88,12 @@
         </button>
       }
 
-      <!-- Tlačítko přidat -->
       <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" title="Přidat jazyk">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Přidat jazyk
       </button>
     </div>
 
-    <!-- Statistiky -->
     <div class="ew-stats">
       <span class="ew-stat">
         <span class="ew-stat-num">{{ totalCount }}</span>
@@ -112,7 +112,6 @@
     </div>
   </div>
 
-  <!-- ══ EDITOR CONTROLS ═══════════════════════════════════════ -->
   <div class="ew-controls">
     <div class="ew-search-group">
       <div class="ew-input-wrap">
@@ -139,7 +138,6 @@
     </div>
   </div>
 
-  <!-- ══ TABULKA ════════════════════════════════════════════════ -->
   <div class="ew-table-wrap" [class.ew-loading]="loadingService.isLoading$ | async">
     <table class="ew-table">
       <thead>
@@ -184,7 +182,6 @@
 
 </div>
 
-<!-- ══ MODAL: PŘIDAT JAZYK ════════════════════════════════════ -->
 @if (showAddForm) {
   <div class="ew-modal-overlay" (click)="closeAddForm()">
     <div class="ew-modal" (click)="$event.stopPropagation()">
@@ -201,7 +198,6 @@
 
       <div class="ew-modal-body">
 
-        <!-- Ikonka -->
        <div class="ew-field">
   <label class="ew-label">Ikonka jazyka <span class="ew-hint">(PNG/JPG, max 512 KB)</span></label>
   <div class="ew-icon-upload-row">
@@ -230,7 +226,6 @@
   </div>
 </div>
 
-        <!-- Kód + Název vedle sebe -->
         <div class="ew-field-row">
           <div class="ew-field">
             <label class="ew-label">Kód jazyka <span class="ew-req">*</span></label>
@@ -252,7 +247,6 @@
           </div>
         </div>
 
-        <!-- Aktivní -->
         <div class="ew-field">
           <label class="ew-checkbox-label">
             <input type="checkbox" [(ngModel)]="newLangActive" class="ew-checkbox">
@@ -280,7 +274,6 @@
   </div>
 }
 
-<!-- ══ MODAL: UPLOAD JSON ════════════════════════════════════ -->
 @if (showUploadModal) {
   <div class="ew-modal-overlay" (click)="closeUploadModal()">
     <div class="ew-modal" (click)="$event.stopPropagation()">
@@ -332,7 +325,6 @@
   </div>
 }
 
-<!-- ══ MODAL: SMAZAT JAZYK ═══════════════════════════════════ -->
 @if (langToDelete) {
   <div class="ew-modal-overlay" (click)="cancelDelete()">
     <div class="ew-modal ew-modal--sm" (click)="$event.stopPropagation()">

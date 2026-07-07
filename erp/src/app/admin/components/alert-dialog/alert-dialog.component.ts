@@ -1,7 +1,7 @@
 /**
  * @file alert-dialog.component.ts
  * @path src/app/admin/components/alert-dialog/alert-dialog.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Presentational component providing a modal alert/notification interface for user feedback.

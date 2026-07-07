@@ -2,7 +2,7 @@
 /**
  * @file ShopCustomerController.php
  * @path app/Http/Controllers/Api/Shop/ShopCustomerController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages CRUD operations for shop customers, including soft-delete lifecycle management, comprehensive audit logging, and bulk trash cleanup.

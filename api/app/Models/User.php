@@ -2,9 +2,9 @@
 /**
  * @file User.php
  * @path app/Models/User.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Core User model representing authentication and profile data.
  */
 

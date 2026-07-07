@@ -1,7 +1,7 @@
 /**
  * @file kb-article.component.ts
  * @path src/app/admin/components/kb-article/kb-article.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description A detail view component for displaying Knowledge Base articles based on route identifiers.

@@ -1,7 +1,7 @@
 /**
  * @file web-settings.component.ts
- * @path src/app/admin/pages/web-settings/web-settings.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/web-settings/web-settings.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages global web configuration including company details, localized brand assets, site branding, and social media links.

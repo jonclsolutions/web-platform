@@ -2,7 +2,7 @@
 /**
  * @file ShopCouponController.php
  * @path app/Http/Controllers/Api/Shop/ShopCouponController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Handles CRUD operations for promotional coupons, including soft-delete functionality, restore capabilities, and integrity-checked batch cleanup.

@@ -1,9 +1,9 @@
 /**
  * @file public-header.component.ts
- * @path src/app/shared/components/public-header/public-header.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/components/public-header/public-header.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages the site-wide public header, including dynamic navigation, language switching, and scroll-responsive UI animations.
  * @dependencies
  * - Router: Handles route state detection for active link highlighting.

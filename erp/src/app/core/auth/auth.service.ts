@@ -1,7 +1,7 @@
 /**
  * @file auth.service.ts
  * @path src/app/core/auth/auth.service.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Core authentication service managing login, session persistence, token lifecycle, and user authorization state.

@@ -2,9 +2,9 @@
 /**
  * @file CoreRoleController.php
  * @path app/Http/Controllers/Api/Core/CoreRoleController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages CRUD operations for user roles, including pagination for administrative tables and audit logging of all data changes.
  */
 

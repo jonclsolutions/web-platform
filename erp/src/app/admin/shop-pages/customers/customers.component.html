@@ -1,3 +1,11 @@
+<!-- 
+    @file: customers.component.html
+    @path: /src/app/admin/shop-pages/customers/customers.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="customers-container container mx-auto p-4">
   @if (errorMessage) {
     <div class="error-banner">⚠️ {{ errorMessage }}</div>
@@ -89,14 +97,10 @@
   </app-details-builder>
 }
 
-<!-- ============================================================
-     MODAL: OBJEDNÁVKY ZÁKAZNÍKA
-     ============================================================ -->
 @if (showOrdersModal && selectedCustomerForOrders) {
   <div class="orders-overlay" (click)="closeOrdersModal()">
     <div class="orders-modal" (click)="$event.stopPropagation()">
 
-      <!-- HLAVIČKA -->
       <div class="orders-modal-header">
         <div class="orders-modal-header-left">
           <div class="orders-customer-avatar">
@@ -131,10 +135,7 @@
         </div>
       </div>
 
-      <!-- TĚLO -->
       <div class="orders-modal-body">
-
-        <!-- Načítání -->
         @if (customerOrdersLoading) {
           <div class="orders-loading">
             <div class="orders-spinner"></div>
@@ -142,7 +143,6 @@
           </div>
         }
 
-        <!-- Chyba -->
         @if (!customerOrdersLoading && customerOrdersError) {
           <div class="orders-error">
             <span class="orders-error-icon">⚠️</span>
@@ -150,7 +150,6 @@
           </div>
         }
 
-        <!-- Prázdný stav -->
         @if (!customerOrdersLoading && !customerOrdersError && customerOrders.length === 0) {
           <div class="orders-empty">
             <div class="orders-empty-icon">📦</div>
@@ -158,13 +157,11 @@
           </div>
         }
 
-        <!-- SEZNAM OBJEDNÁVEK -->
         @if (!customerOrdersLoading && customerOrders.length > 0) {
           <div class="orders-list">
             @for (order of customerOrders; track order.id) {
               <div class="order-card" [class.order-card-expanded]="ordersExpandedId === order.id">
 
-                <!-- Řádek objednávky -->
                 <div class="order-row" (click)="toggleOrderExpand(order.id)">
                   <div class="order-row-main">
                     <div class="order-number-block">
@@ -194,11 +191,8 @@
                   </button>
                 </div>
 
-                <!-- Detail objednávky (rozbalený) -->
                 @if (ordersExpandedId === order.id) {
                   <div class="order-detail">
-
-                    <!-- Info řádky -->
                     <div class="order-detail-grid">
                       <div class="order-detail-section">
                         <h4 class="order-detail-section-title">Doručení</h4>
@@ -270,8 +264,6 @@
                         </p>
                       </div>
                     </div>
-
-                    <!-- Položky objednávky -->
                     @if (order.items && order.items.length > 0) {
                       <div class="order-items-section">
                         <h4 class="order-detail-section-title">Položky ({{ order.items.length }})</h4>
@@ -308,7 +300,6 @@
         }
       </div>
 
-      <!-- PATIČKA S PAGINACÍ -->
       @if (!customerOrdersLoading && ordersTotalPages > 1) {
         <div class="orders-modal-footer">
           <span class="orders-pagination-info">

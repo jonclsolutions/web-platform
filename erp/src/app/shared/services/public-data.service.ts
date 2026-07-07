@@ -1,9 +1,9 @@
 /**
  * @file public-data.service.ts
  * @path src/app/shared/services/public-data.service.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Service providing public API access to shop settings, legal documents, and contact forms.
  * @dependencies
  * - HttpClient: Handles all HTTP communication with the backend API.

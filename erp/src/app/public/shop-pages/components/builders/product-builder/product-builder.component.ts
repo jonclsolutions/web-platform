@@ -1,7 +1,7 @@
 /**
  * @file product-builder.component.ts
- * @path src/app/shop/components/builders/product-builder/product-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/components/builders/product-builder/product-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Presentational component responsible for rendering individual product cards within the catalog, handling thumbnail resolution and price formatting.

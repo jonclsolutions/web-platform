@@ -2,9 +2,9 @@
 /**
  * @file WebSalesOrderResource.php
  * @path app/Http/Resources/Web/WebSalesOrderResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Resource transformation for sales orders linked to leads.
  */
 

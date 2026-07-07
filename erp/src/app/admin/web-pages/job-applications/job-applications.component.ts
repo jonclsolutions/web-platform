@@ -1,9 +1,9 @@
 /**
  * @file job-applications.component.ts
- * @path src/app/admin/pages/web/job-applications/job-applications.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/job-applications/job-applications.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages the administration of job applications, providing filtered views, details retrieval, and status updates.
  * @dependencies
  * - BaseDataComponent: Core logic for data fetching, pagination, and state management.

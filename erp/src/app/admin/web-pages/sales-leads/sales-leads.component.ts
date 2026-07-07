@@ -1,9 +1,9 @@
 /**
  * @file sales-leads.component.ts
- * @path src/app/admin/pages/web/sales-leads/sales-leads.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/sales-leads/sales-leads.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Administrative dashboard component for managing sales leads, including link generation, logging, and CRUD operations.
  * @dependencies
  * - BaseDataComponent: Inheritance for base table/data handling.

@@ -1,7 +1,7 @@
 /**
  * @file suppliers.component.ts
- * @path src/app/admin/pages/shop/suppliers/suppliers.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/suppliers/suppliers.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the administration of store suppliers, including CRUD operations, archive management, and data filtering.

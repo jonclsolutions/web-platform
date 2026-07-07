@@ -1,7 +1,7 @@
 /**
  * @file support-tickets.component.ts
- * @path src/app/admin/pages/web/support-tickets/support-tickets.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/support-tickets/support-tickets.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Administrative dashboard component for managing customer support tickets, including status updates and multi-part data submission.

@@ -2,7 +2,7 @@
 /**
  * @file ShopProductImageResource.php
  * @path app/Http/Resources/Shop/ShopProductImageResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for product imagery.

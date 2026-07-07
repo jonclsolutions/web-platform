@@ -1,9 +1,9 @@
 /**
  * @file services.component.ts
- * @path src/app/pages/services/services.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/services/services.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Orchestrates the presentation of service offerings, including technology stack visualization, dynamic content filtering, and workflow step rendering.
  * @dependencies
  * - LocalizationService: Handles internationalized text for service headers and content.

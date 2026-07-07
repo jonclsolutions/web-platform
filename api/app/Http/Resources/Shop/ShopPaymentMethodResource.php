@@ -2,7 +2,7 @@
 /**
  * @file ShopPaymentMethodResource.php
  * @path app/Http/Resources/Shop/ShopPaymentMethodResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for shop payment methods.

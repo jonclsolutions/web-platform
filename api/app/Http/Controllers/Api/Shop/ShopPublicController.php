@@ -2,7 +2,7 @@
 /**
  * @file ShopPublicController.php
  * @path app/Http/Controllers/Api/Shop/ShopPublicController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Provides public-facing API endpoints for shop storefront operations, including stock verification, payment/shipping configuration, and real-time coupon validation.

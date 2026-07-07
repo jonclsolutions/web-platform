@@ -2,7 +2,7 @@
 /**
  * @file ShopLogController.php
  * @path app/Http/Controllers/Api/Shop/ShopLogController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the retrieval and manual creation of audit trail logs for shop operations, supporting complex filtering and sorting.

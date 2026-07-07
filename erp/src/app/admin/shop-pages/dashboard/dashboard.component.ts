@@ -1,7 +1,7 @@
 /**
  * @file dashboard.component.ts
- * @path src/app/admin/pages/dashboard/dashboard.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/dashboard/dashboard.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Serves as the central management hub, aggregating operational KPIs, sales trends, and real-time shop status.

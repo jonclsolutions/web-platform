@@ -1,7 +1,7 @@
 /**
  * @file login.component.ts
- * @path src/app/admin/pages/login/login.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/auth/login/login.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Authentication component providing a user login interface and password recovery workflow.

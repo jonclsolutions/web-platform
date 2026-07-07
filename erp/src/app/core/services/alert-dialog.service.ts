@@ -1,7 +1,7 @@
 /**
  * @file alert-dialog.service.ts
- * @path src/app/shared/services/alert-dialog.service.ts
- * @project RegioPartner Web
+ * @path src/app/core/services/alert-dialog.service.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Service for programmatically creating and managing dynamic AlertDialogComponent instances globally.

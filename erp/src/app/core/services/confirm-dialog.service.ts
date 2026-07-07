@@ -1,7 +1,7 @@
 /**
  * @file confirm-dialog.service.ts
- * @path src/app/shared/services/confirm-dialog.service.ts
- * @project RegioPartner Web
+ * @path src/app/core/services/confirm-dialog.service.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Service for programmatically creating and managing dynamic ConfirmDialogComponent instances globally.

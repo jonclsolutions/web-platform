@@ -2,7 +2,7 @@
 /**
  * @file ShopOrderController.php
  * @path app/Http/Controllers/Api/Shop/ShopOrderController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages comprehensive shop order lifecycle operations, including creation, status tracking, inventory synchronization, and complex financial recalculations.

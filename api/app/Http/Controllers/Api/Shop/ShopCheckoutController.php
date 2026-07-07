@@ -2,7 +2,7 @@
 /**
  * @file ShopCheckoutController.php
  * @path app/Http/Controllers/Api/Shop/ShopCheckoutController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the end-to-end checkout process, including order persistence, atomic inventory stock updates, coupon validation, and payment simulation.

@@ -1,7 +1,7 @@
 /**
  * @file customers.component.ts
- * @path src/app/admin/pages/shop/customers/customers.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/customers/customers.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the administration of shop customers, including CRUD operations, order history lookups, and data filtering.

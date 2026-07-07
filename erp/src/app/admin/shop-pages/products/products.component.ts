@@ -1,7 +1,7 @@
 /**
  * @file products.component.ts
- * @path src/app/admin/pages/shop/products/products.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/products/products.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Central management component for store inventory, handling CRUD operations for products, variants, and product imagery.

@@ -1,7 +1,7 @@
 /**
  * @file edit-legal.component.ts
- * @path src/app/admin/pages/legal/edit-legal/edit-legal.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/edit-legal/edit-legal.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Provides a multi-language content management interface for legal document sections (e.g., GDPR, Terms of Service).

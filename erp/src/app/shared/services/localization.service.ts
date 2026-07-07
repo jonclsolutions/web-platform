@@ -1,7 +1,7 @@
 /**
  * @file localization.service.ts
  * @path src/app/shared/services/localization.service.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Centralized service for managing application localization, translation loading, and active language state.

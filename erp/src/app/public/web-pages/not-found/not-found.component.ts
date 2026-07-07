@@ -1,7 +1,7 @@
 /**
  * @file not-found.component.ts
- * @path src/app/pages/not-found/not-found.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/not-found/not-found.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Presentational component for the 404 error page, providing user feedback on invalid routes and recovery navigation options.

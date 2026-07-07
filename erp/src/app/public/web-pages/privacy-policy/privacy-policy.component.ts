@@ -1,9 +1,9 @@
 /**
  * @file privacy-policy.component.ts
- * @path src/app/pages/privacy-policy/privacy-policy.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/privacy-policy/privacy-policy.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Renders legal documentation (GDPR or Terms of Service) dynamically fetched based on the application's selected language and document slug.
  * @dependencies
  * - PublicDataService: Provides access to legal document content from the backend.

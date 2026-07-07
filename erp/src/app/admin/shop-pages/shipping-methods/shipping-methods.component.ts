@@ -1,7 +1,7 @@
 /**
  * @file shipping-methods.component.ts
- * @path src/app/admin/pages/shop/shipping-methods/shipping-methods.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/shipping-methods/shipping-methods.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the lifecycle of shipping methods, including configuration, filtering, and soft-delete/restore operations.

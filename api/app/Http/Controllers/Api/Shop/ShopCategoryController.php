@@ -2,7 +2,7 @@
 /**
  * @file ShopCategoryController.php
  * @path app/Http/Controllers/Api/Shop/ShopCategoryController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages CRUD operations for shop product categories, including hierarchical relationships, validation logic for deletion, and audit logging.

@@ -2,9 +2,9 @@
 /**
  * @file StoreWebSalesLeadRequest.php
  * @path app/Http/Requests/Web/WebSalesLead/StoreWebSalesLeadRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Validation logic for creating new sales leads from web sources.
  */
 

@@ -2,7 +2,7 @@
 /**
  * @file ShopProductController.php
  * @path app/Http/Controllers/Api/Shop/ShopProductController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages complex product catalog operations, including multi-variant handling, inventory synchronization, file management for product images, and relational data integrity.

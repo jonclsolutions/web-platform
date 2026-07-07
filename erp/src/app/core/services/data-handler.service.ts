@@ -1,7 +1,7 @@
 /**
  * @file data-handler.service.ts
- * @path src/app/admin/services/data-handler.service.ts
- * @project RegioPartner Web
+ * @path src/app/core/services/data-handler.service.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Centralized HTTP data handler service for administrative operations, providing standard CRUD methods with integrated error reporting.

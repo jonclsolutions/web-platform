@@ -1,24 +1,22 @@
+<!-- 
+    @file: login.component.html
+    @path: /src/app/admin/auth/login/login.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+-->
+
 <div class="login-page">
-
-  <!-- ══ CENTROVANÝ PANEL ══════════════════════════════════════════ -->
   <div class="login-center">
-
-    <!-- Logo / brand -->
     <a routerLink="/home" class="login-brand">
       <span class="login-brand-dot" aria-hidden="true"></span>
       Studio
     </a>
-
-    <!-- Karta -->
     <div class="login-card">
-
       <div class="login-card-header">
         <h1 class="login-title">Administrace</h1>
       </div>
-
       <form (ngSubmit)="onLogin()" class="login-form" novalidate>
-
-        <!-- Login -->
         <div class="field-group">
           <label class="field-label" for="email">Login</label>
           <input
@@ -31,8 +29,6 @@
             required
             autocomplete="username">
         </div>
-
-        <!-- Heslo -->
         <div class="field-group">
           <div class="field-label-row">
             <label class="field-label" for="password">Heslo</label>
@@ -73,8 +69,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Chybová hláška -->
         @if (errorMessage) {
           <div class="error-message" role="alert">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -85,8 +79,6 @@
             {{ errorMessage }}
           </div>
         }
-
-        <!-- Submit -->
         <button type="submit" class="submit-btn">
           Přihlásit se
           <span class="submit-arrow" aria-hidden="true">→</span>
@@ -105,8 +97,6 @@
 
     </div>
   </div>
-
-  <!-- ══ MODAL — zapomenuté heslo ══════════════════════════════════ -->
   @if (showForgotModal) {
     <div class="modal-overlay" (click)="closeForgotModal()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-card" (click)="$event.stopPropagation()">
@@ -165,5 +155,4 @@
       </div>
     </div>
   }
-
 </div>

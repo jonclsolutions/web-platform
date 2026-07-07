@@ -2,7 +2,7 @@
 /**
  * @file WebNews.php
  * @path app/Models/Web/WebNews.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model representing a news article or announcement.

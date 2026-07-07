@@ -1,9 +1,9 @@
 /**
  * @file public-footer.component.ts
- * @path src/app/shared/components/public-footer/public-footer.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/components/public-footer/public-footer.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages the public-facing footer component, handling internationalized navigation, legal links, and dynamic site settings (copyright, taglines, social links).
  * @dependencies
  * - LocalizationService: Manages multi-language support and translation keys.

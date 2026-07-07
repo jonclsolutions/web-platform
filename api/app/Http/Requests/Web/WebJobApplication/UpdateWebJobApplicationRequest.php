@@ -2,9 +2,9 @@
 /**
  * @file UpdateWebJobApplicationRequest.php
  * @path app/Http/Requests/Web/WebJobApplication/UpdateWebJobApplicationRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Validation logic for updating existing job application records, including status changes and notes.
  */
 

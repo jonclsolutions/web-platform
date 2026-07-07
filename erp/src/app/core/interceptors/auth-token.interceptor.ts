@@ -1,7 +1,7 @@
 /**
  * @file auth-token.interceptor.ts
  * @path src/app/core/interceptors/auth-token.interceptor.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Interceptor that automatically attaches JWT tokens to outgoing requests and handles token refreshing upon 401 Unauthorized responses.

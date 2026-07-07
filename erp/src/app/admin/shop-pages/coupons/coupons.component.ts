@@ -1,7 +1,7 @@
 /**
  * @file coupons.component.ts
- * @path src/app/admin/pages/shop/coupons/coupons.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/shop-pages/coupons/coupons.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the lifecycle of shop coupons, handling filtering, CRUD operations, and switching between active and trashed views.

@@ -2,9 +2,9 @@
 /**
  * @file AuthController.php
  * @path app/Http/Controllers/Api/AuthController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages user authentication, token-based session lifecycle (Access/Refresh tokens), and security-related audit logging.
  */
 

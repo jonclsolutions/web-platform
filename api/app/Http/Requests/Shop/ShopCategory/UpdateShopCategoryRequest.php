@@ -2,7 +2,7 @@
 /**
  * @file UpdateShopCategoryRequest.php
  * @path app/Http/Requests/Shop/ShopCategory/UpdateShopCategoryRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing shop categories.

@@ -1,9 +1,9 @@
 /**
  * @file tos.component.ts
- * @path src/app/pages/tos/tos.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/tos/tos.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Renders Terms of Service (TOS) legal documentation by fetching live content based on language state.
  * @dependencies
  * - PublicDataService: Retrieves legal text from server.

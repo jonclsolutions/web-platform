@@ -1,7 +1,7 @@
 /**
  * @file cart.component.ts
- * @path src/app/shop/cart/cart.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/cart/cart.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the user's shopping cart interface, including item quantity adjustments, removal, and checkout navigation.

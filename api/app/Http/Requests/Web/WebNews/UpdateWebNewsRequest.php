@@ -2,7 +2,7 @@
 /**
  * @file UpdateWebNewsRequest.php
  * @path app/Http/Requests/Web/WebNews/UpdateWebNewsRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing web news articles.

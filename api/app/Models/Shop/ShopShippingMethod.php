@@ -2,7 +2,7 @@
 /**
  * @file ShopShippingMethod.php
  * @path app/Models/Shop/ShopShippingMethod.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model representing available shipping methods for the shop.

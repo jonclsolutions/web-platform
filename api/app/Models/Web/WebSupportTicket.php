@@ -2,9 +2,9 @@
 /**
  * @file WebSupportTicket.php
  * @path app/Models/Web/WebSupportTicket.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Model representing a customer support request.
  */
 

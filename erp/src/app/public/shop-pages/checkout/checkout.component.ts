@@ -1,7 +1,7 @@
 /**
  * @file checkout.component.ts
- * @path src/app/shop/checkout/checkout.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/checkout/checkout.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Manages the multi-step checkout process including form validation, coupon application, and final order submission.

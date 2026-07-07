@@ -1,7 +1,7 @@
 /**
  * @file filter-form-builder.component.ts
- * @path src/app/admin/components/filter-form-builder/filter-form-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/components/builders/filter-form-builder/filter-form-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description A dynamic form builder for generating filter interfaces based on column definitions.

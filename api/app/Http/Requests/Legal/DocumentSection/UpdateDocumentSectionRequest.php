@@ -2,7 +2,7 @@
 /**
  * @file UpdateDocumentSectionRequest.php
  * @path app/Http/Requests/Legal/DocumentSection/UpdateDocumentSectionRequest.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing legal document sections.

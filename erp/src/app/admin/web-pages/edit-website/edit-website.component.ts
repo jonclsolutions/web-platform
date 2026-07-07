@@ -1,9 +1,9 @@
 /**
  * @file edit-website.component.ts
- * @path src/app/admin/pages/web/edit-website/edit-website.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/edit-website/edit-website.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages web localization, translation files, and language metadata administration.
  * @dependencies
  * - Angular Core/Common/Forms/Router: Standard framework utilities.

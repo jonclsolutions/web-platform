@@ -1,7 +1,7 @@
 /**
  * @file pagination-buttons-builder.component.ts
- * @path src/app/admin/components/pagination-buttons-builder/pagination-buttons-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/components/builders/pagination-buttons-builder/pagination-buttons-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description A dynamic pagination controller that provides page navigation and items-per-page selection.

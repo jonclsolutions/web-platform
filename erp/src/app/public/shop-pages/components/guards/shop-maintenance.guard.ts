@@ -1,7 +1,7 @@
 /**
  * @file shop-maintenance.guard.ts
- * @path src/app/shop/guards/shop-maintenance.guard.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/components/guards/shop-maintenance.guard.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Authentication-level guard that intercepts shop-related routes to verify if the e-shop is currently active or in maintenance mode.

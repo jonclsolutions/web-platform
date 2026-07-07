@@ -1,9 +1,9 @@
 /**
  * @file references.component.ts
- * @path src/app/pages/references/references.component.ts
- * @project RegioPartner Web
+ * @path src/app/public/web-pages/references/references.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Displays a portfolio of completed projects, dynamically parsed from localized project data.
  * @dependencies
  * - LocalizationService: Manages the project data source and internationalization.

@@ -2,7 +2,7 @@
 /**
  * @file ShopProductImage.php
  * @path app/Models/Shop/ShopProductImage.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model for managing product and variant imagery.

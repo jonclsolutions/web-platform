@@ -2,7 +2,7 @@
 /**
  * @file ShopLog.php
  * @path app/Models/Shop/ShopLog.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model representing shop-specific system event logs.

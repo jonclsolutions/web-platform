@@ -1,7 +1,7 @@
 /**
  * @file shop-public.service.ts
- * @path src/app/shop/components/services/public-data.service.ts
- * @project RegioPartner Web
+ * @path src/app/public/shop-pages/components/services/public-data.service.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Provides a centralized service for fetching public-facing e-shop data from the API, including product catalogs, cart validation, and checkout operations.

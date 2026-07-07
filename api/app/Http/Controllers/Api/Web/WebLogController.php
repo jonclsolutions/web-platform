@@ -2,9 +2,9 @@
 /**
  * @file WebLogController.php
  * @path app/Http/Controllers/Api/Web/WebLogController.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Controller providing access to system audit logs, supporting complex filtering, sorting, and manual log entry creation.
  */
 

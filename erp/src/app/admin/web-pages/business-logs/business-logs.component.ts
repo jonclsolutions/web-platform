@@ -1,9 +1,9 @@
 /**
  * @file business-logs.component.ts
- * @path src/app/admin/pages/web/business-logs/business-logs.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/business-logs/business-logs.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Provides a management interface for viewing and filtering business-related system logs.
  * @dependencies
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and state management.

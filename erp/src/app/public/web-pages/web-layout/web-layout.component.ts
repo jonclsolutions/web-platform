@@ -1,7 +1,7 @@
 /**
  * @file web-layout.component.ts
  * @path src/app/public/web-pages/web-layout/web-layout.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Layout container for all public-facing web pages, providing a consistent structure with shared header and footer components.

@@ -2,9 +2,9 @@
 /**
  * @file ValidatesAttachmentSecurity.php
  * @path app/Http/Requests/Web/WebRawRequestCommission/ValidatesAttachmentSecurity.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Trait providing shared security logic for validating file attachments using a blacklist approach.
  */
 

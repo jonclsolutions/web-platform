@@ -2,7 +2,7 @@
 /**
  * @file DocumentType.php
  * @path app/Models/Legal/DocumentType.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model representing a type of legal document (e.g., TOS, Privacy Policy).

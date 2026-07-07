@@ -1,7 +1,7 @@
 /**
  * @file news.component.ts
  * @path src/app/admin/pages/news/news.component.ts
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Page component for displaying a scrollable list of news articles with infinite-scroll functionality.

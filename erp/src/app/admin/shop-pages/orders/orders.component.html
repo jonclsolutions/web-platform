@@ -1,3 +1,11 @@
+<!-- 
+    @file: edit-eshop.component.html
+    @path: /src/app/admin/shop-pages/edit-eshop/edit-eshop.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
 <div class="orders-container">
   @if (errorMessage) {
     <div class="error-banner">⚠️ {{ errorMessage }}</div>
@@ -366,7 +374,6 @@
           <fieldset>
             <legend>Základní údaje a kontakt</legend>
             
-            <!-- Kontaktní údaje (Místo starého selectu na zákazníky) -->
             <div class="form-row-3">
               <div class="form-group">
                 <label>E-mailová adresa *</label>
@@ -419,7 +426,6 @@
 
             <hr class="form-divider" style="border: 0; border-top: 1px solid var(--border-color, #eee); margin: 15px 0;">
 
-            <!-- Výběr plateb a dopravy -->
             <div class="form-row-2">
               <div class="form-group">
                 <label>Způsob platby *</label>
@@ -466,7 +472,6 @@
                   <div class="coupon-error-msg">⚠️ {{ couponValidation.error }}</div>
                 }
               </div>
-              <!-- Volné místo pro zachování mřížky form-row-2 -->
               <div class="form-group"></div> 
             </div>
           </fieldset>

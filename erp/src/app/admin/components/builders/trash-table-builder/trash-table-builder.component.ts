@@ -1,7 +1,7 @@
 /**
  * @file trash-table-builder.component.ts
- * @path src/app/admin/components/trash-table-builder/trash-table-builder.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/components/builders/trash-table-builder/trash-table-builder.component.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2025
  * @description Specialized table component for managing deleted records ("trash"), allowing for permanent deletion or restoration.

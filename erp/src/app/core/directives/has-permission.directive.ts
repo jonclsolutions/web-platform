@@ -1,7 +1,7 @@
 /**
  * @file has-permission.directive.ts
- * @path src/app/shared/directives/has-permission.directive.ts
- * @project RegioPartner Web
+ * @path src/app/core/directives/has-permission.directive.ts
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Structural directive for conditional rendering of DOM elements based on user permissions.

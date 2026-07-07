@@ -2,7 +2,7 @@
 /**
  * @file SocialLink.php
  * @path app/Models/Legal/SocialLink.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Model for managing social media link associations.

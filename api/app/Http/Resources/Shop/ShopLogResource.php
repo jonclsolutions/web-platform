@@ -2,7 +2,7 @@
 /**
  * @file ShopLogResource.php
  * @path app/Http/Resources/Shop/ShopLogResource.php
- * @project RegioPartner Web
+ * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Resource transformation for system audit logs.

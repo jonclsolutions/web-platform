@@ -1,9 +1,9 @@
 /**
  * @file sales-orders.component.ts
- * @path src/app/admin/pages/web/sales-orders/sales-orders.component.ts
- * @project RegioPartner Web
+ * @path src/app/admin/web-pages/sales-orders/sales-orders.component.ts
+ * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Administrative component for managing sales orders, providing capabilities for status tracking, detail viewing, and data export.
  * @dependencies
  * - BaseDataComponent: Standardized CRUD and state management.
