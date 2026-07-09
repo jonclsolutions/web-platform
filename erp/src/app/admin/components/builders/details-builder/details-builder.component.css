@@ -1,4 +1,11 @@
-/* --- HLAVNÍ OVERLAY --- */
+/*     
+    @file: details-builder.component.css
+    @path: /src/app/admin/components/builders/details-builder/details-builder.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
+
 .popup-overlay {
     position: fixed;
     top: 0; left: 0;

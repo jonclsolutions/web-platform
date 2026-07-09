@@ -1,6 +1,6 @@
 /**
  * @file support-form.component.ts
- * @path src/app/admin/pages/support/support-form/support-form.component.ts
+ * @path src/app/admin/intranet/knowledge-base/pages/support/support-form/support-form.component.ts
  * @project RPSW Web
  * @author RPSW
  * @created 2026

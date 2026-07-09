@@ -1,5 +1,11 @@
+/*  
+    @file: catalog.component.html
+    @path: /src/app/public/shop-pages/catalog/catalog.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+*/
 :host {
-  /* Černobílý moderní design systém */
   --bg-main: #ffffff;
   --bg-dark: #000000;
   --text-main: #000000;
@@ -15,7 +21,6 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* --- HEADER & INLINE FILTER --- */
 .catalog-header {
   padding-bottom: 15px;
 }
@@ -27,7 +32,6 @@
   flex-wrap: wrap;
 }
 
-/* Tlačítko filtru - Ostré hrany, čistý design */
 .filter-toggle {
   background: var(--bg-main);
   border: 1px solid var(--border);
@@ -37,8 +41,8 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transform: none;           /* Odstraněno zkosení */
-  border-radius: 0;          /* Absolutně ostré hrany */
+  transform: none;          
+  border-radius: 0;          
   font-weight: 600;
   font-size: 0.8rem;
   text-transform: uppercase;
@@ -47,7 +51,6 @@
   flex-shrink: 0;
 }
 
-/* Zrušeno protizkosení obsahu uvnitř buttonu */
 .filter-toggle span, 
 .filter-toggle svg { 
   transform: none !important; 
@@ -60,7 +63,6 @@
   color: var(--bg-main);
 }
 
-/* Inline panel filtrů - Zjednodušené rozbalení bez posunu do boku */
 .filter-bar-inline {
   display: flex;
   align-items: center;
@@ -79,26 +81,24 @@
   flex-wrap: wrap;
 }
 
-/* Čisté vstupy bez fialových efektů */
 .filter-item input, 
 .filter-item select {
   background: var(--bg-main);
   border: 1px solid var(--border);
-  border-radius: 0;          /* Ostré hrany */
+  border-radius: 0;          
   color: var(--text-main);
   padding: 8px 12px;
   font-size: 0.8rem;
   font-weight: 500;
   outline: none;
   min-width: 140px;
-  height: 36px;              /* Jednotná výška formulářových prvků */
+  height: 36px;            
   box-sizing: border-box;
   transition: var(--transition);
-  -webkit-appearance: none;  /* Odstranění nativního vzhledu pro cross-browser čistý styl */
+  -webkit-appearance: none;  
   appearance: none;
 }
 
-/* Vlastní minimalistická šipka pro selecty */
 .filter-item select {
   padding-right: 28px;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1L5 5L9 1' stroke='%23707070' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
@@ -118,10 +118,9 @@
 .sort-dir select { 
   min-width: 50px; 
   padding-right: 10px;
-  background-image: none;    /* Pro prosté šipky ↑/↓ netřeba ikona */
+  background-image: none;   
 }
 
-/* --- MŘÍŽKA PRODUKTŮ --- */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -134,7 +133,7 @@
   height: 100%;
   background: transparent;
   border: none;
-  transform: none;           /* Odstraněno zvětšování / transformace na odkazu */
+  transform: none;           
   transition: none;
 }
 
@@ -142,12 +141,11 @@
   opacity: 0.3; 
 }
 
-/* --- EMPTY STATE & PAGINACE --- */
 .empty-state {
   text-align: center;
   padding: 60px;
   color: var(--text-dim);
-  border: 1px solid var(--border); /* Plná čistá linka */
+  border: 1px solid var(--border);
   font-size: 0.85rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -160,7 +158,6 @@
   justify-content: center;
 }
 
-/* --- RESPONZIVITA --- */
 @media (max-width: 768px) {
   .title-group {
     flex-direction: column;
@@ -172,7 +169,7 @@
   }
   .filter-item { 
     flex: 1; 
-    min-width: calc(50% - 4px); /* Přehledné uspořádání do dvojic na mobilních telefonech */
+    min-width: calc(50% - 4px); 
   }
   .filter-item input, 
   .filter-item select { 

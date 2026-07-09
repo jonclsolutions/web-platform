@@ -1,4 +1,11 @@
-/* ========== KONTEJNER ========== */
+/*     
+    @file: products.component.css
+    @path: /src/app/admin/shop-pages/products/products.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
+
 .products-container {
   width: 100%;
   padding: 5px;
@@ -12,7 +19,6 @@
   padding-bottom: 4px;
 }
 
-/* ========== TOOLBAR ========== */
 .toolbar-section {
   background: #ffffff;
   margin-bottom: 5px;
@@ -37,7 +43,6 @@
   gap: 8px;
 }
 
-/* ========== MAIN LAYOUT ========== */
 .main-content-layout {
   display: flex;
   flex-direction: column;
@@ -85,7 +90,6 @@
   padding: 20px;
 }
 
-/* ========== ZÁKLADNÍ MODAL SYSTÉM ========== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -112,13 +116,11 @@
   animation: slideUp 0.3s ease-out;
 }
 
-/* Velikosti modalů */
 .modal-detail   { max-width: 850px; background: #ffffff; }
 .modal-form     { max-width: 950px; }
 .modal-variants { max-width: 700px; }
 .modal-images   { max-width: 700px; }
 
-/* ========== MODAL HEADER ========== */
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -153,14 +155,12 @@
 
 .close-btn:hover { color: #dc2626; }
 
-/* ========== MODAL BODY ========== */
 .modal-body {
   padding: 25px;
   overflow-y: auto;
   flex: 1;
 }
 
-/* ========== MODAL FOOTER ========== */
 .modal-footer,
 .modal-footer-inline {
   padding: 15px 25px;
@@ -172,7 +172,6 @@
   flex-shrink: 0;
 }
 
-/* ========== BUTTONS ========== */
 .btn {
   padding: 10px 16px;
   border: none;
@@ -250,7 +249,6 @@
   font-size: 0.9rem;
 }
 
-/* ========== BADGES ========== */
 .badge {
   padding: 4px 10px;
   border-radius: 4px;
@@ -283,7 +281,6 @@
   gap: 4px;
 }
 
-/* ========== FORMULÁŘE ========== */
 fieldset {
   border: 1px solid #dee2e6;
   border-radius: 6px;
@@ -381,7 +378,6 @@ legend {
   accent-color: #4F46E5;
 }
 
-/* ========== KATEGORIE — CHIPY ========== */
 .category-manager-block {
   margin-bottom: 5px;
 }
@@ -445,7 +441,6 @@ legend {
   max-width: 400px;
 }
 
-/* ========== MULTI-CURRENCY ========== */
 .multi-currency-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -499,7 +494,6 @@ legend {
   width: fit-content;
 }
 
-/* ========== VAT KALKULÁTOR ========== */
 .vat-calculator {
   background: #eff6ff;
   border: 1px solid #bfdbfe;
@@ -523,7 +517,6 @@ legend {
   font-weight: 500;
 }
 
-/* ========== SOUHRN CEN (stejný styl jako v orders) ========== */
 .summary-section {
   background: #eff6ff;
   border-color: #bfdbfe;
@@ -555,7 +548,6 @@ legend {
   color: #4F46E5;
 }
 
-/* ========== VARIANTY — KARTY ========== */
 .variant-card {
   border: 1px solid #dee2e6;
   border-radius: 6px;
@@ -591,7 +583,6 @@ legend {
   gap: 6px;
 }
 
-/* ========== OBRÁZKY — KARTY ========== */
 .image-card {
   flex-shrink: 0;
   border: 1px solid #dee2e6;
@@ -734,7 +725,6 @@ legend {
   box-shadow: 0 0 0 1px #4F46E5, 0 0 0 3px rgba(79, 70, 229, 0.2);
 }
 
-/* ========== NOTE / WARNING ========== */
 .note {
   font-size: 0.85rem;
   color: #dc2626;
@@ -746,7 +736,6 @@ legend {
   line-height: 1.5;
 }
 
-/* ========== ERROR BANNER ========== */
 .error-banner {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -765,7 +754,6 @@ legend {
   font-style: italic;
 }
 
-/* ========== DETAIL MODAL (stejný jazyk jako orders modal-detail) ========== */
 .modal-detail .modal-body {
   padding: 16px;
   background: #ffffff;
@@ -774,7 +762,6 @@ legend {
   gap: 0;
 }
 
-/* Sekce v detailu */
 .modal-detail .detail-section {
   margin-bottom: 0;
   padding-bottom: 0;
@@ -798,7 +785,6 @@ legend {
   border-top: none;
 }
 
-/* Info řádky — tabulkový ERP styl */
 .modal-detail .info-grid {
   display: flex;
   flex-direction: column;
@@ -835,7 +821,6 @@ legend {
   color: #1e293b;
 }
 
-/* Speciální hodnoty */
 .modal-detail .price {
   font-weight: 600;
   color: #4F46E5;
@@ -862,7 +847,6 @@ legend {
   font-weight: 600;
 }
 
-/* ========== VARIANTY V DETAILU ========== */
 .modal-detail .variants-list {
   display: flex;
   flex-direction: column;
@@ -929,7 +913,6 @@ legend {
   font-weight: 500;
 }
 
-/* ========== OBRÁZKY V DETAILU ========== */
 .modal-detail .images-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -963,7 +946,6 @@ legend {
   font-weight: 700;
 }
 
-/* Fallback obecné styly pro detail (mimo .modal-detail) */
 .detail-section {
   margin-bottom: 20px;
   padding-bottom: 20px;
@@ -1011,7 +993,6 @@ legend {
 .badge-yes { color: #16a34a; font-weight: 600; }
 .badge-no  { color: #dc2626; font-weight: 600; }
 
-/* Fallback varianty (mimo .modal-detail) */
 .variants-list {
   display: flex;
   flex-direction: column;
@@ -1055,7 +1036,6 @@ legend {
   font-weight: 600;
 }
 
-/* Fallback obrázky (mimo .modal-detail) */
 .images-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -1088,11 +1068,9 @@ legend {
   font-weight: 700;
 }
 
-/* ========== ANIMACE ========== */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* ========== RESPONSIVITA ========== */
 @media (max-width: 768px) {
   .modal-content {
     width: 100%;

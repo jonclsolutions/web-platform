@@ -1,10 +1,11 @@
-/* ─────────────────────────────────────────────
-   CONTACT PAGE  
-   Dvoupanelové rozvržení: identita vlevo, formulář vpravo.
-   Tmavý brand (#0d0d1b) + fialová akcent (#a67dff / #6b2e91)
-   ───────────────────────────────────────────── */
+/* 
+    @file: contact.component.css
+    @path: /src/app/public/web-pages/contact/contact.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
-/* ── Tokeny ────────────────────────────────── */
 :host {
   --clr-bg:          #0d0d1b;
   --clr-surface:     #11112a;

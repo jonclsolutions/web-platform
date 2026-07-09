@@ -1,7 +1,10 @@
-/* ═══════════════════════════════════════════════════════════════
-   EDIT WEBSITE — redesign
-   Admin světlé schéma: bílá · #f0f2f5 bg · #1e88e5 akcent
-   ═══════════════════════════════════════════════════════════════ */
+/*     
+    @file: edit-website.component.css
+    @path: /src/app/admin/web-pages/edit-website/edit-website.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
 :host {
   --bg:          #f0f2f5;
@@ -44,9 +47,6 @@
   min-height: 100%;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   TOPBAR
-   ═══════════════════════════════════════════════════════════════ */
 .ew-topbar {
   display: flex;
   align-items: center;
@@ -101,9 +101,6 @@
   flex-wrap: wrap;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   BUTTONS
-   ═══════════════════════════════════════════════════════════════ */
 .ew-btn {
   display: inline-flex;
   align-items: center;
@@ -151,9 +148,6 @@
 
 .ew-btn--sm { padding: 4px 10px; font-size: 0.78rem; }
 
-/* ═══════════════════════════════════════════════════════════════
-   LANG PANEL
-   ═══════════════════════════════════════════════════════════════ */
 .ew-lang-panel {
   display: flex;
   align-items: center;
@@ -173,7 +167,6 @@
   overflow-x: auto;
 }
 
-/* Jednotlivý tab jazyka */
 .ew-lang-tab {
   display: flex;
   align-items: center;
@@ -229,7 +222,6 @@
   flex-shrink: 0;
 }
 
-/* Akční tlačítka uvnitř tabu */
 .ew-lang-tab-actions {
   display: none;
   align-items: center;
@@ -259,7 +251,6 @@
 .ew-tab-action-btn:hover { background: var(--border); color: var(--text); }
 .ew-tab-action-btn--danger:hover { background: var(--error-dim); color: var(--error); border-color: var(--error-mid); }
 
-/* Ikonky jazyků */
 .ew-lang-icon-sm {
   width: 18px;
   height: 18px;
@@ -284,7 +275,6 @@
   border: 1px solid var(--border);
 }
 
-/* Statistiky */
 .ew-stats {
   display: flex;
   align-items: center;
@@ -330,9 +320,6 @@
   flex-shrink: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CONTROLS
-   ═══════════════════════════════════════════════════════════════ */
 .ew-controls {
   display: flex;
   align-items: center;
@@ -399,9 +386,6 @@
 }
 .ew-search-clear:hover { color: var(--error); }
 
-/* ═══════════════════════════════════════════════════════════════
-   TABULKA
-   ═══════════════════════════════════════════════════════════════ */
 .ew-table-wrap {
   flex: 1;
   background: var(--surface);
@@ -453,7 +437,6 @@
   vertical-align: top;
 }
 
-/* Řádek s chybějícím překladem */
 .ew-row--missing .ew-td-key { background: #fff8e1; }
 .ew-row--missing .ew-td-val { background: #fffde7; }
 
@@ -527,9 +510,6 @@
   gap: 10px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MODALS
-   ═══════════════════════════════════════════════════════════════ */
 .ew-modal-overlay {
   position: fixed;
   inset: 0;
@@ -650,9 +630,6 @@
   background: var(--surface-2);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FORM PRVKY V MODÁLECH
-   ═══════════════════════════════════════════════════════════════ */
 .ew-field {
   display: flex;
   flex-direction: column;
@@ -696,7 +673,6 @@
 
 .ew-input--mono { font-family: var(--ff-mono); letter-spacing: 0.04em; }
 
-/* Ikonka upload */
 .ew-icon-upload-row {
   display: flex;
   align-items: center;
@@ -727,7 +703,6 @@
   object-fit: cover;
 }
 
-/* JSON drop zone */
 .ew-json-drop-zone {
   display: flex;
   flex-direction: column;
@@ -754,7 +729,6 @@
 
 .ew-json-drop-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
 
-/* Skrytý file input */
 .ew-file-hidden {
   position: absolute;
   inset: 0;
@@ -764,7 +738,6 @@
   cursor: pointer;
 }
 
-/* Checkbox */
 .ew-checkbox-label {
   display: flex;
   align-items: center;
@@ -801,7 +774,6 @@
   line-height: 1;
 }
 
-/* Zprávy */
 .ew-form-error {
   display: flex;
   align-items: center;
@@ -826,9 +798,6 @@
   color: var(--success);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   RESPONZIVITA
-   ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .ew-table-wrap { margin: 0 8px 12px; }
   .ew-controls { padding: 8px; }

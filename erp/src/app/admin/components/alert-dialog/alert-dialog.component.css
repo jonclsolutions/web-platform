@@ -1,4 +1,11 @@
-/* Obal pro pozicování v pravém horním rohu */
+/*     
+    @file: alert-dialog.component.css
+    @path: /src/app/admin/components/alert-dialog/alert-dialog.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
+
 .toast-wrapper {
   position: fixed;
   top: 24px;

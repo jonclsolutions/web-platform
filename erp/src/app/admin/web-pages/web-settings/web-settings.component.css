@@ -1,7 +1,11 @@
-/* ============================================================
-   WEB SETTINGS — shodný design s orders, products, edit-legal
-   Paleta: #4F46E5 · #0f172a · #f8fafc · #e2e8f0
-   ============================================================ */
+/*     
+    @file: web-settings.component.css
+    @path: /src/app/admin/web-pages/web-settings/web-settings.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
+
 .ws-container {
 width: 100%;
 max-width: 860px;
@@ -12,7 +16,6 @@ display: flex;
 flex-direction: column;
 gap: 16px;
 }
-/* ===== HEADER ===== */
 .ws-header {
 display: flex;
 align-items: flex-end;
@@ -33,7 +36,6 @@ font-size: 0.78rem;
 color: #64748b;
 margin-top: 2px;
 }
-/* ===== CHYBA ===== */
 .ws-error {
 background: #fef2f2;
 border: 1px solid #fecaca;
@@ -43,7 +45,6 @@ border-radius: 8px;
 font-size: 0.88rem;
 font-weight: 500;
 }
-/* ===== KARTA ===== */
 .ws-card {
 background: #ffffff;
 border: 1px solid #e2e8f0;
@@ -76,7 +77,6 @@ padding: 2px 7px;
 border-radius: 10px;
 }
 .ws-card-body { padding: 18px 16px; }
-/* ===== SKELETON ===== */
 .ws-skeleton-body {
 padding: 16px;
 display: flex;
@@ -98,7 +98,6 @@ animation: shimmer 1.3s infinite;
   from { background-position: 200% 0; }
   to   { background-position: -200% 0; }
 }
-/* ===== LOGO SEKCE ===== */
 .ws-logo-section {
 display: flex;
 align-items: flex-start;
@@ -180,7 +179,6 @@ border: 1px solid #fef3c7;
 border-radius: 5px;
 padding: 6px 10px;
 }
-/* ===== TLAČÍTKA ===== */
 .ws-btn {
 display: inline-flex;
 align-items: center;
@@ -219,7 +217,6 @@ border-color: #e2e8f0;
 background: #f1f5f9;
 color: #374151;
 }
-/* Tlačítko-label pro input[type=file] */
 .ws-btn-file { cursor: pointer; }
 .ws-hidden-input { display: none; }
 .ws-mini-spin {
@@ -228,7 +225,6 @@ animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== JAZYKOVÝ PŘEPÍNAČ (brand_tagline / copyright_text) ===== */
 .ws-i18n-bar {
 display: flex;
 align-items: center;
@@ -297,7 +293,6 @@ vertical-align: middle;
 text-transform: none;
 }
 
-/* ===== FORMULÁŘ FIREMNÍ ÚDAJE ===== */
 .ws-form-grid {
 display: grid;
 grid-template-columns: 1fr 1fr;
@@ -368,7 +363,6 @@ border-radius: 5px;
 padding: 4px 10px;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-/* ===== SOCIÁLNÍ SÍTĚ ===== */
 .ws-social-list { display: flex; flex-direction: column; }
 .ws-social-empty {
 display: flex;
@@ -401,7 +395,6 @@ animation: slideDown 0.2s ease-out;
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-/* Ikonka upload */
 .ws-social-icon-col {
 display: flex;
 align-items: center;
@@ -447,7 +440,6 @@ opacity: 0;
 transition: opacity 0.15s ease;
 }
 .ws-icon-upload:hover .ws-icon-overlay { opacity: 1; }
-/* Pole sociální sítě */
 .ws-social-fields {
 display: flex;
 flex-direction: column;
@@ -457,7 +449,6 @@ min-width: 0;
 .ws-social-input { font-size: 0.84rem; }
 .ws-input-url { color: #4F46E5; }
 .ws-input-url::placeholder { color: #a5b4fc; }
-/* Akční tlačítka */
 .ws-social-actions {
 display: flex;
 flex-direction: column;
@@ -483,7 +474,6 @@ padding: 0;
 .ws-btn-save:hover:not(:disabled)  { background: #dcfce7; border-color: #10b981; }
 .ws-btn-delete { background: #fff0f0; border-color: #fecaca; color: #dc2626; }
 .ws-btn-delete:hover:not(:disabled) { background: #fee2e2; border-color: #dc2626; }
-/* Tlačítko přidat */
 .ws-social-add-row {
 padding: 12px 16px;
 display: flex;
@@ -513,7 +503,6 @@ font-weight: 700;
 color: #4F46E5;
 line-height: 1;
 }
-/* ===== RESPONSIVITA ===== */
 @media (max-width: 640px) {
 .ws-form-grid    { grid-template-columns: 1fr; }
 .ws-field-full   { grid-column: 1; }

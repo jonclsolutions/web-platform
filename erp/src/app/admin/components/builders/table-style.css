@@ -1,3 +1,11 @@
+/*     
+    @file: trash-table-builder.component.css
+    @path: /src/app/admin/components/builders/table-style.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
+
 .table-responsive {
   overflow-x: auto;
   border: 1px solid #dee2e6;

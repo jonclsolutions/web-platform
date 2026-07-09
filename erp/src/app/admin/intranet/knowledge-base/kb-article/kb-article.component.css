@@ -1,3 +1,11 @@
+/*     
+    @file: kb-article.component.css
+    @path: /src/app/admin/intranet/knowlegge-base/kb-article/kb-article.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+*/
+
 .article-container { 
   animation: fadeIn 0.4s ease-out; 
 }

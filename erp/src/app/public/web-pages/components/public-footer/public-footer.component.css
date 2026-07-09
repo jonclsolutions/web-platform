@@ -1,9 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════
-   PUBLIC FOOTER — redesign v2
-   Sjednocen s brand systémem: #0d0d1b · #a67dff · #6b2e91
-   ═══════════════════════════════════════════════════════════════ */
+/*     
+    @file: public-footer.component.css
+    @path: /src/app/public/web-pages/components/public-footer/public-footer.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
-/* ── Tokeny ─────────────────────────────────────────────────── */
 :host {
   --bg:          #0a0a18;
   --surface:     #111128;

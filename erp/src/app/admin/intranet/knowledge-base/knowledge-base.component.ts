@@ -1,6 +1,6 @@
 /**
  * @file knowledge-base.component.ts
- * @path src/app/admin/pages/knowledge-base/knowledge-base.component.ts
+ * @path src/app/admin/intranet/knowledge-base/knowledge-base.component.ts
  * @project RPSW Web
  * @author RPSW
  * @created 2026

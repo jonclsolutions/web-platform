@@ -1,3 +1,11 @@
+/* 
+    @file: styles.css
+    @path: /src/styles.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+ */
+
 *, *::before, *::after {
     box-sizing: inherit;
 }

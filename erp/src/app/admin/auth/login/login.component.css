@@ -1,9 +1,9 @@
-/* ═══════════════════════════════════════════════════════════════
-   LOGIN PAGE — redesign
-   Brand systém: #0d0d1b · #a67dff · #6b2e91
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ── Tokeny ─────────────────────────────────────────────────── */
+    @file: login.component.html
+    @path: /src/app/admin/auth/login/login.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+    
 :host {
   --bg:           #0d0d1b;
   --surface:      #111128;

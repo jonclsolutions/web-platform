@@ -1,3 +1,11 @@
+/*     
+    @file: pagination-button-builder.component.css
+    @path: /src/app/admin/components/builders/pagination-button-builder/pagination-button-builder.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
+
 .pagination-controls-wrapper {
   display: flex;
   flex-direction: column;

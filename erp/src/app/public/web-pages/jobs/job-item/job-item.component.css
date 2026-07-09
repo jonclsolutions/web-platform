@@ -1,7 +1,10 @@
-/* ═══════════════════════════════════════════════════════════════
-   JOB ITEM — sjednocen s brand systémem
-   #0d0d1b bg · #a67dff accent · #6b2e91 accent-dark
-   ═══════════════════════════════════════════════════════════════ */
+/*     
+    @file: job-item.component.css
+    @path: /src/app/public/web-pages/jobs/job-item/job-item.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
 :host {
   --bg:          #0d0d1b;

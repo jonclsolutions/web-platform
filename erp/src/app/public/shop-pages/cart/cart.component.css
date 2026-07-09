@@ -1,5 +1,11 @@
+/*    
+    @file: cart.component.html
+    @path: /src/app/public/shop-pages/cart/cart.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+*/
 :host {
-  /* Černobílý minimalistický design systém */
   --bg-main: #ffffff;        
   --bg-dark: #000000;        
   --text-main: #000000;      
@@ -7,10 +13,9 @@
   --border: #e5e5e5;         
   --border-dark: #000000;    
   
-  /* Funkční barvy pro upozornění a akce */
-  --success: #10b981;        /* Svěží zelená pro hlavní checkout */
-  --warning: #f59e0b;        /* Oranžová pro limity skladu */
-  --error: #b91c1c;          /* Čistá červená pro odstranění */
+  --success: #10b981;  
+  --warning: #f59e0b;        
+  --error: #b91c1c;         
   
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -31,13 +36,12 @@
   letter-spacing: -0.5px;
 }
 
-/* --- PRÁZDNÝ KOŠÍK --- */
 .empty-cart {
   text-align: center;
   padding: 5rem 1.5rem;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 0;          /* Absolutně ostré hrany */
+  border-radius: 0;         
   color: var(--text-dim);
 }
 
@@ -53,7 +57,6 @@
   color: var(--text-main);
 }
 
-/* --- STRUKTURA OBSAHU --- */
 .cart-content {
   display: grid;
   grid-template-columns: 1fr 380px;
@@ -67,7 +70,6 @@
   gap: 12px;
 }
 
-/* --- POLOŽKA KOŠÍKU --- */
 .cart-item {
   display: grid;
   grid-template-columns: 70px 1fr auto 120px 40px;
@@ -128,7 +130,6 @@
   font-weight: 500;
 }
 
-/* --- MNOŽSTVÍ (Přesná kopie detailu produktu) --- */
 .quantity-selector {
   display: flex;
   flex-direction: column;
@@ -168,14 +169,12 @@
   cursor: not-allowed;
 }
 
-/* Křížek při dosažení maxima */
 .qty-btn.disabled-max {
   color: var(--text-dim) !important;
   font-size: 0.75rem;
   opacity: 1 !important;
 }
 
-/* Číselný displej - odstranění vnitřních šipek */
 .qty-display {
   background: transparent;
   border-left: 1px solid var(--border);
@@ -208,7 +207,6 @@
   letter-spacing: -0.3px;
 }
 
-/* --- TLAČÍTKO ODSTRANIT --- */
 .btn-remove {
   width: 36px;
   height: 36px;
@@ -229,7 +227,6 @@
   background: #fdf2f2;
 }
 
-/* --- REKAPITULAČNÍ KARTA --- */
 .cart-summary-card {
   background: transparent;
   border: 1px solid var(--border-dark);
@@ -299,7 +296,6 @@
   gap: 12px;
 }
 
-/* Hlavní černé tlačítko */
 .btn-buy {
   width: 100%;
   background: var(--bg-dark);
@@ -336,7 +332,6 @@
   color: var(--text-main); 
 }
 
-/* --- RESPONZIVITA --- */
 @media (max-width: 950px) {
   .cart-content { 
     grid-template-columns: 1fr; 

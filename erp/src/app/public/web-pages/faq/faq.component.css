@@ -1,10 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════
-   FAQ PAGE — redesign v2
-   Sjednocen s brand systémem Services + Contact:
-   #0d0d1b bg · #a67dff accent · #6b2e91 accent-dark
-   ═══════════════════════════════════════════════════════════════ */
+/*     
+    @file: faq.component.css
+    @path: /src/app/public/web-pages/faq/faq.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
-/* ── Tokeny ─────────────────────────────────────────────────── */
 :host {
   --bg:           #0d0d1b;
   --surface:     #111128;

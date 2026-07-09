@@ -1,10 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════
-   ADMIN LAYOUT — redesign
-   Světlé admin schéma: bílá + šedá + modrá akcent #1e88e5
-   Zachovává všechny layout breakpointy a resize logiku
-   ═══════════════════════════════════════════════════════════════ */
+/*     
+    @file: admin-layout.component.css
+    @path: /src/app/admin/components/admin-layout/admin-layout.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
-/* ── Tokeny ─────────────────────────────────────────────────── */
 :host {
   --bg:           #f0f2f5;
   --surface:      #ffffff;

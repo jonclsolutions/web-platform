@@ -1,9 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════
-   ORDER FORM — sjednocen s brand systémem (FAQ / Contact / Services)
-   #0d0d1b bg · #a67dff accent · #6b2e91 accent-dark
-   ═══════════════════════════════════════════════════════════════ */
+/*     
+    @file: order-form.component.css
+    @path: /src/app/public/web-pages/order-form/order-form.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
-/* ── Tokeny ─────────────────────────────────────────────────── */
 :host {
   --bg:           #0d0d1b;
   --surface:      #111128;

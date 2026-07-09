@@ -1,3 +1,11 @@
+/*     
+    @file: personal-info.component.css
+    @path: /src/app/admin/web-pages/personal-info/personal-info.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
+
 .personal-info-container {
   display: flex;
   flex-wrap: wrap;
@@ -10,7 +18,6 @@
   width: 100%;
 }
 
-/* ===== VNITŘNÍ KARTY (Přejatý styl .cd-card) ===== */
 .cd-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -30,7 +37,6 @@
   max-width: 450px; 
 }
 
-/* ===== HLAVIČKY KARET ===== */
 .card-header-clean {
   margin-bottom: 20px;
   border-bottom: 1px solid #f1f5f9;
@@ -51,7 +57,6 @@
   color: #94a3b8;
 }
 
-/* ===== SKUPINY ÚDAJŮ ===== */
 .info-group {
   margin-bottom: 24px;
 }
@@ -105,7 +110,6 @@
   grid-column: span 2; 
 }
 
-/* ===== FORMULÁŘ PRO ZMĚNU HESLA ===== */
 .minimal-form {
   display: flex;
   flex-direction: column;
@@ -139,7 +143,6 @@
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-/* ===== TLAČÍTKO (Styl podle Core Dashboardu) ===== */
 .action_button {
   display: inline-flex;
   align-items: center;
@@ -170,7 +173,6 @@
   cursor: not-allowed; 
 }
 
-/* Mini spinner u ukládání */
 .cd-mini-spinner {
   width: 12px;
   height: 12px;
@@ -184,7 +186,6 @@
   to { transform: rotate(360deg); } 
 }
 
-/* ===== CHYBOVÝ BANNER ===== */
 .error-banner {
   background: #fee2e2;
   color: #991b1b;
@@ -195,7 +196,6 @@
   border-left: 4px solid #ef4444;
 }
 
-/* ===== RESPONSIVITA ===== */
 @media (max-width: 900px) {
   .personal-info-container { 
     flex-direction: column; 

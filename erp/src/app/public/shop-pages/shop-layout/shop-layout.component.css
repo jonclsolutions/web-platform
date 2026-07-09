@@ -1,4 +1,11 @@
-/* Nastavení bílého pozadí pro hlavní obsahovou část */
+/*
+    @file: shop-layout.component.css
+    @path: /src/app/public/shop-pages/shop-layout/shop-layout.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026  
+*/
+
 .shop-content {
   background-color: #ffffff;
   color: #000000;

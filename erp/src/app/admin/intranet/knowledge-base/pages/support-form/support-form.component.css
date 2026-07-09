@@ -1,3 +1,11 @@
+/*     
+    @file: support-form.component.css
+    @path: /src/app/admin/intranet/knowledge-base/pages/support-form/support-form.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
+    
 .kb-form-container {
   max-width: 800px;
   animation: fadeIn 0.3s ease-out;

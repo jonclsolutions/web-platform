@@ -1,9 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════
-   ABOUT US PAGE — redesign
-   Brand systém: #0d0d1b · #a67dff · #6b2e91
-   ═══════════════════════════════════════════════════════════════ */
+/*     
+    @file: about-us.component.css
+    @path: /src/app/public/web-pages/about-us/about-us.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
-/* ── Tokeny ─────────────────────────────────────────────────── */
 :host {
   --bg:           #0d0d1b;
   --surface:      #111128;

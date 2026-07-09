@@ -1,4 +1,11 @@
-/* Kontejner pro tlačítka - musí odpovídat tvé struktuře toolbar-actions-in */
+/*     
+    @file: buttons-builder.component.css
+    @path: /src/app/admin/components/builders/buttons-builder/buttons-builder.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
+
 .toolbar-actions-in {
   display: flex;
   flex-wrap: wrap; 

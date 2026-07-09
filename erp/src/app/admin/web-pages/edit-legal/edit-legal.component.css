@@ -1,7 +1,10 @@
-/* ============================================================
-   LEGAL EDITOR — shodný design s orders & products
-   Paleta: #4F46E5 indigo · #0f172a dark · #e2e8f0 border
-   ============================================================ */
+/*     
+    @file: edit-legal.component.css
+    @path: /src/app/admin/web-pages/edit-legal/edit-legal.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
 
 .legal-container {
   width: 100%;
@@ -14,7 +17,6 @@
   gap: 12px;
 }
 
-/* ===== HEADER ===== */
 .legal-header {
   display: flex;
   align-items: flex-end;
@@ -53,7 +55,6 @@
   white-space: nowrap;
 }
 
-/* ===== ZÁLOŽKY DOKUMENTŮ ===== */
 .legal-tabs {
   display: flex;
   gap: 8px;
@@ -87,7 +88,6 @@
   color: #111827;
 }
 
-/* ===== JAZYKOVÉ ZÁLOŽKY ===== */
 .lang-tabs {
   display: flex;
   gap: 6px;
@@ -154,7 +154,6 @@
   background: #fde68a;
 }
 
-/* ===== BANNER CHYBĚJÍCÍCH SEKCÍ ===== */
 .missing-banner {
   display: flex;
   align-items: flex-start;
@@ -208,14 +207,12 @@
   border-color: #f59e0b;
 }
 
-/* ===== SEZNAM SEKCÍ ===== */
 .legal-sections {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* ===== PRÁZDNÝ STAV ===== */
 .legal-empty {
   display: flex;
   flex-direction: column;
@@ -239,7 +236,6 @@
   color: #94a3b8;
 }
 
-/* ===== KARTA SEKCE ===== */
 .legal-section-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -257,7 +253,6 @@
   box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
-/* ---- View mode ---- */
 .section-view {}
 
 .section-view-header {
@@ -321,14 +316,12 @@
   line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
-  /* Max 4 řádky preview */
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* ---- Edit mode ---- */
 .section-edit {}
 
 .section-edit-header {
@@ -414,7 +407,6 @@
   line-height: 1.6;
 }
 
-/* ===== AKČNÍ TLAČÍTKA ===== */
 .section-actions {
   display: flex;
   align-items: center;
@@ -486,7 +478,6 @@
   border-color: #adb5bd;
 }
 
-/* ===== KARTA PŘIDAT ===== */
 .legal-add-card {
   background: #ffffff;
   border: 2px dashed #c7d2fe;
@@ -514,7 +505,6 @@
   color: #ffffff;
 }
 
-/* ===== TLAČÍTKO PŘIDAT ===== */
 .legal-add-row {
   display: flex;
   justify-content: flex-start;
@@ -549,7 +539,6 @@
   color: #4F46E5;
 }
 
-/* ===== RESPONSIVITA ===== */
 @media (max-width: 640px) {
   .legal-container {
     padding: 5px 5px 20px;

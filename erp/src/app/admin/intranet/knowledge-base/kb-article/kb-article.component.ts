@@ -1,6 +1,6 @@
 /**
  * @file kb-article.component.ts
- * @path src/app/admin/components/kb-article/kb-article.component.ts
+ * @path src/app/admin/components/instranet/knowledge-base/kb-article/kb-article.component.ts
  * @project RPSW Web
  * @author RPSW
  * @created 2026

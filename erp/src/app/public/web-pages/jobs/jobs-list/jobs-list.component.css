@@ -1,7 +1,10 @@
-/* ═══════════════════════════════════════════════════════════════
-   JOB LIST — sjednocen s brand systémem (Services / Contact / FAQ)
-   #0d0d1b bg · #a67dff accent · #6b2e91 accent-dark
-   ═══════════════════════════════════════════════════════════════ */
+/*
+    @file: jobs-list.component.css
+    @path: /src/app/public/web-pages/jobs/jobs-list/jobs-list.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+*/
 
 :host {
   --bg:          #0d0d1b;

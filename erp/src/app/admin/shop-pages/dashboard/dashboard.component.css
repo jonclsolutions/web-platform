@@ -1,7 +1,10 @@
-/* ============================================================
-   DASHBOARD — shodný design s orders & products komponentami
-   Paleta: #4F46E5 indigo, #0f172a dark, #f8fafc bg, #e2e8f0 border
-   ============================================================ */
+/*     
+    @file: dashboard.component.css
+    @path: /src/app/admin/shop-pages/dashboard/dashboard.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
 
 .dashboard {
   width: 100%;
@@ -13,7 +16,6 @@
   gap: 14px;
 }
 
-/* ===== HEADER ===== */
 .dash-header {
   display: flex;
   justify-content: space-between;
@@ -80,7 +82,6 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== LOADING / ERROR ===== */
 .dash-loading {
   display: flex;
   align-items: center;
@@ -125,7 +126,6 @@
   font-weight: 500;
 }
 
-/* ===== KPI GRID ===== */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -213,7 +213,6 @@
 .kpi-trend-up   { color: #10b981; }
 .kpi-trend-down { color: #ef4444; }
 
-/* ===== KARTA (obecná) ===== */
 .dash-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -247,7 +246,6 @@
   font-weight: 500;
 }
 
-/* ===== ŘADY ===== */
 .dash-row {
   display: flex;
   gap: 12px;
@@ -279,7 +277,6 @@
   flex: 0 0 280px;
 }
 
-/* ===== GRAF ===== */
 .chart-wrap {
   padding: 10px 8px 4px;
   flex: 1;
@@ -359,7 +356,6 @@
   font-weight: 700;
 }
 
-/* ===== STATUS BREAKDOWN ===== */
 .status-list {
   padding: 12px 14px;
   display: flex;
@@ -418,7 +414,6 @@
   transition: width 0.4s ease;
 }
 
-/* ===== TABULKA OBJEDNÁVEK ===== */
 .orders-table-wrap {
   overflow-x: auto;
   flex: 1;
@@ -500,7 +495,6 @@
   white-space: nowrap;
 }
 
-/* ===== BADGES (totožné s orders) ===== */
 .badge {
   padding: 3px 8px;
   border-radius: 4px;
@@ -521,7 +515,6 @@
 .payment-paid      { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 .payment-pending   { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
-/* ===== LOW STOCK ===== */
 .stock-list {
   padding: 10px 14px;
   display: flex;
@@ -594,7 +587,6 @@
 .stock-bar-warning { background: #f59e0b; }
 .stock-bar-critical { background: #ef4444; }
 
-/* ===== RYCHLÉ STATISTIKY ===== */
 .dash-row-quick {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -629,7 +621,6 @@
   margin-top: 2px;
 }
 
-/* ===== RESPONSIVITA ===== */
 @media (max-width: 1200px) {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);

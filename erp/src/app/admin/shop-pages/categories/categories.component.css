@@ -1,4 +1,11 @@
-/* --- Horní lišta (Toolbar) dle vzoru --- */
+/*     
+    @file: categories.component.css
+    @path: /src/app/admin/shop-pages/categories/categories.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
+
 .toolbar-actions {
   display: flex;
   justify-content: space-between;
@@ -26,7 +33,6 @@
   gap: 8px;
 }
 
-/* --- Rozložení strom + panel --- */
 .layout-wrapper {
   display: grid;
   grid-template-columns: 1fr;
@@ -38,7 +44,6 @@
   grid-template-columns: 1fr 360px;
 }
 
-/* --- Struktura stromu --- */
 .tree-list { list-style: none; padding: 0; margin: 0; }
 .tree-node {
   position: relative;
@@ -53,7 +58,6 @@
   border-left: 1px solid #f1f5f9;
 }
 
-/* --- Řádek kategorie --- */
 .category-row {
   display: flex;
   align-items: center;
@@ -103,7 +107,6 @@
   flex-shrink: 0;
 }
 
-/* Tlačítko počtu produktů */
 .btn-products-count {
   display: inline-flex;
   align-items: center;
@@ -134,7 +137,6 @@
   color: #1d4ed8;
 }
 
-/* --- Akce v řádku --- */
 .actions {
   display: flex;
   gap: 8px;
@@ -155,7 +157,6 @@
   }
 }
 
-/* --- PRODUKT PANEL --- */
 .product-panel {
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -224,7 +225,6 @@
   color: #dc2626;
 }
 
-/* Panel - search row */
 .panel-search-row {
   display: flex;
   gap: 8px;
@@ -290,7 +290,6 @@
   border-color: #6ee7b7;
 }
 
-/* Přidat produkt sekce */
 .add-product-section {
   padding: 10px 12px;
   background: #f8faff;
@@ -371,7 +370,6 @@
   background: #d1fae5;
 }
 
-/* Seznam produktů */
 .product-list {
   flex: 1;
   overflow-y: auto;
@@ -487,7 +485,6 @@
   color: #dc2626;
 }
 
-/* Panel footer */
 .panel-footer {
   padding: 8px 14px;
   font-size: 11px;
@@ -497,7 +494,6 @@
   text-align: right;
 }
 
-/* --- MOBILNÍ ROZLOŽENÍ --- */
 @media (max-width: 900px) {
   .layout-wrapper.has-panel {
     grid-template-columns: 1fr;
@@ -535,7 +531,6 @@
   }
 }
 
-/* --- Editace --- */
 .edit-wrapper {
   display: flex;
   align-items: center;
