@@ -60,30 +60,28 @@ export class PublicFooterComponent implements OnInit, OnDestroy {
    * @description Initializes component state by subscribing to localization changes and fetching site configuration.
    */
   ngOnInit(): void {
-    // 1. Translations stream: Triggers UI updates when the selected language changes
-    this.localizationService.currentTranslations$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(translations => {
-        if (translations) {
-          this.t = translations.footer;
-          this.loadFooterNavLinks();
-          this.loadFooterLegalLinks();
-          this.cdr.markForCheck();
-        }
-      });
+      this.localizationService.currentTranslations$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(translations => {
+          if (translations) {
+            this.t = translations.footer;
+            this.loadFooterNavLinks();
+            this.loadFooterLegalLinks();
+            this.cdr.markForCheck();
+          }
+        });
 
-    // 2. Settings stream: Fetches fresh configuration whenever the application language changes
-    this.localizationService.currentLanguage$
-      .pipe(
-        takeUntil(this.destroy$),
-        switchMap(() => this.publicDataService.getSiteSettings())
-      )
-      .subscribe(res => {
-        this.settings = res.settings;
-        this.socialLinks = res.social_links;
-        this.cdr.markForCheck();
-      });
-  }
+      this.localizationService.currentLanguage$
+        .pipe(
+          takeUntil(this.destroy$),
+          switchMap(() => this.publicDataService.get<{settings: any, social_links: any[]}>('public/legal/config'))
+        )
+        .subscribe(res => {
+          this.settings = res.settings;
+          this.socialLinks = res.social_links;
+          this.cdr.markForCheck();
+        });
+    }
 
   /**
    * @description Resolves absolute storage paths from relative database paths.

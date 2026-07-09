@@ -50,13 +50,14 @@ export class ShopHeaderComponent implements OnInit {
    * @description Initializes site branding and settings from the Public API.
    */
   ngOnInit(): void {
-    this.publicDataService.getSiteSettings().subscribe({
-      next: (data) => {
-        this.siteSettings = data.settings;
-        this.cdr.markForCheck();
-      },
-      error: (err) => console.error('Error loading header site data:', err)
-    });
+    this.publicDataService.get<{settings: any}>('public/legal/config')
+      .subscribe({
+        next: (data) => {
+          this.siteSettings = data.settings;
+          this.cdr.markForCheck();
+        },
+        error: (err) => console.error('Error loading header site data:', err)
+      });
   }
 
   /**

@@ -58,7 +58,7 @@ export class AboutUsComponent implements Web.OnInit, Web.OnDestroy {
       });
 
     // 2. Load dynamic social media links from public settings API
-    this.publicDataService.getSiteSettings()
+    this.publicDataService.get<{social_links: any[]}>('public/legal/config')
       .pipe(Web.takeUntil(this.destroy$))
       .subscribe(res => {
         this.socialLinks = res.social_links;

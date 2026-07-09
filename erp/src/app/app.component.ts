@@ -7,16 +7,18 @@
  * @description Root component of the application, serving as the main entry point for the component tree.
  * @dependencies
  * - AuthService: Used to verify the authentication state upon application initialization.
+ * - PublicDataService: Used to fetch global settings and resolve dynamic assets.
  */
 
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
+import { PublicDataService } from './shared/services/public-data.service';
 
 /**
  * @description The root entry point of the application. It acts as the container for all routed views.
  * @usage Bootstrap entry point for the Angular application.
- * @note This component is responsible for triggering initial authentication checks to restore user sessions.
+ * @note This component triggers authentication checks and handles global UI configurations like dynamic favicon updates.
  */
 @Component({
   selector: 'app-root',
@@ -26,16 +28,36 @@ import { AuthService } from './core/auth/auth.service';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  /**
-   * @param authService Injecting the authentication service to manage user session state.
-   */
-  constructor(private authService: AuthService) {}
+  
+  constructor(
+    private authService: AuthService,
+    private publicDataService: PublicDataService
+  ) {}
 
   /**
-   * @description Initializes the authentication check.
-   * @note This ensures that if a user reloads the page, their session is validated before the application renders the requested route.
+   * @description Initializes authentication and global site configurations.
    */
   ngOnInit(): void {
     this.authService.checkAuth().subscribe();
+    this.publicDataService.get<{settings: any}>('public/legal/config')
+      .subscribe(data => {
+        if (data.settings?.logo_path) {
+          const url = this.publicDataService.getStorageUrl(data.settings.logo_path);
+          this.updateFavicon(url);
+        }
+      });
+  }
+
+  /**
+   * @description Dynamically updates the favicon in the document head.
+   * @param url The fully qualified URL to the new logo asset.
+   */
+  private updateFavicon(url: string): void {
+    const link: HTMLLinkElement = document.querySelector('#dynamic-favicon') || 
+                                  document.createElement('link');
+    link.id = 'dynamic-favicon';
+    link.rel = 'icon';
+    link.href = url;
+    document.head.appendChild(link);
   }
 }

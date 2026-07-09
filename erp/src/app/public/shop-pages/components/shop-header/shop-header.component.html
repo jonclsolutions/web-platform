@@ -11,8 +11,6 @@
     <a routerLink="/shop" class="logo-wrp">
       @if (siteSettings?.logo_path) {
         <img [src]="'/storage/' + siteSettings.logo_path" alt="Logo společnosti">
-      } @else {
-        <img src="assets/images/logos/logo.png" alt="Logo">
       }
     </a>
 

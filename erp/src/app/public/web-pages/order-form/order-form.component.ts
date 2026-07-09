@@ -135,7 +135,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
       formData.append('attachment', this.selectedFile, this.selectedFile.name);
     }
 
-    this.publicDataService.submitOrder(formData).pipe(
+    this.publicDataService.post("sales_orders",formData).pipe(
       Web.finalize(() => {
         this.isLoading = false;
         this.cd.markForCheck();

@@ -50,11 +50,9 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   siteSettings: any = null;
 
   // Asset paths
-  cz_flag_link: string = 'assets/images/icons/czech-republic.png';
   en_flag_link: string = 'assets/images/icons/united-kingdom.png';
   tel_icon: string = 'assets/images/icons/call.png';
   mail_icon: string = 'assets/images/icons/mail.png';
-  logo: string = 'assets/images/logos/logo.png';
 
   showIndicator: boolean = false;
   isAnimatingTransition: boolean = false;
@@ -104,7 +102,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    this.publicDataService.getSiteSettings()
+    this.publicDataService.get<{settings: any}>('public/legal/config')
       .pipe(takeUntil(this.destroy$))
       .subscribe(data => {
         this.siteSettings = data.settings;

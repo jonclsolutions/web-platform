@@ -1,9 +1,10 @@
-    @file: login.component.html
-    @path: /src/app/admin/auth/login/login.component.html
+/*     
+    @file: login.component.css
+    @path: /src/app/admin/auth/login/login.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    
+*/
 :host {
   --bg:           #0d0d1b;
   --surface:      #111128;

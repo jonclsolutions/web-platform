@@ -58,7 +58,7 @@ export class JobsListComponent implements OnInit, OnDestroy {
         }
       });
 
-    this.publicDataService.getSiteSettings()
+    this.publicDataService.get<{settings: any, social_links: any[]}>('public/legal/config')
       .pipe(Web.takeUntil(this.destroy$))
       .subscribe(res => {
         this.settings = res.settings;

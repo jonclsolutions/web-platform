@@ -96,7 +96,7 @@ export class FaqComponent implements Web.OnInit, Web.OnDestroy {
       });
 
     // 2. Settings stream: Fetches global settings for site branding/socials
-    this.publicDataService.getSiteSettings()
+    this.publicDataService.get<{settings: any, social_links: any[]}>('public/legal/config')
       .pipe(Web.takeUntil(this.destroy$))
       .subscribe(res => {
         this.settings = res.settings;

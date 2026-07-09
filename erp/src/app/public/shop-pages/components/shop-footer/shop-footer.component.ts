@@ -85,7 +85,7 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
    * @note Automatically injects the current year into the footer text template.
    */
   private loadSiteData(): void {
-    this.publicDataService.getSiteSettings()
+    this.publicDataService.get<{settings: any, social_links: SocialLink[]}>('public/legal/config')
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
@@ -95,7 +95,6 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
           if (this.siteSettings?.footer_text) {
             this.siteSettings.footer_text = this.siteSettings.footer_text.replace('{year}', this.currentYear.toString());
           }
-          
           this.cdr.markForCheck();
         },
         error: (err) => console.error('Error loading footer site data:', err)
@@ -106,7 +105,7 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
    * @description Fetches enabled payment methods and resolves their icon URLs.
    */
   private loadPaymentMethods(): void {
-    this.publicDataService.getPaymentMethods()
+    this.publicDataService.get<any[]>('shop/public/payment-methods')
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (methods) => {

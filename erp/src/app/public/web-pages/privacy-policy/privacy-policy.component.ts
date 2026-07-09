@@ -48,7 +48,6 @@ export class PrivacyPolicyComponent implements OnInit, OnDestroy {
    * @description Initializes document fetching pipelines.
    */
   ngOnInit(): void {
-    // 1. Translations stream: Syncs static text labels with current UI language
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(translations => {
@@ -56,11 +55,10 @@ export class PrivacyPolicyComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    // 2. Data stream: Reactive fetching triggered by language changes
     this.localizationService.currentLanguage$
       .pipe(
         takeUntil(this.destroy$),
-        switchMap((lang) => this.publicDataService.getLegalDocument(this.docSlug, lang))
+        switchMap((lang) => this.publicDataService.get(`public/legal/${this.docSlug}`, { lang }))
       )
       .subscribe({
         next: (res) => {

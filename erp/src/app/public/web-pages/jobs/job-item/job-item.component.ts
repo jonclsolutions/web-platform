@@ -65,7 +65,7 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
   override ngOnInit(): void {
     this.initForm();
 
-    this.publicDataService.getSiteSettings()
+    this.publicDataService.get<{settings: any}>('public/legal/config')
       .pipe(takeUntil(this.destroy$))
       .subscribe(res => {
         this.settings = res.settings;

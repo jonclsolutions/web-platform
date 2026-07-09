@@ -46,7 +46,6 @@ export class TosComponent implements OnInit, OnDestroy {
    * @description Initializes localization stream and document fetching pipeline.
    */
   ngOnInit(): void {
-    // 1. Translations stream: Syncs static labels
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
       .subscribe(translations => {
@@ -54,19 +53,18 @@ export class TosComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    // 2. Data stream: Fetches legal content reactively
     this.localizationService.currentLanguage$
-      .pipe(
-        takeUntil(this.destroy$),
-        switchMap((lang) => this.publicDataService.getLegalDocument('tos', lang))
-      )
-      .subscribe({
-        next: (res) => {
-          this.data = res;
-          this.cdr.markForCheck();
-        },
-        error: (err) => console.error('Error loading TOS:', err)
-      });
+  .pipe(
+    takeUntil(this.destroy$),
+    switchMap((lang) => this.publicDataService.get('public/legal/tos', { lang }))
+  )
+  .subscribe({
+    next: (res) => {
+      this.data = res;
+      this.cdr.markForCheck();
+    },
+    error: (err) => console.error('Error loading TOS:', err)
+  });
   }
 
   /**
