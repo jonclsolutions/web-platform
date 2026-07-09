@@ -15,50 +15,7 @@ import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { forkJoin, interval, Subscription } from 'rxjs';
 import { catchError, of } from 'rxjs';
-
-interface KpiCard {
-  label: string;
-  value: string | number;
-  sub: string;
-  icon: string;
-  trend: 'up' | 'down' | 'neutral';
-  trendValue: string;
-  color: 'indigo' | 'green' | 'amber' | 'rose' | 'sky';
-}
-
-interface RecentOrder {
-  id: number;
-  order_number: string;
-  status: string;
-  status_label?: string;
-  payment_status: string;
-  payment_status_label?: string;
-  final_amount: number;
-  created_at: string;
-  customer?: { full_name: string; email: string };
-}
-
-interface LowStockProduct {
-  id: number;
-  name: string;
-  sku: string;
-  stock_quantity: number;
-  stock_warning_level: number;
-}
-
-interface ChartPoint {
-  label: string;
-  value: number;
-  x: number;
-  y: number;
-}
-
-interface StatusBreakdown {
-  label: string;
-  count: number;
-  color: string;
-  pct: number;
-}
+import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } from './';
 
 /**
  * @description Orchestrates the administration dashboard, visualizing key performance metrics and operational tasks.

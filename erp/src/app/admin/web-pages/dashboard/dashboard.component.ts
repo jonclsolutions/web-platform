@@ -23,31 +23,7 @@ import * as Core from '../../../shared/imports/core-providers';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
-
-interface ActivityLog {
-  id: number;
-  event_type: string;
-  module: string;
-  description: string;
-  user_plain: string;
-  origin: string;
-  created_at: string;
-}
-
-interface QuickStat {
-  label: string;
-  value: number | string;
-  icon: string;
-  color: 'indigo' | 'green' | 'amber' | 'rose' | 'sky' | 'slate';
-}
-
-interface NavSection {
-  title: string;
-  icon: string;
-  route: string;
-  description: string;
-  color: 'indigo' | 'green' | 'amber' | 'sky' | 'rose' | 'slate';
-}
+import { ActivityLog, QuickStat, NavSection } from './';
 
 /**
  * @description Serves as the primary landing page for authenticated administrators.

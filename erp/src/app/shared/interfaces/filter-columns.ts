@@ -4,6 +4,5 @@ export interface FilterColumns {
     placeholder: string;
     type: string;
     canSort: boolean;
-    // Tady říkáme: "Může to být pole stringů NEBO pole objektů"
     options?: string[] | { value: string | number; label: string }[];
 }

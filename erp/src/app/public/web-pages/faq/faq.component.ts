@@ -13,21 +13,14 @@
 
 import {
   Component,
-  OnInit,
-  OnDestroy,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '../../../shared/imports/web-providers';
 import * as Web from '../../../shared/imports/web-providers';
-import { FaqItem } from '../components/interfaces/faq-item';
+import { FaqItem, FaqCategory } from './';
 import { PublicDataService } from '../../../shared/services/public-data.service';
-
-export interface FaqCategory {
-  id: string;
-  label: string;
-}
 
 /**
  * @description Component for displaying Frequently Asked Questions organized by category.
@@ -43,11 +36,8 @@ export interface FaqCategory {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FaqComponent implements Web.OnInit, Web.OnDestroy {
-  /** Translation object container */
   t: any = null;
-  /** Global site settings */
   settings: any = null;
-  /** Footer/Social link metadata */
   socialLinks: any[] = [];
 
   private destroy$ = new Web.Subject<void>();

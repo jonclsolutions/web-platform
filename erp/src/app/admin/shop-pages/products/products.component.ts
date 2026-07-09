@@ -19,7 +19,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { PRODUCT_BUTTONS, PRODUCT_COLUMNS, TRASH_PRODUCT_COLUMNS, FILTER_COLUMNS, TOOLBAR_BUTTONS, PRODUCT_FORM_FIELDS } from './products.config';
-import { Variant, ProductImage, Category, Supplier, Product } from './product-specific.interface';
+import { Variant, ProductImage, Category, Supplier, Product } from './';
 
 /**
  * @description Controller for the product administration module.

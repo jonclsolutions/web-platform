@@ -20,8 +20,7 @@ import {
 import { CommonModule, KeyValuePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import * as Web from '../../../shared/imports/web-providers';
-import { Technology } from '../components/interfaces/technology';
-import { Item } from '../components/interfaces/item';
+import { Item, Technology } from './';
 
 /**
  * @description Component for detailing available technical services and development workflows.

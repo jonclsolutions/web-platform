@@ -18,50 +18,7 @@ import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { environment } from '../../../../environments/environment';
-
-/** Metadata of supported languages — corresponds to the API response from languages/{module} */
-interface LangMeta {
-  code: string;
-  name: string;
-  iconUrl?: string | null;
-  active: boolean;
-  isBuiltIn?: boolean;
-}
-
-/** Internationalized string map: { "cz": "...", "en": "...", "sk": "..." } */
-type I18nMap = Record<string, string>;
-
-/** Structure representing the global site settings */
-interface SiteSetting {
-  id?: number;
-  company_name: string;
-  brand_tagline: string;
-  brand_tagline_i18n: I18nMap;
-  copyright_text: string;
-  copyright_text_i18n: I18nMap;
-  ico: string;
-  dic: string;
-  contact_email: string;
-  contact_phone: string;
-  address: string;
-  footer_text: string;
-  logo_path?: string | null;
-}
-
-/** Structure representing a social network reference */
-interface SocialLink {
-  id?: number;
-  name: string;
-  url: string;
-  icon_path: string;
-  position: number;
-  _iconFile?: File | null;
-  _iconPreview?: string | null;
-  _saving?: boolean;
-  _isNew?: boolean;
-  _dirty?: boolean;
-}
-
+import { LangMeta, SiteSetting, SocialLink } from './'
 /**
  * @description Component for managing site-wide configuration.
  * @usage Provides an interface to update company profile, localized site text, branding (logo), and a dynamic list of social links.

@@ -1,4 +1,3 @@
-// zastarale, byl nahrazen "button.ts" a button-builderem
 export interface TableButtons {
   display_name: string;
   header_name: string;

@@ -27,7 +27,7 @@ import {
   STATUS_OPTIONS,
   PAYMENT_STATUS_OPTIONS
 } from './orders.config';
-import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './order-specific.interface';
+import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './';
 
 interface CouponValidationResult {
   valid: boolean;

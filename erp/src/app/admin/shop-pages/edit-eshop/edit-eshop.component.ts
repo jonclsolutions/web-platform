@@ -22,27 +22,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
-
-/**
- * @description Defines the metadata structure for supported languages including flags and activation status.
- */
-export interface LangMeta {
-  code: string;        
-  name: string;        
-  iconUrl?: string;    
-  active: boolean;
-  isBuiltIn?: boolean; 
-}
-
-/**
- * @description Flattens complex translation JSON objects into a linear structure for easier editing and diffing.
- */
-export interface FlatKey {
-  path: string;
-  value: string;
-  missing: boolean;    
-}
-
+import { LangMeta, FlatKey } from './';
 const LS_KEY = 'rpsw_languages';
 
 /**
@@ -51,7 +31,7 @@ const LS_KEY = 'rpsw_languages';
  * @note Implements a recursive diffing mechanism against a 'CZ' reference language to identify untranslated keys.
  */
 @Component({
-  selector: 'app-edit-website',
+  selector: 'app-edit-shop',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './edit-eshop.component.html',

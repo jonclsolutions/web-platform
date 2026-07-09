@@ -1,11 +1,8 @@
 export * from './shared-config';
-
 export { 
   ChangeDetectorRef, 
 } from '@angular/core';
-
 export { Router } from '@angular/router';
-
 export { 
   Subject, 
   Observable, 
@@ -13,7 +10,6 @@ export {
   of, 
   forkJoin 
 } from 'rxjs';
-
 export { 
   finalize, 
   takeUntil, 
@@ -21,27 +17,20 @@ export {
   tap, 
   retry 
 } from 'rxjs/operators';
-
 export { HttpErrorResponse } from '@angular/common/http';
-
-export { map } from 'rxjs'; // případně 'rxjs/operators' podle vaší verze Angularu
-
+export { map } from 'rxjs';
 export { DataHandler } from '../../core/services/data-handler.service';
 export { GenericTableService } from '../../core/services/generic-table.service';
 export { AuthService } from '../../core/auth/auth.service';
 export { AlertDialogService } from '../../core/services/alert-dialog.service';
 export { PermissionService } from '../../core/auth/services/permission.service';
 export { LoadingService } from '../../core/services/loading.service'; 
-
-// 2. EXPORTY TYPŮ (Interfaces, Type Aliases)
-// Tyto prvky TypeScript při kompilaci odstraní. MUSÍ mít klíčové slovo "type".
 export type { 
   OnInit, 
   OnDestroy, 
   OnChanges, 
   SimpleChanges 
 } from '@angular/core';
-
 export type { 
   FilterParams, 
   PaginatedResponse 

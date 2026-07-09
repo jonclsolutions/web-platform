@@ -23,31 +23,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
+import { LangMeta, FlatKey } from './';
 
-// ─── Interfaces ───────────────────────────────────────────────
-
-/**
- * Metadata jazyka vrácená serverem.
- * Server ukládá ikonky na disk a vrací iconUrl (veřejná URL).
- * iconBase64 je pouze dočasný stav při nahrávání nové ikonky v UI.
- */
-export interface LangMeta {
-  code: string;        // 'cz', 'en', 'sk' …
-  name: string;        // 'Čeština', 'English' …
-  iconUrl?: string;    // veřejná URL ikonky ze serveru (null = žádná)
-  active: boolean;
-  isBuiltIn?: boolean; // true = nelze smazat
-}
-
-export interface FlatKey {
-  path: string;
-  value: string;
-  missing: boolean;    // prázdná hodnota oproti CZ vzoru
-}
-
-// localStorage klíč — pouze pro fallback seznam jazyků (bez ikonek)
 const LS_KEY = 'rpsw_languages';
-
 
 /**
  * @description Main controller for managing website localization (translations) and language settings.
@@ -71,38 +49,30 @@ export class EditWebsiteComponent
 
   private readonly MODULE = 'web';
 
-  // ── Jazyky ──────────────────────────────────────────────────
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
 
-  // ── Překlady ─────────────────────────────────────────────────
   translations: any = {};
-  czTranslations: any = {};     // referenční CZ pro diff chybějících klíčů
+  czTranslations: any = {};     
   flattenedKeys: FlatKey[] = [];
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
 
-  // ── Přidání jazyka — formulář ────────────────────────────────
   showAddForm: boolean = false;
   newLangCode: string = '';
   newLangName: string = '';
   newLangActive: boolean = true;
   addFormError: string = '';
-  /** Soubor ikonky vybraný uživatelem — odešle se jako FormData */
   private newLangIconFile: File | null = null;
-  /** Preview pro UI — zobrazí se ihned po výběru souboru */
   newLangIconPreview: string = '';
 
-  // ── Upload JSON ───────────────────────────────────────────────
   showUploadModal: boolean = false;
   uploadLangCode: string = '';
   uploadError: string = '';
   uploadSuccess: string = '';
 
-  // ── Smazání jazyka ────────────────────────────────────────────
   langToDelete: LangMeta | null = null;
 
-  // ── Statistiky (gettery, vždy aktuální) ──────────────────────
   get missingCount(): number { return this.filteredKeys.filter(k => k.missing).length; }
   get totalCount(): number   { return this.filteredKeys.length; }
   get filledCount(): number  { return this.filteredKeys.filter(k => !k.missing && k.value?.trim()).length; }
@@ -116,24 +86,15 @@ export class EditWebsiteComponent
     super(dataHandler, cd, genericTableService);
   }
 
-  // ════════════════════════════════════════════════════════════
-  // INIT
-  // ════════════════════════════════════════════════════════════
-
   override ngOnInit(): void {
     this.loadLanguages();
   }
-
-  // ════════════════════════════════════════════════════════════
-  // NAČTENÍ JAZYKŮ
-  // ════════════════════════════════════════════════════════════
 
   /**
    * @description Fetches all available languages for the current module from the API.
    * Falls back to local storage if the server request fails.
    */
   private loadLanguages(): void {
-    // Upravená URL s parametrem modulu
     this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.MODULE}`)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
@@ -144,7 +105,6 @@ export class EditWebsiteComponent
         },
         error: (err) => {
           console.error('Chyba při načítání jazyků:', err);
-          // Fallback na localStorage
           const cached = localStorage.getItem(LS_KEY);
           this.languages = cached ? JSON.parse(cached) : this.getBuiltInLanguages();
           this.afterLanguagesLoaded();
@@ -167,7 +127,6 @@ export class EditWebsiteComponent
    * @description Chains initialization logic once language definitions are ready.
    */
   private afterLanguagesLoaded(): void {
-    // Načti CZ jako referenci pro diff, pak načti aktuální jazyk
     this.loadCzReference(() => {
       this.loadLang(this.currentLang);
     });
@@ -177,14 +136,9 @@ export class EditWebsiteComponent
    * @description Caches basic language information to localStorage to allow for quick offline access.
    */
   private persistMetaToLocalStorage(): void {
-    // Ukládáme bez iconUrl — URL je server-side a může se změnit
     const stripped = this.languages.map(({ iconUrl, ...rest }) => rest);
     try { localStorage.setItem(LS_KEY, JSON.stringify(stripped)); } catch {}
   }
-
-  // ════════════════════════════════════════════════════════════
-  // NAČTENÍ PŘEKLADŮ ZE SERVERU
-  // ════════════════════════════════════════════════════════════
 
   /**
    * @description Fetches the 'cz' (master) translation file to serve as a structure reference for diffing.
@@ -199,7 +153,6 @@ export class EditWebsiteComponent
           callback?.();
         },
         error: () => {
-          // Pokud CZ selže, pokračujeme bez referenčního vzoru
           this.czTranslations = {};
           callback?.();
         }
@@ -211,7 +164,6 @@ export class EditWebsiteComponent
    * @param lang The language ISO code to select.
    */
   loadLang(lang: string): void {
-    // Pokud přepínáme na stejný jazyk a data jsou načtena, přeskočíme
     if (this.currentLang === lang && Object.keys(this.translations).length > 0) return;
     this.currentLang = lang;
     this.refreshTranslations();
@@ -239,8 +191,6 @@ export class EditWebsiteComponent
           this.applyFilter();
         },
         error: () => {
-          // JSON pro tento jazyk ještě neexistuje na serveru
-          // Inicializujeme prázdnou strukturu dle CZ vzoru
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.buildFlatList();
           this.applyFilter();
@@ -253,10 +203,6 @@ export class EditWebsiteComponent
       });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // FLAT LIST + DIFF
-  // ════════════════════════════════════════════════════════════
-
   /**
    * @description Flattens the hierarchical translation JSON into a list for easy filtering and UI representation.
    */
@@ -265,7 +211,6 @@ export class EditWebsiteComponent
     const czFlat  = this.flattenToMap(this.czTranslations);
     const curFlat = this.flattenToMap(this.translations);
 
-    // Projdi všechny klíče z CZ (master vzor)
     for (const [path] of czFlat.entries()) {
       const curVal = curFlat.get(path) ?? '';
       this.flattenedKeys.push({
@@ -275,7 +220,6 @@ export class EditWebsiteComponent
       });
     }
 
-    // Klíče které jsou v překladu ale ne v CZ vzoru (přebývající / nové)
     for (const [path, val] of curFlat.entries()) {
       if (!czFlat.has(path)) {
         this.flattenedKeys.push({ path, value: val, missing: false });
@@ -320,10 +264,6 @@ export class EditWebsiteComponent
     return result;
   }
 
-  // ════════════════════════════════════════════════════════════
-  // FILTROVÁNÍ
-  // ════════════════════════════════════════════════════════════
-
   /**
    * @description Updates the view list based on the search query input.
    */
@@ -355,10 +295,6 @@ export class EditWebsiteComponent
     this.applyFilter();
     setTimeout(() => this.resizeAllTextareas(), 10);
   }
-
-  // ════════════════════════════════════════════════════════════
-  // EDITACE HODNOT
-  // ════════════════════════════════════════════════════════════
 
   /**
    * @description Updates a translation value inside the nested object structure using dot-notation.
@@ -400,10 +336,6 @@ export class EditWebsiteComponent
     });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // ULOŽENÍ PŘEKLADŮ NA SERVER
-  // ════════════════════════════════════════════════════════════
-
   /**
    * @description POSTs the currently edited translation tree to the server.
    */
@@ -427,10 +359,6 @@ export class EditWebsiteComponent
       }
     });
   }
-
-  // ════════════════════════════════════════════════════════════
-  // SPRÁVA JAZYKŮ — PŘIDÁNÍ
-  // ════════════════════════════════════════════════════════════
 
   /**
    * @description Initializes the state for the 'Add New Language' modal.
@@ -471,7 +399,6 @@ export class EditWebsiteComponent
 
     this.newLangIconFile = file;
 
-    // Vytvoříme pouze lokální preview pro UI
     const reader = new FileReader();
     reader.onload = () => {
       this.newLangIconPreview = reader.result as string;
@@ -520,7 +447,6 @@ export class EditWebsiteComponent
       isBuiltIn: false
     };
 
-    // Sestavíme FormData — server očekává 'languages' jako JSON string
     const fd = new FormData();
     fd.append('languages', JSON.stringify([...this.languages, newLang]));
     fd.append('module', this.MODULE);
@@ -537,17 +463,13 @@ export class EditWebsiteComponent
           this.showAddForm = false;
           this.cd.markForCheck();
           
-          // 1. Znovu načteme seznam jazyků, aby se správně propsala ikonka
           this.loadLanguages();
 
-          // 2. MÍSTO volání refreshTranslations(), které by vyvolalo 404, 
-          // nastavíme prázdnou strukturu lokálně:
           this.currentLang = code;
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.buildFlatList();
           this.applyFilter();
           
-          // Upozorníme uživatele, že je jazyk prázdný
           this.alertDialogService.open(
             'Úspěch',
             `Jazyk „${code}" byl vytvořen. Nyní můžete začít překládat klíče.`,
@@ -560,10 +482,6 @@ export class EditWebsiteComponent
         }
       });
   }
-
-  // ════════════════════════════════════════════════════════════
-  // SPRÁVA JAZYKŮ — SMAZÁNÍ
-  // ════════════════════════════════════════════════════════════
 
   /**
    * @description Sets the target language for the deletion confirmation step.
@@ -600,7 +518,6 @@ export class EditWebsiteComponent
             this.translations = {};
           }
 
-          // Znovu načteme seznam jazyků ze serveru
           this.loadLanguages();
           this.cd.markForCheck();
         },
@@ -613,10 +530,6 @@ export class EditWebsiteComponent
       });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // TOGGLE ACTIVE
-  // ════════════════════════════════════════════════════════════
-
   /**
    * @description Updates the 'active' status of a language and syncs the entire manifest to the backend.
    * @param lang The language item to modify.
@@ -627,9 +540,8 @@ export class EditWebsiteComponent
 
   const fd = new FormData();
   fd.append('languages', JSON.stringify(this.languages));
-  fd.append('module', this.MODULE); // PŘIDAT TOTO
+  fd.append('module', this.MODULE);
 
-  // Upravit endpoint na: /api/languages/{module}
   this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
     .pipe(Core.takeUntil(this.destroy$))
     .subscribe({
@@ -640,10 +552,6 @@ export class EditWebsiteComponent
       }
     });
 }
-
-  // ════════════════════════════════════════════════════════════
-  // UPLOAD JSON
-  // ════════════════════════════════════════════════════════════
 
   /**
    * @description Opens the JSON upload modal.
@@ -701,7 +609,6 @@ export class EditWebsiteComponent
         this.uploadSuccess = `JSON pro „${this.uploadLangCode}" byl úspěšně uložen na server.`;
         this.uploadError   = '';
 
-        // Pokud jsme nahrávali pro aktuální jazyk, znovu načteme překlady
         if (this.uploadLangCode === this.currentLang) {
           this.translations = {};
           this.refreshTranslations();
@@ -717,10 +624,6 @@ export class EditWebsiteComponent
     });
   }
 
-  // ════════════════════════════════════════════════════════════
-  // DOWNLOAD JSON
-  // ════════════════════════════════════════════════════════════
-
   /**
    * @description Triggers a browser download of the current translation set as a JSON file.
    */
@@ -735,10 +638,6 @@ export class EditWebsiteComponent
     a.click();
     URL.revokeObjectURL(a.href);
   }
-
-  // ════════════════════════════════════════════════════════════
-  // HELPERS
-  // ════════════════════════════════════════════════════════════
 
   /**
    * @description TrackBy function for key list rendering.

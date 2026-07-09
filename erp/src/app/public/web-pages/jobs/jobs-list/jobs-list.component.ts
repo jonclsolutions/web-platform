@@ -14,7 +14,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRe
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import * as Web from '../../../../shared/imports/web-providers';
-import { JobItem } from '../../components/interfaces/job-item';
+import { JobItem } from './';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 
 /**

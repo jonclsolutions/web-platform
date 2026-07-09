@@ -1,4 +1,3 @@
-//interface pro uživatelskou roli z API
 export interface UserRole {
   role_id: number;
   role_name: string;
@@ -8,7 +7,6 @@ export interface UserRole {
   deleted_at: string | null;
 }
 
-//interface pro uživatelský účet z API
 export interface UserLogin {
   user_login_id: number;
   user_email: string;
