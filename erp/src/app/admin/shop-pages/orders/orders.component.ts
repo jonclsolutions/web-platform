@@ -73,7 +73,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
 
   showOrderForm = false;
   showDetailsModal = false;
-  override showTrashTable = false;
   showFiltersPanel = false;
 
   selectedOrderForDetail: Order | null = null;

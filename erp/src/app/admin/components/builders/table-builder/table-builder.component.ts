@@ -4,28 +4,43 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description A generic, highly configurable table component for displaying datasets with built-in CRUD actions, CSV export, and localized formatting.
+ * @description A generic, highly configurable table component for displaying datasets with
+ * built-in CRUD actions, CSV export, and localized formatting.
+ *
+ * @refactor-note (2025) Dříve dědil z BaseDataComponent kvůli `deleteData()` a napojení na
+ * alert/auth služby — data ale vždy přicházejí přes `@Input`, takže paginační/koš/cache
+ * polovinu BaseDataComponent tato komponenta nikdy nepoužívala. Nyní si skládá
+ * `EntityCrudService` přímo (pro delete + log export) a alert/auth služby injektuje sama.
+ *
  * @dependencies
- * - BaseDataComponent: Provides foundational data management and API interaction logic.
+ * - EntityCrudService: CRUD volání (delete řádku, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations.
  * - CurrencyPipe, DatePipe: Standard pipes for data formatting.
  */
 
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component, Input, Output, EventEmitter, ChangeDetectionStrategy,
+  ChangeDetectorRef, OnDestroy, OnChanges, SimpleChanges, inject
+} from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
-import * as Core from '../../../../shared/imports/core-providers';
+import { firstValueFrom, Subject } from 'rxjs';
+
+import { DataHandler } from '../../../../core/services/data-handler.service';
+import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
+import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
-import { BaseDataComponent } from '../../base-data/base-data.component';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 
 /**
- * @description Renders a dynamic data table with support for pagination, sorting, filtering, and custom action buttons.
+ * @description Renders a dynamic data table with support for pagination, sorting, filtering,
+ * and custom action buttons.
  * @usage Used across various admin modules to display entities like products, users, or orders.
- * @note Implements OnPush change detection and a processing map to prevent duplicate API requests during user interaction.
+ * @note Implements OnPush change detection and a processing map to prevent duplicate API
+ * requests during user interaction.
  */
 @Component({
   selector: 'app-table-builder',
@@ -35,12 +50,12 @@ import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
   styleUrls: ['../table-style.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TableBuilderComponent extends BaseDataComponent<any> implements Core.OnInit, Core.OnChanges {
-  @Input() override data: any[] = [];
+export class TableBuilderComponent implements OnDestroy, OnChanges {
+  @Input() data: any[] = [];
   @Input('columns') columnDefinitions: ColumnDefinition[] = [];
   @Input() inputDefinitions: InputDefinition[] = [];
   @Input() tableCaption?: string;
-  @Input() override apiEndpoint: string = '';
+  @Input() apiEndpoint: string = '';
   @Input() uploadsBaseUrl: string = '';
   @Input() buttons: TableButtons[] = [];
   @Input() isAdminTable: boolean = false;
@@ -52,47 +67,68 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
   @Output() editFormOpened = new EventEmitter<any>();
   @Output() viewDetailsOpened = new EventEmitter<any>();
   @Output() generateFormOpened = new EventEmitter<any>();
-  @Output() resetPasswordFormOpened = new EventEmitter<any>(); 
-  @Output() openImagesModal = new EventEmitter<any>(); 
-  @Output() openVariantsModal = new EventEmitter<any>(); 
+  @Output() resetPasswordFormOpened = new EventEmitter<any>();
+  @Output() openImagesModal = new EventEmitter<any>();
+  @Output() openVariantsModal = new EventEmitter<any>();
   @Output() customerOrdersOpened = new EventEmitter<any>();
 
   web_logs_endpoint: string = 'web/logs';
-  
+
+  public alertDialogService = inject(AlertDialogService);
+  public authService = inject(AuthService);
+
   private processingItemIds = new Set<any>();
+  private destroy$ = new Subject<void>();
+
+  private _crud?: EntityCrudService<any>;
+  private _logCrud?: EntityCrudService<any>;
+
+  /** CRUD pro řádky tabulky (aktuální `apiEndpoint`, lazy — @Input se může měnit). */
+  private get crud(): EntityCrudService<any> {
+    if (!this._crud) {
+      this._crud = new EntityCrudService<any>(
+        this.dataHandler, () => this.apiEndpoint, this.destroy$, () => this.cd.markForCheck()
+      );
+    }
+    return this._crud;
+  }
+
+  /** Samostatná instance pro log endpoint — jiný cíl než `apiEndpoint`. */
+  private get logCrud(): EntityCrudService<any> {
+    if (!this._logCrud) {
+      this._logCrud = new EntityCrudService<any>(
+        this.dataHandler, () => this.web_logs_endpoint, this.destroy$
+      );
+    }
+    return this._logCrud;
+  }
 
   constructor(
-    protected override dataHandler: Core.DataHandler,
-    protected override cd: Core.ChangeDetectorRef,
-    protected override genericTableService: Core.GenericTableService,
+    private dataHandler: DataHandler,
+    private cd: ChangeDetectorRef,
     private confirmDialogService: ConfirmDialogService,
-  ) {
-    super(dataHandler, cd, genericTableService);
-  }
+  ) {}
 
-  override ngOnInit(): void { 
-    super.ngOnInit(); 
-  }
+  ngOnChanges(changes: SimpleChanges): void {}
 
-  override ngOnChanges(changes: Core.SimpleChanges): void { 
-    super.ngOnChanges(changes); 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
-   * @description Resolves cell value based on column configuration and type, applying necessary pipes (currency, date, boolean).
-   * @param item The data object representing the row.
-   * @param column Metadata defining the column rendering logic.
-   * @returns {any} The processed value to be displayed.
+   * @description Resolves cell value based on column configuration and type, applying necessary
+   * pipes (currency, date, boolean).
    */
   getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
     const value = keys.reduce((obj, key) => obj?.[key], item);
-    
+
     switch (column.type) {
       case 'currency': {
         if (value === undefined || value === null || value === '') return '';
         const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'EUR';
-        const locale = 'cs-CZ'; 
+        const locale = 'cs-CZ';
         try {
           return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
         } catch (e) {
@@ -117,8 +153,6 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
 
   /**
    * @description Routes button actions to the corresponding event emitters.
-   * @param item The row item targeted by the action.
-   * @param buttonAction Identifier for the specific action requested.
    */
   handleAction(item: any, buttonAction: string): void {
     if (this.processingItemIds.has(item.id)) {
@@ -135,9 +169,9 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
           case 'details': this.viewDetailsOpened.emit(item); break;
           case 'edit': this.editFormOpened.emit(item); break;
           case 'delete': this.onDeleteAction(item); break;
-          case 'password_reset': this.resetPasswordFormOpened.emit(item); break; 
-          case 'custom_prod_var': this.openVariantsModal.emit(item); break; 
-          case 'custom_prod_img': this.openImagesModal.emit(item); break; 
+          case 'password_reset': this.resetPasswordFormOpened.emit(item); break;
+          case 'custom_prod_var': this.openVariantsModal.emit(item); break;
+          case 'custom_prod_img': this.openImagesModal.emit(item); break;
           case 'customer_orders': this.customerOrdersOpened.emit(item); break;
           default: console.warn('Unknown action type:', buttonAction);
         }
@@ -155,7 +189,7 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
     this.confirmDialogService.open('Delete Confirmation', 'Are you sure you want to delete this item?')
       .then(result => {
         if (result) {
-          this.deleteData(item.id).subscribe({
+          this.crud.remove(item.id).subscribe({
             next: () => {
               this.removeItemFromLocal(item.id);
               this.itemDeleted.emit(item);
@@ -220,7 +254,7 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
       user_id_plain: this.authService.getUserId()?.toString(),
       user_plain: this.authService.getUserEmail()
     };
-    this.dataHandler.post(this.web_logs_endpoint, logData).subscribe({
+    this.logCrud.create(logData).subscribe({
       error: (err) => console.error('Failed to log export:', err)
     });
   }
@@ -233,7 +267,8 @@ export class TableBuilderComponent extends BaseDataComponent<any> implements Cor
   }
 
   /**
-   * @description Calculates the total number of columns including action buttons for the table layout.
+   * @description Calculates the total number of columns including action buttons for the table
+   * layout.
    */
   get colspanValue(): number {
     return this.columnDefinitions.length + (this.buttons?.filter(b => b.isActive).length || 0);

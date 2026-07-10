@@ -4,28 +4,44 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Specialized table component for managing deleted records ("trash"), allowing for permanent deletion or restoration.
+ * @description Specialized table component for managing deleted records ("trash"), allowing for
+ * permanent deletion or restoration.
+ *
+ * @refactor-note (2025) Dříve dědil z BaseDataComponent — data ale vždy přicházejí přes
+ * `@Input` a paginační/koš/cache polovinu BaseDataComponent tato komponenta nikdy
+ * nevyužívala (o to se stará rodičovská "smart" stránka). Nyní si skládá
+ * `EntityCrudService` přímo (restore/delete/hard-delete-all).
+ *
  * @dependencies
- * - BaseDataComponent: Inherits core CRUD and data lifecycle management.
+ * - EntityCrudService: Inherits core CRUD and data lifecycle management.
  * - ConfirmDialogService: Ensures safe irreversible operations (permanent delete).
  * - SHARED_UI_BUILDERS: Provides UI components like toolbars and buttons.
  */
 
-import { Component, Input, ChangeDetectionStrategy, Output, EventEmitter } from '@angular/core';
+import {
+  Component, Input, ChangeDetectionStrategy, Output, EventEmitter,
+  ChangeDetectorRef, OnDestroy, OnChanges, SimpleChanges, inject
+} from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
 
-import * as Core from '../../../../shared/imports/core-providers';
+import { DataHandler } from '../../../../core/services/data-handler.service';
+import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
+import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
-import { BaseDataComponent } from '../../base-data/base-data.component';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builders';
+import * as Core from '../../../../shared/imports/core-providers';
 
 /**
- * @description A dedicated table view for displaying soft-deleted records with utility actions to restore or purge data.
+ * @description A dedicated table view for displaying soft-deleted records with utility actions
+ * to restore or purge data.
  * @usage Used in admin modules to provide a "Trash" view for data recovery.
- * @note Extends BaseDataComponent to leverage standard pagination and API interaction while adding specific trash-related logic.
+ * @note Skládá si `EntityCrudService` pro restore/delete/hard-delete-all — nededí z
+ * BaseDataComponent (nikdy nepoužíval jeho paginační/koš logiku, tu vlastní rodičovská
+ * stránková komponenta).
  */
 @Component({
   selector: 'app-trash-table-builder',
@@ -33,18 +49,18 @@ import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builder
   imports: [
     FormsModule,
     SHARED_UI_BUILDERS
-],
+  ],
   templateUrl: './trash-table-builder.component.html',
   styleUrls: ['../table-style.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TrashTableBuilderComponent extends BaseDataComponent<any> implements Core.OnInit, Core.OnChanges {
-  @Input() override data: any[] = [];
+export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
+  @Input() data: any[] = [];
   @Input('columns') columnDefinitions: ColumnDefinition[] = [];
   @Input() tableCaption?: string;
-  @Input() override apiEndpoint: string = '';
+  @Input() apiEndpoint: string = '';
   @Input() uploadsBaseUrl: string = '';
-  
+
   buttons: TableButtons[] = [
     { display_name: '♻️', header_name: "Restore", isActive: true, type: 'confirm_button', action: "restore" },
     { display_name: '🧨', header_name: "Delete Permanently", isActive: true, type: 'delete_button', action: "delete" },
@@ -66,18 +82,29 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
   @Output() itemRestored = new EventEmitter<void>();
   @Output() itemDeletedPermanently = new EventEmitter<void>();
 
-  constructor(
-    protected override dataHandler: Core.DataHandler,
-    protected override cd: Core.ChangeDetectorRef,
-    protected override genericTableService: Core.GenericTableService,
-    private confirmDialogService: ConfirmDialogService,
-  ) {
-    super(dataHandler, cd, genericTableService);
+  public alertDialogService = inject(AlertDialogService);
+
+  private destroy$ = new Subject<void>();
+  private _crud?: EntityCrudService<any>;
+
+  /** CRUD pro řádky koš tabulky (aktuální `apiEndpoint`, lazy). */
+  private get crud(): EntityCrudService<any> {
+    if (!this._crud) {
+      this._crud = new EntityCrudService<any>(
+        this.dataHandler, () => this.apiEndpoint, this.destroy$, () => this.cd.markForCheck()
+      );
+    }
+    return this._crud;
   }
+
+  constructor(
+    private dataHandler: DataHandler,
+    private cd: ChangeDetectorRef,
+    private confirmDialogService: ConfirmDialogService,
+  ) {}
 
   /**
    * @description Handles toolbar interactions, specifically for the bulk-delete action.
-   * @param action The triggered action identifier.
    */
   handleToolbarAction(action: string): void {
     if (action === 'deleteAll') {
@@ -85,24 +112,20 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
     }
   }
 
-  override ngOnChanges(changes: Core.SimpleChanges): void {
-    super.ngOnChanges(changes);
-  }
+  ngOnChanges(changes: SimpleChanges): void {}
 
-  override ngOnInit(): void {
-    super.ngOnInit();
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
    * @description Renders formatted cell content based on column definition type.
-   * @param item The source data object.
-   * @param column Configuration defining how to format the data.
-   * @returns {any} Localized/formatted string or raw value.
    */
   getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
     const value = keys.reduce((obj, key) => obj?.[key], item);
-    
+
     switch (column.type as any) {
       case 'currency': {
         if (value === undefined || value === null || value === '') return '';
@@ -115,7 +138,7 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
           return `${value} ${currency}`;
         }
       }
-      
+
       case 'date':
         return value ? (new DatePipe('cs-CZ')).transform(value, column.format || 'shortDate') : '';
       case 'boolean':
@@ -134,11 +157,9 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
   isObject(value: any): boolean {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
-  
+
   /**
    * @description Manages row-level restoration and deletion logic.
-   * @param item The target item for the action.
-   * @param action 'restore' or 'delete'.
    */
   handleAction(item: any, action: string): void {
     if (!item.id) return;
@@ -147,7 +168,7 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
       case 'restore':
         this.confirmDialogService.open('Restore Confirmation', 'Are you sure you want to restore this item?').then(result => {
           if (result) {
-            this.restoreDataFromApi(item.id).subscribe({
+            this.crud.restore(item.id).subscribe({
               next: () => {
                 this.alertDialogService.open('Success', 'Item successfully restored.', 'success');
                 this.removeItemFromLocalData(item.id);
@@ -164,7 +185,7 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
       case 'delete':
         this.confirmDialogService.open('Permanent Delete Confirmation', 'Are you sure you want to PERMANENTLY delete this item? This action is irreversible!').then(result => {
           if (result) {
-            this.deleteData(item.id, true).subscribe({
+            this.crud.remove(item.id, { forceDelete: true }).subscribe({
               next: () => {
                 this.alertDialogService.open('Success', 'Item permanently deleted.', 'success');
                 this.removeItemFromLocalData(item.id);
@@ -196,11 +217,11 @@ export class TrashTableBuilderComponent extends BaseDataComponent<any> implement
       this.alertDialogService.open('Warning', 'No items available to delete.', 'warning');
       return;
     }
-    
+
     this.confirmDialogService.open('Delete All Permanently', 'Are you sure you want to PERMANENTLY delete ALL items? This action is irreversible!')
       .then(result => {
         if (result) {
-          this.hardDeleteAllTrashedDataFromApi().subscribe({
+          this.crud.hardDeleteAllTrashed().subscribe({
             next: () => {
               this.alertDialogService.open('Success', 'All items permanently deleted.', 'success');
               this.data = [];

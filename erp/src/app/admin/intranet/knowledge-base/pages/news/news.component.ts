@@ -36,7 +36,6 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
   public override loadingService = inject(LoadingService);
 
   override apiEndpoint: string = 'web/news';
-  override itemsPerPage: number = 5; 
   
   /** * @description Buffer storing all loaded news items for the infinite scroll list. */
   accumulatedNews: any[] = [];
@@ -58,14 +57,16 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
    * @description Fetches the next page of news articles and appends them to the existing collection.
    * @note Prevents execution if a load is already in progress or if all pages have been exhausted.
    */
-  loadMore(): void {
-    const isCurrentlyLoading = (this.loadingService.isLoading$ as any).value;
 
+  loadMore(): void {
+    // 1. Zkontroluj, zda už nenačítáme nebo nejsme na konci
+    const isCurrentlyLoading = (this.loadingService.isLoading$ as any).value;
     if (isCurrentlyLoading || (this.currentPage > this.totalPages && this.totalPages !== 0)) {
       return;
     }
 
-    this.fetchPaginatedData(
+    // 2. Voláme fetchPaginatedData přes delegovanou službu 'list'
+    this.list.fetchPaginatedData(
       false, 
       this.currentPage, 
       this.itemsPerPage, 
@@ -73,7 +74,9 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
     ).subscribe({
       next: (response: PaginatedResponse<any>) => {
         if (response && response.data) {
+          // 3. Akumulujeme data
           this.accumulatedNews = [...this.accumulatedNews, ...response.data];
+          // 4. Inkrementujeme stránku (Pozor: toto už může interně řešit PaginatedListStore)
           this.currentPage++;
         }
         this.cd.markForCheck();

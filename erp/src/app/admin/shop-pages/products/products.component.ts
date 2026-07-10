@@ -45,7 +45,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   showVariantsModal = false;
   showImagesModal   = false;
   showDetailsModal  = false;
-  override showTrashTable = false;
   showFiltersPanel  = false;
 
   selectedProductForDetail: any   = null;
@@ -54,7 +53,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   editingVariantIdx: number | null = null;
   editingVariantImages: ProductImage[] = [];
 
-  override trashData: Product[] = [];
   private isProcessing = false;
 
   filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
@@ -99,29 +97,23 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
    * @param filters Active filter parameters.
    * @returns Observable of paginated product data.
    */
-  override fetchPaginatedData(
-    isTrash: boolean,
-    page: number,
-    perPage: number,
-    filters: Core.FilterParams
-  ): Core.Observable<Core.PaginatedResponse<Product>> {
-    return super.fetchPaginatedData(isTrash, page, perPage, filters).pipe(
-      Core.map((response: Core.PaginatedResponse<Product>) => {
-        if (response?.data) {
-          response.data = response.data.map((product: any) => {
-            product.price_eur      = product.prices?.price_eur_with_vat ?? 0;
-            product.category_name  = product.category?.name ?? '-';
-            product.supplier_name  = product.supplier?.name ?? '-';
-            return product;
-          });
-          if (isTrash) this.trashData = response.data;
-          else          this.data      = response.data;
-        }
+  // V ProductsComponent použij tuto logiku namísto override fetchPaginatedData
+override loadData(): void {
+  // Zavoláme standardní načtení
+  this.list.fetchPaginatedData(this.showTrashTable, this.currentPage, this.itemsPerPage, this.filters)
+    .pipe(
+      Core.map((response) => {
+        // Zde provedeš svoji transformaci dat
+        response.data = response.data.map((product: any) => {
+          product.price_eur     = product.prices?.price_eur_with_vat ?? 0;
+          product.category_name = product.category?.name ?? '-';
+          product.supplier_name = product.supplier?.name ?? '-';
+          return product;
+        });
         return response;
-      }),
-      Core.tap(() => this.cd.markForCheck())
-    );
-  }
+      })
+    ).subscribe();
+}
 
   /**
    * @description Utility to prevent background page scroll when modal overlays are displayed.
