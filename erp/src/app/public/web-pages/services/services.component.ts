@@ -4,29 +4,15 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Orchestrates the presentation of service offerings, including technology stack visualization, dynamic content filtering, and workflow step rendering.
- * @dependencies
- * - LocalizationService: Handles internationalized text for service headers and content.
- * - Reactive forms/RxJS: Manages route-based service filtering and state updates.
  */
 
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule, KeyValuePipe } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import * as Web from '../../../shared/imports/web-providers';
+import { RouterModule, ActivatedRoute } from '@angular/router';
+import { BasePublicComponent } from '../../base-public.component';
 import { Item, Technology } from './';
+import { takeUntil } from 'rxjs/operators';
 
-/**
- * @description Component for detailing available technical services and development workflows.
- * @usage Users can switch between service categories (web, desktop, mobile, AI) to see specific tech stacks and feature sets.
- * @note Implements a reactive approach to URL parameter listening for deep-linking into specific service categories.
- */
 @Component({
   selector: 'app-main-content',
   standalone: true,
@@ -35,159 +21,78 @@ import { Item, Technology } from './';
   styleUrls: ['./services.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ServicesComponent implements OnInit, OnDestroy {
-  s: any = null;
-  private destroy$ = new Web.Subject<void>();
+export class ServicesComponent extends BasePublicComponent {
+
+  protected readonly translationKey = 'services';
+  
+  private route = inject(ActivatedRoute);
 
   currentTech = 'web-dev';
   technologies: Technology[] = [];
 
-  // Static assets for visual representation
-  readonly webTechImages = [
-    { name: 'C#',         path: 'assets/images/services-img/csharp.png' },
-    { name: 'TypeScript', path: 'assets/images/services-img/ts.png' },
-    { name: 'PHP',        path: 'assets/images/services-img/php.png' },
-  ];
-  readonly desktopTechImages = [
-    { name: 'C#',     path: 'assets/images/services-img/csharp.png' },
-    { name: 'C++',    path: 'assets/images/services-img/cpp.png' },
-    { name: 'Python', path: 'assets/images/services-img/py.png' },
-  ];
-  readonly mobileTechImages = [
-    { name: 'C#',         path: 'assets/images/services-img/csharp.png' },
-    { name: 'TypeScript', path: 'assets/images/services-img/ts.png' },
-    { name: 'Kotlin',     path: 'assets/images/services-img/kotlin.png' },
-  ];
-  readonly aiTechImages = [
-    { name: 'Python', path: 'assets/images/services-img/py.png' },
-    { name: 'C++',    path: 'assets/images/services-img/cpp.png' },
-  ];
-
   readonly workflowNumbers = ['01', '02', '03', '04'];
+  readonly techAssets = {
+    'web-dev':     [{ name: 'C#', path: 'assets/images/services-img/csharp.png' }, { name: 'TypeScript', path: 'assets/images/services-img/ts.png' }, { name: 'PHP', path: 'assets/images/services-img/php.png' }],
+    'desktop-dev': [{ name: 'C#', path: 'assets/images/services-img/csharp.png' }, { name: 'C++', path: 'assets/images/services-img/cpp.png' }, { name: 'Python', path: 'assets/images/services-img/py.png' }],
+    'mobile-dev':  [{ name: 'C#', path: 'assets/images/services-img/csharp.png' }, { name: 'TypeScript', path: 'assets/images/services-img/ts.png' }, { name: 'Kotlin', path: 'assets/images/services-img/kotlin.png' }],
+    'ai-dev':      [{ name: 'Python', path: 'assets/images/services-img/py.png' }, { name: 'C++', path: 'assets/images/services-img/cpp.png' }]
+  };
 
-  constructor(
-    private cdr: ChangeDetectorRef,
-    private route: Web.ActivatedRoute,
-    private localizationService: Web.LocalizationService,
-  ) {}
-
-  /**
-   * @description Initializes service data mapping from translations and monitors route changes for category selection.
-   */
-  ngOnInit(): void {
-    this.localizationService.currentTranslations$
-      .pipe(Web.takeUntil(this.destroy$))
-      .subscribe(translations => {
-        if (translations?.services) {
-          this.s = translations.services;
-          this.technologies = [
-            { id: 'web-dev',     name: this.s.web_dev_header },
-            { id: 'desktop-dev', name: this.s.desktop_dev_header },
-            { id: 'mobile-dev',  name: this.s.mobile_dev_header },
-            { id: 'ai-dev',      name: this.s.ai_dev_header },
-          ];
-          this.cdr.detectChanges();
-        }
-      });
-
+  protected override onInit(): void {
     this.route.queryParams
-      .pipe(Web.takeUntil(this.destroy$))
+      .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
         const techId = params['tech'];
-        this.currentTech =
-          techId && this.technologies.some(t => t.id === techId)
-            ? techId
-            : 'web-dev';
-        this.cdr.detectChanges();
+        if (techId && this.technologies.some(t => t.id === techId)) {
+          this.currentTech = techId;
+          this.cdr.markForCheck();
+        }
       });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  protected override onTranslationsLoaded(): void {
+    this.technologies = [
+      { id: 'web-dev',     name: this.t.web_dev_header },
+      { id: 'desktop-dev', name: this.t.desktop_dev_header },
+      { id: 'mobile-dev',  name: this.t.mobile_dev_header },
+      { id: 'ai-dev',      name: this.t.ai_dev_header },
+    ];
   }
 
-  /**
-   * @description Dynamically selects tech stack imagery based on current selection.
-   */
   get currentTechImages() {
-    return this.currentTech === 'web-dev'     ? this.webTechImages
-         : this.currentTech === 'desktop-dev' ? this.desktopTechImages
-         : this.currentTech === 'mobile-dev'  ? this.mobileTechImages
-         : this.aiTechImages;
+    return (this.techAssets as any)[this.currentTech] || [];
   }
 
-  /**
-   * @description Resolves header text based on selected tech.
-   */
   get currentInfoHeader(): string {
-    return this.currentTech === 'web-dev'     ? this.s?.info_header_web
-         : this.currentTech === 'desktop-dev' ? this.s?.info_header_desktop
-         : this.currentTech === 'mobile-dev'  ? this.s?.info_header_mobile
-         : this.s?.info_header_ai;
+    const map: any = { 'web-dev': this.t?.info_header_web, 'desktop-dev': this.t?.info_header_desktop, 'mobile-dev': this.t?.info_header_mobile, 'ai-dev': this.t?.info_header_ai };
+    return map[this.currentTech] || '';
   }
 
-  /**
-   * @description Resolves main descriptive body text based on selected tech.
-   */
   get currentMainText(): string {
-    return this.currentTech === 'web-dev'     ? this.s?.service_main_text_1
-         : this.currentTech === 'desktop-dev' ? this.s?.service_main_text_2
-         : this.currentTech === 'mobile-dev'  ? this.s?.service_main_text_3
-         : this.s?.service_main_text_4;
+    const map: any = { 'web-dev': this.t?.service_main_text_1, 'desktop-dev': this.t?.service_main_text_2, 'mobile-dev': this.t?.service_main_text_3, 'ai-dev': this.t?.service_main_text_4 };
+    return map[this.currentTech] || '';
   }
 
-  /**
-   * @description Retrieves service items dictionary for current tech selection.
-   */
   get currentServices() {
-    return this.currentTech === 'web-dev'     ? this.s?.webServices
-         : this.currentTech === 'desktop-dev' ? this.s?.desktopServices
-         : this.currentTech === 'mobile-dev'  ? this.s?.mobileServices
-         : this.s?.aiServices;
+    const map: any = { 'web-dev': this.t?.webServices, 'desktop-dev': this.t?.desktopServices, 'mobile-dev': this.t?.mobileServices, 'ai-dev': this.t?.aiServices };
+    return map[this.currentTech] || [];
   }
 
-  /**
-   * @description Aggregates pricing items from translation dictionary.
-   */
   get priceItems() {
-    return [
-      this.s?.services?.item_1,
-      this.s?.services?.item_2,
-      this.s?.services?.item_3,
-      this.s?.services?.item_4,
-      this.s?.services?.item_5,
-      this.s?.services?.item_6,
-    ];
+    return [this.t?.services?.item_1, this.t?.services?.item_2, this.t?.services?.item_3, this.t?.services?.item_4, this.t?.services?.item_5, this.t?.services?.item_6];
   }
 
-  /**
-   * @description Aggregates collaboration workflow steps from translation dictionary.
-   */
   get workflowSteps() {
-    return [
-      this.s?.colab?.item_1,
-      this.s?.colab?.item_2,
-      this.s?.colab?.item_3,
-      this.s?.colab?.item_4,
-    ];
+    return [this.t?.colab?.item_1, this.t?.colab?.item_2, this.t?.colab?.item_3, this.t?.colab?.item_4];
   }
 
-  /**
-   * @description Toggles expansion state for FAQ/Service item elements.
-   */
   toggleFaq(item: Item): void {
     item.isActive = !item.isActive;
     this.cdr.markForCheck();
   }
 
-  /**
-   * @description Sets the currently viewed technology category.
-   */
   selectTech(techId: string): void {
-    if (this.currentTech !== techId) {
-      this.currentTech = techId;
-      this.cdr.detectChanges();
-    }
+    this.currentTech = techId;
+    this.cdr.markForCheck();
   }
 }

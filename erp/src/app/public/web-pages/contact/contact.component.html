@@ -8,12 +8,12 @@
     
 <div class="contact-page">
   <aside class="panel-left">
-    <span class="side-label" aria-hidden="true">{{ f?.side_label }}</span>
+    <span class="side-label" aria-hidden="true">{{ t.side_label }}</span>
     <div class="panel-left-content">
       <div class="brand-block">
-        <p class="brand-eyebrow">{{ f?.brand_eyebrow }}</p>
-        <h1 class="brand-headline" [innerHTML]="f?.brand_headline"></h1>
-        <p class="brand-sub">{{ f?.brand_sub }}</p>
+        <p class="brand-eyebrow">{{ t.brand_eyebrow }}</p>
+        <h1 class="brand-headline" [innerHTML]="t.brand_headline"></h1>
+        <p class="brand-sub">{{ t.brand_sub }}</p>
       </div>
 
       <div class="stats-row">
@@ -56,21 +56,21 @@
 
       <div class="form-wrapper">
         <div class="form-header">
-          <p class="form-eyebrow">{{ f?.form_eyebrow }}</p>
-          <h2 class="form-title">{{ f?.form_title }}</h2>
+          <p class="form-eyebrow">{{ t.form_eyebrow }}</p>
+          <h2 class="form-title">{{ t.form_title }}</h2>
         </div>
 
         <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" novalidate class="form-body">
 
           <div class="field-group">
-            <label class="field-label" for="subject">{{ f?.labels?.subject }}</label>
+            <label class="field-label" for="subject">{{ t.labels?.subject }}</label>
             <div class="select-wrap">
               <select id="subject" formControlName="subject" class="field-input">
-                <option value="web">{{ f?.options?.web }}</option>
-                <option value="desktop">{{ f?.options?.desktop }}</option>
-                <option value="mobile">{{ f?.options?.mobile }}</option>
-                <option value="ai">{{ f?.options?.ai }}</option>
-                <option value="other">{{ f?.options?.other }}</option>
+                <option value="web">{{ t.options?.web }}</option>
+                <option value="desktop">{{ t.options?.desktop }}</option>
+                <option value="mobile">{{ t.options?.mobile }}</option>
+                <option value="ai">{{ t.options?.ai }}</option>
+                <option value="other">{{ t.options?.other }}</option>
               </select>
               <span class="select-arrow" aria-hidden="true">↓</span>
             </div>
@@ -79,28 +79,28 @@
           <div class="field-row">
             <div class="field-group">
               <label class="field-label" for="email">
-                {{ f?.labels?.email }} <span class="req">*</span>
+                {{ t.labels?.email }} <span class="req">*</span>
               </label>
               <input
                 id="email"
                 type="email"
                 formControlName="email"
-                [placeholder]="f?.placeholders?.email"
+                [placeholder]="t.placeholders?.email"
                 class="field-input"
                 [class.is-error]="fieldInvalid('email')"
                 autocomplete="email">
               @if (fieldInvalid('email')) {
-                <span class="field-error">{{ f?.errors?.email_invalid }}</span>
+                <span class="field-error">{{ t.errors?.email_invalid }}</span>
               }
             </div>
 
             <div class="field-group">
-              <label class="field-label" for="phone">{{ f?.labels?.phone }}</label>
+              <label class="field-label" for="phone">{{ t.labels?.phone }}</label>
               <input
                 id="phone"
                 type="tel"
                 formControlName="phone"
-                [placeholder]="f?.placeholders?.phone"
+                [placeholder]="t.placeholders?.phone"
                 class="field-input"
                 autocomplete="tel">
             </div>
@@ -108,39 +108,39 @@
 
           <div class="field-group">
             <label class="field-label" for="message">
-              {{ f?.labels?.message }} <span class="req">*</span>
+              {{ t.labels?.message }} <span class="req">*</span>
             </label>
             <textarea
               id="message"
               formControlName="message"
               rows="5"
-              [placeholder]="f?.placeholders?.message"
+              [placeholder]="t.placeholders?.message"
               class="field-input textarea"
               [class.is-error]="fieldInvalid('message')">
             </textarea>
             @if (fieldInvalid('message')) {
               <span class="field-error">
-                @if (contactForm.get('message')?.hasError('required')) { {{ f?.errors?.message_required }} }
-                @else if (contactForm.get('message')?.hasError('minlength')) { {{ f?.errors?.message_minlength }} }
-                @else if (contactForm.get('message')?.hasError('maxlength')) { {{ f?.errors?.message_maxlength }} }
+                @if (contactForm.get('message')?.hasError('required')) { {{ t.errors?.message_required }} }
+                @else if (contactForm.get('message')?.hasError('minlength')) { {{ t.errors?.message_minlength }} }
+                @else if (contactForm.get('message')?.hasError('maxlength')) { {{ t.errors?.message_maxlength }} }
               </span>
             }
           </div>
 
           <div class="field-group">
             <label class="field-label">
-              {{ f?.labels?.attachment }} <span class="field-hint">{{ f?.labels?.attachment_hint }}</span>
+              {{ t.labels?.attachment }} <span class="field-hint">{{ t.labels?.attachment_hint }}</span>
             </label>
             <label class="file-zone" [class.file-zone--has]="selectedFile">
               @if (!selectedFile) {
                 <span class="file-zone-icon" aria-hidden="true">↑</span>
-                <span class="file-zone-text">{{ f?.placeholders?.file_drop }}</span>
+                <span class="file-zone-text">{{ t.placeholders?.file_drop }}</span>
               } @else {
                 <span class="file-zone-icon" aria-hidden="true">✓</span>
                 <span class="file-zone-text file-zone-name">{{ selectedFile.name }}</span>
                 <button type="button" class="file-remove"
                   (click)="removeFile(); $event.stopPropagation()"
-                  [attr.aria-label]="f?.buttons?.remove_file">✕</button>
+                  [attr.aria-label]="t.buttons?.remove_file">✕</button>
               }
               <input type="file" class="file-hidden" (change)="onFileSelected($event)" tabindex="-1" aria-hidden="true">
             </label>
@@ -151,8 +151,8 @@
               <input type="checkbox" formControlName="gdpr" class="checkbox-input">
               <span class="checkbox-box" aria-hidden="true"></span>
               <span class="checkbox-text">
-                {{ f?.labels?.gdpr_consent }}
-                <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">{{ f?.labels?.gdpr_link }}</a>
+                {{ t.labels?.gdpr_consent }}
+                <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">{{ t.labels?.gdpr_link }}</a>
                 <span class="req"> *</span>
               </span>
             </label>
@@ -165,9 +165,9 @@
             [disabled]="contactForm.invalid || isLoading()">
             @if (isLoading()) {
               <span class="spinner" aria-hidden="true"></span>
-              <span>{{ f?.buttons?.sending }}</span>
+              <span>{{ t.buttons?.sending }}</span>
             } @else {
-              <span>{{ f?.buttons?.send }}</span>
+              <span>{{ t.buttons?.send }}</span>
               <span class="btn-arrow" aria-hidden="true">→</span>
             }
           </button>
@@ -179,9 +179,9 @@
 
       <div class="success-panel">
         <div class="success-icon" aria-hidden="true">✓</div>
-        <h2 class="success-title">{{ f?.thank_you?.title }}</h2>
-        <p class="success-text">{{ f?.thank_you?.text }}</p>
-        <a routerLink="/home" class="back-btn">{{ f?.buttons?.go_home }}</a>
+        <h2 class="success-title">{{ t.thank_you?.title }}</h2>
+        <p class="success-text">{{ t.thank_you?.text }}</p>
+        <a routerLink="/home" class="back-btn">{{ t.buttons?.go_home }}</a>
       </div>
 
     }

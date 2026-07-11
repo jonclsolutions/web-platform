@@ -6,28 +6,28 @@
     @created: 2025
 -->
 
-@if (r) {
+@if (t) {
 <div class="ref-page">
 
   <section class="ref-hero">
-    <div class="ref-hero-eyebrow">{{ r?.hero_eyebrow }}</div>
-    <h1 class="ref-hero-title">{{ r?.header_1 }}</h1>
-    <p class="ref-hero-sub">{{ r?.hero_sub }}</p>
+    <div class="ref-hero-eyebrow">{{ t.hero_eyebrow }}</div>
+    <h1 class="ref-hero-title">{{ t.header_1 }}</h1>
+    <p class="ref-hero-sub">{{ t.hero_sub }}</p>
 
     <div class="ref-hero-stats">
       <div class="ref-hero-stat">
-        <span class="ref-hero-stat-num">{{ r?.stat_1_num }}</span>
-        <span class="ref-hero-stat-label">{{ r?.stat_1_label }}</span>
+        <span class="ref-hero-stat-num">{{ t.stat_1_num }}</span>
+        <span class="ref-hero-stat-label">{{ t.stat_1_label }}</span>
       </div>
       <div class="ref-stat-sep" aria-hidden="true"></div>
       <div class="ref-hero-stat">
-        <span class="ref-hero-stat-num">{{ r?.stat_2_num }}</span>
-        <span class="ref-hero-stat-label">{{ r?.stat_2_label }}</span>
+        <span class="ref-hero-stat-num">{{ t.stat_2_num }}</span>
+        <span class="ref-hero-stat-label">{{ t.stat_2_label }}</span>
       </div>
       <div class="ref-stat-sep" aria-hidden="true"></div>
       <div class="ref-hero-stat">
-        <span class="ref-hero-stat-num">{{ r?.stat_3_num }}</span>
-        <span class="ref-hero-stat-label">{{ r?.stat_3_label }}</span>
+        <span class="ref-hero-stat-num">{{ t.stat_3_num }}</span>
+        <span class="ref-hero-stat-label">{{ t.stat_3_label }}</span>
       </div>
     </div>
   </section>
@@ -37,40 +37,40 @@
     <aside class="ref-sidebar">
 
       <div class="sidebar-card">
-        <div class="sidebar-card-eyebrow">{{ r?.sidebar_about_eyebrow }}</div>
-        <h3 class="sidebar-card-title">{{ r?.sidebar_about_title }}</h3>
-        <p class="sidebar-card-text">{{ r?.sidebar_about_text }}</p>
+        <div class="sidebar-card-eyebrow">{{ t.sidebar_about_eyebrow }}</div>
+        <h3 class="sidebar-card-title">{{ t.sidebar_about_title }}</h3>
+        <p class="sidebar-card-text">{{ t.sidebar_about_text }}</p>
       </div>
 
       <div class="sidebar-card">
-        <div class="sidebar-card-eyebrow">{{ r?.sidebar_legend_eyebrow }}</div>
+        <div class="sidebar-card-eyebrow">{{ t.sidebar_legend_eyebrow }}</div>
         <div class="legend-list">
           <div class="legend-item">
             <span class="legend-dot legend-dot--web"></span>
-            <span class="legend-label">{{ r?.legend_web }}</span>
+            <span class="legend-label">{{ t.legend_web }}</span>
           </div>
           <div class="legend-item">
             <span class="legend-dot legend-dot--desktop"></span>
-            <span class="legend-label">{{ r?.legend_desktop }}</span>
+            <span class="legend-label">{{ t.legend_desktop }}</span>
           </div>
           <div class="legend-item">
             <span class="legend-dot legend-dot--mobile"></span>
-            <span class="legend-label">{{ r?.legend_mobile }}</span>
+            <span class="legend-label">{{ t.legend_mobile }}</span>
           </div>
           <div class="legend-item">
             <span class="legend-dot legend-dot--ai"></span>
-            <span class="legend-label">{{ r?.legend_ai }}</span>
+            <span class="legend-label">{{ t.legend_ai }}</span>
           </div>
         </div>
       </div>
 
       <div class="sidebar-archive-card">
-        <p class="sidebar-archive-text">{{ r?.sidebar_archive_text }}</p>
+        <p class="sidebar-archive-text">{{ t.sidebar_archive_text }}</p>
         <a
           target="_blank"
           href="https://www.regiopartner.cz/archiv-ukoncenych-projektu-1404041473.html"
           class="sidebar-archive-btn">
-          {{ r?.sidebar_archive_btn }}
+          {{ t.sidebar_archive_btn }}
           <span aria-hidden="true">↗</span>
         </a>
       </div>
@@ -80,9 +80,9 @@
     <main class="ref-main">
 
       <div class="ref-table-header">
-        <span class="ref-col-title">{{ r?.table_header_title }}</span>
-        <span class="ref-col-duration">{{ r?.table_header_duration }}</span>
-        <span class="ref-col-client">{{ r?.table_header_client }}</span>
+        <span class="ref-col-title">{{ t.table_header_title }}</span>
+        <span class="ref-col-duration">{{ t.table_header_duration }}</span>
+        <span class="ref-col-client">{{ t.table_header_client }}</span>
       </div>
 
       <div class="ref-list" role="list">
@@ -121,12 +121,12 @@
       </div>
 
       <div class="ref-more-row">
-        <p class="ref-more-text">{{ r?.more_button_prompt }}</p>
+        <p class="ref-more-text">{{ t.more_button_prompt }}</p>
         <a
           target="_blank"
           href="https://www.regiopartner.cz/archiv-ukoncenych-projektu-1404041473.html"
           class="ref-more-btn">
-          {{ r?.more_button_link_text }}
+          {{ t.more_button_link_text }}
           <span class="ref-more-arrow" aria-hidden="true">→</span>
         </a>
       </div>
@@ -137,19 +137,19 @@
   <section class="ref-cta-section">
     <div class="cta-row">
       <div class="cta-block">
-        <p class="cta-eyebrow">{{ r?.cta_1_eyebrow }}</p>
-        <p class="cta-text">{{ r?.cta_1_text }}</p>
+        <p class="cta-eyebrow">{{ t.cta_1_eyebrow }}</p>
+        <p class="cta-text">{{ t.cta_1_text }}</p>
         <a routerLink="/services" class="cta-btn">
-          {{ r?.cta_1_btn }}
+          {{ t.cta_1_btn }}
           <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
       <div class="cta-divider" aria-hidden="true"></div>
       <div class="cta-block">
-        <p class="cta-eyebrow">{{ r?.cta_2_eyebrow }}</p>
-        <p class="cta-text">{{ r?.cta_2_text }}</p>
+        <p class="cta-eyebrow">{{ t.cta_2_eyebrow }}</p>
+        <p class="cta-text">{{ t.cta_2_text }}</p>
         <a routerLink="/contact" class="cta-btn cta-btn--accent">
-          {{ r?.cta_2_btn }}
+          {{ t.cta_2_btn }}
           <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>

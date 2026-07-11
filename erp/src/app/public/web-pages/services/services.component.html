@@ -6,13 +6,13 @@
     @created: 2025 
 -->
 
-@if (s) {
+@if (t) {
 <div class="svc-page">
 
   <section class="svc-hero">
-    <div class="svc-hero-eyebrow">{{ s?.small_header }}</div>
-    <h1 class="svc-hero-title">{{ s?.header_1_text }}</h1>
-    <p class="svc-hero-sub">{{ s?.hero_sub }}</p>
+    <div class="svc-hero-eyebrow">{{ t.small_header }}</div>
+    <h1 class="svc-hero-title">{{ t.header_1_text }}</h1>
+    <p class="svc-hero-sub">{{ t.hero_sub }}</p>
     <div class="tech-tabs" role="tablist">
       @for (tech of technologies; track tech.id) {
         <button
@@ -37,7 +37,7 @@
           <h2 class="svc-panel-title">{{ currentInfoHeader }}</h2>
         </div>
         <div class="svc-body-text" [innerHTML]="currentMainText"></div>
-        <div class="faq-label">{{ s?.info_header_3 }}</div>
+        <div class="faq-label">{{ t.info_header_3 }}</div>
         <div class="faq-list" role="list">
           @for (item of (currentServices | keyvalue); track item.key; let i = $index) {
             <div
@@ -67,9 +67,9 @@
 
       <aside class="svc-sidebar">
         <div class="sidebar-card">
-          <div class="sidebar-label">{{ s?.info_header_1 }}</div>
-          @if (s?.info_header_2) {
-            <div class="sidebar-sublabel">{{ s?.info_header_2 }}</div>
+          <div class="sidebar-label">{{ t.info_header_1 }}</div>
+          @if (t.info_header_2) {
+            <div class="sidebar-sublabel">{{ t.info_header_2 }}</div>
           }
           <div class="tech-grid">
             @for (item of currentTechImages; track item.name) {
@@ -84,20 +84,20 @@
         </div>
         <div class="sidebar-stats-grid">
           <div class="sidebar-stat-card">
-            <span class="sidebar-stat-num">{{ s?.sidebar_label_1 }}</span>
-            <span class="sidebar-stat-label">{{ s?.sidebar_stat_1 }}</span>
+            <span class="sidebar-stat-num">{{ t.sidebar_label_1 }}</span>
+            <span class="sidebar-stat-label">{{ t.sidebar_stat_1 }}</span>
           </div>
           <div class="sidebar-stat-card">
-            <span class="sidebar-stat-num">{{ s?.sidebar_label_2}}</span>
-            <span class="sidebar-stat-label">{{ s?.sidebar_stat_2 }}</span>
+            <span class="sidebar-stat-num">{{ t.sidebar_label_2}}</span>
+            <span class="sidebar-stat-label">{{ t.sidebar_stat_2 }}</span>
           </div>
           <div class="sidebar-stat-card">
-            <span class="sidebar-stat-num">{{ s?.sidebar_label_3 }}</span>
-            <span class="sidebar-stat-label">{{ s?.sidebar_stat_3 }}</span>
+            <span class="sidebar-stat-num">{{ t.sidebar_label_3 }}</span>
+            <span class="sidebar-stat-label">{{ t.sidebar_stat_3 }}</span>
           </div>
           <div class="sidebar-stat-card">
-            <span class="sidebar-stat-num">{{ s?.sidebar_label_4 }}</span>
-            <span class="sidebar-stat-label">{{ s?.sidebar_stat_4 }}</span>
+            <span class="sidebar-stat-num">{{ t.sidebar_label_4 }}</span>
+            <span class="sidebar-stat-label">{{ t.sidebar_stat_4 }}</span>
           </div>
         </div>
       </aside>
@@ -106,8 +106,8 @@
 
   <section class="svc-workflow-section">
     <div class="svc-section-header">
-      <div class="section-eyebrow">{{ s?.workflow_header }}</div>
-      <h2 class="section-title">{{ s?.colab?.colab_procces_header }}</h2>
+      <div class="section-eyebrow">{{ t.workflow_header }}</div>
+      <h2 class="section-title">{{ t.colab?.colab_procces_header }}</h2>
     </div>
 
     <div class="wf-desktop" aria-hidden="false">
@@ -150,8 +150,8 @@
 
   <section class="svc-prices-section">
     <div class="svc-section-header">
-      <div class="section-eyebrow">{{ s?.prices_header }}</div>
-      <h2 class="section-title">{{ s?.services?.prices_header }}</h2>
+      <div class="section-eyebrow">{{ t.prices_header }}</div>
+      <h2 class="section-title">{{ t.services?.prices_header }}</h2>
     </div>
     <div class="prices-grid">
       @for (item of priceItems; track item; let i = $index) {
@@ -160,11 +160,11 @@
           <div class="price-card-body">
             <div class="price-amount">
               @if (item?.price !== 'Variabilní cena') {
-                <span class="price-prefix">{{ s?.services?.text_preffix }}</span>
+                <span class="price-prefix">{{ t.services?.text_preffix }}</span>
               }
               <span class="price-value">{{ item?.price }}</span>
               @if (item?.price !== 'Variabilní cena') {
-                <span class="price-currency">{{ s?.services?.currency }}</span>
+                <span class="price-currency">{{ t.services?.currency }}</span>
               }
             </div>
             <p class="price-note">{{ item?.message }}</p>
@@ -177,17 +177,17 @@
   <section class="svc-cta-section">
     <div class="cta-row">
       <div class="cta-block">
-        <p class="cta-text">{{ s?.show_projects_header }}</p>
+        <p class="cta-text">{{ t.show_projects_header }}</p>
         <a routerLink="/references" class="cta-btn">
-          {{ s?.projects_button_text }}
+          {{ t.projects_button_text }}
           <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
       <div class="cta-divider" aria-hidden="true"></div>
       <div class="cta-block">
-        <p class="cta-text">{{ s?.show_contact_header }}</p>
+        <p class="cta-text">{{ t.show_contact_header }}</p>
         <a routerLink="/contact" class="cta-btn cta-btn--accent">
-          {{ s?.contact_button_text }}
+          {{ t.contact_button_text }}
           <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>

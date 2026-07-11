@@ -1,17 +1,4 @@
-/**
- * @file job-item.component.ts
- * @path src/app/pages/jobs/job-item/job-item.component.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2025
- * @description Handles the specific job application page, managing the application form, file attachments, and data submission.
- * @dependencies
- * - BaseDataComponent: Extends core functionality for handling API communication and state.
- * - ReactiveFormsModule: Manages form group validation and state.
- * - PublicDataService/LocalizationService: Provides configuration and localized content.
- */
-
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -23,11 +10,6 @@ import { LocalizationService } from '../../../../shared/services/localization.se
 import { LoadingService } from '../../../../core/services/loading.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 
-/**
- * @description Component for displaying a single job posting and its associated application form.
- * @usage Used for candidates to review job details and upload their CV.
- * @note Extends BaseDataComponent to leverage shared administrative data handling patterns while maintaining public-facing logic.
- */
 @Component({
   selector: 'app-job-item',
   standalone: true,
@@ -36,8 +18,9 @@ import { PublicDataService } from '../../../../shared/services/public-data.servi
   styleUrl: './job-item.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class JobItemComponent extends BaseDataComponent<any> implements OnInit, OnDestroy {
+export class JobItemComponent extends BaseDataComponent<any> implements OnInit {
   public override loadingService = inject(LoadingService);
+  // Endpoint pro PublicDataService
   override apiEndpoint: string = 'job_applications';
 
   applicationForm!: FormGroup;
@@ -47,30 +30,29 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
   isSubmitted = false;
   selectedFile: File | null = null;
 
+  private localizationService = inject(LocalizationService);
+  private publicDataService = inject(PublicDataService);
+  private route = inject(ActivatedRoute);
+  private fb = inject(FormBuilder);
+
   constructor(
     protected override dataHandler: DataHandler,
     protected override cd: ChangeDetectorRef,
-    protected override genericTableService: GenericTableService,
-    private route: ActivatedRoute,
-    private fb: FormBuilder,
-    private localizationService: LocalizationService,
-    private publicDataService: PublicDataService
+    protected override genericTableService: GenericTableService
   ) {
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Initializes form controls and subscribes to translation/settings streams.
-   */
   override ngOnInit(): void {
+    super.ngOnInit(); 
     this.initForm();
+    this.loadPublicData();
+  }
 
+  private loadPublicData(): void {
     this.publicDataService.get<{settings: any}>('public/legal/config')
       .pipe(takeUntil(this.destroy$))
-      .subscribe(res => {
-        this.settings = res.settings;
-        this.cd.markForCheck();
-      });
+      .subscribe(res => { this.settings = res.settings; this.cd.markForCheck(); });
 
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))
@@ -83,24 +65,17 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
       });
   }
 
-  /**
-   * @description Sets up the application form structure with validation.
-   */
   private initForm(): void {
     this.applicationForm = this.fb.group({
-      first_name:              ['', Validators.required],
-      last_name:               ['', Validators.required],
-      email:                   ['', [Validators.required, Validators.email]],
-      phone:                   [''],
-      message:                 [''],
+      first_name: ['', Validators.required],
+      last_name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      phone: [''],
+      message: [''],
       dataProcessingAgreement: [false, Validators.requiredTrue]
     });
   }
 
-  /**
-   * @description Captures file selection from the DOM input.
-   * @param event File input event.
-   */
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
@@ -109,53 +84,45 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit, 
     }
   }
 
-  /**
-   * @description Prepares form data and submits the application via Multipart/Form-Data.
-   */
+  // ZDE POUŽÍVÁME PUBLIC DATA SERVICE MÍSTO BASEDATACOMPONENT
   onSubmit(): void {
     if (this.applicationForm.invalid || !this.selectedFile) {
       this.applicationForm.markAllAsTouched();
       return;
     }
 
-    this.errorMessage = null;
-
     const formData = new FormData();
     Object.keys(this.applicationForm.value).forEach(key => {
       const value = this.applicationForm.value[key];
       if (value !== null && value !== undefined) {
-        const finalValue = key === 'dataProcessingAgreement' ? (value ? '1' : '0') : value;
-        formData.append(key, finalValue);
+        formData.append(key, key === 'dataProcessingAgreement' ? (value ? '1' : '0') : value);
       }
     });
 
     if (this.job) formData.append('position_name', this.job.title);
     formData.append('cv_file', this.selectedFile, this.selectedFile.name);
 
-    this.uploadData<any>(formData).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: () => {
-        this.isSubmitted = true;
-        this.cd.markForCheck();
-      },
-      error: () => {
-        this.errorMessage = this.t?.form_error_generic ?? 'An error occurred. Please try again.';
-        this.cd.markForCheck();
-      }
-    });
+    this.loadingService.show();
+    this.publicDataService.post<any>(this.apiEndpoint, formData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.isSubmitted = true;
+          this.loadingService.hide();
+          this.cd.markForCheck();
+        },
+        error: (err) => {
+          this.errorMessage = err.error?.message || this.t?.form_error_generic || 'Error';
+          this.loadingService.hide();
+          this.cd.markForCheck();
+        }
+      });
   }
 
-  /**
-   * @description Extracts job-specific content from translation keys based on route parameters.
-   */
   private loadJobData(): void {
     const jobId = this.route.snapshot.paramMap.get('id');
     if (jobId && this.t[jobId]) {
-      this.job = {
-        title:       this.t[jobId].title,
-        fullContent: this.t[jobId].content
-      };
+      this.job = { title: this.t[jobId].title, fullContent: this.t[jobId].content };
     }
   }
 }

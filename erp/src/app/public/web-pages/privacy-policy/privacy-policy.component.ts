@@ -4,24 +4,13 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Renders legal documentation (GDPR or Terms of Service) dynamically fetched based on the application's selected language and document slug.
- * @dependencies
- * - PublicDataService: Provides access to legal document content from the backend.
- * - LocalizationService: Supplies localized metadata and triggers document refresh on language change.
  */
 
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { switchMap, takeUntil } from 'rxjs/operators';
-import * as Web from '../../../shared/imports/web-providers';
-import { PublicDataService } from '../../../shared/imports/web-providers';
-import { LocalizationService } from '../../../shared/services/localization.service';
+import { BasePublicComponent } from '../../base-public.component';
+import { takeUntil } from 'rxjs/operators';
 
-/**
- * @description Component for displaying legal documents.
- * @usage Used for displaying GDPR and Terms of Service pages.
- * @note Implements reactive streams to automatically fetch new document versions when the user switches the UI language.
- */
 @Component({
   selector: 'app-privacy-policy',
   standalone: true,
@@ -30,36 +19,22 @@ import { LocalizationService } from '../../../shared/services/localization.servi
   styleUrl: './privacy-policy.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PrivacyPolicyComponent implements OnInit, OnDestroy {
-  /** Input defining the document type; determines which API endpoint is queried */
-  @Input() docSlug: 'gdpr' | 'tos' = 'gdpr';
+export class PrivacyPolicyComponent extends BasePublicComponent {
   
+  protected readonly translationKey = 'privacy_policy';
+
+  @Input() docSlug: 'gdpr' | 'tos' = 'gdpr';
   data: any = null;
-  t: any = null; 
-  private destroy$ = new Web.Subject<void>();
 
-  constructor(
-    private publicDataService: PublicDataService,
-    private localizationService: LocalizationService,
-    private cdr: ChangeDetectorRef
-  ) {}
-
-  /**
-   * @description Initializes document fetching pipelines.
-   */
-  ngOnInit(): void {
-    this.localizationService.currentTranslations$
+  protected override onInit(): void {
+    this.currentLanguage$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(translations => {
-        this.t = translations?.privacy_policy;
-        this.cdr.markForCheck();
-      });
+      .subscribe((lang) => this.loadDocument(lang));
+  }
 
-    this.localizationService.currentLanguage$
-      .pipe(
-        takeUntil(this.destroy$),
-        switchMap((lang) => this.publicDataService.get(`public/legal/${this.docSlug}`, { lang }))
-      )
+  private loadDocument(lang: string): void {
+    this.publicDataService.get(`public/legal/${this.docSlug}`, { lang })
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
           this.data = res;
@@ -67,13 +42,5 @@ export class PrivacyPolicyComponent implements OnInit, OnDestroy {
         },
         error: (err) => console.error(`Error loading legal document ${this.docSlug}:`, err)
       });
-  }
-
-  /**
-   * @description Tears down subscriptions to ensure memory management.
-   */
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }
