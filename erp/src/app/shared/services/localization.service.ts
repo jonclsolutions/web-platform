@@ -11,8 +11,8 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface ApiLanguage {
@@ -105,9 +105,8 @@ export class LocalizationService {
           active: l.active
         }))
       })),
-      tap(res => {
-        this.languagesCache = res.languages;
-      })
+      tap(res => { this.languagesCache = res.languages; }),
+      catchError(() => of({ languages: this.languagesCache })) // tichý fallback na poslední známý stav
     );
   }
 

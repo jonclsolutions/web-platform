@@ -4,34 +4,45 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Serves as the central management hub, aggregating operational KPIs, sales trends, and real-time shop status.
+ * @description Serves as the central management hub, aggregating operational KPIs, sales trends,
+ * and real-time shop status.
+ *
+ * @refactor-note (2025) Dříve volal `HttpClient` přímo (vlastní `/api` prefix, žádné centrální
+ * error handling). Dashboard ale agreguje HNED SEDM různých endpointů paralelně přes `forkJoin`
+ * — nejde o jeden resource s aktivní/koš duplicitou, takže dědit z `BaseDataComponent` by byla
+ * špatná abstrakce (ten předpokládá jeden `apiEndpoint`). Správná vrstva k opakovanému použití
+ * je tu `DataHandler` přímo — stejná služba, kterou interně používá i `EntityCrudService` — dává
+ * jednotný `baseUrl` a centralizované error hlášení, takže komponenta už vůbec nepotřebuje znát
+ * `HttpClient` ani `HttpClientModule`.
+ *
  * @dependencies
- * - HttpClient: Handles REST API communication for data fetching.
+ * - DataHandler: Centralizovaná HTTP komunikace (baseUrl + error handling) — nahrazuje HttpClient.
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
  */
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { forkJoin, interval, Subscription } from 'rxjs';
-import { catchError, of } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { forkJoin, interval, Subscription, catchError, of } from 'rxjs';
+import { DataHandler } from '../../../core/services/data-handler.service';
 import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } from './';
 
 /**
- * @description Orchestrates the administration dashboard, visualizing key performance metrics and operational tasks.
- * @usage Provides a high-level overview for store administrators to track sales, inventory, and pending orders.
- * @note Implements an automatic data-polling mechanism to ensure the dashboard remains up-to-date without page reloads.
+ * @description Orchestrates the administration dashboard, visualizing key performance metrics and
+ * operational tasks.
+ * @usage Provides a high-level overview for store administrators to track sales, inventory, and
+ * pending orders.
+ * @note Implements an automatic data-polling mechanism to ensure the dashboard remains up-to-date
+ * without page reloads.
  */
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HttpClientModule],
+  imports: [CommonModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
 
-  private readonly API = '/api';
   private refreshSub?: Subscription;
 
   loading = true;
@@ -86,7 +97,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   totalRevenue = 0;
   revenueThisMonth = 0;
 
-  constructor(private http: HttpClient) {}
+  constructor(private dataHandler: DataHandler) {}
 
   ngOnInit(): void {
     this.loadAll();
@@ -98,20 +109,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Fetches all dashboard modules concurrently using forkJoin and handles global loading/error states.
+   * @description Fetches all dashboard modules concurrently using forkJoin and handles global
+   * loading/error states.
+   * @note Každé volání je zabaleno vlastním `catchError(() => of(null))` — jednotlivý selhavší
+   * widget (např. výpadek endpointu s doporučeními) tak nespadne celý dashboard, jen se
+   * příslušná karta nevykreslí. DataHandler přitom na pozadí případnou chybu ještě centrálně
+   * nahlásí přes AlertDialogService, takže uživatel o výpadku ví.
    */
   loadAll(): void {
     this.loading = true;
     this.loadingError = false;
 
     forkJoin({
-      orders: this.http.get<any>(`${this.API}/shop/orders?per_page=10&sort_by=created_at&sort_direction=desc`).pipe(catchError(() => of(null))),
-      allOrders: this.http.get<any>(`${this.API}/shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc`).pipe(catchError(() => of(null))),
-      customers: this.http.get<any>(`${this.API}/shop/customers?per_page=1`).pipe(catchError(() => of(null))),
-      products: this.http.get<any>(`${this.API}/shop/products?per_page=1&is_active=true`).pipe(catchError(() => of(null))),
-      lowStock: this.http.get<any>(`${this.API}/shop/products?low_stock=true&no_pagination=true`).pipe(catchError(() => of(null))),
-      coupons: this.http.get<any>(`${this.API}/shop/coupons?is_active=true&per_page=1`).pipe(catchError(() => of(null))),
-      pendingOrders: this.http.get<any>(`${this.API}/shop/orders?status=pending&per_page=1`).pipe(catchError(() => of(null))),
+      orders: this.dataHandler.getPaginatedCollection<any>('shop/orders?per_page=10&sort_by=created_at&sort_direction=desc').pipe(catchError(() => of(null))),
+      allOrders: this.dataHandler.getPaginatedCollection<any>('shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc').pipe(catchError(() => of(null))),
+      customers: this.dataHandler.getPaginatedCollection<any>('shop/customers?per_page=1').pipe(catchError(() => of(null))),
+      products: this.dataHandler.getPaginatedCollection<any>('shop/products?per_page=1&is_active=true').pipe(catchError(() => of(null))),
+      lowStock: this.dataHandler.getPaginatedCollection<any>('shop/products?low_stock=true&no_pagination=true').pipe(catchError(() => of(null))),
+      coupons: this.dataHandler.getPaginatedCollection<any>('shop/coupons?is_active=true&per_page=1').pipe(catchError(() => of(null))),
+      pendingOrders: this.dataHandler.getPaginatedCollection<any>('shop/orders?status=pending&per_page=1').pipe(catchError(() => of(null))),
     }).subscribe({
       next: (res) => {
         this.processData(res);
@@ -188,7 +204,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Normalizes order status counts into a percentage breakdown for the status visualization.
+   * @description Normalizes order status counts into a percentage breakdown for the status
+   * visualization.
    * @param orders Full list of shop orders.
    */
   private buildStatusBreakdown(orders: any[]): void {
@@ -235,7 +252,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Constructs the KPI dashboard cards based on calculated revenue and order statistics.
+   * @description Constructs the KPI dashboard cards based on calculated revenue and order
+   * statistics.
    */
   private buildKpiCards(): void {
     this.kpiCards = [

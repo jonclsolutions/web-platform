@@ -4,18 +4,27 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Manages internationalization (i18n) settings, translation keys, and language metadata for the shop module.
+ * @description Manages internationalization (i18n) settings, translation keys, and language
+ * metadata for the shop module.
+ *
+ * @refactor-note (2025) Tři metody (`confirmAddLang`, `confirmDeleteLang`, `toggleLangActive`)
+ * dřív injektovaly vlastní `HttpClient` a volaly ho s ručně napsaným `/api/languages/{module}`
+ * prefixem — zatímco zbytek souboru (`loadLanguages`, `loadCzReference`, `onSubmit`…) už
+ * používal jednotně `this.dataHandler` (z `BaseDataComponent`). Sjednoceno: `dataHandler.upload()`
+ * pro multipart POST a `dataHandler.delete()` pro DELETE, se stejnou konvencí endpointů jako
+ * zbytek aplikace (bez `/api` prefixu — ten už řeší `DataHandler.baseUrl`). `HttpClient` už
+ * komponenta vůbec nepotřebuje.
+ *
  * @dependencies
  * - BaseDataComponent: Provides foundational CRUD state management.
  * - LoadingService: Manages application-wide loading indicators.
- * - HttpClient: Handles multipart/form-data and standard REST requests for language assets.
+ * - DataHandler: Handles multipart/form-data and standard REST requests for language assets.
  */
 
 import {
   Component, ChangeDetectionStrategy, ChangeDetectorRef,
   inject, OnInit, OnDestroy
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import * as Core from '../../../shared/imports/core-providers';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -26,9 +35,12 @@ import { LangMeta, FlatKey } from './';
 const LS_KEY = 'rpsw_languages';
 
 /**
- * @description Serves as the primary controller for language management and key-based translation editing.
- * @usage Provides administrators the interface to add/remove languages, upload/download JSON translation packs, and translate strings.
- * @note Implements a recursive diffing mechanism against a 'CZ' reference language to identify untranslated keys.
+ * @description Serves as the primary controller for language management and key-based
+ * translation editing.
+ * @usage Provides administrators the interface to add/remove languages, upload/download JSON
+ * translation packs, and translate strings.
+ * @note Implements a recursive diffing mechanism against a 'CZ' reference language to identify
+ * untranslated keys.
  */
 @Component({
   selector: 'app-edit-shop',
@@ -51,7 +63,7 @@ export class EditEshopComponent
   currentLang: string = 'cz';
 
   translations: any = {};
-  czTranslations: any = {};     
+  czTranslations: any = {};
   flattenedKeys: FlatKey[] = [];
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
@@ -82,7 +94,6 @@ export class EditEshopComponent
     protected override dataHandler: Core.DataHandler,
     protected override cd: ChangeDetectorRef,
     protected override genericTableService: Core.GenericTableService,
-    private http: HttpClient,
   ) {
     super(dataHandler, cd, genericTableService);
   }
@@ -92,7 +103,8 @@ export class EditEshopComponent
   }
 
   /**
-   * @description Fetches language metadata from the server, falling back to local storage if necessary.
+   * @description Fetches language metadata from the server, falling back to local storage if
+   * necessary.
    */
   private loadLanguages(): void {
     this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.MODULE}`)
@@ -130,7 +142,8 @@ export class EditEshopComponent
   }
 
   /**
-   * @description Loads CZ as the master reference structure to identify missing keys in other languages.
+   * @description Loads CZ as the master reference structure to identify missing keys in other
+   * languages.
    * @param callback Optional hook to trigger once the reference data is fetched.
    */
   private loadCzReference(callback?: () => void): void {
@@ -190,7 +203,8 @@ export class EditEshopComponent
   }
 
   /**
-   * @description Compares current language structure against the CZ master reference to identify missing content.
+   * @description Compares current language structure against the CZ master reference to identify
+   * missing content.
    */
   private buildFlatList(): void {
     this.flattenedKeys = [];
@@ -324,7 +338,8 @@ export class EditEshopComponent
   }
 
   /**
-   * @description Processes user-selected flag file, creates a local preview, and validates file size.
+   * @description Processes user-selected flag file, creates a local preview, and validates file
+   * size.
    */
   onIconFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -355,7 +370,8 @@ export class EditEshopComponent
   }
 
   /**
-   * @description Submits a new language definition using multipart/form-data to include flag imagery.
+   * @description Submits a new language definition using multipart/form-data to include flag
+   * imagery.
    */
   confirmAddLang(): void {
     const code = this.newLangCode.trim().toLowerCase();
@@ -393,7 +409,7 @@ export class EditEshopComponent
       fd.append('target_code', code);
     }
 
-   this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
+    this.dataHandler.upload<{ status: string }>(`languages/${this.MODULE}`, fd)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -405,7 +421,7 @@ export class EditEshopComponent
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.buildFlatList();
           this.applyFilter();
-          
+
           this.alertDialogService.open(
             'Success',
             `Language „${code}" created.`,
@@ -433,7 +449,7 @@ export class EditEshopComponent
     if (!this.langToDelete) return;
     const code = this.langToDelete.code;
 
-    this.http.delete<void>(`/api/languages/${this.MODULE}/${code}`)
+    this.dataHandler.delete(`languages/${this.MODULE}/${code}`)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -457,7 +473,8 @@ export class EditEshopComponent
   }
 
   /**
-   * @description Toggles language activation state by posting the full updated language metadata list to the server.
+   * @description Toggles language activation state by posting the full updated language metadata
+   * list to the server.
    */
   toggleLangActive(lang: LangMeta): void {
     lang.active = !lang.active;
@@ -467,7 +484,7 @@ export class EditEshopComponent
     fd.append('languages', JSON.stringify(this.languages));
     fd.append('module', this.MODULE);
 
-    this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
+    this.dataHandler.upload<{ status: string }>(`languages/${this.MODULE}`, fd)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         error: () => {

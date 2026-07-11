@@ -5,10 +5,19 @@
  * @author RPSW
  * @created 2025
  * @description Manages web localization, translation files, and language metadata administration.
+ *
+ * @refactor-note (2025) Tři metody (`confirmAddLang`, `confirmDeleteLang`, `toggleLangActive`)
+ * dřív injektovaly vlastní `HttpClient` a volaly ho s ručně napsaným `/api/languages/{module}`
+ * prefixem — zatímco zbytek souboru (`loadLanguages`, `loadCzReference`, `onSubmit`…) už
+ * používal jednotně `this.dataHandler` (z `BaseDataComponent`). Sjednoceno: `dataHandler.upload()`
+ * pro multipart POST a `dataHandler.delete()` pro DELETE, se stejnou konvencí endpointů jako
+ * zbytek aplikace (bez `/api` prefixu — ten už řeší `DataHandler.baseUrl`). `HttpClient` už
+ * komponenta vůbec nepotřebuje.
+ *
  * @dependencies
  * - Angular Core/Common/Forms/Router: Standard framework utilities.
  * - BaseDataComponent: Inheritance for base CRUD and state handling.
- * - HttpClient: Used for multipart/form-data operations (icons/files).
+ * - DataHandler: Used for multipart/form-data operations (icons/files) i standardní REST volání.
  * - LoadingService: Global UI loading state management.
  */
 
@@ -16,7 +25,6 @@ import {
   Component, ChangeDetectionStrategy, ChangeDetectorRef,
   inject, OnInit, OnDestroy
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import * as Core from '../../../shared/imports/core-providers';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -28,9 +36,12 @@ import { LangMeta, FlatKey } from './';
 const LS_KEY = 'rpsw_languages';
 
 /**
- * @description Main controller for managing website localization (translations) and language settings.
- * @usage Enables CRUD operations for languages, provides an inline editor for translation keys, and supports JSON-based bulk updates.
- * @note Implements differential translation checking against the 'cz' locale to identify missing keys.
+ * @description Main controller for managing website localization (translations) and language
+ * settings.
+ * @usage Enables CRUD operations for languages, provides an inline editor for translation keys,
+ * and supports JSON-based bulk updates.
+ * @note Implements differential translation checking against the 'cz' locale to identify missing
+ * keys.
  */
 @Component({
   selector: 'app-edit-website',
@@ -53,7 +64,7 @@ export class EditWebsiteComponent
   currentLang: string = 'cz';
 
   translations: any = {};
-  czTranslations: any = {};     
+  czTranslations: any = {};
   flattenedKeys: FlatKey[] = [];
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
@@ -81,7 +92,6 @@ export class EditWebsiteComponent
     protected override dataHandler: Core.DataHandler,
     protected override cd: ChangeDetectorRef,
     protected override genericTableService: Core.GenericTableService,
-    private http: HttpClient,
   ) {
     super(dataHandler, cd, genericTableService);
   }
@@ -141,7 +151,8 @@ export class EditWebsiteComponent
   }
 
   /**
-   * @description Fetches the 'cz' (master) translation file to serve as a structure reference for diffing.
+   * @description Fetches the 'cz' (master) translation file to serve as a structure reference for
+   * diffing.
    * @param callback Optional trigger to continue loading after reference data is cached.
    */
   private loadCzReference(callback?: () => void): void {
@@ -170,7 +181,8 @@ export class EditWebsiteComponent
   }
 
   /**
-   * @description Communicates with the server to reload translations for the currently active locale.
+   * @description Communicates with the server to reload translations for the currently active
+   * locale.
    */
   public refreshTranslations(): void {
     this.errorMessage = null;
@@ -204,7 +216,8 @@ export class EditWebsiteComponent
   }
 
   /**
-   * @description Flattens the hierarchical translation JSON into a list for easy filtering and UI representation.
+   * @description Flattens the hierarchical translation JSON into a list for easy filtering and UI
+   * representation.
    */
   private buildFlatList(): void {
     this.flattenedKeys = [];
@@ -456,20 +469,20 @@ export class EditWebsiteComponent
       fd.append('target_code', code);
     }
 
-    this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
+    this.dataHandler.upload<{ status: string }>(`languages/${this.MODULE}`, fd)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.showAddForm = false;
           this.cd.markForCheck();
-          
+
           this.loadLanguages();
 
           this.currentLang = code;
           this.translations = this.buildEmptyFromCz(this.czTranslations);
           this.buildFlatList();
           this.applyFilter();
-          
+
           this.alertDialogService.open(
             'Úspěch',
             `Jazyk „${code}" byl vytvořen. Nyní můžete začít překládat klíče.`,
@@ -507,7 +520,7 @@ export class EditWebsiteComponent
     if (!this.langToDelete) return;
     const code = this.langToDelete.code;
 
-    this.http.delete<void>(`/api/languages/${this.MODULE}/${code}`)
+    this.dataHandler.delete(`languages/${this.MODULE}/${code}`)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -531,27 +544,28 @@ export class EditWebsiteComponent
   }
 
   /**
-   * @description Updates the 'active' status of a language and syncs the entire manifest to the backend.
+   * @description Updates the 'active' status of a language and syncs the entire manifest to the
+   * backend.
    * @param lang The language item to modify.
    */
   toggleLangActive(lang: LangMeta): void {
-  lang.active = !lang.active;
-  this.cd.markForCheck();
+    lang.active = !lang.active;
+    this.cd.markForCheck();
 
-  const fd = new FormData();
-  fd.append('languages', JSON.stringify(this.languages));
-  fd.append('module', this.MODULE);
+    const fd = new FormData();
+    fd.append('languages', JSON.stringify(this.languages));
+    fd.append('module', this.MODULE);
 
-  this.http.post<{ status: string }>(`/api/languages/${this.MODULE}`, fd)
-    .pipe(Core.takeUntil(this.destroy$))
-    .subscribe({
-      error: () => {
-        lang.active = !lang.active;
-        this.alertDialogService.open('Chyba', 'Nepodařilo se uložit změnu.', 'danger');
-        this.cd.markForCheck();
-      }
-    });
-}
+    this.dataHandler.upload<{ status: string }>(`languages/${this.MODULE}`, fd)
+      .pipe(Core.takeUntil(this.destroy$))
+      .subscribe({
+        error: () => {
+          lang.active = !lang.active;
+          this.alertDialogService.open('Chyba', 'Nepodařilo se uložit změnu.', 'danger');
+          this.cd.markForCheck();
+        }
+      });
+  }
 
   /**
    * @description Opens the JSON upload modal.
@@ -643,7 +657,7 @@ export class EditWebsiteComponent
    * @description TrackBy function for key list rendering.
    */
   trackByPath(_: number, item: FlatKey): string  { return item.path; }
-  
+
   /**
    * @description TrackBy function for language list rendering.
    */

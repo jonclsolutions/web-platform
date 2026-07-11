@@ -4,18 +4,30 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Central administrative dashboard component providing a high-level overview of system metrics, recent activities, and navigation shortcuts.
+ * @description Central administrative dashboard component providing a high-level overview of
+ * system metrics, recent activities, and navigation shortcuts.
+ *
+ * @refactor-note (2025) Dříve volal `HttpClient` přímo pro agregační dotazy (loadStats,
+ * loadRecentActivity) vedle `BaseDataComponent`, který už `DataHandler` sám injektuje pro
+ * `getItemDetails()`. Teď se pro všechny requesty používá jednotně `this.dataHandler`
+ * (`getPaginatedCollection`, aby zůstal zachovaný `.total` z odpovědi) — komponenta už
+ * vůbec nepotřebuje znát `HttpClient` ani ruční `/api` prefix.
+ *
+ * Zároveň opraveno: `ngOnDestroy` dřív nevolal `super.ngOnDestroy()`, takže `destroy$`
+ * z `BaseDataComponent` se nikdy nedokončil a `crud`/`list` instance uvnitř base třídy by
+ * si nikdy neuklidily své subscriptions.
+ *
  * @dependencies
- * - BaseDataComponent: Inherited base class for state management and API access.
+ * - BaseDataComponent: Inherited base class for state management and API access (deleguje na
+ *   EntityCrudService / PaginatedListStore).
  * - LoadingService: Manages global loading states.
- * - HttpClient: Facilitates direct API communication for non-standard dashboard endpoints.
+ * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
  */
 
 import { Component, ChangeDetectionStrategy, inject, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { Subscription, forkJoin } from 'rxjs';
 import { catchError, of } from 'rxjs';
 
@@ -27,8 +39,10 @@ import { ActivityLog, QuickStat, NavSection } from './';
 
 /**
  * @description Serves as the primary landing page for authenticated administrators.
- * @usage Provides immediate access to administrative sections and visualizes key performance indicators (KPIs).
- * @note Implements component-level data aggregation from multiple API endpoints to populate the dashboard view.
+ * @usage Provides immediate access to administrative sections and visualizes key performance
+ * indicators (KPIs).
+ * @note Implements component-level data aggregation from multiple API endpoints to populate the
+ * dashboard view.
  */
 @Component({
   selector: 'app-dashboard',
@@ -41,7 +55,6 @@ import { ActivityLog, QuickStat, NavSection } from './';
 export class DashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit, OnDestroy {
 
   public override loadingService = inject(LoadingService);
-  private http = inject(HttpClient);
 
   override apiEndpoint = 'core/users';
 
@@ -145,29 +158,32 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   }
 
   /**
-   * @description Aggregates statistical data from multiple system modules concurrently using forkJoin.
-   * @note If an individual request fails, it defaults to null to ensure the rest of the dashboard remains functional.
+   * @description Aggregates statistical data from multiple system modules concurrently using
+   * forkJoin.
+   * @note If an individual request fails, it defaults to null to ensure the rest of the dashboard
+   * remains functional. `getPaginatedCollection` je zvolený záměrně (ne `getCollection`), protože
+   * potřebujeme zachovat `.total` z odpovědi, ne jen odbalené pole záznamů.
    */
   private loadStats(): void {
     this.loadingStats = true;
 
     forkJoin({
-      users:        this.http.get<any>('/api/core/users?per_page=1').pipe(catchError(() => of(null))),
-      webLogs:      this.http.get<any>('/api/web/logs?per_page=1').pipe(catchError(() => of(null))),
-      tickets:      this.http.get<any>('/api/web/support_tickets?per_page=1').pipe(catchError(() => of(null))),
-      openTickets:  this.http.get<any>('/api/web/support_tickets?status=open&per_page=1').pipe(catchError(() => of(null))),
-      jobApps:      this.http.get<any>('/api/web/job_applications?per_page=1').pipe(catchError(() => of(null))),
-      leads:        this.http.get<any>('/api/web/sales_leads?per_page=1').pipe(catchError(() => of(null))),
-      news:         this.http.get<any>('/api/web/news?per_page=1').pipe(catchError(() => of(null))),
+      users:        this.dataHandler.getPaginatedCollection<any>('core/users?per_page=1').pipe(catchError(() => of(null))),
+      webLogs:      this.dataHandler.getPaginatedCollection<any>('web/logs?per_page=1').pipe(catchError(() => of(null))),
+      tickets:      this.dataHandler.getPaginatedCollection<any>('web/support_tickets?per_page=1').pipe(catchError(() => of(null))),
+      openTickets:  this.dataHandler.getPaginatedCollection<any>('web/support_tickets?status=open&per_page=1').pipe(catchError(() => of(null))),
+      jobApps:      this.dataHandler.getPaginatedCollection<any>('web/job_applications?per_page=1').pipe(catchError(() => of(null))),
+      leads:        this.dataHandler.getPaginatedCollection<any>('web/sales_leads?per_page=1').pipe(catchError(() => of(null))),
+      news:         this.dataHandler.getPaginatedCollection<any>('web/news?per_page=1').pipe(catchError(() => of(null))),
     }).subscribe({
       next: (res) => {
         this.quickStats = [
           { label: 'Uživatelé systému', value: res.users?.total ?? '—', icon: '👤', color: 'sky' },
-          { 
-            label: 'Otevřené tickety', 
-            value: res.openTickets?.total ?? '—', 
-            icon: '🎫', 
-            color: res.openTickets?.total > 0 ? 'amber' : 'green' 
+          {
+            label: 'Otevřené tickety',
+            value: res.openTickets?.total ?? '—',
+            icon: '🎫',
+            color: res.openTickets?.total > 0 ? 'amber' : 'green'
           },
           { label: 'Uchazeči', value: res.jobApps?.total ?? '—', icon: '📄', color: 'green' },
           { label: 'Obchodní leady', value: res.leads?.total ?? '—', icon: '💼', color: 'indigo' },
@@ -189,7 +205,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
    */
   private loadRecentActivity(): void {
     this.loadingActivity = true;
-    this.http.get<any>('/api/web/logs?per_page=8&sort_by=created_at&sort_direction=desc')
+    this.dataHandler.getPaginatedCollection<any>('web/logs?per_page=8&sort_by=created_at&sort_direction=desc')
       .pipe(catchError(() => of(null)))
       .subscribe({
         next: (res) => {
@@ -249,5 +265,6 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   override ngOnDestroy(): void {
     this.emailSub?.unsubscribe();
+    super.ngOnDestroy();
   }
 }
