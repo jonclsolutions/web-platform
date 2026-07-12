@@ -22,6 +22,8 @@ export class NotFoundComponent extends BasePublicComponent {
   
   protected readonly translationKey = 'not_found';
   
+  icon_path: string = "/erp/src/assets/images/svg/not-found.svg";
+
   private router = inject(Router);
   attemptedUrl: string = '';
 

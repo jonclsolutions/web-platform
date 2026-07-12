@@ -22,10 +22,21 @@ export class HomeComponent extends BasePublicComponent {
     mobileapp: 'assets/images/backgrounds/service-mobile.jpg',
     aiapp: 'assets/images/backgrounds/service-ai.jpg',
   };
+
+  server: string = "assets/images/svg/server.svg";
+  web_desk: string = "assets/images/svg/web-desk.svg";
+  desktop_desk: string = "assets/images/svg/desktop-desk.svg";
+  mobile_desk: string = "assets/images/svg/mobile-desk.svg";
+  ai_desk: string = "assets/images/svg/ai-desk.svg";
+  server_resp_1: string = "assets/images/svg/server-resp-1.svg";
+  server_resp_2: string = "assets/images/svg/server-resp-2.svg";
+
+  web_mob: string = "assets/images/svg/web-mob.svg";
+  desktop_mob: string = "assets/images/svg/desktop-mob.svg";
+  mobile_mob: string = "assets/images/svg/mobile-mob.svg";
+  ai_mob: string = "assets/images/svg/ai-mob.svg";
   
-  eshop_default: string = 'assets/images/product_images/admin_panel.png';
-  survey_engine: string = 'assets/images/product_images/survey_engine.png';
-  survey_solver: string = 'assets/images/product_images/survey_solver.png';
+
   check_mark: string = 'assets/images/icons/check.png';
 
   c_sharp: string = 'assets/images/services-img/csharp.png';
