@@ -1539,7 +1539,7 @@ button[type="submit"]:active {
     }
 }
 
-@media (min-width: 1131px) {
+@media (min-width: 1331px) {
     .mobile-hero-m {
         display: none;
     }
@@ -2687,8 +2687,14 @@ button[type="submit"]:active {
   }
 }
 
-@media (max-width: 905px){
+@media (max-width: 1131px){
     .desktop-content{
         display: none;
+    }
+}
+
+@media (min-width: 1131px) and (max-width: 1331px){
+    .mobile-content-fix{
+        display: block;
     }
 }

@@ -30,6 +30,7 @@ export class HomeComponent extends BasePublicComponent {
   ai_desk: string = "assets/images/svg/ai-desk.svg";
   server_resp_1: string = "assets/images/svg/server-resp-1.svg";
   server_resp_2: string = "assets/images/svg/server-resp-2.svg";
+  server_mobile: string = "assets/images/svg/server-mobile.svg";
 
   web_mob: string = "assets/images/svg/web-mob.svg";
   desktop_mob: string = "assets/images/svg/desktop-mob.svg";
