@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { GenericDetailsComponent } from './details-builder.component';
+import { DetailsBuilderComponent } from './details-builder.component';
 
-describe('GenericDetailsComponent', () => {
-  let component: GenericDetailsComponent;
-  let fixture: ComponentFixture<GenericDetailsComponent>;
+describe('DetailsBuilderComponent', () => {
+  let component: DetailsBuilderComponent;
+  let fixture: ComponentFixture<DetailsBuilderComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [GenericDetailsComponent]
+      imports: [DetailsBuilderComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(GenericDetailsComponent);
+    fixture = TestBed.createComponent(DetailsBuilderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

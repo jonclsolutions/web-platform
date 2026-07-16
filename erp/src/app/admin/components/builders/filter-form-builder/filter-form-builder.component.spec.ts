@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { GenericFilterFormComponent } from './filter-form-builder.component';
+import { FilterFormBuilderComponent } from './filter-form-builder.component';
 
-describe('GenericFilterFormComponent', () => {
-  let component: GenericFilterFormComponent;
-  let fixture: ComponentFixture<GenericFilterFormComponent>;
+describe('FilterFormBuilderComponent', () => {
+  let component: FilterFormBuilderComponent;
+  let fixture: ComponentFixture<FilterFormBuilderComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [GenericFilterFormComponent]
+      imports: [FilterFormBuilderComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(GenericFilterFormComponent);
+    fixture = TestBed.createComponent(FilterFormBuilderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

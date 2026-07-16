@@ -27,7 +27,6 @@ export class NotFoundComponent extends BasePublicComponent {
   private router = inject(Router);
   attemptedUrl: string = '';
 
-  // Hook volaný po základní inicializaci v bázi
   protected override onInit(): void {
     const navigation = this.router.getCurrentNavigation();
     

@@ -26,7 +26,6 @@ export class TosComponent extends BasePublicComponent {
   data: any = null;
 
   protected override onInit(): void {
-    // Sledování změny jazyka pro automatické přenačtení TOS
     this.currentLanguage$
       .pipe(takeUntil(this.destroy$))
       .subscribe((lang) => this.loadTos(lang));
