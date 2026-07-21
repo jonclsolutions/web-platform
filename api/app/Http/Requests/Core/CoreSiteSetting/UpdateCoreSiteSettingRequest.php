@@ -1,14 +1,14 @@
 <?php
 /**
  * @file UpdateCoreSiteSettingRequest.php
- * @path app/Http/Requests/Core/CoreSiteSettings/UpdateCoreSiteSettingRequest.php
+ * @path app/Http/Requests/Core/CoreSiteSetting/UpdateCoreSiteSettingRequest.php
  * @project RPSW Web
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating core site settings, specifically managing maintenance mode status and messaging.
  */
 
-namespace App\Http\Requests\Core\CoreSiteSettings;
+namespace App\Http\Requests\Core\CoreSiteSetting;
 
 use Illuminate\Foundation\Http\FormRequest;
 

@@ -706,7 +706,7 @@ width: 45%;
     margin-top: 35px;
 }
 .s-1-t, .s-2-t, .s-3-t {
-    font-size: 1.6rem;
+    font-size: 1.2rem;
     text-align: center;
 }
 .stat-1, .stat-2, .stat-3 {
@@ -1437,8 +1437,7 @@ button[type="submit"]:active {
 }
 
 @media (max-width: 905px) {
-    .l-1-2:hover{
-    }
+
     .product-card:hover{
         transform: none;
     }
@@ -2300,11 +2299,11 @@ button[type="submit"]:active {
   gap: 2px;
   overflow: hidden;
 }
-.about-service-card:hover {
+/* .about-service-card:hover {
   border-color: rgba(166,125,255,0.38);
   background: rgba(166,125,255,0.05);
   transform: translateY(-4px);
-}
+} */
 .about-strip {
   position: relative;
   background: #111128;

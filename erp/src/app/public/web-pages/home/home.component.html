@@ -1,6 +1,6 @@
 <!-- 
-    @file: home.component.html
-    @path: /src/app/public/web-pages/home/home.component.html
+    @file: home.component?.html
+    @path: /src/app/public/web-pages/home/home.component?.html
     @project: RPSW Web
     @author: RPSW
     @created: 2025
@@ -495,9 +495,9 @@
     </div>
 @if (t) {
   <section class="about-section">
-    <div class="about-eyebrow">{{ t.about?.eyebrow }}</div>
-    <h2 class="about-heading" [innerHTML]="t.about?.heading"></h2>
-    <p class="about-lead">{{ t.about?.lead }}</p>
+    <div class="about-eyebrow">{{ t?.about?.eyebrow }}</div>
+    <h2 class="about-heading" [innerHTML]="t?.about?.heading"></h2>
+    <p class="about-lead">{{ t?.about?.lead }}</p>
 
     <div class="about-services-grid">
       @for (service of [
@@ -507,8 +507,8 @@
         { key: 'ai', tech: 'ai-dev' }
       ]; track service.key) {
         <a routerLink="/services" [queryParams]="{ tech: service.tech }" class="about-service-card">
-          <div class="about-service-name">{{ t.about?.services[service.key]?.name }}</div>
-          <div class="about-service-desc">{{ t.about?.services[service.key]?.desc }}</div>
+          <div class="about-service-name">{{ t?.about?.services[service.key]?.name }}</div>
+          <div class="about-service-desc">{{ t?.about?.services[service.key]?.desc }}</div>
         </a>
       }
     </div>
@@ -519,8 +519,8 @@
           <div class="about-strip-body">
             <span class="about-strip-num">{{ step }}</span>
             <div class="about-strip-content">
-              <div class="about-strip-title">{{ t.about?.steps[step]?.title }}</div>
-              <div class="about-strip-text">{{ t.about?.steps[step]?.text }}</div>
+              <div class="about-strip-title">{{ t?.about?.steps[step]?.title }}</div>
+              <div class="about-strip-text">{{ t?.about?.steps[step]?.text }}</div>
             </div>
           </div>
         </a>
@@ -603,7 +603,7 @@
           </ul>
         </div>
       </div>
-      <div class="benefit-item-tag_temp_new">{{ t?.why_us_quality_header_3 }}</div>
+      <div class="benefit-item-tag_temp_new">{{ t?.why_us_quality_header_2 }}</div>
     </div>
   </div>
 </div>
@@ -611,11 +611,11 @@
   <div class="gradient-line-separator"></div>
 </div>
 
-@if (t && t.tech_stack) {
+@if (t && t?.tech_stack) {
   <div class="home-stack-section">
-      <div class="home-stack-eyebrow">{{ t.tech_stack.eyebrow }}</div>
+      <div class="home-stack-eyebrow">{{ t?.tech_stack.eyebrow }}</div>
       <div class="home-stack-grid">
-          @for (tech of t.tech_stack.items; track tech.name) {
+          @for (tech of t?.tech_stack.items; track tech.name) {
               <div class="home-stack-item">
                   <div class="home-stack-icon">
                       <img [src]="getTechIcon(tech.name)" [alt]="tech.alt">
@@ -627,14 +627,14 @@
   </div>
 }
  
-@if (t && t.cta) {
+@if (t && t?.cta) {
     <section class="home-cta-section">
         <div class="home-cta-row">
             <div class="home-cta-block">
-                <p class="home-cta-eyebrow">{{ t.cta.references?.eyebrow }}</p>
-                <p class="home-cta-text">{{ t.cta.references?.text }}</p>
+                <p class="home-cta-eyebrow">{{ t?.cta.references?.eyebrow }}</p>
+                <p class="home-cta-text">{{ t?.cta.references?.text }}</p>
                 <a routerLink="/references" class="home-cta-btn">
-                    {{ t.cta.references?.btn }}
+                    {{ t?.cta.references?.btn }}
                     <span class="home-cta-arrow" aria-hidden="true">→</span>
                 </a>
             </div>
@@ -642,10 +642,10 @@
             <div class="home-cta-divider" aria-hidden="true"></div>
             
             <div class="home-cta-block">
-                <p class="home-cta-eyebrow">{{ t.cta.contact?.eyebrow }}</p>
-                <p class="home-cta-text">{{ t.cta.contact?.text }}</p>
+                <p class="home-cta-eyebrow">{{ t?.cta.contact?.eyebrow }}</p>
+                <p class="home-cta-text">{{ t?.cta.contact?.text }}</p>
                 <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
-                    {{ t.cta.contact?.btn }}
+                    {{ t?.cta.contact?.btn }}
                     <span class="home-cta-arrow" aria-hidden="true">→</span>
                 </a>
             </div>
@@ -1189,9 +1189,9 @@
     </a>
     </div>
 <section class="about-section">
-  <div class="about-eyebrow">{{ t.about_eyebrow }}</div>
-  <h2 class="about-heading" [innerHTML]="t.about_heading"></h2>
-  <p class="about-lead">{{ t.about_lead }}</p>
+  <div class="about-eyebrow">{{ t?.about_eyebrow }}</div>
+  <h2 class="about-heading" [innerHTML]="t?.about_heading"></h2>
+  <p class="about-lead">{{ t?.about_lead }}</p>
 
   <div class="about-services-grid">
     <a routerLink="/services" [queryParams]="{ tech: 'web-dev' }" class="about-service-card">
@@ -1200,8 +1200,8 @@
           <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
         </svg>
       </div>
-      <div class="about-service-name">{{ t.web_header }}</div>
-      <div class="about-service-desc">{{ t.web_desc }}</div>
+      <div class="about-service-name">{{ t?.web_header }}</div>
+      <div class="about-service-desc">{{ t?.web_desc }}</div>
     </a>
     <a routerLink="/services" [queryParams]="{ tech: 'desktop-dev' }" class="about-service-card">
       <div class="about-service-icon">
@@ -1209,8 +1209,8 @@
           <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 2v4M16 2v4M2 10h20"/>
         </svg>
       </div>
-      <div class="about-service-name">{{ t.desktop_header }}</div>
-      <div class="about-service-desc">{{ t.desktop_desc }}</div>
+      <div class="about-service-name">{{ t?.desktop_header }}</div>
+      <div class="about-service-desc">{{ t?.desktop_desc }}</div>
     </a>
     <a routerLink="/services" [queryParams]="{ tech: 'mobile-dev' }" class="about-service-card">
       <div class="about-service-icon">
@@ -1218,8 +1218,8 @@
           <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
         </svg>
       </div>
-      <div class="about-service-name">{{ t.mobile_header }}</div>
-      <div class="about-service-desc">{{ t.mobile_desc }}</div>
+      <div class="about-service-name">{{ t?.mobile_header }}</div>
+      <div class="about-service-desc">{{ t?.mobile_desc }}</div>
     </a>
     <a routerLink="/services" [queryParams]="{ tech: 'ai-dev' }" class="about-service-card">
       <div class="about-service-icon">
@@ -1227,8 +1227,8 @@
           <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/>
         </svg>
       </div>
-      <div class="about-service-name">{{ t.ai_header }}</div>
-      <div class="about-service-desc">{{ t.ai_desc }}</div>
+      <div class="about-service-name">{{ t?.ai_header }}</div>
+      <div class="about-service-desc">{{ t?.ai_desc }}</div>
     </a>
   </div>
 
@@ -1238,8 +1238,8 @@
       <div class="about-strip-body">
         <span class="about-strip-num">01</span>
         <div class="about-strip-content">
-          <div class="about-strip-title">{{ t.step_1_title }}</div>
-          <div class="about-strip-text">{{ t.step_1_text }}</div>
+          <div class="about-strip-title">{{ t?.step_1_title }}</div>
+          <div class="about-strip-text">{{ t?.step_1_text }}</div>
         </div>
         <svg class="about-strip-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </div>
@@ -1249,8 +1249,8 @@
       <div class="about-strip-body">
         <span class="about-strip-num">02</span>
         <div class="about-strip-content">
-          <div class="about-strip-title">{{ t.step_2_title }}</div>
-          <div class="about-strip-text">{{ t.step_2_text }}</div>
+          <div class="about-strip-title">{{ t?.step_2_title }}</div>
+          <div class="about-strip-text">{{ t?.step_2_text }}</div>
         </div>
         <svg class="about-strip-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </div>
@@ -1260,8 +1260,8 @@
       <div class="about-strip-body">
         <span class="about-strip-num">03</span>
         <div class="about-strip-content">
-          <div class="about-strip-title">{{ t.step_3_title }}</div>
-          <div class="about-strip-text">{{ t.step_3_text }}</div>
+          <div class="about-strip-title">{{ t?.step_3_title }}</div>
+          <div class="about-strip-text">{{ t?.step_3_text }}</div>
         </div>
         <svg class="about-strip-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </div>
@@ -1273,9 +1273,9 @@
 
 <div class="select-us-section_temp_new">
   <div class="select-us-header-wrp_temp_new">
-    <div class="select-us-eyebrow_temp_new">{{ t.select_us_eyebrow }}</div>
-    <div class="header-0-2-t pad-0">{{ t.select_us_header }}</div>
-    <div class="select-us-lead_temp_new">{{ t.select_us_lead }}</div>
+    <div class="select-us-eyebrow_temp_new">{{ t?.select_us_eyebrow }}</div>
+    <div class="header-0-2-t pad-0">{{ t?.select_us_header }}</div>
+    <div class="select-us-lead_temp_new">{{ t?.select_us_lead }}</div>
   </div>
     <div class="benefits-wrapper_temp_new">
     <div class="benefit-item_temp_new">
@@ -1344,7 +1344,7 @@
 
 
 <div class="home-stack-section">
-    <div class="home-stack-eyebrow">{{ t.stack_eyebrow }}</div>
+    <div class="home-stack-eyebrow">{{ t?.stack_eyebrow }}</div>
     <div class="home-stack-grid">
         <div class="home-stack-item">
             <div class="home-stack-icon"><img [src]="c_sharp" alt="C#"></div>
@@ -1376,19 +1376,19 @@
 <section class="home-cta-section">
     <div class="home-cta-row">
         <div class="home-cta-block">
-            <p class="home-cta-eyebrow">{{ t.cta_left_eyebrow }}</p>
-            <p class="home-cta-text">{{ t.cta_left_text }}</p>
+            <p class="home-cta-eyebrow">{{ t?.cta_left_eyebrow }}</p>
+            <p class="home-cta-text">{{ t?.cta_left_text }}</p>
             <a routerLink="/references" class="home-cta-btn">
-                {{ t.cta_left_btn }}
+                {{ t?.cta_left_btn }}
                 <span class="home-cta-arrow" aria-hidden="true">→</span>
             </a>
         </div>
         <div class="home-cta-divider" aria-hidden="true"></div>
         <div class="home-cta-block">
-            <p class="home-cta-eyebrow">{{ t.cta_right_eyebrow }}</p>
-            <p class="home-cta-text">{{ t.cta_right_text }}</p>
+            <p class="home-cta-eyebrow">{{ t?.cta_right_eyebrow }}</p>
+            <p class="home-cta-text">{{ t?.cta_right_text }}</p>
             <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
-                {{ t.cta_right_btn }}
+                {{ t?.cta_right_btn }}
                 <span class="home-cta-arrow" aria-hidden="true">→</span>
             </a>
         </div>

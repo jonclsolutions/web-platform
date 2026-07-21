@@ -1,1 +1,5 @@
-npm test -- --watch=false
+//RUN ALL
+npm test -- --watch=false 
+
+//RUN ONE
+npm test -- --include=src/app/path 

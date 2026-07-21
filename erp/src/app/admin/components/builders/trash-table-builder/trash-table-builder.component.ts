@@ -15,7 +15,6 @@
  * @dependencies
  * - EntityCrudService: Inherits core CRUD and data lifecycle management.
  * - ConfirmDialogService: Ensures safe irreversible operations (permanent delete).
- * - SHARED_UI_BUILDERS: Provides UI components like toolbars and buttons.
  */
 
 import {
@@ -32,8 +31,8 @@ import { AlertDialogService } from '../../../../core/services/alert-dialog.servi
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
-import { SHARED_UI_BUILDERS } from '../../../../shared/imports/shared-ui-builders';
 import * as Core from '../../../../shared/imports/core-providers';
+import { ButtonBuilderComponent } from '../button-builder/button-builder.component';
 
 /**
  * @description A dedicated table view for displaying soft-deleted records with utility actions
@@ -48,7 +47,7 @@ import * as Core from '../../../../shared/imports/core-providers';
   standalone: true,
   imports: [
     FormsModule,
-    SHARED_UI_BUILDERS
+    ButtonBuilderComponent
   ],
   templateUrl: './trash-table-builder.component.html',
   styleUrls: ['../table-style.css'],

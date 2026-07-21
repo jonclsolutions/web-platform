@@ -56,40 +56,42 @@ else
     echo "WARNING: /server_conf directory does not exist."
 fi
 
-# 6. Explicitly copy SQL files to the build root
-echo "5/8: Copying SQL dumps for export..."
-if ls "$SERVER_CONF_PATH"/*.sql &>/dev/null; then
-    cp "$SERVER_CONF_PATH"/*.sql "$BUILD_DIR/"
-    echo "   - SQL files copied to app_build/ (for easy access)"
-else
-    echo "INFO: No .sql files found."
+# 6. Explicitly copy db.sql and other SQL files to the build root only
+echo "5/8: Copying SQL dumps to build root..."
+if [ -f "$PROJECT_ROOT/db.sql" ]; then
+    cp "$PROJECT_ROOT/db.sql" "$BUILD_DIR/"
+    echo "   - Root db.sql copied to app_build/"
 fi
 
-# 7. Copy documentation (to both build root and www)
-echo "6/8: Copying server_setup and README to both locations..."
+if ls "$SERVER_CONF_PATH"/*.sql &>/dev/null; then
+    cp "$SERVER_CONF_PATH"/*.sql "$BUILD_DIR/"
+    echo "   - Additional SQL files copied to app_build/"
+else
+    echo "INFO: No extra .sql files found in server_conf."
+fi
+
+# 7. Copy documentation (ONLY to build root, excluded from www/production)
+echo "6/8: Copying server_setup and README to build root (preview only)..."
 find_server_setup() {
     if [ -f "$PROJECT_ROOT/server_setup.md" ]; then echo "$PROJECT_ROOT/server_setup.md"
     elif [ -f "$PROJECT_ROOT/server_setup.txt" ]; then echo "$PROJECT_ROOT/server_setup.txt"
     fi
 }
 
-# Copy server_setup
+# Copy server_setup (pouze do BUILD_DIR)
 server_setup_SRC=$(find_server_setup)
 if [ -n "$server_setup_SRC" ]; then
-    cp "$server_setup_SRC" "$WWW_PATH/"      # Goes into zip
-    cp "$server_setup_SRC" "$BUILD_DIR/"     # For quick preview
-    echo "   - server_setup copied."
+    cp "$server_setup_SRC" "$BUILD_DIR/"
+    echo "   - server_setup copied to build root."
 fi
 
-# Copy README (supports .md and .txt)
+# Copy README (pouze do BUILD_DIR, podpora .md a .txt)
 if [ -f "$PROJECT_ROOT/README.md" ]; then
-    cp "$PROJECT_ROOT/README.md" "$WWW_PATH/"
     cp "$PROJECT_ROOT/README.md" "$BUILD_DIR/"
-    echo "   - README.md copied."
+    echo "   - README.md copied to build root."
 elif [ -f "$PROJECT_ROOT/README.txt" ]; then
-    cp "$PROJECT_ROOT/README.txt" "$WWW_PATH/"
     cp "$PROJECT_ROOT/README.txt" "$BUILD_DIR/"
-    echo "   - README.txt copied."
+    echo "   - README.txt copied to build root."
 fi
 
 # 8. Final ZIP archiving (within app_build)

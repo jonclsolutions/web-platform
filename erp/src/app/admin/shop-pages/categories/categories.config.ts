@@ -1,6 +1,5 @@
 import { Button } from '../../../shared/interfaces/button';
 
-// 🛠️ Horní lišta - akce pro celý strom
 export const CATEGORY_TOOLBAR_BUTTONS: Button[] = [
   {
     action: 'expandAll',
@@ -22,7 +21,6 @@ export const CATEGORY_TOOLBAR_BUTTONS: Button[] = [
   }
 ];
 
-// 📑 Tlačítka v řádku - akce pro konkrétní uzel
 export const CATEGORY_ROW_BUTTONS: Button[] = [
   { action: 'addChild', label: '', icon: 'Podkategorie ➕', class: 'btn-create' },
   { action: 'edit', label: '', icon: 'Upravit 📝', class: 'btn-export' },

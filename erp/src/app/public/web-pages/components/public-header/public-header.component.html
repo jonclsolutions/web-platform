@@ -105,13 +105,12 @@
 
       @if (siteSettings) {
         <div class="mobile-contact-wrp">
+          
           <div class="mobile-contact-link">
-            <img [src]="tel_icon">
-            <span>{{ siteSettings.contact_phone }}</span>
+            <span>{{ siteSettings.contact_email }} </span>
           </div>
           <div class="mobile-contact-link">
-            <img [src]="mail_icon">
-            <span>{{ siteSettings.contact_email }}</span>
+            <span>{{ siteSettings.contact_phone }}</span>
           </div>
         </div>
       }
