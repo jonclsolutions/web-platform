@@ -162,9 +162,6 @@
 }
 
 .sidebar-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
   padding: 28px 24px;
   display: flex;
   flex-direction: column;
@@ -243,9 +240,6 @@
 
 /* Stat card */
 .sidebar-stats-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
   padding: 24px;
   display: flex;
   align-items: center;
@@ -313,9 +307,6 @@
 
 /* ── FAQ hlavní sloupec ──────────────────────────────────────── */
 .faq-main {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
   padding: 40px;
   animation: fadeUp 0.6s 0.15s ease-out both;
 }
@@ -354,7 +345,7 @@
   gap: 14px;
   width: 100%;
   padding: 16px 18px;
-  background: transparent;
+  background-color: #111128;  
   border: none;
   cursor: pointer;
   text-align: left;
@@ -398,6 +389,7 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.38s ease, padding 0.38s ease;
+  background-color: #111128;
 }
 
 .faq-item--open .faq-body { max-height: 500px; }
@@ -424,9 +416,6 @@
   margin: 0 auto;
   display: flex;
   align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -589,4 +578,24 @@
   width: 16px;
   height: 16px;
   object-fit: contain;
+}
+
+/* Hover jen na zařízeních s myší */
+@media (hover: hover) {
+  .faq-trigger:hover { background: #161631; }
+}
+
+/* Oddělovač */
+.ref-divider {
+  max-width: 700px;
+  margin: 0 auto 60px;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--accent-dark) 30%,
+    var(--accent-dark) 70%,
+    transparent
+  );
+  opacity: 0.5;
 }

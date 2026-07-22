@@ -58,10 +58,10 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   isAnimatingTransition: boolean = false;
   private animationTimeout: any;
 
-  // Constants for indicator layout
-  private readonly LINK_WIDTH = 130;
-  private readonly GAP_DEFAULT = 15;
-  private readonly GAP_SCROLLED = 8;
+// Constants for indicator layout
+  private readonly LINK_WIDTH = 100;
+  private readonly GAP_DEFAULT = 12;
+  private readonly GAP_SCROLLED = 6;
   private readonly INDICATOR_ANIMATION_DURATION = 400;
 
   private currentActiveRoute: string | null = null;
@@ -291,7 +291,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
       if (targetLinkIndex !== -1) {
         this.indicatorStyle = {
           width: `${this.LINK_WIDTH}px`,
-          height: this.scrolled ? '32px' : '48px',
+          height: this.scrolled ? '26px' : '38px',
           opacity: this.showIndicator ? 1 : 0,
           transform: `translateX(${(targetLinkIndex * this.LINK_WIDTH) + (targetLinkIndex * currentGap)}px) translateY(-50%)`,
           transition: (!forceAnimate && !this.scrolled && !this.isAnimatingTransition)
