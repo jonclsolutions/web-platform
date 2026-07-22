@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { WebLayoutComponent } from './web-layout.component';
 
@@ -8,7 +9,8 @@ describe('WebLayoutComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [WebLayoutComponent]
+      imports: [WebLayoutComponent],
+      providers: [provideRouter([])]
     })
     .compileComponents();
 

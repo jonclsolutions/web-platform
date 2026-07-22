@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { KnowledgeBaseComponent } from './knowledge-base.component';
 
@@ -8,7 +9,8 @@ describe('KnowledgeBaseComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [KnowledgeBaseComponent]
+      imports: [KnowledgeBaseComponent],
+      providers: [provideRouter([])]
     })
     .compileComponents();
 
