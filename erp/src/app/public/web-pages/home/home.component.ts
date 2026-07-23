@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   ElementRef,
   ViewChild,
-  AfterViewInit,
   OnDestroy,
   NgZone,
   PLATFORM_ID,
@@ -37,7 +36,7 @@ interface HeroMousePoint {
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HomeComponent extends BasePublicComponent implements AfterViewInit, OnDestroy {
+export class HomeComponent extends BasePublicComponent implements OnDestroy {
 
   protected readonly translationKey = 'home';
 
@@ -81,13 +80,24 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
   };
 
   // ── Hero particle background ─────────────────────────────────────────
-  // Canvas-based "network" effect (dark background, drifting dots
-  // connected by fading lines, reacting to the cursor) painted behind the
-  // hero section's text — similar to the coolbackgrounds.io "particles"
-  // style. Pure canvas + requestAnimationFrame, no external library.
+  private heroParticleCanvasEl?: HTMLCanvasElement;
+  private hasInitialized = false;
 
-  /** Canvas element (`#heroParticleCanvas` in the template) used as the hero's animated background. */
-  @ViewChild('heroParticleCanvas') private heroParticleCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('heroParticleCanvas') set heroParticleCanvasRef(ref: ElementRef<HTMLCanvasElement> | undefined) {
+    if (ref?.nativeElement && !this.hasInitialized) {
+      this.heroParticleCanvasEl = ref.nativeElement;
+      this.hasInitialized = true;
+      
+      // Spustíme hned, jakmile Angular prvek vykreslí do DOMu
+      if (isPlatformBrowser(this.platformId)) {
+        setTimeout(() => {
+          if (this.heroParticleCanvasEl) {
+            this.initParticleField(this.heroParticleCanvasEl);
+          }
+        }, 50);
+      }
+    }
+  }
 
   private readonly ngZone = inject(NgZone);
   private readonly platformId = inject(PLATFORM_ID);
@@ -96,42 +106,23 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
   private particles: HeroParticle[] = [];
   private particleAnimationFrameId: number | null = null;
   private particleResizeObserver?: ResizeObserver;
-  /** Element that receives pointer events for the field (canvas itself is `pointer-events: none`). */
   private particleInteractionEl?: HTMLElement;
-  /** Current cursor position relative to the canvas, or null when the pointer is outside/inactive. */
   private mouse: HeroMousePoint | null = null;
 
-  /** RGB triplet for the dots/lines — matches the site's purple accent (`#a67dff`). */
   private readonly PARTICLE_COLOR = '166, 125, 255';
-  /** Roughly one particle per this many square px of canvas area — lower = denser field. */
   private readonly PARTICLE_DENSITY = 14000;
   private readonly PARTICLE_MIN_COUNT = 26;
   private readonly PARTICLE_MAX_COUNT = 85;
-  /** Max distance (px) at which two particles are still linked by a line. */
   private readonly PARTICLE_LINK_DISTANCE = 170;
-  /** Max distance (px) at which the cursor links to a particle. */
   private readonly MOUSE_LINK_DISTANCE = 220;
-  /** Radius (px) around the cursor within which particles get gently pushed away. */
   private readonly MOUSE_REPEL_RADIUS = 120;
-  /** Strength of the cursor's repel effect. */
   private readonly MOUSE_REPEL_STRENGTH = 0.6;
-
-  ngAfterViewInit(): void {
-    if (!isPlatformBrowser(this.platformId) || !this.heroParticleCanvasRef) return;
-    this.initParticleField(this.heroParticleCanvasRef.nativeElement);
-  }
 
   override ngOnDestroy(): void {
     this.stopParticleField();
     super.ngOnDestroy();
   }
 
-  /**
-   * @description Boots up the particle network: sizes the canvas to its
-   * parent, seeds a particle field scaled to that area, watches for resize
-   * and cursor movement, and starts the render loop entirely outside
-   * Angular's zone (it repaints every frame and never needs change detection).
-   */
   private initParticleField(canvas: HTMLCanvasElement): void {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -143,8 +134,7 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
     this.particleResizeObserver = new ResizeObserver(() => this.resizeParticleCanvas(canvas));
     this.particleResizeObserver.observe(canvas.parentElement ?? canvas);
 
-    // Canvas is `pointer-events: none` (so it never blocks clicks on the
-    // hero content), so pointer tracking listens on its parent instead.
+    // Důležité: Interakce se poslouchá na rodiči, protože canvas má pointer-events: none
     this.particleInteractionEl = canvas.parentElement ?? canvas;
 
     this.ngZone.runOutsideAngular(() => {
@@ -158,14 +148,14 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
   }
 
   private handlePointerMove = (event: MouseEvent): void => {
-    const canvas = this.heroParticleCanvasRef?.nativeElement;
+    const canvas = this.heroParticleCanvasEl;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     this.mouse = { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
   private handleTouchMove = (event: TouchEvent): void => {
-    const canvas = this.heroParticleCanvasRef?.nativeElement;
+    const canvas = this.heroParticleCanvasEl;
     const touch = event.touches[0];
     if (!canvas || !touch) return;
     const rect = canvas.getBoundingClientRect();
@@ -176,15 +166,18 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
     this.mouse = null;
   };
 
-  /**
-   * @description Syncs the canvas' backing buffer to its on-screen size,
-   * scaled for `devicePixelRatio` so dots and lines stay crisp on high-DPI
-   * screens.
-   */
   private resizeParticleCanvas(canvas: HTMLCanvasElement): void {
     const parent = canvas.parentElement;
-    const width = parent?.clientWidth ?? canvas.clientWidth;
-    const height = parent?.clientHeight ?? canvas.clientHeight;
+    let width = parent?.clientWidth ?? canvas.clientWidth;
+    let height = parent?.clientHeight ?? canvas.clientHeight;
+
+    if (width === 0 || height === 0) {
+      const rect = canvas.getBoundingClientRect();
+      const parentRect = parent?.getBoundingClientRect();
+      width = rect.width || parentRect?.width || window.innerWidth;
+      height = rect.height || parentRect?.height || 500;
+    }
+
     const dpr = window.devicePixelRatio || 1;
 
     canvas.width = Math.max(1, Math.floor(width * dpr));
@@ -193,13 +186,12 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
     canvas.style.height = `${height}px`;
 
     this.particleCtx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (this.particles.length === 0 && width > 0 && height > 0) {
+      this.seedParticles(canvas);
+    }
   }
 
-  /**
-   * @description Generates the particle field, scaling particle count to
-   * the canvas' visible area so density looks consistent from a small
-   * phone hero to a wide desktop one.
-   */
   private seedParticles(canvas: HTMLCanvasElement): void {
     const dpr = window.devicePixelRatio || 1;
     const width = canvas.width / dpr;
@@ -217,14 +209,6 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
     }));
   }
 
-  /**
-   * @description Single animation step: drifts every particle (nudging it
-   * away from the cursor when nearby), bounces it off the canvas edges,
-   * draws it as a soft dot, then connects it to nearby particles — and to
-   * the cursor itself — with a line whose opacity fades with distance.
-   * That's the classic drifting-network particle look, now reactive to
-   * the mouse like coolbackgrounds.io's "particles" preset.
-   */
   private renderParticleFrame = (canvas: HTMLCanvasElement): void => {
     const ctx = this.particleCtx;
     if (!ctx) return;
@@ -239,7 +223,6 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
       particle.x += particle.vx;
       particle.y += particle.vy;
 
-      // Gently push the particle away from the cursor if it's close by.
       if (this.mouse) {
         const dx = particle.x - this.mouse.x;
         const dy = particle.y - this.mouse.y;
@@ -283,7 +266,6 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
       }
     }
 
-    // Link the cursor itself into the network, same fading-line treatment.
     if (this.mouse) {
       for (const particle of this.particles) {
         const dx = particle.x - this.mouse.x;
@@ -310,11 +292,6 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
     this.particleAnimationFrameId = requestAnimationFrame(() => this.renderParticleFrame(canvas));
   };
 
-  /**
-   * @description Cancels the render loop, disconnects the resize observer
-   * and removes the pointer listeners so the particle field doesn't keep
-   * running (or leak) once the home page is navigated away from.
-   */
   private stopParticleField(): void {
     if (this.particleAnimationFrameId !== null) {
       cancelAnimationFrame(this.particleAnimationFrameId);
@@ -329,9 +306,10 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
     this.particleInteractionEl?.removeEventListener('touchend', this.handlePointerLeave);
     this.particleInteractionEl = undefined;
     this.mouse = null;
+    this.hasInitialized = false;
   }
 
-  // Metody zůstávají beze změn pro zachování vazby v HTML
+  // Ostatní metody beze změny
   getTechIcon(name: string): string {
     const icons: Record<string, string> = {
       'C#': this.c_sharp,
@@ -381,6 +359,6 @@ export class HomeComponent extends BasePublicComponent implements AfterViewInit,
 
   setHoverState(serviceName: string, isHovering: boolean) {
     this.hoverState[serviceName] = isHovering;
-    this.cdr.markForCheck(); // Zajištění detekce změny pro OnPush
+    this.cdr.markForCheck();
   }
 }
