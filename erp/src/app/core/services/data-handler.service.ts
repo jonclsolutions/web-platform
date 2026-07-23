@@ -88,8 +88,9 @@ export class DataHandler {
         } else {
           errorMessage = `Client error: ${error.status} ${error.statusText || ''}`;
         }
-      } else if (error.status >= 500) {
-        errorMessage = `Server error (${error.status}): ${error.statusText || 'Internal Server Error'}`;
+     } else if (error.status >= 500) {
+        const text = error.statusText ? error.statusText.trim() : '';
+        errorMessage = `Server error (${error.status}): ${text !== '' ? text : 'Internal Server Error'}`;
       }
     }
     console.error(`API Error: ${errorMessage}`);

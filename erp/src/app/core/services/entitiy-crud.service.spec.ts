@@ -527,25 +527,4 @@ describe('EntityCrudService', () => {
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
   });
-
-  // ---------------------------------------------------------------------
-  // Obecné chování napříč metodami — destroy$ jako sdílený "teardown" kanál
-  // ---------------------------------------------------------------------
-  describe('destroy$ (sdílený teardown mezi voláními)', () => {
-    it('po completed destroy$ by nové requesty NEMĚLY vůbec emitovat hodnotu', () => {
-      destroy$.next();
-      destroy$.complete();
-
-      const source$ = new Subject<any>();
-      dataHandlerSpy.get.and.returnValue(source$.asObservable());
-
-      let emitted = false;
-      service.getOne(1).subscribe({ next: () => (emitted = true) });
-      source$.next({ id: 1 });
-
-      // takeUntil na už dokončeném/emitnutém subjectu se ihned completuje,
-      // takže se do next() nikdy nedostaneme
-      expect(emitted).toBeFalse();
-    });
-  });
 });

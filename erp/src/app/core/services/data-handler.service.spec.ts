@@ -1,579 +1,469 @@
 /**
- * @file base-data.component.spec.ts
- * @path src/app/admin/components/base-data/base-data.component.spec.ts
+ * @file data-handler.service.spec.ts
+ * @path src/app/core/services/data-handler.service.spec.ts
  * @project RPSW Web
- * @description Unit tests for {@link BaseDataComponent}.
+ * @author RPSW
+ * @created 2026
+ * @description Unit tests for {@link DataHandler}.
  *
- * `BaseDataComponent` is an abstract `@Directive()` class, so it cannot be
- * instantiated or bootstrapped directly by `TestBed.createComponent`. To test
- * it we declare a minimal, concrete **host component** (`TestHostComponent`)
- * that extends it and only supplies the abstract `apiEndpoint` member.
+ * `DataHandler` is a thin, centralized wrapper around `HttpClient` used
+ * throughout the admin module. It has two responsibilities worth testing in
+ * isolation:
  *
- * The component delegates almost all of its behaviour to two lazily created
- * collaborators, exposed as protected getters:
- *   - `crud` → an `EntityCrudService<T>` instance (single-entity CRUD calls)
- *   - `list` → a `PaginatedListStore<T>` instance (pagination / cache / trash)
+ *   1. **Request shaping** — building the right headers (JSON vs. multipart
+ *      `FormData`), appending query params while skipping `null`/`undefined`
+ *      values, and unwrapping the Laravel-style `{ data: T }` / `{ data: T[] }`
+ *      envelope where the API uses one.
+ *   2. **Error normalization** (`handleError`) — translating raw
+ *      `HttpErrorResponse` objects (by status code, or a client-side
+ *      `ErrorEvent`) into a single human-readable string, surfacing that
+ *      string via `AlertDialogService.open(...)`, and re-throwing a plain
+ *      `Error` so callers can still `catchError`/`subscribe({ error })`.
  *
- * Rather than re-testing those collaborators here (they have their own spec
- * files), we stub the `crud` / `list` getters with `spyOnProperty(...).and
- * .returnValue(...)`. This lets us verify, in isolation, that
- * `BaseDataComponent` delegates calls with the correct arguments and that its
- * own pass-through / error-handling logic behaves as documented.
+ * We use `HttpClientTestingModule` / `HttpTestingController` to intercept
+ * every outgoing request without touching the network, and a Jasmine spy for
+ * `AlertDialogService` so we can assert exactly what gets shown to the user.
+ *
+ * @dependencies
+ * - HttpClientTestingModule / HttpTestingController: Intercepts and flushes
+ *   HTTP requests synchronously inside each test.
+ * - AlertDialogService: Stubbed out; only `open(...)` is asserted on.
+ *
+ * @note `DataHandler` has no dependency on `ActivatedRoute`, so the
+ * `PROVIDE_ACTIVATED_ROUTE` / `getRouterProviders()` helpers supplied
+ * alongside this task are not required here and are intentionally not wired
+ * into `TestBed.configureTestingModule`. They're kept available for sibling
+ * spec files (e.g. route-parameter-driven components) that do need them.
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ChangeDetectorRef } from '@angular/core';
-import { of, throwError, BehaviorSubject } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController
+} from '@angular/common/http/testing';
+
+import { DataHandler } from './data-handler.service';
+import { AlertDialogService } from './alert-dialog.service';
+import { environment } from '../../../environments/environment';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+describe('DataHandler', () => {
+  let service: DataHandler;
+  let httpMock: HttpTestingController;
+  let alertDialogServiceSpy: jasmine.SpyObj<AlertDialogService>;
 
-import * as Core from '../../shared/imports/core-providers';
+  const baseUrl = environment.base_api_url;
 
-import { BaseDataComponent } from '../../admin/components/base-data/base-data.component';
-import { EntityCrudService } from './entitiy-crud.service';
-import { PaginatedListStore } from '../../admin/components/base-data/paginated-list-store';
-/**
- * @description Minimal shape used as the generic `T` for the test host.
- * Only the fields required by `BaseDataComponent<T>`'s constraint
- * (`{ id?: number; deleted_at?: string | null }`) plus a couple of extra
- * fields to make assertions more concrete.
- */
-interface TestEntity {
-  id?: number;
-  deleted_at?: string | null;
-  name?: string;
-}
-
-/**
- * @description Concrete, standalone host component used purely for testing.
- * It contributes nothing beyond the mandatory `apiEndpoint`, so any behaviour
- * observed in the tests can be attributed to `BaseDataComponent` itself.
- */
-@Component({
-  standalone: true,
-  selector: 'app-test-base-data',
-  template: ''
-})
-class TestHostComponent extends BaseDataComponent<TestEntity> {
-  apiEndpoint = 'test-entities';
-
-  public getCdForTest(): ChangeDetectorRef { return this.cd; }
-  public getDefaultFiltersForTest(): any { return this.defaultFilters; }
-}
-
-describe('BaseDataComponent', () => {
-  let component: TestHostComponent;
-  let fixture: ComponentFixture<TestHostComponent>;
-
-  /** Spy standing in for the lazily built `EntityCrudService<TestEntity>`. */
-  let crudSpy: jasmine.SpyObj<EntityCrudService<TestEntity>>;
-  /** Spy standing in for the lazily built `PaginatedListStore<TestEntity>`. */
-  let listSpy: jasmine.SpyObj<PaginatedListStore<TestEntity>>;
-
-  /** Mock for `AuthService`, exposing a controllable `isLoggedIn$` stream. */
-  let authServiceMock: { isLoggedIn$: BehaviorSubject<boolean> };
-  /** Mock for `Router`, used to assert navigation on failed auth checks. */
-  let routerSpy: jasmine.SpyObj<Router>;
-
-  /**
-   * @description Builds a fresh `EntityCrudService` spy with every method the
-   * component delegates to (`getCollection`, `getOne`, `create`, `update`,
-   * `remove`, `restore`, `upload`, `updatePassword`, `loadAll`,
-   * `hardDeleteAllTrashed`), each defaulting to an empty/`of(...)` observable.
-   * @returns A jasmine spy object matching `EntityCrudService<TestEntity>`'s
-   * public surface.
-   */
-  function createCrudSpy(): jasmine.SpyObj<EntityCrudService<TestEntity>> {
-    const spy = jasmine.createSpyObj<EntityCrudService<TestEntity>>('EntityCrudService', [
-      'getCollection',
-      'getOne',
-      'create',
-      'update',
-      'remove',
-      'restore',
-      'upload',
-      'updatePassword',
-      'loadAll',
-      'hardDeleteAllTrashed'
-    ]);
-    spy.getCollection.and.returnValue(of([]));
-    spy.getOne.and.returnValue(of({} as TestEntity));
-    spy.create.and.returnValue(of({} as TestEntity));
-    spy.update.and.returnValue(of({} as TestEntity));
-    spy.remove.and.returnValue(of(undefined));
-    spy.restore.and.returnValue(of({} as TestEntity));
-    spy.upload.and.returnValue(of({}));
-    spy.updatePassword.and.returnValue(of({}));
-    spy.loadAll.and.returnValue(of([]));
-    spy.hardDeleteAllTrashed.and.returnValue(of(undefined));
-    return spy;
+  /** Shape used for entity-typed responses across the suite. */
+  interface TestEntity {
+    id?: number;
+    name?: string;
   }
 
-  /**
-   * @description Builds a fresh `PaginatedListStore` spy with every method
-   * the component delegates to, plus every pass-through property the
-   * component re-exposes as getters/setters (`data`, `trashData`,
-   * `showTrashTable`, pagination counters, and active/trash filters).
-   * @returns A jasmine spy object matching `PaginatedListStore<TestEntity>`'s
-   * public surface.
-   */
-  function createListSpy(): jasmine.SpyObj<PaginatedListStore<TestEntity>> {
-    return jasmine.createSpyObj<PaginatedListStore<TestEntity>>(
-      'PaginatedListStore',
-      ['forceFullRefresh', 'onHandlePageChange', 'onHandleItemsPerPageChange', 'toggleTable'],
-      {
-        data: [],
-        trashData: [],
-        showTrashTable: false,
-        currentPage: 1,
-        itemsPerPage: 10,
-        totalItems: 0,
-        totalPages: 0,
-        trashCurrentPage: 1,
-        trashItemsPerPage: 10,
-        trashTotalItems: 0,
-        trashTotalPages: 0,
-        currentActiveFilters: { sort_by: 'id', sort_direction: 'desc' },
-        currentTrashFilters: { sort_by: 'id', sort_direction: 'desc' }
-      }
-    );
-  }
+  beforeEach(() => {
+    alertDialogServiceSpy = jasmine.createSpyObj<AlertDialogService>('AlertDialogService', ['open']);
 
-  beforeEach(async () => {
-    authServiceMock = { isLoggedIn$: new BehaviorSubject<boolean>(false) };
-    routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
-
-    await TestBed.configureTestingModule({
-      imports: [TestHostComponent],
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
       providers: [
-        { provide: Core.DataHandler, useValue: jasmine.createSpyObj('DataHandler', ['get', 'post', 'put', 'delete']) },
-        { provide: Core.GenericTableService, useValue: jasmine.createSpyObj('GenericTableService', ['getPage']) },
-        { provide: Core.LoadingService, useValue: jasmine.createSpyObj('LoadingService', ['show', 'hide']) },
-        { provide: Core.AlertDialogService, useValue: jasmine.createSpyObj('AlertDialogService', ['open', 'confirm']) },
-        { provide: Core.AuthService, useValue: authServiceMock },
-        { provide: Core.PermissionService, useValue: jasmine.createSpyObj('PermissionService', ['can']) },
-        { provide: Router, useValue: routerSpy }
+        DataHandler,
+        { provide: AlertDialogService, useValue: alertDialogServiceSpy }
       ]
-    }).compileComponents();
+    });
 
-    fixture = TestBed.createComponent(TestHostComponent);
-    component = fixture.componentInstance;
-
-    // Replace the lazily-instantiated collaborators with test doubles
-    // *before* anything touches `component.data` / `component.crud`, so the
-    // real `EntityCrudService` / `PaginatedListStore` constructors never run.
-    crudSpy = createCrudSpy();
-    listSpy = createListSpy();
-    spyOnProperty<any>(component, 'crud', 'get').and.returnValue(crudSpy);
-    spyOnProperty<any>(component, 'list', 'get').and.returnValue(listSpy);
-
-    fixture.detectChanges();
+    service = TestBed.inject(DataHandler);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  /** @description Sanity check that the host (and therefore the base class) instantiates. */
+  /**
+   * @description Ensures no unmatched/unflushed requests leak between tests,
+   * which would otherwise silently mask assertions in later specs.
+   */
+  afterEach(() => {
+    httpMock.verify();
+  });
+
   it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(service).toBeTruthy();
   });
 
-  /**
-   * @description Verifies the plain UI-state flags declared directly on
-   * `BaseDataComponent` (not delegated anywhere) start with their documented
-   * default values.
-   */
-  describe('initial UI state', () => {
-    it('should default isTableFullWidth to true', () => {
-      expect(component.isTableFullWidth).toBeTrue();
-    });
-
-    it('should default isFilterVisible, showCreateForm and showDetails to false', () => {
-      expect(component.isFilterVisible).toBeFalse();
-      expect(component.showCreateForm).toBeFalse();
-      expect(component.showDetails).toBeFalse();
-    });
-
-    it('should default errorMessage to null', () => {
-      expect(component.errorMessage).toBeNull();
-    });
-  });
-
-  /** @description `toggleFilters()` only flips a local boolean; nothing is delegated. */
-  describe('toggleFilters()', () => {
-    it('should flip isFilterVisible from false to true and back', () => {
-      expect(component.isFilterVisible).toBeFalse();
-
-      component.toggleFilters();
-      expect(component.isFilterVisible).toBeTrue();
-
-      component.toggleFilters();
-      expect(component.isFilterVisible).toBeFalse();
-    });
-  });
-
-  /**
-   * @description Confirms every `data`/pagination/trash property is a thin
-   * pass-through to the `list` collaborator (`PaginatedListStore`), in both
-   * the getter and setter direction.
-   */
-  describe('list pass-through properties', () => {
-    it('should read "data" from the list store', () => {
-      const rows: TestEntity[] = [{ id: 1, name: 'Alpha' }];
-      (listSpy as any).data = rows;
-      expect(component.data).toEqual(rows);
-    });
-
-    it('should write "data" through to the list store', () => {
-      const rows: TestEntity[] = [{ id: 2, name: 'Beta' }];
-      component.data = rows;
-      expect(listSpy.data).toEqual(rows);
-    });
-
-    it('should read/write "trashData"', () => {
-      const rows: TestEntity[] = [{ id: 3, deleted_at: '2025-01-01' }];
-      component.trashData = rows;
-      expect(listSpy.trashData).toEqual(rows);
-      (listSpy as any).trashData = rows;
-      expect(component.trashData).toEqual(rows);
-    });
-
-    it('should read/write "showTrashTable"', () => {
-      component.showTrashTable = true;
-      expect(listSpy.showTrashTable).toBeTrue();
-    });
-
-    it('should read/write pagination counters for the active table', () => {
-      component.currentPage = 3;
-      component.itemsPerPage = 25;
-      component.totalItems = 100;
-      component.totalPages = 4;
-
-      expect(listSpy.currentPage).toBe(3);
-      expect(listSpy.itemsPerPage).toBe(25);
-      expect(listSpy.totalItems).toBe(100);
-      expect(listSpy.totalPages).toBe(4);
-    });
-
-    it('should read/write pagination counters for the trash table', () => {
-      component.trashCurrentPage = 2;
-      component.trashItemsPerPage = 15;
-      component.trashTotalItems = 30;
-      component.trashTotalPages = 2;
-
-      expect(listSpy.trashCurrentPage).toBe(2);
-      expect(listSpy.trashItemsPerPage).toBe(15);
-      expect(listSpy.trashTotalItems).toBe(30);
-      expect(listSpy.trashTotalPages).toBe(2);
-    });
-
-    it('should expose currentActiveFilters and currentTrashFilters from the list store', () => {
-      expect((component as any).currentActiveFilters).toEqual(listSpy.currentActiveFilters);
-      expect((component as any).currentTrashFilters).toEqual(listSpy.currentTrashFilters);
-    });
-  });
-
-  /**
-   * @description Verifies the pagination/trash-toggle methods are forwarded
-   * verbatim to the `list` collaborator, defaulting to the component's own
-   * `currentActiveFilters` when no explicit filters are supplied.
-   */
-  describe('pagination / trash delegation', () => {
-    it('forceFullRefresh() should delegate to list.forceFullRefresh with the given filters', () => {
-      const filters = { sort_by: 'name', sort_direction: 'asc' as const };
-      component.forceFullRefresh(filters);
-      expect(listSpy.forceFullRefresh).toHaveBeenCalledWith(filters);
-    });
-
-    it('forceFullRefresh() should fall back to defaultFilters when called without arguments', () => {
-      component.forceFullRefresh();
-      expect(listSpy.forceFullRefresh).toHaveBeenCalledWith(component.getDefaultFiltersForTest() as any);
-    });
-
-    it('onHandlePageChange() should delegate to list.onHandlePageChange', () => {
-      const filters = listSpy.currentActiveFilters;
-      component.onHandlePageChange(5, filters);
-      expect(listSpy.onHandlePageChange).toHaveBeenCalledWith(5, filters);
-    });
-
-    it('onHandleItemsPerPageChange() should delegate to list.onHandleItemsPerPageChange', () => {
-      const filters = listSpy.currentActiveFilters;
-      component.onHandleItemsPerPageChange(50, filters);
-      expect(listSpy.onHandleItemsPerPageChange).toHaveBeenCalledWith(50, filters);
-    });
-
-    it('toggleTable() should delegate to list.toggleTable', () => {
-      component.toggleTable();
-      expect(listSpy.toggleTable).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  /**
-   * @description `loadData()` is the one method that talks to `crud`
-   * directly instead of going through `list`; it guards against a missing
-   * `apiEndpoint` and otherwise assigns the fetched collection to `data`.
-   */
-  describe('loadData()', () => {
-    it('should set errorMessage and skip the request when apiEndpoint is falsy', () => {
-      component.apiEndpoint = '' as any;
-
-      component.loadData();
-
-      expect(component.errorMessage).toBe('Error: API endpoint undefined.');
-      expect(crudSpy.getCollection).not.toHaveBeenCalled();
-    });
-
-    it('should populate "data" from crud.getCollection() when apiEndpoint is set', () => {
+  // ═══════════════════════════════════════════════════════════════════════
+  // getCollection()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('getCollection()', () => {
+    it('should GET the resource and return the array as-is when the response has no "data" wrapper', () => {
       const rows: TestEntity[] = [{ id: 1, name: 'Alpha' }, { id: 2, name: 'Beta' }];
-      crudSpy.getCollection.and.returnValue(of(rows));
+      let result: TestEntity[] | undefined;
 
-      component.loadData();
+      service.getCollection<TestEntity>('items').subscribe(res => (result = res));
 
-      expect(crudSpy.getCollection).toHaveBeenCalledTimes(1);
-      expect(listSpy.data).toEqual(rows);
+      const req = httpMock.expectOne(`${baseUrl}/items`);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.headers.get('Accept')).toBe('application/json');
+      expect(req.request.headers.get('Content-Type')).toBe('application/json');
+      req.flush(rows);
+
+      expect(result).toEqual(rows);
+    });
+
+    it('should unwrap the "data" key when the response is wrapped', () => {
+      const rows: TestEntity[] = [{ id: 3, name: 'Gamma' }];
+      let result: TestEntity[] | undefined;
+
+      service.getCollection<TestEntity>('items').subscribe(res => (result = res));
+
+      const req = httpMock.expectOne(`${baseUrl}/items`);
+      req.flush({ data: rows });
+
+      expect(result).toEqual(rows);
+    });
+
+    it('should append provided query params to the request URL', () => {
+      service.getCollection<TestEntity>('items', { page: 2, per_page: 10 }).subscribe();
+
+      const req = httpMock.expectOne(
+        r => r.url === `${baseUrl}/items` &&
+             r.params.get('page') === '2' &&
+             r.params.get('per_page') === '10'
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush([]);
+    });
+
+    it('should skip params whose value is null or undefined', () => {
+      service.getCollection<TestEntity>('items', { page: 1, search: null, sort: undefined }).subscribe();
+
+      // Parametr page=1 je přítomen, takže URL obsahuje query string
+      const req = httpMock.expectOne(`${baseUrl}/items?page=1`);
+      expect(req.request.params.has('page')).toBeTrue();
+      expect(req.request.params.has('search')).toBeFalse();
+      expect(req.request.params.has('sort')).toBeFalse();
+      req.flush([]);
+    });
+
+    it('should not attach any params when none are provided', () => {
+      service.getCollection<TestEntity>('items').subscribe();
+
+      const req = httpMock.expectOne(`${baseUrl}/items`);
+      expect(req.request.params.keys().length).toBe(0);
+      req.flush([]);
     });
   });
 
-  /**
-   * @description Each single-entity CRUD method should be a one-to-one
-   * delegation to the matching `EntityCrudService` method, preserving both
-   * arguments and the returned observable's emitted value.
-   */
-  describe('single-entity CRUD delegation', () => {
-    it('getItemDetails() should delegate to crud.getOne(id)', (done) => {
-      const entity: TestEntity = { id: 7, name: 'Gamma' };
-      crudSpy.getOne.and.returnValue(of(entity));
+  // ═══════════════════════════════════════════════════════════════════════
+  // getPaginatedCollection()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('getPaginatedCollection()', () => {
+    it('should GET the resource and return the raw (unwrapped) response', () => {
+      const payload = { data: [{ id: 1 }], meta: { total: 1, per_page: 10 } };
+      let result: any;
 
-      component.getItemDetails(7).subscribe(result => {
-        expect(crudSpy.getOne).toHaveBeenCalledWith(7);
-        expect(result).toEqual(entity);
-        done();
-      });
+      service.getPaginatedCollection('items').subscribe(res => (result = res));
+
+      const req = httpMock.expectOne(`${baseUrl}/items`);
+      expect(req.request.method).toBe('GET');
+      req.flush(payload);
+
+      expect(result).toEqual(payload);
     });
+  });
 
-    it('postData() should delegate to crud.create(data)', (done) => {
-      const payload: TestEntity = { name: 'New item' };
+  // ═══════════════════════════════════════════════════════════════════════
+  // get()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('get()', () => {
+    it('should GET the resource and return the raw response untouched', () => {
+      const payload = { foo: 'bar' };
+      let result: any;
+
+      service.get('config').subscribe(res => (result = res));
+
+      const req = httpMock.expectOne(`${baseUrl}/config`);
+      expect(req.request.method).toBe('GET');
+      req.flush(payload);
+
+      expect(result).toEqual(payload);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // getOne()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('getOne()', () => {
+    it('should GET the resource and unwrap the "data" property', () => {
+      const entity: TestEntity = { id: 5, name: 'Delta' };
+      let result: TestEntity | undefined;
+
+      service.getOne<TestEntity>('items/5').subscribe(res => (result = res));
+
+      const req = httpMock.expectOne(`${baseUrl}/items/5`);
+      expect(req.request.method).toBe('GET');
+      req.flush({ data: entity });
+
+      expect(result).toEqual(entity);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // post()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('post()', () => {
+    it('should POST a JSON body with a JSON Content-Type header and unwrap "data"', () => {
+      const payload = { name: 'New item' };
       const created: TestEntity = { id: 10, name: 'New item' };
-      crudSpy.create.and.returnValue(of(created));
+      let result: TestEntity | undefined;
 
-      component.postData(payload).subscribe(result => {
-        expect(crudSpy.create).toHaveBeenCalledWith(payload);
-        expect(result).toEqual(created);
-        done();
-      });
+      service.post<TestEntity>('items', payload).subscribe(res => (result = res));
+
+      const req = httpMock.expectOne(`${baseUrl}/items`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(payload);
+      expect(req.request.headers.get('Content-Type')).toBe('application/json');
+      expect(req.request.headers.get('Accept')).toBe('application/json');
+      req.flush({ data: created });
+
+      expect(result).toEqual(created);
     });
 
-    it('updateData() should delegate to crud.update(id, data)', (done) => {
-      const payload: TestEntity = { id: 11, name: 'Updated' };
-      crudSpy.update.and.returnValue(of(payload));
-
-      component.updateData(11, payload).subscribe(result => {
-        expect(crudSpy.update).toHaveBeenCalledWith(11, payload);
-        expect(result).toEqual(payload);
-        done();
-      });
-    });
-
-    it('deleteData() should delegate to crud.remove(id, { forceDelete, params })', (done) => {
-      const params = { reason: 'cleanup' };
-      crudSpy.remove.and.returnValue(of(undefined));
-
-      component.deleteData(12, true, params).subscribe(() => {
-        expect(crudSpy.remove).toHaveBeenCalledWith(12, { forceDelete: true, params });
-        done();
-      });
-    });
-
-    it('restoreDataFromApi() should delegate to crud.restore(id)', (done) => {
-      const restored: TestEntity = { id: 13, deleted_at: null };
-      crudSpy.restore.and.returnValue(of(restored));
-
-      component.restoreDataFromApi(13).subscribe(result => {
-        expect(crudSpy.restore).toHaveBeenCalledWith(13);
-        expect(result).toEqual(restored);
-        done();
-      });
-    });
-
-    it('uploadData() should delegate to crud.upload(formData, targetUrl)', (done) => {
+    it('should omit the Content-Type header when the payload is FormData', () => {
       const formData = new FormData();
+      formData.append('name', 'New item');
+
+      service.post<TestEntity>('items', formData).subscribe();
+
+      const req = httpMock.expectOne(`${baseUrl}/items`);
+      expect(req.request.body).toBe(formData);
+      expect(req.request.headers.has('Content-Type')).toBeFalse();
+      expect(req.request.headers.get('Accept')).toBe('application/json');
+      req.flush({ data: {} });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // put()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('put()', () => {
+    it('should PUT a JSON body and unwrap "data"', () => {
+      const payload: TestEntity = { id: 11, name: 'Updated' };
+      let result: TestEntity | undefined;
+
+      service.put<TestEntity>('items/11', payload).subscribe(res => (result = res));
+
+      const req = httpMock.expectOne(`${baseUrl}/items/11`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(payload);
+      expect(req.request.headers.get('Content-Type')).toBe('application/json');
+      req.flush({ data: payload });
+
+      expect(result).toEqual(payload);
+    });
+
+    it('should omit the Content-Type header when the payload is FormData', () => {
+      const formData = new FormData();
+      formData.append('name', 'Updated');
+
+      service.put<TestEntity>('items/11', formData).subscribe();
+
+      const req = httpMock.expectOne(`${baseUrl}/items/11`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.headers.has('Content-Type')).toBeFalse();
+      req.flush({ data: {} });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // patch()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('patch()', () => {
+    it('should PATCH a JSON body and unwrap "data"', () => {
+      const payload: Partial<TestEntity> = { name: 'Patched' };
+      const patched: TestEntity = { id: 12, name: 'Patched' };
+      let result: TestEntity | undefined;
+
+      service.patch<TestEntity>('items/12', payload).subscribe(res => (result = res));
+
+      const req = httpMock.expectOne(`${baseUrl}/items/12`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual(payload);
+      expect(req.request.headers.get('Content-Type')).toBe('application/json');
+      req.flush({ data: patched });
+
+      expect(result).toEqual(patched);
+    });
+
+    it('should omit the Content-Type header when the payload is FormData', () => {
+      const formData = new FormData();
+      formData.append('name', 'Patched');
+
+      service.patch<TestEntity>('items/12', formData).subscribe();
+
+      const req = httpMock.expectOne(`${baseUrl}/items/12`);
+      expect(req.request.headers.has('Content-Type')).toBeFalse();
+      req.flush({ data: {} });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // delete()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('delete()', () => {
+   it('should send a DELETE request to the resource and complete with void', () => {
+      let completed = false;
+
+      service.delete('items/9').subscribe(res => {
+        expect(res).toBeNull(); // Změněno z toBeUndefined() na toBeNull() dle req.flush(null)
+        completed = true;
+      });
+
+      const req = httpMock.expectOne(`${baseUrl}/items/9`);
+      expect(req.request.method).toBe('DELETE');
+      expect(req.request.headers.get('Content-Type')).toBe('application/json');
+      req.flush(null);
+
+      expect(completed).toBeTrue();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // upload()
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('upload()', () => {
+    it('should POST the FormData payload without a Content-Type header and return the raw response', () => {
+      const formData = new FormData();
+      formData.append('file', new Blob(['content']), 'file.png');
       const response = { url: 'https://example.com/file.png' };
-      crudSpy.upload.and.returnValue(of(response));
+      let result: any;
 
-      component.uploadData(formData, '/custom-upload').subscribe(result => {
-        expect(crudSpy.upload).toHaveBeenCalledWith(formData, '/custom-upload');
-        expect(result).toEqual(response);
-        done();
-      });
-    });
+      service.upload<{ url: string }>('items/9/upload', formData).subscribe(res => (result = res));
 
-    it('loadAllData() should delegate to crud.loadAll(filters) when apiEndpoint is set', (done) => {
-      const rows: TestEntity[] = [{ id: 1 }, { id: 2 }];
-      const filters = { sort_by: 'name', sort_direction: 'asc' as const };
-      crudSpy.loadAll.and.returnValue(of(rows));
+      const req = httpMock.expectOne(`${baseUrl}/items/9/upload`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toBe(formData);
+      expect(req.request.headers.has('Content-Type')).toBeFalse();
+      expect(req.request.headers.get('Accept')).toBe('application/json');
+      req.flush(response);
 
-      component.loadAllData(filters).subscribe(result => {
-        expect(crudSpy.loadAll).toHaveBeenCalledWith(filters);
-        expect(result).toEqual(rows);
-        done();
-      });
-    });
-
-    it('loadAllData() should error without calling crud.loadAll when apiEndpoint is missing', (done) => {
-      component.apiEndpoint = '' as any;
-
-      component.loadAllData().subscribe({
-        error: (err) => {
-          expect(err.message).toBe('API endpoint undefined.');
-          expect(crudSpy.loadAll).not.toHaveBeenCalled();
-          done();
-        }
-      });
+      expect(result).toEqual(response);
     });
   });
 
-  /**
-   * @description `updatePassword()` adds error-handling on top of the plain
-   * delegation: on success it simply forwards the emission; on failure it
-   * records a user-facing `errorMessage`, triggers change detection, and
-   * re-throws so callers can still react to the failure.
-   */
-  describe('updatePassword()', () => {
-    it('should clear errorMessage and return the crud result on success', (done) => {
-      const response = { success: true };
-      crudSpy.updatePassword.and.returnValue(of(response));
-      component.errorMessage = 'stale error';
+  // ═══════════════════════════════════════════════════════════════════════
+  // handleError() — exercised indirectly through every public method's
+  // catchError(this.handleError) pipe. get() is used as the vehicle for
+  // most cases since the error path is identical regardless of verb.
+  // ═══════════════════════════════════════════════════════════════════════
+  describe('error normalization (handleError)', () => {
+    /**
+     * @description Fires a GET request through the service, flushes it as an
+     * error with the given status/body/statusText, and returns the message
+     * the resulting Observable errors with.
+     */
+    function triggerHttpError(
+      httpMockRef: HttpTestingController,
+      errorBody: any,
+      status: number,
+      statusText: string = ''
+    ): Promise<string> {
+      return new Promise(resolve => {
+        service.get('items').subscribe({
+          error: (err: Error) => resolve(err.message)
+        });
 
-      component.updatePassword(1, { password: 'new-pass' }).subscribe(result => {
-        expect(component.errorMessage).toBeNull();
-        expect(crudSpy.updatePassword).toHaveBeenCalledWith(1, { password: 'new-pass' });
-        expect(result).toEqual(response);
-        done();
+        const req = httpMockRef.expectOne(`${baseUrl}/items`);
+        req.flush(errorBody, { status, statusText });
       });
-    });
+    }
 
-    it('should set errorMessage, mark for check, and rethrow on failure', (done) => {
-      const httpError = new HttpErrorResponse({ error: 'boom', status: 500 });
-      crudSpy.updatePassword.and.returnValue(throwError(() => httpError));
-      const markForCheckSpy = spyOn(component.getCdForTest(), 'markForCheck');
-
-      component.updatePassword(1, { password: 'new-pass' }).subscribe({
-        error: (err) => {
-          expect(component.errorMessage).toBe(httpError.message);
-          expect(markForCheckSpy).toHaveBeenCalled();
-          expect(err).toBe(httpError);
+    it('should report a client-side error (ErrorEvent) with its message', (done) => {
+      service.get('items').subscribe({
+        error: (err: Error) => {
+          expect(err.message).toBe('Client-side error: connection reset');
+          expect(alertDialogServiceSpy.open).toHaveBeenCalledWith(
+            'API Error',
+            'Client-side error: connection reset',
+            'danger'
+          );
           done();
         }
       });
+
+      const req = httpMock.expectOne(`${baseUrl}/items`);
+      req.error(new ErrorEvent('Network error', { message: 'connection reset' }));
     });
 
-    it('should fall back to a generic message when the error has no message', (done) => {
-      const httpError = { message: '' } as HttpErrorResponse;
-      crudSpy.updatePassword.and.returnValue(throwError(() => httpError));
+    it('should report a connection-level failure for status 0', async () => {
+      const message = await triggerHttpError(httpMock, {}, 0);
+      expect(message).toBe('Unable to connect to the server. Please check your network connection or if the API is running.');
+      expect(alertDialogServiceSpy.open).toHaveBeenCalledWith('API Error', message, 'danger');
+    });
 
-      component.updatePassword(1, {}).subscribe({
-        error: () => {
-          expect(component.errorMessage).toBe('Error changing password.');
+    it('should report the dedicated message for a 403 CANNOT_DELETE_OWN_ACCOUNT error_code', async () => {
+      const message = await triggerHttpError(
+        httpMock,
+        { error_code: 'CANNOT_DELETE_OWN_ACCOUNT' },
+        403
+      );
+      expect(message).toBe('Cannot delete the user you are currently logged in as.');
+    });
+
+    it('should surface the backend "message" for a generic 403 with an explicit message', async () => {
+      const message = await triggerHttpError(httpMock, { message: 'Forbidden resource' }, 403);
+      expect(message).toBe('Forbidden resource');
+    });
+
+    it('should fall back to a generic delete-error message for a 403 with no message/error_code', async () => {
+      const message = await triggerHttpError(httpMock, {}, 403);
+      expect(message).toBe('An error occurred while deleting the item.');
+    });
+
+    it('should join validation errors for a 422 response', async () => {
+      const message = await triggerHttpError(
+        httpMock,
+        { errors: { name: ['Name is required'], email: ['Email is invalid'] } },
+        422
+      );
+      expect(message).toBe('Validation error (422): Name is required; Email is invalid');
+    });
+
+    it('should surface the backend "message" for a generic 4xx (non-403/422) error', async () => {
+      const message = await triggerHttpError(httpMock, { message: 'Item is locked' }, 409);
+      expect(message).toBe('Client error (409): Item is locked');
+    });
+
+    it('should join validation errors for a generic 4xx error that has "errors" but no "message"', async () => {
+      const message = await triggerHttpError(
+        httpMock,
+        { errors: { quantity: ['Must be positive'] } },
+        400
+      );
+      expect(message).toBe('Validation error (400): Must be positive');
+    });
+
+    it('should fall back to status/statusText for a 4xx error with neither "message" nor "errors"', async () => {
+      const message = await triggerHttpError(httpMock, {}, 404, 'Not Found');
+      expect(message).toBe('Client error: 404 Not Found');
+    });
+
+    it('should report a generic server error for a 5xx response', async () => {
+      const message = await triggerHttpError(httpMock, {}, 500, 'Internal Server Error');
+      expect(message).toBe('Server error (500): Internal Server Error');
+    });
+
+    it('should always display the normalized message via AlertDialogService.open(...)', async () => {
+      const message = await triggerHttpError(httpMock, { message: 'Boom' }, 400);
+      expect(alertDialogServiceSpy.open).toHaveBeenCalledWith('API Error', message, 'danger');
+      expect(alertDialogServiceSpy.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('should propagate the normalized error to every calling method\'s pipe, not just get()', (done) => {
+      service.post('items', { name: 'x' }).subscribe({
+        error: (err: Error) => {
+          expect(err.message).toBe('Client error (422): Bad payload');
           done();
         }
       });
-    });
-  });
 
-  /**
-   * @description `hardDeleteAllTrashedDataFromApi()` mirrors `updatePassword()`'s
-   * error-handling pattern but additionally guards against a missing
-   * `apiEndpoint` before ever touching `crud`.
-   */
-  describe('hardDeleteAllTrashedDataFromApi()', () => {
-    it('should error immediately when apiEndpoint is missing, without calling crud', (done) => {
-      component.apiEndpoint = '' as any;
-
-      component.hardDeleteAllTrashedDataFromApi().subscribe({
-        error: (err) => {
-          expect(err.message).toBe('API endpoint undefined.');
-          expect(crudSpy.hardDeleteAllTrashed).not.toHaveBeenCalled();
-          done();
-        }
-      });
-    });
-
-    it('should clear errorMessage and delegate to crud.hardDeleteAllTrashed() on success', (done) => {
-      crudSpy.hardDeleteAllTrashed.and.returnValue(of(undefined));
-      component.errorMessage = 'stale error';
-
-      component.hardDeleteAllTrashedDataFromApi().subscribe(() => {
-        expect(component.errorMessage).toBeNull();
-        expect(crudSpy.hardDeleteAllTrashed).toHaveBeenCalledTimes(1);
-        done();
-      });
-    });
-
-    it('should set errorMessage and mark for check on failure', (done) => {
-      const httpError = new HttpErrorResponse({ error: 'boom', status: 500 });
-      crudSpy.hardDeleteAllTrashed.and.returnValue(throwError(() => httpError));
-      const markForCheckSpy = spyOn(component.getCdForTest(), 'markForCheck');
-      
-      component.hardDeleteAllTrashedDataFromApi().subscribe({
-        error: (err) => {
-          expect(component.errorMessage).toBe(httpError.message);
-          expect(markForCheckSpy).toHaveBeenCalled();
-          expect(err).toBe(httpError);
-          done();
-        }
-      });
-    });
-  });
-
-  /**
-   * @description `initWithAuthCheck()` subscribes to `AuthService.isLoggedIn$`
-   * and either reloads data or redirects to the login page, depending on the
-   * emitted authentication state.
-   */
-  describe('initWithAuthCheck()', () => {
-    it('should call refreshData() when the user is logged in', () => {
-      const refreshSpy = spyOn(component, 'refreshData');
-
-      (component as any).initWithAuthCheck(routerSpy);
-      authServiceMock.isLoggedIn$.next(true);
-
-      expect(refreshSpy).toHaveBeenCalledTimes(1);
-      expect(routerSpy.navigate).not.toHaveBeenCalled();
-    });
-
-    it('should navigate to /auth/login when the user is not logged in', () => {
-      const refreshSpy = spyOn(component, 'refreshData');
-
-      (component as any).initWithAuthCheck(routerSpy);
-      authServiceMock.isLoggedIn$.next(false);
-
-      expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
-      expect(refreshSpy).not.toHaveBeenCalled();
-    });
-
-    it('should unsubscribe once destroy$ has emitted, so later auth changes are ignored', () => {
-      const refreshSpy = spyOn(component, 'refreshData');
-
-      (component as any).initWithAuthCheck(routerSpy);
-      component.ngOnDestroy();
-      authServiceMock.isLoggedIn$.next(true);
-
-      expect(refreshSpy).not.toHaveBeenCalled();
-    });
-  });
-
-  /**
-   * @description `ngOnDestroy()` must complete the shared `destroy$` subject
-   * so that both the component's own subscriptions and any subscriptions
-   * held by `crud`/`list` (which receive the same subject) are torn down.
-   */
-  describe('ngOnDestroy()', () => {
-    it('should call next() and complete() on destroy$', () => {
-      const destroy$ = (component as any).destroy$;
-      const nextSpy = spyOn(destroy$, 'next').and.callThrough();
-      const completeSpy = spyOn(destroy$, 'complete').and.callThrough();
-
-      component.ngOnDestroy();
-
-      expect(nextSpy).toHaveBeenCalledTimes(1);
-      expect(completeSpy).toHaveBeenCalledTimes(1);
+      const req = httpMock.expectOne(`${baseUrl}/items`);
+      req.flush({ message: 'Bad payload' }, { status: 422, statusText: 'Unprocessable Entity' });
     });
   });
 });

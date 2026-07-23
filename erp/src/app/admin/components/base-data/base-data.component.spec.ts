@@ -114,29 +114,53 @@ describe('BaseDataComponent', () => {
    * the component delegates to, plus every pass-through property the
    * component re-exposes as getters/setters (`data`, `trashData`,
    * `showTrashTable`, pagination counters, and active/trash filters).
+   *
+   * @remarks
+   * These properties are defined as **linked get/set accessors over a single
+   * shared state object**, rather than passing a plain properties object to
+   * `jasmine.createSpyObj`. When Jasmine builds property spies from a plain
+   * object, the generated getter and setter for each key are independent
+   * spies that don't talk to each other — the setter just records that it
+   * was called, but never actually updates what the getter returns. Since
+   * `BaseDataComponent`'s pass-through properties always go get → set → get
+   * through `this.list.xxx`, that mismatch silently breaks every read/write
+   * round-trip test. Wiring real accessors over shared `state` fixes that.
+   *
    * @returns A jasmine spy object matching `PaginatedListStore<TestEntity>`'s
    * public surface.
    */
   function createListSpy(): jasmine.SpyObj<PaginatedListStore<TestEntity>> {
-    return jasmine.createSpyObj<PaginatedListStore<TestEntity>>(
+    const state: any = {
+      data: [],
+      trashData: [],
+      showTrashTable: false,
+      currentPage: 1,
+      itemsPerPage: 10,
+      totalItems: 0,
+      totalPages: 0,
+      trashCurrentPage: 1,
+      trashItemsPerPage: 10,
+      trashTotalItems: 0,
+      trashTotalPages: 0,
+      currentActiveFilters: { sort_by: 'id', sort_direction: 'desc' },
+      currentTrashFilters: { sort_by: 'id', sort_direction: 'desc' }
+    };
+
+    const spy = jasmine.createSpyObj<PaginatedListStore<TestEntity>>(
       'PaginatedListStore',
-      ['forceFullRefresh', 'onHandlePageChange', 'onHandleItemsPerPageChange', 'toggleTable'],
-      {
-        data: [],
-        trashData: [],
-        showTrashTable: false,
-        currentPage: 1,
-        itemsPerPage: 10,
-        totalItems: 0,
-        totalPages: 0,
-        trashCurrentPage: 1,
-        trashItemsPerPage: 10,
-        trashTotalItems: 0,
-        trashTotalPages: 0,
-        currentActiveFilters: { sort_by: 'id', sort_direction: 'desc' },
-        currentTrashFilters: { sort_by: 'id', sort_direction: 'desc' }
-      }
+      ['forceFullRefresh', 'onHandlePageChange', 'onHandleItemsPerPageChange', 'toggleTable']
     );
+
+    for (const key of Object.keys(state)) {
+      Object.defineProperty(spy, key, {
+        get: () => state[key],
+        set: (value: any) => { state[key] = value; },
+        enumerable: true,
+        configurable: true
+      });
+    }
+
+    return spy;
   }
 
   beforeEach(async () => {
@@ -282,7 +306,7 @@ describe('BaseDataComponent', () => {
       expect(listSpy.forceFullRefresh).toHaveBeenCalledWith(filters);
     });
 
-it('forceFullRefresh() should fall back to defaultFilters when called without arguments', () => {
+    it('forceFullRefresh() should fall back to defaultFilters when called without arguments', () => {
       component.forceFullRefresh();
       expect(listSpy.forceFullRefresh).toHaveBeenCalledWith(component.getDefaultFiltersForTest() as any);
     });
@@ -531,8 +555,14 @@ it('forceFullRefresh() should fall back to defaultFilters when called without ar
     it('should call refreshData() when the user is logged in', () => {
       const refreshSpy = spyOn(component, 'refreshData');
 
-      (component as any).initWithAuthCheck(routerSpy);
+      // `isLoggedIn$` is a BehaviorSubject, so it replays its current value
+      // synchronously to any new subscriber. The value must be set to
+      // `true` *before* `initWithAuthCheck()` subscribes, otherwise the
+      // subscription would first synchronously receive the stale `false`
+      // default (triggering a spurious `router.navigate`) before this
+      // `next(true)` arrives.
       authServiceMock.isLoggedIn$.next(true);
+      (component as any).initWithAuthCheck(routerSpy);
 
       expect(refreshSpy).toHaveBeenCalledTimes(1);
       expect(routerSpy.navigate).not.toHaveBeenCalled();
