@@ -10,26 +10,43 @@
   <div class="main-content">
 
       <!-- Hero Section -->
-      <section class="hero-section">
-          <div class="hero-content">
-              <div class="hero-eyebrow">{{ t?.hero?.eyebrow || 'Vývoj software na míru' }}</div>
-              <h1 class="hero-heading" [innerHTML]="t?.hero?.heading || 'Jsme IT společnost,<br>která staví digitální produkty'"></h1>
-              <p class="hero-lead">{{ t?.hero?.lead || 'Navrhujeme, vyvíjíme a nasazujeme webové, desktopové i mobilní aplikace – od prvního nápadu až po ostrý provoz.' }}</p>
+        <section class="hero-section">
+  <canvas #heroParticleCanvas class="hero-particles" aria-hidden="true"></canvas>
 
-              <div class="hero-cta-row">
-                  <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
-                      {{ t?.hero?.cta_primary || 'Nezávazná konzultace' }}
-                      <span class="home-cta-arrow" aria-hidden="true">→</span>
-                  </a>
-                  <a routerLink="/services" class="home-cta-btn">
-                      {{ t?.hero?.cta_secondary || 'Naše služby' }}
-                      <span class="home-cta-arrow" aria-hidden="true">→</span>
-                  </a>
-              </div>
-          </div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">{{ t?.hero?.eyebrow || 'Vývoj software · Praha' }}</div>
+    <h1 class="hero-heading" [innerHTML]="t?.hero?.heading || 'Jsme IT společnost,<br>která staví digitální produkty'"></h1>
+    <p class="hero-lead">{{ t?.hero?.lead || 'Navrhujeme, vyvíjíme a nasazujeme webové, desktopové i mobilní aplikace – od prvního nápadu až po ostrý provoz.' }}</p>
 
-          <span class="hero-scroll" aria-hidden="true"></span>
-      </section>
+    <div class="hero-cta-row">
+      <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
+        {{ t?.hero?.cta_primary || 'Nezávazná konzultace' }}
+        <span class="home-cta-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/services" class="home-cta-btn">
+        {{ t?.hero?.cta_secondary || 'Naše služby' }}
+        <span class="home-cta-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num">{{ t?.hero?.stat_1_num || '8+ let' }}</span>
+        <span class="hero-stat-label">{{ t?.hero?.stat_1_label || 'na trhu' }}</span>
+      </div>
+      <span class="hero-stat-divider" aria-hidden="true"></span>
+      <div class="hero-stat">
+        <span class="hero-stat-num">{{ t?.hero?.stat_2_num || '50+' }}</span>
+        <span class="hero-stat-label">{{ t?.hero?.stat_2_label || 'dokončených projektů' }}</span>
+      </div>
+      <span class="hero-stat-divider" aria-hidden="true"></span>
+      <div class="hero-stat">
+        <span class="hero-stat-num">{{ t?.hero?.stat_3_num || '100%' }}</span>
+        <span class="hero-stat-label">{{ t?.hero?.stat_3_label || 'vlastní kód' }}</span>
+      </div>
+    </div>
+  </div>
+</section>
 
       <!-- About Section -->
       <section class="about-section">
