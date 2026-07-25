@@ -36,6 +36,12 @@
             <span class="info-icon">✆</span>
             <a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="info-link">{{ settings.contact_phone }}</a>
           </li>
+          @if (settings.address) {
+            <li class="info-item">
+              <span class="info-icon">⊙</span>
+              <address class="info-address">{{ settings.address }}</address>
+            </li>
+          }
         </ul>
 
         <div class="social-row">
@@ -190,4 +196,4 @@
   </main>
 
 </div>
- </div>   
+ </div>

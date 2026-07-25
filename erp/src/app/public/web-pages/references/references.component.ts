@@ -22,7 +22,6 @@ import { BasePublicComponent } from '../../base-public.component';
 export class ReferencesComponent extends BasePublicComponent {
 
   protected readonly translationKey = 'projects';
-  
   projects: any[] = [];
 
   // Hook volaný automaticky po načtení překladů z bázové třídy
@@ -40,5 +39,22 @@ export class ReferencesComponent extends BasePublicComponent {
   toggleProject(project: any): void {
     project.isActive = !project.isActive;
     this.cdr.markForCheck();
+  }
+
+  /**
+   * @description Maps a project's category id ('web' | 'desktop' | 'mobile' | 'ai')
+   *   to its human-readable label from the same translation keys the sidebar
+   *   legend already uses (t.legend_web, t.legend_desktop, ...). Falls back to
+   *   the raw category id if no matching translation is found, so a missing
+   *   or unexpected category value never breaks rendering.
+   */
+  getCategoryLabel(category: string): string {
+    const map: Record<string, string | undefined> = {
+      web: this.t?.legend_web,
+      desktop: this.t?.legend_desktop,
+      mobile: this.t?.legend_mobile,
+      ai: this.t?.legend_ai,
+    };
+    return map[category] ?? category;
   }
 }

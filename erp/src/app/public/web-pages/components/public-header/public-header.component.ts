@@ -108,10 +108,12 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
     // Read from the cache populated by AppBootstrapService at startup —
     // do NOT fetch here, that would duplicate the request and reintroduce
     // the "empty logo" flash that preloading is meant to avoid.
+    // NOTE: cache holds the full { settings, social_links } response shape,
+    // so we unwrap .settings here (header doesn't use social_links itself).
     this.publicDataService.siteSettingsValue$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(settings => {
-        this.siteSettings = settings;
+      .subscribe(res => {
+        this.siteSettings = res?.settings ?? null;
         this.cdr.markForCheck();
       });
 

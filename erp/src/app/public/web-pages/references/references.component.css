@@ -18,6 +18,10 @@
   --text:        #e0e0f0;
   --text-muted:  #888899;
   --text-dim:    #555566;
+  --cat-web:     #a67dff;
+  --cat-desktop: #7da8ff;
+  --cat-mobile:  #5dcaa5;
+  --cat-ai:      #f08080;
   --ff-display:  'Source Sans Pro', 'Segoe UI', sans-serif;
   --ff-body:     'Segoe UI', system-ui, sans-serif;
   --radius:      12px;
@@ -204,10 +208,10 @@
   border-radius: 50%;
 }
 
-.legend-dot--web     { background: #a67dff; }
-.legend-dot--desktop { background: #7da8ff; }
-.legend-dot--mobile  { background: #5dcaa5; }
-.legend-dot--ai      { background: #f08080; }
+.legend-dot--web     { background: var(--cat-web); }
+.legend-dot--desktop { background: var(--cat-desktop); }
+.legend-dot--mobile  { background: var(--cat-mobile); }
+.legend-dot--ai      { background: var(--cat-ai); }
 
 .legend-label {
   font-size: 0.85rem;
@@ -334,6 +338,27 @@
 }
 
 .ref-trigger-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+/* Barevná tečka kategorie — konečně dává legendě v sidebaru smysl:
+   stejné barvy (--cat-web/desktop/mobile/ai) se používají tady i tam. */
+.ref-cat-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.ref-cat-dot--web     { background: var(--cat-web); }
+.ref-cat-dot--desktop { background: var(--cat-desktop); }
+.ref-cat-dot--mobile  { background: var(--cat-mobile); }
+.ref-cat-dot--ai      { background: var(--cat-ai); }
+
+.ref-trigger-title-text {
   font-size: 0.97rem;
   font-weight: 600;
   color: var(--text);
@@ -368,7 +393,7 @@
   transition: max-height 0.38s ease;
 }
 
-.ref-item--open .ref-body { max-height: 400px; }
+.ref-item--open .ref-body { max-height: 600px; }
 
 .ref-body-inner {
   padding: 16px 18px 20px 62px;
@@ -384,7 +409,7 @@
   color: var(--text-muted);
 }
 
-/* Meta tagy pod popisem */
+/* Meta tagy pod popisem — oblast, velikost, doba trvání, klient, tech */
 .ref-meta-tags {
   display: flex;
   flex-wrap: wrap;
@@ -407,6 +432,19 @@
 .ref-tag-icon {
   font-size: 0.8rem;
   opacity: 0.8;
+}
+
+/* Barva ikony u tagu kategorie odpovídá tečce v řádku */
+.ref-tag--web .ref-tag-icon     { color: var(--cat-web); }
+.ref-tag--desktop .ref-tag-icon { color: var(--cat-desktop); }
+.ref-tag--mobile .ref-tag-icon  { color: var(--cat-mobile); }
+.ref-tag--ai .ref-tag-icon      { color: var(--cat-ai); }
+
+/* Technologické tagy — neutrální, ne accent barva, ať nesoupeří s kategorií */
+.ref-tag--tech {
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-color: var(--border);
 }
 
 /* ═══════════════════════════════════════════════════════════════

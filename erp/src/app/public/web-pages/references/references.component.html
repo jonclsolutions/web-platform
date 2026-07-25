@@ -101,7 +101,10 @@
                 {{ (i + 1).toString().padStart(2, '0') }}
               </span>
               <span class="ref-col-title ref-trigger-title">
-                {{ project.name }}
+                @if (project.category) {
+                  <span class="ref-cat-dot" [ngClass]="'ref-cat-dot--' + project.category" aria-hidden="true"></span>
+                }
+                <span class="ref-trigger-title-text">{{ project.name }}</span>
               </span>
               <span class="ref-col-duration ref-meta">
                 {{ project.duration }}
@@ -109,11 +112,50 @@
               <span class="ref-col-client ref-meta">
                 {{ project.client }}
               </span>
+              <span class="ref-chevron" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
             </button>
 
             <div class="ref-body">
               <div class="ref-body-inner">
                 <p class="ref-description" [innerHTML]="project.description"></p>
+
+                <!-- Strukturované info o projektu — vidět i na mobilu, kde je
+                     .ref-meta (doba/klient) v samotném řádku schovaná. -->
+                <div class="ref-meta-tags">
+                  @if (project.category) {
+                    <span class="ref-tag" [ngClass]="'ref-tag--' + project.category">
+                      <span class="ref-tag-icon" aria-hidden="true">●</span>
+                      {{ getCategoryLabel(project.category) }}
+                    </span>
+                  }
+                  @if (project.size) {
+                    <span class="ref-tag">
+                      <span class="ref-tag-icon" aria-hidden="true">◧</span>
+                      {{ project.size }}
+                    </span>
+                  }
+                  @if (project.duration) {
+                    <span class="ref-tag">
+                      <span class="ref-tag-icon" aria-hidden="true">⏱</span>
+                      {{ project.duration }}
+                    </span>
+                  }
+                  @if (project.client) {
+                    <span class="ref-tag">
+                      <span class="ref-tag-icon" aria-hidden="true">◎</span>
+                      {{ project.client }}
+                    </span>
+                  }
+                  @if (project.tech?.length) {
+                    @for (item of project.tech; track item) {
+                      <span class="ref-tag ref-tag--tech">{{ item }}</span>
+                    }
+                  }
+                </div>
               </div>
             </div>
           </div>

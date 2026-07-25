@@ -12,9 +12,14 @@
     <div class="faq-hero-eyebrow">{{ t?.hero_eyebrow }}</div>
     <h1 class="faq-hero-title">{{ t?.header_1 }}</h1>
     <p class="faq-hero-sub">{{ t?.hero_sub }}</p>
-    <div class="faq-tags">
+    <div class="faq-tags" role="tablist">
       @for (cat of categories; track cat.id) {
-        <button class="faq-tag" [class.faq-tag--active]="activeCategory === cat.id" (click)="setCategory(cat.id)">{{ cat.label }}</button>
+        <button
+          class="faq-tag"
+          [class.faq-tag--active]="activeCategory === cat.id"
+          role="tab"
+          [attr.aria-selected]="activeCategory === cat.id"
+          (click)="setCategory(cat.id)">{{ cat.label }}</button>
       }
     </div>
   </section>
@@ -26,14 +31,20 @@
         <h3 class="sidebar-card-title">{{ t?.sidebar_title }}</h3>
         <p class="sidebar-card-text">{{ t?.sidebar_text }}</p>
           <div class="sidebar-contact-list">
-            <a [href]="'mailto:' + settings.contact_email" class="sidebar-contact-item">
+            <a [href]="emailHref" class="sidebar-contact-item">
               <span class="sidebar-contact-icon">✉</span>
               <span>{{ settings.contact_email }}</span>
             </a>
-            <a class="sidebar-contact-item">
-              <span class="sidebar-contact-icon">✉</span>
+            <a [href]="phoneHref" class="sidebar-contact-item">
+              <span class="sidebar-contact-icon">✆</span>
               <span>{{ settings.contact_phone }}</span>
             </a>
+            @if (settings.address) {
+              <div class="sidebar-contact-item sidebar-contact-item--static">
+                <span class="sidebar-contact-icon">⊙</span>
+                <address class="sidebar-contact-address">{{ settings.address }}</address>
+              </div>
+            }
             @for (link of socialLinks; track link.id) {
               <a [href]="link.url" target="_blank" rel="noopener" class="sidebar-contact-item">
                 <span class="sidebar-contact-icon">
@@ -58,18 +69,25 @@
 
     <main class="faq-main">
       <div class="faq-section-label">{{ t?.section_label }}</div>
-      <div class="faq-list" role="list">
-        @for (item of filteredItems; track item.question; let i = $index) {
-          <div class="faq-item" [class.faq-item--open]="item.isActive" [style.animation-delay]="i * 0.06 + 's'" role="listitem">
-            <button class="faq-trigger" [attr.aria-expanded]="item.isActive" (click)="toggleFaq(item)">
-              <span class="faq-num" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span>
-              <span class="faq-trigger-text">{{ item.question }}</span>
-              <span class="faq-chevron" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-            </button>
-            <div class="faq-body"><p class="faq-answer-text" [innerHTML]="item.answer"></p></div>
-          </div>
-        }
-      </div>
+
+      @if (filteredItems.length > 0) {
+        <div class="faq-list" role="list">
+          @for (item of filteredItems; track item.question; let i = $index) {
+            <div class="faq-item" [class.faq-item--open]="item.isActive" [style.animation-delay]="i * 0.06 + 's'" role="listitem">
+              <button class="faq-trigger" [attr.aria-expanded]="item.isActive" (click)="toggleFaq(item)">
+                <span class="faq-num" aria-hidden="true">{{ (i + 1).toString().padStart(2, '0') }}</span>
+                <span class="faq-trigger-text">{{ item.question }}</span>
+                <span class="faq-chevron" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </button>
+              <div class="faq-body"><p class="faq-answer-text" [innerHTML]="item.answer"></p></div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="faq-empty-state">
+          <p class="faq-empty-text">{{ t?.empty_state_text || 'Pro tuto kategorii zatím nemáme žádné otázky. Zkuste jinou kategorii, nebo se nám ozvěte přímo.' }}</p>
+        </div>
+      }
       
       <div class="faq-mobile-extras">
         <div class="sidebar-stats-card">
@@ -84,10 +102,20 @@
         <div class="sidebar-card">
           <div class="sidebar-card-eyebrow">{{ t?.sidebar_eyebrow }}</div>
             <div class="sidebar-contact-list">
-              <a [href]="'mailto:' + settings.contact_email" class="sidebar-contact-item">
+              <a [href]="emailHref" class="sidebar-contact-item">
                 <span class="sidebar-contact-icon">✉</span>
                 <span>{{ settings.contact_email }}</span>
               </a>
+              <a [href]="phoneHref" class="sidebar-contact-item">
+                <span class="sidebar-contact-icon">✆</span>
+                <span>{{ settings.contact_phone }}</span>
+              </a>
+              @if (settings.address) {
+                <div class="sidebar-contact-item sidebar-contact-item--static">
+                  <span class="sidebar-contact-icon">⊙</span>
+                  <address class="sidebar-contact-address">{{ settings.address }}</address>
+                </div>
+              }
               @for (link of socialLinks; track link.id) {
                 <a [href]="link.url" target="_blank" rel="noopener" class="sidebar-contact-item">
                   <span class="sidebar-contact-icon">
@@ -97,6 +125,7 @@
                 </a>
               }
             </div>
+          <a routerLink="/contact" class="sidebar-cta-btn">{{ t?.sidebar_cta }} <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </main>

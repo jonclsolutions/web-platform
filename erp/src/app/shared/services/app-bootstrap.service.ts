@@ -55,7 +55,10 @@ export class AppBootstrapService {
       const data = await firstValueFrom(
         this.publicDataService.getSiteSettings()
       );
-      this.publicDataService.setCachedSettings(data.settings);
+      // FIX: cache the whole response ({ settings, social_links }), not just
+      // data.settings — caching only the settings sub-object silently drops
+      // social_links, so anything reading from cache gets an empty array.
+      this.publicDataService.setCachedSettings(data);
 
       if (data.settings?.logo_path) {
         const logoUrl = this.publicDataService.getStorageUrl(data.settings.logo_path);

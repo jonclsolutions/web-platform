@@ -149,6 +149,12 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Použito v nové FAQ sekci (home-faq-item), stejný vzor jako ve faq.component.css */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 905px) {
     .hero-section { padding: 110px 30px 60px; justify-content: center; }
     .hero-content { text-align: center; margin: 0 auto; }
@@ -744,4 +750,333 @@
 
 @media (min-width: 906px) {
     .header-0-2-t { font-size: 4rem; }
+}
+
+/* ═══════════════════════════════════════════════════
+   REFERENCES / SOCIAL PROOF SEKCE (nová)
+   ═══════════════════════════════════════════════════ */
+.home-proof-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 50px 40px;
+}
+
+.home-proof-header {
+    text-align: center;
+    margin-bottom: 44px;
+}
+
+.home-proof-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #a67dff;
+    margin-bottom: 14px;
+}
+
+.home-proof-heading {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #e0e0e0;
+    text-shadow: 0 0 15px rgba(158, 158, 158, 0.2);
+    margin: 0;
+}
+
+.home-proof-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 40px;
+}
+
+.home-proof-card {
+    position: relative;
+    background: #111128;
+    border: 1px solid rgba(166, 125, 255, 0.12);
+    border-radius: 16px;
+    padding: 30px 26px 26px;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.25s ease, transform 0.2s ease;
+}
+
+.home-proof-card:hover {
+    border-color: rgba(166, 125, 255, 0.35);
+    transform: translateY(-4px);
+}
+
+.home-proof-quote-mark {
+    font-family: Georgia, serif;
+    font-size: 2.6rem;
+    line-height: 1;
+    color: rgba(166, 125, 255, 0.4);
+    margin-bottom: 8px;
+}
+
+.home-proof-text {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: #a0a0b5;
+    margin: 0 0 24px;
+    flex: 1;
+}
+
+.home-proof-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.home-proof-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(166, 125, 255, 0.14);
+    border: 1px solid rgba(166, 125, 255, 0.3);
+    color: #a67dff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.home-proof-author-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.home-proof-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #d0d0e0;
+}
+
+.home-proof-role {
+    font-size: 0.76rem;
+    color: #7a7a8c;
+}
+
+.home-proof-trustbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.home-proof-trust-item {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #9090a5;
+}
+
+.home-proof-trust-divider {
+    width: 1px;
+    height: 16px;
+    background: rgba(166, 125, 255, 0.25);
+}
+
+@media (max-width: 905px) {
+    .home-proof-section { padding: 50px 30px 30px; }
+    .home-proof-heading { font-size: 1.7rem; }
+    .home-proof-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    .home-proof-section { padding: 40px 20px 20px; }
+    .home-proof-trustbar { gap: 12px; }
+    .home-proof-trust-divider { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-proof-card { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════
+   FAQ SEKCE (nová) — čisté CSS, bez JS ("checkbox hack")
+   Skrytý <input type="checkbox"> + <label> jako trigger + sourozenecké
+   selektory řídí plynulou max-height animaci a rotaci šipky.
+   ═══════════════════════════════════════════════════ */
+.home-faq-section {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 50px 60px;
+}
+
+.home-faq-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.home-faq-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #a67dff;
+    margin-bottom: 14px;
+}
+
+.home-faq-heading {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #e0e0e0;
+    text-shadow: 0 0 15px rgba(158, 158, 158, 0.2);
+    margin: 0;
+}
+
+.home-faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 28px;
+}
+
+.home-faq-item {
+    position: relative;
+    background: #111128;
+    border: 1px solid rgba(166, 125, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+/* Checkbox samotný je vizuálně skrytý, ale zůstává fokusovatelný
+   a ovládatelný klávesnicí (Tab + mezerník) díky vazbě label[for]. */
+.home-faq-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.home-faq-checkbox:checked ~ .home-faq-trigger {
+    background: rgba(166, 125, 255, 0.07);
+}
+
+.home-faq-checkbox:checked ~ .home-faq-body {
+    grid-template-rows: 1fr;
+}
+
+.home-faq-checkbox:checked ~ .home-faq-trigger .home-faq-chevron {
+    transform: rotate(180deg);
+}
+
+.home-faq-checkbox:focus-visible ~ .home-faq-trigger {
+    outline: 2px solid #a67dff;
+    outline-offset: -2px;
+}
+
+.home-faq-trigger {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 24px;
+    padding: 16px 18px;
+    background-color: #111128;
+    cursor: pointer;
+    color: #e0e0f0;
+    font-family: inherit;
+    user-select: none;
+    transition: background 0.3s ease;
+}
+
+.home-faq-trigger:hover {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.home-faq-num {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #a67dff;
+    opacity: 0.7;
+    min-width: 22px;
+}
+
+.home-faq-trigger-text {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #e0e0f0;
+}
+
+.home-faq-chevron {
+    flex-shrink: 0;
+    color: #a67dff;
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+/* Grid s 0fr/1fr řádkem = jediný spolehlivý způsob, jak animovat
+   "auto" výšku obsahu čistě v CSS, bez pevně dané max-height hodnoty
+   a bez JS. Vnitřní div s overflow:hidden dělá samotné odkrytí obsahu. */
+.home-faq-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.38s ease;
+    background-color: #111128;
+}
+
+.home-faq-answer-text {
+    margin: 0;
+    overflow: hidden;
+    min-height: 0;
+    padding: 0 18px 0 54px;
+    font-size: 0.91rem;
+    line-height: 1.75;
+    color: #888899;
+    transition: padding 0.38s ease;
+}
+
+.home-faq-checkbox:checked ~ .home-faq-body .home-faq-answer-text {
+    padding-bottom: 18px;
+}
+
+.home-faq-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #a67dff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: gap 0.2s ease;
+}
+
+.home-faq-more:hover {
+    gap: 12px;
+}
+
+@media (max-width: 905px) {
+    .home-faq-section { padding: 30px 30px 50px; }
+    .home-faq-heading { font-size: 1.5rem; }
+}
+
+@media (max-width: 480px) {
+    .home-faq-section { padding: 24px 20px 40px; }
+    .home-faq-trigger { padding: 14px 14px; }
+    .home-faq-trigger-text { font-size: 0.9rem; }
+    .home-faq-answer-text { padding-left: 40px; }
+}
+
+@media (hover: hover) {
+    .home-faq-trigger:hover { background: #161631; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-faq-item, .home-faq-body, .home-faq-chevron, .home-faq-more,
+    .home-faq-trigger, .home-faq-answer-text { transition: none; }
 }

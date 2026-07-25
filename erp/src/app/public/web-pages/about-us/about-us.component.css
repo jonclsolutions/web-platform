@@ -368,6 +368,107 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   MILESTONES / MILNÍKY — časová osa (nová sekce)
+   ═══════════════════════════════════════════════════════════════ */
+.milestones-section {
+  position: relative;
+  z-index: 1;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 20px 24px 80px;
+  animation: fadeUp 0.6s ease-out both;
+}
+
+.milestones-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.milestones-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.milestones-heading {
+  font-family: var(--ff-display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  color: var(--white);
+}
+
+.milestones-track {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.milestone-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Řádek: linka-vlevo | tečka | linka-vpravo — stejný spolehlivý vzor
+   jako u workflow sekce na /services. Zaručuje, že se čára vždy
+   přesně zarovná s tečkou, bez ohledu na šířku sloupců. */
+.milestone-connector {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 18px;
+}
+
+.milestone-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-mid);
+}
+
+.milestone-line--hidden {
+  background: transparent;
+}
+
+.milestone-dot {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--accent-dark);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 10px -2px rgba(166, 125, 255, 0.7);
+  position: relative;
+  z-index: 1;
+  margin: 0 2px;
+}
+
+.milestone-year {
+  font-family: var(--ff-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.milestone-title {
+  font-family: var(--ff-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.3;
+}
+
+.milestone-text {
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    CTA SEKCE
    ═══════════════════════════════════════════════════════════════ */
 .about-cta-section {
@@ -502,6 +603,11 @@
     gap: 20px;
     padding: 20px 28px;
   }
+
+  .milestones-track {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
 }
 
 @media (max-width: 600px) {
@@ -509,6 +615,7 @@
   .about-hero-title { font-size: 2rem; }
   .about-layout { padding: 0 16px 60px; }
   .about-cta-section { padding-left: 16px; padding-right: 16px; }
+  .milestones-section { padding: 10px 16px 60px; }
 
   .about-pillars { grid-template-columns: 1fr; }
 
@@ -526,4 +633,10 @@
 
 @media (hover: hover) {
   .social-item:hover { background: var(--accent-dim); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-hero, .about-sidebar, .about-main, .milestones-section, .about-cta-section {
+    animation: none;
+  }
 }

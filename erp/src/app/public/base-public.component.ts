@@ -23,6 +23,16 @@
  * @note Components that already extend BaseDataComponent (e.g. JobItemComponent)
  *   cannot use this class due to single-inheritance. They must manage
  *   translations manually as before.
+ *
+ * @fix (EMERGENCY) Site settings now read from PublicDataService.siteSettingsValue$
+ *   (the cache populated once by AppBootstrapService at startup) instead of firing
+ *   a duplicate HTTP request here. IMPORTANT: the cache holds the FULL response
+ *   shape { settings, social_links } — not just the settings sub-object — so both
+ *   `settings` and `socialLinks` are unwrapped from it below. Previously,
+ *   AppBootstrapService cached only `data.settings`, which silently dropped
+ *   `social_links` for every component reading from cache (footer, about-us,
+ *   contact, faq, etc.). That has been fixed in AppBootstrapService itself;
+ *   this file now matches that corrected shape.
  */
 
 import { Directive, inject, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
@@ -78,17 +88,20 @@ export abstract class BasePublicComponent implements OnInit, OnDestroy {
         }
       });
 
-   if (this.loadSiteSettings) {
-    this.publicDataService.siteSettingsValue$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(res => {
-        if (res) {
-          this.settings = res.settings ?? res;
-          this.socialLinks = res.social_links ?? [];
-          this.cdr.markForCheck();
-        }
-      });
-  }
+    // 2. Site settings (opt-in) — read from the cache populated by
+    //    AppBootstrapService at startup, do NOT fetch again here.
+    //    Cache shape is { settings, social_links } (see PublicDataService).
+    if (this.loadSiteSettings) {
+      this.publicDataService.siteSettingsValue$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(res => {
+          if (res) {
+            this.settings    = res.settings ?? null;
+            this.socialLinks = res.social_links ?? [];
+            this.cdr.markForCheck();
+          }
+        });
+    }
 
     // 3. Subclass hook
     this.onInit();
@@ -129,6 +142,16 @@ export abstract class BasePublicComponent implements OnInit, OnDestroy {
   /** Resolves the full public URL for a storage asset. */
   getIconUrl(path: string): string {
     return this.publicDataService.getStorageUrl(path);
+  }
+
+  /** mailto: href for the current site's contact email, null-safe. */
+  get emailHref(): string {
+    return 'mailto:' + (this.settings?.contact_email ?? '');
+  }
+
+  /** tel: href for the current site's contact phone, null-safe and whitespace-stripped. */
+  get phoneHref(): string {
+    return 'tel:' + (this.settings?.contact_phone?.replace(/\s/g, '') ?? '');
   }
 
   get currentLanguage$(): Observable<string> {

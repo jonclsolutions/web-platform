@@ -7,6 +7,28 @@
 -->
 
 @if (t) {
+
+  <!-- 
+    JSON-LD strukturovaná data pro vyhledávače (Organization schema).
+    Poznámka: pro produkční nasazení je robustnější vkládat tohle přes
+    Angular Meta/Renderer2 service v .ts (funguje spolehlivě i při SSR),
+    ale jako statický blok přímo v šabloně projde i takto.
+  -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "RPSW",
+    "url": "https://www.rpsw.cz/",
+    "logo": "https://www.rpsw.cz/assets/images/logos/logo.png",
+    "description": "RPSW je IT společnost zaměřená na vývoj webových, mobilních a desktopových aplikací na míru.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "CZ"
+    }
+  }
+  </script>
+
   <div class="main-content">
 
       <!-- Hero Section -->
@@ -141,9 +163,9 @@
                       <div class="benefit-header_temp_new">{{ t?.select_us?.item_1?.header }}</div>
                       <div class="benefit-points_temp_new">
                           <ul>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_1 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_2 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_1?.bullet_3 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_1?.bullet_1 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_1?.bullet_2 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_1?.bullet_3 }}</li>
                           </ul>
                       </div>
                   </div>
@@ -161,9 +183,9 @@
                       <div class="benefit-header_temp_new">{{ t?.select_us?.item_2?.header }}</div>
                       <div class="benefit-points_temp_new">
                           <ul>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_1 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_2 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_2?.bullet_3 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_2?.bullet_1 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_2?.bullet_2 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_2?.bullet_3 }}</li>
                           </ul>
                       </div>
                   </div>
@@ -183,9 +205,9 @@
                       <div class="benefit-header_temp_new">{{ t?.select_us?.item_3?.header }}</div>
                       <div class="benefit-points_temp_new">
                           <ul>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_1 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_2 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark"></span> {{ t?.select_us?.item_3?.bullet_3 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_3?.bullet_1 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_3?.bullet_2 }}</li>
+                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_3?.bullet_3 }}</li>
                           </ul>
                       </div>
                   </div>
@@ -214,6 +236,151 @@
             </div>
         </div>
       }
+
+      <div class="gradient-seep-wrp">
+          <div class="gradient-line-separator"></div>
+      </div>
+
+      <!-- References / Social Proof Section -->
+       <!-- REFERENCE WILL BE ADDED LATER THIS IS ONLY PLACEHOLDER -->
+      <!-- <section class="home-proof-section">
+        <div class="home-proof-header">
+          <div class="home-proof-eyebrow">{{ t?.proof?.eyebrow || 'Co říkají klienti' }}</div>
+          <h2 class="home-proof-heading">{{ t?.proof?.heading || 'Spolupráce, na které si zakládáme' }}</h2>
+        </div>
+
+        <div class="home-proof-grid">
+          <div class="home-proof-card">
+            <div class="home-proof-quote-mark" aria-hidden="true">"</div>
+            <p class="home-proof-text">{{ t?.proof?.item_1?.text || 'Tým dodal projekt přesně podle zadání a v domluveném termínu. Komunikace byla po celou dobu jasná a bez zbytečných průtahů.' }}</p>
+            <div class="home-proof-author">
+              <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_1?.initials || 'JN' }}</div>
+              <div class="home-proof-author-info">
+                <span class="home-proof-name">{{ t?.proof?.item_1?.name || 'Jan Novák' }}</span>
+                <span class="home-proof-role">{{ t?.proof?.item_1?.role || 'Jednatel, e-shop s doplňky' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-proof-card">
+            <div class="home-proof-quote-mark" aria-hidden="true">"</div>
+            <p class="home-proof-text">{{ t?.proof?.item_2?.text || 'Oceňujeme hlavně to, že nám dokázali poradit i s věcmi, na které jsme se sami nezeptali. Výsledná aplikace funguje bez problémů dodnes.' }}</p>
+            <div class="home-proof-author">
+              <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_2?.initials || 'MK' }}</div>
+              <div class="home-proof-author-info">
+                <span class="home-proof-name">{{ t?.proof?.item_2?.name || 'Michaela Krátká' }}</span>
+                <span class="home-proof-role">{{ t?.proof?.item_2?.role || 'Marketing manažerka' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-proof-card">
+            <div class="home-proof-quote-mark" aria-hidden="true">"</div>
+            <p class="home-proof-text">{{ t?.proof?.item_3?.text || 'Od prvního nápadu po nasazení do ostrého provozu uplynulo jen pár týdnů. Rychlost i kvalita zpracování nás mile překvapily.' }}</p>
+            <div class="home-proof-author">
+              <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_3?.initials || 'PH' }}</div>
+              <div class="home-proof-author-info">
+                <span class="home-proof-name">{{ t?.proof?.item_3?.name || 'Petr Horák' }}</span>
+                <span class="home-proof-role">{{ t?.proof?.item_3?.role || 'CEO, výrobní společnost' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-proof-trustbar">
+          <span class="home-proof-trust-item">{{ t?.proof?.trust_1 || '10+ dokončených projektů' }}</span>
+          <span class="home-proof-trust-divider" aria-hidden="true"></span>
+          <span class="home-proof-trust-item">{{ t?.proof?.trust_2 || '4 roky na trhu' }}</span>
+          <span class="home-proof-trust-divider" aria-hidden="true"></span>
+          <span class="home-proof-trust-item">{{ t?.proof?.trust_3 || 'Podpora i po nasazení' }}</span>
+        </div>
+      </section>
+
+      <div class="gradient-seep-wrp">
+          <div class="gradient-line-separator"></div>
+      </div> -->
+
+      <!-- FAQ Section -->
+      <section class="home-faq-section">
+        <div class="home-faq-header">
+          <div class="home-faq-eyebrow">{{ t?.faq?.eyebrow || 'Časté dotazy' }}</div>
+          <h2 class="home-faq-heading">{{ t?.faq?.heading || 'Než napíšete, možná už tu je odpověď' }}</h2>
+        </div>
+
+        <div class="home-faq-list" role="list">
+
+          <div class="home-faq-item" role="listitem">
+            <input type="checkbox" id="home-faq-1" class="home-faq-checkbox">
+            <label for="home-faq-1" class="home-faq-trigger">
+              <span class="home-faq-num" aria-hidden="true">01</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q1 || 'Jak dlouho trvá vývoj typického projektu?' }}</span>
+              <span class="home-faq-chevron" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </label>
+            <div class="home-faq-body">
+              <p class="home-faq-answer-text">{{ t?.faq?.a1 || 'Záleží na rozsahu — jednodušší weby zvládneme za pár týdnů, komplexnější aplikace obvykle trvají 2–4 měsíce. Přesný odhad dostanete po nezávazné konzultaci.' }}</p>
+            </div>
+          </div>
+
+          <div class="home-faq-item" role="listitem">
+            <input type="checkbox" id="home-faq-2" class="home-faq-checkbox">
+            <label for="home-faq-2" class="home-faq-trigger">
+              <span class="home-faq-num" aria-hidden="true">02</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q2 || 'Kolik stojí vývoj webové nebo mobilní aplikace?' }}</span>
+              <span class="home-faq-chevron" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </label>
+            <div class="home-faq-body">
+              <p class="home-faq-answer-text">{{ t?.faq?.a2 || 'Cena se odvíjí od rozsahu a použitých technologií. Orientační ceník najdete na stránce Služby, konkrétní nabídku připravíme na míru po konzultaci zdarma.' }}</p>
+            </div>
+          </div>
+
+          <div class="home-faq-item" role="listitem">
+            <input type="checkbox" id="home-faq-3" class="home-faq-checkbox">
+            <label for="home-faq-3" class="home-faq-trigger">
+              <span class="home-faq-num" aria-hidden="true">03</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q3 || 'Poskytujete podporu i po dokončení projektu?' }}</span>
+              <span class="home-faq-chevron" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </label>
+            <div class="home-faq-body">
+              <p class="home-faq-answer-text">{{ t?.faq?.a3 || 'Ano, po nasazení nabízíme servisní podporu a další rozvoj podle domluvy — od drobných úprav až po dlouhodobou spolupráci.' }}</p>
+            </div>
+          </div>
+
+          <div class="home-faq-item" role="listitem">
+            <input type="checkbox" id="home-faq-4" class="home-faq-checkbox">
+            <label for="home-faq-4" class="home-faq-trigger">
+              <span class="home-faq-num" aria-hidden="true">04</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q4 || 'Umíte pracovat i s naším stávajícím systémem?' }}</span>
+              <span class="home-faq-chevron" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </label>
+            <div class="home-faq-body">
+              <p class="home-faq-answer-text">{{ t?.faq?.a4 || 'Ano, běžně navazujeme na existující řešení, propojujeme systémy přes API a postupně je modernizujeme, aniž by musel provoz stát.' }}</p>
+            </div>
+          </div>
+
+        </div>
+
+        <a routerLink="/faq" class="home-faq-more">
+          {{ t?.faq?.more_link || 'Zobrazit všechny otázky' }}
+          <span class="home-cta-arrow" aria-hidden="true">→</span>
+        </a>
+      </section>
+
   <div class="gradient-seep-wrp">
           <div class="gradient-line-separator"></div>
       </div>

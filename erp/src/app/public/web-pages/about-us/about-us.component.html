@@ -12,22 +12,22 @@
   <section class="about-hero">
     <div class="about-hero-eyebrow">{{ t?.hero_eyebrow }}</div>
     <h1 class="about-hero-title">{{ t?.header }}</h1>
-    <p class="about-hero-sub">{{ t?.hero_sub }}</p>
+    <p class="about-hero-sub">{{ t?.hero_sub || 'IT divize skupiny RegioPartner — stavíme na patnáctileté zkušenosti mateřské firmy a od roku 2022 ji rozvíjíme v oblasti softwaru.' }}</p>
 
     <div class="about-hero-stats">
       <div class="about-stat">
-        <span class="about-stat-num">{{ t?.stats.projects }}</span>
-        <span class="about-stat-label">{{ t?.stats.projects_label }}</span>
+        <span class="about-stat-num">{{ t?.stats?.projects }}</span>
+        <span class="about-stat-label">{{ t?.stats?.projects_label }}</span>
       </div>
       <div class="about-stat-sep" aria-hidden="true"></div>
       <div class="about-stat">
-        <span class="about-stat-num">{{ t?.stats.experience }}</span>
-        <span class="about-stat-label">{{ t?.stats.experience_label }}</span>
+        <span class="about-stat-num">{{ t?.stats?.experience }}</span>
+        <span class="about-stat-label">{{ t?.stats?.experience_label }}</span>
       </div>
       <div class="about-stat-sep" aria-hidden="true"></div>
       <div class="about-stat">
-        <span class="about-stat-num">{{ t?.stats.response }}</span>
-        <span class="about-stat-label">{{ t?.stats.response_label }}</span>
+        <span class="about-stat-num">{{ t?.stats?.response }}</span>
+        <span class="about-stat-label">{{ t?.stats?.response_label }}</span>
       </div>
     </div>
   </section>
@@ -36,16 +36,16 @@
 
     <aside class="about-sidebar">
       <div class="sidebar-card">
-        <div class="sidebar-eyebrow">{{ t?.sidebar.eyebrow }}</div>
-        <h3 class="sidebar-title">{{ t?.sidebar.title }}</h3>
-        <p class="sidebar-text">{{ t?.sidebar.text }}</p>
+        <div class="sidebar-eyebrow">{{ t?.sidebar?.eyebrow }}</div>
+        <h3 class="sidebar-title">{{ t?.sidebar?.title }}</h3>
+        <p class="sidebar-text">{{ t?.sidebar?.text }}</p>
         <a routerLink="/contact" class="sidebar-cta-btn">
-          {{ t?.sidebar.btn }} <span aria-hidden="true">→</span>
+          {{ t?.sidebar?.btn }} <span aria-hidden="true">→</span>
         </a>
       </div>
 
       <div class="sidebar-card sidebar-card--social">
-        <div class="sidebar-eyebrow">{{ t?.sidebar.social_eyebrow }}</div>
+        <div class="sidebar-eyebrow">{{ t?.sidebar?.social_eyebrow }}</div>
         <div class="social-list">
           @for (link of socialLinks; track link.id) {
             <a [href]="link.url" target="_blank" rel="noopener" [title]="link.name" class="social-item">
@@ -61,7 +61,7 @@
 
       <div class="sidebar-tip-card">
         <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
-        <p class="sidebar-tip-text" [innerHTML]="t?.sidebar.tip_text"></p>
+        <p class="sidebar-tip-text" [innerHTML]="t?.sidebar?.tip_text"></p>
       </div>
     </aside>
 
@@ -69,47 +69,101 @@
       <div class="about-main-eyebrow">{{ t?.main_eyebrow }}</div>
 
       <div class="about-content">
-        <p class="about-paragraph">{{ t?.paragraph_1 }}</p>
-        <p class="about-paragraph">{{ t?.paragraph_2 }}</p>
-        <p class="about-paragraph">{{ t?.paragraph_3 }}</p>
-        <p class="about-paragraph">{{ t?.paragraph_4 }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_1 || 'RPSW je IT divize skupiny RegioPartner, s.r.o. — firmy, která už patnáct let poskytuje poradenství a strategické analýzy veřejnému sektoru v Česku. Nevznikli jsme tedy jako izolovaný startup, ale jako přirozené rozšíření firmy s dlouhodobým zázemím a zkušeností s velkými, komplexními zakázkami.' }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_2 || 'Divize vznikla v roce 2022 s jasným cílem: přenést softwarové know-how a moderní technologie i do prostředí, ve kterém mateřská firma dlouhodobě působí, a zároveň nabídnout vlastní vývoj na míru i dalším klientům mimo tuto oblast.' }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_3 || 'První období jsme věnovali především budování interní infrastruktury, procesů a technologického zázemí — než jsme začali přijímat zakázky navenek, chtěli jsme mít jistotu, že za každým projektem stojí stabilní a otestovaný základ, ne improvizace.' }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_4 || 'Dnes díky tomu dodáváme weby, mobilní a desktopové aplikace i AI řešení s klidem firmy, která ví, jak vypadá dlouhodobá spolupráce — a zároveň s pružností menšího týmu, který se nebojí jít do detailu.' }}</p>
       </div>
 
       <div class="about-pillars">
         <div class="pillar-item">
           <span class="pillar-icon" aria-hidden="true">◈</span>
-          <h4 class="pillar-title">{{ t?.pillars.p1.title }}</h4>
-          <p class="pillar-text">{{ t?.pillars.p1.text }}</p>
+          <h4 class="pillar-title">{{ t?.pillars?.p1?.title }}</h4>
+          <p class="pillar-text">{{ t?.pillars?.p1?.text }}</p>
         </div>
         <div class="pillar-item">
           <span class="pillar-icon" aria-hidden="true">◎</span>
-          <h4 class="pillar-title">{{ t?.pillars.p2.title }}</h4>
-          <p class="pillar-text">{{ t?.pillars.p2.text }}</p>
+          <h4 class="pillar-title">{{ t?.pillars?.p2?.title }}</h4>
+          <p class="pillar-text">{{ t?.pillars?.p2?.text }}</p>
         </div>
         <div class="pillar-item">
           <span class="pillar-icon" aria-hidden="true">◐</span>
-          <h4 class="pillar-title">{{ t?.pillars.p3.title }}</h4>
-          <p class="pillar-text">{{ t?.pillars.p3.text }}</p>
+          <h4 class="pillar-title">{{ t?.pillars?.p3?.title }}</h4>
+          <p class="pillar-text">{{ t?.pillars?.p3?.text }}</p>
         </div>
       </div>
     </main>
   </div>
+
+  <!-- Milestones / Milníky — timeline od založení divize po současnost -->
+  <section class="milestones-section">
+    <div class="milestones-header">
+      <div class="milestones-eyebrow">{{ t?.milestones?.eyebrow || 'Naše cesta' }}</div>
+      <h2 class="milestones-heading">{{ t?.milestones?.heading || 'Od založení divize po dnešek' }}</h2>
+    </div>
+
+    <div class="milestones-track">
+      <div class="milestone-item">
+        <div class="milestone-connector">
+          <div class="milestone-line milestone-line--hidden" aria-hidden="true"></div>
+          <div class="milestone-dot" aria-hidden="true"></div>
+          <div class="milestone-line" aria-hidden="true"></div>
+        </div>
+        <div class="milestone-year">{{ t?.milestones?.m1?.year || '2022' }}</div>
+        <h4 class="milestone-title">{{ t?.milestones?.m1?.title || 'Vznik IT divize' }}</h4>
+        <p class="milestone-text">{{ t?.milestones?.m1?.text || 'RPSW vzniká jako softwarová divize skupiny RegioPartner, s.r.o., navazující na patnáctiletou historii mateřské firmy.' }}</p>
+      </div>
+
+      <div class="milestone-item">
+        <div class="milestone-connector">
+          <div class="milestone-line" aria-hidden="true"></div>
+          <div class="milestone-dot" aria-hidden="true"></div>
+          <div class="milestone-line" aria-hidden="true"></div>
+        </div>
+        <div class="milestone-year">{{ t?.milestones?.m2?.year || '2022–2023' }}</div>
+        <h4 class="milestone-title">{{ t?.milestones?.m2?.title || 'Budování infrastruktury' }}</h4>
+        <p class="milestone-text">{{ t?.milestones?.m2?.text || 'Stavíme interní procesy, technologické zázemí a tým — základ, na kterém dnes stojí každý dodaný projekt.' }}</p>
+      </div>
+
+      <div class="milestone-item">
+        <div class="milestone-connector">
+          <div class="milestone-line" aria-hidden="true"></div>
+          <div class="milestone-dot" aria-hidden="true"></div>
+          <div class="milestone-line" aria-hidden="true"></div>
+        </div>
+        <div class="milestone-year">{{ t?.milestones?.m3?.year || '2024' }}</div>
+        <h4 class="milestone-title">{{ t?.milestones?.m3?.title || 'První zakázky navenek' }}</h4>
+        <p class="milestone-text">{{ t?.milestones?.m3?.text || 'Otevíráme se klientům mimo mateřskou firmu a dodáváme první weby, aplikace a AI řešení na míru.' }}</p>
+      </div>
+
+      <div class="milestone-item">
+        <div class="milestone-connector">
+          <div class="milestone-line" aria-hidden="true"></div>
+          <div class="milestone-dot" aria-hidden="true"></div>
+          <div class="milestone-line milestone-line--hidden" aria-hidden="true"></div>
+        </div>
+        <div class="milestone-year">{{ t?.milestones?.m4?.year || 'Dnes' }}</div>
+        <h4 class="milestone-title">{{ t?.milestones?.m4?.title || 'Stabilní tým, rostoucí portfolio' }}</h4>
+        <p class="milestone-text">{{ t?.milestones?.m4?.text || 'Kombinujeme zázemí zavedené firmy s pružností menšího týmu a dál rozšiřujeme portfolio dokončených projektů.' }}</p>
+      </div>
+    </div>
+  </section>
 
   <div class="about-divider" aria-hidden="true"></div>
 
   <section class="about-cta-section">
     <div class="cta-row">
       <div class="cta-block">
-        <p class="cta-text">{{ t?.cta.ref_text }}</p>
+        <p class="cta-text">{{ t?.cta?.ref_text }}</p>
         <a routerLink="/references" class="cta-btn">
-          {{ t?.cta.ref_btn }} <span class="cta-arrow" aria-hidden="true">→</span>
+          {{ t?.cta?.ref_btn }} <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
       <div class="cta-divider" aria-hidden="true"></div>
       <div class="cta-block">
-        <p class="cta-text">{{ t?.cta.contact_text }}</p>
+        <p class="cta-text">{{ t?.cta?.contact_text }}</p>
         <a routerLink="/contact" class="cta-btn cta-btn--accent">
-          {{ t?.cta.contact_btn }} <span class="cta-arrow" aria-hidden="true">→</span>
+          {{ t?.cta?.contact_btn }} <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
     </div>
