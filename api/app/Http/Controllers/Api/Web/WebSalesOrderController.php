@@ -18,7 +18,8 @@ use App\Http\Requests\Web\WebSalesOrder\{StoreWebSalesOrderRequest, UpdateWebSal
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\{Log, Storage};
-
+use App\Mail\Web\WebSalesOrderReceived;
+use Illuminate\Support\Facades\Mail;
 /**
  * @description Controller responsible for orchestrating sales order processing and tracking.
  * @note Automates sales representative assignment based on linked lead records and manages persistent document storage.
@@ -89,37 +90,46 @@ class WebSalesOrderController extends Controller
      * @return JsonResponse
      * @throws \Exception
      */
-    public function store(StoreWebSalesOrderRequest $request): JsonResponse
-    {
-        try {
-            $validated = $request->validated();
 
-            if ($request->hasFile('attachment')) {
-                $validated['attachment_path'] = $request->file('attachment')->store('orders', 'public');
-            }
 
-            if (!empty($validated['lead_id'])) {
-                $lead = WebSalesLead::find($validated['lead_id']);
-                if ($lead) {
-                    $validated['salesman_name'] = $lead->salesman_name;
-                    $lead->update(['status' => 'Poptávkový formulář odeslán']);
-                }
-            }
+public function store(StoreWebSalesOrderRequest $request): JsonResponse
+{
+    try {
+        $validated = $request->validated();
 
-            if (empty($validated['salesman_name'])) {
-                $validated['salesman_name'] = 'Webová poptávka (bez leadu)';
-            }
-
-            $order = WebSalesOrder::create($validated);
-            
-            $this->logAction($request, 'create', 'WebSalesOrder', "Vytvořena realizace pro: {$order->client_name}", $order->id);
-            
-            return response()->json(new WebSalesOrderResource($order->load('lead')), 201);
-        } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebSalesOrder', "Chyba při vytváření realizace: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření realizace selhalo.'], 500);
+        if ($request->hasFile('attachment')) {
+            $validated['attachment_path'] = $request->file('attachment')->store('orders', 'public');
         }
+
+        if (!empty($validated['lead_id'])) {
+            $lead = WebSalesLead::find($validated['lead_id']);
+            if ($lead) {
+                $validated['salesman_name'] = $lead->salesman_name;
+                $lead->update(['status' => 'Poptávkový formulář odeslán']);
+            }
+        }
+
+        if (empty($validated['salesman_name'])) {
+            $validated['salesman_name'] = 'Webová poptávka (bez leadu)';
+        }
+
+        $order = WebSalesOrder::create($validated);
+
+        $this->logAction($request, 'create', 'WebSalesOrder', "Vytvořena realizace pro: {$order->client_name}", $order->id);
+
+        try {
+            Mail::to($order->client_email)
+                ->send(new WebSalesOrderReceived($order));
+        } catch (\Throwable $e) {
+            $this->logAction($request, 'error', 'WebSalesOrder', "Nepodařilo se odeslat potvrzovací e-mail: " . $e->getMessage(), $order->id);
+        }
+
+        return response()->json(new WebSalesOrderResource($order->load('lead')), 201);
+    } catch (\Exception $e) {
+        $this->logAction($request, 'error', 'WebSalesOrder', "Chyba při vytváření realizace: " . $e->getMessage());
+        return response()->json(['message' => 'Vytvoření realizace selhalo.'], 500);
     }
+}
 
     /**
      * Retrieves detailed information about a specific order, including soft-deleted ones.

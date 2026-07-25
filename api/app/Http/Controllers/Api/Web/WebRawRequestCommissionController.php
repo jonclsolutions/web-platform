@@ -20,6 +20,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\Web\WebRawRequestCommissionReceived;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * @description Controller responsible for processing raw commission inquiries submitted via the website.
@@ -94,7 +96,7 @@ class WebRawRequestCommissionController extends Controller
      * @return JsonResponse Created commission resource.
      * @throws \Exception On database or storage failure.
      */
-    public function store(StoreWebRawRequestCommissionRequest $request): JsonResponse
+   public function store(StoreWebRawRequestCommissionRequest $request): JsonResponse
     {
         try {
             $data = $request->validated();
@@ -106,6 +108,13 @@ class WebRawRequestCommissionController extends Controller
             $commission = WebRawRequestCommission::create($data);
 
             $this->logAction($request, 'create', 'WebRawRequestCommission', "Vytvořen požadavek na provizi: {$commission->thema}", $commission->id);
+
+            try {
+                Mail::to($commission->contact_email)
+                    ->send(new WebRawRequestCommissionReceived($commission));
+            } catch (\Throwable $e) {
+                $this->logAction($request, 'error', 'WebRawRequestCommission', "Nepodařilo se odeslat potvrzovací e-mail: " . $e->getMessage(), $commission->id);
+            }
 
             return response()->json(new WebRawRequestCommissionResource($commission), 201);
         } catch (\Exception $e) {
