@@ -286,43 +286,41 @@
   margin-bottom: 20px;
 }
 
-.tech-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  border-bottom: 1px solid var(--border);;
+/* ── Tech chipy (nahrazují původní tech-grid čtverečky) ───────── */
+.tech-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
 }
 
-.tech-item {
+.tech-chip {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 14px 8px;
+  padding: 7px 14px 7px 8px;
+  border-radius: 999px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border-mid);
+  transition: border-color var(--ease), background var(--ease), transform 0.15s ease;
 }
 
-.tech-item-img-wrap {
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tech-item-img-wrap img {
-  width: 100%;
-  height: 100%;
+.tech-chip-icon {
+  width: 22px;
+  height: 22px;
   object-fit: contain;
-  filter: drop-shadow(0 0 6px rgba(166, 125, 255, 0.4));
-  transition: transform 0.2s ease, filter 0.2s ease;
+  filter: drop-shadow(0 0 4px rgba(166, 125, 255, 0.4));
 }
 
-.tech-item-name {
-  font-size: 0.78rem;
+.tech-chip-name {
+  font-size: 0.82rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text);
+  white-space: nowrap;
 }
 
+/* ── Stat karty (ikona + gradientní číslo) ───────────────────── */
 .sidebar-stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -334,16 +332,27 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   padding: 20px 12px;
   text-align: center;
+}
+
+.sidebar-stat-icon {
+  display: flex;
+  color: var(--accent);
+  opacity: 0.85;
+  margin-bottom: 2px;
 }
 
 .sidebar-stat-num {
   font-family: var(--ff-display);
   font-size: 2rem;
   font-weight: 700;
-  color: var(--accent);
   line-height: 1;
+  background: linear-gradient(135deg, #fff, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .sidebar-stat-label {
@@ -422,6 +431,13 @@
   margin-bottom: 14px;
 }
 
+.wfd-num-total {
+  color: var(--text-muted);
+  font-weight: 600;
+  opacity: 0.55;
+  margin-left: 1px;
+}
+
 /* Řádek: linka-vlevo | tečka | linka-vpravo */
 .wfd-dot-wrap {
   display: flex;
@@ -439,14 +455,19 @@
 /* Skrytá linka na krajích */
 .wfd-line--hidden { background: transparent; }
 
+/* Tečka nese ikonu kroku (lupa / tužka / </> / raketa) */
 .wfd-dot {
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: var(--accent);
-  /* Vizuální obruba — dvojitý kruh */
-  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--accent);
+  background: var(--accent-dark);
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--surface), 0 0 18px -6px rgba(166, 125, 255, 0.65);
   position: relative;
   z-index: 1;
 }
@@ -502,12 +523,18 @@
   flex-shrink: 0;
 }
 
+/* Tečka nese ikonu kroku i na mobilu */
 .wfm-dot {
-  width: 12px;
-  height: 12px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--accent);
+  background: var(--accent-dark);
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--surface), 0 0 14px -6px rgba(166, 125, 255, 0.55);
   flex-shrink: 0;
   position: relative;
   z-index: 1;
@@ -766,8 +793,6 @@
     flex: 1;
     min-width: 280px;
   }
-
-  .tech-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* 860px – přepnutí workflow na mobilní verzi */

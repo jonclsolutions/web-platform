@@ -10,6 +10,9 @@
  * - LocalizationService: Manages multi-language state and translation keys.
  * - PublicDataService: Fetches global site configuration.
  * - Angular Signals/RxJS: Manages reactive state updates for the UI.
+ * @note siteSettings is read from PublicDataService.siteSettingsValue$ (populated once by
+ *   AppBootstrapService during APP_INITIALIZER) instead of being fetched here. By the time
+ *   this component renders, the value — and the logo image bytes — are already available.
  */
 
 import {
@@ -102,10 +105,13 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
-    this.publicDataService.get<{settings: any}>('public/legal/config')
+    // Read from the cache populated by AppBootstrapService at startup —
+    // do NOT fetch here, that would duplicate the request and reintroduce
+    // the "empty logo" flash that preloading is meant to avoid.
+    this.publicDataService.siteSettingsValue$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(data => {
-        this.siteSettings = data.settings;
+      .subscribe(settings => {
+        this.siteSettings = settings;
         this.cdr.markForCheck();
       });
 

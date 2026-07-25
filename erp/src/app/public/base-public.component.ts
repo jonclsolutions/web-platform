@@ -78,16 +78,17 @@ export abstract class BasePublicComponent implements OnInit, OnDestroy {
         }
       });
 
-    // 2. Site settings (opt-in)
-    if (this.loadSiteSettings) {
-      this.publicDataService.getSiteSettings()
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(res => {
-          this.settings   = res.settings;
-          this.socialLinks = res.social_links;
+   if (this.loadSiteSettings) {
+    this.publicDataService.siteSettingsValue$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(res => {
+        if (res) {
+          this.settings = res.settings ?? res;
+          this.socialLinks = res.social_links ?? [];
           this.cdr.markForCheck();
-        });
-    }
+        }
+      });
+  }
 
     // 3. Subclass hook
     this.onInit();

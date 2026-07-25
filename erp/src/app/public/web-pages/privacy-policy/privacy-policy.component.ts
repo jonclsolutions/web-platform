@@ -4,11 +4,15 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
+ * @note Document loading goes through LegalDocsService, which caches by slug+language.
+ *   If AppBootstrapService already prefetched this doc in the background, this resolves
+ *   instantly with no network wait.
  */
 
-import { Component, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BasePublicComponent } from '../../base-public.component';
+import { LegalDocsService } from '../../../shared/services/legal-docs.service';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
@@ -20,11 +24,12 @@ import { takeUntil } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PrivacyPolicyComponent extends BasePublicComponent {
-  
   protected readonly translationKey = 'privacy_policy';
 
   @Input() docSlug: 'gdpr' | 'tos' = 'gdpr';
   data: any = null;
+
+  private legalDocsService = inject(LegalDocsService);
 
   protected override onInit(): void {
     this.currentLanguage$
@@ -33,7 +38,7 @@ export class PrivacyPolicyComponent extends BasePublicComponent {
   }
 
   private loadDocument(lang: string): void {
-    this.publicDataService.get(`public/legal/${this.docSlug}`, { lang })
+    this.legalDocsService.getDocument(this.docSlug, lang)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {

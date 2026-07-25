@@ -126,4 +126,12 @@ export class ContactComponent extends BasePublicComponent {
     const ctrl = this.contactForm.get(name);
     return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
   }
+
+  get emailHref(): string {
+    return 'mailto:' + (this.settings?.contact_email ?? '');
+  }
+
+  get phoneHref(): string {
+    return 'tel:' + (this.settings?.contact_phone?.replace(/\s/g, '') ?? '');
+  }
 }

@@ -9,31 +9,65 @@
 <!doctype html>
 <html lang="cs">
 <head>
-  <meta charset="utf-8">
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/png" href="">
+<meta charset="utf-8">
+<base href="/">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="">
 
 <title>RPSW | Vývoj softwaru na míru | Web, Mobile, Desktop</title>
-  <meta name="description" content="RPSW je váš partner pro komplexní vývoj softwaru na míru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
-  <meta name="keywords" content="vývoj softwaru, webové aplikace, mobilní aplikace, vývoj e-shopů, ERP, CRM, AI, umělá inteligence, web design, desktopové aplikace, programování na míru, software pro firmy">
-  <meta name="author" content="RPSW">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://www.rpsw.cz/">
+  <meta name="description" content="RPSW je váš partner pro komplexní vývoj softwaru na míru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
+  <meta name="keywords" content="vývoj softwaru, webové aplikace, mobilní aplikace, vývoj e-shopů, ERP, CRM, AI, umělá inteligence, web design, desktopové aplikace, programování na míru, software pro firmy">
+  <meta name="author" content="RPSW">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.rpsw.cz/">
 
 <meta property="og:title" content="RPSW | Vývoj softwaru na míru">
-  <meta property="og:description" content="RPSW je váš partner pro komplexní vývoj softwaru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.rpsw.cz/">
-  <meta property="og:image" content="https://www.rpsw.cz/assets/images/logos/logo.png">
-  <meta property="og:locale" content="cs_CZ">
+  <meta property="og:description" content="RPSW je váš partner pro komplexní vývoj softwaru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.rpsw.cz/">
+  <meta property="og:image" content="https://www.rpsw.cz/assets/images/logos/logo.png">
+  <meta property="og:locale" content="cs_CZ">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Inline a mimo Angular záměrně — musí se zobrazit dřív, než se
+       stáhne cokoliv dalšího (JS bundle, překlady, settings). Jakmile
+       Angular vykreslí root komponentu do <app-root>, tenhle obsah
+       se automaticky přepíše a spinner zmizí sám, bez JS zásahu. */
+    #initial-loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0d0d1b;
+      z-index: 9999;
+    }
+    .initial-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(166, 125, 255, 0.2);
+      border-top-color: #a67dff;
+      border-radius: 50%;
+      animation: initial-spin 0.7s linear infinite;
+    }
+    @keyframes initial-spin {
+      to { transform: rotate(360deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .initial-spinner { animation: none; }
+    }
+  </style>
 
 </head>
 <body>
-  <app-root></app-root>
+<app-root>
+  <div id="initial-loader">
+    <div class="initial-spinner"></div>
+  </div>
+</app-root>
 </body>
 </html>

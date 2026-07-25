@@ -8,9 +8,11 @@
  * @dependencies
  * - AuthTokenInterceptor: Handles automatic JWT injection into outgoing requests.
  * - LoadingInterceptor: Manages global HTTP request state tracking.
+ * - AppBootstrapService: Preloads translations + site settings before the app renders,
+ *   so the first paint never shows an empty/blank state.
  */
 
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -19,8 +21,18 @@ import { AuthTokenInterceptor } from './core/interceptors/auth-token.interceptor
 import { LoadingInterceptor } from './core/interceptors/loading.interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeCs from '@angular/common/locales/cs';
+import { AppBootstrapService } from './shared/services/app-bootstrap.service';
 
 registerLocaleData(localeCs, 'cs-CZ');
+
+/**
+ * @description Factory used by APP_INITIALIZER. Angular waits for the returned
+ *   Promise to resolve before bootstrapping the root component, so translations
+ *   and site settings are already in memory on first render.
+ */
+function initAppFactory(bootstrap: AppBootstrapService) {
+  return () => bootstrap.init();
+}
 
 /**
  * @description Global application configuration object for Angular providers.
@@ -31,25 +43,37 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideHttpClient(withInterceptorsFromDi()),
-    
+
     /**
      * @description Injects the AuthTokenInterceptor to secure API communication.
      * @note Registered as 'multi: true' to allow multiple HTTP interceptors to coexist in the chain.
      */
-    { 
-      provide: HTTP_INTERCEPTORS, 
-      useClass: AuthTokenInterceptor, 
-      multi: true 
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthTokenInterceptor,
+      multi: true
     },
-    
+
     /**
      * @description Injects the LoadingInterceptor to track network activity.
      * @note Used to trigger global loading indicators by observing active HTTP requests.
      */
-    { 
-      provide: HTTP_INTERCEPTORS, 
-      useClass: LoadingInterceptor, 
-      multi: true 
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: LoadingInterceptor,
+      multi: true
+    },
+
+    /**
+     * @description Preloads translations and site settings (in parallel) before
+     *   the root component is rendered. Prevents the "flash of empty content"
+     *   (empty header, missing logo, blank text) on first load.
+     */
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initAppFactory,
+      deps: [AppBootstrapService],
+      multi: true,
     },
   ]
 };

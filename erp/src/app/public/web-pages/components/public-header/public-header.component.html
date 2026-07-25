@@ -26,7 +26,11 @@
 </header>
 
 <a routerLink="/home" class="logo-wrp">
-  <img [src]="siteSettings?.logo_path ? '/storage/' + siteSettings.logo_path : null">
+  @if (siteSettings?.logo_path) {
+    <img [src]="'/storage/' + siteSettings.logo_path" alt="Logo">
+  } @else {
+    <div class="logo-placeholder" aria-hidden="true"></div>
+  }
 </a>
 
 <div class="lang-wrp">
@@ -70,7 +74,11 @@
 
 <div class="mobile-header">
   <a routerLink="/home" class="m-logo">
-    <img [src]="siteSettings?.logo_path ? '/storage/' + siteSettings.logo_path : null" alt="Logo">
+    @if (siteSettings?.logo_path) {
+      <img [src]="'/storage/' + siteSettings.logo_path" alt="Logo">
+    } @else {
+      <div class="logo-placeholder logo-placeholder--mobile" aria-hidden="true"></div>
+    }
   </a>
   <div class="hamburger" (click)="toggleMenu()">
     <div class="hamburger-line" [class.open]="isMenuOpen"></div>

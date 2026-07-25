@@ -48,14 +48,16 @@
   </div>
 </section>
 
-      <!-- About Section -->
-      <section class="about-section">
-          <div class="about-eyebrow">{{ t?.about?.eyebrow }}</div>
-          <h2 class="about-heading" [innerHTML]="t?.about?.heading"></h2>
-          <p class="about-lead">{{ t?.about?.lead }}</p>
+<!-- About Section -->
+<section class="about-section">
+  <div class="about-glow" aria-hidden="true"></div>
 
-           <div class="about-services-grid">
-    <a routerLink="/services" [queryParams]="{ tech: 'web-dev' }" class="about-service-card">
+  <div class="about-eyebrow">{{ t?.about?.eyebrow }}</div>
+  <h2 class="about-heading" [innerHTML]="t?.about?.heading"></h2>
+  <p class="about-lead">{{ t?.about?.lead }}</p>
+
+  <div class="about-services-grid">
+    <a routerLink="/services" [queryParams]="{ tech: 'web-dev' }" class="about-service-card" style="--tint:#7c9eff">
       <div class="about-service-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
@@ -63,8 +65,10 @@
       </div>
       <div class="about-service-name">{{ t?.web_header }}</div>
       <div class="about-service-desc">{{ t?.web_desc }}</div>
+      <span class="about-service-arrow">→</span>
     </a>
-    <a routerLink="/services" [queryParams]="{ tech: 'desktop-dev' }" class="about-service-card">
+
+    <a routerLink="/services" [queryParams]="{ tech: 'desktop-dev' }" class="about-service-card" style="--tint:#5fd8c4">
       <div class="about-service-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 2v4M16 2v4M2 10h20"/>
@@ -72,8 +76,10 @@
       </div>
       <div class="about-service-name">{{ t?.desktop_header }}</div>
       <div class="about-service-desc">{{ t?.desktop_desc }}</div>
+      <span class="about-service-arrow">→</span>
     </a>
-    <a routerLink="/services" [queryParams]="{ tech: 'mobile-dev' }" class="about-service-card">
+
+    <a routerLink="/services" [queryParams]="{ tech: 'mobile-dev' }" class="about-service-card" style="--tint:#ff86c2">
       <div class="about-service-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
@@ -81,8 +87,10 @@
       </div>
       <div class="about-service-name">{{ t?.mobile_header }}</div>
       <div class="about-service-desc">{{ t?.mobile_desc }}</div>
+      <span class="about-service-arrow">→</span>
     </a>
-    <a routerLink="/services" [queryParams]="{ tech: 'ai-dev' }" class="about-service-card">
+
+    <a routerLink="/services" [queryParams]="{ tech: 'ai-dev' }" class="about-service-card" style="--tint:#ffb86b">
       <div class="about-service-icon">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/>
@@ -90,23 +98,24 @@
       </div>
       <div class="about-service-name">{{ t?.ai_header }}</div>
       <div class="about-service-desc">{{ t?.ai_desc }}</div>
+      <span class="about-service-arrow">→</span>
     </a>
   </div>
 
-          <div class="about-strips">
-              @for (step of ['01', '02', '03']; track step) {
-                <a routerLink="/services" class="about-strip">
-                  <div class="about-strip-body">
-                    <span class="about-strip-num">{{ step }}</span>
-                    <div class="about-strip-content">
-                      <div class="about-strip-title">{{ t?.about?.steps[step]?.title }}</div>
-                      <div class="about-strip-text">{{ t?.about?.steps[step]?.text }}</div>
-                    </div>
-                  </div>
-                </a>
-              }
+  <div class="about-strips">
+    @for (step of ['01', '02', '03']; track step) {
+      <a routerLink="/services" class="about-strip">
+        <div class="about-strip-body">
+          <span class="about-strip-num">{{ step }}</span>
+          <div class="about-strip-content">
+            <div class="about-strip-title">{{ t?.about?.steps[step]?.title }}</div>
+            <div class="about-strip-text">{{ t?.about?.steps[step]?.text }}</div>
           </div>
-      </section>
+        </div>
+      </a>
+    }
+  </div>
+</section>
 
       <div class="gradient-seep-wrp">
           <div class="gradient-line-separator"></div>
