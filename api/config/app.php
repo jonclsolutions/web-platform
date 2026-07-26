@@ -26,6 +26,7 @@ return [
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:4200'),
 
     'cipher' => 'AES-256-CBC',
 

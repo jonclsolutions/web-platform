@@ -1,0 +1,7 @@
+mailpitstart - zapne mail service lokalni na http://localhost:8025
+mailpitstop - vypne mail service
+(dulezite nastavit maily v .env) + nastavit frontend url
+
+xamppstart - zapne xamp kde je i db na https://localhost/phpmyadmin/
+xamppstop - vypne xamp
+

@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\Core\CoreRoleController;
@@ -99,6 +100,17 @@ Route::get('/sanctum/csrf-cookie', fn(Request $r) => response()->json([], 204));
 
 Route::post('/login',   [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/refresh', [AuthController::class, 'refresh']);
+
+/*
+|--------------------------------------------------------------------------
+| Password reset (public) — krok 1 (vyžádání odkazu) a krok 5 (nastavení nového hesla)
+|--------------------------------------------------------------------------
+| Throttle per-IP proti hrubému útoku / enumeraci; interní audit log viz. web_system_logs.
+*/
+Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])
+    ->middleware('throttle:5,1');
+Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])
+    ->middleware('throttle:10,1');
 
 // Public web forms
 Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store']);

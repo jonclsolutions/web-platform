@@ -78,6 +78,13 @@ export const routes: Routes = [
 
   // --- 4. ADMIN & AUTH ---
   { path: 'auth/login', component: LoginComponent },
+  {
+    // Veřejná stránka mimo AdminLayoutComponent i AuthGuard - cílová stránka odkazu z e-mailu.
+    path: 'auth/reset-password',
+    loadComponent: () =>
+      import('./admin/auth/reset-password/reset-password.component')
+        .then(m => m.ResetPasswordComponent)
+  },
   { path: 'admin', loadChildren: () => import('./admin/admin-routing.module').then(m => m.AdminRoutingModule) },
 
   // --- 5. ERROR PAGES ---

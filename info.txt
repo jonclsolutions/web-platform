@@ -1,8 +1,1 @@
-
-
-
-
-
-WebLayoutComponent (chyba ActivatedRoute)
-
-KbArticleComponent (chyba ActivatedRoute, testy uťaté na konci výstupu)
+smtpd_tls_security_level = may //TOTO ZMENIT ZPET NA PRODUKCI

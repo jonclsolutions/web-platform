@@ -79,6 +79,43 @@ export class AuthService {
   }
 
   /**
+   * @description Requests a password reset link for the given email (step 1 of the recovery flow).
+   * @param email Email address of the admin account (also used as login).
+   * @returns {Observable<{ message: string }>} Generic confirmation message.
+   * @note The backend always returns the same message regardless of whether the account
+   *       exists, to protect against user enumeration. A 429 (throttle) is mapped to a
+   *       dedicated rate-limit message.
+   */
+  requestPasswordReset(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/forgot-password`, { email }).pipe(
+      catchError(this.handlePasswordResetError)
+    );
+  }
+
+  /**
+   * @description Completes the password reset flow using the token received by email (step 2).
+   * @param token Raw token extracted from the reset link's query parameter.
+   * @param password New password.
+   * @param passwordConfirmation Confirmation of the new password.
+   * @returns {Observable<{ message: string }>} Success confirmation message.
+   * @note On success the backend invalidates all existing sessions for the account,
+   *       so the user must log in again with the new password.
+   */
+  resetPassword(
+    token: string,
+    password: string,
+    passwordConfirmation: string
+  ): Observable<{ message: string; email?: string }> {
+    return this.http.post<{ message: string; email?: string }>(`${this.baseUrl}/reset-password`, {
+      token,
+      password,
+      password_confirmation: passwordConfirmation
+    }).pipe(
+      catchError(this.handlePasswordResetError)
+    );
+  }
+
+  /**
    * @description Verifies the existence of a valid access token.
    * @returns {Observable<boolean>} True if authorized, false otherwise.
    */
@@ -188,5 +225,19 @@ export class AuthService {
     let errorMessage = 'Login failed.';
     if (error.status === 401) errorMessage = 'Invalid credentials.';
     return throwError(() => new Error(errorMessage));
+  }
+
+  /**
+   * @description Maps errors from /forgot-password and /reset-password into user-facing
+   *              messages without leaking whether an account exists.
+   */
+  private handlePasswordResetError(error: HttpErrorResponse) {
+    if (error.status === 429) {
+      return throwError(() => new Error('Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.'));
+    }
+
+    // 400 z backendu = neplatný/expirovaný token nebo slabé heslo - zprávu lze zobrazit přímo.
+    const backendMessage = error.error?.message;
+    return throwError(() => new Error(backendMessage || 'Požadavek se nepodařilo odeslat. Zkuste to prosím znovu.'));
   }
 }

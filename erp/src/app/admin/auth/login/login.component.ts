@@ -6,7 +6,7 @@
  * @created 2025
  * @description Authentication component providing a user login interface and password recovery workflow.
  * @dependencies
- * - AuthService: Handles the secure authentication request.
+ * - AuthService: Handles the secure authentication request and password reset requests.
  * - Router: Manages navigation upon successful authentication.
  * - ChangeDetectorRef: Manual change detection for UI updates during asynchronous operations.
  */
@@ -22,78 +22,95 @@ import { AuthService } from '../../../core/auth/auth.service';
  * @note Manages local form state and a dynamic modal for password recovery.
  */
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [FormsModule, RouterModule],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+selector: 'app-login',
+standalone: true,
+imports: [FormsModule, RouterModule],
+templateUrl: './login.component.html',
+styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-  email = '';
-  password = '';
-  errorMessage = '';
-  showPassword = false;
+email = '';
+password = '';
+errorMessage = '';
+showPassword = false;
 
-  showForgotModal = false;
-  resetEmail = '';
-  resetSent = false;
+showForgotModal = false;
+resetEmail = '';
+resetSent = false;
+resetSubmitting = false;
+resetErrorMessage = '';
 
-  constructor(
-    private router: Router,
-    private authService: AuthService,
-    private cdr: ChangeDetectorRef
+constructor(
+private router: Router,
+private authService: AuthService,
+private cdr: ChangeDetectorRef
   ) {}
 
-  /**
+/**
    * @description Processes user credentials and navigates to the dashboard upon success.
    * @note Updates the errorMessage state if authentication fails.
    */
-  onLogin(): void {
-    this.errorMessage = '';
-    this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: () => {
-        this.router.navigate(['/admin/dashboard']);
+onLogin(): void {
+this.errorMessage = '';
+this.authService.login({ email: this.email, password: this.password }).subscribe({
+next: () => {
+this.router.navigate(['/admin/dashboard']);
       },
-      error: (error) => {
-        this.errorMessage = error.message || 'Incorrect credentials.';
-        this.cdr.detectChanges();
+error: (error) => {
+this.errorMessage = error.message || 'Incorrect credentials.';
+this.cdr.detectChanges();
       }
     });
   }
 
-  /**
+/**
    * @description Resets the recovery form state and displays the password reset modal.
    */
-  openForgotModal(): void {
-    this.resetEmail = '';
-    this.resetSent = false;
-    this.showForgotModal = true;
-    this.cdr.detectChanges();
+openForgotModal(): void {
+this.resetEmail = '';
+this.resetSent = false;
+this.resetErrorMessage = '';
+this.showForgotModal = true;
+this.cdr.detectChanges();
   }
 
-  /**
+/**
    * @description Closes the password recovery modal.
    */
-  closeForgotModal(): void {
-    this.showForgotModal = false;
-    this.cdr.detectChanges();
+closeForgotModal(): void {
+this.showForgotModal = false;
+this.cdr.detectChanges();
   }
 
-  /**
-   * @description Triggers the password reset process via the backend.
-   * @note Displays a success confirmation message before closing the modal automatically after 3 seconds.
+/**
+   * @description Triggers the password reset request via the backend (POST /forgot-password).
+   * @note Backend always returns a generic success message regardless of whether the account
+   *       exists (user enumeration protection), so the UI shows the same confirmation either way.
+   *       The modal auto-closes 3 seconds after a successful request.
    */
-  onResetPassword(): void {
-    if (!this.resetEmail.trim()) return;
+onResetPassword(): void {
+if (!this.resetEmail.trim() || this.resetSubmitting) return;
 
-    // TODO: Integrate with backend API reset endpoint (implement by email link)
-    console.log(`Password reset requested for: ${this.resetEmail}`);
+this.resetSubmitting = true;
+this.resetErrorMessage = '';
 
-    this.resetSent = true;
-    this.cdr.detectChanges();
+this.authService.requestPasswordReset(this.resetEmail.trim()).subscribe({
+next: () => {
+this.resetSubmitting = false;
+this.resetSent = true;
+this.cdr.detectChanges();
 
-    setTimeout(() => {
-      this.closeForgotModal();
-    }, 3000);
+setTimeout(() => {
+this.closeForgotModal();
+        }, 3000);
+      },
+error: (error) => {
+this.resetSubmitting = false;
+// auth.service.ts už mapuje HTTP chyby (429 apod.) na hotovou zprávu v error.message,
+// takže zde žádné další rozlišování podle status kódu neděláme.
+this.resetErrorMessage = error?.message || 'Požadavek se nepodařilo odeslat. Zkuste to prosím znovu.';
+this.cdr.detectChanges();
+      }
+    });
   }
 }

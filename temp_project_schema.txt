@@ -1,0 +1,886 @@
+I-----------------------------------------------------------------------------I
+tree -I "vendor|node_modules|.angular|*/vendor|*/node_modules|*/.angular"
+I-----------------------------------------------------------------------------I
+
+.
+├── api
+│   ├── app
+│   │   ├── Http
+│   │   │   ├── Controllers
+│   │   │   │   ├── Api
+│   │   │   │   │   ├── AuthController.php
+│   │   │   │   │   ├── Core
+│   │   │   │   │   │   ├── CoreRoleController.php
+│   │   │   │   │   │   └── CoreSiteSettingController.php
+│   │   │   │   │   ├── Legal
+│   │   │   │   │   │   ├── DocumentSectionController.php
+│   │   │   │   │   │   └── SiteConfigurationController.php
+│   │   │   │   │   ├── Shop
+│   │   │   │   │   │   ├── ShopCategoryController.php
+│   │   │   │   │   │   ├── ShopCouponController.php
+│   │   │   │   │   │   ├── ShopCustomerController.php
+│   │   │   │   │   │   ├── ShopCheckoutController.php
+│   │   │   │   │   │   ├── ShopLogController.php
+│   │   │   │   │   │   ├── ShopOrderController.php
+│   │   │   │   │   │   ├── ShopPaymentMethodController.php
+│   │   │   │   │   │   ├── ShopProductController.php
+│   │   │   │   │   │   ├── ShopPublicController.php
+│   │   │   │   │   │   ├── ShopShippingMethodController.php
+│   │   │   │   │   │   └── ShopSupplierController.php
+│   │   │   │   │   ├── TranslationController.php
+│   │   │   │   │   ├── UserController.php
+│   │   │   │   │   └── Web
+│   │   │   │   │       ├── WebJobApplicationController.php
+│   │   │   │   │       ├── WebLogController.php
+│   │   │   │   │       ├── WebNewsController.php
+│   │   │   │   │       ├── WebRawRequestCommissionController.php
+│   │   │   │   │       ├── WebSalesLeadController.php
+│   │   │   │   │       ├── WebSalesOrderController.php
+│   │   │   │   │       └── WebSupportTicketController.php
+│   │   │   │   └── Controller.php
+│   │   │   ├── Middleware
+│   │   │   │   └── CheckCoreShopActive.php
+│   │   │   ├── Requests
+│   │   │   │   ├── Core
+│   │   │   │   │   ├── CoreRole
+│   │   │   │   │   │   ├── StoreCoreRoleRequest.php
+│   │   │   │   │   │   └── UpdateCoreRoleRequest.php
+│   │   │   │   │   └── CoreSiteSetting
+│   │   │   │   │       └── UpdateCoreSiteSettingRequest.php
+│   │   │   │   ├── Legal
+│   │   │   │   │   ├── Config
+│   │   │   │   │   │   ├── StoreSocialLinkRequest.php
+│   │   │   │   │   │   └── UpdateSiteSettingRequest.php
+│   │   │   │   │   └── DocumentSection
+│   │   │   │   │       ├── StoreDocumentSectionRequest.php
+│   │   │   │   │       └── UpdateDocumentSectionRequest.php
+│   │   │   │   ├── PasswordChangeRequest.php
+│   │   │   │   ├── Shop
+│   │   │   │   │   ├── ShopCategory
+│   │   │   │   │   │   ├── StoreShopCategoryRequest.php
+│   │   │   │   │   │   └── UpdateShopCategoryRequest.php
+│   │   │   │   │   ├── ShopCoupon
+│   │   │   │   │   │   ├── StoreShopCouponRequest.php
+│   │   │   │   │   │   └── UpdateShopCouponRequest.php
+│   │   │   │   │   ├── ShopCustomer
+│   │   │   │   │   │   ├── StoreShopCustomerRequest.php
+│   │   │   │   │   │   └── UpdateShopCustomerRequest.php
+│   │   │   │   │   ├── ShopLog
+│   │   │   │   │   │   └── StoreShopLogRequest.php
+│   │   │   │   │   ├── ShopOrder
+│   │   │   │   │   │   ├── StoreShopOrderRequest.php
+│   │   │   │   │   │   └── UpdateShopOrderRequest.php
+│   │   │   │   │   ├── ShopPaymentMethod
+│   │   │   │   │   │   └── UpdateShopPaymentMethodRequest.php
+│   │   │   │   │   ├── ShopProduct
+│   │   │   │   │   │   ├── StoreShopProductRequest.php
+│   │   │   │   │   │   └── UpdateShopProductRequest.php
+│   │   │   │   │   ├── ShopShippingMethod
+│   │   │   │   │   │   ├── StoreShopShippingMethodRequest.php
+│   │   │   │   │   │   └── UpdateShopShippingMethodRequest.php
+│   │   │   │   │   └── ShopSupplier
+│   │   │   │   │       ├── StoreShopSupplierRequest.php
+│   │   │   │   │       └── UpdateShopSupplierRequest.php
+│   │   │   │   ├── User
+│   │   │   │   │   ├── StoreUserRequest.php
+│   │   │   │   │   └── UpdateUserRequest.php
+│   │   │   │   └── Web
+│   │   │   │       ├── WebJobApplication
+│   │   │   │       │   ├── StoreWebJobApplicationRequest.php
+│   │   │   │       │   └── UpdateWebJobApplicationRequest.php
+│   │   │   │       ├── WebLog
+│   │   │   │       │   └── StoreWebLogRequest.php
+│   │   │   │       ├── WebNews
+│   │   │   │       │   ├── StoreWebNewsRequest.php
+│   │   │   │       │   └── UpdateWebNewsRequest.php
+│   │   │   │       ├── WebRawRequestCommission
+│   │   │   │       │   ├── StoreWebRawRequestCommissionRequest.php
+│   │   │   │       │   ├── UpdateWebRawRequestCommissionRequest.php
+│   │   │   │       │   └── ValidatesAttachmentSecurity.php
+│   │   │   │       ├── WebSalesLead
+│   │   │   │       │   ├── StoreWebSalesLeadRequest.php
+│   │   │   │       │   └── UpdateWebSalesLeadRequest.php
+│   │   │   │       ├── WebSalesOrder
+│   │   │   │       │   ├── StoreWebSalesOrderRequest.php
+│   │   │   │       │   └── UpdateWebSalesOrderRequest.php
+│   │   │   │       └── WebSupportTicket
+│   │   │   │           ├── StoreWebSupportTicketRequest.php
+│   │   │   │           └── UpdateWebSupportTicketRequest.php
+│   │   │   └── Resources
+│   │   │       ├── Core
+│   │   │       │   └── CoreRoleResource.php
+│   │   │       ├── Legal
+│   │   │       │   └── DocumentSectionResource.php
+│   │   │       ├── Shop
+│   │   │       │   ├── ShopCategoryResource.php
+│   │   │       │   ├── ShopCouponResource.php
+│   │   │       │   ├── ShopCustomerResource.php
+│   │   │       │   ├── ShopLogResource.php
+│   │   │       │   ├── ShopOrderItemResource.php
+│   │   │       │   ├── ShopOrderResource.php
+│   │   │       │   ├── ShopPaymentMethodResource.php
+│   │   │       │   ├── ShopProductImageResource.php
+│   │   │       │   ├── ShopProductResource.php
+│   │   │       │   ├── ShopProductVariantResource.php
+│   │   │       │   ├── ShopShippingMethodResource.php
+│   │   │       │   └── ShopSupplierResource.php
+│   │   │       ├── UserResource.php
+│   │   │       └── Web
+│   │   │           ├── WebJobApplicationResource.php
+│   │   │           ├── WebLogResource.php
+│   │   │           ├── WebNewsResource.php
+│   │   │           ├── WebRawRequestCommissionResource.php
+│   │   │           ├── WebSalesLeadResource.php
+│   │   │           ├── WebSalesOrderResource.php
+│   │   │           └── WebSupportTicketResource.php
+│   │   ├── Mail
+│   │   │   └── Web
+│   │   │       ├── WebRawRequestCommissionReceived.php
+│   │   │       └── WebSalesOrderReceived.php
+│   │   ├── Models
+│   │   │   ├── Core
+│   │   │   │   ├── CorePermission.php
+│   │   │   │   ├── CoreRole.php
+│   │   │   │   └── CoreSiteSetting.php
+│   │   │   ├── Legal
+│   │   │   │   ├── DocumentSection.php
+│   │   │   │   ├── DocumentType.php
+│   │   │   │   ├── SiteSetting.php
+│   │   │   │   └── SocialLink.php
+│   │   │   ├── RefreshToken.php
+│   │   │   ├── Shop
+│   │   │   │   ├── ShopCategory.php
+│   │   │   │   ├── ShopCoupon.php
+│   │   │   │   ├── ShopCustomer.php
+│   │   │   │   ├── ShopLog.php
+│   │   │   │   ├── ShopOrderItem.php
+│   │   │   │   ├── ShopOrder.php
+│   │   │   │   ├── ShopPaymentMethod.php
+│   │   │   │   ├── ShopProductImage.php
+│   │   │   │   ├── ShopProduct.php
+│   │   │   │   ├── ShopProductPrice.php
+│   │   │   │   ├── ShopProductVariant.php
+│   │   │   │   ├── ShopShippingMethod.php
+│   │   │   │   └── ShopSupplier.php
+│   │   │   ├── User.php
+│   │   │   └── Web
+│   │   │       ├── WebJobApplication.php
+│   │   │       ├── WebLog.php
+│   │   │       ├── WebNews.php
+│   │   │       ├── WebRawRequestCommission.php
+│   │   │       ├── WebSalesLead.php
+│   │   │       ├── WebSalesOrder.php
+│   │   │       └── WebSupportTicket.php
+│   │   └── Providers
+│   │       ├── AppServiceProvider.php
+│   │       └── RouteServiceProvider.php
+│   ├── artisan
+│   ├── bootstrap
+│   │   ├── app.php
+│   │   ├── cache
+│   │   │   ├── packages.php
+│   │   │   └── services.php
+│   │   └── providers.php
+│   ├── composer.json
+│   ├── composer.lock
+│   ├── config
+│   │   ├── app.php
+│   │   ├── auth.php
+│   │   ├── cache.php
+│   │   ├── cors.php
+│   │   ├── database.php
+│   │   ├── filesystems.php
+│   │   ├── logging.php
+│   │   ├── mail.php
+│   │   ├── queue.php
+│   │   ├── sanctum.php
+│   │   ├── services.php
+│   │   └── session.php
+│   ├── database
+│   │   ├── factories
+│   │   │   ├── BusinessLogFactory.php
+│   │   │   ├── RawRequestCommissionFactory.php
+│   │   │   └── UserFactory.php
+│   │   ├── migrations
+│   │   │   ├── 0001_01_01_000000_create_users_table.php
+│   │   │   ├── 0001_01_01_000001_create_cache_table.php
+│   │   │   ├── 0001_01_01_000002_create_jobs_table.php
+│   │   │   ├── 2025_07_10_075603_create_raw_request_commissions_table.php
+│   │   │   ├── 2025_07_10_155210_create_personal_access_tokens_table.php
+│   │   │   ├── 2025_07_15_101409_create_refresh_tokens_table.php
+│   │   │   ├── 2025_08_17_092907_create_roles_table.php
+│   │   │   ├── 2025_08_17_092907_create_user_logins_table.php
+│   │   │   ├── 2025_08_17_093321_create_user_logins_table.php
+│   │   │   ├── 2025_08_17_093325_create_roles_table.php
+│   │   │   └── 2025_08_17_180250_create_business_logs_table.php
+│   │   └── seeders
+│   │       ├── DatabaseSeeder.php
+│   │       ├── RawRequestCommissionSeeder.php
+│   │       └── UserLoginSeeder.php
+│   ├── _ide_helper.php
+│   ├── package.json
+│   ├── phpunit.xml
+│   ├── public
+│   │   ├── favicon.ico
+│   │   ├── index.php
+│   │   ├── robots.txt
+│   │   └── storage -> /home/joncl/prg/Typescript/rp_website/api/storage/app/public
+│   ├── README.md
+│   ├── resources
+│   │   ├── css
+│   │   │   └── app.css
+│   │   ├── js
+│   │   │   ├── app.js
+│   │   │   └── bootstrap.js
+│   │   └── views
+│   │       ├── emails
+│   │       │   └── web
+│   │       │       ├── raw-request-commission-received.blade.php
+│   │       │       └── sales-order-received.blade.php
+│   │       └── welcome.blade.php
+│   ├── routes
+│   │   ├── api.php
+│   │   ├── console.php
+│   │   └── web.php
+│   ├── storage
+│   │   ├── app
+│   │   │   ├── private
+│   │   │   └── public
+│   │   │       ├── cv_files
+│   │   │       │   └── syOsXNIXFQeXaq2HOhcP1RLka7tS1sp2z2IvdEsy.png
+│   │   │       ├── orders
+│   │   │       ├── payment-methods-images
+│   │   │       │   ├── apple-pay.png
+│   │   │       │   ├── bank-transfer-cz.png
+│   │   │       │   ├── bank-transfer-eu.png
+│   │   │       │   ├── card.png
+│   │   │       │   ├── google-pay.png
+│   │   │       │   ├── paypal.png
+│   │   │       │   ├── stripe-card.png
+│   │   │       │   └── visa.png
+│   │   │       ├── products
+│   │   │       │   ├── b37119c1-bb5d-4659-bccf-612168a9a65b.jpg
+│   │   │       │   ├── f30d78a8-69b6-43f8-ae57-ed2171cca839.webp
+│   │   │       │   ├── f5ba9833-fd32-4ac7-a35d-53629f59d0df.jpg
+│   │   │       │   ├── 1cd68d0c-3ffc-4488-9a2a-4125b9a79961.jpg
+│   │   │       │   ├── 3d982b3e-f2e1-4a0e-875e-7c2f5aaf41ef.jpg
+│   │   │       │   └── 8f3ac2af-82a0-4bf0-8049-06cb9cfabd04.jpg
+│   │   │       ├── raw_request_commissions
+│   │   │       │   └── bIs2j4LB0gr1LIcjPydqvpOJ69n8iCzxKaPlx8UK.txt
+│   │   │       ├── site-logos
+│   │   │       │   └── dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png
+│   │   │       ├── social-icons
+│   │   │       │   └── EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png
+│   │   │       ├── tickets
+│   │   │       ├── translation_images
+│   │   │       │   ├── shop
+│   │   │       │   │   └── czech-republic-default.png
+│   │   │       │   └── web
+│   │   │       │       ├── czech-republic-default.png
+│   │   │       │       └── en_2b39ee4e-bdef-4a2d-83e1-3f39cca964cc.png
+│   │   │       └── translations
+│   │   │           ├── languages.json
+│   │   │           ├── shop
+│   │   │           │   └── cz.json
+│   │   │           └── web
+│   │   │               ├── cz.json
+│   │   │               └── en.json
+│   │   ├── framework
+│   │   │   ├── cache
+│   │   │   │   └── data
+│   │   │   ├── sessions
+│   │   │   ├── testing
+│   │   │   └── views
+│   │   │       └── d73787b501c491196576390876d68bd9.php
+│   │   └── logs
+│   │       └── laravel.log
+│   ├── tests
+│   │   ├── Feature
+│   │   │   └── ExampleTest.php
+│   │   ├── TestCase.php
+│   │   └── Unit
+│   │       └── ExampleTest.php
+│   └── vite.config.js
+├── build-and-deploy.sh
+├── db.sql
+├── doc_CSS_comment_block.json
+├── doc_HTML_comment_clock.json
+├── doc_JSDoc_template.json
+├── doc_PHPDoc_template.json
+├── erp
+│   ├── angular.json
+│   ├── karma.conf.js
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── proxy.conf.json
+│   ├── public
+│   │   └── favicon.ico
+│   ├── README.md
+│   ├── src
+│   │   ├── app
+│   │   │   ├── admin
+│   │   │   │   ├── admin.module.ts
+│   │   │   │   ├── admin-routing.module.ts
+│   │   │   │   ├── auth
+│   │   │   │   │   └── login
+│   │   │   │   │       ├── login.component.css
+│   │   │   │   │       ├── login.component.html
+│   │   │   │   │       ├── login.component.spec.ts
+│   │   │   │   │       └── login.component.ts
+│   │   │   │   ├── components
+│   │   │   │   │   ├── admin-layout
+│   │   │   │   │   │   ├── admin-layout.component.css
+│   │   │   │   │   │   ├── admin-layout.component.html
+│   │   │   │   │   │   ├── admin-layout.component.spec.ts
+│   │   │   │   │   │   └── admin-layout.component.ts
+│   │   │   │   │   ├── alert-dialog
+│   │   │   │   │   │   ├── alert-dialog.component.css
+│   │   │   │   │   │   ├── alert-dialog.component.html
+│   │   │   │   │   │   ├── alert-dialog.component.spec.ts
+│   │   │   │   │   │   └── alert-dialog.component.ts
+│   │   │   │   │   ├── base-data
+│   │   │   │   │   │   ├── base-data.component.spec.ts
+│   │   │   │   │   │   ├── base-data.component.ts
+│   │   │   │   │   │   └── paginated-list-store.ts
+│   │   │   │   │   ├── builders
+│   │   │   │   │   │   ├── button-builder
+│   │   │   │   │   │   │   ├── button-builder.component.css
+│   │   │   │   │   │   │   ├── button-builder.component.html
+│   │   │   │   │   │   │   ├── button-builder.component.spec.ts
+│   │   │   │   │   │   │   └── button-builder.component.ts
+│   │   │   │   │   │   ├── details-builder
+│   │   │   │   │   │   │   ├── details-builder.component.css
+│   │   │   │   │   │   │   ├── details-builder.component.html
+│   │   │   │   │   │   │   ├── details-builder.component.spec.ts
+│   │   │   │   │   │   │   └── details-builder.component.ts
+│   │   │   │   │   │   ├── filter-form-builder
+│   │   │   │   │   │   │   ├── filter-form-builder.component.css
+│   │   │   │   │   │   │   ├── filter-form-builder.component.html
+│   │   │   │   │   │   │   ├── filter-form-builder.component.spec.ts
+│   │   │   │   │   │   │   └── filter-form-builder.component.ts
+│   │   │   │   │   │   ├── form-builder
+│   │   │   │   │   │   │   ├── form-builder.component.css
+│   │   │   │   │   │   │   ├── form-builder.component.html
+│   │   │   │   │   │   │   ├── form-builder.component.spec.ts
+│   │   │   │   │   │   │   └── form-builder.component.ts
+│   │   │   │   │   │   ├── pagination-buttons-builder
+│   │   │   │   │   │   │   ├── pagination-buttons-builder.component.css
+│   │   │   │   │   │   │   ├── pagination-buttons-builder.component.html
+│   │   │   │   │   │   │   ├── pagination-buttons-builder.component.spec.ts
+│   │   │   │   │   │   │   └── pagination-buttons-builder.component.ts
+│   │   │   │   │   │   ├── table-builder
+│   │   │   │   │   │   │   ├── table-builder.component.css
+│   │   │   │   │   │   │   ├── table-builder.component.html
+│   │   │   │   │   │   │   ├── table-builder.component.spec.ts
+│   │   │   │   │   │   │   └── table-builder.component.ts
+│   │   │   │   │   │   ├── table-style.css
+│   │   │   │   │   │   └── trash-table-builder
+│   │   │   │   │   │       ├── trash-table-builder.component.css
+│   │   │   │   │   │       ├── trash-table-builder.component.html
+│   │   │   │   │   │       ├── trash-table-builder.component.spec.ts
+│   │   │   │   │   │       └── trash-table-builder.component.ts
+│   │   │   │   │   └── confirm-dialog
+│   │   │   │   │       ├── confirm-dialog.component.css
+│   │   │   │   │       ├── confirm-dialog.component.html
+│   │   │   │   │       ├── confirm-dialog.component.spec.ts
+│   │   │   │   │       └── confirm-dialog.component.ts
+│   │   │   │   ├── intranet
+│   │   │   │   │   └── knowledge-base
+│   │   │   │   │       ├── kb-article
+│   │   │   │   │       │   ├── kb-article.component.css
+│   │   │   │   │       │   ├── kb-article.component.html
+│   │   │   │   │       │   ├── kb-article.component.spec.ts
+│   │   │   │   │       │   └── kb-article.component.ts
+│   │   │   │   │       ├── knowledge-base.component.css
+│   │   │   │   │       ├── knowledge-base.component.html
+│   │   │   │   │       ├── knowledge-base.component.spec.ts
+│   │   │   │   │       ├── knowledge-base.component.ts
+│   │   │   │   │       ├── pages
+│   │   │   │   │       │   ├── contacts
+│   │   │   │   │       │   │   ├── contacts.component.css
+│   │   │   │   │       │   │   ├── contacts.component.html
+│   │   │   │   │       │   │   ├── contacts.component.spec.ts
+│   │   │   │   │       │   │   └── contacts.component.ts
+│   │   │   │   │       │   ├── introductions
+│   │   │   │   │       │   │   ├── introductions.component.css
+│   │   │   │   │       │   │   ├── introductions.component.html
+│   │   │   │   │       │   │   ├── introductions.component.spec.ts
+│   │   │   │   │       │   │   └── introductions.component.ts
+│   │   │   │   │       │   ├── news
+│   │   │   │   │       │   │   ├── news.component.css
+│   │   │   │   │       │   │   ├── news.component.html
+│   │   │   │   │       │   │   ├── news.component.spec.ts
+│   │   │   │   │       │   │   └── news.component.ts
+│   │   │   │   │       │   ├── sales-rep
+│   │   │   │   │       │   │   ├── sales-rep.component.css
+│   │   │   │   │       │   │   ├── sales-rep.component.html
+│   │   │   │   │       │   │   ├── sales-rep.component.spec.ts
+│   │   │   │   │       │   │   └── sales-rep.component.ts
+│   │   │   │   │       │   ├── security
+│   │   │   │   │       │   │   ├── security.component.css
+│   │   │   │   │       │   │   ├── security.component.html
+│   │   │   │   │       │   │   ├── security.component.spec.ts
+│   │   │   │   │       │   │   └── security.component.ts
+│   │   │   │   │       │   └── support-form
+│   │   │   │   │       │       ├── support-form.component.css
+│   │   │   │   │       │       ├── support-form.component.html
+│   │   │   │   │       │       ├── support-form.component.spec.ts
+│   │   │   │   │       │       └── support-form.component.ts
+│   │   │   │   │       └── substitutions
+│   │   │   │   │           └── kb-footer
+│   │   │   │   │               ├── kb-footer.component.css
+│   │   │   │   │               ├── kb-footer.component.html
+│   │   │   │   │               ├── kb-footer.component.spec.ts
+│   │   │   │   │               └── kb-footer.component.ts
+│   │   │   │   ├── shop-pages
+│   │   │   │   │   ├── categories
+│   │   │   │   │   │   ├── categories.component.css
+│   │   │   │   │   │   ├── categories.component.html
+│   │   │   │   │   │   ├── categories.component.spec.ts
+│   │   │   │   │   │   ├── categories.component.ts
+│   │   │   │   │   │   └── categories.config.ts
+│   │   │   │   │   ├── components
+│   │   │   │   │   │   └── interfaces
+│   │   │   │   │   │       └── category-node.ts
+│   │   │   │   │   ├── coupons
+│   │   │   │   │   │   ├── coupons.component.css
+│   │   │   │   │   │   ├── coupons.component.html
+│   │   │   │   │   │   ├── coupons.component.spec.ts
+│   │   │   │   │   │   ├── coupons.component.ts
+│   │   │   │   │   │   └── coupons.config.ts
+│   │   │   │   │   ├── customers
+│   │   │   │   │   │   ├── customers.component.css
+│   │   │   │   │   │   ├── customers.component.html
+│   │   │   │   │   │   ├── customers.component.spec.ts
+│   │   │   │   │   │   ├── customers.component.ts
+│   │   │   │   │   │   └── customers.config.ts
+│   │   │   │   │   ├── dashboard
+│   │   │   │   │   │   ├── dashboard.component.css
+│   │   │   │   │   │   ├── dashboard.component.html
+│   │   │   │   │   │   ├── dashboard.component.spec.ts
+│   │   │   │   │   │   ├── dashboard.component.ts
+│   │   │   │   │   │   ├── dashboard.interface.ts
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── default-style.css
+│   │   │   │   │   ├── edit-eshop
+│   │   │   │   │   │   ├── edit-eshop.component.css
+│   │   │   │   │   │   ├── edit-eshop.component.html
+│   │   │   │   │   │   ├── edit-eshop.component.spec.ts
+│   │   │   │   │   │   ├── edit-eshop.component.ts
+│   │   │   │   │   │   ├── edit-shop.interface.ts
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── orders
+│   │   │   │   │   │   ├── index.ts
+│   │   │   │   │   │   ├── orders.component.css
+│   │   │   │   │   │   ├── orders.component.html
+│   │   │   │   │   │   ├── orders.component.spec.ts
+│   │   │   │   │   │   ├── orders.component.ts
+│   │   │   │   │   │   ├── orders.config.ts
+│   │   │   │   │   │   └── orders.interface.ts
+│   │   │   │   │   ├── payment-methods
+│   │   │   │   │   │   ├── payment-methods.component.css
+│   │   │   │   │   │   ├── payment-methods.component.html
+│   │   │   │   │   │   ├── payment-methods.component.spec.ts
+│   │   │   │   │   │   ├── payment-methods.component.ts
+│   │   │   │   │   │   └── payment-methods.config.ts
+│   │   │   │   │   ├── products
+│   │   │   │   │   │   ├── index.ts
+│   │   │   │   │   │   ├── products.component.css
+│   │   │   │   │   │   ├── products.component.html
+│   │   │   │   │   │   ├── products.component.spec.ts
+│   │   │   │   │   │   ├── products.component.ts
+│   │   │   │   │   │   ├── products.config.ts
+│   │   │   │   │   │   └── products.interface.ts
+│   │   │   │   │   ├── shipping-methods
+│   │   │   │   │   │   ├── shipping-methods.component.css
+│   │   │   │   │   │   ├── shipping-methods.component.html
+│   │   │   │   │   │   ├── shipping-methods.component.spec.ts
+│   │   │   │   │   │   ├── shipping-methods.component.ts
+│   │   │   │   │   │   └── shipping-methods.config.ts
+│   │   │   │   │   ├── shop-logs
+│   │   │   │   │   │   ├── shop-logs.component.css
+│   │   │   │   │   │   ├── shop-logs.component.html
+│   │   │   │   │   │   ├── shop-logs.component.spec.ts
+│   │   │   │   │   │   ├── shop-logs.component.ts
+│   │   │   │   │   │   └── shop-logs.config.ts
+│   │   │   │   │   └── suppliers
+│   │   │   │   │       ├── suppliers.component.css
+│   │   │   │   │       ├── suppliers.component.html
+│   │   │   │   │       ├── suppliers.component.spec.ts
+│   │   │   │   │       ├── suppliers.component.ts
+│   │   │   │   │       └── suppliers.config.ts
+│   │   │   │   └── web-pages
+│   │   │   │       ├── administrators
+│   │   │   │       │   ├── administrators.component.css
+│   │   │   │       │   ├── administrators.component.html
+│   │   │   │       │   ├── administrators.component.spec.ts
+│   │   │   │       │   ├── administrators.component.ts
+│   │   │   │       │   └── administrators.config.ts
+│   │   │   │       ├── business-logs
+│   │   │   │       │   ├── business-logs.component.css
+│   │   │   │       │   ├── business-logs.component.html
+│   │   │   │       │   ├── business-logs.component.spec.ts
+│   │   │   │       │   ├── business-logs.component.ts
+│   │   │   │       │   └── business-logs.config.ts
+│   │   │   │       ├── components
+│   │   │   │       ├── dashboard
+│   │   │   │       │   ├── dashboard.component.css
+│   │   │   │       │   ├── dashboard.component.html
+│   │   │   │       │   ├── dashboard.component.spec.ts
+│   │   │   │       │   ├── dashboard.component.ts
+│   │   │   │       │   ├── dashboard.interface.ts
+│   │   │   │       │   └── index.ts
+│   │   │   │       ├── default-style.css
+│   │   │   │       ├── edit-legal
+│   │   │   │       │   ├── edit-legal.component.css
+│   │   │   │       │   ├── edit-legal.component.html
+│   │   │   │       │   ├── edit-legal.component.spec.ts
+│   │   │   │       │   └── edit-legal.component.ts
+│   │   │   │       ├── edit-news
+│   │   │   │       │   ├── edit-news.component.css
+│   │   │   │       │   ├── edit-news.component.html
+│   │   │   │       │   ├── edit-news.component.spec.ts
+│   │   │   │       │   ├── edit-news.component.ts
+│   │   │   │       │   └── edit-news.config.ts
+│   │   │   │       ├── edit-website
+│   │   │   │       │   ├── edit-website.component.css
+│   │   │   │       │   ├── edit-website.component.html
+│   │   │   │       │   ├── edit-website.component.spec.ts
+│   │   │   │       │   ├── edit-website.component.ts
+│   │   │   │       │   ├── edit-website.interface.ts
+│   │   │   │       │   └── index.ts
+│   │   │   │       ├── job-applications
+│   │   │   │       │   ├── job-applications.component.css
+│   │   │   │       │   ├── job-applications.component.html
+│   │   │   │       │   ├── job-applications.component.spec.ts
+│   │   │   │       │   ├── job-applications.component.ts
+│   │   │   │       │   └── job-applications.config.ts
+│   │   │   │       ├── personal-info
+│   │   │   │       │   ├── personal-info.component.css
+│   │   │   │       │   ├── personal-info.component.html
+│   │   │   │       │   ├── personal-info.component.spec.ts
+│   │   │   │       │   └── personal-info.component.ts
+│   │   │   │       ├── sales-leads
+│   │   │   │       │   ├── sales-leads.component.css
+│   │   │   │       │   ├── sales-leads.component.html
+│   │   │   │       │   ├── sales-leads.component.spec.ts
+│   │   │   │       │   ├── sales-leads.component.ts
+│   │   │   │       │   └── sales-leads.config.ts
+│   │   │   │       ├── sales-orders
+│   │   │   │       │   ├── sales-orders.component.css
+│   │   │   │       │   ├── sales-orders.component.html
+│   │   │   │       │   ├── sales-orders.component.spec.ts
+│   │   │   │       │   ├── sales-orders.component.ts
+│   │   │   │       │   └── sales-orders.config.ts
+│   │   │   │       ├── support-tickets
+│   │   │   │       │   ├── support-tickets.component.css
+│   │   │   │       │   ├── support-tickets.component.html
+│   │   │   │       │   ├── support-tickets.component.spec.ts
+│   │   │   │       │   ├── support-tickets.component.ts
+│   │   │   │       │   └── support-tickets.config.ts
+│   │   │   │       ├── user-request
+│   │   │   │       │   ├── user-request.component.css
+│   │   │   │       │   ├── user-request.component.html
+│   │   │   │       │   ├── user-request.component.spec.ts
+│   │   │   │       │   ├── user-request.component.ts
+│   │   │   │       │   └── user-request.config.ts
+│   │   │   │       └── web-settings
+│   │   │   │           ├── index.ts
+│   │   │   │           ├── web-settings.component.css
+│   │   │   │           ├── web-settings.component.html
+│   │   │   │           ├── web-settings.component.spec.ts
+│   │   │   │           ├── web-settings.component.ts
+│   │   │   │           └── web-settings.interface.ts
+│   │   │   ├── app.component.css
+│   │   │   ├── app.component.html
+│   │   │   ├── app.component.spec.ts
+│   │   │   ├── app.component.ts
+│   │   │   ├── app.config.ts
+│   │   │   ├── app.routes.ts
+│   │   │   ├── core
+│   │   │   │   ├── auth
+│   │   │   │   │   ├── auth.service.spec.ts
+│   │   │   │   │   ├── auth.service.ts
+│   │   │   │   │   ├── guards
+│   │   │   │   │   │   ├── auth.guard.spec.ts
+│   │   │   │   │   │   └── auth.guard.ts
+│   │   │   │   │   └── services
+│   │   │   │   │       ├── permission.service.spec.ts
+│   │   │   │   │       └── permission.service.ts
+│   │   │   │   ├── directives
+│   │   │   │   │   └── has-permission.directive.ts
+│   │   │   │   ├── interceptors
+│   │   │   │   │   ├── auth-token.interceptor.spec.ts
+│   │   │   │   │   ├── auth-token.interceptor.ts
+│   │   │   │   │   ├── loading.interceptor.spec.ts
+│   │   │   │   │   └── loading.interceptor.ts
+│   │   │   │   └── services
+│   │   │   │       ├── alert-dialog.service.spec.ts
+│   │   │   │       ├── alert-dialog.service.ts
+│   │   │   │       ├── confirm-dialog.service.spec.ts
+│   │   │   │       ├── confirm-dialog.service.ts
+│   │   │   │       ├── data-handler.service.spec.ts
+│   │   │   │       ├── data-handler.service.ts
+│   │   │   │       ├── entitiy-crud.service.spec.ts
+│   │   │   │       ├── entitiy-crud.service.ts
+│   │   │   │       ├── generic-table.service.spec.ts
+│   │   │   │       ├── generic-table.service.ts
+│   │   │   │       ├── loading.service.spec.ts
+│   │   │   │       ├── loading.service.ts
+│   │   │   │       ├── logging.service.spec.ts
+│   │   │   │       └── logging.service.ts
+│   │   │   ├── public
+│   │   │   │   ├── base-public.component.ts
+│   │   │   │   ├── shop-pages
+│   │   │   │   │   ├── cart
+│   │   │   │   │   │   ├── cart.component.css
+│   │   │   │   │   │   ├── cart.component.html
+│   │   │   │   │   │   ├── cart.component.spec.ts
+│   │   │   │   │   │   └── cart.component.ts
+│   │   │   │   │   ├── catalog
+│   │   │   │   │   │   ├── catalog.component.css
+│   │   │   │   │   │   ├── catalog.component.html
+│   │   │   │   │   │   ├── catalog.component.spec.ts
+│   │   │   │   │   │   └── catalog.component.ts
+│   │   │   │   │   ├── components
+│   │   │   │   │   │   ├── builders
+│   │   │   │   │   │   │   ├── pagination-buttons-builder
+│   │   │   │   │   │   │   │   ├── pagination-buttons-builder.component.css
+│   │   │   │   │   │   │   │   ├── pagination-buttons-builder.component.html
+│   │   │   │   │   │   │   │   ├── pagination-buttons-builder.component.spec.ts
+│   │   │   │   │   │   │   │   └── pagination-buttons-builder.component.ts
+│   │   │   │   │   │   │   └── product-builder
+│   │   │   │   │   │   │       ├── product-builder.component.css
+│   │   │   │   │   │   │       ├── product-builder.component.html
+│   │   │   │   │   │   │       ├── product-builder.component.spec.ts
+│   │   │   │   │   │   │       └── product-builder.component.ts
+│   │   │   │   │   │   ├── guards
+│   │   │   │   │   │   │   └── shop-maintenance.guard.ts
+│   │   │   │   │   │   ├── interfaces
+│   │   │   │   │   │   │   ├── payment-method.interface.ts
+│   │   │   │   │   │   │   └── shipping-method.interface.ts
+│   │   │   │   │   │   ├── services
+│   │   │   │   │   │   │   ├── cart.service.spec.ts
+│   │   │   │   │   │   │   ├── cart.service.ts
+│   │   │   │   │   │   │   ├── public-data.service.spec.ts
+│   │   │   │   │   │   │   └── public-data.service.ts
+│   │   │   │   │   │   ├── shop-footer
+│   │   │   │   │   │   │   ├── shop-footer.component.css
+│   │   │   │   │   │   │   ├── shop-footer.component.html
+│   │   │   │   │   │   │   ├── shop-footer.component.spec.ts
+│   │   │   │   │   │   │   └── shop-footer.component.ts
+│   │   │   │   │   │   └── shop-header
+│   │   │   │   │   │       ├── shop-header.component.css
+│   │   │   │   │   │       ├── shop-header.component.html
+│   │   │   │   │   │       ├── shop-header.component.spec.ts
+│   │   │   │   │   │       └── shop-header.component.ts
+│   │   │   │   │   ├── checkout
+│   │   │   │   │   │   ├── checkout.component.css
+│   │   │   │   │   │   ├── checkout.component.html
+│   │   │   │   │   │   ├── checkout.component.spec.ts
+│   │   │   │   │   │   └── checkout.component.ts
+│   │   │   │   │   ├── product-detail
+│   │   │   │   │   │   ├── product-detail.component.css
+│   │   │   │   │   │   ├── product-detail.component.html
+│   │   │   │   │   │   ├── product-detail.component.spec.ts
+│   │   │   │   │   │   └── product-detail.component.ts
+│   │   │   │   │   ├── shop-layout
+│   │   │   │   │   │   ├── shop-layout.component.css
+│   │   │   │   │   │   ├── shop-layout.component.html
+│   │   │   │   │   │   ├── shop-layout.component.spec.ts
+│   │   │   │   │   │   └── shop-layout.component.ts
+│   │   │   │   │   └── shop-maintenance
+│   │   │   │   │       ├── shop-maintenance.component.css
+│   │   │   │   │       ├── shop-maintenance.component.html
+│   │   │   │   │       ├── shop-maintenance.component.spec.ts
+│   │   │   │   │       └── shop-maintenance.component.ts
+│   │   │   │   └── web-pages
+│   │   │   │       ├── about-us
+│   │   │   │       │   ├── about-us.component.css
+│   │   │   │       │   ├── about-us.component.html
+│   │   │   │       │   ├── about-us.component.spec.ts
+│   │   │   │       │   └── about-us.component.ts
+│   │   │   │       ├── components
+│   │   │   │       │   ├── interfaces
+│   │   │   │       │   ├── public-footer
+│   │   │   │       │   │   ├── public-footer.component.css
+│   │   │   │       │   │   ├── public-footer.component.html
+│   │   │   │       │   │   ├── public-footer.component.spec.ts
+│   │   │   │       │   │   └── public-footer.component.ts
+│   │   │   │       │   └── public-header
+│   │   │   │       │       ├── public-header.component.css
+│   │   │   │       │       ├── public-header.component.html
+│   │   │   │       │       ├── public-header.component.spec.ts
+│   │   │   │       │       └── public-header.component.ts
+│   │   │   │       ├── contact
+│   │   │   │       │   ├── contact.component.css
+│   │   │   │       │   ├── contact.component.html
+│   │   │   │       │   ├── contact.component.spec.ts
+│   │   │   │       │   └── contact.component.ts
+│   │   │   │       ├── faq
+│   │   │   │       │   ├── faq.component.css
+│   │   │   │       │   ├── faq.component.html
+│   │   │   │       │   ├── faq.component.spec.ts
+│   │   │   │       │   ├── faq.component.ts
+│   │   │   │       │   ├── faq.interface.ts
+│   │   │   │       │   └── index.ts
+│   │   │   │       ├── home
+│   │   │   │       │   ├── home.component.css
+│   │   │   │       │   ├── home.component.html
+│   │   │   │       │   ├── home.component.spec.ts
+│   │   │   │       │   └── home.component.ts
+│   │   │   │       ├── jobs
+│   │   │   │       │   ├── job-item
+│   │   │   │       │   │   ├── job-item.component.css
+│   │   │   │       │   │   ├── job-item.component.html
+│   │   │   │       │   │   ├── job-item.component.spec.ts
+│   │   │   │       │   │   └── job-item.component.ts
+│   │   │   │       │   └── jobs-list
+│   │   │   │       │       ├── index.ts
+│   │   │   │       │       ├── jobs-list.component.css
+│   │   │   │       │       ├── jobs-list.component.html
+│   │   │   │       │       ├── jobs-list.component.spec.ts
+│   │   │   │       │       ├── jobs-list.component.ts
+│   │   │   │       │       └── jobs-list.interface.ts
+│   │   │   │       ├── not-found
+│   │   │   │       │   ├── not-found.component.css
+│   │   │   │       │   ├── not-found.component.html
+│   │   │   │       │   ├── not-found.component.spec.ts
+│   │   │   │       │   └── not-found.component.ts
+│   │   │   │       ├── order-form
+│   │   │   │       │   ├── order-form.component.css
+│   │   │   │       │   ├── order-form.component.html
+│   │   │   │       │   ├── order-form.component.spec.ts
+│   │   │   │       │   └── order-form.component.ts
+│   │   │   │       ├── privacy-policy
+│   │   │   │       │   ├── privacy-policy.component.css
+│   │   │   │       │   ├── privacy-policy.component.html
+│   │   │   │       │   ├── privacy-policy.component.spec.ts
+│   │   │   │       │   └── privacy-policy.component.ts
+│   │   │   │       ├── references
+│   │   │   │       │   ├── references.component.css
+│   │   │   │       │   ├── references.component.html
+│   │   │   │       │   ├── references.component.spec.ts
+│   │   │   │       │   └── references.component.ts
+│   │   │   │       ├── services
+│   │   │   │       │   ├── index.ts
+│   │   │   │       │   ├── services.component.css
+│   │   │   │       │   ├── services.component.html
+│   │   │   │       │   ├── services.component.spec.ts
+│   │   │   │       │   ├── services.component.ts
+│   │   │   │       │   └── services.interface.ts
+│   │   │   │       ├── tos
+│   │   │   │       │   ├── tos.component.css
+│   │   │   │       │   ├── tos.component.html
+│   │   │   │       │   ├── tos.component.spec.ts
+│   │   │   │       │   └── tos.component.ts
+│   │   │   │       └── web-layout
+│   │   │   │           ├── web-layout.component.css
+│   │   │   │           ├── web-layout.component.html
+│   │   │   │           ├── web-layout.component.spec.ts
+│   │   │   │           └── web-layout.component.ts
+│   │   │   └── shared
+│   │   │       ├── imports
+│   │   │       │   ├── core-providers.ts
+│   │   │       │   ├── shared-config.ts
+│   │   │       │   ├── shared-ui-builders.ts
+│   │   │       │   └── web-providers.ts
+│   │   │       ├── interfaces
+│   │   │       │   ├── button.ts
+│   │   │       │   ├── filter-columns.ts
+│   │   │       │   ├── generic-form-column-definiton.ts
+│   │   │       │   ├── input-definiton.ts
+│   │   │       │   ├── item-details-columns.ts
+│   │   │       │   ├── table-buttons.ts
+│   │   │       │   └── user.ts
+│   │   │       └── services
+│   │   │           ├── app-bootstrap.service.spec.ts
+│   │   │           ├── app-bootstrap.service.ts
+│   │   │           ├── legal-docs.service.spec.ts
+│   │   │           ├── legal-docs.service.ts
+│   │   │           ├── localization.service.spec.ts
+│   │   │           ├── localization.service.ts
+│   │   │           ├── public-data.service.spec.ts
+│   │   │           └── public-data.service.ts
+│   │   ├── assets
+│   │   │   ├── fonts
+│   │   │   │   ├── DhuwurLoroRegular-KGno.ttf
+│   │   │   │   ├── DhuwurRegular-nZ4Y.ttf
+│   │   │   │   ├── HighSansSerif7-xZeR.ttf
+│   │   │   │   └── ValderoRegular-Vd06.ttf
+│   │   │   └── images
+│   │   │       ├── backgrounds
+│   │   │       │   ├── service-ai.jpg
+│   │   │       │   ├── service-desktop.jpg
+│   │   │       │   ├── service-mobile.jpg
+│   │   │       │   └── service-web.jpg
+│   │   │       ├── icons
+│   │   │       │   ├── call.png
+│   │   │       │   ├── email.png
+│   │   │       │   ├── check.png
+│   │   │       │   ├── mail.png
+│   │   │       │   ├── search.png
+│   │   │       │   └── send.png
+│   │   │       ├── placeholder-product.png
+│   │   │       ├── services-img
+│   │   │       │   ├── angular.png
+│   │   │       │   ├── c.png
+│   │   │       │   ├── cpp.png
+│   │   │       │   ├── csharp.png
+│   │   │       │   ├── go.png
+│   │   │       │   ├── java.png
+│   │   │       │   ├── js.png
+│   │   │       │   ├── kotlin.png
+│   │   │       │   ├── mssql.png
+│   │   │       │   ├── mysql.png
+│   │   │       │   ├── net.png
+│   │   │       │   ├── php.png
+│   │   │       │   ├── postgresql.png
+│   │   │       │   ├── py.png
+│   │   │       │   ├── react.png
+│   │   │       │   ├── rust.png
+│   │   │       │   ├── sqlite.png
+│   │   │       │   ├── swift.png
+│   │   │       │   └── ts.png
+│   │   │       └── svg
+│   │   │           ├── ai-desk.svg
+│   │   │           ├── ai-mob.svg
+│   │   │           ├── ai.svg
+│   │   │           ├── desktop-desk.svg
+│   │   │           ├── desktop-mob.svg
+│   │   │           ├── desktop.svg
+│   │   │           ├── mobile-desk.svg
+│   │   │           ├── mobile-mob.svg
+│   │   │           ├── mobil.svg
+│   │   │           ├── not-found.svg
+│   │   │           ├── server-mobile.svg
+│   │   │           ├── server-resp-1.svg
+│   │   │           ├── server-resp-2.svg
+│   │   │           ├── server.svg
+│   │   │           ├── web-desk.svg
+│   │   │           ├── web-mob.svg
+│   │   │           └── web.svg
+│   │   ├── environments
+│   │   │   ├── environment.prod.ts
+│   │   │   └── environment.ts
+│   │   ├── index.html
+│   │   ├── main.ts
+│   │   ├── styles.css
+│   │   └── testing
+│   │       ├── router-stub.ts
+│   │       └── test-utils.ts
+│   ├── ssl
+│   │   ├── laragon.crt
+│   │   └── laragon.key
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   └── tsconfig.spec.json
+├── generate-ssh.sh
+├── id_ed25519_server
+├── id_ed25519_server.pub
+├── info.txt
+├── README.md
+├── server_conf
+│   └── configure-server.sh
+├── server_setup.md
+└── test_runner.txt
