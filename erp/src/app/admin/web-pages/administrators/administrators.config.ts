@@ -3,8 +3,6 @@ import * as Core from '../../../shared/imports/core-providers';
 export const ROLE_OPTIONS = [
   { value: '1', label: 'sysadmin' },
   { value: '2', label: 'admin' },
-  { value: '4', label: 'UI/UX Designer' },
-  { value: '5', label: 'Salesman' },
 ];
 
 export const TABLE_BUTTONS: Core.TableButtons[] = [

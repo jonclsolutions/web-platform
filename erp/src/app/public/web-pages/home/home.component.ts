@@ -110,13 +110,43 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
   private mouse: HeroMousePoint | null = null;
 
   private readonly PARTICLE_COLOR = '166, 125, 255';
+
+  /**
+   * Cílová "hustota" v px² plochy na jednu částici - určuje průměrnou vzdálenost
+   * mezi tečkami. Toto číslo se NEMĚNÍ podle velikosti plochy (proto samo o sobě
+   * dává na všech rozlišeních konzistentní design), problém byl jen v tom, že
+   * výsledný počet byl dřív tvrdě ořezáván (viz PARTICLE_MIN/MAX_COUNT níže).
+   */
   private readonly PARTICLE_DENSITY = 14000;
-  private readonly PARTICLE_MIN_COUNT = 26;
-  private readonly PARTICLE_MAX_COUNT = 85;
+
+  /**
+   * Dolní/horní mez počtu částic. Dolní mez chrání jen velmi malé plochy
+   * (ať tam není jen pár osamocených teček), horní mez je čistě výkonnostní
+   * pojistka pro extrémně velké plochy (spojnice se počítají O(n²) na snímek) -
+   * NENÍ to designový strop, proto je nastavena mnohem výš, než kolik reálně
+   * kdy vzorec plocha/hustota na běžných rozlišeních vrátí.
+   */
+  private readonly PARTICLE_MIN_COUNT = 14;
+  private readonly PARTICLE_MAX_COUNT = 260;
+
+  /**
+   * Vzdálenosti pro spojnice/interakci jsou navržené a odladěné pro tuto
+   * referenční šířku plátna (běžný notebook). Při jiné šířce se přepočítají
+   * proporcionálně (viz `currentScale`), takže relativní "hustota pavučiny"
+   * zůstává na všech rozlišeních stejná - na 1440px šířky se chování vůbec
+   * nezmění, jinde se poměrově přizpůsobí.
+   */
+  private readonly REFERENCE_WIDTH = 1440;
+  private readonly SCALE_MIN = 0.4;
+  private readonly SCALE_MAX = 2.6;
+
   private readonly PARTICLE_LINK_DISTANCE = 170;
   private readonly MOUSE_LINK_DISTANCE = 220;
   private readonly MOUSE_REPEL_RADIUS = 120;
   private readonly MOUSE_REPEL_STRENGTH = 0.6;
+
+  /** Aktuální poměr aktuální_šířka / REFERENCE_WIDTH, přepočítaný při každém resize. */
+  private currentScale = 1;
 
   override ngOnDestroy(): void {
     this.stopParticleField();
@@ -166,6 +196,11 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     this.mouse = null;
   };
 
+  /** Ořízne hodnotu do zadaného rozsahu [min, max]. */
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+  }
+
   private resizeParticleCanvas(canvas: HTMLCanvasElement): void {
     const parent = canvas.parentElement;
     let width = parent?.clientWidth ?? canvas.clientWidth;
@@ -186,6 +221,9 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     canvas.style.height = `${height}px`;
 
     this.particleCtx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Přepočet měřítka pro spojnice/interakci dle aktuální (logické, CSS) šířky plátna.
+    this.currentScale = this.clamp(width / this.REFERENCE_WIDTH, this.SCALE_MIN, this.SCALE_MAX);
 
     if (this.particles.length === 0 && width > 0 && height > 0) {
       this.seedParticles(canvas);
@@ -217,6 +255,11 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     const width = canvas.width / dpr;
     const height = canvas.height / dpr;
 
+    // Vzdálenosti přepočtené na aktuální velikost plátna - viz komentář u currentScale výše.
+    const linkDistance = this.PARTICLE_LINK_DISTANCE * this.currentScale;
+    const mouseLinkDistance = this.MOUSE_LINK_DISTANCE * this.currentScale;
+    const mouseRepelRadius = this.MOUSE_REPEL_RADIUS * this.currentScale;
+
     ctx.clearRect(0, 0, width, height);
 
     for (const particle of this.particles) {
@@ -228,8 +271,8 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
         const dy = particle.y - this.mouse.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < this.MOUSE_REPEL_RADIUS && distance > 0.01) {
-          const force = (1 - distance / this.MOUSE_REPEL_RADIUS) * this.MOUSE_REPEL_STRENGTH;
+        if (distance < mouseRepelRadius && distance > 0.01) {
+          const force = (1 - distance / mouseRepelRadius) * this.MOUSE_REPEL_STRENGTH;
           particle.x += (dx / distance) * force;
           particle.y += (dy / distance) * force;
         }
@@ -254,8 +297,8 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
         const dy = a.y - b.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < this.PARTICLE_LINK_DISTANCE) {
-          const opacity = (1 - distance / this.PARTICLE_LINK_DISTANCE) * 0.4;
+        if (distance < linkDistance) {
+          const opacity = (1 - distance / linkDistance) * 0.4;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
@@ -272,8 +315,8 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
         const dy = particle.y - this.mouse.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < this.MOUSE_LINK_DISTANCE) {
-          const opacity = (1 - distance / this.MOUSE_LINK_DISTANCE) * 0.55;
+        if (distance < mouseLinkDistance) {
+          const opacity = (1 - distance / mouseLinkDistance) * 0.55;
           ctx.beginPath();
           ctx.moveTo(particle.x, particle.y);
           ctx.lineTo(this.mouse.x, this.mouse.y);

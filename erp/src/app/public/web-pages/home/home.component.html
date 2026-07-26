@@ -36,35 +36,35 @@
   <canvas #heroParticleCanvas class="hero-particles" aria-hidden="true"></canvas>
 
   <div class="hero-content">
-    <div class="hero-eyebrow">{{ t?.hero?.eyebrow || 'Vývoj software · Praha' }}</div>
-    <h1 class="hero-heading" [innerHTML]="t?.hero?.heading || 'Jsme IT společnost,<br>která staví digitální produkty'"></h1>
-    <p class="hero-lead">{{ t?.hero?.lead || 'Navrhujeme, vyvíjíme a nasazujeme webové, desktopové i mobilní aplikace – od prvního nápadu až po ostrý provoz.' }}</p>
+    <div class="hero-eyebrow">{{ t?.hero?.eyebrow || 'Software development · Prague' }}</div>
+    <h1 class="hero-heading" [innerHTML]="t?.hero?.heading || 'We\'re an IT company<br>building digital products'"></h1>
+    <p class="hero-lead">{{ t?.hero?.lead || 'We design, develop, and deploy web, desktop, and mobile applications - from the first idea to production.' }}</p>
 
     <div class="hero-cta-row">
       <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
-        {{ t?.hero?.cta_primary || 'Nezávazná konzultace' }}
+        {{ t?.hero?.cta_primary || 'Free consultation' }}
         <span class="home-cta-arrow" aria-hidden="true">→</span>
       </a>
       <a routerLink="/services" class="home-cta-btn">
-        {{ t?.hero?.cta_secondary || 'Naše služby' }}
+        {{ t?.hero?.cta_secondary || 'Our services' }}
         <span class="home-cta-arrow" aria-hidden="true">→</span>
       </a>
     </div>
 
     <div class="hero-stats">
       <div class="hero-stat">
-        <span class="hero-stat-num">{{ t?.hero?.stat_1_num || '4 roky' }}</span>
-        <span class="hero-stat-label">{{ t?.hero?.stat_1_label || 'na trhu' }}</span>
+        <span class="hero-stat-num">{{ t?.hero?.stat_1_num || '4 years' }}</span>
+        <span class="hero-stat-label">{{ t?.hero?.stat_1_label || 'in business' }}</span>
       </div>
       <span class="hero-stat-divider" aria-hidden="true"></span>
       <div class="hero-stat">
         <span class="hero-stat-num">{{ t?.hero?.stat_2_num || '10+' }}</span>
-        <span class="hero-stat-label">{{ t?.hero?.stat_2_label || 'dokončených projektů' }}</span>
+        <span class="hero-stat-label">{{ t?.hero?.stat_2_label || 'completed projects' }}</span>
       </div>
       <span class="hero-stat-divider" aria-hidden="true"></span>
       <div class="hero-stat">
         <span class="hero-stat-num">{{ t?.hero?.stat_3_num || '100%' }}</span>
-        <span class="hero-stat-label">{{ t?.hero?.stat_3_label || 'vlastní kód' }}</span>
+        <span class="hero-stat-label">{{ t?.hero?.stat_3_label || 'custom code' }}</span>
       </div>
     </div>
   </div>
@@ -245,54 +245,54 @@
        <!-- REFERENCE WILL BE ADDED LATER THIS IS ONLY PLACEHOLDER -->
       <!-- <section class="home-proof-section">
         <div class="home-proof-header">
-          <div class="home-proof-eyebrow">{{ t?.proof?.eyebrow || 'Co říkají klienti' }}</div>
-          <h2 class="home-proof-heading">{{ t?.proof?.heading || 'Spolupráce, na které si zakládáme' }}</h2>
+          <div class="home-proof-eyebrow">{{ t?.proof?.eyebrow || 'What clients say' }}</div>
+          <h2 class="home-proof-heading">{{ t?.proof?.heading || 'Collaborations we\'re proud of' }}</h2>
         </div>
 
         <div class="home-proof-grid">
           <div class="home-proof-card">
             <div class="home-proof-quote-mark" aria-hidden="true">"</div>
-            <p class="home-proof-text">{{ t?.proof?.item_1?.text || 'Tým dodal projekt přesně podle zadání a v domluveném termínu. Komunikace byla po celou dobu jasná a bez zbytečných průtahů.' }}</p>
+            <p class="home-proof-text">{{ t?.proof?.item_1?.text || 'The team delivered the project exactly to spec and on the agreed schedule. Communication was clear throughout, with no unnecessary delays.' }}</p>
             <div class="home-proof-author">
               <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_1?.initials || 'JN' }}</div>
               <div class="home-proof-author-info">
-                <span class="home-proof-name">{{ t?.proof?.item_1?.name || 'Jan Novák' }}</span>
-                <span class="home-proof-role">{{ t?.proof?.item_1?.role || 'Jednatel, e-shop s doplňky' }}</span>
+                <span class="home-proof-name">{{ t?.proof?.item_1?.name || 'Jan Novak' }}</span>
+                <span class="home-proof-role">{{ t?.proof?.item_1?.role || 'Managing Director, supplements e-shop' }}</span>
               </div>
             </div>
           </div>
 
           <div class="home-proof-card">
             <div class="home-proof-quote-mark" aria-hidden="true">"</div>
-            <p class="home-proof-text">{{ t?.proof?.item_2?.text || 'Oceňujeme hlavně to, že nám dokázali poradit i s věcmi, na které jsme se sami nezeptali. Výsledná aplikace funguje bez problémů dodnes.' }}</p>
+            <p class="home-proof-text">{{ t?.proof?.item_2?.text || 'What we appreciate most is that they were able to advise us on things we hadn\'t even thought to ask about. The resulting application still runs without issues today.' }}</p>
             <div class="home-proof-author">
               <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_2?.initials || 'MK' }}</div>
               <div class="home-proof-author-info">
-                <span class="home-proof-name">{{ t?.proof?.item_2?.name || 'Michaela Krátká' }}</span>
-                <span class="home-proof-role">{{ t?.proof?.item_2?.role || 'Marketing manažerka' }}</span>
+                <span class="home-proof-name">{{ t?.proof?.item_2?.name || 'Michaela Kratka' }}</span>
+                <span class="home-proof-role">{{ t?.proof?.item_2?.role || 'Marketing Manager' }}</span>
               </div>
             </div>
           </div>
 
           <div class="home-proof-card">
             <div class="home-proof-quote-mark" aria-hidden="true">"</div>
-            <p class="home-proof-text">{{ t?.proof?.item_3?.text || 'Od prvního nápadu po nasazení do ostrého provozu uplynulo jen pár týdnů. Rychlost i kvalita zpracování nás mile překvapily.' }}</p>
+            <p class="home-proof-text">{{ t?.proof?.item_3?.text || 'From the first idea to going live, only a few weeks went by. The speed and quality of the work pleasantly surprised us.' }}</p>
             <div class="home-proof-author">
               <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_3?.initials || 'PH' }}</div>
               <div class="home-proof-author-info">
-                <span class="home-proof-name">{{ t?.proof?.item_3?.name || 'Petr Horák' }}</span>
-                <span class="home-proof-role">{{ t?.proof?.item_3?.role || 'CEO, výrobní společnost' }}</span>
+                <span class="home-proof-name">{{ t?.proof?.item_3?.name || 'Petr Horak' }}</span>
+                <span class="home-proof-role">{{ t?.proof?.item_3?.role || 'CEO, manufacturing company' }}</span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="home-proof-trustbar">
-          <span class="home-proof-trust-item">{{ t?.proof?.trust_1 || '10+ dokončených projektů' }}</span>
+          <span class="home-proof-trust-item">{{ t?.proof?.trust_1 || '10+ completed projects' }}</span>
           <span class="home-proof-trust-divider" aria-hidden="true"></span>
-          <span class="home-proof-trust-item">{{ t?.proof?.trust_2 || '4 roky na trhu' }}</span>
+          <span class="home-proof-trust-item">{{ t?.proof?.trust_2 || '4 years in business' }}</span>
           <span class="home-proof-trust-divider" aria-hidden="true"></span>
-          <span class="home-proof-trust-item">{{ t?.proof?.trust_3 || 'Podpora i po nasazení' }}</span>
+          <span class="home-proof-trust-item">{{ t?.proof?.trust_3 || 'Support after launch too' }}</span>
         </div>
       </section>
 
@@ -303,8 +303,8 @@
       <!-- FAQ Section -->
       <section class="home-faq-section">
         <div class="home-faq-header">
-          <div class="home-faq-eyebrow">{{ t?.faq?.eyebrow || 'Časté dotazy' }}</div>
-          <h2 class="home-faq-heading">{{ t?.faq?.heading || 'Než napíšete, možná už tu je odpověď' }}</h2>
+          <div class="home-faq-eyebrow">{{ t?.faq?.eyebrow || 'Frequently asked questions' }}</div>
+          <h2 class="home-faq-heading">{{ t?.faq?.heading || 'Before you reach out, the answer might already be here' }}</h2>
         </div>
 
         <div class="home-faq-list" role="list">
@@ -313,7 +313,7 @@
             <input type="checkbox" id="home-faq-1" class="home-faq-checkbox">
             <label for="home-faq-1" class="home-faq-trigger">
               <span class="home-faq-num" aria-hidden="true">01</span>
-              <span class="home-faq-trigger-text">{{ t?.faq?.q1 || 'Jak dlouho trvá vývoj typického projektu?' }}</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q1 || 'How long does a typical project take?' }}</span>
               <span class="home-faq-chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -321,7 +321,7 @@
               </span>
             </label>
             <div class="home-faq-body">
-              <p class="home-faq-answer-text">{{ t?.faq?.a1 || 'Záleží na rozsahu — jednodušší weby zvládneme za pár týdnů, komplexnější aplikace obvykle trvají 2–4 měsíce. Přesný odhad dostanete po nezávazné konzultaci.' }}</p>
+              <p class="home-faq-answer-text">{{ t?.faq?.a1 || 'It depends on the scope - simpler websites can be done in a few weeks, while more complex applications usually take 2-4 months. You will get an exact estimate after a free consultation.' }}</p>
             </div>
           </div>
 
@@ -329,7 +329,7 @@
             <input type="checkbox" id="home-faq-2" class="home-faq-checkbox">
             <label for="home-faq-2" class="home-faq-trigger">
               <span class="home-faq-num" aria-hidden="true">02</span>
-              <span class="home-faq-trigger-text">{{ t?.faq?.q2 || 'Kolik stojí vývoj webové nebo mobilní aplikace?' }}</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q2 || 'How much does a web or mobile app cost?' }}</span>
               <span class="home-faq-chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -337,7 +337,7 @@
               </span>
             </label>
             <div class="home-faq-body">
-              <p class="home-faq-answer-text">{{ t?.faq?.a2 || 'Cena se odvíjí od rozsahu a použitých technologií. Orientační ceník najdete na stránce Služby, konkrétní nabídku připravíme na míru po konzultaci zdarma.' }}</p>
+              <p class="home-faq-answer-text">{{ t?.faq?.a2 || 'Price depends on scope and the technologies used. You will find indicative pricing on the Services page, and we will prepare a tailored quote after a free consultation.' }}</p>
             </div>
           </div>
 
@@ -345,7 +345,7 @@
             <input type="checkbox" id="home-faq-3" class="home-faq-checkbox">
             <label for="home-faq-3" class="home-faq-trigger">
               <span class="home-faq-num" aria-hidden="true">03</span>
-              <span class="home-faq-trigger-text">{{ t?.faq?.q3 || 'Poskytujete podporu i po dokončení projektu?' }}</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q3 || 'Do you provide support after the project is finished?' }}</span>
               <span class="home-faq-chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -353,7 +353,7 @@
               </span>
             </label>
             <div class="home-faq-body">
-              <p class="home-faq-answer-text">{{ t?.faq?.a3 || 'Ano, po nasazení nabízíme servisní podporu a další rozvoj podle domluvy — od drobných úprav až po dlouhodobou spolupráci.' }}</p>
+              <p class="home-faq-answer-text">{{ t?.faq?.a3 || 'Yes, after launch we offer service support and further development as agreed - from small tweaks to long-term collaboration.' }}</p>
             </div>
           </div>
 
@@ -361,7 +361,7 @@
             <input type="checkbox" id="home-faq-4" class="home-faq-checkbox">
             <label for="home-faq-4" class="home-faq-trigger">
               <span class="home-faq-num" aria-hidden="true">04</span>
-              <span class="home-faq-trigger-text">{{ t?.faq?.q4 || 'Umíte pracovat i s naším stávajícím systémem?' }}</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q4 || 'Can you work with our existing system?' }}</span>
               <span class="home-faq-chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -369,14 +369,14 @@
               </span>
             </label>
             <div class="home-faq-body">
-              <p class="home-faq-answer-text">{{ t?.faq?.a4 || 'Ano, běžně navazujeme na existující řešení, propojujeme systémy přes API a postupně je modernizujeme, aniž by musel provoz stát.' }}</p>
+              <p class="home-faq-answer-text">{{ t?.faq?.a4 || 'Yes, we regularly build on existing solutions, connect systems via APIs, and modernize them gradually without stopping operations.' }}</p>
             </div>
           </div>
 
         </div>
 
         <a routerLink="/faq" class="home-faq-more">
-          {{ t?.faq?.more_link || 'Zobrazit všechny otázky' }}
+          {{ t?.faq?.more_link || 'View all questions' }}
           <span class="home-cta-arrow" aria-hidden="true">→</span>
         </a>
       </section>
