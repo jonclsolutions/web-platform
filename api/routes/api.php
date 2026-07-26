@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\Core\CoreRoleController;
+use App\Http\Controllers\Api\Core\CorePermissionController;
 use App\Http\Controllers\Api\Core\CoreSiteSettingController;
 use App\Http\Controllers\Api\Legal\DocumentSectionController;
 use App\Http\Controllers\Api\Legal\SiteConfigurationController;
@@ -170,10 +171,18 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
             ->except(['store', 'create', 'edit'])
             ->parameters(['users' => 'id']);
 
+        // Seznam všech oprávnění (řádky matice na stránce správy rolí) - jen čtení.
+        Route::get('/permissions', [CorePermissionController::class, 'index']);
+
         Route::prefix('roles')->group(function () {
+            // POZOR: 'store' je záměrně mimo apiResource níže (viz ->except),
+            // takže musí mít explicitní routu zde - bez ní vytvoření role vůbec nešlo zavolat.
+            Route::post('/',                   [CoreRoleController::class, 'store']);
             Route::post('/{id}/restore',       [CoreRoleController::class, 'restore']);
             Route::delete('/force-delete-all', [CoreRoleController::class, 'forceDeleteAllTrashed']);
             Route::get('/{id}',                [CoreRoleController::class, 'show']);
+            // Synchronizace oprávnění role z maticového UI ("Uložit oprávnění" u sloupce role).
+            Route::put('/{id}/permissions',    [CoreRoleController::class, 'syncPermissions']);
         });
         Route::apiResource('roles', CoreRoleController::class)
             ->except(['store', 'create', 'edit'])

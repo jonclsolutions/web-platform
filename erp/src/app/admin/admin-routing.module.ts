@@ -17,6 +17,7 @@ import { AdminLayoutComponent } from './components/admin-layout/admin-layout.com
 import { DashboardComponent } from './web-pages/dashboard/dashboard.component';
 import { UserRequestComponent } from './web-pages/user-request/user-request.component';
 import { AuthGuard } from '../core/auth/guards/auth.guard';
+import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
 import { AdministratorsComponent } from './web-pages/administrators/administrators.component';
 import { BusinessLogsComponent } from './web-pages/business-logs/business-logs.component';
 import { PersonalInfoComponent } from './web-pages/personal-info/personal-info.component';
@@ -33,6 +34,7 @@ import { SalesOrdersComponent } from './web-pages/sales-orders/sales-orders.comp
 import { SupportFormComponent } from './intranet/knowledge-base/pages/support-form/support-form.component';
 import { SupportTicketsComponent } from './web-pages/support-tickets/support-tickets.component';
 import { JobApplicationsComponent } from './web-pages/job-applications/job-applications.component';
+import { EditRolesComponent } from './web-pages/edit-roles/edit-roles.component';
 
 // Shop module components
 import { DashboardComponent as ShopDashboardComponent } from './shop-pages/dashboard/dashboard.component';
@@ -76,6 +78,10 @@ const routes: Routes = [
       { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-view-job-applications' } },
       { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'web-edit-legal' } },
       { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'web-view-web-settings' } },
+
+      // 🔒 Správa rolí a oprávnění - natvrdo omezeno na roli 'sysadmin' (viz sysadminGuard),
+      // nezávisle na permission systému, aby zůstala vždy pod výhradní kontrolou sysadmina.
+      { path: 'edit-roles', component: EditRolesComponent, canActivate: [sysadminGuard] },
 
       // 🛒 E-SHOP STRÁNKY (E-commerce administrative interfaces)
       { 

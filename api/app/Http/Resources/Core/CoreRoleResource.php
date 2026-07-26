@@ -30,6 +30,17 @@ class CoreRoleResource extends JsonResource
             'id'            => $this->id,
             'role_name'     => $this->role_name,
             'description'   => $this->description,
+            // Systémové role (sysadmin/admin) - needitovatelné a nesmazatelné.
+            'is_protected'  => $this->isProtected(),
+            // Kolik uživatelských účtů má tuto roli přiřazenou - použito pro ochranu proti smazání
+            // role, která je v použití. Pokud nebyl načten withCount('users'), spočítá se on-demand.
+            'users_count'   => $this->users_count ?? $this->users()->count(),
+            // Pole klíčů přiřazených oprávnění - pro předvyplnění checkboxů v matici.
+            'permissions'   => $this->whenLoaded(
+                'permissions',
+                fn () => $this->permissions->pluck('permission_key')->values(),
+                []
+            ),
             'created_at'    => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'    => $this->updated_at?->format('Y-m-d H:i:s'),
         ];

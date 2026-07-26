@@ -36,7 +36,9 @@ class StoreCoreRoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role_name'     => ['required', 'string', 'max:50', 'unique:roles,role_name'],
+            // Opraveno: skutečná tabulka je `core_roles`, ne `roles` (ta neexistuje -
+            // způsobovalo to SQLSTATE[42S02] při každém pokusu o vytvoření role).
+            'role_name'     => ['required', 'string', 'max:50', 'unique:core_roles,role_name'],
             'description'   => ['nullable', 'string', 'max:255'],
         ];
     }

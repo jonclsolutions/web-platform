@@ -35,14 +35,30 @@ class UpdateCoreRoleRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Retrieve ID from route parameter
-        $role = $this->route('role');
-        $roleId = is_object($role) ? $role->id : $role; 
+        // Opraveno: routy pro 'roles' mají parametr přejmenovaný na 'id'
+        // (viz routes/api.php: ->parameters(['roles' => 'id'])), takže
+        // $this->route('role') vždy vracelo null - unique pravidlo pak
+        // neignorovalo žádný záznam a validace selhávala i při zachování
+        // stejného názvu role (jen se měnil popis).
+        $roleId = $this->route('id') ?? $this->route('role');
+        $roleId = is_object($roleId) ? $roleId->id : $roleId;
 
         return [
-            // Ensure uniqueness while ignoring the current record ID
-            'role_name'   => 'required|string|max:50|unique:roles,role_name,' . $roleId . ',id',
+            'role_name'   => 'required|string|max:50|unique:core_roles,role_name,' . $roleId . ',id',
             'description' => 'nullable|string|max:255',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
+    public function messages(): array
+    {
+        return [
+            'role_name.unique' => 'Tato role již existuje.',
+            'role_name.required' => 'Název role je povinný.',
         ];
     }
 }

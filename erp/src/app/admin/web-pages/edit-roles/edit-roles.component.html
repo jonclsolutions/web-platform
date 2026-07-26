@@ -1,1 +1,223 @@
-<p>edit-roles works!</p>
+<!--
+    @file: edit-roles.component.html
+    @path: src/app/admin/web-pages/edit-roles/edit-roles.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+-->
+
+<div class="roles-page">
+
+  <div class="roles-page-header">
+    <div>
+      <h1>Správa rolí a oprávnění</h1>
+      <p class="roles-page-subtitle">
+        Systémové role (<strong>sysadmin</strong>, <strong>admin</strong>) jsou needitovatelné
+        a nesmazatelné. Vyberte roli vlevo a upravte její oprávnění vpravo.
+      </p>
+    </div>
+    <button class="btn-primary" (click)="openNewRoleForm()" *ngIf="!showNewRoleForm">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Nová role
+    </button>
+  </div>
+
+  <!-- ── Formulář nové role ─────────────────────────────────────────── -->
+  <div class="new-role-card" *ngIf="showNewRoleForm">
+    <div class="new-role-fields">
+      <div class="field-group">
+        <label for="new-role-name">Název role</label>
+        <input id="new-role-name" type="text" [(ngModel)]="newRoleName" placeholder="např. Účetní" maxlength="50" />
+      </div>
+      <div class="field-group field-group--wide">
+        <label for="new-role-desc">Popis (nepovinné)</label>
+        <input id="new-role-desc" type="text" [(ngModel)]="newRoleDescription" placeholder="Krátký popis účelu role" maxlength="255" />
+      </div>
+    </div>
+    <p class="error-text" *ngIf="newRoleError">{{ newRoleError }}</p>
+    <div class="new-role-actions">
+      <button class="btn-secondary" (click)="closeNewRoleForm()" [disabled]="isCreatingRole">Storno</button>
+      <button class="btn-primary" (click)="createRole()" [disabled]="isCreatingRole">
+        {{ isCreatingRole ? 'Vytvářím...' : 'Vytvořit roli' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading stav ───────────────────────────────────────────────── -->
+  <div class="loading-box" *ngIf="isLoading">
+    <div class="loader-spinner"></div>
+    <span>Načítám role a oprávnění…</span>
+  </div>
+
+  <!-- ── Master-detail layout ───────────────────────────────────────── -->
+  <div class="roles-layout" *ngIf="!isLoading">
+
+    <!-- Levý panel: seznam rolí -->
+    <aside class="roles-list-panel">
+      <div class="roles-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" [(ngModel)]="roleSearch" placeholder="Hledat roli…" />
+      </div>
+
+      <ul class="roles-list">
+        <li
+          *ngFor="let role of filteredRoles; trackBy: trackByRoleId"
+          class="role-list-item"
+          [class.role-list-item--active]="selectedRole?.id === role?.id"
+          [class.role-list-item--protected]="role?.is_protected"
+          (click)="role && selectRole(role)">
+
+          <div class="role-list-item-main" *ngIf="role">
+            <span class="role-list-name">
+              <svg *ngIf="role.is_protected" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lock-icon" title="Systémová role">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              {{ role.role_name }}
+            </span>
+            <span class="users-badge" [class.users-badge--zero]="role.users_count === 0">{{ role.users_count }}</span>
+          </div>
+          <span class="role-list-desc" *ngIf="role?.description">{{ role.description }}</span>
+        </li>
+
+        <li class="roles-list-empty" *ngIf="filteredRoles.length === 0">
+          Žádná role neodpovídá hledání.
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Pravý panel: detail vybrané role -->
+    <section class="role-detail-panel" *ngIf="selectedRole; else noSelection">
+
+      <div class="detail-header">
+        <div class="detail-header-main">
+          <ng-container *ngIf="isEditingDetails; else nameDisplay">
+            <input class="detail-name-input" type="text" [(ngModel)]="draftName" maxlength="50" />
+          </ng-container>
+          <ng-template #nameDisplay>
+            <h2 class="detail-name">
+              <svg *ngIf="selectedRole.is_protected" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lock-icon" title="Systémová role">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              {{ selectedRole.role_name }}
+            </h2>
+          </ng-template>
+
+          <div class="detail-header-badges">
+            <span class="users-badge" [class.users-badge--zero]="selectedRole.users_count === 0">
+              {{ selectedRole.users_count }} {{ selectedRole.users_count === 1 ? 'uživatel' : (selectedRole.users_count >= 2 && selectedRole.users_count <= 4 ? 'uživatelé' : 'uživatelů') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="detail-header-actions">
+          <ng-container *ngIf="!selectedRole.is_protected">
+            <ng-container *ngIf="!isEditingDetails; else editingActions">
+              <button class="btn-secondary btn-small" (click)="startEditingDetails()">Upravit název/popis</button>
+              <button
+                class="btn-danger btn-small"
+                [disabled]="!canDeleteRole(selectedRole)"
+                [title]="canDeleteRole(selectedRole) ? 'Smazat roli' : deleteBlockedReason(selectedRole)"
+                (click)="openDeleteConfirm(selectedRole)">
+                Smazat roli
+              </button>
+            </ng-container>
+            <ng-template #editingActions>
+              <button class="btn-secondary btn-small" (click)="cancelEditingDetails()" [disabled]="isSavingDetails">Storno</button>
+              <button class="btn-primary btn-small" (click)="saveDetails()" [disabled]="isSavingDetails">
+                {{ isSavingDetails ? 'Ukládám…' : 'Uložit' }}
+              </button>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
+
+      <ng-container *ngIf="isEditingDetails">
+        <input class="detail-desc-input" type="text" [(ngModel)]="draftDescription" placeholder="Popis role" maxlength="255" />
+      </ng-container>
+      <p class="detail-desc" *ngIf="!isEditingDetails && selectedRole.description">{{ selectedRole.description }}</p>
+
+      <div class="protected-notice" *ngIf="selectedRole.is_protected">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Toto je systémová role - název, popis i oprávnění jsou needitovatelné.
+      </div>
+
+      <div class="permissions-checklist">
+        <div class="permission-group" *ngFor="let group of permissionGroups">
+          <div class="permission-group-header">{{ moduleLabel(group.module) }}</div>
+
+          <label
+            class="permission-row"
+            *ngFor="let perm of group.items"
+            [class.permission-row--protected]="selectedRole.is_protected">
+            <input
+              type="checkbox"
+              [checked]="isChecked(perm.permission_key)"
+              [disabled]="selectedRole.is_protected"
+              (change)="togglePermission(perm.permission_key)"
+            />
+            <span class="permission-row-text">
+              <span class="perm-key">{{ perm.permission_key }}</span>
+              <span class="perm-desc" *ngIf="perm.description">{{ perm.description }}</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="detail-footer" *ngIf="!selectedRole.is_protected && isPermissionsDirty">
+        <span class="unsaved-note">Máte neuložené změny oprávnění.</span>
+        <button class="btn-secondary btn-small" (click)="discardPermissionChanges()" [disabled]="isSavingPermissions">Zahodit</button>
+        <button class="btn-primary btn-small" (click)="savePermissions()" [disabled]="isSavingPermissions">
+          {{ isSavingPermissions ? 'Ukládám…' : 'Uložit oprávnění' }}
+        </button>
+      </div>
+    </section>
+
+    <ng-template #noSelection>
+      <div class="empty-state">
+        <p>Vyberte roli ze seznamu vlevo, nebo vytvořte novou.</p>
+      </div>
+    </ng-template>
+  </div>
+
+</div>
+
+<!-- ── Potvrzovací modál smazání ────────────────────────────────────── -->
+@if (pendingDeleteRole) {
+  <div class="delete-modal-overlay">
+    <div class="delete-modal-card">
+      <div class="delete-modal-header">
+        <div class="delete-modal-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <h3>Smazat roli?</h3>
+      </div>
+
+      <div class="delete-modal-body">
+        <p>Opravdu chcete trvale smazat roli <strong>{{ pendingDeleteRole.role_name }}</strong>?</p>
+        <div class="warning-box">
+          Tato akce je <strong>nevratná</strong>. Role bude odstraněna včetně přiřazených oprávnění.
+        </div>
+        <p class="error-text" *ngIf="deleteError">{{ deleteError }}</p>
+      </div>
+
+      <div class="delete-modal-footer">
+        <button class="btn-secondary" (click)="cancelDelete()" [disabled]="isDeletingRole">Storno</button>
+        <button class="btn-danger" (click)="confirmDelete()" [disabled]="isDeletingRole">
+          {{ isDeletingRole ? 'Mažu…' : 'Ano, smazat' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

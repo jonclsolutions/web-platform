@@ -1,0 +1,507 @@
+/**
+ * @file edit-roles.component.css
+ * @path src/app/admin/web-pages/edit-roles/edit-roles.component.css
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2026
+ */
+
+:host {
+  --accent:        #1e88e5;
+  --accent-dark:   #1565c0;
+  --accent-dim:    #e3f2fd;
+  --accent-dim-2:  #bbdefb;
+  --text:          #1a1d23;
+  --text-muted:    #6b7280;
+  --text-dim:      #9ca3af;
+  --border:        #e4e6ea;
+  --border-mid:    #d0d3da;
+  --error:         #d32f2f;
+  --error-dim:     #ffebee;
+  --success:       #2e7d32;
+  --success-dim:   #e8f5e9;
+  --warning:       #f59f00;
+  --warning-dim:   #fff9db;
+  --surface:       #ffffff;
+  --surface-2:     #f8f9fb;
+  --radius:        6px;
+  --radius-md:     8px;
+  --ff:            'Segoe UI', system-ui, sans-serif;
+
+  display: block;
+  font-family: var(--ff);
+  padding: 20px 24px 60px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Header ─────────────────────────────────────────────── */
+.roles-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.roles-page-header h1 {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.roles-page-subtitle {
+  margin: 0;
+  max-width: 640px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* ── Tlačítka ───────────────────────────────────────────── */
+.btn-primary, .btn-secondary, .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: var(--ff);
+  cursor: pointer;
+  border: none;
+  transition: background 0.18s ease, transform 0.12s ease;
+  white-space: nowrap;
+}
+
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-dark); }
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border-mid);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--border); }
+
+.btn-danger { background: var(--error); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #b71c1c; }
+
+.btn-primary:disabled, .btn-secondary:disabled, .btn-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 0.78rem;
+}
+
+/* ── Nová role - formulář ──────────────────────────────────── */
+.new-role-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(20, 30, 60, 0.05);
+}
+
+.new-role-fields { display: flex; gap: 14px; flex-wrap: wrap; }
+.field-group { display: flex; flex-direction: column; gap: 5px; min-width: 200px; }
+.field-group--wide { flex: 1; }
+.field-group label { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+
+.field-group input, .roles-search input, .detail-name-input, .detail-desc-input {
+  padding: 9px 11px;
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+  font-family: var(--ff);
+  outline: none;
+}
+.field-group input:focus, .roles-search input:focus, .detail-name-input:focus, .detail-desc-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.12);
+}
+
+.new-role-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+.error-text { color: var(--error); font-size: 0.8rem; margin: 8px 0 0; }
+
+/* ── Loading ────────────────────────────────────────────── */
+.loading-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 40px;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.loader-spinner {
+  width: 20px; height: 20px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Master-detail layout ──────────────────────────────────
+   Klíčová vlastnost pro škálovatelnost: šířka stránky je fixní
+   bez ohledu na počet rolí - roste jen výška levého seznamu
+   (a ten scrolluje samostatně), ne šířka celé stránky.
+   ─────────────────────────────────────────────────────────── */
+.roles-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── Levý panel: seznam rolí ────────────────────────────── */
+.roles-list-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(20, 30, 60, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 200px);
+}
+
+.roles-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.roles-search input {
+  border: none;
+  flex: 1;
+  padding: 4px 0;
+  font-size: 0.85rem;
+}
+.roles-search input:focus { box-shadow: none; }
+
+.roles-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.role-list-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.role-list-item:hover { background: var(--surface-2); }
+.role-list-item--active {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  padding-left: 11px;
+}
+.role-list-item--protected { background: #fbfaf6; }
+.role-list-item--protected.role-list-item--active { background: var(--accent-dim); }
+
+.role-list-item-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.role-list-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.role-list-desc {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.roles-list-empty {
+  padding: 24px 14px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.lock-icon { color: var(--warning); flex-shrink: 0; }
+
+.users-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-dim);
+  color: var(--accent-dark);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.users-badge--zero { background: var(--border); color: var(--text-dim); }
+
+/* ── Pravý panel: detail role ───────────────────────────── */
+.role-detail-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(20, 30, 60, 0.05);
+  padding: 22px 26px 26px;
+}
+
+.empty-state {
+  background: var(--surface);
+  border: 1px dashed var(--border-mid);
+  border-radius: var(--radius-md);
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.detail-header-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.detail-name {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.detail-name-input {
+  font-size: 1.05rem;
+  font-weight: 700;
+  min-width: 220px;
+}
+
+.detail-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.detail-desc {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.detail-desc-input {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 8px;
+}
+
+.protected-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 13px;
+  background: var(--warning-dim);
+  border: 1px solid rgba(245, 159, 0, 0.35);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  color: #6b4e00;
+}
+
+/* ── Checklist oprávnění ────────────────────────────────── */
+.permissions-checklist {
+  margin-top: 22px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.permission-group + .permission-group {
+  margin-top: 6px;
+}
+
+.permission-group-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent-dark);
+  background: var(--surface-2);
+  padding: 7px 10px;
+  border-radius: 5px;
+  margin: 14px 0 4px;
+}
+
+.permission-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.13s ease;
+}
+.permission-row:hover { background: var(--surface-2); }
+.permission-row--protected { cursor: default; }
+.permission-row--protected:hover { background: transparent; }
+
+.permission-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.permission-row input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.7; }
+
+.permission-row-text { display: flex; flex-direction: column; }
+
+.perm-key {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.perm-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* ── Footer se stavem neuložených změn ──────────────────── */
+.detail-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-dim-2);
+  border-radius: var(--radius);
+}
+
+.unsaved-note {
+  font-size: 0.82rem;
+  color: var(--accent-dark);
+  font-weight: 600;
+  flex: 1;
+}
+
+/* ── Potvrzovací modál smazání ──────────────────────────── */
+.delete-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.delete-modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  font-family: var(--ff);
+}
+
+.delete-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--error-dim);
+}
+
+.delete-modal-icon {
+  width: 30px; height: 30px;
+  border-radius: var(--radius);
+  background: #fff;
+  border: 1px solid #ef9a9a;
+  color: var(--error);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.delete-modal-header h3 { margin: 0; font-size: 1rem; color: var(--text); }
+
+.delete-modal-body {
+  padding: 18px 20px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.warning-box {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--warning-dim);
+  border: 1px solid rgba(245, 159, 0, 0.35);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius);
+  font-size: 0.83rem;
+  color: #6b4e00;
+}
+
+.delete-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--surface-2);
+}
+
+/* ── Responzivita ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .roles-layout { grid-template-columns: 1fr; }
+  .roles-list-panel { max-height: 320px; }
+}
+
+@media (max-width: 600px) {
+  :host { padding: 14px 12px 40px; }
+  .roles-page-header { flex-direction: column; }
+  .role-detail-panel { padding: 18px 16px 20px; }
+}

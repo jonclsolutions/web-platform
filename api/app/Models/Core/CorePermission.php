@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property int $id The unique identifier for the permission.
  * @property string $permission_key The unique slug/key for the permission.
  * @property string|null $description A description of what this permission allows.
+ * @property string $module Logical grouping used for displaying permissions (web/shop/core).
  */
 class CorePermission extends Model
 {
@@ -32,16 +33,25 @@ class CorePermission extends Model
      */
     protected $fillable = [
         'permission_key',
-        'description'
+        'description',
+        'module',
     ];
 
     /**
      * Get the roles associated with this permission.
      *
+     * @note Opraveno: původně odkazovalo na neexistující `Role::class` a špatnou
+     *       pivot tabulku `role_permissions` (skutečná tabulka je `core_role_permissions`,
+     *       viz CoreRole::permissions()).
      * @return BelongsToMany
      */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'role_permissions', 'permission_id', 'role_id', 'id', 'id');
+        return $this->belongsToMany(
+            CoreRole::class,
+            'core_role_permissions',
+            'permission_id',
+            'role_id'
+        );
     }
 }

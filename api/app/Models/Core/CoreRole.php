@@ -36,6 +36,27 @@ class CoreRole extends Model
     ];
 
     /**
+     * Systémové role, které nelze editovat ani smazat přes UI/API správy rolí.
+     * @note (2026) `primeadmin` byla dříve v tomhle seznamu jako "záložní klíč" bez
+     *       vlastního self-service resetu hesla. Teď, když existuje reset hesla přes
+     *       e-mail, se primeadmin chová jako naprosto běžná (needitovatelná ochrana
+     *       se na ni nevztahuje) role - lze ji editovat i smazat stejně jako custom role.
+     *       Jediné trvale chráněné role jsou `sysadmin` a `admin`.
+     *
+     * @var array<int, string>
+     */
+    public const PROTECTED_ROLE_NAMES = ['sysadmin', 'admin'];
+
+    /**
+     * @description Určuje, zda je role systémová (chráněná před editací/smazáním).
+     * @return bool
+     */
+    public function isProtected(): bool
+    {
+        return in_array(strtolower($this->role_name), self::PROTECTED_ROLE_NAMES, true);
+    }
+
+    /**
      * Get the users assigned to this role.
      *
      * @return BelongsToMany
@@ -56,8 +77,7 @@ class CoreRole extends Model
             CorePermission::class, 
             'core_role_permissions', 
             'role_id', 
-            'permission_id', 
-            'id' 
+            'permission_id'
         );
     }
 }

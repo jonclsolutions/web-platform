@@ -9,6 +9,12 @@
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and state management.
  * - TableBuilderComponent: Used for rendering the administrators data grid.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
+ * @bugfix-note (2026) `role_id` select options bývaly natvrdo `[{sysadmin},{admin}]`
+ *       v administrators.config.ts. Teď, když jsou role spravovány dynamicky
+ *       (viz /admin/edit-roles - vytváření/mazání custom rolí), by nově vytvořené
+ *       role nešlo přes tenhle formulář vůbec nikomu přiřadit.
+ *       Options pro `role_id` (ve formuláři i ve filtru) se proto teď načítají
+ *       dynamicky z `core/roles` při inicializaci komponenty - viz loadRoleOptions().
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -17,6 +23,12 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './administrators.config';
+
+/** Tvar jedné položky v roles-endpointu, jen pole, která tu skutečně potřebujeme. */
+interface RoleOptionSource {
+  id: number;
+  role_name: string;
+}
 
 /**
  * @description Component for the administration of platform administrators.
@@ -49,6 +61,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   selectedItemForDetails: any | null = null;
   resetPasswordTitle: string = 'Resetovat heslo';
   filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
+
+  /** Aktuální role načtené z API, ve tvaru pro select input (viz loadRoleOptions()). */
+  roleOptions: { value: string; label: string }[] = [];
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -109,6 +124,44 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
+    this.loadRoleOptions();
+  }
+
+  /**
+   * @description Načte aktuální seznam rolí z API a doplní jím `options` u pole `role_id`
+   *              ve formuláři i ve filtru. Bez tohoto by šlo uživatelům přiřazovat jen
+   *              natvrdo zadrátované role (sysadmin/admin), ne nově vytvořené custom role
+   * @note Endpoint vrací jen netrashnuté role (Eloquent SoftDeletes je defaultně vylučuje),
+   *       takže smazané role se v nabídce logicky neobjeví.
+   */
+  private loadRoleOptions(): void {
+    this.dataHandler.getCollection<RoleOptionSource>('core/roles?no_pagination=true').subscribe({
+      next: (roles) => {
+        this.roleOptions = (roles || [])
+          .filter((r): r is RoleOptionSource => !!r)
+          .map(r => ({ value: String(r.id), label: r.role_name }));
+
+        // Nové pole objektů (ne mutace sdíleného Config exportu), ať se nic
+        // neděje ostatním instancím/importům, které by na Config.FORM_FIELDS
+        // odkazovaly jinde.
+        this.formFields = this.formFields.map(field =>
+          field.column_name === 'role_id' ? { ...field, options: this.roleOptions } : field
+        );
+
+        this.filterColumns = this.filterColumns.map(col =>
+          col.key === 'role_id' ? { ...col, options: this.roleOptions.map(o => o.label) } : col
+        );
+
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.alertDialogService.open(
+          'Chyba',
+          'Nepodařilo se načíst aktuální seznam rolí pro formulář. Zkuste prosím stránku obnovit.',
+          'danger'
+        );
+      }
+    });
   }
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }

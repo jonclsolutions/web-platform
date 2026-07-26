@@ -6,6 +6,12 @@
  * @author RPSW
  * @created 2025
  * @description Manages user account lifecycles, including creation, role assignment, password security policies, and administrative audit logging.
+ * @note (2026) Veškerá speciální logika okolo role 'primeadmin' byla odstraněna - chová
+ *       se teď jako naprosto běžná role. Jediné trvale chráněné (needitovatelné,
+ *       nesmazatelné) role jsou 'sysadmin' a 'admin' (viz CoreRole::PROTECTED_ROLE_NAMES).
+ *       changePassword() proto už roli 'primeadmin' automaticky nepovažuje za "admina"
+ *       s právem měnit hesla jiným uživatelům - kdo tohle právo mít má, se řídí čistě
+ *       tím, jestli má roli 'admin' nebo 'sysadmin'.
  */
 
 namespace App\Http\Controllers\Api;
@@ -22,7 +28,6 @@ use Illuminate\Support\Facades\{Hash, Log, DB};
 
 /**
  * @description Controller responsible for user management operations.
- * @note Includes robust security checks to protect 'primeadmin' accounts and enforces administrative validation for sensitive actions like password changes.
  */
 class UserController extends Controller
 {
@@ -42,10 +47,7 @@ class UserController extends Controller
         $dir = in_array(strtolower($request->input('sort_direction')), ['asc', 'desc']) ? $request->input('sort_direction') : 'desc';
 
         $query = User::query()->withTrashed();
-        
-        // Exclude Prime Admins from standard lists
-        $query->whereDoesntHave('roles', fn($q) => $q->where('role_name', 'primeadmin'));
-        
+
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
         if ($request->filled('full_name')) $query->where('full_name', 'like', "%{$request->full_name}%");
@@ -89,10 +91,6 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        
-        if (isset($validated['role_id']) && CoreRole::find($validated['role_id'])?->role_name === 'primeadmin') {
-            return response()->json(['message' => 'Nelze vytvořit Prime Admina.'], 403);
-        }
 
         DB::beginTransaction();
         try {
@@ -117,7 +115,7 @@ class UserController extends Controller
     }
 
     /**
-     * Displays details for a specific user, ensuring no unauthorized access to protected roles.
+     * Displays details for a specific user.
      *
      * @param int $id
      * @return JsonResponse
@@ -125,10 +123,6 @@ class UserController extends Controller
     public function show($id): JsonResponse
     {
         $user = User::withTrashed()->findOrFail($id);
-
-        if ($user->roles()->where('role_name', 'primeadmin')->exists()) {
-            return response()->json(['message' => 'Zakázaný přístup.'], 403);
-        }
 
         return response()->json(new UserResource($user->load('roles.permissions')));
     }
@@ -143,10 +137,6 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, $id): JsonResponse
     {
         $user = User::findOrFail($id);
-
-        if ($user->roles()->where('role_name', 'primeadmin')->exists()) {
-            return response()->json(['message' => 'Prime Admin je nedotknutelný.'], 403);
-        }
 
         $validated = $request->validated();
 
@@ -191,11 +181,7 @@ class UserController extends Controller
             $validated = $request->validated();
             $auth = $request->user() ?? auth('sanctum')->user();
 
-            if ($user->roles()->where('role_name', 'primeadmin')->exists()) {
-                return response()->json(['message' => 'Heslo Prime Admina nelze měnit.'], 403);
-            }
-
-            $isAdmin = $auth->roles()->whereIn('role_name', ['admin', 'sysadmin', 'primeadmin'])->exists();
+            $isAdmin = $auth->roles()->whereIn('role_name', ['admin', 'sysadmin'])->exists();
             $isOwner = $user->id === $auth->id;
 
             if (!$isOwner && !$isAdmin) {
@@ -245,6 +231,7 @@ class UserController extends Controller
 
     /**
      * Handles soft or hard deletion of a user.
+     * @note Jediná zbývající ochrana je obecná - uživatel nemůže smazat sám sebe.
      *
      * @param Request $request
      * @param int $id
@@ -254,9 +241,9 @@ class UserController extends Controller
     {
         try {
             $user = User::withTrashed()->findOrFail($id);
-            
-            if ($user->roles()->where('role_name', 'primeadmin')->exists() || $request->user()?->id == $id) {
-                return response()->json(['message' => 'Nelze smazat tento účet.'], 403);
+
+            if ($request->user()?->id == $id) {
+                return response()->json(['message' => 'Nelze smazat vlastní účet.'], 403);
             }
 
             $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
@@ -271,14 +258,14 @@ class UserController extends Controller
     }
 
     /**
-     * Permanently deletes all soft-deleted users (excluding Prime Admins).
+     * Permanently deletes all soft-deleted users.
      *
      * @return JsonResponse
      */
     public function forceDeleteAllTrashed(): JsonResponse
     {
         try {
-            $query = User::onlyTrashed()->whereDoesntHave('roles', fn($q) => $q->where('role_name', 'primeadmin'));
+            $query = User::onlyTrashed();
             $count = $query->count();
             $query->forceDelete();
             

@@ -1,9 +1,15 @@
 import * as Core from '../../../shared/imports/core-providers';
 
-export const ROLE_OPTIONS = [
-  { value: '1', label: 'sysadmin' },
-  { value: '2', label: 'admin' },
-];
+/**
+ * @description Výchozí (prázdný) seznam rolí pro select pole ve formuláři a filtru.
+ * @note Dříve bylo natvrdo `[{sysadmin},{admin}]` - teď, když jsou role dynamické
+ *       (viz /admin/edit-roles), by to znamenalo, že nově vytvořené custom role
+ *       by v tomto formuláři nešlo vůbec vybrat/přiřadit.
+ *       Skutečné hodnoty se doplňují za běhu v AdministratorsComponent.loadRoleOptions()
+ *       (GET core/roles?no_pagination=true), tohle prázdné pole je jen bezpečný
+ *       výchozí stav, než se ten požadavek stihne vrátit.
+ */
+export const ROLE_OPTIONS: { value: string; label: string }[] = [];
 
 export const TABLE_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
@@ -73,6 +79,8 @@ export const FORM_FIELDS: Core.InputDefinition[] = [
     show_in_edit: false, 
     show_in_create: true 
   },
+  // Options se doplňují za běhu (viz ROLE_OPTIONS výše) - toto pole tu zůstává
+  // prázdné, dokud AdministratorsComponent nedokončí loadRoleOptions().
   { column_name: 'role_id', label: 'Role', type: 'select', options: ROLE_OPTIONS, required: true, errorMessage: 'Vyberte roli uživatele.', editable: true, show_in_edit: true, show_in_create: true },
   { column_name: 'phone_number', label: 'Telefon', placeholder: '+420 123 456 789', type: 'text', required: false, editable: true, show_in_edit: true, show_in_create: true },
   { column_name: 'birth_date', label: 'Datum narození', type: 'date', required: false, editable: true, show_in_edit: true, show_in_create: true },
@@ -102,6 +110,7 @@ export const TRASH_TABLE_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'deleted_at', header: 'Smazáno', type: 'date', format: 'short' },
 ];
 
+// Options se doplňují za běhu (viz ROLE_OPTIONS výše).
 export const FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'id', header: 'ID', type: 'text', placeholder: 'ID', canSort: true },
   { key: 'full_name', header: 'Jméno', type: 'text', placeholder: 'Hledat jméno', canSort: true },
