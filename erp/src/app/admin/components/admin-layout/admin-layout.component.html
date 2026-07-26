@@ -120,6 +120,17 @@
         <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Přehled</div>
           <ul>
+            <li *appHasPermission="'web-view-welcome-page'">
+              <a routerLink="/admin/welcome-page" routerLinkActive="active" (click)="onLinkClick()" title="Vítejte">
+                <span class="nav-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                </span>
+                <span class="nav-text">Vítejte</span>
+              </a>
+            </li>
             <li *appHasPermission="'web-view-dashboard'">
               <a routerLink="/admin/dashboard" routerLinkActive="active" (click)="onLinkClick()" title="Dashboard">
                 <span class="nav-icon">

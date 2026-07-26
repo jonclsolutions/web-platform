@@ -1,0 +1,67 @@
+<!-- 
+    @file: welcome-page.component.html
+    @path: /src/app/admin/web-pages/welcome-page/welcome-page.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026 
+-->
+
+<div class="wp-page">
+
+  <div class="wp-welcome">
+    <div class="wp-welcome-left">
+      <div class="wp-welcome-date">{{ currentDateTime }}</div>
+      <h1 class="wp-welcome-title">{{ welcomeMessage }}</h1>
+      <p class="wp-welcome-sub">Rádi vás vidíme v administračním systému RPSW.</p>
+    </div>
+    <div class="wp-welcome-right">
+      <div class="wp-role-chip">
+        <span class="wp-role-dot"></span>
+        {{ userRole ?? 'Uživatel' }}
+      </div>
+    </div>
+  </div>
+
+  @if (errorMessage) {
+    <div class="wp-error-banner">⚠️ {{ errorMessage }}</div>
+  }
+
+  <div class="wp-card">
+    <div class="wp-card-header">
+      <span class="wp-card-icon">👤</span>
+      <span class="wp-card-title">Váš profil</span>
+    </div>
+    <div class="wp-card-body">
+      @if (isLoadingProfile) {
+        <div class="wp-profile-skeleton"></div>
+      }
+      @if (!isLoadingProfile) {
+        <div class="wp-profile-avatar">
+          {{ (userData?.full_name ?? userEmail ?? 'U').charAt(0).toUpperCase() }}
+        </div>
+        <div class="wp-profile-info">
+          <div class="wp-profile-name">{{ userData?.full_name ?? '—' }}</div>
+          <div class="wp-profile-row">
+            <span class="wp-label">E-mail</span>
+            <span class="wp-value wp-value-mono">{{ userEmail ?? '—' }}</span>
+          </div>
+          <div class="wp-profile-row">
+            <span class="wp-label">Role</span>
+            <span class="wp-value">{{ userRole ?? '—' }}</span>
+          </div>
+          @if (userData?.created_at) {
+            <div class="wp-profile-row">
+              <span class="wp-label">Účet vytvořen</span>
+              <span class="wp-value">{{ formatDate(userData!.created_at) }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="wp-footer">
+    <span>Potřebujete pomoc s něčím konkrétním? Kontaktujte technickou podporu nebo svého správce systému.</span>
+  </div>
+
+</div>

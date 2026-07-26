@@ -9,12 +9,16 @@
  * - RouterModule: Core Angular routing service.
  * - AuthGuard: Authentication middleware ensuring restricted access to administrative routes.
  * - AdminLayoutComponent: Main wrapper layout for the admin section.
+ * @refactor-note (2026) Přidána `welcome-page` jako nová výchozí post-login stránka
+ *      (viz redirect '' -> 'welcome-page', dřív mířil na 'dashboard'). Dashboard zůstává
+ *      samostatnou, citlivější stránkou chráněnou `web-view-dashboard`.
  */
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AdminLayoutComponent } from './components/admin-layout/admin-layout.component';
 import { DashboardComponent } from './web-pages/dashboard/dashboard.component';
+import { WelcomePageComponent } from './web-pages/welcome-page/welcome-page.component';
 import { UserRequestComponent } from './web-pages/user-request/user-request.component';
 import { AuthGuard } from '../core/auth/guards/auth.guard';
 import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
@@ -62,8 +66,12 @@ const routes: Routes = [
     component: AdminLayoutComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      
+      { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
+
+      // 👋 Uvítací stránka po přihlášení - vidí ji každý s oprávněním web-view-welcome-page
+      // (defaultně sysadmin + admin, ostatní role lze doplnit přes /admin/edit-roles).
+      { path: 'welcome-page', component: WelcomePageComponent, data: { permission: 'web-view-welcome-page' } },
+
       // 🌍 WEB STRÁNKY (Core website management interfaces)
       { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
       { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-view-user-requests' } },

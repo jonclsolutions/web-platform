@@ -4,32 +4,29 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Central administrative dashboard component providing a high-level overview of
- * system metrics, recent activities, and navigation shortcuts.
+ * @description Central administrative dashboard component providing sensitive system metrics,
+ * recent activity, and navigation shortcuts. Gated behind `web-view-dashboard` permission.
  *
- * @refactor-note (2025) Dříve volal `HttpClient` přímo pro agregační dotazy (loadStats,
- * loadRecentActivity) vedle `BaseDataComponent`, který už `DataHandler` sám injektuje pro
- * `getItemDetails()`. Teď se pro všechny requesty používá jednotně `this.dataHandler`
- * (`getPaginatedCollection`, aby zůstal zachovaný `.total` z odpovědi) — komponenta už
- * vůbec nepotřebuje znát `HttpClient` ani ruční `/api` prefix.
- *
- * Zároveň opraveno: `ngOnDestroy` dřív nevolal `super.ngOnDestroy()`, takže `destroy$`
- * z `BaseDataComponent` se nikdy nedokončil a `crud`/`list` instance uvnitř base třídy by
- * si nikdy neuklidily své subscriptions.
+ * @refactor-note (2026) Profil uživatele, uvítací hlavička a "vytvořen účet" byly přesunuty
+ * na novou WelcomePageComponent (`/admin/welcome-page`), kterou vidí každý přihlášený uživatel
+ * s oprávněním `web-view-welcome-page` - tahle stránka teď obsahuje výhradně citlivé/agregační
+ * přehledy (počty uživatelů, tickety, systémové logy, rychlé odkazy do modulů), které mají
+ * vidět jen uživatelé s `web-view-dashboard`. Odstraněno vše, co s profilem souviselo
+ * (getItemDetails/profil, e-mail subscription, welcomeMessage) - `BaseDataComponent` tu
+ * zůstává jen kvůli `errorMessage`/`cd`/`alertDialogService` a jednotnému vzoru, i když
+ * `apiEndpoint` se teď prakticky nevyužívá (agregace jede přes `dataHandler` napřímo).
  *
  * @dependencies
- * - BaseDataComponent: Inherited base class for state management and API access (deleguje na
- *   EntityCrudService / PaginatedListStore).
+ * - BaseDataComponent: Poskytuje errorMessage/cd/alertDialogService (žádné CRUD tu není potřeba).
  * - LoadingService: Manages global loading states.
  * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
  */
 
-import { Component, ChangeDetectionStrategy, inject, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Subscription, forkJoin } from 'rxjs';
-import { catchError, of } from 'rxjs';
+import { forkJoin, catchError, of } from 'rxjs';
 
 import * as Core from '../../../shared/imports/core-providers';
 import { UserLogin } from '../../../shared/interfaces/user';
@@ -38,9 +35,8 @@ import { LoadingService } from '../../../core/services/loading.service';
 import { ActivityLog, QuickStat, NavSection } from './';
 
 /**
- * @description Serves as the primary landing page for authenticated administrators.
- * @usage Provides immediate access to administrative sections and visualizes key performance
- * indicators (KPIs).
+ * @description Serves as the sensitive metrics/overview page for administrators with
+ * dashboard access. Not the post-login landing page anymore - see WelcomePageComponent.
  * @note Implements component-level data aggregation from multiple API endpoints to populate the
  * dashboard view.
  */
@@ -52,15 +48,11 @@ import { ActivityLog, QuickStat, NavSection } from './';
   styleUrl: './dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit, OnDestroy {
+export class DashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit {
 
   public override loadingService = inject(LoadingService);
 
   override apiEndpoint = 'core/users';
-
-  userData: UserLogin | null = null;
-  userEmail: string | null = null;
-  userRole: string | null = null;
 
   quickStats: QuickStat[] = [];
   loadingStats = true;
@@ -113,8 +105,6 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     },
   ];
 
-  private emailSub?: Subscription;
-
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -125,36 +115,8 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   override ngOnInit(): void {
     super.ngOnInit();
-    this.userRole = this.authService.getUserRole();
-
-    this.emailSub = this.authService.userEmail$.subscribe(email => {
-      this.userEmail = email;
-      this.cd.markForCheck();
-    });
-
-    this.loadUserProfile();
     this.loadStats();
     this.loadRecentActivity();
-  }
-
-  /**
-   * @description Fetches the currently authenticated user's profile information.
-   */
-  private loadUserProfile(): void {
-    const userId = this.authService.getUserId();
-    if (!userId) return;
-    if (this.loadingService.isLoadingSnapshot) return;
-
-    this.getItemDetails(parseInt(userId, 10)).subscribe({
-      next: (response: any) => {
-        this.userData = response.data ?? response;
-        this.cd.markForCheck();
-      },
-      error: () => {
-        this.errorMessage = 'Nepodařilo se načíst profil.';
-        this.cd.markForCheck();
-      }
-    });
   }
 
   /**
@@ -221,14 +183,6 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   }
 
   /**
-   * @description Returns a personalized greeting based on user profile name or email.
-   */
-  get welcomeMessage(): string {
-    const name = this.userData?.full_name ?? this.userEmail ?? 'uživateli';
-    return `Dobrý den, ${name}`;
-  }
-
-  /**
    * @description Formats current system date for display in the dashboard header.
    */
   get currentDateTime(): string {
@@ -261,10 +215,5 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       export: 'ev-export', error: 'ev-error', payment: 'ev-create',
     };
     return map[type] ?? 'ev-default';
-  }
-
-  override ngOnDestroy(): void {
-    this.emailSub?.unsubscribe();
-    super.ngOnDestroy();
   }
 }

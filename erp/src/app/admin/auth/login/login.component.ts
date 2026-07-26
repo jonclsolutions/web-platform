@@ -47,14 +47,14 @@ private cdr: ChangeDetectorRef
   ) {}
 
 /**
-   * @description Processes user credentials and navigates to the dashboard upon success.
+   * @description Processes user credentials and navigates to the welcome page upon success.
    * @note Updates the errorMessage state if authentication fails.
    */
 onLogin(): void {
 this.errorMessage = '';
 this.authService.login({ email: this.email, password: this.password }).subscribe({
 next: () => {
-this.router.navigate(['/admin/dashboard']);
+this.router.navigate(['/admin/welcome-page']);
       },
 error: (error) => {
 this.errorMessage = error.message || 'Incorrect credentials.';

@@ -8,69 +8,32 @@
 
 <div class="core-dashboard">
 
-  <div class="cd-welcome">
-    <div class="cd-welcome-left">
-      <div class="cd-welcome-date">{{ currentDateTime }}</div>
-      <h1 class="cd-welcome-title">{{ welcomeMessage }}</h1>
-      <p class="cd-welcome-sub">Administrační systém — přehled vašeho účtu a aktivit</p>
-    </div>
-    <div class="cd-welcome-right">
-      <div class="cd-role-chip">
-        <span class="cd-role-dot"></span>
-        {{ userRole ?? 'Administrátor' }}
-      </div>
-    </div>
+  <div class="cd-header-bar">
+    <div class="cd-header-date">{{ currentDateTime }}</div>
+    <h1 class="cd-header-title">Přehled systému</h1>
+    <p class="cd-header-sub">Souhrnné statistiky, poslední aktivita a rychlá navigace</p>
   </div>
 
+  @if (errorMessage) {
+    <div class="cd-error-banner">⚠️ {{ errorMessage }}</div>
+  }
+
   <div class="cd-section">
-    <div class="cd-profile-row">
-
-      <div class="cd-card cd-card-profile">
-        <div class="cd-card-header">
-          <span class="cd-card-icon">👤</span>
-          <span class="cd-card-title">Váš profil</span>
-        </div>
-        <div class="cd-card-body">
-          <div class="cd-profile-avatar">
-            {{ (userData?.full_name ?? userEmail ?? 'U').charAt(0).toUpperCase() }}
-          </div>
-          <div class="cd-profile-info">
-            <div class="cd-profile-name">{{ userData?.full_name ?? '—' }}</div>
-            <div class="cd-profile-row-item">
-              <span class="cd-label">E-mail</span>
-              <span class="cd-value cd-value-mono">{{ userEmail ?? '—' }}</span>
-            </div>
-            <div class="cd-profile-row-item">
-              <span class="cd-label">Role</span>
-              <span class="cd-value">{{ userRole ?? 'Administrátor' }}</span>
-            </div>
-            @if (userData?.created_at) {
-              <div class="cd-profile-row-item">
-                <span class="cd-label">Účet vytvořen</span>
-                <span class="cd-value">{{ formatDate(userData!.created_at) }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-
-      <div class="cd-stats-grid">
-        @if (loadingStats) {
-          @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="cd-stat-card cd-stat-skeleton"></div>
-          }
+    <div class="cd-stats-grid">
+      @if (loadingStats) {
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="cd-stat-card cd-stat-skeleton"></div>
         }
-        @if (!loadingStats) {
-          @for (stat of quickStats; track stat.label) {
-            <div class="cd-stat-card cd-stat-{{ stat.color }}">
-              <div class="cd-stat-icon">{{ stat.icon }}</div>
-              <div class="cd-stat-value">{{ stat.value }}</div>
-              <div class="cd-stat-label">{{ stat.label }}</div>
-            </div>
-          }
+      }
+      @if (!loadingStats) {
+        @for (stat of quickStats; track stat.label) {
+          <div class="cd-stat-card cd-stat-{{ stat.color }}">
+            <div class="cd-stat-icon">{{ stat.icon }}</div>
+            <div class="cd-stat-value">{{ stat.value }}</div>
+            <div class="cd-stat-label">{{ stat.label }}</div>
+          </div>
         }
-      </div>
-
+      }
     </div>
   </div>
 

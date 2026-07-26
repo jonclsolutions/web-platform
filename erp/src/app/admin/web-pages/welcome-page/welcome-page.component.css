@@ -1,0 +1,211 @@
+/*     
+    @file: welcome-page.component.css
+    @path: /src/app/admin/web-pages/welcome-page/welcome-page.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
+
+.wp-page {
+  width: 100%;
+  max-width: 900px;
+  padding: 5px 5px 28px;
+  font-family: Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.wp-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 0 14px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.wp-welcome-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: capitalize;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+
+.wp-welcome-title {
+  margin: 0 0 5px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.wp-welcome-sub {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.wp-welcome-right {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 6px;
+}
+
+.wp-role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #ede9fe;
+  color: #4F46E5;
+  border: 1px solid #c4b5fd;
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.wp-role-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4F46E5;
+  flex-shrink: 0;
+}
+
+.wp-error-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.wp-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.wp-card-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.wp-card-icon {
+  font-size: 0.95rem;
+}
+
+.wp-card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #4F46E5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wp-card-body {
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.wp-profile-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4F46E5, #7c3aed);
+  color: #ffffff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wp-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wp-profile-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.wp-profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #f1f5f9;
+  gap: 8px;
+}
+
+.wp-profile-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.wp-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.wp-value {
+  font-size: 0.85rem;
+  color: #334155;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-all;
+}
+
+.wp-value-mono {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #4F46E5;
+}
+
+.wp-profile-skeleton {
+  width: 100%;
+  min-height: 60px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+.wp-footer {
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  .wp-welcome-title { font-size: 1.25rem; }
+  .wp-card-body { flex-direction: column; align-items: flex-start; }
+}
