@@ -4,26 +4,31 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
+               zaoblené karty (18px), jemné stíny, tmavý akcent (#18181b) místo
+               indigo, plně zaoblené ("pill") tlačítko. Struktura/třídy a logika
+               beze změny, jde jen o barvy/zaoblení/typografii.
 */
 
 .personal-info-container {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  padding: 5px 5px 28px;
+  padding: 0 0 28px;
   background-color: transparent;
   align-items: flex-start;
-  font-family: Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   max-width: 1400px;
   width: 100%;
 }
 
 .cd-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid #ececea;
+  border-radius: 18px;
   overflow: hidden;
-  padding: 20px;
+  padding: 22px;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
 }
 
 .info-card { 
@@ -39,14 +44,14 @@
 
 .card-header-clean {
   margin-bottom: 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f4f4f5;
   padding-bottom: 12px;
 }
 
 .card-title {
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: #4F46E5;
+  color: #18181b;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 0 0 4px 0;
@@ -54,7 +59,7 @@
 
 .admin-note {
   font-size: 0.78rem;
-  color: #94a3b8;
+  color: #a1a1aa;
 }
 
 .info-group {
@@ -68,7 +73,7 @@
 .group-title {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: #a1a1aa;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 14px;
@@ -83,26 +88,26 @@
 .info-item label {
   display: block;
   font-size: 0.72rem;
-  color: #64748b;
+  color: #71717a;
   font-weight: 500;
   margin-bottom: 2px;
 }
 
 .info-item .value {
   font-size: 0.88rem;
-  color: #0f172a;
+  color: #18181b;
   font-weight: 500;
   word-break: break-all;
 }
 
 .value.muted { 
-  color: #64748b; 
+  color: #71717a; 
 }
 
 .cd-value-mono {
   font-family: 'Courier New', monospace;
   font-size: 0.82rem;
-  color: #4F46E5;
+  color: #18181b;
   font-weight: 600;
 }
 
@@ -119,28 +124,29 @@
 .form-field-minimal label {
   display: block;
   font-size: 0.78rem;
-  color: #1e293b;
+  color: #3f3f46;
   margin-bottom: 4px;
   font-weight: 600;
 }
 
 .form-field-minimal input {
   width: 100%;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  padding: 8px 12px;
-  border-radius: 6px;
+  border: 1px solid #e4e4e7;
+  background: #fafafa;
+  padding: 9px 13px;
+  border-radius: 10px;
   font-size: 0.85rem;
-  color: #0f172a;
+  color: #18181b;
   transition: all 0.15s ease;
   box-sizing: border-box;
+  font-family: inherit;
 }
 
 .form-field-minimal input:focus {
   outline: none;
-  border-color: #4F46E5;
+  border-color: #18181b;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 
 .action_button {
@@ -148,28 +154,29 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #4F46E5;
+  background: #18181b;
   color: #ffffff;
-  border: 1px solid #4F46E5;
-  padding: 9px 16px;
-  border-radius: 6px;
-  font-size: 0.82rem;
+  border: 1px solid #18181b;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   margin-top: 6px;
   transition: all 0.15s ease;
+  font-family: inherit;
 }
 
 .action_button:hover:not(:disabled) { 
-  background: #4338ca;
-  border-color: #4338ca;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+  background: #000000;
+  border-color: #000000;
+  transform: translateY(-1px);
 }
 
 .action_button:disabled { 
-  background: #cbd5e1; 
-  border-color: #cbd5e1;
-  color: #64748b;
+  background: #e4e4e7; 
+  border-color: #e4e4e7;
+  color: #a1a1aa;
   cursor: not-allowed; 
 }
 
@@ -187,13 +194,13 @@
 }
 
 .error-banner {
-  background: #fee2e2;
-  color: #991b1b;
-  padding: 10px 12px;
-  border-radius: 6px;
+  background: #fff1f2;
+  color: #9f1239;
+  padding: 11px 13px;
+  border-radius: 10px;
   font-size: 0.78rem;
   font-weight: 500;
-  border-left: 4px solid #ef4444;
+  border-left: 3px solid #e11d48;
 }
 
 @media (max-width: 900px) {

@@ -15,13 +15,21 @@
  * jednotný `baseUrl` a centralizované error hlášení, takže komponenta už vůbec nepotřebuje znát
  * `HttpClient` ani `HttpClientModule`.
  *
+ * @icons-note (2026) `kpiCards[].icon` teď nese klíč do `ICONS` mapy (viz `getIcon()`) místo
+ *      emoji, šablona ho vykresluje jako inline SVG přes `[innerHTML]`. Ikony jsou záměrně
+ *      bez `viewBox` a s `width="24" height="24"` (přesně dle souřadnic cest) - zmenšení na
+ *      výslednou velikost řeší CSS, protože `[innerHTML]` na SVG vloženém do běžného HTML
+ *      elementu prochází HTML parserem, který by `viewBox` přepsal na malé `viewbox`
+ *      (SVG by ho pak ignorovalo) - tomuhle se tak vyhneme úplně.
+ *
  * @dependencies
  * - DataHandler: Centralizovaná HTTP komunikace (baseUrl + error handling) — nahrazuje HttpClient.
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
  */
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { forkJoin, interval, Subscription, catchError, of } from 'rxjs';
 import { DataHandler } from '../../../core/services/data-handler.service';
 import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } from './';
@@ -43,6 +51,7 @@ import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } fr
 })
 export class DashboardComponent implements OnInit, OnDestroy {
 
+  private sanitizer = inject(DomSanitizer);
   private refreshSub?: Subscription;
 
   loading = true;
@@ -96,6 +105,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activeCoupons = 0;
   totalRevenue = 0;
   revenueThisMonth = 0;
+
+  /**
+   * Knihovna ikon použitých na dashboardu (viz @icons-note výše). Bez `viewBox`,
+   * velikost na obrazovce řídí CSS (`.kpi-icon svg`).
+   */
+  private readonly ICONS: Record<string, string> = {
+    money: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+    box: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+    users: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    bag: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+  };
+
+  /**
+   * @description Vrátí bezpečně vysanitizovanou SVG značku pro zadaný klíč ikony (viz `ICONS`).
+   */
+  getIcon(key: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(this.ICONS[key] ?? '');
+  }
 
   constructor(private dataHandler: DataHandler) {}
 
@@ -261,7 +288,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         label: 'Tržby tento měsíc',
         value: this.formatCurrency(this.revenueThisMonth),
         sub: `Celkem: ${this.formatCurrency(this.totalRevenue)}`,
-        icon: '💰',
+        icon: 'money',
         trend: 'up',
         trendValue: '',
         color: 'indigo',
@@ -270,7 +297,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         label: 'Objednávky celkem',
         value: this.totalOrders,
         sub: `${this.pendingOrders} čeká na vyřízení`,
-        icon: '📦',
+        icon: 'box',
         trend: this.pendingOrders > 0 ? 'down' : 'neutral',
         trendValue: `${this.pendingOrders} pending`,
         color: 'amber',
@@ -279,7 +306,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         label: 'Zákazníci',
         value: this.totalCustomers,
         sub: 'Registrovaní zákazníci',
-        icon: '👥',
+        icon: 'users',
         trend: 'up',
         trendValue: '',
         color: 'sky',
@@ -288,7 +315,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         label: 'Aktivní produkty',
         value: this.activeProducts,
         sub: `${this.lowStockProducts.length} pod limitem skladu`,
-        icon: '🛍️',
+        icon: 'bag',
         trend: this.lowStockProducts.length > 0 ? 'down' : 'neutral',
         trendValue: `${this.lowStockProducts.length} low stock`,
         color: this.lowStockProducts.length > 0 ? 'rose' : 'green',

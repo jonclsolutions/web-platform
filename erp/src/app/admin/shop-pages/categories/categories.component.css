@@ -4,6 +4,13 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
+    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
+               zaoblené karty (14-18px), jemné stíny, tmavý akcent (#18181b)
+               místo modré, plně zaoblená ("pill") tlačítka/badge. Zelená u akcí
+               "přidat produkt" zůstala - je to sémantická barva (kladná akce),
+               ne branding. ::ng-deep override pro btn-filter/trash/create/export
+               sjednocen s paletou z buttons-builder, ať se komponenty nerozcházejí.
+               Struktura/třídy a logika beze změny.
 */
 
 .toolbar-actions {
@@ -12,16 +19,17 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 15px;
-  padding: 0 7px;
-  margin-bottom: 5px;
-  margin-top: 5px;
+  padding: 0;
+  margin-bottom: 14px;
+  margin-top: 0;
 }
 
 .table-header {
-  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 1.25rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 1.3rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #18181b;
+  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
 }
@@ -44,27 +52,38 @@
   grid-template-columns: 1fr 360px;
 }
 
+.tree-wrapper {
+  border-radius: 18px !important;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03) !important;
+  border-color: #ececea !important;
+}
+
 .tree-list { list-style: none; padding: 0; margin: 0; }
+
+.tree-node-icon {
+  display: inline-flex;
+  align-items: center;
+}
 .tree-node {
   position: relative;
   margin: 2px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f4f4f5;
 }
 .tree-node:last-child { border-bottom: none; }
 
 .node-children {
   margin-left: 6px;
   padding-left: 8px;
-  border-left: 1px solid #f1f5f9;
+  border-left: 1px solid #f4f4f5;
 }
 
 .category-row {
   display: flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
+  padding: 0.3rem 0.6rem;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 10px;
   min-height: 36px;
   transition: all 0.1s ease;
   gap: 2px;
@@ -72,38 +91,38 @@
   box-sizing: border-box;
 }
 
-.category-row:hover { background: #f8fafc; border-color: #f1f5f9; }
+.category-row:hover { background: #fafafa; border-color: #f4f4f5; }
 .category-row.is-editing {
   background: #ffffff;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #18181b;
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 .category-row.is-selected {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: #f4f4f5;
+  border-color: #e4e4e7;
 }
 
 .expand-trigger {
   width: 20px; height: 20px; min-width: 20px;
   font-size: 14px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: #cbd5e1; background: none; border: none;
+  cursor: pointer; color: #d4d4d8; background: none; border: none;
   padding: 0; margin: 0;
 }
 
 .node-name {
-  flex-grow: 1; font-size: 13px; font-weight: 500; color: #334155;
+  flex-grow: 1; font-size: 13px; font-weight: 500; color: #3f3f46;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   min-width: 0;
 }
 
 .node-name.inactive {
-  color: #ef4444 !important;
+  color: #e11d48 !important;
   font-weight: 700;
 }
 
 .count-badge {
-  font-size: 9px; font-weight: 600; color: #94a3b8; background: #f1f5f9;
-  padding: 2px 5px; border-radius: 3px; border: 1px solid #e2e8f0;
+  font-size: 9px; font-weight: 700; color: #a1a1aa; background: #f4f4f5;
+  padding: 2px 7px; border-radius: 999px; border: 1px solid #ececea;
   flex-shrink: 0;
 }
 
@@ -112,12 +131,12 @@
   align-items: center;
   gap: 3px;
   font-size: 10px;
-  font-weight: 600;
-  color: #6b7280;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 2px 7px;
+  font-weight: 700;
+  color: #71717a;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  padding: 3px 9px;
   margin-left: 6px;
   cursor: pointer;
   white-space: nowrap;
@@ -126,17 +145,16 @@
 }
 
 .btn-products-count:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  color: #2563eb;
+  background: #ececea;
+  border-color: #d4d4d8;
+  color: #18181b;
 }
 
 .btn-products-count.active {
-  background: #dbeafe;
-  border-color: #3b82f6;
-  color: #1d4ed8;
+  background: #18181b;
+  border-color: #18181b;
+  color: #ffffff;
 }
-
 .actions {
   display: flex;
   gap: 8px;
@@ -159,9 +177,9 @@
 
 .product-panel {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  border: 1px solid #ececea;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -174,9 +192,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
-  border-bottom: 1px solid #e5e7eb;
+  padding: 13px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #f4f4f5;
   gap: 8px;
 }
 
@@ -188,14 +206,17 @@
 }
 
 .product-panel-icon {
-  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #52525b;
   flex-shrink: 0;
 }
 
 .product-panel-name {
   font-size: 13px;
   font-weight: 700;
-  color: #1f2937;
+  color: #18181b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -203,7 +224,7 @@
 
 .product-panel-sub {
   font-size: 10px;
-  color: #6b7280;
+  color: #a1a1aa;
   margin-top: 1px;
 }
 
@@ -211,26 +232,26 @@
   background: none;
   border: none;
   font-size: 14px;
-  color: #9ca3af;
+  color: #a1a1aa;
   cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
+  padding: 5px 7px;
+  border-radius: 999px;
   flex-shrink: 0;
   line-height: 1;
   transition: all 0.1s;
 }
 
 .panel-close-btn:hover {
-  background: #fee2e2;
-  color: #dc2626;
+  background: #fff1f2;
+  color: #e11d48;
 }
 
 .panel-search-row {
   display: flex;
   gap: 8px;
   align-items: center;
-  padding: 10px 12px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 11px 14px;
+  border-bottom: 1px solid #f4f4f5;
 }
 
 .panel-search-wrap {
@@ -238,10 +259,10 @@
   align-items: center;
   gap: 6px;
   flex: 1;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 0 8px;
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  padding: 0 11px;
 }
 
 .panel-search-wrap.mb-2 {
@@ -249,8 +270,9 @@
 }
 
 .panel-search-icon {
-  font-size: 12px;
-  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  color: #a1a1aa;
   flex-shrink: 0;
 }
 
@@ -258,27 +280,26 @@
   border: none;
   background: transparent;
   font-size: 12px;
-  color: #374151;
+  color: #3f3f46;
   width: 100%;
-  padding: 6px 0;
+  padding: 7px 0;
   outline: none;
 }
 
 .panel-search-input::placeholder {
-  color: #9ca3af;
+  color: #a1a1aa;
 }
-
 .btn-add-product {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-weight: 600;
-  color: #059669;
+  font-weight: 700;
+  color: #047857;
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
-  border-radius: 6px;
-  padding: 5px 10px;
+  border-radius: 999px;
+  padding: 6px 12px;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
@@ -291,9 +312,9 @@
 }
 
 .add-product-section {
-  padding: 10px 12px;
-  background: #f8faff;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 11px 14px;
+  background: #fafafa;
+  border-bottom: 1px solid #f4f4f5;
 }
 
 .add-product-header {
@@ -305,31 +326,31 @@
 
 .add-product-title {
   font-size: 11px;
-  font-weight: 600;
-  color: #374151;
+  font-weight: 700;
+  color: #3f3f46;
 }
 
 .add-product-close {
   background: none;
   border: none;
   font-size: 12px;
-  color: #9ca3af;
+  color: #a1a1aa;
   cursor: pointer;
   padding: 2px 4px;
-  border-radius: 3px;
+  border-radius: 999px;
   transition: all 0.1s;
 }
 
 .add-product-close:hover {
-  background: #fee2e2;
-  color: #dc2626;
+  background: #fff1f2;
+  color: #e11d48;
 }
 
 .add-product-list {
   max-height: 180px;
   overflow-y: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid #ececea;
+  border-radius: 12px;
   background: #fff;
 }
 
@@ -337,30 +358,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 10px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 8px 11px;
+  border-bottom: 1px solid #f4f4f5;
   gap: 8px;
   transition: background 0.1s;
 }
 
 .add-product-item:last-child { border-bottom: none; }
-.add-product-item:hover { background: #f0fdf4; }
+.add-product-item:hover { background: #fafafa; }
 
 .empty-add-list {
   padding: 16px;
   text-align: center;
-  color: #9ca3af;
+  color: #a1a1aa;
   font-size: 12px;
 }
 
 .btn-item-add {
   font-size: 11px;
-  font-weight: 600;
-  color: #059669;
+  font-weight: 700;
+  color: #047857;
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
-  border-radius: 4px;
-  padding: 3px 8px;
+  border-radius: 999px;
+  padding: 4px 11px;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.1s;
@@ -369,7 +390,6 @@
 .btn-item-add:hover {
   background: #d1fae5;
 }
-
 .product-list {
   flex: 1;
   overflow-y: auto;
@@ -380,7 +400,7 @@
 .product-list-empty {
   padding: 32px 16px;
   text-align: center;
-  color: #9ca3af;
+  color: #a1a1aa;
   font-size: 12px;
 }
 
@@ -398,8 +418,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 9px 14px;
+  border-bottom: 1px solid #f4f4f5;
   transition: background 0.1s;
 }
 
@@ -409,14 +429,14 @@
 .product-item-thumb {
   width: 36px;
   height: 36px;
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
-  background: #f3f4f6;
+  background: #f4f4f5;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #ececea;
 }
 
 .thumb-img {
@@ -426,8 +446,11 @@
 }
 
 .thumb-placeholder {
-  font-size: 16px;
-  opacity: 0.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a1a1aa;
+  opacity: 0.6;
 }
 
 .product-item-info {
@@ -441,7 +464,7 @@
 .product-item-name {
   font-size: 12px;
   font-weight: 600;
-  color: #1f2937;
+  color: #18181b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -449,48 +472,66 @@
 
 .product-item-sku {
   font-size: 10px;
-  color: #6b7280;
+  color: #71717a;
   font-family: monospace;
 }
 
 .product-item-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 10px;
-  color: #6b7280;
+  color: #71717a;
 }
 
 .product-item-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 10px;
-  color: #9ca3af;
+  color: #a1a1aa;
 }
 
 .product-item-status.active {
   color: #059669;
 }
 
+.status-dot-mini {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d4d4d8;
+  flex-shrink: 0;
+}
+
+.status-dot-mini.active {
+  background: #10b981;
+}
+
 .btn-remove-product {
   background: none;
   border: none;
   font-size: 13px;
-  color: #d1d5db;
+  color: #d4d4d8;
   cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
+  padding: 5px 7px;
+  border-radius: 999px;
   flex-shrink: 0;
   transition: all 0.1s;
   line-height: 1;
 }
 
 .btn-remove-product:hover {
-  background: #fee2e2;
-  color: #dc2626;
+  background: #fff1f2;
+  color: #e11d48;
 }
 
 .panel-footer {
-  padding: 8px 14px;
+  padding: 9px 16px;
   font-size: 11px;
-  color: #6b7280;
-  background: #f9fafb;
-  border-top: 1px solid #f3f4f6;
+  color: #71717a;
+  background: #fafafa;
+  border-top: 1px solid #f4f4f5;
   text-align: right;
 }
 
@@ -511,7 +552,7 @@
 
   .category-row {
     min-height: auto;
-    padding: 0.75rem 0.5rem;
+    padding: 0.75rem 0.6rem;
     gap: 8px;
     align-items: flex-start;
   }
@@ -538,7 +579,6 @@
   flex-grow: 1;
   min-width: 0;
 }
-
 .input-container {
   position: relative;
   flex-grow: 1;
@@ -547,11 +587,18 @@
 
 .edit-input {
   width: 100%;
-  height: 26px;
+  height: 28px;
   font-size: 12px;
-  border: 1px solid #3b82f6;
-  border-radius: 4px;
-  padding: 0 6px;
+  border: 1px solid #18181b;
+  border-radius: 8px;
+  padding: 0 8px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
+}
+
+.edit-input.error {
+  border-color: #e11d48;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
 }
 
 .error-msg {
@@ -559,11 +606,13 @@
   top: -16px;
   left: 30px;
   font-size: 9px;
-  color: #ef4444;
+  color: #e11d48;
   font-weight: bold;
 }
 
-::ng-deep .btn-filter { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
-::ng-deep .btn-trash { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
-::ng-deep .btn-create { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
-::ng-deep .btn-export { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+/* Sjednoceno se stejnou paletou jako v buttons-builder.component.css, ať se
+   komponenty nerozcházejí, ať už vyhraje kterýkoli z ::ng-deep/lokálních stylů. */
+::ng-deep .btn-filter { background: #f4f4f5; color: #3f3f46; border-color: #e4e4e7; }
+::ng-deep .btn-trash  { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+::ng-deep .btn-create { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+::ng-deep .btn-export { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }

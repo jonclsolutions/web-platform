@@ -85,12 +85,15 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Dynamically generates action buttons for individual category rows, adjusting labels and classes based on status.
    * @param node The category node being rendered.
    * @returns {Button[]} Array of action buttons.
+   * @icons-note (2026) Emoji odstraněny - stav (aktivní/neaktivní) teď nese jen text +
+   *      barva tlačítka (btn-export = zelená / btn-filter = neutrální šedá), bez
+   *      barevných emoji teček.
    */
   getRowButtons(node: CategoryNode): Button[] {
     return CATEGORY_ROW_BUTTONS.map(btn => {
       const updatedBtn = { ...btn };
       if (btn.action === 'toggleStatus') {
-        updatedBtn.icon = node.is_active ? 'Aktivní 🟢' : ' Neaktivní ⚪';
+        updatedBtn.icon = node.is_active ? 'Aktivní' : 'Neaktivní';
         updatedBtn.class = node.is_active ? 'btn-export' : 'btn-filter';
       }
       return updatedBtn;
@@ -101,14 +104,16 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Returns save/cancel buttons for nodes currently in editing mode.
    * @param node The category node in edit state.
    * @returns {Button[]} Array of edit action buttons.
+   * @icons-note (2026) Emoji (✅/❌) nahrazeny prostými znaky (✓/✕) - stejné ✕, jaké se
+   *      v komponentě už používá jinde (zavírací tlačítka), ať je to konzistentní.
    */
   getEditButtons(node: CategoryNode): Button[] {
     const isDuplicate = this.isDuplicateName(node);
     const isEmpty = !node.name || node.name.trim().length === 0;
 
     return [
-      { action: 'submit', label: 'Uložit', icon: '✅', class: 'btn-create', disabled: isDuplicate || isEmpty },
-      { action: 'cancel', label: 'Zrušit', icon: '❌', class: 'btn-trash' }
+      { action: 'submit', label: 'Uložit', icon: '✓', class: 'btn-create', disabled: isDuplicate || isEmpty },
+      { action: 'cancel', label: 'Zrušit', icon: '✕', class: 'btn-trash' }
     ];
   }
 
@@ -377,7 +382,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
       await this.alertDialogService.open('Nelze smazat', 'Smažte nejdříve podkategorie.', 'warning');
       return;
     }
-
     if (node.products_count && node.products_count > 0) {
       await this.alertDialogService.open(
         'Nelze smazat',
@@ -597,15 +601,14 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     const newPrimaryCategoryId = updatedCategoryIds.length > 0 ? updatedCategoryIds[0] : null;
 
     const url = `shop/products/${product.id}/category`;
-    const payload = { 
-      category_id: newPrimaryCategoryId, 
-      category_ids: updatedCategoryIds 
+    const payload = {
+      category_id: newPrimaryCategoryId,
+      category_ids: updatedCategoryIds
     };
 
     this.dataHandler.patch<any>(url, payload).subscribe({
       next: () => {
         this.alertDialogService.open('Hotovo', 'Produkt byl odebrán z kategorie.', 'success');
-        
         this.loadTree(this.selectedCategory?.id, true);
         if (this.selectedCategory) {
           this.loadCategoryProducts(this.selectedCategory.id);
@@ -633,15 +636,14 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     const updatedCategoryIds = Array.from(new Set([...currentCategoryIds, this.selectedCategory.id]));
 
     const url = `shop/products/${product.id}/category`;
-    const payload = { 
+    const payload = {
       category_id: this.selectedCategory.id,
-      category_ids: updatedCategoryIds       
+      category_ids: updatedCategoryIds
     };
 
     this.dataHandler.patch<any>(url, payload).subscribe({
       next: () => {
         this.alertDialogService.open('Hotovo', `Produkt byl přidán do kategorie.`, 'success');
-        
         this.loadTree(this.selectedCategory?.id, true);
         this.loadCategoryProducts(this.selectedCategory!.id);
       },

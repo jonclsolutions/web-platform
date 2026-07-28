@@ -32,7 +32,11 @@
 
   @if (loadingError) {
     <div class="dash-error">
-      ⚠️ Nepodařilo se načíst data z API. Zkontrolujte připojení nebo se přihlaste.
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      Nepodařilo se načíst data z API. Zkontrolujte připojení nebo se přihlaste.
     </div>
   }
 
@@ -41,7 +45,7 @@
     <div class="kpi-grid">
       @for (card of kpiCards; track card.label) {
         <div class="kpi-card kpi-{{ card.color }}">
-          <div class="kpi-icon">{{ card.icon }}</div>
+          <div class="kpi-icon" [innerHTML]="getIcon(card.icon)"></div>
           <div class="kpi-body">
             <div class="kpi-label">{{ card.label }}</div>
             <div class="kpi-value">{{ card.value }}</div>
@@ -190,12 +194,14 @@
                   </td>
                   <td>
                     <span class="badge {{ statusClass(order.status) }}">
-                        {{ order.status_label }}  </span>
-                    </td>
-                    <td>
+                      {{ order.status_label }}
+                    </span>
+                  </td>
+                  <td>
                     <span class="badge {{ paymentClass(order.payment_status) }}">
-                        {{ order.payment_status_label }} </span>
-                    </td>
+                      {{ order.payment_status_label }}
+                    </span>
+                  </td>
                   <td class="text-right amount-cell">
                     {{ formatCurrency(order.final_amount) }}
                   </td>
@@ -216,7 +222,13 @@
 
       <div class="dash-card dash-card-stock">
         <div class="dash-card-header">
-          <span class="dash-card-title">⚠️ Nízký stav skladu</span>
+          <span class="dash-card-title dash-card-title-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Nízký stav skladu
+          </span>
           <span class="dash-card-meta">{{ lowStockProducts.length }} produktů</span>
         </div>
         @if (lowStockProducts.length) {
@@ -243,7 +255,10 @@
           </div>
         } @else {
           <div class="dash-empty dash-empty-good">
-            ✅ Všechny produkty mají dostatek zásob
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 17"/>
+            </svg>
+            Všechny produkty mají dostatek zásob
           </div>
         }
       </div>
@@ -251,28 +266,48 @@
 
     <div class="dash-row dash-row-quick">
       <div class="quick-stat">
-        <span class="quick-stat-icon">🎫</span>
+        <span class="quick-stat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+            <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+          </svg>
+        </span>
         <div>
           <div class="quick-stat-value">{{ activeCoupons }}</div>
           <div class="quick-stat-label">Aktivní kupóny</div>
         </div>
       </div>
       <div class="quick-stat">
-        <span class="quick-stat-icon">📋</span>
+        <span class="quick-stat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>
+          </svg>
+        </span>
         <div>
           <div class="quick-stat-value">{{ pendingOrders }}</div>
           <div class="quick-stat-label">Čeká na vyřízení</div>
         </div>
       </div>
       <div class="quick-stat">
-        <span class="quick-stat-icon">💵</span>
+        <span class="quick-stat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </span>
         <div>
           <div class="quick-stat-value">{{ formatCurrency(revenueThisMonth) }}</div>
           <div class="quick-stat-label">Tržby tento měsíc</div>
         </div>
       </div>
       <div class="quick-stat">
-        <span class="quick-stat-icon">🏭</span>
+        <span class="quick-stat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4l-6 5Z"/>
+            <path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/>
+          </svg>
+        </span>
         <div>
           <div class="quick-stat-value">{{ lowStockProducts.length }}</div>
           <div class="quick-stat-label">Produkty pod limitem</div>

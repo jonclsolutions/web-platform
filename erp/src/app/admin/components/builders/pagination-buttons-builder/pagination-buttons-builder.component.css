@@ -4,6 +4,9 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
+               plně zaoblená ("pill") tlačítka, tmavý akcent (#18181b) místo indigo
+               pro aktivní stránku. Struktura/třídy a logika beze změny.
 */
 
 .pagination-controls-wrapper {
@@ -11,21 +14,24 @@
   flex-direction: column;
   align-items: center; 
   width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
 .pagination-info-text {
-  font-size: 0.875rem;
-  color: #6B7280;
+  font-size: 0.85rem;
+  color: #71717a;
   margin-bottom: 16px;
   font-weight: 400;
 }
-.pagination-info{
-  font-size: small;
-  color: #6a6464;
-  padding-bottom: 5px;
+
+.pagination-info {
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  padding-bottom: 10px;
 }
+
 .pagination-info-text strong {
-  color: #111827; 
+  color: #18181b; 
   font-weight: 600;
 }
 
@@ -48,56 +54,61 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #D1D5DB;
-  background-color: #FFFFFF;
-  color: #374151;
-  font-size: 0.875rem;
-  font-weight: 500;
+  border: 1px solid #e4e4e7;
+  background-color: #ffffff;
+  color: #3f3f46;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  border-radius: 999px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  font-family: inherit;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #F9FAFB;
-  border-color: #9CA3AF;
-  color: #111827;
+  background-color: #f4f4f5;
+  border-color: #d4d4d8;
+  color: #18181b;
 }
 
 .pagination-button.active-page {
-  background-color: #EEF2FF !important;
-  border-color: #6366F1 !important;
-  color: #4F46E5 !important;
+  background-color: #18181b !important;
+  border-color: #18181b !important;
+  color: #ffffff !important;
   font-weight: 700;
 }
 
 .pagination-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  background-color: #F3F4F6;
+  background-color: #fafafa;
 }
 
 .items-per-page-container {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.875rem;
-  color: #6B7280;
+  font-size: 0.85rem;
+  color: #71717a;
 }
 
 .items-per-page-select {
   height: 36px;
-  background-color: #FFFFFF;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  padding: 0 8px;
+  background-color: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  padding: 0 14px;
   outline: none;
   cursor: pointer;
-  color: #374151;
+  color: #3f3f46;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .items-per-page-select:focus {
-  border-color: #6366F1;
+  border-color: #18181b;
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 
 .nav-arrow-icon {

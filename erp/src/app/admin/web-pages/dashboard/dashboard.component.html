@@ -15,7 +15,13 @@
   </div>
 
   @if (errorMessage) {
-    <div class="cd-error-banner">⚠️ {{ errorMessage }}</div>
+    <div class="cd-error-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      {{ errorMessage }}
+    </div>
   }
 
   <div class="cd-section">
@@ -28,7 +34,7 @@
       @if (!loadingStats) {
         @for (stat of quickStats; track stat.label) {
           <div class="cd-stat-card cd-stat-{{ stat.color }}">
-            <div class="cd-stat-icon">{{ stat.icon }}</div>
+            <div class="cd-stat-icon" [innerHTML]="getIcon(stat.icon)"></div>
             <div class="cd-stat-value">{{ stat.value }}</div>
             <div class="cd-stat-label">{{ stat.label }}</div>
           </div>
@@ -42,7 +48,7 @@
     <div class="cd-nav-grid">
       @for (section of navSections; track section.route) {
         <a class="cd-nav-card cd-nav-{{ section.color }}" [routerLink]="section.route">
-          <div class="cd-nav-icon">{{ section.icon }}</div>
+          <div class="cd-nav-icon" [innerHTML]="getIcon(section.icon)"></div>
           <div class="cd-nav-body">
             <div class="cd-nav-title">{{ section.title }}</div>
             <div class="cd-nav-desc">{{ section.description }}</div>
@@ -57,7 +63,13 @@
     <div class="cd-section-label">Poslední aktivita v systému</div>
     <div class="cd-card cd-card-activity">
       <div class="cd-card-header">
-        <span class="cd-card-icon">📋</span>
+        <span class="cd-card-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>
+          </svg>
+        </span>
         <span class="cd-card-title">Záznamy aktivit (web logy)</span>
         <a class="cd-card-link" routerLink="/admin/web/logs">Zobrazit vše →</a>
       </div>

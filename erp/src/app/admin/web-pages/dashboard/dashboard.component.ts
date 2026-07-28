@@ -16,6 +16,14 @@
  * zůstává jen kvůli `errorMessage`/`cd`/`alertDialogService` a jednotnému vzoru, i když
  * `apiEndpoint` se teď prakticky nevyužívá (agregace jede přes `dataHandler` napřímo).
  *
+ * @icons-note (2026) `quickStats`/`navSections` teď v poli `icon` nenesou emoji, ale klíč
+ *      do `ICONS` mapy (viz `getIcon()`) - šablona ho vykresluje jako inline SVG přes
+ *      `[innerHTML]`. Ikony jsou záměrně bez `viewBox` a s `width="24" height="24"`
+ *      (přesně dle souřadnic cest) - zmenšení na výslednou velikost řeší CSS
+ *      (`.cd-stat-icon svg`/`.cd-nav-icon svg`), protože `[innerHTML]` na SVG vloženém
+ *      do běžného HTML elementu prochází HTML parserem, který by atribut `viewBox`
+ *      přepsal na malé `viewbox` (SVG ho pak ignoruje) - tomuhle se tak vyhneme úplně.
+ *
  * @dependencies
  * - BaseDataComponent: Poskytuje errorMessage/cd/alertDialogService (žádné CRUD tu není potřeba).
  * - LoadingService: Manages global loading states.
@@ -26,6 +34,7 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { forkJoin, catchError, of } from 'rxjs';
 
 import * as Core from '../../../shared/imports/core-providers';
@@ -51,6 +60,7 @@ import { ActivityLog, QuickStat, NavSection } from './';
 export class DashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit {
 
   public override loadingService = inject(LoadingService);
+  private sanitizer = inject(DomSanitizer);
 
   override apiEndpoint = 'core/users';
 
@@ -63,47 +73,62 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   readonly navSections: NavSection[] = [
     {
       title: 'E-shop',
-      icon: '🛒',
+      icon: 'cart',
       route: '/admin/shop/orders',
       description: 'Objednávky, produkty, zákazníci, kupóny',
       color: 'indigo',
     },
     {
       title: 'Uživatelé',
-      icon: '👤',
+      icon: 'users',
       route: '/admin/core/users',
       description: 'Správa uživatelských účtů a rolí',
       color: 'sky',
     },
     {
       title: 'Web — Logy',
-      icon: '📋',
+      icon: 'logs',
       route: '/admin/web/logs',
       description: 'Záznamy o aktivitách na webu',
       color: 'slate',
     },
     {
       title: 'Support tickety',
-      icon: '🎫',
+      icon: 'ticket',
       route: '/admin/web/support-tickets',
       description: 'Přijaté požadavky na podporu',
       color: 'amber',
     },
     {
       title: 'Uchazeči',
-      icon: '📄',
+      icon: 'file',
       route: '/admin/web/job-applications',
       description: 'Reakce na pracovní pozice',
       color: 'green',
     },
     {
       title: 'Obchodní leady',
-      icon: '💼',
+      icon: 'briefcase',
       route: '/admin/web/sales-leads',
       description: 'Pipeline obchodních příležitostí',
       color: 'rose',
     },
   ];
+
+  /**
+   * Knihovna ikon použitých na dashboardu - klíč odpovídá hodnotě `icon` v
+   * `QuickStat`/`NavSection`. Bez `viewBox` (viz @icons-note výše), velikost
+   * na obrazovce řídí CSS (`.cd-stat-icon svg`, `.cd-nav-icon svg`).
+   */
+  private readonly ICONS: Record<string, string> = {
+    cart: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`,
+    users: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+    logs: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/></svg>`,
+    ticket: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>`,
+    file: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+    briefcase: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+    newspaper: `<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>`,
+  };
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -117,6 +142,14 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     super.ngOnInit();
     this.loadStats();
     this.loadRecentActivity();
+  }
+
+  /**
+   * @description Vrátí bezpečně vysanitizovanou SVG značku pro zadaný klíč ikony
+   *              (viz `ICONS`), pro vykreslení přes `[innerHTML]` v šabloně.
+   */
+  getIcon(key: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(this.ICONS[key] ?? '');
   }
 
   /**
@@ -140,17 +173,17 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     }).subscribe({
       next: (res) => {
         this.quickStats = [
-          { label: 'Uživatelé systému', value: res.users?.total ?? '—', icon: '👤', color: 'sky' },
+          { label: 'Uživatelé systému', value: res.users?.total ?? '—', icon: 'users', color: 'sky' },
           {
             label: 'Otevřené tickety',
             value: res.openTickets?.total ?? '—',
-            icon: '🎫',
+            icon: 'ticket',
             color: res.openTickets?.total > 0 ? 'amber' : 'green'
           },
-          { label: 'Uchazeči', value: res.jobApps?.total ?? '—', icon: '📄', color: 'green' },
-          { label: 'Obchodní leady', value: res.leads?.total ?? '—', icon: '💼', color: 'indigo' },
-          { label: 'Novinky na webu', value: res.news?.total ?? '—', icon: '📰', color: 'rose' },
-          { label: 'Záznamy v logu', value: res.webLogs?.total ?? '—', icon: '📋', color: 'slate' },
+          { label: 'Uchazeči', value: res.jobApps?.total ?? '—', icon: 'file', color: 'green' },
+          { label: 'Obchodní leady', value: res.leads?.total ?? '—', icon: 'briefcase', color: 'indigo' },
+          { label: 'Novinky na webu', value: res.news?.total ?? '—', icon: 'newspaper', color: 'rose' },
+          { label: 'Záznamy v logu', value: res.webLogs?.total ?? '—', icon: 'logs', color: 'slate' },
         ];
         this.loadingStats = false;
         this.cd.markForCheck();

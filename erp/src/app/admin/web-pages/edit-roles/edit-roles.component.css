@@ -4,33 +4,39 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
+ * @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
+ *            zaoblené karty (18px), jemné stíny, tmavý akcent (#18181b) místo
+ *            modré, plně zaoblená ("pill") tlačítka. Protože komponenta už
+ *            používala CSS proměnné (--accent, --radius, ...), stačilo z velké
+ *            části přepnout jen hodnoty proměnných - struktura/třídy a logika
+ *            beze změny.
  */
 
 :host {
-  --accent:        #1e88e5;
-  --accent-dark:   #1565c0;
-  --accent-dim:    #e3f2fd;
-  --accent-dim-2:  #bbdefb;
-  --text:          #1a1d23;
-  --text-muted:    #6b7280;
-  --text-dim:      #9ca3af;
-  --border:        #e4e6ea;
-  --border-mid:    #d0d3da;
-  --error:         #d32f2f;
-  --error-dim:     #ffebee;
-  --success:       #2e7d32;
-  --success-dim:   #e8f5e9;
-  --warning:       #f59f00;
-  --warning-dim:   #fff9db;
+  --accent:        #18181b;
+  --accent-dark:   #000000;
+  --accent-dim:    #f4f4f5;
+  --accent-dim-2:  #e4e4e7;
+  --text:          #18181b;
+  --text-muted:    #71717a;
+  --text-dim:      #a1a1aa;
+  --border:        #ececea;
+  --border-mid:    #e4e4e7;
+  --error:         #e11d48;
+  --error-dim:     #fff1f2;
+  --success:       #059669;
+  --success-dim:   #ecfdf5;
+  --warning:       #d97706;
+  --warning-dim:   #fffbeb;
   --surface:       #ffffff;
-  --surface-2:     #f8f9fb;
-  --radius:        6px;
-  --radius-md:     8px;
-  --ff:            'Segoe UI', system-ui, sans-serif;
+  --surface-2:     #fafafa;
+  --radius:        10px;
+  --radius-md:     18px;
+  --ff:            -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 
   display: block;
   font-family: var(--ff);
-  padding: 20px 24px 60px;
+  padding: 0 0 60px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -49,6 +55,7 @@
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .roles-page-subtitle {
@@ -59,13 +66,13 @@
   line-height: 1.55;
 }
 
-/* ── Tlačítka ───────────────────────────────────────────── */
+/* ── Tlačítka - vždy plně zaoblená (pill), bez ohledu na --radius ─── */
 .btn-primary, .btn-secondary, .btn-danger {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 9px 16px;
-  border-radius: var(--radius);
+  padding: 9px 18px;
+  border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
   font-family: var(--ff);
@@ -76,7 +83,7 @@
 }
 
 .btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover:not(:disabled) { background: var(--accent-dark); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-dark); transform: translateY(-1px); }
 
 .btn-secondary {
   background: var(--surface);
@@ -86,7 +93,7 @@
 .btn-secondary:hover:not(:disabled) { background: var(--border); }
 
 .btn-danger { background: var(--error); color: #fff; }
-.btn-danger:hover:not(:disabled) { background: #b71c1c; }
+.btn-danger:hover:not(:disabled) { background: #9f1239; }
 
 .btn-primary:disabled, .btn-secondary:disabled, .btn-danger:disabled {
   opacity: 0.55;
@@ -94,7 +101,7 @@
 }
 
 .btn-small {
-  padding: 6px 12px;
+  padding: 7px 14px;
   font-size: 0.78rem;
 }
 
@@ -105,7 +112,7 @@
   border-radius: var(--radius-md);
   padding: 18px 20px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(20, 30, 60, 0.05);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
 }
 
 .new-role-fields { display: flex; gap: 14px; flex-wrap: wrap; }
@@ -114,7 +121,7 @@
 .field-group label { font-size: 0.78rem; font-weight: 600; color: var(--text); }
 
 .field-group input, .roles-search input, .detail-name-input, .detail-desc-input {
-  padding: 9px 11px;
+  padding: 9px 12px;
   border: 1px solid var(--border-mid);
   border-radius: var(--radius);
   font-size: 0.88rem;
@@ -123,7 +130,7 @@
 }
 .field-group input:focus, .roles-search input:focus, .detail-name-input:focus, .detail-desc-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 
 .new-role-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
@@ -166,7 +173,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 2px 8px rgba(20, 30, 60, 0.05);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -210,7 +217,7 @@
   border-left: 3px solid var(--accent);
   padding-left: 11px;
 }
-.role-list-item--protected { background: #fbfaf6; }
+.role-list-item--protected { background: #fafafa; }
 .role-list-item--protected.role-list-item--active { background: var(--accent-dim); }
 
 .role-list-item-main {
@@ -243,16 +250,15 @@
   color: var(--text-dim);
   font-size: 0.82rem;
 }
-
 .lock-icon { color: var(--warning); flex-shrink: 0; }
 
 .users-badge {
   font-size: 0.68rem;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 2px 9px;
   border-radius: 999px;
   background: var(--accent-dim);
-  color: var(--accent-dark);
+  color: var(--accent);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -263,7 +269,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 2px 8px rgba(20, 30, 60, 0.05);
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
   padding: 22px 26px 26px;
 }
 
@@ -333,11 +339,11 @@
   margin-top: 14px;
   padding: 10px 13px;
   background: var(--warning-dim);
-  border: 1px solid rgba(245, 159, 0, 0.35);
+  border: 1px solid #fde68a;
   border-left: 3px solid var(--warning);
   border-radius: var(--radius);
   font-size: 0.82rem;
-  color: #6b4e00;
+  color: #92400e;
 }
 
 /* ── Checklist oprávnění ────────────────────────────────── */
@@ -356,11 +362,12 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--accent-dark);
+  color: var(--text);
   background: var(--surface-2);
-  padding: 7px 10px;
-  border-radius: 5px;
+  padding: 7px 12px;
+  border-radius: 999px;
   margin: 14px 0 4px;
+  display: inline-block;
 }
 
 .permission-row {
@@ -368,7 +375,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   cursor: pointer;
   transition: background 0.13s ease;
 }
@@ -409,15 +416,15 @@
   align-items: center;
   gap: 10px;
   margin-top: 18px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   background: var(--accent-dim);
   border: 1px solid var(--accent-dim-2);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
 }
 
 .unsaved-note {
   font-size: 0.82rem;
-  color: var(--accent-dark);
+  color: var(--text);
   font-weight: 600;
   flex: 1;
 }
@@ -426,7 +433,7 @@
 .delete-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(24, 24, 27, 0.45);
   backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
@@ -441,7 +448,7 @@
   border-radius: var(--radius-md);
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.18);
   overflow: hidden;
   font-family: var(--ff);
 }
@@ -459,7 +466,7 @@
   width: 30px; height: 30px;
   border-radius: var(--radius);
   background: #fff;
-  border: 1px solid #ef9a9a;
+  border: 1px solid #fecdd3;
   color: var(--error);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -476,13 +483,13 @@
 
 .warning-box {
   margin-top: 12px;
-  padding: 10px 12px;
+  padding: 10px 13px;
   background: var(--warning-dim);
-  border: 1px solid rgba(245, 159, 0, 0.35);
+  border: 1px solid #fde68a;
   border-left: 3px solid var(--warning);
   border-radius: var(--radius);
   font-size: 0.83rem;
-  color: #6b4e00;
+  color: #92400e;
 }
 
 .delete-modal-footer {
@@ -501,7 +508,7 @@
 }
 
 @media (max-width: 600px) {
-  :host { padding: 14px 12px 40px; }
+  :host { padding: 0 0 40px; }
   .roles-page-header { flex-direction: column; }
   .role-detail-panel { padding: 18px 16px 20px; }
 }

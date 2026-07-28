@@ -11,6 +11,10 @@
  * - DataHandler: Facilitates communication with the administration API.
  * - LoadingService: Observes global loading states for the UI.
  * - AlertDialogService: Provides feedback for critical administrative operations.
+ * @redesign-note (2026) Přidán `isMobileActionsOpen` + `toggleMobileActions()`/`closeMobileActions()`.
+ *      Na mobilu (viz CSS) header schovává většinu obsahu (uživatel, hodiny, přepínač modulů,
+ *      wiki/bug odkazy), aby se nic neořezávalo - místo toho se všechno přesune do vysouvacího
+ *      panelu ovládaného novým hamburger tlačítkem vpravo nahoře. Desktopové chování je beze změny.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
@@ -64,6 +68,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   isMenuOpen: boolean = true;
   sidebarWidth: number = 200; 
   isResizing: boolean = false;
+
+  /** Vysouvací panel na mobilu (hamburger vpravo nahoře) - uživatel, role, hodiny, moduly, odkazy. */
+  isMobileActionsOpen: boolean = false;
 
   private minWidth: number = 150;
   private maxWidth: number = 500;
@@ -205,6 +212,20 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     if (window.innerWidth <= 768) {
       this.isMenuOpen = false;
     }
+  }
+
+  /**
+   * @description Otevře/zavře mobilní panel s uživatelskými informacemi a akcemi
+   *              (hamburger vpravo nahoře, viditelný jen na mobilu přes CSS media query).
+   */
+  toggleMobileActions(): void {
+    this.isMobileActionsOpen = !this.isMobileActionsOpen;
+    this.cdr.markForCheck();
+  }
+
+  closeMobileActions(): void {
+    this.isMobileActionsOpen = false;
+    this.cdr.markForCheck();
   }
 
   /**
