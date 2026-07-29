@@ -66,23 +66,6 @@
       </div>
 
       <aside class="svc-sidebar">
-        <div class="sidebar-card">
-          <div class="sidebar-label">{{ t.info_header_1 }}</div>
-          @if (t.info_header_2) {
-            <div class="sidebar-sublabel">{{ t.info_header_2 }}</div>
-          }
-
-          <!-- Technologie jako kompaktní chipy -->
-          <div class="tech-chip-list">
-            @for (item of currentTechImages; track item.name) {
-              <div class="tech-chip">
-                <img [src]="item?.path" [alt]="item?.name" loading="lazy" class="tech-chip-icon">
-                <span class="tech-chip-name">{{ item?.name }}</span>
-              </div>
-            }
-          </div>
-        </div>
-
         <!-- Statistiky s ikonou + gradientním číslem -->
         <div class="sidebar-stats-grid">
           <div class="sidebar-stat-card">
@@ -202,31 +185,79 @@
     </div>
   </section>
 
-  <section class="svc-prices-section">
-    <div class="svc-section-header">
-      <div class="section-eyebrow">{{ t.prices_header }}</div>
-      <h2 class="section-title">{{ t.services?.prices_header }}</h2>
-    </div>
-    <div class="prices-grid">
-      @for (item of priceItems; track item; let i = $index) {
-        <div class="price-card" [class.price-card--variable]="item?.price === 'Variabilní cena'">
-          <div class="price-card-header">{{ item?.header }}</div>
-          <div class="price-card-body">
-            <div class="price-amount">
-              @if (item?.price !== 'Variabilní cena') {
-                <span class="price-prefix">{{ t.services?.text_preffix }}</span>
+<section class="svc-prices-section">
+  <div class="svc-section-header">
+    <!-- <div class="section-eyebrow">{{ t.services?.pricing?.eyebrow }}</div> -->
+    <div class="section-eyebrow">{{ t.pricing?.eyebrow }}</div>
+    <h2 class="section-title">{{ t.pricing?.header }}</h2>
+    <p class="section-subtitle">{{ t.pricing?.subheader }}</p>
+  </div>
+
+  <div class="pricing-matrix-wrap">
+    <table class="pricing-matrix">
+      <thead>
+        <tr>
+          <th class="pm-feature-col"></th>
+          @for (pkg of pricingPackages; track pkg.id) {
+            <th class="pm-pkg-col" [class.pm-pkg-col--highlight]="pkg.highlight">
+              <div class="pm-pkg-name">{{ pkg.name }}</div>
+              <div class="pm-pkg-price">{{ pkg.priceLabel }}</div>
+              @if (pkg.description) {
+                <div class="pm-pkg-desc">{{ pkg.description }}</div>
               }
-              <span class="price-value">{{ item?.price }}</span>
-              @if (item?.price !== 'Variabilní cena') {
-                <span class="price-currency">{{ t.services?.currency }}</span>
-              }
-            </div>
-            <p class="price-note">{{ item?.message }}</p>
-          </div>
-        </div>
-      }
-    </div>
-  </section>
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of pricingFeatures; track row.key) {
+          <tr>
+            <td class="pm-feature-col">
+              <div class="pm-feature-label-row">
+                <span class="pm-feature-label">{{ row.label }}</span>
+                @if (row.tooltip) {
+                  <span class="pm-info-wrap">
+                    <button
+                      type="button"
+                      class="pm-info-btn"
+                      (click)="toggleTooltip(row.key)"
+                      (mouseenter)="activeTooltipKey = row.key"
+                      (mouseleave)="activeTooltipKey = null"
+                      [attr.aria-label]="row.tooltip">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                    </button>
+                    @if (activeTooltipKey === row.key) {
+                      <span class="pm-tooltip">{{ row.tooltip }}</span>
+                    }
+                  </span>
+                }
+              </div>
+            </td>
+            @for (pkg of pricingPackages; track pkg.id) {
+              <td class="pm-value-col" [class.pm-value-col--highlight]="pkg.highlight">
+                @switch (featureCellType(row.values[pkg.id])) {
+                  @case ('yes') {
+                    <svg class="pm-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  }
+                  @case ('no') {
+                    <span class="pm-dash">—</span>
+                  }
+                  @case ('text') {
+                    <span class="pm-value-text">{{ row.values[pkg.id] }}</span>
+                  }
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
 
   <div class="svc-divider" aria-hidden="true"></div>
 

@@ -124,118 +124,244 @@
     </a>
   </div>
 
-  <div class="about-strips">
-    @for (step of ['01', '02', '03']; track step) {
-      <a routerLink="/services" class="about-strip">
-        <div class="about-strip-body">
-          <span class="about-strip-num">{{ step }}</span>
-          <div class="about-strip-content">
-            <div class="about-strip-title">{{ t?.about?.steps[step]?.title }}</div>
-            <div class="about-strip-text">{{ t?.about?.steps[step]?.text }}</div>
-          </div>
-        </div>
-      </a>
-    }
+<div class="about-story-row">
+  <div class="about-story-text">
+    <div class="about-eyebrow">{{ t?.about?.story_eyebrow }}</div>
+    <h3 class="about-heading about-story-heading">{{ t?.about?.story_heading }}</h3>
+    <p class="about-lead about-story-paragraph">{{ t?.about?.story_text }}</p>
   </div>
+
+  <div class="about-story-media">
+    <div class="about-story-photo-placeholder" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <circle cx="8.5" cy="10.5" r="1.8"/>
+        <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
+      </svg>
+      <span class="about-story-photo-label">{{ t?.about?.story_photo_placeholder }}</span>
+    </div>
+  </div>
+</div>
+  <div class="about-story-row">
+      <div class="about-story-media">
+    <div class="about-story-photo-placeholder" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <circle cx="8.5" cy="10.5" r="1.8"/>
+        <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
+      </svg>
+      <span class="about-story-photo-label">{{ t?.about?.story_photo_placeholder }}</span>
+    </div>
+  </div>
+  <div class="about-story-text">
+    <div class="about-eyebrow">{{ t?.about?.story_eyebrow }}</div>
+    <h3 class="about-heading about-story-heading">{{ t?.about?.story_heading }}</h3>
+    <p class="about-lead about-story-paragraph">{{ t?.about?.story_text }}</p>
+  </div>
+
+
+</div>
+
 </section>
 
       <div class="gradient-seep-wrp">
           <div class="gradient-line-separator"></div>
       </div>
 
-      <!-- Why Us Section -->
-      <div class="select-us-section_temp_new">
-          <div class="select-us-header-wrp_temp_new">
-              <div class="select-us-eyebrow_temp_new">{{ t?.why_us_header }}</div>
-              <div class="header-0-2-t pad-0">{{ t?.select_us_header }}</div>
-              <div class="select-us-lead_temp_new">{{ t?.why_us_text }}</div>
-          </div>
+<!-- ═══════════════════════════════════════════════════
+     PROČ SI VYBRAT NÁS - odlehčený redesign
+     Odstraněno: glow blur pozadí, <img> checkmarky (nahrazeno inline SVG,
+     žádná závislost na obrázku), silné stíny/prstence kolem ikon.
+     Zůstalo: 3 karty, ikona, nadpis, 3 body, malý tag badge.
+     ═══════════════════════════════════════════════════ -->
+<section class="select-us-section_temp_new">
+  <div class="select-us-header-wrp_temp_new">
+    <div class="select-us-eyebrow_temp_new">{{ t?.why_us_header }}</div>
+    <h2 class="select-us-title_temp_new">{{ t?.select_us_header }}</h2>
+    <p class="select-us-lead_temp_new">{{ t?.why_us_text }}</p>
+  </div>
 
-          <div class="benefits-wrapper_temp_new">
-              <div class="benefit-item_temp_new">
-                  <div class="benefit-item-glow_temp_new"></div>
-                  <div class="benefit-icon-slot_temp_new">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      </svg>
-                  </div>
-                  <div class="benefit-text-wrapper_temp_new">
-                      <div class="benefit-header_temp_new">{{ t?.select_us?.item_1?.header }}</div>
-                      <div class="benefit-points_temp_new">
-                          <ul>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_1?.bullet_1 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_1?.bullet_2 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_1?.bullet_3 }}</li>
-                          </ul>
-                      </div>
-                  </div>
-                  <div class="benefit-item-tag_temp_new">{{ t?.why_us_quality_header }}</div>
-              </div>
+  <div class="benefits-wrapper_temp_new">
 
-              <div class="benefit-item_temp_new benefit-item--mid_temp_new">
-                  <div class="benefit-item-glow_temp_new benefit-item-glow--mid_temp_new"></div>
-                  <div class="benefit-icon-slot_temp_new benefit-icon-slot--mid_temp_new">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                      </svg>
-                  </div>
-                  <div class="benefit-text-wrapper_temp_new">
-                      <div class="benefit-header_temp_new">{{ t?.select_us?.item_2?.header }}</div>
-                      <div class="benefit-points_temp_new">
-                          <ul>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_2?.bullet_1 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_2?.bullet_2 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_2?.bullet_3 }}</li>
-                          </ul>
-                      </div>
-                  </div>
-                  <div class="benefit-item-tag_temp_new benefit-item-tag--mid_temp_new">{{ t?.why_us_quality_header_1 }}</div>
-              </div>
-
-              <div class="benefit-item_temp_new">
-                  <div class="benefit-item-glow_temp_new"></div>
-                  <div class="benefit-icon-slot_temp_new">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                          <circle cx="9" cy="7" r="4"/>
-                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                      </svg>
-                  </div>
-                  <div class="benefit-text-wrapper_temp_new">
-                      <div class="benefit-header_temp_new">{{ t?.select_us?.item_3?.header }}</div>
-                      <div class="benefit-points_temp_new">
-                          <ul>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_3?.bullet_1 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_3?.bullet_2 }}</li>
-                              <li><span class="bullet-highlight_temp_new"><img [src]="check_mark" alt=""></span> {{ t?.select_us?.item_3?.bullet_3 }}</li>
-                          </ul>
-                      </div>
-                  </div>
-                  <div class="benefit-item-tag_temp_new">{{ t?.why_us_quality_header_2 }}</div>
-              </div>
-          </div>
+    <div class="benefit-item_temp_new">
+      <div class="benefit-icon-slot_temp_new">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
       </div>
+      <div class="benefit-text-wrapper_temp_new">
+        <div class="benefit-header_temp_new">{{ t?.select_us?.item_1?.header }}</div>
+        <ul class="benefit-points_temp_new">
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_1?.bullet_1 }}
+          </li>
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_1?.bullet_2 }}
+          </li>
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_1?.bullet_3 }}
+          </li>
+        </ul>
+      </div>
+      <span class="benefit-item-tag_temp_new">{{ t?.why_us_quality_header }}</span>
+    </div>
+
+    <div class="benefit-item_temp_new benefit-item--mid_temp_new">
+      <div class="benefit-icon-slot_temp_new">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div class="benefit-text-wrapper_temp_new">
+        <div class="benefit-header_temp_new">{{ t?.select_us?.item_2?.header }}</div>
+        <ul class="benefit-points_temp_new">
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_2?.bullet_1 }}
+          </li>
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_2?.bullet_2 }}
+          </li>
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_2?.bullet_3 }}
+          </li>
+        </ul>
+      </div>
+      <span class="benefit-item-tag_temp_new benefit-item-tag--mid_temp_new">{{ t?.why_us_quality_header_1 }}</span>
+    </div>
+
+    <div class="benefit-item_temp_new">
+      <div class="benefit-icon-slot_temp_new">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="benefit-text-wrapper_temp_new">
+        <div class="benefit-header_temp_new">{{ t?.select_us?.item_3?.header }}</div>
+        <ul class="benefit-points_temp_new">
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_3?.bullet_1 }}
+          </li>
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_3?.bullet_2 }}
+          </li>
+          <li>
+            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t?.select_us?.item_3?.bullet_3 }}
+          </li>
+        </ul>
+      </div>
+      <span class="benefit-item-tag_temp_new">{{ t?.why_us_quality_header_2 }}</span>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     CO NAŠE SYSTÉMY OBSAHUJÍ - bodově, srozumitelně i pro laika.
+     Každá položka má tlačítko "i" s vysvětlivkou (čistě CSS hover/focus
+     tooltip, žádná JS logika navíc není potřeba). Na konci zvýrazněný
+     "trust" pruh o bezpečnosti.
+     ═══════════════════════════════════════════════════ -->
+<section class="sys-features-section_temp_new">
+  <div class="select-us-header-wrp_temp_new">
+    <div class="select-us-eyebrow_temp_new">{{ t?.sys_features?.eyebrow }}</div>
+    <h2 class="select-us-title_temp_new">{{ t?.sys_features?.header }}</h2>
+    <p class="select-us-lead_temp_new">{{ t?.sys_features?.lead }}</p>
+  </div>
+
+  <div class="sys-features-list_temp_new">
+
+    <div class="sys-feature-item_temp_new">
+      <div class="sys-feature-icon_temp_new">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      <div class="sys-feature-body_temp_new">
+        <span class="sys-feature-label_temp_new">{{ t?.sys_features?.seo?.label }}</span>
+        <span class="sys-info-wrap_temp_new" tabindex="0">
+          <svg class="sys-info-icon_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span class="sys-tooltip_temp_new">{{ t?.sys_features?.seo?.tooltip }}</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="sys-feature-item_temp_new">
+      <div class="sys-feature-icon_temp_new">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div class="sys-feature-body_temp_new">
+        <span class="sys-feature-label_temp_new">{{ t?.sys_features?.auth?.label }}</span>
+        <span class="sys-info-wrap_temp_new" tabindex="0">
+          <svg class="sys-info-icon_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span class="sys-tooltip_temp_new">{{ t?.sys_features?.auth?.tooltip }}</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="sys-feature-item_temp_new">
+      <div class="sys-feature-icon_temp_new">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16"/><path d="M9 4v16"/>
+        </svg>
+      </div>
+      <div class="sys-feature-body_temp_new">
+        <span class="sys-feature-label_temp_new">{{ t?.sys_features?.middleware?.label }}</span>
+        <span class="sys-info-wrap_temp_new" tabindex="0">
+          <svg class="sys-info-icon_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span class="sys-tooltip_temp_new">{{ t?.sys_features?.middleware?.tooltip }}</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="sys-feature-item_temp_new">
+      <div class="sys-feature-icon_temp_new">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="sys-feature-body_temp_new">
+        <span class="sys-feature-label_temp_new">{{ t?.sys_features?.attack_protection?.label }}</span>
+        <span class="sys-info-wrap_temp_new" tabindex="0">
+          <svg class="sys-info-icon_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span class="sys-tooltip_temp_new">{{ t?.sys_features?.attack_protection?.tooltip }}</span>
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sys-trust-banner_temp_new">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <span>{{ t?.sys_features?.trust_statement }}</span>
+  </div>
+</section>
 
       <div class="gradient-seep-wrp">
           <div class="gradient-line-separator"></div>
       </div>
-
-      <!-- Tech Stack Section -->
-      @if (t?.tech_stack) {
-        <div class="home-stack-section">
-            <div class="home-stack-eyebrow">{{ t?.tech_stack.eyebrow }}</div>
-            <div class="home-stack-grid">
-                @for (tech of t?.tech_stack.items; track tech.name) {
-                    <div class="home-stack-item">
-                        <div class="home-stack-icon">
-                            <img [src]="getTechIcon(tech.name)" [alt]="tech.alt">
-                        </div>
-                        <span class="home-stack-name">{{ tech.name }}</span>
-                    </div>
-                }
-            </div>
-        </div>
-      }
 
       <div class="gradient-seep-wrp">
           <div class="gradient-line-separator"></div>

@@ -24,7 +24,6 @@
 /* ── Shared type primitives ─────────────────────────── */
 .hero-eyebrow,
 .about-eyebrow,
-.home-stack-eyebrow,
 .home-cta-eyebrow,
 .select-us-eyebrow_temp_new {
     font-size: 0.75rem;
@@ -167,68 +166,6 @@
     .hero-heading { font-size: 1.9rem; }
     .hero-cta-row { flex-direction: column; align-items: stretch; }
     .hero-stats { gap: 14px; }
-}
-
-/* ═══════════════════════════════════════════════════
-   TECH STACK SEKCE
-   ═══════════════════════════════════════════════════ */
-.home-stack-section {
-    position: relative;
-    z-index: 1;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px 50px 20px;
-}
-
-.home-stack-eyebrow {
-    text-align: center;
-    margin-bottom: 28px;
-}
-
-.home-stack-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 14px;
-}
-
-.home-stack-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 22px 12px;
-    transition: border-color 0.25s ease, transform 0.2s ease, background 0.25s ease;
-}
-
-.home-stack-icon {
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.home-stack-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.home-stack-name {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #b0b0b0;
-    white-space: nowrap;
-}
-
-@media (max-width: 905px) {
-    .home-stack-grid { grid-template-columns: repeat(3, 1fr); }
-    .home-stack-section { padding: 10px 20px 50px; }
-}
-
-@media (max-width: 480px) {
-    .home-stack-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -467,59 +404,6 @@
   transform: translateX(0);
 }
 
-.about-strips {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
-}
-
-.about-strip {
-  position: relative;
-  background: #111128;
-  border: 1px solid rgba(166, 125, 255, 0.1);
-  transition: background 0.2s ease, border-color 0.2s ease, padding-left 0.2s ease;
-  text-decoration: none;
-}
-
-.about-strip:hover {
-  background: rgba(166,125,255,0.05);
-  border-color: rgba(166,125,255,0.3);
-}
-
-.about-strip-body {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  padding: 22px 24px 22px 28px;
-}
-
-.about-strip-num {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: rgba(166, 125, 255, 0.25);
-  min-width: 36px;
-  flex-shrink: 0;
-  transition: color 0.2s ease;
-}
-
-.about-strip:hover .about-strip-num { color: rgba(166,125,255,0.6); }
-
-.about-strip-content { flex: 1; }
-
-.about-strip-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #c0c0d5;
-  margin-bottom: 5px;
-}
-
-.about-strip-text {
-  font-size: 0.88rem;
-  color: #7a7a8c;
-  line-height: 1.55;
-}
-
 @media (max-width: 1024px) {
   .about-services-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -527,20 +411,164 @@
 @media (max-width: 905px) {
   .about-section { padding: 60px 30px 40px; }
   .about-heading { font-size: 2.1rem; }
-  .about-strip-body { gap: 18px; padding: 18px 18px 18px 22px; }
 }
 
 @media (max-width: 600px) {
   .about-section { padding: 50px 20px 30px; }
   .about-heading { font-size: 1.75rem; }
   .about-services-grid { grid-template-columns: 1fr; gap: 12px; }
-  .about-strip-num { display: none; }
+}
+/* ── About: text + placeholder fotky (střídavé řádky pod service kartami) ──
+   .about-story-heading používá stejnou třídu jako .about-heading a .about-story-paragraph
+   stejnou jako .about-lead - dědí tak font, barvu i váhu řezu z existujících stylů.
+
+   DŮLEŽITÉ: záměrně FLEXBOX, ne CSS grid. Grid sloupce se řídí POZICÍ (1. sloupec/
+   2. sloupec), takže by "úzký" vždy dostal ten div, co je zrovna na dané straně -
+   přesně proto to dřív vypadalo špatně (oba divy vycházely úzké/široké podle strany,
+   ne podle typu obsahu). Flexbox s `flex-basis` na konkrétních třídách (.about-story-text
+   vs. .about-story-media) drží šířku vázanou na TYP obsahu bez ohledu na to, jestli je
+   v HTML první nebo druhý - takže .about-story-media je vždy užší, ať je vlevo, nebo vpravo,
+   a sekce se tak můžou v HTML normálně střídat (text-media, media-text, text-media, ...). */
+
+.about-story-row {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  width: 100%;
+  margin-top: 72px;
+  position: relative;
+  z-index: 1;
+}
+
+.about-story-text {
+  flex: 1.1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.about-story-media {
+  flex: 0.6 1 0%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  perspective: 1300px;
+}
+
+/* Doladění .about-heading pro tenhle kontext - font/barva/váha zůstávají zděděné */
+.about-story-heading {
+  text-align: left;
+  font-size: 1.7rem;
+  margin: 0;
+}
+
+/* Doladění .about-lead pro tenhle kontext - font/barva zůstávají zděděné */
+.about-story-paragraph {
+  text-align: left;
+  max-width: none;
+  margin: 0 auto 0 0;
+}
+
+/* ── Fotka: užší, portrétní, s 3D náklonem do prostoru ─────────────
+   Náklon je zrcadlený podle toho, na které straně fotka zrovna je -
+   zjišťuje se strukturálně (jestli je .about-story-media první dítě
+   v řádku, tzn. fotka je vlevo), ne přes modifikátorovou třídu. */
+.about-story-photo-placeholder {
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 3 / 4;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #16162f 0%, #111128 100%);
+  border: 1px solid rgba(166, 125, 255, 0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #7a7a8c;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* Fotka vpravo (text je první dítě řádku) - náklon "hledí" doleva, ke textu */
+.about-story-row > .about-story-text:first-child ~ .about-story-media .about-story-photo-placeholder {
+  transform: rotateY(-12deg) rotateX(5deg) rotate(-2deg);
+  box-shadow:
+    18px 22px 40px -18px rgba(0, 0, 0, 0.55),
+    -8px 0 26px -14px rgba(166, 125, 255, 0.28);
+}
+
+/* Fotka vlevo (media je první dítě řádku) - náklon zrcadlově "hledí" doprava, ke textu */
+.about-story-row > .about-story-media:first-child .about-story-photo-placeholder {
+  transform: rotateY(12deg) rotateX(5deg) rotate(2deg);
+  box-shadow:
+    -18px 22px 40px -18px rgba(0, 0, 0, 0.55),
+    8px 0 26px -14px rgba(166, 125, 255, 0.28);
+}
+
+.about-story-row > .about-story-text:first-child ~ .about-story-media:hover .about-story-photo-placeholder {
+  transform: rotateY(-6deg) rotateX(2deg) rotate(-1deg) translateY(-4px);
+  box-shadow:
+    14px 26px 46px -18px rgba(0, 0, 0, 0.6),
+    -8px 0 30px -12px rgba(166, 125, 255, 0.36);
+}
+
+.about-story-row > .about-story-media:first-child:hover .about-story-photo-placeholder {
+  transform: rotateY(6deg) rotateX(2deg) rotate(1deg) translateY(-4px);
+  box-shadow:
+    -14px 26px 46px -18px rgba(0, 0, 0, 0.6),
+    8px 0 30px -12px rgba(166, 125, 255, 0.36);
+}
+
+.about-story-photo-placeholder svg {
+  color: #a67dff;
+}
+
+.about-story-photo-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #7a7a8c;
+}
+
+/* ── Responzivita ─────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .about-story-row {
+    flex-direction: column;
+    gap: 32px;
+    margin-top: 56px;
+  }
+
+  /* `order` funguje nezávisle na pořadí v HTML - takže ať je v DOM
+     první text, nebo fotka, na mobilu je výsledek vždy text -> fotka. */
+  .about-story-text {
+    order: 1;
+    flex-basis: auto;
+  }
+
+  .about-story-media {
+    order: 2;
+    flex-basis: auto;
+  }
+
+  /* Na mobilu už "vlevo/vpravo" nedává smysl, náklon sjednotíme na jeden směr */
+  .about-story-photo-placeholder,
+  .about-story-row > .about-story-text:first-child ~ .about-story-media .about-story-photo-placeholder,
+  .about-story-row > .about-story-media:first-child .about-story-photo-placeholder {
+    max-width: min(100%, 360px);
+    transform: rotateY(-6deg) rotateX(3deg) rotate(-1deg);
+  }
+
+  .about-story-heading {
+    font-size: 1.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .about-service-card, .about-service-icon, .about-service-arrow, .about-strip { transition: none; }
+  .about-story-photo-placeholder {
+    transition: none;
+  }
 }
-
 /* ═══════════════════════════════════════════════════
    SELECT US SEKCE
    ═══════════════════════════════════════════════════ */
@@ -549,45 +577,337 @@
 }
 .pad-0 { padding: 0; }
 
+/* ═══════════════════════════════════════════════════
+   PROČ SI VYBRAT NÁS - odlehčeno
+   Odstraněno: blur glow pozadí za kartami, silné stíny/prstence ikon.
+   ═══════════════════════════════════════════════════ */
+
 .select-us-section_temp_new {
-    position: relative;
-    z-index: 1;
-    padding: 0 0 20px;
+  position: relative;
+  z-index: 1;
+  padding: 0 0 20px;
 }
 
 .select-us-header-wrp_temp_new {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .select-us-eyebrow_temp_new {
-    margin-bottom: 10px;
-    position: relative;
+  margin-bottom: 10px;
+  position: relative;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: #a67dff;
 }
 
 .select-us-eyebrow_temp_new::before,
 .select-us-eyebrow_temp_new::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 40px;
-    height: 1px;
-    background: rgba(166, 125, 255, 0.35);
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40px;
+  height: 1px;
+  background: rgba(166, 125, 255, 0.35);
 }
 .select-us-eyebrow_temp_new::before { right: calc(100% + 12px); }
 .select-us-eyebrow_temp_new::after  { left: calc(100% + 12px); }
 
-.select-us-lead_temp_new {
-    font-size: 1rem;
-    color: #7a7a8c;
-    text-align: center;
-    margin: 8px auto 40px;
-    max-width: 480px;
-    line-height: 1.6;
+.select-us-title_temp_new {
+  font-size: 2rem;
+  text-align: center;
+  color: #eeeef7;
+  margin: 0;
 }
 
+.select-us-lead_temp_new {
+  font-size: 1rem;
+  color: #7a7a8c;
+  text-align: center;
+  margin: 8px auto 40px;
+  max-width: 480px;
+  line-height: 1.6;
+}
+
+.benefits-wrapper_temp_new {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.benefit-item_temp_new {
+  position: relative;
+  background: #111128;
+  border: 1px solid rgba(166, 125, 255, 0.14);
+  border-radius: 14px;
+  padding: 26px 22px 22px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.benefit-item_temp_new:hover {
+  border-color: rgba(166, 125, 255, 0.32);
+  transform: translateY(-3px);
+}
+
+.benefit-item--mid_temp_new {
+  border-color: rgba(166, 125, 255, 0.28);
+}
+
+.benefit-item--mid_temp_new::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: #a67dff;
+}
+
+.benefit-icon-slot_temp_new {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(166, 125, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a67dff;
+  margin-bottom: 16px;
+}
+
+.benefit-text-wrapper_temp_new {
+  display: flex;
+  flex-direction: column;
+}
+
+.benefit-header_temp_new {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #d0d0e0;
+  margin-bottom: 12px;
+}
+
+.benefit-points_temp_new {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.benefit-points_temp_new li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #7a7a8c;
+  line-height: 1.5;
+}
+
+.bullet-check_temp_new {
+  color: #a67dff;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.benefit-item-tag_temp_new {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #a67dff;
+  background: rgba(166, 125, 255, 0.1);
+  border-radius: 999px;
+}
+
+.benefit-item-tag--mid_temp_new {
+  background: #a67dff;
+  color: #0d0d1f;
+}
+
+@media (max-width: 1024px) {
+  .benefits-wrapper_temp_new { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .benefits-wrapper_temp_new { grid-template-columns: 1fr; }
+  .select-us-title_temp_new { font-size: 1.6rem; }
+}
+
+
+/* ═══════════════════════════════════════════════════
+   CO NAŠE SYSTÉMY OBSAHUJÍ - bodový přehled s "i" vysvětlivkami
+   ═══════════════════════════════════════════════════ */
+
+.sys-features-section_temp_new {
+  position: relative;
+  z-index: 1;
+  padding: 60px 0 20px;
+}
+
+.sys-features-list_temp_new {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.sys-feature-item_temp_new {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #111128;
+  border: 1px solid rgba(166, 125, 255, 0.14);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.2s ease;
+}
+
+.sys-feature-item_temp_new:hover {
+  border-color: rgba(166, 125, 255, 0.3);
+}
+
+.sys-feature-icon_temp_new {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(166, 125, 255, 0.1);
+  color: #a67dff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sys-feature-body_temp_new {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sys-feature-label_temp_new {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #d0d0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sys-info-wrap_temp_new {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  outline: none;
+  flex-shrink: 0;
+}
+
+.sys-info-icon_temp_new {
+  color: #7a7a8c;
+  cursor: help;
+  transition: color 0.15s ease;
+}
+
+.sys-info-wrap_temp_new:hover .sys-info-icon_temp_new,
+.sys-info-wrap_temp_new:focus-visible .sys-info-icon_temp_new {
+  color: #a67dff;
+}
+
+.sys-tooltip_temp_new {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  width: 220px;
+  background: #1c1c38;
+  border: 1px solid rgba(166, 125, 255, 0.25);
+  color: #c4c4d4;
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 10px 26px -8px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.sys-info-wrap_temp_new:hover .sys-tooltip_temp_new,
+.sys-info-wrap_temp_new:focus-visible .sys-tooltip_temp_new {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.sys-tooltip_temp_new::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1c1c38;
+}
+
+.sys-trust-banner_temp_new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: 720px;
+  margin: 24px auto 0;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: rgba(166, 125, 255, 0.08);
+  border: 1px solid rgba(166, 125, 255, 0.22);
+  color: #c4c4d4;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.sys-trust-banner_temp_new svg {
+  color: #a67dff;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .sys-features-list_temp_new { grid-template-columns: 1fr; }
+
+  .sys-tooltip_temp_new {
+    width: 180px;
+    left: auto;
+    right: -8px;
+    transform: translateY(4px);
+  }
+
+  .sys-info-wrap_temp_new:hover .sys-tooltip_temp_new,
+  .sys-info-wrap_temp_new:focus-visible .sys-tooltip_temp_new {
+    transform: translateY(0);
+  }
+
+  .sys-tooltip_temp_new::after {
+    left: auto;
+    right: 12px;
+    transform: none;
+  }
+
+  .sys-trust-banner_temp_new {
+    flex-direction: column;
+    text-align: center;
+  }
+}
 .benefits-wrapper_temp_new {
     display: flex;
     justify-content: center;

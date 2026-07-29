@@ -575,7 +575,20 @@
   color: var(--text-muted);
 }
 
-/* ── Ceník ───────────────────────────────────────────────────── */
+/* ── Ceník: srovnávací matice balíček × funkce ──────────────────
+   Nahrazuje starou .prices-grid/.price-card sadu pravidel - ta lze
+   smazat, tahle sekce je už nepoužívá.
+   ──────────────────────────────────────────────────────────────── */
+
+.section-subtitle {
+  max-width: 640px;
+  margin: 10px auto 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
 .svc-prices-section {
   position: relative;
   z-index: 1;
@@ -583,96 +596,220 @@
   animation: fadeUp 0.7s 0.2s ease-out both;
 }
 
-.prices-grid {
+/* Scroll wrapper - klíčové pro responzivitu s velkým počtem balíčků.
+   První sloupec (názvy funkcí) zůstává přilepený vlevo (position: sticky),
+   ať uživatel při horizontálním scrollu na mobilu pořád vidí, co porovnává. */
+.pricing-matrix-wrap {
   max-width: var(--max-w);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
-}
-
-.price-card {
+  margin: 40px auto 0;
+  overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
   background: var(--surface);
-  transition: border-color var(--ease), transform 0.2s ease;
-  animation: fadeUp 0.5s ease-out both;
+  -webkit-overflow-scrolling: touch;
 }
 
-.price-card:hover {
-  border-color: var(--border-mid);
-  transform: translateY(-4px);
+.pricing-matrix {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 760px;
 }
 
-.prices-grid .price-card:nth-child(1) { animation-delay: 0.05s; }
-.prices-grid .price-card:nth-child(2) { animation-delay: 0.1s;  }
-.prices-grid .price-card:nth-child(3) { animation-delay: 0.15s; }
-.prices-grid .price-card:nth-child(4) { animation-delay: 0.2s;  }
-.prices-grid .price-card:nth-child(5) { animation-delay: 0.25s; }
-.prices-grid .price-card:nth-child(6) { animation-delay: 0.3s;  }
-
-.price-card-header {
-  background: var(--surface-2);
+/* ── Sloupec s názvy funkcí (sticky vlevo) ─────────────────────── */
+.pm-feature-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--surface);
+  text-align: left;
+  padding: 14px 18px;
+  min-width: 220px;
+  max-width: 260px;
+  border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border-mid);
-  padding: 16px 20px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
+  vertical-align: middle;
 }
 
-.price-card--variable .price-card-header {
+thead .pm-feature-col {
+  background: var(--surface-2);
+  z-index: 3;
+}
+
+tbody tr:last-child .pm-feature-col {
+  border-bottom: none;
+}
+
+.pm-feature-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pm-feature-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* ── Info tooltip u nejasných funkcí ────────────────────────────── */
+.pm-info-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pm-info-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-dim, var(--text-muted));
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.pm-info-btn:hover,
+.pm-info-btn:focus-visible {
+  color: var(--accent);
+  background: var(--surface-2);
+  outline: none;
+}
+
+.pm-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  background: var(--accent-dark, #18181b);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  z-index: 10;
+  text-align: left;
+  pointer-events: none;
+}
+
+.pm-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--accent-dark, #18181b);
+}
+
+/* ── Hlavička balíčků ────────────────────────────────────────────── */
+.pm-pkg-col {
+  padding: 20px 18px;
+  min-width: 160px;
+  text-align: center;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-mid);
+  border-left: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.pm-pkg-col--highlight {
   background: linear-gradient(135deg, var(--accent-dark), #3d1466);
   color: #fff;
-  border-bottom-color: transparent;
 }
 
-.price-card-body {
-  padding: 28px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+.pm-pkg-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: inherit;
+  margin-bottom: 8px;
 }
 
-.price-amount {
-  display: flex;
-  align-items: baseline;
-  gap: 3px;
-  margin-bottom: 12px;
-}
-
-.price-prefix {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-right: 2px;
-}
-
-.price-value {
+.pm-pkg-price {
   font-family: var(--ff-display);
-  font-size: 2.6rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--accent);
-  line-height: 1;
+  line-height: 1.2;
 }
 
-.price-card--variable .price-value { font-size: 1.5rem; }
+.pm-pkg-col--highlight .pm-pkg-price {
+  color: #fff;
+}
 
-.price-currency {
+.pm-pkg-desc {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.pm-pkg-col--highlight .pm-pkg-desc {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Hodnoty v matici ────────────────────────────────────────────── */
+.pm-value-col {
+  text-align: center;
+  padding: 12px 16px;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-mid);
+  min-width: 140px;
+}
+
+tbody tr:last-child .pm-value-col {
+  border-bottom: none;
+}
+
+.pm-value-col--highlight {
+  background: rgba(124, 58, 237, 0.04);
+}
+
+.pm-check {
+  color: var(--success, #059669);
+}
+
+.pm-dash {
+  color: var(--text-dim, #d4d4d8);
   font-size: 1rem;
-  color: var(--text-muted);
-  align-self: flex-start;
-  padding-top: 4px;
 }
 
-.price-note {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.55;
+.pm-value-text {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
+/* ── Responzivita ─────────────────────────────────────────────────
+   Tabulka se drží stejného, přehledného tvaru i na malých obrazovkách -
+   jen se horizontálně scrolluje, se stále viditelným sloupcem funkcí
+   vlevo (sticky), ať uživatel neztratí kontext, co zrovna porovnává.
+   ────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .pricing-matrix { min-width: 640px; }
+  .pm-pkg-col, .pm-value-col { min-width: 130px; padding: 14px 12px; }
+  .pm-feature-col { min-width: 180px; max-width: 200px; padding: 12px 14px; }
+}
+
+@media (max-width: 600px) {
+  .pricing-matrix-wrap { margin-top: 28px; border-radius: var(--radius, 10px); }
+  .pm-pkg-price { font-size: 1.1rem; }
+  .pm-feature-label { font-size: 0.8rem; }
+  .pm-tooltip { width: 180px; font-size: 0.72rem; }
+}
 /* ── CTA ─────────────────────────────────────────────────────── */
 .svc-cta-section {
   position: relative;
@@ -831,12 +968,9 @@
   .tech-tabs { gap: 6px; }
   .tech-tab { padding: 8px 14px; font-size: 0.8rem; }
 
-  .prices-grid { grid-template-columns: 1fr; max-width: 380px; }
-
   .svc-content-section { padding: 0 16px 60px; }
 
   .svc-workflow-section,
-  .svc-prices-section,
   .svc-cta-section { padding-left: 16px; padding-right: 16px; }
 
   .sidebar-stats-grid { grid-template-columns: repeat(2, 1fr); }
