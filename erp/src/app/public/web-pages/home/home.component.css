@@ -647,11 +647,6 @@
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
-.benefit-item_temp_new:hover {
-  border-color: rgba(166, 125, 255, 0.32);
-  transform: translateY(-3px);
-}
-
 .benefit-item--mid_temp_new {
   border-color: rgba(166, 125, 255, 0.28);
 }
@@ -769,10 +764,6 @@
   transition: border-color 0.2s ease;
 }
 
-.sys-feature-item_temp_new:hover {
-  border-color: rgba(166, 125, 255, 0.3);
-}
-
 .sys-feature-icon_temp_new {
   width: 34px;
   height: 34px;
@@ -801,6 +792,7 @@
   text-overflow: ellipsis;
 }
 
+/* ── "i" vysvětlivka - čistě CSS hover/focus tooltip, bez JS logiky ── */
 .sys-info-wrap_temp_new {
   position: relative;
   display: inline-flex;
@@ -860,6 +852,67 @@
   border-top-color: #1c1c38;
 }
 
+/* ── Placeholder demo videa administrace ──────────────────────────
+   16:9 karta ve stejném vizuálním jazyce jako .sys-feature-item
+   (tmavé pozadí, fialový okraj). Dokud není <source> videa doplněný,
+   .sys-demo-video-placeholder leží navrchu jako overlay s play tlačítkem.
+   Po doplnění reálného videa lze overlay klidně ponechat jako poster
+   stav (zobrazí se, dokud uživatel nedá play), nebo ho úplně odstranit. */
+.sys-demo-video_temp_new {
+  position: relative;
+  max-width: 720px;
+  margin: 32px auto 0;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #16162f 0%, #111128 100%);
+  border: 1px solid rgba(166, 125, 255, 0.18);
+}
+
+.sys-demo-video-el_temp_new {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: transparent;
+}
+
+.sys-demo-video-placeholder_temp_new {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #7a7a8c;
+}
+
+.sys-demo-play-btn_temp_new {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(166, 125, 255, 0.12);
+  border: 1px solid rgba(166, 125, 255, 0.35);
+  color: #a67dff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sys-demo-video_temp_new:hover .sys-demo-play-btn_temp_new {
+  background: rgba(166, 125, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.sys-demo-video-label_temp_new {
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* ── Trust banner na konci sekce ─────────────────────────────── */
 .sys-trust-banner_temp_new {
   display: flex;
   align-items: center;
@@ -903,11 +956,17 @@
     transform: none;
   }
 
+  .sys-demo-play-btn_temp_new {
+    width: 48px;
+    height: 48px;
+  }
+
   .sys-trust-banner_temp_new {
     flex-direction: column;
     text-align: center;
   }
 }
+
 .benefits-wrapper_temp_new {
     display: flex;
     justify-content: center;
@@ -973,7 +1032,7 @@
     flex-shrink: 0;
     transition: background 0.3s ease, color 0.3s ease;
 }
-.benefit-item_temp_new:hover .benefit-icon-slot_temp_new {
+.benefit-icon-slot_temp_new {
     background: rgba(166, 125, 255, 0.14);
     color: #a67dff;
 }
@@ -1034,7 +1093,7 @@
     line-height: 1.5;
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
-.benefit-item_temp_new:hover .benefit-points_temp_new li {
+.benefit-points_temp_new li {
     color: #a0a0b5;
     background: rgba(166, 125, 255, 0.06);
     border-color: rgba(166, 125, 255, 0.1);

@@ -351,6 +351,30 @@
 
   </div>
 
+  <!-- ── Placeholder demo videa administrace - žádný nadpis, video doplníte později.
+       Zatím jen vizuální placeholder (přehrávač bez zdroje) se stejným vzhledem
+       jako zbytek sekce. Až bude video hotové, stačí přidat <source> a odstranit
+       .sys-demo-video-placeholder overlay (nebo ho ponechat jako poster stav). ── -->
+  <div class="sys-demo-video_temp_new">
+    <video
+      class="sys-demo-video-el_temp_new"
+      muted
+      loop
+      playsinline
+      preload="none"
+      aria-label="{{ t?.sys_features?.demo_video_label }}">
+      <!-- <source src="..." type="video/mp4"> - doplnit později -->
+    </video>
+    <div class="sys-demo-video-placeholder_temp_new">
+      <div class="sys-demo-play-btn_temp_new">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+      <span class="sys-demo-video-label_temp_new">{{ t?.sys_features?.demo_video_placeholder }}</span>
+    </div>
+  </div>
+
   <div class="sys-trust-banner_temp_new">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -366,65 +390,6 @@
       <div class="gradient-seep-wrp">
           <div class="gradient-line-separator"></div>
       </div>
-
-      <!-- References / Social Proof Section -->
-       <!-- REFERENCE WILL BE ADDED LATER THIS IS ONLY PLACEHOLDER -->
-      <!-- <section class="home-proof-section">
-        <div class="home-proof-header">
-          <div class="home-proof-eyebrow">{{ t?.proof?.eyebrow || 'What clients say' }}</div>
-          <h2 class="home-proof-heading">{{ t?.proof?.heading || 'Collaborations we\'re proud of' }}</h2>
-        </div>
-
-        <div class="home-proof-grid">
-          <div class="home-proof-card">
-            <div class="home-proof-quote-mark" aria-hidden="true">"</div>
-            <p class="home-proof-text">{{ t?.proof?.item_1?.text || 'The team delivered the project exactly to spec and on the agreed schedule. Communication was clear throughout, with no unnecessary delays.' }}</p>
-            <div class="home-proof-author">
-              <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_1?.initials || 'JN' }}</div>
-              <div class="home-proof-author-info">
-                <span class="home-proof-name">{{ t?.proof?.item_1?.name || 'Jan Novak' }}</span>
-                <span class="home-proof-role">{{ t?.proof?.item_1?.role || 'Managing Director, supplements e-shop' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="home-proof-card">
-            <div class="home-proof-quote-mark" aria-hidden="true">"</div>
-            <p class="home-proof-text">{{ t?.proof?.item_2?.text || 'What we appreciate most is that they were able to advise us on things we hadn\'t even thought to ask about. The resulting application still runs without issues today.' }}</p>
-            <div class="home-proof-author">
-              <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_2?.initials || 'MK' }}</div>
-              <div class="home-proof-author-info">
-                <span class="home-proof-name">{{ t?.proof?.item_2?.name || 'Michaela Kratka' }}</span>
-                <span class="home-proof-role">{{ t?.proof?.item_2?.role || 'Marketing Manager' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="home-proof-card">
-            <div class="home-proof-quote-mark" aria-hidden="true">"</div>
-            <p class="home-proof-text">{{ t?.proof?.item_3?.text || 'From the first idea to going live, only a few weeks went by. The speed and quality of the work pleasantly surprised us.' }}</p>
-            <div class="home-proof-author">
-              <div class="home-proof-avatar" aria-hidden="true">{{ t?.proof?.item_3?.initials || 'PH' }}</div>
-              <div class="home-proof-author-info">
-                <span class="home-proof-name">{{ t?.proof?.item_3?.name || 'Petr Horak' }}</span>
-                <span class="home-proof-role">{{ t?.proof?.item_3?.role || 'CEO, manufacturing company' }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="home-proof-trustbar">
-          <span class="home-proof-trust-item">{{ t?.proof?.trust_1 || '10+ completed projects' }}</span>
-          <span class="home-proof-trust-divider" aria-hidden="true"></span>
-          <span class="home-proof-trust-item">{{ t?.proof?.trust_2 || '4 years in business' }}</span>
-          <span class="home-proof-trust-divider" aria-hidden="true"></span>
-          <span class="home-proof-trust-item">{{ t?.proof?.trust_3 || 'Support after launch too' }}</span>
-        </div>
-      </section>
-
-      <div class="gradient-seep-wrp">
-          <div class="gradient-line-separator"></div>
-      </div> -->
 
       <!-- FAQ Section -->
       <section class="home-faq-section">
