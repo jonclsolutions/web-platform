@@ -20,19 +20,16 @@
     }
   </div>
 
+  <!-- Taby typů dokumentů - dynamicky podle document_types z API, ne natvrdo 1|2 -->
   <div class="legal-tabs">
-    <button
-      class="legal-tab"
-      [class.active]="activeTab === 1"
-      (click)="switchTab(1)">
-      🔒 GDPR
-    </button>
-    <button
-      class="legal-tab"
-      [class.active]="activeTab === 2"
-      (click)="switchTab(2)">
-      📄 Obchodní podmínky
-    </button>
+    @for (docType of documentTypes; track trackByTypeId($index, docType)) {
+      <button
+        class="legal-tab"
+        [class.active]="activeTabId === docType.id"
+        (click)="switchTab(docType.id)">
+        {{ docType.title }}
+      </button>
+    }
   </div>
 
   @if (languages.length > 0) {
@@ -119,7 +116,7 @@
             <div class="section-edit-header">
               <div class="section-position">{{ item.position }}</div>
               <span class="section-edit-label">
-                Editace sekce 
+                Editace sekce
                 <span class="lang-badge">{{ getLangName(activeLang) }}</span>
               </span>
               <div class="section-actions">
@@ -131,6 +128,7 @@
                 </button>
               </div>
             </div>
+
             <div class="section-edit-fields">
               <div class="edit-field-group">
                 <label class="edit-label">Nadpis sekce</label>
@@ -169,9 +167,9 @@
             }
           </span>
           <div class="section-actions">
-            <button 
-              class="action-btn save-btn" 
-              (click)="submitAdd()" 
+            <button
+              class="action-btn save-btn"
+              (click)="submitAdd()"
               [disabled]="saving || !newContent.trim() || !newHeading.trim()">
               💾 Přidat sekci
             </button>
@@ -203,7 +201,6 @@
         </div>
       </div>
     }
-
   </div>
 
   @if (!showAddForm) {

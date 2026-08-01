@@ -1,0 +1,2 @@
+localStorage.removeItem('rpsw_cookie_consent');
+location.reload();

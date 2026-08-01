@@ -8,12 +8,16 @@
  * @dependencies
  * - PublicHeaderComponent: Displays top-level navigation.
  * - PublicFooterComponent: Displays site-wide legal and contact information.
+ * - CookieConsentComponent: Globální lišta souhlasu s cookies (2026) - vložena sem, ne do
+ *   jednotlivých stránek, protože musí být viditelná/aktivní na celém veřejném webu, bez
+ *   ohledu na to, na které podstránce se uživatel zrovna nachází.
  */
 
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { PublicHeaderComponent } from '../components/public-header/public-header.component';
 import { PublicFooterComponent } from '../components/public-footer/public-footer.component';
+import { CookieConsentComponent } from '../cookie-consent/cookie-consent.component';
 
 /**
  * @description Main layout wrapper for the web application's public pages.
@@ -26,7 +30,8 @@ import { PublicFooterComponent } from '../components/public-footer/public-footer
   imports: [
     RouterOutlet,
     PublicHeaderComponent,
-    PublicFooterComponent
+    PublicFooterComponent,
+    CookieConsentComponent,
   ],
   templateUrl: './web-layout.component.html',
   styleUrls: ['./web-layout.component.css']

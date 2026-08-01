@@ -1,0 +1,257 @@
+/*     
+    @file: cookie-consent.component.css
+    @path: /src/app/public/web-pages/components/cookie-consent/cookie-consent.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @note Stejná paleta jako zbytek "signature" tmavých sekcí webu (about-section,
+    sys-features) - tmavé pozadí #111128, fialový akcent #a67dff. Lišta je fixní,
+    nezávislá na tom, jestli je zrovna pod ní na stránce světlá, nebo tmavá sekce.
+*/
+
+.cc-overlay {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none;
+}
+
+.cc-banner {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 920px;
+  background: #111128;
+  border: 1px solid rgba(166, 125, 255, 0.22);
+  border-radius: 16px;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.35), 0 12px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: cc-slide-up 0.35s ease-out both;
+}
+
+@keyframes cc-slide-up {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Hlavní stav (Přijmout vše / Jen nezbytné / Nastavení) ─────────── */
+.cc-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  flex-wrap: wrap;
+}
+
+.cc-text {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.cc-title {
+  margin: 0 0 4px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #eeeef7;
+}
+
+.cc-desc {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #9a9aac;
+  line-height: 1.55;
+}
+
+.cc-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* ── Tlačítka ───────────────────────────────────────────────────── */
+.cc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  font-family: inherit;
+}
+
+.cc-btn--ghost {
+  background: transparent;
+  color: #9a9aac;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.cc-btn--ghost:hover {
+  color: #eeeef7;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.cc-btn--outline {
+  background: transparent;
+  color: #d0d0e0;
+  border-color: rgba(166, 125, 255, 0.4);
+}
+.cc-btn--outline:hover {
+  border-color: #a67dff;
+  background: rgba(166, 125, 255, 0.08);
+}
+
+.cc-btn--accent {
+  background: #a67dff;
+  color: #0d0d1f;
+  border-color: #a67dff;
+}
+.cc-btn--accent:hover {
+  background: #b794ff;
+  transform: translateY(-1px);
+}
+
+/* ── Panel nastavení (kategorie) ────────────────────────────────── */
+.cc-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 24px;
+}
+
+.cc-settings-header .cc-title { margin-bottom: 4px; }
+
+.cc-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.cc-category {
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(166, 125, 255, 0.12);
+  border-radius: 10px;
+}
+
+.cc-category-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cc-category-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #d0d0e0;
+}
+
+.cc-category-desc {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: #7a7a8c;
+  line-height: 1.5;
+}
+
+/* ── Vlastní přepínač (switch), needitovatelný stav pro "Nezbytné" ── */
+.cc-switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cc-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cc-switch-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.cc-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d0d0e0;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.cc-switch input:checked + .cc-switch-track {
+  background: #a67dff;
+}
+
+.cc-switch input:checked + .cc-switch-track::after {
+  transform: translateX(16px);
+  background: #ffffff;
+}
+
+.cc-switch--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cc-actions--settings {
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 14px;
+}
+
+/* ── Responzivita ───────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .cc-overlay { padding: 0; }
+
+  .cc-banner {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .cc-main {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 18px 18px 20px;
+  }
+
+  .cc-actions {
+    justify-content: stretch;
+  }
+
+  .cc-actions .cc-btn {
+    flex: 1 1 auto;
+  }
+
+  .cc-actions--settings {
+    flex-direction: column-reverse;
+  }
+
+  .cc-actions--settings .cc-btn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,105 @@
+<!-- 
+    @file: cookie-consent.component.html
+    @path: /src/app/public/web-pages/components/cookie-consent/cookie-consent.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+-->
+
+@if (visible) {
+  <div class="cc-overlay" [class.cc-overlay--settings]="showSettings">
+    <div class="cc-banner" role="dialog" aria-modal="false" aria-label="{{ t?.aria_label }}">
+
+      @if (!showSettings) {
+        <div class="cc-main">
+          <div class="cc-text">
+            <p class="cc-title">{{ t?.title }}</p>
+            <p class="cc-desc">{{ t?.description }}</p>
+          </div>
+
+          <div class="cc-actions">
+            <button type="button" class="cc-btn cc-btn--ghost" (click)="toggleSettings()">
+              {{ t?.btn_settings }}
+            </button>
+            <button type="button" class="cc-btn cc-btn--outline" (click)="rejectNonEssential()">
+              {{ t?.btn_necessary_only }}
+            </button>
+            <button type="button" class="cc-btn cc-btn--accent" (click)="acceptAll()">
+              {{ t?.btn_accept_all }}
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (showSettings) {
+        <div class="cc-settings">
+          <div class="cc-settings-header">
+            <p class="cc-title">{{ t?.settings_title }}</p>
+            <p class="cc-desc">{{ t?.settings_desc }}</p>
+          </div>
+
+          <div class="cc-categories">
+
+            <div class="cc-category">
+              <div class="cc-category-row">
+                <span class="cc-category-name">{{ t?.cat_necessary?.label }}</span>
+                <label class="cc-switch cc-switch--disabled">
+                  <input type="checkbox" checked disabled>
+                  <span class="cc-switch-track"></span>
+                </label>
+              </div>
+              <p class="cc-category-desc">{{ t?.cat_necessary?.desc }}</p>
+            </div>
+
+            <div class="cc-category">
+              <div class="cc-category-row">
+                <span class="cc-category-name">{{ t?.cat_functional?.label }}</span>
+                <label class="cc-switch">
+                  <input type="checkbox" [(ngModel)]="draft.functional">
+                  <span class="cc-switch-track"></span>
+                </label>
+              </div>
+              <p class="cc-category-desc">{{ t?.cat_functional?.desc }}</p>
+            </div>
+
+            <div class="cc-category">
+              <div class="cc-category-row">
+                <span class="cc-category-name">{{ t?.cat_analytics?.label }}</span>
+                <label class="cc-switch">
+                  <input type="checkbox" [(ngModel)]="draft.analytics">
+                  <span class="cc-switch-track"></span>
+                </label>
+              </div>
+              <p class="cc-category-desc">{{ t?.cat_analytics?.desc }}</p>
+            </div>
+
+            <div class="cc-category">
+              <div class="cc-category-row">
+                <span class="cc-category-name">{{ t?.cat_marketing?.label }}</span>
+                <label class="cc-switch">
+                  <input type="checkbox" [(ngModel)]="draft.marketing">
+                  <span class="cc-switch-track"></span>
+                </label>
+              </div>
+              <p class="cc-category-desc">{{ t?.cat_marketing?.desc }}</p>
+            </div>
+
+          </div>
+
+          <div class="cc-actions cc-actions--settings">
+            <button type="button" class="cc-btn cc-btn--ghost" (click)="toggleSettings()">
+              {{ t?.btn_back }}
+            </button>
+            <button type="button" class="cc-btn cc-btn--outline" (click)="rejectNonEssential()">
+              {{ t?.btn_necessary_only }}
+            </button>
+            <button type="button" class="cc-btn cc-btn--accent" (click)="saveSettings()">
+              {{ t?.btn_save_settings }}
+            </button>
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
+}

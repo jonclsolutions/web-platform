@@ -6,12 +6,20 @@
  * @author RPSW
  * @created 2025
  * @description Manages CRUD operations and public delivery of legal document sections, featuring language-based fallback logic and audit logging.
+ *
+ * @refactor-note (2026) `publicShow()` dřív mapovalo slug na document_type_id natvrdo
+ * (`$slug === 'gdpr' ? 1 : ($slug === 'tos' ? 2 : null)`), takže nový typ dokumentu
+ * ("cookies") by vždy skončil 404. Přepsáno na dohledání `DocumentType` podle `slug`
+ * sloupce - funguje tak pro libovolný typ dokumentu bez další úpravy kódu. Zároveň
+ * doplněno pole `footer_effective`, které šablona (`{{ data.footer_effective }}`)
+ * očekávala, ale odpověď ho dřív vůbec neposílala.
  */
 
 namespace App\Http\Controllers\Api\Legal;
 
 use App\Http\Controllers\Controller;
 use App\Models\Legal\DocumentSection;
+use App\Models\Legal\DocumentType;
 use App\Models\Shop\ShopLog;
 use App\Http\Resources\Legal\DocumentSectionResource;
 use App\Http\Requests\Legal\DocumentSection\StoreDocumentSectionRequest;
@@ -35,7 +43,6 @@ class DocumentSectionController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = DocumentSection::query();
-        
         if ($typeId = $request->input('document_type_id')) {
             $query->where('document_type_id', $typeId);
         }
@@ -90,7 +97,7 @@ class DocumentSectionController extends Controller
         try {
             $section = DocumentSection::findOrFail($id);
             $section->update($request->validated());
-            
+
             $this->logAction($request, 'update', 'Legal', "Updated section ID: {$id}", $id);
             return response()->json(new DocumentSectionResource($section));
         } catch (\Exception $e) {
@@ -100,39 +107,45 @@ class DocumentSectionController extends Controller
     }
 
     /**
-     * Serves content for public display, mapping slugs (gdpr/tos) to document types with language fallback.
+     * Serves content for public display, mapping a document type slug (gdpr/tos/cookies/...)
+     * to its sections, with language fallback to 'cz' when the requested language has no content.
      *
      * @param Request $request The incoming request.
-     * @param string $slug The document type identifier (e.g., 'gdpr').
+     * @param string $slug The document type identifier (e.g., 'gdpr', 'tos', 'cookies').
      * @return JsonResponse Document sections and metadata.
      */
     public function publicShow(Request $request, string $slug): JsonResponse
     {
-        $typeId = ($slug === 'gdpr') ? 1 : (($slug === 'tos') ? 2 : null);
+        $documentType = DocumentType::where('slug', $slug)->first();
 
-        if (!$typeId) {
+        if (!$documentType) {
             return response()->json(['message' => 'Document not found.'], 404);
         }
 
         $lang = $request->input('lang', 'cz');
 
         // Attempt to load requested language
-        $data = DocumentSection::where('document_type_id', $typeId)
+        $data = DocumentSection::where('document_type_id', $documentType->id)
             ->where('lang', $lang)
             ->orderBy('position', 'asc')
             ->get();
 
         // Fallback: If no content in requested language, default to 'cz'
         if ($data->isEmpty() && $lang !== 'cz') {
-            $data = DocumentSection::where('document_type_id', $typeId)
+            $data = DocumentSection::where('document_type_id', $documentType->id)
                 ->where('lang', 'cz')
                 ->orderBy('position', 'asc')
                 ->get();
         }
 
+        $lastUpdate = $data->max('updated_at');
+
         return response()->json([
-            'header_main' => ($typeId === 1) ? 'GDPR' : 'Terms of Service',
-            'last_update_date' => $data->max('updated_at')?->format('d.m.Y') ?? date('d.m.Y'),
+            'header_main' => $documentType->title,
+            'last_update_date' => $lastUpdate?->format('d.m.Y') ?? date('d.m.Y'),
+            'footer_effective' => $lastUpdate
+                ? 'Tyto zásady jsou účinné od ' . $lastUpdate->format('d.m.Y') . '.'
+                : null,
             'sections' => DocumentSectionResource::collection($data)
         ]);
     }
@@ -150,7 +163,6 @@ class DocumentSectionController extends Controller
             $section = DocumentSection::findOrFail($id);
             $heading = $section->heading;
             $section->delete();
-            
             $this->logAction($request, 'delete', 'Legal', "Deleted section: {$heading}", (int)$id);
             return response()->json(null, 204);
         } catch (\Exception $e) {
@@ -184,8 +196,8 @@ class DocumentSectionController extends Controller
                 'context_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
                 'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'System'
             ]);
-        } catch (\Exception $e) { 
-            Log::error("Log error: " . $e->getMessage()); 
+        } catch (\Exception $e) {
+            Log::error("Log error: " . $e->getMessage());
         }
     }
 }

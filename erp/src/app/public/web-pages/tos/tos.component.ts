@@ -21,7 +21,7 @@ import { takeUntil } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './tos.component.html',
-  styleUrl: './tos.component.css',
+  styleUrl: './../../../shared/legal-document.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TosComponent extends BasePublicComponent {

@@ -81,7 +81,8 @@ export class PublicFooterComponent extends BasePublicComponent {
   private loadFooterLegalLinks(): void {
     const legalLinkKeys = [
       { route: '/privacy-policy', key: 'legal.privacy_policy' },
-      { route: '/tos', key: 'legal.terms_of_service' }
+      { route: '/tos', key: 'legal.terms_of_service' },
+      { route: '/cookies-policy', key: 'legal.cookies_policy' }
     ];
 
     this.footerLegalLinks = legalLinkKeys.map(link => ({

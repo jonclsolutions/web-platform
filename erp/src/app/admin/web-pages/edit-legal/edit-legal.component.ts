@@ -4,12 +4,18 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Provides a multi-language content management interface for legal document sections (e.g., GDPR, Terms of Service).
+ * @description Provides a multi-language content management interface for legal document sections (e.g., GDPR, Terms of Service, Cookies).
  * @dependencies
  * - BaseDataComponent: Manages core CRUD operations and API communication.
  * - ConfirmDialogService: Facilitates secure deletion of content sections.
  * - AlertDialogService: Provides feedback to users after operations.
  * - RxJS: Used for reactive data fetching and cross-language consistency checks.
+ *
+ * @refactor-note (2026) `activeTab: 1 | 2` bylo natvrdo napsané pro přesně 2 typy dokumentů
+ * (GDPR/TOS). Po přidání třetího typu (Cookies) byl tenhle hardcoded výčet nahrazen
+ * dynamickým načítáním typů dokumentů z nového endpointu `legal/document-types`
+ * (viz DocumentTypeController) - přidání dalšího typu dokumentu v budoucnu tak
+ * nebude vyžadovat žádnou další změnu v tomhle souboru.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
@@ -31,9 +37,15 @@ interface DocumentSection {
   lang?: string;
 }
 
+interface DocumentTypeItem {
+  id: number;
+  slug: string;
+  title: string;
+}
+
 /**
  * @description Manages the editing lifecycle of localized legal document content.
- * @usage Allows administrators to toggle between document types (GDPR, TOS) and languages, ensuring content parity across translations.
+ * @usage Allows administrators to toggle between document types (GDPR, TOS, Cookies, ...) and languages, ensuring content parity across translations.
  * @note Implements an inline editing pattern with a completeness checker to warn users about missing translations.
  */
 @Component({
@@ -49,7 +61,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
 
   private readonly LANG_MODULE = 'web';
 
-  activeTab: 1 | 2 = 1;
+  /** Typy dokumentů (GDPR/TOS/Cookies/...) načtené z API - taby se vykreslují podle tohoto pole. */
+  documentTypes: DocumentTypeItem[] = [];
+  /** ID aktuálně vybraného typu dokumentu; null dokud se typy ještě nenačetly. */
+  activeTabId: number | null = null;
 
   languages: any[] = [];
   activeLang: string = 'cz';
@@ -80,7 +95,26 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
 
   override ngOnInit(): void {
     this.initWithAuthCheck(this.router);
+    this.loadDocumentTypes();
     this.loadLanguages();
+  }
+
+  /**
+   * @description Načte dostupné typy právních dokumentů a nastaví první z nich jako výchozí tab.
+   */
+  private loadDocumentTypes(): void {
+    this.dataHandler.getCollection<DocumentTypeItem>('legal/document-types')
+      .pipe(catchError(() => of([])))
+      .subscribe((types) => {
+        this.documentTypes = types ?? [];
+
+        if (this.documentTypes.length > 0 && this.activeTabId === null) {
+          this.activeTabId = this.documentTypes[0].id;
+          this.refreshData();
+        }
+
+        this.cd.markForCheck();
+      });
   }
 
   /**
@@ -122,11 +156,12 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
   }
 
   override refreshData(): void {
+    if (this.activeTabId === null) return;
+
     const params = {
-      document_type_id: this.activeTab,
+      document_type_id: this.activeTabId,
       lang: this.activeLang
     };
-    
     this.loadAllData(params).subscribe({
       next: (res) => {
         this.data = Array.isArray(res) ? res : [];
@@ -136,9 +171,13 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     });
   }
 
-  switchTab(tabId: 1 | 2): void {
-    if (this.activeTab === tabId) return;
-    this.activeTab = tabId;
+  /**
+   * @description Přepne aktivní typ dokumentu (tab) a resetuje rozpracovaný stav editace.
+   * @param tabId ID typu dokumentu z `documentTypes`.
+   */
+  switchTab(tabId: number): void {
+    if (this.activeTabId === tabId) return;
+    this.activeTabId = tabId;
     this.editingIds.clear();
     this.editBuffer = {};
     this.showAddForm = false;
@@ -153,7 +192,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
    * @note Uses forkJoin to aggregate data for every supported language and compares position availability.
    */
   private checkCompleteness(): void {
-    if (this.languages.length <= 1) {
+    if (this.languages.length <= 1 || this.activeTabId === null) {
       this.missingSummary = {};
       this.cd.markForCheck();
       return;
@@ -161,7 +200,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
 
     const requests = this.languages.map(lang =>
       this.loadAllData({
-        document_type_id: this.activeTab,
+        document_type_id: this.activeTabId,
         lang: lang.code
       }).pipe(
         map(res => ({
@@ -294,16 +333,16 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       this.alertDialog.open('Validace', 'Nadpis i obsah musí být vyplněny.', 'warning');
       return;
     }
+    if (this.activeTabId === null) return;
 
     this.saving = true;
     const payload: any = {
-      document_type_id: this.activeTab,
+      document_type_id: this.activeTabId,
       heading: this.newHeading,
       content: this.newContent,
       position: this.addForPosition ?? (this.data.length + 1),
       lang: this.activeLang,
     };
-
     this.postData(payload as DocumentSection).subscribe({
       next: () => {
         this.cancelAdd();
@@ -342,11 +381,18 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     }
   }
 
+  /**
+   * @description Název aktuálně vybraného typu dokumentu (dřív natvrdo `activeTab === 1 ? 'GDPR' : ...`).
+   */
   get tabLabel(): string {
-    return this.activeTab === 1 ? 'GDPR' : 'Obchodní podmínky';
+    return this.documentTypes.find(t => t.id === this.activeTabId)?.title ?? '';
   }
 
   trackById(_: number, item: DocumentSection): number {
+    return item.id;
+  }
+
+  trackByTypeId(_: number, item: DocumentTypeItem): number {
     return item.id;
   }
 }

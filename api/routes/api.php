@@ -39,7 +39,7 @@ use App\Http\Controllers\Api\Shop\ShopOrderController;
 use App\Http\Controllers\Api\Shop\ShopCustomerController;
 use App\Http\Controllers\Api\Shop\ShopCheckoutController;
 use App\Http\Controllers\Api\Shop\ShopPublicController;
-
+use App\Http\Controllers\Api\Legal\DocumentTypeController;
 /*
 |--------------------------------------------------------------------------
 | LANGUAGES — public access (frontend does not require a token)
@@ -343,20 +343,22 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     */
     Route::prefix('legal')->group(function () {
 
-        Route::prefix('document-sections')->group(function () {
-            Route::get('/',      [DocumentSectionController::class, 'index']);
-            Route::post('/',     [DocumentSectionController::class, 'store']);
-            Route::get('/{id}',  [DocumentSectionController::class, 'show']);
-            Route::put('/{id}',  [DocumentSectionController::class, 'update']);
-            Route::delete('/{id}', [DocumentSectionController::class, 'destroy']);
-        });
+    Route::get('document-types', [DocumentTypeController::class, 'index']);   // ← nový řádek
 
-        Route::prefix('config')->group(function () {
-            Route::get('/',             [SiteConfigurationController::class, 'index']);
-            Route::put('/settings',     [SiteConfigurationController::class, 'updateSettings']);
-            Route::post('/social',      [SiteConfigurationController::class, 'storeSocial']);
-            Route::put('/social/{id}',  [SiteConfigurationController::class, 'updateSocial']);
-            Route::delete('/social/{id}', [SiteConfigurationController::class, 'destroySocial']);
-        });
+    Route::prefix('document-sections')->group(function () {
+        Route::get('/',      [DocumentSectionController::class, 'index']);
+        Route::post('/',     [DocumentSectionController::class, 'store']);
+        Route::get('/{id}',  [DocumentSectionController::class, 'show']);
+        Route::put('/{id}',  [DocumentSectionController::class, 'update']);
+        Route::delete('/{id}', [DocumentSectionController::class, 'destroy']);
     });
+
+    Route::prefix('config')->group(function () {
+        Route::get('/',             [SiteConfigurationController::class, 'index']);
+        Route::put('/settings',     [SiteConfigurationController::class, 'updateSettings']);
+        Route::post('/social',      [SiteConfigurationController::class, 'storeSocial']);
+        Route::put('/social/{id}',  [SiteConfigurationController::class, 'updateSocial']);
+        Route::delete('/social/{id}', [SiteConfigurationController::class, 'destroySocial']);
+    });
+});
 });

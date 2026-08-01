@@ -206,13 +206,15 @@ export class EditEshopComponent
    * @description Compares current language structure against the CZ master reference to identify
    * missing content.
    */
-  private buildFlatList(): void {
+private buildFlatList(): void {
     this.flattenedKeys = [];
     const czFlat  = this.flattenToMap(this.czTranslations);
     const curFlat = this.flattenToMap(this.translations);
 
     for (const [path] of czFlat.entries()) {
-      const curVal = curFlat.get(path) ?? '';
+      const rawVal = curFlat.get(path) ?? '';
+      const curVal = typeof rawVal === 'string' ? rawVal : String(rawVal); // <-- Bezpečná ochrana
+      
       this.flattenedKeys.push({
         path,
         value: curVal,
@@ -222,7 +224,8 @@ export class EditEshopComponent
 
     for (const [path, val] of curFlat.entries()) {
       if (!czFlat.has(path)) {
-        this.flattenedKeys.push({ path, value: val, missing: false });
+        const safeVal = typeof val === 'string' ? val : String(val);
+        this.flattenedKeys.push({ path, value: safeVal, missing: false });
       }
     }
   }
@@ -271,7 +274,7 @@ export class EditEshopComponent
     setTimeout(() => this.resizeAllTextareas(), 10);
   }
 
-  updateValue(path: string, newValue: string): void {
+updateValue(path: string, newValue: string): void {
     const keys = path.split('.');
     let temp = this.translations;
     for (let i = 0; i < keys.length - 1; i++) {
@@ -283,7 +286,7 @@ export class EditEshopComponent
     const item = this.flattenedKeys.find(k => k.path === path);
     if (item) {
       item.value   = newValue;
-      item.missing = newValue.trim() === '';
+      item.missing = (typeof newValue === 'string' ? newValue : String(newValue)).trim() === '';
     }
   }
 

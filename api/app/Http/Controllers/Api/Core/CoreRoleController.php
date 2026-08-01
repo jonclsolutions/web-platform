@@ -175,7 +175,7 @@ class CoreRoleController extends Controller
      * @param int $id The ID of the role to delete.
      * @return JsonResponse Returns 204 No Content upon success.
      */
-    public function destroy(Request $request, $id): JsonResponse
+public function destroy(Request $request, $id): JsonResponse
     {
         Log::info('[ROLE DELETE DEBUG] destroy() called', [
             'raw_id'          => $id,
@@ -185,8 +185,6 @@ class CoreRoleController extends Controller
             'user_id'         => $request->user()?->id,
             'user_email'      => $request->user()?->user_email,
         ]);
-
-        $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
 
         try {
             $role = CoreRole::withTrashed()->findOrFail($id);
@@ -202,8 +200,6 @@ class CoreRoleController extends Controller
             'id'             => $role->id,
             'role_name'      => $role->role_name,
             'is_protected'   => $role->isProtected(),
-            'deleted_at_now' => $role->deleted_at,
-            'force_delete'   => $forceDelete,
         ]);
 
         if ($role->isProtected()) {
@@ -232,20 +228,15 @@ class CoreRoleController extends Controller
         }
 
         try {
-            if ($forceDelete) {
-                Log::info('[ROLE DELETE DEBUG] volám forceDelete()', ['id' => $role->id]);
-                $result = $role->forceDelete();
-            } else {
-                Log::info('[ROLE DELETE DEBUG] volám delete() (soft delete)', ['id' => $role->id]);
-                $result = $role->delete();
-            }
+            Log::info('[ROLE DELETE DEBUG] volám forceDelete()', ['id' => $role->id]);
+            $result = $role->forceDelete();
 
-            Log::info('[ROLE DELETE DEBUG] výsledek delete()/forceDelete()', [
+            Log::info('[ROLE DELETE DEBUG] výsledek forceDelete()', [
                 'id'     => $role->id,
                 'result' => $result,
             ]);
         } catch (\Throwable $e) {
-            Log::error('[ROLE DELETE DEBUG] delete()/forceDelete() vyhodilo výjimku', [
+            Log::error('[ROLE DELETE DEBUG] forceDelete() vyhodilo výjimku', [
                 'id' => $role->id,
                 'exception' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -253,23 +244,13 @@ class CoreRoleController extends Controller
             throw $e;
         }
 
-        // Ověření přímo proti DB (bypass Eloquent modelu/cache), ať víme jistě,
-        // jestli je sloupec deleted_at v tabulce opravdu vyplněný, nebo řádek fyzicky pryč.
-        if ($forceDelete) {
-            $stillExists = DB::table('core_roles')->where('id', $id)->exists();
-            Log::info('[ROLE DELETE DEBUG] ověření z DB po forceDelete()', [
-                'id' => $id,
-                'still_exists_in_db' => $stillExists,
-            ]);
-        } else {
-            $freshRow = DB::table('core_roles')->where('id', $id)->first();
-            Log::info('[ROLE DELETE DEBUG] ověření z DB po delete() (soft)', [
-                'id' => $id,
-                'row_from_db' => $freshRow,
-            ]);
-        }
+        $stillExists = DB::table('core_roles')->where('id', $id)->exists();
+        Log::info('[ROLE DELETE DEBUG] ověření z DB po forceDelete()', [
+            'id' => $id,
+            'still_exists_in_db' => $stillExists,
+        ]);
 
-        $this->logAction($request, $forceDelete ? 'hard_delete' : 'soft_delete', 'CoreRole', "Deleted role ID: $id", $id);
+        $this->logAction($request, 'hard_delete', 'CoreRole', "Deleted role ID: $id", $id);
 
         return response()->json(null, 204);
     }

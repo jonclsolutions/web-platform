@@ -1,0 +1,139 @@
+/*     
+    @file: legal-document.css
+    @path: src/app/shared/styles/legal-document.css
+    @project RPSW Web
+    @author RPSW
+    @created 2026
+    @description Sdílený vzhled pro všechny stránky s právním dokumentem (GDPR, TOS,
+    Cookies, ...). Dřív měly tos.component.css a privacy-policy.component.css naprosto
+    identický obsah (copy-paste) - teď existuje jednou tady a jednotlivé komponenty ho
+    jen importují (`@import '../../../shared/styles/legal-document.css';`), takže úprava
+    vzhledu na jednom místě se projeví všude.
+*/
+
+.container {
+  max-width: 860px;
+  margin: 20px auto;
+  padding: 40px 50px;
+  color: #a0a0b0;
+  font-family: "Source Sans Pro", sans-serif;
+  line-height: 1.7;
+}
+
+h1 {
+  margin-top: 50px;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  font-family: "Source Sans Pro", sans-serif;
+  text-shadow: 0 0 15px rgba(158, 158, 158, 0.2);
+}
+
+h2 {
+  color: #a67dff;
+  margin-top: 40px;
+  margin-bottom: 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: "Source Sans Pro", sans-serif;
+  border-bottom: 1px solid rgba(166, 125, 255, 0.2);
+  padding-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+h3 {
+  color: #c8b8ff;
+  margin-top: 22px;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: "Source Sans Pro", sans-serif;
+}
+
+p {
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+  color: #8a8a9c;
+}
+
+ul, ol {
+  margin-left: 20px;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+ul { list-style: disc; }
+ol { list-style: decimal; }
+
+li {
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 0.95rem;
+  color: #8a8a9c;
+  margin-bottom: 6px;
+  line-height: 1.65;
+}
+
+strong {
+  font-weight: 700;
+  color: #b0b0c0;
+}
+
+em {
+  font-style: italic;
+  color: #9090a8;
+}
+
+a {
+  color: #a67dff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #c09fff;
+  text-decoration: underline;
+}
+
+.last-update {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #55556a;
+  font-family: "Source Sans Pro", sans-serif;
+  margin-top: 40px;
+  border-top: 1px solid rgba(166, 125, 255, 0.12);
+  padding-top: 14px;
+}
+
+.policy-section {
+  margin-bottom: 8px;
+}
+
+.subsection {
+  margin-top: 4px;
+  padding-left: 16px;
+  border-left: 2px solid rgba(166, 125, 255, 0.15);
+}
+
+@media (max-width: 905px) {
+  h1 {
+    margin-top: 0;
+    font-size: 1.9rem;
+  }
+  .container {
+    padding: 24px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.6rem;
+  }
+  h2 {
+    font-size: 1.1rem;
+  }
+  .container {
+    padding: 20px 16px;
+  }
+}

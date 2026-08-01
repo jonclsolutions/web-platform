@@ -1,0 +1,11 @@
+/*     
+    @file: cookies-policy.component.css
+    @path: /src/app/public/web-pages/cookies-policy/cookies-policy.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @note Odkaz "Změnit nastavení cookies" je obyčejný <a> element ve stejném vzoru
+    jako odkaz na Zásady ochrany osobních údajů (věta + odkaz) - žádný nový CSS
+    tedy není potřeba, `a`/`p` styly jsou už ve sdíleném legal-document.css.
+*/
+@import '../../../shared/styles/legal-document.css';

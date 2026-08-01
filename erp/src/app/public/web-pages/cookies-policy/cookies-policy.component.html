@@ -1,0 +1,50 @@
+<!-- 
+    @file: cookies-policy.component.html
+    @path: /src/app/public/web-pages/cookies-policy/cookies-policy.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+-->
+@if (data) {
+  <div class="container">
+    <h1>{{ t?.header_main }}</h1>
+    <p class="last-update">
+      <strong>{{ t?.last_update_text }}</strong> {{ data.last_update_date }}
+    </p>
+
+    @for (section of data.sections; track section.id) {
+      <div class="policy-section">
+        <h2>{{ section.heading }}</h2>
+        <div [innerHTML]="section.content"></div>
+
+        @if (section.subsections && section.subsections.length > 0) {
+          <div>
+            @for (sub of section.subsections; track sub.id) {
+              <div class="subsection">
+                <h3>{{ sub.heading }}</h3>
+                <p>{{ sub.text }}</p>
+                @if (sub.list) {
+                  <ul>
+                    @for (bullet of sub.list; track bullet) {
+                      <li [innerHTML]="bullet"></li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <p style="margin-top: 20px;">
+      {{ t?.change_settings_text }} <a href="javascript:void(0)" (click)="openCookieSettings()">{{ t?.change_settings_link_text }}</a>.
+    </p>
+
+    <p style="margin-top: 20px;">
+      {{ t?.more_info_text }} <a routerLink="../privacy-policy">{{ t?.more_info_link_text }}</a>.
+    </p>
+
+    <p class="last-update" style="margin-top: 40px;">{{ data.footer_effective }}</p>
+  </div>
+}

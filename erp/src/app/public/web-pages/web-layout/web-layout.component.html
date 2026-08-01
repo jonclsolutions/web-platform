@@ -1,6 +1,6 @@
 <!-- 
-    @file: web-laoyut.component.html
-    @path: /src/app/public/web-pages/web-laoyut/web-laoyut.component.html
+    @file: web-layout.component.html
+    @path: /src/app/public/web-pages/web-layout/web-layout.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2025
@@ -9,7 +9,9 @@
 <app-public-header (menuToggled)="toggleRootScroll($event)"></app-public-header>
 
 <main>
-  <router-outlet></router-outlet> 
+  <router-outlet></router-outlet>
 </main>
 
 <app-public-footer></app-public-footer>
+
+<app-cookie-consent></app-cookie-consent>
