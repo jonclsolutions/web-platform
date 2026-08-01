@@ -9,6 +9,10 @@
  * - BaseDataComponent: Provides base CRUD and state management.
  * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
  * - CommonModule/FormsModule: Standard Angular modules for structural directives and two-way data binding.
+ *
+ * @refactor-note (2026) Přidáno `google_analytics_id` do `settings` state a do obou větví
+ * `saveSettings()` (FormData i JSON) - GA4 Measurement ID se ukládá stejnou cestou jako
+ * ostatní firemní údaje (`legal/config/settings`), žádný nový endpoint nebyl potřeba.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
@@ -42,6 +46,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   settings: SiteSetting = {
     company_name: '', ico: '', dic: '',
+    google_analytics_id: null,
     contact_email: '', contact_phone: '',
     address: '', footer_text: '',
     logo_path: null,
@@ -155,7 +160,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
             copyright_text_i18n: res.settings.copyright_text_i18n ?? {},
           };
         }
-
         this.ensureI18nDefaults();
 
         this.socialLinks = (res.social_links ?? []).map((s: any) => ({
@@ -236,6 +240,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       fd.append('copyright_text_i18n', JSON.stringify(this.settings.copyright_text_i18n ?? {}));
       fd.append('ico',           this.settings.ico           ?? '');
       fd.append('dic',           this.settings.dic           ?? '');
+      fd.append('google_analytics_id', this.settings.google_analytics_id ?? '');
       fd.append('contact_email', this.settings.contact_email ?? '');
       fd.append('contact_phone', this.settings.contact_phone ?? '');
       fd.append('address',       this.settings.address       ?? '');
@@ -254,6 +259,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
         copyright_text_i18n:  this.settings.copyright_text_i18n ?? {},
         ico:                  this.settings.ico,
         dic:                  this.settings.dic,
+        google_analytics_id:  this.settings.google_analytics_id || null,
         contact_email:        this.settings.contact_email,
         contact_phone:        this.settings.contact_phone,
         address:              this.settings.address,
@@ -364,7 +370,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       (event.target as HTMLInputElement).value = '';
       return;
     }
-
     const updated = [...this.socialLinks];
     if (updated[index]._iconPreview) URL.revokeObjectURL(updated[index]._iconPreview!);
     updated[index] = {
@@ -418,7 +423,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       fd.append('url',      link.url.trim());
       fd.append('position', String(link.position));
       if (link._iconFile) fd.append('icon_file', link._iconFile, link._iconFile.name);
-
       const endpoint = link._isNew
         ? 'legal/config/social'
         : `legal/config/social/${link.id}`;

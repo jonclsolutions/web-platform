@@ -155,6 +155,21 @@
                    name="dic" placeholder="CZ12345678">
           </div>
 
+          <!-- Vložit do .ws-form-grid (karta "Firemní údaje"), hned za pole DIČ,
+     před pole "Kontaktní e-mail". Žádná jiná změna v souboru není potřeba.
+     Použita existující .ws-logo-hint třída (žlutý hint box), ne .ws-i18n-lang-tag
+     (ta je stylovaná jako malý pill štítek, na celou větu by vypadala divně). -->
+
+<div class="ws-field ws-field-full">
+  <label class="ws-label">Google Analytics 4 - Measurement ID</label>
+  <input class="ws-input" type="text" [(ngModel)]="settings.google_analytics_id"
+         name="google_analytics_id" placeholder="G-XXXXXXXXXX"
+         pattern="^G-[A-Za-z0-9]{6,10}$">
+  <p class="ws-logo-hint">
+    ℹ️ Nepovinné - GA se na webu spustí až po odsouhlasení analytických cookies návštěvníkem.
+  </p>
+</div>
+
           <div class="ws-field">
             <label class="ws-label">Kontaktní e-mail *</label>
             <input class="ws-input" type="email" [(ngModel)]="settings.contact_email"

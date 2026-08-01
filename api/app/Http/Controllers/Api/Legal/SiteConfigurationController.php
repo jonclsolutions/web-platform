@@ -6,6 +6,12 @@
  * @author RPSW
  * @created 2026
  * @description Centralized management for site-wide configuration, including company details, localized branding assets, and social media links with file handling.
+ *
+ * @refactor-note (2026) Přidáno pole `google_analytics_id` do `updateSettings()` validace -
+ * GA4 Measurement ID má formát "G-" následované 10 alfanumerickými znaky, proto přidán
+ * i `regex` požadavek navíc k `nullable|string` (je to volitelné pole, web bez GA funguje
+ * stejně dál). Hodnota se pak čte na veřejné straně přes `publicShow()`/`index()`, které
+ * se neměnily - Eloquent ji serializuje automaticky jako každý jiný sloupec.
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -50,6 +56,7 @@ class SiteConfigurationController extends Controller
             'company_name'         => 'required|string|max:255',
             'ico'                  => 'required|string|max:20',
             'dic'                  => 'nullable|string|max:20',
+            'google_analytics_id'  => 'nullable|string|max:20|regex:/^G-[A-Z0-9]{6,10}$/',
             'brand_tagline'        => 'nullable|string|max:255',
             'brand_tagline_i18n'   => 'nullable',
             'copyright_text'       => 'nullable|string|max:255',
