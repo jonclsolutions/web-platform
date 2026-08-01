@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\Shop\ShopCustomerController;
 use App\Http\Controllers\Api\Shop\ShopCheckoutController;
 use App\Http\Controllers\Api\Shop\ShopPublicController;
 use App\Http\Controllers\Api\Legal\DocumentTypeController;
+use App\Http\Controllers\Api\Web\WebExternalLinkController;
 /*
 |--------------------------------------------------------------------------
 | LANGUAGES — public access (frontend does not require a token)
@@ -288,6 +289,14 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         });
         Route::apiResource('job_applications', WebJobApplicationController::class)
             ->parameters(['job_applications' => 'id']);
+
+        Route::prefix('external_links')->group(function () {
+            Route::get('/{id}',                [WebExternalLinkController::class, 'show']);
+            Route::post('/{id}/restore',       [WebExternalLinkController::class, 'restore']);
+            Route::delete('/force-delete-all', [WebExternalLinkController::class, 'forceDeleteAllTrashed']);
+        });
+        Route::apiResource('external_links', WebExternalLinkController::class)
+            ->parameters(['external_links' => 'id']);
 
         Route::prefix('logs')->group(function () {
             Route::get('/',     [WebLogController::class, 'index']);

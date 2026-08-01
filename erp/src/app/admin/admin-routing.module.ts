@@ -39,6 +39,7 @@ import { SupportFormComponent } from './intranet/knowledge-base/pages/support-fo
 import { SupportTicketsComponent } from './web-pages/support-tickets/support-tickets.component';
 import { JobApplicationsComponent } from './web-pages/job-applications/job-applications.component';
 import { EditRolesComponent } from './web-pages/edit-roles/edit-roles.component';
+import { ExternalLinksComponent } from './web-pages/external-links/external-links.component';
 
 // Shop module components
 import { DashboardComponent as ShopDashboardComponent } from './shop-pages/dashboard/dashboard.component';
@@ -86,6 +87,7 @@ const routes: Routes = [
       { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-view-job-applications' } },
       { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'web-edit-legal' } },
       { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'web-view-web-settings' } },
+       { path: 'external-links', component: ExternalLinksComponent, data: { permission: 'web-manage-external-links' } }, 
 
       // 🔒 Správa rolí a oprávnění - natvrdo omezeno na roli 'sysadmin' (viz sysadminGuard),
       // nezávisle na permission systému, aby zůstala vždy pod výhradní kontrolou sysadmina.
