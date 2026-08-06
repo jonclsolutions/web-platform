@@ -9,6 +9,8 @@
  *   Also warms the legal-docs cache (GDPR/TOS) in the background AFTER the app has rendered,
  *   so visiting /privacy-policy or /tos later usually needs no network wait — without
  *   delaying the initial paint for pages almost nobody visits.
+ *   Additionally sets up a global CSSOM-based ':hover' disabler for touch/narrow viewports,
+ *   so hover-triggered styles never get "stuck" after a tap on mobile/tablet.
  * @note All requests inside init()'s Promise.all run in parallel — total wait time is bounded
  *   by the slowest one, not their sum. The logo image itself is preloaded as raw bytes (not
  *   just its path) so the <img> in the header can paint instantly from browser cache.
@@ -20,11 +22,26 @@ import { LocalizationService } from './localization.service';
 import { PublicDataService } from './public-data.service';
 import { LegalDocsService } from './legal-docs.service';
 
+/**
+ * @description Viewport width (in px) at or below which ':hover' rules are
+ *   globally suppressed. Matches the app's mobile/tablet breakpoint, where
+ *   input is touch-based and hover has no meaningful interaction model.
+ */
+const HOVER_DISABLE_MAX_WIDTH = 906;
+
 @Injectable({ providedIn: 'root' })
 export class AppBootstrapService {
   private localizationService = inject(LocalizationService);
   private publicDataService = inject(PublicDataService);
   private legalDocsService = inject(LegalDocsService);
+
+  /**
+   * @description Stores the original inline cssText of every ':hover' CSSStyleRule
+   *   found across all readable stylesheets, so it can be restored exactly when the
+   *   viewport grows back above HOVER_DISABLE_MAX_WIDTH. Keyed by rule reference —
+   *   safe because CSSOM rule objects are stable for the lifetime of the stylesheet.
+   */
+  private savedHoverDeclarations = new Map<CSSStyleRule, string>();
 
   /**
    * @description Entry point called by APP_INITIALIZER. Angular bootstrap is
@@ -42,6 +59,10 @@ export class AppBootstrapService {
     // If it fails or is slow, nobody waits on it — the legal-page components
     // simply fall back to fetching on demand (see LegalDocsService.getDocument).
     this.prefetchLegalDocs();
+
+    // UI-only concern, must never block or delay app startup — set up once,
+    // reacts to viewport changes for the lifetime of the session.
+    this.initHoverDisabling();
   }
 
   /**
@@ -94,5 +115,99 @@ export class AppBootstrapService {
     const lang = this.localizationService.getCurrentLanguage();
     this.legalDocsService.preload('gdpr', lang).catch(() => {});
     this.legalDocsService.preload('tos', lang).catch(() => {});
+  }
+
+  /**
+   * @description Registers the resize listener, starts the stylesheet MutationObserver,
+   *   and runs an initial pass of applyHoverState(). This is the public entry point for
+   *   the hover-disabling feature — called once from init() and left running for the
+   *   app's lifetime.
+   * @note Deliberately does NOT use the '(hover: none)' media feature: that only
+   *   reflects the input device's real capability, not viewport width, so shrinking
+   *   a desktop browser window would not trigger it. Width-based matching is what
+   *   the business requirement actually asks for (disable hover under 906px,
+   *   regardless of device type).
+   */
+  private initHoverDisabling(): void {
+    this.applyHoverState();
+    window.addEventListener('resize', () => this.applyHoverState());
+    this.observeLazyStyleInjection();
+  }
+
+  /**
+   * @description Watches <head> for newly inserted <style> tags and re-runs
+   *   applyHoverState() whenever one appears.
+   * @note This is the critical piece that makes hover-disabling actually work on
+   *   this app: routes use loadComponent() lazy loading, so each component's CSS
+   *   is only injected into document.styleSheets at the moment that route chunk
+   *   loads — which happens AFTER APP_INITIALIZER has already run once. Without
+   *   this observer, a user landing directly on a mobile-width page would see
+   *   working hovers on any component whose stylesheet arrived after the single
+   *   initial applyHoverState() call, since 'resize' never fires on first load.
+   * @note Debounced with a microtask (Promise.resolve().then) rather than firing
+   *   once per individual <style> tag — Angular can inject several stylesheets
+   *   in the same tick when a chunk with child components loads.
+   */
+  private observeLazyStyleInjection(): void {
+    let scheduled = false;
+
+    const observer = new MutationObserver(mutations => {
+      const hasNewStyleTag = mutations.some(m =>
+        Array.from(m.addedNodes).some(
+          node => node instanceof HTMLStyleElement || node instanceof HTMLLinkElement
+        )
+      );
+
+      if (hasNewStyleTag && !scheduled) {
+        scheduled = true;
+        Promise.resolve().then(() => {
+          scheduled = false;
+          this.applyHoverState();
+        });
+      }
+    });
+
+    observer.observe(document.head, { childList: true });
+  }
+
+  /**
+   * @description Walks every stylesheet reachable from the document, finds all
+   *   CSSStyleRule instances whose selector contains ':hover', and either strips
+   *   their declarations (viewport <= HOVER_DISABLE_MAX_WIDTH) or restores the
+   *   originally saved declarations (viewport above the breakpoint).
+   * @note Only clears the hover rule's OWN declarations — never touches unrelated
+   *   rules, non-hover states, or inherited values. This avoids the color/layout
+   *   corruption caused by broader approaches like 'all: revert !important' on
+   *   '*:hover', which interacts unpredictably with the cascade.
+   * @note Cross-origin stylesheets (e.g. CDN fonts) throw on .cssRules access and
+   *   are silently skipped — there is nothing hover-related to control there anyway.
+   */
+  private applyHoverState(): void {
+    const shouldDisable = window.innerWidth <= HOVER_DISABLE_MAX_WIDTH;
+
+    for (const sheet of Array.from(document.styleSheets)) {
+      let rules: CSSRuleList;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+
+      Array.from(rules).forEach(rule => {
+        if (!(rule instanceof CSSStyleRule) || !rule.selectorText?.includes(':hover')) {
+          return;
+        }
+
+        if (shouldDisable) {
+          if (!this.savedHoverDeclarations.has(rule)) {
+            this.savedHoverDeclarations.set(rule, rule.style.cssText);
+          }
+          rule.style.cssText = '';
+        } else if (this.savedHoverDeclarations.has(rule)) {
+          rule.style.cssText = this.savedHoverDeclarations.get(rule)!;
+          this.savedHoverDeclarations.delete(rule);
+        }
+      });
+    }
   }
 }

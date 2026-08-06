@@ -8,9 +8,15 @@
  *      nahrazena rozsáhlejší srovnávací maticí balíček × funkce (`pricingPackages` /
  *      `pricingFeatures`), protože přibyly další služby (Custom ERP/CRM apod.) s
  *      podstatně větším počtem funkcí než předchozích 6 karet uneslo přehledně.
- *      Matice je jeden univerzální ceník (nezávislý na záložkách Web/Desktop/Mobil/AI),
- *      s volitelným tooltipem u řádků, jejichž název sám o sobě nemusí být jasný
- *      (např. "Uživatelské role a oprávnění").
+ * @pricing-matrix-note (2026-2) Matice byla dál rozdělena PER TECHNOLOGII (web/desktop/
+ *      mobile/ai), protože jednotlivé technologické větve nabízejí zásadně odlišný počet
+ *      a typ balíčků/funkcí (např. AI sekce má výrazně méně řádků než web). Struktura
+ *      překladu se tedy změnila z jednoho globálního `t.pricing.{packages,features}` na
+ *      `t.pricing.{tech-id}.{eyebrow,header,subheader,packages,features}` - klíčovaný
+ *      stejnými ID jako `technologies` (`web-dev`, `desktop-dev`, `mobile-dev`, `ai-dev`),
+ *      analogicky ke stávajícímu vzoru `webServices` / `desktopServices` apod.
+ *      Getter `currentPricing` vybírá aktivní sadu podle `currentTech` - `pricingPackages`
+ *      a `pricingFeatures` z ní jen čtou, takže šablona (HTML) se vůbec nemusí měnit.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -35,6 +41,18 @@ export interface PricingFeatureRow {
   label: string;
   tooltip?: string;
   values: Record<string, string | boolean | null>;
+}
+
+/**
+ * @description Kompletní cenová matice pro jednu technologickou záložku (web/desktop/
+ *              mobile/ai) - vlastní hlavička sekce + vlastní sada balíčků a funkcí.
+ */
+export interface PricingMatrix {
+  eyebrow?: string;
+  header?: string;
+  subheader?: string;
+  packages: PricingPackage[];
+  features: PricingFeatureRow[];
 }
 
 @Component({
@@ -65,6 +83,9 @@ this.route.queryParams
 const techId = params['tech'];
 if (techId && this.technologies.some(t => t.id === techId)) {
 this.currentTech = techId;
+// Cenová matice se mění spolu se záložkou - tooltip otevřený u řádku
+// z předchozí matice by po přepnutí odkazoval na neexistující/jiný řádek.
+this.activeTooltipKey = null;
 this.cdr.markForCheck();
         }
       });
@@ -95,19 +116,29 @@ return map[this.currentTech] || [];
   }
 
 /**
-   * @description Balíčky (sloupce) cenové matice - jeden univerzální ceník napříč
-   *              celou nabídkou služeb, nezávislý na zvolené technologické záložce.
+   * @description Cenová matice (hlavička + balíčky + funkce) pro AKTUÁLNĚ vybranou
+   *              technologickou záložku. Jediné místo, které čte `t.pricing[currentTech]`
+   *              - všechny ostatní gettery pod ním (eyebrow/header/subheader/packages/
+   *              features) z něj jen odvozují svou hodnotu.
    */
-get pricingPackages(): PricingPackage[] {
-return this.t?.pricing?.packages ?? [];
+get currentPricing(): PricingMatrix | null {
+return this.t?.pricing?.[this.currentTech] ?? null;
   }
 
 /**
-   * @description Řádky (funkce/vlastnosti) cenové matice, každý s hodnotou pro
-   *              každý balíček (true/false pro fajfku, nebo text jako konkrétní hodnota).
+   * @description Balíčky (sloupce) cenové matice AKTIVNÍ technologické záložky.
+   */
+get pricingPackages(): PricingPackage[] {
+return this.currentPricing?.packages ?? [];
+  }
+
+/**
+   * @description Řádky (funkce/vlastnosti) cenové matice AKTIVNÍ technologické záložky,
+   *              každý s hodnotou pro každý balíček (true/false pro fajfku, nebo text
+   *              jako konkrétní hodnota).
    */
 get pricingFeatures(): PricingFeatureRow[] {
-return this.t?.pricing?.features ?? [];
+return this.currentPricing?.features ?? [];
   }
 
 /**
@@ -140,6 +171,16 @@ this.cdr.markForCheck();
 
 selectTech(techId: string): void {
 this.currentTech = techId;
+// Viz poznámka v onInit() - jiná matice může mít úplně jiné řádky (`row.key`),
+// takže případně otevřený tooltip z předchozí záložky nechceme "zdědit".
+this.activeTooltipKey = null;
 this.cdr.markForCheck();
   }
+  /**
+ * @description Obecná poznámka pod cenovou maticí platná napříč všemi technologickými
+ *              záložkami - matice je orientační, reálný rozsah/cena se řeší individuálně.
+ */
+get pricingNote(): string {
+  return this.t?.pricing?.note ?? '';
+}
 }

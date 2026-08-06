@@ -55,7 +55,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 120px 24px 60px;
+  padding: 120px 24px 20px;
   animation: fadeUp 0.7s ease-out both;
 }
 
@@ -146,20 +146,6 @@
 
 .svc-panel-header { margin-bottom: 24px; }
 
-.svc-panel-tag {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid var(--border-mid);
-  border-radius: 999px;
-  padding: 4px 12px;
-  margin-bottom: 12px;
-}
-
 .svc-panel-title {
   font-family: var(--ff-display);
   font-size: 1.9rem;
@@ -248,7 +234,9 @@
   background-color: #111128;
 }
 
-.faq-item--open .faq-body { max-height: 400px; }
+/* Klikatelné, jen když je položka rozbalená (jinak je obsah stejně
+   skrytý za max-height: 0 a kliknout na něj není kam). */
+.faq-item--open .faq-body { max-height: 400px; cursor: pointer; }
 
 .faq-answer-text {
   padding: 0 18px 16px;
@@ -614,6 +602,105 @@
   border-collapse: separate;
   border-spacing: 0;
   min-width: 760px;
+}
+
+.pm-disclaimer {
+  max-width: 640px;
+  margin: 20px auto 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.svc-consultation-section {
+  padding: 32px 0;
+}
+
+.svc-consultation-section .section-eyebrow {
+  font-size: 0.72rem;
+}
+
+.svc-consultation-section .section-title {
+  font-family: var(--ff-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  color: #fff;
+}
+
+.consultation-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding-bottom: 80px;
+}
+
+.consultation-card {
+  background: rgba(13, 13, 27, 0.35);
+  outline: 1px solid rgba(166, 125, 255, 0.16);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: outline-color 0.3s ease;
+}
+
+.consultation-card:hover {
+  outline-color: rgba(166, 125, 255, 0.4);
+}
+
+.consultation-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgba(166, 125, 255, 0.1);
+  color: #a67dff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.consultation-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.consultation-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e8e8f0;
+  margin: 0;
+}
+
+.consultation-card-price {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #a67dff;
+  margin: -2px 0 2px 0;
+}
+
+.consultation-card-text {
+  color: #8585a0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 0 0 6px 0;
+  flex-grow: 1;
+}
+
+.consultation-card .cta-btn {
+  font-size: 0.85rem;
+  padding: 8px 14px;
+}
+
+@media (max-width: 700px) {
+  .consultation-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Sloupec s názvy funkcí (sticky vlevo) ─────────────────────── */

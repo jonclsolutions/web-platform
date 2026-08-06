@@ -33,7 +33,6 @@
 
       <div class="svc-main-col">
         <div class="svc-panel-header">
-          <div class="svc-panel-tag">{{ currentTech }}</div>
           <h2 class="svc-panel-title">{{ currentInfoHeader }}</h2>
         </div>
         <div class="svc-body-text" [innerHTML]="currentMainText"></div>
@@ -57,7 +56,10 @@
                   </svg>
                 </span>
               </button>
-              <div class="faq-body">
+              <!-- UX: rozbalené tělo je také klikatelné a sbalí položku - uživatel
+                   nemusí mířit přesně zpět na hlavičku, stačí kliknout kamkoli
+                   do textu odpovědi. -->
+              <div class="faq-body" (click)="toggleFaq(item?.value)">
                 <p class="faq-answer-text">{{ item?.value?.answer }}</p>
               </div>
             </div>
@@ -187,10 +189,9 @@
 
 <section class="svc-prices-section">
   <div class="svc-section-header">
-    <!-- <div class="section-eyebrow">{{ t.services?.pricing?.eyebrow }}</div> -->
-    <div class="section-eyebrow">{{ t.pricing?.eyebrow }}</div>
-    <h2 class="section-title">{{ t.pricing?.header }}</h2>
-    <p class="section-subtitle">{{ t.pricing?.subheader }}</p>
+    <div class="section-eyebrow">{{ currentPricing?.eyebrow }}</div>
+    <h2 class="section-title">{{ currentPricing?.header }}</h2>
+    <p class="section-subtitle">{{ currentPricing?.subheader }}</p>
   </div>
 
   <div class="pricing-matrix-wrap">
@@ -256,6 +257,47 @@
         }
       </tbody>
     </table>
+  </div>
+</section>
+
+<section class="svc-consultation-section">
+  <div class="svc-section-header">
+    <div class="section-eyebrow">{{ t.consultation?.eyebrow }}</div>
+    <h2 class="section-title">{{ t.consultation?.header }}</h2>
+  </div>
+
+  <div class="consultation-row">
+
+    <div class="consultation-card">
+      <div class="consultation-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <h3 class="consultation-card-title">{{ t.consultation?.free_header }}</h3>
+      <p class="consultation-card-text">{{ t.consultation?.free_text }}</p>
+      <a routerLink="/contact" [queryParams]="{ type: 'consultation' }" class="cta-btn">
+        {{ t.consultation?.free_button }}
+        <span class="cta-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+
+    <div class="consultation-card">
+      <div class="consultation-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M21 21l-4.3-4.3"/>
+        </svg>
+      </div>
+      <h3 class="consultation-card-title">{{ t.consultation?.audit_header }}</h3>
+      <p class="consultation-card-price">{{ t.consultation?.audit_price }}</p>
+      <p class="consultation-card-text">{{ t.consultation?.audit_text }}</p>
+      <a routerLink="/contact" [queryParams]="{ type: 'audit' }" class="cta-btn cta-btn--accent">
+        {{ t.consultation?.audit_button }}
+        <span class="cta-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+
   </div>
 </section>
 

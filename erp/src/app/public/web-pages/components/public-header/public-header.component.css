@@ -486,6 +486,14 @@ header.scrolled .active-indicator {
   align-items: center;
 }
 
+.mobile-contact-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #8585a0;
+}
+
 .mobile-menu-wrapper.open { transform: translateX(0); }
 
 .mobile-nav { width: 100%; }

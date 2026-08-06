@@ -215,58 +215,25 @@
   gap: 12px;
 }
 
+/* Sjednoceno se zbytkem aplikace (viz Contact / FAQ): jen ikona,
+   bez popisku, bez hover efektu, výraznější velikost. */
 .social-list {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+  flex-wrap: wrap;
   margin-top: 4px;
 }
 
 .social-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  text-decoration: none;
-  font-size: 0.87rem;
-  font-weight: 500;
-  transition: color var(--ease), background var(--ease), border-color var(--ease);
-}
-
-.social-item:hover {
-  color: var(--accent);
-  background: var(--accent-dim);
-  border-color: var(--border-mid);
+  justify-content: center;
 }
 
 .social-icon {
-  flex-shrink: 0;
-  width: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-  opacity: 0.7;
-  transition: opacity var(--ease);
-}
-
-.social-item:hover .social-icon { opacity: 1; }
-
-.social-label { flex: 1; }
-
-.social-arrow {
-  font-size: 0.75rem;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity var(--ease), transform var(--ease);
-}
-
-.social-item:hover .social-arrow {
-  opacity: 0.6;
-  transform: translateX(0);
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
 
 /* Tip karta */
@@ -328,43 +295,6 @@
   font-size: 1rem;
   line-height: 1.8;
   color: var(--text-body);
-}
-
-/* Hodnoty / pillars */
-.about-pillars {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-.pillar-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  transition: border-color var(--ease), background var(--ease);
-}
-
-.pillar-icon {
-  font-size: 1.2rem;
-  color: var(--accent);
-  line-height: 1;
-}
-
-.pillar-title {
-  font-family: var(--ff-display);
-  font-size: 0.97rem;
-  font-weight: 700;
-  color: var(--white);
-}
-
-.pillar-text {
-  font-size: 0.83rem;
-  line-height: 1.6;
-  color: var(--text-muted);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -581,18 +511,12 @@
 
   .sidebar-card { flex: 1; min-width: 220px; }
   .sidebar-tip-card { flex: 1; min-width: 180px; }
-
-  .about-pillars {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 @media (max-width: 860px) {
   .about-main { padding: 28px 20px; }
 
   .about-sidebar { flex-direction: column; }
-
-  .about-pillars { grid-template-columns: 1fr 1fr; }
 
   .cta-row { flex-direction: column; }
   .cta-divider { width: 120px; height: 1px; }
@@ -617,8 +541,6 @@
   .about-cta-section { padding-left: 16px; padding-right: 16px; }
   .milestones-section { padding: 10px 16px 60px; }
 
-  .about-pillars { grid-template-columns: 1fr; }
-
   .about-hero-stats {
     flex-direction: column;
     align-items: center;
@@ -629,10 +551,6 @@
     width: 60px;
     height: 1px;
   }
-}
-
-@media (hover: hover) {
-  .social-item:hover { background: var(--accent-dim); }
 }
 
 @media (prefers-reduced-motion: reduce) {

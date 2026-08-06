@@ -33,6 +33,31 @@
     color: #a67dff;
 }
 
+/* ── Vodorovné čáry po stranách fialových mini-nadpisů (eyebrow) ──────
+   Sjednoceno napříč celou stránkou - stejný styl (40px, 1px, stejná barva
+   a 12px mezera), jaký měl dřív jen .select-us-eyebrow_temp_new, se nyní
+   aplikuje na všechny eyebrow prvky na stránce. */
+.about-eyebrow::before,
+.about-eyebrow::after,
+.home-faq-eyebrow::before,
+.home-faq-eyebrow::after,
+.select-us-eyebrow_temp_new::before,
+.select-us-eyebrow_temp_new::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40px;
+  height: 1px;
+  background: rgba(166, 125, 255, 0.35);
+}
+.about-eyebrow::before,
+.home-faq-eyebrow::before,
+.select-us-eyebrow_temp_new::before { right: calc(100% + 12px); }
+
+.about-eyebrow::after,
+.home-faq-eyebrow::after,
+.select-us-eyebrow_temp_new::after  { left: calc(100% + 12px); }
+
 .hero-heading,
 .about-heading,
 .header-0-2-t {
@@ -296,7 +321,9 @@
 }
 
 .about-eyebrow {
-  margin-bottom: 18px;
+  margin: 0 auto 18px;
+  width: fit-content;
+  position: relative;
   text-align: center;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -603,18 +630,6 @@
   font-size: 0.78rem;
   color: #a67dff;
 }
-
-.select-us-eyebrow_temp_new::before,
-.select-us-eyebrow_temp_new::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 40px;
-  height: 1px;
-  background: rgba(166, 125, 255, 0.35);
-}
-.select-us-eyebrow_temp_new::before { right: calc(100% + 12px); }
-.select-us-eyebrow_temp_new::after  { left: calc(100% + 12px); }
 
 .select-us-title_temp_new {
   font-size: 2rem;
@@ -1300,7 +1315,9 @@
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: #a67dff;
-    margin-bottom: 14px;
+    margin: 0 auto 14px;
+    width: fit-content;
+    position: relative;
 }
 
 .home-faq-heading {

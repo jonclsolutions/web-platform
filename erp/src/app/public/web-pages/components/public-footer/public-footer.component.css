@@ -130,25 +130,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border-mid);
-  border-radius: var(--radius);
-  background: var(--surface);
-  transition: border-color var(--ease), background var(--ease), transform 0.15s ease;
 }
 
 .footer-social-link img {
-  width: 18px;
-  height: 18px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
   transition: filter var(--ease), opacity var(--ease);
-}
-
-.footer-social-link:hover {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-  transform: translateY(-2px);
 }
 
 /* Firemní meta */

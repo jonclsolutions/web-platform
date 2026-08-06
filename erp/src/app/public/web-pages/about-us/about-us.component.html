@@ -48,12 +48,8 @@
         <div class="sidebar-eyebrow">{{ t?.sidebar?.social_eyebrow }}</div>
         <div class="social-list">
           @for (link of socialLinks; track link.id) {
-            <a [href]="link.url" target="_blank" rel="noopener" [title]="link.name" class="social-item">
-              <span class="social-icon" aria-hidden="true">
-                <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" width="16" height="16">
-              </span>
-              <span class="social-label">{{ link.name }}</span>
-              <span class="social-arrow" aria-hidden="true">↗</span>
+            <a [href]="link.url" target="_blank" rel="noopener" [attr.aria-label]="link.name" class="social-item">
+              <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" class="social-icon">
             </a>
           }
         </div>
@@ -73,24 +69,6 @@
         <p class="about-paragraph">{{ t?.paragraph_2 || 'The division was founded in 2022 with a clear goal: to bring software expertise and modern technology into the environment our parent company has long operated in, while also offering custom development to clients beyond that space.' }}</p>
         <p class="about-paragraph">{{ t?.paragraph_3 || 'We spent our first period focused mainly on building internal infrastructure, processes, and technical foundations — before taking on outside work, we wanted to be sure every project would rest on a stable, tested base rather than improvisation.' }}</p>
         <p class="about-paragraph">{{ t?.paragraph_4 || 'Today, that means we deliver websites, mobile and desktop applications, and AI solutions with the confidence of a company that understands long-term partnerships — combined with the agility of a smaller team unafraid to get into the details.' }}</p>
-      </div>
-
-      <div class="about-pillars">
-        <div class="pillar-item">
-          <span class="pillar-icon" aria-hidden="true">◈</span>
-          <h4 class="pillar-title">{{ t?.pillars?.p1?.title }}</h4>
-          <p class="pillar-text">{{ t?.pillars?.p1?.text }}</p>
-        </div>
-        <div class="pillar-item">
-          <span class="pillar-icon" aria-hidden="true">◎</span>
-          <h4 class="pillar-title">{{ t?.pillars?.p2?.title }}</h4>
-          <p class="pillar-text">{{ t?.pillars?.p2?.text }}</p>
-        </div>
-        <div class="pillar-item">
-          <span class="pillar-icon" aria-hidden="true">◐</span>
-          <h4 class="pillar-title">{{ t?.pillars?.p3?.title }}</h4>
-          <p class="pillar-text">{{ t?.pillars?.p3?.text }}</p>
-        </div>
       </div>
     </main>
   </div>

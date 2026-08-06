@@ -19,6 +19,9 @@ import { shopMaintenanceGuard } from './public/shop-pages/components/guards/shop
  * @description Main application routing configuration.
  * @usage Imported by the root application module/app config.
  * @note All public and shop pages use lazy loading to ensure optimal bundle size and performance.
+ *   The root path ('') and '/home' both resolve directly to HomeComponent (no redirectTo) so the
+ *   browser address bar keeps showing the clean domain root (e.g. www.rpsw.cz) instead of being
+ *   rewritten to /home. Both URLs remain independently accessible as aliases for the same view.
  */
 export const routes: Routes = [
   // --- 1. MAIN WEB ---
@@ -26,8 +29,15 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./public/web-pages/web-layout/web-layout.component').then(m => m.WebLayoutComponent),
     children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
-      { path: 'home', loadComponent: () => import('./public/web-pages/home/home.component').then(m => m.HomeComponent) },
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./public/web-pages/home/home.component').then(m => m.HomeComponent)
+      },
+      {
+        path: 'home',
+        loadComponent: () => import('./public/web-pages/home/home.component').then(m => m.HomeComponent)
+      },
       { path: 'services', loadComponent: () => import('./public/web-pages/services/services.component').then(m => m.ServicesComponent) },
       { path: 'contact', loadComponent: () => import('./public/web-pages/contact/contact.component').then(m => m.ContactComponent) },
       { path: 'tos', loadComponent: () => import('./public/web-pages/tos/tos.component').then(m => m.TosComponent) },
@@ -48,25 +58,25 @@ export const routes: Routes = [
     loadComponent: () => import('./public/shop-pages/shop-layout/shop-layout.component').then(m => m.ShopLayoutComponent),
     children: [
       { path: '', redirectTo: 'catalog', pathMatch: 'full' },
-      { 
-        path: 'catalog', 
+      {
+        path: 'catalog',
         canActivate: [shopMaintenanceGuard],
-        loadComponent: () => import('./public/shop-pages/catalog/catalog.component').then(m => m.CatalogComponent) 
+        loadComponent: () => import('./public/shop-pages/catalog/catalog.component').then(m => m.CatalogComponent)
       },
-      { 
-        path: 'products/:slugOrId', 
+      {
+        path: 'products/:slugOrId',
         canActivate: [shopMaintenanceGuard],
-        loadComponent: () => import('./public/shop-pages/product-detail/product-detail.component').then(m => m.ProductDetailComponent) 
+        loadComponent: () => import('./public/shop-pages/product-detail/product-detail.component').then(m => m.ProductDetailComponent)
       },
-      { 
-        path: 'cart', 
+      {
+        path: 'cart',
         canActivate: [shopMaintenanceGuard],
-        loadComponent: () => import('./public/shop-pages/cart/cart.component').then(m => m.CartComponent) 
+        loadComponent: () => import('./public/shop-pages/cart/cart.component').then(m => m.CartComponent)
       },
-      { 
-        path: 'checkout', 
+      {
+        path: 'checkout',
         canActivate: [shopMaintenanceGuard],
-        loadComponent: () => import('./public/shop-pages/checkout/checkout.component').then(m => m.CheckoutComponent) 
+        loadComponent: () => import('./public/shop-pages/checkout/checkout.component').then(m => m.CheckoutComponent)
       }
     ]
   },

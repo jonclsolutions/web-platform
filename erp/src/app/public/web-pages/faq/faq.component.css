@@ -226,14 +226,37 @@
 
 .sidebar-contact-icon {
   width: 20px;
-  text-align: center;
-  color: var(--accent);
-  font-size: 0.9rem;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
 }
 
 .sidebar-contact-item--static .sidebar-contact-icon {
   margin-top: 1px;
+}
+
+/* ── Sociální sítě ─────────────────────────────────────────────
+   Samostatné od .sidebar-contact-item záměrně: bez popisku (jen ikona),
+   bez hover efektu a s větší ikonou, podle zadání. */
+.sidebar-social-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.sidebar-social-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-social-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
 
 .sidebar-cta-btn {
@@ -428,7 +451,7 @@
   background-color: #111128;
 }
 
-.faq-item--open .faq-body { max-height: 500px; }
+.faq-item--open .faq-body { max-height: 500px; cursor: pointer; }
 
 .faq-answer-text {
   padding: 0 18px 18px 54px;
@@ -609,12 +632,6 @@
 
 @media (hover: hover) {
   .faq-trigger:hover { background: rgba(255, 255, 255, 0.02); }
-}
-.sidebar-contact-icon img {
-  display: block;
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
 }
 
 /* Hover jen na zařízeních s myší */

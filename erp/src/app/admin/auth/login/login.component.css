@@ -104,14 +104,6 @@
 
 .login-brand:hover { color: var(--accent); }
 
-.login-brand-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-
 /* ── Přihlašovací karta ──────────────────────────────────────── */
 .login-card {
   width: 100%;
