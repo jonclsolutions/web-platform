@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jul 04, 2026 at 12:27 AM
+-- Generation Time: Aug 01, 2026 at 04:53 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -38,10 +38,14 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1783011124),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1783011124;', 1783011124),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:60;', 1783117450),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1783117450;', 1783117450);
+('laravel-cache-1352246e33277e9d3c9090a434fa72cfa6536ae2', 'i:11;', 1785059249),
+('laravel-cache-1352246e33277e9d3c9090a434fa72cfa6536ae2:timer', 'i:1785059249;', 1785059249),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1785595850),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1785595850;', 1785595850),
+('laravel-cache-f1f836cb4ea6efb2a0b1b99f41ad8b103eff4b59', 'i:9;', 1785096710),
+('laravel-cache-f1f836cb4ea6efb2a0b1b99f41ad8b103eff4b59:timer', 'i:1785096710;', 1785096710),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:32;', 1785595978),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1785595978;', 1785595978);
 
 -- --------------------------------------------------------
 
@@ -89,7 +93,9 @@ INSERT INTO `core_permissions` (`id`, `permission_key`, `description`, `module`,
 (26, 'shop-set-maitanance-mode', 'Může přepnout eshop do stavu údržby.', 'core', '2026-06-12 13:09:55'),
 (27, 'web-edit-legal', 'Editovat GDPR a TOS.', 'core', '2026-06-12 19:24:15'),
 (28, 'web-view-web-settings', 'Může editovat nastavení webu.', 'core', '2026-06-13 08:40:51'),
-(29, 'shop-view-edit-eshop', 'Možnost Editovat shop texty.', 'core', '2026-06-30 10:01:32');
+(29, 'shop-view-edit-eshop', 'Možnost Editovat shop texty.', 'core', '2026-06-30 10:01:32'),
+(30, 'web-view-welcome-page', 'Zobrazit uvítací stránku po přihlášení.', 'web', '2026-07-26 20:08:46'),
+(31, 'web-manage-external-links', 'Spravovat externí linky cookies associated etc.', 'core', '2026-08-01 11:01:56');
 
 -- --------------------------------------------------------
 
@@ -112,11 +118,7 @@ CREATE TABLE `core_roles` (
 
 INSERT INTO `core_roles` (`id`, `role_name`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'sysadmin', 'Systémový administrátor - má vše', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(2, 'admin', 'Administrátor - správa webu', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(3, 'primeadmin', 'Primární administrátor - správa admins', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(4, 'UI/UX Designer', 'Designer - správa UI/UX', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(5, 'Salesman', 'Prodejce - správa sales', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(6, 'shop-manager', 'Manager e-shopu', '2026-03-22 08:12:31', '2026-03-22 08:12:31', NULL);
+(2, 'admin', 'Administrátor - správa webu', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL);
 
 -- --------------------------------------------------------
 
@@ -162,6 +164,8 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (1, 27),
 (1, 28),
 (1, 29),
+(1, 30),
+(1, 31),
 (2, 3),
 (2, 4),
 (2, 5),
@@ -179,29 +183,7 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (2, 19),
 (2, 20),
 (2, 21),
-(3, 1),
-(3, 2),
-(3, 5),
-(3, 18),
-(4, 3),
-(4, 5),
-(4, 6),
-(4, 18),
-(5, 3),
-(5, 5),
-(5, 8),
-(5, 10),
-(5, 18),
-(6, 5),
-(6, 13),
-(6, 14),
-(6, 15),
-(6, 16),
-(6, 17),
-(6, 18),
-(6, 19),
-(6, 20),
-(6, 21);
+(2, 30);
 
 -- --------------------------------------------------------
 
@@ -222,7 +204,7 @@ CREATE TABLE `core_site_settings` (
 --
 
 INSERT INTO `core_site_settings` (`id`, `is_shop_active`, `maintenance_message`, `updated_at`, `created_at`) VALUES
-(1, 0, 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.', '2026-07-03 22:24:00', '2026-06-12 11:42:21');
+(1, 0, 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.', '2026-08-01 11:23:35', '2026-06-12 11:42:21');
 
 -- --------------------------------------------------------
 
@@ -264,42 +246,13 @@ INSERT INTO `document_sections` (`id`, `document_type_id`, `position`, `heading`
 (39, 2, 8, '8. Ochrana osobních údajů', 'Prodávající se zavazuje chránit osobní údaje Kupujícího v souladu s platnými právními předpisy, zejména s nařízením GDPR (Nařízení Evropského parlamentu a Rady (EU) 2016/679 o ochraně fyzických osob v souvislosti se zpracováním osobních údajů). Podrobné informace o zpracování osobních údajů jsou k dispozici v samostatném dokumentu \"Zásady ochrany osobních údajů\", který je dostupný na webové stránce Prodávajícího. Odkaz:', 'cz', '2026-06-13 05:58:39', '2026-06-13 05:58:39'),
 (40, 2, 9, '9. Práva z vadného plnění a reklamační řád', 'Kupující je povinen při převzetí digitálního produktu či zahájení čerpání služby bez zbytečného odkladu ověřit jejich funkčnost a soulad s objednávkou. Pokud digitální produkt nebo služba vykazuje vady, jako je například nefunkční odkaz ke stažení, nesoulad se specifikací v objednávce či nedostupnost přístupu k členské sekci, má Kupující právo na reklamaci. Reklamaci je Kupující povinen uplatnit bez zbytečného odkladu poté, co vadu zjistí, a to elektronickou poštou na e-mailovou adresu info@rpsw.cz. Oznámení o reklamaci musí obsahovat identifikaci Kupujícího, tedy jméno a e-mail použitý při objednávce, číslo objednávky, detailní popis vady, případně vizuální dokumentaci vady, a požadovaný způsob vyřízení reklamace. Prodávající o reklamaci rozhodne ihned, ve složitých případech do tří pracovních dnů, přičemž do této lhůty se nezapočítává doba přiměřená podle druhu digitálního obsahu či služby potřebná k odbornému posouzení vady. Reklamace včetně odstranění vady bude vyřízena bez zbytečného odkladu, nejpozději do 30 dnů ode dne uplatnění reklamace, pokud se Prodávající s Kupujícím nedohodnou na delší lhůtě. Prodávající odpovídá Kupujícímu za to, že digitální produkt je při dodání bez vad a má vlastnosti, které byly ujednány nebo které lze vzhledem k povaze produktu očekávat. V případě, že vadu nelze odstranit, má Kupující právo na přiměřenou slevu z kupní ceny nebo na odstoupení od kupní smlouvy v souladu s příslušnými ustanoveními občanského zákoníku.', 'cz', '2026-06-13 05:58:39', '2026-06-13 06:26:22'),
 (41, 2, 10, '10. Závěrečná ustanovení', 'Je-li některé ustanovení OP neplatné nebo neúčinné, nebo se takovým stane, namísto neplatných ustanovení nastoupí ustanovení, jehož smysl se neplatnému ustanovení co nejvíce přibližuje. Tyto obchodní podmínky se řídí právním řádem České republiky. Veškeré spory vznikající z těchto OP nebo v souvislosti s nimi budou řešeny příslušnými soudy České republiky. V případě, že dojde mezi Prodávajícím a spotřebitelem ke vzniku spotřebitelského sporu z kupní smlouvy, který se nepodaří vyřešit vzájemnou dohodou, může spotřebitel podat návrh na mimosoudní řešení takového sporu určenému subjektu mimosoudního řešení spotřebitelských sporů, kterým je: Česká obchodní inspekce, Ústřední inspektorát – oddělení ADR, Štěpánská 44, 110 00 Praha 1, Web: www.coi.cz. Tyto obchodní podmínky nabývají účinnosti dnem 22. srpna 2025.', 'cz', '2026-06-13 06:25:49', '2026-06-13 06:25:49'),
-(45, 1, 1, 'English', 'English', 'en', '2026-07-03 16:12:06', '2026-07-03 16:12:06'),
-(46, 1, 2, 'English2', 'English2', 'en', '2026-07-03 16:12:28', '2026-07-03 16:12:28'),
-(47, 1, 3, 'English3', 'English3', 'en', '2026-07-03 16:12:41', '2026-07-03 16:12:54'),
-(48, 1, 4, 'English4', 'English4', 'en', '2026-07-03 16:13:01', '2026-07-03 16:13:01'),
-(49, 1, 5, 'English5', 'English5', 'en', '2026-07-03 16:13:09', '2026-07-03 16:13:09'),
-(50, 1, 6, 'English6', 'English6', 'en', '2026-07-03 16:13:16', '2026-07-03 16:13:16'),
-(51, 1, 7, 'English7', 'English7', 'en', '2026-07-03 16:13:25', '2026-07-03 16:13:25'),
-(52, 1, 8, 'English8', 'English8', 'en', '2026-07-03 16:13:33', '2026-07-03 16:13:33'),
-(53, 1, 1, 'DE1', 'DE1', 'de', '2026-07-03 16:13:47', '2026-07-03 16:13:47'),
-(54, 1, 2, 'DE2', 'DE2', 'de', '2026-07-03 16:13:54', '2026-07-03 16:13:54'),
-(55, 1, 3, 'DE3', 'DE3', 'de', '2026-07-03 16:14:01', '2026-07-03 16:14:01'),
-(56, 1, 4, 'DE4', 'DE4', 'de', '2026-07-03 16:14:08', '2026-07-03 16:14:08'),
-(57, 1, 5, 'DE5', 'DE5', 'de', '2026-07-03 16:14:16', '2026-07-03 16:14:16'),
-(58, 1, 6, 'DE6', 'DE6', 'de', '2026-07-03 16:14:26', '2026-07-03 16:14:26'),
-(59, 1, 7, 'DE7', 'DE7', 'de', '2026-07-03 16:14:38', '2026-07-03 16:14:47'),
-(60, 1, 8, 'DE8', 'DE8', 'de', '2026-07-03 16:14:53', '2026-07-03 16:14:53'),
-(61, 2, 1, 'English1', 'English1', 'en', '2026-07-03 16:15:10', '2026-07-03 16:15:10'),
-(62, 2, 2, 'English2', 'English2', 'en', '2026-07-03 16:15:17', '2026-07-03 16:15:17'),
-(63, 2, 3, 'English3', 'English3', 'en', '2026-07-03 16:15:25', '2026-07-03 16:15:25'),
-(64, 2, 4, 'English4', 'English4', 'en', '2026-07-03 16:15:32', '2026-07-03 16:15:32'),
-(65, 2, 5, 'English5', 'English5', 'en', '2026-07-03 16:15:39', '2026-07-03 16:15:39'),
-(66, 2, 6, 'English6', 'English6', 'en', '2026-07-03 16:15:45', '2026-07-03 16:15:45'),
-(67, 2, 7, 'English7', 'English7', 'en', '2026-07-03 16:15:54', '2026-07-03 16:15:54'),
-(68, 2, 8, 'English8', 'English8', 'en', '2026-07-03 16:16:01', '2026-07-03 16:16:01'),
-(69, 2, 9, 'English9', 'English9', 'en', '2026-07-03 16:16:08', '2026-07-03 16:16:08'),
-(70, 2, 10, 'English10', 'English10', 'en', '2026-07-03 16:16:18', '2026-07-03 16:16:18'),
-(71, 2, 1, 'DE1', 'DE1', 'de', '2026-07-03 16:16:31', '2026-07-03 16:16:31'),
-(72, 2, 2, 'DE2', 'DE2', 'de', '2026-07-03 16:16:38', '2026-07-03 16:16:38'),
-(73, 2, 3, 'DE3', 'DE3', 'de', '2026-07-03 16:16:45', '2026-07-03 16:16:45'),
-(74, 2, 4, 'DE4', 'DE4', 'de', '2026-07-03 16:16:53', '2026-07-03 16:16:53'),
-(75, 2, 5, 'DE5', 'DE5', 'de', '2026-07-03 16:16:59', '2026-07-03 16:16:59'),
-(76, 2, 6, 'DE6', 'DE6', 'de', '2026-07-03 16:17:06', '2026-07-03 16:17:06'),
-(77, 2, 7, 'DE7', 'DE7', 'de', '2026-07-03 16:17:15', '2026-07-03 16:17:15'),
-(78, 2, 8, 'DE8', 'DE8', 'de', '2026-07-03 16:17:24', '2026-07-03 16:17:24'),
-(79, 2, 9, 'DE9', 'DE9', 'de', '2026-07-03 16:17:32', '2026-07-03 16:17:32'),
-(80, 2, 10, 'DE10', 'DE10', 'de', '2026-07-03 16:17:43', '2026-07-03 16:17:43');
+(81, 3, 1, '1. Co jsou cookies', 'Cookies jsou malé textové soubory, které se při návštěvě webové stránky ukládají do vašeho prohlížeče. Umožňují webu zapamatovat si informace o vaší návštěvě (např. zvolený jazyk nebo to, že jste s používáním cookies souhlasili), a díky tomu je další prohlížení webu pohodlnější. Některé cookies jsou nezbytné pro základní fungování webu, jiné nám pomáhají web vylepšovat nebo vám zobrazovat relevantnější obsah.', 'cz', '2026-07-31 21:50:49', '2026-07-31 21:50:49'),
+(82, 3, 2, '2. Jaké kategorie cookies používáme', 'Cookies na našem webu dělíme do čtyř kategorií: Nezbytné cookies - nutné pro základní fungování webu (např. zapamatování vašeho souhlasu s cookies); tyto nelze vypnout. Funkční cookies - umožňují si web zapamatovat vaše preference (např. zvolený jazyk) a nabídnout pohodlnější prohlížení. Analytické cookies - pomáhají nám pochopit, jak návštěvníci web používají (např. Google Analytics), abychom ho mohli postupně vylepšovat. Marketingové cookies - používají se k zobrazování relevantnější reklamy na základě vašeho zájmu, a to i na jiných webech. Analytické a marketingové cookies používáme pouze na základě vašeho výslovného souhlasu.', 'cz', '2026-07-31 21:50:49', '2026-07-31 21:50:49'),
+(83, 3, 3, '3. Konkrétní cookies, které používáme', 'Nezbytné: rpsw_cookie_consent - uchovává vaši volbu ohledně souhlasu s cookies, platnost 180 dní. Analytické (pouze se souhlasem): _ga, _ga_* - Google Analytics, rozlišování návštěvníků a měření návštěvnosti, platnost až 2 roky; poskytovatel Google Ireland Limited. Marketingové (pouze se souhlasem): cookies reklamních a remarketingových nástrojů (např. Google Ads, Meta), pokud jsou na webu aktivně nasazeny - jejich přesný výčet a účel doplníme, jakmile konkrétní nástroj nasadíme. Funkční: cookies pro zapamatování zvoleného jazyka webu.', 'cz', '2026-07-31 21:50:49', '2026-07-31 21:50:49'),
+(84, 3, 4, '4. Jak dlouho cookies uchováváme', 'Doba uchování se liší podle typu cookie. Váš souhlas s cookies uchováváme 180 dní, po jejich uplynutí vás požádáme o souhlas znovu. Analytické cookies od Google Analytics jsou uchovávány dle nastavení tohoto nástroje, standardně až 2 roky. Cookies pro zapamatování jazyka jsou trvalé (persistentní) do doby, než je sami smažete v nastavení prohlížeče, nebo dokud znovu nezměníte volbu jazyka.', 'cz', '2026-07-31 21:50:49', '2026-07-31 21:50:49'),
+(85, 3, 5, '5. Jak můžete svůj souhlas změnit nebo odvolat', 'Svůj souhlas s jednotlivými kategoriemi cookies můžete kdykoli změnit nebo odvolat - stačí použít tlačítko \"Změnit nastavení cookies\" na této stránce, které znovu otevře lištu s možností volby jednotlivých kategorií. Odvolání souhlasu nemá vliv na zákonnost zpracování prováděného na základě souhlasu před jeho odvoláním. Cookies si také můžete kdykoli smazat přímo v nastavení svého prohlížeče - tím se ale současně smaže i záznam o vašem souhlasu a lišta se při další návštěvě zobrazí znovu.', 'cz', '2026-07-31 21:50:49', '2026-07-31 21:50:49'),
+(86, 3, 6, '6. Cookies třetích stran', 'Pro analytické účely využíváme službu Google Analytics, provozovanou společností Google Ireland Limited. Tato služba může ukládat vlastní cookies a zpracovávat údaje o vašem chování na webu v souladu se zásadami ochrany soukromí Google. Tyto cookies se ukládají pouze v případě, že s analytickými cookies vyslovíte souhlas. Podrobnosti o zpracování údajů společností Google najdete na stránkách policies.google.com/privacy.', 'cz', '2026-07-31 21:50:49', '2026-07-31 21:50:49'),
+(87, 3, 7, '7. Kontakt a změny těchto zásad', 'V případě jakýchkoli dotazů ohledně používání cookies nás můžete kontaktovat na e-mailu info@rpsw.cz. Tyto zásady můžeme čas od času aktualizovat, zejména v souvislosti se změnami v tom, jaké nástroje na webu používáme. Aktuální znění je vždy dostupné na této stránce.', 'cz', '2026-07-31 21:50:49', '2026-07-31 21:50:49');
 
 -- --------------------------------------------------------
 
@@ -321,7 +274,8 @@ CREATE TABLE `document_types` (
 
 INSERT INTO `document_types` (`id`, `slug`, `title`, `created_at`, `updated_at`) VALUES
 (1, 'gdpr', 'GDPR - Ochrana osobních údajů', '2026-06-12 19:15:23', '2026-06-12 19:15:23'),
-(2, 'tos', 'Obchodní podmínky', '2026-06-12 19:15:23', '2026-06-13 05:35:46');
+(2, 'tos', 'Obchodní podmínky', '2026-06-12 19:15:23', '2026-06-13 05:35:46'),
+(3, 'cookies', 'Zásady používání cookies', '2026-07-31 21:50:49', '2026-07-31 21:50:49');
 
 -- --------------------------------------------------------
 
@@ -334,6 +288,7 @@ CREATE TABLE `legal_site_settings` (
   `company_name` varchar(255) NOT NULL,
   `ico` varchar(20) NOT NULL,
   `dic` varchar(20) DEFAULT NULL,
+  `google_analytics_id` varchar(20) DEFAULT NULL,
   `brand_tagline` varchar(255) NOT NULL,
   `brand_tagline_i18n` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`brand_tagline_i18n`)),
   `copyright_text` varchar(255) NOT NULL,
@@ -350,8 +305,8 @@ CREATE TABLE `legal_site_settings` (
 -- Dumping data for table `legal_site_settings`
 --
 
-INSERT INTO `legal_site_settings` (`id`, `company_name`, `ico`, `dic`, `brand_tagline`, `brand_tagline_i18n`, `copyright_text`, `copyright_text_i18n`, `contact_email`, `contact_phone`, `address`, `footer_text`, `logo_path`, `updated_at`) VALUES
-(1, 'Joncletika, s.r.o.', '25133161', 'CZ25133161', 'Tvoříme digitální produkty, na které jste hrdí.', '{\"cz\":\"Tvo\\u0159\\u00edme digit\\u00e1ln\\u00ed produkty, na kter\\u00e9 jste hrd\\u00ed.\",\"en\":\"Creating digital products you can be proud of.\"}', '©2026 RegioPartner, s.r.o., Všechna práva vyhrazena.', '{\"cz\":\"\\u00a9 2026 RegioPartner, s.r.o. | Vytvo\\u0159eno & Spravov\\u00e1no RPSW\",\"en\":\"\\u00a9 2026 RegioPartner, s.r.o. | Created & Powered by RPSW\"}', 'gamber@rpsw.cz', '733 188 328', 'Kytlická 862/6, 190 00 Praha', '©2026 RegioPartner, s.r.o., Všechna práva vyhrazena.', 'site-logos/dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png', '2026-07-03 21:58:29');
+INSERT INTO `legal_site_settings` (`id`, `company_name`, `ico`, `dic`, `google_analytics_id`, `brand_tagline`, `brand_tagline_i18n`, `copyright_text`, `copyright_text_i18n`, `contact_email`, `contact_phone`, `address`, `footer_text`, `logo_path`, `updated_at`) VALUES
+(1, 'Joncletika, s.r.o.', '25133161', 'CZ25133161', 'G-TEST123456', 'Tvoříme digitální produkty, na které jste hrdí.', '{\"cz\":\"Tvo\\u0159\\u00edme digit\\u00e1ln\\u00ed produkty, na kter\\u00e9 jste hrd\\u00ed.\",\"en\":\"Creating digital products you can be proud of.\"}', '© 2026 RegioPartner, s.r.o. | Vytvořeno & Spravováno RPSW', '{\"cz\":\"\\u00a9 2026 RegioPartner, s.r.o. | Vytvo\\u0159eno & Spravov\\u00e1no RPSW\",\"en\":\"\\u00a9 2026 RegioPartner, s.r.o. | Created & Powered by RPSW\"}', 'gamber@rpsw.cz', '733 188 328', 'Kytlická 862/6, 190 00 Praha', '©2026 RegioPartner, s.r.o., Všechna práva vyhrazena.', 'site-logos/dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png', '2026-08-01 10:13:57');
 
 -- --------------------------------------------------------
 
@@ -398,7 +353,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (3, '0001_01_01_000002_create_jobs_table', 1),
 (10, '2025_07_10_155210_create_personal_access_tokens_table', 3),
 (11, '2025_07_15_101409_create_refresh_tokens_table', 3),
-(12, '2025_07_10_075603_create_raw_request_commissions_table', 4);
+(12, '2025_07_10_075603_create_raw_request_commissions_table', 4),
+(13, '2026_07_26_120000_recreate_password_reset_tokens_table', 5);
 
 -- --------------------------------------------------------
 
@@ -407,10 +363,21 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 --
 
 CREATE TABLE `password_reset_tokens` (
-  `email` varchar(255) NOT NULL,
-  `token` varchar(255) NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `token_hash` varchar(64) NOT NULL COMMENT 'SHA-256 hash raw tokenu, nikdy raw hodnota',
+  `expires_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `used_at` timestamp NULL DEFAULT NULL COMMENT 'NULL = dosud nepoužitý',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `password_reset_tokens`
+--
+
+INSERT INTO `password_reset_tokens` (`id`, `user_id`, `token_hash`, `expires_at`, `used_at`, `created_at`) VALUES
+(4, 25, 'b09b5f673bb4c9dc44a99ebd2a987b44b9e1b59cdbe7772a2551599a816231fe', '2026-07-26 09:51:32', NULL, '2026-07-26 09:36:32'),
+(8, 34, '3332713ea59d425c9776eb4830344e203c5801f67323798ab47a53d95323b869', '2026-07-26 19:28:05', '2026-07-26 19:28:05', '2026-07-26 19:27:03');
 
 -- --------------------------------------------------------
 
@@ -436,12 +403,12 @@ CREATE TABLE `personal_access_tokens` (
 --
 
 INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `name`, `token`, `abilities`, `last_used_at`, `expires_at`, `created_at`, `updated_at`) VALUES
-(79, 'App\\Models\\User', 34, 'access-token', '46ffc555bdaa30fe9c7baf1ff082fbc0a7e78cf5bdf4a8a08580f153eab32b51', '[\"*\"]', '2026-02-15 22:39:32', '2026-02-15 23:09:32', '2026-02-15 22:39:32', '2026-02-15 22:39:32'),
-(81, 'App\\Models\\User', 34, 'access-token', 'b68364618e440f61d911b78ad90ca53d74ec497c10d71d743a4e4eb20081c2d7', '[\"*\"]', '2026-02-15 22:39:56', '2026-02-15 23:09:56', '2026-02-15 22:39:56', '2026-02-15 22:39:56'),
 (87, 'App\\Models\\User', 59, 'access-token', 'c58f7b40a4862562dc033216ec4ba476336d5cc77af42b57e8a6721e0c735545', '[\"*\"]', '2026-02-15 22:41:38', '2026-02-15 23:11:38', '2026-02-15 22:41:38', '2026-02-15 22:41:38'),
 (134, 'App\\Models\\User', 62, 'access-token', '696da6ddfce759f43fcd6c430016ffff654238b4bd746c50642599a4b68a1cd7', '[\"*\"]', '2026-02-18 02:12:13', '2026-02-18 03:12:09', '2026-02-18 02:12:09', '2026-02-18 02:12:13'),
 (172, 'App\\Models\\User', 77, 'access-token', 'f783051fdb88711a863e9ccd4e5176a5a3f2a3606204c816754c3227d07698f8', '[\"*\"]', '2026-02-25 00:08:53', '2026-02-25 00:42:29', '2026-02-24 23:42:29', '2026-02-25 00:08:53'),
-(541, 'App\\Models\\User', 25, 'access-token', '0faa076ab9417fb0322a820b4e165e4c6db40213ddf975ebe6632b5fbcd2064b', '[\"*\"]', '2026-07-03 22:24:00', '2026-07-03 23:16:45', '2026-07-03 22:16:45', '2026-07-03 22:24:00');
+(591, 'App\\Models\\User', 34, 'access-token', '68783429471135aedb98b9dd0c6fea1dda24afe7d6cbb225d9e9a8ab20236672', '[\"*\"]', '2026-07-26 20:10:52', '2026-07-26 21:08:21', '2026-07-26 20:08:21', '2026-07-26 20:10:52'),
+(642, 'App\\Models\\User', 25, 'access-token', '71a07150ed34836fb5ba291901663980dcf788ed0c6edd7bbaf4801b777d60a8', '[\"*\"]', '2026-08-01 14:13:32', '2026-08-01 15:13:31', '2026-08-01 14:13:31', '2026-08-01 14:13:32'),
+(643, 'App\\Models\\User', 25, 'access-token', 'caec23b3766a1fb6a0a1b26e70d0f08441a7b633ead0cae511fb6ef4382ed936', '[\"*\"]', '2026-08-01 14:52:36', '2026-08-01 15:49:50', '2026-08-01 14:49:50', '2026-08-01 14:52:36');
 
 -- --------------------------------------------------------
 
@@ -463,7 +430,8 @@ CREATE TABLE `refresh_tokens` (
 --
 
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`, `updated_at`) VALUES
-(540, 25, '6a1b28bb068cb0931412b103358802129fee81e55f713571423cf00407592508', '2026-07-10 22:16:45', '2026-07-03 22:16:45', '2026-07-03 22:16:45');
+(590, 34, '6ca2a222a68ecde85377c89a03af94933892ad45b2a438db88d9cde3acf336d0', '2026-08-02 20:08:21', '2026-07-26 20:08:21', '2026-07-26 20:08:21'),
+(642, 25, 'bbb80b22ee59e1d055d854b78c53fe2324a7b64b6caeba1387e6e6bd1665ed2a', '2026-08-08 14:49:50', '2026-08-01 14:49:50', '2026-08-01 14:49:50');
 
 -- --------------------------------------------------------
 
@@ -678,7 +646,7 @@ CREATE TABLE `shop_payment_methods` (
   `bank_iban` varchar(34) DEFAULT NULL COMMENT 'Pro mezinárodní platby',
   `bank_swift_bic` varchar(11) DEFAULT NULL,
   `variable_symbol_type` enum('order_number','phone_number','none') DEFAULT 'order_number',
-  `config` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT json_object() COMMENT 'Specifická konfigurace pro platební brány a metody' CHECK (json_valid(`config`)),
+`config` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Specifická konfigurace pro platební brány a metody' CHECK (json_valid(`config`)),
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -916,9 +884,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `user_email`, `contact_email`, `full_name`, `birth_date`, `personal_id_num`, `address`, `bank_account`, `health_insurance`, `commission_rate`, `dpp_hours_spent`, `has_tax_declaration`, `phone_number`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
-(25, 'joncl', 'jonasbucina@rpsw.cz', 'Jonáš Bučina', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, '733 188 328', NULL, '$2y$12$rV1ILe7YeW1L1XfWb5DrfuiCYTC.1FZsIU4wtNmA95GaUNwXAtYoa', NULL, '2026-07-02 18:51:05', '2026-02-14 08:12:31', '2026-07-02 18:51:05', NULL, 0),
-(30, 'prime_admin', NULL, 'Prime Admin', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, NULL, NULL, '$2y$12$NEiDrqVCChulf9S/EUPIpeOHScIM0zwswPTxIFamRDrY4XajgHQOe', NULL, NULL, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL, 0),
-(34, 'lindicka', 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, NULL, NULL, '$2y$12$xbMrIDwkEj.ZOnsLe7Glr..2qbca1i7XnSclNnGILENFKlL.Kw9.W', NULL, '2026-02-15 23:39:56', '2026-02-14 08:12:31', '2026-02-20 23:59:34', NULL, 0);
+(25, 'jonasbucina@rpsw.cz', 'jonasbucina@rpsw.cz', 'Jonáš Bučina', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, '733 188 328', NULL, '$2y$12$rV1ILe7YeW1L1XfWb5DrfuiCYTC.1FZsIU4wtNmA95GaUNwXAtYoa', NULL, '2026-08-01 16:49:50', '2026-02-14 08:12:31', '2026-08-01 16:49:50', NULL, 0),
+(30, 'primeadmin@rpsw.cz', NULL, 'Prime Admin', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, NULL, NULL, '$2y$12$NEiDrqVCChulf9S/EUPIpeOHScIM0zwswPTxIFamRDrY4XajgHQOe', NULL, NULL, '2026-02-14 08:12:31', '2026-07-26 21:11:59', '2026-07-26 21:11:59', 0),
+(34, 'lindicka@mazliva.cz', 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', NULL, NULL, NULL, NULL, NULL, 10, 0, 0, NULL, NULL, '$2y$12$BsUy3PDkEnUTP5NyEJ/Vm.Oe1urkhyUlRsr/0Ib4vwEdWT8olJmWq', NULL, '2026-07-26 21:28:20', '2026-02-14 08:12:31', '2026-07-26 21:28:20', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -937,8 +905,31 @@ CREATE TABLE `user_roles` (
 
 INSERT INTO `user_roles` (`user_id`, `role_id`) VALUES
 (25, 1),
-(30, 3),
-(34, 5);
+(34, 2);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `web_external_links`
+--
+
+CREATE TABLE `web_external_links` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `name` varchar(150) NOT NULL,
+  `url` varchar(500) NOT NULL,
+  `position` int(11) NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `web_external_links`
+--
+
+INSERT INTO `web_external_links` (`id`, `name`, `url`, `position`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Google Analytics', 'https://analytics.google.com', 1, 1, '2026-08-01 11:17:26', '2026-08-01 11:21:52', NULL);
 
 -- --------------------------------------------------------
 
@@ -1116,6 +1107,23 @@ CREATE TABLE `web_system_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Dumping data for table `web_system_logs`
+--
+
+INSERT INTO `web_system_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `context_data`) VALUES
+(1, '2026-07-26 11:06:27', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 25)', '{\"email_requested\":\"jonasbucina@rpsw.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":25}'),
+(2, '2026-07-26 11:14:01', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 25)', '{\"email_requested\":\"jonasbucina@rpsw.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":25}'),
+(3, '2026-07-26 11:25:57', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 25)', '{\"email_requested\":\"jonasbucina@rpsw.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":25}'),
+(4, '2026-07-26 11:36:32', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 25)', '{\"email_requested\":\"jonasbucina@rpsw.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":25}'),
+(5, '2026-07-26 11:45:25', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 85)', '{\"email_requested\":\"testing@test.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":85}'),
+(6, '2026-07-26 11:45:53', '127.0.0.1', 'password_reset_completed', 'auth', 'Pokus o reset hesla (user_id: 85)', '{\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":85}'),
+(7, '2026-07-26 21:26:52', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 34)', '{\"email_requested\":\"lindicka@mazliva.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":34}'),
+(8, '2026-07-26 21:26:55', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 34)', '{\"email_requested\":\"lindicka@mazliva.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":34}'),
+(9, '2026-07-26 21:27:03', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 34)', '{\"email_requested\":\"lindicka@mazliva.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":34}'),
+(10, '2026-07-26 21:27:46', '127.0.0.1', 'password_reset_failed', 'auth', 'Pokus o reset hesla (user_id: neznámý)', '{\"reason\":\"invalid_token\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":null}'),
+(11, '2026-07-26 21:28:05', '127.0.0.1', 'password_reset_completed', 'auth', 'Pokus o reset hesla (user_id: 34)', '{\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":34}');
+
+--
 -- Indexes for dumped tables
 --
 
@@ -1188,7 +1196,9 @@ ALTER TABLE `migrations`
 -- Indexes for table `password_reset_tokens`
 --
 ALTER TABLE `password_reset_tokens`
-  ADD PRIMARY KEY (`email`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `password_reset_tokens_token_hash_unique` (`token_hash`),
+  ADD KEY `password_reset_tokens_user_id_used_at_index` (`user_id`,`used_at`);
 
 --
 -- Indexes for table `personal_access_tokens`
@@ -1366,6 +1376,12 @@ ALTER TABLE `user_roles`
   ADD KEY `fk_ur_role_id` (`role_id`);
 
 --
+-- Indexes for table `web_external_links`
+--
+ALTER TABLE `web_external_links`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `web_job_applications`
 --
 ALTER TABLE `web_job_applications`
@@ -1425,13 +1441,13 @@ ALTER TABLE `web_system_logs`
 -- AUTO_INCREMENT for table `core_permissions`
 --
 ALTER TABLE `core_permissions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `core_roles`
 --
 ALTER TABLE `core_roles`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `core_site_settings`
@@ -1443,13 +1459,13 @@ ALTER TABLE `core_site_settings`
 -- AUTO_INCREMENT for table `document_sections`
 --
 ALTER TABLE `document_sections`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
 
 --
 -- AUTO_INCREMENT for table `document_types`
 --
 ALTER TABLE `document_types`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `legal_site_settings`
@@ -1467,25 +1483,31 @@ ALTER TABLE `legal_social_links`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=542;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=644;
 
 --
 -- AUTO_INCREMENT for table `refresh_tokens`
 --
 ALTER TABLE `refresh_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=541;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=643;
 
 --
 -- AUTO_INCREMENT for table `shop_categories`
 --
 ALTER TABLE `shop_categories`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT for table `shop_coupons`
@@ -1497,7 +1519,7 @@ ALTER TABLE `shop_coupons`
 -- AUTO_INCREMENT for table `shop_customers`
 --
 ALTER TABLE `shop_customers`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `shop_logs`
@@ -1509,13 +1531,13 @@ ALTER TABLE `shop_logs`
 -- AUTO_INCREMENT for table `shop_orders`
 --
 ALTER TABLE `shop_orders`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `shop_order_items`
 --
 ALTER TABLE `shop_order_items`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `shop_payments`
@@ -1539,13 +1561,13 @@ ALTER TABLE `shop_payment_methods`
 -- AUTO_INCREMENT for table `shop_products`
 --
 ALTER TABLE `shop_products`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `shop_product_categories`
 --
 ALTER TABLE `shop_product_categories`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `shop_product_images`
@@ -1557,13 +1579,13 @@ ALTER TABLE `shop_product_images`
 -- AUTO_INCREMENT for table `shop_product_prices`
 --
 ALTER TABLE `shop_product_prices`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `shop_product_variants`
 --
 ALTER TABLE `shop_product_variants`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `shop_reviews`
@@ -1587,13 +1609,19 @@ ALTER TABLE `shop_suppliers`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
+
+--
+-- AUTO_INCREMENT for table `web_external_links`
+--
+ALTER TABLE `web_external_links`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `web_job_applications`
 --
 ALTER TABLE `web_job_applications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `web_logs`
@@ -1611,7 +1639,7 @@ ALTER TABLE `web_news`
 -- AUTO_INCREMENT for table `web_raw_request_commissions`
 --
 ALTER TABLE `web_raw_request_commissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `web_sales_leads`
@@ -1635,7 +1663,7 @@ ALTER TABLE `web_support_tickets`
 -- AUTO_INCREMENT for table `web_system_logs`
 --
 ALTER TABLE `web_system_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- Constraints for dumped tables
@@ -1653,6 +1681,12 @@ ALTER TABLE `core_role_permissions`
 --
 ALTER TABLE `document_sections`
   ADD CONSTRAINT `fk_document_type` FOREIGN KEY (`document_type_id`) REFERENCES `document_types` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD CONSTRAINT `password_reset_tokens_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `refresh_tokens`

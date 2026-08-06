@@ -1451,6 +1451,13 @@
     .home-faq-answer-text { padding-left: 40px; }
 }
 
+@media (max-width: 738px) {
+    .sys-features-section_temp_new{
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
 @media (hover: hover) {
     .home-faq-trigger:hover { background: #161631; }
 }

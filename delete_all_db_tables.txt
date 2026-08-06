@@ -1,0 +1,31 @@
+-- ═══════════════════════════════════════════════════════════════
+-- Funguje na JAKÉKOLI databázi, do které jste v phpMyAdmin/mysql
+-- klientovi zrovna přihlášeni - DATABASE() vrátí název aktuálně
+-- vybrané DB automaticky, nikde není natvrdo napsaný název.
+--
+-- Bez PREPARE/EXECUTE (to dělalo problémy) - jen obyčejný SELECT,
+-- který vygeneruje seznam DROP TABLE příkazů. Ty pak zkopírujete
+-- a spustíte jako druhý krok. Funguje spolehlivě v jakékoli verzi
+-- phpMyAdmin.
+--
+-- POZOR: nevratné. Udělejte si zálohu (Export) PŘED spuštěním.
+-- ═══════════════════════════════════════════════════════════════
+
+
+-- ── KROK 1: vygenerování DROP příkazů (nic se nesmaže) ───────────
+-- ── !!!!!!!!!!!!! ZNENIT NAZEV DB !!!!!!!!!!!!!§
+SELECT CONCAT('DROP TABLE IF EXISTS `', TABLE_NAME, '`;') AS drop_statement
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = 'f191121'
+ORDER BY TABLE_NAME;
+
+
+-- ── KROK 2: skutečné smazání ──────────────────────────────────────
+-- Zkopírujte VÝSTUP z KROKU 1 (celý sloupec drop_statement) a vložte
+-- ho místo komentáře níže, pak spusťte celý tenhle blok najednou.
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- <<< sem vložte zkopírované DROP TABLE příkazy z KROKU 1 >>>
+
+SET FOREIGN_KEY_CHECKS = 1;

@@ -78,6 +78,16 @@
 .footer-top {
   padding: 72px 0 56px;
 }
+/* Přidat do public-footer.component.css, pokud ikony po výměně za SVG
+   nesedí přesně na výšku textu vedle nich (původní pravidlo bylo nejspíš
+   jen font-size pro textový znak, což na <svg> potomka nemá vliv). */
+
+.footer-contact-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
 .footer-top .footer-inner {
   display: grid;
@@ -237,7 +247,7 @@
   text-align: center;
   color: var(--accent);
   font-size: 0.85rem;
-  margin-top: 1px;
+  margin-top: 4px;
   opacity: 0.8;
 }
 
