@@ -10,13 +10,11 @@
 <div class="jobs-page">
 
   <section class="jobs-hero">
-    <div class="jobs-hero-eyebrow">{{ t?.list_hero_eyebrow }}</div>
     <h1 class="jobs-hero-title">{{ t?.list_header_1 }}</h1>
     <p class="jobs-hero-sub">{{ t?.list_hero_sub }}</p>
   </section>
 
   <div class="jobs-body">
-    <div class="jobs-section-label">{{ t?.list_section_label }}</div>
     <div class="jobs-list" role="list">
       @for (job of availableJobs; track job.id; let i = $index) {
         <a class="job-card" [routerLink]="['/jobs', job.id]" role="listitem">

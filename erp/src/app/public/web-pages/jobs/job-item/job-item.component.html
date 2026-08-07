@@ -16,7 +16,6 @@
   @if (job) {
 
     <section class="job-hero">
-      <div class="job-hero-eyebrow">{{ t?.item_hero_eyebrow }}</div>
       <h1 class="job-hero-title">{{ job?.title }}</h1>
       <div class="job-hero-meta">
         <span class="job-meta-tag">{{ t?.item_meta_type }}</span>
@@ -44,7 +43,6 @@
         <div class="form-card">
 
           @if (!isSubmitted) {
-            <div class="form-card-eyebrow">{{ t?.form_eyebrow }}</div>
             <h2 class="form-card-title">{{ t?.form_title }}</h2>
 
             <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()" novalidate>
@@ -60,9 +58,13 @@
                     formControlName="first_name"
                     [placeholder]="t?.form_first_name_placeholder"
                     class="field-input"
-                    [class.is-error]="applicationForm.get('first_name')?.invalid && applicationForm.get('first_name')?.touched">
-                  @if (applicationForm.get('first_name')?.errors?.['required'] && applicationForm.get('first_name')?.touched) {
-                    <span class="field-error">{{ t?.form_first_name_error }}</span>
+                    [class.is-error]="applicationForm.get('first_name')?.invalid && (applicationForm.get('first_name')?.dirty || applicationForm.get('first_name')?.touched)">
+                  @if (applicationForm.get('first_name')?.dirty || applicationForm.get('first_name')?.touched) {
+                    @if (applicationForm.get('first_name')?.errors?.['required']) {
+                      <span class="field-error">{{ t?.form_first_name_error }}</span>
+                    } @else if (applicationForm.get('first_name')?.errors?.['pattern']) {
+                      <span class="field-error">{{ t?.form_first_name_pattern_error || 'Jméno nesmí obsahovat čísla ani speciální znaky.' }}</span>
+                    }
                   }
                 </div>
 
@@ -76,9 +78,13 @@
                     formControlName="last_name"
                     [placeholder]="t?.form_last_name_placeholder"
                     class="field-input"
-                    [class.is-error]="applicationForm.get('last_name')?.invalid && applicationForm.get('last_name')?.touched">
-                  @if (applicationForm.get('last_name')?.errors?.['required'] && applicationForm.get('last_name')?.touched) {
-                    <span class="field-error">{{ t?.form_last_name_error }}</span>
+                    [class.is-error]="applicationForm.get('last_name')?.invalid && (applicationForm.get('last_name')?.dirty || applicationForm.get('last_name')?.touched)">
+                  @if (applicationForm.get('last_name')?.dirty || applicationForm.get('last_name')?.touched) {
+                    @if (applicationForm.get('last_name')?.errors?.['required']) {
+                      <span class="field-error">{{ t?.form_last_name_error }}</span>
+                    } @else if (applicationForm.get('last_name')?.errors?.['pattern']) {
+                      <span class="field-error">{{ t?.form_last_name_pattern_error || 'Příjmení nesmí obsahovat čísla ani speciální znaky.' }}</span>
+                    }
                   }
                 </div>
               </div>
@@ -93,9 +99,9 @@
                   formControlName="email"
                   [placeholder]="t?.form_email_placeholder"
                   class="field-input"
-                  [class.is-error]="applicationForm.get('email')?.invalid && applicationForm.get('email')?.touched"
+                  [class.is-error]="applicationForm.get('email')?.invalid && (applicationForm.get('email')?.dirty || applicationForm.get('email')?.touched)"
                   autocomplete="email">
-                @if (applicationForm.get('email')?.touched) {
+                @if (applicationForm.get('email')?.dirty || applicationForm.get('email')?.touched) {
                   @if (applicationForm.get('email')?.errors?.['required']) {
                     <span class="field-error">{{ t?.form_email_required_error }}</span>
                   } @else if (applicationForm.get('email')?.errors?.['email']) {
@@ -112,7 +118,11 @@
                   formControlName="phone"
                   [placeholder]="t?.form_phone_placeholder"
                   class="field-input"
+                  [class.is-error]="applicationForm.get('phone')?.invalid && (applicationForm.get('phone')?.dirty || applicationForm.get('phone')?.touched)"
                   autocomplete="tel">
+                @if (applicationForm.get('phone')?.errors?.['pattern'] && (applicationForm.get('phone')?.dirty || applicationForm.get('phone')?.touched)) {
+                  <span class="field-error">{{ t?.form_phone_pattern_error || 'Telefon smí obsahovat jen číslice a běžné oddělovače (+, mezera, závorky, pomlčka).' }}</span>
+                }
               </div>
 
               <div class="field-group">
@@ -145,8 +155,11 @@
                     tabindex="-1"
                     aria-hidden="true">
                 </label>
-                @if (!selectedFile && applicationForm.touched) {
+                @if (!selectedFile && applicationForm.touched && !fileSizeError) {
                   <span class="field-error">{{ t?.form_cv_error }}</span>
+                }
+                @if (fileSizeError) {
+                  <span class="field-error">{{ t?.form_cv_size_error || 'Soubor je příliš velký. Maximální velikost je 20 MB.' }}</span>
                 }
               </div>
 

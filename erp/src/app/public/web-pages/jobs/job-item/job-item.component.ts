@@ -10,6 +10,29 @@ import { LocalizationService } from '../../../../shared/services/localization.se
 import { LoadingService } from '../../../../core/services/loading.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 
+/**
+ * @description Povolené znaky pro jméno/příjmení - písmena (včetně diakritiky přes \p{L}
+ *              unicode property), mezery, pomlčky a apostrofy (např. "Marie-Anne", "O'Brien").
+ *              Záměrně žádné číslice - jméno s číslem je vždy chyba vstupu, ne legitimní hodnota.
+ * @note Vyžaduje 'u' (unicode) flag, jinak \p{L} funguje jen jako doslovné "p", "L" apod.
+ */
+const NAME_PATTERN = /^[\p{L}\s'-]+$/u;
+
+/**
+ * @description Povolené znaky pro telefonní číslo - číslice, mezery, +, závorky a pomlčky
+ *              (pokrývá běžné zápisy typu "+420 733 188 328", "(420) 733-188-328").
+ *              Min. 6 znaků, ať projde i extrémně krátké testovací číslo, ale ne prázdné/1 znak.
+ */
+const PHONE_PATTERN = /^[0-9+()\s-]{6,20}$/;
+
+/**
+ * @description Maximální povolená velikost přiloženého CV v bytech - zrcadlí limit
+ *              `max:20480` (20 480 KB = 20 MB) ze `StoreWebJobApplicationRequest` na
+ *              backendu. Kontrola zde je jen UX pojistka (rychlá zpětná vazba bez
+ *              čekání na server) - autoritativní limit zůstává vynucený na backendu.
+ */
+const MAX_FILE_SIZE_BYTES = 20480 * 1024;
+
 @Component({
   selector: 'app-job-item',
   standalone: true,
@@ -29,6 +52,8 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit {
   settings: any = null;
   isSubmitted = false;
   selectedFile: File | null = null;
+  /** Nastaveno, pokud uživatel vybere soubor přes limit MAX_FILE_SIZE_BYTES. */
+  fileSizeError = false;
 
   private localizationService = inject(LocalizationService);
   private publicDataService = inject(PublicDataService);
@@ -67,21 +92,36 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit {
 
   private initForm(): void {
     this.applicationForm = this.fb.group({
-      first_name: ['', Validators.required],
-      last_name: ['', Validators.required],
+      first_name: ['', [Validators.required, Validators.pattern(NAME_PATTERN)]],
+      last_name: ['', [Validators.required, Validators.pattern(NAME_PATTERN)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: [''],
+      phone: ['', [Validators.pattern(PHONE_PATTERN)]],
       message: [''],
       dataProcessingAgreement: [false, Validators.requiredTrue]
     });
   }
 
+  /**
+   * @description Zpracuje výběr souboru z file inputu a ověří jeho velikost proti
+   *              MAX_FILE_SIZE_BYTES. Soubor přes limit se do selectedFile vůbec
+   *              neuloží (formulář ho tedy nejde odeslat), místo toho se nastaví
+   *              fileSizeError pro zobrazení chybové hlášky v šabloně.
+   */
   onFileSelected(event: any): void {
     const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      this.selectedFile = null;
+      this.fileSizeError = true;
+      event.target.value = '';
       this.cd.markForCheck();
+      return;
     }
+
+    this.fileSizeError = false;
+    this.selectedFile = file;
+    this.cd.markForCheck();
   }
 
   // ZDE POUŽÍVÁME PUBLIC DATA SERVICE MÍSTO BASEDATACOMPONENT

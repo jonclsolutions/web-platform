@@ -87,7 +87,6 @@ export class GenericTableService {
     const dataObservable = this.dataHandler
       .getPaginatedCollection<PaginatedResponse<T>>(`${endpoint}?${params.toString()}`)
       .pipe(
-        tap(() => console.log(`Fetched from API: ${cacheKey}`)),
         shareReplay(1)
       );
 
