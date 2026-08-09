@@ -5,3 +5,17 @@ mailpitstop - vypne mail service
 xamppstart - zapne xamp kde je i db na https://localhost/phpmyadmin/
 xamppstop - vypne xamp
 
+//RUN ALL
+npm test -- --watch=false 
+
+//RUN ONE
+npm test -- --include=src/app/path 
+
+//START QUEUE FOR JOBS TABLE
+php artisan queue:work
+
+//API START
+php artisan start
+
+//ANGULAR START
+ng serve

@@ -4,6 +4,15 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
+ * @refactor-note (2026) Route parametr přejmenován z 'leadParam' na 'token' (viz app.routes.ts)
+ *      a přestal se parsovat jako "lead_id=123" (odhalovalo to interní DB ID a strukturu -
+ *      IDOR riziko). Nově je to čistý neuhodnutelný `public_token` z web_sales_leads.
+ *      Komponenta při načtení zavolá GET /public/sales-leads/{token} (WebSalesLeadController::
+ *      showByToken), předvyplní kontaktní pole a ošetří tři stavy: platný odkaz, neplatný
+ *      odkaz (404) a už jednou použitý odkaz (410 - backend ho po odeslání invaliduje).
+ *      Formulář už neposílá `lead_id` - odesílá `lead_token`, ze kterého si lead dohledá
+ *      a napojí backend sám (WebSalesOrderController::store), nikdy ne podle klientem
+ *      posílaného ID.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -12,97 +21,154 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { BasePublicComponent } from '../../base-public.component';
 import * as Web from '../../../shared/imports/web-providers';
 
+/** Stav ověření odkazu podle public_token - řídí, co komponenta zobrazí. */
+type LinkState = 'loading' | 'valid' | 'no-token' | 'invalid' | 'used';
+
+/** Bezpečná podmnožina polí leadu, kterou vrací veřejný showByToken endpoint. */
+interface LeadPrefill {
+  id: number;
+  subject_name: string | null;
+  contact_person: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+}
+
 @Component({
-  selector: 'app-order-form',
-  standalone: true,
-  imports: [ReactiveFormsModule, RouterModule],
-  templateUrl: './order-form.component.html',
-  styleUrl: './order-form.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+selector: 'app-order-form',
+standalone: true,
+imports: [ReactiveFormsModule, RouterModule],
+templateUrl: './order-form.component.html',
+styleUrl: './order-form.component.css',
+changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrderFormComponent extends BasePublicComponent {
 
-  protected readonly translationKey = 'order_form';
-  
-  private route = inject(ActivatedRoute);
-  private fb = inject(FormBuilder);
+protected readonly translationKey = 'order_form';
+private route = inject(ActivatedRoute);
+private fb = inject(FormBuilder);
 
-  orderForm!: FormGroup;
-  leadId: string | null = null;
-  isSubmitted = false;
-  isLoading = false; 
-  selectedFile: File | null = null;
-  errorMessage: string | null = null;
+orderForm!: FormGroup;
 
-  // Hook volaný po základní inicializaci v bázi
-  protected override onInit(): void {
-    const param = this.route.snapshot.paramMap.get('leadParam');
-    if (param && param.includes('=')) {
-      this.leadId = param.split('=')[1];
+/** Čistý public_token z URL (/order_form/:token) - nikdy interní DB id. */
+token: string | null = null;
+linkState: LinkState = 'loading';
+leadPrefill: LeadPrefill | null = null;
+
+isSubmitted = false;
+isLoading = false; 
+selectedFile: File | null = null;
+errorMessage: string | null = null;
+
+// Hook volaný po základní inicializaci v bázi
+protected override onInit(): void {
+this.initForm();
+
+const token = this.route.snapshot.paramMap.get('token');
+this.token = token;
+
+if (!token) {
+      // Formulář dostupný i bez tokenu (obecná poptávka mimo obchodní proces) -
+      // WebSalesOrderController::store() v takovém případě vytvoří objednávku bez
+      // navázání na lead, přesně jako dřív.
+this.linkState = 'no-token';
+this.cdr.markForCheck();
+return;
     }
-    this.initForm();
+
+this.publicDataService.get<LeadPrefill>(`public/sales-leads/${token}`)
+      .pipe(Web.takeUntil(this.destroy$))
+      .subscribe({
+next: (lead) => {
+this.leadPrefill = lead;
+this.orderForm.patchValue({
+client_name: lead.contact_person || lead.subject_name || '',
+client_email: lead.contact_email || '',
+client_phone: lead.contact_phone || '',
+          });
+this.linkState = 'valid';
+this.cdr.markForCheck();
+        },
+error: (err: any) => {
+          // Backend vrací 410 pro už jednou použitý odkaz, 404 pro neplatný/neexistující.
+this.linkState = err?.status === 410 ? 'used' : 'invalid';
+this.cdr.markForCheck();
+        }
+      });
   }
 
-  private initForm(): void {
-    this.orderForm = this.fb.group({
-      lead_id: [this.leadId],
-      client_name: ['', Validators.required],
-      ico: ['', [Validators.pattern('^[0-9]*$')]],
-      client_address: [''],
-      client_phone: ['', [Validators.pattern('^\\+?[0-9]*$'), Validators.maxLength(20)]],
-      client_email: ['', [Validators.required, Validators.email]],
-      order_description: ['', Validators.required],
-      dataProcessingAgreement: [false, Validators.requiredTrue],
-      tosAgreement: [false, Validators.requiredTrue]
+private initForm(): void {
+this.orderForm = this.fb.group({
+client_name: ['', Validators.required],
+ico: ['', [Validators.pattern('^[0-9]*$')]],
+client_address: [''],
+client_phone: ['', [Validators.pattern('^\\+?[0-9]*$'), Validators.maxLength(20)]],
+client_email: ['', [Validators.required, Validators.email]],
+order_description: ['', Validators.required],
+dataProcessingAgreement: [false, Validators.requiredTrue],
+tosAgreement: [false, Validators.requiredTrue]
     });
   }
-  
-  get btnText(): string {
-    if (!this.t) return '...';
-    return this.isLoading ? this.t.buttons.sending : this.t.buttons.send;
+
+get btnText(): string {
+if (!this.t) return '...';
+return this.isLoading ? this.t.buttons.sending : this.t.buttons.send;
   }
 
-  onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-      this.cdr.markForCheck();
+onFileSelected(event: any): void {
+const file = event.target.files[0];
+if (file) {
+this.selectedFile = file;
+this.cdr.markForCheck();
     }
   }
 
-  onSubmit(): void {
-    if (this.orderForm.invalid) return;
+onSubmit(): void {
+if (this.orderForm.invalid) return;
 
-    this.isLoading = true;
-    this.errorMessage = null;
+this.isLoading = true;
+this.errorMessage = null;
 
-    const formData = new FormData();
-    Object.keys(this.orderForm.value).forEach(key => {
-      const value = this.orderForm.value[key];
-      if (value !== null && value !== undefined) {
-        formData.append(key, value);
+const formData = new FormData();
+Object.keys(this.orderForm.value).forEach(key => {
+const value = this.orderForm.value[key];
+if (value !== null && value !== undefined) {
+formData.append(key, value);
       }
     });
 
-    if (this.selectedFile) {
-      formData.append('attachment', this.selectedFile, this.selectedFile.name);
+    // Lead se váže výhradně přes token - backend si podle něj dohledá a ověří
+    // lead sám (viz WebSalesOrderController::store). Posílá se jen když existuje
+    // (formulář může běžet i bez navázání na konkrétní lead).
+if (this.token) {
+formData.append('lead_token', this.token);
     }
 
-    this.publicDataService.post("sales_orders", formData).pipe(
-      Web.finalize(() => {
-        this.isLoading = false;
-        this.cdr.markForCheck();
+if (this.selectedFile) {
+formData.append('attachment', this.selectedFile, this.selectedFile.name);
+    }
+
+this.publicDataService.post("sales_orders", formData).pipe(
+Web.finalize(() => {
+this.isLoading = false;
+this.cdr.markForCheck();
       }),
-      Web.takeUntil(this.destroy$)
+Web.takeUntil(this.destroy$)
     ).subscribe({
-      next: () => {
-        this.isSubmitted = true;
-        this.cdr.markForCheck();
+next: () => {
+this.isSubmitted = true;
+this.cdr.markForCheck();
       },
-      error: (err: any) => {
-        this.errorMessage = this.t?.errors?.submit_error || 'Submission error.';
-        console.error('Submission failed:', err);
-        this.cdr.markForCheck();
+error: (err: any) => {
+        // 410 může přijít i tady, pokud byl token použit souběžně (dvě otevřené karty) -
+        // zobrazíme stejnou hlášku jako při načtení, ať uživatel ví, co se stalo.
+if (err?.status === 410) {
+this.linkState = 'used';
+this.errorMessage = null;
+        } else {
+this.errorMessage = this.t?.errors?.submit_error || 'Submission error.';
+        }
+console.error('Submission failed:', err);
+this.cdr.markForCheck();
       }
     });
   }

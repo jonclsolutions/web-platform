@@ -58,7 +58,7 @@ this.errorMessage = '';
 this.authService.login({ email: this.email, password: this.password }).subscribe({
 next: () => {
 this.setInitialAdminModule();
-this.router.navigate(['/admin/core/dashboard']);
+this.router.navigate(['/admin/core/welcome-page']);
       },
 error: (error) => {
 this.errorMessage = error.message || 'Incorrect credentials.';

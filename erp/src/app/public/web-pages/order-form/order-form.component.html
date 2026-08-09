@@ -9,10 +9,43 @@
 @if (t) {
   <div class="form-wrp">
     <div class="contact-form">
-      @if (!isSubmitted) {
+
+      @if (linkState === 'loading') {
+
+        <div class="success-container">
+          <p class="success-text">{{ t.link_states?.loading || 'Ověřuji odkaz…' }}</p>
+        </div>
+
+      } @else if (linkState === 'invalid') {
+
+        <div class="success-container">
+          <div class="success-icon">✕</div>
+          <h2>{{ t.link_states?.invalid_title || 'Odkaz je neplatný' }}</h2>
+          <p class="success-text">
+            {{ t.link_states?.invalid_text || 'Tento odkaz na objednávkový formulář neexistuje nebo byl odstraněn. Kontaktujte prosím svého obchodního zástupce.' }}
+          </p>
+          <button class="submit-btn" routerLink="/home">
+            <span>{{ t.buttons?.go_home }}</span>
+          </button>
+        </div>
+
+      } @else if (linkState === 'used') {
+
+        <div class="success-container">
+          <div class="success-icon">✕</div>
+          <h2>{{ t.link_states?.used_title || 'Formulář již byl odeslán' }}</h2>
+          <p class="success-text">
+            {{ t.link_states?.used_text || 'Tento odkaz je jednorázový a už byl použit. Pokud potřebujete něco doplnit, kontaktujte prosím svého obchodního zástupce.' }}
+          </p>
+          <button class="submit-btn" routerLink="/home">
+            <span>{{ t.buttons?.go_home }}</span>
+          </button>
+        </div>
+
+      } @else if (!isSubmitted) {
+
         <h2>{{ t.header }}</h2>
         <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
-          <input type="hidden" formControlName="lead_id">
           <div class="form-group">
             <label>{{ t.labels?.name }} <span class="required-asterisk">*</span></label>
             <input type="text" formControlName="client_name">
@@ -98,7 +131,9 @@
             <span>{{ btnText }}</span>
           </button>
         </form>
+
       } @else {
+
         <div class="success-container">
           <div class="success-icon">✓</div>
           <h2>{{ t.thank_you?.title }}</h2>
@@ -109,6 +144,7 @@
             <span>{{ t.buttons?.go_home }}</span>
           </button>
         </div>
+
       }
     </div>
   </div>

@@ -6,6 +6,12 @@
  * @author RPSW
  * @created 2025
  * @description Controller responsible for managing sales lead lifecycle, including filtering, lifecycle state management (soft-delete), and comprehensive administrative audit logging.
+ * @refactor-note (2026) Přidány `generateLink()` (admin - vygeneruje/vrátí public_token pro
+ *      sdílení odkazu na objednávkový formulář) a `showByToken()` (VEŘEJNÁ metoda bez auth -
+ *      pro OrderFormComponent na frontendu). `showByToken()` záměrně nevrací plný
+ *      WebSalesLeadResource (ten obsahuje interní CRM pole jako `salesman_name`, `status`,
+ *      `priority`, `rejection_reason`, `next_step` - to vše je neveřejné), ale jen úzkou
+ *      podmnožinu polí, která zákazník na objednávkovém formuláři reálně potřebuje.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -220,6 +226,71 @@ class WebSalesLeadController extends Controller
             $this->logAction($request, 'error', 'WebSalesLead', "Chyba při vyprazdňování koše leadů: " . $e->getMessage());
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
         }
+    }
+
+    /**
+     * @description Vygeneruje (nebo vrátí existující) public_token pro daný lead a sestaví
+     *              z něj plnou veřejnou URL na objednávkový formulář.
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse {"token": "...", "url": "https://.../order_form/{token}"}
+     * @note ADMIN endpoint - musí zůstat za AuthGuard/Sanctum middlewarem v routes/api.php,
+     *       stejně jako ostatní metody tohoto controlleru. Nikdy nevolat veřejně.
+     */
+    public function generateLink(Request $request, $id): JsonResponse
+    {
+        try {
+            $lead = WebSalesLead::findOrFail($id);
+            $token = $lead->getOrCreatePublicToken();
+
+            $this->logAction($request, 'generate_link', 'WebSalesLead', "Vygenerován odkaz na objednávkový formulář pro lead ID: {$lead->id}", $lead->id);
+
+            return response()->json([
+                'data' => [
+                    'token' => $token,
+                    'url'   => rtrim(config('app.frontend_url', $request->getSchemeAndHttpHost()), '/') . "/order_form/{$token}",
+                ],
+            ]);
+        } catch (\Exception $e) {
+            $this->logAction($request, 'error', 'WebSalesLead', "Chyba při generování odkazu pro lead ID {$id}: " . $e->getMessage(), $id);
+            return response()->json(['message' => 'Vygenerování odkazu selhalo.'], 500);
+        }
+    }
+
+    /**
+     * @description VEŘEJNÁ metoda (bez auth) pro načtení leadu podle public_token -
+     *              slouží OrderFormComponent na frontendu k předvyplnění objednávkového
+     *              formuláře. Vrací jen úzkou, bezpečnou podmnožinu polí (žádná interní
+     *              CRM data jako stav, priorita, obchodník, poznámky).
+     * @param string $token Public token z URL (/order_form/{token}).
+     * @return JsonResponse
+     * @note Musí být zaregistrována v routes/api.php MIMO auth middleware skupinu,
+     *       viz Route::get('/public/sales-leads/{token}', ...) níže.
+     * @note Vrací 410 Gone, pokud byl odkaz už jednou použit (public_token_used_at není
+     *       null) - samotné zobrazení formuláře tedy zákazníkovi rovnou řekne, že odkaz
+     *       už není platný, aniž by musel formulář vůbec vyplňovat. Skutečnou (atomickou)
+     *       ochranu proti dvojímu odeslání ale musí dělat WebSalesOrderController::store()
+     *       v okamžiku vytváření objednávky - viz poznámka v odpovědi.
+     */
+    public function showByToken(string $token): JsonResponse
+    {
+        $lead = WebSalesLead::where('public_token', $token)->first();
+
+        if (!$lead) {
+            return response()->json(['message' => 'Odkaz je neplatný nebo již expiroval.'], 404);
+        }
+
+        if ($lead->public_token_used_at) {
+            return response()->json(['message' => 'Tento formulář již byl jednou odeslán a odkaz není možné použít znovu.'], 410);
+        }
+
+        return response()->json([
+            'id'             => $lead->id,
+            'subject_name'   => $lead->subject_name,
+            'contact_person' => $lead->contact_person,
+            'contact_email'  => $lead->contact_email,
+            'contact_phone'  => $lead->contact_phone,
+        ]);
     }
 
     /**

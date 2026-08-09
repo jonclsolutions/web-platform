@@ -7,6 +7,17 @@
  * @author RPSW
  * @created 2025
  * @description Defines all application API endpoints, including public access for the frontend, checkout processes, and protected administrative routes.
+ * @refactor-note (2026) Přidána veřejná routa `public/sales-leads/{token}` (WebSalesLeadController::showByToken)
+ *      pro OrderFormComponent - dohledání leadu podle neuhodnutelného public_token místo
+ *      interního `id`. Do chráněné `web/sales_leads` skupiny přidána `POST /{id}/generate-link`
+ *      (WebSalesLeadController::generateLink) pro adminy k vygenerování/znovuvyzvednutí
+ *      tohoto tokenu. Viz WebSalesLead.php (getOrCreatePublicToken) a WebSalesOrderController::store()
+ *      pro navazující atomickou ochranu proti dvojímu odeslání formuláře.
+ * @refactor-note (2026-2) `sales_orders` (veřejný, bez auth) doplněn o `throttle:10,1` -
+ *      endpoint posílá potvrzovací e-mail na libovolnou `client_email` ze vstupu, takže bez
+ *      limitu šlo použít k emailovému bombardování cizí adresy (a poškození doménové
+ *      reputace odesílatele). Ostatní veřejné endpointy (login, forgot-password) throttle
+ *      už měly, tenhle ho chybně neměl.
  */
 
 use Illuminate\Http\Request;
@@ -95,6 +106,18 @@ Route::prefix('public/legal')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| PUBLIC SALES LEADS — resolve by unguessable token (order form prefill)
+|--------------------------------------------------------------------------
+| Slouží OrderFormComponent k předvyplnění formuláře podle odkazu, který lead
+| dostal od obchodníka (viz WebSalesLeadController::generateLink v chráněné
+| sekci níže). NIKDY nepřidávat sem přístup podle interního `id` - jen `token`.
+*/
+Route::prefix('public')->group(function () {
+    Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken']);
+});
+
+/*
+|--------------------------------------------------------------------------
 | Authentication (public)
 |--------------------------------------------------------------------------
 */
@@ -116,7 +139,8 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 
 // Public web forms
 Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store']);
-Route::post('sales_orders',            [WebSalesOrderController::class, 'store']);
+Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
+    ->middleware('throttle:10,1');
 Route::post('job_applications',        [WebJobApplicationController::class, 'store']);
 
 Route::get('/download-file/{folder}/{file}', function ($folder, $file) {
@@ -340,6 +364,8 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
             Route::get('/{id}',                [WebSalesLeadController::class, 'show']);
             Route::post('/{id}/restore',       [WebSalesLeadController::class, 'restore']);
             Route::delete('/force-delete-all', [WebSalesLeadController::class, 'forceDeleteAllTrashed']);
+            // Vygeneruje/vrátí public_token daného leadu + sestavenou URL na order_form.
+            Route::post('/{id}/generate-link', [WebSalesLeadController::class, 'generateLink']);
         });
         Route::apiResource('sales_leads', WebSalesLeadController::class)
             ->parameters(['sales_leads' => 'id']);

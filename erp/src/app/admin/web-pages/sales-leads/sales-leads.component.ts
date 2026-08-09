@@ -113,19 +113,28 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     this.initWithAuthCheck(this.router);
   }
 
-  /**
-   * @description Constructs a unique order form URL for the lead and copies it to the clipboard.
-   * @param item The specific sales lead entity.
-   */
-  handleGenerateFormLink(item: any): void {
-    const url = `${window.location.origin}/order_form/lead_id=${item.id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      this.alertDialogService.open('Odkaz zkopírován', `Odkaz pro lead ID: ${item.id} je ve schránce.`, 'success');
-      this.logAction(item);
-    }).catch(() => {
-      this.alertDialogService.open('Chyba', 'Nepodařilo se zkopírovat odkaz.', 'danger');
+/**
+ * @description Vyžádá (nebo znovu použije) unikátní veřejný odkaz na objednávkový
+ *              formulář pro daný lead a zkopíruje ho do schránky.
+ * @param item Konkrétní obchodní lead.
+ * @note Token se generuje/ověřuje na backendu (WebSalesLeadController::generateLink) -
+ *       frontend URL nikdy neskládá sám z `item.id`, ať se do ní nedostane interní ID.
+ */
+handleGenerateFormLink(item: any): void {
+  this.dataHandler.post<{ token: string; url: string }>(`web/sales_leads/${item.id}/generate-link`, {})
+    .subscribe({
+      next: (res) => {
+        navigator.clipboard.writeText(res.url).then(() => {
+          this.alertDialogService.open('Odkaz zkopírován', `Odkaz pro lead "${item.subject_name}" je ve schránce.`, 'success');
+        }).catch(() => {
+          this.alertDialogService.open('Chyba', 'Nepodařilo se zkopírovat odkaz.', 'danger');
+        });
+      },
+      error: () => {
+        this.alertDialogService.open('Chyba', 'Nepodařilo se vygenerovat odkaz.', 'danger');
+      }
     });
-  }
+}
 
   /**
    * @description Sends an audit log entry to the server regarding specific user actions on a lead.

@@ -20,6 +20,9 @@
  *      `switchModule()` zná novou cílovou cestu `/admin/core/dashboard`. Viditelnost tlačítka
  *      v přepínači řeší nová permission `view-core` přes `*appHasPermission` v šabloně,
  *      stejně jako u stávajících 'view-web'/'view-eshop'.
+ * @redesign-note (2026-3) `switchModule('web')` nyní míří na `/admin/web/dashboard` místo
+ *      `/admin/dashboard` - web stránky sjednoceny pod prefix `web/...`, stejně jako
+ *      `core/...` a `shop/...` (viz admin-routing.module.ts).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
@@ -203,8 +206,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     localStorage.setItem('admin_current_module', module);
 
     const landingRoute: Record<'web' | 'core' | 'shop', string> = {
-      web: '/admin/dashboard',
-      core: '/admin/core/dashboard',
+      web: '/admin/web/dashboard',
+      core: '/admin/core/welcome-page',
       shop: '/admin/shop/dashboard'
     };
     this.router.navigate([landingRoute[module]]);

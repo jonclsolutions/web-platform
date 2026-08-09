@@ -243,19 +243,8 @@
         <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Přehled</div>
           <ul>
-            <li *appHasPermission="'web-view-welcome-page'">
-              <a routerLink="/admin/welcome-page" routerLinkActive="active" (click)="onLinkClick()" title="Vítejte">
-                <span class="nav-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                </span>
-                <span class="nav-text">Vítejte</span>
-              </a>
-            </li>
             <li *appHasPermission="'web-view-dashboard'">
-              <a routerLink="/admin/dashboard" routerLinkActive="active" (click)="onLinkClick()" title="Dashboard">
+              <a routerLink="/admin/web/dashboard" routerLinkActive="active" (click)="onLinkClick()" title="Dashboard">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -272,7 +261,7 @@
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obchod</div>
           <ul>
             <li *appHasPermission="'web-view-user-requests'">
-              <a routerLink="/admin/user-request" routerLinkActive="active" (click)="onLinkClick()" title="Webový formulář">
+              <a routerLink="/admin/web/user-request" routerLinkActive="active" (click)="onLinkClick()" title="Webový formulář">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -284,7 +273,7 @@
               </a>
             </li>
             <li *appHasPermission="'web-view-sales-leads'">
-              <a routerLink="/admin/sales-leads" routerLinkActive="active" (click)="onLinkClick()" title="Obchodní Leady">
+              <a routerLink="/admin/web/sales-leads" routerLinkActive="active" (click)="onLinkClick()" title="Obchodní Leady">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
@@ -295,7 +284,7 @@
               </a>
             </li>
             <li *appHasPermission="'web-view-sales-orders'">
-              <a routerLink="/admin/sales-orders" routerLinkActive="active" (click)="onLinkClick()" title="Přijaté poptávky">
+              <a routerLink="/admin/web/sales-orders" routerLinkActive="active" (click)="onLinkClick()" title="Přijaté poptávky">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
@@ -311,7 +300,7 @@
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obsah webu</div>
           <ul>
             <li *appHasPermission="'web-view-edit-website'">
-              <a routerLink="/admin/edit-website" routerLinkActive="active" (click)="onLinkClick()" title="Správa Webu">
+              <a routerLink="/admin/web/edit-website" routerLinkActive="active" (click)="onLinkClick()" title="Správa Webu">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
@@ -321,7 +310,7 @@
               </a>
             </li>
             <li *appHasPermission="'web-view-news'">
-              <a routerLink="/admin/edit-news" routerLinkActive="active" (click)="onLinkClick()" title="Správa Novinek">
+              <a routerLink="/admin/web/edit-news" routerLinkActive="active" (click)="onLinkClick()" title="Správa Novinek">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
@@ -338,7 +327,7 @@
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Lidé</div>
           <ul>
             <li *appHasPermission="'web-view-job-applications'">
-              <a routerLink="/admin/job-applications" routerLinkActive="active" (click)="onLinkClick()" title="Správa Uchazečů">
+              <a routerLink="/admin/web/job-applications" routerLinkActive="active" (click)="onLinkClick()" title="Správa Uchazečů">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -350,7 +339,7 @@
               </a>
             </li>
             <li *appHasPermission="'web-view-support-tickets'">
-              <a routerLink="/admin/support-tickets" routerLinkActive="active" (click)="onLinkClick()" title="Helpdesk Tikety">
+              <a routerLink="/admin/web/support-tickets" routerLinkActive="active" (click)="onLinkClick()" title="Helpdesk Tikety">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/>
@@ -368,7 +357,7 @@
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Systém</div>
           <ul>
             <li *appHasPermission="'web-view-web-logs'">
-              <a routerLink="/admin/business-logs" routerLinkActive="active" (click)="onLinkClick()" title="Serverové Logy">
+              <a routerLink="/admin/web/business-logs" routerLinkActive="active" (click)="onLinkClick()" title="Serverové Logy">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -390,6 +379,17 @@
         <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Přehled</div>
           <ul>
+            <li *appHasPermission="'core-view-welcome-page'">
+              <a routerLink="/admin/core/welcome-page" routerLinkActive="active" (click)="onLinkClick()" title="Vítejte">
+                <span class="nav-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                </span>
+                <span class="nav-text">Vítejte</span>
+              </a>
+            </li>
             <li *appHasPermission="'view-core'">
               <a routerLink="/admin/core/dashboard" routerLinkActive="active" (click)="onLinkClick()" title="Core Dashboard">
                 <span class="nav-icon">

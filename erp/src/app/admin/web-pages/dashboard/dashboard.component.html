@@ -9,7 +9,6 @@
 <div class="core-dashboard">
 
   <div class="cd-header-bar">
-    <div class="cd-header-date">{{ currentDateTime }}</div>
     <h1 class="cd-header-title">Přehled systému</h1>
     <p class="cd-header-sub">Souhrnné statistiky, poslední aktivita a rychlá navigace</p>
   </div>
@@ -71,7 +70,7 @@
           </svg>
         </span>
         <span class="cd-card-title">Záznamy aktivit (web logy)</span>
-        <a class="cd-card-link" routerLink="/admin/web/logs">Zobrazit vše →</a>
+        <a class="cd-card-link" routerLink="/admin/web/business-logs">Zobrazit vše →</a>
       </div>
       <div class="cd-activity-body">
         @if (loadingActivity) {

@@ -24,7 +24,7 @@ import * as Config from './logs.config';
  * @note Extends BaseDataComponent to leverage standard CRUD patterns while specifically handling log-specific identification fields.
  */
 @Component({
-  selector: 'app-business-logs',
+  selector: 'app-core-system-logs',
   standalone: true,
   imports: [SHARED_UI_BUILDERS],
   templateUrl: './logs.component.html',

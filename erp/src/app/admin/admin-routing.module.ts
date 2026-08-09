@@ -4,7 +4,7 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Centralized routing configuration for the administrative module, separating Web, E-Shop, and Core interfaces with role-based access control.
+ * @description Centralized routing configuration for the administrative module, separating Web, Core, and E-Shop interfaces with role-based access control.
  * @dependencies
  * - RouterModule: Core Angular routing service.
  * - AuthGuard: Authentication middleware ensuring restricted access to administrative routes.
@@ -15,25 +15,29 @@
  *      a login.component.ts.
  * @refactor-note (2026-2) Vyčleněna nová sekce `core` (systémové/sdílené stránky napříč
  *      Web a E-shop): GDPR/TOS, osobní informace, firemní údaje, externí odkazy, správa
- *      rolí, správa účtů - přesunuty z `web-pages` do `core-pages` beze změny permission
- *      klíčů (přejmenování řešeno v samostatném tasku). Nové `core/dashboard` a
- *      `core/logs` jsou zatím placeholder stránky chráněné novou permission `view-core`
- *      (nutno ručně doplnit do core_permissions v DB). `business-logs` zůstává i nadále
- *      dostupná ve `web-pages` beze změny - core/logs je samostatná, dočasně na stejná
- *      data napojená stránka, ne přesun.
+ *      rolí, správa účtů, welcome-page - přesunuty z `web-pages` do `core-pages` beze
+ *      změny permission klíčů (přejmenování řešeno v samostatném tasku). Nové
+ *      `core/dashboard` a `core/logs` jsou zatím placeholder stránky chráněné novou
+ *      permission `view-core` (nutno ručně doplnit do core_permissions v DB).
+ *      `business-logs` zůstává i nadále dostupná ve `web` sekci beze změny - core/logs
+ *      je samostatná, dočasně na stejná data napojená stránka, ne přesun.
+ * @refactor-note (2026-3) Web stránky sjednoceny pod prefix `web/...` (dřív byly na
+ *      kořenové úrovni `/admin/xxx`), stejně jako `core/...` a `shop/...` - konzistentní
+ *      URL struktura napříč všemi třemi sekcemi. Zároveň doplněna chybějící route
+ *      `web/edit-website` (existoval jen odkaz v menu, route v modulu chyběla).
  */
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AdminLayoutComponent } from './components/admin-layout/admin-layout.component';
 import { DashboardComponent } from './web-pages/dashboard/dashboard.component';
-import { WelcomePageComponent } from './web-pages/welcome-page/welcome-page.component';
 import { UserRequestComponent } from './web-pages/user-request/user-request.component';
 import { AuthGuard } from '../core/auth/guards/auth.guard';
 import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
 import { BusinessLogsComponent } from './web-pages/business-logs/business-logs.component';
 import { SalesLeadsComponent } from './web-pages/sales-leads/sales-leads.component';
 import { EditNewsComponent } from './web-pages/edit-news/edit-news.component';
+import { EditWebsiteComponent } from './web-pages/edit-website/edit-website.component';
 import { SalesOrdersComponent } from './web-pages/sales-orders/sales-orders.component';
 import { SupportTicketsComponent } from './web-pages/support-tickets/support-tickets.component';
 import { JobApplicationsComponent } from './web-pages/job-applications/job-applications.component';
@@ -54,6 +58,7 @@ import { ExternalLinksComponent } from './core-pages/external-links/external-lin
 import { EditRolesComponent } from './core-pages/edit-roles/edit-roles.component';
 import { AdministratorsComponent } from './core-pages/administrators/administrators.component';
 import { CoreLogsComponent } from './core-pages/logs/logs.component';
+import { WelcomePageComponent } from './core-pages/welcome-page/welcome-page.component';
 
 // Shop module components
 import { DashboardComponent as ShopDashboardComponent } from './shop-pages/dashboard/dashboard.component';
@@ -71,7 +76,8 @@ import { EditEshopComponent } from './shop-pages/edit-eshop/edit-eshop.component
 /**
  * @description Defines the navigation hierarchy and access permissions for the administration interface.
  * @usage Acts as the master route table for the admin module, protected by AuthGuard to prevent unauthenticated access.
- * @note Routes are grouped into Web, Core, and E-Shop segments for maintainability and clear logical separation.
+ * @note Routes are grouped into Web, Core, and E-Shop segments, each under its own path prefix
+ *       ('web/', 'core/', 'shop/') for a consistent, predictable URL structure.
  */
 const routes: Routes = [
   {
@@ -81,26 +87,30 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'core/dashboard', pathMatch: 'full' },
 
-      // 👋 Uvítací stránka po přihlášení - vidí ji každý s oprávněním web-view-welcome-page
-      // (defaultně sysadmin + admin, ostatní role lze doplnit přes /admin/core/edit-roles).
-      { path: 'welcome-page', component: WelcomePageComponent, data: { permission: 'web-view-welcome-page' } },
-
       // 🌍 WEB STRÁNKY (Core website management interfaces)
-      { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
-      { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-view-user-requests' } },
-      { path: 'business-logs', component: BusinessLogsComponent, data: { permission: 'web-view-web-logs' } },
-      { path: 'sales-leads', component: SalesLeadsComponent, data: { permission: 'web-view-sales-leads' } },
-      { path: 'edit-news', component: EditNewsComponent, data: { permission: 'web-view-news' } },
-      { path: 'sales-orders', component: SalesOrdersComponent, data: { permission: 'web-view-sales-orders' } },
-      { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-view-support-tickets' } },
-      { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-view-job-applications' } },
+      {
+        path: 'web',
+        children: [
+          { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+          { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
+          { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-view-user-requests' } },
+          { path: 'business-logs', component: BusinessLogsComponent, data: { permission: 'web-view-web-logs' } },
+          { path: 'sales-leads', component: SalesLeadsComponent, data: { permission: 'web-view-sales-leads' } },
+          { path: 'edit-news', component: EditNewsComponent, data: { permission: 'web-view-news' } },
+          { path: 'edit-website', component: EditWebsiteComponent, data: { permission: 'web-view-edit-website' } },
+          { path: 'sales-orders', component: SalesOrdersComponent, data: { permission: 'web-view-sales-orders' } },
+          { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-view-support-tickets' } },
+          { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-view-job-applications' } },
+        ]
+      },
 
       // 🧩 CORE STRÁNKY (systémové/sdílené napříč Web a E-shop)
       {
         path: 'core',
         children: [
-          { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+          { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
           { path: 'dashboard', component: CoreDashboardComponent, data: { permission: 'view-core' } },
+          { path: 'welcome-page', component: WelcomePageComponent, data: { permission: 'core-view-welcome-page' } },
           { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'web-edit-legal' } },
           { path: 'personal-info', component: PersonalInfoComponent, data: { permission: 'web-view-personal-info' } },
           { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'web-view-web-settings' } },
