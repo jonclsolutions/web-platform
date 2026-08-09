@@ -9,6 +9,9 @@
  * - AuthService: Handles the secure authentication request and password reset requests.
  * - Router: Manages navigation upon successful authentication.
  * - ChangeDetectorRef: Manual change detection for UI updates during asynchronous operations.
+ * @refactor-note (2026) Post-login navigace přesměrována z '/admin/welcome-page' na
+ *      '/admin/core/dashboard' - nová výchozí přistávací stránka po přihlášení odpovídá
+ *      novému Core modulu (viz admin-routing.module.ts).
  */
 
 import { Component, ChangeDetectorRef } from '@angular/core';
@@ -47,20 +50,32 @@ private cdr: ChangeDetectorRef
   ) {}
 
 /**
-   * @description Processes user credentials and navigates to the welcome page upon success.
+   * @description Processes user credentials and navigates to the core dashboard upon success.
    * @note Updates the errorMessage state if authentication fails.
    */
 onLogin(): void {
 this.errorMessage = '';
 this.authService.login({ email: this.email, password: this.password }).subscribe({
 next: () => {
-this.router.navigate(['/admin/welcome-page']);
+this.setInitialAdminModule();
+this.router.navigate(['/admin/core/dashboard']);
       },
 error: (error) => {
 this.errorMessage = error.message || 'Incorrect credentials.';
 this.cdr.detectChanges();
       }
     });
+  }
+
+/**
+   * @description Zapíše do localStorage 'core' jako aktuální admin modul, ať AdminLayoutComponent
+   *              po přihlášení nezobrazí zbytek UI (přepínač, sidebar) podle modulu zvoleného
+   *              v předchozí relaci, ale podle skutečné cílové URL '/admin/core/dashboard'.
+   */
+private setInitialAdminModule(): void {
+if (typeof window !== 'undefined') {
+localStorage.setItem('admin_current_module', 'core');
+    }
   }
 
 /**

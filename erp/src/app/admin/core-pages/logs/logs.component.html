@@ -1,0 +1,68 @@
+<!-- 
+    @file: business-logs.component.html
+    @path: /src/app/admin/web-pages/business-logs/business-logs.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+-->
+    
+<div class="user-request-container container mx-auto p-4">
+  @if (errorMessage) {
+    <div class="error-banner">
+      ⚠️ {{ errorMessage }}
+    </div>
+  }
+  @if (!errorMessage) {
+    <div>
+      <div class="toolbar-actions m-b-t-5">
+        <div class="table-header">Auditní záznamy (Business Logs)</div>
+        <div class="toolbar-actions-in">
+          <app-button-builder
+            [configs]="toolbarButtons"
+            (actionTriggered)="handleToolbarAction($event)">
+          </app-button-builder>
+        </div>
+      </div>
+      <div class="main-content-layout">
+        <div class="filter-side-panel" [class.active]="isFilterVisible">
+          <app-filter-form-builder
+            [filterColumns]="filterColumns"
+            [initialFilters]="filters"
+            (filtersApplied)="applyFilters($event)"
+            (filtersCleared)="clearFilters()">
+          </app-filter-form-builder>
+        </div>
+        <div class="table-and-pagination-container">
+          <app-table-builder #activeTable
+            [buttons]="buttons"
+            [data]="data"
+            [currentFilters]="filters"
+            [columns]="tableColumns"
+            [isFullWidth]="isTableFullWidth"
+            [tableCaption]="'Seznam událostí systému'"
+            [apiEndpoint]="apiEndpoint"
+            (viewDetailsOpened)="handleViewDetails($event)">
+          </app-table-builder>
+          <div class="flex justify-between items-center mt-4">
+            <app-pagination-buttons-builder
+              [currentPage]="currentPage"
+              [totalPages]="totalPages"
+              [totalItems]="totalItems"
+              [itemsPerPage]="itemsPerPage"
+              [dataLength]="data.length"
+              (pageChange)="handlePageChange($event)"
+              (itemsPerPageChange)="handleItemsPerPageChange($event)">
+            </app-pagination-buttons-builder>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+@if (showDetails) {
+  <app-details-builder
+    [itemDetailColumns]="detailsColumns"
+    [itemData]="selectedItemForDetails"
+    (closeDetails)="handleCloseDetails()">
+  </app-details-builder>
+}

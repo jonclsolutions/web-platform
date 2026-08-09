@@ -4,14 +4,23 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Centralized routing configuration for the administrative module, separating Web, E-Shop, and Intranet interfaces with role-based access control.
+ * @description Centralized routing configuration for the administrative module, separating Web, E-Shop, and Core interfaces with role-based access control.
  * @dependencies
  * - RouterModule: Core Angular routing service.
  * - AuthGuard: Authentication middleware ensuring restricted access to administrative routes.
  * - AdminLayoutComponent: Main wrapper layout for the admin section.
- * @refactor-note (2026) Přidána `welcome-page` jako nová výchozí post-login stránka
- *      (viz redirect '' -> 'welcome-page', dřív mířil na 'dashboard'). Dashboard zůstává
- *      samostatnou, citlivější stránkou chráněnou `web-view-dashboard`.
+ * @refactor-note (2026) Přidána `welcome-page` jako samostatná stránka dostupná z menu
+ *      (odkaz "Vítejte"). Výchozí post-login přistávací stránka je od refactoru (2026-2)
+ *      `core/dashboard`, ne `welcome-page` - viz redirect '' -> 'core/dashboard' níže
+ *      a login.component.ts.
+ * @refactor-note (2026-2) Vyčleněna nová sekce `core` (systémové/sdílené stránky napříč
+ *      Web a E-shop): GDPR/TOS, osobní informace, firemní údaje, externí odkazy, správa
+ *      rolí, správa účtů - přesunuty z `web-pages` do `core-pages` beze změny permission
+ *      klíčů (přejmenování řešeno v samostatném tasku). Nové `core/dashboard` a
+ *      `core/logs` jsou zatím placeholder stránky chráněné novou permission `view-core`
+ *      (nutno ručně doplnit do core_permissions v DB). `business-logs` zůstává i nadále
+ *      dostupná ve `web-pages` beze změny - core/logs je samostatná, dočasně na stejná
+ *      data napojená stránka, ne přesun.
  */
 
 import { NgModule } from '@angular/core';
@@ -22,24 +31,29 @@ import { WelcomePageComponent } from './web-pages/welcome-page/welcome-page.comp
 import { UserRequestComponent } from './web-pages/user-request/user-request.component';
 import { AuthGuard } from '../core/auth/guards/auth.guard';
 import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
-import { AdministratorsComponent } from './web-pages/administrators/administrators.component';
 import { BusinessLogsComponent } from './web-pages/business-logs/business-logs.component';
-import { PersonalInfoComponent } from './web-pages/personal-info/personal-info.component';
-import { EditWebsiteComponent } from './web-pages/edit-website/edit-website.component';
+import { SalesLeadsComponent } from './web-pages/sales-leads/sales-leads.component';
+import { EditNewsComponent } from './web-pages/edit-news/edit-news.component';
+import { SalesOrdersComponent } from './web-pages/sales-orders/sales-orders.component';
+import { SupportTicketsComponent } from './web-pages/support-tickets/support-tickets.component';
+import { JobApplicationsComponent } from './web-pages/job-applications/job-applications.component';
 import { KnowledgeBaseComponent } from './intranet/knowledge-base/knowledge-base.component';
 import { IntroductionsComponent } from './intranet/knowledge-base/pages/introductions/introductions.component';
 import { SalesRepComponent } from './intranet/knowledge-base/pages/sales-rep/sales-rep.component';
-import { SalesLeadsComponent } from './web-pages/sales-leads/sales-leads.component';
 import { NewsComponent } from './intranet/knowledge-base/pages/news/news.component';
 import { SecurityComponent } from './intranet/knowledge-base/pages/security/security.component';
 import { ContactsComponent } from './intranet/knowledge-base/pages/contacts/contacts.component';
-import { EditNewsComponent } from './web-pages/edit-news/edit-news.component';
-import { SalesOrdersComponent } from './web-pages/sales-orders/sales-orders.component';
 import { SupportFormComponent } from './intranet/knowledge-base/pages/support-form/support-form.component';
-import { SupportTicketsComponent } from './web-pages/support-tickets/support-tickets.component';
-import { JobApplicationsComponent } from './web-pages/job-applications/job-applications.component';
-import { EditRolesComponent } from './web-pages/edit-roles/edit-roles.component';
-import { ExternalLinksComponent } from './web-pages/external-links/external-links.component';
+
+// Core module components (přesunuto z web-pages do core-pages skriptem create-core-pages.sh)
+import { CoreDashboardComponent } from './core-pages/dashboard/dashboard.component';
+import { EditLegalComponent } from './core-pages/edit-legal/edit-legal.component';
+import { PersonalInfoComponent } from './core-pages/personal-info/personal-info.component';
+import { WebSettingsComponent } from './core-pages/web-settings/web-settings.component';
+import { ExternalLinksComponent } from './core-pages/external-links/external-links.component';
+import { EditRolesComponent } from './core-pages/edit-roles/edit-roles.component';
+import { AdministratorsComponent } from './core-pages/administrators/administrators.component';
+import { CoreLogsComponent } from './core-pages/logs/logs.component';
 
 // Shop module components
 import { DashboardComponent as ShopDashboardComponent } from './shop-pages/dashboard/dashboard.component';
@@ -52,14 +66,12 @@ import { ShopLogsComponent } from './shop-pages/shop-logs/shop-logs.component';
 import { ShippingMethodsComponent } from './shop-pages/shipping-methods/shipping-methods.component';
 import { SuppliersComponent } from './shop-pages/suppliers/suppliers.component';
 import { PaymentMethodsComponent } from './shop-pages/payment-methods/payment-methods.component';
-import { EditLegalComponent } from './web-pages/edit-legal/edit-legal.component';
-import { WebSettingsComponent } from './web-pages/web-settings/web-settings.component';
 import { EditEshopComponent } from './shop-pages/edit-eshop/edit-eshop.component';
 
 /**
  * @description Defines the navigation hierarchy and access permissions for the administration interface.
  * @usage Acts as the master route table for the admin module, protected by AuthGuard to prevent unauthenticated access.
- * @note Routes are grouped into Web, E-Shop, and Intranet segments for maintainability and clear logical separation.
+ * @note Routes are grouped into Web, Core, and E-Shop segments for maintainability and clear logical separation.
  */
 const routes: Routes = [
   {
@@ -67,31 +79,39 @@ const routes: Routes = [
     component: AdminLayoutComponent,
     canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
+      { path: '', redirectTo: 'core/dashboard', pathMatch: 'full' },
 
       // 👋 Uvítací stránka po přihlášení - vidí ji každý s oprávněním web-view-welcome-page
-      // (defaultně sysadmin + admin, ostatní role lze doplnit přes /admin/edit-roles).
+      // (defaultně sysadmin + admin, ostatní role lze doplnit přes /admin/core/edit-roles).
       { path: 'welcome-page', component: WelcomePageComponent, data: { permission: 'web-view-welcome-page' } },
 
       // 🌍 WEB STRÁNKY (Core website management interfaces)
       { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
       { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-view-user-requests' } },
-      { path: 'administrators', component: AdministratorsComponent, data: { permission: 'web-manage-administrators' } },
       { path: 'business-logs', component: BusinessLogsComponent, data: { permission: 'web-view-web-logs' } },
-      { path: 'personal-info', component: PersonalInfoComponent, data: { permission: 'web-view-personal-info' } },
-      { path: 'edit-website', component: EditWebsiteComponent, data: { permission: 'web-view-edit-website' } },
       { path: 'sales-leads', component: SalesLeadsComponent, data: { permission: 'web-view-sales-leads' } },
       { path: 'edit-news', component: EditNewsComponent, data: { permission: 'web-view-news' } },
       { path: 'sales-orders', component: SalesOrdersComponent, data: { permission: 'web-view-sales-orders' } },
       { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-view-support-tickets' } },
       { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-view-job-applications' } },
-      { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'web-edit-legal' } },
-      { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'web-view-web-settings' } },
-       { path: 'external-links', component: ExternalLinksComponent, data: { permission: 'web-manage-external-links' } }, 
 
-      // 🔒 Správa rolí a oprávnění - natvrdo omezeno na roli 'sysadmin' (viz sysadminGuard),
-      // nezávisle na permission systému, aby zůstala vždy pod výhradní kontrolou sysadmina.
-      { path: 'edit-roles', component: EditRolesComponent, canActivate: [sysadminGuard] },
+      // 🧩 CORE STRÁNKY (systémové/sdílené napříč Web a E-shop)
+      {
+        path: 'core',
+        children: [
+          { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+          { path: 'dashboard', component: CoreDashboardComponent, data: { permission: 'view-core' } },
+          { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'web-edit-legal' } },
+          { path: 'personal-info', component: PersonalInfoComponent, data: { permission: 'web-view-personal-info' } },
+          { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'web-view-web-settings' } },
+          { path: 'external-links', component: ExternalLinksComponent, data: { permission: 'web-manage-external-links' } },
+          // Nezávisle na permission systému natvrdo omezeno na roli 'sysadmin' (viz sysadminGuard).
+          { path: 'edit-roles', component: EditRolesComponent, canActivate: [sysadminGuard] },
+          { path: 'administrators', component: AdministratorsComponent, data: { permission: 'web-manage-administrators' } },
+          // Placeholder - dočasně čte ze stejného zdroje jako web/business-logs, viz poznámka v logs.component.ts.
+          { path: 'logs', component: CoreLogsComponent, data: { permission: 'view-core' } },
+        ]
+      },
 
       // 🛒 E-SHOP STRÁNKY (E-commerce administrative interfaces)
       { 

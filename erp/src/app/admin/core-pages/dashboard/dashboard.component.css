@@ -1,0 +1,44 @@
+/*
+    @file: dashboard.component.css
+    @path: /src/app/admin/core-pages/dashboard/dashboard.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
+
+.core-dashboard-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  padding: 80px 24px;
+}
+
+.core-dashboard-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(166, 125, 255, 0.1);
+  border: 1px solid rgba(166, 125, 255, 0.25);
+  color: #a67dff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.core-dashboard-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e0e0f0;
+  margin: 0;
+}
+
+.core-dashboard-text {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: #888899;
+  max-width: 480px;
+  margin: 0;
+}

@@ -15,6 +15,11 @@
  *      Na mobilu (viz CSS) header schovává většinu obsahu (uživatel, hodiny, přepínač modulů,
  *      wiki/bug odkazy), aby se nic neořezávalo - místo toho se všechno přesune do vysouvacího
  *      panelu ovládaného novým hamburger tlačítkem vpravo nahoře. Desktopové chování je beze změny.
+ * @redesign-note (2026-2) `currentModule` rozšířeno o třetí hodnotu `'core'` (nová sekce
+ *      systémových/sdílených stránek napříč Web a E-shop - viz admin-routing.module.ts).
+ *      `switchModule()` zná novou cílovou cestu `/admin/core/dashboard`. Viditelnost tlačítka
+ *      v přepínači řeší nová permission `view-core` přes `*appHasPermission` v šabloně,
+ *      stejně jako u stávajících 'view-web'/'view-eshop'.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
@@ -49,7 +54,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   userRole: string | null = null;
   isLoggedIn: boolean = false;
   
-  currentModule: 'web' | 'shop' = 'web';
+  currentModule: 'web' | 'core' | 'shop' = 'web';
 
   isShopActive: boolean = true;
   maintenanceMessage: string = '';
@@ -100,7 +105,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       if (savedWidth) this.sidebarWidth = parseInt(savedWidth, 10);
       
       const savedState = localStorage.getItem('admin_menu_open');
-      const savedModule = localStorage.getItem('admin_current_module') as 'web' | 'shop';
+      const savedModule = localStorage.getItem('admin_current_module') as 'web' | 'core' | 'shop';
       if (savedModule) this.currentModule = savedModule;
 
       if (window.innerWidth <= 768) {
@@ -190,13 +195,19 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Switches between main application modules ('web' vs 'shop') and updates navigation.
+   * @description Switches between main application modules ('web' / 'core' / 'shop') and updates navigation.
    * @param module The target module to navigate into.
    */
-  switchModule(module: 'web' | 'shop'): void {
+  switchModule(module: 'web' | 'core' | 'shop'): void {
     this.currentModule = module;
     localStorage.setItem('admin_current_module', module);
-    this.router.navigate([module === 'web' ? '/admin/dashboard' : '/admin/shop/dashboard']);
+
+    const landingRoute: Record<'web' | 'core' | 'shop', string> = {
+      web: '/admin/dashboard',
+      core: '/admin/core/dashboard',
+      shop: '/admin/shop/dashboard'
+    };
+    this.router.navigate([landingRoute[module]]);
     this.cdr.markForCheck();
   }
 
