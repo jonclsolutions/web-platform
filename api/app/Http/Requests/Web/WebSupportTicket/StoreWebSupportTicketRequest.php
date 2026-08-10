@@ -6,6 +6,15 @@
  * @author RPSW
  * @created 2026
  * @description Validation logic for creating new support tickets, including file attachment constraints.
+ *
+ * @refactor-note (2026-08) `$safeExtensions` drasticky zúžen. Pole je popsané jako
+ * "Příloha (Screenshot / Log)" - původní seznam ale povoloval audio (mp3/wav/flac...),
+ * video (mp4/mov/mkv...), CAD/design formáty (dwg/stl/psd/ai...) a širokou škálu archivů
+ * (rar/7z/tar.gz), což nikdy neodpovídalo účelu pole a umožňovalo nahrát cokoliv (viz
+ * incident - reálný .mp3 soubor prošel validací a přehrával se v adminu). Ponechány jen
+ * typy relevantní pro screenshoty a textové/log přílohy. SVG záměrně VYLOUČENO - může
+ * obsahovat vložený <script> a při přímém otevření (ne přes <img>) jde o stored XSS
+ * riziko z nahraného souboru.
  */
 
 namespace App\Http\Requests\Web\WebSupportTicket;
@@ -31,14 +40,14 @@ class StoreWebSupportTicketRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Jen screenshoty a textové/log přílohy - viz @refactor-note výše.
         $safeExtensions = [
-            'pdf', 'doc', 'docx', 'dotx', 'odt', 'pages', 'rtf', 'txt', 'csv',
-            'xls', 'xlsx', 'xlsm', 'xltx', 'ods', 'numbers', 'ppt', 'pptx', 'key',
-            'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff', 'tif', 'heic', 'heif', 'psd', 'ai', 'eps',
-            'zip', 'rar', '7z', 'tar', 'gz',
-            'mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac',
-            'mp4', 'mov', 'avi', 'wmv', 'mkv', 'webm',
-            'dwg', 'dxf', 'stp', 'step', 'stl', 'obj'
+            // Screenshoty
+            'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif',
+            // Textové logy / exporty
+            'pdf', 'txt', 'csv', 'doc', 'docx', 'xls', 'xlsx',
+            // Bundling více log souborů
+            'zip',
         ];
 
         return [
@@ -49,11 +58,10 @@ class StoreWebSupportTicketRequest extends FormRequest
             'subject'          => ['required', 'string', 'max:255'],
             'description'      => ['required', 'string'],
             'priority'         => ['nullable', 'string', 'max:50', 'in:low,medium,high'],
-            
             'attachment'       => [
-                'nullable', 
-                'file', 
-                'mimes:' . implode(',', $safeExtensions), 
+                'nullable',
+                'file',
+                'mimes:' . implode(',', $safeExtensions),
                 'max:20480'
             ],
         ];

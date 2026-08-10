@@ -54,7 +54,11 @@
                       }
                     }
                     @case ('link') {
-                      <a [href]="getCellValue(item, col)" target="_blank">{{ getCellValue(item, col) }}</a>
+                      @if (getCellValue(item, col)) {
+                        <a [href]="getCellValue(item, col)" target="_blank" rel="noopener noreferrer">{{ getCellValue(item, col) }}</a>
+                      } @else {
+                        {{ getCellValue(item, col) }}
+                      }
                     }
                     @default {
                       {{ getCellValue(item, col) }}

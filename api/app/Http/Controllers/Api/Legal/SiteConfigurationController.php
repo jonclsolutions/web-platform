@@ -12,6 +12,22 @@
  * i `regex` požadavek navíc k `nullable|string` (je to volitelné pole, web bez GA funguje
  * stejně dál). Hodnota se pak čte na veřejné straně přes `publicShow()`/`index()`, které
  * se neměnily - Eloquent ji serializuje automaticky jako každý jiný sloupec.
+ *
+ * @refactor-note (2026-08) Logování přesunuto z lokální `logAction()` (chybně mířila do
+ * `shop_logs` a ručně `json_encode()`-ovala `context_data`, což při Eloquent `'array'`
+ * castu vede k dvojitému enkódování - stejný bug jako u DocumentSectionController) na
+ * sdílený `LogsActivity` trait, zapisující do `CoreLog::class`. Site-wide konfigurace je
+ * dle dohodnutého Core/Web/Shop rozdělení doménou Core. Volání navíc traitu předávají
+ * `['logo_file', 'icon_file']` jako extra vyloučené klíče, ať se do `context_data`
+ * nesnaží (marně) serializovat nahrávaný soubor.
+ *
+ * @refactor-note (2026-08-2) `updateSettings()` dřív logoval jen statický text 'Updated
+ * company details and logo' bez informace, KTERÁ pole se změnila - u citlivých/GDPR-
+ * relevantních položek (google_analytics_id, kontaktní údaje) to znamenalo, že admin musel
+ * rozklikávat celý `context_data`, aby zjistil, co se vlastně stalo. Popis teď obsahuje
+ * seznam skutečně změněných klíčů (`array_keys($data)` proti hodnotám PŘED update() voláním),
+ * hodnoty samotné zůstávají jen v `context_data` jako dřív - popis je čitelný souhrn, ne
+ * duplicitní úložiště dat.
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -19,7 +35,8 @@ namespace App\Http\Controllers\Api\Legal;
 use App\Http\Controllers\Controller;
 use App\Models\Legal\SiteSetting;
 use App\Models\Legal\SocialLink;
-use App\Models\Shop\ShopLog;
+use App\Models\Core\CoreLog;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +48,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class SiteConfigurationController extends Controller
 {
+    use LogsActivity;
+
     /**
      * Fetches current corporate settings and social media configuration.
      *
@@ -93,8 +112,16 @@ class SiteConfigurationController extends Controller
             $data['logo_path'] = $request->file('logo_file')->store('site-logos', 'public');
         }
 
-        $settings->update($data);
-        $this->logAction($request, 'update', 'Legal', 'Updated company details and logo');
+        // Zachytit skutečně změněné klíče PŘED update() (isDirty() po update() by už nic nenašel).
+        $settings->fill($data);
+        $changedKeys = array_keys($settings->getDirty());
+        $settings->save();
+
+        $description = $changedKeys
+            ? 'Updated company details: ' . implode(', ', $changedKeys)
+            : 'Updated company details (no field changes detected)';
+
+        $this->logAction($request, CoreLog::class, 'update', 'Legal', $description, $settings->id, 'SiteConfiguration', ['logo_file']);
 
         return response()->json($settings);
     }
@@ -153,7 +180,7 @@ class SiteConfigurationController extends Controller
             'icon_path' => $iconPath ?? '',
         ]);
 
-        $this->logAction($request, 'create', 'Legal', "Added social network: {$social->name}", $social->id);
+        $this->logAction($request, CoreLog::class, 'create', 'Legal', "Added social network: {$social->name}", $social->id, 'SocialLink', ['icon_file']);
         return response()->json($social, 201);
     }
 
@@ -190,7 +217,7 @@ class SiteConfigurationController extends Controller
             'icon_path' => $iconPath,
         ]);
 
-        $this->logAction($request, 'update', 'Legal', "Updated social network: {$social->name}", $social->id);
+        $this->logAction($request, CoreLog::class, 'update', 'Legal', "Updated social network: {$social->name}", $social->id, 'SocialLink', ['icon_file']);
         return response()->json($social);
     }
 
@@ -212,7 +239,7 @@ class SiteConfigurationController extends Controller
         $name = $social->name;
         $social->delete();
 
-        $this->logAction($request, 'delete', 'Legal', "Deleted social network: {$name}", $id);
+        $this->logAction($request, CoreLog::class, 'delete', 'Legal', "Deleted social network: {$name}", $id, 'SocialLink');
         return response()->json(null, 204);
     }
 
@@ -235,27 +262,5 @@ class SiteConfigurationController extends Controller
         }
 
         return $existing;
-    }
-
-    /**
-     * Logs administrative actions to the ShopLog audit table.
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
-    {
-        try {
-            $user = $request->user() ?? auth('sanctum')->user();
-            ShopLog::create([
-                'origin' => $request->ip(),
-                'event_type' => $eventType,
-                'module' => $module,
-                'description' => $description,
-                'affected_entity_type' => 'SiteConfiguration',
-                'affected_entity_id' => $affectedId,
-                'user_id' => $user?->id,
-                'context_data' => json_encode($request->except(['logo_file', 'icon_file']), JSON_UNESCAPED_UNICODE),
-                'user_id_plain' => (string)($user?->id ?? '0'),
-                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'System',
-            ]);
-        } catch (\Exception $e) { Log::error("Log error: " . $e->getMessage()); }
     }
 }

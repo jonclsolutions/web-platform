@@ -86,39 +86,44 @@ class WebSupportTicketController extends Controller
         ]);
     }
 
-    /**
-     * Stores a new support ticket and handles optional file attachments.
-     *
-     * @param StoreWebSupportTicketRequest $request
-     * @return JsonResponse
-     */
-    public function store(StoreWebSupportTicketRequest $request): JsonResponse
-    {
-        try {
-            $data = $request->all(); 
-            $user = $request->user() ?? auth('sanctum')->user();
+/**
+ * Stores a new support ticket and handles optional file attachments.
+ *
+ * @param StoreWebSupportTicketRequest $request
+ * @return JsonResponse
+ */
+public function store(StoreWebSupportTicketRequest $request): JsonResponse
+{
+    try {
+        $data = $request->validated();
+        // 'attachment' je ve validation rules jako soubor (UploadedFile) - musí se
+        // odstranit před uložením do DB, jinak se stejný problém (binární objekt v
+        // insert bindings) opakuje i po přechodu na validated().
+        unset($data['attachment']);
 
-            if ($user) {
-                $data['user_id'] = $user->id;
-                $data['user_name_plain'] = $data['user_name_plain'] ?? ($user->full_name ?? $user->user_email);
-                $data['user_plain'] = $data['user_plain'] ?? $user->user_email;
-            }
-            
-            if ($request->hasFile('attachment')) {
-                $path = $request->file('attachment')->store('tickets', 'public');
-                $data['attachment_path'] = $path;
-            }
+        $user = $request->user() ?? auth('sanctum')->user();
 
-            $ticket = WebSupportTicket::create($data);
-
-            $this->logAction($request, 'create', 'WebSupportTicket', "Nový ticket: {$ticket->subject}", $ticket->id);
-            
-            return response()->json(new WebSupportTicketResource($ticket), 201);
-        } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebSupportTicket', "Chyba při vytváření ticketu: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření ticketu selhalo.'], 500);
+        if ($user) {
+            $data['user_id'] = $user->id;
+            $data['user_name_plain'] = $data['user_name_plain'] ?? ($user->full_name ?? $user->user_email);
+            $data['user_plain'] = $data['user_plain'] ?? $user->user_email;
         }
+
+        if ($request->hasFile('attachment')) {
+            $path = $request->file('attachment')->store('tickets', 'public');
+            $data['attachment_path'] = $path;
+        }
+
+        $ticket = WebSupportTicket::create($data);
+
+        $this->logAction($request, 'create', 'WebSupportTicket', "Nový ticket: {$ticket->subject}", $ticket->id);
+        
+        return response()->json(new WebSupportTicketResource($ticket), 201);
+    } catch (\Exception $e) {
+        $this->logAction($request, 'error', 'WebSupportTicket', "Chyba při vytváření ticketu: " . $e->getMessage());
+        return response()->json(['message' => 'Vytvoření ticketu selhalo.'], 500);
     }
+}
 
     /**
      * Retrieves a single support ticket by ID, including soft-deleted items.

@@ -57,7 +57,7 @@ export const EXTERNAL_LINK_FORM_FIELDS: Core.InputDefinition[] = [
 export const EXTERNAL_LINK_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'id', header: 'ID', type: 'text' },
   { key: 'name', header: 'Název', type: 'text' },
-  { key: 'url', header: 'URL', type: 'text' },
+  { key: 'url', header: 'URL', type: 'link' },
   { key: 'position', header: 'Pořadí', type: 'text' },
   { key: 'is_active', header: 'Aktivní', type: 'boolean' },
   { key: 'created_at', header: 'Vytvořeno', type: 'date', format: 'short' }

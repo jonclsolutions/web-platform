@@ -12,11 +12,19 @@
  *       changePassword() proto už roli 'primeadmin' automaticky nepovažuje za "admina"
  *       s právem měnit hesla jiným uživatelům - kdo tohle právo mít má, se řídí čistě
  *       tím, jestli má roli 'admin' nebo 'sysadmin'.
+ *
+ * @refactor-note (2026-08) KRITICKÁ BEZPEČNOSTNÍ OCHRANA přidána do `destroy()` a
+ * `forceDeleteAllTrashed()`: účet s rolí 'sysadmin' smí smazat (soft i hard, jednotlivě
+ * i hromadně přes koš) VÝHRADNĚ jiný účet s rolí 'sysadmin'. Tohle je nezávislé na
+ * permission systému (`hasPermission`) záměrně - i kdyby v budoucnu nějaká role omylem
+ * (nebo útokem) získala plná delete oprávnění, nesmí být fyzicky možné, aby jimi
+ * "vystřílela" všechny sysadmin účty a zablokovala tak správu celé aplikace (nikdo by
+ * pak neměl práva role/oprávnění spravovat zpět). Kontrola je natvrdo na `role_name`
+ * stejně jako `sysadminGuard` na frontendu - ne na permission klíči.
  */
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\{User};
 use App\Models\Core\CoreRole;
 use App\Models\Web\WebLog;
@@ -231,7 +239,8 @@ class UserController extends Controller
 
     /**
      * Handles soft or hard deletion of a user.
-     * @note Jediná zbývající ochrana je obecná - uživatel nemůže smazat sám sebe.
+     * @note Uživatel nemůže smazat sám sebe. KRITICKÁ OCHRANA: účet s rolí 'sysadmin'
+     * smí smazat výhradně jiný sysadmin - viz @refactor-note (2026-08) v hlavičce souboru.
      *
      * @param Request $request
      * @param int $id
@@ -244,6 +253,23 @@ class UserController extends Controller
 
             if ($request->user()?->id == $id) {
                 return response()->json(['message' => 'Nelze smazat vlastní účet.'], 403);
+            }
+
+            // KRITICKÁ OCHRANA - nezávisle na permission systému. Bez tohohle by
+            // libovolný účet s právem mazat uživatele mohl "vystřílet" všechny
+            // sysadmin účty a aplikace by zůstala bez možnosti spravovat role/přístupy.
+            $targetIsSysadmin = $user->roles()->where('role_name', 'sysadmin')->exists();
+
+            if ($targetIsSysadmin) {
+                $actorIsSysadmin = $request->user()
+                    ?->roles()
+                    ->where('role_name', 'sysadmin')
+                    ->exists() ?? false;
+
+                if (!$actorIsSysadmin) {
+                    $this->logAction($request, 'delete_denied', 'User', "Zamítnut pokus o smazání sysadmin účtu: {$user->user_email}", $id);
+                    return response()->json(['message' => 'Účet s rolí sysadmin smí smazat pouze jiný sysadmin.'], 403);
+                }
             }
 
             $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
@@ -259,6 +285,11 @@ class UserController extends Controller
 
     /**
      * Permanently deletes all soft-deleted users.
+     * @note KRITICKÁ OCHRANA: trashnuté účty s rolí 'sysadmin' se z hromadného
+     * vyprázdnění koše vyjímají, pokud sám volající není sysadmin - viz @refactor-note
+     * (2026-08) v hlavičce souboru. Jinak by šlo obejít ochranu v `destroy()` tak, že
+     * by sysadmin účet skončil v koši (např. vlastním omylem) a kdokoliv jiný s
+     * oprávněním koš vysypat by ho tudy permanentně smazal.
      *
      * @return JsonResponse
      */
@@ -266,6 +297,18 @@ class UserController extends Controller
     {
         try {
             $query = User::onlyTrashed();
+
+            $actorIsSysadmin = request()->user()
+                ?->roles()
+                ->where('role_name', 'sysadmin')
+                ->exists() ?? false;
+
+            if (!$actorIsSysadmin) {
+                $query->whereDoesntHave('roles', function ($q) {
+                    $q->where('role_name', 'sysadmin');
+                });
+            }
+
             $count = $query->count();
             $query->forceDelete();
             
