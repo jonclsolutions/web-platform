@@ -94,3 +94,14 @@
     Zobrazit tabulku na šířce stránky
   </label>
 </div>
+
+<!-- existující .toolbar div beze změny -->
+
+  @if (showExportPopup) {
+    <app-export-popup-builder
+      [itemCount]="data.length"
+      [isExporting]="isExporting"
+      (formatSelected)="handleExportFormatSelected($event)"
+      (closed)="closeExportPopup()">
+    </app-export-popup-builder>
+  }

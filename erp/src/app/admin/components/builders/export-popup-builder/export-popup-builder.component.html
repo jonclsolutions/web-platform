@@ -1,0 +1,61 @@
+<!-- 
+    @file: export-popup-builder.component.html
+    @path: /src/app/admin/components/builders/export-popup-builder/export-popup-builder.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Format-picker popup shown when the admin clicks "Export" on any table.
+    @dependencies: ExportPopupBuilderComponent (visibleFormatOptions, itemCount, isExporting)
+-->
+
+<div class="export-popup-overlay" (mousedown)="onOverlayClick($event)">
+  <div class="export-popup-card" (click)="$event.stopPropagation()">
+
+    <div class="export-popup-header">
+      <div class="export-popup-header-text">
+        <h2 class="export-popup-title">Export dat</h2>
+        <p class="export-popup-subtitle">
+          @if (itemCount > 0) {
+            Vyberte formát pro export ({{ itemCount }} záznamů)
+          } @else {
+            Vyberte formát pro export dat
+          }
+        </p>
+      </div>
+      <button class="export-popup-close" (click)="onClose()" [disabled]="isExporting" aria-label="Zavřít">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="export-format-grid" [class.disabled]="isExporting">
+      @for (option of visibleFormatOptions; track option.value) {
+        <button
+          type="button"
+          class="export-format-card"
+          [disabled]="isExporting"
+          (click)="onSelect(option.value)">
+          <div class="export-format-icon" [innerHTML]="getIcon(option.icon)"></div>
+          <div class="export-format-body">
+            <div class="export-format-label">{{ option.label }}</div>
+            <div class="export-format-desc">{{ option.description }}</div>
+          </div>
+          <div class="export-format-ext">{{ option.extension }}</div>
+        </button>
+      }
+    </div>
+
+    @if (isExporting) {
+      <div class="export-popup-loading">
+        <div class="export-popup-spinner"></div>
+        <span>Připravuji soubor…</span>
+      </div>
+    }
+
+    <div class="export-popup-footer">
+      <button type="button" class="export-popup-cancel" (click)="onClose()" [disabled]="isExporting">Zrušit</button>
+    </div>
+
+  </div>
+</div>

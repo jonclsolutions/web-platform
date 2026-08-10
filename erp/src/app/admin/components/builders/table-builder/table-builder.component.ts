@@ -5,17 +5,29 @@
  * @author RPSW
  * @created 2025
  * @description A generic, highly configurable table component for displaying datasets with
- * built-in CRUD actions, CSV export, and localized formatting.
+ * built-in CRUD actions, multi-format export (CSV/XLSX/JSON/TXT), and localized formatting.
  *
  * @refactor-note (2025) Dříve dědil z BaseDataComponent kvůli `deleteData()` a napojení na
  * alert/auth služby — data ale vždy přicházejí přes `@Input`, takže paginační/koš/cache
  * polovinu BaseDataComponent tato komponenta nikdy nepoužívala. Nyní si skládá
  * `EntityCrudService` přímo (pro delete + log export) a alert/auth služby injektuje sama.
  *
+ * @refactor-note (2026-08) Export přepracován z jediného tlačítka "Export CSV" (okamžité
+ * stažení) na formátový picker (`ExportPopupBuilderComponent`) s volbou CSV/XLSX/JSON/TXT.
+ * Metoda `exportToCSV()` byla ZÁMĚRNĚ ponechána pod stejným jménem - jen teď otevírá popup
+ * místo přímého stahování - aby žádný z mnoha `*.component.ts` napříč adminem, které ji
+ * volají přes `this.activeTable.exportToCSV()` z toolbar akce, nemusel být upravován.
+ * Skutečné generování souboru přesunuto do `handleExportFormatSelected()` + sady
+ * `download*()` metod, sdílejících stejnou `getCellValue()` logiku jako viditelná tabulka
+ * (formátování měny/data, popisky select hodnot) - export tak vždy odpovídá tomu, co admin
+ * vidí na obrazovce, ne syrovým DB hodnotám.
+ *
  * @dependencies
  * - EntityCrudService: CRUD volání (delete řádku, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations.
+ * - ExportPopupBuilderComponent: Formátový picker popup pro export dat.
  * - CurrencyPipe, DatePipe: Standard pipes for data formatting.
+ * - xlsx (SheetJS): Lazy-loaded jen při volbě XLSX exportu, viz downloadXlsx().
  */
 
 import {
@@ -34,10 +46,12 @@ import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-col
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
+import { ExportFormat } from '../../../../shared/interfaces/export-format';
+import { ExportPopupBuilderComponent } from '../export-popup-builder/export-popup-builder.component';
 
 /**
  * @description Renders a dynamic data table with support for pagination, sorting, filtering,
- * and custom action buttons.
+ * custom action buttons, and multi-format export.
  * @usage Used across various admin modules to display entities like products, users, or orders.
  * @note Implements OnPush change detection and a processing map to prevent duplicate API
  * requests during user interaction.
@@ -45,7 +59,7 @@ import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 @Component({
   selector: 'app-table-builder',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ExportPopupBuilderComponent],
   templateUrl: './table-builder.component.html',
   styleUrls: ['../table-style.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -73,6 +87,11 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Output() customerOrdersOpened = new EventEmitter<any>();
 
   web_logs_endpoint: string = 'web/logs';
+
+  /** Řídí viditelnost popupu pro výběr exportního formátu (otevírá `exportToCSV()`). */
+  showExportPopup = false;
+  /** Blokuje popup a zobrazuje spinner po dobu stahování/generování souboru. */
+  isExporting = false;
 
   public alertDialogService = inject(AlertDialogService);
   public authService = inject(AuthService);
@@ -216,40 +235,155 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   /**
-   * @description Fetches all data (ignoring pagination) to generate and download a CSV file.
+   * @description Opens the export-format picker popup instead of downloading immediately.
+   * @note Kept the historic method name `exportToCSV()` intact (rather than renaming it)
+   * so every page component that calls `this.activeTable.exportToCSV()` from its toolbar
+   * action keeps working unchanged - only the toolbar button label needs updating from
+   * 'Export CSV' to 'Export' in each `*.config.ts`.
    */
-  async exportToCSV() {
+  exportToCSV(): void {
+    this.showExportPopup = true;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Closes the export popup. No-op while a file is actively being generated,
+   * so an accidental click can't leave `isExporting` in an inconsistent state.
+   */
+  closeExportPopup(): void {
+    if (this.isExporting) return;
+    this.showExportPopup = false;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Fetches the full (unpaginated) dataset once, then builds and downloads
+   * the file in the chosen format. Ignores current pagination by design, same as the
+   * original CSV-only behaviour it replaces.
+   * @param format Format chosen by the user in ExportPopupBuilderComponent.
+   */
+  async handleExportFormatSelected(format: ExportFormat): Promise<void> {
+    if (this.isExporting) return;
+    this.isExporting = true;
+    this.cd.markForCheck();
+
     try {
-      this.cd.markForCheck();
       const responseData = await firstValueFrom(this.loadDataAsCollection());
       const allData: any[] = Array.isArray(responseData) ? responseData : [];
-      if (allData.length > 0) {
-        let csv = this.columnDefinitions.map(col => col.header || col.key).join(';') + '\n';
-        allData.forEach(item => {
-          csv += this.columnDefinitions.map(col => `"${String(this.getCellValue(item, col) || '').replace(/"/g, '""')}"`).join(';') + '\n';
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${this.tableCaption || 'export'}.csv`;
-        link.click();
-        this.logExportActivity(allData.length);
-      } else {
+
+      if (allData.length === 0) {
         this.alertDialogService.open('Export', 'No data available for export.', 'warning');
+        return;
       }
+
+      const rows = this.buildExportRows(allData);
+      const filename = this.tableCaption || 'export';
+
+      switch (format) {
+        case 'csv':  this.downloadCsv(rows, filename); break;
+        case 'xlsx': await this.downloadXlsx(rows, filename); break;
+        case 'json': this.downloadJson(rows, filename); break;
+        case 'txt':  this.downloadTxt(rows, filename); break;
+      }
+
+      this.logExportActivity(allData.length, format);
     } catch (error) {
       console.error('Export error:', error);
       this.alertDialogService.open('Error', 'An error occurred during export.', 'danger');
     } finally {
+      this.isExporting = false;
+      this.showExportPopup = false;
       this.cd.markForCheck();
     }
   }
 
-  private logExportActivity(rowCount: number): void {
+  /**
+   * @description Maps raw records to plain header->formatted-value objects using the
+   * exact same `getCellValue()` resolution already used by the visible table (currency/
+   * date formatting, select-option label lookup) - keeps every export format visually
+   * consistent with what the admin sees on screen, not raw DB values.
+   * @param data Raw records fetched from the API (unpaginated).
+   * @returns Array of plain objects keyed by column header, ready for any format builder.
+   */
+  private buildExportRows(data: any[]): Record<string, any>[] {
+    return data.map(item => {
+      const row: Record<string, any> = {};
+      this.columnDefinitions.forEach(col => {
+        row[col.header || col.key] = this.getCellValue(item, col) ?? '';
+      });
+      return row;
+    });
+  }
+
+  /**
+   * @description Creates a temporary object URL for the given blob, triggers a browser
+   * download via a synthetic anchor click, then revokes the URL to avoid leaking memory.
+   */
+  private triggerDownload(blob: Blob, filename: string): void {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  private downloadCsv(rows: Record<string, any>[], filename: string): void {
+    const headers = Object.keys(rows[0]);
+    let csv = headers.join(';') + '\n';
+    rows.forEach(row => {
+      csv += headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(';') + '\n';
+    });
+    this.triggerDownload(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), `${filename}.csv`);
+  }
+
+  private downloadTxt(rows: Record<string, any>[], filename: string): void {
+    const headers = Object.keys(rows[0]);
+    let txt = headers.join('\t') + '\n';
+    rows.forEach(row => {
+      txt += headers.map(h => String(row[h] ?? '')).join('\t') + '\n';
+    });
+    this.triggerDownload(new Blob([txt], { type: 'text/plain;charset=utf-8;' }), `${filename}.txt`);
+  }
+
+  private downloadJson(rows: Record<string, any>[], filename: string): void {
+    const json = JSON.stringify(rows, null, 2);
+    this.triggerDownload(new Blob([json], { type: 'application/json;charset=utf-8;' }), `${filename}.json`);
+  }
+
+  /**
+   * @description Lazy-loads SheetJS (`xlsx` package) so the (fairly heavy, ~700kB) bundle
+   * only downloads for admins who actually export XLSX, not on every page that happens to
+   * render a table.
+   */
+  private async downloadXlsx(rows: Record<string, any>[], filename: string): Promise<void> {
+    const XLSX = await import('xlsx');
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Export');
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
+  }
+
+  /**
+   * @description Fetches all data (ignoring pagination) for export - shared by every
+   * format builder above.
+   */
+  private loadDataAsCollection() {
+    const params = { ...this.currentFilters, no_pagination: 'true' };
+    if (!params.sort_by) params.sort_by = 'id';
+    if (!params.sort_direction) params.sort_direction = 'desc';
+    return this.dataHandler.getCollection<any>(this.apiEndpoint, params);
+  }
+
+  /**
+   * @description Logs the export action to `web_logs` - `event_type` carries the chosen
+   * format (`export_csv`/`export_xlsx`/`export_json`/`export_txt`) instead of a single
+   * generic `DATA_EXPORT`, so the audit trail shows exactly what was downloaded.
+   */
+  private logExportActivity(rowCount: number, format: ExportFormat): void {
     const logData = {
-      event_type: 'DATA_EXPORT',
+      event_type: `export_${format}`,
       module: this.apiEndpoint,
-      description: `User exported ${rowCount} records from table: ${this.tableCaption || this.apiEndpoint}.`,
+      description: `User exported ${rowCount} records (${format.toUpperCase()}) from table: ${this.tableCaption || this.apiEndpoint}.`,
       affected_entity_type: 'collection',
       user_id_plain: this.authService.getUserId()?.toString(),
       user_plain: this.authService.getUserEmail()
@@ -257,13 +391,6 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     this.logCrud.create(logData).subscribe({
       error: (err) => console.error('Failed to log export:', err)
     });
-  }
-
-  private loadDataAsCollection() {
-    const params = { ...this.currentFilters, no_pagination: 'true' };
-    if (!params.sort_by) params.sort_by = 'id';
-    if (!params.sort_direction) params.sort_direction = 'desc';
-    return this.dataHandler.getCollection<any>(this.apiEndpoint, params);
   }
 
   /**
