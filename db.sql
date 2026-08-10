@@ -646,7 +646,7 @@ CREATE TABLE `shop_payment_methods` (
   `bank_iban` varchar(34) DEFAULT NULL COMMENT 'Pro mezinárodní platby',
   `bank_swift_bic` varchar(11) DEFAULT NULL,
   `variable_symbol_type` enum('order_number','phone_number','none') DEFAULT 'order_number',
-`config` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Specifická konfigurace pro platební brány a metody' CHECK (json_valid(`config`)),
+  `config` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT json_object() COMMENT 'Specifická konfigurace pro platební brány a metody' CHECK (json_valid(`config`)),
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),

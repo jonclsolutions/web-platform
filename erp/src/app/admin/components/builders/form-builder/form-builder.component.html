@@ -59,8 +59,10 @@
                     </select>
                   }
                   @case ('textarea') {
-                    <textarea [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input textarea" [disabled]="input.editable === false"></textarea>
-                  }
+  <textarea [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" 
+    [pattern]="input.pattern || ''" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" 
+    class="custom-input textarea" [disabled]="input.editable === false"></textarea>
+}
                   @case ('checkbox') {
                     <div class="checkbox-wrapper">
                       <input type="checkbox" [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" [disabled]="input.editable === false" />

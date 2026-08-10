@@ -10,6 +10,13 @@
                jen hodnotami; navíc jsem jazykové taby a tlačítka převedl na
                plně zaoblený ("pill") tvar, ať sedí se zbytkem aplikace. Struktura/
                třídy a logika beze změny.
+    @fix: 2026-2 - .ew-lang-tab-tab--active neměl vlastní :hover, takže při najetí na
+               VYBRANÝ (aktivní) tab ho .ew-lang-tab:hover kvůli pořadí ve zdroji
+               nepřebilo (stejná specificita, vyhrává to, co je v souboru později) -
+               hover na aktivním tlačítku tak vizuálně skoro nic nedělal. Zároveň
+               chyběl vlastní :focus-visible styl, takže se ukazoval nativní (často
+               systémově oranžový) obrys prohlížeče. Obojí opraveno níže u
+               .ew-lang-tab--active a .ew-lang-tab.
 */
 
 :host {
@@ -170,7 +177,6 @@
   flex: 1;
   overflow-x: auto;
 }
-
 .ew-lang-tab {
   display: flex;
   align-items: center;
@@ -188,8 +194,15 @@
   position: relative;
   transition: color var(--ease), border-color var(--ease), background var(--ease);
 }
+/* 
+.ew-lang-tab:hover { color: var(--text); background: var(--surface-2); border-color: var(--text-dim); } */
 
-.ew-lang-tab:hover { color: var(--text); background: var(--surface-2); border-color: var(--text-dim); }
+/* Nahrazuje nativní (systémovou, často oranžovou) focus obrysovou barvu prohlížeče
+   vlastním, jemným stylem v barvě aplikace. */
+.ew-lang-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.18);
+}
 
 .ew-lang-tab--active {
   color: #ffffff;
@@ -197,6 +210,15 @@
   font-weight: 700;
   background: var(--accent);
 }
+
+/* Vlastní hover pro AKTIVNÍ tab - musí být až PO .ew-lang-tab--active ve zdroji,
+   jinak by ho .ew-lang-tab:hover (stejná specificita) přebilo v opačném pořadí a
+   hover by na vybraném tlačítku vizuálně nic neudělal. Jemné zesvětlení, ne
+   nápadná barevná změna. */
+/* .ew-lang-tab--active:hover {
+  background: #27272a;
+  border-color: #27272a;
+} */
 
 .ew-lang-tab--inactive { opacity: 0.55; }
 
@@ -238,7 +260,6 @@
 .ew-lang-tab--active .ew-lang-tab-actions {
   display: flex;
 }
-
 .ew-tab-action-btn {
   display: flex;
   align-items: center;
@@ -323,7 +344,6 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-
 .ew-stat-sep {
   width: 1px;
   height: 24px;
@@ -455,7 +475,6 @@
   word-break: break-all;
   line-height: 1.5;
 }
-
 .ew-missing-badge {
   display: inline-flex;
   align-items: center;
@@ -542,7 +561,6 @@
   animation: ew-slide-up 0.2s ease both;
   overflow: hidden;
 }
-
 .ew-modal--sm { max-width: 380px; }
 
 @keyframes ew-slide-up {
@@ -641,7 +659,6 @@
   flex-direction: column;
   gap: 6px;
 }
-
 .ew-field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -733,7 +750,6 @@
 }
 
 .ew-json-drop-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
-
 .ew-file-hidden {
   position: absolute;
   inset: 0;

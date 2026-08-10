@@ -203,34 +203,34 @@ class WebNewsController extends Controller
         }
     }
 
-    /**
-     * Logs administrative actions to the audit log table.
-     *
-     * @param Request $request Current request instance.
-     * @param string $eventType Action type (create, update, delete, etc.).
-     * @param string $module Module context.
-     * @param string $description Detailed audit message.
-     * @param int|null $affectedId Entity identifier.
-     * @return void
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
-    {
-        try {
-            $user = $request->user();
-            WebLog::create([
-                'origin'               => $request->ip(),
-                'event_type'           => $eventType,
-                'module'               => $module,
-                'description'          => $description,
-                'affected_entity_type' => 'WebNews',
-                'affected_entity_id'   => $affectedId,
-                'user_id'              => $user?->id,
-                'context_data'         => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
-                'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'           => $user?->user_email ?? 'system'
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Log error (WebNews): " . $e->getMessage());
-        }
+  /**
+ * Logs administrative actions to the audit log table.
+ *
+ * @param Request $request Current request instance.
+ * @param string $eventType Action type (create, update, delete, etc.).
+ * @param string $module Module context.
+ * @param string $description Detailed audit message.
+ * @param int|null $affectedId Entity identifier.
+ * @return void
+ */
+protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
+{
+    try {
+        $user = $request->user();
+        WebLog::create([
+            'origin'               => $request->ip(),
+            'event_type'           => $eventType,
+            'module'               => $module,
+            'description'          => \Illuminate\Support\Str::limit($description, 990, '...'),
+            'affected_entity_type' => 'WebNews',
+            'affected_entity_id'   => $affectedId,
+            'user_id'              => $user?->id,
+            'context_data'         => \Illuminate\Support\Str::limit(json_encode($request->all(), JSON_UNESCAPED_UNICODE), 60000, '...'),
+            'user_id_plain'        => (string)($user?->id ?? '0'),
+            'user_plain'           => $user?->user_email ?? 'system'
+        ]);
+    } catch (\Exception $e) {
+        Log::error("Log error (WebNews): " . $e->getMessage());
     }
+}
 }

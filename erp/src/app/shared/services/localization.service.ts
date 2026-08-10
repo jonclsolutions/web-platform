@@ -11,6 +11,9 @@
  *   It is triggered exactly once by AppBootstrapService.initTranslations() during
  *   APP_INITIALIZER, so the app never renders before translations are ready — and never
  *   fires the fetch twice (once in the constructor, once at bootstrap).
+ * @refactor-note (2026) fetchLanguages() nyní filtruje jen jazyky s active:true - viz
+ *   komentář přímo u metody. Bez toho se v jazykovém přepínači na veřejném webu zobrazovaly
+ *   i jazyky, které admin v EditWebsiteComponent schválně deaktivoval.
  */
 
 import { Injectable } from '@angular/core';
@@ -55,19 +58,10 @@ export class LocalizationService {
   public currentTranslations$ = this.currentTranslationsSource.asObservable();
 
   constructor(private http: HttpClient) {
-    // Only restore the preferred language code here — do NOT fetch translations
-    // yet. The actual fetch is triggered once by initTranslations() via
-    // APP_INITIALIZER (see app.config.ts / app-bootstrap.service.ts).
     const stored = localStorage.getItem('selectedLanguage') || 'cz';
     this.currentLanguageSource.next(stored);
   }
 
-  /**
-   * @description Called once by AppBootstrapService during APP_INITIALIZER.
-   *   Loads translations for the currently selected language and resolves only
-   *   after `currentTranslations$` has a value, so components relying on `t`
-   *   never render with `t = null`.
-   */
   public initTranslations(): Promise<any> {
     const lang = this.currentLanguageSource.getValue();
     return firstValueFrom(this.loadTranslations$(lang)).then(data => {
@@ -79,10 +73,6 @@ export class LocalizationService {
     });
   }
 
-  /**
-   * @description Switches the operational module and refreshes available languages.
-   * @param module The module context (e.g., 'web', 'admin', 'shop').
-   */
   public setModule(module: string): void {
     if (this.currentModule !== module) {
       this.currentModule = module;
@@ -91,12 +81,6 @@ export class LocalizationService {
     }
   }
 
-  /**
-   * @description Resolves a nested key string into a translated value.
-   * @param key Dot-notation key (e.g., 'navigation.home').
-   * @returns {string} The translation or the key itself if not found.
-   * @note Uses reduce to safely navigate the translation object hierarchy.
-   */
   public getText(key: string): string {
     const translations = this.currentTranslationsSource.getValue();
     if (!translations) {
@@ -108,27 +92,29 @@ export class LocalizationService {
   /**
    * @description Fetches supported languages for the current module from the API.
    * @returns {Observable<{languages: LangMeta[]}>} Observable containing language metadata.
+   * @note Backend endpoint /languages/{module} vrací VŠECHNY jazyky modulu (i neaktivní) -
+   *       to je záměr, protože stejný endpoint používá i admin (EditWebsiteComponent),
+   *       který potřebuje vidět a spravovat i deaktivované jazyky. Tato služba je ale
+   *       výhradně pro VEŘEJNÝ web, takže tady se neaktivní jazyky odfiltrují - jinak by
+   *       se v přepínači jazyků na webu zobrazily i ty, co admin schválně vypnul.
    */
   public fetchLanguages(): Observable<{ languages: LangMeta[] }> {
     return this.http.get<{ languages: ApiLanguage[] }>(`${this.API_URL}/languages/${this.currentModule}`).pipe(
       map(res => ({
-        languages: res.languages.map((l: ApiLanguage) => ({
-          code: l.code,
-          label: l.name,
-          flag: l.iconUrl || 'assets/images/icons/default.png',
-          active: l.active
-        }))
+        languages: res.languages
+          .filter((l: ApiLanguage) => l.active)
+          .map((l: ApiLanguage) => ({
+            code: l.code,
+            label: l.name,
+            flag: l.iconUrl || 'assets/images/icons/default.png',
+            active: l.active
+          }))
       })),
       tap(res => { this.languagesCache = res.languages; }),
-      catchError(() => of({ languages: this.languagesCache })) // tichý fallback na poslední známý stav
+      catchError(() => of({ languages: this.languagesCache }))
     );
   }
 
-  /**
-   * @description Internal observable variant used by both initTranslations() (Promise-based,
-   *   for APP_INITIALIZER) and loadTranslations() (fire-and-forget, for language switching).
-   *   Falls back to 'cz' on error, same as before, but without duplicating the request logic.
-   */
   private loadTranslations$(lang: string): Observable<any> {
     if (this.translationsCache.has(lang)) {
       return of(this.translationsCache.get(lang));
@@ -147,13 +133,6 @@ export class LocalizationService {
     );
   }
 
-  /**
-   * @description Loads translations for a specific language into the cache.
-   * @param lang The language code to load.
-   * @note If the language is already cached, it immediately updates the translation stream.
-   *   Used for runtime language switching (see setLanguage). Startup loading goes through
-   *   initTranslations() instead.
-   */
   public loadTranslations(lang: string): void {
     this.loadTranslations$(lang).subscribe(data => {
       if (data) {
@@ -162,21 +141,12 @@ export class LocalizationService {
     });
   }
 
-  /**
-   * @description Updates the active application language.
-   * @param code The new language code.
-   * @note Persists the language choice in localStorage and triggers translation loading.
-   */
   public setLanguage(code: string): void {
     localStorage.setItem('selectedLanguage', code);
     this.currentLanguageSource.next(code);
     this.loadTranslations(code);
   }
 
-  /**
-   * @description Returns the currently active language code.
-   * @returns {string} The active language code (e.g., 'cz', 'en').
-   */
   public getCurrentLanguage(): string {
     return this.currentLanguageSource.getValue();
   }

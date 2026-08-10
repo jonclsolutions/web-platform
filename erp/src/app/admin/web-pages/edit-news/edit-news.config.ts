@@ -84,17 +84,18 @@ export const NEWS_FORM_FIELDS: Core.InputDefinition[] = [
     show_in_edit: true,
     show_in_create: true
   },
-  {
-    column_name: 'message',
-    label: 'Hlavní text zprávy',
-    placeholder: 'Detailní popis novinky...',
-    type: 'textarea', 
-    required: true,
-    errorMessage: 'Obsah novinky nemůže být prázdný.',
-    editable: true,
-    show_in_edit: true,
-    show_in_create: true
-  },
+{
+  column_name: 'message',
+  label: 'Hlavní text zprávy',
+  placeholder: 'Detailní popis novinky...',
+  type: 'textarea',
+  required: true,
+  pattern: '^[\\s\\S]{1,10000}$',
+  errorMessage: 'Obsah novinky může mít maximálně 10 000 znaků.',
+  editable: true,
+  show_in_edit: true,
+  show_in_create: true
+},
   {
     column_name: 'bullet_1',
     label: 'Důležitý bod 1',
