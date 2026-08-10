@@ -21,7 +21,7 @@ export const TABLE_BUTTONS: Core.TableButtons[] = [
 export const TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtrovat', icon: '🔍', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Nový uživatel', icon: '➕', class: 'btn-create', showIf: true },
-  { action: 'exportActiveTable', label: 'Export CSV', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
@@ -31,12 +31,19 @@ export const RESET_PASSWORD_FORM_FIELDS: Core.InputDefinition[] = [
   { column_name: 'new_password_confirmation', label: 'Potvrzení nového hesla', placeholder: 'Zadejte znovu nové heslo', type: 'password', required: true, pattern: '^.{8,}$', errorMessage: 'Heslo musí mít 8 a více znaků', editable: true, show_in_edit: true, show_in_create: true },
 ];
 
+/**
+ * @refactor-note (2026-08) Odstraněna legacy HR/osobní pole + `commission_rate` /
+ * `has_tax_declaration` - viz User.php. `enable_2fa` zůstává ve formuláři/detailu,
+ * ale byl odebrán z `TABLE_COLUMNS` (hlavní přehledová tabulka) na žádost - kdo má
+ * 2FA zapnuté není informace důležitá na první pohled v přehledu, stačí v detailu
+ * záznamu (`DETAILS_COLUMNS`).
+ */
 export const FORM_FIELDS: Core.InputDefinition[] = [
   { 
     column_name: 'user_email', 
     label: 'Přihlašovací e-mail', 
     placeholder: 'jmeno@firma.cz', 
-    type: 'email', // Změněno na email pro správnou aktivaci form-builderu
+    type: 'email',
     required: true, 
     pattern: '[^@]+@[^@]+\\.[^@]+', 
     errorMessage: 'Zadejte platný přihlašovací e-mail.', 
@@ -56,18 +63,6 @@ export const FORM_FIELDS: Core.InputDefinition[] = [
     show_in_create: true 
   },
   { 
-    column_name: 'contact_email', 
-    label: 'Kontaktní e-mail', 
-    placeholder: 'soukromy@email.cz', 
-    type: 'email', 
-    required: false, 
-    pattern: '[^@]+@[^@]+\\.[^@]+', 
-    errorMessage: 'Neplatný e-mail', 
-    editable: true, 
-    show_in_edit: true, 
-    show_in_create: true 
-  },
-  { 
     column_name: 'user_password_hash', 
     label: 'Heslo', 
     placeholder: 'Zadejte silné heslo', 
@@ -82,19 +77,22 @@ export const FORM_FIELDS: Core.InputDefinition[] = [
   // Options se doplňují za běhu (viz ROLE_OPTIONS výše) - toto pole tu zůstává
   // prázdné, dokud AdministratorsComponent nedokončí loadRoleOptions().
   { column_name: 'role_id', label: 'Role', type: 'select', options: ROLE_OPTIONS, required: true, errorMessage: 'Vyberte roli uživatele.', editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'phone_number', label: 'Telefon', placeholder: '+420 123 456 789', type: 'text', required: false, editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'birth_date', label: 'Datum narození', type: 'date', required: false, editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'personal_id_num', label: 'Rodné číslo', type: 'text', required: false, editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'address', label: 'Trvalé bydliště', type: 'text', required: false, editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'bank_account', label: 'Bankovní účet', type: 'text', required: false, editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'commission_rate', label: 'Provize (%)', type: 'number', required: true, errorMessage: 'Sazba provize musí být v rozmezí 0 až 100 %.', editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'has_tax_declaration', label: 'Daňové prohlášení', type: 'checkbox', required: false, editable: true, show_in_edit: true, show_in_create: true },
+  { 
+    column_name: 'enable_2fa', 
+    label: 'Dvoufaktorové ověření (2FA)', 
+    type: 'checkbox', 
+    required: false, 
+    editable: true, 
+    show_in_edit: true, 
+    show_in_create: true 
+  },
   { column_name: 'internal_note', label: 'Poznámka', type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
-  
-  { column_name: 'health_insurance', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
+
   { column_name: 'dpp_hours_spent', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true }
 ];
 
+// enable_2fa záměrně NENÍ v TABLE_COLUMNS - viz @refactor-note výše, dostupné jen
+// ve formuláři a v DETAILS_COLUMNS.
 export const TABLE_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'id', header: 'ID', type: 'text' },
   { key: 'full_name', header: 'Jméno', type: 'text' },
@@ -123,14 +121,7 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'full_name', displayName: 'Celé jméno', type: 'text' },
   { key: 'user_email', displayName: 'Přihlašovací E-mail', type: 'text' },
   { key: 'roles.0.role_name', displayName: 'Přiřazená role', type: 'text' },
-  { key: 'contact_email', displayName: 'Soukromý e-mail', type: 'text' },
-  { key: 'phone_number', displayName: 'Telefon', type: 'text' },
-  { key: 'birth_date', displayName: 'Datum narození', type: 'date', format: 'medium' },
-  { key: 'personal_id_num', displayName: 'Rodné číslo', type: 'text' },
-  { key: 'address', displayName: 'Trvalé bydliště', type: 'text' },
-  { key: 'bank_account', displayName: 'Bankovní účet', type: 'text' },
-  { key: 'commission_rate', displayName: 'Sazba provize', type: 'text' },
-  { key: 'has_tax_declaration', displayName: 'Daňové prohlášení', type: 'text' },
+  { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření', type: 'text' },
   { key: 'internal_note', displayName: 'Interní poznámka', type: 'text' },
   { key: 'created_at', displayName: 'Účet vytvořen', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Poslední změna údajů', type: 'date', format: 'medium' }

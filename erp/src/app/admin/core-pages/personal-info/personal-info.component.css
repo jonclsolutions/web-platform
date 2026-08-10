@@ -224,3 +224,121 @@
     grid-column: span 1; 
   }
 }
+/* ── Zabezpečení / 2FA ─────────────────────────────────────────────────── */
+
+.security-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.security-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.security-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #18181b;
+  cursor: pointer;
+  user-select: none;
+}
+
+.security-toggle-label.disabled {
+  cursor: not-allowed;
+  color: #71717a;
+}
+
+.security-toggle-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #18181b;
+  cursor: pointer;
+}
+
+.security-toggle-label.disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+.security-hint {
+  font-size: 0.72rem;
+  color: #a1a1aa;
+}
+
+.action_button--secondary {
+  background: #ffffff;
+  color: #18181b;
+  border: 1px solid #e4e4e7;
+}
+
+.action_button--secondary:hover:not(:disabled) {
+  background: #f4f4f5;
+  border-color: #d4d4d8;
+  transform: translateY(-1px);
+}
+
+/* ── Popup na změnu hesla ──────────────────────────────────────────────── */
+
+.password-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+}
+
+.password-popup-card {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.25);
+  padding: 22px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.password-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.password-popup-close {
+  border: none;
+  background: transparent;
+  color: #a1a1aa;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.password-popup-close:hover {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+@media (max-width: 480px) {
+  .password-popup-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .password-popup-card {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+  }
+}

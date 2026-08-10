@@ -6,6 +6,18 @@
  * @author RPSW
  * @created 2025
  * @description Core User model representing authentication and profile data.
+ *
+ * @refactor-note (2026-08) Odstraněny legacy HR/osobní sloupce, které aktuální verze
+ * systému nepotřebuje a nikdy nevyžaduje k vyplnění (`birth_date`, `personal_id_num`,
+ * `address`, `bank_account`, `health_insurance`, `contact_email`, `phone_number`) - byla
+ * to mock data bez reálného využití, viz SQL migrace. Přidán `enable_2fa` (zatím jen
+ * příznak, reálná 2FA logika bude dořešena později) - `admin`/`sysadmin` ho mají VŽDY
+ * `true`, vynuceno na backendu v `UserController` (store/update).
+ *
+ * @refactor-note (2026-08-3) Odstraněny i `commission_rate` a `has_tax_declaration` -
+ * ověřeno, že na ně nikde jinde v appce neváže žádná reálná obchodní logika (žádný
+ * SalesLead/Order kontroler s nimi nepočítá), byla to nepoužívaná HR pole stejně jako
+ * ostatní odstraněné sloupce. `dpp_hours_spent` ZŮSTÁVÁ - nebylo součástí požadavku.
  */
 
 namespace App\Models;
@@ -20,7 +32,8 @@ use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @description Manages user credentials, profile information, and role-based access control (RBAC).
- * * @property string $full_name User's display name.
+ * @property string $full_name User's display name.
+ * @property bool $enable_2fa Whether two-factor auth is enabled for this account.
  * @property array $core_permissions Calculated list of permission keys.
  */
 class User extends Authenticatable
@@ -31,10 +44,9 @@ class User extends Authenticatable
      * @var array<int, string> The attributes that are mass assignable.
      */
     protected $fillable = [
-        'user_email', 'contact_email', 'user_password_hash', 'full_name',
-        'birth_date', 'personal_id_num', 'address', 'bank_account',
-        'health_insurance', 'commission_rate', 'dpp_hours_spent',
-        'has_tax_declaration', 'phone_number', 'internal_note', 'last_login_at',
+        'user_email', 'user_password_hash', 'full_name',
+        'dpp_hours_spent', 'internal_note', 'last_login_at',
+        'enable_2fa',
     ];
 
     /**
@@ -52,8 +64,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'last_login_at' => 'datetime',
-        'birth_date' => 'date',
-        'has_tax_declaration' => 'boolean',
+        'enable_2fa' => 'boolean',
     ];
 
     /**
@@ -63,7 +74,8 @@ class User extends Authenticatable
 
     /**
      * Get the roles assigned to this user.
-     * * @return BelongsToMany
+     *
+     * @return BelongsToMany
      */
     public function roles(): BelongsToMany
     {
@@ -72,7 +84,8 @@ class User extends Authenticatable
 
     /**
      * Get a flattened, unique list of all permission keys derived from assigned roles.
-     * * @return array<int, string>
+     *
+     * @return array<int, string>
      */
     public function getPermissionsAttribute(): array
     {

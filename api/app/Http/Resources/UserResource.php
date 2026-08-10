@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2025
  * @description Resource transformation for system users and administrative access.
+ *
+ * @refactor-note (2026-08) Odstraněna legacy HR/osobní pole + `commission_rate` /
+ * `has_tax_declaration` (viz User.php).
  */
 
 namespace App\Http\Resources;
@@ -32,17 +35,9 @@ class UserResource extends JsonResource
         return [
             'id'                    => $this->id,
             'user_email'            => $this->user_email,
-            'contact_email'         => $this->contact_email,
             'full_name'             => $this->full_name,
-            'birth_date'            => $this->birth_date?->format('Y-m-d'),
-            'personal_id_num'       => $this->personal_id_num,
-            'address'               => $this->address,
-            'bank_account'          => $this->bank_account,
-            'health_insurance'      => $this->health_insurance,
-            'commission_rate'       => (int) $this->commission_rate,
             'dpp_hours_spent'       => (int) $this->dpp_hours_spent,
-            'has_tax_declaration'   => (bool) $this->has_tax_declaration,
-            'phone_number'          => $this->phone_number,
+            'enable_2fa'            => (bool) $this->enable_2fa,
             'internal_note'         => $this->internal_note,
             'last_login_at'         => $this->last_login_at?->format('Y-m-d H:i:s'),
             'created_at'            => $this->created_at?->format('Y-m-d H:i:s'),

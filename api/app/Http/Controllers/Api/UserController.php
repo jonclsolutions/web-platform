@@ -13,18 +13,24 @@
  *       s právem měnit hesla jiným uživatelům - kdo tohle právo mít má, se řídí čistě
  *       tím, jestli má roli 'admin' nebo 'sysadmin'.
  *
- * @refactor-note (2026-08) KRITICKÁ BEZPEČNOSTNÍ OCHRANA přidána do `destroy()` a
- * `forceDeleteAllTrashed()`: účet s rolí 'sysadmin' smí smazat (soft i hard, jednotlivě
- * i hromadně přes koš) VÝHRADNĚ jiný účet s rolí 'sysadmin'. Tohle je nezávislé na
- * permission systému (`hasPermission`) záměrně - i kdyby v budoucnu nějaká role omylem
- * (nebo útokem) získala plná delete oprávnění, nesmí být fyzicky možné, aby jimi
- * "vystřílela" všechny sysadmin účty a zablokovala tak správu celé aplikace (nikdo by
- * pak neměl práva role/oprávnění spravovat zpět). Kontrola je natvrdo na `role_name`
- * stejně jako `sysadminGuard` na frontendu - ne na permission klíči.
+ * @refactor-note (2026-08-2) Odstraněna legacy HR/osobní pole (viz User.php). Přidán
+ * `enable_2fa` - admin/sysadmin ho mají VŽDY `true`, vynuceno na backendu
+ * (`resolveEnable2fa()`), nezávisle na tom, co pošle klient, a to při store() i update().
+ *
+ * @refactor-note (2026-08-3) KRITICKÁ BEZPEČNOSTNÍ OCHRANA "jen sysadmin smí zasáhnout
+ * sysadmina" je nyní důsledně aplikovaná na VŠECH pěti místech, kde se to týká:
+ * `store()` (vytvoření nového sysadmin účtu), `update()` (editace existujícího sysadmin
+ * účtu I povýšení cizího účtu na sysadmina), `changePassword()` (reset hesla sysadmin
+ * účtu - kromě vlastníka sobě samému), `destroy()` a `forceDeleteAllTrashed()` (mazání,
+ * jednotlivě i hromadně přes koš). Všech pět kontrol sdílí stejnou konstantu
+ * `SYSADMIN_ROLE_NAME` a pomocnou metodu `isSysadminRoleId()`/`actorIsSysadmin()`, aby
+ * nemohlo dojít k nekonzistenci (např. hardcoded string na jednom místě, konstanta na
+ * druhém) - historicky se to stalo a je to přesně ten typ chyby, který otevírá díru.
  */
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\{User};
 use App\Models\Core\CoreRole;
 use App\Models\Web\WebLog;
@@ -39,6 +45,19 @@ use Illuminate\Support\Facades\{Hash, Log, DB};
  */
 class UserController extends Controller
 {
+    /**
+     * @description Role names which always have 2FA forced on, regardless of client input.
+     */
+    private const FORCED_2FA_ROLE_NAMES = ['admin', 'sysadmin'];
+
+    /**
+     * @description Role name protected by the "only a sysadmin may touch a sysadmin"
+     * invariant (create, edit/promote, delete, password change). Deliberately narrower
+     * than FORCED_2FA_ROLE_NAMES - only 'sysadmin' itself is this strictly protected,
+     * not 'admin'.
+     */
+    private const SYSADMIN_ROLE_NAME = 'sysadmin';
+
     /**
      * Retrieves a paginated list of users with filtering and role-based sorting.
      *
@@ -92,6 +111,9 @@ class UserController extends Controller
 
     /**
      * Creates a new user and assigns an initial role.
+     * @note KRITICKÁ OCHRANA: vytvořit nový účet s rolí sysadmin smí jen volající, který
+     * je sám sysadmin - jinak by šlo ochranu v update()/destroy() obejít tím, že by se
+     * sysadmin účet rovnou VYTVOŘIL, místo aby se na něj někdo povyšoval.
      *
      * @param StoreUserRequest $request
      * @return JsonResponse
@@ -99,16 +121,23 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $roleId = $validated['role_id'] ?? null;
+
+        if ($roleId && $this->isSysadminRoleId((int) $roleId) && !$this->actorIsSysadmin($request)) {
+            $this->logAction($request, 'create_denied', 'User', "Zamítnut pokus o vytvoření nového sysadmin účtu: {$validated['user_email']}");
+            return response()->json(['message' => 'Nový účet s rolí sysadmin smí vytvořit pouze jiný sysadmin.'], 403);
+        }
 
         DB::beginTransaction();
         try {
+            $validated['enable_2fa'] = $this->resolveEnable2fa($roleId, $validated['enable_2fa'] ?? false);
+
             $user = User::create(array_merge($validated, [
                 'user_password_hash' => Hash::make($validated['user_password_hash']),
-                'commission_rate' => $validated['commission_rate'] ?? 10
             ]));
 
-            if (isset($validated['role_id'])) {
-                $user->roles()->attach($validated['role_id']);
+            if ($roleId) {
+                $user->roles()->attach($roleId);
             }
 
             DB::commit();
@@ -137,6 +166,10 @@ class UserController extends Controller
 
     /**
      * Updates an existing user's information.
+     * @note KRITICKÁ OCHRANA: pokud je cílový účet sysadmin, NEBO request žádá o
+     * povýšení cílového účtu na sysadmina, smí to provést jen volající, který je SÁM
+     * sysadmin. `enable_2fa` je navíc vynuceno na `true` pro admin/sysadmin bez ohledu
+     * na to, co přijde v requestu.
      *
      * @param UpdateUserRequest $request
      * @param int $id
@@ -145,14 +178,30 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, $id): JsonResponse
     {
         $user = User::findOrFail($id);
-
         $validated = $request->validated();
+
+        $targetIsSysadmin = $user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
+        $promotingToSysadmin = isset($validated['role_id']) && !$targetIsSysadmin
+            && $this->isSysadminRoleId((int) $validated['role_id']);
+
+        if (($targetIsSysadmin || $promotingToSysadmin) && !$this->actorIsSysadmin($request)) {
+            $reason = $targetIsSysadmin
+                ? "Zamítnuta úprava sysadmin účtu: {$user->user_email}"
+                : "Zamítnut pokus o povýšení účtu na sysadmina: {$user->user_email}";
+            $this->logAction($request, 'update_denied', 'User', $reason, $id);
+            return response()->json(['message' => 'Účet s rolí sysadmin smí upravovat, nebo na ni povyšovat, pouze jiný sysadmin.'], 403);
+        }
 
         if (!empty($validated['user_password_hash'])) {
             $validated['user_password_hash'] = Hash::make($validated['user_password_hash']);
         } else {
             unset($validated['user_password_hash']);
         }
+
+        // Role po update (buď nově zvolená, nebo stávající, pokud se role nemění)
+        // rozhoduje o vynucení enable_2fa - nejen v okamžiku výběru role ve formuláři.
+        $effectiveRoleId = $validated['role_id'] ?? $user->roles()->first()?->id;
+        $validated['enable_2fa'] = $this->resolveEnable2fa($effectiveRoleId, $validated['enable_2fa'] ?? $user->enable_2fa);
 
         DB::beginTransaction();
         try {
@@ -177,6 +226,8 @@ class UserController extends Controller
 
     /**
      * Handles password changes with administrative validation requirements.
+     * @note KRITICKÁ OCHRANA: cizí sysadmin účet smí heslo změnit jen jiný sysadmin -
+     * vlastník (isOwner) si své vlastní heslo měnit může vždy, bez ohledu na roli.
      *
      * @param PasswordChangeRequest $request
      * @param int $id
@@ -189,8 +240,18 @@ class UserController extends Controller
             $validated = $request->validated();
             $auth = $request->user() ?? auth('sanctum')->user();
 
-            $isAdmin = $auth->roles()->whereIn('role_name', ['admin', 'sysadmin'])->exists();
             $isOwner = $user->id === $auth->id;
+
+            $targetIsSysadmin = $user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
+            if ($targetIsSysadmin && !$isOwner) {
+                $actorIsSysadmin = $auth->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
+                if (!$actorIsSysadmin) {
+                    $this->logAction($request, 'password_change_denied', 'User', "Zamítnut pokus o změnu hesla sysadmin účtu: {$user->user_email}", $id);
+                    return response()->json(['message' => 'Heslo účtu s rolí sysadmin smí změnit pouze jiný sysadmin.'], 403);
+                }
+            }
+
+            $isAdmin = $auth->roles()->whereIn('role_name', ['admin', 'sysadmin'])->exists();
 
             if (!$isOwner && !$isAdmin) {
                 return response()->json(['message' => 'Nedostatečná oprávnění.'], 403);
@@ -240,7 +301,7 @@ class UserController extends Controller
     /**
      * Handles soft or hard deletion of a user.
      * @note Uživatel nemůže smazat sám sebe. KRITICKÁ OCHRANA: účet s rolí 'sysadmin'
-     * smí smazat výhradně jiný sysadmin - viz @refactor-note (2026-08) v hlavičce souboru.
+     * smí smazat výhradně jiný sysadmin.
      *
      * @param Request $request
      * @param int $id
@@ -255,21 +316,11 @@ class UserController extends Controller
                 return response()->json(['message' => 'Nelze smazat vlastní účet.'], 403);
             }
 
-            // KRITICKÁ OCHRANA - nezávisle na permission systému. Bez tohohle by
-            // libovolný účet s právem mazat uživatele mohl "vystřílet" všechny
-            // sysadmin účty a aplikace by zůstala bez možnosti spravovat role/přístupy.
-            $targetIsSysadmin = $user->roles()->where('role_name', 'sysadmin')->exists();
+            $targetIsSysadmin = $user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
 
-            if ($targetIsSysadmin) {
-                $actorIsSysadmin = $request->user()
-                    ?->roles()
-                    ->where('role_name', 'sysadmin')
-                    ->exists() ?? false;
-
-                if (!$actorIsSysadmin) {
-                    $this->logAction($request, 'delete_denied', 'User', "Zamítnut pokus o smazání sysadmin účtu: {$user->user_email}", $id);
-                    return response()->json(['message' => 'Účet s rolí sysadmin smí smazat pouze jiný sysadmin.'], 403);
-                }
+            if ($targetIsSysadmin && !$this->actorIsSysadmin($request)) {
+                $this->logAction($request, 'delete_denied', 'User', "Zamítnut pokus o smazání sysadmin účtu: {$user->user_email}", $id);
+                return response()->json(['message' => 'Účet s rolí sysadmin smí smazat pouze jiný sysadmin.'], 403);
             }
 
             $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
@@ -286,10 +337,7 @@ class UserController extends Controller
     /**
      * Permanently deletes all soft-deleted users.
      * @note KRITICKÁ OCHRANA: trashnuté účty s rolí 'sysadmin' se z hromadného
-     * vyprázdnění koše vyjímají, pokud sám volající není sysadmin - viz @refactor-note
-     * (2026-08) v hlavičce souboru. Jinak by šlo obejít ochranu v `destroy()` tak, že
-     * by sysadmin účet skončil v koši (např. vlastním omylem) a kdokoliv jiný s
-     * oprávněním koš vysypat by ho tudy permanentně smazal.
+     * vyprázdnění koše vyjímají, pokud sám volající není sysadmin.
      *
      * @return JsonResponse
      */
@@ -298,14 +346,9 @@ class UserController extends Controller
         try {
             $query = User::onlyTrashed();
 
-            $actorIsSysadmin = request()->user()
-                ?->roles()
-                ->where('role_name', 'sysadmin')
-                ->exists() ?? false;
-
-            if (!$actorIsSysadmin) {
+            if (!$this->actorIsSysadmin(request())) {
                 $query->whereDoesntHave('roles', function ($q) {
-                    $q->where('role_name', 'sysadmin');
+                    $q->where('role_name', self::SYSADMIN_ROLE_NAME);
                 });
             }
 
@@ -318,6 +361,56 @@ class UserController extends Controller
             $this->logAction(request(), 'error', 'User', "Chyba při vysypávání koše uživatelů: " . $e->getMessage());
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
         }
+    }
+
+    /**
+     * @description Zjišťuje, jestli přihlášený uživatel z daného requestu má roli
+     * sysadmin. Sdílená pomocná metoda pro store()/update()/destroy()/forceDeleteAllTrashed().
+     *
+     * @param Request $request
+     * @return bool
+     */
+    private function actorIsSysadmin(Request $request): bool
+    {
+        return $request->user()
+            ?->roles()
+            ->where('role_name', self::SYSADMIN_ROLE_NAME)
+            ->exists() ?? false;
+    }
+
+    /**
+     * @description Zjišťuje, jestli daná role odpovídá roli sysadmin.
+     *
+     * @param int $roleId
+     * @return bool
+     */
+    private function isSysadminRoleId(int $roleId): bool
+    {
+        return CoreRole::where('id', $roleId)
+            ->where('role_name', self::SYSADMIN_ROLE_NAME)
+            ->exists();
+    }
+
+    /**
+     * @description Rozhoduje o výsledné hodnotě `enable_2fa` pro danou roli - pro
+     * admin/sysadmin VŽDY vrátí `true` bez ohledu na `$requestedValue`, jinak vrátí
+     * `$requestedValue` beze změny.
+     *
+     * @param int|null $roleId
+     * @param bool $requestedValue Hodnota poslaná klientem (nebo aktuální stav u update()).
+     * @return bool
+     */
+    private function resolveEnable2fa(?int $roleId, bool $requestedValue): bool
+    {
+        if (!$roleId) {
+            return $requestedValue;
+        }
+
+        $isForcedRole = CoreRole::where('id', $roleId)
+            ->whereIn('role_name', self::FORCED_2FA_ROLE_NAMES)
+            ->exists();
+
+        return $isForcedRole ? true : $requestedValue;
     }
 
     /**

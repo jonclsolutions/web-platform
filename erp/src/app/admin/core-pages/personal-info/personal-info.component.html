@@ -4,79 +4,80 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08): Karta s legacy osobními/HR údaji (datum narození, rodné
+        číslo, adresa, bankovní účet, pojišťovna, kontaktní e-mail, telefon) odstraněna -
+        tyto sloupce v systému už neexistují (viz User.php). Přidána sekce Zabezpečení
+        (2FA toggle). Formulář na změnu hesla přesunut do popupu (viz showPasswordPopup).
 -->
     
 <div class="personal-info-container">
 
-  @if (userData) {
-    <div class="cd-card info-card">
-      <div class="card-header-clean">
-        <h2 class="card-title">Osobní profil</h2>
-        <span class="admin-note">Pro změnu údajů kontaktujte administrátora</span>
-      </div>
-      <div class="card-content-minimal">
+  <div class="cd-card info-card">
+    <div class="card-header-clean">
+      <h2 class="card-title">Osobní profil</h2>
+      <span class="admin-note">Pro změnu jména/e-mailu kontaktujte administrátora</span>
+    </div>
+    <div class="card-content-minimal">
+
+      @if (userData) {
         <div class="info-group">
           <h3 class="group-title">Základní údaje</h3>
           <div class="info-grid">
-            <div class="info-item">
-              <label>Celé jméno</label>
-              <div class="value">{{ userData.full_name || '—' }}</div>
-            </div>
-            <div class="info-item">
-              <label>Datum narození</label>
-              <div class="value">{{ userData.birth_date ? (userData.birth_date | date:'d. M. yyyy') : '—' }}</div>
-            </div>
-            <div class="info-item">
-              <label>Rodné číslo</label>
-              <div class="value cd-value-mono">{{ userData.personal_id_num || '—' }}</div>
-            </div>
-            <div class="info-item">
-              <label>Pojišťovna</label>
-              <div class="value">{{ userData.health_insurance || '—' }}</div>
-            </div>
+          <div class="info-item">
+          <label>Celé jméno</label>
+          <div class="value">{{ userData.full_name || '—' }}</div>
+        </div>
+        <div class="info-item">
+          <label>Přihlašovací e-mail</label>
+          <div class="value muted cd-value-mono">{{ userData.user_email || '—' }}</div>
+        </div>
+        <div class="info-item">
+          <label>Role</label>
+          <div class="value">{{ userRoleName || '—' }}</div>
+        </div>
           </div>
         </div>
+      }
 
-        <div class="info-group">
-          <h3 class="group-title">Kontakt a adresa</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <label>Přihlašovací e-mail</label>
-              <div class="value muted cd-value-mono">{{ userData.user_email || '—' }}</div>
-            </div>
-            <div class="info-item">
-              <label>Kontaktní e-mail</label>
-              <div class="value">{{ userData.contact_email || '—' }}</div>
-            </div>
-            <div class="info-item">
-              <label>Telefon</label>
-              <div class="value">{{ userData.phone_number || '—' }}</div>
-            </div>
-            <div class="info-item full-width">
-              <label>Adresa trvalého bydliště</label>
-              <div class="value">{{ userData.address || '—' }}</div>
-            </div>
+      <div class="info-group">
+        <h3 class="group-title">Zabezpečení</h3>
+        <div class="security-row">
+          <div class="security-row-text">
+            <label class="security-toggle-label" [class.disabled]="isForced2fa">
+              <input
+                type="checkbox"
+                [checked]="enable2faValue"
+                [disabled]="isForced2fa || isSaving2fa"
+                (change)="onToggle2fa()">
+              Dvoufaktorové ověření (2FA)
+            </label>
+            @if (isForced2fa) {
+              <span class="security-hint">Pro vaši roli je 2FA povinné a nelze ho vypnout.</span>
+            }
           </div>
-        </div>
-
-        <div class="info-group">
-          <h3 class="group-title">Ostatní</h3>
-          <div class="info-grid">
-            <div class="info-item">
-              <label>Bankovní účet</label>
-              <div class="value cd-value-mono">{{ userData.bank_account || '—' }}</div>
-            </div>
-          </div>
+          <button type="button" class="action_button action_button--secondary" (click)="openPasswordPopup()">
+            Změnit heslo
+          </button>
         </div>
       </div>
-    </div>
-  }
 
-  <div class="cd-card password-card-minimal">
-    <div class="card-header-clean">
-      <h2 class="card-title">Změna hesla</h2>
     </div>
-    <div class="card-content">
+  </div>
+</div>
+
+@if (showPasswordPopup) {
+  <div class="password-popup-overlay" (mousedown)="onOverlayClick($event)">
+    <div class="password-popup-card" (click)="$event.stopPropagation()">
+
+      <div class="password-popup-header">
+        <h2 class="card-title">Změna hesla</h2>
+        <button type="button" class="password-popup-close" (click)="closePasswordPopup()" aria-label="Zavřít">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
       <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="minimal-form">
         @if (errorMessage) {
           <div class="error-banner">
@@ -111,4 +112,4 @@
       </form>
     </div>
   </div>
-</div>
+}

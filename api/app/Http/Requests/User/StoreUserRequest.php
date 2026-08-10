@@ -5,7 +5,10 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Validation logic for creating new system users, including HR-specific fields like commissions and tax declarations.
+ * @description Validation logic for creating new system users.
+ *
+ * @refactor-note (2026-08) Odstraněna validace legacy HR/osobních polí + `commission_rate`
+ * / `has_tax_declaration` (viz User.php).
  */
 
 namespace App\Http\Requests\User;
@@ -16,7 +19,7 @@ use App\Models\Core\CoreRole;
 
 /**
  * @description Handles request validation for new user registration and account creation.
- * @note Implements automatic default value injection for commission rates and DPP hours.
+ * @note Implements automatic default value injection for DPP hours.
  */
 class StoreUserRequest extends FormRequest
 {
@@ -37,19 +40,11 @@ class StoreUserRequest extends FormRequest
         return [
             'user_email'          => ['required', 'email', 'max:255', 'unique:users,user_email'],
             'full_name'           => ['required', 'string', 'max:255'],
-            'contact_email'       => ['nullable', 'email', 'max:255'],
             'user_password_hash'  => ['required', 'string', 'min:8'],
-            'role_id'             => ['required', 'numeric', Rule::exists(CoreRole::class, 'id')], 
-            'phone_number'        => ['nullable', 'string', 'max:20'],
-            'birth_date'          => ['nullable', 'date'],
-            'personal_id_num'     => ['nullable', 'string', 'max:20'],
-            'address'             => ['nullable', 'string'],
-            'bank_account'        => ['nullable', 'string', 'max:50'],
-            'commission_rate'     => ['required', 'numeric', 'min:0', 'max:100'],
-            'has_tax_declaration' => ['nullable', 'boolean'],
+            'role_id'             => ['required', 'numeric', Rule::exists(CoreRole::class, 'id')],
             'internal_note'       => ['nullable', 'string'],
-            'health_insurance'    => ['nullable', 'string', 'max:10'],
             'dpp_hours_spent'     => ['nullable', 'integer', 'min:0'],
+            'enable_2fa'          => ['nullable', 'boolean'],
         ];
     }
 
@@ -61,9 +56,8 @@ class StoreUserRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge([
-            'has_tax_declaration' => filter_var($this->has_tax_declaration, FILTER_VALIDATE_BOOLEAN),
-            'commission_rate'     => $this->filled('commission_rate') ? $this->commission_rate : 10,
-            'dpp_hours_spent'     => $this->filled('dpp_hours_spent') ? $this->dpp_hours_spent : 0,
+            'dpp_hours_spent' => $this->filled('dpp_hours_spent') ? $this->dpp_hours_spent : 0,
+            'enable_2fa'      => filter_var($this->enable_2fa, FILTER_VALIDATE_BOOLEAN),
         ]);
     }
 
@@ -80,14 +74,10 @@ class StoreUserRequest extends FormRequest
             'user_email.max'              => 'E-mail může obsahovat maximálně 255 znaků.',
             'user_email.unique'           => 'Tento přihlašovací e-mail je již obsazen.',
             'full_name.required'          => 'Jméno je povinné.',
-            'contact_email.email'         => 'Neplatný formát kontaktního e-mailu.',
             'user_password_hash.required' => 'Heslo je povinné.',
             'user_password_hash.min'      => 'Minimálně 8 znaků.',
             'role_id.required'            => 'Vyberte roli uživatele.',
             'role_id.exists'              => 'Vybraná role neexistuje.',
-            'commission_rate.required'    => 'Sazba provize je povinná.',
-            'commission_rate.min'         => 'Provize nemůže být záporná.',
-            'commission_rate.max'         => 'Provize může být maximálně 100 %.',
         ];
     }
 }

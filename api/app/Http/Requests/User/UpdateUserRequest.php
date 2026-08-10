@@ -5,7 +5,10 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Validation logic for updating existing system users, ensuring integrity of email uniqueness during modification.
+ * @description Validation logic for updating existing system users.
+ *
+ * @refactor-note (2026-08) Odstraněna validace legacy HR/osobních polí + `commission_rate`
+ * / `has_tax_declaration` (viz User.php).
  */
 
 namespace App\Http\Requests\User;
@@ -43,19 +46,11 @@ class UpdateUserRequest extends FormRequest
                 Rule::unique('users', 'user_email')->ignore($userId),
             ],
             'full_name'           => ['sometimes', 'required', 'string', 'max:255'],
-            'contact_email'       => ['nullable', 'email', 'max:255'],
             'user_password_hash'  => ['nullable', 'string', 'min:8'],
             'role_id'             => ['sometimes', 'required', 'integer', Rule::exists(CoreRole::class, 'id')],
-            'phone_number'        => ['nullable', 'string', 'max:20'],
-            'birth_date'          => ['nullable', 'date'],
-            'personal_id_num'     => ['nullable', 'string', 'max:20'],
-            'address'             => ['nullable', 'string'],
-            'bank_account'        => ['nullable', 'string', 'max:50'],
-            'commission_rate'     => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'has_tax_declaration' => ['boolean'],
             'internal_note'       => ['nullable', 'string'],
-            'health_insurance'    => ['nullable', 'string', 'max:10'],
             'dpp_hours_spent'     => ['nullable', 'integer', 'min:0'],
+            'enable_2fa'          => ['nullable', 'boolean'],
         ];
     }
 
@@ -71,12 +66,9 @@ class UpdateUserRequest extends FormRequest
             'user_email.email'           => 'Zadejte platnou e-mailovou adresu pro přihlášení.',
             'user_email.unique'          => 'Tento přihlašovací e-mail je již obsazen.',
             'full_name.required'         => 'Jméno je povinné.',
-            'contact_email.email'        => 'Neplatný formát kontaktního e-mailu.',
             'user_password_hash.min'     => 'Minimálně 8 znaků.',
             'role_id.required'           => 'Vyberte roli uživatele.',
             'role_id.exists'             => 'Vybraná role neexistuje.',
-            'commission_rate.min'        => 'Provize nemůže být záporná.',
-            'commission_rate.max'        => 'Provize může být maximálně 100 %.',
         ];
     }
 }
