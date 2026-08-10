@@ -34,7 +34,7 @@ import * as Config from './logs.config';
 export class CoreLogsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
-  override apiEndpoint: string = 'web/logs';
+  override apiEndpoint: string = 'core/logs';
 
   buttons = Config.BUTTONS.filter(b => b.action !== 'create' && b.action !== 'edit');
   tableColumns = Config.TABLE_COLUMNS;

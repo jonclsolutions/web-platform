@@ -5,7 +5,7 @@
     @author: RPSW
     @created: 2026
     @description: System-wide overview - resource counters shared across Web and Shop,
-        quick navigation into Core management screens, and the system-level audit feed.
+        quick navigation into Core management screens, and the core_logs audit feed.
     @dependencies: CoreDashboardComponent (getIcon, quickStats, navSections, recentActivity)
 -->
 
@@ -63,7 +63,7 @@
     </div>
   </div>
 
-  <!-- @component: Recent system activity — password resets, auth events, infra logs -->
+  <!-- @component: Recent system activity — auth events, role/legal/site-settings changes -->
   <div class="cd-section">
     <div class="cd-section-label">Poslední systémové události</div>
     <div class="cd-card cd-card-activity">
@@ -101,6 +101,8 @@
                   <div class="cd-activity-desc">{{ log.description }}</div>
                   <div class="cd-activity-meta">
                     <span class="cd-activity-module">{{ log.module }}</span>
+                    <span class="cd-activity-sep">·</span>
+                    <span class="cd-activity-user">{{ log.user_plain }}</span>
                     <span class="cd-activity-sep">·</span>
                     <span class="cd-activity-ip">{{ log.origin }}</span>
                   </div>

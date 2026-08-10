@@ -1,27 +1,27 @@
 <?php
 /**
- * @file ShopLogController.php
- * @path app/Http/Controllers/Api/Shop/ShopLogController.php
+ * @file CoreLogController.php
+ * @path app/Http/Controllers/Api/Core/CoreLogController.php
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Read/write access to the shop-domain audit log (shop_logs) - e-commerce
- * activity across products, orders, customers, coupons, categories, suppliers, shipping
- * and payment methods. Structurally mirrors CoreLogController / WebLogController.
+ * @description Read/write access to the system-wide audit log (core_logs) - authentication
+ * events, user/role/permission management, legal document changes, core site settings.
+ * Structurally mirrors WebLogController / ShopLogController.
  */
 
-namespace App\Http\Controllers\Api\Shop;
+namespace App\Http\Controllers\Api\Core;
 
 use App\Http\Controllers\Controller;
-use App\Models\Shop\ShopLog;
-use App\Http\Resources\Shop\ShopLogResource;
+use App\Models\Core\CoreLog;
+use App\Http\Resources\Core\CoreLogResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class ShopLogController extends Controller
+class CoreLogController extends Controller
 {
     /**
-     * Retrieves a paginated list of shop audit events with optional filtering.
+     * Retrieves a paginated list of core audit events with optional filtering.
      *
      * @param Request $request Incoming request containing filters and pagination.
      * @return JsonResponse
@@ -30,7 +30,7 @@ class ShopLogController extends Controller
     {
         $perPage = $request->input('per_page', 15);
 
-        $query = ShopLog::query();
+        $query = CoreLog::query();
 
         if ($request->filled('event_type')) {
             $query->where('event_type', $request->event_type);
@@ -51,7 +51,7 @@ class ShopLogController extends Controller
         $data = $query->paginate($perPage);
 
         return response()->json([
-            'data'         => ShopLogResource::collection($data->items()),
+            'data'         => CoreLogResource::collection($data->items()),
             'total'        => $data->total(),
             'per_page'     => $data->perPage(),
             'current_page' => $data->currentPage(),
@@ -60,8 +60,8 @@ class ShopLogController extends Controller
     }
 
     /**
-     * Persists a new shop audit event. Exposed mainly for consistency with
-     * CoreLogController/WebLogController - in practice most shop_logs rows are written
+     * Persists a new core audit event. Exposed mainly for consistency with
+     * WebLogController/ShopLogController - in practice most core_logs rows are written
      * internally via the LogsActivity trait, not through this endpoint directly.
      *
      * @param Request $request
@@ -75,7 +75,7 @@ class ShopLogController extends Controller
             'description' => ['required', 'string', 'max:1000'],
         ]);
 
-        $log = ShopLog::create([
+        $log = CoreLog::create([
             ...$validated,
             'origin'        => $request->ip(),
             'user_id'       => $request->user()?->id,
@@ -83,18 +83,18 @@ class ShopLogController extends Controller
             'user_plain'    => $request->user()?->user_email ?? 'system',
         ]);
 
-        return response()->json(new ShopLogResource($log), 201);
+        return response()->json(new CoreLogResource($log), 201);
     }
 
     /**
-     * Retrieves the details of a single shop audit event.
+     * Retrieves the details of a single core audit event.
      *
      * @param int $id
      * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        $log = ShopLog::findOrFail($id);
-        return response()->json(new ShopLogResource($log));
+        $log = CoreLog::findOrFail($id);
+        return response()->json(new CoreLogResource($log));
     }
 }

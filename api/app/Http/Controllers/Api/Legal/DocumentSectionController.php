@@ -13,6 +13,12 @@
  * sloupce - funguje tak pro libovolný typ dokumentu bez další úpravy kódu. Zároveň
  * doplněno pole `footer_effective`, které šablona (`{{ data.footer_effective }}`)
  * očekávala, ale odpověď ho dřív vůbec neposílala.
+ *
+ * @refactor-note (2026-08) Logování přesunuto z lokální `logAction()` (chybně mířila
+ * do `shop_logs`, viz incident - GDPR/TOS/Cookies změny se logovaly do e-shopové audit
+ * tabulky) na sdílený `LogsActivity` trait, zapisující do `CoreLog::class`. Právní
+ * dokumenty jsou dle dohodnutého rozdělení Core/Web/Shop doménou Core (sdílené napříč
+ * Web a Shop), stejně jako auth, uživatelé, role a site settings.
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -20,10 +26,11 @@ namespace App\Http\Controllers\Api\Legal;
 use App\Http\Controllers\Controller;
 use App\Models\Legal\DocumentSection;
 use App\Models\Legal\DocumentType;
-use App\Models\Shop\ShopLog;
+use App\Models\Core\CoreLog;
 use App\Http\Resources\Legal\DocumentSectionResource;
 use App\Http\Requests\Legal\DocumentSection\StoreDocumentSectionRequest;
 use App\Http\Requests\Legal\DocumentSection\UpdateDocumentSectionRequest;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -34,6 +41,8 @@ use Illuminate\Support\Facades\Log;
  */
 class DocumentSectionController extends Controller
 {
+    use LogsActivity;
+
     /**
      * Retrieves all sections for a specific document type and language.
      *
@@ -65,9 +74,10 @@ class DocumentSectionController extends Controller
     {
         try {
             $section = DocumentSection::create($request->validated());
-            $this->logAction($request, 'create', 'Legal', "Created section: {$section->heading} ({$section->lang})", $section->id);
+            $this->logAction($request, CoreLog::class, 'create', 'Legal', "Created section: {$section->heading} ({$section->lang})", $section->id, 'DocumentSection');
             return response()->json(new DocumentSectionResource($section), 201);
         } catch (\Exception $e) {
+            $this->logAction($request, CoreLog::class, 'error', 'Legal', "Error creating section: " . $e->getMessage(), null, 'DocumentSection');
             Log::error("Legal Store Error: " . $e->getMessage());
             return response()->json(['message' => 'Error creating section.'], 500);
         }
@@ -98,9 +108,10 @@ class DocumentSectionController extends Controller
             $section = DocumentSection::findOrFail($id);
             $section->update($request->validated());
 
-            $this->logAction($request, 'update', 'Legal', "Updated section ID: {$id}", $id);
+            $this->logAction($request, CoreLog::class, 'update', 'Legal', "Updated section: {$section->heading} ({$section->lang})", $section->id, 'DocumentSection');
             return response()->json(new DocumentSectionResource($section));
         } catch (\Exception $e) {
+            $this->logAction($request, CoreLog::class, 'error', 'Legal', "Error updating section ID {$id}: " . $e->getMessage(), (int)$id, 'DocumentSection');
             Log::error("Legal Update Error: " . $e->getMessage());
             return response()->json(['message' => 'Update failed.'], 500);
         }
@@ -163,41 +174,12 @@ class DocumentSectionController extends Controller
             $section = DocumentSection::findOrFail($id);
             $heading = $section->heading;
             $section->delete();
-            $this->logAction($request, 'delete', 'Legal', "Deleted section: {$heading}", (int)$id);
+            $this->logAction($request, CoreLog::class, 'delete', 'Legal', "Deleted section: {$heading}", (int)$id, 'DocumentSection');
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            $this->logAction($request, CoreLog::class, 'error', 'Legal', "Error deleting section ID {$id}: " . $e->getMessage(), (int)$id, 'DocumentSection');
             Log::error("Legal Delete Error: " . $e->getMessage());
             return response()->json(['message' => 'Error deleting section.'], 500);
-        }
-    }
-
-    /**
-     * Logs administrative actions to the central audit system.
-     *
-     * @param Request $request Request object for context.
-     * @param string $eventType Action type (create, update, delete).
-     * @param string $module Module identification.
-     * @param string $description Audit log message.
-     * @param int|null $affectedId ID of the affected entity.
-     * @return void
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
-    {
-        try {
-            $user = $request->user();
-            ShopLog::create([
-                'origin' => $request->ip(),
-                'event_type' => $eventType,
-                'module' => $module,
-                'description' => $description,
-                'affected_entity_type' => 'DocumentSection',
-                'affected_entity_id' => $affectedId,
-                'user_id' => $user?->id,
-                'context_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
-                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'System'
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Log error: " . $e->getMessage());
         }
     }
 }

@@ -15,6 +15,13 @@
  * to every logged-in user regardless of `core-view-dashboard` and therefore do not belong
  * on a permission-gated overview page.
  *
+ * @refactor-note (2026-08) `core_logs` je nyní plnohodnotná log tabulka se stejnou
+ * strukturou jako `web_logs`/`shop_logs` (nahradila původní odlehčenou `web_system_logs`
+ * bez `user_id`/`affected_entity_*`/`user_plain`) - `ActivityLog` proto sdílí přesně stejný
+ * tvar jako u `WebDashboardComponent`, žádný zvláštní `SystemActivityLog` typ už není
+ * potřeba. Endpoint `core/system_logs` (dočasně neexistující 404) nahrazen skutečnou
+ * routou `core/logs` (`CoreLogController`).
+ *
  * @dependencies
  * - BaseDataComponent: Provides errorMessage/cd/alertDialogService (no CRUD needed here).
  * - LoadingService: Manages global loading states.
@@ -55,19 +62,22 @@ interface NavSection {
 }
 
 /**
- * @description Row shape returned by the system-level audit log endpoint
- * (`web_system_logs` table). Unlike business logs (`web_logs`), system logs are not tied
- * to an authenticated admin action against a specific entity - they capture
- * infrastructure/auth-level events (login attempts, password resets, etc.) and therefore
- * carry no `user_plain` / `affected_entity_*` columns.
+ * @description Row shape returned by the `core_logs` audit endpoint. Structurally
+ * identical to the `ActivityLog` shape used by `WebDashboardComponent` (`web_logs`),
+ * since both tables share the same columns by design - see @refactor-note above.
  */
-interface SystemActivityLog {
+interface ActivityLog {
   id: number;
   created_at: string;
   origin: string;
   event_type: string;
   module: string;
   description: string;
+  affected_entity_type?: string | null;
+  affected_entity_id?: number | null;
+  user_id?: number | null;
+  user_id_plain?: string | null;
+  user_plain?: string | null;
 }
 
 /**
@@ -95,7 +105,7 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   quickStats: QuickStat[] = [];
   loadingStats = true;
 
-  recentActivity: SystemActivityLog[] = [];
+  recentActivity: ActivityLog[] = [];
   loadingActivity = true;
 
   readonly navSections: NavSection[] = [
@@ -190,11 +200,6 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
    * dashboard remains functional. `getPaginatedCollection` is used deliberately (not
    * `getCollection`) to keep `.total` from the response instead of just the unwrapped
    * page of records.
-   * @assumption `core/roles`, `legal/document_sections` and `core/system_logs` endpoint
-   * names are inferred from the project's existing naming convention
-   * (`{module}/{table_name}`) - verify against the real API routes for `CoreRoleController`,
-   * `DocumentSectionController` and the controller backing the `core-pages/logs` page
-   * before relying on these in production.
    */
   private loadStats(): void {
     this.loadingStats = true;
@@ -204,7 +209,7 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       roles:         this.dataHandler.getPaginatedCollection<any>('core/roles?per_page=1').pipe(catchError(() => of(null))),
       legalDocs:     this.dataHandler.getPaginatedCollection<any>('legal/document-sections?per_page=1').pipe(catchError(() => of(null))),
       externalLinks: this.dataHandler.getPaginatedCollection<any>('web/external_links?per_page=1').pipe(catchError(() => of(null))),
-      systemLogs:    this.dataHandler.getPaginatedCollection<any>('core/system_logs?per_page=1').pipe(catchError(() => of(null))),
+      coreLogs:      this.dataHandler.getPaginatedCollection<any>('core/logs?per_page=1').pipe(catchError(() => of(null))),
     }).subscribe({
       next: (res) => {
         this.quickStats = [
@@ -212,7 +217,7 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
           { label: 'Role a oprávnění', value: res.roles?.total ?? '—', icon: 'shield', color: 'indigo' },
           { label: 'Právní dokumenty', value: res.legalDocs?.total ?? '—', icon: 'legal', color: 'slate' },
           { label: 'Externí odkazy', value: res.externalLinks?.total ?? '—', icon: 'link', color: 'green' },
-          { label: 'Systémové logy', value: res.systemLogs?.total ?? '—', icon: 'logs', color: 'amber' },
+          { label: 'Systémové logy', value: res.coreLogs?.total ?? '—', icon: 'logs', color: 'amber' },
         ];
         this.loadingStats = false;
         this.cd.markForCheck();
@@ -225,13 +230,12 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   }
 
   /**
-   * @description Fetches the latest system-level audit events (authentication, password
-   * resets, infrastructure) for the activity feed.
-   * @assumption Endpoint name `core/system_logs` - see note on `loadStats()`.
+   * @description Fetches the latest system-level audit events (authentication, role/
+   * permission changes, legal document changes) for the activity feed.
    */
   private loadRecentActivity(): void {
     this.loadingActivity = true;
-    this.dataHandler.getPaginatedCollection<any>('core/system_logs?per_page=8&sort_by=created_at&sort_direction=desc')
+    this.dataHandler.getPaginatedCollection<any>('core/logs?per_page=8&sort_by=created_at&sort_direction=desc')
       .pipe(catchError(() => of(null)))
       .subscribe({
         next: (res) => {
@@ -255,19 +259,23 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   }
 
   /**
-   * @description Maps raw `event_type` values from `web_system_logs` to human-readable
-   * Czech labels.
+   * @description Maps raw `event_type` values from `core_logs` to human-readable Czech
+   * labels - covers both auth-level events and Core-resource CRUD (roles, legal docs,
+   * site settings).
    * @param type Raw event type string.
    * @returns Human-readable label, falling back to the raw value if unmapped.
    */
   eventTypeLabel(type: string): string {
     const map: Record<string, string> = {
+      login_success: 'Přihlášení',
+      login_failed: 'Neúspěšné přihlášení',
+      logout: 'Odhlášení',
       password_reset_requested: 'Žádost o reset hesla',
       password_reset_completed: 'Reset hesla dokončen',
       password_reset_failed: 'Reset hesla selhal',
-      login_success: 'Přihlášení',
-      login_failed: 'Neúspěšné přihlášení',
-      create: 'Vytvoření', update: 'Úprava', delete: 'Smazání', error: 'Chyba',
+      password_reset_email_rate_limited: 'Reset hesla - limit vyčerpán',
+      create: 'Vytvoření', update: 'Úprava', soft_delete: 'Smazání',
+      hard_delete: 'Trvalé smazání', restore: 'Obnova', error: 'Chyba',
     };
     return map[type] ?? type;
   }
@@ -279,12 +287,15 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
    */
   eventTypeClass(type: string): string {
     const map: Record<string, string> = {
+      login_success: 'ev-create',
+      login_failed: 'ev-delete',
+      logout: 'ev-update',
       password_reset_requested: 'ev-update',
       password_reset_completed: 'ev-create',
       password_reset_failed: 'ev-delete',
-      login_success: 'ev-create',
-      login_failed: 'ev-delete',
-      create: 'ev-create', update: 'ev-update', delete: 'ev-delete', error: 'ev-error',
+      password_reset_email_rate_limited: 'ev-error',
+      create: 'ev-create', update: 'ev-update', soft_delete: 'ev-delete',
+      hard_delete: 'ev-delete', restore: 'ev-restore', error: 'ev-error',
     };
     return map[type] ?? 'ev-default';
   }

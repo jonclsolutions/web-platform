@@ -164,11 +164,6 @@
 
 .kpi-card::before { content: none; }
 
-.kpi-card:hover {
-  box-shadow: 0 6px 20px rgba(24, 24, 27, 0.08);
-  transform: translateY(-1px);
-}
-
 .kpi-icon {
   width: 40px;
   height: 40px;

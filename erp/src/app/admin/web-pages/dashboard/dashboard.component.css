@@ -133,11 +133,6 @@
 
 .cd-stat-card::before { content: none; }
 
-.cd-stat-card:hover {
-  box-shadow: 0 6px 20px rgba(24, 24, 27, 0.08);
-  transform: translateY(-1px);
-}
-
 .cd-stat-icon {
   width: 36px;
   height: 36px;

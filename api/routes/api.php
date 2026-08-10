@@ -52,6 +52,7 @@ use App\Http\Controllers\Api\Shop\ShopCheckoutController;
 use App\Http\Controllers\Api\Shop\ShopPublicController;
 use App\Http\Controllers\Api\Legal\DocumentTypeController;
 use App\Http\Controllers\Api\Web\WebExternalLinkController;
+use App\Http\Controllers\Api\Core\CoreLogController;
 /*
 |--------------------------------------------------------------------------
 | LANGUAGES — public access (frontend does not require a token)
@@ -185,6 +186,12 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
             Route::put('/', [CoreSiteSettingController::class, 'update']);
         });
 
+         Route::prefix('logs')->group(function () {
+            Route::get('/',     [CoreLogController::class, 'index']);
+            Route::post('/',    [CoreLogController::class, 'store']);
+            Route::get('/{id}', [CoreLogController::class, 'show']);
+        });
+        
         Route::prefix('users')->group(function () {
             Route::post('/',                         [UserController::class, 'store']);
             Route::get('/{id}',                      [UserController::class, 'show']);
