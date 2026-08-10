@@ -10,7 +10,7 @@ export const CUSTOMER_BUTTONS: Core.TableButtons[] = [
 export const CUSTOMER_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Nový zákazník', icon: '➕', class: 'btn-create', showIf: true },
-  { action: 'exportActiveTable', label: 'Export CSV', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 

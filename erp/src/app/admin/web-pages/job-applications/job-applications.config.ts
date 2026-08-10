@@ -17,7 +17,7 @@ export const JOB_APPLICATION_TOOLBAR_BUTTONS: Core.Button[] = [
   },
   {
     action: 'exportActiveTable',
-    label: 'Export CSV',
+    label: 'Export',
     icon: '📥',
     class: 'btn-export',
     showIf: true

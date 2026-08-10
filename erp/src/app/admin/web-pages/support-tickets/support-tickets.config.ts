@@ -22,7 +22,7 @@ export const SUPPORT_TICKET_TOOLBAR_BUTTONS: Core.Button[] = [
   },
   {
     action: 'exportActiveTable',
-    label: 'Export CSV',
+    label: 'Export',
     icon: '📥',
     class: 'btn-export',
     showIf: true

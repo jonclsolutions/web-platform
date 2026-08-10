@@ -12,7 +12,7 @@
  * polovinu BaseDataComponent tato komponenta nikdy nepoužívala. Nyní si skládá
  * `EntityCrudService` přímo (pro delete + log export) a alert/auth služby injektuje sama.
  *
- * @refactor-note (2026-08) Export přepracován z jediného tlačítka "Export CSV" (okamžité
+ * @refactor-note (2026-08) Export přepracován z jediného tlačítka "Export" (okamžité
  * stažení) na formátový picker (`ExportPopupBuilderComponent`) s volbou CSV/XLSX/JSON/TXT.
  * Metoda `exportToCSV()` byla ZÁMĚRNĚ ponechána pod stejným jménem - jen teď otevírá popup
  * místo přímého stahování - aby žádný z mnoha `*.component.ts` napříč adminem, které ji
@@ -239,7 +239,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * @note Kept the historic method name `exportToCSV()` intact (rather than renaming it)
    * so every page component that calls `this.activeTable.exportToCSV()` from its toolbar
    * action keeps working unchanged - only the toolbar button label needs updating from
-   * 'Export CSV' to 'Export' in each `*.config.ts`.
+   * 'Export' to 'Export' in each `*.config.ts`.
    */
   exportToCSV(): void {
     this.showExportPopup = true;

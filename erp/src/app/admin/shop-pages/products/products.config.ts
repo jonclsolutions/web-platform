@@ -3,7 +3,7 @@ import * as Core from '../../../shared/imports/core-providers';
 export const TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Nový produkt', icon: '➕', class: 'btn-create', showIf: true },
-  { action: 'exportActiveTable', label: 'Export CSV', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
   { action: 'toggleTrash', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'shop-products-delete' }
 ];
 
