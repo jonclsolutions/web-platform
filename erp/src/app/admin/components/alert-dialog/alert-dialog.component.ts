@@ -1,24 +1,16 @@
-/**
- * @file alert-dialog.component.ts
- * @path src/app/admin/components/alert-dialog/alert-dialog.component.ts
- * @project RPSW Web
- * @author RPSW
- * @created 2025
- * @description Presentational component providing a modal alert/notification interface for user feedback.
- * @dependencies
- * - CommonModule: Standard Angular directives.
- */
-
-import { Component, EventEmitter, Output, Input, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Output, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type AlertType = 'info' | 'warning' | 'danger' | 'success';
 
-/**
- * @description Displays a modal alert dialog with customizable types and automatic timeout behavior.
- * @usage Dynamically instantiated by AlertDialogService to show global system notifications.
- * @note Implements an automatic timeout for non-critical alerts (info/success) to streamline user experience.
- */
+export interface AlertToastItem {
+  id: number;
+  title: string;
+  message: string;
+  type: AlertType;
+  leaving?: boolean;
+}
+
 @Component({
   selector: 'app-alert-dialog',
   standalone: true,
@@ -27,80 +19,70 @@ export type AlertType = 'info' | 'warning' | 'danger' | 'success';
   styleUrls: ['./alert-dialog.component.css']
 })
 export class AlertDialogComponent implements OnDestroy {
-  @Input() title: string = '';
-  @Input() message: string = '';
-  @Input() type: AlertType = 'info';
+  toasts: AlertToastItem[] = [];
 
-  @Output() onOk = new EventEmitter<void>();
-  @Output() onClose = new EventEmitter<void>();
+  @Output() toastClosed = new EventEmitter<number>();
 
-  isVisible: boolean = false;
-  private autoHideTimeout: any;
+  private autoHideTimeouts = new Map<number, any>();
+  private cdr = inject(ChangeDetectorRef);
 
-  /**
-   * @description Displays the dialog and starts the auto-hide timer if applicable.
-   * @note Timers are set only for 'info' and 'success' types to ensure critical warnings remain visible until user interaction.
-   */
-  show(): void {
-    this.isVisible = true;
-    
-    if (this.autoHideTimeout) {
-      clearTimeout(this.autoHideTimeout);
-    }
+  private static readonly EXIT_ANIMATION_MS = 220;
 
-    if (this.type === 'success' || this.type === 'info') {
-      this.autoHideTimeout = setTimeout(() => {
-        this.hide();
-      }, 5000); 
+  addToast(toast: AlertToastItem): void {
+    // Nový toast dáváme na začátek (nahoru)
+    this.toasts = [toast, ...this.toasts];
+    this.cdr.detectChanges(); // Vynutíme detekci pro dynamicky mountnutou komponentu
+
+    if (toast.type === 'success' || toast.type === 'info') {
+      const timeout = setTimeout(() => this.removeToast(toast.id), 5000);
+      this.autoHideTimeouts.set(toast.id, timeout);
     }
   }
 
-  /**
-   * @description Hides the dialog and triggers the closure event.
-   */
-  public hide(): void {
-    this.isVisible = false;
-    this.onClose.emit();
-    if (this.autoHideTimeout) {
-      clearTimeout(this.autoHideTimeout);
+  ok(id: number): void {
+    this.removeToast(id);
+  }
+
+  closeClick(id: number, event: Event): void {
+    event.stopPropagation();
+    this.removeToast(id);
+  }
+
+  private removeToast(id: number): void {
+    const toast = this.toasts.find(t => t.id === id);
+    if (!toast || toast.leaving) return;
+
+    this.clearTimeoutFor(id);
+    toast.leaving = true;
+    this.toasts = [...this.toasts];
+    this.toastClosed.emit(id);
+    this.cdr.detectChanges();
+
+    setTimeout(() => {
+      this.toasts = this.toasts.filter(t => t.id !== id);
+      this.cdr.detectChanges();
+    }, AlertDialogComponent.EXIT_ANIMATION_MS);
+  }
+
+  private clearTimeoutFor(id: number): void {
+    const timeout = this.autoHideTimeouts.get(id);
+    if (timeout) {
+      clearTimeout(timeout);
+      this.autoHideTimeouts.delete(id);
     }
   }
 
-  /**
-   * @description Confirms the alert and closes the dialog.
-   */
-  ok(): void {
-    this.onOk.emit();
-    this.hide();
-  }
-
-  /**
-   * @description Closes the dialog via UI interaction.
-   */
-  closeClick(): void {
-    this.hide();
-  }
-
-  /**
-   * @description Cleans up memory by clearing active timeouts during component destruction.
-   */
-  ngOnDestroy(): void {
-    if (this.autoHideTimeout) {
-      clearTimeout(this.autoHideTimeout);
-    }
-  }
-
-  /**
-   * @description Maps the alert type to a corresponding CSS class for styling.
-   * @returns {string} The CSS class name.
-   * @note Fallback logic defaults to 'info-dialog' if an unknown type is provided.
-   */
-  getDialogClass(): string {
-    switch (this.type) {
+  getDialogClass(type: AlertType): string {
+    switch (type) {
       case 'warning': return 'warning-dialog';
       case 'danger': return 'danger-dialog';
       case 'success': return 'success-dialog';
       default: return 'info-dialog';
     }
+  }
+
+  ngOnDestroy(): void {
+    this.autoHideTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.autoHideTimeouts.clear();
   }
 }

@@ -4,6 +4,12 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08): .toast-wrapper je teď flex sloupec držící VÍCE položek
+        najednou (dřív obalovalo jedinou absolutně "naplácnutou" krabičku). Nové toasty se
+        v poli přidávají na konec -> vizuálně přibývají dole pod existujícími. Když se
+        položka odstraní odkudkoliv ze sloupce, zbytek se automaticky srovná nahoru -
+        to je jen běžné chování flexboxu, žádné extra CSS není potřeba. Přidána .leaving
+        varianta (slideOutRight) pro plynulé mizení - viz removeToast() v .ts.
 */
 
 .toast-wrapper {
@@ -11,13 +17,17 @@
   top: 24px;
   right: 24px;
   z-index: 40000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
   pointer-events: none;
 }
 
-/* Hlavní kontejner toastu */
+/* Hlavní kontejner jednoho toastu */
 .dialog-container {
   display: flex;
-  align-items: center; /* DOKONALÉ HORIZONTÁLNÍ VYCENTROVÁNÍ VŠECH PRVKŮ NA STŘED VÝŠKY */
+  align-items: center;
   gap: 16px;
   width: 420px;
   max-width: 90vw;
@@ -27,16 +37,28 @@
   position: relative;
   pointer-events: auto;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  /* Důležité: plynulý posun při zmizení jiného toastu */
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s, box-shadow 0.2s;
   
-  /* Animace vyjetí zprava */
-  animation: slideInRight 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  /* ZDE BYLA CHYBA: odstranili jsme 'forwards', aby animace nezamykala transform natvrdo */
+  animation: slideInRight 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* Hover efekt */
 .dialog-container:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Mizení toastu */
+.dialog-container.leaving {
+  animation: slideOutRight 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
+.dialog-container.leaving:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Levý blok s ikonou - vycentrovaný */
@@ -54,7 +76,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex-grow: 1; /* Donutí křížek odskočit úplně doprava */
+  flex-grow: 1;
+  min-width: 0;
 }
 
 .dialog-title {
@@ -71,7 +94,7 @@
   opacity: 0.85;
 }
 
-/* Pravý křížek - nyní se centruje sám díky flexboxu kontejneru */
+/* Pravý křížek */
 .close-x-btn {
   background: none;
   border: none;
@@ -86,6 +109,7 @@
   width: 24px;
   height: 24px;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .close-x-btn:hover {
@@ -97,31 +121,27 @@
    BAREVNÉ VARIANTY
    ========================================================================== */
 
-/* SUCCESS (Zelená) */
 .success-dialog {
   background-color: #c2f0d5;
   color: #0f5132;
 }
 
-/* INFO (Modrá) */
 .info-dialog {
   background-color: #cbebf6;
   color: #084298;
 }
 
-/* WARNING (Žlutá / Oranžová) */
 .warning-dialog {
   background-color: #fcecd6;
   color: #664d03;
 }
 
-/* DANGER (Červená) */
 .danger-dialog {
   background-color: #fccbc7;
   color: #842029;
 }
 
-/* Kód animace pro vyjetí z pravé strany */
+/* Animace vjetí zprava */
 @keyframes slideInRight {
   from {
     opacity: 0;
@@ -130,5 +150,17 @@
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* Animace vyjetí zpět doprava (mizení) */
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(120%);
   }
 }

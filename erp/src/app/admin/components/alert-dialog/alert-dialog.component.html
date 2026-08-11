@@ -4,13 +4,18 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08): Přepsáno na @for přes toasts frontu - viz alert-dialog.component.ts.
 -->
 
-@if (isVisible) {
-  <div class="toast-wrapper">
-    <div class="dialog-container" [ngClass]="getDialogClass()" (click)="ok()">
+<div class="toast-wrapper">
+  @for (toast of toasts; track toast.id) {
+    <div
+      class="dialog-container"
+      [ngClass]="getDialogClass(toast.type)"
+      [class.leaving]="toast.leaving"
+      (click)="ok(toast.id)">
       <div class="dialog-icon">
-        @switch (type) {
+        @switch (toast.type) {
           @case ('success') {
             <span>✔️</span>
           }
@@ -26,10 +31,10 @@
         }
       </div>
       <div class="dialog-content">
-        <h2 class="dialog-title">{{ title || (type | titlecase) }}</h2>
-        <p class="dialog-message">{{ message }}</p>
+        <h2 class="dialog-title">{{ toast.title || (toast.type | titlecase) }}</h2>
+        <p class="dialog-message">{{ toast.message }}</p>
       </div>
-      <button class="close-x-btn" (click)="closeClick(); $event.stopPropagation()">✕</button>
+      <button class="close-x-btn" (click)="closeClick(toast.id, $event)">✕</button>
     </div>
-  </div>
-}
+  }
+</div>
