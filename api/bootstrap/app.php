@@ -6,6 +6,11 @@
  * @author RPSW
  * @created 2026
  * @description Application bootstrap configuration including routing, middleware, and exception handling.
+ *
+ * @refactor-note (2026-08) Zaregistrován alias `permission` -> CheckPermission middleware,
+ * použitý v routes/api.php (`->middleware('permission:web-manage-administrators')` apod.) -
+ * viz CheckPermission.php pro odůvodnění (permission systém dřív existoval jen jako
+ * Angular route metadata, backend ho nikdy nekontroloval).
  */
 
 use Illuminate\Foundation\Application;
@@ -35,7 +40,8 @@ return Application::configure(basePath: dirname(__DIR__))
          * Register custom middleware aliases for use in route definitions.
          */
         $middleware->alias([
-            'shop.active' => \App\Http\Middleware\CheckCoreShopActive::class,
+            'shop.active'  => \App\Http\Middleware\CheckCoreShopActive::class,
+            'permission'   => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

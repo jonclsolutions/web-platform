@@ -152,7 +152,18 @@
 
       <div class="permissions-checklist">
         <div class="permission-group" *ngFor="let group of permissionGroups">
-          <div class="permission-group-header">{{ moduleLabel(group.module) }}</div>
+          <label class="permission-group-header" [class.permission-group-header--protected]="selectedRole.is_protected">
+            <input
+              type="checkbox"
+              class="permission-group-header-checkbox"
+              [checked]="isGroupFullyChecked(group)"
+              [indeterminate]="isGroupPartiallyChecked(group)"
+              [disabled]="selectedRole.is_protected"
+              (change)="toggleGroup(group)"
+              (click)="$event.stopPropagation()"
+            />
+            {{ moduleLabel(group.module) }}
+          </label>
 
           <label
             class="permission-row"

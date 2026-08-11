@@ -18,6 +18,33 @@
  *      limitu šlo použít k emailovému bombardování cizí adresy (a poškození doménové
  *      reputace odesílatele). Ostatní veřejné endpointy (login, forgot-password) throttle
  *      už měly, tenhle ho chybně neměl.
+ * @refactor-note (2026-08) KRITICKÁ BEZPEČNOSTNÍ OCHRANA: doplněn middleware `permission:...`
+ *      na VŠECHNY chráněné admin/core/web/shop/legal endpointy. Dřív existoval permission
+ *      systém pouze jako Angular route metadata (`data: { permission }`) - Laravel ho nikdy
+ *      nekontroloval, takže jakýkoliv přihlášený uživatel mohl zavolat libovolný endpoint
+ *      přímo (mimo UI) bez ohledu na svou roli/oprávnění. Permission klíče u každé skupiny
+ *      odpovídají 1:1 klíčům použitým v `admin-routing.module.ts`/`admin-layout.component.html`
+ *      na frontendu. `core/users/{id}` routy (show/update/change-password) navíc používají
+ *      `selfParam` variantu (`permission:web-manage-administrators,id`), aby zůstaly
+ *      dostupné běžnému uživateli pro VLASTNÍ účet (stránka personal-info) i bez
+ *      administrátorského oprávnění - viz CheckPermission middleware. `core/roles` a
+ *      `core/permissions` (matice oprávnění) záměrně NEmají permission middleware - jsou
+ *      chráněné výhradně `role_name === 'sysadmin'` kontrolou přímo v CoreRoleController
+ *      (edit-roles stránka na frontendu používá `sysadminGuard`, ne permission systém -
+ *      viz odůvodnění v CoreRoleController).
+ * @refactor-note (2026-08-2) `POST /web/logs`, `POST /shop/logs`, `POST /core/logs`
+ *      záměrně BEZ permission middleware (na rozdíl od GET routes ve stejné skupině) -
+ *      jde o zápis VLASTNÍHO audit záznamu (např. TableBuilderComponent.logExportActivity()
+ *      po exportu tabulky z libovolné admin stránky), ne o čtení cizích logů. Uživatel
+ *      s např. jen `web-view-news` musí moct zalogovat export novinek, i když nemá
+ *      `web-view-web-logs` na ČTENÍ historie logů - jinak export projde, ale zápis do
+ *      auditu tiše spadne na 403. GET (čtení historie) permission vyžaduje i nadále.
+ * @refactor-note (2026-08-3) `CheckPermission` middleware nyní podporuje více klíčů
+ *      oddělených `|` (logika OR - stačí kterýkoliv z nich). `core/settings` proto gatuje
+ *      `web-view-web-settings|shop-set-maitanance-mode`, protože `CoreSiteSettingController`
+ *      obsluhuje jak plný formulář "Firemní údaje", tak rychlý přepínač údržby e-shopu
+ *      v headeru - dvě různé skupiny uživatelů, které se nemusí překrývat. (Poznámka:
+ *      samotná logika/UX přepínače údržby řešena v samostatném navazujícím tasku.)
  */
 
 use Illuminate\Http\Request;
@@ -53,6 +80,7 @@ use App\Http\Controllers\Api\Shop\ShopPublicController;
 use App\Http\Controllers\Api\Legal\DocumentTypeController;
 use App\Http\Controllers\Api\Web\WebExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
+
 /*
 |--------------------------------------------------------------------------
 | LANGUAGES — public access (frontend does not require a token)
@@ -160,17 +188,13 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user',    [AuthController::class, 'user']);
 
-    // ── Translations ──────────────────────────────────────────────
-    // Now accepts the module to determine where to store the JSON
-    Route::post('/save_translations/{module}', [TranslationController::class, 'save']);
+    // ── Translations / Languages — spravováno na stránce "Správa Webu" (edit-website) ──
+    Route::post('/save_translations/{module}', [TranslationController::class, 'save'])
+        ->middleware('permission:web-view-edit-website');
 
-    // ── Languages — mutations are protected ─────────────────────────
-    Route::prefix('languages')->group(function () {
-        // POST save list
+    Route::prefix('languages')->middleware('permission:web-view-edit-website')->group(function () {
         Route::post('/{module}',     [TranslationController::class, 'saveLanguages']);
-        // Icons
         Route::post('/{module}/{code}/icon', [TranslationController::class, 'storeLanguageIcon']);
-        // Delete
         Route::delete('/{module}/{code}',    [TranslationController::class, 'destroyLanguage']);
     });
 
@@ -181,31 +205,61 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     */
     Route::prefix('core')->group(function () {
 
-        Route::prefix('settings')->group(function () {
+        // Obsluhuje dva různé přístupové body: plný formulář "Firemní údaje"
+        // (web-view-web-settings) i rychlý přepínač údržby e-shopu v headeru
+        // (shop-set-maitanance-mode) - viz @refactor-note (2026-08-3) výše.
+        // UX/logika samotného přepínače řešena v samostatném navazujícím tasku.
+        Route::prefix('settings')->middleware('permission:web-view-web-settings|shop-set-maitanance-mode')->group(function () {
             Route::get('/', [CoreSiteSettingController::class, 'show']);
             Route::put('/', [CoreSiteSettingController::class, 'update']);
         });
 
-         Route::prefix('logs')->group(function () {
-            Route::get('/',     [CoreLogController::class, 'index']);
+        // POST bez permission middleware - zápis vlastního audit záznamu (viz
+        // @refactor-note 2026-08-2 v hlavičce souboru). GET (čtení historie) chráněno.
+        Route::prefix('logs')->group(function () {
+            Route::get('/',     [CoreLogController::class, 'index'])
+                ->middleware('permission:view-core');
             Route::post('/',    [CoreLogController::class, 'store']);
-            Route::get('/{id}', [CoreLogController::class, 'show']);
+            Route::get('/{id}', [CoreLogController::class, 'show'])
+                ->middleware('permission:view-core');
         });
-        
-        Route::prefix('users')->group(function () {
-            Route::post('/',                         [UserController::class, 'store']);
-            Route::get('/{id}',                      [UserController::class, 'show']);
-            Route::post('/{id}/restore',             [UserController::class, 'restore']);
-            Route::put('/{id}/change-password',      [UserController::class, 'changePassword']);
-            Route::delete('/force-delete-all',       [UserController::class, 'forceDeleteAllTrashed']);
-        });
-        Route::apiResource('users', UserController::class)
-            ->except(['store', 'create', 'edit'])
-            ->parameters(['users' => 'id']);
 
-        // Seznam všech oprávnění (řádky matice na stránce správy rolí) - jen čtení.
+        // ── core/users ────────────────────────────────────────────────────
+        // {id} routy mají 'selfParam' => id (viz CheckPermission) - vlastní účet
+        // (personal-info stránka) je dostupný i bez web-manage-administrators.
+        // Routy BEZ {id} (index/store/force-delete-all) sebe-výjimku nemají.
+        Route::prefix('users')->group(function () {
+            Route::get('/',    [UserController::class, 'index'])
+                ->middleware('permission:web-manage-administrators');
+            Route::post('/',   [UserController::class, 'store'])
+                ->middleware('permission:web-manage-administrators');
+            Route::get('/{id}', [UserController::class, 'show'])
+                ->middleware('permission:web-manage-administrators,id');
+            Route::put('/{id}', [UserController::class, 'update'])
+                ->middleware('permission:web-manage-administrators,id');
+            Route::patch('/{id}', [UserController::class, 'update'])
+                ->middleware('permission:web-manage-administrators,id');
+            Route::put('/{id}/change-password', [UserController::class, 'changePassword'])
+                ->middleware('permission:web-manage-administrators,id');
+            Route::post('/{id}/restore', [UserController::class, 'restore'])
+                ->middleware('permission:web-manage-administrators');
+            Route::delete('/{id}', [UserController::class, 'destroy'])
+                ->middleware('permission:web-manage-administrators');
+            Route::delete('/force-delete-all', [UserController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:web-manage-administrators');
+        });
+
+        // Seznam všech oprávnění (řádky matice na stránce správy rolí) - jen čtení,
+        // NENÍ gated přes permission middleware. Použito výhradně na edit-roles stránce,
+        // která je chráněná sysadminGuard (frontend) + actorIsSysadmin() (backend,
+        // viz CoreRoleController).
         Route::get('/permissions', [CorePermissionController::class, 'index']);
 
+        // core/roles - záměrně BEZ permission middleware. Chráněno výhradně
+        // role_name === 'sysadmin' kontrolou přímo v CoreRoleController
+        // (actorIsSysadmin()) - správa rolí/oprávnění nesmí být gated permission
+        // klíčem, protože permission klíče jsou přesně to, co se tu edituje (riziko
+        // eskalace privilegií). Viz CoreRoleController hlavička souboru.
         Route::prefix('roles')->group(function () {
             // POZOR: 'store' je záměrně mimo apiResource níže (viz ->except),
             // takže musí mít explicitní routu zde - bez ní vytvoření role vůbec nešlo zavolat.
@@ -229,81 +283,96 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     Route::prefix('shop')->group(function () {
 
         // Products
-        Route::prefix('products')->group(function () {
+        Route::prefix('products')->middleware('permission:shop-manage-products')->group(function () {
             Route::patch('/{id}/category',     [ShopProductController::class, 'updateCategory']);
             Route::get('/{id}',                [ShopProductController::class, 'show']);
             Route::post('/{id}/restore',       [ShopProductController::class, 'restore']);
             Route::delete('/force-delete-all', [ShopProductController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('products', ShopProductController::class)
-            ->parameters(['products' => 'id']);
+            ->parameters(['products' => 'id'])
+            ->middleware('permission:shop-manage-products');
 
         // Customers
-        Route::prefix('customers')->group(function () {
+        Route::prefix('customers')->middleware('permission:shop-manage-customers')->group(function () {
             Route::get('/{id}',                [ShopCustomerController::class, 'show']);
             Route::post('/{id}/restore',       [ShopCustomerController::class, 'restore']);
             Route::delete('/force-delete-all', [ShopCustomerController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('customers', ShopCustomerController::class)
-            ->parameters(['customers' => 'id']);
+            ->parameters(['customers' => 'id'])
+            ->middleware('permission:shop-manage-customers');
 
         // Orders
-        Route::prefix('orders')->group(function () {
+        Route::prefix('orders')->middleware('permission:shop-view-orders')->group(function () {
             Route::get('/{id}',                [ShopOrderController::class, 'show']);
             Route::post('/{id}/restore',       [ShopOrderController::class, 'restore']);
             Route::delete('/force-delete-all', [ShopOrderController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('orders', ShopOrderController::class)
-            ->parameters(['orders' => 'id']);
+            ->parameters(['orders' => 'id'])
+            ->middleware('permission:shop-view-orders');
 
         // Suppliers
-        Route::prefix('suppliers')->group(function () {
+        Route::prefix('suppliers')->middleware('permission:shop-manage-suppliers')->group(function () {
             Route::get('/{id}',                [ShopSupplierController::class, 'show']);
             Route::post('/{id}/restore',       [ShopSupplierController::class, 'restore']);
             Route::delete('/force-delete-all', [ShopSupplierController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('suppliers', ShopSupplierController::class)
-            ->parameters(['suppliers' => 'id']);
+            ->parameters(['suppliers' => 'id'])
+            ->middleware('permission:shop-manage-suppliers');
 
-        // Shop Logs
+        // Shop Logs — stejný princip jako core/logs výše: POST bez permission middleware
+        // (zápis vlastního audit záznamu z jakékoliv shop stránky), GET s permission.
         Route::prefix('logs')->group(function () {
-            Route::get('/',     [ShopLogController::class, 'index']);
+            Route::get('/',     [ShopLogController::class, 'index'])
+                ->middleware('permission:shop-view-logs');
             Route::post('/',    [ShopLogController::class, 'store']);
-            Route::get('/{id}', [ShopLogController::class, 'show']);
+            Route::get('/{id}', [ShopLogController::class, 'show'])
+                ->middleware('permission:shop-view-logs');
         });
 
         // Coupons
-        Route::prefix('coupons')->group(function () {
+        Route::prefix('coupons')->middleware('permission:shop-view-reports')->group(function () {
             Route::get('/{id}',                [ShopCouponController::class, 'show']);
             Route::post('/{id}/restore',       [ShopCouponController::class, 'restore']);
             Route::delete('/force-delete-all', [ShopCouponController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('coupons', ShopCouponController::class)
-            ->parameters(['coupons' => 'id']);
+            ->parameters(['coupons' => 'id'])
+            ->middleware('permission:shop-view-reports');
 
         // Categories
-        Route::prefix('categories')->group(function () {
+        Route::prefix('categories')->middleware('permission:shop-manage-categories')->group(function () {
             Route::get('/{id}', [ShopCategoryController::class, 'show']);
         });
         Route::apiResource('categories', ShopCategoryController::class)
-            ->parameters(['categories' => 'id']);
+            ->parameters(['categories' => 'id'])
+            ->middleware('permission:shop-manage-categories');
 
         // Shipping Methods
-        Route::prefix('shipping_methods')->group(function () {
+        Route::prefix('shipping_methods')->middleware('permission:shop-manage-shipping-methods')->group(function () {
             Route::get('/{id}',                [ShopShippingMethodController::class, 'show']);
             Route::post('/{id}/restore',       [ShopShippingMethodController::class, 'restore']);
             Route::delete('/force-delete-all', [ShopShippingMethodController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('shipping_methods', ShopShippingMethodController::class)
-            ->parameters(['shipping_methods' => 'id']);
+            ->parameters(['shipping_methods' => 'id'])
+            ->middleware('permission:shop-manage-shipping-methods');
 
         // Payment Methods
-        Route::prefix('payment_methods')->group(function () {
+        Route::prefix('payment_methods')->middleware('permission:shop-manage-payment-methods')->group(function () {
             Route::get('/{id}', [ShopPaymentMethodController::class, 'show']);
         });
         Route::apiResource('payment_methods', ShopPaymentMethodController::class)
             ->only(['index', 'update'])
-            ->parameters(['payment_methods' => 'id']);
+            ->parameters(['payment_methods' => 'id'])
+            ->middleware('permission:shop-manage-payment-methods');
+
+        // TODO (budoucí task): EditEshopController zatím neexistuje. Až vznikne, doplnit
+        // sem routy s middlewarem permission:shop-view-edit-eshop (stejný klíč, jaký
+        // používá EditEshopComponent na frontendu).
     });
 
     /*
@@ -313,61 +382,74 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     */
     Route::prefix('web')->group(function () {
 
-        Route::prefix('job_applications')->group(function () {
+        Route::prefix('job_applications')->middleware('permission:web-view-job-applications')->group(function () {
             Route::get('/{id}',                [WebJobApplicationController::class, 'show']);
             Route::post('/{id}/restore',       [WebJobApplicationController::class, 'restore']);
             Route::delete('/force-delete-all', [WebJobApplicationController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('job_applications', WebJobApplicationController::class)
-            ->parameters(['job_applications' => 'id']);
+            ->parameters(['job_applications' => 'id'])
+            ->middleware('permission:web-view-job-applications');
 
-        Route::prefix('external_links')->group(function () {
+        Route::prefix('external_links')->middleware('permission:web-manage-external-links')->group(function () {
             Route::get('/{id}',                [WebExternalLinkController::class, 'show']);
             Route::post('/{id}/restore',       [WebExternalLinkController::class, 'restore']);
             Route::delete('/force-delete-all', [WebExternalLinkController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('external_links', WebExternalLinkController::class)
-            ->parameters(['external_links' => 'id']);
+            ->parameters(['external_links' => 'id'])
+            ->middleware('permission:web-manage-external-links');
+        // Pozn.: external_links jsou navíc scoped na vlastníka přímo v kontroleru
+        // (viz WebExternalLinkController - plně soukromé per uživatel), permission
+        // middleware tady jen ověřuje, že uživatel má na stránku vůbec přístup.
 
+        // web/logs — stejný princip: POST (zápis exportu/akce z libovolné web stránky)
+        // bez permission middleware, GET (čtení historie) s permission.
         Route::prefix('logs')->group(function () {
-            Route::get('/',     [WebLogController::class, 'index']);
+            Route::get('/',     [WebLogController::class, 'index'])
+                ->middleware('permission:web-view-web-logs');
             Route::post('/',    [WebLogController::class, 'store']);
-            Route::get('/{id}', [WebLogController::class, 'show']);
+            Route::get('/{id}', [WebLogController::class, 'show'])
+                ->middleware('permission:web-view-web-logs');
         });
 
-        Route::prefix('support_tickets')->group(function () {
+        Route::prefix('support_tickets')->middleware('permission:web-view-support-tickets')->group(function () {
             Route::get('/{id}',                [WebSupportTicketController::class, 'show']);
             Route::post('/{id}/restore',       [WebSupportTicketController::class, 'restore']);
             Route::delete('/force-delete-all', [WebSupportTicketController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('support_tickets', WebSupportTicketController::class)
-            ->parameters(['support_tickets' => 'id']);
+            ->parameters(['support_tickets' => 'id'])
+            ->middleware('permission:web-view-support-tickets');
 
-        Route::prefix('raw_request_commissions')->group(function () {
+        Route::prefix('raw_request_commissions')->middleware('permission:web-view-user-requests')->group(function () {
             Route::get('/{id}',                [WebRawRequestCommissionController::class, 'show']);
             Route::post('/{id}/restore',       [WebRawRequestCommissionController::class, 'restore']);
             Route::delete('/force-delete-all', [WebRawRequestCommissionController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('raw_request_commissions', WebRawRequestCommissionController::class)
-            ->parameters(['raw_request_commissions' => 'id']);
+            ->parameters(['raw_request_commissions' => 'id'])
+            ->middleware('permission:web-view-user-requests');
 
-        Route::prefix('sales_orders')->group(function () {
+        Route::prefix('sales_orders')->middleware('permission:web-view-sales-orders')->group(function () {
             Route::get('/{id}',                [WebSalesOrderController::class, 'show']);
             Route::post('/{id}/restore',       [WebSalesOrderController::class, 'restore']);
             Route::delete('/force-delete-all', [WebSalesOrderController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('sales_orders', WebSalesOrderController::class)
-            ->parameters(['sales_orders' => 'id']);
+            ->parameters(['sales_orders' => 'id'])
+            ->middleware('permission:web-view-sales-orders');
 
-        Route::prefix('news')->group(function () {
+        Route::prefix('news')->middleware('permission:web-view-news')->group(function () {
             Route::get('/{id}',                [WebNewsController::class, 'show']);
             Route::post('/{id}/restore',       [WebNewsController::class, 'restore']);
             Route::delete('/force-delete-all', [WebNewsController::class, 'forceDeleteAllTrashed']);
         });
         Route::apiResource('news', WebNewsController::class)
-            ->parameters(['news' => 'id']);
+            ->parameters(['news' => 'id'])
+            ->middleware('permission:web-view-news');
 
-        Route::prefix('sales_leads')->group(function () {
+        Route::prefix('sales_leads')->middleware('permission:web-view-sales-leads')->group(function () {
             Route::get('/{id}',                [WebSalesLeadController::class, 'show']);
             Route::post('/{id}/restore',       [WebSalesLeadController::class, 'restore']);
             Route::delete('/force-delete-all', [WebSalesLeadController::class, 'forceDeleteAllTrashed']);
@@ -375,32 +457,33 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
             Route::post('/{id}/generate-link', [WebSalesLeadController::class, 'generateLink']);
         });
         Route::apiResource('sales_leads', WebSalesLeadController::class)
-            ->parameters(['sales_leads' => 'id']);
+            ->parameters(['sales_leads' => 'id'])
+            ->middleware('permission:web-view-sales-leads');
     });
 
     /*
     |----------------------------------------------------------------------
-    | LEGAL
+    | LEGAL — spravováno na core/edit-legal stránce (GDPR/TOS/Cookies)
     |----------------------------------------------------------------------
     */
-    Route::prefix('legal')->group(function () {
+    Route::prefix('legal')->middleware('permission:web-edit-legal')->group(function () {
 
-    Route::get('document-types', [DocumentTypeController::class, 'index']);   // ← nový řádek
+        Route::get('document-types', [DocumentTypeController::class, 'index']);   // ← nový řádek
 
-    Route::prefix('document-sections')->group(function () {
-        Route::get('/',      [DocumentSectionController::class, 'index']);
-        Route::post('/',     [DocumentSectionController::class, 'store']);
-        Route::get('/{id}',  [DocumentSectionController::class, 'show']);
-        Route::put('/{id}',  [DocumentSectionController::class, 'update']);
-        Route::delete('/{id}', [DocumentSectionController::class, 'destroy']);
+        Route::prefix('document-sections')->group(function () {
+            Route::get('/',      [DocumentSectionController::class, 'index']);
+            Route::post('/',     [DocumentSectionController::class, 'store']);
+            Route::get('/{id}',  [DocumentSectionController::class, 'show']);
+            Route::put('/{id}',  [DocumentSectionController::class, 'update']);
+            Route::delete('/{id}', [DocumentSectionController::class, 'destroy']);
+        });
+
+        Route::prefix('config')->group(function () {
+            Route::get('/',             [SiteConfigurationController::class, 'index']);
+            Route::put('/settings',     [SiteConfigurationController::class, 'updateSettings']);
+            Route::post('/social',      [SiteConfigurationController::class, 'storeSocial']);
+            Route::put('/social/{id}',  [SiteConfigurationController::class, 'updateSocial']);
+            Route::delete('/social/{id}', [SiteConfigurationController::class, 'destroySocial']);
+        });
     });
-
-    Route::prefix('config')->group(function () {
-        Route::get('/',             [SiteConfigurationController::class, 'index']);
-        Route::put('/settings',     [SiteConfigurationController::class, 'updateSettings']);
-        Route::post('/social',      [SiteConfigurationController::class, 'storeSocial']);
-        Route::put('/social/{id}',  [SiteConfigurationController::class, 'updateSocial']);
-        Route::delete('/social/{id}', [SiteConfigurationController::class, 'destroySocial']);
-    });
-});
 });

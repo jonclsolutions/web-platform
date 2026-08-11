@@ -20,9 +20,22 @@
  *       "Call to a member function getAttributes() on null", protože model neexistoval v DB.
  *       Opraveno stejně, jako už správně dělají destroy()/syncPermissions()/restore() -
  *       $id se přebírá napřímo a model se dohledává ručně přes findOrFail().
- * @debug-note (2026) destroy() dočasně obsahuje podrobné Log::info() volání (prefix
+ *
+ * @refactor-note (2026-08-5) KRITICKÁ BEZPEČNOSTNÍ OCHRANA přidána: `isProtected()`
+ * chránilo jen roli, se kterou se pracuje (sysadmin/admin jako CÍL), ale nikdo nekontroloval,
+ * KDO akci provádí. Frontend `sysadminGuard` je jen UX vrstva na routě `/admin/core/
+ * edit-roles` - kdokoliv přihlášený mohl obejít frontend a zavolat API přímo (např.
+ * `PUT /core/roles/{id}/permissions`), vytvořit vlastní roli a nastavit jí libovolná
+ * oprávnění, bez jakékoliv sysadmin kontroly na backendu. `store()`, `update()`,
+ * `syncPermissions()`, `destroy()`, `restore()` a `forceDeleteAllTrashed()` nyní vyžadují,
+ * aby VOLAJÍCÍ (`actorIsSysadmin()`) měl roli sysadmin - stejný princip a stejně pojmenovaná
+ * metoda jako v `UserController`. `index()`/`show()` (čtení) zůstávají beze změny - čtení
+ * matice rolí samo o sobě neumožňuje privilege escalation.
+ *
+ * @debug-note (2026) destroy() dočasně obsahoval podrobné Log::info() volání (prefix
  *       "[ROLE DELETE DEBUG]") kvůli diagnostice hlášeného chování "smaže se jen na
- *       frontendu, po refreshi se role vrátí". Po vyřešení klidně odstraňte.
+ *       frontendu, po refreshi se role vrátí" - ODSTRANĚNO (2026-08-5), problém byl
+ *       diagnostikován (implicit binding bug výše) a vyřešen.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -37,11 +50,17 @@ use App\Models\Core\CoreRole;
 use App\Models\Web\WebLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CoreRoleController extends Controller
 {
+    /**
+     * @description Role name required of the ACTOR (not the role being edited) for every
+     * mutating action on this controller - viz @refactor-note (2026-08-5). Musí sedět s
+     * `UserController::SYSADMIN_ROLE_NAME`.
+     */
+    private const SYSADMIN_ROLE_NAME = 'sysadmin';
+
     /**
      * Retrieves a list of roles for the administrative interface.
      * Supports `no_pagination=true` for the permission-matrix UI, which needs all roles at once.
@@ -84,12 +103,19 @@ class CoreRoleController extends Controller
 
     /**
      * Stores a new role entity in the database.
+     * @note KRITICKÁ OCHRANA: pouze sysadmin smí vytvářet nové role - viz @refactor-note
+     * (2026-08-5) v hlavičce souboru.
      *
      * @param StoreCoreRoleRequest $request Validated request containing role details.
      * @return JsonResponse Returns the created resource.
      */
     public function store(StoreCoreRoleRequest $request): JsonResponse
     {
+        if (!$this->actorIsSysadmin($request)) {
+            $this->logAction($request, 'create_denied', 'CoreRole', 'Zamítnut pokus o vytvoření role - volající není sysadmin.');
+            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+        }
+
         $role = CoreRole::create($request->validated());
 
         $this->logAction($request, 'create', 'CoreRole', "Created role: {$role->role_name}", $role->id);
@@ -112,6 +138,8 @@ class CoreRoleController extends Controller
 
     /**
      * Updates an existing role entity (name/description only - permissions go through syncPermissions()).
+     * @note KRITICKÁ OCHRANA: pouze sysadmin smí role upravovat - viz @refactor-note
+     * (2026-08-5) v hlavičce souboru.
      *
      * @param UpdateCoreRoleRequest $request Validated request containing updated data.
      * @param int $id The ID of the role (route parameter je pojmenovaný `id`, viz routes/api.php).
@@ -119,6 +147,11 @@ class CoreRoleController extends Controller
      */
     public function update(UpdateCoreRoleRequest $request, $id): JsonResponse
     {
+        if (!$this->actorIsSysadmin($request)) {
+            $this->logAction($request, 'update_denied', 'CoreRole', "Zamítnut pokus o úpravu role ID {$id} - volající není sysadmin.", (int) $id);
+            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+        }
+
         $role = CoreRole::findOrFail($id);
 
         if ($role->isProtected()) {
@@ -136,6 +169,10 @@ class CoreRoleController extends Controller
 
     /**
      * Synchronizes the set of permissions assigned to a role (matrix UI "save" action).
+     * @note KRITICKÁ OCHRANA: pouze sysadmin smí měnit oprávnění rolí - toto je NEJKRITIČTĚJŠÍ
+     * endpoint v celém controlleru (přímá cesta k privilege escalation, viz @refactor-note
+     * 2026-08-5 v hlavičce souboru - přesně tenhle endpoint umožňoval nesysadmin účtu
+     * nastavit libovolné roli plná oprávnění).
      *
      * @param SyncRolePermissionsRequest $request Validated request containing the desired permission_keys.
      * @param int $id The ID of the role to update.
@@ -143,6 +180,11 @@ class CoreRoleController extends Controller
      */
     public function syncPermissions(SyncRolePermissionsRequest $request, $id): JsonResponse
     {
+        if (!$this->actorIsSysadmin($request)) {
+            $this->logAction($request, 'sync_permissions_denied', 'CoreRole', "Zamítnut pokus o změnu oprávnění role ID {$id} - volající není sysadmin.", (int) $id);
+            return response()->json(['message' => 'Oprávnění rolí smí spravovat pouze sysadmin.'], 403);
+        }
+
         $role = CoreRole::findOrFail($id);
 
         if ($role->isProtected()) {
@@ -170,85 +212,37 @@ class CoreRoleController extends Controller
     /**
      * Deletes a role entity, supporting both soft and hard (force) deletion.
      * Blocked for protected (system) roles and for any role currently assigned to a user.
+     * @note KRITICKÁ OCHRANA: pouze sysadmin smí role mazat - viz @refactor-note
+     * (2026-08-5) v hlavičce souboru.
      *
      * @param Request $request Request containing delete parameters.
      * @param int $id The ID of the role to delete.
      * @return JsonResponse Returns 204 No Content upon success.
      */
-public function destroy(Request $request, $id): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
-        Log::info('[ROLE DELETE DEBUG] destroy() called', [
-            'raw_id'          => $id,
-            'id_type'         => gettype($id),
-            'route_param_id'  => $request->route('id'),
-            'query_params'    => $request->query(),
-            'user_id'         => $request->user()?->id,
-            'user_email'      => $request->user()?->user_email,
-        ]);
-
-        try {
-            $role = CoreRole::withTrashed()->findOrFail($id);
-        } catch (\Throwable $e) {
-            Log::warning('[ROLE DELETE DEBUG] findOrFail selhal - role s tímto ID neexistuje vůbec', [
-                'id' => $id,
-                'exception' => $e->getMessage(),
-            ]);
-            throw $e;
+        if (!$this->actorIsSysadmin($request)) {
+            $this->logAction($request, 'delete_denied', 'CoreRole', "Zamítnut pokus o smazání role ID {$id} - volající není sysadmin.", (int) $id);
+            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
         }
 
-        Log::info('[ROLE DELETE DEBUG] role nalezena', [
-            'id'             => $role->id,
-            'role_name'      => $role->role_name,
-            'is_protected'   => $role->isProtected(),
-        ]);
+        $role = CoreRole::withTrashed()->findOrFail($id);
 
         if ($role->isProtected()) {
-            Log::info('[ROLE DELETE DEBUG] zamítnuto - role je chráněná (sysadmin/admin)', [
-                'id' => $role->id,
-            ]);
             return response()->json([
                 'message' => 'Systémovou roli nelze smazat.',
             ], 403);
         }
 
         $usersCount = $role->users()->count();
-        Log::info('[ROLE DELETE DEBUG] počet přiřazených uživatelů', [
-            'id' => $role->id,
-            'users_count' => $usersCount,
-        ]);
 
         if ($usersCount > 0) {
-            Log::info('[ROLE DELETE DEBUG] zamítnuto - role má přiřazené uživatele', [
-                'id' => $role->id,
-                'users_count' => $usersCount,
-            ]);
             return response()->json([
                 'message' => "Roli nelze smazat - je přiřazena k {$usersCount} uživatelskému účtu(ům). Nejprve těmto uživatelům přiřaďte jinou roli.",
             ], 403);
         }
 
-        try {
-            Log::info('[ROLE DELETE DEBUG] volám forceDelete()', ['id' => $role->id]);
-            $result = $role->forceDelete();
-
-            Log::info('[ROLE DELETE DEBUG] výsledek forceDelete()', [
-                'id'     => $role->id,
-                'result' => $result,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('[ROLE DELETE DEBUG] forceDelete() vyhodilo výjimku', [
-                'id' => $role->id,
-                'exception' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw $e;
-        }
-
-        $stillExists = DB::table('core_roles')->where('id', $id)->exists();
-        Log::info('[ROLE DELETE DEBUG] ověření z DB po forceDelete()', [
-            'id' => $id,
-            'still_exists_in_db' => $stillExists,
-        ]);
+        $role->forceDelete();
 
         $this->logAction($request, 'hard_delete', 'CoreRole', "Deleted role ID: $id", $id);
 
@@ -257,6 +251,8 @@ public function destroy(Request $request, $id): JsonResponse
 
     /**
      * Restores a previously soft-deleted role entity.
+     * @note KRITICKÁ OCHRANA: pouze sysadmin smí role obnovovat - viz @refactor-note
+     * (2026-08-5) v hlavičce souboru.
      *
      * @param Request $request The incoming request.
      * @param int $id The ID of the role to restore.
@@ -264,6 +260,11 @@ public function destroy(Request $request, $id): JsonResponse
      */
     public function restore(Request $request, int $id): JsonResponse
     {
+        if (!$this->actorIsSysadmin($request)) {
+            $this->logAction($request, 'restore_denied', 'CoreRole', "Zamítnut pokus o obnovu role ID {$id} - volající není sysadmin.", $id);
+            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+        }
+
         $role = CoreRole::withTrashed()->findOrFail($id);
         $role->restore();
 
@@ -275,24 +276,47 @@ public function destroy(Request $request, $id): JsonResponse
     /**
      * Permanently deletes all soft-deleted roles (excluding protected system roles as a safety net,
      * though those are never soft-deleted via this controller in the first place).
+     * @note KRITICKÁ OCHRANA: pouze sysadmin - viz @refactor-note (2026-08-5) v hlavičce souboru.
      *
      * @return JsonResponse
-     * @note Doplněno - routa `/core/roles/force-delete-all` na tuto metodu odkazovala,
-     *       ale v původním controlleru neexistovala.
      */
     public function forceDeleteAllTrashed(): JsonResponse
     {
+        $request = request();
+
+        if (!$this->actorIsSysadmin($request)) {
+            $this->logAction($request, 'force_delete_all_denied', 'CoreRole', 'Zamítnut pokus o vysypání koše rolí - volající není sysadmin.');
+            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+        }
+
         try {
             $query = CoreRole::onlyTrashed();
             $count = $query->count();
             $query->forceDelete();
 
-            $this->logAction(request(), 'force_delete_all', 'CoreRole', "Vysypání koše rolí. Smazáno: $count");
+            $this->logAction($request, 'force_delete_all', 'CoreRole', "Vysypání koše rolí. Smazáno: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction(request(), 'error', 'CoreRole', "Chyba při vysypávání koše rolí: " . $e->getMessage());
+            $this->logAction($request, 'error', 'CoreRole', "Chyba při vysypávání koše rolí: " . $e->getMessage());
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
         }
+    }
+
+    /**
+     * @description Zjišťuje, jestli přihlášený uživatel z daného requestu má roli
+     * sysadmin. Sdílená pomocná metoda pro store()/update()/syncPermissions()/destroy()/
+     * restore()/forceDeleteAllTrashed() - stejný princip a stejné jméno jako v
+     * `UserController`.
+     *
+     * @param Request $request
+     * @return bool
+     */
+    private function actorIsSysadmin(Request $request): bool
+    {
+        return $request->user()
+            ?->roles()
+            ->where('role_name', self::SYSADMIN_ROLE_NAME)
+            ->exists() ?? false;
     }
 
     /**

@@ -20,6 +20,11 @@
  *              synchronizace oprávnění role (`core/roles/{id}/permissions`) jdou mimo
  *              standardní CRUD sadu jednoho endpointu, proto tam voláme `this.dataHandler`
  *              přímo (stejný vzor jako updatePassword() v EntityCrudService).
+ * @refactor-note (2026-08) Přidáno hromadné zaškrtnutí/odškrtnutí celé sekce (modulu)
+ *              oprávnění najednou - "select all" checkbox v hlavičce sekce
+ *              (isGroupFullyChecked/isGroupPartiallyChecked/toggleGroup), ať uživatel
+ *              nemusí procházet každé oprávnění zvlášť, když chce roli dát/odebrat
+ *              přístup k celé sekci (např. "celý Web").
  * @dependencies
  * - BaseDataComponent: Standardní CRUD (create/update/delete/loadAll) nad apiEndpoint 'core/roles'.
  * - DataHandler: Přímé volání pro core/permissions a sync oprávnění (mimo EntityCrudService).
@@ -230,6 +235,47 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     if (!this.selectedRole) return;
     this.currentPermissions = new Set(this.selectedRole.permissions);
     this.isPermissionsDirty = false;
+  }
+
+  // ── Hromadné zaškrtnutí celé sekce (modulu) ────────────────────────────
+
+  /**
+   * @description Zda jsou VŠECHNA oprávnění dané skupiny (modulu) aktuálně zaškrtnutá -
+   * řídí stav "select all" checkboxu v hlavičce sekce.
+   */
+  isGroupFullyChecked(group: PermissionGroup): boolean {
+    return group.items.length > 0 && group.items.every(p => this.currentPermissions.has(p.permission_key));
+  }
+
+  /**
+   * @description Zda je zaškrtnutá jen ČÁST oprávnění dané skupiny - použito pro
+   * indeterminate stav "select all" checkboxu.
+   */
+  isGroupPartiallyChecked(group: PermissionGroup): boolean {
+    const checkedCount = group.items.filter(p => this.currentPermissions.has(p.permission_key)).length;
+    return checkedCount > 0 && checkedCount < group.items.length;
+  }
+
+  /**
+   * @description Zaškrtne, nebo odškrtne, všechna oprávnění dané skupiny (modulu)
+   * najednou - ať uživatel nemusí procházet každé oprávnění zvlášť, když chce roli
+   * dát/odebrat přístup k celé sekci (např. "celý Web").
+   * @param group Skupina oprávnění (jeden modul), na kterou se hromadná akce aplikuje.
+   */
+  toggleGroup(group: PermissionGroup): void {
+    if (!this.selectedRole || this.selectedRole.is_protected) return;
+
+    const shouldCheckAll = !this.isGroupFullyChecked(group);
+
+    group.items.forEach(perm => {
+      if (shouldCheckAll) {
+        this.currentPermissions.add(perm.permission_key);
+      } else {
+        this.currentPermissions.delete(perm.permission_key);
+      }
+    });
+
+    this.isPermissionsDirty = true;
   }
 
   savePermissions(): void {

@@ -86,7 +86,6 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     label: 'Příloha',
     type: 'file',
     required: false,
-    editable: false, 
     show_in_edit: false, 
     show_in_create: true
   }

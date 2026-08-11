@@ -10,6 +10,9 @@
  *            používala CSS proměnné (--accent, --radius, ...), stačilo z velké
  *            části přepnout jen hodnoty proměnných - struktura/třídy a logika
  *            beze změny.
+ * @refactor-note (2026-08) Doplněny styly pro "select all" checkbox v hlavičce
+ *            každé sekce oprávnění (.permission-group-header-checkbox) - viz
+ *            edit-roles.component.ts (toggleGroup).
  */
 
 :host {
@@ -367,8 +370,24 @@
   padding: 7px 12px;
   border-radius: 999px;
   margin: 14px 0 4px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
 }
+
+.permission-group-header--protected {
+  cursor: default;
+}
+
+.permission-group-header-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.permission-group-header-checkbox:disabled { cursor: not-allowed; opacity: 0.7; }
 
 .permission-row {
   display: flex;

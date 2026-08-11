@@ -22,6 +22,17 @@
  * (formátování měny/data, popisky select hodnot) - export tak vždy odpovídá tomu, co admin
  * vidí na obrazovce, ne syrovým DB hodnotám.
  *
+ * @refactor-note (2026-08-2) Export teď zahrnuje CELÝ řádek dat z API, ne jen sloupce
+ * viditelné v `columnDefinitions` - dřív export bral výhradně to, co bylo v přehledové
+ * tabulce, takže cokoliv schválně skryté z přehledu (např. `enable_2fa` u
+ * administrátorů, protože to není na první pohled důležité v přehledu) se do exportu
+ * vůbec nedostalo, i když šlo o reálná data záznamu. Pole navíc se formátují best-effort
+ * podle odpovídající `InputDefinition` (checkbox -> 'true'/'false' string, select ->
+ * label z options), jinak syrová hodnota; objekty/pole se serializují do JSON stringu.
+ * Zavedeny `DEFAULT_EXPORT_EXCLUDED_KEYS` (hesla, soft-delete technické příznaky) +
+ * `@Input() excludeFromExport` pro doplnění dalších polí per stránka, kdyby bylo
+ * potřeba schovat i něco navíc, co do defaultní sady nepatří.
+ *
  * @dependencies
  * - EntityCrudService: CRUD volání (delete řádku, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations.
@@ -50,6 +61,23 @@ import { ExportFormat } from '../../../../shared/interfaces/export-format';
 import { ExportPopupBuilderComponent } from '../export-popup-builder/export-popup-builder.component';
 
 /**
+ * @description Technická pole, která se z exportu vynechávají VŽDY, napříč všemi
+ * tabulkami - hesla/hashe (nikdy by se neměly objevit v exportovaném souboru, i kdyby
+ * je API omylem vrátilo) a soft-delete interní příznaky (pro běžného uživatele
+ * v exportu nemají informační hodnotu; koš má vlastní samostatný pohled). Nejde o
+ * bezpečnostní hranici (to musí hlídat API resource), jen o to, aby export nebyl
+ * zahlcený technickým šumem.
+ */
+const DEFAULT_EXPORT_EXCLUDED_KEYS = [
+  'user_password_hash',
+  'user_password_salt',
+  'password',
+  'password_hash',
+  'is_deleted',
+  'deleted_at',
+];
+
+/**
  * @description Renders a dynamic data table with support for pagination, sorting, filtering,
  * custom action buttons, and multi-format export.
  * @usage Used across various admin modules to display entities like products, users, or orders.
@@ -75,6 +103,14 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Input() isAdminTable: boolean = false;
   @Input() isFullWidth: boolean = true;
   @Input() currentFilters: any = {};
+
+  /**
+   * @description Doplňkové klíče k vynechání z exportu, nad rámec
+   * `DEFAULT_EXPORT_EXCLUDED_KEYS` - pro pole, která jsou technická/nezajímavá jen na
+   * konkrétní stránce (např. interní vazební ID, které nemá pro danou entitu smysl
+   * exportovat), ne globálně napříč celou appkou.
+   */
+  @Input() excludeFromExport: string[] = [];
 
   @Output() itemDeleted = new EventEmitter<any>();
   @Output() createFormOpened = new EventEmitter<void>();
@@ -238,8 +274,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * @description Opens the export-format picker popup instead of downloading immediately.
    * @note Kept the historic method name `exportToCSV()` intact (rather than renaming it)
    * so every page component that calls `this.activeTable.exportToCSV()` from its toolbar
-   * action keeps working unchanged - only the toolbar button label needs updating from
-   * 'Export' to 'Export' in each `*.config.ts`.
+   * action keeps working unchanged.
    */
   exportToCSV(): void {
     this.showExportPopup = true;
@@ -298,21 +333,99 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   /**
-   * @description Maps raw records to plain header->formatted-value objects using the
-   * exact same `getCellValue()` resolution already used by the visible table (currency/
-   * date formatting, select-option label lookup) - keeps every export format visually
-   * consistent with what the admin sees on screen, not raw DB values.
+   * @description Maps raw records to plain header->formatted-value objects. Exportuje
+   * CELÝ řádek dat z API (kromě vyloučených klíčů - viz `DEFAULT_EXPORT_EXCLUDED_KEYS`
+   * a `@Input() excludeFromExport`), ne jen sloupce viditelné v tabulce. Sloupce z
+   * `columnDefinitions` se formátují stejně jako dřív přes `getCellValue()`; pole navíc
+   * se formátují best-effort podle odpovídající `InputDefinition`.
    * @param data Raw records fetched from the API (unpaginated).
-   * @returns Array of plain objects keyed by column header, ready for any format builder.
+   * @returns Array of plain objects keyed by header label, ready for any format builder.
    */
   private buildExportRows(data: any[]): Record<string, any>[] {
+    const columnKeys = this.columnDefinitions.map(c => c.key);
+    const excludedKeys = new Set([...DEFAULT_EXPORT_EXCLUDED_KEYS, ...this.excludeFromExport]);
+    const extraKeys = this.collectExtraKeys(data, columnKeys, excludedKeys);
+
     return data.map(item => {
       const row: Record<string, any> = {};
+
       this.columnDefinitions.forEach(col => {
+        if (excludedKeys.has(col.key)) return;
         row[col.header || col.key] = this.getCellValue(item, col) ?? '';
       });
+
+      extraKeys.forEach(key => {
+        row[this.getExportHeaderForKey(key)] = this.getExportValueForKey(item, key);
+      });
+
       return row;
     });
+  }
+
+  /**
+   * @description Zjistí všechny klíče přítomné v datech, které nejsou pokryté
+   * `columnDefinitions` ani vyloučené (`excludedKeys`) - napříč VŠEMI záznamy (ne jen
+   * prvním), pro případ, že by nějaké pole bylo `null`/chybělo jen u některých řádků.
+   * Pořadí zachovává první výskyt klíče v datech.
+   */
+  private collectExtraKeys(data: any[], columnKeys: string[], excludedKeys: Set<string>): string[] {
+    const seen = new Set<string>([...columnKeys, ...excludedKeys]);
+    const ordered: string[] = [];
+    data.forEach(item => {
+      Object.keys(item || {}).forEach(key => {
+        if (seen.has(key)) return;
+        seen.add(key);
+        ordered.push(key);
+      });
+    });
+    return ordered;
+  }
+
+  /**
+   * @description Hlavička sloupce navíc - použije label z odpovídající `InputDefinition`,
+   * pokud existuje, jinak surový klíč z API.
+   */
+  private getExportHeaderForKey(key: string): string {
+    const inputDef = this.inputDefinitions.find(i => i.column_name === key);
+    return inputDef?.label || key;
+  }
+
+  /**
+   * @description Best-effort formátování hodnoty pole navíc podle odpovídající
+   * `InputDefinition`. Checkbox se exportuje jako syrový `'true'`/`'false'` string (ne
+   * přeložené "Yes"/"No" jako u viditelných sloupců typu `boolean` - jde o pole mimo
+   * přehled, kde je přesná strojově čitelná hodnota žádanější než lokalizovaný text).
+   * Select pole dostane label z options, jinak se použije syrová hodnota; objekty/pole
+   * (např. `roles` relace) se serializují do JSON stringu.
+   */
+  private getExportValueForKey(item: any, key: string): any {
+    const value = item?.[key];
+    if (value === null || value === undefined) return '';
+
+    const inputDef = this.inputDefinitions.find(i => i.column_name === key);
+
+    if (inputDef?.type === 'checkbox') {
+      return (value === true || value === 'true' || value == 1) ? 'true' : 'false';
+    }
+    if (inputDef?.options) {
+      const option = inputDef.options.find(opt => String(opt.value) === String(value));
+      if (option) return option.label;
+    }
+    if (typeof value === 'object') {
+      try { return JSON.stringify(value); } catch { return String(value); }
+    }
+    return value;
+  }
+
+  /**
+   * @description Sjednocené hlavičky přes VŠECHNY řádky (ne jen `rows[0]`) - jednotlivé
+   * záznamy mohou mít mírně odlišnou sadu klíčů, takže brát hlavičky jen z prvního řádku
+   * by mohlo některé sloupce v CSV/TXT/XLSX vynechat.
+   */
+  private getAllHeaders(rows: Record<string, any>[]): string[] {
+    const headers = new Set<string>();
+    rows.forEach(row => Object.keys(row).forEach(h => headers.add(h)));
+    return Array.from(headers);
   }
 
   /**
@@ -328,7 +441,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   private downloadCsv(rows: Record<string, any>[], filename: string): void {
-    const headers = Object.keys(rows[0]);
+    const headers = this.getAllHeaders(rows);
     let csv = headers.join(';') + '\n';
     rows.forEach(row => {
       csv += headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(';') + '\n';
@@ -337,7 +450,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   private downloadTxt(rows: Record<string, any>[], filename: string): void {
-    const headers = Object.keys(rows[0]);
+    const headers = this.getAllHeaders(rows);
     let txt = headers.join('\t') + '\n';
     rows.forEach(row => {
       txt += headers.map(h => String(row[h] ?? '')).join('\t') + '\n';
@@ -353,11 +466,13 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   /**
    * @description Lazy-loads SheetJS (`xlsx` package) so the (fairly heavy, ~700kB) bundle
    * only downloads for admins who actually export XLSX, not on every page that happens to
-   * render a table.
+   * render a table. `header` je předán explicitně (sjednocené přes všechny řádky), ať
+   * SheetJS nevezme sloupce jen z prvního záznamu.
    */
   private async downloadXlsx(rows: Record<string, any>[], filename: string): Promise<void> {
     const XLSX = await import('xlsx');
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const headers = this.getAllHeaders(rows);
+    const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Export');
     XLSX.writeFile(workbook, `${filename}.xlsx`);
