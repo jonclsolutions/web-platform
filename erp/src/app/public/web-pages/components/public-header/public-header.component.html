@@ -38,16 +38,17 @@
   <a routerLink="/faq" class="nav-link">{{ t?.navigation?.faq }}</a>
 
   <div class="lang-dropdown" [class.lang-dropdown--open]="isLangOpen">
-    <button class="lang-trigger" (click)="toggleLangDropdown()" [attr.aria-expanded]="isLangOpen" aria-haspopup="listbox">
-      <img
-        [src]="getActiveLang()?.flag ?? null"
-        [alt]="getActiveLang()?.code ?? 'cz'"
-        class="lang-trigger-flag">
-      <span class="lang-trigger-code">{{ (getActiveLang()?.code ?? 'cz') | uppercase }}</span>
-      <svg class="lang-trigger-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
+<button class="lang-trigger" (click)="toggleLangDropdown()" [attr.aria-expanded]="isLangOpen" aria-haspopup="listbox">
+  @if (getActiveLang(); as activeLang) {
+    <img [src]="activeLang.flag" [alt]="activeLang.code" class="lang-trigger-flag">
+  } @else {
+    <div class="lang-trigger-flag lang-trigger-flag--placeholder" aria-hidden="true"></div>
+  }
+  <span class="lang-trigger-code">{{ (getActiveLang()?.code ?? 'cz') | uppercase }}</span>
+  <svg class="lang-trigger-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
 
     @if (isLangOpen) {
       <ul class="lang-menu" role="listbox">

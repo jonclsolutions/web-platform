@@ -15,28 +15,35 @@
 <link rel="icon" type="image/png" href="">
 
 <title>RPSW | Vývoj softwaru na míru | Web, Mobile, Desktop</title>
-  <meta name="description" content="RPSW je váš partner pro komplexní vývoj softwaru na míru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
-  <meta name="keywords" content="vývoj softwaru, webové aplikace, mobilní aplikace, vývoj e-shopů, ERP, CRM, AI, umělá inteligence, web design, desktopové aplikace, programování na míru, software pro firmy">
-  <meta name="author" content="RPSW">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://www.rpsw.cz/">
+<meta name="description" content="RPSW je váš partner pro komplexní vývoj softwaru na míru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
+<meta name="keywords" content="vývoj softwaru, webové aplikace, mobilní aplikace, vývoj e-shopů, ERP, CRM, AI, umělá inteligence, web design, desktopové aplikace, programování na míru, software pro firmy">
+<meta name="author" content="RPSW">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.rpsw.cz/">
 
 <meta property="og:title" content="RPSW | Vývoj softwaru na míru">
-  <meta property="og:description" content="RPSW je váš partner pro komplexní vývoj softwaru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.rpsw.cz/">
-  <meta property="og:image" content="https://www.rpsw.cz/assets/images/logos/logo.png">
-  <meta property="og:locale" content="cs_CZ">
+<meta property="og:description" content="RPSW je váš partner pro komplexní vývoj softwaru. Tvoříme moderní webové a mobilní aplikace, e-shopy a robustní ERP a CRM systémy.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.rpsw.cz/">
+<meta property="og:image" content="https://www.rpsw.cz/assets/images/logos/logo.png">
+<meta property="og:locale" content="cs_CZ">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <style>
+<style>
     /* Inline a mimo Angular záměrně — musí se zobrazit dřív, než se
-       stáhne cokoliv dalšího (JS bundle, překlady, settings). Jakmile
-       Angular vykreslí root komponentu do <app-root>, tenhle obsah
-       se automaticky přepíše a spinner zmizí sám, bez JS zásahu. */
+       stáhne cokoliv dalšího (JS bundle, překlady, settings).
+       @refactor-note (2026-08): Loader je teď SOUROZENEC <app-root>, ne jeho
+       obsah. Uvnitř <app-root> by Angular přepsal (vyčistil) obsah hned při
+       vložení AppComponent šablony — tedy hned po dokončení APP_INITIALIZERu,
+       ne po skutečném vykreslení routované (lazy-loaded) stránky. Tím vznikala
+       mezera "spinner zmizel, ale header/obsah ještě není hotový" (bílá
+       stránka na moment). Skrytí teď řeší explicitně AppComponent přes
+       ApplicationRef.isStable (viz app.component.ts), který čeká i na
+       dokončení lazy-chunk importu a veškerých HTTP volání provedených
+       uvnitř NgZone, ne jen na dokončení APP_INITIALIZERu. */
     #initial-loader {
       position: fixed;
       inset: 0;
@@ -45,6 +52,11 @@
       justify-content: center;
       background: #0d0d1b;
       z-index: 9999;
+      transition: opacity 0.25s ease;
+    }
+    #initial-loader.fade-out {
+      opacity: 0;
+      pointer-events: none;
     }
     .initial-spinner {
       width: 32px;
@@ -60,14 +72,13 @@
     @media (prefers-reduced-motion: reduce) {
       .initial-spinner { animation: none; }
     }
-  </style>
+</style>
 
 </head>
 <body>
-<app-root>
-  <div id="initial-loader">
-    <div class="initial-spinner"></div>
-  </div>
-</app-root>
+<app-root></app-root>
+<div id="initial-loader">
+  <div class="initial-spinner"></div>
+</div>
 </body>
 </html>

@@ -628,3 +628,10 @@ html.no-scroll { overflow: hidden !important; }
 
   .mobile-lang-wrp { gap: 6px; }
 }
+.lang-trigger-flag--placeholder {
+  width: 16px; /* stejný rozměr jako .lang-trigger-flag - dej mi prosím CSS, ať doladím přesně */
+  height: 16px;
+  background: #e4e4e7;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
