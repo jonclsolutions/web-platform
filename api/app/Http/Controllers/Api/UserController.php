@@ -18,19 +18,31 @@
  * (`resolveEnable2fa()`), nezávisle na tom, co pošle klient, a to při store() i update().
  *
  * @refactor-note (2026-08-3) KRITICKÁ BEZPEČNOSTNÍ OCHRANA "jen sysadmin smí zasáhnout
- * sysadmina" je nyní důsledně aplikovaná na VŠECH pěti místech, kde se to týká:
- * `store()` (vytvoření nového sysadmin účtu), `update()` (editace existujícího sysadmin
- * účtu I povýšení cizího účtu na sysadmina), `changePassword()` (reset hesla sysadmin
- * účtu - kromě vlastníka sobě samému), `destroy()` a `forceDeleteAllTrashed()` (mazání,
- * jednotlivě i hromadně přes koš). Všech pět kontrol sdílí stejnou konstantu
- * `SYSADMIN_ROLE_NAME` a pomocnou metodu `isSysadminRoleId()`/`actorIsSysadmin()`, aby
- * nemohlo dojít k nekonzistenci (např. hardcoded string na jednom místě, konstanta na
- * druhém) - historicky se to stalo a je to přesně ten typ chyby, který otevírá díru.
+ * sysadmina" je aplikovaná na `store()`, `update()`, `changePassword()`, `destroy()` a
+ * `forceDeleteAllTrashed()`. Všech pět kontrol sdílí `SYSADMIN_ROLE_NAME` a pomocné
+ * metody `isSysadminRoleId()`/`actorIsSysadmin()`.
+ *
+ * @refactor-note (2026-08-4) `changePassword()` nyní odesílá `PasswordChangedNotification`
+ * PŘI KAŽDÉ změně hesla (self-service i admin reset cizímu účtu) - dřív notifikaci
+ * dostával uživatel jen při resetu přes veřejný "zapomenuté heslo" flow
+ * (`PasswordResetController`), ne při změně z `personal-info` ani při resetu adminem.
+ * Bezpečnostní důvod: pokud někdo změní heslo BEZ vědomí majitele účtu (ukradená session,
+ * XSS, škodlivý admin), majitel se o tom musí dozvědět stejně jako u zapomenutého hesla -
+ * jinak má útočník tichý, nedetekovaný přístup. Notifikace jde vždy na
+ * `$user->user_email` (účet, kterému se heslo mění), ne tomu, kdo změnu provedl.
+ * Ochrana proti spamu: endpoint je autentizovaný (na rozdíl od `forgot-password`, kde
+ * hrozí user enumeration/mail-bombing anonymně), takže riziko je jiné - škodlivý admin by
+ * mohl opakovaně resetovat heslo cizímu účtu jen proto, aby ho zahltil "heslo bylo
+ * změněno" e-maily (notification-fatigue/harassment). Řešeno per-cílový-účet rate
+ * limiterem (`RateLimiter`, stejný mechanismus jako v `PasswordResetController`) - po
+ * překročení limitu se HESLO POŘÁD ZMĚNÍ (nesmí to blokovat legitimní funkčnost), ale
+ * další e-mail se v daném okně už neposílá a pokus se zaloguje.
  */
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Auth\PasswordChangedNotification;
 use App\Models\{User};
 use App\Models\Core\CoreRole;
 use App\Models\Web\WebLog;
@@ -38,7 +50,7 @@ use App\Http\Requests\User\{StoreUserRequest, UpdateUserRequest};
 use App\Http\Requests\PasswordChangeRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\{Request, JsonResponse};
-use Illuminate\Support\Facades\{Hash, Log, DB};
+use Illuminate\Support\Facades\{Hash, Log, DB, Mail, RateLimiter};
 
 /**
  * @description Controller responsible for user management operations.
@@ -52,11 +64,19 @@ class UserController extends Controller
 
     /**
      * @description Role name protected by the "only a sysadmin may touch a sysadmin"
-     * invariant (create, edit/promote, delete, password change). Deliberately narrower
-     * than FORCED_2FA_ROLE_NAMES - only 'sysadmin' itself is this strictly protected,
-     * not 'admin'.
+     * invariant (create, edit/promote, delete, password change).
      */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
+
+    /**
+     * @description Max. počet "heslo bylo změněno" e-mailů, které smí odejít na JEDEN
+     * cílový účet v rámci časového okna - chrání příjemce před zahlcením, pokud by
+     * changePassword() na jeho účet volal někdo opakovaně (viz @refactor-note 2026-08-4).
+     */
+    private const PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS = 5;
+
+    /** Délka okna limitu v sekundách (1 hodina). */
+    private const PASSWORD_CHANGE_NOTIFY_DECAY_SECONDS = 3600;
 
     /**
      * Retrieves a paginated list of users with filtering and role-based sorting.
@@ -112,8 +132,7 @@ class UserController extends Controller
     /**
      * Creates a new user and assigns an initial role.
      * @note KRITICKÁ OCHRANA: vytvořit nový účet s rolí sysadmin smí jen volající, který
-     * je sám sysadmin - jinak by šlo ochranu v update()/destroy() obejít tím, že by se
-     * sysadmin účet rovnou VYTVOŘIL, místo aby se na něj někdo povyšoval.
+     * je sám sysadmin.
      *
      * @param StoreUserRequest $request
      * @return JsonResponse
@@ -168,8 +187,7 @@ class UserController extends Controller
      * Updates an existing user's information.
      * @note KRITICKÁ OCHRANA: pokud je cílový účet sysadmin, NEBO request žádá o
      * povýšení cílového účtu na sysadmina, smí to provést jen volající, který je SÁM
-     * sysadmin. `enable_2fa` je navíc vynuceno na `true` pro admin/sysadmin bez ohledu
-     * na to, co přijde v requestu.
+     * sysadmin. `enable_2fa` je navíc vynuceno na `true` pro admin/sysadmin.
      *
      * @param UpdateUserRequest $request
      * @param int $id
@@ -227,7 +245,10 @@ class UserController extends Controller
     /**
      * Handles password changes with administrative validation requirements.
      * @note KRITICKÁ OCHRANA: cizí sysadmin účet smí heslo změnit jen jiný sysadmin -
-     * vlastník (isOwner) si své vlastní heslo měnit může vždy, bez ohledu na roli.
+     * vlastník (isOwner) si své vlastní heslo měnit může vždy. Po úspěšné změně se VŽDY
+     * odešle `PasswordChangedNotification` na účet, kterému se heslo měnilo (self-service
+     * i admin reset), s rate limitem proti zahlcení příjemce - viz @refactor-note
+     * (2026-08-4) v hlavičce souboru.
      *
      * @param PasswordChangeRequest $request
      * @param int $id
@@ -270,6 +291,8 @@ class UserController extends Controller
                 "Změna hesla u: {$user->user_email} " . ($isAdmin && !$isOwner ? "(provedl admin: {$auth->user_email})" : ""), 
                 $user->id
             );
+
+            $this->notifyPasswordChanged($request, $user);
 
             return response()->json(['message' => 'Heslo úspěšně změněno.']);
         } catch (\Exception $e) {
@@ -360,6 +383,38 @@ class UserController extends Controller
         } catch (\Exception $e) {
             $this->logAction(request(), 'error', 'User', "Chyba při vysypávání koše uživatelů: " . $e->getMessage());
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+        }
+    }
+
+    /**
+     * @description Odešle `PasswordChangedNotification` na účet, kterému se heslo právě
+     * změnilo, chráněné per-cílový-účet rate limiterem proti zahlcení příjemce (viz
+     * @refactor-note 2026-08-4). Heslo je v tuhle chvíli VŽDY už uložené - tahle metoda
+     * nikdy neblokuje ani neruší samotnou změnu hesla, jen řídí, jestli se pošle e-mail.
+     * Chyba při odesílání (SMTP výpadek apod.) se jen zaloguje, nikdy nevyhodí uživateli
+     * chybu - heslo už je změněné a request musí skončit úspěchem.
+     *
+     * @param Request $request
+     * @param User $user Účet, kterému se heslo změnilo (příjemce notifikace).
+     * @return void
+     */
+    private function notifyPasswordChanged(Request $request, User $user): void
+    {
+        $notifyKey = 'password-change-notify:' . $user->id;
+
+        if (RateLimiter::tooManyAttempts($notifyKey, self::PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS)) {
+            $this->logAction($request, 'password_notification_rate_limited', 'User', "Notifikace o změně hesla potlačena (limit) pro: {$user->user_email}", $user->id);
+            return;
+        }
+
+        RateLimiter::hit($notifyKey, self::PASSWORD_CHANGE_NOTIFY_DECAY_SECONDS);
+
+        try {
+            Mail::to($user->user_email)->send(
+                new PasswordChangedNotification($user, now()->format('d.m.Y H:i'))
+            );
+        } catch (\Throwable $e) {
+            Log::error("Password changed notification failed for user {$user->id}: " . $e->getMessage());
         }
     }
 

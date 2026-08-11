@@ -12,23 +12,28 @@
  * vůbec nepoužíval. Nyní si skládá `EntityCrudService` přímo (stejnou třídu, na kterou
  * i BaseDataComponent interně deleguje) — je to jediné, co tato komponenta potřebuje.
  *
- * @refactor-note (2026-08) Legacy osobní/HR pole (datum narození, rodné číslo, adresa,
- * bankovní účet, pojišťovna, kontaktní e-mail, telefon) byla ze systému odstraněna - viz
- * User.php. Karta s těmito údaji byla proto z šablony odstraněna. Formulář na změnu hesla
- * přesunut z natrvalo otevřeného na `showPasswordPopup` popup (šetří místo na stránce).
- * Přidán self-service `enable_2fa` toggle - pro `admin`/`sysadmin` je vždy `true` a
- * needitovatelný (`isForced2fa`), server to i tak vynutí zpět na `true`, kdyby se to
- * přesto pokusilo projít (viz `UserController::resolveEnable2fa()`) - frontendová
- * disabled` atribut je jen UX pohodlí, ne bezpečnostní hranice.
+ * @refactor-note (2026-08) Legacy osobní/HR pole odstraněna - viz User.php. Formulář na
+ * změnu hesla přesunut do `showPasswordPopup` popupu. Přidán self-service `enable_2fa`
+ * toggle a `userRoleName` getter pro zobrazení role.
+ *
+ * @refactor-note (2026-08-2) `passwordsMatchValidator` přepsán bez `setErrors()`
+ * manipulace (mohla přepisovat jiné chyby na `new_password_confirmation` controlu -
+ * typicky `required`, pokud běžely validace v nešťastném pořadí) - teď je to čistý
+ * group-level validator, chyba se čte přes `passwordForm.errors` v šabloně. Zároveň
+ * opraven klíč `{ validator: ... }` → `{ validators: ... }` (jednotné číslo `validator`
+ * NENÍ platný klíč `AbstractControlOptions` - Angular ho mohl tiše ignorovat, takže
+ * cross-field validace hesel se pravděpodobně nikdy nespouštěla). Přidán `Validators.pattern`
+ * na `new_password` dle sdílené `PASSWORD_PATTERN` a live checklist požadavků hesla.
  *
  * @dependencies
  * - EntityCrudService: Jednotlivé CRUD volání (getOne, update, updatePassword) pro endpoint 'core/users'.
  * - ReactiveFormsModule: Enables form group management and validation for password change inputs.
  * - AuthService: Used to identify the currently authenticated user for profile requests.
+ * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -38,6 +43,8 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { LoadingService } from '../../../core/services/loading.service';
+import { PASSWORD_PATTERN } from '../../../shared/constants/password-policy';
+import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 
 /** Role s napevno vynuceným 2FA - musí sedět s UserController::FORCED_2FA_ROLE_NAMES. */
 const FORCED_2FA_ROLES = ['admin', 'sysadmin'];
@@ -53,7 +60,8 @@ const FORCED_2FA_ROLES = ['admin', 'sysadmin'];
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    PasswordRequirementsChecklistComponent,
   ],
   templateUrl: './personal-info.component.html',
   styleUrl: './personal-info.component.css'
@@ -89,10 +97,10 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   ) {
     this.passwordForm = this.fb.group({
       old_password: ['', [Validators.required]],
-      new_password: ['', [Validators.required, Validators.minLength(8)]],
+      new_password: ['', [Validators.required, Validators.pattern(PASSWORD_PATTERN)]],
       new_password_confirmation: ['', [Validators.required]]
     }, {
-      validator: this.passwordsMatchValidator
+      validators: [this.passwordsMatchValidator]
     });
 
     this.crud = new EntityCrudService<UserLogin>(
@@ -133,21 +141,15 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * @description Zda je 2FA pro aktuální roli uživatele napevno vynucené (admin/sysadmin) -
-   * v takovém případě je checkbox jen needitovatelný indikátor stavu, ne přepínač.
-   * @note Skutečné vynucení hlídá backend (UserController::resolveEnable2fa()) - tohle je
-   * jen UX, aby uživatel neklikal na něco, co se stejně nezmění.
-   */
   get isForced2fa(): boolean {
     const roleName = (this.userData as any)?.roles?.[0]?.role_name;
     return FORCED_2FA_ROLES.includes(roleName);
   }
 
-  /**
-   * @description Přepne a rovnou uloží stav 2FA (self-service, žádné potvrzovací tlačítko
-   * navíc - jde jen o checkbox, ne o citlivější formulář jako změna hesla).
-   */
+  get userRoleName(): string | null {
+    return (this.userData as any)?.roles?.[0]?.role_name ?? null;
+  }
+
   onToggle2fa(): void {
     if (this.isForced2fa || this.isSaving2fa) return;
 
@@ -192,20 +194,21 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Validator that compares the new password and confirmation fields.
+   * @description Group-level validator: srovnává `new_password` a
+   * `new_password_confirmation`. Nemutuje errors na jednotlivých controlech (viz
+   * @refactor-note 2026-08-2) - chyba se čte v šabloně přes `passwordForm.errors`.
+   * Prázdné potvrzení se nepovažuje za neshodu, ať se chyba neukáže dřív, než ho
+   * uživatel začne psát.
    */
-  private passwordsMatchValidator(group: FormGroup): { [key: string]: any } | null {
-    const newPassword = group.get('new_password');
-    const newPasswordConfirmation = group.get('new_password_confirmation');
-    if (!newPassword || !newPasswordConfirmation) return null;
+  private passwordsMatchValidator(group: AbstractControl): ValidationErrors | null {
+    const newPassword = group.get('new_password')?.value;
+    const confirmation = group.get('new_password_confirmation')?.value;
+    if (!confirmation) return null;
+    return newPassword === confirmation ? null : { passwordsNotMatching: true };
+  }
 
-    if (newPassword.value !== newPasswordConfirmation.value) {
-      newPasswordConfirmation.setErrors({ passwordsNotMatching: true });
-      return { passwordsNotMatching: true };
-    } else {
-      newPasswordConfirmation.setErrors(null);
-      return null;
-    }
+  get passwordMismatch(): boolean {
+    return !!this.passwordForm.errors?.['passwordsNotMatching'];
   }
 
   /**
@@ -241,11 +244,4 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
         }
       });
   }
-  /**
- * @description Název role aktuálně přihlášeného uživatele pro zobrazení v profilu.
- * @note Stejný zdroj dat jako `isForced2fa` (userData.roles[0]) - žádné další API volání.
- */
-get userRoleName(): string | null {
-  return (this.userData as any)?.roles?.[0]?.role_name ?? null;
-}
 }

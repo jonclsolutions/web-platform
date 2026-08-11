@@ -69,18 +69,21 @@
                       <label [for]="input.column_name">Aktivní / Souhlasím</label>
                     </div>
                   }
-                  @case ('confirm-password') {
-                    <div class="confirm-password-container">
-                      <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || 'Zadejte heslo'" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" (ngModelChange)="checkPasswordMatch(input.column_name)" />
-                      <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">Potvrzení hesla @if (input.required) {
-                        <span class="required-star">*</span>
-                      }</label>
-                      <input type="password" [id]="input.column_name + '_confirm'" placeholder="Zadejte heslo znovu" [required]="!!input.required" [name]="input.column_name + '_confirm'" [(ngModel)]="confirmPasswordData[input.column_name]" class="custom-input" [disabled]="input.editable === false" (ngModelChange)="checkPasswordMatch(input.column_name)" />
-                    </div>
-                    @if (passwordsNotMatching && confirmPasswordData[input.column_name]) {
-                      <div class="error-text">Hesla se neshodují.</div>
-                    }
-                  }
+@case ('confirm-password') {
+  <div class="confirm-password-container">
+    <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || 'Zadejte heslo'"
+      [required]="!!input.required" [pattern]="input.pattern || ''" [maxlength]="input.max || 16" [name]="input.column_name"
+      [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+    <app-password-requirements-checklist [password]="formData[input.column_name] || ''"></app-password-requirements-checklist>
+    <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">Potvrzení hesla @if (input.required) {
+      <span class="required-star">*</span>
+    }</label>
+    <input type="password" [id]="input.column_name + '_confirm'" placeholder="Zadejte heslo znovu" [required]="!!input.required" [maxlength]="input.max || 16" [name]="input.column_name + '_confirm'" [(ngModel)]="confirmPasswordData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+  </div>
+  @if (passwordMismatch(input.column_name)) {
+    <div class="error-text">Hesla se neshodují.</div>
+  }
+}
                   @default {
                     <input [type]="input.type" [id]="input.column_name" [required]="!!input.required" 
                       [pattern]="input.pattern || '.*'" [name]="input.column_name" 
@@ -99,7 +102,7 @@
 
         <div class="form-footer-actions">
           <button type="button" class="btn-secondary" (click)="onCancel()">Zrušit</button>
-          <button type="submit" class="btn-primary" [disabled]="isSubmitting || genericForm.invalid || passwordsNotMatching">Potvrdit</button>
+         <button type="submit" class="btn-primary" [disabled]="isSubmitting || genericForm.invalid || hasPasswordMismatch">Potvrdit</button>
         </div>
       </form>
     </div>

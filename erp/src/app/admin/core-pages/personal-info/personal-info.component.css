@@ -342,3 +342,9 @@
     border-radius: 20px 20px 0 0;
   }
 }
+.error-text {
+  color: #be123c;
+  font-size: 0.72rem;
+  font-weight: 500;
+  margin-top: 4px;
+}

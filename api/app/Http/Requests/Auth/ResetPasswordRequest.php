@@ -7,6 +7,10 @@
  * @author RPSW
  * @created 2026
  * @description Validace vstupu pro dokončení resetu hesla (krok 5) - token + nové heslo.
+ *
+ * @refactor-note (2026-08) `Password::min(10)->mixedCase()->numbers()` nahrazeno
+ * sjednocenou politikou platnou všude v appce: `min(8)` + `max:16` + `letters()` (bez
+ * požadavku na mixedCase) + `numbers()` + `symbols()`.
  */
 
 namespace App\Http\Requests\Auth;
@@ -25,7 +29,10 @@ class ResetPasswordRequest extends FormRequest
     {
         return [
             'token'                 => ['required', 'string'],
-            'password'              => ['required', 'confirmed', Password::min(10)->mixedCase()->numbers()],
+            'password'              => [
+                'required', 'confirmed', 'max:16',
+                Password::min(8)->letters()->numbers()->symbols(),
+            ],
             'password_confirmation' => ['required', 'string'],
         ];
     }
@@ -34,6 +41,7 @@ class ResetPasswordRequest extends FormRequest
     {
         return [
             'password.confirmed' => 'Zadaná hesla se neshodují.',
+            'password.max'       => 'Heslo může mít maximálně 16 znaků.',
         ];
     }
 }

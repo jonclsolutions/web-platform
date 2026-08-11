@@ -223,22 +223,27 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   }
 
   /**
-   * @description Performs the password change request against the user endpoint.
-   * @param formData Password change credentials.
-   */
-  handleResetPasswordFormSubmitted(formData: any): void {
-    const payload = { 
-        old_password: formData.old_password, 
-        new_password: formData.new_password, 
-        new_password_confirmation: formData.new_password 
-    };
-    this.dataHandler.put(`core/users/${formData.id}/change-password`, payload)
-      .pipe(Core.finalize(() => { this.showResetPasswordForm = false; this.cd.markForCheck(); }))
-      .subscribe({
-        next: () => this.alertDialogService.open('Úspěch', 'Heslo bylo změněno.', 'success'),
-        error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
-      });
-  }
+ * @description Performs the password change request against the user endpoint.
+ * @note `formData.new_password` je teď garantovaně shodné s tím, co admin zadal do
+ * potvrzovacího pole - `RESET_PASSWORD_FORM_FIELDS` používá `confirm-password` typ
+ * (viz administrators.config.ts), takže FormBuilderComponent odeslání zablokuje
+ * (`hasPasswordMismatch`), dokud se obě hodnoty neshodují. `new_password_confirmation`
+ * proto můžeme bezpečně syntetizovat stejnou hodnotou pro backend `confirmed` pravidlo.
+ * @param formData Password change credentials.
+ */
+handleResetPasswordFormSubmitted(formData: any): void {
+  const payload = { 
+      old_password: formData.old_password, 
+      new_password: formData.new_password, 
+      new_password_confirmation: formData.new_password 
+  };
+  this.dataHandler.put(`core/users/${formData.id}/change-password`, payload)
+    .pipe(Core.finalize(() => { this.showResetPasswordForm = false; this.cd.markForCheck(); }))
+    .subscribe({
+      next: () => this.alertDialogService.open('Úspěch', 'Heslo bylo změněno.', 'success'),
+      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+    });
+}
 
   /**
    * @description Loads full entity details for inspection.

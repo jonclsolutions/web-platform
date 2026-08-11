@@ -5,16 +5,31 @@
  * @author RPSW
  * @created 2025
  * @description A dynamic, template-driven form generator that maps field definitions to interactive UI controls.
+ *
+ * @refactor-note (2026-08) Přepsáno matchování hesel u `confirm-password` typu z
+ * imperativního `checkPasswordMatch()` (mutovalo sdílenou `passwordsNotMatching`
+ * proměnnou přes `(ngModelChange)` handlery vedle `[(ngModel)]` na TÉŽE inputu - závislé
+ * na pořadí, v jakém Angular sloučené listenery na stejný event spouští, křehké a
+ * nespolehlivé) na čistou `passwordMismatch(columnName)` metodu, počítanou LIVE při každém
+ * change-detection cyklu přímo z `formData`/`confirmPasswordData`, bez uloženého stavu.
+ * Díky tomu nemůže dojít k desynchronizaci mezi tím, co je vidět na obrazovce a tím, co
+ * `onSubmit()` skutečně vyhodnotí. `[pattern]` navíc nově skutečně aplikováno i na první
+ * input `confirm-password` case (dřív tam chybělo úplně, takže `pattern`/`errorMessage`
+ * z konfigurace se na hesla nikdy nepoužily). Přidán live checklist požadavků hesla
+ * (`PasswordRequirementsChecklistComponent`) pod prvním password inputem.
+ *
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.
  * - AlertDialogService: Provides user feedback for submission outcomes.
  * - InputDefinition: Interface for rendering dynamic form inputs and validation metadata.
+ * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla.
  */
 
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule, NgForm, FormControl } from '@angular/forms';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
+import { PasswordRequirementsChecklistComponent } from '../../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 
 /**
  * @description Renders a dynamic form based on an array of field definitions.
@@ -24,7 +39,7 @@ import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 @Component({
   selector: 'app-form-builder',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PasswordRequirementsChecklistComponent],
   templateUrl: './form-builder.component.html',
   styleUrl: './form-builder.component.css',
 })
@@ -39,9 +54,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   @ViewChild('genericForm') genericForm!: NgForm;
 
   formData: { [key: string]: any } = {};
-  confirmPasswordData: { [key: string]: string } = {}; 
+  confirmPasswordData: { [key: string]: string } = {};
   isSubmitting = false;
-  passwordsNotMatching = false;
   visibleInputDefinitions: InputDefinition[] = [];
 
   constructor(
@@ -91,12 +105,27 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Validates password confirmation inputs against original passwords.
+   * @description Zjišťuje, jestli se u daného `confirm-password` pole aktuálně neshoduje
+   * hlavní hodnota (`formData[columnName]`) s potvrzením (`confirmPasswordData[columnName]`).
+   * Počítá se live při každém CD cyklu - žádný uložený stav, žádná závislost na pořadí
+   * event handlerů. Prázdné potvrzení (uživatel ho ještě nezačal psát) se nepovažuje
+   * za neshodu - chyba se ukáže, až uživatel do potvrzení něco napíše.
    */
-  checkPasswordMatch(columnName: string): void {
-    const original = this.formData[columnName];
+  passwordMismatch(columnName: string): boolean {
     const confirmation = this.confirmPasswordData[columnName];
-    this.passwordsNotMatching = (original !== confirmation) && !!confirmation;
+    if (!confirmation) return false;
+    return this.formData[columnName] !== confirmation;
+  }
+
+  /**
+   * @description Jestli existuje JAKÉKOLIV `confirm-password` pole ve formuláři s
+   * neshodujícím se potvrzením - použito v `onSubmit()` k zablokování odeslání a na
+   * submit tlačítku k jeho disable.
+   */
+  get hasPasswordMismatch(): boolean {
+    return this.visibleInputDefinitions.some(
+      input => input.type === 'confirm-password' && this.passwordMismatch(input.column_name)
+    );
   }
 
   /**
@@ -149,13 +178,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
       form.controls[field]?.markAsTouched();
     });
 
-    this.visibleInputDefinitions.forEach(input => {
-      if (input.type === 'confirm-password') {
-        this.checkPasswordMatch(input.column_name);
-      }
-    });
-
-    if (this.passwordsNotMatching) {
+    if (this.hasPasswordMismatch) {
       this.alertDialogService.open('Error', 'Passwords do not match.', 'danger');
       return;
     }

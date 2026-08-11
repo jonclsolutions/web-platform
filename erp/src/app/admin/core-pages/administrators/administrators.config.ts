@@ -1,4 +1,5 @@
 import * as Core from '../../../shared/imports/core-providers';
+import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '../../../shared/constants/password-policy';
 
 /**
  * @description Výchozí (prázdný) seznam rolí pro select pole ve formuláři a filtru.
@@ -27,8 +28,16 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
 
 export const RESET_PASSWORD_FORM_FIELDS: Core.InputDefinition[] = [
   { column_name: 'old_password', label: 'Vaše aktuální heslo (potvrzení)', placeholder: 'Zadejte své heslo', type: 'password', required: true, editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'new_password', label: 'Nové heslo uživatele', placeholder: 'Minimálně 8 znaků', type: 'password', required: true, pattern: '^.{8,}$', errorMessage: 'Heslo musí mít 8 a více znaků', editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'new_password_confirmation', label: 'Potvrzení nového hesla', placeholder: 'Zadejte znovu nové heslo', type: 'password', required: true, pattern: '^.{8,}$', errorMessage: 'Heslo musí mít 8 a více znaků', editable: true, show_in_edit: true, show_in_create: true },
+  {
+    column_name: 'new_password',
+    label: 'Nové heslo uživatele',
+    placeholder: `${8}-${16} znaků`,
+    type: 'confirm-password',
+    required: true,
+    pattern: PASSWORD_PATTERN,
+    errorMessage: PASSWORD_ERROR_MESSAGE,
+    editable: true, show_in_edit: true, show_in_create: true
+  },
 ];
 
 /**
@@ -62,17 +71,17 @@ export const FORM_FIELDS: Core.InputDefinition[] = [
     show_in_edit: true, 
     show_in_create: true 
   },
-  { 
-    column_name: 'user_password_hash', 
-    label: 'Heslo', 
-    placeholder: 'Zadejte silné heslo', 
-    type: 'confirm-password', 
-    required: true, 
-    pattern: '^.{8,}$', 
-    errorMessage: 'Minimálně 8 znaků', 
-    editable: true, 
-    show_in_edit: false, 
-    show_in_create: true 
+ {
+    column_name: 'user_password_hash',
+    label: 'Heslo',
+    placeholder: 'Zadejte silné heslo',
+    type: 'confirm-password',
+    required: true,
+    pattern: PASSWORD_PATTERN,
+    errorMessage: PASSWORD_ERROR_MESSAGE,
+    editable: true,
+    show_in_edit: false,
+    show_in_create: true
   },
   // Options se doplňují za běhu (viz ROLE_OPTIONS výše) - toto pole tu zůstává
   // prázdné, dokud AdministratorsComponent nedokončí loadRoleOptions().

@@ -7,10 +7,19 @@
  * @description Veřejně přístupná stránka (bez auth guardu), na kterou vede odkaz z e-mailu pro
  *              reset hesla. Token se čte z query parametru `token`, backend jej ověřuje
  *              (existence, expirace, jednorázové použití) až při odeslání formuláře.
+ *
+ * @refactor-note (2026-08) `passwordStrength`/`passwordStrengthLabel` (0-4 bar-meter)
+ * nahrazeny sdíleným `PasswordRequirementsChecklistComponent`, stejný jako všude jinde
+ * v appce (admin vytvoření uživatele, admin reset hesla, personal-info). `minlength`
+ * sníženo z 10 na 8, sjednoceno se sdílenou politikou (`PASSWORD_MIN_LENGTH`/`MAX`).
+ * Přidán live `passwordsMismatch` getter pro zobrazení neshody hesel PŘED odesláním
+ * (dřív se to zjistilo až v `onSubmit()`).
+ *
  * @dependencies
  * - AuthService: volání /forgot-password a /reset-password endpointů.
  * - ActivatedRoute: čtení `token` z URL query parametrů.
  * - Router: přesměrování zpět na přihlášení po úspěšném resetu.
+ * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla.
  */
 
 import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
@@ -18,11 +27,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from '../../../shared/constants/password-policy';
+import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PasswordRequirementsChecklistComponent],
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.css']
 })
@@ -38,6 +49,9 @@ export class ResetPasswordComponent implements OnInit {
   isSubmitting = false;
   success = false;
   errorMessage = '';
+
+  readonly minLength = PASSWORD_MIN_LENGTH;
+  readonly maxLength = PASSWORD_MAX_LENGTH;
 
   /** E-mail účtu vrácený backendem po úspěšném resetu - jen pro zobrazení potvrzení uživateli. */
   changedForEmail: string | null = null;
@@ -63,35 +77,12 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   /**
-   * @description Jednoduchý odhad síly hesla jen pro vizuální zpětnou vazbu (0-4).
-   *              Skutečnou validaci síly hesla dělá vždy backend (ResetPasswordRequest).
+   * @description Live neshoda hesel, počítaná z aktuálních hodnot - žádný uložený stav.
+   * Prázdné potvrzení se nepovažuje za neshodu (chyba se neukáže, dokud ho uživatel
+   * nezačne psát).
    */
-  get passwordStrength(): number {
-    const val = this.password;
-    if (!val) return 0;
-
-    let score = 0;
-    if (val.length >= 10) score++;
-    if (val.length >= 14) score++;
-    if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
-    if (/\d/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
-
-    return Math.min(score, 4);
-  }
-
-  get passwordStrengthLabel(): string {
-    switch (this.passwordStrength) {
-      case 0:
-      case 1:
-        return 'Slabé';
-      case 2:
-        return 'Dostatečné';
-      case 3:
-        return 'Silné';
-      default:
-        return 'Velmi silné';
-    }
+  get passwordsMismatch(): boolean {
+    return !!this.passwordConfirmation && this.password !== this.passwordConfirmation;
   }
 
   /**
@@ -106,7 +97,7 @@ export class ResetPasswordComponent implements OnInit {
       return;
     }
 
-    if (this.password !== this.passwordConfirmation) {
+    if (this.passwordsMismatch) {
       this.errorMessage = 'Zadaná hesla se neshodují.';
       return;
     }
@@ -127,7 +118,6 @@ export class ResetPasswordComponent implements OnInit {
         },
         error: (error) => {
           this.isSubmitting = false;
-          // auth.service.ts mapuje HTTP chybu na hotovou zprávu v error.message (viz handlePasswordResetError).
           this.errorMessage = error?.message || 'Odkaz je neplatný nebo vypršel. Vyžádejte si prosím nový.';
           this.cdr.detectChanges();
         }
