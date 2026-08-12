@@ -121,6 +121,6 @@ export const JOB_APPLICATION_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'state', displayName: 'Aktuální stav', type: 'text' },
   { key: 'message', displayName: 'Průvodní dopis / Zpráva', type: 'text' },
   { key: 'internal_note', displayName: 'Interní poznámka HR', type: 'text' },
-  { key: 'cv_url', displayName: 'Životopis', type: 'file' }, 
+{ key: 'attachments', displayName: 'Životopis', type: 'files' },
   { key: 'created_at', displayName: 'Datum doručení', type: 'date', format: 'medium' }
 ];

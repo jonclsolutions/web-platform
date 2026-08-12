@@ -6,97 +6,101 @@
     @created: 2025
     @refactor-note (2026-08-2): Přidán @case ('files') - výpis VÍCE příloh, viz
         details-builder.component.ts.
+    @refactor-note (2026-08-3): "Zobrazit" odkaz u @case('file') i @case('files') přepnut
+        z přímého [href]="fileUrl"/[href]="file.url" (veřejný storage symlink, vždy
+        hashované jméno) na [href]="getViewUrl(...)" (API proxy, inline preview pod
+        originálním jménem) - viz getViewUrl() v details-builder.component.ts.
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
-  <div class="form-container wide-style" (click)="$event.stopPropagation()">
+<div class="form-container wide-style" (click)="$event.stopPropagation()">
 
-    <div class="form-header">
-      <h2 class="header-title">Detaily záznamu</h2>
-      <button class="close-button" (click)="onClose()" aria-label="Zavřít">
-        &times;
-      </button>
-    </div>
+<div class="form-header">
+<h2 class="header-title">Detaily záznamu</h2>
+<button class="close-button" (click)="onClose()" aria-label="Zavřít">
+&times;
+</button>
+</div>
 
-    <div class="details-content">
-      @if (itemData) {
-        <div class="details-grid">
-          @for (column of itemDetailColumns; track column) {
-            <div class="details-row">
-              <div class="label-cell">
+<div class="details-content">
+@if (itemData) {
+<div class="details-grid">
+@for (column of itemDetailColumns; track column) {
+<div class="details-row">
+<div class="label-cell">
                 {{ column.displayName }}
-              </div>
-              <div class="value-cell">
-                @switch (column.type) {
-                  @case ('file') {
-                    <div>
-                      @if (getValueByPath(itemData, column.key); as fileUrl) {
-                        <div>
-                          <div class="file-actions">
-                            <a [href]="fileUrl" target="_blank" class="btn-action view">📄 Zobrazit</a>
-                            <button type="button" (click)="downloadFile(fileUrl)" class="btn-action download">
+</div>
+<div class="value-cell">
+@switch (column.type) {
+@case ('file') {
+<div>
+@if (getValueByPath(itemData, column.key); as fileUrl) {
+<div>
+<div class="file-actions">
+<a [href]="getViewUrl(fileUrl)" target="_blank" class="btn-action view">📄 Zobrazit</a>
+<button type="button" (click)="downloadFile(fileUrl)" class="btn-action download">
                               📥 Stáhnout
-                            </button>
-                          </div>
-                        </div>
+</button>
+</div>
+</div>
                       } @else {
-                        <span class="text-muted">Není přiložena</span>
+<span class="text-muted">Není přiložena</span>
                       }
-                    </div>
+</div>
                   }
-                  @case ('files') {
-                    <div>
-                      @if (getValueByPath(itemData, column.key); as filesList) {
-                        @if (filesList.length > 0) {
-                          <ul class="details-files-list">
-                            @for (file of filesList; track file.id) {
-                              <li class="details-file-row">
-                                <div class="details-file-info">
-                                  <span class="details-file-name">{{ file.original_filename }}</span>
-                                  <span class="details-file-size">{{ formatFileSize(file.size_bytes) }}</span>
-                                </div>
-                                <div class="file-actions">
-                                  <a [href]="file.url" target="_blank" class="btn-action view">📄 Zobrazit</a>
-                                  <button type="button" (click)="downloadFile(file.url)" class="btn-action download">
+@case ('files') {
+<div>
+@if (getValueByPath(itemData, column.key); as filesList) {
+@if (filesList.length > 0) {
+<ul class="details-files-list">
+@for (file of filesList; track file.id) {
+<li class="details-file-row">
+<div class="details-file-info">
+<span class="details-file-name">{{ file.original_filename }}</span>
+<span class="details-file-size">{{ formatFileSize(file.size_bytes) }}</span>
+</div>
+<div class="file-actions">
+<a [href]="getViewUrl(file.url)" target="_blank" class="btn-action view">📄 Zobrazit</a>
+<button type="button" (click)="downloadFile(file.url)" class="btn-action download">
                                     📥 Stáhnout
-                                  </button>
-                                </div>
-                              </li>
+</button>
+</div>
+</li>
                             }
-                          </ul>
+</ul>
                         } @else {
-                          <span class="text-muted">Nejsou přiloženy žádné soubory</span>
+<span class="text-muted">Nejsou přiloženy žádné soubory</span>
                         }
                       } @else {
-                        <span class="text-muted">Nejsou přiloženy žádné soubory</span>
+<span class="text-muted">Nejsou přiloženy žádné soubory</span>
                       }
-                    </div>
+</div>
                   }
-                  @default {
-                    <div>
-                      @if (getValueByPath(itemData, column.key); as val) {
-                        <div>
-                          @if (isObject(val)) {
-                            <pre class="json-block">{{ getJsonValue(val) | json }}</pre>
+@default {
+<div>
+@if (getValueByPath(itemData, column.key); as val) {
+<div>
+@if (isObject(val)) {
+<pre class="json-block">{{ getJsonValue(val) | json }}</pre>
                           } @else {
                             {{ getFormattedValue(itemData, column.key, column) || '-' }}
                           }
-                        </div>
+</div>
                       } @else {
                         -
                       }
-                    </div>
+</div>
                   }
                 }
-              </div>
-            </div>
+</div>
+</div>
           }
-        </div>
+</div>
       }
-    </div>
+</div>
 
-    <div class="form-footer">
-      <button class="btn-close-flat" (click)="onClose()">Zavřít</button>
-    </div>
-  </div>
+<div class="form-footer">
+<button class="btn-close-flat" (click)="onClose()">Zavřít</button>
+</div>
+</div>
 </div>

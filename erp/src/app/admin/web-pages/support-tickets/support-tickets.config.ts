@@ -170,6 +170,6 @@ export const SUPPORT_TICKET_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'category', displayName: 'Kategorie', type: 'text' },
   { key: 'priority', displayName: 'Priorita', type: 'text' },
   { key: 'description', displayName: 'Popis problému', type: 'text' },
-  { key: 'attachment_url', displayName: 'Příloha', type: 'file' },
+{ key: 'attachments', displayName: 'Příloha', type: 'files' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' }
 ];

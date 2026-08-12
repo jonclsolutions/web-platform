@@ -6,6 +6,18 @@
  * @author RPSW
  * @created 2025
  * @description Manages the lifecycle of job applications, including document handling (CVs), status updates, and soft-delete administrative workflows.
+ * @refactor-note (2026-08) store()/update() capture the client's original CV file name
+ *      into `cv_original_name` via HandlesFileUploads::storeUploadedFile().
+ * @refactor-note (2026-08-2) SUPERSEDES the note above - CV storage moved from the
+ *      single `cv_path`/`cv_original_name` columns to the polymorphic `web_attachments`
+ *      table (HandlesAttachments::storeSingleAttachment()), same system already used by
+ *      WebSalesOrder/WebRawRequestCommission. Reason: unifies download/preview handling
+ *      behind one mechanism (PublicFileDownloadController already looks up
+ *      WebAttachment::path first) instead of maintaining two parallel systems.
+ *      `cv_path`/`cv_original_name` columns are NOT dropped - old applications uploaded
+ *      before this change keep their CV accessible via that legacy path (see
+ *      PublicFileDownloadController's FOLDER_MAP fallback), but new uploads only ever
+ *      create a WebAttachment row now.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -16,17 +28,24 @@ use App\Models\Web\WebLog;
 use App\Http\Resources\Web\WebJobApplicationResource;
 use App\Http\Requests\Web\WebJobApplication\StoreWebJobApplicationRequest;
 use App\Http\Requests\Web\WebJobApplication\UpdateWebJobApplicationRequest;
+use App\Traits\HandlesAttachments;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @description Controller responsible for processing incoming job applications and managing applicant records.
- * @note Implements file storage logic for CV uploads and integrates with the central logging system.
+ * @note Implements file storage logic for CV uploads (via HandlesAttachments) and integrates with the central logging system.
  */
 class WebJobApplicationController extends Controller
 {
+    use HandlesAttachments;
+
+    /**
+     * Storage folder for CV uploads within the public disk.
+     */
+    private const CV_FOLDER = 'cv_files';
+
     /**
      * Retrieves a paginated list of job applications with optional search and filtering.
      *
@@ -89,17 +108,17 @@ class WebJobApplicationController extends Controller
     {
         try {
             $validatedData = $request->validated();
-
-            if ($request->hasFile('cv_file')) {
-                $path = $request->file('cv_file')->store('cv_files', 'public');
-                $validatedData['cv_path'] = $path;
-            }
+            // 'cv_file' je jen v $request (UploadedFile), ne sloupec v DB - viz
+            // storeSingleAttachment() níže, které ho ukládá do web_attachments.
+            unset($validatedData['cv_file']);
 
             $application = WebJobApplication::create($validatedData);
 
+            $this->storeSingleAttachment($request, $application, self::CV_FOLDER, 'cv_file');
+
             $this->logAction($request, 'create', 'WebJobApplication', "Nová reakce na pozici: {$application->position_name} ({$application->first_name} {$application->last_name})", $application->id);
             
-            return response()->json(new WebJobApplicationResource($application), 201);
+            return response()->json(new WebJobApplicationResource($application->load('attachments')), 201);
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebJobApplication', "Chyba při vytváření uchazeče: " . $e->getMessage());
             return response()->json(['message' => 'Vytvoření se nezdařilo.'], 500);
@@ -114,7 +133,7 @@ class WebJobApplicationController extends Controller
      */
     public function show($id): JsonResponse
     {
-        $jobApplication = WebJobApplication::withTrashed()->findOrFail($id);
+        $jobApplication = WebJobApplication::withTrashed()->with('attachments')->findOrFail($id);
         
         return response()->json(new WebJobApplicationResource($jobApplication));
     }
@@ -130,19 +149,16 @@ class WebJobApplicationController extends Controller
     public function update(UpdateWebJobApplicationRequest $request, $id): JsonResponse
     {
         try {
-            $jobApplication = \App\Models\Web\WebJobApplication::withTrashed()->findOrFail($id);
+            $jobApplication = WebJobApplication::withTrashed()->findOrFail($id);
 
             $validated = $request->validated();
-
-            if ($request->hasFile('cv_file')) {
-                if ($jobApplication->cv_path) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($jobApplication->cv_path);
-                }
-                $path = $request->file('cv_file')->store('cv_files', 'public');
-                $validated['cv_path'] = $path;
-            }
+            unset($validated['cv_file']);
 
             $jobApplication->update($validated);
+
+            // storeSingleAttachment() sama smaže dřívější přílohu (disk i DB), pokud
+            // requestu dorazil nový 'cv_file' - jinak beze změny.
+            $this->storeSingleAttachment($request, $jobApplication, self::CV_FOLDER, 'cv_file');
             
             $this->logAction(
                 $request, 
@@ -152,7 +168,7 @@ class WebJobApplicationController extends Controller
                 $id
             );
             
-            return response()->json(new \App\Http\Resources\Web\WebJobApplicationResource($jobApplication->fresh()));
+            return response()->json(new WebJobApplicationResource($jobApplication->fresh()->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction(
                 $request, 
@@ -176,12 +192,10 @@ class WebJobApplicationController extends Controller
     {
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebJobApplication::withTrashed()->findOrFail($id);
+            $item = WebJobApplication::withTrashed()->with('attachments')->findOrFail($id);
             
             if ($forceDelete) {
-                if ($item->cv_path) {
-                    Storage::disk('public')->delete($item->cv_path);
-                }
+                $this->deleteAllAttachments($item);
                 $item->forceDelete();
             } else {
                 $item->delete();
@@ -211,7 +225,7 @@ class WebJobApplicationController extends Controller
             
             $this->logAction($request, 'restore', 'WebJobApplication', "Obnova uchazeče ID: $id", $id);
             
-            return response()->json(new WebJobApplicationResource($item));
+            return response()->json(new WebJobApplicationResource($item->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebJobApplication', "Chyba při obnově uchazeče ID: $id. Chyba: " . $e->getMessage(), $id);
             return response()->json(['message' => 'Obnova se nezdařila.'], 500);
@@ -227,13 +241,11 @@ class WebJobApplicationController extends Controller
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
-            $trashed = WebJobApplication::onlyTrashed()->get();
+            $trashed = WebJobApplication::onlyTrashed()->with('attachments')->get();
             $count = $trashed->count();
 
             foreach ($trashed as $item) {
-                if ($item->cv_path) {
-                    Storage::disk('public')->delete($item->cv_path);
-                }
+                $this->deleteAllAttachments($item);
                 $item->forceDelete();
             }
 

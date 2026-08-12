@@ -81,6 +81,8 @@ use App\Http\Controllers\Api\Legal\DocumentTypeController;
 use App\Http\Controllers\Api\Web\WebExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
+use App\Http\Controllers\Api\PublicFileDownloadController;
+
 /*
 |--------------------------------------------------------------------------
 | LANGUAGES — public access (frontend does not require a token)
@@ -177,11 +179,11 @@ Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
     ->middleware('throttle:10,1');
 Route::post('job_applications',        [WebJobApplicationController::class, 'store']);
 
-Route::get('/download-file/{folder}/{file}', function ($folder, $file) {
-    $path = $folder . '/' . $file;
-    if (!Storage::disk('public')->exists($path)) abort(404);
-    return Storage::disk('public')->download($path);
-})->where('file', '.*');
+Route::get('/download-file/{folder}/{file}', [PublicFileDownloadController::class, 'download'])
+    ->where('file', '.*');
+
+Route::get('/view-file/{folder}/{file}', [PublicFileDownloadController::class, 'view'])
+    ->where('file', '.*');
 
 /*
 |--------------------------------------------------------------------------

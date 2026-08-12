@@ -6,6 +6,18 @@
  * @author RPSW
  * @created 2026
  * @description Manages the support ticket lifecycle, including creation, status tracking, file attachment management, and audit logging.
+ * @refactor-note (2026-08) store()/update() capture the client's original attachment
+ *      file name into `attachment_original_name` via HandlesFileUploads::storeUploadedFile().
+ * @refactor-note (2026-08-2) SUPERSEDES the note above - attachment storage moved from
+ *      the single `attachment_path`/`attachment_original_name` columns to the
+ *      polymorphic `web_attachments` table (HandlesAttachments::storeSingleAttachment()),
+ *      same system already used by WebSalesOrder/WebRawRequestCommission. Unifies
+ *      download/preview handling behind one mechanism (PublicFileDownloadController
+ *      already looks up WebAttachment::path first). `attachment_path`/
+ *      `attachment_original_name` columns are NOT dropped - tickets created before this
+ *      change keep their attachment accessible via that legacy path (see
+ *      PublicFileDownloadController's FOLDER_MAP fallback), but new uploads only ever
+ *      create a WebAttachment row now.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -16,17 +28,24 @@ use App\Models\Web\WebLog;
 use App\Http\Requests\Web\WebSupportTicket\StoreWebSupportTicketRequest;
 use App\Http\Requests\Web\WebSupportTicket\UpdateWebSupportTicketRequest;
 use App\Http\Resources\Web\WebSupportTicketResource;
+use App\Traits\HandlesAttachments;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @description Controller responsible for processing customer support tickets.
- * @note Supports soft-delete operations and persistent file storage for ticket attachments.
+ * @note Supports soft-delete operations and persistent file storage (via HandlesAttachments) for ticket attachments.
  */
 class WebSupportTicketController extends Controller
 {
+    use HandlesAttachments;
+
+    /**
+     * Storage folder for ticket attachments within the public disk.
+     */
+    private const ATTACHMENT_FOLDER = 'tickets';
+
     /**
      * Retrieves a paginated list of support tickets based on filters and sorting criteria.
      *
@@ -86,44 +105,42 @@ class WebSupportTicketController extends Controller
         ]);
     }
 
-/**
- * Stores a new support ticket and handles optional file attachments.
- *
- * @param StoreWebSupportTicketRequest $request
- * @return JsonResponse
- */
-public function store(StoreWebSupportTicketRequest $request): JsonResponse
-{
-    try {
-        $data = $request->validated();
-        // 'attachment' je ve validation rules jako soubor (UploadedFile) - musí se
-        // odstranit před uložením do DB, jinak se stejný problém (binární objekt v
-        // insert bindings) opakuje i po přechodu na validated().
-        unset($data['attachment']);
+    /**
+     * Stores a new support ticket and handles the optional file attachment.
+     *
+     * @param StoreWebSupportTicketRequest $request
+     * @return JsonResponse
+     */
+    public function store(StoreWebSupportTicketRequest $request): JsonResponse
+    {
+        try {
+            $data = $request->validated();
+            // 'attachment' je ve validation rules jako soubor (UploadedFile) - musí se
+            // odstranit před uložením do DB, jinak se stejný problém (binární objekt v
+            // insert bindings) opakuje i po přechodu na validated(). Ukládá ho níže
+            // storeSingleAttachment() do web_attachments, ne přímo do tohoto řádku.
+            unset($data['attachment']);
 
-        $user = $request->user() ?? auth('sanctum')->user();
+            $user = $request->user() ?? auth('sanctum')->user();
 
-        if ($user) {
-            $data['user_id'] = $user->id;
-            $data['user_name_plain'] = $data['user_name_plain'] ?? ($user->full_name ?? $user->user_email);
-            $data['user_plain'] = $data['user_plain'] ?? $user->user_email;
+            if ($user) {
+                $data['user_id'] = $user->id;
+                $data['user_name_plain'] = $data['user_name_plain'] ?? ($user->full_name ?? $user->user_email);
+                $data['user_plain'] = $data['user_plain'] ?? $user->user_email;
+            }
+
+            $ticket = WebSupportTicket::create($data);
+
+            $this->storeSingleAttachment($request, $ticket, self::ATTACHMENT_FOLDER, 'attachment');
+
+            $this->logAction($request, 'create', 'WebSupportTicket', "Nový ticket: {$ticket->subject}", $ticket->id);
+            
+            return response()->json(new WebSupportTicketResource($ticket->load('attachments')), 201);
+        } catch (\Exception $e) {
+            $this->logAction($request, 'error', 'WebSupportTicket', "Chyba při vytváření ticketu: " . $e->getMessage());
+            return response()->json(['message' => 'Vytvoření ticketu selhalo.'], 500);
         }
-
-        if ($request->hasFile('attachment')) {
-            $path = $request->file('attachment')->store('tickets', 'public');
-            $data['attachment_path'] = $path;
-        }
-
-        $ticket = WebSupportTicket::create($data);
-
-        $this->logAction($request, 'create', 'WebSupportTicket', "Nový ticket: {$ticket->subject}", $ticket->id);
-        
-        return response()->json(new WebSupportTicketResource($ticket), 201);
-    } catch (\Exception $e) {
-        $this->logAction($request, 'error', 'WebSupportTicket', "Chyba při vytváření ticketu: " . $e->getMessage());
-        return response()->json(['message' => 'Vytvoření ticketu selhalo.'], 500);
     }
-}
 
     /**
      * Retrieves a single support ticket by ID, including soft-deleted items.
@@ -133,7 +150,7 @@ public function store(StoreWebSupportTicketRequest $request): JsonResponse
      */
     public function show($id): JsonResponse
     {
-        $supportTicket = WebSupportTicket::withTrashed()->findOrFail($id);
+        $supportTicket = WebSupportTicket::withTrashed()->with('attachments')->findOrFail($id);
         
         return response()->json(new WebSupportTicketResource($supportTicket));
     }
@@ -150,20 +167,17 @@ public function store(StoreWebSupportTicketRequest $request): JsonResponse
         try {
             $ticket = WebSupportTicket::withTrashed()->findOrFail($id);
             $validated = $request->validated();
-
-            if ($request->hasFile('attachment')) {
-                if ($ticket->attachment_path) {
-                    Storage::disk('public')->delete($ticket->attachment_path);
-                }
-                $path = $request->file('attachment')->store('tickets', 'public');
-                $validated['attachment_path'] = $path;
-            }
+            unset($validated['attachment']);
 
             $ticket->update($validated);
 
+            // storeSingleAttachment() sama smaže dřívější přílohu (disk i DB), pokud
+            // requestu dorazil nový 'attachment' - jinak beze změny.
+            $this->storeSingleAttachment($request, $ticket, self::ATTACHMENT_FOLDER, 'attachment');
+
             $this->logAction($request, 'update', 'WebSupportTicket', "Aktualizace ticketu ID: {$id}", $id);
             
-            return response()->json(new WebSupportTicketResource($ticket->fresh()));
+            return response()->json(new WebSupportTicketResource($ticket->fresh()->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebSupportTicket', "Chyba při aktualizaci ticketu ID {$id}: " . $e->getMessage(), $id);
             return response()->json(['message' => 'Aktualizace ticketu selhala.'], 500);
@@ -181,12 +195,10 @@ public function store(StoreWebSupportTicketRequest $request): JsonResponse
     {
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebSupportTicket::withTrashed()->findOrFail($id);
+            $item = WebSupportTicket::withTrashed()->with('attachments')->findOrFail($id);
             
             if ($forceDelete) {
-                if ($item->attachment_path) {
-                    Storage::disk('public')->delete($item->attachment_path);
-                }
+                $this->deleteAllAttachments($item);
                 $item->forceDelete();
             } else {
                 $item->delete();
@@ -214,7 +226,7 @@ public function store(StoreWebSupportTicketRequest $request): JsonResponse
             $item->restore();
             
             $this->logAction($request, 'restore', 'WebSupportTicket', "Obnova ticketu ID: $id", $id);
-            return response()->json(new WebSupportTicketResource($item));
+            return response()->json(new WebSupportTicketResource($item->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebSupportTicket', "Chyba při obnově ticketu ID $id: " . $e->getMessage(), $id);
             return response()->json(['message' => 'Obnova ticketu selhala.'], 500);
@@ -230,13 +242,11 @@ public function store(StoreWebSupportTicketRequest $request): JsonResponse
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
-            $trashed = WebSupportTicket::onlyTrashed()->get();
+            $trashed = WebSupportTicket::onlyTrashed()->with('attachments')->get();
             $count = $trashed->count();
 
             foreach ($trashed as $ticket) {
-                if ($ticket->attachment_path) {
-                    Storage::disk('public')->delete($ticket->attachment_path);
-                }
+                $this->deleteAllAttachments($ticket);
                 $ticket->forceDelete();
             }
 

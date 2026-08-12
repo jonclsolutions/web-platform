@@ -14,6 +14,14 @@
  * příloh (z `web_attachments` relace, pole objektů `{id, original_filename, mime_type,
  * size_bytes, url, created_at}`) místo jediného souboru, jak to řešil dosavadní `'file'`
  * case. `formatFileSize()` přidán jako pomocná metoda pro čitelný výpis velikosti.
+ * @refactor-note (2026-08-3) Přidán `getViewUrl()` - "Zobrazit" odkaz (u obou `'file'`
+ *      i `'files'` case v šabloně) dřív mířil PŘÍMO na `fileUrl`/`file.url`, tedy na
+ *      veřejný storage symlink se souborem pod interním hashovaným jménem (žádná
+ *      možnost ovlivnit Content-Disposition/jméno u přímého odkazu na statický soubor).
+ *      `downloadFile()` už dávno správně přesměrovává přes API proxy
+ *      (`/download-file/...`) - `getViewUrl()` dělá to samé, jen pro protějškovou
+ *      inline-preview routu (`/view-file/...`), viz PublicFileDownloadController
+ *      na backendu.
  */
 
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
@@ -28,152 +36,175 @@ import { environment } from '../../../../../environments/environment';
  * @note Manages DOM overflow state to ensure the modal occupies the screen correctly and uses pipes for data localization.
  */
 @Component({
-  selector: 'app-details-builder',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './details-builder.component.html',
-  styleUrl: './details-builder.component.css',
-  providers: [DatePipe, CurrencyPipe]
+selector: 'app-details-builder',
+standalone: true,
+imports: [CommonModule],
+templateUrl: './details-builder.component.html',
+styleUrl: './details-builder.component.css',
+providers: [DatePipe, CurrencyPipe]
 })
 export class DetailsBuilderComponent implements OnInit, OnDestroy {
   @Input() itemData: any;
   @Input() itemDetailColumns: ItemDetailsColumns[] = [];
   @Input() inputDefinitions: InputDefinition[] = [];
   @Output() closeDetails = new EventEmitter<void>();
-
   constructor(
-    private datePipe: DatePipe,
-    private currencyPipe: CurrencyPipe
+private datePipe: DatePipe,
+private currencyPipe: CurrencyPipe
   ) {}
 
-  /**
+/**
    * @description Locks page scrolling while the detail modal is active.
    */
-  ngOnInit(): void {
-    document.body.style.overflow = 'hidden';
+ngOnInit(): void {
+document.body.style.overflow = 'hidden';
   }
 
-  /**
+/**
    * @description Restores page scrolling upon component destruction.
    */
-  ngOnDestroy(): void {
-    document.body.style.overflow = 'auto';
+ngOnDestroy(): void {
+document.body.style.overflow = 'auto';
   }
 
-  onClose(): void {
-    this.closeDetails.emit();
+onClose(): void {
+this.closeDetails.emit();
   }
 
-  onOverlayClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.onClose();
+onOverlayClick(event: MouseEvent): void {
+if (event.target === event.currentTarget) {
+this.onClose();
     }
   }
 
-  /**
+/**
    * @description Attempts to parse a JSON-formatted string into an object.
    * @param val Input value to check.
    * @returns The parsed object if successful, or the original value.
    */
-  getJsonValue(val: any): any {
-    if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) {
-      try {
-        return JSON.parse(val);
+getJsonValue(val: any): any {
+if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) {
+try {
+return JSON.parse(val);
       } catch (e) {
-        return val;
+return val;
       }
     }
-    return val;
+return val;
   }
 
-  /**
+/**
    * @description Determines if a value should be rendered as a JSON block.
    * @param val Input value to validate.
    * @returns {boolean} True if the value is an object or a parsable JSON string.
    */
-  isObject(val: any): boolean {
-    if (val === null || val === undefined) return false;
-    if (typeof val === 'object' && !(val instanceof Date)) return true;
-    if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) return true;
-    return false;
+isObject(val: any): boolean {
+if (val === null || val === undefined) return false;
+if (typeof val === 'object' && !(val instanceof Date)) return true;
+if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) return true;
+return false;
   }
 
-  /**
+/**
    * @description Extracts a filename from a given storage URL.
    */
-  getFileName(url: string): string {
-    if (!url) return 'file';
-    const parts = url.split('/');
-    return parts[parts.length - 1].split('?')[0] || 'file';
+getFileName(url: string): string {
+if (!url) return 'file';
+const parts = url.split('/');
+return parts[parts.length - 1].split('?')[0] || 'file';
   }
 
-  /**
+/**
    * @description Formats a byte count into a human-readable KB/MB string.
    */
-  formatFileSize(bytes: number): string {
-    if (!bytes && bytes !== 0) return '';
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+formatFileSize(bytes: number): string {
+if (!bytes && bytes !== 0) return '';
+if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
   /**
    * @description Initiates a file download through the API storage proxy.
    * @param fullUrl The absolute file path.
    */
-  downloadFile(fullUrl: string): void {
-    const pathParts = fullUrl.split('/storage/');
-    if (pathParts.length < 2) {
-      window.open(fullUrl, '_blank');
-      return;
+downloadFile(fullUrl: string): void {
+const pathParts = fullUrl.split('/storage/');
+if (pathParts.length < 2) {
+window.open(fullUrl, '_blank');
+return;
     }
-    const storagePath = pathParts[1];
-    const downloadUrl = `${environment.base_api_url}/download-file/${storagePath}`;
-    window.location.href = downloadUrl;
+const storagePath = pathParts[1];
+const downloadUrl = `${environment.base_api_url}/download-file/${storagePath}`;
+window.location.href = downloadUrl;
   }
 
   /**
+   * @description Builds an in-browser PREVIEW url through the API storage
+   *              proxy, mirroring downloadFile() above but targeting the
+   *              inline-preview route (Content-Disposition: inline,
+   *              original file name) instead of the forced-download one.
+   *              Used for the "Zobrazit" (view) action's [href] - linking
+   *              directly to the raw storage URL (as before) always served
+   *              the file under its internal hashed on-disk name, with no
+   *              way to influence it from the frontend.
+   * @param fullUrl The raw storage asset URL (WebAttachment.url / *_url field).
+   * @returns URL routed through PublicFileDownloadController::view(), or the original URL unchanged if it doesn't look like a "/storage/..." asset URL.
+   */
+  getViewUrl(fullUrl: string): string {
+    if (!fullUrl) {
+      return fullUrl;
+    }
+    const pathParts = fullUrl.split('/storage/');
+    if (pathParts.length < 2) {
+      return fullUrl;
+    }
+    const storagePath = pathParts[1];
+    return `${environment.base_api_url}/view-file/${storagePath}`;
+  }
+
+/**
    * @description Transforms raw data into a human-readable format based on column type definitions.
    * @param obj The source data object.
    * @param path The dot-notation string path to the property.
    * @param columnDef The configuration for the column being processed.
    * @returns The formatted string or value.
    */
-  getFormattedValue(obj: any, path: string, columnDef: ItemDetailsColumns): any {
-    const value = this.getValueByPath(obj, path);
-    if (value === null || value === undefined || value === '') return null;
+getFormattedValue(obj: any, path: string, columnDef: ItemDetailsColumns): any {
+const value = this.getValueByPath(obj, path);
+if (value === null || value === undefined || value === '') return null;
 
-    switch (columnDef.type) {
-      case 'currency':
-        return this.currencyPipe.transform(value, 'CZK', 'symbol-narrow', '1.0-0', 'cs-CZ');
-      case 'date':
-        const date = new Date(value);
-        return isNaN(date.getTime()) ? value : this.datePipe.transform(date, columnDef.format || 'dd.MM.yyyy HH:mm', 'cs-CZ');
-      case 'boolean':
-        return (value == true || value == 1) ? 'Yes' : 'No';
-      default:
-        const fieldDef = this.inputDefinitions.find(i => i.column_name === columnDef.key);
-        if (fieldDef?.options) {
-          const option = fieldDef.options.find(opt => String(opt.value) === String(value));
-          return option ? option.label : value;
+switch (columnDef.type) {
+case 'currency':
+return this.currencyPipe.transform(value, 'CZK', 'symbol-narrow', '1.0-0', 'cs-CZ');
+case 'date':
+const date = new Date(value);
+return isNaN(date.getTime()) ? value : this.datePipe.transform(date, columnDef.format || 'dd.MM.yyyy HH:mm', 'cs-CZ');
+case 'boolean':
+return (value == true || value == 1) ? 'Yes' : 'No';
+default:
+const fieldDef = this.inputDefinitions.find(i => i.column_name === columnDef.key);
+if (fieldDef?.options) {
+const option = fieldDef.options.find(opt => String(opt.value) === String(value));
+return option ? option.label : value;
         }
-        return value;
+return value;
     }
   }
 
-  /**
+/**
    * @description Resolves a value from a nested object using a dot-notation path.
    * @param obj The source object.
    * @param path String like 'user.profile.name'.
    * @returns The resolved value.
    */
-  getValueByPath(obj: any, path: string): any {
-    if (!obj || !path) return '';
-    const keys = path.split('.');
-    let current = obj;
-    for (const key of keys) {
-      if (current === null || current === undefined) return '';
-      current = current[key];
+getValueByPath(obj: any, path: string): any {
+if (!obj || !path) return '';
+const keys = path.split('.');
+let current = obj;
+for (const key of keys) {
+if (current === null || current === undefined) return '';
+current = current[key];
     }
-    return current;
+return current;
   }
 }
