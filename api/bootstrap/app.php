@@ -41,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->alias([
             'shop.active'  => \App\Http\Middleware\CheckCoreShopActive::class,
+            'web.active'   => \App\Http\Middleware\CheckCoreWebActive::class,
             'permission'   => \App\Http\Middleware\CheckPermission::class,
         ]);
     })

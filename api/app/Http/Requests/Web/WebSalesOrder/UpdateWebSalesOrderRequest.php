@@ -6,10 +6,17 @@
  * @author RPSW
  * @created 2025
  * @description Validation logic for updating existing sales orders.
+ *
+ * @refactor-note (2026-08) `attachment` (jeden soubor, max 20 MB) nahrazeno `attachments`
+ * (pole, max. 10 souborů, každý max. 20 MB, souhrnně max. 50 MB) - sjednoceno se
+ * StoreWebSalesOrderRequest. Tenhle request byl dřív VŮBEC nepoužívaný -
+ * WebSalesOrderController::update() bral $request->all() bez jakékoli validace
+ * (mass-assignment riziko) - nyní kontroler skutečně typuje na tuhle třídu.
  */
 
 namespace App\Http\Requests\Web\WebSalesOrder;
 
+use App\Rules\AttachmentsTotalSize;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\Web\WebSalesLead;
@@ -19,6 +26,10 @@ use App\Models\Web\WebSalesLead;
  */
 class UpdateWebSalesOrderRequest extends FormRequest
 {
+    private const MAX_ATTACHMENTS = 10;
+    private const MAX_FILE_SIZE_KB = 20480; // 20 MB
+    private const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -46,11 +57,11 @@ class UpdateWebSalesOrderRequest extends FormRequest
             'client_phone'      => 'nullable|string|max:255',
             'client_email'      => 'nullable|email|max:255',
             'order_description' => 'nullable|string',
-            'attachment'        => [
-                'nullable', 
-                'file', 
-                'mimes:' . implode(',', $safeExtensions), 
-                'max:20480'
+            'attachments'       => ['sometimes', 'nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
+            'attachments.*'     => [
+                'file',
+                'mimes:' . implode(',', $safeExtensions),
+                'max:' . self::MAX_FILE_SIZE_KB,
             ],
         ];
     }
@@ -63,8 +74,9 @@ class UpdateWebSalesOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'attachment.mimes' => 'Povolené formáty pro přílohy objednávek jsou PDF, Word, Excel, CAD formáty nebo obrázky.',
-            'attachment.max'   => 'Soubor přílohy nesmí přesáhnout 20 MB.',
+            'attachments.max'      => 'Můžete najednou přidat maximálně ' . self::MAX_ATTACHMENTS . ' souborů.',
+            'attachments.*.mimes'  => 'Povolené formáty pro přílohy objednávek jsou PDF, Word, Excel, CAD formáty nebo obrázky.',
+            'attachments.*.max'    => 'Soubor přílohy nesmí přesáhnout 20 MB.',
         ];
     }
 }

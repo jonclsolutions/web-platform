@@ -6,10 +6,15 @@
  * @author RPSW
  * @created 2025
  * @description Validation logic for updating existing commission requests, including secure file handling.
+ *
+ * @refactor-note (2026-08) `attachment` (jeden soubor, max 10 MB) nahrazeno `attachments`
+ * (pole, max. 10 souborů, každý max. 20 MB, souhrnně max. 50 MB) - sjednoceno se
+ * StoreWebRawRequestCommissionRequest, ať mají create i update stejnou politiku.
  */
 
 namespace App\Http\Requests\Web\WebRawRequestCommission;
 
+use App\Rules\AttachmentsTotalSize;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -19,21 +24,20 @@ class UpdateWebRawRequestCommissionRequest extends FormRequest
 {
     use ValidatesAttachmentSecurity;
 
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
+    /** @description Max. počet příloh přidaných v rámci JEDNOHO update requestu. */
+    private const MAX_ATTACHMENTS = 10;
+
+    /** @description Max. velikost jednoho souboru v kB (Laravel `max:` pravidlo je v kB). */
+    private const MAX_FILE_SIZE_KB = 20480; // 20 MB
+
+    /** @description Max. souhrnná velikost všech nově nahraných příloh v bytech. */
+    private const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
     public function rules(): array
     {
         return [
@@ -44,7 +48,8 @@ class UpdateWebRawRequestCommissionRequest extends FormRequest
             'status'            => ['sometimes', 'string', 'in:Nově zadané,Zpracovává se,Dokončeno,Zrušeno'],
             'priority'          => ['sometimes', 'string', 'in:Nízká,Neutrální,Vysoká'],
             'note'              => ['sometimes', 'nullable', 'string'],
-            'attachment'        => ['sometimes', 'nullable', 'file', 'max:10240', $this->attachmentExtensionRule()],
+            'attachments'       => ['sometimes', 'nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
+            'attachments.*'     => ['file', 'max:' . self::MAX_FILE_SIZE_KB, $this->attachmentExtensionRule()],
         ];
     }
 
@@ -59,22 +64,18 @@ class UpdateWebRawRequestCommissionRequest extends FormRequest
         $validator->after(fn ($v) => $this->validateAttachmentMime($v));
     }
 
-    /**
-     * Get custom error messages for validation rules.
-     *
-     * @return array
-     */
     public function messages(): array
     {
         return [
-            'thema.min'                     => 'Téma musí mít 3-255 znaků.',
-            'thema.max'                     => 'Téma musí mít 3-255 znaků.',
-            'thema.regex'                   => 'Téma obsahuje nepovolené znaky.',
-            'contact_email.email'           => 'Zadejte platnou e-mailovou adresu.',
-            'contact_phone.regex'           => 'Zadejte platné telefonní číslo.',
-            'order_description.max'         => 'Popis požadavku je příliš dlouhý.',
-            'attachment.max'                => 'Soubor je příliš velký. Maximální velikost je 10 MB.',
-            'attachment.file'               => 'Příloha musí být platný soubor.',
+            'thema.min'                  => 'Téma musí mít 3-255 znaků.',
+            'thema.max'                  => 'Téma musí mít 3-255 znaků.',
+            'thema.regex'                => 'Téma obsahuje nepovolené znaky.',
+            'contact_email.email'        => 'Zadejte platnou e-mailovou adresu.',
+            'contact_phone.regex'        => 'Zadejte platné telefonní číslo.',
+            'order_description.max'      => 'Popis požadavku je příliš dlouhý.',
+            'attachments.max'            => 'Můžete najednou přidat maximálně ' . self::MAX_ATTACHMENTS . ' souborů.',
+            'attachments.*.max'          => 'Každý soubor může mít maximálně 20 MB.',
+            'attachments.*.file'         => 'Příloha musí být platný soubor.',
         ];
     }
 }

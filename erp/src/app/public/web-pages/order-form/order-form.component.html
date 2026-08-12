@@ -4,148 +4,146 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025 
+    @refactor-note (2026-08): Jednosouborový file-drop-area nahrazen sdílenou
+        <app-multi-file-upload> komponentou (max. 10 souborů, 20 MB/soubor, 50 MB celkem).
 -->
-    
 @if (t) {
-  <div class="form-wrp">
-    <div class="contact-form">
+<div class="form-wrp">
+<div class="contact-form">
 
-      @if (linkState === 'loading') {
+@if (linkState === 'loading') {
 
-        <div class="success-container">
-          <p class="success-text">{{ t.link_states?.loading || 'Ověřuji odkaz…' }}</p>
-        </div>
+<div class="success-container">
+<p class="success-text">{{ t.link_states?.loading || 'Ověřuji odkaz…' }}</p>
+</div>
 
       } @else if (linkState === 'invalid') {
 
-        <div class="success-container">
-          <div class="success-icon">✕</div>
-          <h2>{{ t.link_states?.invalid_title || 'Odkaz je neplatný' }}</h2>
-          <p class="success-text">
+<div class="success-container">
+<div class="success-icon">✕</div>
+<h2>{{ t.link_states?.invalid_title || 'Odkaz je neplatný' }}</h2>
+<p class="success-text">
             {{ t.link_states?.invalid_text || 'Tento odkaz na objednávkový formulář neexistuje nebo byl odstraněn. Kontaktujte prosím svého obchodního zástupce.' }}
-          </p>
-          <button class="submit-btn" routerLink="/home">
-            <span>{{ t.buttons?.go_home }}</span>
-          </button>
-        </div>
+</p>
+<button class="submit-btn" routerLink="/home">
+<span>{{ t.buttons?.go_home }}</span>
+</button>
+</div>
 
       } @else if (linkState === 'used') {
 
-        <div class="success-container">
-          <div class="success-icon">✕</div>
-          <h2>{{ t.link_states?.used_title || 'Formulář již byl odeslán' }}</h2>
-          <p class="success-text">
+<div class="success-container">
+<div class="success-icon">✕</div>
+<h2>{{ t.link_states?.used_title || 'Formulář již byl odeslán' }}</h2>
+<p class="success-text">
             {{ t.link_states?.used_text || 'Tento odkaz je jednorázový a už byl použit. Pokud potřebujete něco doplnit, kontaktujte prosím svého obchodního zástupce.' }}
-          </p>
-          <button class="submit-btn" routerLink="/home">
-            <span>{{ t.buttons?.go_home }}</span>
-          </button>
-        </div>
-
+</p>
+<button class="submit-btn" routerLink="/home">
+<span>{{ t.buttons?.go_home }}</span>
+</button>
+</div>
       } @else if (!isSubmitted) {
 
-        <h2>{{ t.header }}</h2>
-        <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
-          <div class="form-group">
-            <label>{{ t.labels?.name }} <span class="required-asterisk">*</span></label>
-            <input type="text" formControlName="client_name">
-          </div>
-          <div class="form-group">
-            <label>{{ t.labels?.ico }}</label>
-            <input type="text" formControlName="ico"
-              [class.error-input]="orderForm.get('ico')?.invalid && orderForm.get('ico')?.dirty">
-            @if (orderForm.get('ico')?.errors?.['pattern']) {
-              <small class="error-msg">
+<h2>{{ t.header }}</h2>
+<form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
+<div class="form-group">
+<label>{{ t.labels?.name }} <span class="required-asterisk">*</span></label>
+<input type="text" formControlName="client_name">
+</div>
+<div class="form-group">
+<label>{{ t.labels?.ico }}</label>
+<input type="text" formControlName="ico"
+[class.error-input]="orderForm.get('ico')?.invalid && orderForm.get('ico')?.dirty">
+@if (orderForm.get('ico')?.errors?.['pattern']) {
+<small class="error-msg">
                 {{ t.errors?.ico_pattern }}
-              </small>
+</small>
             }
-          </div>
-          <div class="form-group">
-            <label>{{ t.labels?.address }}</label>
-            <input type="text" formControlName="client_address">
-          </div>
-          <div class="mobile-flex-stack">
-            <div class="form-group flex-1">
-              <label>{{ t.labels?.phone }}</label>
-              <input type="text" formControlName="client_phone"
-                [placeholder]="t.placeholders?.phone"
-                maxlength="20"
-                [class.error-input]="orderForm.get('client_phone')?.invalid && orderForm.get('client_phone')?.dirty">
-              @if (orderForm.get('client_phone')?.errors?.['pattern']) {
-                <small class="error-msg">
+</div>
+<div class="form-group">
+<label>{{ t.labels?.address }}</label>
+<input type="text" formControlName="client_address">
+</div>
+<div class="mobile-flex-stack">
+<div class="form-group flex-1">
+<label>{{ t.labels?.phone }}</label>
+<input type="text" formControlName="client_phone"
+[placeholder]="t.placeholders?.phone"
+maxlength="20"
+[class.error-input]="orderForm.get('client_phone')?.invalid && orderForm.get('client_phone')?.dirty">
+@if (orderForm.get('client_phone')?.errors?.['pattern']) {
+<small class="error-msg">
                   {{ t.errors?.phone_pattern }}
-                </small>
+</small>
               }
-              @if (orderForm.get('client_phone')?.errors?.['maxlength']) {
-                <small class="error-msg">
+@if (orderForm.get('client_phone')?.errors?.['maxlength']) {
+<small class="error-msg">
                   {{ t.errors?.phone_max }}
-                </small>
+</small>
               }
-            </div>
-            <div class="form-group flex-1">
-              <label>{{ t.labels?.email }} <span class="required-asterisk">*</span></label>
-              <input type="email" formControlName="client_email"
-                [class.error-input]="orderForm.get('client_email')?.invalid && orderForm.get('client_email')?.dirty">
-              @if (orderForm.get('client_email')?.errors?.['email'] && orderForm.get('client_email')?.dirty) {
-                <small class="error-msg">
+</div>
+<div class="form-group flex-1">
+<label>{{ t.labels?.email }} <span class="required-asterisk">*</span></label>
+<input type="email" formControlName="client_email"
+[class.error-input]="orderForm.get('client_email')?.invalid && orderForm.get('client_email')?.dirty">
+@if (orderForm.get('client_email')?.errors?.['email'] && orderForm.get('client_email')?.dirty) {
+<small class="error-msg">
                   {{ t.errors?.email_invalid }}
-                </small>
+</small>
               }
-            </div>
-          </div>
-          <div class="form-group">
-            <label>{{ t.labels?.description }} <span class="required-asterisk">*</span></label>
-            <textarea formControlName="order_description" rows="4"></textarea>
-          </div>
-          <div class="form-group">
-            <label>{{ t.labels?.attachment }}</label>
-            <div class="file-drop-area" [class.has-file]="selectedFile">
-              <span class="file-msg">
-                <span class="upload-icon">{{ selectedFile ? '✓' : '+' }}</span>
-                <span class="file-text">{{ selectedFile ? selectedFile.name : t.placeholders?.file_drop }}</span>
-              </span>
-              <input type="file" class="file-input" (change)="onFileSelected($event)">
-            </div>
-          </div>
-          <div class="checkbox-container">
+</div>
+</div>
+<div class="form-group">
+<label>{{ t.labels?.description }} <span class="required-asterisk">*</span></label>
+<textarea formControlName="order_description" rows="4"></textarea>
+</div>
+<div class="form-group">
+<app-multi-file-upload
+[label]="t.labels?.attachment"
+[maxFiles]="10"
+[maxFileSizeMb]="20"
+[maxTotalSizeMb]="50"
+(filesChanged)="onFilesChanged($event)">
+</app-multi-file-upload>
+</div> <div class="checkbox-container">
             <div class="checkbox-group">
-              <input type="checkbox" id="dataProcessingAgreement" formControlName="dataProcessingAgreement">
-              <label for="dataProcessingAgreement">
+<input type="checkbox" id="dataProcessingAgreement" formControlName="dataProcessingAgreement">
+<label for="dataProcessingAgreement">
                 {{ t.labels?.gdpr_consent }} <span class="required-asterisk">*</span>
-              </label>
-            </div>
-            <a routerLink="/privacy-policy" target="_blank" class="privacy-policy-link">{{ t.labels?.gdpr_link }}</a>
-            <div class="checkbox-group mt-15">
-              <input type="checkbox" id="tosAgreement" formControlName="tosAgreement">
-              <label for="tosAgreement">
+</label>
+</div>
+<a routerLink="/privacy-policy" target="_blank" class="privacy-policy-link">{{ t.labels?.gdpr_link }}</a>
+<div class="checkbox-group mt-15">
+<input type="checkbox" id="tosAgreement" formControlName="tosAgreement">
+<label for="tosAgreement">
                 {{ t.labels?.tos_consent }} <span class="required-asterisk">*</span>
-              </label>
-            </div>
-            <a routerLink="/tos" target="_blank" class="privacy-policy-link">{{ t.labels?.tos_link }}</a>
-          </div>
-          <p class="required-info">{{ t.labels?.required_info }}</p>
-          @if (errorMessage) {
-            <div class="error-msg-main">{{ errorMessage }}</div>
+</label>
+</div>
+<a routerLink="/tos" target="_blank" class="privacy-policy-link">{{ t.labels?.tos_link }}</a>
+</div>
+<p class="required-info">{{ t.labels?.required_info }}</p>
+@if (errorMessage) {
+<div class="error-msg-main">{{ errorMessage }}</div>
           }
-          <button type="submit" class="submit-btn" [disabled]="orderForm.invalid || isLoading">
-            <span>{{ btnText }}</span>
-          </button>
-        </form>
+<button type="submit" class="submit-btn" [disabled]="orderForm.invalid || isLoading">
+<span>{{ btnText }}</span>
+</button>
+</form>
 
       } @else {
 
-        <div class="success-container">
-          <div class="success-icon">✓</div>
-          <h2>{{ t.thank_you?.title }}</h2>
-          <p class="success-text">
+<div class="success-container">
+<div class="success-icon">✓</div>
+<h2>{{ t.thank_you?.title }}</h2>
+<p class="success-text">
             {{ t.thank_you?.text }}
-          </p>
-          <button class="submit-btn" routerLink="/home">
-            <span>{{ t.buttons?.go_home }}</span>
-          </button>
-        </div>
+</p>
+<button class="submit-btn" routerLink="/home">
+<span>{{ t.buttons?.go_home }}</span>
+</button>
+</div>
 
       }
-    </div>
-  </div>
+</div>
+</div>
 }

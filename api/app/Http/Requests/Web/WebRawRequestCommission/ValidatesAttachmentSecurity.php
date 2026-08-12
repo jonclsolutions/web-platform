@@ -6,6 +6,13 @@
  * @author RPSW
  * @created 2025
  * @description Trait providing shared security logic for validating file attachments using a blacklist approach.
+ *
+ * @refactor-note (2026-08) `validateAttachmentMime()` přepsáno z kontroly jediného pole
+ * `attachment` na iteraci přes pole `attachments` (vícenásobný upload) - kontroluje MIME
+ * typ KAŽDÉHO nahraného souboru zvlášť, chybu přidává na konkrétní index pole
+ * (`attachments.0`, `attachments.1`, ...), ať uživatel přesně vidí, který soubor je
+ * problematický. `attachmentExtensionRule()` beze změny - používá se jako closure
+ * pravidlo přímo na `attachments.*`, takže Laravel jí už předá jednotlivý soubor, ne pole.
  */
 
 namespace App\Http\Requests\Web\WebRawRequestCommission;
@@ -17,7 +24,8 @@ trait ValidatesAttachmentSecurity
 {
     /**
      * Returns a list of forbidden file extensions.
-     * * @return array
+     *
+     * @return array
      */
     public static function forbiddenExtensions(): array
     {
@@ -31,7 +39,8 @@ trait ValidatesAttachmentSecurity
 
     /**
      * Returns a list of forbidden MIME types.
-     * * @return array
+     *
+     * @return array
      */
     public static function forbiddenMimes(): array
     {
@@ -51,8 +60,10 @@ trait ValidatesAttachmentSecurity
     }
 
     /**
-     * Validation rule for file extensions.
-     * * @return \Closure
+     * Validation rule for file extensions - použito jako closure pravidlo přímo na
+     * `attachments.*`, Laravel do `$value` předá jednotlivý UploadedFile, ne celé pole.
+     *
+     * @return \Closure
      */
     public function attachmentExtensionRule(): \Closure
     {
@@ -67,18 +78,27 @@ trait ValidatesAttachmentSecurity
     }
 
     /**
-     * Validates MIME type to prevent disguise of malicious files.
-     * * @param \Illuminate\Validation\Validator $validator
+     * Validates MIME type of every uploaded attachment to prevent disguise of malicious
+     * files (extension can be spoofed, MIME sniffing is an extra layer of defense).
+     *
+     * @param \Illuminate\Validation\Validator $validator
      * @return void
      */
     public function validateAttachmentMime($validator): void
     {
-        if (!$this->hasFile('attachment')) return;
+        if (!$this->hasFile('attachments')) return;
 
-        $mime = $this->file('attachment')->getMimeType();
+        foreach ($this->file('attachments') as $index => $file) {
+            if (!$file || !$file->isValid()) continue;
 
-        if (in_array($mime, self::forbiddenMimes(), true)) {
-            $validator->errors()->add('attachment', 'Tento typ souboru není z bezpečnostních důvodů povolen.');
+            $mime = $file->getMimeType();
+
+            if (in_array($mime, self::forbiddenMimes(), true)) {
+                $validator->errors()->add(
+                    "attachments.{$index}",
+                    "Soubor \"{$file->getClientOriginalName()}\" má nepovolený typ a nebyl z bezpečnostních důvodů přijat."
+                );
+            }
         }
     }
 }

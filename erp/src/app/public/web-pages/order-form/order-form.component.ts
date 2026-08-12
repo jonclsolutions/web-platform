@@ -13,12 +13,17 @@
  *      Formulář už neposílá `lead_id` - odesílá `lead_token`, ze kterého si lead dohledá
  *      a napojí backend sám (WebSalesOrderController::store), nikdy ne podle klientem
  *      posílaného ID.
+ * @refactor-note (2026-08) `selectedFile: File | null` (jeden soubor) nahrazeno
+ * `selectedFiles: File[]` (max 10, viz StoreWebSalesOrderRequest) - `onFileSelected()`
+ * nahrazeno `onFilesChanged()`, napojeno na sdílenou `MultiFileUploadComponent`. FormData
+ * teď posílá `attachments[]` (pole) místo `attachment` (jeden soubor).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { BasePublicComponent } from '../../base-public.component';
+import { MultiFileUploadComponent } from '../../../shared/components/multi-file-upload/multi-file-upload.component';
 import * as Web from '../../../shared/imports/web-providers';
 
 /** Stav ověření odkazu podle public_token - řídí, co komponenta zobrazí. */
@@ -34,141 +39,142 @@ interface LeadPrefill {
 }
 
 @Component({
-selector: 'app-order-form',
-standalone: true,
-imports: [ReactiveFormsModule, RouterModule],
-templateUrl: './order-form.component.html',
-styleUrl: './order-form.component.css',
-changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-order-form',
+  standalone: true,
+  imports: [ReactiveFormsModule, RouterModule, MultiFileUploadComponent],
+  templateUrl: './order-form.component.html',
+  styleUrl: './order-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrderFormComponent extends BasePublicComponent {
 
-protected readonly translationKey = 'order_form';
-private route = inject(ActivatedRoute);
-private fb = inject(FormBuilder);
+  protected readonly translationKey = 'order_form';
+  private route = inject(ActivatedRoute);
+  private fb = inject(FormBuilder);
 
-orderForm!: FormGroup;
+  orderForm!: FormGroup;
 
-/** Čistý public_token z URL (/order_form/:token) - nikdy interní DB id. */
-token: string | null = null;
-linkState: LinkState = 'loading';
-leadPrefill: LeadPrefill | null = null;
+  /** Čistý public_token z URL (/order_form/:token) - nikdy interní DB id. */
+  token: string | null = null;
+  linkState: LinkState = 'loading';
+  leadPrefill: LeadPrefill | null = null;
 
-isSubmitted = false;
-isLoading = false; 
-selectedFile: File | null = null;
-errorMessage: string | null = null;
+  isSubmitted = false;
+  isLoading = false;
+  selectedFiles: File[] = [];
+  errorMessage: string | null = null;
 
-// Hook volaný po základní inicializaci v bázi
-protected override onInit(): void {
-this.initForm();
+  // Hook volaný po základní inicializaci v bázi
+  protected override onInit(): void {
+    this.initForm();
 
-const token = this.route.snapshot.paramMap.get('token');
-this.token = token;
+    const token = this.route.snapshot.paramMap.get('token');
+    this.token = token;
 
-if (!token) {
+    if (!token) {
       // Formulář dostupný i bez tokenu (obecná poptávka mimo obchodní proces) -
       // WebSalesOrderController::store() v takovém případě vytvoří objednávku bez
       // navázání na lead, přesně jako dřív.
-this.linkState = 'no-token';
-this.cdr.markForCheck();
-return;
+      this.linkState = 'no-token';
+      this.cdr.markForCheck();
+      return;
     }
 
-this.publicDataService.get<LeadPrefill>(`public/sales-leads/${token}`)
+    this.publicDataService.get<LeadPrefill>(`public/sales-leads/${token}`)
       .pipe(Web.takeUntil(this.destroy$))
       .subscribe({
-next: (lead) => {
-this.leadPrefill = lead;
-this.orderForm.patchValue({
-client_name: lead.contact_person || lead.subject_name || '',
-client_email: lead.contact_email || '',
-client_phone: lead.contact_phone || '',
+        next: (lead) => {
+          this.leadPrefill = lead;
+          this.orderForm.patchValue({
+            client_name: lead.contact_person || lead.subject_name || '',
+            client_email: lead.contact_email || '',
+            client_phone: lead.contact_phone || '',
           });
-this.linkState = 'valid';
-this.cdr.markForCheck();
+          this.linkState = 'valid';
+          this.cdr.markForCheck();
         },
-error: (err: any) => {
+        error: (err: any) => {
           // Backend vrací 410 pro už jednou použitý odkaz, 404 pro neplatný/neexistující.
-this.linkState = err?.status === 410 ? 'used' : 'invalid';
-this.cdr.markForCheck();
+          this.linkState = err?.status === 410 ? 'used' : 'invalid';
+          this.cdr.markForCheck();
         }
       });
   }
 
-private initForm(): void {
-this.orderForm = this.fb.group({
-client_name: ['', Validators.required],
-ico: ['', [Validators.pattern('^[0-9]*$')]],
-client_address: [''],
-client_phone: ['', [Validators.pattern('^\\+?[0-9]*$'), Validators.maxLength(20)]],
-client_email: ['', [Validators.required, Validators.email]],
-order_description: ['', Validators.required],
-dataProcessingAgreement: [false, Validators.requiredTrue],
-tosAgreement: [false, Validators.requiredTrue]
+  private initForm(): void {
+    this.orderForm = this.fb.group({
+      client_name: ['', Validators.required],
+      ico: ['', [Validators.pattern('^[0-9]*$')]],
+      client_address: [''],
+      client_phone: ['', [Validators.pattern('^\\+?[0-9]*$'), Validators.maxLength(20)]],
+      client_email: ['', [Validators.required, Validators.email]],
+      order_description: ['', Validators.required],
+      dataProcessingAgreement: [false, Validators.requiredTrue],
+      tosAgreement: [false, Validators.requiredTrue]
     });
   }
 
-get btnText(): string {
-if (!this.t) return '...';
-return this.isLoading ? this.t.buttons.sending : this.t.buttons.send;
+  get btnText(): string {
+    if (!this.t) return '...';
+    return this.isLoading ? this.t.buttons.sending : this.t.buttons.send;
   }
 
-onFileSelected(event: any): void {
-const file = event.target.files[0];
-if (file) {
-this.selectedFile = file;
-this.cdr.markForCheck();
-    }
+  /**
+   * @description Přijímá aktuální seznam souborů z MultiFileUploadComponent. Komponenta
+   * sama hlídá klientský limit (10 souborů / 20 MB / 50 MB celkem) - jde jen o UX
+   * pomůcku, skutečnou hranici vždy vynucuje backend (StoreWebSalesOrderRequest).
+   */
+  onFilesChanged(files: File[]): void {
+    this.selectedFiles = files;
   }
 
-onSubmit(): void {
-if (this.orderForm.invalid) return;
+  onSubmit(): void {
+    if (this.orderForm.invalid) return;
 
-this.isLoading = true;
-this.errorMessage = null;
+    this.isLoading = true;
+    this.errorMessage = null;
 
-const formData = new FormData();
-Object.keys(this.orderForm.value).forEach(key => {
-const value = this.orderForm.value[key];
-if (value !== null && value !== undefined) {
-formData.append(key, value);
+    const formData = new FormData();
+    Object.keys(this.orderForm.value).forEach(key => {
+      const value = this.orderForm.value[key];
+      if (value !== null && value !== undefined) {
+        formData.append(key, value);
       }
     });
 
     // Lead se váže výhradně přes token - backend si podle něj dohledá a ověří
     // lead sám (viz WebSalesOrderController::store). Posílá se jen když existuje
     // (formulář může běžet i bez navázání na konkrétní lead).
-if (this.token) {
-formData.append('lead_token', this.token);
+    if (this.token) {
+      formData.append('lead_token', this.token);
     }
 
-if (this.selectedFile) {
-formData.append('attachment', this.selectedFile, this.selectedFile.name);
-    }
+    this.selectedFiles.forEach(file => {
+      formData.append('attachments[]', file, file.name);
+    });
 
-this.publicDataService.post("sales_orders", formData).pipe(
-Web.finalize(() => {
-this.isLoading = false;
-this.cdr.markForCheck();
+    this.publicDataService.post("sales_orders", formData).pipe(
+      Web.finalize(() => {
+        this.isLoading = false;
+        this.cdr.markForCheck();
       }),
-Web.takeUntil(this.destroy$)
+      Web.takeUntil(this.destroy$)
     ).subscribe({
-next: () => {
-this.isSubmitted = true;
-this.cdr.markForCheck();
+      next: () => {
+        this.isSubmitted = true;
+        this.cdr.markForCheck();
       },
-error: (err: any) => {
+      error: (err: any) => {
         // 410 může přijít i tady, pokud byl token použit souběžně (dvě otevřené karty) -
         // zobrazíme stejnou hlášku jako při načtení, ať uživatel ví, co se stalo.
-if (err?.status === 410) {
-this.linkState = 'used';
-this.errorMessage = null;
+        if (err?.status === 410) {
+          this.linkState = 'used';
+          this.errorMessage = null;
         } else {
-this.errorMessage = this.t?.errors?.submit_error || 'Submission error.';
+          this.errorMessage = this.t?.errors?.submit_error || 'Submission error.';
         }
-console.error('Submission failed:', err);
-this.cdr.markForCheck();
+        console.error('Submission failed:', err);
+        this.cdr.markForCheck();
       }
     });
   }

@@ -8,9 +8,7 @@
  * @dependencies
  * - AuthService: Manages user authentication and session status.
  * - PermissionService: Validates access to specific administrative modules.
- * - DataHandler: Facilitates communication with the administration API.
  * - LoadingService: Observes global loading states for the UI.
- * - AlertDialogService: Provides feedback for critical administrative operations.
  * @redesign-note (2026) Přidán `isMobileActionsOpen` + `toggleMobileActions()`/`closeMobileActions()`.
  *      Na mobilu (viz CSS) header schovává většinu obsahu (uživatel, hodiny, přepínač modulů,
  *      wiki/bug odkazy), aby se nic neořezávalo - místo toho se všechno přesune do vysouvacího
@@ -23,9 +21,17 @@
  * @redesign-note (2026-3) `switchModule('web')` nyní míří na `/admin/web/dashboard` místo
  *      `/admin/dashboard` - web stránky sjednoceny pod prefix `web/...`, stejně jako
  *      `core/...` a `shop/...` (viz admin-routing.module.ts).
+ * @refactor-note (2026-08) Přepínač "E-shop: Aktivní/Údržba" + potvrzovací modál s heslem
+ *      KOMPLETNĚ ODSTRANĚN z headeru - logika se přesunula na `shop-pages/dashboard`
+ *      (nová karta "Režim údržby e-shopu"). Analogický přepínač pro veřejný web přibyl na
+ *      `web-pages/dashboard`. Header adminu už žádné maintenance ovládání neobsahuje -
+ *      `dataHandler`/`alertDialogService` injekce a `isShopActive`/`maintenanceMessage`/
+ *      `showConfirmModal`/`confirmPasswordValue`/`pendingTargetState`/`toggleShopStatus()`/
+ *      `submitShopStatusChange()`/`cancelShopStatusChange()`/`loadShopSettings()` byly
+ *      odstraněny, protože už v této komponentě nemají žádné využití.
  */
 
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Subscription, interval, Observable } from 'rxjs';
@@ -34,13 +40,11 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { LoadingService } from '../../../core/services/loading.service';
-import { DataHandler } from '../../../core/services/data-handler.service';
-import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 
 /**
- * @description The layout shell for the administration area, handling sidebar controls and system-wide settings like shop maintenance mode.
+ * @description The layout shell for the administration area, handling sidebar controls and navigation.
  * @usage Used as the root component for all '/admin' routes.
- * @note Implements persistent storage for layout preferences (sidebar width, menu state) and handles sensitive status toggles via confirmation dialogs.
+ * @note Implements persistent storage for layout preferences (sidebar width, menu state).
  */
 @Component({
   selector: 'app-admin-layout',
@@ -58,13 +62,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   isLoggedIn: boolean = false;
   
   currentModule: 'web' | 'core' | 'shop' = 'web';
-
-  isShopActive: boolean = true;
-  maintenanceMessage: string = '';
-
-  showConfirmModal: boolean = false;
-  confirmPasswordValue: string = '';
-  pendingTargetState: boolean = true;
 
   isLoadingGlobal$: Observable<boolean>;
   
@@ -84,9 +81,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private maxWidth: number = 500;
   private authSubscription: Subscription | undefined;
   private userEmailSubscription: Subscription | undefined;
-
-  private dataHandler = inject(DataHandler);
-  private alertDialogService = inject(AlertDialogService);
 
   constructor(
     private router: Router, 
@@ -121,10 +115,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.authSubscription = this.authService.isLoggedIn$.subscribe(loggedIn => {
       this.isLoggedIn = loggedIn;
       this.userRole = loggedIn ? this.authService.getUserRole() : null;
-      
-      if (loggedIn) {
-        this.loadShopSettings();
-      }
       this.cdr.markForCheck(); 
     });
 
@@ -132,69 +122,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.userEmail = email;
       this.cdr.markForCheck();
     });
-  }
-
-  /**
-   * @description Fetches system settings from the backend to determine shop status.
-   */
-  private loadShopSettings(): void {
-    this.dataHandler.get<any>('core/settings').subscribe({
-      next: (res) => {
-        if (res) {
-          this.isShopActive = !!res.is_shop_active;
-          this.maintenanceMessage = res.maintenance_message || '';
-          this.cdr.markForCheck();
-        }
-      }
-    });
-  }
-
-  /**
-   * @description Opens the confirmation modal to initiate a status change for the shop.
-   */
-  toggleShopStatus(): void {
-    this.pendingTargetState = !this.isShopActive;
-    this.confirmPasswordValue = ''; 
-    this.showConfirmModal = true;   
-    this.cdr.markForCheck();
-  }
-
-  /**
-   * @description Executes the PUT request to change the shop status, requiring a password for authorization.
-   * @note Uses AlertDialogService to provide immediate feedback on success or failure.
-   */
-  submitShopStatusChange(): void {
-    if (!this.confirmPasswordValue.trim()) {
-      this.alertDialogService.open('Validation Error', 'Authorization password is required.', 'danger');
-      return;
-    }
-
-    this.dataHandler.put<any>('core/settings', {
-      is_shop_active: this.pendingTargetState,
-      maintenance_message: this.maintenanceMessage || 'System under maintenance.',
-      confirm_password: this.confirmPasswordValue
-    }).subscribe({
-      next: () => {
-        this.isShopActive = this.pendingTargetState;
-        this.showConfirmModal = false; 
-        this.alertDialogService.open(
-          'Success', 
-          this.pendingTargetState ? 'Shop is now active.' : 'Maintenance mode activated.',
-          'success'
-        );
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        const errorMessage = err?.error?.message || 'Failed to update shop status.';
-        this.alertDialogService.open('Authorization Error', errorMessage, 'danger');
-      }
-    });
-  }
-
-  cancelShopStatusChange(): void {
-    this.showConfirmModal = false;
-    this.confirmPasswordValue = '';
-    this.cdr.markForCheck();
   }
 
   /**

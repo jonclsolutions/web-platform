@@ -3,14 +3,20 @@
     @path: /src/app/admin/web-pages/dashboard/dashboard.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2026 
+    @created: 2026
+    @description: System-wide overview - resource counters shared across Web and Shop,
+        quick navigation into Web management screens, and the web_logs audit feed.
+    @dependencies: DashboardComponent (getIcon, quickStats, navSections, recentActivity,
+        maintenance toggle state)
+    @refactor-note (2026-08): Přidána sekce "Režim údržby" + potvrzovací modál s heslem
+        (přesunuto z admin-layout headeru).
 -->
 
 <div class="core-dashboard">
 
   <div class="cd-header-bar">
-    <h1 class="cd-header-title">Přehled systému</h1>
-    <p class="cd-header-sub">Souhrnné statistiky, poslední aktivita a rychlá navigace</p>
+    <h1 class="cd-header-title">Přehled webu</h1>
+    <p class="cd-header-sub">Obsah a provoz veřejné webové prezentace</p>
   </div>
 
   @if (errorMessage) {
@@ -23,10 +29,11 @@
     </div>
   }
 
+  <!-- @component: Stats grid — resource counters for every Web-owned module -->
   <div class="cd-section">
     <div class="cd-stats-grid">
       @if (loadingStats) {
-        @for (i of [1,2,3,4,5,6]; track i) {
+        @for (i of [1,2,3,4,5,6,7]; track i) {
           <div class="cd-stat-card cd-stat-skeleton"></div>
         }
       }
@@ -42,6 +49,7 @@
     </div>
   </div>
 
+  <!-- @component: Quick navigation — one card per Web management screen -->
   <div class="cd-section">
     <div class="cd-section-label">Rychlá navigace</div>
     <div class="cd-nav-grid">
@@ -58,8 +66,9 @@
     </div>
   </div>
 
+  <!-- @component: Recent web activity — content changes, CRUD on web-owned resources -->
   <div class="cd-section">
-    <div class="cd-section-label">Poslední aktivita v systému</div>
+    <div class="cd-section-label">Poslední aktivita</div>
     <div class="cd-card cd-card-activity">
       <div class="cd-card-header">
         <span class="cd-card-icon">
@@ -69,7 +78,7 @@
             <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>
           </svg>
         </span>
-        <span class="cd-card-title">Záznamy aktivit (web logy)</span>
+        <span class="cd-card-title">Business logy</span>
         <a class="cd-card-link" routerLink="/admin/web/business-logs">Zobrazit vše →</a>
       </div>
       <div class="cd-activity-body">
@@ -80,7 +89,7 @@
           </div>
         }
         @if (!loadingActivity && recentActivity.length === 0) {
-          <div class="cd-activity-empty">Zatím žádné záznamy aktivit</div>
+          <div class="cd-activity-empty">Zatím žádné záznamy</div>
         }
         @if (!loadingActivity && recentActivity.length > 0) {
           <div class="cd-activity-list">
@@ -112,7 +121,53 @@
     </div>
   </div>
 
+  <!-- @component: Web maintenance toggle — visible only with 'web-set-maintenance-mode' -->
+  <div class="cd-section" *appHasPermission="'web-set-maintenance-mode'">
+    <div class="cd-section-label">Režim údržby</div>
+    <div class="cd-card">
+      <div class="maintenance-toggle-row">
+        <div class="maintenance-status" [class.status-active]="isWebActive" [class.status-inactive]="!isWebActive">
+          <span class="status-indicator"></span>
+          {{ isWebActive ? 'Web je aktivní' : 'Web je v údržbě' }}
+        </div>
+        <button class="maintenance-switch-btn" (click)="openWebMaintenanceModal()">
+          {{ isWebActive ? 'Zapnout údržbu' : 'Ukončit údržbu' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="cd-footer">
     <span>Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému.</span>
   </div>
 </div>
+
+@if (showWebMaintenanceModal) {
+  <div class="password-modal-overlay">
+    <div class="password-modal-card">
+      <div class="password-modal-header">
+        <h3 class="modal-header-title">Ověření administrátora</h3>
+        <button class="close-modal-btn" (click)="cancelWebMaintenanceModal()" aria-label="Zavřít">✕</button>
+      </div>
+      <div class="password-modal-body">
+        <p>Chystáte se změnit stav webu na:
+          <strong [class.state-active]="pendingWebTargetState" [class.state-inactive]="!pendingWebTargetState">
+            {{ pendingWebTargetState ? 'STANDARDNÍ PROVOZ' : 'REŽIM ÚDRŽBY' }}
+          </strong>
+        </p>
+        <div class="modal-warning-box">Tato akce ovlivní celý veřejný web. Pro uložení zadejte své přihlašovací heslo.</div>
+        <div class="password-input-group">
+          <label for="web-confirm-pwd">Aktuální heslo</label>
+          <input id="web-confirm-pwd" type="password" placeholder="••••••••"
+            (input)="webConfirmPasswordValue = $any($event.target).value"
+            (keyup.enter)="submitWebMaintenanceChange()"
+            class="form-control-password" autocomplete="current-password">
+        </div>
+      </div>
+      <div class="password-modal-footer">
+        <button class="btn-modal-secondary" (click)="cancelWebMaintenanceModal()">Storno</button>
+        <button class="btn-modal-primary" (click)="submitWebMaintenanceChange()">Potvrdit a uložit</button>
+      </div>
+    </div>
+  </div>
+}

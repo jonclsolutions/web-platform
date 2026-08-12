@@ -22,8 +22,19 @@
  *      elementu prochází HTML parserem, který by `viewBox` přepsal na malé `viewbox`
  *      (SVG by ho pak ignorovalo) - tomuhle se tak vyhneme úplně.
  *
+ * @refactor-note (2026-08) Přidána karta "Režim údržby e-shopu" (přesunuto z headeru
+ * admin-layoutu, viz jeho @refactor-note) - `isShopActive`/`shopMaintenanceMessage` +
+ * potvrzovací modál s heslem (`openShopMaintenanceModal()`/`submitShopMaintenanceChange()`).
+ * Karta je viditelná jen s permission `shop-set-maitanance-mode` (`*appHasPermission`),
+ * proto nový import `HasPermissionDirective`. Endpoint `core/settings` je sdílený s Core
+ * i Web maintenance sekcí - `PUT` posílá jen `is_shop_active`/`maintenance_message` pole,
+ * ostatní sekce (web) `CoreSiteSettingController::update()` nechá beze změny (viz jeho
+ * `TOGGLE_GROUPS` mechanismus).
+ *
  * @dependencies
  * - DataHandler: Centralizovaná HTTP komunikace (baseUrl + error handling) — nahrazuje HttpClient.
+ * - AlertDialogService: Zpětná vazba při úspěchu/chybě změny režimu údržby.
+ * - HasPermissionDirective: Gate karty údržby na permission `shop-set-maitanance-mode`.
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
  */
 
@@ -32,6 +43,8 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { forkJoin, interval, Subscription, catchError, of } from 'rxjs';
 import { DataHandler } from '../../../core/services/data-handler.service';
+import { AlertDialogService } from '../../../core/services/alert-dialog.service';
+import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } from './';
 
 /**
@@ -45,13 +58,14 @@ import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } fr
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HasPermissionDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
 
   private sanitizer = inject(DomSanitizer);
+  private alertDialogService = inject(AlertDialogService);
   private refreshSub?: Subscription;
 
   loading = true;
@@ -106,6 +120,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   totalRevenue = 0;
   revenueThisMonth = 0;
 
+  // ── Režim údržby e-shopu ────────────────────────────────────────────
+  isShopActive = true;
+  shopMaintenanceMessage = '';
+  showShopMaintenanceModal = false;
+  shopConfirmPasswordValue = '';
+  pendingShopTargetState = true;
+
   /**
    * Knihovna ikon použitých na dashboardu (viz @icons-note výše). Bez `viewBox`,
    * velikost na obrazovce řídí CSS (`.kpi-icon svg`).
@@ -128,6 +149,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadAll();
+    this.loadMaintenanceStatus();
     this.refreshSub = interval(120_000).subscribe(() => this.loadAll());
   }
 
@@ -407,5 +429,67 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   yPos(step: number): number {
     return this.chartPadT + this.chartInnerH - (step / 4) * this.chartInnerH;
+  }
+
+  // ── Režim údržby e-shopu ────────────────────────────────────────────
+
+  /**
+   * @description Načte aktuální stav režimu údržby e-shopu ze sdíleného `core/settings`
+   * endpointu. Volá se samostatně od `loadAll()`, ať výpadek shop-KPI dat neblokuje
+   * zobrazení stavu údržby a naopak.
+   */
+  private loadMaintenanceStatus(): void {
+    this.dataHandler.get<any>('core/settings').subscribe({
+      next: (res) => {
+        if (res) {
+          this.isShopActive = !!res.is_shop_active;
+          this.shopMaintenanceMessage = res.maintenance_message || '';
+        }
+      }
+    });
+  }
+
+  openShopMaintenanceModal(): void {
+    this.pendingShopTargetState = !this.isShopActive;
+    this.shopConfirmPasswordValue = '';
+    this.showShopMaintenanceModal = true;
+  }
+
+  cancelShopMaintenanceModal(): void {
+    this.showShopMaintenanceModal = false;
+    this.shopConfirmPasswordValue = '';
+  }
+
+  /**
+   * @description Odešle změnu stavu e-shopu na `core/settings`. Posílá jen
+   * `is_shop_active`/`maintenance_message` pole - `CoreSiteSettingController::update()`
+   * je generický a upraví jen sekce, které se skutečně pošlou (viz TOGGLE_GROUPS), takže
+   * tímhle voláním se web-maintenance sekce nedotkne.
+   */
+  submitShopMaintenanceChange(): void {
+    if (!this.shopConfirmPasswordValue.trim()) {
+      this.alertDialogService.open('Chyba', 'Zadejte prosím heslo pro potvrzení.', 'danger');
+      return;
+    }
+
+    this.dataHandler.put<any>('core/settings', {
+      is_shop_active: this.pendingShopTargetState,
+      maintenance_message: this.shopMaintenanceMessage || 'Omlouváme se, na systému momentálně probíhá údržba.',
+      confirm_password: this.shopConfirmPasswordValue
+    }).subscribe({
+      next: () => {
+        this.isShopActive = this.pendingShopTargetState;
+        this.showShopMaintenanceModal = false;
+        this.alertDialogService.open(
+          'Úspěch',
+          this.pendingShopTargetState ? 'E-shop je nyní aktivní.' : 'Režim údržby byl aktivován.',
+          'success'
+        );
+      },
+      error: (err) => {
+        const message = err?.error?.message || 'Změna režimu údržby selhala.';
+        this.alertDialogService.open('Chyba autorizace', message, 'danger');
+      }
+    });
   }
 }

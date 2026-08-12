@@ -8,6 +8,8 @@
  * @note siteSettings$ acts as an in-memory cache populated once by AppBootstrapService
  *   during APP_INITIALIZER. Components should read from siteSettingsValue$ instead of
  *   calling getSiteSettings() themselves, to avoid redundant requests and loading flicker.
+ * @refactor-note (2026-08) Přidána `getWebStatus()` - mirror `getShopStatus()`, používá
+ *   `webMaintenanceGuard` k rozhodnutí, jestli přesměrovat na /web-maintenance.
  */
 
 import { Injectable } from '@angular/core';
@@ -68,6 +70,22 @@ export class PublicDataService {
 
   getShopStatus(): Observable<{ is_shop_active: boolean }> {
     return this.http.get<{ is_shop_active: boolean }>(`${this.apiUrl}/shop/public/status`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    }).pipe(catchError(this.handleError));
+  }
+
+  /**
+   * @description Fetches whether the public web is currently active or in maintenance
+   * mode - used by webMaintenanceGuard. No-cache headers for the same reason as
+   * getShopStatus(): the status can flip at any moment via the admin toggle, we never
+   * want a stale cached 200 masking an active maintenance window.
+   */
+  getWebStatus(): Observable<{ is_web_active: boolean }> {
+    return this.http.get<{ is_web_active: boolean }>(`${this.apiUrl}/web/public/status`, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',

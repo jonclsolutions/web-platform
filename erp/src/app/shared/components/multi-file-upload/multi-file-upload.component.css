@@ -1,0 +1,202 @@
+/*     
+    @file: multi-file-upload.component.css
+    @path: /src/app/shared/components/multi-file-upload/multi-file-upload.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Sdílená drag&drop multi-file upload komponenta - sladěno s tmavým
+        fialkovým vizuálním jazykem veřejného webu (order-form/contact), stejná paleta
+        proměnných jako .file-drop-area/.checkbox-group.
+    @note Komponenta je standalone a používá se i mimo tenhle konkrétní tmavý kontext
+        (v budoucnu i v adminu - viz task "část 2"), proto si CSS proměnné definuje
+        samostatně na :host s fallbacky na tmavou paletu - pokud bude nasazena do
+        světlého admin layoutu, tenhle blok proměnných se v tom kontextu přepíše/doladí.
+*/
+
+:host {
+  --bg:           #0d0d1b;
+  --surface:      #111128;
+  --surface-2:    #18183a;
+  --border:       rgba(166, 125, 255, 0.1);
+  --border-mid:   rgba(166, 125, 255, 0.22);
+  --accent:       #a67dff;
+  --accent-dark:  #6b2e91;
+  --accent-dim:   rgba(166, 125, 255, 0.07);
+  --accent-hover: #7d35ae;
+  --white:        #ffffff;
+  --text:         #e0e0f0;
+  --text-muted:   #888899;
+  --text-dim:     #555566;
+  --error:        #ff5566;
+  --success:      #44cc88;
+  --ff-body:      'Segoe UI', system-ui, sans-serif;
+  --radius:       12px;
+  --ease:         0.25s ease;
+
+  display: block;
+  font-family: var(--ff-body);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.mfu-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mfu-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.mfu-hint {
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  margin-left: 4px;
+}
+
+/* ── Dropzone — stejný vzor jako .file-drop-area ────────────────────── */
+.mfu-dropzone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 80px;
+  padding: 20px;
+  border: 1px dashed var(--border-mid);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  margin-top: 6px;
+  transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
+}
+
+.mfu-dropzone:hover,
+.mfu-dropzone.dragging {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: 0 0 0 3px rgba(166, 125, 255, 0.08);
+}
+
+.mfu-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mfu-dropzone-label {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.mfu-dropzone:hover .mfu-dropzone-label {
+  color: var(--text);
+}
+
+/* ── Chyba — stejný vzor jako .error-msg-main ───────────────────────── */
+.mfu-error {
+  color: var(--error);
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 4px;
+  padding: 10px 14px;
+  background: rgba(255, 85, 102, 0.07);
+  border: 1px solid rgba(255, 85, 102, 0.2);
+  border-radius: var(--radius);
+}
+
+/* ── Seznam vybraných souborů ────────────────────────────────────────── */
+.mfu-file-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mfu-file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+
+.mfu-file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.mfu-file-size {
+  color: var(--text-dim);
+  font-size: 0.76rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mfu-remove-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--ease), color var(--ease);
+}
+
+.mfu-remove-btn:hover {
+  color: var(--error);
+  background: rgba(255, 85, 102, 0.1);
+}
+
+.mfu-total {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  text-align: right;
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .mfu-dropzone {
+    padding: 16px;
+  }
+
+  .mfu-file-name {
+    max-width: 50vw;
+  }
+}

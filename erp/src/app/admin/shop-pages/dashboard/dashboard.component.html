@@ -4,6 +4,8 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-08): Přidána karta "Režim údržby e-shopu" (dash-row-quick sekce)
+        + potvrzovací modál s heslem, přesunuto z admin-layout headeru.
 -->
 
 <div class="dashboard">
@@ -315,5 +317,52 @@
       </div>
     </div>
 
+    <div class="dash-row" *appHasPermission="'shop-set-maitanance-mode'">
+      <div class="dash-card dash-card-maintenance">
+        <div class="dash-card-header">
+          <span class="dash-card-title">Režim údržby e-shopu</span>
+        </div>
+        <div class="maintenance-toggle-row">
+          <div class="maintenance-status" [class.status-active]="isShopActive" [class.status-inactive]="!isShopActive">
+            <span class="status-indicator"></span>
+            {{ isShopActive ? 'E-shop je aktivní' : 'E-shop je v údržbě' }}
+          </div>
+          <button class="maintenance-switch-btn" (click)="openShopMaintenanceModal()">
+            {{ isShopActive ? 'Zapnout údržbu' : 'Ukončit údržbu' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
   }
 </div>
+
+@if (showShopMaintenanceModal) {
+  <div class="password-modal-overlay">
+    <div class="password-modal-card">
+      <div class="password-modal-header">
+        <h3 class="modal-header-title">Ověření administrátora</h3>
+        <button class="close-modal-btn" (click)="cancelShopMaintenanceModal()" aria-label="Zavřít">✕</button>
+      </div>
+      <div class="password-modal-body">
+        <p>Chystáte se změnit stav e-shopu na:
+          <strong [class.state-active]="pendingShopTargetState" [class.state-inactive]="!pendingShopTargetState">
+            {{ pendingShopTargetState ? 'STANDARDNÍ PROVOZ' : 'REŽIM ÚDRŽBY' }}
+          </strong>
+        </p>
+        <div class="modal-warning-box">Tato akce ovlivní veřejné zákazníky. Pro uložení zadejte své přihlašovací heslo.</div>
+        <div class="password-input-group">
+          <label for="shop-confirm-pwd">Aktuální heslo</label>
+          <input id="shop-confirm-pwd" type="password" placeholder="••••••••"
+            (input)="shopConfirmPasswordValue = $any($event.target).value"
+            (keyup.enter)="submitShopMaintenanceChange()"
+            class="form-control-password" autocomplete="current-password">
+        </div>
+      </div>
+      <div class="password-modal-footer">
+        <button class="btn-modal-secondary" (click)="cancelShopMaintenanceModal()">Storno</button>
+        <button class="btn-modal-primary" (click)="submitShopMaintenanceChange()">Potvrdit a uložit</button>
+      </div>
+    </div>
+  </div>
+}

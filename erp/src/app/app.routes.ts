@@ -7,14 +7,21 @@
  * @description Central routing configuration for the application, managing lazy-loaded modules and route guards.
  * @dependencies
  * - shopMaintenanceGuard: Validates e-shop availability status.
+ * - webMaintenanceGuard: Validates public web availability status.
  * - LoginComponent: Handles administrative authentication.
  * - AdminRoutingModule: Loads the protected administrative section.
+ *
+ * @refactor-note (2026-08) Přidán `webMaintenanceGuard` jako `canActivateChild` na
+ * kořenovou '' routu (WebLayoutComponent) - blokuje CELÝ veřejný web najednou, na rozdíl
+ * od `shopMaintenanceGuard`, který je duplikovaný per-child uvnitř 'shop' skupiny. Nová
+ * routa 'web-maintenance' mimo AuthGuard i webMaintenanceGuard (jinak by se sama
+ * zablokovala - ochranu proti smyčce navíc řeší i guard samotný, viz jeho komentář).
  */
 
 import { Routes } from '@angular/router';
 import { LoginComponent } from './admin/auth/login/login.component';
 import { shopMaintenanceGuard } from './public/shop-pages/components/guards/shop-maintenance.guard';
-
+import { webMaintenanceGuard } from './public/web-pages/components/guards/web-maintenance.guard';
 /**
  * @description Main application routing configuration.
  * @usage Imported by the root application module/app config.
@@ -27,6 +34,7 @@ export const routes: Routes = [
   // --- 1. MAIN WEB ---
   {
     path: '',
+    canActivateChild: [webMaintenanceGuard],
     loadComponent: () => import('./public/web-pages/web-layout/web-layout.component').then(m => m.WebLayoutComponent),
     children: [
       {
@@ -81,10 +89,14 @@ export const routes: Routes = [
     ]
   },
 
-  // --- 3. MAINTENANCE PAGE ---
+  // --- 3. MAINTENANCE PAGES ---
   {
     path: 'shop-maintenance',
     loadComponent: () => import('./public/shop-pages/shop-maintenance/shop-maintenance.component').then(m => m.ShopMaintenanceComponent)
+  },
+  {
+    path: 'web-maintenance',
+    loadComponent: () => import('./public/web-pages/web-maintenance/web-maintenance.component').then(m => m.WebMaintenanceComponent)
   },
 
   // --- 4. ADMIN & AUTH ---

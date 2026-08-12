@@ -6,12 +6,17 @@
  * @author RPSW
  * @created 2025
  * @description Validation logic for creating new sales orders, including file attachments and required agreements.
+ *
+ * @refactor-note (2026-08) `attachment` (jeden soubor) nahrazeno `attachments` (pole,
+ * max. 10 souborů, každý max. 20 MB, souhrnně max. 50 MB) - sjednoceno se stejnou
+ * politikou jako StoreWebRawRequestCommissionRequest.
  */
 
 namespace App\Http\Requests\Web\WebSalesOrder;
 
+use App\Rules\AttachmentsTotalSize;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule; 
+use Illuminate\Validation\Rule;
 use App\Models\Web\WebSalesLead;
 
 /**
@@ -20,18 +25,15 @@ use App\Models\Web\WebSalesLead;
  */
 class StoreWebSalesOrderRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize(): bool { return true; }
+    private const MAX_ATTACHMENTS = 10;
+    private const MAX_FILE_SIZE_KB = 20480; // 20 MB
+    private const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         $safeExtensions = [
@@ -53,11 +55,10 @@ class StoreWebSalesOrderRequest extends FormRequest
             'ico'               => 'nullable|string|max:20',
             'client_address'    => 'nullable|string|max:500',
             'client_phone'      => 'nullable|string|max:20',
-            
-            'attachment'        => [
-                'nullable',
+            'attachments'       => ['nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
+            'attachments.*'     => [
                 'file',
-                'max:20480',
+                'max:' . self::MAX_FILE_SIZE_KB,
                 'mimes:' . implode(',', $safeExtensions),
             ],
             'dataProcessingAgreement' => 'required|accepted',
@@ -65,18 +66,14 @@ class StoreWebSalesOrderRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom error messages for validation rules.
-     *
-     * @return array
-     */
     public function messages(): array
     {
         return [
-            'attachment.mimes' => 'Tento typ souboru není povolen. Nahrajte prosím běžný dokument, obrázek, video nebo archiv.',
-            'attachment.max' => 'Maximální velikost souboru je 20 MB.',
+            'attachments.max'                  => 'Můžete nahrát maximálně ' . self::MAX_ATTACHMENTS . ' souborů.',
+            'attachments.*.mimes'              => 'Tento typ souboru není povolen. Nahrajte prosím běžný dokument, obrázek, video nebo archiv.',
+            'attachments.*.max'                => 'Každý soubor může mít maximálně 20 MB.',
             'dataProcessingAgreement.accepted' => 'Pro odeslání musíte souhlasit se zpracováním údajů.',
-            'tosAgreement.accepted' => 'Pro odeslání musíte souhlasit s obchodními podmínkami.',
+            'tosAgreement.accepted'            => 'Pro odeslání musíte souhlasit s obchodními podmínkami.',
         ];
     }
 }

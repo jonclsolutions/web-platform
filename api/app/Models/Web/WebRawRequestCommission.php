@@ -6,6 +6,10 @@
  * @author RPSW
  * @created 2025
  * @description Model representing raw commission requests submitted from the web.
+ *
+ * @refactor-note (2026-08) Odstraněno jednosouborové pole `file_path` - nahrazeno
+ * polymorfním vztahem `attachments()` (viz WebAttachment.php), který umožňuje uložit
+ * až 10 příloh na jeden požadavek místo jedné.
  */
 
 namespace App\Models\Web;
@@ -13,24 +17,19 @@ namespace App\Models\Web;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * @description Handles raw commission inquiry submissions, preserving contact info and order details.
- * * @property int $id Unique identifier.
+ * @property int $id Unique identifier.
  * @property string $thema Subject of the commission.
  */
 class WebRawRequestCommission extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * @var bool Indicates if the model should be timestamped.
-     */
     public $timestamps = true;
 
-    /**
-     * @var array<int, string> The attributes that are mass assignable.
-     */
     protected $fillable = [
         'thema',
         'contact_email',
@@ -39,15 +38,16 @@ class WebRawRequestCommission extends Model
         'status',
         'priority',
         'note',
-        'file_path',
     ];
 
-    /**
-     * @var array<string, string> The attributes that should be cast to native types.
-     */
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(WebAttachment::class, 'attachable');
+    }
 }

@@ -4,9 +4,12 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @redesign: 2026 - stejný vizuální jazyk jako admin-layout (Kravio styl):
-               generózní zaoblení, jemné stíny, tlumené barevné ikony místo
-               plných barevných proužků. Struktura sekcí/tříd beze změny.
+    @description: Visual language shared 1:1 with CoreDashboardComponent (`core-pages/dashboard`)
+        so all dashboards read as a single consistent product - generous rounding, soft
+        shadows, muted color-coded icon tiles instead of solid color bars.
+    @dependencies: none (self-contained component styles)
+    @refactor-note (2026-08) Přidány styly pro kartu "Režim údržby" a potvrzovací
+        modál s heslem (přesunuto z admin-layout headeru) - viz konec souboru.
 */
 
 .core-dashboard {
@@ -22,14 +25,6 @@
 
 .cd-header-bar {
   padding: 4px 0 6px;
-}
-
-.cd-header-date {
-  font-size: 0.76rem;
-  color: #a1a1aa;
-  text-transform: capitalize;
-  margin-bottom: 6px;
-  letter-spacing: 0.02em;
 }
 
 .cd-header-title {
@@ -113,7 +108,7 @@
 
 .cd-stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
 }
 
@@ -132,6 +127,11 @@
 }
 
 .cd-stat-card::before { content: none; }
+
+.cd-stat-card:hover {
+  box-shadow: 0 6px 20px rgba(24, 24, 27, 0.08);
+  transform: translateY(-1px);
+}
 
 .cd-stat-icon {
   width: 36px;
@@ -312,7 +312,7 @@
 
 .cd-activity-row {
   display: grid;
-  grid-template-columns: 110px 1fr 140px;
+  grid-template-columns: 150px 1fr 140px;
   align-items: center;
   gap: 14px;
   padding: 12px 18px;
@@ -394,7 +394,12 @@
   color: #d4d4d8;
 }
 
-.cd-activity-user,
+.cd-activity-user {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .cd-activity-ip {
   white-space: nowrap;
   overflow: hidden;
@@ -441,7 +446,7 @@
   }
 
   .cd-activity-row {
-    grid-template-columns: 90px 1fr;
+    grid-template-columns: 110px 1fr;
     grid-template-rows: auto auto;
   }
 
@@ -459,5 +464,185 @@
 @media (max-width: 420px) {
   .cd-stats-grid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Režim údržby webu ────────────────────────────────────────────── */
+
+.maintenance-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  gap: 14px;
+}
+
+.maintenance-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-indicator {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.status-active .status-indicator { background: #10b981; }
+.status-active { color: #059669; }
+.status-inactive .status-indicator { background: #f59e0b; }
+.status-inactive { color: #b45309; }
+
+.maintenance-switch-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: inherit;
+}
+.maintenance-switch-btn:hover { background: #f4f4f5; }
+
+/* ── Potvrzovací modál ────────────────────────────────────────────── */
+
+.password-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.password-modal-card {
+  background: #ffffff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.25);
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.password-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f4f4f5;
+}
+
+.modal-header-title {
+  margin: 0;
+  font-size: 1rem;
+  color: #18181b;
+}
+
+.close-modal-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.5;
+  color: inherit;
+  transition: opacity 0.15s ease;
+}
+.close-modal-btn:hover { opacity: 1; }
+
+.password-modal-body {
+  padding: 18px 20px;
+  font-size: 0.88rem;
+  color: #52525b;
+  line-height: 1.55;
+}
+
+.password-modal-body strong.state-active { color: #059669; }
+.password-modal-body strong.state-inactive { color: #b45309; }
+
+.modal-warning-box {
+  margin-top: 10px;
+  padding: 10px 13px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 3px solid #d97706;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: #92400e;
+}
+
+.password-input-group {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.password-input-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.form-control-password {
+  padding: 9px 12px;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+}
+.form-control-password:focus {
+  border-color: #18181b;
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
+}
+
+.password-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #f4f4f5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: #fafafa;
+}
+
+.btn-modal-secondary, .btn-modal-primary {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.btn-modal-secondary {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  color: #52525b;
+}
+.btn-modal-secondary:hover { background: #f4f4f5; }
+
+.btn-modal-primary {
+  background: #18181b;
+  color: #ffffff;
+}
+.btn-modal-primary:hover { background: #000000; }
+
+@media (max-width: 480px) {
+  .password-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .password-modal-card {
+    max-width: 100%;
+    border-radius: 18px 18px 0 0;
   }
 }

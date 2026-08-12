@@ -80,7 +80,7 @@ use App\Http\Controllers\Api\Shop\ShopPublicController;
 use App\Http\Controllers\Api\Legal\DocumentTypeController;
 use App\Http\Controllers\Api\Web\WebExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
-
+use App\Http\Controllers\Api\Web\WebPublicController;
 /*
 |--------------------------------------------------------------------------
 | LANGUAGES — public access (frontend does not require a token)
@@ -112,7 +112,12 @@ Route::prefix('shop/public')->group(function () {
         Route::post('coupons/validate', [ShopPublicController::class, 'validateCoupon']);
     });
 });
-
+/*
+|--------------------------------------------------------------------------
+| PUBLIC WEB STATUS
+|--------------------------------------------------------------------------
+*/
+Route::get('web/public/status', [WebPublicController::class, 'getStatus']);
 /*
 |--------------------------------------------------------------------------
 | CHECKOUT

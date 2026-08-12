@@ -32,10 +32,20 @@
  *      do běžného HTML elementu prochází HTML parserem, který by atribut `viewBox`
  *      přepsal na malé `viewbox` (SVG ho pak ignoruje) - tomuhle se tak vyhneme úplně.
  *
+ * @refactor-note (2026-08-2) Přidána karta "Režim údržby" (přesunuto z admin-layout
+ * headeru, viz jeho @refactor-note) - `isWebActive`/`webMaintenanceMessage` +
+ * potvrzovací modál s heslem (`openWebMaintenanceModal()`/`submitWebMaintenanceChange()`).
+ * Karta je viditelná jen s permission `web-set-maintenance-mode` (`*appHasPermission`),
+ * proto nový import `HasPermissionDirective`. Endpoint `core/settings` je sdílený se
+ * Shop maintenance sekcí - `PUT` posílá jen `is_web_active`/`web_maintenance_message`
+ * pole, shop sekci `CoreSiteSettingController::update()` nechá beze změny (viz jeho
+ * `TOGGLE_GROUPS` mechanismus).
+ *
  * @dependencies
  * - BaseDataComponent: Poskytuje errorMessage/cd/alertDialogService (žádné CRUD tu není potřeba).
  * - LoadingService: Manages global loading states.
  * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
+ * - HasPermissionDirective: Gate karty údržby na permission `web-set-maintenance-mode`.
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
  */
 
@@ -49,6 +59,7 @@ import * as Core from '../../../shared/imports/core-providers';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
+import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { ActivityLog, QuickStat, NavSection } from './';
 
 /**
@@ -62,7 +73,7 @@ import { ActivityLog, QuickStat, NavSection } from './';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule, CommonModule, HasPermissionDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -71,6 +82,8 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   public override loadingService = inject(LoadingService);
   private sanitizer = inject(DomSanitizer);
+  // Pozn.: `alertDialogService` se ZDE ZÁMĚRNĚ znovu nedeklaruje - už ho poskytuje
+  // zděděný BaseDataComponent (stejný vzor jako EditRolesComponent), stačí `this.alertDialogService`.
 
   override apiEndpoint = 'core/users';
 
@@ -79,6 +92,13 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   recentActivity: ActivityLog[] = [];
   loadingActivity = true;
+
+  // ── Režim údržby webu ────────────────────────────────────────────
+  isWebActive = true;
+  webMaintenanceMessage = '';
+  showWebMaintenanceModal = false;
+  webConfirmPasswordValue = '';
+  pendingWebTargetState = true;
 
   readonly navSections: NavSection[] = [
     {
@@ -167,6 +187,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
     super.ngOnInit();
     this.loadStats();
     this.loadRecentActivity();
+    this.loadWebMaintenanceStatus();
   }
 
   /**
@@ -184,9 +205,6 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
    * dashboard remains functional. `getPaginatedCollection` je zvolený záměrně (ne
    * `getCollection`), protože potřebujeme zachovat `.total` z odpovědi, ne jen odbalené
    * pole záznamů.
-   * @assumption Endpoint `web/raw_request_commissions` je odvozený z názvu tabulky
-   * `web_raw_request_commissions` (`WebRawRequestCommissionController`) - over si přesný
-   * název route.
    */
   private loadStats(): void {
     this.loadingStats = true;
@@ -279,5 +297,69 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       export: 'ev-export', error: 'ev-error', payment: 'ev-create',
     };
     return map[type] ?? 'ev-default';
+  }
+
+  // ── Režim údržby webu ────────────────────────────────────────────
+
+  /**
+   * @description Načte aktuální stav režimu údržby webu ze sdíleného `core/settings`
+   * endpointu. Volá se samostatně od `loadStats()`/`loadRecentActivity()`, ať výpadek
+   * jednoho z nich neblokuje zobrazení stavu údržby a naopak.
+   */
+  private loadWebMaintenanceStatus(): void {
+    this.dataHandler.get<any>('core/settings').subscribe({
+      next: (res: any) => {
+        if (res) {
+          this.isWebActive = !!res.is_web_active;
+          this.webMaintenanceMessage = res.web_maintenance_message || '';
+          this.cd.markForCheck();
+        }
+      }
+    });
+  }
+
+  openWebMaintenanceModal(): void {
+    this.pendingWebTargetState = !this.isWebActive;
+    this.webConfirmPasswordValue = '';
+    this.showWebMaintenanceModal = true;
+  }
+
+  cancelWebMaintenanceModal(): void {
+    this.showWebMaintenanceModal = false;
+    this.webConfirmPasswordValue = '';
+  }
+
+  /**
+   * @description Odešle změnu stavu webu na `core/settings`. Posílá jen
+   * `is_web_active`/`web_maintenance_message` pole - `CoreSiteSettingController::update()`
+   * je generický a upraví jen sekce, které se skutečně pošlou (viz TOGGLE_GROUPS), takže
+   * tímhle voláním se shop-maintenance sekce nedotkne.
+   */
+  submitWebMaintenanceChange(): void {
+    if (!this.webConfirmPasswordValue.trim()) {
+      this.alertDialogService.open('Chyba', 'Zadejte prosím heslo pro potvrzení.', 'danger');
+      return;
+    }
+
+    this.dataHandler.put<any>('core/settings', {
+      is_web_active: this.pendingWebTargetState,
+      web_maintenance_message: this.webMaintenanceMessage || 'Omlouváme se, web je momentálně v údržbě.',
+      confirm_password: this.webConfirmPasswordValue
+    }).subscribe({
+      next: () => {
+        this.isWebActive = this.pendingWebTargetState;
+        this.showWebMaintenanceModal = false;
+        this.alertDialogService.open(
+          'Úspěch',
+          this.pendingWebTargetState ? 'Web je nyní aktivní.' : 'Režim údržby webu byl aktivován.',
+          'success'
+        );
+        this.cd.markForCheck();
+      },
+      error: (err: any) => {
+        const message = err?.error?.message || 'Změna režimu údržby selhala.';
+        this.alertDialogService.open('Chyba autorizace', message, 'danger');
+      }
+    });
   }
 }

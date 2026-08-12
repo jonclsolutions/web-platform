@@ -1,0 +1,32 @@
+<!-- multi-file-upload.component.html -->
+<div class="mfu-container">
+  <label class="mfu-label">{{ label }} <span class="mfu-hint">(max. {{ maxFiles }} souborů, {{ maxFileSizeMb }} MB/soubor, {{ maxTotalSizeMb }} MB celkem)</span></label>
+
+  <div class="mfu-dropzone"
+    [class.dragging]="isDragging"
+    (drop)="onDrop($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()">
+    <input type="file" multiple (change)="onFileInputChange($event)" id="mfu-input" class="mfu-input">
+    <label for="mfu-input" class="mfu-dropzone-label">
+      <span>↑ Vyberte soubory nebo je přetáhněte sem</span>
+    </label>
+  </div>
+
+  @if (errorMessage) {
+    <div class="mfu-error">{{ errorMessage }}</div>
+  }
+
+  @if (files.length > 0) {
+    <ul class="mfu-file-list">
+      @for (file of files; track file.name + file.size; let i = $index) {
+        <li class="mfu-file-item">
+          <span class="mfu-file-name">{{ file.name }}</span>
+          <span class="mfu-file-size">{{ formatSize(file.size) }}</span>
+          <button type="button" class="mfu-remove-btn" (click)="removeFile(i)">✕</button>
+        </li>
+      }
+    </ul>
+    <div class="mfu-total">Celkem: {{ files.length }} / {{ maxFiles }} souborů, {{ totalSizeLabel }}</div>
+  }
+</div>

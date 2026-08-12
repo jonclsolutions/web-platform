@@ -8,6 +8,7 @@
 │   │   │   │   │   │   └── PasswordResetController.php
 │   │   │   │   │   ├── AuthController.php
 │   │   │   │   │   ├── Core
+│   │   │   │   │   │   ├── CoreLogController.php
 │   │   │   │   │   │   ├── CorePermissionController.php
 │   │   │   │   │   │   ├── CoreRoleController.php
 │   │   │   │   │   │   └── CoreSiteSettingController.php
@@ -34,13 +35,16 @@
 │   │   │   │   │       ├── WebJobApplicationController.php
 │   │   │   │   │       ├── WebLogController.php
 │   │   │   │   │       ├── WebNewsController.php
+│   │   │   │   │       ├── WebPublicController.php
 │   │   │   │   │       ├── WebRawRequestCommissionController.php
 │   │   │   │   │       ├── WebSalesLeadController.php
 │   │   │   │   │       ├── WebSalesOrderController.php
 │   │   │   │   │       └── WebSupportTicketController.php
 │   │   │   │   └── Controller.php
 │   │   │   ├── Middleware
-│   │   │   │   └── CheckCoreShopActive.php
+│   │   │   │   ├── CheckCoreShopActive.php
+│   │   │   │   ├── CheckCoreWebActive.php
+│   │   │   │   └── CheckPermission.php
 │   │   │   ├── Requests
 │   │   │   │   ├── Auth
 │   │   │   │   │   ├── ForgotPasswordRequest.php
@@ -113,6 +117,7 @@
 │   │   │   │           └── UpdateWebSupportTicketRequest.php
 │   │   │   └── Resources
 │   │   │       ├── Core
+│   │   │       │   ├── CoreLogResource.php
 │   │   │       │   └── CoreRoleResource.php
 │   │   │       ├── Legal
 │   │   │       │   └── DocumentSectionResource.php
@@ -147,6 +152,7 @@
 │   │   │       └── WebSalesOrderReceived.php
 │   │   ├── Models
 │   │   │   ├── Core
+│   │   │   │   ├── CoreLog.php
 │   │   │   │   ├── CorePermission.php
 │   │   │   │   ├── CoreRole.php
 │   │   │   │   └── CoreSiteSetting.php
@@ -181,9 +187,11 @@
 │   │   │       ├── WebSalesLead.php
 │   │   │       ├── WebSalesOrder.php
 │   │   │       └── WebSupportTicket.php
-│   │   └── Providers
-│   │       ├── AppServiceProvider.php
-│   │       └── RouteServiceProvider.php
+│   │   ├── Providers
+│   │   │   ├── AppServiceProvider.php
+│   │   │   └── RouteServiceProvider.php
+│   │   └── Traits
+│   │       └── LogsActivity.php
 │   ├── artisan
 │   ├── bootstrap
 │   │   ├── app.php
@@ -284,8 +292,7 @@
 │   │   │       ├── site-logos
 │   │   │       │   └── dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png
 │   │   │       ├── social-icons
-│   │   │       │   ├── EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png
-│   │   │       │   └── 3kaUr9msI4V2i3joXq4Izuxy0xHfHJIx2c3VZIeW.png
+│   │   │       │   └── EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png
 │   │   │       ├── tickets
 │   │   │       ├── translation_images
 │   │   │       │   ├── shop
@@ -490,6 +497,11 @@
 │   │   │   │   │   │   │   ├── details-builder.component.html
 │   │   │   │   │   │   │   ├── details-builder.component.spec.ts
 │   │   │   │   │   │   │   └── details-builder.component.ts
+│   │   │   │   │   │   ├── export-popup-builder
+│   │   │   │   │   │   │   ├── export-popup-builder.component.css
+│   │   │   │   │   │   │   ├── export-popup-builder.component.html
+│   │   │   │   │   │   │   ├── export-popup-builder.component.spec.ts
+│   │   │   │   │   │   │   └── export-popup-builder.component.ts
 │   │   │   │   │   │   ├── filter-form-builder
 │   │   │   │   │   │   │   ├── filter-form-builder.component.css
 │   │   │   │   │   │   │   ├── filter-form-builder.component.html
@@ -867,6 +879,8 @@
 │   │   │   │       │   ├── about-us.component.spec.ts
 │   │   │   │       │   └── about-us.component.ts
 │   │   │   │       ├── components
+│   │   │   │       │   ├── guards
+│   │   │   │       │   │   └── web-maintenance.guard.ts
 │   │   │   │       │   ├── interfaces
 │   │   │   │       │   ├── public-footer
 │   │   │   │       │   │   ├── public-footer.component.css
@@ -950,12 +964,25 @@
 │   │   │   │       │   ├── tos.component.html
 │   │   │   │       │   ├── tos.component.spec.ts
 │   │   │   │       │   └── tos.component.ts
-│   │   │   │       └── web-layout
-│   │   │   │           ├── web-layout.component.css
-│   │   │   │           ├── web-layout.component.html
-│   │   │   │           ├── web-layout.component.spec.ts
-│   │   │   │           └── web-layout.component.ts
+│   │   │   │       ├── web-layout
+│   │   │   │       │   ├── web-layout.component.css
+│   │   │   │       │   ├── web-layout.component.html
+│   │   │   │       │   ├── web-layout.component.spec.ts
+│   │   │   │       │   └── web-layout.component.ts
+│   │   │   │       └── web-maintenance
+│   │   │   │           ├── web-maintenance.component.css
+│   │   │   │           ├── web-maintenance.component.html
+│   │   │   │           ├── web-maintenance.component.spec.ts
+│   │   │   │           └── web-maintenance.component.ts
 │   │   │   └── shared
+│   │   │       ├── components
+│   │   │       │   └── password-requirements-checklist
+│   │   │       │       ├── password-requirements-checklist.component.css
+│   │   │       │       ├── password-requirements-checklist.component.html
+│   │   │       │       ├── password-requirements-checklist.component.spec.ts
+│   │   │       │       └── password-requirements-checklist.component.ts
+│   │   │       ├── constants
+│   │   │       │   └── password-policy.ts
 │   │   │       ├── imports
 │   │   │       │   ├── core-providers.ts
 │   │   │       │   ├── shared-config.ts
@@ -963,6 +990,7 @@
 │   │   │       │   └── web-providers.ts
 │   │   │       ├── interfaces
 │   │   │       │   ├── button.ts
+│   │   │       │   ├── export-format.ts
 │   │   │       │   ├── filter-columns.ts
 │   │   │       │   ├── generic-form-column-definiton.ts
 │   │   │       │   ├── input-definiton.ts
@@ -1068,4 +1096,4 @@
 ├── strom.txt
 └── temp_project_schema.txt
 
-237 directories, 832 files
+244 directories, 853 files

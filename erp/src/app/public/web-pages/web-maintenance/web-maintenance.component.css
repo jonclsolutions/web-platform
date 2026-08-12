@@ -1,0 +1,37 @@
+/*  
+    @file: web-maintenance.component.css
+    @path: /src/app/public/web-pages/web-maintenance/web-maintenance.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+*/
+
+.maintenance-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+  z-index: 9999;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.maintenance-content {
+  max-width: 500px;
+  padding: 20px;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.sub-text {
+  color: #666;
+  margin-bottom: 30px;
+}

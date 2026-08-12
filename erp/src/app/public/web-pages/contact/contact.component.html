@@ -4,209 +4,199 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08): Jednosouborový file-zone nahrazen sdílenou
+        <app-multi-file-upload> komponentou (max. 10 souborů, 20 MB/soubor, 50 MB celkem).
 -->
- <div *ngIf="t">
+<div *ngIf="t">
 
 <div class="contact-page">
-  <aside class="panel-left">
-    <span class="side-label" aria-hidden="true">{{ t.side_label }}</span>
-    <div class="panel-left-content">
-      <div class="brand-block">
-        <p class="brand-eyebrow">{{ t.brand_eyebrow }}</p>
-        <h1 class="brand-headline" [innerHTML]="t.brand_headline"></h1>
-        <p class="brand-sub">{{ t.brand_sub }}</p>
-      </div>
+<aside class="panel-left">
+<span class="side-label" aria-hidden="true">{{ t.side_label }}</span>
+<div class="panel-left-content">
+<div class="brand-block">
+<p class="brand-eyebrow">{{ t.brand_eyebrow }}</p>
+<h1 class="brand-headline" [innerHTML]="t.brand_headline"></h1>
+<p class="brand-sub">{{ t.brand_sub }}</p>
+</div>
 
-      <div class="stats-row">
-        @for (stat of stats; track stat.value) {
-          <div class="stat-item">
-            <span class="stat-value">{{ stat.value }}</span>
-            <span class="stat-label">{{ stat.label }}</span>
-          </div>
+<div class="stats-row">
+@for (stat of stats; track stat.value) {
+<div class="stat-item">
+<span class="stat-value">{{ stat.value }}</span>
+<span class="stat-label">{{ stat.label }}</span>
+</div>
         }
-      </div>
+</div>
 
-      @if (settings) {
-        <ul class="info-list">
-          <li class="info-item">
-            <span class="info-icon" aria-hidden="true">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22 6 12 13 2 6"/>
-              </svg>
-            </span>
-            <a [href]="'mailto:' + settings.contact_email" class="info-link">{{ settings.contact_email }}</a>
-          </li>
-          <li class="info-item">
-            <span class="info-icon" aria-hidden="true">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-            </span>
-            <a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="info-link">{{ settings.contact_phone }}</a>
-          </li>
-          @if (settings.address) {
-            <li class="info-item">
-              <span class="info-icon" aria-hidden="true">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-              </span>
-              <address class="info-address">{{ settings.address }}</address>
-            </li>
+@if (settings) {
+<ul class="info-list">
+<li class="info-item">
+<span class="info-icon" aria-hidden="true">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+<polyline points="22 6 12 13 2 6"/>
+</svg>
+</span>
+<a [href]="'mailto:' + settings.contact_email" class="info-link">{{ settings.contact_email }}</a>
+</li>
+<li class="info-item">
+<span class="info-icon" aria-hidden="true">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+</svg>
+</span>
+<a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="info-link">{{ settings.contact_phone }}</a>
+</li>
+@if (settings.address) {
+<li class="info-item">
+<span class="info-icon" aria-hidden="true">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/>
+<circle cx="12" cy="10" r="3"/>
+</svg>
+</span>
+<address class="info-address">{{ settings.address }}</address>
+</li>
           }
-        </ul>
+</ul>
 
-        <div class="social-row">
-          @for (link of socialLinks; track link.id) {
-            <a [href]="link.url" target="_blank" rel="noopener" class="social-link" [attr.aria-label]="link.name">
-              <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" class="social-link-icon">
-            </a>
+<div class="social-row">
+@for (link of socialLinks; track link.id) {
+<a [href]="link.url" target="_blank" rel="noopener" class="social-link" [attr.aria-label]="link.name">
+<img [src]="getIconUrl(link.icon_path)" [alt]="link.name" class="social-link-icon">
+</a>
           }
-        </div>
+</div>
       }
-
     </div>
-  </aside>
+</aside>
 
-  <main class="panel-right">
+<main class="panel-right">
 
-    @if (!isSubmitted()) {
+@if (!isSubmitted()) {
 
-      <div class="form-wrapper">
-        <div class="form-header">
-          <p class="form-eyebrow">{{ t.form_eyebrow }}</p>
-          <h2 class="form-title">{{ t.form_title }}</h2>
-        </div>
+<div class="form-wrapper">
+<div class="form-header">
+<p class="form-eyebrow">{{ t.form_eyebrow }}</p>
+<h2 class="form-title">{{ t.form_title }}</h2>
+</div>
 
-        <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" novalidate class="form-body">
+<form [formGroup]="contactForm" (ngSubmit)="onSubmit()" novalidate class="form-body">
 
-          <div class="field-group">
-            <label class="field-label" for="subject">{{ t.labels?.subject }}</label>
-            <div class="select-wrap">
-              <select id="subject" formControlName="subject" class="field-input">
-                <option value="web">{{ t.options?.web }}</option>
-                <option value="desktop">{{ t.options?.desktop }}</option>
-                <option value="mobile">{{ t.options?.mobile }}</option>
-                <option value="ai">{{ t.options?.ai }}</option>
-                <option value="other">{{ t.options?.other }}</option>
-              </select>
-              <span class="select-arrow" aria-hidden="true">↓</span>
-            </div>
-          </div>
+<div class="field-group">
+<label class="field-label" for="subject">{{ t.labels?.subject }}</label>
+<div class="select-wrap">
+<select id="subject" formControlName="subject" class="field-input">
+<option value="web">{{ t.options?.web }}</option>
+<option value="desktop">{{ t.options?.desktop }}</option>
+<option value="mobile">{{ t.options?.mobile }}</option>
+<option value="ai">{{ t.options?.ai }}</option>
+<option value="other">{{ t.options?.other }}</option>
+</select>
+<span class="select-arrow" aria-hidden="true">↓</span>
+</div>
+</div>
 
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label" for="email">
+<div class="field-row">
+<div class="field-group">
+<label class="field-label" for="email">
                 {{ t.labels?.email }} <span class="req">*</span>
-              </label>
-              <input
-                id="email"
-                type="email"
-                formControlName="email"
-                [placeholder]="t.placeholders?.email"
-                class="field-input"
-                [class.is-error]="fieldInvalid('email')"
-                autocomplete="email">
-              @if (fieldInvalid('email')) {
-                <span class="field-error">{{ t.errors?.email_invalid }}</span>
+</label>
+<input
+id="email"
+type="email"
+formControlName="email"
+[placeholder]="t.placeholders?.email"
+class="field-input"
+[class.is-error]="fieldInvalid('email')"
+autocomplete="email">
+@if (fieldInvalid('email')) {
+<span class="field-error">{{ t.errors?.email_invalid }}</span>
               }
-            </div>
+</div>
 
-            <div class="field-group">
-              <label class="field-label" for="phone">{{ t.labels?.phone }}</label>
-              <input
-                id="phone"
-                type="tel"
-                formControlName="phone"
-                [placeholder]="t.placeholders?.phone"
-                class="field-input"
-                autocomplete="tel">
-            </div>
-          </div>
-
+<div class="field-group">
+<label class="field-label" for="phone">{{ t.labels?.phone }}</label>
+<input
+id="phone"
+type="tel"
+formControlName="phone"
+[placeholder]="t.placeholders?.phone"
+class="field-input"
+autocomplete="tel">
+</div>
+</div>
           <div class="field-group">
-            <label class="field-label" for="message">
+<label class="field-label" for="message">
               {{ t.labels?.message }} <span class="req">*</span>
-            </label>
-            <textarea
-              id="message"
-              formControlName="message"
-              rows="5"
-              [placeholder]="t.placeholders?.message"
-              class="field-input textarea"
-              [class.is-error]="fieldInvalid('message')">
-            </textarea>
-            @if (fieldInvalid('message')) {
-              <span class="field-error">
-                @if (contactForm.get('message')?.hasError('required')) { {{ t.errors?.message_required }} }
-                @else if (contactForm.get('message')?.hasError('minlength')) { {{ t.errors?.message_minlength }} }
-                @else if (contactForm.get('message')?.hasError('maxlength')) { {{ t.errors?.message_maxlength }} }
-              </span>
+</label>
+<textarea
+id="message"
+formControlName="message"
+rows="5"
+[placeholder]="t.placeholders?.message"
+class="field-input textarea"
+[class.is-error]="fieldInvalid('message')">
+</textarea>
+@if (fieldInvalid('message')) {
+<span class="field-error">
+@if (contactForm.get('message')?.hasError('required')) { {{ t.errors?.message_required }} }
+@else if (contactForm.get('message')?.hasError('minlength')) { {{ t.errors?.message_minlength }} }
+@else if (contactForm.get('message')?.hasError('maxlength')) { {{ t.errors?.message_maxlength }} }
+</span>
             }
-          </div>
+</div>
 
-          <div class="field-group">
-            <label class="field-label">
-              {{ t.labels?.attachment }} <span class="field-hint">{{ t.labels?.attachment_hint }}</span>
-            </label>
-            <label class="file-zone" [class.file-zone--has]="selectedFile">
-              @if (!selectedFile) {
-                <span class="file-zone-icon" aria-hidden="true">↑</span>
-                <span class="file-zone-text">{{ t.placeholders?.file_drop }}</span>
-              } @else {
-                <span class="file-zone-icon" aria-hidden="true">✓</span>
-                <span class="file-zone-text file-zone-name">{{ selectedFile.name }}</span>
-                <button type="button" class="file-remove"
-                  (click)="removeFile(); $event.stopPropagation()"
-                  [attr.aria-label]="t.buttons?.remove_file">✕</button>
-              }
-              <input type="file" class="file-hidden" (change)="onFileSelected($event)" tabindex="-1" aria-hidden="true">
-            </label>
-          </div>
-
+<div class="field-group">
+<app-multi-file-upload
+[label]="t.labels?.attachment"
+[maxFiles]="10"
+[maxFileSizeMb]="20"
+[maxTotalSizeMb]="50"
+(filesChanged)="onFilesChanged($event)">
+</app-multi-file-upload>
+</div>
           <div class="gdpr-row">
-            <label class="checkbox-label" [class.is-error]="fieldInvalid('gdpr')">
-              <input type="checkbox" formControlName="gdpr" class="checkbox-input">
-              <span class="checkbox-box" aria-hidden="true"></span>
-              <span class="checkbox-text">
+<label class="checkbox-label" [class.is-error]="fieldInvalid('gdpr')">
+<input type="checkbox" formControlName="gdpr" class="checkbox-input">
+<span class="checkbox-box" aria-hidden="true"></span>
+<span class="checkbox-text">
                 {{ t.labels?.gdpr_consent }}
-                <a routerLink="/privacy-policy" target="_blank" class="gdpr-link">{{ t.labels?.gdpr_link }}</a>
-                <span class="req"> *</span>
-              </span>
-            </label>
-          </div>
+<a routerLink="/privacy-policy" target="_blank" class="gdpr-link">{{ t.labels?.gdpr_link }}</a>
+<span class="req"> *</span>
+</span>
+</label>
+</div>
 
-          <button
-            type="submit"
-            class="submit-btn"
-            [class.submit-btn--loading]="isLoading()"
-            [disabled]="contactForm.invalid || isLoading()">
-            @if (isLoading()) {
-              <span class="spinner" aria-hidden="true"></span>
-              <span>{{ t.buttons?.sending }}</span>
+<button
+type="submit"
+class="submit-btn"
+[class.submit-btn--loading]="isLoading()"
+[disabled]="contactForm.invalid || isLoading()">
+@if (isLoading()) {
+<span class="spinner" aria-hidden="true"></span>
+<span>{{ t.buttons?.sending }}</span>
             } @else {
-              <span>{{ t.buttons?.send }}</span>
-              <span class="btn-arrow" aria-hidden="true">→</span>
+<span>{{ t.buttons?.send }}</span>
+<span class="btn-arrow" aria-hidden="true">→</span>
             }
-          </button>
+</button>
 
-        </form>
-      </div>
+</form>
+</div>
 
     } @else {
 
-      <div class="success-panel">
-        <div class="success-icon" aria-hidden="true">✓</div>
-        <h2 class="success-title">{{ t.thank_you?.title }}</h2>
-        <p class="success-text">{{ t.thank_you?.text }}</p>
-        <a routerLink="/home" class="back-btn">{{ t.buttons?.go_home }}</a>
-      </div>
+<div class="success-panel">
+<div class="success-icon" aria-hidden="true">✓</div>
+<h2 class="success-title">{{ t.thank_you?.title }}</h2>
+<p class="success-text">{{ t.thank_you?.text }}</p>
+<a routerLink="/home" class="back-btn">{{ t.buttons?.go_home }}</a>
+</div>
 
     }
 
-  </main>
+</main>
 
 </div>
- </div>
+</div>

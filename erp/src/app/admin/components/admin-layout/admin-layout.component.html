@@ -4,6 +4,9 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08): Odstraněn přepínač "E-shop: Aktivní/Údržba" a potvrzovací
+        modál s heslem z headeru (desktop i mobilní panel) - přesunuto na shop/web
+        dashboardy. Viz admin-layout.component.ts hlavička.
 -->
 
 <header class="admin-header">
@@ -81,17 +84,6 @@
       </svg>
       E-Shop
     </button>
-
-    <div class="maintenance-toggle-wrapper" *appHasPermission="'shop-set-maitanance-mode'">
-      <button
-        class="maintenance-toggle-btn"
-        [class.shop-active]="isShopActive"
-        [class.shop-inactive]="!isShopActive"
-        (click)="toggleShopStatus()">
-        <span class="status-indicator"></span>
-        <span class="maintenance-label">{{ isShopActive ? 'E-shop: Aktivní' : 'E-shop: Údržba' }}</span>
-      </button>
-    </div>
   </div>
 
   <div class="header-right">
@@ -191,17 +183,6 @@
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
         </svg>
         E-Shop
-      </button>
-    </div>
-
-    <div class="map-maintenance" *appHasPermission="'shop-set-maitanance-mode'">
-      <button
-        class="maintenance-toggle-btn"
-        [class.shop-active]="isShopActive"
-        [class.shop-inactive]="!isShopActive"
-        (click)="toggleShopStatus(); closeMobileActions()">
-        <span class="status-indicator"></span>
-        <span class="maintenance-label">{{ isShopActive ? 'E-shop: Aktivní' : 'E-shop: Údržba' }}</span>
       </button>
     </div>
 
@@ -635,7 +616,7 @@
             </li>
           </ul>
         </div>
-                 <div class="nav-group">
+        <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obsah webu</div>
           <ul>
             <li *appHasPermission="'shop-view-edit-eshop'">
@@ -699,63 +680,6 @@
   </main>
 
 </div>
-
-@if (showConfirmModal) {
-  <div class="password-modal-overlay" *appHasPermission="'shop-set-maitanance-mode'">
-    <div class="password-modal-card">
-
-      <div class="password-modal-header">
-        <div class="modal-header-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
-        <h3 class="modal-header-title">Ověření administrátora</h3>
-        <button class="close-modal-btn" (click)="cancelShopStatusChange()" aria-label="Zavřít">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="password-modal-body">
-        <p>Chystáte se změnit stav e-shopu na:
-          <strong class="modal-state-label" [class.state-active]="pendingTargetState" [class.state-inactive]="!pendingTargetState">
-            {{ pendingTargetState ? 'STANDARDNÍ PROVOZ' : 'REŽIM ÚDRŽBY' }}
-          </strong>
-        </p>
-        <div class="modal-warning-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          Tato akce ovlivní veřejné zákazníky. Pro uložení zadejte své přihlašovací heslo.
-        </div>
-
-        <div class="password-input-group">
-          <label for="admin-confirm-pwd" class="pwd-label">Aktuální heslo</label>
-          <input
-            id="admin-confirm-pwd"
-            type="password"
-            placeholder="••••••••"
-            (input)="confirmPasswordValue = $any($event.target).value"
-            (keyup.enter)="submitShopStatusChange()"
-            class="form-control-password"
-            autocomplete="current-password">
-        </div>
-      </div>
-
-      <div class="password-modal-footer">
-        <button class="btn-modal-secondary" (click)="cancelShopStatusChange()">Storno</button>
-        <button class="btn-modal-primary" (click)="submitShopStatusChange()">
-          Potvrdit a uložit
-        </button>
-      </div>
-
-    </div>
-  </div>
-}
 
 @if (isLoadingGlobal$ | async) {
   <div class="global-loading-overlay" role="status" aria-label="Načítám data">

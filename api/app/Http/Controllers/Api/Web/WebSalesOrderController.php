@@ -5,7 +5,7 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Manages sales order (realizace) lifecycle, including integration with sales leads, file attachment handling, and comprehensive audit logging.
+ * @description Manages sales order (realizace) lifecycle, including integration with sales leads, multiple file attachment handling, and comprehensive audit logging.
  * @refactor-note (2026) `store()` přepsán tak, aby lead nikdy nebral z klientem poslaného
  *      `lead_id` (veřejný endpoint - kdokoliv mohl uhodnutím čísla přiřadit objednávku
  *      k cizímu leadu / spustit e-mail cizímu obchodníkovi). Lead se teď resolvuje
@@ -18,6 +18,14 @@
  *      routes/api.php zároveň doplněn o throttle:10,1 (chybějící rate limit u veřejného
  *      endpointu, co posílá e-mail na libovolnou adresu ze vstupu - riziko zneužití k
  *      emailovému bombardování).
+ * @refactor-note (2026-08) Jednosouborové pole `attachment_path` KOMPLETNĚ ODSTRANĚNO
+ *      (sloupec smazán z DB) - nahrazeno polymorfním `web_attachments` vztahem přes
+ *      `HandlesAttachments` trait, podporujícím až 10 příloh na jednu realizaci.
+ *      `store()`/`update()`/`destroy()`/`forceDeleteAllTrashed()` upraveny tak, aby už
+ *      nikde neodkazovaly na neexistující `attachment_path` sloupec. `update()` navíc
+ *      přepsán z `$request->all()` (žádná validace, mass-assignment riziko) na
+ *      `UpdateWebSalesOrderRequest` - viz jeho vlastní úprava, potřebná analogicky k
+ *      StoreWebSalesOrderRequest.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -25,11 +33,12 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Web\{WebSalesOrder, WebSalesLead};
 use App\Models\Web\WebLog;
+use App\Traits\HandlesAttachments;
 use App\Http\Resources\Web\WebSalesOrderResource;
 use App\Http\Requests\Web\WebSalesOrder\{StoreWebSalesOrderRequest, UpdateWebSalesOrderRequest};
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\{Log, Storage, DB};
+use Illuminate\Support\Facades\{Log, DB};
 use App\Mail\Web\WebSalesOrderReceived;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -40,6 +49,13 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class WebSalesOrderController extends Controller
 {
+    use HandlesAttachments;
+
+    /**
+     * Storage folder for attachments within public disk.
+     */
+    private const ATTACHMENT_FOLDER = 'sales_orders';
+
     /**
      * Retrieves a paginated list of sales orders with filtering and eager-loaded lead data.
      *
@@ -66,7 +82,6 @@ class WebSalesOrderController extends Controller
         foreach (['id', 'lead_id', 'ico'] as $f) {
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
-        
         foreach (['client_name', 'salesman_name', 'client_email'] as $f) {
             if ($request->filled($f)) $query->where($f, 'like', '%' . $request->input($f) . '%');
         }
@@ -100,27 +115,26 @@ class WebSalesOrderController extends Controller
     /**
      * Stores a new sales order and, if a valid lead token is provided, atomically links it
      * to the corresponding lead while marking that lead's public link as consumed.
+     * Handles up to 10 file attachments (see HandlesAttachments trait).
      *
      * @param StoreWebSalesOrderRequest $request
      * @return JsonResponse
-     * @throws \Exception
      * @note `lead_id` z `$validated` je vždy zahozeno - endpoint je veřejný (bez auth),
      *       takže klientem poslané `lead_id` nelze nikdy důvěřovat (IDOR - kdokoliv by si
      *       mohl objednávku "podvrhnout" k libovolnému cizímu leadu jen uhodnutím čísla).
      *       Jediná důvěryhodná cesta k napojení na lead je `lead_token`, který zná jen ten,
      *       kdo dostal skutečný odkaz (viz WebSalesLeadController::generateLink/showByToken).
+     * @note Přílohy se ukládají AŽ PO úspěšném commitnutí DB transakce (má smysl - soubory
+     *       na disk nejsou součástí transakce a nemá cenu je řešit uvnitř lockForUpdate()
+     *       bloku). Pokud by transakce spadla (neplatný/použitý token), žádný soubor se
+     *       vůbec nezkusí uložit.
      */
     public function store(StoreWebSalesOrderRequest $request): JsonResponse
     {
         $leadToken = $request->input('lead_token');
 
         try {
-            $validated = $request->validated();
-            unset($validated['lead_id']);
-
-            if ($request->hasFile('attachment')) {
-                $validated['attachment_path'] = $request->file('attachment')->store('orders', 'public');
-            }
+            $validated = $request->safe()->except(['attachments', 'lead_id']);
 
             if ($leadToken) {
                 // Lead resolvován + objednávka vytvořena + token invalidován v JEDNÉ
@@ -164,6 +178,8 @@ class WebSalesOrderController extends Controller
                 $order = WebSalesOrder::create($validated);
             }
 
+            $this->storeAttachments($request, $order, self::ATTACHMENT_FOLDER);
+
             $this->logAction($request, 'create', 'WebSalesOrder', "Vytvořena realizace pro: {$order->client_name}", $order->id);
 
             try {
@@ -177,7 +193,7 @@ class WebSalesOrderController extends Controller
                 $this->logAction($request, 'error', 'WebSalesOrder', "Nepodařilo se odeslat potvrzovací e-mail: " . $e->getMessage(), $order->id);
             }
 
-            return response()->json(new WebSalesOrderResource($order->load('lead')), 201);
+            return response()->json(new WebSalesOrderResource($order->load(['lead', 'attachments'])), 201);
         } catch (HttpException $e) {
             // 404/410 z abort() výše (neplatný nebo už použitý token) - srozumitelná
             // zpráva pro klienta, ne obecné 500.
@@ -190,45 +206,39 @@ class WebSalesOrderController extends Controller
     }
 
     /**
-     * Retrieves detailed information about a specific order, including soft-deleted ones.
+     * Retrieves detailed information about a specific order, including soft-deleted ones
+     * and its attachments.
      *
      * @param int $id
      * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
-        $sales_order = WebSalesOrder::withTrashed()->findOrFail($id);
-        $sales_order->load('lead');
-        
+        $sales_order = WebSalesOrder::withTrashed()->with(['lead', 'attachments'])->findOrFail($id);
         return response()->json(new WebSalesOrderResource($sales_order));
     }
 
     /**
-     * Updates an existing order record and replaces associated file attachments.
+     * Updates an existing order record. Newly uploaded attachments are ADDED to the
+     * existing set (not replaced) - admin can remove individual old attachments via a
+     * separate endpoint (part 2 of this task).
      *
-     * @param Request $request
+     * @param UpdateWebSalesOrderRequest $request
      * @param int $id
      * @return JsonResponse
-     * @throws \Exception
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(UpdateWebSalesOrderRequest $request, $id): JsonResponse
     {
         try {
             $order = WebSalesOrder::findOrFail($id);
-            $data = $request->all();
+            $validated = $request->safe()->except(['attachments']);
 
-            if ($request->hasFile('attachment')) {
-                if ($order->attachment_path) {
-                    Storage::disk('public')->delete($order->attachment_path);
-                }
-                $data['attachment_path'] = $request->file('attachment')->store('orders', 'public');
-            }
+            $order->update($validated);
 
-            $order->update($data);
-            
+            $this->storeAttachments($request, $order, self::ATTACHMENT_FOLDER);
+
             $this->logAction($request, 'update', 'WebSalesOrder', "Aktualizace realizace ID: {$order->id}", $order->id);
-            
-            return response()->json(new WebSalesOrderResource($order->load('lead')));
+            return response()->json(new WebSalesOrderResource($order->fresh()->load(['lead', 'attachments'])));
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebSalesOrder', "Chyba při aktualizaci realizace ID {$id}: " . $e->getMessage(), $id);
             return response()->json(['message' => 'Aktualizace realizace selhala.'], 500);
@@ -236,7 +246,8 @@ class WebSalesOrderController extends Controller
     }
 
     /**
-     * Handles soft or hard deletion of an order, including file cleanup.
+     * Handles soft or hard deletion of an order. On hard delete, all associated attachment
+     * files and their DB records are removed too (see HandlesAttachments::deleteAllAttachments()).
      *
      * @param Request $request
      * @param int $id
@@ -246,12 +257,10 @@ class WebSalesOrderController extends Controller
     {
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebSalesOrder::withTrashed()->findOrFail($id);
-            
+            $item = WebSalesOrder::withTrashed()->with('attachments')->findOrFail($id);
+
             if ($forceDelete) {
-                if ($item->attachment_path) {
-                    Storage::disk('public')->delete($item->attachment_path);
-                }
+                $this->deleteAllAttachments($item);
                 $item->forceDelete();
             } else {
                 $item->delete();
@@ -277,10 +286,8 @@ class WebSalesOrderController extends Controller
         try {
             $item = WebSalesOrder::withTrashed()->findOrFail($id);
             $item->restore();
-            
             $this->logAction($request, 'restore', 'WebSalesOrder', "Obnova realizace ID: $id", $id);
-            
-            return response()->json(new WebSalesOrderResource($item->load('lead')));
+            return response()->json(new WebSalesOrderResource($item->load(['lead', 'attachments'])));
         } catch (\Exception $e) {
             $this->logAction($request, 'error', 'WebSalesOrder', "Chyba při obnově realizace ID $id: " . $e->getMessage(), $id);
             return response()->json(['message' => 'Obnova realizace selhala.'], 500);
@@ -288,7 +295,7 @@ class WebSalesOrderController extends Controller
     }
 
     /**
-     * Permanently purges all soft-deleted orders and their associated files.
+     * Permanently purges all soft-deleted orders and their associated attachment files.
      *
      * @param Request $request
      * @return JsonResponse
@@ -296,13 +303,11 @@ class WebSalesOrderController extends Controller
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
-            $trashedOrders = WebSalesOrder::onlyTrashed()->get();
+            $trashedOrders = WebSalesOrder::onlyTrashed()->with('attachments')->get();
             $count = $trashedOrders->count();
 
             foreach ($trashedOrders as $order) {
-                if ($order->attachment_path) {
-                    Storage::disk('public')->delete($order->attachment_path);
-                }
+                $this->deleteAllAttachments($order);
                 $order->forceDelete();
             }
 
@@ -337,7 +342,7 @@ class WebSalesOrderController extends Controller
                 'affected_entity_type' => 'WebSalesOrder',
                 'affected_entity_id'   => $affectedId,
                 'user_id'              => $user?->id,
-                'context_data'         => json_encode($request->except(['attachment']), JSON_UNESCAPED_UNICODE),
+                'context_data'         => json_encode($request->except(['attachments']), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
                 'user_plain'           => $user ? $user->user_email : 'system/public'
             ]);
