@@ -4,6 +4,8 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08-2): Přidán @case ('files') - sdílená <app-multi-file-upload>
+        pro vícenásobný upload, viz form-builder.component.ts.
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -18,7 +20,7 @@
       <form #genericForm="ngForm" (ngSubmit)="onSubmit(genericForm, $event)" novalidate>
         <div class="form-grid-layout">
           @for (input of visibleInputDefinitions; track input) {
-            <div class="form-row-item" [class.full-width]="input.type === 'textarea'">
+            <div class="form-row-item" [class.full-width]="input.type === 'textarea' || input.type === 'files'">
               <label [for]="input.column_name" class="field-label">
                 {{ input.label }}
                 @if (input.required) {
@@ -34,6 +36,15 @@
                   }
                   @case ('file') {
                     <input type="file" [id]="input.column_name" (change)="onFileChange($event, input.column_name)" class="custom-input" [disabled]="input.editable === false" />
+                  }
+                  @case ('files') {
+                    <app-multi-file-upload
+                      [label]="''"
+                      [maxFiles]="10"
+                      [maxFileSizeMb]="20"
+                      [maxTotalSizeMb]="50"
+                      (filesChanged)="onFilesChange($event, input.column_name)">
+                    </app-multi-file-upload>
                   }
                   @case ('text') {
                     <input type="text" [id]="input.column_name" [placeholder]="input.placeholder" 
@@ -59,31 +70,31 @@
                     </select>
                   }
                   @case ('textarea') {
-  <textarea [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" 
-    [pattern]="input.pattern || ''" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" 
-    class="custom-input textarea" [disabled]="input.editable === false"></textarea>
-}
+                    <textarea [id]="input.column_name" [placeholder]="input.placeholder" [required]="!!input.required" 
+                      [pattern]="input.pattern || ''" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" 
+                      class="custom-input textarea" [disabled]="input.editable === false"></textarea>
+                  }
                   @case ('checkbox') {
                     <div class="checkbox-wrapper">
                       <input type="checkbox" [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" [disabled]="input.editable === false" />
                       <label [for]="input.column_name">Aktivní / Souhlasím</label>
                     </div>
                   }
-@case ('confirm-password') {
-  <div class="confirm-password-container">
-    <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || 'Zadejte heslo'"
-      [required]="!!input.required" [pattern]="input.pattern || ''" [maxlength]="input.max || 16" [name]="input.column_name"
-      [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
-    <app-password-requirements-checklist [password]="formData[input.column_name] || ''"></app-password-requirements-checklist>
-    <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">Potvrzení hesla @if (input.required) {
-      <span class="required-star">*</span>
-    }</label>
-    <input type="password" [id]="input.column_name + '_confirm'" placeholder="Zadejte heslo znovu" [required]="!!input.required" [maxlength]="input.max || 16" [name]="input.column_name + '_confirm'" [(ngModel)]="confirmPasswordData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
-  </div>
-  @if (passwordMismatch(input.column_name)) {
-    <div class="error-text">Hesla se neshodují.</div>
-  }
-}
+                  @case ('confirm-password') {
+                    <div class="confirm-password-container">
+                      <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || 'Zadejte heslo'"
+                        [required]="!!input.required" [pattern]="input.pattern || ''" [maxlength]="input.max || 16" [name]="input.column_name"
+                        [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                      <app-password-requirements-checklist [password]="formData[input.column_name] || ''"></app-password-requirements-checklist>
+                      <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">Potvrzení hesla @if (input.required) {
+                        <span class="required-star">*</span>
+                      }</label>
+                      <input type="password" [id]="input.column_name + '_confirm'" placeholder="Zadejte heslo znovu" [required]="!!input.required" [maxlength]="input.max || 16" [name]="input.column_name + '_confirm'" [(ngModel)]="confirmPasswordData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                    </div>
+                    @if (passwordMismatch(input.column_name)) {
+                      <div class="error-text">Hesla se neshodují.</div>
+                    }
+                  }
                   @default {
                     <input [type]="input.type" [id]="input.column_name" [required]="!!input.required" 
                       [pattern]="input.pattern || '.*'" [name]="input.column_name" 
@@ -102,7 +113,7 @@
 
         <div class="form-footer-actions">
           <button type="button" class="btn-secondary" (click)="onCancel()">Zrušit</button>
-         <button type="submit" class="btn-primary" [disabled]="isSubmitting || genericForm.invalid || hasPasswordMismatch">Potvrdit</button>
+          <button type="submit" class="btn-primary" [disabled]="isSubmitting || genericForm.invalid || hasPasswordMismatch">Potvrdit</button>
         </div>
       </form>
     </div>

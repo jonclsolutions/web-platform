@@ -4,6 +4,11 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
+ * @refactor-note (2026-08) Vylepšený vzhled - `loadSiteSettings = true` přidáno, ať
+ * komponenta dostane `this.settings`/`this.socialLinks` ze stejné cache jako
+ * PublicFooterComponent (žádné nové HTTP volání, jen čtení z BasePublicComponent). Nová
+ * šablona zobrazuje sociální ikony a kontaktní údaje (e-mail, telefon), ať návštěvník má
+ * i během údržby jak se spojit s firmou.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -20,8 +25,8 @@ import { takeUntil } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShopMaintenanceComponent extends BasePublicComponent {
-  
   protected readonly translationKey = 'shop_maintenance';
+  protected override readonly loadSiteSettings = true;
   private router = inject(Router);
 
   protected override onInit() {

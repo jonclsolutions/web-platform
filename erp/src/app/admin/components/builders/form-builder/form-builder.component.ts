@@ -18,11 +18,22 @@
  * z konfigurace se na hesla nikdy nepoužily). Přidán live checklist požadavků hesla
  * (`PasswordRequirementsChecklistComponent`) pod prvním password inputem.
  *
+ * @refactor-note (2026-08-2) Přidán typ `'files'` (množné číslo, na rozdíl od `'file'`,
+ * které zůstává jako jednosouborové pole) - napojuje sdílenou `MultiFileUploadComponent`
+ * (max. 10 souborů / 20 MB / 50 MB, stejná politika jako veřejné formuláře). V edit módu
+ * se pole VŽDY inicializuje jako prázdné pole (`resetFileArrayFields()`), i kdyby
+ * `formDataToEdit` neslo existující `attachments` (pole objektů z API, ne `File`
+ * instance) - `'files'` pole slouží jen k PŘIDÁNÍ nových příloh, správa/mazání
+ * existujících je mimo scope (viz TableBuilder detail zobrazení). `onSubmit()` upraven,
+ * aby detekoval jak jednotlivý `File` (typ `'file'`), tak pole `File[]` (typ `'files'`) a
+ * do `FormData` je serializoval odpovídajícím způsobem (`key` vs. `key[]`).
+ *
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.
  * - AlertDialogService: Provides user feedback for submission outcomes.
  * - InputDefinition: Interface for rendering dynamic form inputs and validation metadata.
  * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla.
+ * - MultiFileUploadComponent: Sdílený drag&drop multi-file upload, viz `'files'` case.
  */
 
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
@@ -30,6 +41,7 @@ import { FormsModule, NgForm, FormControl } from '@angular/forms';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { PasswordRequirementsChecklistComponent } from '../../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
+import { MultiFileUploadComponent } from '../../../../shared/components/multi-file-upload/multi-file-upload.component';
 
 /**
  * @description Renders a dynamic form based on an array of field definitions.
@@ -39,7 +51,7 @@ import { PasswordRequirementsChecklistComponent } from '../../../../shared/compo
 @Component({
   selector: 'app-form-builder',
   standalone: true,
-  imports: [FormsModule, PasswordRequirementsChecklistComponent],
+  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent],
   templateUrl: './form-builder.component.html',
   styleUrl: './form-builder.component.css',
 })
@@ -73,11 +85,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
       this.formData = { ...this.formDataToEdit };
       this.visibleInputDefinitions = this.inputDefinitions.filter(input => input.show_in_edit !== false);
       this.normalizeSelectValues();
+      this.resetFileArrayFields();
     } else {
       this.formData = {};
       this.visibleInputDefinitions = this.inputDefinitions.filter(input => input.show_in_create !== false);
       this.visibleInputDefinitions.forEach(input => {
-        this.formData[input.column_name] = input.defaultValue ?? '';
+        this.formData[input.column_name] = input.type === 'files' ? [] : (input.defaultValue ?? '');
       });
     }
   }
@@ -96,6 +109,22 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
         if (optionExists) {
           this.formData[input.column_name] = valueAsString;
         }
+      }
+    });
+  }
+
+  /**
+   * @description Vynutí prázdné pole pro každé `'files'` pole PŘI EDITACI - `formDataToEdit`
+   * u takového klíče typicky nese existující přílohy jako pole API objektů (`{id, url,
+   * original_filename, ...}`), ne `File` instance. Bez tohoto resetu by `onSubmit()`
+   * takové pole nerozpoznal jako soubory (neprojde `isFileArray()` testem) a skončilo by
+   * jako nesmyslně stringifikované do `FormData`. `'files'` pole slouží výhradně k
+   * PŘIDÁNÍ nových příloh - správa/mazání starých je mimo scope tohoto formuláře.
+   */
+  private resetFileArrayFields(): void {
+    this.visibleInputDefinitions.forEach(input => {
+      if (input.type === 'files') {
+        this.formData[input.column_name] = [];
       }
     });
   }
@@ -138,6 +167,19 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * @description Přijímá aktuální seznam souborů z `MultiFileUploadComponent` pro pole
+   * typu `'files'`. Komponenta sama hlídá klientský limit (10 souborů / 20 MB / 50 MB
+   * celkem) jako UX pomůcku - skutečnou hranici vždy vynucuje backend.
+   */
+  onFilesChange(files: File[], columnName: string): void {
+    this.formData[columnName] = files;
+  }
+
+  private isFileArray(value: any): value is File[] {
+    return Array.isArray(value) && value.length > 0 && value.every(v => v instanceof File);
+  }
+
   getControl(columnName: string): FormControl | null {
     if (!this.genericForm) return null;
     return this.genericForm.controls[columnName] as FormControl || null;
@@ -168,7 +210,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
   /**
    * @description Sanitizes and validates form data before emitting the submission event.
-   * @note Automatically serializes data into FormData if file inputs are detected.
+   * @note Automatically serializes data into FormData if file inputs (single `File` or
+   * `File[]` from a `'files'` field) are detected. Single files se posílají pod svým
+   * klíčem beze změny (`key`), pole souborů pod `key[]` (Laravel/PHP konvence pro
+   * vícenásobný upload, sedí s `attachments[]` očekávaným backendem).
    */
   onSubmit(form: NgForm, event?: Event): void {
     event?.preventDefault();
@@ -185,9 +230,9 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
     if (form.valid) {
       this.isSubmitting = true;
-      
+
       let payload: any;
-      const hasFile = Object.values(this.formData).some(val => val instanceof File);
+      const hasFile = Object.values(this.formData).some(val => val instanceof File || this.isFileArray(val));
 
       if (hasFile) {
         payload = new FormData();
@@ -195,6 +240,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
           const value = this.formData[key];
           if (value instanceof File) {
             payload.append(key, value, value.name);
+          } else if (this.isFileArray(value)) {
+            value.forEach((file: File) => payload.append(`${key}[]`, file, file.name));
+          } else if (Array.isArray(value)) {
+            // Prázdné/nesouborové pole ('files' pole bez vybraného souboru apod.) -
+            // nemá smysl posílat, backend ho stejně bere jako 'sometimes'.
+            return;
           } else if (value !== null && value !== undefined) {
             payload.append(key, String(value));
           }

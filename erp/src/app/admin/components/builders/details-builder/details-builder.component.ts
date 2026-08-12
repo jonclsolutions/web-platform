@@ -9,6 +9,11 @@
  * - CommonModule, DatePipe, CurrencyPipe: Formatting utilities.
  * - ItemDetailsColumns: Interface for column metadata.
  * - InputDefinition: Interface for field configuration and options.
+ *
+ * @refactor-note (2026-08) Přidán typ `'files'` (množné číslo) - zobrazuje seznam VÍCE
+ * příloh (z `web_attachments` relace, pole objektů `{id, original_filename, mime_type,
+ * size_bytes, url, created_at}`) místo jediného souboru, jak to řešil dosavadní `'file'`
+ * case. `formatFileSize()` přidán jako pomocná metoda pro čitelný výpis velikosti.
  */
 
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
@@ -100,6 +105,15 @@ export class DetailsBuilderComponent implements OnInit, OnDestroy {
     if (!url) return 'file';
     const parts = url.split('/');
     return parts[parts.length - 1].split('?')[0] || 'file';
+  }
+
+  /**
+   * @description Formats a byte count into a human-readable KB/MB string.
+   */
+  formatFileSize(bytes: number): string {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
   /**

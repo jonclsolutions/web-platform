@@ -17,6 +17,11 @@ export const USER_REQUEST_STATUS_OPTIONS: string[] = ['Nově zadané', 'Zpracov�
 export const USER_REQUEST_PRIORITY_OPTIONS: string[] = ['Nízká', 'Neutrální', 'Vysoká'];
 export const USER_REQUEST_THEMA_OPTIONS: string[] = ['Webový vývoj', 'Desktopový vývoj', 'Mobilní vývoj', 'AI vývoj', 'Jiné'];
 
+/**
+ * @refactor-note (2026-08-2) `attachment` (type: 'file', show_in_edit: false) nahrazeno
+ * `attachments` (type: 'files', show_in_edit: true) - backend `update()` teď umí přílohy
+ * přidávat i při editaci existujícího požadavku, ne jen při vytvoření.
+ */
 export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
   {
     column_name: 'thema',
@@ -82,11 +87,11 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     editable: true, show_in_edit: true, show_in_create: true
   },
   {
-    column_name: 'attachment',
-    label: 'Příloha',
-    type: 'file',
+    column_name: 'attachments',
+    label: 'Přílohy',
+    type: 'files',
     required: false,
-    show_in_edit: false, 
+    show_in_edit: true, 
     show_in_create: true
   }
 ];
@@ -115,6 +120,10 @@ export const USER_REQUEST_FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'priority', header: 'Priorita', type: 'select', options: USER_REQUEST_PRIORITY_OPTIONS, placeholder: '-- Priorita --', canSort: true },
 ];
 
+/**
+ * @refactor-note (2026-08-2) `file_url` (type: 'file') nahrazeno `attachments`
+ * (type: 'files') - detail teď vypíše VŠECHNY přílohy požadavku, ne jen jednu.
+ */
 export const USER_REQUEST_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID požadavku', type: 'text' },
   { key: 'thema', displayName: 'Téma', type: 'text' },
@@ -124,7 +133,7 @@ export const USER_REQUEST_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'priority', displayName: 'Priorita', type: 'text' },
   { key: 'order_description', displayName: 'Popis požadavku', type: 'text' },
   { key: 'note', displayName: 'Poznámka', type: 'text' },
-  { key: 'file_url', displayName: 'Příloha', type: 'file' },
+  { key: 'attachments', displayName: 'Přílohy', type: 'files' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Naposledy změněno', type: 'date', format: 'medium' },
 ];

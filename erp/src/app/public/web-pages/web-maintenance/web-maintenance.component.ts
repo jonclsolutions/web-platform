@@ -6,12 +6,15 @@
  * @created 2026
  * @description Mirror of ShopMaintenanceComponent - shown when the public web is in
  * maintenance mode, polls status and redirects back to /home once active again.
+ * @refactor-note (2026-08) Vylepšený vzhled - `loadSiteSettings = true` přidáno (stejný
+ * princip jako ShopMaintenanceComponent), zobrazuje sociální ikony a kontaktní údaje.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { BasePublicComponent } from '../../base-public.component';
+
 @Component({
   selector: 'app-web-maintenance',
   standalone: true,
@@ -22,6 +25,7 @@ import { BasePublicComponent } from '../../base-public.component';
 })
 export class WebMaintenanceComponent extends BasePublicComponent {
   protected readonly translationKey = 'web_maintenance';
+  protected override readonly loadSiteSettings = true;
   private router = inject(Router);
 
   protected override onInit() {

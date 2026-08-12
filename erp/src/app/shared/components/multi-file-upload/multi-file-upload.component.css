@@ -4,40 +4,22 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @description: Sdílená drag&drop multi-file upload komponenta - sladěno s tmavým
-        fialkovým vizuálním jazykem veřejného webu (order-form/contact), stejná paleta
-        proměnných jako .file-drop-area/.checkbox-group.
-    @note Komponenta je standalone a používá se i mimo tenhle konkrétní tmavý kontext
-        (v budoucnu i v adminu - viz task "část 2"), proto si CSS proměnné definuje
-        samostatně na :host s fallbacky na tmavou paletu - pokud bude nasazena do
-        světlého admin layoutu, tenhle blok proměnných se v tom kontextu přepíše/doladí.
+    @description: Sdílená drag&drop multi-file upload komponenta.
+    @refactor-note (2026-08-2) Přepsáno z natvrdo definovaných `:host { --x: ... }`
+        proměnných (které STÍNOVALY stejnojmenné proměnné z jakéhokoliv nadřazeného
+        kontextu - Angular view encapsulation neizoluje CSS custom properties, ale
+        `:host` blok je stejně explicitně PŘEDEFINOVÁVAL na téhle komponentě) na
+        `var(--mfu-x, fallback)` vzor - komponenta teď respektuje `--mfu-*` proměnné
+        nastavené na libovolném předkovi (např. admin form-builder v LIGHT tématu), a
+        když nejsou nastavené, spadne na tmavý fallback (výchozí vzhled na veřejném webu).
 */
 
 :host {
-  --bg:           #0d0d1b;
-  --surface:      #111128;
-  --surface-2:    #18183a;
-  --border:       rgba(166, 125, 255, 0.1);
-  --border-mid:   rgba(166, 125, 255, 0.22);
-  --accent:       #a67dff;
-  --accent-dark:  #6b2e91;
-  --accent-dim:   rgba(166, 125, 255, 0.07);
-  --accent-hover: #7d35ae;
-  --white:        #ffffff;
-  --text:         #e0e0f0;
-  --text-muted:   #888899;
-  --text-dim:     #555566;
-  --error:        #ff5566;
-  --success:      #44cc88;
-  --ff-body:      'Segoe UI', system-ui, sans-serif;
-  --radius:       12px;
-  --ease:         0.25s ease;
-
   display: block;
-  font-family: var(--ff-body);
+  font-family: var(--mfu-ff-body, 'Segoe UI', system-ui, sans-serif);
 }
 
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::as { box-sizing: border-box; }
 
 .mfu-container {
   display: flex;
@@ -50,19 +32,19 @@
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--mfu-accent, #a67dff);
 }
 
 .mfu-hint {
   font-weight: 400;
   letter-spacing: normal;
   text-transform: none;
-  color: var(--text-dim);
+  color: var(--mfu-text-dim, #555566);
   font-size: 0.72rem;
   margin-left: 4px;
 }
 
-/* ── Dropzone — stejný vzor jako .file-drop-area ────────────────────── */
+/* ── Dropzone ────────────────────────────────────────────────────────── */
 .mfu-dropzone {
   position: relative;
   display: flex;
@@ -71,18 +53,18 @@
   width: 100%;
   min-height: 80px;
   padding: 20px;
-  border: 1px dashed var(--border-mid);
-  border-radius: var(--radius);
-  background: var(--surface-2);
+  border: 1px dashed var(--mfu-border-mid, rgba(166, 125, 255, 0.22));
+  border-radius: var(--mfu-radius, 12px);
+  background: var(--mfu-surface-2, #18183a);
   margin-top: 6px;
-  transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 
 .mfu-dropzone:hover,
 .mfu-dropzone.dragging {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-  box-shadow: 0 0 0 3px rgba(166, 125, 255, 0.08);
+  border-color: var(--mfu-accent, #a67dff);
+  background: var(--mfu-accent-dim, rgba(166, 125, 255, 0.07));
+  box-shadow: 0 0 0 3px var(--mfu-accent-ring, rgba(166, 125, 255, 0.08));
 }
 
 .mfu-input {
@@ -99,7 +81,7 @@
 
 .mfu-dropzone-label {
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--mfu-text-muted, #888899);
   font-size: 0.88rem;
   display: flex;
   align-items: center;
@@ -110,19 +92,19 @@
 }
 
 .mfu-dropzone:hover .mfu-dropzone-label {
-  color: var(--text);
+  color: var(--mfu-text, #e0e0f0);
 }
 
-/* ── Chyba — stejný vzor jako .error-msg-main ───────────────────────── */
+/* ── Chyba ───────────────────────────────────────────────────────────── */
 .mfu-error {
-  color: var(--error);
+  color: var(--mfu-error, #ff5566);
   font-size: 0.85rem;
   text-align: center;
   margin-top: 4px;
   padding: 10px 14px;
-  background: rgba(255, 85, 102, 0.07);
-  border: 1px solid rgba(255, 85, 102, 0.2);
-  border-radius: var(--radius);
+  background: var(--mfu-error-dim, rgba(255, 85, 102, 0.07));
+  border: 1px solid var(--mfu-error-border, rgba(255, 85, 102, 0.2));
+  border-radius: var(--mfu-radius, 12px);
 }
 
 /* ── Seznam vybraných souborů ────────────────────────────────────────── */
@@ -140,9 +122,9 @@
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-mid);
-  border-radius: var(--radius);
+  background: var(--mfu-surface-2, #18183a);
+  border: 1px solid var(--mfu-border-mid, rgba(166, 125, 255, 0.22));
+  border-radius: var(--mfu-radius, 12px);
   font-size: 0.85rem;
 }
 
@@ -152,12 +134,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text);
+  color: var(--mfu-text, #e0e0f0);
   font-weight: 500;
 }
 
 .mfu-file-size {
-  color: var(--text-dim);
+  color: var(--mfu-text-dim, #555566);
   font-size: 0.76rem;
   white-space: nowrap;
   flex-shrink: 0;
@@ -167,7 +149,7 @@
   border: none;
   background: none;
   cursor: pointer;
-  color: var(--text-dim);
+  color: var(--mfu-text-dim, #555566);
   font-size: 0.9rem;
   line-height: 1;
   padding: 4px;
@@ -176,17 +158,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background var(--ease), color var(--ease);
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .mfu-remove-btn:hover {
-  color: var(--error);
-  background: rgba(255, 85, 102, 0.1);
+  color: var(--mfu-error, #ff5566);
+  background: var(--mfu-error-dim, rgba(255, 85, 102, 0.1));
 }
 
 .mfu-total {
   font-size: 0.76rem;
-  color: var(--text-dim);
+  color: var(--mfu-text-dim, #555566);
   text-align: right;
   margin-top: 2px;
 }

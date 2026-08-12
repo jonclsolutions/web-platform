@@ -9,7 +9,20 @@
                fialové/indigo, plně zaoblená ("pill") tlačítka. Struktura/třídy
                a veškerá logika formuláře beze změny, jen barvy a zaoblení.
 */
-
+.form-container {
+  --mfu-surface-2: #f4f4f5;
+  --mfu-border-mid: #d4d4d8;
+  --mfu-accent: #18181b;
+  --mfu-accent-dim: #f4f4f5;
+  --mfu-accent-ring: rgba(24, 24, 27, 0.08);
+  --mfu-text: #18181b;
+  --mfu-text-muted: #71717a;
+  --mfu-text-dim: #a1a1aa;
+  --mfu-error: #be123c;
+  --mfu-error-dim: #fff1f2;
+  --mfu-error-border: #fecdd3;
+  --mfu-radius: 10px;
+}
 .popup-overlay {
   position: fixed;
   top: 0; left: 0;
