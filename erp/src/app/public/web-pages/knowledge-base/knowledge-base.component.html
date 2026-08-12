@@ -1,0 +1,556 @@
+<!--
+    @file: knowledge-base.component.html
+    @path: /src/app/public/web-pages/knowledge-base/knowledge-base.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+-->
+
+@if (t) {
+
+  <div class="kb-main-content">
+
+    <!-- Hero / úvod stránky -->
+    <section class="kb-hero">
+      <div class="kb-hero-eyebrow">{{ t?.hero?.eyebrow }}</div>
+      <h1 class="kb-hero-heading">{{ t?.hero?.heading }}</h1>
+      <p class="kb-hero-lead">{{ t?.hero?.lead }}</p>
+    </section>
+
+    <!-- Obsah / rychlá navigace na jednotlivé sekce -->
+<nav class="kb-toc" aria-label="Obsah stránky">
+  <a href="#kb-security" (click)="scrollToSection($event, 'kb-security')" class="kb-toc-item">{{ t?.sections?.security?.header }}</a>
+  <a href="#kb-legal" (click)="scrollToSection($event, 'kb-legal')" class="kb-toc-item">{{ t?.sections?.legal?.header }}</a>
+  <a href="#kb-admin" (click)="scrollToSection($event, 'kb-admin')" class="kb-toc-item">{{ t?.sections?.admin?.header }}</a>
+  <a href="#kb-uiux" (click)="scrollToSection($event, 'kb-uiux')" class="kb-toc-item">{{ t?.sections?.ui_ux?.header }}</a>
+  <a href="#kb-database" (click)="scrollToSection($event, 'kb-database')" class="kb-toc-item">{{ t?.sections?.database?.header }}</a>
+  <a href="#kb-api" (click)="scrollToSection($event, 'kb-api')" class="kb-toc-item">{{ t?.sections?.api?.header }}</a>
+  <a href="#kb-hosting" (click)="scrollToSection($event, 'kb-hosting')" class="kb-toc-item">{{ t?.sections?.hosting?.header }}</a>
+  <a href="#kb-deployment" (click)="scrollToSection($event, 'kb-deployment')" class="kb-toc-item">{{ t?.sections?.deployment?.header }}</a>
+  <a href="#kb-performance" (click)="scrollToSection($event, 'kb-performance')" class="kb-toc-item">{{ t?.sections?.performance?.header }}</a>
+  <a href="#kb-support" (click)="scrollToSection($event, 'kb-support')" class="kb-toc-item">{{ t?.sections?.support?.header }}</a>
+  <a href="#kb-glossary" (click)="scrollToSection($event, 'kb-glossary')" class="kb-toc-item">{{ t?.glossary?.header }}</a>
+</nav>
+
+    <!-- ═══════════════════════════════════════════
+         BEZPEČNOST
+         ═══════════════════════════════════════════ -->
+    <section id="kb-security" class="kb-section">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.security?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.security?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.security?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.security?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.security?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.security?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.security?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.security?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.security?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.security?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.security?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         PRÁVNÍ SOULAD / GDPR / EU
+         ═══════════════════════════════════════════ -->
+    <section id="kb-legal" class="kb-section kb-section--alt">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v18M5 8l-3 6a4 4 0 0 0 6 0l-3-6zM19 8l-3 6a4 4 0 0 0 6 0l-3-6zM5 8h4M15 8h4M9 3h6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.legal?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.legal?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.legal?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.legal?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.legal?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.legal?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.legal?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.legal?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.legal?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.legal?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.legal?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         ADMINISTRACE (web + shop sekce)
+         ═══════════════════════════════════════════ -->
+    <section id="kb-admin" class="kb-section">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.admin?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.admin?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.admin?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.admin?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.admin?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.admin?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.admin?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.admin?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.admin?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.admin?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.admin?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         UI / UX
+         ═══════════════════════════════════════════ -->
+    <section id="kb-uiux" class="kb-section kb-section--alt">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.ui_ux?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.ui_ux?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.ui_ux?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.ui_ux?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.ui_ux?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.ui_ux?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.ui_ux?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.ui_ux?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.ui_ux?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.ui_ux?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.ui_ux?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         DATABÁZE
+         ═══════════════════════════════════════════ -->
+    <section id="kb-database" class="kb-section">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.database?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.database?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.database?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.database?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.database?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.database?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.database?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.database?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.database?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.database?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.database?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         API / KOMUNIKACE FRONTEND ↔ SERVER
+         ═══════════════════════════════════════════ -->
+    <section id="kb-api" class="kb-section kb-section--alt">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M9 6h6a3 3 0 0 1 3 3v6"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.api?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.api?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.api?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.api?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.api?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.api?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.api?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.api?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.api?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.api?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.api?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         HOSTING (Forpsi)
+         ═══════════════════════════════════════════ -->
+    <section id="kb-hosting" class="kb-section">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="7" rx="1.5"/><rect x="2" y="14" width="20" height="7" rx="1.5"/><line x1="6" y1="6.5" x2="6.01" y2="6.5"/><line x1="6" y1="17.5" x2="6.01" y2="17.5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.hosting?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.hosting?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.hosting?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.hosting?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.hosting?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.hosting?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.hosting?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.hosting?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.hosting?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.hosting?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.hosting?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         NASAZENÍ / SSH / FTP
+         ═══════════════════════════════════════════ -->
+    <section id="kb-deployment" class="kb-section kb-section--alt">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.deployment?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.deployment?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.deployment?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.deployment?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.deployment?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.deployment?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.deployment?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.deployment?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.deployment?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.deployment?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.deployment?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         VÝKON A ŠKÁLOVATELNOST
+         ═══════════════════════════════════════════ -->
+    <section id="kb-performance" class="kb-section">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"/><path d="M12 12l4-3"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.performance?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.performance?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.performance?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.performance?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.performance?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.performance?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.performance?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.performance?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.performance?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.performance?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.performance?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         PODPORA A ÚDRŽBA
+         ═══════════════════════════════════════════ -->
+    <section id="kb-support" class="kb-section kb-section--alt">
+      <div class="kb-section-head">
+        <div class="kb-section-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kb-section-eyebrow">{{ t?.sections?.support?.eyebrow }}</div>
+          <h2 class="kb-section-header">{{ t?.sections?.support?.header }}</h2>
+        </div>
+      </div>
+      <p class="kb-section-lead">{{ t?.sections?.support?.lead }}</p>
+      <div class="kb-points-grid">
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.support?.item_1?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.support?.item_1?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.support?.item_2?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.support?.item_2?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.support?.item_3?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.support?.item_3?.text }}</p>
+        </div>
+        <div class="kb-point">
+          <div class="kb-point-title">{{ t?.sections?.support?.item_4?.title }}</div>
+          <p class="kb-point-text">{{ t?.sections?.support?.item_4?.text }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         SLOVNÍČEK POJMŮ (accordion, čisté CSS)
+         ═══════════════════════════════════════════ -->
+    <section id="kb-glossary" class="kb-glossary-section">
+      <div class="kb-glossary-header">
+        <div class="kb-section-eyebrow">{{ t?.glossary?.eyebrow }}</div>
+        <h2 class="kb-section-header">{{ t?.glossary?.header }}</h2>
+        <p class="kb-section-lead">{{ t?.glossary?.lead }}</p>
+      </div>
+
+      <div class="kb-glossary-list">
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-1" class="kb-glossary-checkbox">
+          <label for="kb-gl-1" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_1?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_1?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-2" class="kb-glossary-checkbox">
+          <label for="kb-gl-2" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_2?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_2?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-3" class="kb-glossary-checkbox">
+          <label for="kb-gl-3" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_3?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_3?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-4" class="kb-glossary-checkbox">
+          <label for="kb-gl-4" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_4?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_4?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-5" class="kb-glossary-checkbox">
+          <label for="kb-gl-5" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_5?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_5?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-6" class="kb-glossary-checkbox">
+          <label for="kb-gl-6" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_6?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_6?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-7" class="kb-glossary-checkbox">
+          <label for="kb-gl-7" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_7?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_7?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-8" class="kb-glossary-checkbox">
+          <label for="kb-gl-8" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_8?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_8?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-9" class="kb-glossary-checkbox">
+          <label for="kb-gl-9" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_9?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_9?.text }}</p>
+          </div>
+        </div>
+
+        <div class="kb-glossary-item">
+          <input type="checkbox" id="kb-gl-10" class="kb-glossary-checkbox">
+          <label for="kb-gl-10" class="kb-glossary-trigger">
+            <span class="kb-glossary-term">{{ t?.glossary?.item_10?.term }}</span>
+            <span class="kb-glossary-chevron" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </label>
+          <div class="kb-glossary-body">
+            <p class="kb-glossary-answer">{{ t?.glossary?.item_10?.text }}</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- CTA na konci stránky -->
+    <section class="kb-cta-section">
+      <div class="kb-cta-block">
+        <p class="kb-cta-eyebrow">{{ t?.cta?.eyebrow }}</p>
+        <p class="kb-cta-text">{{ t?.cta?.text }}</p>
+        <a routerLink="/contact" class="kb-cta-btn">
+          {{ t?.cta?.btn }}
+          <span class="kb-cta-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+} @else {
+  <div class="loading-state">Loading...</div>
+}

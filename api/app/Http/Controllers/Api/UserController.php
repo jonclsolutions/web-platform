@@ -37,6 +37,21 @@
  * limiterem (`RateLimiter`, stejný mechanismus jako v `PasswordResetController`) - po
  * překročení limitu se HESLO POŘÁD ZMĚNÍ (nesmí to blokovat legitimní funkčnost), ale
  * další e-mail se v daném okně už neposílá a pokus se zaloguje.
+ *
+ * @refactor-note (2026-08-12) KRITICKÁ OPRAVA: `id` parametr napříč všemi metodami byl
+ * dřív typován/přetypováván nekonzistentně (`$id`, `int $id`, `?int $id` v logAction()).
+ * Route segmenty z Laravel routingu přichází vždy jako `string`, a pokud nejde o čistě
+ * numerický řetězec, implicitní koerce na `int` v PHP 8 vyhodí `TypeError` - typicky u
+ * hromadných operací (mass delete), kde frontend může poslat id v neočekávaném formátu.
+ * Řešeno na dvou úrovních obrany:
+ *   1) Všechny akce přijímající `{id}` z route teď mají explicitní `string $id` a validují
+ *      ho přes `ctype_digit()` HNED na začátku - neplatné id se odmítne s 422 dřív, než se
+ *      vůbec dotkne modelu nebo logu.
+ *   2) `logAction()` přijímá `int|string|null $id` a interně ho bezpečně normalizuje přes
+ *      `normalizeLogId()` - logovací utilita NIKDY nesmí vyhodit výjimku a shodit tak
+ *      hlavní request jen kvůli chybnému auditnímu zápisu.
+ * Doplněno doporučené `Route::pattern('id', '[0-9]+')` v api.php jako první linie obrany
+ * přímo na úrovni routeru.
  */
 
 namespace App\Http\Controllers\Api;
@@ -173,11 +188,15 @@ class UserController extends Controller
     /**
      * Displays details for a specific user.
      *
-     * @param int $id
+     * @param string $id
      * @return JsonResponse
      */
-    public function show($id): JsonResponse
+    public function show(string $id): JsonResponse
     {
+        if (!ctype_digit($id)) {
+            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+        }
+
         $user = User::withTrashed()->findOrFail($id);
 
         return response()->json(new UserResource($user->load('roles.permissions')));
@@ -190,11 +209,15 @@ class UserController extends Controller
      * sysadmin. `enable_2fa` je navíc vynuceno na `true` pro admin/sysadmin.
      *
      * @param UpdateUserRequest $request
-     * @param int $id
+     * @param string $id
      * @return JsonResponse
      */
-    public function update(UpdateUserRequest $request, $id): JsonResponse
+    public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
+        if (!ctype_digit($id)) {
+            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+        }
+
         $user = User::findOrFail($id);
         $validated = $request->validated();
 
@@ -251,11 +274,15 @@ class UserController extends Controller
      * (2026-08-4) v hlavičce souboru.
      *
      * @param PasswordChangeRequest $request
-     * @param int $id
+     * @param string $id
      * @return JsonResponse
      */
-    public function changePassword(PasswordChangeRequest $request, $id): JsonResponse
+    public function changePassword(PasswordChangeRequest $request, string $id): JsonResponse
     {
+        if (!ctype_digit($id)) {
+            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+        }
+
         try {
             $user = User::findOrFail($id);
             $validated = $request->validated();
@@ -304,11 +331,15 @@ class UserController extends Controller
     /**
      * Restores a soft-deleted user.
      *
-     * @param int $id
+     * @param string $id
      * @return JsonResponse
      */
-    public function restore($id): JsonResponse
+    public function restore(string $id): JsonResponse
     {
+        if (!ctype_digit($id)) {
+            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+        }
+
         try {
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
@@ -327,11 +358,15 @@ class UserController extends Controller
      * smí smazat výhradně jiný sysadmin.
      *
      * @param Request $request
-     * @param int $id
+     * @param string $id
      * @return JsonResponse
      */
-    public function destroy(Request $request, $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
+        if (!ctype_digit($id)) {
+            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+        }
+
         try {
             $user = User::withTrashed()->findOrFail($id);
 
@@ -470,15 +505,19 @@ class UserController extends Controller
 
     /**
      * Internal audit logging utility.
+     * @note NIKDY nesmí vyhodit výjimku ven ze třídy - je to best-effort audit log, ne
+     * kritická závislost hlavní operace. `$id` je proto přijímáno volně
+     * (int|string|null) a bezpečně normalizováno přes normalizeLogId() - viz
+     * @refactor-note (2026-08-12) v hlavičce souboru.
      *
      * @param Request $request
      * @param string $type
      * @param string $mod
      * @param string $desc
-     * @param int|null $id
+     * @param int|string|null $id
      * @return void
      */
-    protected function logAction(Request $request, string $type, string $mod, string $desc, ?int $id = null)
+    protected function logAction(Request $request, string $type, string $mod, string $desc, int|string|null $id = null)
     {
         try {
             $user = $request->user() ?? auth('sanctum')->user();
@@ -499,7 +538,7 @@ class UserController extends Controller
                 'module'               => $mod,
                 'description'          => $desc,
                 'affected_entity_type' => 'User',
-                'affected_entity_id'   => $id,
+                'affected_entity_id'   => $this->normalizeLogId($id),
                 'user_id'              => $user?->id,
                 'context_data'         => json_encode($request->except($sensitiveFields), JSON_UNESCAPED_UNICODE),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
@@ -508,5 +547,33 @@ class UserController extends Controller
         } catch (\Exception $e) { 
             Log::error("Log error (User): " . $e->getMessage()); 
         }
+    }
+
+    /**
+     * @description Safely coerces a loosely-typed id (int|string|null) into a strict
+     *   ?int for storage. Non-numeric or malformed values degrade to null instead of
+     *   throwing, so a bad id can never break audit logging or the parent request.
+     *   Any coercion failure is logged (warning level) so the malformed input is still
+     *   traceable for debugging, without ever propagating as an exception.
+     *
+     * @param int|string|null $id
+     * @return int|null
+     */
+    private function normalizeLogId(int|string|null $id): ?int
+    {
+        if ($id === null || $id === '') {
+            return null;
+        }
+
+        if (is_int($id)) {
+            return $id;
+        }
+
+        if (ctype_digit($id)) {
+            return (int) $id;
+        }
+
+        Log::warning("logAction() received a non-numeric id, storing null instead: " . $id);
+        return null;
     }
 }

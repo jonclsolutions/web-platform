@@ -233,7 +233,13 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         // {id} routy mají 'selfParam' => id (viz CheckPermission) - vlastní účet
         // (personal-info stránka) je dostupný i bez web-manage-administrators.
         // Routy BEZ {id} (index/store/force-delete-all) sebe-výjimku nemají.
-        Route::prefix('users')->group(function () {
+       Route::prefix('users')->group(function () {
+            // POZOR: 'force-delete-all' MUSÍ být definovaná před 'DELETE /{id}' -
+            // Laravel matchuje routy v pořadí zápisu, jinak by string "force-delete-all"
+            // spadl do parametru {id} destroy() a byl odmítnut jako neplatné ID.
+            Route::delete('/force-delete-all', [UserController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:web-manage-administrators');
+
             Route::get('/',    [UserController::class, 'index'])
                 ->middleware('permission:web-manage-administrators');
             Route::post('/',   [UserController::class, 'store'])
@@ -249,8 +255,6 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
             Route::post('/{id}/restore', [UserController::class, 'restore'])
                 ->middleware('permission:web-manage-administrators');
             Route::delete('/{id}', [UserController::class, 'destroy'])
-                ->middleware('permission:web-manage-administrators');
-            Route::delete('/force-delete-all', [UserController::class, 'forceDeleteAllTrashed'])
                 ->middleware('permission:web-manage-administrators');
         });
 

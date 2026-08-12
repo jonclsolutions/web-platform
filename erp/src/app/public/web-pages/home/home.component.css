@@ -1471,3 +1471,9 @@
     .home-faq-item, .home-faq-body, .home-faq-chevron, .home-faq-more,
     .home-faq-trigger, .home-faq-answer-text { transition: none; }
 }
+
+.home-cta-btn-wrp{
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}

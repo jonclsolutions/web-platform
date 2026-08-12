@@ -13,7 +13,7 @@
  */
 
 import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { routes } from './app.routes';
@@ -41,7 +41,21 @@ function initAppFactory(bootstrap: AppBootstrapService) {
  */
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
+    /**
+     * @description Registers the app routes and enables in-memory scroll handling.
+     * @note anchorScrolling lets links like [routerLink] + fragment="kb-security"
+     *   smoothly scroll to the matching #kb-security element on the SAME route,
+     *   instead of the fragment being misinterpreted as a new root-level route.
+     *   scrollPositionRestoration restores the scroll position correctly on
+     *   browser back/forward navigation.
+     */
+    provideRouter(
+      routes,
+      withInMemoryScrolling({
+        anchorScrolling: 'enabled',
+        scrollPositionRestoration: 'enabled'
+      })
+    ),
     provideHttpClient(withInterceptorsFromDi()),
 
     /**

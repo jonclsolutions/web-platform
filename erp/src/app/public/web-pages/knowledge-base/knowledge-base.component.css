@@ -1,0 +1,341 @@
+/*
+    @file: knowledge-base.component.css
+    @path: /src/app/public/web-pages/knowledge-base/knowledge-base.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+    @description: Klidný, "dokumentační" vizuál - žádné hravé tvary ani animace
+    navíc, jen konzistentní tmavé karty a typografie sdílená se zbytkem webu.
+*/
+
+.kb-main-content {
+    font-family: "Source Sans Pro", sans-serif;
+    position: relative;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* ── Hero ─────────────────────────────────────────── */
+.kb-hero {
+    padding: 120px 0 40px;
+    text-align: center;
+}
+
+.kb-hero-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #a67dff;
+    margin-bottom: 16px;
+}
+
+.kb-hero-heading {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #e0e0e0;
+    line-height: 1.25;
+    margin: 0 0 18px;
+}
+
+.kb-hero-lead {
+    font-size: 1.02rem;
+    color: #a0a0b5;
+    line-height: 1.65;
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+/* ── Obsah / rychlá navigace ──────────────────────── */
+.kb-toc {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px 0 60px;
+    border-bottom: 1px solid rgba(166, 125, 255, 0.14);
+    margin-bottom: 50px;
+}
+
+.kb-toc-item {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #a0a0b5;
+    text-decoration: none;
+    padding: 7px 14px;
+    border: 1px solid rgba(166, 125, 255, 0.18);
+    border-radius: 999px;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.kb-toc-item:hover {
+    color: #e0e0f0;
+    border-color: #a67dff;
+    background: rgba(166, 125, 255, 0.07);
+}
+
+/* ── Jednotlivé sekce ─────────────────────────────── */
+.kb-section {
+    padding: 50px 0;
+    border-bottom: 1px solid rgba(166, 125, 255, 0.08);
+    scroll-margin-top: 90px;
+}
+
+.kb-section:last-of-type {
+    border-bottom: none;
+}
+
+.kb-section--alt {
+    /* jemné odlišení sudých sekcí bez použití zářivých efektů */
+    background: rgba(166, 125, 255, 0.025);
+    margin: 0 -24px;
+    padding: 50px 24px;
+}
+
+.kb-section-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.kb-section-icon {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: rgba(166, 125, 255, 0.1);
+    border: 1px solid rgba(166, 125, 255, 0.22);
+    color: #a67dff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kb-section-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #a67dff;
+    margin-bottom: 4px;
+}
+
+.kb-section-header {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #e0e0e0;
+    margin: 0;
+}
+
+.kb-section-lead {
+    font-size: 0.96rem;
+    color: #8a8a9c;
+    line-height: 1.7;
+    max-width: 720px;
+    margin: 0 0 28px;
+}
+
+.kb-points-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.kb-point {
+    background: #111128;
+    border: 1px solid rgba(166, 125, 255, 0.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+}
+
+.kb-point-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #c8b8ff;
+    margin-bottom: 8px;
+}
+
+.kb-point-text {
+    font-size: 0.87rem;
+    line-height: 1.65;
+    color: #8a8a9c;
+    margin: 0;
+}
+
+/* ── Slovníček pojmů (accordion, čisté CSS - checkbox hack) ── */
+.kb-glossary-section {
+    padding: 50px 0 30px;
+}
+
+.kb-glossary-header {
+    margin-bottom: 28px;
+}
+
+.kb-glossary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kb-glossary-item {
+    background: #111128;
+    border: 1px solid rgba(166, 125, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.kb-glossary-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.kb-glossary-checkbox:checked ~ .kb-glossary-trigger {
+    background: rgba(166, 125, 255, 0.07);
+}
+
+.kb-glossary-checkbox:checked ~ .kb-glossary-body {
+    grid-template-rows: 1fr;
+}
+
+.kb-glossary-checkbox:checked ~ .kb-glossary-trigger .kb-glossary-chevron {
+    transform: rotate(180deg);
+}
+
+.kb-glossary-checkbox:focus-visible ~ .kb-glossary-trigger {
+    outline: 2px solid #a67dff;
+    outline-offset: -2px;
+}
+
+.kb-glossary-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 18px;
+    cursor: pointer;
+    color: #e0e0f0;
+    font-family: inherit;
+    user-select: none;
+    transition: background 0.25s ease;
+}
+
+.kb-glossary-trigger:hover {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.kb-glossary-term {
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.kb-glossary-chevron {
+    flex-shrink: 0;
+    color: #a67dff;
+    display: flex;
+    transition: transform 0.25s ease;
+}
+
+.kb-glossary-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.32s ease;
+}
+
+.kb-glossary-answer {
+    overflow: hidden;
+    min-height: 0;
+    margin: 0;
+    padding: 0 18px;
+    font-size: 0.87rem;
+    line-height: 1.7;
+    color: #8a8a9c;
+    transition: padding 0.32s ease;
+}
+
+.kb-glossary-checkbox:checked ~ .kb-glossary-body .kb-glossary-answer {
+    padding-bottom: 16px;
+}
+
+/* ── CTA na konci stránky ─────────────────────────── */
+.kb-cta-section {
+    padding: 50px 0 90px;
+    display: flex;
+    justify-content: center;
+}
+
+.kb-cta-block {
+    text-align: center;
+    max-width: 460px;
+}
+
+.kb-cta-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #a67dff;
+    margin: 0 0 10px;
+}
+
+.kb-cta-text {
+    font-size: 0.98rem;
+    color: #a0a0b5;
+    line-height: 1.6;
+    margin: 0 0 22px;
+}
+
+.kb-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 26px;
+    background: #6b2e91;
+    border: 1px solid #a67dff;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.25s ease, transform 0.15s ease;
+}
+
+.kb-cta-btn:hover {
+    background: #7d35ae;
+    transform: translateY(-2px);
+}
+
+.kb-cta-arrow {
+    transition: transform 0.25s ease;
+}
+
+.kb-cta-btn:hover .kb-cta-arrow {
+    transform: translateX(4px);
+}
+
+/* ── Responzivita ─────────────────────────────────── */
+@media (max-width: 760px) {
+    .kb-hero { padding: 100px 0 30px; }
+    .kb-hero-heading { font-size: 1.9rem; }
+    .kb-points-grid { grid-template-columns: 1fr; }
+    .kb-section--alt { margin: 0 -16px; padding: 40px 16px; }
+}
+
+@media (max-width: 480px) {
+    .kb-main-content { padding: 0 16px; }
+    .kb-hero-heading { font-size: 1.6rem; }
+    .kb-section-header { font-size: 1.2rem; }
+    .kb-toc { gap: 8px; }
+    .kb-toc-item { font-size: 0.76rem; padding: 6px 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .kb-glossary-body, .kb-glossary-chevron, .kb-glossary-answer, .kb-cta-btn, .kb-cta-arrow, .kb-toc-item {
+        transition: none;
+    }
+}

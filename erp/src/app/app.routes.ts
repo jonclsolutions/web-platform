@@ -52,6 +52,7 @@ export const routes: Routes = [
       { path: 'privacy-policy', loadComponent: () => import('./public/web-pages/privacy-policy/privacy-policy.component').then(m => m.PrivacyPolicyComponent) },
       { path: 'references', loadComponent: () => import('./public/web-pages/references/references.component').then(m => m.ReferencesComponent) },
       { path: 'faq', loadComponent: () => import('./public/web-pages/faq/faq.component').then(m => m.FaqComponent) },
+      { path: 'knowledge-base', loadComponent: () => import('./public/web-pages/knowledge-base/knowledge-base.component').then(m => m.KnowledgeBaseComponent) },
       { path: 'cookies-policy', loadComponent: () => import('./public/web-pages/cookies-policy/cookies-policy.component').then(m => m.CookiesPolicyComponent) },
       { path: 'about-us', loadComponent: () => import('./public/web-pages/about-us/about-us.component').then(m => m.AboutUsComponent) },
       { path: 'jobs', loadComponent: () => import('./public/web-pages/jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent) },

@@ -68,6 +68,7 @@ export class PublicFooterComponent extends BasePublicComponent {
       { route: '/faq', key: 'navigation.faq_full', ext: false },
       { route: '/about-us', key: 'navigation.about-us', ext: false },
       { route: '/jobs', key: 'navigation.jobs', ext: false },
+      { route: '/knowledge-base', key: 'knowledge-base.knowledge-base_footer', ext: false },
       { route: '/auth/login', key: 'navigation.login_btn', ext: false },
     ];
 
