@@ -4,6 +4,11 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
+    @refactor-note (2026-08-7): checklist oprávnění nyní vykresluje DVĚ úrovně
+        (modul -> zdroj -> jednotlivé permission řádky) místo jedné plocné - viz
+        edit-roles.component.ts (visiblePermissionGroups, toggleResourceGroup).
+        Přidáno samostatné vyhledávací pole nad checklistem (permissionSearch),
+        nezávislé na existujícím hledání v seznamu rolí vlevo (roleSearch).
 -->
 
 <div class="roles-page">
@@ -79,7 +84,7 @@
               </svg>
               {{ role.role_name }}
             </span>
-            <span class="users-badge" [class.users-badge--zero]="role.users_count === 0">{{ role.users_count }}</span>
+            <span class="users-badge" [class.users-badge--zero]="role.users_count === 0" title="Počet uživatelských účtů s touto rolí">{{ role.users_count }}</span>
           </div>
           <span class="role-list-desc" *ngIf="role?.description">{{ role.description }}</span>
         </li>
@@ -109,7 +114,7 @@
           </ng-template>
 
           <div class="detail-header-badges">
-            <span class="users-badge" [class.users-badge--zero]="selectedRole.users_count === 0">
+            <span class="users-badge" [class.users-badge--zero]="selectedRole.users_count === 0" title="Počet uživatelských účtů s touto rolí">
               {{ selectedRole.users_count }} {{ selectedRole.users_count === 1 ? 'uživatel' : (selectedRole.users_count >= 2 && selectedRole.users_count <= 4 ? 'uživatelé' : 'uživatelů') }}
             </span>
           </div>
@@ -150,37 +155,68 @@
         Toto je systémová role - název, popis i oprávnění jsou needitovatelné.
       </div>
 
-      <div class="permissions-checklist">
-        <div class="permission-group" *ngFor="let group of permissionGroups">
-          <label class="permission-group-header" [class.permission-group-header--protected]="selectedRole.is_protected">
-            <input
-              type="checkbox"
-              class="permission-group-header-checkbox"
-              [checked]="isGroupFullyChecked(group)"
-              [indeterminate]="isGroupPartiallyChecked(group)"
-              [disabled]="selectedRole.is_protected"
-              (change)="toggleGroup(group)"
-              (click)="$event.stopPropagation()"
-            />
-            {{ moduleLabel(group.module) }}
-          </label>
+      <!-- ── Vyhledávání v checklistu oprávnění (nezávislé na hledání rolí vlevo) ── -->
+      <div class="permission-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" [(ngModel)]="permissionSearch" placeholder="Hledat oprávnění podle názvu nebo klíče…" />
+      </div>
 
-          <label
-            class="permission-row"
-            *ngFor="let perm of group.items"
-            [class.permission-row--protected]="selectedRole.is_protected">
-            <input
-              type="checkbox"
-              [checked]="isChecked(perm.permission_key)"
-              [disabled]="selectedRole.is_protected"
-              (change)="togglePermission(perm.permission_key)"
-            />
-            <span class="permission-row-text">
-              <span class="perm-key">{{ perm.permission_key }}</span>
-              <span class="perm-desc" *ngIf="perm.description">{{ perm.description }}</span>
-            </span>
-          </label>
-        </div>
+      <div class="permissions-checklist">
+        <ng-container *ngIf="visiblePermissionGroups.length > 0; else noPermMatch">
+
+          <div class="permission-group" *ngFor="let group of visiblePermissionGroups; trackBy: trackByModule">
+            <label class="permission-group-header" [class.permission-group-header--protected]="selectedRole.is_protected">
+              <input
+                type="checkbox"
+                class="permission-group-header-checkbox"
+                [checked]="isModuleFullyChecked(group)"
+                [indeterminate]="isModulePartiallyChecked(group)"
+                [disabled]="selectedRole.is_protected"
+                (change)="toggleModuleGroup(group)"
+                (click)="$event.stopPropagation()"
+              />
+              {{ group.moduleLabel }}
+            </label>
+
+            <div class="permission-resource" *ngFor="let resource of group.resources; trackBy: trackByResourceKey">
+              <label class="permission-resource-header" [class.permission-resource-header--protected]="selectedRole.is_protected">
+                <input
+                  type="checkbox"
+                  class="permission-resource-header-checkbox"
+                  [checked]="isResourceFullyChecked(resource)"
+                  [indeterminate]="isResourcePartiallyChecked(resource)"
+                  [disabled]="selectedRole.is_protected"
+                  (change)="toggleResourceGroup(resource)"
+                  (click)="$event.stopPropagation()"
+                />
+                {{ resource.resourceLabel }}
+              </label>
+
+              <label
+                class="permission-row"
+                *ngFor="let perm of resource.items; trackBy: trackByPermKey"
+                [class.permission-row--protected]="selectedRole.is_protected">
+                <input
+                  type="checkbox"
+                  [checked]="isChecked(perm.permission_key)"
+                  [disabled]="selectedRole.is_protected"
+                  (change)="togglePermission(perm.permission_key)"
+                />
+                <span class="permission-row-text">
+                  <span class="perm-key">{{ perm.permission_key }}</span>
+                  <span class="perm-desc" *ngIf="perm.description">{{ perm.description }}</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+        </ng-container>
+
+        <ng-template #noPermMatch>
+          <div class="permission-search-empty">Žádné oprávnění neodpovídá hledání „{{ permissionSearch }}".</div>
+        </ng-template>
       </div>
 
       <div class="detail-footer" *ngIf="!selectedRole.is_protected && isPermissionsDirty">

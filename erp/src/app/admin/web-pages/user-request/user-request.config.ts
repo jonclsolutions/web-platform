@@ -1,14 +1,28 @@
+/**
+ * @file user-request.config.ts
+ * @path src/app/admin/web-pages/user-request/user-request.config.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2025
+ * @description Static configuration (buttons, form fields, table/filter/detail columns) for
+ * the User Request (raw commission requests) management page.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+ *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
+ *      - USER_REQUEST_TOOLBAR_BUTTONS: "Přidat" -> `permission: 'web-user-requests-create'`.
+ *      - USER_REQUEST_BUTTONS: "Edit" -> `web-user-requests-update`,
+ *        "Smazat" -> `web-user-requests-delete`. "Detaily" zůstává bez permission.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const USER_REQUEST_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔍', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-user-requests-update' },
+  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-user-requests-delete' },
 ];
 
 export const USER_REQUEST_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true },
+  { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-user-requests-create' },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];

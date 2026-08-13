@@ -13,6 +13,12 @@
  * @refactor-note (2026-08) Doplněny styly pro "select all" checkbox v hlavičce
  *            každé sekce oprávnění (.permission-group-header-checkbox) - viz
  *            edit-roles.component.ts (toggleGroup).
+ * @refactor-note (2026-08-7) Doplněny styly pro DRUHOU úroveň grupování
+ *            (.permission-resource, .permission-resource-header) - vizuálně mírně
+ *            odsazená/menší varianta modulového nadpisu, ať je jasná hierarchie
+ *            modul -> zdroj -> jednotlivá oprávnění. Doplněno i druhé vyhledávací
+ *            pole (.permission-search, .permission-search-empty) - stylově kopíruje
+ *            existující .roles-search (levý panel), jen umístěné v pravém detailu.
  */
 
 :host {
@@ -123,7 +129,7 @@
 .field-group--wide { flex: 1; }
 .field-group label { font-size: 0.78rem; font-weight: 600; color: var(--text); }
 
-.field-group input, .roles-search input, .detail-name-input, .detail-desc-input {
+.field-group input, .roles-search input, .permission-search input, .detail-name-input, .detail-desc-input {
   padding: 9px 12px;
   border: 1px solid var(--border-mid);
   border-radius: var(--radius);
@@ -131,7 +137,7 @@
   font-family: var(--ff);
   outline: none;
 }
-.field-group input:focus, .roles-search input:focus, .detail-name-input:focus, .detail-desc-input:focus {
+.field-group input:focus, .roles-search input:focus, .permission-search input:focus, .detail-name-input:focus, .detail-desc-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
@@ -170,7 +176,6 @@
   gap: 20px;
   align-items: start;
 }
-
 /* ── Levý panel: seznam rolí ────────────────────────────── */
 .roles-list-panel {
   background: var(--surface);
@@ -266,7 +271,6 @@
   flex-shrink: 0;
 }
 .users-badge--zero { background: var(--border); color: var(--text-dim); }
-
 /* ── Pravý panel: detail role ───────────────────────────── */
 .role-detail-panel {
   background: var(--surface);
@@ -349,9 +353,39 @@
   color: #92400e;
 }
 
-/* ── Checklist oprávnění ────────────────────────────────── */
+/* ── Vyhledávání v checklistu oprávnění (pravý panel) ───────────────
+   Stylově kopíruje .roles-search, jen bez ohraničeného panelu okolo -
+   žije přímo v .role-detail-panel, proto má vlastní jemný rámeček. ── */
+.permission-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  margin-top: 18px;
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+.permission-search input {
+  border: none;
+  background: transparent;
+  flex: 1;
+  padding: 3px 0;
+  font-size: 0.85rem;
+}
+.permission-search input:focus { box-shadow: none; }
+
+.permission-search-empty {
+  padding: 28px 14px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ── Checklist oprávnění - úroveň 1: MODUL ──────────────────────── */
 .permissions-checklist {
-  margin-top: 22px;
+  margin-top: 14px;
   border-top: 1px solid var(--border);
   padding-top: 10px;
 }
@@ -369,7 +403,7 @@
   background: var(--surface-2);
   padding: 7px 12px;
   border-radius: 999px;
-  margin: 14px 0 4px;
+  margin: 14px 0 6px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -389,6 +423,47 @@
 }
 .permission-group-header-checkbox:disabled { cursor: not-allowed; opacity: 0.7; }
 
+/* ── Checklist oprávnění - úroveň 2: ZDROJ (resource) ────────────────
+   Vizuálně odsazená a menší varianta modulového nadpisu, ať je na
+   první pohled jasná hierarchie modul -> zdroj -> jednotlivá práva.
+   Levý akcentní proužek místo pilulkového pozadí (modul má pill,
+   zdroj má subtilnější "podnadpis" vzhled, aby spolu nesoutěžily). ── */
+.permission-resource {
+  margin-left: 14px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+.permission-resource + .permission-resource {
+  margin-top: 10px;
+}
+
+.permission-resource-header {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 4px 0;
+  margin: 8px 0 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.permission-resource-header--protected {
+  cursor: default;
+}
+
+.permission-resource-header-checkbox {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.permission-resource-header-checkbox:disabled { cursor: not-allowed; opacity: 0.7; }
+
+/* ── Checklist oprávnění - úroveň 3: jednotlivá práva ────────────── */
 .permission-row {
   display: flex;
   align-items: flex-start;
@@ -420,7 +495,6 @@
   color: var(--text);
   font-family: 'Consolas', 'Courier New', monospace;
 }
-
 .perm-desc {
   font-size: 0.78rem;
   color: var(--text-muted);
@@ -530,4 +604,5 @@
   :host { padding: 0 0 40px; }
   .roles-page-header { flex-direction: column; }
   .role-detail-panel { padding: 18px 16px 20px; }
+  .permission-resource { margin-left: 8px; padding-left: 9px; }
 }

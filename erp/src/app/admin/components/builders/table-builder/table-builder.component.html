@@ -4,108 +4,112 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08-5): hlavička i řádkové buňky akčních tlačítek nyní kontrolují
+        i isButtonVisible(button) (permission), ne jen button.isActive - viz
+        table-builder.component.ts stejné datum. Musí zůstat SYNCHRONIZOVANÉ (stejná
+        podmínka na obou místech), jinak by hlavička a řádky měly různý počet sloupců.
 -->
 
 <div class="table-responsive">
-  <table [class.fit-content-table]="!isFullWidth">
-    @if (tableCaption) {
-      <caption>
-        <div class="caption-content-wrapper">
-          <div class="caption-text">
+<table [class.fit-content-table]="!isFullWidth">
+@if (tableCaption) {
+<caption>
+<div class="caption-content-wrapper">
+<div class="caption-text">
             {{ tableCaption }}
-          </div>
-        </div>
-      </caption>
+</div>
+</div>
+</caption>
     }
-    <thead>
-      <tr>
-        @for (col of columnDefinitions; track col) {
-          <th>
-            <ng-container>
-              <span class="header-content">
+<thead>
+<tr>
+@for (col of columnDefinitions; track col) {
+<th>
+<ng-container>
+<span class="header-content">
                 {{ col.header }}
-              </span>
-            </ng-container>
-          </th>
+</span>
+</ng-container>
+</th>
         }
-        @for (button of buttons; track button) {
-          @if (button.isActive) {
-            <th class="button-header">
+@for (button of buttons; track button) {
+@if (button.isActive && isButtonVisible(button)) {
+<th class="button-header">
               {{ button.header_name }}
-            </th>
+</th>
           }
         }
-      </tr>
-    </thead>
-    <tbody>
-      @if (data && data.length > 0) {
-        @for (item of data; track item) {
-          <tr>
-            @for (col of columnDefinitions; track col) {
-              @if (!col.hidden) {
-                <td>
-                  @switch (col.type) {
-                    @case ('image') {
-                      @if (getCellValue(item, col)) {
-                        <img [src]="getCellValue(item, col)" alt="Obrázek" class="table-cell-image">
+</tr>
+</thead>
+<tbody>
+@if (data && data.length > 0) {
+@for (item of data; track item) {
+<tr>
+@for (col of columnDefinitions; track col) {
+@if (!col.hidden) {
+<td>
+@switch (col.type) {
+@case ('image') {
+@if (getCellValue(item, col)) {
+<img [src]="getCellValue(item, col)" alt="Obrázek" class="table-cell-image">
                       }
-                      @if (!getCellValue(item, col)) {
-                        <span>Není obrázek</span>
+@if (!getCellValue(item, col)) {
+<span>Není obrázek</span>
                       }
                     }
-                    @case ('link') {
-                      @if (getCellValue(item, col)) {
-                        <a [href]="getCellValue(item, col)" target="_blank" rel="noopener noreferrer">{{ getCellValue(item, col) }}</a>
+@case ('link') {
+@if (getCellValue(item, col)) {
+<a [href]="getCellValue(item, col)" target="_blank" rel="noopener noreferrer">{{ getCellValue(item, col) }}</a>
                       } @else {
                         {{ getCellValue(item, col) }}
                       }
                     }
-                    @default {
+@default {
                       {{ getCellValue(item, col) }}
                     }
                   }
-                </td>
+</td>
               }
             }
-            @for (button of buttons; track button) {
-              @if (button.isActive) {
-                <td class="action-button-cell">
-                  <button
-                    [class]="button.type"
-                    [disabled]="button.type === 'delete_button' && item.id == authService.getUserId() && isAdminTable == true"
-                    (click)="handleAction(item, button.action)">
+@for (button of buttons; track button) {
+@if (button.isActive && isButtonVisible(button)) {
+<td class="action-button-cell">
+<button
+[class]="button.type"
+[disabled]="button.type === 'delete_button' && item.id == authService.getUserId() && isAdminTable == true"
+(click)="handleAction(item, button.action)">
                     {{ button.display_name }}
-                  </button>
-                </td>
+</button>
+</td>
               }
             }
-          </tr>
+</tr>
         }
       } @else {
-        <tr>
-          <td [attr.colspan]="colspanValue" class="no-data-msg">
+<tr>
+<td [attr.colspan]="colspanValue" class="no-data-msg">
             Nebyla nalezena žádná data.
-          </td>
-        </tr>
+</td>
+</tr>
       }
-    </tbody>
-  </table>
+</tbody>
+</table>
 </div>
 
 <div class="toolbar">
-  <label class="checkbox-container">
-    <input type="checkbox" [(ngModel)]="isFullWidth">
+<label class="checkbox-container">
+<input type="checkbox" [(ngModel)]="isFullWidth">
     Zobrazit tabulku na šířce stránky
-  </label>
+</label>
 </div>
 
 <!-- existující .toolbar div beze změny -->
 
-  @if (showExportPopup) {
-    <app-export-popup-builder
-      [itemCount]="data.length"
-      [isExporting]="isExporting"
-      (formatSelected)="handleExportFormatSelected($event)"
-      (closed)="closeExportPopup()">
-    </app-export-popup-builder>
+@if (showExportPopup) {
+<app-export-popup-builder
+[itemCount]="data.length"
+[isExporting]="isExporting"
+(formatSelected)="handleExportFormatSelected($event)"
+(closed)="closeExportPopup()">
+</app-export-popup-builder>
   }

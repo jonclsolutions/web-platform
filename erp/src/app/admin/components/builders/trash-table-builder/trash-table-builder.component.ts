@@ -12,9 +12,20 @@
  * nevyužívala (o to se stará rodičovská "smart" stránka). Nyní si skládá
  * `EntityCrudService` přímo (restore/delete/hard-delete-all).
  *
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php,
+ * table-builder.component.ts a has-permission.directive.ts stejné datum): restore i
+ * trvalé smazání spadají na backendu pod STEJNÝ granulární klíč `{resource}-delete`
+ * (viz api.php - `force-delete-all`/`restore`/`destroy` sdílejí permission), takže na
+ * rozdíl od TableBuilderComponent (kde má každé tlačítko svůj vlastní `permission`)
+ * stačí tady jeden `@Input() deletePermission`, který platí pro OBĚ tlačítka (Restore i
+ * Delete Permanently) i pro hromadné "Delete All". Podporuje stejnou OR syntaxi
+ * (`klic1|klic2`) jako *appHasPermission direktiva. Bez nastaveného `deletePermission`
+ * zůstává komponenta zpětně kompatibilní - vše viditelné jako dřív.
+ *
  * @dependencies
  * - EntityCrudService: Inherits core CRUD and data lifecycle management.
  * - ConfirmDialogService: Ensures safe irreversible operations (permanent delete).
+ * - PermissionService: Vyhodnocení `deletePermission` pro restore/delete/delete-all.
  */
 
 import {
@@ -28,6 +39,7 @@ import { Subject } from 'rxjs';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
+import { PermissionService } from '../../../../core/auth/services/permission.service';
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
@@ -60,20 +72,18 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   @Input() apiEndpoint: string = '';
   @Input() uploadsBaseUrl: string = '';
 
+  /**
+   * @description Permission klíč (nebo víc oddělených `|` - OR) požadovaný pro Restore,
+   * Delete Permanently I hromadné Delete All - všechny tři spadají na backendu pod
+   * stejný granulární `{resource}-delete` klíč (viz api.php). Když není nastaven,
+   * všechny akce zůstávají viditelné (zpětná kompatibilita se stránkami, které tenhle
+   * Input ještě nepředávají).
+   */
+  @Input() deletePermission?: string;
+
   buttons: TableButtons[] = [
     { display_name: '♻️', header_name: "Restore", isActive: true, type: 'confirm_button', action: "restore" },
     { display_name: '🧨', header_name: "Delete Permanently", isActive: true, type: 'delete_button', action: "delete" },
-  ];
-
-  deleteAllButtonConfig: Core.Button[] = [
-    {
-      action: 'deleteAll',
-      label: 'Delete All',
-      icon: '🗑️',
-      class: 'btn-trash small-btn',
-      isActive: false,
-      showIf: true
-    }
   ];
 
   public isFullWidth: boolean = true;
@@ -82,6 +92,7 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   @Output() itemDeletedPermanently = new EventEmitter<void>();
 
   public alertDialogService = inject(AlertDialogService);
+  public permissionService = inject(PermissionService);
 
   private destroy$ = new Subject<void>();
   private _crud?: EntityCrudService<any>;
@@ -101,6 +112,34 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
     private cd: ChangeDetectorRef,
     private confirmDialogService: ConfirmDialogService,
   ) {}
+
+  /**
+   * @description Whether restore/delete/delete-all should be visible at all, based on
+   * `deletePermission`. Supports OR syntax ('klic1|klic2'), same as *appHasPermission -
+   * `true` when `deletePermission` is not set (backwards compatible default).
+   */
+  get canManageTrash(): boolean {
+    if (!this.deletePermission) return true;
+    return this.deletePermission.split('|').some(p => this.permissionService.hasPermission(p));
+  }
+
+  /**
+   * @description Bulk "Delete All" toolbar button config. Je to getter (ne statické
+   * pole) - `showIf` se dopočítává z `canManageTrash`, ať se hromadná akce schová
+   * stejně jako řádková tlačítka, když uživatel nemá `deletePermission`.
+   */
+  get deleteAllButtonConfig(): Core.Button[] {
+    return [
+      {
+        action: 'deleteAll',
+        label: 'Delete All',
+        icon: '🗑️',
+        class: 'btn-trash small-btn',
+        isActive: false,
+        showIf: this.canManageTrash
+      }
+    ];
+  }
 
   /**
    * @description Handles toolbar interactions, specifically for the bulk-delete action.
@@ -236,10 +275,14 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   /**
-   * @description Calculates colspan for empty or error message rows.
+   * @description Calculates colspan for empty or error message rows. Řádková tlačítka
+   * (Restore/Delete) se počítají jako jeden souhrnný sloupec jen pokud `canManageTrash`
+   * - jinak by se objevil prázdný sloupec navíc bez tlačítek.
    */
   get colspanValue(): number {
-    const activeButtonsCount = this.buttons?.filter(b => b.isActive).length || 0;
+    const activeButtonsCount = this.canManageTrash
+      ? (this.buttons?.filter(b => b.isActive).length || 0)
+      : 0;
     return this.columnDefinitions.length + (activeButtonsCount > 0 ? 1 : 0);
   }
 }

@@ -25,6 +25,30 @@
  *      kořenové úrovni `/admin/xxx`), stejně jako `core/...` a `shop/...` - konzistentní
  *      URL struktura napříč všemi třemi sekcemi. Zároveň doplněna chybějící route
  *      `web/edit-website` (existoval jen odkaz v menu, route v modulu chyběla).
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php stejné datum):
+ *      permission klíče přejmenovány tak, aby "vidět stránku" jednotně odpovídalo
+ *      `-view` variantě nového granulárního klíče (`{resource}-view/create/update/delete`),
+ *      místo dřívějšího nekonzistentního mixu `web-view-*` / `web-manage-*` / `web-edit-*`,
+ *      který matoucím způsobem pojmenovával stejnou věc (přístup na stránku) různě.
+ *      Zdroje přesunuté pod core-* (administrators, external-links, settings) mají nově
+ *      i klíč s prefixem core- místo historického web-. `edit-legal` reálně kombinuje dva
+ *      zdroje (document-sections + config/social) rozdělené na `core-legal-documents-*` a
+ *      `core-legal-config-*`, proto používá OR syntaxi `core-legal-documents-view|
+ *      core-legal-config-view` (`*appHasPermission` direktiva ji od tohoto data podporuje
+ *      stejně jako backend CheckPermission middleware) - ať položka v menu zůstane
+ *      viditelná i uživateli s právem jen na jeden z těch dvou zdrojů. POZOR: pokud
+ *      `AuthGuard` čte `data.permission` a validuje ho samostatně (ne přes direktivu),
+ *      zkontrolovat, že i on tuhle OR syntaxi podporuje - jinak by menu položku ukázal,
+ *      ale kliknutí by guard odmítl.
+ * @bugfix-note (2026-08-6) `web-settings` route měla omylem `core-settings-view`
+ *      (permission pro CoreSiteSettingController / `core/settings` - přepínače údržby
+ *      webu/eshopu). `WebSettingsComponent` ale reálně volá `legal/config`,
+ *      `legal/config/settings`, `legal/config/social/*` (SiteConfigurationController) -
+ *      stejný backend jako `edit-legal` config podsekce. Opraveno na
+ *      `core-legal-config-view`, ať permission klíč odpovídá tomu, co komponenta
+ *      skutečně čte/zapisuje. `core-settings-*` zůstává platný pro `core/settings`
+ *      route v api.php, jen k němu momentálně žádná frontend stránka nesahá (dřívější
+ *      přepínač údržby v headeru byl odstraněn, viz admin-layout.component.html).
  */
 
 import { NgModule } from '@angular/core';
@@ -93,14 +117,14 @@ const routes: Routes = [
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
-          { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-view-user-requests' } },
+          { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-user-requests-view' } },
           { path: 'business-logs', component: BusinessLogsComponent, data: { permission: 'web-view-web-logs' } },
-          { path: 'sales-leads', component: SalesLeadsComponent, data: { permission: 'web-view-sales-leads' } },
-          { path: 'edit-news', component: EditNewsComponent, data: { permission: 'web-view-news' } },
+          { path: 'sales-leads', component: SalesLeadsComponent, data: { permission: 'web-sales-leads-view' } },
+          { path: 'edit-news', component: EditNewsComponent, data: { permission: 'web-news-view' } },
           { path: 'edit-website', component: EditWebsiteComponent, data: { permission: 'web-view-edit-website' } },
-          { path: 'sales-orders', component: SalesOrdersComponent, data: { permission: 'web-view-sales-orders' } },
-          { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-view-support-tickets' } },
-          { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-view-job-applications' } },
+          { path: 'sales-orders', component: SalesOrdersComponent, data: { permission: 'web-sales-orders-view' } },
+          { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-support-tickets-view' } },
+          { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-job-applications-view' } },
         ]
       },
 
@@ -111,13 +135,13 @@ const routes: Routes = [
           { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
           { path: 'dashboard', component: CoreDashboardComponent, data: { permission: 'view-core' } },
           { path: 'welcome-page', component: WelcomePageComponent, data: { permission: 'core-view-welcome-page' } },
-          { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'web-edit-legal' } },
+          { path: 'edit-legal', component: EditLegalComponent, data: { permission: 'core-legal-documents-view|core-legal-config-view' } },
           { path: 'personal-info', component: PersonalInfoComponent, data: { permission: 'web-view-personal-info' } },
-          { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'web-view-web-settings' } },
-          { path: 'external-links', component: ExternalLinksComponent, data: { permission: 'web-manage-external-links' } },
+          { path: 'web-settings', component: WebSettingsComponent, data: { permission: 'core-legal-config-view' } },
+          { path: 'external-links', component: ExternalLinksComponent, data: { permission: 'core-external-links-view' } },
           // Nezávisle na permission systému natvrdo omezeno na roli 'sysadmin' (viz sysadminGuard).
           { path: 'edit-roles', component: EditRolesComponent, canActivate: [sysadminGuard] },
-          { path: 'administrators', component: AdministratorsComponent, data: { permission: 'web-manage-administrators' } },
+          { path: 'administrators', component: AdministratorsComponent, data: { permission: 'core-administrators-view' } },
           // Placeholder - dočasně čte ze stejného zdroje jako web/business-logs, viz poznámka v logs.component.ts.
           { path: 'logs', component: CoreLogsComponent, data: { permission: 'view-core' } },
         ]

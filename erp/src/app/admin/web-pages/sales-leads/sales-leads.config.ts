@@ -1,15 +1,32 @@
+/**
+ * @file sales-leads.config.ts
+ * @path src/app/admin/web-pages/sales-leads/sales-leads.config.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2025
+ * @description Static configuration (buttons, form fields, table/filter/detail columns) for
+ * the Sales Leads (CRM) management page.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+ *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
+ *      - SALES_LEAD_TOOLBAR_BUTTONS: "Přidat lead" -> `permission: 'web-sales-leads-create'`.
+ *      - SALES_LEAD_BUTTONS: "Edit" -> `web-sales-leads-update`,
+ *        "Smazat" -> `web-sales-leads-delete`. "Link" (generate_form, generuje
+ *        public_token pro OrderFormComponent) -> `web-sales-leads-update`, protože na
+ *        backendu je to `POST /{id}/generate-link` gatovaný stejným update klíčem jako
+ *        editace leadu (viz api.php). "Detaily" zůstává bez permission.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const SALES_LEAD_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '🔗', header_name: 'Link', isActive: true, type: 'neutral_button', action: 'generate_form' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-sales-leads-update' },
+  { display_name: '🔗', header_name: 'Link', isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-sales-leads-update' },
+  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-sales-leads-delete' },
 ];
 
 export const SALES_LEAD_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Přidat lead', icon: '➕', class: 'btn-create', showIf: true },
+  { action: 'handleCreateFormOpened', label: 'Přidat lead', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-sales-leads-create' },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];

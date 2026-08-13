@@ -19,6 +19,18 @@
  * zlomek (např. PersonalInfoComponent, TableBuilderComponent), už z této třídy
  * vůbec nedědí — skládají si `EntityCrudService` přímo (viz jejich soubory).
  *
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php,
+ * table-builder.component.ts a has-permission.directive.ts stejné datum): přidána
+ * `hasAnyPermission()` - sdílený helper pro komponenty, jejichž šablona NEPOUŽÍVÁ
+ * TableBuilderComponent (tedy nemá k dispozici jeho `isButtonVisible()`), typicky
+ * vlastní inline UI jako EditLegalComponent nebo jednoduché formulářové stránky jako
+ * WebSettingsComponent. Vyhodnocuje stejnou OR syntaxi (`klic1|klic2`) jako
+ * *appHasPermission direktiva a backend CheckPermission middleware, ale jako obyčejná
+ * metoda volatelná přímo z `@if` bloku v šabloně - `*appHasPermission` (strukturální
+ * direktiva) sice funguje i zde, ale její import by musely přidat všechny standalone
+ * komponenty zvlášť; `hasAnyPermission()` je zdarma pro každého, kdo už dědí
+ * z BaseDataComponent (`permissionService` byl `public` už předtím).
+ *
  * @dependencies
  * - DataHandler: Facilitates HTTP communication.
  * - GenericTableService: Used internally by PaginatedListStore.
@@ -162,6 +174,19 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
         if (loggedIn) this.refreshData();
         else router.navigate(['/auth/login']);
       });
+  }
+
+  /**
+   * @description Checks whether the current user holds any of the given permission key(s).
+   * Supports OR syntax ('klic1|klic2'), same as the *appHasPermission directive and the
+   * backend CheckPermission middleware. Intended for templates that render their own
+   * inline action buttons instead of going through TableBuilderComponent's `buttons`
+   * Input (which has its own `isButtonVisible()`) - e.g. EditLegalComponent's inline
+   * edit/delete/add controls, or WebSettingsComponent's single-form Save button.
+   * @param permission One permission key, or several separated by '|'.
+   */
+  public hasAnyPermission(permission: string): boolean {
+    return permission.split('|').some(p => this.permissionService.hasPermission(p));
   }
 
   // ── Stránkování / koš — deleguje na PaginatedListStore ──────────────────────

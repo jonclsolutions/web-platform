@@ -4,6 +4,18 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-08-6) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+        base-data.component.ts stejné datum): tato stránka nepoužívá
+        TableBuilderComponent (má vlastní inline edit/add/delete UI), takže tlačítka
+        kontrolují viditelnost přes zděděný hasAnyPermission() (BaseDataComponent), ne
+        přes *appHasPermission direktivu:
+        - "✏️ Upravit" -> core-legal-documents-update
+        - "🗑️" (smazat sekci) -> core-legal-documents-delete
+        - "+ Doplnit pozici X" a "+ Přidat sekci do ..." -> core-legal-documents-create
+        Tlačítka uvnitř již otevřeného edit/add formuláře (💾 Uložit, 💾 Přidat sekci,
+        ✕ Zrušit) NEJSOU gatovaná zvlášť - k jejich zobrazení už vede jen tlačítko, které
+        gatované JE (Upravit / Přidat sekci), takže bez příslušného práva se tam uživatel
+        vůbec nedostane.
 -->
 
 <div class="legal-container">
@@ -62,13 +74,15 @@
           {{ missingPositionsForCurrentLang.length === 1 ? 'sekce' : 'sekcí' }},
           které existují v jiných jazycích.
         </div>
-        <div class="missing-banner-actions">
-          @for (pos of missingPositionsForCurrentLang; track pos) {
-            <button class="missing-add-btn" (click)="openAddForm(pos)">
-              + Doplnit pozici {{ pos }}
-            </button>
-          }
-        </div>
+        @if (hasAnyPermission('core-legal-documents-create')) {
+          <div class="missing-banner-actions">
+            @for (pos of missingPositionsForCurrentLang; track pos) {
+              <button class="missing-add-btn" (click)="openAddForm(pos)">
+                + Doplnit pozici {{ pos }}
+              </button>
+            }
+          </div>
+        }
       </div>
     </div>
   }
@@ -99,12 +113,16 @@
                 </div>
               }
               <div class="section-actions">
-                <button class="action-btn edit-btn" (click)="startEdit(item)" title="Upravit sekci">
-                  ✏️ Upravit
-                </button>
-                <button class="action-btn delete-btn" (click)="confirmDelete(item)" title="Smazat sekci">
-                  🗑️
-                </button>
+                @if (hasAnyPermission('core-legal-documents-update')) {
+                  <button class="action-btn edit-btn" (click)="startEdit(item)" title="Upravit sekci">
+                    ✏️ Upravit
+                  </button>
+                }
+                @if (hasAnyPermission('core-legal-documents-delete')) {
+                  <button class="action-btn delete-btn" (click)="confirmDelete(item)" title="Smazat sekci">
+                    🗑️
+                  </button>
+                }
               </div>
             </div>
             <div class="section-content-preview">{{ item.content }}</div>
@@ -203,7 +221,7 @@
     }
   </div>
 
-  @if (!showAddForm) {
+  @if (!showAddForm && hasAnyPermission('core-legal-documents-create')) {
     <div class="legal-add-row">
       <button class="add-section-btn" (click)="openAddForm()">
         <span class="add-section-plus">+</span>

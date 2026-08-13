@@ -1,0 +1,221 @@
+{
+  "task_title": "Granularizace permission systému - sekce SHOP",
+  "status": "not_started",
+  "created": "2026-08-13",
+  "context": {
+    "summary": "Sekce web a core už mají permission systém granularizovaný na view/create/update/delete akce (viz api.php refactor-note 2026-08-5/2026-08-6). Sekce shop byla v tomhle prvním kole VĚDOMĚ vynechána (nižší priorita) a pořád používá staré 'manage'/'view' klíče, které kryjí CELÝ zdroj (index/store/show/update/destroy) jedním klíčem.",
+    "why_it_matters": "Dnes kdokoliv s např. shop-manage-products může produkty i mazat, i kdyby měl mít jen právo je upravovat. Cíl je stejný jako u web/core: rozdělit na granulární akce, aby šlo šikovně nastavit role (např. skladník smí upravovat sklad/produkty, ale ne mazat).",
+    "reference_implementation": "Kompletní hotový vzor je modul 'news' (web sekce) - viz edit-news.config.ts + edit-news.component.html + table-builder.component.ts (isButtonVisible) + trash-table-builder.component.ts (deletePermission). Tenhle task na shopu je 1:1 replikace stejného postupu, jen na jiné resources."
+  },
+  "prerequisite_files_to_request_before_starting": [
+    {
+      "file": "routes/api.php",
+      "reason": "Ověřit, že SHOP blok se od 2026-08-6 nezměnil (nové controllery, nové routy). Aktuální známý stav je zaznamenaný níže v 'current_shop_api_state', ale MUSÍ se to znovu ověřit, ne slepě věřit této poznámce."
+    },
+    {
+      "file": "db dump - CREATE TABLE core_permissions + aktuální INSERT data",
+      "reason": "Zjistit aktuální ID a přesné znění shop-* permissions, protože se mezitím mohly přidat/změnit (např. shop-view-edit-eshop čekal na budoucí EditEshopController - ověřit, jestli mezitím vznikl)."
+    },
+    {
+      "file": "Všechny shop-pages *.config.ts soubory (products, categories, orders, customers, suppliers, coupons, shipping-methods, payment-methods, logs, edit-eshop pokud existuje)",
+      "reason": "Stejně jako u web/core modulů - potřeba vidět přesná jména TOOLBAR_BUTTONS a *_BUTTONS polí, abych mohl doplnit permission klíče bez hádání."
+    },
+    {
+      "file": "Všechny shop-pages *.component.html soubory (stejný seznam jako výše)",
+      "reason": "Zjistit, které moduly MAJÍ tlačítko 'Přidat' (handleCreateFormOpened + (createFormOpened) output) a které ne - viz pitfall #3 níže. Také zjistit, které mají <app-trash-table-builder> vůbec (categories a payment_methods podezřele nemají restore/force-delete-all routy v api.php - možná trash vůbec nemají)."
+    },
+    {
+      "file": "Kontrolery: ShopProductController, ShopCustomerController, ShopOrderController, ShopSupplierController, ShopCouponController, ShopCategoryController, ShopShippingMethodController, ShopPaymentMethodController (aspoň hlavičky/doc-bloky, ne nutně celý obsah)",
+      "reason": "Ověřit skutečné chování store()/update()/destroy() - hlavně u coupons, kde je podezření na špatně namapovaný permission klíč (viz open_questions)."
+    }
+  ],
+  "current_shop_api_state_KNOWN_AT_2026-08-13_MUST_REVERIFY": {
+    "note": "Tohle je snapshot z api.php, jak vypadal při psaní tohohle ticketu. Než začneš, znovu si stáhni aktuální api.php a porovnej - shop sekce byla označená jako 'TODO budoucí task' na více místech, takže se mohla mezitím změnit.",
+    "resources": [
+      {
+        "resource": "products",
+        "current_permission_key": "shop-manage-products",
+        "backend_actions_available": ["index", "store", "show", "update", "destroy", "restore", "force-delete-all", "updateCategory (PATCH /{id}/category)"],
+        "has_trash_routes": true
+      },
+      {
+        "resource": "customers",
+        "current_permission_key": "shop-manage-customers",
+        "backend_actions_available": ["index", "store", "show", "update", "destroy", "restore", "force-delete-all"],
+        "has_trash_routes": true,
+        "note": "Ověřit, jestli customers vznikají i ručně přes admin UI, nebo jen z checkoutu (shop/checkout je veřejná routa) - stejný pattern jako sales-orders/job-applications, kde create permission ve UI nemusí být potřeba."
+      },
+      {
+        "resource": "orders",
+        "current_permission_key": "shop-view-orders",
+        "backend_actions_available": ["index", "store", "show", "update", "destroy", "restore", "force-delete-all"],
+        "has_trash_routes": true,
+        "note": "Objednávky pravděpodobně vznikají z shop/checkout (veřejná routa), ne ručně admin UI - ověřit v orders.component.html, jestli tam vůbec je tlačítko Přidat, než se přidává -create permission (stejný pattern jako sales-orders)."
+      },
+      {
+        "resource": "suppliers",
+        "current_permission_key": "shop-manage-suppliers",
+        "backend_actions_available": ["index", "store", "show", "update", "destroy", "restore", "force-delete-all"],
+        "has_trash_routes": true
+      },
+      {
+        "resource": "coupons",
+        "current_permission_key": "shop-view-reports",
+        "backend_actions_available": ["index", "store", "show", "update", "destroy", "restore", "force-delete-all"],
+        "has_trash_routes": true,
+        "SUSPICIOUS": "Permission klíč 'shop-view-reports' zní jako reportingová/read-only permission, ne jako správa kupónů (CRUD zdroj). Tohle vypadá na STEJNÝ typ chyby, jakou jsme našli u WebSettingsComponent (permission klíč nesedí s tím, co komponenta reálně dělá). PŘED granularizací zjistit: je 'shop-view-reports' myšlená specificky pro coupons, nebo je to omylem sdílený klíč s nějakou jinou budoucí 'reports' stránkou? Pokud je to skutečně jen pro coupons, přejmenovat rovnou na shop-coupons-*. Pokud má sloužit i něčemu jinému, coupons potřebují VLASTNÍ klíč a shop-view-reports zůstává pro to ostatní."
+      },
+      {
+        "resource": "categories",
+        "current_permission_key": "shop-manage-categories",
+        "backend_actions_available": ["index", "store", "show", "update", "destroy"],
+        "has_trash_routes": false,
+        "note": "V api.php NENÍ vidět restore ani force-delete-all routa pro categories (na rozdíl od ostatních shop resources) - ověřit, jestli categories.component.html vůbec renderuje <app-trash-table-builder>. Pokud ne, nepřidávat deletePermission tam, kde není co gatovat."
+      },
+      {
+        "resource": "shipping_methods",
+        "current_permission_key": "shop-manage-shipping-methods",
+        "backend_actions_available": ["index", "store", "show", "update", "destroy", "restore", "force-delete-all"],
+        "has_trash_routes": true
+      },
+      {
+        "resource": "payment_methods",
+        "current_permission_key": "shop-manage-payment-methods",
+        "backend_actions_available": ["index", "update"],
+        "has_trash_routes": false,
+        "note": "apiResource omezený na ->only(['index', 'update']) - ŽÁDNÝ store/destroy na backendu vůbec neexistuje. Stejně jako core-settings-* (jen view+update, žádné create/delete klíče) - NEPŘIDÁVAT shop-payment-methods-create/delete, protože by to gatovalo akci, kterou API stejně neumí."
+      },
+      {
+        "resource": "logs",
+        "current_permission_key": "shop-view-logs",
+        "note": "Beze změny - stejný princip jako web-view-web-logs/view-core: jen čtení, POST (zápis vlastního audit záznamu) beze permission middleware."
+      },
+      {
+        "resource": "dashboard",
+        "current_permission_key": "shop-view-dashboard",
+        "note": "Beze změny - čistě 'vidět stránku' flag, ne CRUD zdroj."
+      },
+      {
+        "resource": "edit-eshop",
+        "current_permission_key": "shop-view-edit-eshop",
+        "note": "V api.php byl při psaní tohoto ticketu označený jako TODO - 'EditEshopController zatím neexistuje'. Zjistit, jestli mezitím vznikl. Pokud ano, projít stejným postupem jako 'core-legal-*' (textový/konfigurační obsah eshopu)."
+      },
+      {
+        "resource": "settings (maintenance toggle)",
+        "current_permission_key": "shop-set-maitanance-mode",
+        "note": "Beze změny - je to toggle akce (OR alternativa k core-settings-* na core/settings routě), ne CRUD zdroj."
+      }
+    ]
+  },
+  "proposed_naming_convention": "Stejná jako web/core: {resource}-{view|create|update|delete}, restore a force-delete-all spadají pod -delete (správa koše = destruktivní akce). Prefix zůstává 'shop-' (na rozdíl od administrators/external-links u core sekce, shop-pages skutečně žijí pod /shop routou, takže žádné přejmenování prefixu není potřeba).",
+  "proposed_new_keys_DRAFT_NEEDS_CONFIRMATION": [
+    "shop-products-view / -create / -update / -delete",
+    "shop-customers-view / -update / -delete  (create JEN pokud UI má tlačítko Přidat - ověřit)",
+    "shop-orders-view / -update / -delete  (create pravděpodobně NE - objednávky z checkoutu, ověřit)",
+    "shop-suppliers-view / -create / -update / -delete",
+    "shop-coupons-view / -create / -update / -delete  (POZOR: viz SUSPICIOUS poznámka u coupons výše - vyřešit nejdřív)",
+    "shop-categories-view / -create / -update  (BEZ -delete, protože backend nemá restore/force-delete-all routy - ověřit case by case, možná destroy() existuje jako hard-delete rovnou bez koše, pak by -delete dávalo smysl jen na destroy)",
+    "shop-shipping-methods-view / -create / -update / -delete",
+    "shop-payment-methods-view / -update  (BEZ create/delete - backend routa neexistuje)",
+    "shop-view-logs, shop-view-dashboard, shop-set-maitanance-mode, shop-view-edit-eshop - beze změny"
+  ],
+  "step_by_step_procedure": [
+    {
+      "step": 1,
+      "action": "Poslat Claude/asistentovi aktuální api.php (shop blok), aktuální core_permissions SQL dump, a všechny shop-pages *.config.ts + *.component.html soubory (viz prerequisite_files_to_request_before_starting)."
+    },
+    {
+      "step": 2,
+      "action": "Vyřešit open_questions (hlavně coupons/shop-view-reports záhadu) PŘED jakýmkoliv psaním kódu."
+    },
+    {
+      "step": 3,
+      "action": "Asistent navrhne finální tabulku {resource -> nové klíče} k potvrzení - stejný formát jako u web/core (tabulka v chatu, ne rovnou kód)."
+    },
+    {
+      "step": 4,
+      "action": "Po potvrzení: vygenerovat SQL migraci (INSERT nových permissions, INSERT IGNORE do core_role_permissions přes JOIN se starým klíčem, DELETE starého klíče) - přesně stejný vzor jako v minulých SQL blocích této konverzace."
+    },
+    {
+      "step": 5,
+      "action": "Spustit SQL na serveru (backup DB PŘED spuštěním)."
+    },
+    {
+      "step": 6,
+      "action": "Nahradit routes/api.php (shop blok rozepsaný na jednotlivé routy s permission per akce, stejně jako web/core - pozor na pořadí force-delete-all PŘED DELETE /{id})."
+    },
+    {
+      "step": 7,
+      "action": "php artisan route:clear na serveru."
+    },
+    {
+      "step": 8,
+      "action": "Nahradit admin-routing.module.ts a admin-layout.component.html - shop sekce, permission klíče na '-view' variantu."
+    },
+    {
+      "step": 9,
+      "action": "Pro každý shop modul s tabulkou (products, customers, orders, suppliers, coupons, categories, shipping-methods, payment-methods): doplnit permission do *_TOOLBAR_BUTTONS (create) a *_BUTTONS (update/delete) v .config.ts, a [deletePermission] do <app-trash-table-builder> v .component.html - JEN tam, kde backend danou akci skutečně podporuje (viz current_shop_api_state)."
+    },
+    {
+      "step": 10,
+      "action": "edit-eshop (pokud existuje controller) - zjistit strukturu (jednoduchý formulář jako web-settings, nebo tabulka?) a zvolit odpovídající vzor."
+    },
+    {
+      "step": 11,
+      "action": "grep -rn 'shop-manage-\\|shop-view-orders\\|shop-view-customers' src/ (a další staré klíče) - ověřit, že nezůstal žádný mimo komentářů."
+    },
+    {
+      "step": 12,
+      "action": "Smoke test: 2 role (jen -view vs. plný set) na aspoň products (tabulka s trash) a payment-methods (jen view+update, žádný trash) - ověřit i edge-case, že se u payment-methods NEOBJEVILO žádné tlačítko Smazat/Přidat, protože ta akce na backendu neexistuje vůbec."
+    }
+  ],
+  "known_pitfalls_learned_from_web_core_rollout": [
+    {
+      "id": 1,
+      "pitfall": "Permission klíč historicky přiřazený stránce nemusí odpovídat tomu, co komponenta SKUTEČNĚ volá na backendu.",
+      "example": "WebSettingsComponent měl route permission 'core-settings-view', ale reálně volal legal/config/* (jiný kontroler, jiný permission klíč). Vždycky ověřit v .ts souboru komponenty, jaký apiEndpoint/jaké URL se skutečně volají, ne jen věřit historickému permission klíči v routing modulu."
+    },
+    {
+      "id": 2,
+      "pitfall": "Nepřidávat '-create' permission na toolbar tlačítko, které v HTML vůbec neexistuje.",
+      "example": "sales-orders a job-applications nemají tlačítko 'Přidat' v šabloně (žádný handleCreateFormOpened + (createFormOpened) output) - protože záznamy vznikají z veřejného formuláře. Přidání '-create' permission tam, kde není co gatovat, je zbytečné (ale neškodí, pokud backend permission existuje pro API endpoint - jen ve UI configu ho nepřidávej k neexistujícímu tlačítku)."
+    },
+    {
+      "id": 3,
+      "pitfall": "V api.php MUSÍ být 'force-delete-all' routa definovaná PŘED 'DELETE /{id}' - jinak Laravel matchne string 'force-delete-all' jako parametr {id} a spadne to na neplatné ID."
+    },
+    {
+      "id": 4,
+      "pitfall": "restore + force-delete-all + destroy sdílí JEDEN permission klíč '-delete' (ne tři různé) - je to všechno správa koše/mazání, ne tři oddělené akce."
+    },
+    {
+      "id": 5,
+      "pitfall": "TrashTableBuilderComponent potřebuje [deletePermission] Input na <app-trash-table-builder> tagu v .component.html - bez něj zůstane koš tabulka plně otevřená komukoliv s přístupem na stránku, bez ohledu na delete permission."
+    },
+    {
+      "id": 6,
+      "pitfall": "TableButtons (řádková tlačítka Edit/Smazat v tabulce) potřebují 'permission' pole přímo v *_BUTTONS poli v .config.ts - bez něj TableBuilderComponent tlačítko vždycky zobrazí (isButtonVisible() vrací true pro tlačítka bez permission pole - zpětná kompatibilita, ne automatická ochrana)."
+    },
+    {
+      "id": 7,
+      "pitfall": "OR syntaxe (klic1|klic2) funguje jen tam, kde je explicitně implementovaná: *appHasPermission direktiva ANO, AuthGuard ANO (opraveno 2026-08-6), BaseDataComponent.hasAnyPermission() ANO, TableBuilderComponent.isButtonVisible() ANO, TrashTableBuilderComponent.canManageTrash ANO. PermissionService.hasPermission() SAMO O SOBĚ NE - bere jen jeden klíč, split se musí dít na volající straně."
+    },
+    {
+      "id": 8,
+      "pitfall": "Sysadmin role musí mít v DB (core_role_permissions) přiřazené VŠECHNY nové permission klíče, jinak (i s frontend sysadmin-bypassem v AuthGuard) může nastat nesoulad mezi tím, co vidí v menu (bypass funguje) a co skutečně smí na API (backend CheckPermission middleware TAKY bypassuje sysadmin bez ohledu na DB, takže by to nemělo být funkčně kritické) - ale pro čistotu dat je lepší mít sysadmin roli v DB kompletní."
+    },
+    {
+      "id": 9,
+      "pitfall": "Ne každý resource podporuje create/update/delete stejně - ověřit skutečné ->only()/->except() na apiResource() v api.php (příklad: payment_methods má jen index+update, žádný store/destroy vůbec)."
+    },
+    {
+      "id": 10,
+      "pitfall": "Komponenty, které NEPOUŽÍVAJÍ TableBuilderComponent (vlastní inline UI jako edit-legal, nebo jednoduchý formulář jako web-settings), gatují tlačítka přes zděděný BaseDataComponent.hasAnyPermission() v šabloně (@if bloky), NE přes *appHasPermission direktivu (ta vyžaduje import do standalone komponenty navíc)."
+    }
+  ],
+  "open_questions_to_resolve_before_starting": [
+    "Je 'shop-view-reports' skutečně permission pro coupons, nebo je to sdílený/špatně napojený klíč (viz SUSPICIOUS poznámka)? Zkontrolovat ShopCouponController a případnou budoucí 'reports' stránku v shop-pages.",
+    "Existuje mezitím EditEshopController? Pokud ano, jakou má strukturu (formulář vs. tabulka)?",
+    "Mají categories a payment_methods v komponentách vůbec <app-trash-table-builder>, když na ně backend nemá routy? Pokud ano, je to mrtvý/nefunkční UI element, který by se měl v rámci téhle appky případně odstranit (mimo scope permission tasku, ale stojí za nahlášení)."
+  ]
+}

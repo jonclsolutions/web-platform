@@ -1,9 +1,26 @@
+/**
+ * @file support-tickets.config.ts
+ * @path src/app/admin/web-pages/support-tickets/support-tickets.config.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2026
+ * @description Static configuration (buttons, form fields, table/filter/detail columns) for
+ * the Helpdesk Support Tickets management page.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+ *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
+ *      - SUPPORT_TICKET_TOOLBAR_BUTTONS: "Přidat tiket" -> `permission: 'web-support-tickets-create'`.
+ *        Tickety jsou INTERNÍ (na ICT) - žádná veřejná routa pro ně neexistuje, takže na
+ *        rozdíl od sales-leads/sales-orders/job-applications tu `-create` skutečně gatuje
+ *        jediný způsob, jak ticket vůbec vznikne (viz api.php refactor-note 2026-08-5).
+ *      - SUPPORT_TICKET_BUTTONS: "Edit" -> `web-support-tickets-update`,
+ *        "Smazat" -> `web-support-tickets-delete`. "Detaily" zůstává bez permission.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const SUPPORT_TICKET_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-support-tickets-update' },
+  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-support-tickets-delete' },
 ];
 export const SUPPORT_TICKET_TOOLBAR_BUTTONS: Core.Button[] = [
   {
@@ -18,7 +35,8 @@ export const SUPPORT_TICKET_TOOLBAR_BUTTONS: Core.Button[] = [
     label: 'Přidat tiket',
     icon: '➕',
     class: 'btn-create',
-    showIf: true
+    showIf: true,
+    permission: 'web-support-tickets-create'
   },
   {
     action: 'exportActiveTable',

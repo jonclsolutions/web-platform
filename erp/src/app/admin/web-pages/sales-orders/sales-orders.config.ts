@@ -1,9 +1,28 @@
+/**
+ * @file sales-orders.config.ts
+ * @path src/app/admin/web-pages/sales-orders/sales-orders.config.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2025
+ * @description Static configuration (buttons, form fields, table/filter/detail columns) for
+ * the Sales Orders (realizace zakázek) management page.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+ *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
+ *      - SALES_ORDER_BUTTONS: "Edit" -> `web-sales-orders-update`,
+ *        "Smazat" -> `web-sales-orders-delete`. "Detaily" zůstává bez permission.
+ *      - SALES_ORDER_TOOLBAR_BUTTONS NEMÁ tlačítko "Přidat" (žádný
+ *        `handleCreateFormOpened` v HTML ani `(createFormOpened)` output na
+ *        app-table-builder - realizace vznikají automaticky ze Sales Leadů, viz
+ *        info-banner v šabloně). Backend permission `web-sales-orders-create` proto
+ *        existuje (pro interní API endpoint), ale ve UI zatím není co gatovat -
+ *        nic tu tedy NEBYLO přidáno, aby nevznikl mrtvý/neviditelný permission check.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const SALES_ORDER_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-sales-orders-update' },
+  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-sales-orders-delete' },
 ];
 
 export const SALES_ORDER_TOOLBAR_BUTTONS: Core.Button[] = [

@@ -33,10 +33,20 @@
  * `@Input() excludeFromExport` pro doplnění dalších polí per stránka, kdyby bylo
  * potřeba schovat i něco navíc, co do defaultní sady nepatří.
  *
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php,
+ * table-buttons.ts a has-permission.directive.ts stejné datum): řádková akční tlačítka
+ * (Edit/Delete/...) teď respektují volitelné `TableButtons.permission` pole - komponenta
+ * injektuje `PermissionService` a `isButtonVisible()` ho vyhodnocuje (s podporou OR
+ * syntaxe `klic1|klic2`, stejně jako *appHasPermission direktiva) jak v hlavičce tabulky,
+ * tak u samotných řádků, a `colspanValue` s tím správně počítá, ať hlavička a řádky
+ * nemají rozdílný počet sloupců, když je nějaké tlačítko permission schované. Tlačítka
+ * bez `permission` pole se chovají beze změny (viditelná dokud `isActive`).
+ *
  * @dependencies
  * - EntityCrudService: CRUD volání (delete řádku, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations.
  * - ExportPopupBuilderComponent: Formátový picker popup pro export dat.
+ * - PermissionService: Vyhodnocení `TableButtons.permission` pro řádková tlačítka.
  * - CurrencyPipe, DatePipe: Standard pipes for data formatting.
  * - xlsx (SheetJS): Lazy-loaded jen při volbě XLSX exportu, viz downloadXlsx().
  */
@@ -53,6 +63,7 @@ import { DataHandler } from '../../../../core/services/data-handler.service';
 import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { PermissionService } from '../../../../core/auth/services/permission.service';
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
@@ -131,6 +142,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
   public alertDialogService = inject(AlertDialogService);
   public authService = inject(AuthService);
+  public permissionService = inject(PermissionService);
 
   private processingItemIds = new Set<any>();
   private destroy$ = new Subject<void>();
@@ -204,6 +216,19 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
         }
         return value;
     }
+  }
+
+  /**
+   * @description Determines whether a row action button should render, based on its
+   * optional `TableButtons.permission` field. Supports OR syntax ('klic1|klic2'), same
+   * as the *appHasPermission directive and the backend CheckPermission middleware -
+   * buttons without a `permission` set stay visible whenever `isActive` is true
+   * (backwards compatible with existing button configs that don't define it yet).
+   * @param button The row action button configuration to check.
+   */
+  isButtonVisible(button: TableButtons): boolean {
+    if (!button.permission) return true;
+    return button.permission.split('|').some(p => this.permissionService.hasPermission(p));
   }
 
   /**
@@ -510,9 +535,11 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Calculates the total number of columns including action buttons for the table
-   * layout.
+   * layout. Počítá jen tlačítka, která jsou zároveň `isActive` I viditelná podle
+   * `isButtonVisible()` - jinak by hlavička měla jiný počet sloupců než reálně
+   * vykreslené řádky, kdykoliv je nějaké tlačítko permission schované.
    */
   get colspanValue(): number {
-    return this.columnDefinitions.length + (this.buttons?.filter(b => b.isActive).length || 0);
+    return this.columnDefinitions.length + (this.buttons?.filter(b => b.isActive && this.isButtonVisible(b)).length || 0);
   }
 }

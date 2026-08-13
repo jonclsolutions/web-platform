@@ -1,3 +1,24 @@
+/**
+ * @file administrators.config.ts
+ * @path src/app/admin/core-pages/administrators/administrators.config.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2025
+ * @description Static configuration (buttons, form fields, table/filter/detail columns) for
+ * the Administrators (core user account) management page.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+ *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
+ *      - TOOLBAR_BUTTONS: "Nový uživatel" -> `permission: 'core-administrators-create'`.
+ *      - TABLE_BUTTONS: "Edit" -> `core-administrators-update`, "Smazat" ->
+ *        `core-administrators-delete`. "Heslo" (password_reset) -> rovněž
+ *        `core-administrators-update`, protože na backendu `PUT
+ *        /core/users/{id}/change-password` sdílí STEJNÝ permission klíč jako běžný
+ *        update (`core-administrators-update,id` - viz api.php), ne samostatný klíč.
+ *        "Detaily" zůstává bez permission.
+ *      @note Klíče přejmenovány z historického `web-manage-administrators` na
+ *      `core-administrators-*`, protože stránka reálně žije pod `/core` routou - viz
+ *      admin-routing.module.ts stejné datum.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '../../../shared/constants/password-policy';
 
@@ -14,14 +35,14 @@ export const ROLE_OPTIONS: { value: string; label: string }[] = [];
 
 export const TABLE_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '🔑', header_name: 'Heslo', isActive: true, type: 'neutral_button', action: 'password_reset' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'core-administrators-update' },
+  { display_name: '🔑', header_name: 'Heslo', isActive: true, type: 'neutral_button', action: 'password_reset', permission: 'core-administrators-update' },
+  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-administrators-delete' },
 ];
 
 export const TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtrovat', icon: '🔍', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Nový uživatel', icon: '➕', class: 'btn-create', showIf: true },
+  { action: 'handleCreateFormOpened', label: 'Nový uživatel', icon: '➕', class: 'btn-create', showIf: true, permission: 'core-administrators-create' },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];

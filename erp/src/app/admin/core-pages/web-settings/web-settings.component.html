@@ -4,6 +4,23 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-08-6) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+        base-data.component.ts stejné datum): stránka nepoužívá TableBuilderComponent
+        (vlastní formulářové UI), tlačítka proto kontrolují viditelnost přes zděděný
+        hasAnyPermission() (BaseDataComponent):
+        - Logo výběr/zrušení + "💾 Uložit firemní údaje" -> core-legal-config-update
+          (formulářová POLE zůstávají editovatelná i bez tohoto práva - gatuje se jen
+          možnost odeslat/uložit, stejný princip jako u ostatních modulů v této
+          granularizaci; needěláme z toho readonly formulář).
+        - "+ Přidat sociální síť" -> core-legal-config-create.
+        - Řádkové 💾 Uložit u sociální sítě -> core-legal-config-create pro NOVÝ
+          (ještě neuložený, link._isNew) řádek, core-legal-config-update pro existující
+          - jedno tlačítko slouží oběma akcím podle stavu řádku (viz saveSocialLink()
+          v .ts, které samo rozlišuje POST vs. PUT).
+        - Řádkové 🗑️ Smazat u sociální sítě -> pro NOVÝ řádek (ještě neodeslaný na
+          server) je mazání čistě lokální (žádné API volání, viz deleteSocialLink()),
+          proto beze změny vždy viditelné; pro existující řádek vyžaduje
+          core-legal-config-delete.
 -->
 
 <div class="ws-container">
@@ -54,18 +71,20 @@
                 <span class="ws-logo-none">Žádné logo — nahrajte soubor JPG, PNG nebo SVG (max 2 MB)</span>
               }
             </div>
-            <div class="ws-logo-buttons">
-              <label class="ws-btn ws-btn-secondary ws-btn-file">
-                {{ logoFile ? '🔄 Změnit logo' : '📁 Vybrat logo' }}
-                <input type="file" accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                       class="ws-hidden-input" (change)="onLogoSelected($event)">
-              </label>
-              @if (logoFile) {
-                <button class="ws-btn ws-btn-ghost" (click)="cancelLogoSelection()">
-                  ✕ Zrušit výběr
-                </button>
-              }
-            </div>
+            @if (hasAnyPermission('core-legal-config-update')) {
+              <div class="ws-logo-buttons">
+                <label class="ws-btn ws-btn-secondary ws-btn-file">
+                  {{ logoFile ? '🔄 Změnit logo' : '📁 Vybrat logo' }}
+                  <input type="file" accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                         class="ws-hidden-input" (change)="onLogoSelected($event)">
+                </label>
+                @if (logoFile) {
+                  <button class="ws-btn ws-btn-ghost" (click)="cancelLogoSelection()">
+                    ✕ Zrušit výběr
+                  </button>
+                }
+              </div>
+            }
             @if (logoFile) {
               <p class="ws-logo-hint">
                 ℹ️ Logo se uloží po kliknutí na „Uložit firemní údaje" níže.
@@ -203,10 +222,12 @@
           @if (logoFile) {
             <span class="ws-logo-pending-badge">🖼️ Nové logo připraveno k uložení</span>
           }
-          <button class="ws-btn ws-btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
-            @if (settingsSaving) { <span class="ws-mini-spin">↻</span> }
-            💾 Uložit firemní údaje{{ logoFile ? ' + logo' : '' }}
-          </button>
+          @if (hasAnyPermission('core-legal-config-update')) {
+            <button class="ws-btn ws-btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
+              @if (settingsSaving) { <span class="ws-mini-spin">↻</span> }
+              💾 Uložit firemní údaje{{ logoFile ? ' + logo' : '' }}
+            </button>
+          }
         </div>
       </div>
     }
@@ -264,27 +285,33 @@
                      placeholder="https://facebook.com/firma">
             </div>
             <div class="ws-social-actions">
-              <button class="ws-action-btn ws-btn-save"
-                      (click)="saveSocialLink(i)"
-                      [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
-                      title="Uložit">
-                @if (link._saving) { <span class="ws-mini-spin">↻</span> } @else { 💾 }
-              </button>
-              <button class="ws-action-btn ws-btn-delete"
-                      (click)="deleteSocialLink(i)"
-                      [disabled]="link._saving"
-                      title="Smazat">
-                🗑️
-              </button>
+              @if (link._isNew ? hasAnyPermission('core-legal-config-create') : hasAnyPermission('core-legal-config-update')) {
+                <button class="ws-action-btn ws-btn-save"
+                        (click)="saveSocialLink(i)"
+                        [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
+                        title="Uložit">
+                  @if (link._saving) { <span class="ws-mini-spin">↻</span> } @else { 💾 }
+                </button>
+              }
+              @if (link._isNew || hasAnyPermission('core-legal-config-delete')) {
+                <button class="ws-action-btn ws-btn-delete"
+                        (click)="deleteSocialLink(i)"
+                        [disabled]="link._saving"
+                        title="Smazat">
+                  🗑️
+                </button>
+              }
             </div>
           </div>
         }
-        <div class="ws-social-add-row">
-          <button class="ws-add-btn" (click)="addSocialLink()">
-            <span class="ws-add-plus">+</span>
-            Přidat sociální síť
-          </button>
-        </div>
+        @if (hasAnyPermission('core-legal-config-create')) {
+          <div class="ws-social-add-row">
+            <button class="ws-add-btn" (click)="addSocialLink()">
+              <span class="ws-add-plus">+</span>
+              Přidat sociální síť
+            </button>
+          </div>
+        }
       </div>
     }
   </div>

@@ -1,3 +1,26 @@
+/**
+ * @file edit-news.config.ts
+ * @path src/app/admin/web-pages/edit-news/edit-news.config.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2026
+ * @description Static configuration (buttons, form fields, table/filter/detail columns) for
+ * the News management page.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php,
+ *      table-buttons.ts a table-builder.component.ts stejné datum): doplněny reálné
+ *      permission klíče na tlačítka, která dřív žádnou kontrolu neměla:
+ *      - NEWS_TOOLBAR_BUTTONS: "Přidat novinku" dostalo `permission: 'web-news-create'`
+ *        (dřív viditelné pro kohokoliv s přístupem na stránku, tedy i pro uživatele bez
+ *        práva cokoliv vytvářet - jen se mu po odeslání formuláře vrátil 403 z API).
+ *      - NEWS_BUTTONS (řádková tlačítka v tabulce): "Edit" -> `web-news-update`,
+ *        "Smazat" -> `web-news-delete`. "Detaily" zůstává bez permission (čtení detailu
+ *        je pokryté už tím, že se uživatel vůbec dostal na stránku, která vyžaduje
+ *        `web-news-view`).
+ *      TENTO SOUBOR JE VZOR pro granularizaci zbytku modulů (sales-leads, sales-orders,
+ *      support-tickets, job-applications, administrators, external-links...) - stejný
+ *      princip: `create`/`update`/`delete` klíče doplnit podle konvence
+ *      `{resource}-{akce}` zavedené v api.php.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const NEWS_THEMA_OPTIONS: string[] = [
@@ -24,7 +47,8 @@ export const NEWS_TOOLBAR_BUTTONS: Core.Button[] = [
     label: 'Přidat novinku',
     icon: '➕',
     class: 'btn-create',
-    showIf: true
+    showIf: true,
+    permission: 'web-news-create'
   },
   {
     action: 'exportActiveTable',
@@ -44,8 +68,8 @@ export const NEWS_TOOLBAR_BUTTONS: Core.Button[] = [
 
 export const NEWS_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-news-update' },
+  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-news-delete' },
 ];
 
 export const NEWS_FORM_FIELDS: Core.InputDefinition[] = [

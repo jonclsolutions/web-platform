@@ -7,6 +7,14 @@
     @refactor-note (2026-08): Odstraněn přepínač "E-shop: Aktivní/Údržba" a potvrzovací
         modál s heslem z headeru (desktop i mobilní panel) - přesunuto na shop/web
         dashboardy. Viz admin-layout.component.ts hlavička.
+    @refactor-note (2026-08-5): GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+        admin-routing.module.ts stejné datum) - *appHasPermission klíče u položek menu
+        přejmenovány na `-view` variantu nových granulárních klíčů, ať "vidět stránku"
+        jednotně odpovídá stejnému vzoru napříč celou aplikací (dřív matoucí mix
+        web-view-* / web-manage-* / web-edit-*, který dělal tu samou věc pod různými
+        jmény). 'edit-legal' položka používá OR syntaxi
+        (core-legal-documents-view|core-legal-config-view), protože stránka kombinuje dva
+        zdroje - viz has-permission.directive.ts, kde OR podpora přibyla stejné datum.
 -->
 
 <header class="admin-header">
@@ -241,7 +249,7 @@
         <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obchod</div>
           <ul>
-            <li *appHasPermission="'web-view-user-requests'">
+            <li *appHasPermission="'web-user-requests-view'">
               <a routerLink="/admin/web/user-request" routerLinkActive="active" (click)="onLinkClick()" title="Webový formulář">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -253,7 +261,7 @@
                 <span class="nav-text">Webový formulář</span>
               </a>
             </li>
-            <li *appHasPermission="'web-view-sales-leads'">
+            <li *appHasPermission="'web-sales-leads-view'">
               <a routerLink="/admin/web/sales-leads" routerLinkActive="active" (click)="onLinkClick()" title="Obchodní Leady">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -264,7 +272,7 @@
                 <span class="nav-text">Obchodní Leady</span>
               </a>
             </li>
-            <li *appHasPermission="'web-view-sales-orders'">
+            <li *appHasPermission="'web-sales-orders-view'">
               <a routerLink="/admin/web/sales-orders" routerLinkActive="active" (click)="onLinkClick()" title="Přijaté poptávky">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -290,7 +298,7 @@
                 <span class="nav-text">Správa Webu</span>
               </a>
             </li>
-            <li *appHasPermission="'web-view-news'">
+            <li *appHasPermission="'web-news-view'">
               <a routerLink="/admin/web/edit-news" routerLinkActive="active" (click)="onLinkClick()" title="Správa Novinek">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -307,7 +315,7 @@
         <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Lidé</div>
           <ul>
-            <li *appHasPermission="'web-view-job-applications'">
+            <li *appHasPermission="'web-job-applications-view'">
               <a routerLink="/admin/web/job-applications" routerLinkActive="active" (click)="onLinkClick()" title="Správa Uchazečů">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -319,7 +327,7 @@
                 <span class="nav-text">Správa Uchazečů</span>
               </a>
             </li>
-            <li *appHasPermission="'web-view-support-tickets'">
+            <li *appHasPermission="'web-support-tickets-view'">
               <a routerLink="/admin/web/support-tickets" routerLinkActive="active" (click)="onLinkClick()" title="Helpdesk Tikety">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -388,7 +396,7 @@
         <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Právní a firemní</div>
           <ul>
-            <li *appHasPermission="'web-edit-legal'">
+            <li *appHasPermission="'core-legal-documents-view|core-legal-config-view'">
               <a routerLink="/admin/core/edit-legal" routerLinkActive="active" (click)="onLinkClick()" title="GDPR / TOS / COOKIES">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -398,7 +406,11 @@
                 <span class="nav-text">GDPR / TOS / COOKIES</span>
               </a>
             </li>
-            <li *appHasPermission="'web-view-web-settings'">
+            <!-- @bugfix-note (2026-08-6): bylo omylem 'core-settings-view' (jiný backend -
+                 CoreSiteSettingController). WebSettingsComponent volá legal/config/*
+                 (SiteConfigurationController), proto core-legal-config-view - viz
+                 bugfix-note v admin-routing.module.ts stejné datum. -->
+            <li *appHasPermission="'core-legal-config-view'">
               <a routerLink="/admin/core/web-settings" routerLinkActive="active" (click)="onLinkClick()" title="Firemní údaje">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -410,7 +422,7 @@
                 <span class="nav-text">Firemní údaje</span>
               </a>
             </li>
-            <li *appHasPermission="'web-manage-external-links'">
+            <li *appHasPermission="'core-external-links-view'">
               <a routerLink="/admin/core/external-links" routerLinkActive="active" (click)="onLinkClick()" title="Externí odkazy">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -428,7 +440,7 @@
         <div class="nav-group">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Uživatelé</div>
           <ul>
-            <li *appHasPermission="'web-manage-administrators'">
+            <li *appHasPermission="'core-administrators-view'">
               <a routerLink="/admin/core/administrators" routerLinkActive="active" (click)="onLinkClick()" title="Správa účtů">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

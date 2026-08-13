@@ -1,101 +1,103 @@
 <!-- 
     @file: administrators.component.html
-    @path: /src/app/admin/web-pages/administrators/administrators.component.html
+    @path: /src/app/admin/core-pages/administrators/administrators.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2025 
+    @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
+        ('core-administrators-delete') - viz trash-table-builder.component.ts stejné datum.
 -->
-    
 <div class="user-request-container container mx-auto p-4">
-  @if (errorMessage) {
-    <div class="error-banner">
+@if (errorMessage) {
+<div class="error-banner">
       ⚠️ {{ errorMessage }}
-    </div>
+</div>
   }
-  @if (!errorMessage) {
-    <div>
-      <div class="toolbar-actions m-b-t-5">
-        <div class="table-header">Správa uživatelských účtů</div>
-        <div class="toolbar-actions-in">
-          <app-button-builder
-            [configs]="toolbarButtons"
-            (actionTriggered)="handleToolbarAction($event)">
-          </app-button-builder>
-        </div>
-      </div>
-      <div class="main-content-layout">
-        <div class="filter-side-panel" [class.active]="isFilterVisible">
-          <app-filter-form-builder
-            [filterColumns]="filterColumns"
-            [initialFilters]="filters"
-            (filtersApplied)="applyFilters($event)"
-            (filtersCleared)="clearFilters()">
-          </app-filter-form-builder>
-        </div>
-        <div class="table-and-pagination-container">
-          @if (!showTrashTable) {
-            <app-table-builder #activeTable
-              [buttons]="buttons"
-              [data]="data"
-              [tableCaption]="'Seznam Administrátorksých účtů'"
-              [columns]="tableColumns"
-              [inputDefinitions]="formFields"
-              [isFullWidth]="isTableFullWidth"
-              [apiEndpoint]="apiEndpoint"
-              (itemDeleted)="handleItemDeleted()"
-              (editFormOpened)="handleEditFormOpened($event)"
-              (viewDetailsOpened)="handleViewDetails($event)"
-              (resetPasswordFormOpened)="handleResetPasswordFormOpened($event)">
-            </app-table-builder>
+@if (!errorMessage) {
+<div>
+<div class="toolbar-actions m-b-t-5">
+<div class="table-header">Správa uživatelských účtů</div>
+<div class="toolbar-actions-in">
+<app-button-builder
+[configs]="toolbarButtons"
+(actionTriggered)="handleToolbarAction($event)">
+</app-button-builder>
+</div>
+</div>
+<div class="main-content-layout">
+<div class="filter-side-panel" [class.active]="isFilterVisible">
+<app-filter-form-builder
+[filterColumns]="filterColumns"
+[initialFilters]="filters"
+(filtersApplied)="applyFilters($event)"
+(filtersCleared)="clearFilters()">
+</app-filter-form-builder>
+</div>
+<div class="table-and-pagination-container">
+@if (!showTrashTable) {
+<app-table-builder #activeTable
+[buttons]="buttons"
+[data]="data"
+[tableCaption]="'Seznam Administrátorksých účtů'"
+[columns]="tableColumns"
+[inputDefinitions]="formFields"
+[isFullWidth]="isTableFullWidth"
+[apiEndpoint]="apiEndpoint"
+(itemDeleted)="handleItemDeleted()"
+(editFormOpened)="handleEditFormOpened($event)"
+(viewDetailsOpened)="handleViewDetails($event)"
+(resetPasswordFormOpened)="handleResetPasswordFormOpened($event)">
+</app-table-builder>
           }
-          @if (showTrashTable) {
-            <app-trash-table-builder
-              [data]="trashData"
-              [columns]="trashTableColumns"
-              [apiEndpoint]="apiEndpoint"
-              (itemRestored)="handleItemRestored()">
-            </app-trash-table-builder>
+@if (showTrashTable) {
+<app-trash-table-builder
+[data]="trashData"
+[columns]="trashTableColumns"
+[apiEndpoint]="apiEndpoint"
+[deletePermission]="'core-administrators-delete'"
+(itemRestored)="handleItemRestored()">
+</app-trash-table-builder>
           }
-          <div class="footer-controls flex justify-between items-center mt-4">
-            <app-pagination-buttons-builder
-              [currentPage]="showTrashTable ? trashCurrentPage : currentPage"
-              [totalPages]="showTrashTable ? trashTotalPages : totalPages"
-              [totalItems]="showTrashTable ? trashTotalItems : totalItems"
-              [itemsPerPage]="showTrashTable ? trashItemsPerPage : itemsPerPage"
-              (pageChange)="handlePageChange($event)"
-              (itemsPerPageChange)="handleItemsPerPageChange($event)">
-            </app-pagination-buttons-builder>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="footer-controls flex justify-between items-center mt-4">
+<app-pagination-buttons-builder
+[currentPage]="showTrashTable ? trashCurrentPage : currentPage"
+[totalPages]="showTrashTable ? trashTotalPages : totalPages"
+[totalItems]="showTrashTable ? trashTotalItems : totalItems"
+[itemsPerPage]="showTrashTable ? trashItemsPerPage : itemsPerPage"
+(pageChange)="handlePageChange($event)"
+(itemsPerPageChange)="handleItemsPerPageChange($event)">
+</app-pagination-buttons-builder>
+</div>
+</div>
+</div>
+</div>
   }
 </div>
 
 @if (showCreateForm) {
-  <app-form-builder
-    [inputDefinitions]="formFields"
-    [formDataToEdit]="selectedItemForEdit"
-    (formSubmitted)="handleFormSubmitted($event)"
-    (formCanceled)="showCreateForm = false">
-  </app-form-builder>
+<app-form-builder
+[inputDefinitions]="formFields"
+[formDataToEdit]="selectedItemForEdit"
+(formSubmitted)="handleFormSubmitted($event)"
+(formCanceled)="showCreateForm = false">
+</app-form-builder>
 }
 
 @if (showResetPasswordForm) {
-  <app-form-builder
-    [inputDefinitions]="formFields"
-    [headerText]="resetPasswordTitle"
-    [inputDefinitions]="resetPasswordFormFields"
-    [formDataToEdit]="selectedItemForEdit"
-    (formSubmitted)="handleResetPasswordFormSubmitted($event)"
-    (formCanceled)="showResetPasswordForm = false"
-  ></app-form-builder>
+<app-form-builder
+[inputDefinitions]="formFields"
+[headerText]="resetPasswordTitle"
+[inputDefinitions]="resetPasswordFormFields"
+[formDataToEdit]="selectedItemForEdit"
+(formSubmitted)="handleResetPasswordFormSubmitted($event)"
+(formCanceled)="showResetPasswordForm = false"
+></app-form-builder>
 }
 
 @if (showDetails) {
-  <app-details-builder
-    [itemDetailColumns]="detailsColumns"
-    [itemData]="selectedItemForDetails"
-    (closeDetails)="showDetails = false">
-  </app-details-builder>
+<app-details-builder
+[itemDetailColumns]="detailsColumns"
+[itemData]="selectedItemForDetails"
+(closeDetails)="showDetails = false">
+</app-details-builder>
 }

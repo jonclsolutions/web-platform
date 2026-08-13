@@ -1,3 +1,21 @@
+/**
+ * @file job-applications.config.ts
+ * @path src/app/admin/web-pages/job-applications/job-applications.config.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2025
+ * @description Static configuration (buttons, form fields, table/filter/detail columns) for
+ * the Job Applications (nábor) management page.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
+ *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
+ *      - JOB_APPLICATION_BUTTONS: "Stav / Poznámka" (edit) -> `web-job-applications-update`,
+ *        "Smazat" -> `web-job-applications-delete`. "Detaily" zůstává bez permission.
+ *      - JOB_APPLICATION_TOOLBAR_BUTTONS NEMÁ tlačítko "Přidat" (žádný
+ *        `handleCreateFormOpened` v HTML - uchazeči vznikají výhradně z veřejného
+ *        formuláře `POST /job_applications`). Backend permission
+ *        `web-job-applications-create` proto existuje (pro interní API endpoint), ale ve
+ *        UI zatím není co gatovat - nic tu tedy NEBYLO přidáno.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const JOB_APP_STATUS_OPTIONS = [
@@ -32,8 +50,8 @@ export const JOB_APPLICATION_TOOLBAR_BUTTONS: Core.Button[] = [
 ];
 export const JOB_APPLICATION_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Stav / Poznámka', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: '✒️', header_name: 'Stav / Poznámka', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-job-applications-update' },
+  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-job-applications-delete' },
 ];
 
 export const JOB_APPLICATION_FORM_FIELDS: Core.InputDefinition[] = [
