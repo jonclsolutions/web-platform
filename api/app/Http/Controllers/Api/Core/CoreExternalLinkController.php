@@ -1,7 +1,7 @@
 <?php
 /**
- * @file WebExternalLinkController.php
- * @path app/Http/Controllers/Api/Web/WebExternalLinkController.php
+ * @file CoreExternalLinkController.php
+ * @path app/Http/Controllers/Api/Core/CoreExternalLinkController.php
  * @project RPSW Web
  * @author RPSW
  * @created 2026
@@ -26,16 +26,16 @@
  * zrcadlí ostatní resource controllery v aplikaci pro konzistenci.
  */
 
-namespace App\Http\Controllers\Api\Web;
+namespace App\Http\Controllers\Api\Core;
 
 use App\Http\Controllers\Controller;
-use App\Models\Web\WebExternalLink;
+use App\Models\Core\CoreExternalLink;
 use App\Models\Web\WebLog;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-class WebExternalLinkController extends Controller
+class CoreExternalLinkController extends Controller
 {
     use LogsActivity;
 
@@ -47,8 +47,8 @@ class WebExternalLinkController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = $request->boolean('only_trashed')
-            ? WebExternalLink::onlyTrashed()
-            : WebExternalLink::query();
+            ? CoreExternalLink::onlyTrashed()
+            : CoreExternalLink::query();
 
         $query->where('user_id', $request->user()->id);
 
@@ -80,7 +80,7 @@ class WebExternalLinkController extends Controller
      */
     public function show(Request $request, $id): JsonResponse
     {
-        $link = WebExternalLink::withTrashed()
+        $link = CoreExternalLink::withTrashed()
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
@@ -100,7 +100,7 @@ class WebExternalLinkController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $link = WebExternalLink::create([
+        $link = CoreExternalLink::create([
             'user_id'   => $request->user()->id,
             'name'      => $validated['name'],
             'url'       => $validated['url'],
@@ -108,7 +108,7 @@ class WebExternalLinkController extends Controller
             'is_active' => $validated['is_active'] ?? true,
         ]);
 
-        $this->logAction($request, WebLog::class, 'create', 'Web', "Vytvořen externí odkaz: {$link->name}", $link->id, 'WebExternalLink');
+        $this->logAction($request, WebLog::class, 'create', 'Web', "Vytvořen externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
         return response()->json($link, 201);
     }
 
@@ -118,7 +118,7 @@ class WebExternalLinkController extends Controller
      */
     public function update(Request $request, $id): JsonResponse
     {
-        $link = WebExternalLink::where('user_id', $request->user()->id)->findOrFail($id);
+        $link = CoreExternalLink::where('user_id', $request->user()->id)->findOrFail($id);
 
         $validated = $request->validate([
             'name'      => 'required|string|max:150',
@@ -129,7 +129,7 @@ class WebExternalLinkController extends Controller
 
         $link->update($validated);
 
-        $this->logAction($request, WebLog::class, 'update', 'Web', "Upraven externí odkaz: {$link->name}", $link->id, 'WebExternalLink');
+        $this->logAction($request, WebLog::class, 'update', 'Web', "Upraven externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
         return response()->json($link);
     }
 
@@ -139,11 +139,11 @@ class WebExternalLinkController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
-        $link = WebExternalLink::where('user_id', $request->user()->id)->findOrFail($id);
+        $link = CoreExternalLink::where('user_id', $request->user()->id)->findOrFail($id);
         $name = $link->name;
         $link->delete();
 
-        $this->logAction($request, WebLog::class, 'delete', 'Web', "Smazán externí odkaz: {$name}", (int) $id, 'WebExternalLink');
+        $this->logAction($request, WebLog::class, 'delete', 'Web', "Smazán externí odkaz: {$name}", (int) $id, 'CoreExternalLink');
         return response()->json(null, 204);
     }
 
@@ -153,13 +153,13 @@ class WebExternalLinkController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
-        $link = WebExternalLink::onlyTrashed()
+        $link = CoreExternalLink::onlyTrashed()
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
         $link->restore();
 
-        $this->logAction($request, WebLog::class, 'restore', 'Web', "Obnoven externí odkaz: {$link->name}", $link->id, 'WebExternalLink');
+        $this->logAction($request, WebLog::class, 'restore', 'Web', "Obnoven externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
         return response()->json($link);
     }
 
@@ -169,7 +169,7 @@ class WebExternalLinkController extends Controller
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
-        $ownTrashed = WebExternalLink::onlyTrashed()->where('user_id', $request->user()->id);
+        $ownTrashed = CoreExternalLink::onlyTrashed()->where('user_id', $request->user()->id);
         $count = $ownTrashed->count();
         $ownTrashed->forceDelete();
 

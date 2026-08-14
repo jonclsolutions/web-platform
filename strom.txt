@@ -16,6 +16,7 @@
 │   │   │   │   │   │   ├── DocumentSectionController.php
 │   │   │   │   │   │   ├── DocumentTypeController.php
 │   │   │   │   │   │   └── SiteConfigurationController.php
+│   │   │   │   │   ├── PublicFileDownloadController.php
 │   │   │   │   │   ├── Shop
 │   │   │   │   │   │   ├── ShopCategoryController.php
 │   │   │   │   │   │   ├── ShopCouponController.php
@@ -136,6 +137,7 @@
 │   │   │       │   └── ShopSupplierResource.php
 │   │   │       ├── UserResource.php
 │   │   │       └── Web
+│   │   │           ├── WebAttachmentResource.php
 │   │   │           ├── WebJobApplicationResource.php
 │   │   │           ├── WebLogResource.php
 │   │   │           ├── WebNewsResource.php
@@ -179,6 +181,7 @@
 │   │   │   │   └── ShopSupplier.php
 │   │   │   ├── User.php
 │   │   │   └── Web
+│   │   │       ├── WebAttachment.php
 │   │   │       ├── WebExternalLink.php
 │   │   │       ├── WebJobApplication.php
 │   │   │       ├── WebLog.php
@@ -190,7 +193,11 @@
 │   │   ├── Providers
 │   │   │   ├── AppServiceProvider.php
 │   │   │   └── RouteServiceProvider.php
+│   │   ├── Rules
+│   │   │   └── AttachmentsTotalSize.php
 │   │   └── Traits
+│   │       ├── HandlesAttachments.php
+│   │       ├── HandlesFileUploads.php
 │   │       └── LogsActivity.php
 │   ├── artisan
 │   ├── bootstrap
@@ -268,9 +275,7 @@
 │   │   │   ├── private
 │   │   │   └── public
 │   │   │       ├── cv_files
-│   │   │       │   ├── BtHqYbUKaMpybvwTuCHAcXCoNcOk8kYOK5Hup5tw.txt
-│   │   │       │   ├── JRImHhgQQtnA5fSTBiFjQt4CbJ39B4SwiiWRdu25.txt
-│   │   │       │   └── VtyC0R40UdnY2M6Df88vxwqPLUBsqAPrsoEvBoxg.txt
+│   │   │       │   └── P2qFNkfDdO48ZRRWHmS7VTkaijTZJGRYD35RFjFV.txt
 │   │   │       ├── orders
 │   │   │       ├── payment-methods-images
 │   │   │       │   ├── apple-pay.png
@@ -289,6 +294,7 @@
 │   │   │       │   ├── 3d982b3e-f2e1-4a0e-875e-7c2f5aaf41ef.jpg
 │   │   │       │   └── 8f3ac2af-82a0-4bf0-8049-06cb9cfabd04.jpg
 │   │   │       ├── raw_request_commissions
+│   │   │       ├── sales_orders
 │   │   │       ├── site-logos
 │   │   │       │   └── dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png
 │   │   │       ├── social-icons
@@ -313,9 +319,9 @@
 │   │   │   ├── sessions
 │   │   │   ├── testing
 │   │   │   └── views
+│   │   │       ├── b0da7ce40f4e9bcba2a03c4560b1eed2.php
 │   │   │       ├── c01436b0ab8e4d76735f9b9e42064cea.php
-│   │   │       ├── dabb2898a11fa784c3f9c20860c490c1.php
-│   │   │       ├── de9feb1432383d6768e1082fe3ff9509.php
+│   │   │       ├── c95f21bb542b6be33f0059cf19be2862.php
 │   │   │       └── d73787b501c491196576390876d68bd9.php
 │   │   └── logs
 │   │       └── laravel.log
@@ -932,6 +938,11 @@
 │   │   │   │       │       ├── jobs-list.component.spec.ts
 │   │   │   │       │       ├── jobs-list.component.ts
 │   │   │   │       │       └── jobs-list.interface.ts
+│   │   │   │       ├── knowledge-base
+│   │   │   │       │   ├── knowledge-base.component.css
+│   │   │   │       │   ├── knowledge-base.component.html
+│   │   │   │       │   ├── knowledge-base.component.spec.ts
+│   │   │   │       │   └── knowledge-base.component.ts
 │   │   │   │       ├── not-found
 │   │   │   │       │   ├── not-found.component.css
 │   │   │   │       │   ├── not-found.component.html
@@ -976,6 +987,11 @@
 │   │   │   │           └── web-maintenance.component.ts
 │   │   │   └── shared
 │   │   │       ├── components
+│   │   │       │   ├── multi-file-upload
+│   │   │       │   │   ├── multi-file-upload.component.css
+│   │   │       │   │   ├── multi-file-upload.component.html
+│   │   │       │   │   ├── multi-file-upload.component.spec.ts
+│   │   │       │   │   └── multi-file-upload.component.ts
 │   │   │       │   └── password-requirements-checklist
 │   │   │       │       ├── password-requirements-checklist.component.css
 │   │   │       │       ├── password-requirements-checklist.component.html
@@ -1094,6 +1110,8 @@
 │   └── configure-server.sh
 ├── server_setup.md
 ├── strom.txt
-└── temp_project_schema.txt
+├── temp_project_schema.txt
+├── TODO_SHOP_PERMISSIONS.json
+└── verify-file-downloads.sh
 
-244 directories, 853 files
+248 directories, 867 files

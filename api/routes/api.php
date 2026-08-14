@@ -104,7 +104,7 @@ use App\Http\Controllers\Api\Shop\ShopCustomerController;
 use App\Http\Controllers\Api\Shop\ShopCheckoutController;
 use App\Http\Controllers\Api\Shop\ShopPublicController;
 use App\Http\Controllers\Api\Legal\DocumentTypeController;
-use App\Http\Controllers\Api\Web\WebExternalLinkController;
+use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\PublicFileDownloadController;
@@ -315,6 +315,32 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         Route::apiResource('roles', CoreRoleController::class)
             ->except(['store', 'create', 'edit'])
             ->parameters(['roles' => 'id']);
+
+        // ── web/external_links → přejmenováno na core-external-links-* ────
+        // @refactor-note (2026-08-5): web-manage-external-links -> core-external-links-*
+        // (sjednocení prefixu, zdroj žije pod /core stránkou External Links).
+        Route::prefix('external_links')->group(function () {
+            Route::delete('/force-delete-all', [CoreExternalLinkController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:core-external-links-delete');
+            Route::get('/',      [CoreExternalLinkController::class, 'index'])
+                ->middleware('permission:core-external-links-view');
+            Route::post('/',     [CoreExternalLinkController::class, 'store'])
+                ->middleware('permission:core-external-links-create');
+            Route::get('/{id}',  [CoreExternalLinkController::class, 'show'])
+                ->middleware('permission:core-external-links-view');
+            Route::put('/{id}',  [CoreExternalLinkController::class, 'update'])
+                ->middleware('permission:core-external-links-update');
+            Route::patch('/{id}', [CoreExternalLinkController::class, 'update'])
+                ->middleware('permission:core-external-links-update');
+            Route::post('/{id}/restore', [CoreExternalLinkController::class, 'restore'])
+                ->middleware('permission:core-external-links-delete');
+            Route::delete('/{id}', [CoreExternalLinkController::class, 'destroy'])
+                ->middleware('permission:core-external-links-delete');
+        });
+        // Pozn.: external_links jsou navíc scoped na vlastníka přímo v kontroleru
+        // (viz WebExternalLinkContCoreExternalLinkControllerroller - plně soukromé per uživatel), permission
+        // middleware tady jen ověřuje, že uživatel má na stránku vůbec přístup.
+
     });
 
     /*
@@ -449,31 +475,7 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
                 ->middleware('permission:web-job-applications-delete');
         });
 
-        // ── web/external_links → přejmenováno na core-external-links-* ────
-        // @refactor-note (2026-08-5): web-manage-external-links -> core-external-links-*
-        // (sjednocení prefixu, zdroj žije pod /core stránkou External Links).
-        Route::prefix('external_links')->group(function () {
-            Route::delete('/force-delete-all', [WebExternalLinkController::class, 'forceDeleteAllTrashed'])
-                ->middleware('permission:core-external-links-delete');
-            Route::get('/',      [WebExternalLinkController::class, 'index'])
-                ->middleware('permission:core-external-links-view');
-            Route::post('/',     [WebExternalLinkController::class, 'store'])
-                ->middleware('permission:core-external-links-create');
-            Route::get('/{id}',  [WebExternalLinkController::class, 'show'])
-                ->middleware('permission:core-external-links-view');
-            Route::put('/{id}',  [WebExternalLinkController::class, 'update'])
-                ->middleware('permission:core-external-links-update');
-            Route::patch('/{id}', [WebExternalLinkController::class, 'update'])
-                ->middleware('permission:core-external-links-update');
-            Route::post('/{id}/restore', [WebExternalLinkController::class, 'restore'])
-                ->middleware('permission:core-external-links-delete');
-            Route::delete('/{id}', [WebExternalLinkController::class, 'destroy'])
-                ->middleware('permission:core-external-links-delete');
-        });
-        // Pozn.: external_links jsou navíc scoped na vlastníka přímo v kontroleru
-        // (viz WebExternalLinkController - plně soukromé per uživatel), permission
-        // middleware tady jen ověřuje, že uživatel má na stránku vůbec přístup.
-
+        
         // web/logs — stejný princip: POST (zápis exportu/akce z libovolné web stránky)
         // bez permission middleware, GET (čtení historie) s permission.
         Route::prefix('logs')->group(function () {

@@ -37,7 +37,7 @@ import * as Config from './external-links.config';
 export class ExternalLinksComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
-  override apiEndpoint: string = 'web/external_links';
+  override apiEndpoint: string = 'core/external_links';
 
   buttons = Config.EXTERNAL_LINK_BUTTONS;
   formFields = Config.EXTERNAL_LINK_FORM_FIELDS;

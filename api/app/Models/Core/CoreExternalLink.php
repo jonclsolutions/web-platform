@@ -1,7 +1,7 @@
 <?php
 /**
- * @file WebExternalLink.php
- * @path app/Models/Web/WebExternalLink.php
+ * @file CoreExternalLink.php
+ * @path app/Models/Core/WebExternalLink.php
  * @project RPSW Web
  * @author RPSW
  * @created 2026
@@ -14,7 +14,7 @@
  * poslanému z klienta - vždy bere `$request->user()->id`).
  */
 
-namespace App\Models\Web;
+namespace App\Models\Core;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -28,7 +28,7 @@ use App\Models\User;
  * @property int $position Pořadí zobrazení v adminu.
  * @property bool $is_active Zda se odkaz má v adminu zobrazovat.
  */
-class WebExternalLink extends Model
+class CoreExternalLink extends Model
 {
     use SoftDeletes;
 
