@@ -14,12 +14,23 @@
  * @refactor-note (2026-08) Fixed a double-JSON-encoding bug: the original version called
  * `json_encode()` on `context_data` before passing it to `create()`, but the log models'
  * `'array'` cast ALSO json_encodes on write - stacking both meant the DB ended up with an
- * escaped JSON string instead of a usable object, and reads returned a mangled string
- * rather than the actual payload. Fix: pass a plain PHP array and let the model cast
- * handle serialization exactly once. Also strips common sensitive keys (passwords, tokens)
- * before logging, since `$request->all()` on any auth/user-management endpoint would
- * otherwise write plaintext credentials into the audit trail - a GDPR/security issue in
- * its own right, independent of the encoding bug.
+ * escaped JSON string instead of a usable object. Fix: pass a plain PHP array and let the
+ * model cast handle serialization exactly once. Also strips common sensitive keys
+ * (passwords, tokens) before logging.
+ *
+ * @refactor-note (2026-08-7) Two fixes found while auditing controllers still on the old
+ * local logAction() pattern (AuthController/TranslationController/UserController):
+ * 1) SENSITIVE_KEYS was missing `old_password`, `new_password`, `new_password_confirmation`.
+ *    UserController::changePassword() sends exactly these field names - migrating it to
+ *    this trait without adding them here would have logged plaintext passwords into
+ *    `context_data`. Added.
+ * 2) Added an optional 8th parameter `$extraExcludedKeys` - SiteConfigurationController
+ *    already relied on this call shape (`logAction(..., ['logo_file'])`) to keep binary
+ *    file uploads out of `context_data`; the trait signature didn't actually support it
+ *    yet, which would have caused an ArgumentCountError. Any caller passing an uploaded
+ *    file field (logo_file, icon_file, attachment, cv_file, ...) should use this instead
+ *    of relying on the global SENSITIVE_KEYS list, since those are per-endpoint field
+ *    names, not universally sensitive data.
  */
 
 namespace App\Traits;
@@ -43,6 +54,9 @@ trait LogsActivity
         'refreshToken',
         'refresh_token',
         'current_password',
+        'old_password',
+        'new_password',
+        'new_password_confirmation',
     ];
 
     /**
@@ -54,12 +68,11 @@ trait LogsActivity
      * @param string $description Human-readable audit message.
      * @param int|null $affectedId Entity identifier.
      * @param string|null $affectedType Entity class/type name.
+     * @param array $extraExcludedKeys Additional request keys to strip from context_data
+     *   for this specific call only (e.g. uploaded file fields like 'logo_file') - on top
+     *   of the global SENSITIVE_KEYS list.
      * @note Never throws - a failure here must not mask or interrupt the original
-     * controller action. `context_data` is passed as a plain array - the model's
-     * `'array'` cast performs the JSON encoding exactly once on write (see
-     * @refactor-note above for why manually pre-encoding it here was a bug). Payload size
-     * is bounded by capping the array to `MAX_CONTEXT_BYTES` worth of encoded JSON rather
-     * than by truncating an already-encoded string, so the stored value stays valid JSON.
+     * controller action.
      */
     protected function logAction(
         Request $request,
@@ -68,7 +81,8 @@ trait LogsActivity
         string $module,
         string $description,
         ?int $affectedId = null,
-        ?string $affectedType = null
+        ?string $affectedType = null,
+        array $extraExcludedKeys = []
     ): void {
         try {
             $user = $request->user();
@@ -81,7 +95,7 @@ trait LogsActivity
                 'affected_entity_type' => $affectedType,
                 'affected_entity_id'   => $affectedId,
                 'user_id'              => $user?->id,
-                'context_data'         => $this->safeContextData($request),
+                'context_data'         => $this->safeContextData($request, $extraExcludedKeys),
                 'user_id_plain'        => (string)($user?->id ?? '0'),
                 'user_plain'           => $user?->user_email ?? 'system',
             ]);
@@ -92,14 +106,17 @@ trait LogsActivity
 
     /**
      * @description Builds a safe-to-store payload array from the request: strips
-     * sensitive fields, then caps overall size so an oversized request body can never
-     * cause the log write itself to fail on the `text` column limit.
+     * globally sensitive fields plus any call-specific extra fields, then caps overall
+     * size so an oversized request body can never cause the log write itself to fail on
+     * the `text` column limit.
      * @param Request $request
+     * @param array $extraExcludedKeys
      * @return array
      */
-    private function safeContextData(Request $request): array
+    private function safeContextData(Request $request, array $extraExcludedKeys = []): array
     {
-        $data = $request->except(self::SENSITIVE_KEYS);
+        $excluded = array_merge(self::SENSITIVE_KEYS, $extraExcludedKeys);
+        $data = $request->except($excluded);
 
         $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
         if ($encoded !== false && strlen($encoded) > 60000) {

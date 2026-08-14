@@ -6,6 +6,15 @@
  * @author RPSW
  * @created 2026
  * @description Manages comprehensive shop order lifecycle operations, including creation, status tracking, inventory synchronization, and complex financial recalculations.
+ *
+ * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * lokální duplicitní logAction() - doménově beze změny (ShopLog::class). ODSTRANĚNY
+ * ladicí `Log::info("...Store/Update started", ['payload' => $request->all()])` volání -
+ * stejný důvod jako u ShopCheckoutController/ShopCustomerController: zbytečná duplikace
+ * osobních/platebních údajů objednávky mimo řízený `shop_logs` audit trail.
+ * `updateStatus()`, `destroy()`, `forceDeleteAllTrashed()` dosud NEMĚLY žádné auditní
+ * volání do `shop_logs` (na rozdíl od store/update/restore) - doplněno, ať je změna
+ * stavu objednávky a mazání stejně dohledatelné jako ostatní mutace.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -20,6 +29,7 @@ use App\Models\Shop\ShopLog;
 use App\Http\Resources\Shop\ShopOrderResource;
 use App\Http\Requests\Shop\ShopOrder\StoreShopOrderRequest;
 use App\Http\Requests\Shop\ShopOrder\UpdateShopOrderRequest;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -31,11 +41,10 @@ use Illuminate\Support\Facades\DB;
  */
 class ShopOrderController extends Controller
 {
+    use LogsActivity;
+
     /**
      * Retrieves a paginated list of orders with flexible filtering options.
-     *
-     * @param Request $request Incoming request with search, status, and date range filters.
-     * @return JsonResponse Paginated order data or full collection.
      */
     public function index(Request $request): JsonResponse
     {
@@ -53,11 +62,11 @@ class ShopOrderController extends Controller
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
         if ($s = $request->input('search')) {
-            $query->where(fn($q) => 
-                $q->where('id', $s) 
+            $query->where(fn($q) =>
+                $q->where('id', $s)
                   ->orWhere('order_number', 'like', "%$s%")
                   ->orWhere('shipping_address', 'like', "%$s%")
-                  ->orWhereHas('customer', fn($cq) => 
+                  ->orWhereHas('customer', fn($cq) =>
                       $cq->where('email', 'like', "%$s%")
                         ->orWhere('first_name', 'like', "%$s%")
                         ->orWhere('last_name', 'like', "%$s%")
@@ -107,15 +116,9 @@ class ShopOrderController extends Controller
 
     /**
      * Stores a new order and processes associated inventory and customer data.
-     *
-     * @param StoreShopOrderRequest $request Validated order store request.
-     * @return JsonResponse Returns the created order resource.
-     * @throws \Exception On database transaction failure.
      */
     public function store(StoreShopOrderRequest $request): JsonResponse
     {
-        Log::info("ShopOrder Store started", ['payload' => $request->all()]);
-        
         $validated = $request->validated();
         $totalAmount = 0;
         foreach ($validated['items'] as $itemData) {
@@ -138,8 +141,8 @@ class ShopOrderController extends Controller
                 return response()->json(['message' => "Minimální hodnota objednávky pro tento kupón je " . number_format($coupon->min_order_amount, 2) . " EUR."], 422);
             }
 
-            $discountAmount = ($coupon->discount_type === 'percent') 
-                ? ($totalAmount * (float)$coupon->discount_value) / 100 
+            $discountAmount = ($coupon->discount_type === 'percent')
+                ? ($totalAmount * (float)$coupon->discount_value) / 100
                 : (float)$coupon->discount_value;
         }
 
@@ -180,7 +183,7 @@ class ShopOrderController extends Controller
                 'payment_status'       => $validated['payment_status'] ?? 'pending',
                 'total_amount'         => $totalAmount,
                 'shipping_amount'      => $shippingAmount,
-                'tax_amount'           => 0, 
+                'tax_amount'           => 0,
                 'discount_amount'      => $discountAmount,
                 'final_amount'         => $finalAmount,
                 'coupon_id'            => $validated['coupon_id'] ?? null,
@@ -235,22 +238,20 @@ class ShopOrderController extends Controller
             if ($order->customer) { $order->customer->recalculateTotalSpent(); }
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
-            $this->logAction($request, 'create', 'ShopOrder', "Vytvořena objednávka: {$order->order_number}.", $order->id);
+            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder', "Vytvořena objednávka: {$order->order_number}.", $order->id, 'ShopOrder');
 
             return response()->json(new ShopOrderResource($order), 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("ShopOrder creation error: " . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Vytvoření objednávky selhalo: " . $e->getMessage());
             return response()->json(['message' => 'Vytvoření objednávky selhalo: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Retrieves full order details including relations.
-     *
-     * @param int $id The order ID.
-     * @return JsonResponse Detailed order resource.
      */
     public function show($id): JsonResponse
     {
@@ -260,16 +261,9 @@ class ShopOrderController extends Controller
 
     /**
      * Updates an existing order, including customer details, items, and recalculates totals.
-     *
-     * @param UpdateShopOrderRequest $request Validated update request.
-     * @param int $id The order ID.
-     * @return JsonResponse The updated order resource.
-     * @throws \Exception On database transaction failure.
      */
     public function update(UpdateShopOrderRequest $request, $id): JsonResponse
     {
-        Log::info("ShopOrder Update started", ['id' => $id, 'payload' => $request->all()]);
-
         try {
             DB::beginTransaction();
             $order = ShopOrder::findOrFail($id);
@@ -297,22 +291,19 @@ class ShopOrderController extends Controller
             if ($order->customer) { $order->customer->recalculateTotalSpent(); }
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
-            $this->logAction($request, 'update', 'ShopOrder', "Aktualizace objednávky: {$order->order_number}", $order->id);
+            $this->logAction($request, ShopLog::class, 'update', 'ShopOrder', "Aktualizace objednávky: {$order->order_number}", $order->id, 'ShopOrder');
 
             return response()->json(new ShopOrderResource($order));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("ShopOrder update error: " . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Aktualizace selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
             return response()->json(['message' => 'Aktualizace selhala: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Updates the status of an order and handles stock restoration if applicable.
-     *
-     * @param Request $request Request containing the new status.
-     * @param int $id The order ID.
-     * @return JsonResponse The updated order.
      */
     public function updateStatus(Request $request, $id)
     {
@@ -332,16 +323,13 @@ class ShopOrderController extends Controller
             if ($order->customer) { $order->customer->recalculateTotalSpent(); }
         });
 
+        $this->logAction($request, ShopLog::class, 'status_change', 'ShopOrder', "Změna stavu objednávky {$order->order_number}: {$oldStatus} -> {$newStatus}", $order->id, 'ShopOrder');
+
         return response()->json($order);
     }
 
     /**
      * Performs a soft or hard delete of an order, restoring stock if required.
-     *
-     * @param Request $request Request flag for hard deletion.
-     * @param int $id The order ID.
-     * @return JsonResponse No content on success.
-     * @throws \Exception On failure.
      */
     public function destroy(Request $request, $id)
     {
@@ -362,20 +350,19 @@ class ShopOrderController extends Controller
             DB::commit();
             if ($order->customer) { $order->customer->recalculateTotalSpent(); }
 
+            $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopOrder', "Smazání objednávky ID: $id", (int) $id, 'ShopOrder');
+
             return response()->json(null, 204);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("ShopOrder delete error: " . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Smazání selhalo ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
             return response()->json(['message' => 'Smazání selhalo.'], 500);
         }
     }
 
     /**
      * Restores a soft-deleted order.
-     *
-     * @param Request $request Incoming request.
-     * @param int $id The order ID.
-     * @return JsonResponse The restored order resource.
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -384,27 +371,25 @@ class ShopOrderController extends Controller
             $order->restore();
             $order->items()->restore();
 
-            Log::info("Order restored", ['id' => $id]);
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
-            $this->logAction($request, 'restore', 'ShopOrder', "Obnova objednávky ID: $id", $id);
+            $this->logAction($request, ShopLog::class, 'restore', 'ShopOrder', "Obnova objednávky ID: $id", (int) $id, 'ShopOrder');
 
             return response()->json(new ShopOrderResource($order));
         } catch (\Exception $e) {
             Log::error("ShopOrder restore error: " . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Obnova selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
             return response()->json(['message' => 'Obnova objednávky selhala.'], 500);
         }
     }
 
     /**
      * Purges all soft-deleted orders.
-     *
-     * @param Request $request Incoming request.
-     * @return JsonResponse No content on success.
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
             $trashedOrders = ShopOrder::onlyTrashed()->with('items')->get();
+            $count = $trashedOrders->count();
             DB::beginTransaction();
 
             foreach ($trashedOrders as $order) {
@@ -415,19 +400,17 @@ class ShopOrderController extends Controller
             }
 
             DB::commit();
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopOrder', "Vysypání koše objednávek. Počet: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
             DB::rollBack();
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Chyba při vyprazdňování koše: " . $e->getMessage());
             return response()->json(['message' => 'Chyba při vyprazdňování koše.'], 500);
         }
     }
 
     /**
      * Helper to update or add order items during an order update.
-     *
-     * @param ShopOrder $order The order instance.
-     * @param array $items Array of item data.
-     * @return void
      */
     private function updateOrderItems(ShopOrder $order, array $items): void
     {
@@ -461,9 +444,6 @@ class ShopOrderController extends Controller
 
     /**
      * Recalculates order financial totals based on items, coupons, and shipping.
-     *
-     * @param ShopOrder $order The order instance.
-     * @return void
      */
     private function recalculateOrderTotals(ShopOrder $order): void
     {
@@ -474,8 +454,8 @@ class ShopOrderController extends Controller
         if ($order->coupon_id) {
             $coupon = \App\Models\Shop\ShopCoupon::find($order->coupon_id);
             if ($coupon) {
-                $discountAmount = ($coupon->discount_type === 'percent') 
-                    ? ($totalWithVatBeforeDiscount * (float)$coupon->discount_value) / 100 
+                $discountAmount = ($coupon->discount_type === 'percent')
+                    ? ($totalWithVatBeforeDiscount * (float)$coupon->discount_value) / 100
                     : (float)$coupon->discount_value;
             }
         }
@@ -484,7 +464,7 @@ class ShopOrderController extends Controller
         $totalTax = 0;
 
         foreach ($items as $item) {
-            $rate = $item->vat_rate ?? 21; 
+            $rate = $item->vat_rate ?? 21;
             $lineTotalAfterDiscount = $item->total_price * $discountFactor;
             $itemTax = $lineTotalAfterDiscount * ($rate / (100 + $rate));
             $totalTax += $itemTax;
@@ -499,36 +479,5 @@ class ShopOrderController extends Controller
             'shipping_amount' => $shippingAmount,
             'final_amount'    => max(0, $totalWithVatBeforeDiscount + $shippingAmount - $discountAmount),
         ]);
-    }
-
-    /**
-     * Logs administrative actions to the central audit system.
-     *
-     * @param Request $request Request context.
-     * @param string $eventType Operation type.
-     * @param string $module Module identification.
-     * @param string $description Audit entry description.
-     * @param int|null $affectedId Entity ID.
-     * @return void
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
-    {
-        try {
-            $user = $request->user() ?? auth('sanctum')->user();
-            ShopLog::create([
-                'origin' => $request->ip(),
-                'event_type' => $eventType,
-                'module' => $module,
-                'description' => $description,
-                'affected_entity_type' => 'ShopOrder',
-                'affected_entity_id' => $affectedId,
-                'user_id' => $user?->id,
-                'context_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
-                'user_id_plain' => (string)($user?->id ?? '0'),
-                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'Systém'
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Log action error: " . $e->getMessage());
-        }
     }
 }

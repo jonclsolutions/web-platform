@@ -44,11 +44,14 @@
    HEADER
    ═══════════════════════════════════════════════════════════════ */
 .admin-header {
-  height: var(--header-h);
+  height: auto;
+  min-height: var(--header-h);
   width: 100%;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
+  flex-wrap: wrap;              /* NOVÉ - povolí zalomení na 2. řádek */
+  row-gap: 4px;                 /* NOVÉ - mezera mezi řádky po zalomení */
   align-items: center;
   z-index: 1100;
   padding: 0 20px 0 0;
@@ -56,17 +59,17 @@
   font-family: var(--ff);
   margin-top: 22px;
 }
-
 /* ── Levá skupina ────────────────────────────────────────────── */
 .header-left {
   display: flex;
   align-items: center;
   gap: 0;
   flex-shrink: 0;
-  height: 100%;
+  height: var(--header-h);      /* ZMĚNA z implicitního stretch(100%) - potřebuje
+                                    pevnou výšku, jakmile header přestane mít
+                                    fixní výšku kvůli wrapu */
   overflow: hidden;
 }
-
 .menu-toggle-btn {
   height: 100%;
   width: 52px;
@@ -184,7 +187,7 @@
 .module-switcher {
   display: flex;
   align-items: center;
-  height: 100%;
+  height: var(--header-h);      /* ZMĚNA ze 100% na pevnou hodnotu - stejný důvod */
   margin-left: 8px;
   gap: 4px;
 }
@@ -282,6 +285,7 @@
   margin-left: auto;
   display: flex;
   align-items: center;
+  height: var(--header-h);      /* NOVÉ - pro konzistentní výšku i po zalomení */
   gap: 8px;
   padding-left: 12px;
   flex-shrink: 0;

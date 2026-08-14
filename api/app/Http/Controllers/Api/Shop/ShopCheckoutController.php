@@ -6,6 +6,16 @@
  * @author RPSW
  * @created 2026
  * @description Manages the end-to-end checkout process, including order persistence, atomic inventory stock updates, coupon validation, and payment simulation.
+ *
+ * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * lokální duplicitní logAction() - doménově beze změny (ShopLog::class). Zároveň
+ * ODSTRANĚN ladicí `Log::info("Checkout createOrder started", ['payload' => $request->all()])`
+ * na začátku createOrder() - jde o VEŘEJNÝ (bez auth) endpoint, takže tohle volání
+ * zapisovalo do laravel.log kompletní nešifrovaný payload (jméno, e-mail, adresa,
+ * telefon zákazníka) při KAŽDÉM checkoutu bez jakékoli ochrany/expirace typické pro
+ * `shop_logs` audit trail - zbytečná duplicita osobních údajů mimo řízené úložiště.
+ * Skutečná obchodní událost (vytvoření objednávky) se loguje standardně přes
+ * logAction() níže.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -19,6 +29,7 @@ use App\Models\Shop\ShopCustomer;
 use App\Models\Shop\ShopCoupon;
 use App\Models\Shop\ShopLog;
 use App\Http\Resources\Shop\ShopOrderResource;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -31,17 +42,13 @@ use Illuminate\Support\Facades\Cache;
  */
 class ShopCheckoutController extends Controller
 {
+    use LogsActivity;
+
     /**
      * Orchestrates the order creation process, handling customer identification, price calculation, and inventory management.
-     *
-     * @param Request $request Validated checkout data containing customer info, cart items, and payment/shipping methods.
-     * @return JsonResponse Returns the created order resource or an error status on failure.
-     * @throws \Exception When database integrity constraints are violated or inventory is insufficient.
      */
     public function createOrder(Request $request): JsonResponse
     {
-        Log::info("Checkout createOrder started", ['payload' => $request->all()]);
-
         $validated = $request->validate([
             'email' => 'required|email',
             'first_name' => 'required|string',
@@ -68,7 +75,7 @@ class ShopCheckoutController extends Controller
             DB::beginTransaction();
 
             $email = trim(strtolower($validated['email']));
-            
+
             $customer = ShopCustomer::withTrashed()->where('email', $email)->first();
 
             if ($customer) {
@@ -199,7 +206,7 @@ class ShopCheckoutController extends Controller
 
                 if (!empty($itemData['product_variant_id'])) {
                     $variant = ShopProductVariant::lockForUpdate()->findOrFail($itemData['product_variant_id']);
-                    
+
                     if ($variant->stock_quantity < $quantity) {
                         DB::rollBack();
                         return response()->json([
@@ -213,11 +220,11 @@ class ShopCheckoutController extends Controller
                         $vatRate = $variant->vat_rate;
                     }
                     ShopProductVariant::forceSyncParentStock($product->id);
-                    
+
                     Cache::forget("product_stock_{$product->id}_v{$variant->id}");
                 } else {
                     $product->lockForUpdate();
-                    
+
                     if ($product->stock_quantity < $quantity) {
                         DB::rollBack();
                         return response()->json([
@@ -262,23 +269,20 @@ class ShopCheckoutController extends Controller
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
 
-            $this->logAction($request, 'create', 'ShopOrder (Checkout)', "Vytvořena objednávka: {$order->order_number}", $order->id);
+            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Vytvořena objednávka: {$order->order_number}", $order->id, 'ShopOrder');
 
             return response()->json(new ShopOrderResource($order), 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Checkout createOrder error: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Chyba při vytváření objednávky: " . $e->getMessage());
             return response()->json(['message' => 'Chyba při vytváření objednávky: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Provides a secure stock check mechanism for public UI, utilizing cache to mitigate scraping risk.
-     *
-     * @param Request $request Request containing quantity and variant parameters.
-     * @param int $id The product ID to check.
-     * @return JsonResponse Boolean status of availability.
      */
     public function checkStock(Request $request, $id): JsonResponse
     {
@@ -290,10 +294,10 @@ class ShopCheckoutController extends Controller
         $stockQuantity = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($id, $variantId) {
             $product = ShopProduct::find($id);
             if (!$product) return 0;
-            
+
             if ($variantId) {
                 $foreignKey = 'product_id';
-                
+
                 $variantModel = new ShopProductVariant();
                 if (method_exists($variantModel, 'product')) {
                     $foreignKey = $variantModel->product()->getForeignKeyName();
@@ -306,7 +310,7 @@ class ShopCheckoutController extends Controller
                     return $variant ? $variant->stock_quantity : 0;
                 } catch (\Illuminate\Database\QueryException $e) {
                     $fallbackKey = ($foreignKey === 'product_id') ? 'shop_product_id' : 'product_id';
-                    
+
                     try {
                         $variant = ShopProductVariant::where($fallbackKey, $id)->find($variantId);
                         return $variant ? $variant->stock_quantity : 0;
@@ -322,7 +326,7 @@ class ShopCheckoutController extends Controller
                     }
                 }
             }
-            
+
             return $product->stock_quantity;
         });
 
@@ -333,9 +337,6 @@ class ShopCheckoutController extends Controller
 
     /**
      * Validates a coupon code against business rules (expiration, usage limits, minimum order amounts).
-     *
-     * @param Request $request Request containing coupon code and total order amount.
-     * @return JsonResponse Status of coupon validity and the coupon object.
      */
     public function validateCoupon(Request $request): JsonResponse
     {
@@ -380,9 +381,6 @@ class ShopCheckoutController extends Controller
 
     /**
      * Simulates a payment gateway response for testing purposes.
-     *
-     * @param Request $request Request containing order ID.
-     * @return JsonResponse Payment result and updated order status.
      */
     public function simulatePayment(Request $request): JsonResponse
     {
@@ -401,7 +399,7 @@ class ShopCheckoutController extends Controller
                     'paid_at' => now()
                 ]);
 
-                $this->logAction($request, 'payment', 'ShopOrder (Checkout)', "Platba simulována: {$order->order_number}", $order->id);
+                $this->logAction($request, ShopLog::class, 'payment', 'ShopOrder (Checkout)', "Platba simulována: {$order->order_number}", $order->id, 'ShopOrder');
 
                 return response()->json([
                     'success' => true,
@@ -416,38 +414,8 @@ class ShopCheckoutController extends Controller
             }
         } catch (\Exception $e) {
             Log::error("Payment simulation error: " . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Chyba při simulaci platby: " . $e->getMessage());
             return response()->json(['message' => 'Chyba při simulaci platby'], 500);
-        }
-    }
-
-    /**
-     * Logs administrative or checkout-related events for auditing purposes.
-     *
-     * @param Request $request The original request context.
-     * @param string $eventType Category of the event.
-     * @param string $module The system module triggered.
-     * @param string $description Detailed description of the action.
-     * @param int|null $affectedId Optional ID of the entity influenced by the action.
-     * @return void
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
-    {
-        try {
-            $user = $request->user() ?? auth('sanctum')->user();
-            ShopLog::create([
-                'origin' => $request->ip(),
-                'event_type' => $eventType,
-                'module' => $module,
-                'description' => $description,
-                'affected_entity_type' => 'ShopOrder',
-                'affected_entity_id' => $affectedId,
-                'user_id' => $user?->id,
-                'context_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
-                'user_id_plain' => (string)($user?->id ?? '0'),
-                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'Systém'
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Log action error: " . $e->getMessage());
         }
     }
 }

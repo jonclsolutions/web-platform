@@ -6,12 +6,10 @@
  * @author RPSW
  * @created 2025
  * @description Controller responsible for managing sales lead lifecycle, including filtering, lifecycle state management (soft-delete), and comprehensive administrative audit logging.
- * @refactor-note (2026) Přidány `generateLink()` (admin - vygeneruje/vrátí public_token pro
- *      sdílení odkazu na objednávkový formulář) a `showByToken()` (VEŘEJNÁ metoda bez auth -
- *      pro OrderFormComponent na frontendu). `showByToken()` záměrně nevrací plný
- *      WebSalesLeadResource (ten obsahuje interní CRM pole jako `salesman_name`, `status`,
- *      `priority`, `rejection_reason`, `next_step` - to vše je neveřejné), ale jen úzkou
- *      podmnožinu polí, která zákazník na objednávkovém formuláři reálně potřebuje.
+ * @refactor-note (2026) Přidány `generateLink()` a `showByToken()` - viz metody níže pro
+ *      detaily o veřejném/adminovém rozdělení a bezpečnostních poznámkách.
+ * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * lokální duplicitní logAction(). Doménově beze změny (WebLog::class).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -19,9 +17,9 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Web\WebSalesLead;
 use App\Models\Web\WebLog;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use App\Http\Requests\Web\WebSalesLead\StoreWebSalesLeadRequest;
 use App\Http\Resources\Web\WebSalesLeadResource;
 
@@ -31,11 +29,10 @@ use App\Http\Resources\Web\WebSalesLeadResource;
  */
 class WebSalesLeadController extends Controller
 {
+    use LogsActivity;
+
     /**
      * Retrieves a list of sales leads based on filtering and pagination criteria.
-     *
-     * @param Request $request Filter parameters (search, status, priority, channel, dates) and sorting settings.
-     * @return JsonResponse Paginated data or full collection on export.
      */
     public function index(Request $request): JsonResponse
     {
@@ -43,10 +40,9 @@ class WebSalesLeadController extends Controller
         $onlyTrashed = filter_var($request->input('only_trashed', false), FILTER_VALIDATE_BOOLEAN);
 
         $query = WebSalesLead::query();
-        
+
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Fulltext Search
         if ($s = $request->input('search')) {
             $query->where(fn($q) => $q->where('subject_name', 'like', "%$s%")
                 ->orWhere('contact_person', 'like', "%$s%")
@@ -54,12 +50,10 @@ class WebSalesLeadController extends Controller
                 ->orWhere('description', 'like', "%$s%"));
         }
 
-        // Exact match filters
         foreach (['id', 'status', 'priority', 'source_channel'] as $f) {
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
 
-        // Partial match filters
         foreach (['subject_name', 'contact_person', 'contact_email', 'contact_phone', 'location', 'salesman_name'] as $f) {
             if ($request->filled($f)) $query->where($f, 'like', '%' . $request->input($f) . '%');
         }
@@ -67,19 +61,17 @@ class WebSalesLeadController extends Controller
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
         if ($request->filled('last_contact_date')) $query->whereDate('last_contact_date', $request->last_contact_date);
 
-        // Sorting
         $sortBy = $request->input('sort_by', 'created_at');
-        $sortDirection = in_array(strtolower($request->input('sort_direction')), ['asc', 'desc']) 
-            ? $request->input('sort_direction') 
+        $sortDirection = in_array(strtolower($request->input('sort_direction')), ['asc', 'desc'])
+            ? $request->input('sort_direction')
             : 'desc';
-        
+
         $query->orderBy($sortBy, $sortDirection);
 
-        // Execution
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
-        
+
         if ($noPagination) {
-            $this->logAction($request, 'export', 'WebSalesLead', "Hromadný export obchodních leadů.");
+            $this->logAction($request, WebLog::class, 'export', 'WebSalesLead', "Hromadný export obchodních leadů.");
             $data = $query->get();
             return response()->json(WebSalesLeadResource::collection($data));
         }
@@ -97,10 +89,6 @@ class WebSalesLeadController extends Controller
 
     /**
      * Persists a new sales lead, assigning default owner data if available.
-     *
-     * @param StoreWebSalesLeadRequest $request Validated input.
-     * @return JsonResponse Created lead resource.
-     * @throws \Exception On database failure.
      */
     public function store(StoreWebSalesLeadRequest $request): JsonResponse
     {
@@ -117,21 +105,18 @@ class WebSalesLeadController extends Controller
             }
 
             $lead = WebSalesLead::create($validated);
-            
-            $this->logAction($request, 'create', 'WebSalesLead', "Vytvořen nový lead: {$lead->subject_name}", $lead->id);
-            
+
+            $this->logAction($request, WebLog::class, 'create', 'WebSalesLead', "Vytvořen nový lead: {$lead->subject_name}", $lead->id, 'WebSalesLead');
+
             return response()->json(new WebSalesLeadResource($lead), 201);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebSalesLead', "Chyba při vytváření leadu: " . $e->getMessage());
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při vytváření leadu: " . $e->getMessage());
             return response()->json(['message' => 'Vytvoření leadu selhalo.'], 500);
         }
     }
 
     /**
      * Retrieves the details of a single lead.
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
@@ -141,89 +126,74 @@ class WebSalesLeadController extends Controller
 
     /**
      * Updates an existing sales lead record.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, $id): JsonResponse
     {
         try {
             $lead = WebSalesLead::findOrFail($id);
             $lead->update($request->all());
-            
-            $this->logAction($request, 'update', 'WebSalesLead', "Aktualizace leadu ID: {$lead->id} ({$lead->subject_name})", $lead->id);
-            
+
+            $this->logAction($request, WebLog::class, 'update', 'WebSalesLead', "Aktualizace leadu ID: {$lead->id} ({$lead->subject_name})", $lead->id, 'WebSalesLead');
+
             return response()->json(new WebSalesLeadResource($lead));
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebSalesLead', "Chyba při aktualizaci leadu ID {$id}: " . $e->getMessage(), $id);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při aktualizaci leadu ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Aktualizace leadu selhala.'], 500);
         }
     }
 
     /**
      * Deletes a lead (Soft or Hard).
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
             $item = WebSalesLead::withTrashed()->findOrFail($id);
-            
+
             $forceDelete ? $item->forceDelete() : $item->delete();
-            
-            $this->logAction($request, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSalesLead', "Smazání leadu ID: $id", $id);
+
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSalesLead', "Smazání leadu ID: $id", (int) $id, 'WebSalesLead');
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebSalesLead', "Chyba při mazání leadu ID $id: " . $e->getMessage(), $id);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při mazání leadu ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Smazání leadu selhalo.'], 500);
         }
     }
 
     /**
      * Restores a soft-deleted lead.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
         try {
             $item = WebSalesLead::withTrashed()->findOrFail($id);
             $item->restore();
-            
-            $this->logAction($request, 'restore', 'WebSalesLead', "Obnova leadu ID: $id", $id);
-            
+
+            $this->logAction($request, WebLog::class, 'restore', 'WebSalesLead', "Obnova leadu ID: $id", (int) $id, 'WebSalesLead');
+
             return response()->json(new WebSalesLeadResource($item));
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebSalesLead', "Chyba při obnově leadu ID $id: " . $e->getMessage(), $id);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při obnově leadu ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Obnova leadu selhala.'], 500);
         }
     }
 
     /**
      * Permanently deletes all soft-deleted records.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
             $count = WebSalesLead::onlyTrashed()->count();
             WebSalesLead::onlyTrashed()->forceDelete();
-            
-            $this->logAction($request, 'force_delete_all', 'WebSalesLead', "Hromadné smazání koše leadů. Počet: $count");
-            
+
+            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSalesLead', "Hromadné smazání koše leadů. Počet: $count");
+
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebSalesLead', "Chyba při vyprazdňování koše leadů: " . $e->getMessage());
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při vyprazdňování koše leadů: " . $e->getMessage());
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
         }
     }
@@ -231,11 +201,7 @@ class WebSalesLeadController extends Controller
     /**
      * @description Vygeneruje (nebo vrátí existující) public_token pro daný lead a sestaví
      *              z něj plnou veřejnou URL na objednávkový formulář.
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse {"token": "...", "url": "https://.../order_form/{token}"}
-     * @note ADMIN endpoint - musí zůstat za AuthGuard/Sanctum middlewarem v routes/api.php,
-     *       stejně jako ostatní metody tohoto controlleru. Nikdy nevolat veřejně.
+     * @note ADMIN endpoint - musí zůstat za AuthGuard/Sanctum middlewarem v routes/api.php.
      */
     public function generateLink(Request $request, $id): JsonResponse
     {
@@ -243,7 +209,7 @@ class WebSalesLeadController extends Controller
             $lead = WebSalesLead::findOrFail($id);
             $token = $lead->getOrCreatePublicToken();
 
-            $this->logAction($request, 'generate_link', 'WebSalesLead', "Vygenerován odkaz na objednávkový formulář pro lead ID: {$lead->id}", $lead->id);
+            $this->logAction($request, WebLog::class, 'generate_link', 'WebSalesLead', "Vygenerován odkaz na objednávkový formulář pro lead ID: {$lead->id}", $lead->id, 'WebSalesLead');
 
             return response()->json([
                 'data' => [
@@ -252,7 +218,7 @@ class WebSalesLeadController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebSalesLead', "Chyba při generování odkazu pro lead ID {$id}: " . $e->getMessage(), $id);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při generování odkazu pro lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Vygenerování odkazu selhalo.'], 500);
         }
     }
@@ -260,17 +226,9 @@ class WebSalesLeadController extends Controller
     /**
      * @description VEŘEJNÁ metoda (bez auth) pro načtení leadu podle public_token -
      *              slouží OrderFormComponent na frontendu k předvyplnění objednávkového
-     *              formuláře. Vrací jen úzkou, bezpečnou podmnožinu polí (žádná interní
-     *              CRM data jako stav, priorita, obchodník, poznámky).
-     * @param string $token Public token z URL (/order_form/{token}).
-     * @return JsonResponse
-     * @note Musí být zaregistrována v routes/api.php MIMO auth middleware skupinu,
-     *       viz Route::get('/public/sales-leads/{token}', ...) níže.
-     * @note Vrací 410 Gone, pokud byl odkaz už jednou použit (public_token_used_at není
-     *       null) - samotné zobrazení formuláře tedy zákazníkovi rovnou řekne, že odkaz
-     *       už není platný, aniž by musel formulář vůbec vyplňovat. Skutečnou (atomickou)
-     *       ochranu proti dvojímu odeslání ale musí dělat WebSalesOrderController::store()
-     *       v okamžiku vytváření objednávky - viz poznámka v odpovědi.
+     *              formuláře. Vrací jen úzkou, bezpečnou podmnožinu polí.
+     * @note Musí být zaregistrována v routes/api.php MIMO auth middleware skupinu.
+     * @note Vrací 410 Gone, pokud byl odkaz už jednou použit.
      */
     public function showByToken(string $token): JsonResponse
     {
@@ -291,37 +249,5 @@ class WebSalesLeadController extends Controller
             'contact_email'  => $lead->contact_email,
             'contact_phone'  => $lead->contact_phone,
         ]);
-    }
-
-    /**
-     * Logs administrative actions to the central audit system.
-     *
-     * @param Request $request
-     * @param string $eventType
-     * @param string $module
-     * @param string $description
-     * @param int|null $affectedId
-     * @return void
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
-    {
-        try {
-            $user = $request->user();
-
-            WebLog::create([
-                'origin'               => $request->ip(),
-                'event_type'           => $eventType,
-                'module'               => $module,
-                'description'          => $description,
-                'affected_entity_type' => 'WebSalesLead',
-                'affected_entity_id'   => $affectedId,
-                'user_id'              => $user?->id,
-                'context_data'         => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
-                'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'           => $user?->user_email ?? 'System/Automated'
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Log error (WebSalesLead): " . $e->getMessage());
-        }
     }
 }

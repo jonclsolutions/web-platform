@@ -6,52 +6,27 @@
  * @author RPSW
  * @created 2025
  * @description Manages user account lifecycles, including creation, role assignment, password security policies, and administrative audit logging.
- * @note (2026) Veškerá speciální logika okolo role 'primeadmin' byla odstraněna - chová
- *       se teď jako naprosto běžná role. Jediné trvale chráněné (needitovatelné,
- *       nesmazatelné) role jsou 'sysadmin' a 'admin' (viz CoreRole::PROTECTED_ROLE_NAMES).
- *       changePassword() proto už roli 'primeadmin' automaticky nepovažuje za "admina"
- *       s právem měnit hesla jiným uživatelům - kdo tohle právo mít má, se řídí čistě
- *       tím, jestli má roli 'admin' nebo 'sysadmin'.
- *
- * @refactor-note (2026-08-2) Odstraněna legacy HR/osobní pole (viz User.php). Přidán
- * `enable_2fa` - admin/sysadmin ho mají VŽDY `true`, vynuceno na backendu
- * (`resolveEnable2fa()`), nezávisle na tom, co pošle klient, a to při store() i update().
+ * @note (2026) Jediné trvale chráněné role jsou 'sysadmin' a 'admin'.
  *
  * @refactor-note (2026-08-3) KRITICKÁ BEZPEČNOSTNÍ OCHRANA "jen sysadmin smí zasáhnout
- * sysadmina" je aplikovaná na `store()`, `update()`, `changePassword()`, `destroy()` a
- * `forceDeleteAllTrashed()`. Všech pět kontrol sdílí `SYSADMIN_ROLE_NAME` a pomocné
- * metody `isSysadminRoleId()`/`actorIsSysadmin()`.
+ * sysadmina" je aplikovaná na store(), update(), changePassword(), destroy() a
+ * forceDeleteAllTrashed().
  *
- * @refactor-note (2026-08-4) `changePassword()` nyní odesílá `PasswordChangedNotification`
- * PŘI KAŽDÉ změně hesla (self-service i admin reset cizímu účtu) - dřív notifikaci
- * dostával uživatel jen při resetu přes veřejný "zapomenuté heslo" flow
- * (`PasswordResetController`), ne při změně z `personal-info` ani při resetu adminem.
- * Bezpečnostní důvod: pokud někdo změní heslo BEZ vědomí majitele účtu (ukradená session,
- * XSS, škodlivý admin), majitel se o tom musí dozvědět stejně jako u zapomenutého hesla -
- * jinak má útočník tichý, nedetekovaný přístup. Notifikace jde vždy na
- * `$user->user_email` (účet, kterému se heslo mění), ne tomu, kdo změnu provedl.
- * Ochrana proti spamu: endpoint je autentizovaný (na rozdíl od `forgot-password`, kde
- * hrozí user enumeration/mail-bombing anonymně), takže riziko je jiné - škodlivý admin by
- * mohl opakovaně resetovat heslo cizímu účtu jen proto, aby ho zahltil "heslo bylo
- * změněno" e-maily (notification-fatigue/harassment). Řešeno per-cílový-účet rate
- * limiterem (`RateLimiter`, stejný mechanismus jako v `PasswordResetController`) - po
- * překročení limitu se HESLO POŘÁD ZMĚNÍ (nesmí to blokovat legitimní funkčnost), ale
- * další e-mail se v daném okně už neposílá a pokus se zaloguje.
+ * @refactor-note (2026-08-4) changePassword() odesílá PasswordChangedNotification PŘI
+ * KAŽDÉ změně hesla, s per-cílový-účet rate limitem proti zahlcení příjemce.
  *
- * @refactor-note (2026-08-12) KRITICKÁ OPRAVA: `id` parametr napříč všemi metodami byl
- * dřív typován/přetypováván nekonzistentně (`$id`, `int $id`, `?int $id` v logAction()).
- * Route segmenty z Laravel routingu přichází vždy jako `string`, a pokud nejde o čistě
- * numerický řetězec, implicitní koerce na `int` v PHP 8 vyhodí `TypeError` - typicky u
- * hromadných operací (mass delete), kde frontend může poslat id v neočekávaném formátu.
- * Řešeno na dvou úrovních obrany:
- *   1) Všechny akce přijímající `{id}` z route teď mají explicitní `string $id` a validují
- *      ho přes `ctype_digit()` HNED na začátku - neplatné id se odmítne s 422 dřív, než se
- *      vůbec dotkne modelu nebo logu.
- *   2) `logAction()` přijímá `int|string|null $id` a interně ho bezpečně normalizuje přes
- *      `normalizeLogId()` - logovací utilita NIKDY nesmí vyhodit výjimku a shodit tak
- *      hlavní request jen kvůli chybnému auditnímu zápisu.
- * Doplněno doporučené `Route::pattern('id', '[0-9]+')` v api.php jako první linie obrany
- * přímo na úrovni routeru.
+ * @refactor-note (2026-08-12) `id` z route validováno přes ctype_digit() před použitím.
+ *
+ * @refactor-note (2026-08-7) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * lokální duplicitní logAction(). ZÁROVEŇ OPRAVENA DOMÉNA: lokální verze logovala do
+ * `WebLog::class`, ale správa uživatelských účtů je Core doména (`core-administrators-*`)
+ * - loguje se nově do `CoreLog::class`. Lokální logAction() měla vlastní rozšířený seznam
+ * SENSITIVE_KEYS (navíc old_password/new_password/new_password_confirmation oproti
+ * tehdejšímu traitu) - tahle mezera byla opravena přímo v `LogsActivity::SENSITIVE_KEYS`
+ * (viz trait hlavička), takže lokální kopii seznamu i vlastní normalizeLogId() už
+ * nepotřebujeme: `$id` je v každé metodě před voláním logAction() už ověřené přes
+ * ctype_digit() (nebo je to rovnou int z modelu), takže bezpečně proteče přes běžnou
+ * PHP weak-typing koerci na `?int` parametr traitu.
  */
 
 namespace App\Http\Controllers\Api;
@@ -60,7 +35,8 @@ use App\Http\Controllers\Controller;
 use App\Mail\Auth\PasswordChangedNotification;
 use App\Models\{User};
 use App\Models\Core\CoreRole;
-use App\Models\Web\WebLog;
+use App\Models\Core\CoreLog;
+use App\Traits\LogsActivity;
 use App\Http\Requests\User\{StoreUserRequest, UpdateUserRequest};
 use App\Http\Requests\PasswordChangeRequest;
 use App\Http\Resources\UserResource;
@@ -72,37 +48,20 @@ use Illuminate\Support\Facades\{Hash, Log, DB, Mail, RateLimiter};
  */
 class UserController extends Controller
 {
-    /**
-     * @description Role names which always have 2FA forced on, regardless of client input.
-     */
+    use LogsActivity;
+
     private const FORCED_2FA_ROLE_NAMES = ['admin', 'sysadmin'];
-
-    /**
-     * @description Role name protected by the "only a sysadmin may touch a sysadmin"
-     * invariant (create, edit/promote, delete, password change).
-     */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
-
-    /**
-     * @description Max. počet "heslo bylo změněno" e-mailů, které smí odejít na JEDEN
-     * cílový účet v rámci časového okna - chrání příjemce před zahlcením, pokud by
-     * changePassword() na jeho účet volal někdo opakovaně (viz @refactor-note 2026-08-4).
-     */
     private const PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS = 5;
-
-    /** Délka okna limitu v sekundách (1 hodina). */
     private const PASSWORD_CHANGE_NOTIFY_DECAY_SECONDS = 3600;
 
     /**
      * Retrieves a paginated list of users with filtering and role-based sorting.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
-        $onlyTrashed = filter_var($request->input('only_trashed', false), FILTER_VALIDATE_BOOLEAN) 
+        $onlyTrashed = filter_var($request->input('only_trashed', false), FILTER_VALIDATE_BOOLEAN)
                     || filter_var($request->input('is_deleted', false), FILTER_VALIDATE_BOOLEAN);
 
         $sortBy = $request->input('sort_by', 'id');
@@ -128,7 +87,7 @@ class UserController extends Controller
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
         if ($noPagination) {
-            $this->logAction($request, 'export', 'User', "Hromadný export uživatelů.");
+            $this->logAction($request, CoreLog::class, 'export', 'User', "Hromadný export uživatelů.");
             $users = $query->with('roles.permissions')->get();
             return response()->json(UserResource::collection($users));
         }
@@ -148,9 +107,6 @@ class UserController extends Controller
      * Creates a new user and assigns an initial role.
      * @note KRITICKÁ OCHRANA: vytvořit nový účet s rolí sysadmin smí jen volající, který
      * je sám sysadmin.
-     *
-     * @param StoreUserRequest $request
-     * @return JsonResponse
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
@@ -158,7 +114,7 @@ class UserController extends Controller
         $roleId = $validated['role_id'] ?? null;
 
         if ($roleId && $this->isSysadminRoleId((int) $roleId) && !$this->actorIsSysadmin($request)) {
-            $this->logAction($request, 'create_denied', 'User', "Zamítnut pokus o vytvoření nového sysadmin účtu: {$validated['user_email']}");
+            $this->logAction($request, CoreLog::class, 'create_denied', 'User', "Zamítnut pokus o vytvoření nového sysadmin účtu: {$validated['user_email']}");
             return response()->json(['message' => 'Nový účet s rolí sysadmin smí vytvořit pouze jiný sysadmin.'], 403);
         }
 
@@ -175,21 +131,18 @@ class UserController extends Controller
             }
 
             DB::commit();
-            $this->logAction($request, 'create', 'User', "Vytvořen uživatel: {$user->user_email}", $user->id);
-            
+            $this->logAction($request, CoreLog::class, 'create', 'User', "Vytvořen uživatel: {$user->user_email}", $user->id, 'User');
+
             return response()->json(new UserResource($user->load('roles.permissions')), 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->logAction($request, 'error', 'User', "Chyba při vytváření uživatele: " . $e->getMessage());
+            $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při vytváření uživatele: " . $e->getMessage());
             return response()->json(['message' => 'Chyba při vytváření uživatele.'], 500);
         }
     }
 
     /**
      * Displays details for a specific user.
-     *
-     * @param string $id
-     * @return JsonResponse
      */
     public function show(string $id): JsonResponse
     {
@@ -206,11 +159,7 @@ class UserController extends Controller
      * Updates an existing user's information.
      * @note KRITICKÁ OCHRANA: pokud je cílový účet sysadmin, NEBO request žádá o
      * povýšení cílového účtu na sysadmina, smí to provést jen volající, který je SÁM
-     * sysadmin. `enable_2fa` je navíc vynuceno na `true` pro admin/sysadmin.
-     *
-     * @param UpdateUserRequest $request
-     * @param string $id
-     * @return JsonResponse
+     * sysadmin.
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
@@ -229,7 +178,7 @@ class UserController extends Controller
             $reason = $targetIsSysadmin
                 ? "Zamítnuta úprava sysadmin účtu: {$user->user_email}"
                 : "Zamítnut pokus o povýšení účtu na sysadmina: {$user->user_email}";
-            $this->logAction($request, 'update_denied', 'User', $reason, $id);
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', $reason, (int) $id, 'User');
             return response()->json(['message' => 'Účet s rolí sysadmin smí upravovat, nebo na ni povyšovat, pouze jiný sysadmin.'], 403);
         }
 
@@ -239,8 +188,6 @@ class UserController extends Controller
             unset($validated['user_password_hash']);
         }
 
-        // Role po update (buď nově zvolená, nebo stávající, pokud se role nemění)
-        // rozhoduje o vynucení enable_2fa - nejen v okamžiku výběru role ve formuláři.
         $effectiveRoleId = $validated['role_id'] ?? $user->roles()->first()?->id;
         $validated['enable_2fa'] = $this->resolveEnable2fa($effectiveRoleId, $validated['enable_2fa'] ?? $user->enable_2fa);
 
@@ -255,27 +202,20 @@ class UserController extends Controller
             }
 
             DB::commit();
-            $this->logAction($request, 'update', 'User', "Aktualizace uživatele: {$user->user_email}", $user->id);
+            $this->logAction($request, CoreLog::class, 'update', 'User', "Aktualizace uživatele: {$user->user_email}", $user->id, 'User');
             return response()->json(new UserResource($user->load('roles.permissions')));
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->logAction($request, 'error', 'User', "Chyba při updatu uživatele ID {$id}: " . $e->getMessage(), $id);
+            $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při updatu uživatele ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Chyba serveru při ukládání.'], 500);
         }
     }
 
     /**
      * Handles password changes with administrative validation requirements.
-     * @note KRITICKÁ OCHRANA: cizí sysadmin účet smí heslo změnit jen jiný sysadmin -
-     * vlastník (isOwner) si své vlastní heslo měnit může vždy. Po úspěšné změně se VŽDY
-     * odešle `PasswordChangedNotification` na účet, kterému se heslo měnilo (self-service
-     * i admin reset), s rate limitem proti zahlcení příjemce - viz @refactor-note
-     * (2026-08-4) v hlavičce souboru.
-     *
-     * @param PasswordChangeRequest $request
-     * @param string $id
-     * @return JsonResponse
+     * @note KRITICKÁ OCHRANA: cizí sysadmin účet smí heslo změnit jen jiný sysadmin.
+     * Po úspěšné změně se VŽDY odešle PasswordChangedNotification s rate limitem.
      */
     public function changePassword(PasswordChangeRequest $request, string $id): JsonResponse
     {
@@ -294,7 +234,7 @@ class UserController extends Controller
             if ($targetIsSysadmin && !$isOwner) {
                 $actorIsSysadmin = $auth->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
                 if (!$actorIsSysadmin) {
-                    $this->logAction($request, 'password_change_denied', 'User', "Zamítnut pokus o změnu hesla sysadmin účtu: {$user->user_email}", $id);
+                    $this->logAction($request, CoreLog::class, 'password_change_denied', 'User', "Zamítnut pokus o změnu hesla sysadmin účtu: {$user->user_email}", (int) $id, 'User');
                     return response()->json(['message' => 'Heslo účtu s rolí sysadmin smí změnit pouze jiný sysadmin.'], 403);
                 }
             }
@@ -310,29 +250,28 @@ class UserController extends Controller
             }
 
             $user->update(['user_password_hash' => Hash::make($validated['new_password'])]);
-            
+
             $this->logAction(
-                $request, 
-                'PasswordChanged', 
-                'User', 
-                "Změna hesla u: {$user->user_email} " . ($isAdmin && !$isOwner ? "(provedl admin: {$auth->user_email})" : ""), 
-                $user->id
+                $request,
+                CoreLog::class,
+                'PasswordChanged',
+                'User',
+                "Změna hesla u: {$user->user_email} " . ($isAdmin && !$isOwner ? "(provedl admin: {$auth->user_email})" : ""),
+                $user->id,
+                'User'
             );
 
             $this->notifyPasswordChanged($request, $user);
 
             return response()->json(['message' => 'Heslo úspěšně změněno.']);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'User', "Chyba při změně hesla ID {$id}: " . $e->getMessage(), $id);
+            $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při změně hesla ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Změna hesla selhala.'], 500);
         }
     }
 
     /**
      * Restores a soft-deleted user.
-     *
-     * @param string $id
-     * @return JsonResponse
      */
     public function restore(string $id): JsonResponse
     {
@@ -344,10 +283,10 @@ class UserController extends Controller
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
 
-            $this->logAction(request(), 'restore', 'User', "Obnoven uživatel: {$user->user_email}", $user->id);
+            $this->logAction(request(), CoreLog::class, 'restore', 'User', "Obnoven uživatel: {$user->user_email}", $user->id, 'User');
             return response()->json(new UserResource($user->load('roles.permissions')));
         } catch (\Exception $e) {
-            $this->logAction(request(), 'error', 'User', "Chyba při obnově uživatele ID {$id}: " . $e->getMessage(), $id);
+            $this->logAction(request(), CoreLog::class, 'error', 'User', "Chyba při obnově uživatele ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Obnova uživatele selhala.'], 500);
         }
     }
@@ -356,10 +295,6 @@ class UserController extends Controller
      * Handles soft or hard deletion of a user.
      * @note Uživatel nemůže smazat sám sebe. KRITICKÁ OCHRANA: účet s rolí 'sysadmin'
      * smí smazat výhradně jiný sysadmin.
-     *
-     * @param Request $request
-     * @param string $id
-     * @return JsonResponse
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
@@ -377,17 +312,17 @@ class UserController extends Controller
             $targetIsSysadmin = $user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
 
             if ($targetIsSysadmin && !$this->actorIsSysadmin($request)) {
-                $this->logAction($request, 'delete_denied', 'User', "Zamítnut pokus o smazání sysadmin účtu: {$user->user_email}", $id);
+                $this->logAction($request, CoreLog::class, 'delete_denied', 'User', "Zamítnut pokus o smazání sysadmin účtu: {$user->user_email}", (int) $id, 'User');
                 return response()->json(['message' => 'Účet s rolí sysadmin smí smazat pouze jiný sysadmin.'], 403);
             }
 
             $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
             $force ? $user->forceDelete() : $user->delete();
-            
-            $this->logAction($request, $force ? 'hard_delete' : 'soft_delete', 'User', "Smazáno ID: $id", $id);
+
+            $this->logAction($request, CoreLog::class, $force ? 'hard_delete' : 'soft_delete', 'User', "Smazáno ID: $id", (int) $id, 'User');
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'User', "Chyba při mazání uživatele ID {$id}: " . $e->getMessage(), $id);
+            $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při mazání uživatele ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Smazání uživatele selhalo.'], 500);
         }
     }
@@ -396,8 +331,6 @@ class UserController extends Controller
      * Permanently deletes all soft-deleted users.
      * @note KRITICKÁ OCHRANA: trashnuté účty s rolí 'sysadmin' se z hromadného
      * vyprázdnění koše vyjímají, pokud sám volající není sysadmin.
-     *
-     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(): JsonResponse
     {
@@ -412,33 +345,25 @@ class UserController extends Controller
 
             $count = $query->count();
             $query->forceDelete();
-            
-            $this->logAction(request(), 'force_delete_all', 'User', "Vysypání koše. Smazáno: $count");
+
+            $this->logAction(request(), CoreLog::class, 'force_delete_all', 'User', "Vysypání koše. Smazáno: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction(request(), 'error', 'User', "Chyba při vysypávání koše uživatelů: " . $e->getMessage());
+            $this->logAction(request(), CoreLog::class, 'error', 'User', "Chyba při vysypávání koše uživatelů: " . $e->getMessage());
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
         }
     }
 
     /**
-     * @description Odešle `PasswordChangedNotification` na účet, kterému se heslo právě
-     * změnilo, chráněné per-cílový-účet rate limiterem proti zahlcení příjemce (viz
-     * @refactor-note 2026-08-4). Heslo je v tuhle chvíli VŽDY už uložené - tahle metoda
-     * nikdy neblokuje ani neruší samotnou změnu hesla, jen řídí, jestli se pošle e-mail.
-     * Chyba při odesílání (SMTP výpadek apod.) se jen zaloguje, nikdy nevyhodí uživateli
-     * chybu - heslo už je změněné a request musí skončit úspěchem.
-     *
-     * @param Request $request
-     * @param User $user Účet, kterému se heslo změnilo (příjemce notifikace).
-     * @return void
+     * @description Odešle PasswordChangedNotification na účet, kterému se heslo právě
+     * změnilo, chráněné per-cílový-účet rate limiterem proti zahlcení příjemce.
      */
     private function notifyPasswordChanged(Request $request, User $user): void
     {
         $notifyKey = 'password-change-notify:' . $user->id;
 
         if (RateLimiter::tooManyAttempts($notifyKey, self::PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS)) {
-            $this->logAction($request, 'password_notification_rate_limited', 'User', "Notifikace o změně hesla potlačena (limit) pro: {$user->user_email}", $user->id);
+            $this->logAction($request, CoreLog::class, 'password_notification_rate_limited', 'User', "Notifikace o změně hesla potlačena (limit) pro: {$user->user_email}", $user->id, 'User');
             return;
         }
 
@@ -455,10 +380,7 @@ class UserController extends Controller
 
     /**
      * @description Zjišťuje, jestli přihlášený uživatel z daného requestu má roli
-     * sysadmin. Sdílená pomocná metoda pro store()/update()/destroy()/forceDeleteAllTrashed().
-     *
-     * @param Request $request
-     * @return bool
+     * sysadmin.
      */
     private function actorIsSysadmin(Request $request): bool
     {
@@ -470,9 +392,6 @@ class UserController extends Controller
 
     /**
      * @description Zjišťuje, jestli daná role odpovídá roli sysadmin.
-     *
-     * @param int $roleId
-     * @return bool
      */
     private function isSysadminRoleId(int $roleId): bool
     {
@@ -483,12 +402,7 @@ class UserController extends Controller
 
     /**
      * @description Rozhoduje o výsledné hodnotě `enable_2fa` pro danou roli - pro
-     * admin/sysadmin VŽDY vrátí `true` bez ohledu na `$requestedValue`, jinak vrátí
-     * `$requestedValue` beze změny.
-     *
-     * @param int|null $roleId
-     * @param bool $requestedValue Hodnota poslaná klientem (nebo aktuální stav u update()).
-     * @return bool
+     * admin/sysadmin VŽDY vrátí `true` bez ohledu na `$requestedValue`.
      */
     private function resolveEnable2fa(?int $roleId, bool $requestedValue): bool
     {
@@ -501,79 +415,5 @@ class UserController extends Controller
             ->exists();
 
         return $isForcedRole ? true : $requestedValue;
-    }
-
-    /**
-     * Internal audit logging utility.
-     * @note NIKDY nesmí vyhodit výjimku ven ze třídy - je to best-effort audit log, ne
-     * kritická závislost hlavní operace. `$id` je proto přijímáno volně
-     * (int|string|null) a bezpečně normalizováno přes normalizeLogId() - viz
-     * @refactor-note (2026-08-12) v hlavičce souboru.
-     *
-     * @param Request $request
-     * @param string $type
-     * @param string $mod
-     * @param string $desc
-     * @param int|string|null $id
-     * @return void
-     */
-    protected function logAction(Request $request, string $type, string $mod, string $desc, int|string|null $id = null)
-    {
-        try {
-            $user = $request->user() ?? auth('sanctum')->user();
-            
-            $sensitiveFields = [
-                'new_password_confirmation',
-                'user_password_hash', 
-                'old_password', 
-                'new_password', 
-                'password', 
-                'password_confirmation',
-                'current_password'
-            ];
-
-            WebLog::create([
-                'origin'               => $request->ip(),
-                'event_type'           => $type,
-                'module'               => $mod,
-                'description'          => $desc,
-                'affected_entity_type' => 'User',
-                'affected_entity_id'   => $this->normalizeLogId($id),
-                'user_id'              => $user?->id,
-                'context_data'         => json_encode($request->except($sensitiveFields), JSON_UNESCAPED_UNICODE),
-                'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'           => $user?->user_email ?? 'system'
-            ]);
-        } catch (\Exception $e) { 
-            Log::error("Log error (User): " . $e->getMessage()); 
-        }
-    }
-
-    /**
-     * @description Safely coerces a loosely-typed id (int|string|null) into a strict
-     *   ?int for storage. Non-numeric or malformed values degrade to null instead of
-     *   throwing, so a bad id can never break audit logging or the parent request.
-     *   Any coercion failure is logged (warning level) so the malformed input is still
-     *   traceable for debugging, without ever propagating as an exception.
-     *
-     * @param int|string|null $id
-     * @return int|null
-     */
-    private function normalizeLogId(int|string|null $id): ?int
-    {
-        if ($id === null || $id === '') {
-            return null;
-        }
-
-        if (is_int($id)) {
-            return $id;
-        }
-
-        if (ctype_digit($id)) {
-            return (int) $id;
-        }
-
-        Log::warning("logAction() received a non-numeric id, storing null instead: " . $id);
-        return null;
     }
 }

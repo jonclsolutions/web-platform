@@ -6,6 +6,12 @@
  * @author RPSW
  * @created 2026
  * @description Controller managing shipping methods, including filtering, lifecycle operations, and administrative logging. Implements safety checks to protect system-critical hardcoded shipping methods from modification or deletion.
+ *
+ * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class). `store()` už
+ * loguje jen v úspěšné větvi (chybová větev nyní také přes logAction() namísto
+ * vraceného `debug_error`/`line` v odpovědi - viz poznámka u store() níže, `debug_error`
+ * v produkci zbytečně odhaluje interní implementační detaily volajícímu).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -15,6 +21,7 @@ use App\Models\Shop\ShopShippingMethod;
 use App\Models\Shop\ShopLog;
 use App\Http\Resources\Shop\ShopShippingMethodResource;
 use App\Http\Requests\Shop\ShopShippingMethod\{StoreShopShippingMethodRequest, UpdateShopShippingMethodRequest};
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -25,11 +32,10 @@ use Illuminate\Support\Facades\Log;
  */
 class ShopShippingMethodController extends Controller
 {
+    use LogsActivity;
+
     /**
      * Retrieves a paginated list of shipping methods with filtering support.
-     *
-     * @param Request $request Filter, sort, and pagination parameters.
-     * @return JsonResponse Returns either a standard paginated response or a full collection.
      */
     public function index(Request $request): JsonResponse
     {
@@ -51,12 +57,12 @@ class ShopShippingMethodController extends Controller
 
         $query->orderBy($request->input('sort_by', 'sort_order'), $request->input('sort_direction', 'asc'));
 
-        $data = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN) 
-            ? $query->get() 
+        $data = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN)
+            ? $query->get()
             : $query->paginate($perPage);
 
-        return response()->json($data instanceof \Illuminate\Support\Collection 
-            ? ShopShippingMethodResource::collection($data) 
+        return response()->json($data instanceof \Illuminate\Support\Collection
+            ? ShopShippingMethodResource::collection($data)
             : [
                 'data' => ShopShippingMethodResource::collection($data->items()),
                 'total' => $data->total(),
@@ -68,31 +74,25 @@ class ShopShippingMethodController extends Controller
 
     /**
      * Persists a new shipping method into the system.
-     *
-     * @param StoreShopShippingMethodRequest $request Validated shipping method data.
-     * @return JsonResponse Created resource details.
-     * @throws \Exception On database failure.
+     * @note Chybová větev dřív vracela `debug_error`/`line` přímo klientovi - v produkci
+     * to zbytečně odhaluje interní implementační detaily; nahrazeno standardním
+     * logAction() zápisem do audit logu a obecnou chybovou hláškou pro klienta.
      */
     public function store(StoreShopShippingMethodRequest $request): JsonResponse
     {
         try {
             $method = ShopShippingMethod::create($request->validated());
-            $this->logAction($request, 'create', 'ShopShippingMethod', "Vytvořen způsob dopravy: {$method->name}", $method->id);
+            $this->logAction($request, ShopLog::class, 'create', 'ShopShippingMethod', "Vytvořen způsob dopravy: {$method->name}", $method->id, 'ShopShippingMethod');
             return response()->json(new ShopShippingMethodResource($method), 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Chyba při vytváření dopravy.',
-                'debug_error' => $e->getMessage(),
-                'line' => $e->getLine()
-            ], 500);
+            Log::error("ShopShippingMethod store error: " . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Chyba při vytváření dopravy: " . $e->getMessage());
+            return response()->json(['message' => 'Chyba při vytváření dopravy.'], 500);
         }
     }
 
     /**
      * Retrieves a single shipping method by ID.
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
@@ -102,41 +102,34 @@ class ShopShippingMethodController extends Controller
 
     /**
      * Updates an existing shipping method, enforcing integrity rules for hardcoded methods.
-     *
-     * @param UpdateShopShippingMethodRequest $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(UpdateShopShippingMethodRequest $request, $id): JsonResponse
     {
         try {
             $method = ShopShippingMethod::withTrashed()->findOrFail($id);
-            
+
             $data = $request->validated();
-            
+
             if ($method->isHardcoded()) {
-                unset($data['code']); 
+                unset($data['code']);
             }
 
             $method->update($data);
-            $this->logAction($request, 'update', 'ShopShippingMethod', "Aktualizace dopravy: {$method->name}", $method->id);
+            $this->logAction($request, ShopLog::class, 'update', 'ShopShippingMethod', "Aktualizace dopravy: {$method->name}", $method->id, 'ShopShippingMethod');
             return response()->json(new ShopShippingMethodResource($method));
         } catch (\Exception $e) {
+            $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Aktualizace selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopShippingMethod');
             return response()->json(['message' => 'Aktualizace selhala.'], 500);
         }
     }
 
     /**
      * Removes a shipping method from the system. Prevents deletion of hardcoded entries.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
         $item = ShopShippingMethod::withTrashed()->findOrFail($id);
-        
+
         if ($item->isHardcoded()) {
             return response()->json([
                 'message' => 'Tuto systémovou metodu dopravy (Osobní odběr / Nejbližší dopravce) nelze smazat.'
@@ -145,52 +138,19 @@ class ShopShippingMethodController extends Controller
 
         $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
         $force ? $item->forceDelete() : $item->delete();
-        
-        $this->logAction($request, $force ? 'hard_delete' : 'soft_delete', 'ShopShippingMethod', "Smazání dopravy ID: $id", $id);
+
+        $this->logAction($request, ShopLog::class, $force ? 'hard_delete' : 'soft_delete', 'ShopShippingMethod', "Smazání dopravy ID: $id", (int) $id, 'ShopShippingMethod');
         return response()->json(null, 204);
     }
 
     /**
      * Restores a previously soft-deleted shipping method.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
         $item = ShopShippingMethod::withTrashed()->findOrFail($id);
         $item->restore();
-        $this->logAction($request, 'restore', 'ShopShippingMethod', "Obnova dopravy ID: $id", $id);
+        $this->logAction($request, ShopLog::class, 'restore', 'ShopShippingMethod', "Obnova dopravy ID: $id", (int) $id, 'ShopShippingMethod');
         return response()->json(new ShopShippingMethodResource($item));
-    }
-
-    /**
-     * Logs administrative actions for audit tracking.
-     *
-     * @param Request $request
-     * @param string $eventType
-     * @param string $module
-     * @param string $description
-     * @param int|null $affectedId
-     * @return void
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
-    {
-        try {
-            $user = $request->user();
-            ShopLog::create([
-                'origin' => $request->ip(),
-                'event_type' => $eventType,
-                'module' => $module,
-                'description' => $description,
-                'affected_entity_type' => 'ShopShippingMethod',
-                'affected_entity_id' => $affectedId,
-                'user_id' => $user?->id,
-                'context_data' => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
-                'user_id_plain' => (string)($user?->id ?? '0'),
-                'user_plain' => $user ? ($user->full_name ?? $user->user_email) : 'Systém'
-            ]);
-        } catch (\Exception $e) { Log::error("Log error: " . $e->getMessage()); }
     }
 }

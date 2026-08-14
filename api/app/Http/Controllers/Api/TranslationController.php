@@ -6,12 +6,21 @@
  * @author RPSW
  * @created 2025
  * @description Manages internationalization (i18n) data, including JSON translation file management, language metadata administration, and associated icon assets.
+ *
+ * @refactor-note (2026-08-7) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * lokální duplicitní logAction(). Doménově beze změny (WebLog::class - spravuje se pod
+ * `web/edit-website`, permission `web-view-edit-website`). Lokální verze měla
+ * nestandardní 6. parametr `array $changes` (diff starých/nových hodnot překladu), který
+ * sdílený trait nepodporuje - diff se teď stejně jako u SiteConfigurationController
+ * (viz @refactor-note 2026-08-2 tamtéž) vkládá přímo do čitelného `$description`, ne do
+ * zvláštního parametru. `context_data` necháváme na traitu (automaticky ořízne velikost).
  */
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Web\WebLog;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +33,8 @@ use Illuminate\Http\JsonResponse;
  */
 class TranslationController extends Controller
 {
+    use LogsActivity;
+
     /**
      * @var string Public disk for icon storage.
      */
@@ -36,10 +47,6 @@ class TranslationController extends Controller
 
     /**
      * Saves translation data to a JSON file for a specific module and language.
-     *
-     * @param Request $request
-     * @param string $module
-     * @return JsonResponse Returns status and count of detected changes.
      */
     public function save(Request $request, string $module): JsonResponse
     {
@@ -64,7 +71,11 @@ class TranslationController extends Controller
 
             File::put($filePath, json_encode($newData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-            $this->logAction($request, 'update', "Translation:{$module}", "Update {$lang}.json", null, $changes);
+            $description = $changes
+                ? "Update {$lang}.json: " . $this->summarizeDiff($changes)
+                : "Update {$lang}.json (no value changes detected)";
+
+            $this->logAction($request, WebLog::class, 'update', "Translation:{$module}", $description, null, 'Translation');
 
             return response()->json(['status' => 'success', 'detected_changes' => count($changes)]);
         } catch (\Exception $e) {
@@ -74,10 +85,6 @@ class TranslationController extends Controller
 
     /**
      * Retrieves translation strings for a specific language and module.
-     *
-     * @param string $module
-     * @param string $lang
-     * @return JsonResponse JSON contents or 404 if file is missing.
      */
     public function show(string $module, string $lang): JsonResponse
     {
@@ -92,14 +99,11 @@ class TranslationController extends Controller
 
     /**
      * Lists available languages for a specific module with generated icon URLs.
-     *
-     * @param string $module
-     * @return JsonResponse
      */
     public function getLanguages(string $module): JsonResponse
     {
         $allMeta = $this->readLanguagesMeta();
-        
+
         $filtered = array_values(array_filter($allMeta, fn($l) => ($l['module'] ?? '') === $module));
 
         foreach ($filtered as &$lang) {
@@ -112,10 +116,6 @@ class TranslationController extends Controller
 
     /**
      * Updates language metadata and handles optional icon uploads for a module.
-     *
-     * @param Request $request
-     * @param string $module
-     * @return JsonResponse
      */
     public function saveLanguages(Request $request, string $module): JsonResponse
     {
@@ -129,7 +129,7 @@ class TranslationController extends Controller
         $allMeta  = $this->readLanguagesMeta();
 
         $otherModulesMeta = array_filter($allMeta, fn($l) => ($l['module'] ?? 'web') !== $module);
-        
+
         $currentModuleMeta = collect(array_filter($allMeta, fn($l) => ($l['module'] ?? 'web') === $module))
             ->keyBy('code');
 
@@ -148,30 +148,25 @@ class TranslationController extends Controller
 
             if ($idx !== null) {
                 $this->deleteIconFile($mergedCurrent[$idx]['icon_path']);
-                
+
                 $file      = $request->file('icon');
                 $filename  = $code . '_' . \Str::uuid() . '.' . $file->getClientOriginalExtension();
                 $path      = $file->storeAs(self::ICON_FOLDER . '/' . $module, $filename, self::ICON_DISK);
-                
+
                 $mergedCurrent[$idx]['icon_path'] = $path;
             }
         }
 
         $finalMeta = array_merge($otherModulesMeta, $mergedCurrent);
         $this->writeLanguagesMeta($finalMeta);
-        
-        $this->logAction($request, 'update', "Languages:{$module}", 'Aktualizace seznamu jazyků a metadat');
+
+        $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", 'Aktualizace seznamu jazyků a metadat', null, 'Translation', ['icon']);
 
         return response()->json(['status' => 'success']);
     }
 
     /**
      * Uploads or replaces an icon for a specific language.
-     *
-     * @param Request $request
-     * @param string $module
-     * @param string $code
-     * @return JsonResponse
      */
     public function storeLanguageIcon(Request $request, string $module, string $code): JsonResponse
     {
@@ -191,13 +186,13 @@ class TranslationController extends Controller
         $file      = $request->file('icon');
         $filename  = $code . '_' . \Str::uuid() . '.' . $file->getClientOriginalExtension();
         $path      = self::ICON_FOLDER . '/' . $module;
-        
+
         $iconPath  = $file->storeAs($path, $filename, self::ICON_DISK);
 
         $meta[$idx]['icon_path'] = $iconPath;
         $this->writeLanguagesMeta($meta);
 
-        $this->logAction($request, 'update', "Languages:{$module}", "Nahrána ikonka: {$code}");
+        $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", "Nahrána ikonka: {$code}", null, 'Translation', ['icon']);
 
         return response()->json([
             'status'   => 'success',
@@ -207,11 +202,6 @@ class TranslationController extends Controller
 
     /**
      * Deletes a language metadata entry, its associated icon, and its JSON file.
-     *
-     * @param Request $request
-     * @param string $module
-     * @param string $code
-     * @return JsonResponse
      */
     public function destroyLanguage(Request $request, string $module, string $code): JsonResponse
     {
@@ -234,7 +224,7 @@ class TranslationController extends Controller
         $this->deleteIconFile($allMeta[$idx]['icon_path'] ?? null);
 
         $jsonPath = $this->i18nDirectory($module) . '/' . $code . '.json';
-        
+
         if (File::exists($jsonPath)) {
             File::delete($jsonPath);
         }
@@ -242,7 +232,7 @@ class TranslationController extends Controller
         array_splice($allMeta, $idx, 1);
         $this->writeLanguagesMeta($allMeta);
 
-        $this->logAction($request, 'delete', "Languages:{$module}", "Smazán jazyk: {$code}");
+        $this->logAction($request, WebLog::class, 'delete', "Languages:{$module}", "Smazán jazyk: {$code}", null, 'Translation');
 
         return response()->json(null, 204);
     }
@@ -280,7 +270,7 @@ class TranslationController extends Controller
      */
     private function writeLanguagesMeta(array $meta): void
     {
-        $dir = storage_path('app/public/translations'); 
+        $dir = storage_path('app/public/translations');
         if (!File::isDirectory($dir)) {
             File::makeDirectory($dir, 0755, true, true);
         }
@@ -351,41 +341,16 @@ class TranslationController extends Controller
     }
 
     /**
-     * Logs translation-related actions to the audit system.
+     * @description Sbalí pole diff-položek z getDeepDiff() do jednoho ořízlého řetězce
+     * vhodného pro vložení do $description (nahrazuje dřívější zvláštní parametr
+     * `array $changes` v lokální logAction() - viz refactor-note v hlavičce souboru).
      */
-    protected function logAction(
-        Request $request,
-        string $eventType,
-        string $module,
-        string $description,
-        ?int $affectedEntityId = null,
-        array $changes = []
-    ): void {
-        try {
-            $user = $request->user() ?? auth('sanctum')->user();
-
-            $diffString = implode(' | ', $changes);
-            if (mb_strlen($diffString) > 200) {
-                $diffString = mb_substr($diffString, 0, 197) . '...';
-            }
-
-            WebLog::create([
-                'origin'               => $request->ip(),
-                'event_type'           => $eventType,
-                'module'               => $module,
-                'description'          => $description,
-                'affected_entity_type' => 'Translation',
-                'affected_entity_id'   => $affectedEntityId,
-                'user_id'              => $user?->id,
-                'context_data'         => json_encode([
-                    'lg' => $request->input('lang') ?? null,
-                    'df' => $diffString ?: 'no_val_change',
-                ], JSON_UNESCAPED_UNICODE),
-                'user_id_plain' => (string) ($user?->id ?? '0'),
-                'user_plain'    => $user?->user_email ?? 'system',
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Chyba logování (Translation): ' . $e->getMessage());
+    private function summarizeDiff(array $changes): string
+    {
+        $diffString = implode(' | ', $changes);
+        if (mb_strlen($diffString) > 200) {
+            $diffString = mb_substr($diffString, 0, 197) . '...';
         }
+        return $diffString;
     }
 }

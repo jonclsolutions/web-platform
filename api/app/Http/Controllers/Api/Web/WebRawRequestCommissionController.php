@@ -9,10 +9,17 @@
  * attachments, status tracking, and administrative audit logging.
  *
  * @refactor-note (2026-08) Jednosouborové pole `file_path` KOMPLETNĚ ODSTRANĚNO (sloupec
- * smazán z DB, viz SQL migrace) - nahrazeno polymorfním `web_attachments` vztahem přes
- * `HandlesAttachments` trait, podporujícím až 10 příloh na jeden požadavek. `store()`,
- * `show()`, `update()`, `destroy()`, `forceDeleteAllTrashed()` upraveny tak, aby už nikde
- * neodkazovaly na neexistující `file_path` sloupec.
+ * smazán z DB) - nahrazeno polymorfním `web_attachments` vztahem přes `HandlesAttachments`
+ * trait, podporujícím až 10 příloh na jeden požadavek.
+ *
+ * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * lokální duplicitní logAction(). Lokální verze ručně volala `json_encode()` na
+ * `context_data` PŘED `create()` - u modelu s `'array'` castem (WebLog má `'array'`
+ * cast na `context_data`, viz CoreLog/WebLog/ShopLog) to vede k DVOJITÉMU enkódování
+ * (stejný bug, jaký byl opraven u DocumentSectionController/SiteConfigurationController -
+ * viz LogsActivity trait hlavička). Trait navíc stripuje citlivá pole a ořezává
+ * description/context_data na bezpečnou velikost, což lokální verze vůbec nedělala.
+ * Doménově zůstává WebLog::class beze změny (Web sekce).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -21,12 +28,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Web\WebRawRequestCommission;
 use App\Models\Web\WebLog;
 use App\Traits\HandlesAttachments;
+use App\Traits\LogsActivity;
 use App\Http\Resources\Web\WebRawRequestCommissionResource;
 use App\Http\Requests\Web\WebRawRequestCommission\StoreWebRawRequestCommissionRequest;
 use App\Http\Requests\Web\WebRawRequestCommission\UpdateWebRawRequestCommissionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use App\Mail\Web\WebRawRequestCommissionReceived;
 use Illuminate\Support\Facades\Mail;
 
@@ -37,6 +44,7 @@ use Illuminate\Support\Facades\Mail;
 class WebRawRequestCommissionController extends Controller
 {
     use HandlesAttachments;
+    use LogsActivity;
 
     /**
      * Storage folder for attachments within public disk.
@@ -45,9 +53,6 @@ class WebRawRequestCommissionController extends Controller
 
     /**
      * Retrieves a paginated or full collection of commission requests with search and filtering.
-     *
-     * @param Request $request Filters (status, priority, date) and pagination settings.
-     * @return JsonResponse|mixed Returns paginated data or a collection.
      */
     public function index(Request $request)
     {
@@ -57,7 +62,6 @@ class WebRawRequestCommissionController extends Controller
         $query = WebRawRequestCommission::query();
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
-        // Fulltext-like search
         if ($s = $request->input('search')) {
             $query->where(fn($q) => $q->where('thema', 'like', "%$s%")
                 ->orWhere('order_description', 'like', "%$s%")
@@ -65,19 +69,16 @@ class WebRawRequestCommissionController extends Controller
                 ->orWhere('contact_phone', 'like', "%$s%"));
         }
 
-        // Exact match filters
         foreach (['id', 'status', 'priority'] as $f) {
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
 
-        // Partial match filters
         foreach (['contact_email', 'contact_phone', 'thema', 'order_description'] as $f) {
             if ($request->filled($f)) $query->where($f, 'like', '%' . $request->input($f) . '%');
         }
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
 
-        // Sorting
         $sortBy = $request->input('sort_by', 'id');
         $sortDirection = $request->input('sort_direction', 'desc');
         $query->orderBy($sortBy, $sortDirection);
@@ -100,9 +101,6 @@ class WebRawRequestCommissionController extends Controller
 
     /**
      * Stores a new commission request, handling multiple optional file uploads.
-     *
-     * @param StoreWebRawRequestCommissionRequest $request Validated request data.
-     * @return JsonResponse Created commission resource.
      */
     public function store(StoreWebRawRequestCommissionRequest $request): JsonResponse
     {
@@ -113,27 +111,24 @@ class WebRawRequestCommissionController extends Controller
 
             $this->storeAttachments($request, $commission, self::ATTACHMENT_FOLDER);
 
-            $this->logAction($request, 'create', 'WebRawRequestCommission', "Vytvořen požadavek na provizi: {$commission->thema}", $commission->id);
+            $this->logAction($request, WebLog::class, 'create', 'WebRawRequestCommission', "Vytvořen požadavek na provizi: {$commission->thema}", $commission->id, 'WebRawRequestCommission');
 
             try {
                 Mail::to($commission->contact_email)
                     ->send(new WebRawRequestCommissionReceived($commission));
             } catch (\Throwable $e) {
-                $this->logAction($request, 'error', 'WebRawRequestCommission', "Nepodařilo se odeslat potvrzovací e-mail: " . $e->getMessage(), $commission->id);
+                $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Nepodařilo se odeslat potvrzovací e-mail: " . $e->getMessage(), $commission->id, 'WebRawRequestCommission');
             }
 
             return response()->json(new WebRawRequestCommissionResource($commission->load('attachments')), 201);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebRawRequestCommission', "Chyba při vytváření požadavku: " . $e->getMessage());
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při vytváření požadavku: " . $e->getMessage());
             return response()->json(['message' => 'Vytvoření požadavku selhalo.'], 500);
         }
     }
 
     /**
      * Retrieves a single commission request by ID, including trashed records and attachments.
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show($id): JsonResponse
     {
@@ -145,10 +140,6 @@ class WebRawRequestCommissionController extends Controller
      * Updates an existing request. Newly uploaded attachments are ADDED to the existing
      * set (not replaced) - admin can remove individual old attachments via a separate
      * endpoint (part 2 of this task).
-     *
-     * @param UpdateWebRawRequestCommissionRequest $request Validated data.
-     * @param int $id Request identifier.
-     * @return JsonResponse Updated resource.
      */
     public function update(UpdateWebRawRequestCommissionRequest $request, $id): JsonResponse
     {
@@ -160,11 +151,11 @@ class WebRawRequestCommissionController extends Controller
 
             $this->storeAttachments($request, $rawRequestCommission, self::ATTACHMENT_FOLDER);
 
-            $this->logAction($request, 'update', 'WebRawRequestCommission', "Aktualizace požadavku ID: {$rawRequestCommission->id}", $rawRequestCommission->id);
+            $this->logAction($request, WebLog::class, 'update', 'WebRawRequestCommission', "Aktualizace požadavku ID: {$rawRequestCommission->id}", $rawRequestCommission->id, 'WebRawRequestCommission');
 
             return response()->json(new WebRawRequestCommissionResource($rawRequestCommission->fresh()->load('attachments')));
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebRawRequestCommission', "Chyba při aktualizaci požadavku ID {$id}: " . $e->getMessage(), $id);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při aktualizaci požadavku ID {$id}: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
             return response()->json(['message' => 'Aktualizace požadavku selhala.'], 500);
         }
     }
@@ -172,10 +163,6 @@ class WebRawRequestCommissionController extends Controller
     /**
      * Deletes a request (Soft or Hard). On hard delete, all associated attachment files
      * and their DB records are removed too (see HandlesAttachments::deleteAllAttachments()).
-     *
-     * @param Request $request Flags (force_delete).
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -190,21 +177,17 @@ class WebRawRequestCommissionController extends Controller
                 $item->delete();
             }
 
-            $this->logAction($request, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebRawRequestCommission', "Smazání požadavku na provizi ID: $id", $id);
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebRawRequestCommission', "Smazání požadavku na provizi ID: $id", (int) $id, 'WebRawRequestCommission');
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebRawRequestCommission', "Chyba při mazání požadavku ID $id: " . $e->getMessage(), $id);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při mazání požadavku ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
             return response()->json(['message' => 'Smazání požadavku selhalo.'], 500);
         }
     }
 
     /**
      * Restores a soft-deleted request.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -212,20 +195,17 @@ class WebRawRequestCommissionController extends Controller
             $item = WebRawRequestCommission::withTrashed()->findOrFail($id);
             $item->restore();
 
-            $this->logAction($request, 'restore', 'WebRawRequestCommission', "Obnova požadavku ID: $id", $id);
+            $this->logAction($request, WebLog::class, 'restore', 'WebRawRequestCommission', "Obnova požadavku ID: $id", (int) $id, 'WebRawRequestCommission');
 
             return response()->json(new WebRawRequestCommissionResource($item->load('attachments')));
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebRawRequestCommission', "Chyba při obnově požadavku ID $id: " . $e->getMessage(), $id);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při obnově požadavku ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
             return response()->json(['message' => 'Obnova požadavku selhala.'], 500);
         }
     }
 
     /**
      * Permanently deletes all soft-deleted records and all their attachment files.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
@@ -238,44 +218,12 @@ class WebRawRequestCommissionController extends Controller
                 $item->forceDelete();
             }
 
-            $this->logAction($request, 'force_delete_all', 'WebRawRequestCommission', "Hromadné smazání koše provizí. Počet: $count");
+            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebRawRequestCommission', "Hromadné smazání koše provizí. Počet: $count");
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, 'error', 'WebRawRequestCommission', "Chyba při vyprazdňování koše provizí: " . $e->getMessage());
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při vyprazdňování koše provizí: " . $e->getMessage());
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
-        }
-    }
-
-    /**
-     * Logs administrative actions to the central audit system.
-     *
-     * @param Request $request
-     * @param string $eventType
-     * @param string $module
-     * @param string $description
-     * @param int|null $affectedId
-     * @return void
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null)
-    {
-        try {
-            $user = $request->user() ?? auth('sanctum')->user();
-
-            WebLog::create([
-                'origin'               => $request->ip(),
-                'event_type'           => $eventType,
-                'module'               => $module,
-                'description'          => $description,
-                'affected_entity_type' => 'WebRawRequestCommission',
-                'affected_entity_id'   => $affectedId,
-                'user_id'              => $user?->id,
-                'context_data'         => json_encode($request->except(['attachments']), JSON_UNESCAPED_UNICODE),
-                'user_id_plain'        => (string)($user?->id ?? '0'),
-                'user_plain'           => $user ? $user->user_email : 'Veřejný formulář'
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Log error (WebRawRequestCommission): " . $e->getMessage());
         }
     }
 }

@@ -6,6 +6,14 @@
  * @author RPSW
  * @created 2026
  * @description Manages complex product catalog operations, including multi-variant handling, inventory synchronization, file management for product images, and relational data integrity.
+ *
+ * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class). Ladicí
+ * `Log::info('ShopProduct Store/Update started')` (bez payloadu, jen textová značka)
+ * ponechány - na rozdíl od ShopCustomer/ShopCheckout/ShopOrder neobsahují osobní ani
+ * platební údaje, takže nejde o GDPR/bezpečnostní problém, jen technickou telemetrii.
+ * `updateCategory()` dosud logovala bez `affected_entity_type` - doplněno pro konzistenci
+ * se zbytkem controlleru.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -19,6 +27,7 @@ use App\Models\Shop\ShopLog;
 use App\Http\Resources\Shop\ShopProductResource;
 use App\Http\Requests\Shop\ShopProduct\StoreShopProductRequest;
 use App\Http\Requests\Shop\ShopProduct\UpdateShopProductRequest;
+use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -32,11 +41,10 @@ use Illuminate\Support\Str;
  */
 class ShopProductController extends Controller
 {
+    use LogsActivity;
+
     /**
      * Retrieves a paginated list of products based on applied filters.
-     *
-     * @param Request $request The incoming request containing filter, search, and pagination parameters.
-     * @return JsonResponse Paginated list of products or the full collection.
      */
     public function index(Request $request): JsonResponse
     {
@@ -102,10 +110,6 @@ class ShopProductController extends Controller
 
     /**
      * Stores a new product including nested categories, prices, variants, and media.
-     *
-     * @param StoreShopProductRequest $request The validated store request.
-     * @return JsonResponse The newly created product resource.
-     * @throws \Exception If transaction or storage operations fail.
      */
     public function store(StoreShopProductRequest $request): JsonResponse
     {
@@ -137,21 +141,19 @@ class ShopProductController extends Controller
             }
 
             $product->load($this->defaultRelations());
-            $this->logAction($request, 'create', 'ShopProduct', "Vytvořen produkt: {$product->name}", $product->id);
+            $this->logAction($request, ShopLog::class, 'create', 'ShopProduct', "Vytvořen produkt: {$product->name}", $product->id, 'ShopProduct');
 
             return response()->json(new ShopProductResource($product), 201);
 
         } catch (\Exception $e) {
             Log::error('ShopProduct creation error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Vytvoření produktu selhalo: " . $e->getMessage());
             return response()->json(['message' => 'Vytvoření produktu selhalo: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Returns details of a specific product.
-     *
-     * @param int $id The product identifier.
-     * @return JsonResponse Product resource.
      */
     public function show($id): JsonResponse
     {
@@ -161,11 +163,6 @@ class ShopProductController extends Controller
 
     /**
      * Updates an existing product and its related associations.
-     *
-     * @param UpdateShopProductRequest $request The validated update request.
-     * @param int $id The product identifier.
-     * @return JsonResponse The updated product resource.
-     * @throws \Exception If the update process fails.
      */
     public function update(UpdateShopProductRequest $request, $id): JsonResponse
     {
@@ -216,22 +213,19 @@ class ShopProductController extends Controller
             $this->clearProductCache($product);
 
             $product->load($this->defaultRelations());
-            $this->logAction($request, 'update', 'ShopProduct', "Aktualizace produktu: {$product->name}", $product->id);
+            $this->logAction($request, ShopLog::class, 'update', 'ShopProduct', "Aktualizace produktu: {$product->name}", $product->id, 'ShopProduct');
 
             return response()->json(new ShopProductResource($product));
 
         } catch (\Exception $e) {
             Log::error('ShopProduct update error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Aktualizace selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
             return response()->json(['message' => 'Aktualizace selhala: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Efficiently updates the category mapping for a product.
-     *
-     * @param Request $request Request containing category identifiers.
-     * @param int $id Product identifier.
-     * @return JsonResponse Updated product resource.
      */
     public function updateCategory(Request $request, $id): JsonResponse
     {
@@ -249,23 +243,20 @@ class ShopProductController extends Controller
             $product->syncCategories($categoryIds, $primaryId);
             $this->clearProductCache($product);
 
-            $this->logAction($request, 'update', 'ShopProduct', "Rychlá změna kategorií produktu", $product->id);
+            $this->logAction($request, ShopLog::class, 'update', 'ShopProduct', "Rychlá změna kategorií produktu", $product->id, 'ShopProduct');
 
             $product->load($this->defaultRelations());
             return response()->json(new ShopProductResource($product));
 
         } catch (\Exception $e) {
             Log::error('ShopProduct quick category update error: ' . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Rychlá změna kategorií selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
             return response()->json(['message' => 'Aktualizace kategorie selhala.'], 500);
         }
     }
 
     /**
      * Deletes a product, supporting both soft and hard delete modes.
-     *
-     * @param Request $request Request flags.
-     * @param int $id Product identifier.
-     * @return JsonResponse 204 No Content.
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -289,21 +280,18 @@ class ShopProductController extends Controller
                 $product->delete();
             }
 
-            $this->logAction($request, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopProduct', "Smazání produktu ID: $id", $id);
+            $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopProduct', "Smazání produktu ID: $id", (int) $id, 'ShopProduct');
             return response()->json(null, 204);
 
         } catch (\Exception $e) {
             Log::error('ShopProduct delete error: ' . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Smazání produktu selhalo ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
             return response()->json(['message' => 'Smazání produktu selhalo: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Restores a soft-deleted product.
-     *
-     * @param Request $request The incoming request.
-     * @param int $id Product identifier.
-     * @return JsonResponse The restored product.
      */
     public function restore(Request $request, $id): JsonResponse
     {
@@ -311,24 +299,24 @@ class ShopProductController extends Controller
             $product = ShopProduct::withTrashed()->findOrFail($id);
             $product->restore();
             $product->load($this->defaultRelations());
-            $this->logAction($request, 'restore', 'ShopProduct', "Obnova produktu ID: $id", $id);
+            $this->logAction($request, ShopLog::class, 'restore', 'ShopProduct', "Obnova produktu ID: $id", (int) $id, 'ShopProduct');
             return response()->json(new ShopProductResource($product));
         } catch (\Exception $e) {
             Log::error('ShopProduct restore error: ' . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Obnova selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
             return response()->json(['message' => 'Obnova produktu selhala.'], 500);
         }
     }
 
     /**
      * Clears all soft-deleted items from the database permanently.
-     *
-     * @param Request $request Incoming request.
-     * @return JsonResponse 204 No Content.
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
             $trashedProducts = ShopProduct::onlyTrashed()->with(['variants', 'images'])->get();
+            $count = $trashedProducts->count();
+
             foreach ($trashedProducts as $product) {
                 foreach ($product->images as $image) {
                     Storage::disk('public')->delete('products/' . $image->image_path);
@@ -342,18 +330,18 @@ class ShopProductController extends Controller
                 $product->prices()->delete();
                 $product->forceDelete();
             }
+
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopProduct', "Vysypání koše produktů. Počet: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error('ShopProduct force delete all error: ' . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Vyprázdnění koše selhalo: " . $e->getMessage());
             return response()->json(['message' => 'Vyprázdnění koše selhalo: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Publicly accessible endpoint to browse active products.
-     *
-     * @param Request $request Filtering parameters.
-     * @return JsonResponse Paginated result.
      */
     public function publicIndex(Request $request): JsonResponse
     {
@@ -387,9 +375,6 @@ class ShopProductController extends Controller
 
     /**
      * Retrieves details for a product by slug or ID for public storefront.
-     *
-     * @param string|int $slugOrId Identifier.
-     * @return JsonResponse Product resource.
      */
     public function publicShow($slugOrId): JsonResponse
     {
@@ -410,8 +395,6 @@ class ShopProductController extends Controller
 
     /**
      * Defines the default relations to load for standard product responses.
-     *
-     * @return array
      */
     private function defaultRelations(): array
     {
@@ -423,10 +406,6 @@ class ShopProductController extends Controller
 
     /**
      * Resolves category IDs, ensuring the primary category is included in the set.
-     *
-     * @param Request $request
-     * @param int|null $primaryId
-     * @return array
      */
     private function resolveCategoryIds(Request $request, ?int $primaryId): array
     {
@@ -458,9 +437,6 @@ class ShopProductController extends Controller
 
     /**
      * Placeholder for price data normalization or validation.
-     *
-     * @param array $prices
-     * @return array
      */
     private function filterPriceData(array $prices): array
     {
@@ -469,9 +445,6 @@ class ShopProductController extends Controller
 
     /**
      * Clears cached stock levels upon product update.
-     *
-     * @param ShopProduct $product
-     * @return void
      */
     private function clearProductCache(ShopProduct $product): void
     {
@@ -483,12 +456,6 @@ class ShopProductController extends Controller
 
     /**
      * Stores and associates uploaded images to a product or variant.
-     *
-     * @param ShopProduct $product
-     * @param array $images
-     * @param Request $request
-     * @param string $prefix
-     * @return void
      */
     private function storeImages(ShopProduct $product, array $images, Request $request, string $prefix = 'images'): void
     {
@@ -529,9 +496,6 @@ class ShopProductController extends Controller
 
     /**
      * Removes images from storage and the database.
-     *
-     * @param array $imageIds
-     * @return void
      */
     private function deleteImages(array $imageIds): void
     {
@@ -546,11 +510,6 @@ class ShopProductController extends Controller
 
     /**
      * Creates new variants for a product and associates them with prices and images.
-     *
-     * @param ShopProduct $product
-     * @param array $variants
-     * @param Request|null $request
-     * @return void
      */
     private function storeVariants(ShopProduct $product, array $variants, ?Request $request = null): void
     {
@@ -580,11 +539,6 @@ class ShopProductController extends Controller
 
     /**
      * Updates existing product variants, including nested prices and images.
-     *
-     * @param ShopProduct $product
-     * @param array $variants
-     * @param Request $request
-     * @return void
      */
     private function updateVariants(ShopProduct $product, array $variants, Request $request): void
     {
@@ -625,9 +579,6 @@ class ShopProductController extends Controller
 
     /**
      * Syncs the total stock quantity of a product based on its variants.
-     *
-     * @param ShopProduct $product
-     * @return void
      */
     private function syncProductStock(ShopProduct $product): void
     {
@@ -635,36 +586,5 @@ class ShopProductController extends Controller
             ->whereNull('deleted_at')
             ->sum('stock_quantity');
         $product->update(['stock_quantity' => $totalStock]);
-    }
-
-    /**
-     * Logs administrative actions to the audit system.
-     *
-     * @param Request $request
-     * @param string $eventType
-     * @param string $module
-     * @param string $description
-     * @param int|null $affectedId
-     * @return void
-     */
-    protected function logAction(Request $request, string $eventType, string $module, string $description, ?int $affectedId = null): void
-    {
-        try {
-            $user = $request->user() ?? auth('sanctum')->user();
-            ShopLog::create([
-                'origin'               => $request->ip(),
-                'event_type'           => $eventType,
-                'module'               => $module,
-                'description'          => $description,
-                'affected_entity_type' => 'ShopProduct',
-                'affected_entity_id'   => $affectedId,
-                'user_id'              => $user?->id,
-                'context_data'         => json_encode($request->all(), JSON_UNESCAPED_UNICODE),
-                'user_id_plain'        => (string) ($user?->id ?? '0'),
-                'user_plain'           => $user ? ($user->full_name ?? $user->user_email) : 'Systém',
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Log action error: ' . $e->getMessage());
-        }
     }
 }
