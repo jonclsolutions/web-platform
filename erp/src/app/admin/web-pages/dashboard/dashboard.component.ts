@@ -36,10 +36,7 @@
  * headeru, viz jeho @refactor-note) - `isWebActive`/`webMaintenanceMessage` +
  * potvrzovací modál s heslem (`openWebMaintenanceModal()`/`submitWebMaintenanceChange()`).
  * Karta je viditelná jen s permission `web-set-maintenance-mode` (`*appHasPermission`),
- * proto nový import `HasPermissionDirective`. Endpoint `core/settings` je sdílený se
- * Shop maintenance sekcí - `PUT` posílá jen `is_web_active`/`web_maintenance_message`
- * pole, shop sekci `CoreSiteSettingController::update()` nechá beze změny (viz jeho
- * `TOGGLE_GROUPS` mechanismus).
+ * proto nový import `HasPermissionDirective`.
  *
  * @refactor-note (2026-08-9) TTL CACHE + RUČNÍ REFRESH (backlog: "zbytečně moc dotazů na
  * API"), stejný vzor jako `CoreDashboardComponent`/shop `DashboardComponent`. Dashboard
@@ -53,6 +50,17 @@
  * maintenance cache klíč, ať další čtení (i jinde v adminu) odráží novou hodnotu.
  * Poznámka: `initWithAuthCheck()` se v této komponentě NIKDY nevolala (viz `ngOnInit`
  * override níže) - žádná regresní úprava `usesPaginatedList` tu proto není potřeba.
+ *
+ * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA: `loadWebMaintenanceStatus()` a
+ * `submitWebMaintenanceChange()` volaly sdílený `core/settings` endpoint, který spolu s
+ * `App\Models\Core\CoreSiteSetting` a tabulkou `core_site_settings` byl zrušen (viz
+ * `WebSiteSettingController`, `App\Models\Web\WebSiteSetting`, tabulka
+ * `web_site_settings`). Stejný symptom jako dřívější shop bug: bez tohoto přepojení by
+ * PUT požadavek narazil na neexistující route (404), UI by si ale nastavilo optimistickou
+ * zelenou/oranžovou, a po refreshi (GET na neexistující/prázdný endpoint) by karta spadla
+ * zpět na výchozí stav. Oba volání přepojena na `web/settings`
+ * (WebSiteSettingController::show/update), který vrací/přijímá přesně
+ * `is_web_active`/`web_maintenance_message` shape - zbytek komponenty beze změny.
  *
  * @dependencies
  * - BaseDataComponent: Poskytuje errorMessage/cd/alertDialogService (žádné CRUD tu není potřeba).
@@ -351,15 +359,17 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   // ── Režim údržby webu ────────────────────────────────────────────
 
   /**
-   * @description Načte aktuální stav režimu údržby webu ze sdíleného `core/settings`
+   * @description Načte aktuální stav režimu údržby webu z vyhrazeného `web/settings`
    * endpointu, přes krátkou TTL cache (1 min - stav je bezpečnostně/provozně citlivý).
    * Volá se samostatně od `loadStats()`/`loadRecentActivity()`, ať výpadek jednoho z nich
    * neblokuje zobrazení stavu údržby a naopak.
+   * @bugfix-note (2026-08-15) Dříve volalo `core/settings` (sdílený, nyní zrušený Core
+   * endpoint) - přepojeno na `web/settings` (WebSiteSettingController::show).
    */
   private loadWebMaintenanceStatus(): void {
     this.resourceCache.get(
       this.MAINTENANCE_CACHE_KEY,
-      () => this.dataHandler.get<any>('core/settings'),
+      () => this.dataHandler.get<any>('web/settings'),
       this.MAINTENANCE_TTL_MS
     ).subscribe({
       next: (res: any) => {
@@ -384,11 +394,11 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   }
 
   /**
-   * @description Odešle změnu stavu webu na `core/settings`. Posílá jen
-   * `is_web_active`/`web_maintenance_message` pole - `CoreSiteSettingController::update()`
-   * je generický a upraví jen sekce, které se skutečně pošlou (viz TOGGLE_GROUPS), takže
-   * tímhle voláním se shop-maintenance sekce nedotkne. Po úspěchu invaliduje maintenance
-   * cache klíč, ať další čtení (i jinde v adminu) odráží novou hodnotu.
+   * @description Odešle změnu stavu webu na `web/settings`
+   * (WebSiteSettingController::update). Po úspěchu invaliduje maintenance cache klíč, ať
+   * další čtení (i jinde v adminu) odráží novou hodnotu.
+   * @bugfix-note (2026-08-15) Dříve volalo `core/settings` - viz bugfix-note u
+   * `loadWebMaintenanceStatus()` a hlavičky souboru pro plné vysvětlení dopadu.
    */
   submitWebMaintenanceChange(): void {
     if (!this.webConfirmPasswordValue.trim()) {
@@ -396,7 +406,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       return;
     }
 
-    this.dataHandler.put<any>('core/settings', {
+    this.dataHandler.put<any>('web/settings', {
       is_web_active: this.pendingWebTargetState,
       web_maintenance_message: this.webMaintenanceMessage || 'Omlouváme se, web je momentálně v údržbě.',
       confirm_password: this.webConfirmPasswordValue

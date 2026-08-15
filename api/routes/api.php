@@ -35,10 +35,6 @@
  *      s např. jen `web-news-view` musí moct zalogovat export novinek, i když nemá
  *      `web-view-web-logs` na ČTENÍ historie logů - jinak export projde, ale zápis do
  *      auditu tiše spadne na 403. GET (čtení historie) permission vyžaduje i nadále.
- * @refactor-note (2026-08-3) `CheckPermission` middleware nyní podporuje více klíčů
- *      oddělených `|` (logika OR - stačí kterýkoliv z nich). `core/settings` proto gatuje
- *      `core-settings-view` na GET a `core-settings-update` na PUT - viz
- *      @refactor-note (2026-08-15) níže, shop přepínač už tohle sdílet nemusí.
  * @refactor-note (2026-08-4) KRITICKÁ BEZPEČNOSTNÍ OCHRANA - implicitní route-model-binding
  *      bug u core/roles (viz CoreRoleController hlavička) a chybějící pořadí routy
  *      `force-delete-all` PŘED `DELETE /{id}` u core/users (Laravel matchuje routy v pořadí
@@ -52,30 +48,37 @@
  *      akcí `{resource}-view / -create / -update / -delete` (restore a force-delete-all
  *      spadají pod `-delete`, protože jde o správu koše = destruktivní akce, ne o čtení).
  *      Zároveň přejmenovány klíče zdrojů, které reálně žijí pod `/core` routou, ale nesly
- *      historický prefix `web-` (administrators, external_links, legal, settings) - nově
- *      důsledně `core-*`. Zdroje s veřejným formulářem (sales_leads, sales_orders,
- *      job_applications, support_tickets) DOSTÁVAJÍ i `-create` navzdory veřejné routě mimo
- *      tuto skupinu - admin/obchodník může založit záznam i ručně přes tento interní
- *      `apiResource` endpoint (jiná URL, jiná autentizace, ale stejná `store()` metoda).
- *      `web-edit-legal` rozdělen na `core-legal-documents-*` (GDPR/TOS/Cookies texty) a
- *      `core-legal-config-*` (firemní config + sociální sítě), protože jde o dva věcně
- *      odlišné zdroje, které dřív sdílely jeden klíč. `core-settings-*` má jen view/update
- *      (firemní údaje jsou jeden řádek nastavení, create/delete nedávají smysl). Migrace
- *      permission tabulek (core_permissions, core_role_permissions) proběhla samostatným
- *      SQL skriptem mimo Laravel migrace (projekt migrace nepoužívá, jede z SQL dumpu).
- *      Beze změny zůstávají: web-view-web-logs, web-view-dashboard, web-view-personal-info
- *      (selfParam výjimka), web-view-edit-website, view-deleted, view-web, view-eshop,
- *      view-core, core-view-welcome-page, web-set-maintenance-mode, shop-set-maitanance-mode,
- *      celá shop sekce (nižší priorita, granularizace plánována v budoucím tasku) a
- *      core/roles + core/permissions (chráněno sysadmin kontrolou, ne permission klíčem).
+ *      historický prefix `web-` (administrators, external_links, legal) - nově důsledně
+ *      `core-*`. Zdroje s veřejným formulářem (sales_leads, sales_orders, job_applications,
+ *      support_tickets) DOSTÁVAJÍ i `-create` navzdory veřejné routě mimo tuto skupinu -
+ *      admin/obchodník může založit záznam i ručně přes tento interní `apiResource`
+ *      endpoint (jiná URL, jiná autentizace, ale stejná `store()` metoda). `web-edit-legal`
+ *      rozdělen na `core-legal-documents-*` (GDPR/TOS/Cookies texty) a `core-legal-config-*`
+ *      (firemní config + sociální sítě), protože jde o dva věcně odlišné zdroje, které dřív
+ *      sdílely jeden klíč. Migrace permission tabulek (core_permissions,
+ *      core_role_permissions) proběhla samostatným SQL skriptem mimo Laravel migrace
+ *      (projekt migrace nepoužívá, jede z SQL dumpu).
  * @refactor-note (2026-08-15) PŘESUN SHOP MAINTENANCE Z CORE DO SHOP SEKCE. Endpoint
- *      `core/settings` už negatuje shop toggle - `shop-set-maitanance-mode` permission
- *      klíč byl z GET/PUT `core/settings` odstraněn a přesunut na nový vyhrazený blok
- *      `shop/settings` (viz SHOP sekce níže), obsluhovaný `ShopSiteSettingController`.
- *      Veřejný `shop/public/settings` endpoint přepojen z `CoreSiteSettingController::publicShow`
- *      na `ShopSiteSettingController::publicShow`. Viz ShopSiteSettingController,
- *      ShopSiteSetting model a `shop_site_settings` tabulka (SQL migrace mimo Laravel,
- *      stejně jako u permission tabulek výše).
+ *      `core/settings` přestal gatovat shop toggle - `shop-set-maitanance-mode` permission
+ *      klíč přesunut na nový vyhrazený blok `shop/settings`, obsluhovaný
+ *      `ShopSiteSettingController`. Veřejný `shop/public/settings` endpoint přepojen z
+ *      `CoreSiteSettingController::publicShow` na `ShopSiteSettingController::publicShow`.
+ * @refactor-note (2026-08-15) PŘESUN WEB MAINTENANCE Z CORE DO WEB SEKCE + ZRUŠENÍ
+ *      `core/settings`. Po přesunu shop (viz výše) zůstala v `core_site_settings` už jen
+ *      web maintenance - tabulka i controller (`CoreSiteSettingController`,
+ *      `App\Models\Core\CoreSiteSetting`, `core_site_settings`) proto ZRUŠENY ÚPLNĚ, ne jen
+ *      vyprázdněny. Web maintenance přesunuta do nového bloku `web/settings`
+ *      (`WebSiteSettingController`, `App\Models\Web\WebSiteSetting`, tabulka
+ *      `web_site_settings`), gatováno stávajícím klíčem `web-set-maintenance-mode`
+ *      (beze změny názvu, jen endpoint). Veřejný `web/public/status`
+ *      (`WebPublicController::getStatus`) zůstává jediným public endpointem pro web status -
+ *      žádný nový `web/public/settings` nebyl zaveden, protože ani dřív neexistoval.
+ *      `core-settings-view`/`core-settings-update` permission klíče smazány (SQL skript),
+ *      protože už nemají co gatovat. Zbylé klíče `web-view-web-logs`, `web-view-dashboard`,
+ *      `web-view-personal-info` (selfParam výjimka), `web-view-edit-website`, `view-deleted`,
+ *      `view-web`, `view-eshop`, `view-core`, `core-view-welcome-page`, celá shop sekce
+ *      (nižší priorita, granularizace plánována v budoucím tasku) a `core/roles` +
+ *      `core/permissions` (chráněno sysadmin kontrolou) - beze změny.
  */
 
 use Illuminate\Http\Request;
@@ -87,7 +90,6 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\Core\CoreRoleController;
 use App\Http\Controllers\Api\Core\CorePermissionController;
-use App\Http\Controllers\Api\Core\CoreSiteSettingController;
 use App\Http\Controllers\Api\Legal\DocumentSectionController;
 use App\Http\Controllers\Api\Legal\SiteConfigurationController;
 use App\Http\Controllers\Api\Web\WebRawRequestCommissionController;
@@ -97,6 +99,7 @@ use App\Http\Controllers\Api\Web\WebNewsController;
 use App\Http\Controllers\Api\Web\WebSalesOrderController;
 use App\Http\Controllers\Api\Web\WebSupportTicketController;
 use App\Http\Controllers\Api\Web\WebJobApplicationController;
+use App\Http\Controllers\Api\Web\WebSiteSettingController;
 use App\Http\Controllers\Api\Shop\ShopLogController;
 use App\Http\Controllers\Api\Shop\ShopSupplierController;
 use App\Http\Controllers\Api\Shop\ShopCouponController;
@@ -133,8 +136,6 @@ Route::get('translations/{module}/{lang}', [TranslationController::class, 'show'
 Route::prefix('shop/public')->group(function () {
 
     Route::get('status', [ShopPublicController::class, 'getStatus']);
-    // @refactor-note (2026-08-15): přepojeno z CoreSiteSettingController::publicShow
-    // na ShopSiteSettingController::publicShow (shop maintenance přesunuta ze zdroje Core).
     Route::get('settings', [ShopSiteSettingController::class, 'publicShow']);
 
     Route::middleware('shop.active')->group(function () {
@@ -243,18 +244,11 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     |----------------------------------------------------------------------
     | CORE
     |----------------------------------------------------------------------
+    | @refactor-note (2026-08-15): blok `core/settings` (CoreSiteSettingController)
+    |    ZRUŠEN celý - viz hlavička souboru. Web maintenance žije nově pod `web/settings`
+    |    (WEB sekce níže), shop maintenance pod `shop/settings` (SHOP sekce níže).
     */
     Route::prefix('core')->group(function () {
-
-        // Obsluhuje plný formulář "Firemní údaje" i přepínač údržby WEBU (headeru).
-        // @refactor-note (2026-08-15): shop-set-maitanance-mode odsud odstraněn -
-        // shop přepínač žije nově pod shop/settings (viz SHOP sekce níže).
-        Route::prefix('settings')->group(function () {
-            Route::get('/', [CoreSiteSettingController::class, 'show'])
-                ->middleware('permission:core-settings-view');
-            Route::put('/', [CoreSiteSettingController::class, 'update'])
-                ->middleware('permission:core-settings-update');
-        });
 
         // POST bez permission middleware - zápis vlastního audit záznamu (viz
         // @refactor-note 2026-08-2 v hlavičce souboru). GET (čtení historie) chráněno.
@@ -356,13 +350,12 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     |----------------------------------------------------------------------
     | @note (2026-08-5) Shop sekce zatím NENÍ granularizována (view/create/update/delete)
     | - nižší priorita, plánováno do budoucího tasku. Klíče beze změny.
-    | @refactor-note (2026-08-15) Přidán blok `shop/settings` (maintenance toggle),
-    |    přesunutý z `core/settings` - viz ShopSiteSettingController a hlavička souboru.
+    | @refactor-note (2026-08-15) Blok `shop/settings` (maintenance toggle) přesunutý
+    |    z bývalého core/settings - viz ShopSiteSettingController a hlavička souboru.
     */
     Route::prefix('shop')->group(function () {
 
-        // Přepínač údržby e-shopu (headeru). Přesunuto z core/settings - viz
-        // @refactor-note (2026-08-15) v hlavičce souboru a ShopSiteSettingController.
+        // Přepínač údržby e-shopu (dashboard karta). Přesunuto z core/settings.
         Route::prefix('settings')->group(function () {
             Route::get('/', [ShopSiteSettingController::class, 'show'])
                 ->middleware('permission:shop-set-maitanance-mode');
@@ -467,8 +460,19 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     |----------------------------------------------------------------------
     | WEB
     |----------------------------------------------------------------------
+    | @refactor-note (2026-08-15) Blok `web/settings` (maintenance toggle) nově
+    |    přesunutý z bývalého core/settings - viz WebSiteSettingController a
+    |    hlavička souboru. `web-set-maintenance-mode` permission klíč beze změny.
     */
     Route::prefix('web')->group(function () {
+
+        // Přepínač údržby webu (dashboard karta). Přesunuto z core/settings.
+        Route::prefix('settings')->group(function () {
+            Route::get('/', [WebSiteSettingController::class, 'show'])
+                ->middleware('permission:web-set-maintenance-mode');
+            Route::put('/', [WebSiteSettingController::class, 'update'])
+                ->middleware('permission:web-set-maintenance-mode');
+        });
 
         // ── web/job_applications ─────────────────────────────────────────
         // @refactor-note (2026-08-5): web-view-job-applications -> web-job-applications-*.

@@ -13,10 +13,11 @@
  * Angular route metadata, backend ho nikdy nekontroloval).
  *
  * @refactor-note (2026-08-15) Alias `shop.active` přepojen z `CheckCoreShopActive` na
- * `CheckShopActive` - shop maintenance middleware se přesunul z Core do Shop domény
- * společně s daty (`shop_site_settings` tabulka), viz ShopSiteSettingController a
- * ShopSiteSetting model. Alias samotný (`shop.active`) zůstává stejný, mění se jen
- * cílová třída. `web.active` beze změny.
+ * `CheckShopActive` a alias `web.active` přepojen z `CheckCoreWebActive` na
+ * `CheckWebActive` - shop i web maintenance middleware se přesunuly z Core domény do
+ * vlastních domén (Shop/Web) společně s daty (`shop_site_settings`/`web_site_settings`
+ * tabulky, `core_site_settings` zrušena úplně). Aliasy samotné (`shop.active`,
+ * `web.active`) zůstávají stejné, mění se jen cílové třídy.
  */
 
 use Illuminate\Foundation\Application;
@@ -47,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->alias([
             'shop.active'  => \App\Http\Middleware\CheckShopActive::class,
-            'web.active'   => \App\Http\Middleware\CheckCoreWebActive::class,
+            'web.active'   => \App\Http\Middleware\CheckWebActive::class,
             'permission'   => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
