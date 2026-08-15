@@ -14,6 +14,20 @@
  * @note All requests inside init()'s Promise.all run in parallel — total wait time is bounded
  *   by the slowest one, not their sum. The logo image itself is preloaded as raw bytes (not
  *   just its path) so the <img> in the header can paint instantly from browser cache.
+ *
+ * @bugfix-note (2026-08-15) CRITICAL, part 1: init() used to fire preloadSiteSettings() and
+ *   prefetchLegalDocs() unconditionally, before Angular Router could evaluate
+ *   webMaintenanceGuard. Putting the web into maintenance mode did NOT stop these downloads.
+ * @bugfix-note (2026-08-15) CRITICAL, part 2 (correction of the part-1 fix): the part-1 fix
+ *   was too broad - it skipped preloadSiteSettings() entirely during maintenance, which also
+ *   silently removed contact email/phone/social links from WebMaintenanceComponent, even
+ *   though that component is explicitly designed to show them (see its refactor-note:
+ *   "zobrazuje sociální ikony a kontaktní údaje"). The actual concern was narrower: only
+ *   the full GDPR/TOS document BODIES (prefetchLegalDocs()) have no reason to download
+ *   during maintenance - contact/social settings are legitimately needed by the
+ *   maintenance page itself and are NOT sensitive/embargoed content. Fix: preloadSiteSettings()
+ *   now runs unconditionally (same as before any of this); only prefetchLegalDocs() is
+ *   skipped when the web is inactive.
  */
 
 import { Injectable, inject } from '@angular/core';
@@ -48,21 +62,48 @@ export class AppBootstrapService {
    *   held until this Promise resolves — keep this to critical, above-the-fold
    *   data only (translations, settings, logo). Anything else goes to
    *   prefetchLegalDocs(), which is deliberately NOT awaited here.
+   * @note See bugfix-notes in the file header: web-active status is checked first and
+   *   used ONLY to gate prefetchLegalDocs() (full GDPR/TOS document bodies) - everything
+   *   else (translations, site settings/contact/social links, logo) loads unconditionally,
+   *   maintenance or not, since the maintenance page itself depends on it.
    */
   async init(): Promise<void> {
+    const webActive = await this.checkWebActiveStatus();
+
     await Promise.all([
       this.localizationService.initTranslations(),
       this.preloadSiteSettings(),
     ]);
 
     // Fire-and-forget: runs after the app has already started rendering.
+    // Skipped entirely during maintenance - full GDPR/TOS document bodies have no
+    // legitimate reason to be downloaded while the site is dark (see bugfix-note).
     // If it fails or is slow, nobody waits on it — the legal-page components
     // simply fall back to fetching on demand (see LegalDocsService.getDocument).
-    this.prefetchLegalDocs();
+    if (webActive) {
+      this.prefetchLegalDocs();
+    }
 
     // UI-only concern, must never block or delay app startup — set up once,
     // reacts to viewport changes for the lifetime of the session.
     this.initHoverDisabling();
+  }
+
+  /**
+   * @description Checks whether the public web is currently active, using the same
+   *   no-cache status endpoint webMaintenanceGuard uses (GET /web/public/status).
+   *   Used only to gate prefetchLegalDocs() - see init().
+   * @note Fails open (returns true) on any error, exactly like webMaintenanceGuard's
+   *   own catchError — a transient status-check failure must never prevent the app
+   *   from starting normally.
+   */
+  private async checkWebActiveStatus(): Promise<boolean> {
+    try {
+      const res = await firstValueFrom(this.publicDataService.getWebStatus());
+      return res.is_web_active;
+    } catch {
+      return true;
+    }
   }
 
   /**

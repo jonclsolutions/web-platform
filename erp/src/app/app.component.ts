@@ -7,7 +7,8 @@
  * @description Root component of the application, serving as the main entry point for the component tree.
  * @dependencies
  * - AuthService: Used to verify the authentication state upon application initialization.
- * - PublicDataService: Used to fetch global settings and resolve dynamic assets.
+ * - PublicDataService: Used to read the cached global settings (populated by
+ *   AppBootstrapService at startup) and resolve dynamic assets.
  * - ApplicationRef: Used to detect when the app (including lazy-loaded route chunks and
  *   any in-flight HTTP requests) has become fully stable, to hide the static index.html loader.
  *
@@ -18,10 +19,20 @@
  * nebyla stažená ani vykreslená, takže bylo krátce vidět prázdnou stránku. `isStable`
  * emitne `true` až NgZone nemá ŽÁDNÉ čekající úlohy - to zahrnuje dynamický `import()`
  * lazy route chunku (Promise, patchovaný zone.js), veškeré HTTP requesty spuštěné uvnitř
- * NgZone (checkAuth(), favicon fetch níže) i libovolné `setTimeout`. Používá se
+ * NgZone (checkAuth() níže) i libovolné `setTimeout`. Používá se
  * `first(isStable => isStable)`, takže se loader skrývá jen JEDNOU - po prvním dosažení
  * stability, i kdyby appka později (např. při navigaci) zase krátce "nestabilizovala"
  * kvůli dalším HTTP voláním (o ty se stará LoadingInterceptor/LoadingService, ne tenhle kód).
+ *
+ * @bugfix-note (2026-08-15) `ngOnInit()` dřív volalo vlastní, NEZÁVISLÉ
+ * `publicDataService.get('public/legal/config')` jen kvůli faviconě - mimo jednotnou
+ * cache (`siteSettingsValue$`) populovanou `AppBootstrapService` při startu. Důsledek:
+ * duplicitní síťový request na KAŽDÉ stránce (AppComponent se renderuje vždy, nezávisle
+ * na routě) - viditelné i během web maintenance, protože tohle volání běželo úplně mimo
+ * `webMaintenanceGuard`/`AppBootstrapService` logiku a nikdo ho negatoval. Přepojeno na
+ * `siteSettingsValue$` (stejný vzor jako `BasePublicComponent`) - žádný nový request,
+ * jen čtení z paměti. Favicon se aktualizuje, jakmile cache poprvé dostane hodnotu
+ * (APP_INITIALIZER již dokončen v tu chvíli, takže první emit přijde synchronně).
  */
 
 import { Component, OnInit, ApplicationRef, inject } from '@angular/core';
@@ -56,22 +67,24 @@ export class AppComponent implements OnInit {
    */
   ngOnInit(): void {
     this.authService.checkAuth().subscribe();
-    this.publicDataService.get<{ settings: any }>('public/legal/config')
-      .subscribe(data => {
-        if (data.settings?.logo_path) {
-          const url = this.publicDataService.getStorageUrl(data.settings.logo_path);
-          this.updateFavicon(url);
-        }
-      });
+
+    // Read from the cache populated by AppBootstrapService at startup instead of
+    // firing a duplicate HTTP request here (see bugfix-note in file header).
+    this.publicDataService.siteSettingsValue$.subscribe(res => {
+      if (res?.settings?.logo_path) {
+        const url = this.publicDataService.getStorageUrl(res.settings.logo_path);
+        this.updateFavicon(url);
+      }
+    });
 
     this.hideInitialLoaderWhenStable();
   }
 
   /**
    * @description Waits for the very first moment NgZone has no pending macro/microtasks
-   * (initial CD cycle, lazy route chunk import, checkAuth()/favicon HTTP calls above all
-   * resolved), then fades out and removes the static `#initial-loader` element from
-   * index.html. Falls back to a no-op if the element is already gone (defensive - should
+   * (initial CD cycle, lazy route chunk import, checkAuth() HTTP call above resolved),
+   * then fades out and removes the static `#initial-loader` element from index.html.
+   * Falls back to a no-op if the element is already gone (defensive - should
    * never happen in normal flow, but harmless if it does).
    */
   private hideInitialLoaderWhenStable(): void {
