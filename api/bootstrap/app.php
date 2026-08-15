@@ -11,6 +11,12 @@
  * použitý v routes/api.php (`->middleware('permission:web-manage-administrators')` apod.) -
  * viz CheckPermission.php pro odůvodnění (permission systém dřív existoval jen jako
  * Angular route metadata, backend ho nikdy nekontroloval).
+ *
+ * @refactor-note (2026-08-15) Alias `shop.active` přepojen z `CheckCoreShopActive` na
+ * `CheckShopActive` - shop maintenance middleware se přesunul z Core do Shop domény
+ * společně s daty (`shop_site_settings` tabulka), viz ShopSiteSettingController a
+ * ShopSiteSetting model. Alias samotný (`shop.active`) zůstává stejný, mění se jen
+ * cílová třída. `web.active` beze změny.
  */
 
 use Illuminate\Foundation\Application;
@@ -40,7 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
          * Register custom middleware aliases for use in route definitions.
          */
         $middleware->alias([
-            'shop.active'  => \App\Http\Middleware\CheckCoreShopActive::class,
+            'shop.active'  => \App\Http\Middleware\CheckShopActive::class,
             'web.active'   => \App\Http\Middleware\CheckCoreWebActive::class,
             'permission'   => \App\Http\Middleware\CheckPermission::class,
         ]);

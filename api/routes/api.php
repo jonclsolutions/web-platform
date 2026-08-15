@@ -37,11 +37,8 @@
  *      auditu tiše spadne na 403. GET (čtení historie) permission vyžaduje i nadále.
  * @refactor-note (2026-08-3) `CheckPermission` middleware nyní podporuje více klíčů
  *      oddělených `|` (logika OR - stačí kterýkoliv z nich). `core/settings` proto gatuje
- *      `core-settings-view|shop-set-maitanance-mode` na GET a `core-settings-update|shop-set-
- *      maitanance-mode` na PUT, protože `CoreSiteSettingController` obsluhuje jak plný
- *      formulář "Firemní údaje", tak rychlý přepínač údržby e-shopu v headeru - dvě různé
- *      skupiny uživatelů, které se nemusí překrývat. (Poznámka: samotná logika/UX přepínače
- *      údržby řešena v samostatném navazujícím tasku.)
+ *      `core-settings-view` na GET a `core-settings-update` na PUT - viz
+ *      @refactor-note (2026-08-15) níže, shop přepínač už tohle sdílet nemusí.
  * @refactor-note (2026-08-4) KRITICKÁ BEZPEČNOSTNÍ OCHRANA - implicitní route-model-binding
  *      bug u core/roles (viz CoreRoleController hlavička) a chybějící pořadí routy
  *      `force-delete-all` PŘED `DELETE /{id}` u core/users (Laravel matchuje routy v pořadí
@@ -71,6 +68,14 @@
  *      view-core, core-view-welcome-page, web-set-maintenance-mode, shop-set-maitanance-mode,
  *      celá shop sekce (nižší priorita, granularizace plánována v budoucím tasku) a
  *      core/roles + core/permissions (chráněno sysadmin kontrolou, ne permission klíčem).
+ * @refactor-note (2026-08-15) PŘESUN SHOP MAINTENANCE Z CORE DO SHOP SEKCE. Endpoint
+ *      `core/settings` už negatuje shop toggle - `shop-set-maitanance-mode` permission
+ *      klíč byl z GET/PUT `core/settings` odstraněn a přesunut na nový vyhrazený blok
+ *      `shop/settings` (viz SHOP sekce níže), obsluhovaný `ShopSiteSettingController`.
+ *      Veřejný `shop/public/settings` endpoint přepojen z `CoreSiteSettingController::publicShow`
+ *      na `ShopSiteSettingController::publicShow`. Viz ShopSiteSettingController,
+ *      ShopSiteSetting model a `shop_site_settings` tabulka (SQL migrace mimo Laravel,
+ *      stejně jako u permission tabulek výše).
  */
 
 use Illuminate\Http\Request;
@@ -103,6 +108,7 @@ use App\Http\Controllers\Api\Shop\ShopOrderController;
 use App\Http\Controllers\Api\Shop\ShopCustomerController;
 use App\Http\Controllers\Api\Shop\ShopCheckoutController;
 use App\Http\Controllers\Api\Shop\ShopPublicController;
+use App\Http\Controllers\Api\Shop\ShopSiteSettingController;
 use App\Http\Controllers\Api\Legal\DocumentTypeController;
 use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
@@ -127,7 +133,9 @@ Route::get('translations/{module}/{lang}', [TranslationController::class, 'show'
 Route::prefix('shop/public')->group(function () {
 
     Route::get('status', [ShopPublicController::class, 'getStatus']);
-    Route::get('settings', [CoreSiteSettingController::class, 'publicShow']);
+    // @refactor-note (2026-08-15): přepojeno z CoreSiteSettingController::publicShow
+    // na ShopSiteSettingController::publicShow (shop maintenance přesunuta ze zdroje Core).
+    Route::get('settings', [ShopSiteSettingController::class, 'publicShow']);
 
     Route::middleware('shop.active')->group(function () {
         Route::get('products', [ShopProductController::class, 'publicIndex']);
@@ -238,15 +246,14 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     */
     Route::prefix('core')->group(function () {
 
-        // Obsluhuje dva různé přístupové body: plný formulář "Firemní údaje"
-        // (core-settings-*) i rychlý přepínač údržby e-shopu v headeru
-        // (shop-set-maitanance-mode) - viz @refactor-note (2026-08-3) výše.
-        // UX/logika samotného přepínače řešena v samostatném navazujícím tasku.
+        // Obsluhuje plný formulář "Firemní údaje" i přepínač údržby WEBU (headeru).
+        // @refactor-note (2026-08-15): shop-set-maitanance-mode odsud odstraněn -
+        // shop přepínač žije nově pod shop/settings (viz SHOP sekce níže).
         Route::prefix('settings')->group(function () {
             Route::get('/', [CoreSiteSettingController::class, 'show'])
-                ->middleware('permission:core-settings-view|shop-set-maitanance-mode');
+                ->middleware('permission:core-settings-view');
             Route::put('/', [CoreSiteSettingController::class, 'update'])
-                ->middleware('permission:core-settings-update|shop-set-maitanance-mode');
+                ->middleware('permission:core-settings-update');
         });
 
         // POST bez permission middleware - zápis vlastního audit záznamu (viz
@@ -349,8 +356,19 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     |----------------------------------------------------------------------
     | @note (2026-08-5) Shop sekce zatím NENÍ granularizována (view/create/update/delete)
     | - nižší priorita, plánováno do budoucího tasku. Klíče beze změny.
+    | @refactor-note (2026-08-15) Přidán blok `shop/settings` (maintenance toggle),
+    |    přesunutý z `core/settings` - viz ShopSiteSettingController a hlavička souboru.
     */
     Route::prefix('shop')->group(function () {
+
+        // Přepínač údržby e-shopu (headeru). Přesunuto z core/settings - viz
+        // @refactor-note (2026-08-15) v hlavičce souboru a ShopSiteSettingController.
+        Route::prefix('settings')->group(function () {
+            Route::get('/', [ShopSiteSettingController::class, 'show'])
+                ->middleware('permission:shop-set-maitanance-mode');
+            Route::put('/', [ShopSiteSettingController::class, 'update'])
+                ->middleware('permission:shop-set-maitanance-mode');
+        });
 
         // Products
         Route::prefix('products')->middleware('permission:shop-manage-products')->group(function () {

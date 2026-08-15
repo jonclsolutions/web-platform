@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 12, 2026 at 01:38 PM
+-- Generation Time: Aug 15, 2026 at 04:10 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -38,21 +38,13 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('laravel-cache-1352246e33277e9d3c9090a434fa72cfa6536ae2', 'i:11;', 1785059249),
-('laravel-cache-1352246e33277e9d3c9090a434fa72cfa6536ae2:timer', 'i:1785059249;', 1785059249),
-('laravel-cache-3c26dffc8a2e8804dfe2c8a1195cfaa5ef6d0014', 'i:1;', 1786451719),
-('laravel-cache-3c26dffc8a2e8804dfe2c8a1195cfaa5ef6d0014:timer', 'i:1786451719;', 1786451719),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1786489962),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1786489962;', 1786489962),
-('laravel-cache-f1f836cb4ea6efb2a0b1b99f41ad8b103eff4b59', 'i:4;', 1786402588),
-('laravel-cache-f1f836cb4ea6efb2a0b1b99f41ad8b103eff4b59:timer', 'i:1786402588;', 1786402588),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:14;', 1786534634),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1786534634;', 1786534634),
-('laravel-cache-password-change-notify:25', 'i:2;', 1786408499),
-('laravel-cache-password-change-notify:25:timer', 'i:1786408499;', 1786408499),
-('laravel-cache-password-change-notify:86', 'i:1;', 1786453081),
-('laravel-cache-password-change-notify:86:timer', 'i:1786453081;', 1786453081),
-('laravel-cache-site_setting_active_web', 'O:31:\"App\\Models\\Core\\CoreSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:18:\"core_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:7:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:0;s:13:\"is_web_active\";i:0;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"updated_at\";s:19:\"2026-08-12 01:11:57\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:11:\"\0*\0original\";a:7:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:0;s:13:\"is_web_active\";i:0;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"updated_at\";s:19:\"2026-08-12 01:11:57\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:14:\"is_shop_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1786490616);
+('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9', 'i:24;', 1786803025),
+('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9:timer', 'i:1786803025;', 1786803025),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1786801298),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1786801298;', 1786801298),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:9;', 1786802968),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1786802968;', 1786802968),
+('laravel-cache-site_setting_active_web', 'O:31:\"App\\Models\\Core\\CoreSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:18:\"core_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:7:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:0;s:13:\"is_web_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"updated_at\";s:19:\"2026-08-12 15:44:06\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:11:\"\0*\0original\";a:7:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:0;s:13:\"is_web_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"updated_at\";s:19:\"2026-08-12 15:44:06\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:14:\"is_shop_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1786801509);
 
 -- --------------------------------------------------------
 
@@ -75,27 +67,6 @@ CREATE TABLE `core_logs` (
   `user_plain` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `core_logs`
---
-
-INSERT INTO `core_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
-(1, '2026-07-26 11:06:27', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 25)', 'Auth', NULL, NULL, '{\"email_requested\":\"jonasbucina@rpsw.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":25}', NULL, 'system'),
-(2, '2026-07-26 11:14:01', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 25)', 'Auth', NULL, NULL, '{\"email_requested\":\"jonasbucina@rpsw.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":25}', NULL, 'system'),
-(3, '2026-07-26 11:25:57', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 25)', 'Auth', NULL, NULL, '{\"email_requested\":\"jonasbucina@rpsw.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":25}', NULL, 'system'),
-(4, '2026-07-26 11:36:32', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 25)', 'Auth', NULL, NULL, '{\"email_requested\":\"jonasbucina@rpsw.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":25}', NULL, 'system'),
-(5, '2026-07-26 11:45:25', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 85)', 'Auth', NULL, NULL, '{\"email_requested\":\"testing@test.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":85}', NULL, 'system'),
-(6, '2026-07-26 11:45:53', '127.0.0.1', 'password_reset_completed', 'auth', 'Pokus o reset hesla (user_id: 85)', 'Auth', NULL, NULL, '{\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":85}', NULL, 'system'),
-(7, '2026-07-26 21:26:52', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 34)', 'Auth', NULL, NULL, '{\"email_requested\":\"lindicka@mazliva.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":34}', NULL, 'system'),
-(8, '2026-07-26 21:26:55', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 34)', 'Auth', NULL, NULL, '{\"email_requested\":\"lindicka@mazliva.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":34}', NULL, 'system'),
-(9, '2026-07-26 21:27:03', '127.0.0.1', 'password_reset_requested', 'auth', 'Pokus o reset hesla (user_id: 34)', 'Auth', NULL, NULL, '{\"email_requested\":\"lindicka@mazliva.cz\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":34}', NULL, 'system'),
-(10, '2026-07-26 21:27:46', '127.0.0.1', 'password_reset_failed', 'auth', 'Pokus o reset hesla (user_id: neznámý)', 'Auth', NULL, NULL, '{\"reason\":\"invalid_token\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":null}', NULL, 'system'),
-(11, '2026-07-26 21:28:05', '127.0.0.1', 'password_reset_completed', 'auth', 'Pokus o reset hesla (user_id: 34)', 'Auth', NULL, NULL, '{\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\/20100101 Firefox\\/145.0\",\"user_id\":34}', NULL, 'system'),
-(16, '2026-08-10 19:28:15', '127.0.0.1', 'update', 'Legal', 'Updated section: 1. Úvodní ustanovení - test (cz)', 'DocumentSection', 24, 25, '{\"id\":24,\"document_type_id\":1,\"position\":1,\"heading\":\"1. Úvodní ustanovení - test\",\"content\":\"Tyto Zásady zpracování osobních údajů (dále jen „Zásady“) popisují, jak společnost RegioPartner, s.r.o., se sídlem Kytlická 862\\/6, 190 00 Praha, IČO: 25133161, DIČ: CZ25133161, zapsaná v obchodním rejstříku vedeném Městským soudem v Praze, oddíl C, vložka 52029 (dále jen „my“ nebo „Správce“), shromažďuje, používá a chrání osobní údaje, které nám poskytujete v souvislosti s používáním našich webových stránek a našich služeb, zejména inzerce digitálních produktů a služeb. Zavazujeme se chránit vaše soukromí a zpracováváme osobní údaje v souladu s Nařízením Evropského parlamentu a Rady (EU) 2016\\/679 (dále jen „GDPR“) a platnými právními předpisy České republiky, zejména zákonem č. 110\\/2019 Sb., o zpracování osobních údajů, ve znění pozdějších předpisů. Pokud s těmito Zásadami nesouhlasíte, prosíme, nepoužívejte naše webové stránky ani služby.\",\"lang\":\"cz\"}', '25', 'jonasbucina@rpsw.cz'),
-(17, '2026-08-10 19:34:30', '127.0.0.1', 'update', 'Legal', 'Updated section: 1. Úvodní ustanovení (cz)', 'DocumentSection', 24, 25, '{\"id\":24,\"document_type_id\":1,\"position\":1,\"heading\":\"1. \\u00davodn\\u00ed ustanoven\\u00ed\",\"content\":\"Tyto Z\\u00e1sady zpracov\\u00e1n\\u00ed osobn\\u00edch \\u00fadaj\\u016f (d\\u00e1le jen \\u201eZ\\u00e1sady\\u201c) popisuj\\u00ed, jak spole\\u010dnost RegioPartner, s.r.o., se s\\u00eddlem Kytlick\\u00e1 862\\/6, 190 00 Praha, I\\u010cO: 25133161, DI\\u010c: CZ25133161, zapsan\\u00e1 v obchodn\\u00edm rejst\\u0159\\u00edku veden\\u00e9m M\\u011bstsk\\u00fdm soudem v Praze, odd\\u00edl C, vlo\\u017eka 52029 (d\\u00e1le jen \\u201emy\\u201c nebo \\u201eSpr\\u00e1vce\\u201c), shroma\\u017e\\u010fuje, pou\\u017e\\u00edv\\u00e1 a chr\\u00e1n\\u00ed osobn\\u00ed \\u00fadaje, kter\\u00e9 n\\u00e1m poskytujete v souvislosti s pou\\u017e\\u00edv\\u00e1n\\u00edm na\\u0161ich webov\\u00fdch str\\u00e1nek a na\\u0161ich slu\\u017eeb, zejm\\u00e9na inzerce digit\\u00e1ln\\u00edch produkt\\u016f a slu\\u017eeb. Zavazujeme se chr\\u00e1nit va\\u0161e soukrom\\u00ed a zpracov\\u00e1v\\u00e1me osobn\\u00ed \\u00fadaje v souladu s Na\\u0159\\u00edzen\\u00edm Evropsk\\u00e9ho parlamentu a Rady (EU) 2016\\/679 (d\\u00e1le jen \\u201eGDPR\\u201c) a platn\\u00fdmi pr\\u00e1vn\\u00edmi p\\u0159edpisy \\u010cesk\\u00e9 republiky, zejm\\u00e9na z\\u00e1konem \\u010d. 110\\/2019 Sb., o zpracov\\u00e1n\\u00ed osobn\\u00edch \\u00fadaj\\u016f, ve zn\\u011bn\\u00ed pozd\\u011bj\\u0161\\u00edch p\\u0159edpis\\u016f. Pokud s t\\u011bmito Z\\u00e1sadami nesouhlas\\u00edte, pros\\u00edme, nepou\\u017e\\u00edvejte na\\u0161e webov\\u00e9 str\\u00e1nky ani slu\\u017eby.\",\"lang\":\"cz\"}', '25', 'jonasbucina@rpsw.cz'),
-(18, '2026-08-10 20:19:58', '127.0.0.1', 'update', 'Legal', 'Updated company details: brand_tagline, brand_tagline_i18n', 'SiteConfiguration', 1, 25, '{\"company_name\":\"Joncletika, s.r.o.\",\"brand_tagline_i18n\":{\"cz\":\"Tvo\\u0159\\u00edme digit\\u00e1ln\\u00ed produkty, na kter\\u00e9 jste hrd\\u00ed. - TEST\",\"en\":\"Creating digital products you can be proud of.\"},\"copyright_text_i18n\":{\"cz\":\"\\u00a9 2026 RegioPartner, s.r.o. | Vytvo\\u0159eno & Spravov\\u00e1no RPSW\",\"en\":\"\\u00a9 2026 RegioPartner, s.r.o. | Created & Powered by RPSW\"},\"ico\":\"25133161\",\"dic\":\"CZ25133161\",\"google_analytics_id\":\"G-TEST123456\",\"contact_email\":\"gamber@rpsw.cz\",\"contact_phone\":\"733 188 328\",\"address\":\"Kytlick\\u00e1 862\\/6, 190 00 Praha\",\"footer_text\":\"\\u00a92026 RegioPartner, s.r.o., V\\u0161echna pr\\u00e1va vyhrazena.\"}', '25', 'jonasbucina@rpsw.cz'),
-(19, '2026-08-10 20:20:01', '127.0.0.1', 'delete', 'Legal', 'Deleted social network: test', 'SocialLink', 7, 25, '[]', '25', 'jonasbucina@rpsw.cz');
-
 -- --------------------------------------------------------
 
 --
@@ -115,18 +86,11 @@ CREATE TABLE `core_permissions` (
 --
 
 INSERT INTO `core_permissions` (`id`, `permission_key`, `description`, `module`, `created_at`) VALUES
-(1, 'web-manage-administrators', 'Správa administrátorských účtů', 'web', '2026-02-14 08:12:31'),
 (2, 'web-view-web-logs', 'Prohlížení web logů', 'web', '2026-02-14 08:12:31'),
 (3, 'web-view-personal-info', 'Zobrazení osobních údajů', 'web', '2026-02-14 08:12:31'),
-(4, 'web-view-user-requests', 'Zobrazení uživatelských požadavků', 'web', '2026-02-14 08:12:31'),
 (5, 'web-view-dashboard', 'Přístup k nástěnce', 'web', '2026-02-14 08:12:31'),
 (6, 'web-view-edit-website', 'Možnost editovat web', 'web', '2026-02-14 08:12:31'),
 (7, 'view-deleted', 'Zobrazit softdeleted záznamy', 'web', '2026-02-14 08:12:31'),
-(8, 'web-view-sales-leads', 'Zobrazit Sales Leads', 'web', '2026-02-14 08:12:31'),
-(9, 'web-view-news', 'Může vidět a editovat News', 'web', '2026-02-14 08:12:31'),
-(10, 'web-view-sales-orders', 'Vidí poptávkové listy od klientů', 'web', '2026-02-14 08:12:31'),
-(11, 'web-view-support-tickets', 'Může zobrazit tikety zaslané na podporu', 'web', '2026-02-14 08:12:31'),
-(12, 'web-view-job-applications', 'Může zobrazit seznam uchazečů', 'web', '2026-02-14 08:12:31'),
 (13, 'shop-manage-products', 'Správa produktů v e-shopu', 'shop', '2026-03-22 08:12:31'),
 (14, 'shop-manage-categories', 'Správa kategorií produktů', 'shop', '2026-03-22 08:12:31'),
 (15, 'shop-view-orders', 'Prohlížení objednávek e-shopu', 'shop', '2026-03-22 08:12:31'),
@@ -140,13 +104,52 @@ INSERT INTO `core_permissions` (`id`, `permission_key`, `description`, `module`,
 (23, 'shop-manage-suppliers', 'Zobrazit dodavatele.', 'core', '2026-03-27 14:41:13'),
 (24, 'shop-manage-payment-methods', 'Zobrazit způsoby plateb.', 'core', '2026-03-27 14:49:37'),
 (26, 'shop-set-maitanance-mode', 'Může přepnout eshop do stavu údržby.', 'shop', '2026-06-12 13:09:55'),
-(27, 'web-edit-legal', 'Editovat GDPR a TOS.', 'core', '2026-06-12 19:24:15'),
-(28, 'web-view-web-settings', 'Může editovat nastavení webu.', 'core', '2026-06-13 08:40:51'),
 (29, 'shop-view-edit-eshop', 'Možnost Editovat shop texty.', 'core', '2026-06-30 10:01:32'),
 (30, 'core-view-welcome-page', 'Zobrazit uvítací stránku po přihlášení.', 'web', '2026-07-26 20:08:46'),
-(31, 'web-manage-external-links', 'Spravovat externí linky cookies associated etc.', 'core', '2026-08-01 11:01:56'),
 (32, 'view-core', 'Zobrazit Core / System založku v administraci.', 'core', '2026-08-07 07:23:39'),
-(33, 'web-set-maintenance-mode', 'Může přepnout web do stavu údržby.', 'web', '2026-08-11 22:30:26');
+(33, 'web-set-maintenance-mode', 'Může přepnout web do stavu údržby.', 'web', '2026-08-11 22:30:26'),
+(35, 'web-support-tickets-view', 'Zobrazit tickety podpory', 'web', '2026-08-13 08:53:39'),
+(36, 'web-support-tickets-create', 'Vytvořit ticket podpory (interní)', 'web', '2026-08-13 08:53:39'),
+(37, 'web-support-tickets-update', 'Upravit ticket podpory', 'web', '2026-08-13 08:53:39'),
+(38, 'web-support-tickets-delete', 'Smazat / obnovit ticket podpory', 'web', '2026-08-13 08:53:39'),
+(39, 'web-sales-leads-view', 'Zobrazit sales leady', 'web', '2026-08-13 08:53:39'),
+(40, 'web-sales-leads-create', 'Vytvořit sales lead', 'web', '2026-08-13 08:53:39'),
+(41, 'web-sales-leads-update', 'Upravit sales lead', 'web', '2026-08-13 08:53:39'),
+(42, 'web-sales-leads-delete', 'Smazat / obnovit sales lead', 'web', '2026-08-13 08:53:39'),
+(43, 'web-news-view', 'Zobrazit novinky', 'web', '2026-08-13 08:53:39'),
+(44, 'web-news-create', 'Vytvořit novinku', 'web', '2026-08-13 08:53:39'),
+(45, 'web-news-update', 'Upravit novinku', 'web', '2026-08-13 08:53:39'),
+(46, 'web-news-delete', 'Smazat / obnovit novinku', 'web', '2026-08-13 08:53:39'),
+(47, 'web-sales-orders-view', 'Zobrazit poptávkové objednávky', 'web', '2026-08-13 08:53:39'),
+(48, 'web-sales-orders-create', 'Vytvořit poptávkovou objednávku (interně)', 'web', '2026-08-13 08:53:39'),
+(49, 'web-sales-orders-update', 'Upravit poptávkovou objednávku', 'web', '2026-08-13 08:53:39'),
+(50, 'web-sales-orders-delete', 'Smazat / obnovit poptávkovou objednávku', 'web', '2026-08-13 08:53:39'),
+(51, 'web-job-applications-view', 'Zobrazit uchazeče', 'web', '2026-08-13 08:53:39'),
+(52, 'web-job-applications-create', 'Vytvořit záznam uchazeče (interně)', 'web', '2026-08-13 08:53:39'),
+(53, 'web-job-applications-update', 'Upravit uchazeče', 'web', '2026-08-13 08:53:39'),
+(54, 'web-job-applications-delete', 'Smazat / obnovit uchazeče', 'web', '2026-08-13 08:53:39'),
+(55, 'core-administrators-view', 'Zobrazit administrátorské účty', 'core', '2026-08-13 08:53:39'),
+(56, 'core-administrators-create', 'Vytvořit administrátorský účet', 'core', '2026-08-13 08:53:39'),
+(57, 'core-administrators-update', 'Upravit administrátorský účet', 'core', '2026-08-13 08:53:39'),
+(58, 'core-administrators-delete', 'Smazat / obnovit administrátorský účet', 'core', '2026-08-13 08:53:39'),
+(59, 'core-external-links-view', 'Zobrazit externí odkazy', 'core', '2026-08-13 08:53:39'),
+(60, 'core-external-links-create', 'Vytvořit externí odkaz', 'core', '2026-08-13 08:53:39'),
+(61, 'core-external-links-update', 'Upravit externí odkaz', 'core', '2026-08-13 08:53:39'),
+(62, 'core-external-links-delete', 'Smazat / obnovit externí odkaz', 'core', '2026-08-13 08:53:39'),
+(63, 'core-legal-documents-view', 'Zobrazit právní dokumenty (GDPR/TOS/Cookies)', 'core', '2026-08-13 08:53:39'),
+(64, 'core-legal-documents-create', 'Vytvořit sekci právního dokumentu', 'core', '2026-08-13 08:53:39'),
+(65, 'core-legal-documents-update', 'Upravit sekci právního dokumentu', 'core', '2026-08-13 08:53:39'),
+(66, 'core-legal-documents-delete', 'Smazat sekci právního dokumentu', 'core', '2026-08-13 08:53:39'),
+(67, 'core-legal-config-view', 'Zobrazit firemní konfiguraci / sociální sítě', 'core', '2026-08-13 08:53:39'),
+(68, 'core-legal-config-create', 'Vytvořit položku sociální sítě', 'core', '2026-08-13 08:53:39'),
+(69, 'core-legal-config-update', 'Upravit firemní konfiguraci / sociální síť', 'core', '2026-08-13 08:53:39'),
+(70, 'core-legal-config-delete', 'Smazat položku sociální sítě', 'core', '2026-08-13 08:53:39'),
+(71, 'core-settings-view', 'Zobrazit firemní údaje / nastavení webu', 'core', '2026-08-13 08:53:39'),
+(72, 'core-settings-update', 'Upravit firemní údaje / nastavení webu', 'core', '2026-08-13 08:53:39'),
+(73, 'web-user-requests-view', 'Zobrazit uživatelské požadavky (provize)', 'web', '2026-08-13 12:10:56'),
+(74, 'web-user-requests-create', 'Vytvořit uživatelský požadavek (provize)', 'web', '2026-08-13 12:10:56'),
+(75, 'web-user-requests-update', 'Upravit uživatelský požadavek (provize)', 'web', '2026-08-13 12:10:56'),
+(76, 'web-user-requests-delete', 'Smazat / obnovit uživatelský požadavek (provize)', 'web', '2026-08-13 12:10:56');
 
 -- --------------------------------------------------------
 
@@ -170,7 +173,8 @@ CREATE TABLE `core_roles` (
 INSERT INTO `core_roles` (`id`, `role_name`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'sysadmin', 'Systémový administrátor - má vše', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
 (2, 'admin', 'Administrátor - správa webu', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(12, 'test', 'test', '2026-08-10 22:56:00', '2026-08-10 22:56:00', NULL);
+(12, 'test', 'test', '2026-08-10 22:56:00', '2026-08-10 22:56:00', NULL),
+(13, 'web-read-only', NULL, '2026-08-13 11:55:25', '2026-08-13 12:14:09', NULL);
 
 -- --------------------------------------------------------
 
@@ -188,18 +192,11 @@ CREATE TABLE `core_role_permissions` (
 --
 
 INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
-(1, 1),
 (1, 2),
 (1, 3),
-(1, 4),
 (1, 5),
 (1, 6),
 (1, 7),
-(1, 8),
-(1, 9),
-(1, 10),
-(1, 11),
-(1, 12),
 (1, 13),
 (1, 14),
 (1, 15),
@@ -213,22 +210,55 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (1, 23),
 (1, 24),
 (1, 26),
-(1, 27),
-(1, 28),
 (1, 29),
 (1, 30),
-(1, 31),
 (1, 32),
 (1, 33),
+(1, 35),
+(1, 36),
+(1, 37),
+(1, 38),
+(1, 39),
+(1, 40),
+(1, 41),
+(1, 42),
+(1, 43),
+(1, 44),
+(1, 45),
+(1, 46),
+(1, 47),
+(1, 48),
+(1, 49),
+(1, 50),
+(1, 51),
+(1, 52),
+(1, 53),
+(1, 54),
+(1, 55),
+(1, 56),
+(1, 57),
+(1, 58),
+(1, 59),
+(1, 60),
+(1, 61),
+(1, 62),
+(1, 63),
+(1, 64),
+(1, 65),
+(1, 66),
+(1, 67),
+(1, 68),
+(1, 69),
+(1, 70),
+(1, 71),
+(1, 72),
+(1, 73),
+(1, 74),
+(1, 75),
+(1, 76),
 (2, 3),
-(2, 4),
 (2, 5),
 (2, 7),
-(2, 8),
-(2, 9),
-(2, 10),
-(2, 11),
-(2, 12),
 (2, 13),
 (2, 14),
 (2, 15),
@@ -238,19 +268,99 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (2, 20),
 (2, 21),
 (2, 30),
-(12, 1),
+(2, 35),
+(2, 36),
+(2, 37),
+(2, 38),
+(2, 39),
+(2, 40),
+(2, 41),
+(2, 42),
+(2, 43),
+(2, 44),
+(2, 45),
+(2, 46),
+(2, 47),
+(2, 48),
+(2, 49),
+(2, 50),
+(2, 51),
+(2, 52),
+(2, 53),
+(2, 54),
+(2, 73),
+(2, 74),
+(2, 75),
+(2, 76),
 (12, 2),
 (12, 3),
-(12, 4),
 (12, 5),
 (12, 6),
 (12, 7),
-(12, 8),
-(12, 9),
-(12, 10),
-(12, 11),
-(12, 12),
-(12, 30);
+(12, 18),
+(12, 19),
+(12, 20),
+(12, 21),
+(12, 22),
+(12, 23),
+(12, 24),
+(12, 29),
+(12, 30),
+(12, 32),
+(12, 33),
+(12, 35),
+(12, 36),
+(12, 37),
+(12, 38),
+(12, 39),
+(12, 40),
+(12, 41),
+(12, 42),
+(12, 43),
+(12, 45),
+(12, 47),
+(12, 48),
+(12, 49),
+(12, 50),
+(12, 51),
+(12, 52),
+(12, 53),
+(12, 54),
+(12, 55),
+(12, 56),
+(12, 57),
+(12, 58),
+(12, 59),
+(12, 60),
+(12, 61),
+(12, 62),
+(12, 63),
+(12, 64),
+(12, 65),
+(12, 66),
+(12, 67),
+(12, 68),
+(12, 69),
+(12, 70),
+(12, 71),
+(12, 72),
+(12, 73),
+(12, 74),
+(12, 75),
+(12, 76),
+(13, 2),
+(13, 3),
+(13, 5),
+(13, 6),
+(13, 18),
+(13, 30),
+(13, 32),
+(13, 35),
+(13, 39),
+(13, 43),
+(13, 47),
+(13, 51),
+(13, 73);
 
 -- --------------------------------------------------------
 
@@ -273,7 +383,7 @@ CREATE TABLE `core_site_settings` (
 --
 
 INSERT INTO `core_site_settings` (`id`, `is_shop_active`, `is_web_active`, `maintenance_message`, `web_maintenance_message`, `updated_at`, `created_at`) VALUES
-(1, 0, 0, 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.', 'Omlouváme se, web je momentálně v údržbě.', '2026-08-11 23:11:57', '2026-06-12 11:42:21');
+(1, 0, 1, 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.', 'Omlouváme se, web je momentálně v údržbě.', '2026-08-12 13:44:06', '2026-06-12 11:42:21');
 
 -- --------------------------------------------------------
 
@@ -516,7 +626,8 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (172, 'App\\Models\\User', 77, 'access-token', 'f783051fdb88711a863e9ccd4e5176a5a3f2a3606204c816754c3227d07698f8', '[\"*\"]', '2026-02-25 00:08:53', '2026-02-25 00:42:29', '2026-02-24 23:42:29', '2026-02-25 00:08:53'),
 (591, 'App\\Models\\User', 34, 'access-token', '68783429471135aedb98b9dd0c6fea1dda24afe7d6cbb225d9e9a8ab20236672', '[\"*\"]', '2026-07-26 20:10:52', '2026-07-26 21:08:21', '2026-07-26 20:08:21', '2026-07-26 20:10:52'),
 (695, 'App\\Models\\User', 86, 'access-token', 'c01dd389ec650634ad228e9a6534e6391de2ed139c2a50bae4be0e9f48265c71', '[\"*\"]', '2026-08-11 12:34:19', '2026-08-11 13:34:19', '2026-08-11 12:34:19', '2026-08-11 12:34:19'),
-(701, 'App\\Models\\User', 25, 'access-token', 'd926bd32532fc9998eee89dc97d22f34a6684d9905871c5d1d1b07c9cb80b5ed', '[\"*\"]', '2026-08-12 11:36:45', '2026-08-12 12:35:04', '2026-08-12 11:35:04', '2026-08-12 11:36:45');
+(771, 'App\\Models\\User', 25, 'access-token', '2cb9f107963df4049984e63b73532099aff7ffa1085b2febd05db9c43f2f5c25', '[\"*\"]', '2026-08-15 14:08:29', '2026-08-15 14:40:38', '2026-08-15 13:40:38', '2026-08-15 14:08:29'),
+(772, 'App\\Models\\User', 90, 'access-token', '5e2ac7905d25054d3abf62caedc019dea8cfe121304cc7ed3cdb53b5f09eca9f', '[\"*\"]', '2026-08-15 14:09:45', '2026-08-15 15:00:06', '2026-08-15 14:00:06', '2026-08-15 14:09:45');
 
 -- --------------------------------------------------------
 
@@ -538,7 +649,8 @@ CREATE TABLE `refresh_tokens` (
 --
 
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`, `updated_at`) VALUES
-(700, 25, '3a73385e85d9d110a4c8e435187ed0825d71e95ae349be94741af5da610d4316', '2026-08-19 11:35:04', '2026-08-12 11:35:04', '2026-08-12 11:35:04');
+(770, 25, '9f9bc78454028cbfb5475c9803f08ac3b6b38b4775b946f6e08982fb7e6a84b0', '2026-08-22 13:40:38', '2026-08-15 13:40:38', '2026-08-15 13:40:38'),
+(771, 90, '77d7657749bf7a914d29853df194eabd3c6ac00b3b8cfe8a83c0bf084bf48e0f', '2026-08-22 14:00:06', '2026-08-15 14:00:06', '2026-08-15 14:00:06');
 
 -- --------------------------------------------------------
 
@@ -644,13 +756,6 @@ CREATE TABLE `shop_logs` (
   `user_id_plain` varchar(255) DEFAULT NULL,
   `user_plain` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `shop_logs`
---
-
-INSERT INTO `shop_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
-(1, '2026-08-06 15:56:12', '127.0.0.1', 'create', 'Legal', 'Added social network: test', 'SiteConfiguration', 7, 25, '\"{\\\"name\\\":\\\"test\\\",\\\"url\\\":\\\"https:\\\\\\/\\\\\\/www.instagram.com\\\\\\/rpsw.cz\\\",\\\"position\\\":\\\"2\\\"}\"', '25', 'Jonáš Bučina');
 
 -- --------------------------------------------------------
 
@@ -990,8 +1095,10 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `user_email`, `full_name`, `dpp_hours_spent`, `enable_2fa`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
-(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, NULL, '$2y$12$PSt4jxIj8qs47185wr149uoVtxUmdWI0srk4Mq.WHSeHlmNoFPvNS', NULL, '2026-08-12 01:11:43', '2026-02-14 08:12:31', '2026-08-12 01:11:43', NULL, 0),
-(34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-11 00:55:27', NULL, 0);
+(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, NULL, '$2y$12$PSt4jxIj8qs47185wr149uoVtxUmdWI0srk4Mq.WHSeHlmNoFPvNS', NULL, '2026-08-15 15:40:38', '2026-02-14 08:12:31', '2026-08-15 15:40:38', NULL, 0),
+(34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-11 00:55:27', NULL, 0),
+(90, 'test@test.cz', 'asdadsd', 0, 1, NULL, '$2y$12$1xKhoRDFWyrfslg9Ubrr1e.l3BRd7ULcS8tEbFGyt4/rdc0UfbsrG', NULL, '2026-08-15 10:44:45', '2026-08-13 12:35:47', '2026-08-15 10:44:45', NULL, 0),
+(91, 'foner@foner.cz', 'askfjdslkf', 0, 0, NULL, '$2y$12$WEZmuC.izG6ThmGCAAop6.d7kZVb/atIamQkM/aPWxg3iaVAqhDg6', NULL, NULL, '2026-08-15 10:46:16', '2026-08-15 10:46:35', '2026-08-15 10:46:35', 0);
 
 -- --------------------------------------------------------
 
@@ -1010,7 +1117,34 @@ CREATE TABLE `user_roles` (
 
 INSERT INTO `user_roles` (`user_id`, `role_id`) VALUES
 (25, 1),
-(34, 2);
+(34, 2),
+(90, 1),
+(91, 13);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `web_attachments`
+--
+
+CREATE TABLE `web_attachments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `attachable_type` varchar(191) NOT NULL,
+  `attachable_id` bigint(20) UNSIGNED NOT NULL,
+  `disk` varchar(50) NOT NULL DEFAULT 'public',
+  `path` varchar(500) NOT NULL,
+  `original_filename` varchar(255) NOT NULL,
+  `mime_type` varchar(150) DEFAULT NULL,
+  `size_bytes` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `web_attachments`
+--
+
+INSERT INTO `web_attachments` (`id`, `attachable_type`, `attachable_id`, `disk`, `path`, `original_filename`, `mime_type`, `size_bytes`, `created_at`) VALUES
+(24, 'App\\Models\\Web\\WebJobApplication', 9, 'public', 'cv_files/P2qFNkfDdO48ZRRWHmS7VTkaijTZJGRYD35RFjFV.txt', 'xxxxxx.mp3', 'audio/mpeg', 1616, '2026-08-12 22:36:16');
 
 -- --------------------------------------------------------
 
@@ -1030,13 +1164,6 @@ CREATE TABLE `web_external_links` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `web_external_links`
---
-
-INSERT INTO `web_external_links` (`id`, `user_id`, `name`, `url`, `position`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(2, 25, 'test', 'https://www.google.com/?hl=cs', 1, 1, '2026-08-10 18:36:56', '2026-08-12 11:36:14', '2026-08-12 11:36:14');
-
 -- --------------------------------------------------------
 
 --
@@ -1052,6 +1179,7 @@ CREATE TABLE `web_job_applications` (
   `position_name` varchar(150) NOT NULL,
   `message` text DEFAULT NULL,
   `cv_path` varchar(255) DEFAULT NULL,
+  `cv_original_name` varchar(255) DEFAULT NULL,
   `state` varchar(50) DEFAULT 'Nový',
   `internal_note` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -1063,10 +1191,8 @@ CREATE TABLE `web_job_applications` (
 -- Dumping data for table `web_job_applications`
 --
 
-INSERT INTO `web_job_applications` (`id`, `first_name`, `last_name`, `email`, `phone`, `position_name`, `message`, `cv_path`, `state`, `internal_note`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(4, 'test', 'test', 'asda@sd.cz', NULL, 'UI/UX Designer', 'msfsmd.,fsmd.,fms.fmsd', 'cv_files/VtyC0R40UdnY2M6Df88vxwqPLUBsqAPrsoEvBoxg.txt', 'Zamítnut', NULL, '2026-08-06 22:42:28', '2026-08-09 22:16:40', '2026-08-09 22:16:40'),
-(5, '786', '87678', 'sdf@sdf.cj', 'ůlůsakfůlsdk', 'UI/UX Designer', NULL, 'cv_files/BtHqYbUKaMpybvwTuCHAcXCoNcOk8kYOK5Hup5tw.txt', 'Nový', NULL, '2026-08-06 23:02:16', '2026-08-09 22:16:37', '2026-08-09 22:16:37'),
-(6, 'joans', 'foner', 'foner@asdas.dcz', '876687678', 'UI/UX Designer', 'jhsfdjk', 'cv_files/JRImHhgQQtnA5fSTBiFjQt4CbJ39B4SwiiWRdu25.txt', 'Nový', NULL, '2026-08-06 23:09:39', '2026-08-09 22:16:35', '2026-08-09 22:16:35');
+INSERT INTO `web_job_applications` (`id`, `first_name`, `last_name`, `email`, `phone`, `position_name`, `message`, `cv_path`, `cv_original_name`, `state`, `internal_note`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(9, 'sdnfskjdfhj', 'jsdkfh', 'sdfsd@sdfdsf.cu', NULL, 'UI/UX Designer', NULL, NULL, NULL, 'Nový', NULL, '2026-08-12 22:36:16', '2026-08-12 22:36:55', '2026-08-12 22:36:55');
 
 -- --------------------------------------------------------
 
@@ -1088,173 +1214,6 @@ CREATE TABLE `web_logs` (
   `user_id_plain` varchar(255) DEFAULT NULL,
   `user_plain` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `web_logs`
---
-
-INSERT INTO `web_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
-(1, '2026-08-06 15:55:36', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(2, '2026-08-06 15:57:02', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(3, '2026-08-06 18:02:52', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(4, '2026-08-06 23:50:17', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: asdasda', 'User', NULL, NULL, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '0', 'asdasda'),
-(5, '2026-08-07 00:42:28', '127.0.0.1', 'create', 'WebJobApplication', 'Nová reakce na pozici: UI/UX Designer (test test)', 'WebJobApplication', 4, NULL, '\"{\\\"first_name\\\":\\\"test\\\",\\\"last_name\\\":\\\"test\\\",\\\"email\\\":\\\"asda@sd.cz\\\",\\\"phone\\\":null,\\\"message\\\":\\\"msfsmd.,fsmd.,fms.fmsd\\\",\\\"dataProcessingAgreement\\\":\\\"1\\\",\\\"position_name\\\":\\\"UI\\\\\\/UX Designer\\\"}\"', '0', 'Veřejný web (Uchazeč)'),
-(6, '2026-08-07 00:43:04', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(7, '2026-08-07 00:43:23', '127.0.0.1', 'update', 'WebJobApplication', 'Aktualizace uchazeče ID: 4. Stav: Zamítnut', 'WebJobApplication', 4, 25, '\"{\\\"id\\\":4,\\\"first_name\\\":\\\"test\\\",\\\"last_name\\\":\\\"test\\\",\\\"full_name\\\":\\\"test test\\\",\\\"email\\\":\\\"asda@sd.cz\\\",\\\"phone\\\":null,\\\"position_name\\\":\\\"UI\\\\\\/UX Designer\\\",\\\"message\\\":\\\"msfsmd.,fsmd.,fms.fmsd\\\",\\\"cv_path\\\":\\\"cv_files\\\\\\/VtyC0R40UdnY2M6Df88vxwqPLUBsqAPrsoEvBoxg.txt\\\",\\\"cv_url\\\":\\\"http:\\\\\\/\\\\\\/127.0.0.1:8000\\\\\\/storage\\\\\\/cv_files\\\\\\/VtyC0R40UdnY2M6Df88vxwqPLUBsqAPrsoEvBoxg.txt\\\",\\\"state\\\":\\\"Zam\\u00edtnut\\\",\\\"internal_note\\\":null,\\\"created_at\\\":\\\"2026-08-07 00:42:28\\\",\\\"updated_at\\\":\\\"2026-08-07 00:42:28\\\",\\\"deleted_at\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(8, '2026-08-07 00:43:29', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(9, '2026-08-07 01:02:16', '127.0.0.1', 'create', 'WebJobApplication', 'Nová reakce na pozici: UI/UX Designer (786 87678)', 'WebJobApplication', 5, NULL, '\"{\\\"first_name\\\":\\\"786\\\",\\\"last_name\\\":\\\"87678\\\",\\\"email\\\":\\\"sdf@sdf.cj\\\",\\\"phone\\\":\\\"\\u016fl\\u016fsakf\\u016flsdk\\\",\\\"message\\\":null,\\\"dataProcessingAgreement\\\":\\\"1\\\",\\\"position_name\\\":\\\"UI\\\\\\/UX Designer\\\"}\"', '0', 'Veřejný web (Uchazeč)'),
-(10, '2026-08-07 01:09:39', '127.0.0.1', 'create', 'WebJobApplication', 'Nová reakce na pozici: UI/UX Designer (joans foner)', 'WebJobApplication', 6, NULL, '\"{\\\"first_name\\\":\\\"joans\\\",\\\"last_name\\\":\\\"foner\\\",\\\"email\\\":\\\"foner@asdas.dcz\\\",\\\"phone\\\":\\\"876687678\\\",\\\"message\\\":\\\"jhsfdjk\\\",\\\"dataProcessingAgreement\\\":\\\"1\\\",\\\"position_name\\\":\\\"UI\\\\\\/UX Designer\\\"}\"', '0', 'Veřejný web (Uchazeč)'),
-(11, '2026-08-07 08:43:00', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(12, '2026-08-07 09:20:55', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(13, '2026-08-07 09:31:16', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(14, '2026-08-07 09:32:23', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(15, '2026-08-07 09:32:31', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(16, '2026-08-07 09:35:49', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(17, '2026-08-07 09:35:52', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(18, '2026-08-09 21:32:59', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(19, '2026-08-09 21:33:02', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(20, '2026-08-09 21:35:45', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(21, '2026-08-09 21:35:49', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(22, '2026-08-09 21:37:44', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(23, '2026-08-09 21:37:47', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(24, '2026-08-09 22:29:31', '127.0.0.1', 'create', 'WebSalesLead', 'Vytvořen nový lead: Test', 'WebSalesLead', 7, 25, '\"{\\\"subject_name\\\":\\\"Test\\\",\\\"user_id\\\":null,\\\"salesman_name\\\":null,\\\"contact_other\\\":null,\\\"source_url\\\":null,\\\"first_contact_date\\\":null,\\\"contact_person\\\":null,\\\"contact_email\\\":null,\\\"contact_phone\\\":null,\\\"location\\\":null,\\\"source_channel\\\":\\\"LinkedIn - Direct Message\\\",\\\"status\\\":\\\"Nov\\u00e9\\\",\\\"priority\\\":\\\"N\\u00edzk\\u00e1\\\",\\\"last_contact_date\\\":null,\\\"next_step\\\":null,\\\"description\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(25, '2026-08-09 22:31:44', '127.0.0.1', 'generate_link', 'WebSalesLead', 'Vygenerován odkaz na objednávkový formulář pro lead ID: 7', 'WebSalesLead', 7, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(26, '2026-08-09 22:33:41', '127.0.0.1', 'generate_link', 'WebSalesLead', 'Vygenerován odkaz na objednávkový formulář pro lead ID: 7', 'WebSalesLead', 7, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(27, '2026-08-09 22:34:30', '127.0.0.1', 'create', 'WebSalesOrder', 'Vytvořena realizace pro: Test', 'WebSalesOrder', 3, NULL, '\"{\\\"client_name\\\":\\\"Test\\\",\\\"ico\\\":\\\"76876\\\",\\\"client_address\\\":null,\\\"client_phone\\\":null,\\\"client_email\\\":\\\"asd@sf.cz\\\",\\\"order_description\\\":\\\"d\\u016fsdfsdfdsf\\\",\\\"dataProcessingAgreement\\\":\\\"true\\\",\\\"tosAgreement\\\":\\\"true\\\",\\\"lead_token\\\":\\\"BeMKIXWYrPOCLDiIK98Ygddz5hMbnRwHc9gLU0cW\\\"}\"', '0', 'system/public'),
-(28, '2026-08-09 22:34:30', '127.0.0.1', 'error', 'WebSalesOrder', 'Nepodařilo se odeslat potvrzovací e-mail: Connection could not be established with host \"127.0.0.1:1025\": stream_socket_client(): Unable to connect to 127.0.0.1:1025 (Connection refused)', 'WebSalesOrder', 3, NULL, '\"{\\\"client_name\\\":\\\"Test\\\",\\\"ico\\\":\\\"76876\\\",\\\"client_address\\\":null,\\\"client_phone\\\":null,\\\"client_email\\\":\\\"asd@sf.cz\\\",\\\"order_description\\\":\\\"d\\u016fsdfsdfdsf\\\",\\\"dataProcessingAgreement\\\":\\\"true\\\",\\\"tosAgreement\\\":\\\"true\\\",\\\"lead_token\\\":\\\"BeMKIXWYrPOCLDiIK98Ygddz5hMbnRwHc9gLU0cW\\\"}\"', '0', 'system/public'),
-(29, '2026-08-09 22:35:01', '127.0.0.1', 'create', 'WebSalesOrder', 'Vytvořena realizace pro: Test', 'WebSalesOrder', 4, NULL, '\"{\\\"client_name\\\":\\\"Test\\\",\\\"ico\\\":\\\"768789\\\",\\\"client_address\\\":\\\"jsdjknfsldnfl\\\",\\\"client_phone\\\":\\\"86789897\\\",\\\"client_email\\\":\\\"jsdlkfjsdlkfds@dsf.cz\\\",\\\"order_description\\\":\\\"jashdkjashdk\\\",\\\"dataProcessingAgreement\\\":\\\"true\\\",\\\"tosAgreement\\\":\\\"true\\\",\\\"lead_token\\\":\\\"BeMKIXWYrPOCLDiIK98Ygddz5hMbnRwHc9gLU0cW\\\"}\"', '0', 'system/public'),
-(30, '2026-08-09 22:35:01', '127.0.0.1', 'error', 'WebSalesOrder', 'Nepodařilo se odeslat potvrzovací e-mail: Connection could not be established with host \"127.0.0.1:1025\": stream_socket_client(): Unable to connect to 127.0.0.1:1025 (Connection refused)', 'WebSalesOrder', 4, NULL, '\"{\\\"client_name\\\":\\\"Test\\\",\\\"ico\\\":\\\"768789\\\",\\\"client_address\\\":\\\"jsdjknfsldnfl\\\",\\\"client_phone\\\":\\\"86789897\\\",\\\"client_email\\\":\\\"jsdlkfjsdlkfds@dsf.cz\\\",\\\"order_description\\\":\\\"jashdkjashdk\\\",\\\"dataProcessingAgreement\\\":\\\"true\\\",\\\"tosAgreement\\\":\\\"true\\\",\\\"lead_token\\\":\\\"BeMKIXWYrPOCLDiIK98Ygddz5hMbnRwHc9gLU0cW\\\"}\"', '0', 'system/public'),
-(31, '2026-08-09 22:55:04', '127.0.0.1', 'DATA_EXPORT', 'web/logs', 'User exported 30 records from table: Seznam událostí systému.', 'collection', NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
-(32, '2026-08-09 23:02:35', '127.0.0.1', 'create', 'WebSalesLead', 'Vytvořen nový lead: TESTING FESTING', 'WebSalesLead', 8, 25, '\"{\\\"subject_name\\\":\\\"TESTING FESTING\\\",\\\"user_id\\\":null,\\\"salesman_name\\\":null,\\\"contact_other\\\":null,\\\"source_url\\\":null,\\\"first_contact_date\\\":null,\\\"contact_person\\\":null,\\\"contact_email\\\":null,\\\"contact_phone\\\":null,\\\"location\\\":null,\\\"source_channel\\\":\\\"LinkedIn - Direct Message\\\",\\\"status\\\":\\\"Nov\\u00e9\\\",\\\"priority\\\":\\\"N\\u00edzk\\u00e1\\\",\\\"last_contact_date\\\":null,\\\"next_step\\\":null,\\\"description\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(33, '2026-08-09 23:02:38', '127.0.0.1', 'generate_link', 'WebSalesLead', 'Vygenerován odkaz na objednávkový formulář pro lead ID: 8', 'WebSalesLead', 8, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(34, '2026-08-09 23:03:07', '127.0.0.1', 'create', 'WebSalesOrder', 'Vytvořena realizace pro: TESTING FESTING', 'WebSalesOrder', 5, NULL, '\"{\\\"client_name\\\":\\\"TESTING FESTING\\\",\\\"ico\\\":\\\"678678678\\\",\\\"client_address\\\":null,\\\"client_phone\\\":null,\\\"client_email\\\":\\\"jonas.bucina@seznam.cz\\\",\\\"order_description\\\":\\\"djgdkfhgjd\\\",\\\"dataProcessingAgreement\\\":\\\"true\\\",\\\"tosAgreement\\\":\\\"true\\\",\\\"lead_token\\\":\\\"TLOqtoSc3dcylJIBjkeYrJHvJxPpCpgJy7NDeKxG\\\"}\"', '0', 'system/public'),
-(35, '2026-08-09 23:03:07', '127.0.0.1', 'error', 'WebSalesOrder', 'Nepodařilo se odeslat potvrzovací e-mail: Connection could not be established with host \"127.0.0.1:1025\": stream_socket_client(): Unable to connect to 127.0.0.1:1025 (Connection refused)', 'WebSalesOrder', 5, NULL, '\"{\\\"client_name\\\":\\\"TESTING FESTING\\\",\\\"ico\\\":\\\"678678678\\\",\\\"client_address\\\":null,\\\"client_phone\\\":null,\\\"client_email\\\":\\\"jonas.bucina@seznam.cz\\\",\\\"order_description\\\":\\\"djgdkfhgjd\\\",\\\"dataProcessingAgreement\\\":\\\"true\\\",\\\"tosAgreement\\\":\\\"true\\\",\\\"lead_token\\\":\\\"TLOqtoSc3dcylJIBjkeYrJHvJxPpCpgJy7NDeKxG\\\"}\"', '0', 'system/public'),
-(36, '2026-08-09 23:17:05', '127.0.0.1', 'create', 'WebSalesLead', 'Vytvořen nový lead: fonetia', 'WebSalesLead', 9, 25, '\"{\\\"subject_name\\\":\\\"fonetia\\\",\\\"user_id\\\":null,\\\"salesman_name\\\":null,\\\"contact_other\\\":null,\\\"source_url\\\":null,\\\"first_contact_date\\\":null,\\\"contact_person\\\":null,\\\"contact_email\\\":null,\\\"contact_phone\\\":null,\\\"location\\\":null,\\\"source_channel\\\":\\\"LinkedIn - Direct Message\\\",\\\"status\\\":\\\"Nov\\u00e9\\\",\\\"priority\\\":\\\"Vysok\\u00e1\\\",\\\"last_contact_date\\\":null,\\\"next_step\\\":null,\\\"description\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(37, '2026-08-09 23:17:07', '127.0.0.1', 'generate_link', 'WebSalesLead', 'Vygenerován odkaz na objednávkový formulář pro lead ID: 9', 'WebSalesLead', 9, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(38, '2026-08-09 23:17:23', '127.0.0.1', 'create', 'WebSalesOrder', 'Vytvořena realizace pro: fonetia', 'WebSalesOrder', 6, NULL, '\"{\\\"client_name\\\":\\\"fonetia\\\",\\\"ico\\\":\\\"6876786\\\",\\\"client_address\\\":null,\\\"client_phone\\\":null,\\\"client_email\\\":\\\"sdfsssdf@sdf.cz\\\",\\\"order_description\\\":\\\"sdfsdf\\\",\\\"dataProcessingAgreement\\\":\\\"true\\\",\\\"tosAgreement\\\":\\\"true\\\",\\\"lead_token\\\":\\\"wp8811YTlAwe47T6vpm3j6jkq90GALtZnP7YpGck\\\"}\"', '0', 'system/public'),
-(39, '2026-08-09 23:41:28', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(40, '2026-08-09 23:41:37', '127.0.0.1', 'update', 'Translation:web', 'Update en.json', 'Translation', NULL, 25, '\"{\\\"lg\\\":\\\"en\\\",\\\"df\\\":\\\"NEW:faq([Array]) | NEW:common([Array]) | NEW:navigation([Array]) | NEW:projects([Array]) | NEW:footer([Array]) | NEW:legal([Array]) | NEW:form([Array]) | NEW:privacy_policy([Array]) | NEW:services(...\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(41, '2026-08-09 23:41:43', '127.0.0.1', 'update', 'Translation:web', 'Update en.json', 'Translation', NULL, 25, '\"{\\\"lg\\\":\\\"en\\\",\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(42, '2026-08-09 23:41:56', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(43, '2026-08-09 23:43:48', '127.0.0.1', 'update', 'Translation:web', 'Update en.json', 'Translation', NULL, 25, '\"{\\\"lg\\\":\\\"en\\\",\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(44, '2026-08-09 23:44:00', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(45, '2026-08-09 23:44:02', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(46, '2026-08-09 23:44:03', '127.0.0.1', 'update', 'Translation:web', 'Update en.json', 'Translation', NULL, 25, '\"{\\\"lg\\\":\\\"en\\\",\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(47, '2026-08-09 23:49:40', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(48, '2026-08-09 23:49:42', '127.0.0.1', 'update', 'Translation:web', 'Update en.json', 'Translation', NULL, 25, '\"{\\\"lg\\\":\\\"en\\\",\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(49, '2026-08-09 23:55:33', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(50, '2026-08-09 23:55:35', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(51, '2026-08-09 23:56:46', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(52, '2026-08-09 23:56:48', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(53, '2026-08-09 23:57:12', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(54, '2026-08-09 23:57:14', '127.0.0.1', 'update', 'Translation:web', 'Update en.json', 'Translation', NULL, 25, '\"{\\\"lg\\\":\\\"en\\\",\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(55, '2026-08-09 23:57:42', '127.0.0.1', 'update', 'Languages:web', 'Aktualizace seznamu jazyků a metadat', 'Translation', NULL, 25, '\"{\\\"lg\\\":null,\\\"df\\\":\\\"no_val_change\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(56, '2026-08-09 23:59:50', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: test', 'WebNews', 4, 25, '\"{\\\"title\\\":\\\"test\\\",\\\"thema\\\":\\\"Miln\\u00edk\\\",\\\"author\\\":\\\"assdf\\\",\\\"message\\\":\\\"ssdfsdf\\\",\\\"bullet_1\\\":null,\\\"bullet_2\\\":null,\\\"bullet_3\\\":null,\\\"bullet_4\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(57, '2026-08-10 00:11:03', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: test', 'WebNews', 4, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(58, '2026-08-10 00:11:07', '127.0.0.1', 'force_delete_all', 'WebNews', 'Hromadné smazání koše novinek. Počet: 1', 'WebNews', NULL, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(59, '2026-08-10 00:14:31', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: asdasd', 'WebNews', 5, 25, '\"{\\\"title\\\":\\\"asdasd\\\",\\\"thema\\\":\\\"Miln\\u00edk\\\",\\\"author\\\":\\\"asdadsad\\\",\\\"message\\\":\\\"as\\\",\\\"bullet_1\\\":null,\\\"bullet_2\\\":null,\\\"bullet_3\\\":null,\\\"bullet_4\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(60, '2026-08-10 00:15:26', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: asdasd', 'WebNews', 5, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(61, '2026-08-10 00:15:32', '127.0.0.1', 'hard_delete', 'WebNews', 'Smazání novinky: asdasd', 'WebNews', 5, 25, '\"{\\\"force_delete\\\":\\\"true\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(62, '2026-08-10 00:15:46', '127.0.0.1', 'soft_delete', 'WebSalesLead', 'Smazání leadu ID: 9', 'WebSalesLead', 9, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(63, '2026-08-10 00:15:48', '127.0.0.1', 'soft_delete', 'WebSalesLead', 'Smazání leadu ID: 8', 'WebSalesLead', 8, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(64, '2026-08-10 00:15:51', '127.0.0.1', 'soft_delete', 'WebSalesLead', 'Smazání leadu ID: 7', 'WebSalesLead', 7, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(65, '2026-08-10 00:15:55', '127.0.0.1', 'force_delete_all', 'WebSalesLead', 'Hromadné smazání koše leadů. Počet: 3', 'WebSalesLead', NULL, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(66, '2026-08-10 00:16:08', '127.0.0.1', 'soft_delete', 'WebSalesOrder', 'Smazání realizace ID: 6', 'WebSalesOrder', 6, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(67, '2026-08-10 00:16:11', '127.0.0.1', 'soft_delete', 'WebSalesOrder', 'Smazání realizace ID: 5', 'WebSalesOrder', 5, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(68, '2026-08-10 00:16:14', '127.0.0.1', 'soft_delete', 'WebSalesOrder', 'Smazání realizace ID: 4', 'WebSalesOrder', 4, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(69, '2026-08-10 00:16:17', '127.0.0.1', 'soft_delete', 'WebSalesOrder', 'Smazání realizace ID: 3', 'WebSalesOrder', 3, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(70, '2026-08-10 00:16:22', '127.0.0.1', 'force_delete_all', 'WebSalesOrder', 'Hromadné smazání koše realizací. Počet: 4', 'WebSalesOrder', NULL, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(71, '2026-08-10 00:16:35', '127.0.0.1', 'soft_delete', 'WebJobApplication', 'Smazání uchazeče ID: 6', 'WebJobApplication', 6, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(72, '2026-08-10 00:16:37', '127.0.0.1', 'soft_delete', 'WebJobApplication', 'Smazání uchazeče ID: 5', 'WebJobApplication', 5, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(73, '2026-08-10 00:16:40', '127.0.0.1', 'soft_delete', 'WebJobApplication', 'Smazání uchazeče ID: 4', 'WebJobApplication', 4, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(74, '2026-08-10 20:08:41', '127.0.0.1', 'export_json', 'web/logs', 'User exported 15 records (JSON) from table: Seznam událostí systému.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
-(75, '2026-08-10 20:08:58', '127.0.0.1', 'export_txt', 'web/logs', 'User exported 15 records (TXT) from table: Seznam událostí systému.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
-(76, '2026-08-10 20:09:44', '127.0.0.1', 'export_csv', 'web/logs', 'User exported 15 records (CSV) from table: Seznam událostí systému.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
-(77, '2026-08-10 20:36:56', '127.0.0.1', 'create', 'Web', 'Vytvořen externí odkaz: test', 'WebExternalLink', 2, 25, '{\"name\":\"test\",\"url\":\"https:\\/\\/www.google.com\\/?hl=cs\",\"position\":\"1\",\"is_active\":\"1\"}', '25', 'jonasbucina@rpsw.cz'),
-(78, '2026-08-10 20:37:40', '127.0.0.1', 'PasswordChanged', 'User', 'Změna hesla u: lindicka@mazliva.cz (provedl admin: jonasbucina@rpsw.cz)', 'User', 34, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(79, '2026-08-10 20:37:42', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(80, '2026-08-10 20:37:48', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: lindicka@mazliva.cz', 'User', 34, 34, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '34', 'lindicka@mazliva.cz'),
-(81, '2026-08-10 20:37:56', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: lindicka@mazliva.cz', 'User', 34, 34, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '34', 'lindicka@mazliva.cz'),
-(82, '2026-08-10 20:38:02', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(83, '2026-08-10 20:38:10', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: lindicka@mazliva.cz', 'User', 34, 25, '\"{\\\"id\\\":34,\\\"user_email\\\":\\\"lindicka@mazliva.cz\\\",\\\"contact_email\\\":\\\"lindicka@mazliva.cz\\\",\\\"full_name\\\":\\\"Lindi\\u010dka Tr\\u00fdb\\u00ed\\u010dkov\\u00e1 Mazliva\\\",\\\"birth_date\\\":null,\\\"personal_id_num\\\":null,\\\"address\\\":null,\\\"bank_account\\\":null,\\\"health_insurance\\\":null,\\\"commission_rate\\\":10,\\\"dpp_hours_spent\\\":0,\\\"has_tax_declaration\\\":false,\\\"phone_number\\\":null,\\\"internal_note\\\":null,\\\"last_login_at\\\":\\\"2026-08-10 20:37:48\\\",\\\"created_at\\\":\\\"2026-02-14 08:12:31\\\",\\\"updated_at\\\":\\\"2026-08-10 20:37:48\\\",\\\"deleted_at\\\":null,\\\"role_id\\\":1,\\\"roles\\\":[{\\\"id\\\":2,\\\"role_name\\\":\\\"admin\\\",\\\"description\\\":\\\"Administr\\u00e1tor - spr\\u00e1va webu\\\",\\\"is_protected\\\":true,\\\"users_count\\\":1,\\\"permissions\\\":[\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"core-view-welcome-page\\\"],\\\"created_at\\\":\\\"2026-02-14 09:12:31\\\",\\\"updated_at\\\":\\\"2026-02-14 09:12:31\\\"}],\\\"user_permissions\\\":[\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"core-view-welcome-page\\\"],\\\"permissions\\\":[\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"core-view-welcome-page\\\"]}\"', '25', 'jonasbucina@rpsw.cz'),
-(84, '2026-08-10 20:38:13', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(85, '2026-08-10 20:38:18', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: lindicka@mazliva.cz', 'User', 34, 34, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '34', 'lindicka@mazliva.cz'),
-(86, '2026-08-10 20:38:28', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: lindicka@mazliva.cz', 'User', 34, 34, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '34', 'lindicka@mazliva.cz'),
-(87, '2026-08-10 20:38:32', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(88, '2026-08-10 22:37:13', '127.0.0.1', 'create', 'WebSupportTicket', 'Nový ticket: asdasdad', 'WebSupportTicket', 5, 25, '\"{\\\"category\\\":\\\"it\\\",\\\"priority\\\":\\\"medium\\\",\\\"subject\\\":\\\"asdasdad\\\",\\\"description\\\":\\\"asdadasdad\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(89, '2026-08-10 22:42:07', '127.0.0.1', 'create', 'WebSupportTicket', 'Nový ticket: asdasdsd', 'WebSupportTicket', 6, 25, '\"{\\\"subject\\\":\\\"asdasdsd\\\",\\\"category\\\":\\\"it\\\",\\\"priority\\\":\\\"low\\\",\\\"description\\\":\\\"asdsdf\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(90, '2026-08-11 00:47:07', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: lindicka@mazliva.cz', 'User', 34, 25, '\"{\\\"id\\\":34,\\\"user_email\\\":\\\"lindicka@mazliva.cz\\\",\\\"full_name\\\":\\\"Lindi\\u010dka Tr\\u00fdb\\u00ed\\u010dkov\\u00e1 Mazliva\\\",\\\"commission_rate\\\":10,\\\"dpp_hours_spent\\\":0,\\\"has_tax_declaration\\\":false,\\\"enable_2fa\\\":true,\\\"internal_note\\\":null,\\\"last_login_at\\\":\\\"2026-08-10 20:38:18\\\",\\\"created_at\\\":\\\"2026-02-14 08:12:31\\\",\\\"updated_at\\\":\\\"2026-08-11 00:23:26\\\",\\\"deleted_at\\\":null,\\\"role_id\\\":2,\\\"roles\\\":[{\\\"id\\\":1,\\\"role_name\\\":\\\"sysadmin\\\",\\\"description\\\":\\\"Syst\\u00e9mov\\u00fd administr\\u00e1tor - m\\u00e1 v\\u0161e\\\",\\\"is_protected\\\":true,\\\"users_count\\\":2,\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"],\\\"created_at\\\":\\\"2026-02-14 09:12:31\\\",\\\"updated_at\\\":\\\"2026-02-14 09:12:31\\\"}],\\\"user_permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"],\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"]}\"', '25', 'jonasbucina@rpsw.cz'),
-(91, '2026-08-11 00:47:13', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"id\\\":25,\\\"user_email\\\":\\\"jonasbucina@rpsw.cz\\\",\\\"full_name\\\":\\\"Jon\\u00e1\\u0161 Bu\\u010dina\\\",\\\"commission_rate\\\":10,\\\"dpp_hours_spent\\\":0,\\\"has_tax_declaration\\\":false,\\\"enable_2fa\\\":true,\\\"internal_note\\\":null,\\\"last_login_at\\\":\\\"2026-08-10 20:38:32\\\",\\\"created_at\\\":\\\"2026-02-14 08:12:31\\\",\\\"updated_at\\\":\\\"2026-08-11 00:23:26\\\",\\\"deleted_at\\\":null,\\\"role_id\\\":2,\\\"roles\\\":[{\\\"id\\\":1,\\\"role_name\\\":\\\"sysadmin\\\",\\\"description\\\":\\\"Syst\\u00e9mov\\u00fd administr\\u00e1tor - m\\u00e1 v\\u0161e\\\",\\\"is_protected\\\":true,\\\"users_count\\\":1,\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"],\\\"created_at\\\":\\\"2026-02-14 09:12:31\\\",\\\"updated_at\\\":\\\"2026-02-14 09:12:31\\\"}],\\\"user_permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"],\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"]}\"', '25', 'jonasbucina@rpsw.cz'),
-(92, '2026-08-11 00:55:22', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(93, '2026-08-11 00:55:27', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: lindicka@mazliva.cz', 'User', 34, 34, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '34', 'lindicka@mazliva.cz'),
-(94, '2026-08-11 00:55:36', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: lindicka@mazliva.cz', 'User', 34, 34, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '34', 'lindicka@mazliva.cz'),
-(95, '2026-08-11 00:55:39', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(96, '2026-08-11 00:56:00', '127.0.0.1', 'create', 'CoreRole', 'Created role: test', 'CoreRole', 12, 25, '\"{\\\"role_name\\\":\\\"test\\\",\\\"description\\\":\\\"test\\\",\\\"is_protected\\\":false,\\\"users_count\\\":0,\\\"permissions\\\":[]}\"', '25', 'jonasbucina@rpsw.cz'),
-(97, '2026-08-11 00:56:27', '127.0.0.1', 'sync_permissions', 'CoreRole', 'Aktualizována oprávnění role: test (13 oprávnění)', 'CoreRole', 12, 25, '\"{\\\"permission_keys\\\":[\\\"core-view-welcome-page\\\",\\\"view-deleted\\\",\\\"web-manage-administrators\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"web-view-job-applications\\\",\\\"web-view-news\\\",\\\"web-view-personal-info\\\",\\\"web-view-sales-leads\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-user-requests\\\",\\\"web-view-web-logs\\\"]}\"', '25', 'jonasbucina@rpsw.cz'),
-(98, '2026-08-11 00:57:51', '127.0.0.1', 'create', 'User', 'Vytvořen uživatel: test@test.test', 'User', 86, 25, '\"{\\\"user_email\\\":\\\"test@test.test\\\",\\\"full_name\\\":\\\"Test\\\",\\\"role_id\\\":12,\\\"enable_2fa\\\":true,\\\"internal_note\\\":null,\\\"dpp_hours_spent\\\":0}\"', '25', 'jonasbucina@rpsw.cz'),
-(99, '2026-08-11 00:57:56', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(100, '2026-08-11 00:58:05', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: test@test.test', 'User', 86, NULL, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '86', 'test@test.test'),
-(101, '2026-08-11 00:58:10', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: test@test.test', 'User', 86, NULL, '\"{\\\"enable_2fa\\\":false}\"', '86', 'test@test.test'),
-(102, '2026-08-11 00:58:40', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: jonasbucina@rpsw.cz', 'User', 25, NULL, '\"{\\\"id\\\":25,\\\"user_email\\\":\\\"jonasbucina@rpsw.cz\\\",\\\"full_name\\\":\\\"Jon\\u00e1\\u0161 Bu\\u010dina\\\",\\\"dpp_hours_spent\\\":0,\\\"enable_2fa\\\":true,\\\"internal_note\\\":null,\\\"last_login_at\\\":\\\"2026-08-11 00:55:39\\\",\\\"created_at\\\":\\\"2026-02-14 08:12:31\\\",\\\"updated_at\\\":\\\"2026-08-11 00:55:39\\\",\\\"deleted_at\\\":null,\\\"role_id\\\":2,\\\"roles\\\":[{\\\"id\\\":1,\\\"role_name\\\":\\\"sysadmin\\\",\\\"description\\\":\\\"Syst\\u00e9mov\\u00fd administr\\u00e1tor - m\\u00e1 v\\u0161e\\\",\\\"is_protected\\\":true,\\\"users_count\\\":1,\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"],\\\"created_at\\\":\\\"2026-02-14 09:12:31\\\",\\\"updated_at\\\":\\\"2026-02-14 09:12:31\\\"}],\\\"user_permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"],\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"shop-view-reports\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"shop-manage-shipping-methods\\\",\\\"shop-manage-suppliers\\\",\\\"shop-manage-payment-methods\\\",\\\"shop-set-maitanance-mode\\\",\\\"web-edit-legal\\\",\\\"web-view-web-settings\\\",\\\"shop-view-edit-eshop\\\",\\\"core-view-welcome-page\\\",\\\"web-manage-external-links\\\",\\\"view-core\\\"]}\"', '86', 'test@test.test'),
-(103, '2026-08-11 01:09:03', '127.0.0.1', 'update_denied', 'User', 'Zamítnut pokus o povýšení účtu na sysadmina: jonasbucina@rpsw.cz', 'User', 25, NULL, '\"{\\\"id\\\":25,\\\"user_email\\\":\\\"jonasbucina@rpsw.cz\\\",\\\"full_name\\\":\\\"Jon\\u00e1\\u0161 Bu\\u010dina\\\",\\\"dpp_hours_spent\\\":0,\\\"enable_2fa\\\":true,\\\"internal_note\\\":null,\\\"last_login_at\\\":\\\"2026-08-11 00:55:39\\\",\\\"created_at\\\":\\\"2026-02-14 08:12:31\\\",\\\"updated_at\\\":\\\"2026-08-11 00:55:39\\\",\\\"deleted_at\\\":null,\\\"role_id\\\":1,\\\"roles\\\":[{\\\"id\\\":2,\\\"role_name\\\":\\\"admin\\\",\\\"description\\\":\\\"Administr\\u00e1tor - spr\\u00e1va webu\\\",\\\"is_protected\\\":true,\\\"users_count\\\":2,\\\"permissions\\\":[\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"core-view-welcome-page\\\"],\\\"created_at\\\":\\\"2026-02-14 09:12:31\\\",\\\"updated_at\\\":\\\"2026-02-14 09:12:31\\\"}],\\\"user_permissions\\\":[\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"core-view-welcome-page\\\"],\\\"permissions\\\":[\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"shop-manage-products\\\",\\\"shop-manage-categories\\\",\\\"shop-view-orders\\\",\\\"shop-manage-customers\\\",\\\"view-web\\\",\\\"view-eshop\\\",\\\"shop-view-dashboard\\\",\\\"shop-view-logs\\\",\\\"core-view-welcome-page\\\"]}\"', '86', 'test@test.test'),
-(104, '2026-08-11 01:10:42', '127.0.0.1', 'create_denied', 'User', 'Zamítnut pokus o vytvoření nového sysadmin účtu: tset@sdf.cz', 'User', NULL, NULL, '\"{\\\"user_email\\\":\\\"tset@sdf.cz\\\",\\\"full_name\\\":\\\"jkljlkj\\\",\\\"role_id\\\":1,\\\"enable_2fa\\\":false,\\\"internal_note\\\":null,\\\"dpp_hours_spent\\\":0}\"', '86', 'test@test.test'),
-(105, '2026-08-11 01:10:48', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: test@test.test', 'User', 86, NULL, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '86', 'test@test.test'),
-(106, '2026-08-11 01:11:10', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: test@test.cz', 'User', NULL, NULL, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '0', 'test@test.cz'),
-(107, '2026-08-11 01:11:24', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: test@test.test', 'User', 86, NULL, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '86', 'test@test.test'),
-(108, '2026-08-11 01:11:37', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: test@test.test', 'User', 86, NULL, '\"{\\\"id\\\":86,\\\"user_email\\\":\\\"test@test.test\\\",\\\"full_name\\\":\\\"Test\\\",\\\"dpp_hours_spent\\\":0,\\\"enable_2fa\\\":false,\\\"internal_note\\\":null,\\\"last_login_at\\\":\\\"2026-08-11 01:11:24\\\",\\\"created_at\\\":\\\"2026-08-11 00:57:51\\\",\\\"updated_at\\\":\\\"2026-08-11 01:11:24\\\",\\\"deleted_at\\\":null,\\\"role_id\\\":2,\\\"roles\\\":[{\\\"id\\\":12,\\\"role_name\\\":\\\"test\\\",\\\"description\\\":\\\"test\\\",\\\"is_protected\\\":false,\\\"users_count\\\":1,\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"core-view-welcome-page\\\"],\\\"created_at\\\":\\\"2026-08-11 00:56:00\\\",\\\"updated_at\\\":\\\"2026-08-11 00:56:00\\\"}],\\\"user_permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"core-view-welcome-page\\\"],\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"core-view-welcome-page\\\"]}\"', '86', 'test@test.test'),
-(109, '2026-08-11 01:22:08', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: test@test.test', 'User', 86, NULL, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '86', 'test@test.test'),
-(110, '2026-08-11 01:22:11', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(111, '2026-08-11 01:22:36', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: dasdasd', 'WebNews', 6, 25, '\"{\\\"title\\\":\\\"dasdasd\\\",\\\"thema\\\":\\\"Miln\\u00edk\\\",\\\"author\\\":\\\"dasdasd\\\",\\\"message\\\":\\\"dasdasd\\\",\\\"bullet_1\\\":null,\\\"bullet_2\\\":null,\\\"bullet_3\\\":null,\\\"bullet_4\\\":null}\"', '25', 'jonasbucina@rpsw.cz');
-INSERT INTO `web_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
-(112, '2026-08-11 01:22:47', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: dasdasd', 'WebNews', 7, 25, '\"{\\\"title\\\":\\\"dasdasd\\\",\\\"thema\\\":\\\"Miln\\u00edk\\\",\\\"author\\\":\\\"dasdasd\\\",\\\"message\\\":\\\"dasdasd\\\",\\\"bullet_1\\\":null,\\\"bullet_2\\\":null,\\\"bullet_3\\\":null,\\\"bullet_4\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(113, '2026-08-11 01:22:54', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: dasdasd', 'WebNews', 8, 25, '\"{\\\"title\\\":\\\"dasdasd\\\",\\\"thema\\\":\\\"Miln\\u00edk\\\",\\\"author\\\":\\\"dasdasd\\\",\\\"message\\\":\\\"dasdasd\\\",\\\"bullet_1\\\":null,\\\"bullet_2\\\":null,\\\"bullet_3\\\":null,\\\"bullet_4\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(114, '2026-08-11 01:23:01', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: dasdasd', 'WebNews', 9, 25, '\"{\\\"title\\\":\\\"dasdasd\\\",\\\"thema\\\":\\\"Miln\\u00edk\\\",\\\"author\\\":\\\"dasdasd\\\",\\\"message\\\":\\\"dasdasd\\\",\\\"bullet_1\\\":null,\\\"bullet_2\\\":null,\\\"bullet_3\\\":null,\\\"bullet_4\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(115, '2026-08-11 01:23:46', '127.0.0.1', 'export_json', 'web/news', 'User exported 4 records (JSON) from table: Seznam aktualit a novinek.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
-(116, '2026-08-11 01:33:32', '127.0.0.1', 'PasswordChanged', 'User', 'Změna hesla u: test@test.test (provedl admin: jonasbucina@rpsw.cz)', 'User', 86, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(117, '2026-08-11 01:34:59', '127.0.0.1', 'PasswordChanged', 'User', 'Změna hesla u: jonasbucina@rpsw.cz ', 'User', 25, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(118, '2026-08-11 01:35:23', '127.0.0.1', 'PasswordChanged', 'User', 'Změna hesla u: jonasbucina@rpsw.cz ', 'User', 25, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(119, '2026-08-11 01:36:54', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: test@test.test', 'User', 86, NULL, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '86', 'test@test.test'),
-(120, '2026-08-11 01:37:24', '127.0.0.1', 'PasswordChanged', 'User', 'Změna hesla u: test@test.test (provedl admin: jonasbucina@rpsw.cz)', 'User', 86, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(121, '2026-08-11 13:58:01', '127.0.0.1', 'PasswordChanged', 'User', 'Změna hesla u: test@test.test (provedl admin: jonasbucina@rpsw.cz)', 'User', 86, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(122, '2026-08-11 14:02:51', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(123, '2026-08-11 14:02:54', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(124, '2026-08-11 15:02:31', '127.0.0.1', 'export', 'User', 'Hromadný export uživatelů.', 'User', NULL, 25, '\"{\\\"no_pagination\\\":\\\"true\\\",\\\"sort_by\\\":\\\"id\\\",\\\"sort_direction\\\":\\\"desc\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(125, '2026-08-11 15:02:32', '127.0.0.1', 'export_json', 'core/users', 'User exported 3 records (JSON) from table: Seznam Administrátorksých účtů.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
-(126, '2026-08-11 15:03:25', '127.0.0.1', 'export_json', 'web/logs', 'User exported 15 records (JSON) from table: Seznam událostí systému.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
-(127, '2026-08-11 15:24:25', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: test@test.test', 'User', 86, 25, '\"{\\\"id\\\":86,\\\"user_email\\\":\\\"test@test.test\\\",\\\"full_name\\\":\\\"Testova\\u010d Testov\\u00fd\\\",\\\"dpp_hours_spent\\\":0,\\\"enable_2fa\\\":true,\\\"internal_note\\\":null,\\\"last_login_at\\\":\\\"2026-08-11 01:36:54\\\",\\\"created_at\\\":\\\"2026-08-11 00:57:51\\\",\\\"updated_at\\\":\\\"2026-08-11 13:58:01\\\",\\\"deleted_at\\\":null,\\\"role_id\\\":12,\\\"roles\\\":[{\\\"id\\\":12,\\\"role_name\\\":\\\"test\\\",\\\"description\\\":\\\"test\\\",\\\"is_protected\\\":false,\\\"users_count\\\":1,\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"core-view-welcome-page\\\"],\\\"created_at\\\":\\\"2026-08-11 00:56:00\\\",\\\"updated_at\\\":\\\"2026-08-11 00:56:00\\\"}],\\\"user_permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"core-view-welcome-page\\\"],\\\"permissions\\\":[\\\"web-manage-administrators\\\",\\\"web-view-web-logs\\\",\\\"web-view-personal-info\\\",\\\"web-view-user-requests\\\",\\\"web-view-dashboard\\\",\\\"web-view-edit-website\\\",\\\"view-deleted\\\",\\\"web-view-sales-leads\\\",\\\"web-view-news\\\",\\\"web-view-sales-orders\\\",\\\"web-view-support-tickets\\\",\\\"web-view-job-applications\\\",\\\"core-view-welcome-page\\\"]}\"', '25', 'jonasbucina@rpsw.cz'),
-(128, '2026-08-11 15:25:43', '127.0.0.1', 'export', 'User', 'Hromadný export uživatelů.', 'User', NULL, 25, '\"{\\\"no_pagination\\\":\\\"true\\\",\\\"sort_by\\\":\\\"id\\\",\\\"sort_direction\\\":\\\"desc\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(129, '2026-08-11 15:25:43', '127.0.0.1', 'export_csv', 'core/users', 'User exported 3 records (CSV) from table: Seznam Administrátorksých účtů.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
-(130, '2026-08-11 15:51:39', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: sdfsdf', 'WebNews', 10, 25, '\"{\\\"title\\\":\\\"sdfsdf\\\",\\\"thema\\\":\\\"Miln\\u00edk\\\",\\\"author\\\":\\\"sdfsdf\\\",\\\"message\\\":\\\"sdfsdf\\\",\\\"bullet_1\\\":null,\\\"bullet_2\\\":null,\\\"bullet_3\\\":null,\\\"bullet_4\\\":null}\"', '25', 'jonasbucina@rpsw.cz'),
-(131, '2026-08-11 15:51:48', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 6, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(132, '2026-08-11 15:51:50', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 7, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(133, '2026-08-11 15:51:54', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 9, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(134, '2026-08-11 15:51:56', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 8, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(135, '2026-08-11 16:45:10', '127.0.0.1', 'restore', 'WebNews', 'Obnovení novinky: dasdasd', 'WebNews', 9, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(136, '2026-08-11 16:45:12', '127.0.0.1', 'restore', 'WebNews', 'Obnovení novinky: dasdasd', 'WebNews', 8, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(137, '2026-08-11 16:45:15', '127.0.0.1', 'restore', 'WebNews', 'Obnovení novinky: dasdasd', 'WebNews', 6, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(138, '2026-08-11 16:46:26', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: sdfsdf', 'WebNews', 10, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(139, '2026-08-11 16:46:29', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 6, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(140, '2026-08-11 16:46:46', '127.0.0.1', 'restore', 'WebNews', 'Obnovení novinky: sdfsdf', 'WebNews', 10, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(141, '2026-08-11 16:48:01', '127.0.0.1', 'restore', 'WebNews', 'Obnovení novinky: dasdasd', 'WebNews', 6, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(142, '2026-08-11 16:48:04', '127.0.0.1', 'restore', 'WebNews', 'Obnovení novinky: dasdasd', 'WebNews', 7, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(143, '2026-08-11 16:48:13', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: sdfsdf', 'WebNews', 10, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(144, '2026-08-11 16:48:15', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 6, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(145, '2026-08-11 16:48:19', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 7, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(146, '2026-08-12 01:09:48', '127.0.0.1', 'maintenance_status_changed', 'Core', 'User jonasbucina@rpsw.cz changed status - e-shopu: ENABLED (Operational).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":true,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(147, '2026-08-12 01:10:08', '127.0.0.1', 'maintenance_status_changed', 'Core', 'User jonasbucina@rpsw.cz changed status - e-shopu: DISABLED (Maintenance).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_shop_active\\\":false,\\\"maintenance_message\\\":\\\"Omlouv\\u00e1me se, na syst\\u00e9mu moment\\u00e1ln\\u011b prob\\u00edh\\u00e1 \\u00fadr\\u017eba. Zkuste to pros\\u00edm pozd\\u011bji.\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(148, '2026-08-12 01:11:39', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(149, '2026-08-12 01:11:43', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '\"{\\\"ip\\\":\\\"127.0.0.1\\\",\\\"user_agent\\\":\\\"Mozilla\\\\\\/5.0 (X11; Linux x86_64; rv:145.0) Gecko\\\\\\/20100101 Firefox\\\\\\/145.0\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(150, '2026-08-12 01:11:57', '127.0.0.1', 'maintenance_status_changed', 'Core', 'User jonasbucina@rpsw.cz changed status - webu: DISABLED (Maintenance).', 'CoreSiteSetting', 1, 25, '\"{\\\"is_web_active\\\":false,\\\"web_maintenance_message\\\":\\\"Omlouv\\u00e1me se, web je moment\\u00e1ln\\u011b v \\u00fadr\\u017eb\\u011b.\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(151, '2026-08-12 13:35:20', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 9, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(152, '2026-08-12 13:35:23', '127.0.0.1', 'soft_delete', 'WebNews', 'Smazání novinky: dasdasd', 'WebNews', 8, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(153, '2026-08-12 13:35:30', '127.0.0.1', 'force_delete_all', 'WebNews', 'Hromadné smazání koše novinek. Počet: 5', 'WebNews', NULL, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(154, '2026-08-12 13:35:38', '127.0.0.1', 'soft_delete', 'WebSupportTicket', 'Smazání ticketu ID: 6', 'WebSupportTicket', 6, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(155, '2026-08-12 13:35:41', '127.0.0.1', 'soft_delete', 'WebSupportTicket', 'Smazání ticketu ID: 5', 'WebSupportTicket', 5, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(156, '2026-08-12 13:35:46', '127.0.0.1', 'force_delete_all', 'WebSupportTicket', 'Hromadné smazání koše ticketů. Počet: 2', 'WebSupportTicket', NULL, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(157, '2026-08-12 13:36:14', '127.0.0.1', 'delete', 'Web', 'Smazán externí odkaz: test', 'WebExternalLink', 2, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
-(158, '2026-08-12 13:36:27', '127.0.0.1', 'soft_delete', 'User', 'Smazáno ID: 86', 'User', 86, 25, '\"[]\"', '25', 'jonasbucina@rpsw.cz'),
-(159, '2026-08-12 13:36:39', '127.0.0.1', 'hard_delete', 'User', 'Smazáno ID: 30', 'User', 30, 25, '\"{\\\"force_delete\\\":\\\"true\\\"}\"', '25', 'jonasbucina@rpsw.cz'),
-(160, '2026-08-12 13:36:45', '127.0.0.1', 'hard_delete', 'User', 'Smazáno ID: 86', 'User', 86, 25, '\"{\\\"force_delete\\\":\\\"true\\\"}\"', '25', 'jonasbucina@rpsw.cz');
 
 -- --------------------------------------------------------
 
@@ -1294,9 +1253,15 @@ CREATE TABLE `web_raw_request_commissions` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `note` text DEFAULT NULL,
-  `file_path` varchar(255) DEFAULT NULL
+  `note` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `web_raw_request_commissions`
+--
+
+INSERT INTO `web_raw_request_commissions` (`id`, `thema`, `contact_email`, `contact_phone`, `order_description`, `status`, `priority`, `created_at`, `updated_at`, `deleted_at`, `note`) VALUES
+(23, 'est', 'sdfds@sdf.cz', NULL, 'sddfgf', 'Nově zadané', 'Nízká', '2026-08-13 08:57:13', '2026-08-15 11:59:46', '2026-08-15 11:59:46', NULL);
 
 -- --------------------------------------------------------
 
@@ -1346,7 +1311,6 @@ CREATE TABLE `web_sales_orders` (
   `client_phone` varchar(255) DEFAULT NULL,
   `client_email` varchar(255) DEFAULT NULL,
   `order_description` text DEFAULT NULL,
-  `attachment_path` varchar(512) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -1369,6 +1333,7 @@ CREATE TABLE `web_support_tickets` (
   `subject` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `attachment_path` varchar(255) DEFAULT NULL,
+  `attachment_original_name` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -1648,6 +1613,13 @@ ALTER TABLE `user_roles`
   ADD KEY `fk_ur_role_id` (`role_id`);
 
 --
+-- Indexes for table `web_attachments`
+--
+ALTER TABLE `web_attachments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `web_attachments_attachable_index` (`attachable_type`,`attachable_id`);
+
+--
 -- Indexes for table `web_external_links`
 --
 ALTER TABLE `web_external_links`
@@ -1709,19 +1681,19 @@ ALTER TABLE `web_support_tickets`
 -- AUTO_INCREMENT for table `core_logs`
 --
 ALTER TABLE `core_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `core_permissions`
 --
 ALTER TABLE `core_permissions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
 
 --
 -- AUTO_INCREMENT for table `core_roles`
 --
 ALTER TABLE `core_roles`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `core_site_settings`
@@ -1751,7 +1723,7 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `legal_site_settings`
@@ -1781,13 +1753,13 @@ ALTER TABLE `password_reset_tokens`
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=702;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=773;
 
 --
 -- AUTO_INCREMENT for table `refresh_tokens`
 --
 ALTER TABLE `refresh_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=701;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=772;
 
 --
 -- AUTO_INCREMENT for table `shop_categories`
@@ -1811,7 +1783,7 @@ ALTER TABLE `shop_customers`
 -- AUTO_INCREMENT for table `shop_logs`
 --
 ALTER TABLE `shop_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `shop_orders`
@@ -1895,55 +1867,61 @@ ALTER TABLE `shop_suppliers`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+
+--
+-- AUTO_INCREMENT for table `web_attachments`
+--
+ALTER TABLE `web_attachments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `web_external_links`
 --
 ALTER TABLE `web_external_links`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `web_job_applications`
 --
 ALTER TABLE `web_job_applications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `web_logs`
 --
 ALTER TABLE `web_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `web_news`
 --
 ALTER TABLE `web_news`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `web_raw_request_commissions`
 --
 ALTER TABLE `web_raw_request_commissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `web_sales_leads`
 --
 ALTER TABLE `web_sales_leads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `web_sales_orders`
 --
 ALTER TABLE `web_sales_orders`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `web_support_tickets`
 --
 ALTER TABLE `web_support_tickets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- Constraints for dumped tables

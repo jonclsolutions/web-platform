@@ -5,9 +5,8 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Manages global site configuration - toggling maintenance mode for one or
- * more independent "sections" (currently shop + web) with secure password verification
- * and per-section cache invalidation.
+ * @description Manages global site configuration - toggling maintenance mode for the
+ * public web, with secure password verification and cache invalidation.
  *
  * @refactor-note (2026-08) Přepsáno z natvrdo zadrátovaného shop-only togglu na generický
  * mechanismus (`TOGGLE_GROUPS`) - `update()` teď přijímá libovolnou kombinaci
@@ -18,6 +17,12 @@
  * OPRAVEN cílový log model: lokální verze zapisovala do `WebLog::class`, ale globální
  * site settings (maintenance mode webu i e-shopu) jsou dle dohodnutého Core/Web/Shop
  * rozdělení doménou CORE, ne Web - loguje se proto nově do `CoreLog::class`.
+ *
+ * @refactor-note (2026-08-15) SHOP MAINTENANCE PŘESUNUT. `TOGGLE_GROUPS` zredukován
+ * jen na `web` - shop větev (is_shop_active, maintenance_message) žije nově v
+ * `ShopSiteSettingController` / `App\Models\Shop\ShopSiteSetting` /
+ * `shop_site_settings` tabulce. Tento controller od teď obsluhuje výhradně web
+ * maintenance a je jediný spotřebitel `core_site_settings` tabulky.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -32,10 +37,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * @description Controller responsible for site-wide status settings (shop maintenance,
- * web maintenance, and any future toggleable section).
- * @note Uses Redis/Cache invalidation per-section so `CheckCoreShopActive`/
- * `CheckCoreWebActive` middleware react instantly to configuration changes.
+ * @description Controller responsible for public web maintenance status settings.
+ * @note Uses Cache invalidation so `CheckCoreWebActive` middleware and the public status
+ * endpoint react instantly to configuration changes.
  */
 class CoreSiteSettingController extends Controller
 {
@@ -45,14 +49,9 @@ class CoreSiteSettingController extends Controller
      * @description Definuje každou nezávisle přepínatelnou "sekci" - jméno DB sloupce
      * pro aktivní stav, jméno DB sloupce pro zprávu, cache klíč použitý příslušným
      * middlewarem/veřejným status endpointem, a lidsky čitelný label pro audit log.
+     * @note (2026-08-15) Obsahuje už jen `web` - `shop` viz ShopSiteSettingController.
      */
     private const TOGGLE_GROUPS = [
-        'shop' => [
-            'active_field'  => 'is_shop_active',
-            'message_field' => 'maintenance_message',
-            'cache_key'     => 'site_setting_active',
-            'label'         => 'e-shopu',
-        ],
         'web' => [
             'active_field'  => 'is_web_active',
             'message_field' => 'web_maintenance_message',
@@ -67,8 +66,6 @@ class CoreSiteSettingController extends Controller
     public function show()
     {
         $settings = CoreSiteSetting::first() ?? CoreSiteSetting::create([
-            'is_shop_active'          => true,
-            'maintenance_message'     => 'Omlouváme se, na systému momentálně probíhá údržba.',
             'is_web_active'           => true,
             'web_maintenance_message' => 'Omlouváme se, web je momentálně v údržbě.',
         ]);

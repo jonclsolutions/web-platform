@@ -8,6 +8,7 @@
 │   │   │   │   │   │   └── PasswordResetController.php
 │   │   │   │   │   ├── AuthController.php
 │   │   │   │   │   ├── Core
+│   │   │   │   │   │   ├── CoreExternalLinkController.php
 │   │   │   │   │   │   ├── CoreLogController.php
 │   │   │   │   │   │   ├── CorePermissionController.php
 │   │   │   │   │   │   ├── CoreRoleController.php
@@ -32,7 +33,6 @@
 │   │   │   │   │   ├── TranslationController.php
 │   │   │   │   │   ├── UserController.php
 │   │   │   │   │   └── Web
-│   │   │   │   │       ├── WebExternalLinkController.php
 │   │   │   │   │       ├── WebJobApplicationController.php
 │   │   │   │   │       ├── WebLogController.php
 │   │   │   │   │       ├── WebNewsController.php
@@ -154,6 +154,7 @@
 │   │   │       └── WebSalesOrderReceived.php
 │   │   ├── Models
 │   │   │   ├── Core
+│   │   │   │   ├── CoreExternalLink.php
 │   │   │   │   ├── CoreLog.php
 │   │   │   │   ├── CorePermission.php
 │   │   │   │   ├── CoreRole.php
@@ -182,7 +183,6 @@
 │   │   │   ├── User.php
 │   │   │   └── Web
 │   │   │       ├── WebAttachment.php
-│   │   │       ├── WebExternalLink.php
 │   │   │       ├── WebJobApplication.php
 │   │   │       ├── WebLog.php
 │   │   │       ├── WebNews.php
@@ -319,10 +319,6 @@
 │   │   │   ├── sessions
 │   │   │   ├── testing
 │   │   │   └── views
-│   │   │       ├── b0da7ce40f4e9bcba2a03c4560b1eed2.php
-│   │   │       ├── c01436b0ab8e4d76735f9b9e42064cea.php
-│   │   │       ├── c95f21bb542b6be33f0059cf19be2862.php
-│   │   │       └── d73787b501c491196576390876d68bd9.php
 │   │   └── logs
 │   │       └── laravel.log
 │   ├── tests
@@ -803,6 +799,8 @@
 │   │   │   │       ├── alert-dialog.service.ts
 │   │   │   │       ├── confirm-dialog.service.spec.ts
 │   │   │   │       ├── confirm-dialog.service.ts
+│   │   │   │       ├── current-user-profile.service.spec.ts
+│   │   │   │       ├── current-user-profile.service.ts
 │   │   │   │       ├── data-handler.service.spec.ts
 │   │   │   │       ├── data-handler.service.ts
 │   │   │   │       ├── entitiy-crud.service.spec.ts
@@ -812,7 +810,13 @@
 │   │   │   │       ├── loading.service.spec.ts
 │   │   │   │       ├── loading.service.ts
 │   │   │   │       ├── logging.service.spec.ts
-│   │   │   │       └── logging.service.ts
+│   │   │   │       ├── logging.service.ts
+│   │   │   │       ├── resource-cache.service.spec.ts
+│   │   │   │       ├── resource-cache.service.ts
+│   │   │   │       ├── role-options.service.spec.ts
+│   │   │   │       ├── role-options.service.ts
+│   │   │   │       ├── table-refresh-bus.service.spec.ts
+│   │   │   │       └── table-refresh-bus.service.ts
 │   │   │   ├── public
 │   │   │   │   ├── base-public.component.ts
 │   │   │   │   ├── shop-pages
@@ -1114,4 +1118,4 @@
 ├── TODO_SHOP_PERMISSIONS.json
 └── verify-file-downloads.sh
 
-248 directories, 867 files
+248 directories, 871 files

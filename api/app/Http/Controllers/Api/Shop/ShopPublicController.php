@@ -6,6 +6,10 @@
  * @author RPSW
  * @created 2026
  * @description Provides public-facing API endpoints for shop storefront operations, including stock verification, payment/shipping configuration, and real-time coupon validation.
+ *
+ * @refactor-note (2026-08-15) `getStatus()` repointed from `App\Models\Core\CoreSiteSetting`
+ * to `App\Models\Shop\ShopSiteSetting` following the move of shop maintenance data out of
+ * the Core domain - see ShopSiteSettingController for the accompanying admin endpoint.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -16,6 +20,7 @@ use App\Models\Shop\ShopProductVariant;
 use App\Models\Shop\ShopShippingMethod;
 use App\Models\Shop\ShopPaymentMethod;
 use App\Models\Shop\ShopCoupon;
+use App\Models\Shop\ShopSiteSetting;
 use App\Http\Resources\Shop\ShopShippingMethodResource;
 use App\Http\Resources\Shop\ShopPaymentMethodResource;
 use Illuminate\Http\Request;
@@ -164,14 +169,14 @@ class ShopPublicController extends Controller
     }
 
     /**
-     * Checks global shop activity status from site settings.
+     * Checks global shop activity status from shop-owned site settings.
      *
      * @return JsonResponse Shop active status boolean.
      */
-    public function getStatus()
+    public function getStatus(): JsonResponse
     {
-        $settings = \App\Models\Core\CoreSiteSetting::first();
-        
+        $settings = ShopSiteSetting::first();
+
         return response()->json([
             'is_shop_active' => (bool) ($settings->is_shop_active ?? true)
         ]);

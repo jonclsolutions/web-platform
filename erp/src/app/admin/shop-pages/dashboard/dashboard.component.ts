@@ -26,10 +26,7 @@
  * admin-layoutu, viz jeho @refactor-note) - `isShopActive`/`shopMaintenanceMessage` +
  * potvrzovací modál s heslem (`openShopMaintenanceModal()`/`submitShopMaintenanceChange()`).
  * Karta je viditelná jen s permission `shop-set-maitanance-mode` (`*appHasPermission`),
- * proto nový import `HasPermissionDirective`. Endpoint `core/settings` je sdílený s Core
- * i Web maintenance sekcí - `PUT` posílá jen `is_shop_active`/`maintenance_message` pole,
- * ostatní sekce (web) `CoreSiteSettingController::update()` nechá beze změny (viz jeho
- * `TOGGLE_GROUPS` mechanismus).
+ * proto nový import `HasPermissionDirective`.
  *
  * @refactor-note (2026-08-9) TTL CACHE (backlog: "zbytečně moc dotazů na API"). Dashboard
  * je typický post-login landing point pro obchodní roli, ke kterému se admin často vrací
@@ -40,6 +37,20 @@
  * čerstvý fetch, ne jen mount-time navigaci. Jen počáteční `ngOnInit()` volání respektuje TTL.
  * `loadAll(force)`/`loadMaintenanceStatus(force)` - `dashboard.component.html` upraven tak,
  * aby tlačítko "Obnovit" volalo `loadAll(true)` místo `loadAll()`.
+ *
+ * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA: `loadMaintenanceStatus()` a
+ * `submitShopMaintenanceChange()` volaly sdílený `core/settings` endpoint, který od
+ * přesunu shop maintenance do Shop domény (viz ShopSiteSettingController) obsluhuje už jen
+ * WEB maintenance a `is_shop_active`/`maintenance_message` v requestu tiše ignoruje.
+ * Důsledek v produkci: PUT request "prošel" (200 OK, heslo se ověřilo), ale zapsal se do
+ * `core_site_settings` (web pole), ne do `shop_site_settings` - UI si po odeslání
+ * OPTIMISTICKY nastavilo zelenou (`this.isShopActive = this.pendingShopTargetState`), ale
+ * po refreshi `loadMaintenanceStatus()` znovu načetlo `core/settings`, který teď `is_shop_active`
+ * vůbec nevrací (`undefined` -> `!!undefined` -> `false`) -> karta spadla zpět na oranžovou
+ * a `shop_site_settings.is_shop_active` v DB reálně zůstalo nezměněné. Oba volání přepojena
+ * na `shop/settings` (ShopSiteSettingController::show/update), který vrací/přijímá přesně
+ * `is_shop_active`/`maintenance_message` shape, takže zbytek komponenty (šablona, optimistic
+ * update) beze změny funguje správně.
  *
  * @dependencies
  * - DataHandler: Centralizovaná HTTP komunikace (baseUrl + error handling) — nahrazuje HttpClient.
@@ -458,10 +469,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ── Režim údržby e-shopu ────────────────────────────────────────────
 
   /**
-   * @description Načte aktuální stav režimu údržby e-shopu ze sdíleného `core/settings`
+   * @description Načte aktuální stav režimu údržby e-shopu ze shop-owned `shop/settings`
    * endpointu, přes krátkou TTL cache (1 min - stav je bezpečnostně/provozně citlivý,
    * proto kratší TTL než u zbytku dashboardu). Volá se samostatně od `loadAll()`, ať
    * výpadek shop-KPI dat neblokuje zobrazení stavu údržby a naopak.
+   * @bugfix-note (2026-08-15) Dříve volalo `core/settings` (sdílený Core endpoint) - po
+   * přesunu shop maintenance do Shop domény ten endpoint `is_shop_active` už vůbec
+   * nevrací. Přepojeno na `shop/settings` (ShopSiteSettingController::show).
    * @param force Bypass cache - voláno po vlastní úspěšné změně stavu.
    */
   private loadMaintenanceStatus(force: boolean = false): void {
@@ -471,7 +485,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.resourceCache.get(
       this.MAINTENANCE_CACHE_KEY,
-      () => this.dataHandler.get<any>('core/settings'),
+      () => this.dataHandler.get<any>('shop/settings'),
       this.MAINTENANCE_TTL_MS
     ).subscribe({
       next: (res) => {
@@ -495,11 +509,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Odešle změnu stavu e-shopu na `core/settings`. Posílá jen
-   * `is_shop_active`/`maintenance_message` pole - `CoreSiteSettingController::update()`
-   * je generický a upraví jen sekce, které se skutečně pošlou (viz TOGGLE_GROUPS), takže
-   * tímhle voláním se web-maintenance sekce nedotkne. Po úspěchu invaliduje maintenance
-   * cache klíč, ať další čtení (i jinde v adminu) odráží novou hodnotu.
+   * @description Odešle změnu stavu e-shopu na `shop/settings`
+   * (ShopSiteSettingController::update). Po úspěchu invaliduje maintenance cache klíč, ať
+   * další čtení (i jinde v adminu) odráží novou hodnotu.
+   * @bugfix-note (2026-08-15) Dříve volalo `core/settings` - viz bugfix-note u
+   * `loadMaintenanceStatus()` a hlavičky souboru pro plné vysvětlení dopadu.
    */
   submitShopMaintenanceChange(): void {
     if (!this.shopConfirmPasswordValue.trim()) {
@@ -507,7 +521,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.dataHandler.put<any>('core/settings', {
+    this.dataHandler.put<any>('shop/settings', {
       is_shop_active: this.pendingShopTargetState,
       maintenance_message: this.shopMaintenanceMessage || 'Omlouváme se, na systému momentálně probíhá údržba.',
       confirm_password: this.shopConfirmPasswordValue
