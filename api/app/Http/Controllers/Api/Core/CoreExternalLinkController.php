@@ -22,6 +22,14 @@
  *   `LogsActivity` trait, zapisující do `WebLog::class` (externí odkazy patří dle
  *   Core/Web/Shop rozdělení do Web domény - viz `web_external_links` tabulka).
  *
+ * @bugfix-note (2026-08-15) `destroy()` (soft-delete do koše) a `forceDeleteAllTrashed()`
+ * (trvalé smazání) obě logovaly stejný `event_type = 'delete'`, na rozdíl od konvence
+ * `soft_delete`/`force_delete_all` používané zbytkem web/core controllerů v aplikaci - z
+ * auditní stopy tak nešlo poznat, jestli šlo o vratné, nebo nevratné smazání. Sjednoceno:
+ * `destroy()` teď loguje `soft_delete`, `forceDeleteAllTrashed()` loguje
+ * `force_delete_all` - konzistentní s WebNewsController/WebSalesOrderController/
+ * UserController/CoreRoleController atd.
+ *
  * @note Struktura kontroleru (index/store/show/update/destroy/restore/forceDeleteAllTrashed)
  * zrcadlí ostatní resource controllery v aplikaci pro konzistenci.
  */
@@ -143,7 +151,7 @@ class CoreExternalLinkController extends Controller
         $name = $link->name;
         $link->delete();
 
-        $this->logAction($request, WebLog::class, 'delete', 'Web', "Smazán externí odkaz: {$name}", (int) $id, 'CoreExternalLink');
+        $this->logAction($request, WebLog::class, 'soft_delete', 'Web', "Smazán externí odkaz: {$name}", (int) $id, 'CoreExternalLink');
         return response()->json(null, 204);
     }
 
@@ -173,7 +181,7 @@ class CoreExternalLinkController extends Controller
         $count = $ownTrashed->count();
         $ownTrashed->forceDelete();
 
-        $this->logAction($request, WebLog::class, 'delete', 'Web', "Trvale smazáno {$count} externích odkazů z koše");
+        $this->logAction($request, WebLog::class, 'force_delete_all', 'Web', "Trvale smazáno {$count} externích odkazů z koše");
         return response()->json(null, 204);
     }
 }

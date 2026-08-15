@@ -12,6 +12,14 @@
  * Str::limit(description, 990) a Str::limit(json_encode(context_data), 60000) ochranu -
  * trait dělá totéž centrálně (viz LogsActivity::safeContextData()), takže lokální
  * duplicita mizí beze změny chování. Doménově beze změny (WebLog::class).
+ *
+ * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA FILTRŮ: `index()` vůbec nezpracovával
+ * filtry `id` a `title`, přestože `NEWS_FILTER_COLUMNS` (frontend) je nabízí. Laravel
+ * neznámé query parametry mlčky ignoruje, takže `?id=17` nebo `?title=...` neměly
+ * žádný efekt - jediné, co se z requestu vždy aplikovalo, bylo `sort_by`/`sort_direction`,
+ * proto to navenek vypadalo, že filtr "jen otočí pořadí". Doplněno `id` (přesná shoda)
+ * a `title` (částečná shoda přes LIKE, konzistentně s `author`) - stejný vzor, jaký už
+ * správně používá např. WebSalesOrderController::index().
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -49,6 +57,16 @@ class WebNewsController extends Controller
             $query->where(fn($q) => $q->where('title', 'like', "%$s%")
                 ->orWhere('author', 'like', "%$s%")
                 ->orWhere('message', 'like', "%$s%"));
+        }
+
+        // Přesná shoda - ID je číselný identifikátor, částečná shoda by tu nedávala smysl.
+        if ($request->filled('id')) {
+            $query->where('id', $request->input('id'));
+        }
+
+        // Částečná shoda (stejně jako 'author' níže) - uživatel typicky zná jen část titulku.
+        if ($request->filled('title')) {
+            $query->where('title', 'like', '%' . $request->input('title') . '%');
         }
 
         if ($request->filled('thema')) {

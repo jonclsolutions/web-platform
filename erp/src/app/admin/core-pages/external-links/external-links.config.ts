@@ -77,7 +77,6 @@ export const EXTERNAL_LINK_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'url', header: 'URL', type: 'link' },
   { key: 'position', header: 'Pořadí', type: 'text' },
   { key: 'is_active', header: 'Aktivní', type: 'boolean' },
-  { key: 'created_at', header: 'Vytvořeno', type: 'date', format: 'short' }
 ];
 
 export const EXTERNAL_LINK_TRASH_COLUMNS: Core.ColumnDefinition[] = [

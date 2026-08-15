@@ -13,6 +13,14 @@
  * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
  * lokální duplicitní logAction() - stejný důvod jako u ostatních Web kontrolerů (viz
  * WebRawRequestCommissionController hlavička). Doménově beze změny (WebLog::class).
+ *
+ * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA FILTRŮ: `index()` zpracovával jen textové
+ * filtry (`first_name`, `last_name`, `email`, `position_name`, `state`) přes LIKE, ale
+ * `id` z `JOB_APPLICATION_FILTER_COLUMNS` (frontend) se nikde nezpracovával - stejný
+ * symptom jako u WebNewsController (viz jeho bugfix-note stejné datum). `id` teď má
+ * vlastní přesnou shodu (`where('id', ...)`), oddělenou od LIKE smyčky pro textová pole -
+ * konzistentní s WebSalesLeadController/WebRawRequestCommissionController, které tenhle
+ * vzor už měly správně.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -58,6 +66,11 @@ class WebJobApplicationController extends Controller
                 ->orWhere('last_name', 'like', "%$s%")
                 ->orWhere('email', 'like', "%$s%")
                 ->orWhere('position_name', 'like', "%$s%"));
+        }
+
+        // Přesná shoda - ID je číselný identifikátor, LIKE by tu nedávalo smysl.
+        if ($request->filled('id')) {
+            $query->where('id', $request->input('id'));
         }
 
         foreach (['first_name', 'last_name', 'email', 'position_name', 'state'] as $f) {

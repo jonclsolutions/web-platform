@@ -42,9 +42,8 @@ protected $fillable = [
 'priority',
 'state',
 'subject',
-'description',
-'attachment_path'
-    ];
+'description'
+];
 
 /**
      * @var array<string, string> The attributes that should be cast to native types.

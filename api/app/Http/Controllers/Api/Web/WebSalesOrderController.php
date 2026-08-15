@@ -13,6 +13,18 @@
  * @refactor-note (2026-08) `attachment_path` odstraněno, nahrazeno `web_attachments`.
  * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
  * lokální duplicitní logAction(). Doménově beze změny (WebLog::class).
+ *
+ * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA (GDPR): `store()` teď explicitně přemapuje
+ * `dataProcessingAgreement`/`tosAgreement` (camelCase klíče, jak je posílá
+ * order-form.component.ts/html a jak je validuje StoreWebSalesOrderRequest) na
+ * snake_case DB sloupce `data_processing_agreement`/`tos_agreement` PŘED voláním
+ * `WebSalesOrder::create()`. Dřív se tyto klíče posílaly do `create()` beze změny -
+ * `$fillable` je neznal (ani sloupce v DB neexistovaly), takže Eloquent je mlčky
+ * zahodil navzdory tomu, že `StoreWebSalesOrderRequest` vyžadovala `required|accepted`
+ * u obou. Viz WebSalesOrder.php pro doplněný `$fillable`/`$casts` a přiloženou SQL
+ * migraci pro nové sloupce. `update()` tyto hodnoty záměrně NEPŘIJÍMÁ a nemění -
+ * `UpdateWebSalesOrderRequest` o nich vůbec neví - administrátor při editaci záznamu
+ * souhlas dodatečně needituje, jde o jednorázový zápis v okamžiku podání.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -106,6 +118,14 @@ class WebSalesOrderController extends Controller
         try {
             $validated = $request->safe()->except(['attachments', 'lead_id']);
 
+            // Přemapování camelCase klíčů z formuláře (viz StoreWebSalesOrderRequest
+            // validation rules) na snake_case DB sloupce - viz bugfix-note v hlavičce
+            // souboru. Bez tohoto kroku Eloquent tyto klíče mlčky zahodí (nejsou ve
+            // $fillable pod camelCase názvem) a souhlas se nikam neuloží.
+            $validated['data_processing_agreement'] = (bool) ($validated['dataProcessingAgreement'] ?? false);
+            $validated['tos_agreement'] = (bool) ($validated['tosAgreement'] ?? false);
+            unset($validated['dataProcessingAgreement'], $validated['tosAgreement']);
+
             if ($leadToken) {
                 $order = DB::transaction(function () use ($leadToken, $validated) {
                     $lead = WebSalesLead::where('public_token', $leadToken)
@@ -171,7 +191,8 @@ class WebSalesOrderController extends Controller
 
     /**
      * Updates an existing order record. Newly uploaded attachments are ADDED to the
-     * existing set (not replaced).
+     * existing set (not replaced). Consent fields are intentionally untouched here -
+     * see bugfix-note in file header.
      */
     public function update(UpdateWebSalesOrderRequest $request, $id): JsonResponse
     {

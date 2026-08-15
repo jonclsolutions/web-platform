@@ -8,6 +8,13 @@
  * @description Read/write access to the shop-domain audit log (shop_logs) - e-commerce
  * activity across products, orders, customers, coupons, categories, suppliers, shipping
  * and payment methods. Structurally mirrors CoreLogController / WebLogController.
+ *
+ * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA FILTRŮ: `index()` zpracovával jen
+ * `event_type`/`module` (přesná shoda) a `search` (LIKE jen na `description`). Frontend
+ * (shop-pages logs config FILTER_COLUMNS) ale nabízí i `id`, `user_plain` a `origin` -
+ * tyhle tři se nikde nezpracovávaly. Stejná díra byla nalezena a opravena souběžně u
+ * WebLogController a CoreLogController (identická šablona, viz jejich bugfix-notes
+ * stejné datum). Doplněno `id` (přesná shoda) a `user_plain`/`origin` (LIKE).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -32,12 +39,26 @@ class ShopLogController extends Controller
 
         $query = ShopLog::query();
 
+        // Přesná shoda - ID je číselný identifikátor.
+        if ($request->filled('id')) {
+            $query->where('id', $request->input('id'));
+        }
+
         if ($request->filled('event_type')) {
             $query->where('event_type', $request->event_type);
         }
 
         if ($request->filled('module')) {
             $query->where('module', $request->module);
+        }
+
+        // Částečná shoda - uživatel typicky zná jen část e-mailu.
+        if ($request->filled('user_plain')) {
+            $query->where('user_plain', 'like', '%' . $request->input('user_plain') . '%');
+        }
+
+        if ($request->filled('origin')) {
+            $query->where('origin', 'like', '%' . $request->input('origin') . '%');
         }
 
         if ($s = $request->input('search')) {

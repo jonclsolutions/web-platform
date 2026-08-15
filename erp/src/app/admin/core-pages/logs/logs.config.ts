@@ -1,3 +1,38 @@
+/**
+ * @file logs.config.ts
+ * @path src/app/admin/core-pages/logs/logs.config.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2026
+ * @description Static configuration (buttons, table/filter/detail columns) for the Core
+ * system logs (audit trail) page. Read-only - no FORM_FIELDS, no create/edit/delete
+ * buttons, since log entries are never created or edited through the admin UI, only
+ * written internally by LogsActivity trait calls throughout the backend.
+ *
+ * @bugfix-note (2026-08-15, part 1+2, superseded) Dřívější verze doplnila "Core" a
+ * maintenance eventy, ale nikdy nebyla ověřena proti VŠEM core controllerům - obsahovala
+ * moduly, které ve skutečnosti patří do web_logs ("News", "SalesOrder", "SupportTicket",
+ * "JobApplication", "RawRequestCommission", "BusinessLog", "Translation"), a chyběl jí
+ * "Legal" i drtivá většina _denied eventů.
+ *
+ * @bugfix-note (2026-08-15, part 3 - DEFINITIVNÍ) KOMPLETNÍ PŘEPOČET po plošné kontrole
+ * všech pěti core controllerů, které do core_logs skutečně zapisují: AuthController
+ * (module='Auth'), CoreRoleController (module='CoreRole'), UserController (module='User'),
+ * DocumentSectionController + SiteConfigurationController (obě module='Legal' - právní
+ * dokumenty a firemní/site konfigurace sdílí jeden modul, viz jejich vlastní refactor-notes
+ * o přesunu z chybného shop_logs). CorePermissionController potvrzen jako čistě read-only -
+ * do logu nezapisuje nic. "Core" odstraněno - CoreSiteSettingController, jediný zdroj této
+ * hodnoty, byl mezitím smazán (web/shop maintenance migrace). "News"/"SalesOrder"/
+ * "SupportTicket"/"JobApplication"/"RawRequestCommission"/"BusinessLog"/"Translation"
+ * odstraněny - patří do web_logs, ne core_logs (viz business-logs.config.ts). "Role"
+ * opraveno na "CoreRole". "login" opraveno na "login_success"/"login_failed" (přesné
+ * event_type hodnoty, které AuthController skutečně zapisuje). "bulk_hard_delete"
+ * opraveno na "force_delete_all". Doplněna kompletní sada _denied eventů
+ * (create_denied, update_denied, delete_denied, restore_denied, sync_permissions_denied,
+ * force_delete_all_denied, password_change_denied) - bezpečnostně nejcitlivější kategorie
+ * v celém logu (zamítnuté pokusy o privilege escalation / zásah do cizího/sysadmin účtu),
+ * dřív úplně nefiltrovatelná stejně jako unauthorized_maintenance_toggle_attempt.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const BUTTONS: Core.TableButtons[] = [
@@ -40,7 +75,30 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
     key: 'event_type',
     header: 'Událost',
     type: 'select',
-    options: ["create", "update", "soft_delete", "hard_delete", "restore", "login", "bulk_hard_delete"],
+    options: [
+      "create",
+      "create_denied",
+      "update",
+      "update_denied",
+      "soft_delete",
+      "hard_delete",
+      "delete",
+      "delete_denied",
+      "restore",
+      "restore_denied",
+      "force_delete_all",
+      "force_delete_all_denied",
+      "sync_permissions",
+      "sync_permissions_denied",
+      "PasswordChanged",
+      "password_change_denied",
+      "password_notification_rate_limited",
+      "login_success",
+      "login_failed",
+      "logout",
+      "export",
+      "error"
+    ],
     placeholder: '-- Typ akce --',
     canSort: true
   },
@@ -48,7 +106,12 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
     key: 'module',
     header: 'Modul',
     type: 'select',
-    options: ["Auth", "BusinessLog", "JobApplication", "News", "RawRequestCommission", "Role", "SalesLead", "SalesOrder", "SupportTicket", "Translation", "User"],
+    options: [
+      "Auth",
+      "CoreRole",
+      "User",
+      "Legal"
+    ],
     placeholder: '-- Modul --',
     canSort: true
   },

@@ -16,6 +16,15 @@
  *        info-banner v šabloně). Backend permission `web-sales-orders-create` proto
  *        existuje (pro interní API endpoint), ale ve UI zatím není co gatovat -
  *        nic tu tedy NEBYLO přidáno, aby nevznikl mrtvý/neviditelný permission check.
+ *
+ * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA (GDPR): Odstraněn mrtvý `FORM_FIELDS` záznam
+ * `dataProcessingAgreement` (`show_in_create:true` bez jakéhokoliv create tlačítka v UI,
+ * `show_in_edit:false` - nikdy se nezobrazil vůbec nikde) a nahrazen READ-ONLY
+ * zobrazením obou reálně existujících souhlasů (`data_processing_agreement`,
+ * `tos_agreement`) v `SALES_ORDER_DETAILS_COLUMNS`. Backend teď tyto hodnoty skutečně
+ * ukládá (viz WebSalesOrderController::store() a WebSalesOrder.php) - patří do Detailů,
+ * kde admin/compliance audit reálně kontroluje, jestli klient souhlas dal, ne do
+ * needitovatelného formuláře.
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -55,6 +64,8 @@ export const SALES_ORDER_TOOLBAR_BUTTONS: Core.Button[] = [
  * přílohy do `web_attachments` (viz WebSalesOrderController). `show_in_edit` nastaveno na
  * `true` (dřív `false`) - backend `update()` teď umí přílohy přidávat i při editaci
  * záznamu, ne jen při vytvoření (přidávají se k existujícím, nenahrazují je).
+ * @bugfix-note (2026-08-15) Mrtvý `dataProcessingAgreement` field odstraněn - viz
+ * hlavička souboru. Souhlas se nyní zobrazuje jen v DETAILS_COLUMNS (read-only).
  */
 export const SALES_ORDER_FORM_FIELDS: Core.InputDefinition[] = [
   {
@@ -115,14 +126,6 @@ export const SALES_ORDER_FORM_FIELDS: Core.InputDefinition[] = [
     type: 'files',
     required: false,
     editable: true, show_in_edit: true, show_in_create: true
-  },
-  {
-    column_name: 'dataProcessingAgreement',
-    label: 'Souhlas se zpracováním údajů',
-    type: 'checkbox',
-    required: true,
-    errorMessage: 'Souhlas je povinný.',
-    editable: true, show_in_edit: false, show_in_create: true
   }
 ];
 
@@ -151,6 +154,9 @@ export const SALES_ORDER_FILTER_COLUMNS: Core.FilterColumns[] = [
 /**
  * @refactor-note (2026-08-2) `attachment_url` (type: 'file') nahrazeno `attachments`
  * (type: 'files') - detail teď vypíše VŠECHNY přílohy záznamu, ne jen jednu.
+ * @bugfix-note (2026-08-15) Doplněny `data_processing_agreement` a `tos_agreement`
+ * (read-only, typ boolean) - viz hlavička souboru. Umístěny hned za `order_description`,
+ * ať jsou v detailu vidět pohromadě s obsahem objednávky, kterého se souhlas týká.
  */
 export const SALES_ORDER_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Objednávky', type: 'text' },
@@ -161,6 +167,8 @@ export const SALES_ORDER_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'client_phone', displayName: 'Telefon', type: 'text' },
   { key: 'client_address', displayName: 'Adresa', type: 'text' },
   { key: 'order_description', displayName: 'Popis realizace', type: 'text' },
+  { key: 'data_processing_agreement', displayName: 'Souhlas se zpracováním údajů (GDPR)', type: 'boolean' },
+  { key: 'tos_agreement', displayName: 'Souhlas s obchodními podmínkami', type: 'boolean' },
   { key: 'attachments', displayName: 'Přílohy / Smlouva', type: 'files' },
   { key: 'created_at', displayName: 'Datum vytvoření', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Poslední změna', type: 'date', format: 'medium' }
