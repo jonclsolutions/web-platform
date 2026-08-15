@@ -24,9 +24,9 @@
  *
  * @refactor-note (2026-08) `$permission` nyní podporuje více klíčů oddělených `|`
  * (logika OR - stačí mít KTERÝKOLIV z nich), např.
- * `permission:web-view-web-settings|shop-set-maitanance-mode` na `core/settings` -
+ * `permission:web-view-web-settings|shop-set-maintenance-mode` na `core/settings` -
  * tenhle endpoint obsluhuje jak plný formulář firemních údajů (web-view-web-settings),
- * tak rychlý přepínač údržby e-shopu v headeru (shop-set-maitanance-mode), a jsou to
+ * tak rychlý přepínač údržby e-shopu v headeru (shop-set-maintenance-mode), a jsou to
  * dvě různé skupiny uživatelů, které se nemusí překrývat.
  */
 

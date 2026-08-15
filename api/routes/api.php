@@ -59,7 +59,7 @@
  *      core_role_permissions) proběhla samostatným SQL skriptem mimo Laravel migrace
  *      (projekt migrace nepoužívá, jede z SQL dumpu).
  * @refactor-note (2026-08-15) PŘESUN SHOP MAINTENANCE Z CORE DO SHOP SEKCE. Endpoint
- *      `core/settings` přestal gatovat shop toggle - `shop-set-maitanance-mode` permission
+ *      `core/settings` přestal gatovat shop toggle - `shop-set-maintenance-mode` permission
  *      klíč přesunut na nový vyhrazený blok `shop/settings`, obsluhovaný
  *      `ShopSiteSettingController`. Veřejný `shop/public/settings` endpoint přepojen z
  *      `CoreSiteSettingController::publicShow` na `ShopSiteSettingController::publicShow`.
@@ -358,9 +358,9 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         // Přepínač údržby e-shopu (dashboard karta). Přesunuto z core/settings.
         Route::prefix('settings')->group(function () {
             Route::get('/', [ShopSiteSettingController::class, 'show'])
-                ->middleware('permission:shop-set-maitanance-mode');
+                ->middleware('permission:shop-set-maintenance-mode');
             Route::put('/', [ShopSiteSettingController::class, 'update'])
-                ->middleware('permission:shop-set-maitanance-mode');
+                ->middleware('permission:shop-set-maintenance-mode');
         });
 
         // Products

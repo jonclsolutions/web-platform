@@ -718,9 +718,9 @@ describe('AdminLayoutComponent', () => {
       expect(buttons.length).toBe(0);
     });
 
-    it('by mělo zobrazit přepínač údržby, pouze pokud má uživatel oprávnění "shop-set-maitanance-mode"', () => {
+    it('by mělo zobrazit přepínač údržby, pouze pokud má uživatel oprávnění "shop-set-maintenance-mode"', () => {
       permissionServiceMock.hasPermission.and.callFake(
-        (perm: string) => perm === 'shop-set-maitanance-mode'
+        (perm: string) => perm === 'shop-set-maintenance-mode'
       );
       createComponent();
       fixture.detectChanges();
@@ -731,7 +731,7 @@ describe('AdminLayoutComponent', () => {
 
     it('by NEMĚLO zobrazit přepínač údržby bez příslušného oprávnění', () => {
       permissionServiceMock.hasPermission.and.callFake(
-        (perm: string) => perm !== 'shop-set-maitanance-mode'
+        (perm: string) => perm !== 'shop-set-maintenance-mode'
       );
       createComponent();
       fixture.detectChanges();
@@ -748,7 +748,7 @@ describe('AdminLayoutComponent', () => {
       expect(permissionServiceMock.hasPermission).toHaveBeenCalledWith('view-web');
       expect(permissionServiceMock.hasPermission).toHaveBeenCalledWith('view-eshop');
       expect(permissionServiceMock.hasPermission).toHaveBeenCalledWith(
-        'shop-set-maitanance-mode'
+        'shop-set-maintenance-mode'
       );
     });
   });

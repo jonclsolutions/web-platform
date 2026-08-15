@@ -25,7 +25,7 @@
  * @refactor-note (2026-08) Přidána karta "Režim údržby e-shopu" (přesunuto z headeru
  * admin-layoutu, viz jeho @refactor-note) - `isShopActive`/`shopMaintenanceMessage` +
  * potvrzovací modál s heslem (`openShopMaintenanceModal()`/`submitShopMaintenanceChange()`).
- * Karta je viditelná jen s permission `shop-set-maitanance-mode` (`*appHasPermission`),
+ * Karta je viditelná jen s permission `shop-set-maintenance-mode` (`*appHasPermission`),
  * proto nový import `HasPermissionDirective`.
  *
  * @refactor-note (2026-08-9) TTL CACHE (backlog: "zbytečně moc dotazů na API"). Dashboard
@@ -55,7 +55,7 @@
  * @dependencies
  * - DataHandler: Centralizovaná HTTP komunikace (baseUrl + error handling) — nahrazuje HttpClient.
  * - AlertDialogService: Zpětná vazba při úspěchu/chybě změny režimu údržby.
- * - HasPermissionDirective: Gate karty údržby na permission `shop-set-maitanance-mode`.
+ * - HasPermissionDirective: Gate karty údržby na permission `shop-set-maintenance-mode`.
  * - ResourceCacheService: TTL cache pro stats/maintenance fetch (viz refactor-note výše).
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
  */

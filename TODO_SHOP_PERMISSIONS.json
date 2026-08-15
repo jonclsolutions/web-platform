@@ -102,7 +102,7 @@
       },
       {
         "resource": "settings (maintenance toggle)",
-        "current_permission_key": "shop-set-maitanance-mode",
+        "current_permission_key": "shop-set-maintenance-mode",
         "note": "Beze změny - je to toggle akce (OR alternativa k core-settings-* na core/settings routě), ne CRUD zdroj."
       }
     ]
@@ -117,7 +117,7 @@
     "shop-categories-view / -create / -update  (BEZ -delete, protože backend nemá restore/force-delete-all routy - ověřit case by case, možná destroy() existuje jako hard-delete rovnou bez koše, pak by -delete dávalo smysl jen na destroy)",
     "shop-shipping-methods-view / -create / -update / -delete",
     "shop-payment-methods-view / -update  (BEZ create/delete - backend routa neexistuje)",
-    "shop-view-logs, shop-view-dashboard, shop-set-maitanance-mode, shop-view-edit-eshop - beze změny"
+    "shop-view-logs, shop-view-dashboard, shop-set-maintenance-mode, shop-view-edit-eshop - beze změny"
   ],
   "step_by_step_procedure": [
     {
