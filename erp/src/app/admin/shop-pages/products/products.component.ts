@@ -9,15 +9,28 @@
  * - BaseDataComponent: Provides base CRUD functionality.
  * - ConfirmDialogService: Facilitates user confirmation for deletion actions.
  * - Core Providers: Handles API communication and state management.
+ * - ResourceCacheService: TTL cache pro lookup data (kategorie, dodavatelé) - viz
+ *   refactor-note 2026-08-9.
+ *
+ * @refactor-note (2026-08-9) TTL CACHE pro lookup data (backlog: "zbytečně moc dotazů na
+ * API"). `loadCategories()`/`loadSuppliers()` (plní `category_id`/`supplier_id` select
+ * options ve formuláři a filtru) se dřív natahovaly znovu při KAŽDÉM vstupu na stránku -
+ * stejný vzor jako `RoleOptionsService` u administrátorů. Cache 5 min (stejný řád jako
+ * ostatní "select lookup" zdroje v adminu). Pozn.: na rozdíl od `RoleOptionsService`
+ * (sdílená napříč stránkami, protože roli lze editovat jen na jednom místě) tahle cache
+ * NENÍ invalidovaná při editaci kategorií na `CategoriesComponent` - cross-page invalidace
+ * by vyžadovala sdílenou službu (podobně jako `RoleOptionsService`), což zatím není nutné:
+ * TTL 5 min je dostatečně krátké a kategorie se nemění tak často jako role.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { PRODUCT_BUTTONS, PRODUCT_COLUMNS, TRASH_PRODUCT_COLUMNS, FILTER_COLUMNS, TOOLBAR_BUTTONS, PRODUCT_FORM_FIELDS } from './products.config';
 import { Variant, ProductImage, Category, Supplier, Product } from './';
 
@@ -37,6 +50,11 @@ import { Variant, ProductImage, Category, Supplier, Product } from './';
 export class ProductsComponent extends BaseDataComponent<Product> implements OnInit, OnDestroy {
   override apiEndpoint: string = 'shop/products';
   @ViewChild('activeTable') activeTable!: any;
+
+  private resourceCache = inject(ResourceCacheService);
+  private readonly CATEGORIES_CACHE_KEY = 'shop-products:categories';
+  private readonly SUPPLIERS_CACHE_KEY = 'shop-products:suppliers';
+  private readonly LOOKUP_TTL_MS = 5 * 60 * 1000;
 
   categories: Category[] = [];
   suppliers: Supplier[] = [];
@@ -81,7 +99,6 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.formFields = JSON.parse(JSON.stringify(PRODUCT_FORM_FIELDS));
     this.loadCategories();
     this.loadSuppliers();
-    this.refreshData();
   }
 
   override ngOnDestroy(): void {
@@ -178,10 +195,15 @@ override loadData(): void {
   handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
 
   /**
-   * @description Fetches all available categories to populate dropdowns and filter selectors.
+   * @description Fetches all available categories to populate dropdowns and filter
+   * selectors, přes TTL cache (viz refactor-note v hlavičce souboru).
    */
   private loadCategories(): void {
-    this.dataHandler.getCollection<Category>('shop/categories?no_pagination=true')
+    this.resourceCache.get(
+      this.CATEGORIES_CACHE_KEY,
+      () => this.dataHandler.getCollection<Category>('shop/categories?no_pagination=true'),
+      this.LOOKUP_TTL_MS
+    )
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (data) => { this.categories = data; this.updateFormFieldsOptions(); this.cd.markForCheck(); },
@@ -190,10 +212,15 @@ override loadData(): void {
   }
 
   /**
-   * @description Fetches all available suppliers for product assignment.
+   * @description Fetches all available suppliers for product assignment, přes TTL cache
+   * (viz refactor-note v hlavičce souboru).
    */
   private loadSuppliers(): void {
-    this.dataHandler.getCollection<Supplier>('shop/suppliers?no_pagination=true')
+    this.resourceCache.get(
+      this.SUPPLIERS_CACHE_KEY,
+      () => this.dataHandler.getCollection<Supplier>('shop/suppliers?no_pagination=true'),
+      this.LOOKUP_TTL_MS
+    )
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (data) => { this.suppliers = data; this.updateFormFieldsOptions(); this.cd.markForCheck(); },

@@ -37,20 +37,22 @@
         <div class="table-and-pagination-container">
           @if (!showTrashTable) {
             <app-table-builder #activeTable
-              [buttons]="buttons"
-              [data]="data"
-              [columns]="productColumns"
-              [currentFilters]="filters"
-              [isFullWidth]="true"
-              [tableCaption]="'Seznam produktů'"
-              [apiEndpoint]="apiEndpoint"
-              (itemDeleted)="refreshData()"
-              (createFormOpened)="handleCreateFormOpened()"
-              (editFormOpened)="handleEditFormOpened($event)"
-              (viewDetailsOpened)="handleViewDetails($event)"
-              (openVariantsModal)="openVariantsModal($event)"
-              (openImagesModal)="openImagesModal($event)">
-            </app-table-builder>
+  [buttons]="buttons"
+  [data]="data"
+  [columns]="productColumns"
+  [currentFilters]="filters"
+  [isFullWidth]="true"
+  [tableCaption]="'Seznam produktů'"
+  [apiEndpoint]="apiEndpoint"
+  [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+  (refreshRequested)="forceFullRefresh(filters)"
+  (itemDeleted)="refreshData()"
+  (createFormOpened)="handleCreateFormOpened()"
+  (editFormOpened)="handleEditFormOpened($event)"
+  (viewDetailsOpened)="handleViewDetails($event)"
+  (openVariantsModal)="openVariantsModal($event)"
+  (openImagesModal)="openImagesModal($event)">
+</app-table-builder>
           }
           @if (showTrashTable) {
             <app-trash-table-builder

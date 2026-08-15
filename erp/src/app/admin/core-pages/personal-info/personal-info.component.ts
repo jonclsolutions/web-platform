@@ -25,8 +25,17 @@
  * cross-field validace hesel se pravděpodobně nikdy nespouštěla). Přidán `Validators.pattern`
  * na `new_password` dle sdílené `PASSWORD_PATTERN` a live checklist požadavků hesla.
  *
+ * @refactor-note (2026-08-8) Zdroj profilu přepnut z přímého `EntityCrudService.getOne()`
+ * na sdílenou `CurrentUserProfileService` (backlog: "zbytečně moc dotazů na API") -
+ * WelcomePageComponent načítá TENTÝŽ `core/users/{id}` záznam nezávisle, takže uživatel
+ * co po loginu prošel welcome-page a pak klikl na "Osobní Informace" dělal dva identické
+ * requesty za sebou. `onToggle2fa()` a `onSubmit()` (změna hesla) teď po úspěchu volají
+ * `profileService.invalidate()`, ať sdílená cache neukazuje starý stav jinde v adminu.
+ * `EntityCrudService` zůstává jen pro `updatePassword()` (mutace, ne čtení - cache se
+ * netýká).
  * @dependencies
- * - EntityCrudService: Jednotlivé CRUD volání (getOne, update, updatePassword) pro endpoint 'core/users'.
+ * - EntityCrudService: `updatePassword()` pro endpoint 'core/users'.
+ * - CurrentUserProfileService: TTL-cached čtení vlastního profilu, sdílené s WelcomePageComponent.
  * - ReactiveFormsModule: Enables form group management and validation for password change inputs.
  * - AuthService: Used to identify the currently authenticated user for profile requests.
  * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla.
@@ -41,6 +50,7 @@ import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
 import { DataHandler } from '../../../core/services/data-handler.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
+import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { LoadingService } from '../../../core/services/loading.service';
 import { PASSWORD_PATTERN } from '../../../shared/constants/password-policy';
@@ -82,6 +92,7 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
 
   private readonly authService = inject(AuthService);
   public readonly alertDialogService = inject(AlertDialogService);
+  private readonly profileService = inject(CurrentUserProfileService);
 
   private destroy$ = new Subject<void>();
 
@@ -121,13 +132,11 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Retrieves the current user's details from the server using the active session ID.
+   * @description Retrieves the current user's details přes sdílenou TTL-cached
+   * `CurrentUserProfileService` (viz refactor-note 2026-08-8 v hlavičce souboru).
    */
   private loadCurrentUserData(): void {
-    const userId = this.authService.getUserId();
-    if (!userId) return;
-
-    this.crud.getOne(parseInt(userId, 10))
+    this.profileService.getProfile()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data: any) => {
@@ -150,6 +159,11 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     return (this.userData as any)?.roles?.[0]?.role_name ?? null;
   }
 
+  /**
+   * @description Přepne self-service 2FA. Po úspěchu invaliduje sdílenou profilovou
+   * cache (viz refactor-note v hlavičce souboru), ať WelcomePageComponent/další čtení
+   * neukazují starou hodnotu `enable_2fa`.
+   */
   onToggle2fa(): void {
     if (this.isForced2fa || this.isSaving2fa) return;
 
@@ -165,6 +179,7 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
         next: () => {
           this.enable2faValue = newValue;
           this.isSaving2fa = false;
+          this.profileService.invalidate();
           this.cd.markForCheck();
         },
         error: () => {
@@ -212,7 +227,10 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Submits the password change request to the server if form validation passes.
+   * @description Submits the password change request to the server if form validation
+   * passes. Po úspěchu invaliduje sdílenou profilovou cache (heslo se nepromítá do
+   * `userData`, ale je to konzistentní bezpečnostní zvyk - jakákoliv mutace vlastního
+   * účtu invaliduje jeho cache).
    */
   onSubmit(): void {
     if (this.passwordForm.invalid) return;
@@ -234,6 +252,7 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
         next: () => {
           this.passwordForm.reset();
           this.showPasswordPopup = false;
+          this.profileService.invalidate();
           this.alertDialogService.open('Změna hesla', 'Heslo bylo úspěšně změněno.', 'success');
           this.errorMessage = null;
           this.cd.markForCheck();

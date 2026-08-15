@@ -42,6 +42,8 @@
               [inputDefinitions]="formFields"
               [currentFilters]="filters"
               [isFullWidth]="isTableFullWidth"
+              [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
               [tableCaption]="'Seznam aktivních dodavatelů'"
               [apiEndpoint]="apiEndpoint"
               (itemDeleted)="handleItemDeleted()"

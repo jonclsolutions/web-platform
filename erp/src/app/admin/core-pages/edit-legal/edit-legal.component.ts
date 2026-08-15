@@ -9,6 +9,8 @@
  * - BaseDataComponent: Manages core CRUD operations and API communication.
  * - ConfirmDialogService: Facilitates secure deletion of content sections.
  * - AlertDialogService: Provides feedback to users after operations.
+ * - ResourceCacheService: TTL cache pro document-types/languages/section fetche (viz
+ *   refactor-note 2026-08-8).
  * - RxJS: Used for reactive data fetching and cross-language consistency checks.
  *
  * @refactor-note (2026) `activeTab: 1 | 2` bylo natvrdo napsané pro přesně 2 typy dokumentů
@@ -16,17 +18,45 @@
  * dynamickým načítáním typů dokumentů z nového endpointu `legal/document-types`
  * (viz DocumentTypeController) - přidání dalšího typu dokumentu v budoucnu tak
  * nebude vyžadovat žádnou další změnu v tomhle souboru.
+ *
+ * @refactor-note (2026-08-8) TTL CACHE (backlog: "zbytečně moc dotazů na API"). Tahle
+ * stránka měla dva zdroje zbytečných requestů:
+ * 1) `loadDocumentTypes()`/`loadLanguages()` se natahovaly znovu při KAŽDÉM vstupu na
+ *    stránku, přestože typy dokumentů a jazyky se mění jen zřídka - teď cache 10 min.
+ * 2) `checkCompleteness()` volá `loadAllData()` JEDNOU ZA KAŽDÝ JAZYK při KAŽDÉM
+ *    přepnutí tabu/jazyka - přidána `fetchSections()` obalující stejné volání TTL cache
+ *    (2 min) s klíčem podle `document_type_id` + `lang`, sdílenou s `refreshData()`.
+ * Po jakékoliv mutaci (saveEdit/submitAdd/confirmDelete) se invaliduje jen cache klíč
+ * PRÁVĚ upravované kombinace.
+ *
+ * @refactor-note (2026-08-11) KRITICKÁ OPRAVA - `usesPaginatedList = false` (backlog:
+ * "zbytečně moc dotazů na API", stejná třída bugu jako u `CategoriesComponent`). Tahle
+ * komponenta NEPOUŽÍVÁ stránkování vůbec - `this.data` je plněno výhradně vlastním
+ * `override refreshData()`/`fetchSections()` podle `document_type_id`+`lang`. Bez
+ * `usesPaginatedList = false` ale `BaseDataComponent.initWithAuthCheck()` navíc spouští
+ * `this.list.loadInitial()` - pokus o STRÁNKOVANÝ fetch na `legal/document-sections`.
+ * Backend (`DocumentSectionController::index()`) ale na tomhle endpointu vůbec
+ * nestránkuje - vrací holé pole `DocumentSectionResource::collection($data)`, ne
+ * `{ data: [...], total, ... }`. `GenericTableService`/`PaginatedListStore` pak udělá
+ * `this.data = response.data`, kde `response` JE to pole samo -> `response.data` je
+ * `undefined` -> `this.data` (přes `this.list.data`) se přepíše na `undefined` ->
+ * runtime chyba `ctx.data is undefined` v šabloně (`@if (data.length === 0)`).
+ * Stejnou cestou byl zranitelný i globální "Aktualizovat vše" button v headeru a
+ * 15minutový background refresh (oba volaly zděděné `forceFullRefresh()`, které jde
+ * přes `this.list`) - proto `forceFullRefresh()` teď PŘEPSÁNO, ať místo toho zavolá
+ * `invalidateCurrentSections()` + `refreshData()` (skutečný zdroj dat téhle komponenty).
  */
 
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 
 interface DocumentSection {
   id: number;
@@ -58,8 +88,13 @@ interface DocumentTypeItem {
 })
 export class EditLegalComponent extends BaseDataComponent<DocumentSection> implements OnInit {
   override apiEndpoint: string = 'legal/document-sections';
+  override usesPaginatedList = false;
 
   private readonly LANG_MODULE = 'web';
+  private readonly META_TTL_MS = 10 * 60 * 1000;
+  private readonly SECTIONS_TTL_MS = 2 * 60 * 1000;
+
+  private resourceCache = inject(ResourceCacheService);
 
   /** Typy dokumentů (GDPR/TOS/Cookies/...) načtené z API - taby se vykreslují podle tohoto pole. */
   documentTypes: DocumentTypeItem[] = [];
@@ -91,6 +126,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     private alertDialog: AlertDialogService
   ) {
     super(dataHandler, cd, genericTableService);
+    // Chráníme se před `undefined` i kdyby cokoliv (staré cache, race, budoucí regrese)
+    // omylem přepsalo `this.data` přes zděděné `this.list` mechanismy - šablona s tímhle
+    // polem počítá jako s polem vždy.
+    this.data = [];
   }
 
   override ngOnInit(): void {
@@ -100,10 +139,15 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
   }
 
   /**
-   * @description Načte dostupné typy právních dokumentů a nastaví první z nich jako výchozí tab.
+   * @description Načte dostupné typy právních dokumentů a nastaví první z nich jako
+   * výchozí tab. Cache 10 min (viz refactor-note v hlavičce souboru).
    */
   private loadDocumentTypes(): void {
-    this.dataHandler.getCollection<DocumentTypeItem>('legal/document-types')
+    this.resourceCache.get(
+      'edit-legal:document-types',
+      () => this.dataHandler.getCollection<DocumentTypeItem>('legal/document-types'),
+      this.META_TTL_MS
+    )
       .pipe(catchError(() => of([])))
       .subscribe((types) => {
         this.documentTypes = types ?? [];
@@ -118,10 +162,15 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
   }
 
   /**
-   * @description Retrieves supported languages for the 'web' module and initializes the active language state.
+   * @description Retrieves supported languages for the 'web' module and initializes the
+   * active language state. Cache 10 min (viz refactor-note v hlavičce souboru).
    */
   private loadLanguages(): void {
-    this.dataHandler.getCollection<any>(`languages/${this.LANG_MODULE}`)
+    this.resourceCache.get(
+      `edit-legal:languages:${this.LANG_MODULE}`,
+      () => this.dataHandler.getCollection<any>(`languages/${this.LANG_MODULE}`),
+      this.META_TTL_MS
+    )
       .pipe(catchError(() => of({ languages: [] })))
       .subscribe((res: any) => {
         this.languages = (res?.languages ?? []).filter((l: any) => l.active !== false);
@@ -133,6 +182,30 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
         this.refreshData();
         this.cd.markForCheck();
       });
+  }
+
+  /**
+   * @description Sjednocené načtení sekcí pro danou kombinaci typu dokumentu + jazyka,
+   * přes TTL cache (viz refactor-note v hlavičce souboru). SDÍLENO mezi `refreshData()`
+   * a `checkCompleteness()` - stejný klíč, stejný cache záznam, ať se stejná data
+   * netahají dvakrát nezávisle.
+   */
+  private fetchSections(documentTypeId: number, lang: string): Observable<DocumentSection[]> {
+    const key = `edit-legal:sections:${documentTypeId}:${lang}`;
+    return this.resourceCache.get(
+      key,
+      () => this.loadAllData({ document_type_id: documentTypeId, lang }),
+      this.SECTIONS_TTL_MS
+    );
+  }
+
+  /**
+   * @description Zneplatní cache klíč PRÁVĚ upravované kombinace (aktivní typ dokumentu +
+   * aktivní jazyk) - volat po každé úspěšné mutaci (create/update/delete sekce).
+   */
+  private invalidateCurrentSections(): void {
+    if (this.activeTabId === null) return;
+    this.resourceCache.invalidate(`edit-legal:sections:${this.activeTabId}:${this.activeLang}`);
   }
 
   /**
@@ -158,17 +231,32 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
   override refreshData(): void {
     if (this.activeTabId === null) return;
 
-    const params = {
-      document_type_id: this.activeTabId,
-      lang: this.activeLang
-    };
-    this.loadAllData(params).subscribe({
+    this.fetchSections(this.activeTabId, this.activeLang).subscribe({
       next: (res) => {
         this.data = Array.isArray(res) ? res : [];
         this.checkCompleteness();
         this.cd.markForCheck();
+      },
+      error: () => {
+        // I na chybu se `data` musí vrátit do prokazatelně platného stavu (prázdné pole),
+        // ne zůstat undefined - viz refactor-note (2026-08-11) v hlavičce souboru.
+        this.data = [];
+        this.cd.markForCheck();
       }
     });
+  }
+
+  /**
+   * @description "Tvrdý" refresh - přepsáno (ne zděděno z `BaseDataComponent`), ať
+   * globální "Aktualizovat vše" tlačítko v headeru a periodický background refresh
+   * (oba volají `forceFullRefresh()`) míří na SKUTEČNÝ zdroj dat téhle komponenty, ne
+   * na `this.list` (které tahle komponenta vůbec nepoužívá - viz refactor-note
+   * 2026-08-11 v hlavičce souboru).
+   */
+  override forceFullRefresh(_currentFilters: Core.FilterParams = this.defaultFilters): void {
+    if (this.activeTabId === null) return;
+    this.invalidateCurrentSections();
+    this.refreshData();
   }
 
   /**
@@ -189,7 +277,9 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
 
   /**
    * @description Performs an asynchronous check across all languages to identify missing translations for existing sections.
-   * @note Uses forkJoin to aggregate data for every supported language and compares position availability.
+   * @note Uses forkJoin to aggregate data for every supported language and compares position availability. Přes `fetchSections()`
+   * sdílí cache se zobrazenou sekcí, takže opakované přepínání tabů/jazyků nevyvolává
+   * pokaždé nové requesty - viz refactor-note v hlavičce souboru.
    */
   private checkCompleteness(): void {
     if (this.languages.length <= 1 || this.activeTabId === null) {
@@ -199,10 +289,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     }
 
     const requests = this.languages.map(lang =>
-      this.loadAllData({
-        document_type_id: this.activeTabId,
-        lang: lang.code
-      }).pipe(
+      this.fetchSections(this.activeTabId!, lang.code).pipe(
         map(res => ({
           lang: lang.code,
           positions: new Set<number>((Array.isArray(res) ? res : []).map((s: DocumentSection) => s.position))
@@ -289,6 +376,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       next: () => {
         this.cancelEdit(item.id);
         this.saving = false;
+        this.invalidateCurrentSections();
         this.refreshData();
         this.alertDialog.open('Úspěch', 'Změny byly uloženy.', 'success');
       },
@@ -347,6 +435,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       next: () => {
         this.cancelAdd();
         this.saving = false;
+        this.invalidateCurrentSections();
         this.refreshData();
         this.alertDialog.open('Úspěch', 'Sekce byla úspěšně přidána.', 'success');
       },
@@ -371,6 +460,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
     if (confirmed) {
       this.deleteData(item.id).subscribe({
         next: () => {
+          this.invalidateCurrentSections();
           this.refreshData();
           this.alertDialog.open('Úspěch', 'Sekce byla smazána.', 'success');
         },

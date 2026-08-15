@@ -31,10 +31,21 @@
  * ostatní sekce (web) `CoreSiteSettingController::update()` nechá beze změny (viz jeho
  * `TOGGLE_GROUPS` mechanismus).
  *
+ * @refactor-note (2026-08-9) TTL CACHE (backlog: "zbytečně moc dotazů na API"). Dashboard
+ * je typický post-login landing point pro obchodní roli, ke kterému se admin často vrací
+ * modul switcherem. `loadAll()` (7 souběžných requestů) a `loadMaintenanceStatus()` teď jdou
+ * přes `ResourceCacheService` (2 min TTL). PONECHÁN existující `interval(120_000)` polling
+ * (dashboard se má aktivně obnovovat, dokud je otevřený) - ale volání z intervalu i z tlačítka
+ * "Obnovit" jsou explicitně `force=true` (obcházejí cache), protože jde o VĚDOMĚ vyžádaný
+ * čerstvý fetch, ne jen mount-time navigaci. Jen počáteční `ngOnInit()` volání respektuje TTL.
+ * `loadAll(force)`/`loadMaintenanceStatus(force)` - `dashboard.component.html` upraven tak,
+ * aby tlačítko "Obnovit" volalo `loadAll(true)` místo `loadAll()`.
+ *
  * @dependencies
  * - DataHandler: Centralizovaná HTTP komunikace (baseUrl + error handling) — nahrazuje HttpClient.
  * - AlertDialogService: Zpětná vazba při úspěchu/chybě změny režimu údržby.
  * - HasPermissionDirective: Gate karty údržby na permission `shop-set-maitanance-mode`.
+ * - ResourceCacheService: TTL cache pro stats/maintenance fetch (viz refactor-note výše).
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
  */
 
@@ -45,6 +56,7 @@ import { forkJoin, interval, Subscription, catchError, of } from 'rxjs';
 import { DataHandler } from '../../../core/services/data-handler.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } from './';
 
 /**
@@ -66,7 +78,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private sanitizer = inject(DomSanitizer);
   private alertDialogService = inject(AlertDialogService);
+  private resourceCache = inject(ResourceCacheService);
   private refreshSub?: Subscription;
+
+  private readonly TTL_MS = 2 * 60 * 1000;
+  private readonly STATS_CACHE_KEY = 'shop-dashboard:all';
+  private readonly MAINTENANCE_CACHE_KEY = 'shop-dashboard:maintenance';
+  private readonly MAINTENANCE_TTL_MS = 60 * 1000;
 
   loading = true;
   loadingError = false;
@@ -150,7 +168,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadAll();
     this.loadMaintenanceStatus();
-    this.refreshSub = interval(120_000).subscribe(() => this.loadAll());
+    this.refreshSub = interval(120_000).subscribe(() => this.loadAll(true));
   }
 
   ngOnDestroy(): void {
@@ -159,17 +177,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Fetches all dashboard modules concurrently using forkJoin and handles global
-   * loading/error states.
+   * loading/error states. Přes TTL cache (viz refactor-note v hlavičce souboru).
+   * @param force Bypass cache - použito ručním tlačítkem "Obnovit" a periodickým pollingem
+   * (interval 120s), oba případy jsou vědomě vyžádaný čerstvý fetch, ne mount-time navigace.
    * @note Každé volání je zabaleno vlastním `catchError(() => of(null))` — jednotlivý selhavší
    * widget (např. výpadek endpointu s doporučeními) tak nespadne celý dashboard, jen se
    * příslušná karta nevykreslí. DataHandler přitom na pozadí případnou chybu ještě centrálně
    * nahlásí přes AlertDialogService, takže uživatel o výpadku ví.
    */
-  loadAll(): void {
+  loadAll(force: boolean = false): void {
     this.loading = true;
     this.loadingError = false;
 
-    forkJoin({
+    if (force) {
+      this.resourceCache.invalidate(this.STATS_CACHE_KEY);
+    }
+
+    this.resourceCache.get(this.STATS_CACHE_KEY, () => forkJoin({
       orders: this.dataHandler.getPaginatedCollection<any>('shop/orders?per_page=10&sort_by=created_at&sort_direction=desc').pipe(catchError(() => of(null))),
       allOrders: this.dataHandler.getPaginatedCollection<any>('shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc').pipe(catchError(() => of(null))),
       customers: this.dataHandler.getPaginatedCollection<any>('shop/customers?per_page=1').pipe(catchError(() => of(null))),
@@ -177,7 +201,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       lowStock: this.dataHandler.getPaginatedCollection<any>('shop/products?low_stock=true&no_pagination=true').pipe(catchError(() => of(null))),
       coupons: this.dataHandler.getPaginatedCollection<any>('shop/coupons?is_active=true&per_page=1').pipe(catchError(() => of(null))),
       pendingOrders: this.dataHandler.getPaginatedCollection<any>('shop/orders?status=pending&per_page=1').pipe(catchError(() => of(null))),
-    }).subscribe({
+    }), this.TTL_MS).subscribe({
       next: (res) => {
         this.processData(res);
         this.lastRefreshed = new Date();
@@ -435,11 +459,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Načte aktuální stav režimu údržby e-shopu ze sdíleného `core/settings`
-   * endpointu. Volá se samostatně od `loadAll()`, ať výpadek shop-KPI dat neblokuje
-   * zobrazení stavu údržby a naopak.
+   * endpointu, přes krátkou TTL cache (1 min - stav je bezpečnostně/provozně citlivý,
+   * proto kratší TTL než u zbytku dashboardu). Volá se samostatně od `loadAll()`, ať
+   * výpadek shop-KPI dat neblokuje zobrazení stavu údržby a naopak.
+   * @param force Bypass cache - voláno po vlastní úspěšné změně stavu.
    */
-  private loadMaintenanceStatus(): void {
-    this.dataHandler.get<any>('core/settings').subscribe({
+  private loadMaintenanceStatus(force: boolean = false): void {
+    if (force) {
+      this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
+    }
+
+    this.resourceCache.get(
+      this.MAINTENANCE_CACHE_KEY,
+      () => this.dataHandler.get<any>('core/settings'),
+      this.MAINTENANCE_TTL_MS
+    ).subscribe({
       next: (res) => {
         if (res) {
           this.isShopActive = !!res.is_shop_active;
@@ -464,7 +498,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * @description Odešle změnu stavu e-shopu na `core/settings`. Posílá jen
    * `is_shop_active`/`maintenance_message` pole - `CoreSiteSettingController::update()`
    * je generický a upraví jen sekce, které se skutečně pošlou (viz TOGGLE_GROUPS), takže
-   * tímhle voláním se web-maintenance sekce nedotkne.
+   * tímhle voláním se web-maintenance sekce nedotkne. Po úspěchu invaliduje maintenance
+   * cache klíč, ať další čtení (i jinde v adminu) odráží novou hodnotu.
    */
   submitShopMaintenanceChange(): void {
     if (!this.shopConfirmPasswordValue.trim()) {
@@ -480,6 +515,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: () => {
         this.isShopActive = this.pendingShopTargetState;
         this.showShopMaintenanceModal = false;
+        this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
         this.alertDialogService.open(
           'Úspěch',
           this.pendingShopTargetState ? 'E-shop je nyní aktivní.' : 'Režim údržby byl aktivován.',

@@ -8,19 +8,29 @@
  * @dependencies
  * - BaseDataComponent: Provides base CRUD and state management.
  * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
+ * - ResourceCacheService: TTL cache pro languages/settings fetch (viz refactor-note 2026-08-8).
  * - CommonModule/FormsModule: Standard Angular modules for structural directives and two-way data binding.
  *
  * @refactor-note (2026) Přidáno `google_analytics_id` do `settings` state a do obou větví
  * `saveSettings()` (FormData i JSON) - GA4 Measurement ID se ukládá stejnou cestou jako
  * ostatní firemní údaje (`legal/config/settings`), žádný nový endpoint nebyl potřeba.
+ *
+ * @refactor-note (2026-08-8) TTL CACHE (backlog: "zbytečně moc dotazů na API").
+ * `loadLanguages()` (10 min TTL - jazyky se mění zřídka) a `loadAll()` (2 min TTL -
+ * firemní údaje + sociální sítě) teď jdou přes `ResourceCacheService` místo přímého
+ * `dataHandler` volání při každém vstupu na stránku. Po KAŽDÉ úspěšné mutaci (uložení
+ * nastavení, uložení/smazání sociální sítě) se cache klíč `web-settings:all` explicitně
+ * invaliduje PŘED voláním `loadAll()` - jinak by `loadAll()` po vlastní úspěšné mutaci
+ * vrátil čerstvě neplatná (stará) cachovaná data místo právě uložené hodnoty.
  */
 
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { environment } from '../../../../environments/environment';
 import { LangMeta, SiteSetting, SocialLink } from './'
 /**
@@ -40,6 +50,11 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   override apiEndpoint = 'legal/config';
 
   private readonly LANG_MODULE = 'web';
+  private readonly LANG_TTL_MS = 10 * 60 * 1000;
+  private readonly SETTINGS_TTL_MS = 2 * 60 * 1000;
+  private readonly SETTINGS_CACHE_KEY = 'web-settings:all';
+
+  private resourceCache = inject(ResourceCacheService);
 
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
@@ -81,10 +96,15 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
 
   /**
-   * @description Fetches available active languages for the module to enable localization support.
+   * @description Fetches available active languages for the module to enable localization
+   * support. Cache 10 min (viz refactor-note v hlavičce souboru).
    */
   private loadLanguages(): void {
-    this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.LANG_MODULE}`).subscribe({
+    this.resourceCache.get(
+      `web-settings:languages:${this.LANG_MODULE}`,
+      () => this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.LANG_MODULE}`),
+      this.LANG_TTL_MS
+    ).subscribe({
       next: (res) => {
         this.languages = (res?.languages ?? []).filter(l => l.active !== false);
 
@@ -143,14 +163,20 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
 
   /**
-   * @description Synchronizes all site settings and social links from the server.
+   * @description Synchronizes all site settings and social links from the server. Cache
+   * 2 min (viz refactor-note v hlavičce souboru) - volající, kteří data právě změnili,
+   * musí PŘED tímto voláním zavolat `resourceCache.invalidate(SETTINGS_CACHE_KEY)`.
    */
   private loadAll(): void {
     this.settingsLoading = true;
     this.socialLoading   = true;
     this.cd.markForCheck();
 
-    this.dataHandler.get<any>('legal/config').subscribe({
+    this.resourceCache.get(
+      this.SETTINGS_CACHE_KEY,
+      () => this.dataHandler.get<any>('legal/config'),
+      this.SETTINGS_TTL_MS
+    ).subscribe({
       next: (res) => {
         if (res.settings) {
           this.settings = {
@@ -188,7 +214,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     });
   }
 
-  override refreshData(): void { this.loadAll(); }
+  override refreshData(): void {
+    this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
+    this.loadAll();
+  }
 
   /**
    * @description Handles local selection and validation of a new logo file.
@@ -275,6 +304,8 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   /**
    * @description Handles successful settings save and cleanup of local file states.
+   * Invaliduje cache PŘED `loadAll()` (viz refactor-note v hlavičce souboru), ať se
+   * znovu nenačte právě zneplatněná stará hodnota.
    * @param res The updated settings returned by the server.
    */
   private onSettingsSaved(res: any): void {
@@ -298,6 +329,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.alertDialogService.open('Uloženo', 'Firemní údaje byly úspěšně uloženy.', 'success');
     setTimeout(() => { this.settingsSaved = false; this.cd.markForCheck(); }, 2500);
 
+    this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
     this.loadAll();
   }
 
@@ -384,6 +416,8 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   /**
    * @description Submits a single social link row update or creation to the server.
+   * Invaliduje cache PŘED `loadAll()` v `onSuccess`, ze stejného důvodu jako
+   * `onSettingsSaved()`.
    * @param index The index of the row to save.
    */
   saveSocialLink(index: number): void {
@@ -406,6 +440,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
     const onSuccess = () => {
       this.alertDialogService.open('Uloženo', `Odkaz „${link.name}" byl uložen.`, 'success');
+      this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
       this.loadAll();
     };
     const onError = (err: any) => {
@@ -441,6 +476,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   /**
    * @description Requests confirmation and deletes a social network link from the server.
+   * Invaliduje cache PŘED `loadAll()`, ze stejného důvodu jako výše.
    * @param index The index of the row to delete.
    */
   async deleteSocialLink(index: number): Promise<void> {
@@ -463,6 +499,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       next: () => {
         if (link._iconPreview) URL.revokeObjectURL(link._iconPreview);
         this.alertDialogService.open('Smazáno', `Odkaz „${link.name}" byl smazán.`, 'success');
+        this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
         this.loadAll();
       },
       error: (err: any) =>

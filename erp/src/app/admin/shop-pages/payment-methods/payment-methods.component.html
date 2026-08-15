@@ -38,6 +38,8 @@
             [buttons]="buttons"
             [data]="data"
             [columns]="columns"
+            [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
             [currentFilters]="filters"
             [inputDefinitions]="formFields"
             [isFullWidth]="isTableFullWidth"

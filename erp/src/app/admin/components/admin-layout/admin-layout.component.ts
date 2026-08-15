@@ -9,6 +9,7 @@
  * - AuthService: Manages user authentication and session status.
  * - PermissionService: Validates access to specific administrative modules.
  * - LoadingService: Observes global loading states for the UI.
+ * - TableRefreshBusService: Vyvolání globálního "Aktualizovat vše" tlačítka pro tabulky.
  * @redesign-note (2026) Přidán `isMobileActionsOpen` + `toggleMobileActions()`/`closeMobileActions()`.
  *      Na mobilu (viz CSS) header schovává většinu obsahu (uživatel, hodiny, přepínač modulů,
  *      wiki/bug odkazy), aby se nic neořezávalo - místo toho se všechno přesune do vysouvacího
@@ -29,6 +30,12 @@
  *      `showConfirmModal`/`confirmPasswordValue`/`pendingTargetState`/`toggleShopStatus()`/
  *      `submitShopStatusChange()`/`cancelShopStatusChange()`/`loadShopSettings()` byly
  *      odstraněny, protože už v této komponentě nemají žádné využití.
+ * @refactor-note (2026-08-6) Přidáno globální "Aktualizovat vše" tlačítko (desktop header
+ *      i mobilní panel) - `refreshAllTables()` deleguje na `TableRefreshBusService`, který
+ *      zneplatní CELOU cache `GenericTableService` (žádný síťový dotaz sám o sobě) a vyšle
+ *      signál, na který aktuálně mountnutá stránka s tabulkou zareaguje reálným
+ *      refetchem (viz BaseDataComponent.initWithAuthCheck()). Součást řešení backlog
+ *      tasku "zbytečně moc dotazů na API" / lepší UX správy tabulek.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID } from '@angular/core';
@@ -40,6 +47,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { LoadingService } from '../../../core/services/loading.service';
+import { TableRefreshBusService } from '../../../core/services/table-refresh-bus.service';
 
 /**
  * @description The layout shell for the administration area, handling sidebar controls and navigation.
@@ -87,7 +95,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private permissionService: PermissionService,
     private cdr: ChangeDetectorRef,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private tableRefreshBus: TableRefreshBusService
   ) { 
     this.isLoadingGlobal$ = this.loadingService.isLoading$;
   }
@@ -167,6 +176,16 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   closeMobileActions(): void {
     this.isMobileActionsOpen = false;
     this.cdr.markForCheck();
+  }
+
+  /**
+   * @description Vyvolá globální "Aktualizovat vše" napříč všemi tabulkami v adminu.
+   * Zneplatní celou cache `GenericTableService` (žádný síťový dotaz sám o sobě) a
+   * přinutí aktuálně mountnutou stránku s tabulkou k tvrdému refetchi. Ostatní, právě
+   * neotevřené stránky se přefetchnou samy při příští návštěvě.
+   */
+  refreshAllTables(): void {
+    this.tableRefreshBus.triggerGlobalRefresh();
   }
 
   /**

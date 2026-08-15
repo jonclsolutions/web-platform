@@ -8,6 +8,9 @@
         i isButtonVisible(button) (permission), ne jen button.isActive - viz
         table-builder.component.ts stejné datum. Musí zůstat SYNCHRONIZOVANÉ (stejná
         podmínka na obou místech), jinak by hlavička a řádky měly různý počet sloupců.
+    @refactor-note (2026-08-6): Do toolbaru přidáno tlačítko "Aktualizovat"
+        (onRefreshClick()) a badge "Aktualizováno v HH:MM:SS" (lastUpdatedAt Input) -
+        viz table-builder.component.ts stejné datum, backlog "zbytečně moc dotazů na API".
 -->
 
 <div class="table-responsive">
@@ -97,13 +100,26 @@
 </div>
 
 <div class="toolbar">
+<button type="button" class="table-refresh-btn" (click)="onRefreshClick()" title="Načíst aktuální data">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<polyline points="23 4 23 10 17 10"/>
+<polyline points="1 20 1 14 7 14"/>
+<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+</svg>
+    Aktualizovat
+</button>
+
+@if (lastUpdatedAt) {
+<span class="table-last-updated">
+    Aktualizováno v {{ lastUpdatedAt | date:'HH:mm:ss' }}
+</span>
+  }
+
 <label class="checkbox-container">
 <input type="checkbox" [(ngModel)]="isFullWidth">
     Zobrazit tabulku na šířce stránky
 </label>
 </div>
-
-<!-- existující .toolbar div beze změny -->
 
 @if (showExportPopup) {
 <app-export-popup-builder

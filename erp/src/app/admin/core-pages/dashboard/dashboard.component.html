@@ -7,13 +7,31 @@
     @description: System-wide overview - resource counters shared across Web and Shop,
         quick navigation into Core management screens, and the core_logs audit feed.
     @dependencies: CoreDashboardComponent (getIcon, quickStats, navSections, recentActivity)
+    @refactor-note (2026-08-8): přidáno "Aktualizovat" tlačítko + "Aktualizováno v
+        HH:mm:ss" badge do hlavičky - viz dashboard.component.ts stejné datum, backlog
+        task "zbytečně moc dotazů na API".
 -->
 
 <div class="core-dashboard">
 
   <div class="cd-header-bar">
-    <h1 class="cd-header-title">Systémový přehled</h1>
-    <p class="cd-header-sub">Sdílená nastavení a zdroje napříč weblovou prezentací a e-shopem</p>
+    <div>
+      <h1 class="cd-header-title">Systémový přehled</h1>
+      <p class="cd-header-sub">Sdílená nastavení a zdroje napříč weblovou prezentací a e-shopem</p>
+    </div>
+    <div class="cd-header-actions">
+      @if (lastUpdatedAt) {
+        <span class="cd-last-updated">Aktualizováno v {{ lastUpdatedAt | date:'HH:mm:ss' }}</span>
+      }
+      <button type="button" class="cd-refresh-btn" (click)="refresh()" [disabled]="isRefreshing" title="Načíst aktuální data">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        Aktualizovat
+      </button>
+    </div>
   </div>
 
   @if (errorMessage) {

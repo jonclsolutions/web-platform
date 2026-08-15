@@ -47,6 +47,8 @@
               [data]="data"
               [columns]="orderColumns"
               [currentFilters]="filters"
+              [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
               [isFullWidth]="true"
               [tableCaption]="currentMode === 'pending_tasks' ? 'Objednávky k vyřízení' : 'Seznam objednávek'"
               [apiEndpoint]="apiEndpoint"

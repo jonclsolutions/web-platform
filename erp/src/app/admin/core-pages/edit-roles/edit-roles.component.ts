@@ -29,38 +29,42 @@
  * @refactor-note (2026-08-7) DVOUÚROVŇOVÉ GRUPOVÁNÍ + VYHLEDÁVÁNÍ V OPRÁVNĚNÍCH. Po
  *              granularizaci permission systému (viz api.php 2026-08-5/6) narostl počet
  *              jednotlivých klíčů natolik, že plochý seznam pod modulem přestal být
- *              přehledný (např. sekce "Web" dnes obsahuje desítky řádků - news-view/
- *              -create/-update/-delete, sales-leads-*, support-tickets-* atd. za sebou).
- *              Přidána DRUHÁ úroveň grupování - "zdroj" (resource) - odvozená ČISTĚ
- *              parsováním `permission_key` podle konvence zavedené při granularizaci:
- *              `{modul}-{zdroj}-{akce}`, kde akce ∈ view|create|update|delete (viz
- *              `parsePermissionKey()`). Modul se bere z `permission.module` sloupce v DB
- *              (beze změny, dynamické jako dřív) - z klíče se odstraní jen prefix modulu
- *              a případný akční suffix, zbytek je "zdroj" (např. 'web-news-update' ->
- *              modul 'web' + zdroj 'news' + akce 'update'). ŽÁDNÉ hardcodování názvů
- *              zdrojů - nová permission, která dodrží konvenci, se automaticky zařadí
- *              do správné sekce bez jakéhokoliv zásahu do téhle stránky. Klíče, které
- *              vzor nedodržují (flagy jako `view-core`, `view-deleted`,
- *              `web-set-maintenance-mode`, nebo dosud negranularizovaný `shop-manage-*`),
- *              spadnou do záchytné skupiny "Obecné" na konci modulu - nic se neztratí,
- *              jen se to nedá smysluplně podřadit pod konkrétní zdroj.
- *              Zdrojová skupina má vlastní "select all" checkbox (stejný mechanismus
- *              jako modulová úroveň, jen na užší množině), a přibylo samostatné
- *              vyhledávací pole (`permissionSearch`) filtrující checklist podle
- *              permission_key/description/resourceLabel, nezávislé na existujícím
- *              hledání v seznamu ROLÍ (`roleSearch`, levý panel - beze změny).
+ *              přehledný. Přidána DRUHÁ úroveň grupování - "zdroj" (resource) - odvozená
+ *              ČISTĚ parsováním `permission_key` podle konvence `{modul}-{zdroj}-{akce}`
+ *              (viz `parsePermissionKey()`). Přidáno samostatné vyhledávací pole
+ *              (`permissionSearch`) filtrující checklist, nezávislé na hledání v seznamu
+ *              ROLÍ (`roleSearch`).
+ * @refactor-note (2026-08-8) INVALIDACE `RoleOptionsService` CACHE po každé mutaci role
+ *              (create/rename/delete) - viz `AdministratorsComponent`, jejíž `role_id`
+ *              select by jinak až 5 minut nabízel zastaralý seznam rolí.
+ * @refactor-note (2026-08-10) TTL CACHE PRO TENTO SAMOTNÝ SCREEN (backlog: "zbytečně moc
+ *              dotazů na API"). Tahle komponenta nikdy nevolala `initWithAuthCheck()` ani
+ *              žádnou jinou cache infrastrukturu - `initializeRolesAndPermissions()` dělala
+ *              vždy přímý síťový fetch při KAŽDÉM vstupu na stránku, bez ohledu na to, jak
+ *              nedávno se to samé stalo (na rozdíl od všech ostatních admin stránek). Teď
+ *              jde `core/permissions` (10 min TTL - seznam oprávnění se mění jen při
+ *              vývoji, ne za běhu) i `core/roles` (2 min TTL) přes `ResourceCacheService`.
+ *              KAŽDÁ mutace (createRole/saveDetails/savePermissions/confirmDelete) po
+ *              úspěchu invaliduje `ROLES_CACHE_KEY` (a `RoleOptionsService`, viz
+ *              2026-08-8 výše) - žádná akce tak neukáže sama sobě zastaralý stav.
+ *              `core/permissions` se nikdy nemutuje z téhle stránky, proto se jeho cache
+ *              nikdy neinvaliduje.
  * @dependencies
  * - BaseDataComponent: Standardní CRUD (create/update/delete/loadAll) nad apiEndpoint 'core/roles'.
  * - DataHandler: Přímé volání pro core/permissions a sync oprávnění (mimo EntityCrudService).
+ * - ResourceCacheService: TTL cache pro seznam rolí i oprávnění (viz refactor-note výše).
+ * - RoleOptionsService: Invalidace sdílené cache seznamu rolí po mutaci (AdministratorsComponent).
  * @note Access to this page/route is restricted to the 'sysadmin' role via sysadminGuard,
  *       independent of the regular permission-key system.
  */
 
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
+import { RoleOptionsService } from '../../../core/services/role-options.service';
 
 interface CorePermission {
   id: number;
@@ -121,10 +125,17 @@ const MODULE_LABELS: Record<string, string> = {
 export class EditRolesComponent extends BaseDataComponent<CoreRole> implements Core.OnInit {
   apiEndpoint = 'core/roles';
 
+  private resourceCache = inject(ResourceCacheService);
+  private readonly PERMISSIONS_CACHE_KEY = 'edit-roles:permissions';
+  private readonly PERMISSIONS_TTL_MS = 10 * 60 * 1000;
+  private readonly ROLES_CACHE_KEY = 'edit-roles:roles';
+  private readonly ROLES_TTL_MS = 2 * 60 * 1000;
+
   constructor(
     dataHandler: Core.DataHandler,
     cd: Core.ChangeDetectorRef,
-    genericTableService: Core.GenericTableService
+    genericTableService: Core.GenericTableService,
+    private roleOptionsService: RoleOptionsService
   ) {
     super(dataHandler, cd, genericTableService);
   }
@@ -140,29 +151,21 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   roleSearch = '';
 
   get filteredRoles(): CoreRole[] {
-    // Defenzivní filtr: i kdyby se do pole nějak dostala null/undefined položka
-    // (např. kvůli dočasně nekonzistentnímu stavu během async operací), *ngFor
-    // ji nikdy neuvidí - šablona pak nemůže spadnout na "role is undefined".
     const source = (this.roles ?? []).filter((r): r is CoreRole => !!r);
-
     const term = this.roleSearch.trim().toLowerCase();
     if (!term) return source;
-
     return source.filter(r =>
       r.role_name.toLowerCase().includes(term) ||
       (r.description ?? '').toLowerCase().includes(term)
     );
   }
 
-  /** trackBy pro *ngFor - páruje řádky podle id, ne podle pozice v poli. */
   trackByRoleId(_index: number, role: CoreRole): number | undefined {
     return role?.id;
   }
 
   // ── Detail vybrané role (pravý panel) ─────────────────────────────────
   selectedRole: CoreRole | null = null;
-
-  /** Rozpracovaná (dosud neuložená) sada oprávnění pro AKTUÁLNĚ vybranou roli. */
   currentPermissions = new Set<string>();
   isPermissionsDirty = false;
   isSavingPermissions = false;
@@ -184,18 +187,9 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   isDeletingRole = false;
   deleteError = '';
 
-  // ── Vyhledávání v checklistu oprávnění (pravý panel, nezávislé na roleSearch) ─
+  // ── Vyhledávání v checklistu oprávnění ─────────────────────────────
   permissionSearch = '';
 
-  /**
-   * @description Modulové skupiny oprávnění po aplikaci `permissionSearch` filtru -
-   * hledá se podle `permission_key`, `description` i `resourceLabel`. Prázdné zdrojové
-   * skupiny (po filtraci nic nezbylo) i prázdné moduly se z výsledku odstraní, ať se
-   * nezobrazují nadpisy bez obsahu. Používá se v šabloně MÍSTO `permissionGroups` -
-   * "select all" checkboxy (modulové i zdrojové) tak přirozeně operují jen nad aktuálně
-   * viditelnou (vyfiltrovanou) sadou, což je u hledání očekávané chování ("vyber vše, co
-   * teď vidím"), ne skryté položky mimo obrazovku.
-   */
   get visiblePermissionGroups(): PermissionModuleGroup[] {
     const term = this.permissionSearch.trim().toLowerCase();
     if (!term) return this.permissionGroups;
@@ -221,11 +215,19 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.initializeRolesAndPermissions();
   }
 
+  /**
+   * @description Načte seznam oprávnění přes TTL cache (viz refactor-note v hlavičce
+   * souboru) - jde o statická data, která se mění jen při vývoji, ne za běhu, proto
+   * dlouhá TTL a žádná invalidace odsud.
+   */
   private initializeRolesAndPermissions(): void {
     this.isLoading = true;
 
-    // Seznam oprávnění je mimo standardní CRUD jednoho apiEndpointu, voláno přímo.
-    this.dataHandler.get<CorePermission[]>('core/permissions').subscribe({
+    this.resourceCache.get(
+      this.PERMISSIONS_CACHE_KEY,
+      () => this.dataHandler.get<CorePermission[]>('core/permissions'),
+      this.PERMISSIONS_TTL_MS
+    ).subscribe({
       next: (permissions) => {
         this.permissionGroups = this.buildPermissionGroups(permissions || []);
         this.loadRoles();
@@ -239,19 +241,23 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   /**
-   * @description Načte seznam rolí. Pokud je zadaný `preferred` (id a/nebo role_name),
-   * po načtení se pokusí vybrat PRÁVĚ TU roli místo automatického výběru první v poli -
-   * používá se ve fallback větvích po uložení (savePermissions/saveDetails/createRole),
-   * kdy odpověď serveru nepřišla v očekávaném tvaru a musíme si být jistí čerstvými daty
-   * ze serveru, ale nechceme přitom uživateli "uteklo" z rozeditované role na sysadmina
-   * (roles[0], typicky nejnižší id) jen proto, že se seznam znovu natáhl.
-   * @param preferred Volitelně id a/nebo role_name role, která má zůstat vybraná. Pokud
-   * se v čerstvě načteném seznamu nenajde (např. role byla mezitím smazána), spadne se
-   * zpátky na výběr první role - stejné chování jako dřív.
+   * @description Načte seznam rolí přes TTL cache (viz refactor-note v hlavičce
+   * souboru). Pokud je zadaný `preferred` (id a/nebo role_name), po načtení se pokusí
+   * vybrat PRÁVĚ TU roli místo automatického výběru první v poli - používá se ve
+   * fallback větvích po uložení, kdy odpověď serveru nepřišla v očekávaném tvaru.
+   * @param preferred Volitelně id a/nebo role_name role, která má zůstat vybraná.
+   * @param force Bypass cache - voláno po každé úspěšné mutaci (create/update/delete role).
    */
-  private loadRoles(preferred?: { id?: number; name?: string }): void {
-    // loadAllData() -> EntityCrudService.loadAll() -> GET core/roles?no_pagination=true
-    this.loadAllData().subscribe({
+  private loadRoles(preferred?: { id?: number; name?: string }, force: boolean = false): void {
+    if (force) {
+      this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
+    }
+
+    this.resourceCache.get(
+      this.ROLES_CACHE_KEY,
+      () => this.loadAllData(),
+      this.ROLES_TTL_MS
+    ).subscribe({
       next: (roles) => {
         this.roles = (roles || []).filter((r): r is CoreRole => !!r);
         this.isLoading = false;
@@ -264,8 +270,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
         if (preferredRole) {
           this.selectRole(preferredRole);
         } else if (this.roles.length > 0) {
-          // Fallback beze změny: žádná preferovaná role nenalezena (nebo nebyla zadaná
-          // vůbec - první načtení stránky) -> pohodlný default, vybrat první v pořadí.
           this.selectRole(this.roles[0]);
         }
         this.cd.markForCheck();
@@ -280,19 +284,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   // ── Parsování a grupování permission klíčů (modul -> zdroj) ───────────
 
-  /**
-   * @description Odvodí "zdroj" (resource) a "akci" z permission klíče podle konvence
-   * `{modul}-{zdroj}-{akce}`, kterou zavedla granularizace permission systému
-   * (viz api.php 2026-08-5). Nejdřív se z klíče odstraní prefix modulu (např. 'web-'
-   * u klíče s modulem 'web'), pak se zkusí najít akční suffix (-view/-create/-update/
-   * -delete). Pokud se povede najít oboje, zbytek mezi nimi je "zdroj" (např.
-   * 'web-news-update' -> modul 'web' odstraněn -> 'news-update' -> suffix '-update'
-   * odstraněn -> zdroj 'news'). Klíče, které vzor nedodrží (flagy, negranularizované
-   * shop-manage-* klíče, historické nesrovnalosti typu 'core-view-welcome-page' s
-   * module='web'), spadnou do záchytné skupiny "Obecné" - žádná chyba, jen to nejde
-   * smysluplně podřadit pod konkrétní zdroj.
-   * @param perm Permission záznam z API (core/permissions).
-   */
   private parsePermissionKey(perm: CorePermission): { resourceKey: string; resourceLabel: string; action: PermissionAction | null } {
     const key = perm.permission_key;
     const modulePrefix = `${perm.module}-`;
@@ -317,11 +308,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     };
   }
 
-  /**
-   * @description Převede syrový segment zdroje ('sales-leads') na čitelný popisek
-   * ('Sales Leads') - rozdělí podle pomlčky a každé slovo napíše s velkým počátečním
-   * písmenem. Čistě kosmetické, žádná byznys logika.
-   */
   private humanizeResourceKey(rawResource: string): string {
     return rawResource
       .split('-')
@@ -330,12 +316,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       .join(' ');
   }
 
-  /**
-   * @description Sestaví dvouúrovňovou strukturu modul -> zdroje -> položky ze
-   * syrového seznamu permissions vráceného z `core/permissions`. Volá se jednou při
-   * načtení stránky; `visiblePermissionGroups` pak nad tímhle výsledkem jen filtruje
-   * podle `permissionSearch`, žádné přepočítávání parsování při každém keystroke.
-   */
   private buildPermissionGroups(permissions: CorePermission[]): PermissionModuleGroup[] {
     const moduleMap = new Map<string, Map<string, PermissionResourceGroup>>();
 
@@ -358,8 +338,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       resources: this.sortResourceGroups(Array.from(resourceMap.values())),
     }));
 
-    // Sjednocené pořadí položek uvnitř každého zdroje (view/create/update/delete),
-    // "Obecné" položky abecedně podle klíče.
     groups.forEach(group => {
       group.resources.forEach(resource => {
         resource.items.sort((a, b) => {
@@ -374,7 +352,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     return groups;
   }
 
-  /** "Obecné" skupina vždy naposled, ostatní zdroje abecedně podle popisku. */
   private sortResourceGroups(resources: PermissionResourceGroup[]): PermissionResourceGroup[] {
     return resources.sort((a, b) => {
       if (a.resourceLabel === GENERAL_RESOURCE_LABEL) return 1;
@@ -386,8 +363,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   moduleLabel(module: string): string {
     return MODULE_LABELS[module] ?? module;
   }
-
-  // ── trackBy helpery pro vnořené *ngFor smyčky checklistu ───────────────
 
   trackByModule(_index: number, group: PermissionModuleGroup): string {
     return group.module;
@@ -405,7 +380,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   selectRole(role: CoreRole): void {
     if (this.isPermissionsDirty || this.isEditingDetails) {
-      // Ochrana proti tichému zahození rozpracovaných změn při přepnutí role.
       const confirmed = window.confirm('Máte neuložené změny u aktuální role. Přepnutím o ně přijdete. Pokračovat?');
       if (!confirmed) return;
     }
@@ -416,8 +390,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isEditingDetails = false;
     this.draftName = role.role_name;
     this.draftDescription = role.description ?? '';
-    // Hledání v checklistu je per-role interakce, ne persistentní napříč rolemi -
-    // reset při přepnutí, ať nová role nezůstane nesmyslně přefiltrovaná.
     this.permissionSearch = '';
   }
 
@@ -444,38 +416,21 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isPermissionsDirty = false;
   }
 
-  // ── Hromadné zaškrtnutí celého MODULU (obou úrovní najednou) ───────────
-
   private moduleItems(group: PermissionModuleGroup): CorePermission[] {
     return group.resources.flatMap(r => r.items);
   }
 
-  /**
-   * @description Zda jsou VŠECHNA oprávnění dané modulové skupiny (napříč všemi jejími
-   * zdroji) aktuálně zaškrtnutá - řídí stav "select all" checkboxu v hlavičce modulu.
-   * Pracuje nad `group`, jak byla předaná z šablony - u aktivního vyhledávání to je
-   * `visiblePermissionGroups` (tedy jen viditelná/vyfiltrovaná podmnožina), viz getter
-   * výše.
-   */
   isModuleFullyChecked(group: PermissionModuleGroup): boolean {
     const items = this.moduleItems(group);
     return items.length > 0 && items.every(p => this.currentPermissions.has(p.permission_key));
   }
 
-  /**
-   * @description Zda je zaškrtnutá jen ČÁST oprávnění dané modulové skupiny -
-   * indeterminate stav "select all" checkboxu.
-   */
   isModulePartiallyChecked(group: PermissionModuleGroup): boolean {
     const items = this.moduleItems(group);
     const checkedCount = items.filter(p => this.currentPermissions.has(p.permission_key)).length;
     return checkedCount > 0 && checkedCount < items.length;
   }
 
-  /**
-   * @description Zaškrtne, nebo odškrtne, všechna oprávnění dané modulové skupiny
-   * (napříč všemi jejími zdroji) najednou.
-   */
   toggleModuleGroup(group: PermissionModuleGroup): void {
     if (!this.selectedRole || this.selectedRole.is_protected) return;
 
@@ -493,29 +448,15 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isPermissionsDirty = true;
   }
 
-  // ── Hromadné zaškrtnutí jednoho ZDROJE uvnitř modulu ───────────────────
-
-  /**
-   * @description Zda jsou VŠECHNA oprávnění daného zdroje (např. "News" v modulu Web)
-   * aktuálně zaškrtnutá - řídí stav "select all" checkboxu v hlavičce zdroje.
-   */
   isResourceFullyChecked(resource: PermissionResourceGroup): boolean {
     return resource.items.length > 0 && resource.items.every(p => this.currentPermissions.has(p.permission_key));
   }
 
-  /**
-   * @description Zda je zaškrtnutá jen ČÁST oprávnění daného zdroje - indeterminate
-   * stav "select all" checkboxu zdroje.
-   */
   isResourcePartiallyChecked(resource: PermissionResourceGroup): boolean {
     const checkedCount = resource.items.filter(p => this.currentPermissions.has(p.permission_key)).length;
     return checkedCount > 0 && checkedCount < resource.items.length;
   }
 
-  /**
-   * @description Zaškrtne, nebo odškrtne, všechna oprávnění jednoho zdroje najednou
-   * (např. celé "News" - view/create/update/delete čtyřmi klepnutími ušetřenými).
-   */
   toggleResourceGroup(resource: PermissionResourceGroup): void {
     if (!this.selectedRole || this.selectedRole.is_protected) return;
 
@@ -532,6 +473,11 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isPermissionsDirty = true;
   }
 
+  /**
+   * @description Uloží oprávnění role. Po úspěchu invaliduje cache seznamu rolí (obě
+   * větve - `permissions[]` se mění, `RoleOptionsService` se netýká, protože ten cachuje
+   * jen `id`/`role_name`, ne oprávnění).
+   */
   savePermissions(): void {
     if (!this.selectedRole || this.selectedRole.is_protected || this.isSavingPermissions) return;
 
@@ -539,7 +485,6 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     const keys = Array.from(this.currentPermissions);
     this.isSavingPermissions = true;
 
-    // Sub-akce mimo EntityCrudService (viz @refactor-note) - přímé volání dataHandleru.
     this.dataHandler.put<CoreRole>(`core/roles/${role.id}/permissions`, { permission_keys: keys }).subscribe({
       next: (updated) => {
         this.isSavingPermissions = false;
@@ -548,13 +493,14 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
           console.warn('[EditRolesComponent] PUT core/roles/{id}/permissions vrátil neočekávanou odpověď:', updated);
           this.isPermissionsDirty = false;
           this.alertDialogService.open('Uloženo', 'Oprávnění byla pravděpodobně uložena, ale odpověď serveru nebyla v očekávaném formátu. Obnovuji seznam ze serveru.', 'success');
-          this.loadRoles({ id: role.id, name: role.role_name });
+          this.loadRoles({ id: role.id, name: role.role_name }, true);
           this.cd.markForCheck();
           return;
         }
 
         this.applyUpdatedRole(updated);
         this.isPermissionsDirty = false;
+        this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
         this.alertDialogService.open('Uloženo', `Oprávnění role "${updated.role_name}" byla aktualizována.`, 'success');
         this.cd.markForCheck();
       },
@@ -583,6 +529,11 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isEditingDetails = false;
   }
 
+  /**
+   * @description Uloží název/popis role. Po úspěchu invaliduje cache seznamu rolí
+   * i sdílenou `RoleOptionsService` cache (viz refactor-note 2026-08-8/10 v hlavičce
+   * souboru) - `role_name` se mohl změnit.
+   */
   saveDetails(): void {
     if (!this.selectedRole || this.selectedRole.is_protected || this.isSavingDetails) return;
 
@@ -600,14 +551,9 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       permissions: this.selectedRole.permissions,
     };
 
-    // Zachyceno PŘED voláním API - `this.selectedRole` se nesmí měnit pod rukama,
-    // ale hlavně: ve fallback větvi níže potřebujeme vědět, KTEROU roli po reloadu
-    // znovu vybrat (id se navíc nemění, name je nová hodnota, kterou právě ukládáme).
     const roleId = this.selectedRole.id;
-
     this.isSavingDetails = true;
 
-    // updateData() -> EntityCrudService.update() -> PUT core/roles/{id}
     this.updateData(this.selectedRole.id, payload).subscribe({
       next: (updated) => {
         this.isSavingDetails = false;
@@ -615,14 +561,17 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
         if (!updated || updated.id === undefined) {
           console.warn('[EditRolesComponent] PUT core/roles/{id} vrátil neočekávanou odpověď:', updated);
           this.isEditingDetails = false;
+          this.roleOptionsService.invalidate();
           this.alertDialogService.open('Uloženo', 'Údaje byly pravděpodobně uloženy, ale odpověď serveru nebyla v očekávaném formátu. Obnovuji seznam ze serveru.', 'success');
-          this.loadRoles({ id: roleId, name });
+          this.loadRoles({ id: roleId, name }, true);
           this.cd.markForCheck();
           return;
         }
 
         this.applyUpdatedRole(updated);
         this.isEditingDetails = false;
+        this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
+        this.roleOptionsService.invalidate();
         this.alertDialogService.open('Uloženo', 'Údaje role byly aktualizovány.', 'success');
         this.cd.markForCheck();
       },
@@ -658,6 +607,10 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.showNewRoleForm = false;
   }
 
+  /**
+   * @description Vytvoří novou roli. Po úspěchu invaliduje cache seznamu rolí i sdílenou
+   * `RoleOptionsService` cache (viz refactor-note 2026-08-8/10 v hlavičce souboru).
+   */
   createRole(): void {
     const name = this.newRoleName.trim();
     if (!name) {
@@ -676,32 +629,29 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       permissions: [],
     };
 
-    // postData() -> EntityCrudService.create() -> POST core/roles
     this.postData(payload).subscribe({
       next: (created) => {
         this.isCreatingRole = false;
 
         if (!created || created.id === undefined) {
-          // Backend odpověděl bez těla/neplatným tělem - nespoléháme na obsah `created`,
-          // radši roli dohledáme čerstvě ze serveru, ať UI zůstane konzistentní.
           console.warn('[EditRolesComponent] POST core/roles vrátil neočekávanou odpověď:', created);
           this.showNewRoleForm = false;
+          this.roleOptionsService.invalidate();
           this.alertDialogService.open(
             'Vytvořeno',
             `Role "${name}" byla pravděpodobně vytvořena, ale odpověď serveru nebyla v očekávaném formátu. Obnovuji seznam ze serveru.`,
             'success'
           );
-          // Id nově vytvořené role neznáme (server neodpověděl v očekávaném tvaru) -
-          // hledáme podle jména, které jsme právě odeslali.
-          this.loadRoles({ name });
+          this.loadRoles({ name }, true);
           this.cd.markForCheck();
           return;
         }
 
         this.roles = [...this.roles, created];
         this.showNewRoleForm = false;
+        this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
+        this.roleOptionsService.invalidate();
         this.alertDialogService.open('Vytvořeno', `Role "${created.role_name}" byla vytvořena.`, 'success');
-        // Rovnou přepneme na nově vytvořenou roli, ať jde ihned konfigurovat oprávnění.
         this.selectRole(created);
         this.cd.markForCheck();
       },
@@ -738,6 +688,10 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.deleteError = '';
   }
 
+  /**
+   * @description Smaže roli. Po úspěchu invaliduje cache seznamu rolí i sdílenou
+   * `RoleOptionsService` cache (viz refactor-note 2026-08-8/10 v hlavičce souboru).
+   */
   confirmDelete(): void {
     const role = this.pendingDeleteRole;
     if (!role || this.isDeletingRole) return;
@@ -745,16 +699,16 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isDeletingRole = true;
     this.deleteError = '';
 
-    // deleteData() -> EntityCrudService.remove() -> DELETE core/roles/{id}
     this.deleteData(role.id).subscribe({
       next: () => {
         this.isDeletingRole = false;
         this.roles = this.roles.filter(r => !!r && r.id !== role.id);
+        this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
+        this.roleOptionsService.invalidate();
         if (this.selectedRole?.id === role.id) {
           this.selectedRole = null;
           this.currentPermissions = new Set();
           this.isPermissionsDirty = false;
-          // Po smazání vybrané role rovnou nabídneme první zbývající, ať panel není prázdný zbytečně.
           if (this.roles.length > 0) this.selectRole(this.roles[0]);
         }
         this.pendingDeleteRole = null;

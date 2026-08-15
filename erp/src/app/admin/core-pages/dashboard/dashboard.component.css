@@ -453,3 +453,9 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+.cd-header-bar { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+.cd-header-actions { display: flex; align-items: center; gap: 10px; }
+.cd-last-updated { font-size: 0.78rem; color: var(--text-dim, #a1a1aa); }
+.cd-refresh-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border-mid, #e0e0dd); background: var(--surface, #fff); color: var(--text-muted, #71717a); font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+.cd-refresh-btn:hover { background: var(--surface-2, #fafafa); color: var(--text, #18181b); }
+.cd-refresh-btn:disabled { opacity: 0.6; cursor: default; }

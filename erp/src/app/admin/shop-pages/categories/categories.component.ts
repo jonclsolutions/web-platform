@@ -9,9 +9,32 @@
  * - Core services: DataHandler, GenericTableService, LoadingService.
  * - Shared UI: SHARED_UI_BUILDERS, ConfirmDialogService.
  * - BaseDataComponent: Provides foundational data management for entity collections.
+ * - ResourceCacheService: TTL cache pro strom kategorií, panel produktů kategorie a
+ *   seznam "všech produktů" v add-product panelu (viz refactor-note 2026-08-9).
+ *
+ * @refactor-note (2026-08-9) TTL CACHE (backlog: "zbytečně moc dotazů na API").
+ * Tahle stránka NEPOUŽÍVÁ standardní `this.list`/`this.data` (PaginatedListStore) -
+ * strom kategorií je vlastní rekurzivní struktura postavená přes `loadAllData()`
+ * (no_pagination fetch) a `buildTree()`. `usesPaginatedList = false`, ať
+ * `BaseDataComponent.initWithAuthCheck()` při mountu volá přímo `refreshData()`
+ * (= `loadTree()`), místo aby zbytečně tahal nepoužívaná stránkovaná
+ * `shop/categories` data přes `this.list` (viz base-data.component.ts stejné datum -
+ * bez tohohle přepínače by se strom při vstupu na stránku vůbec nenačetl).
+ * Ze stejného důvodu je `forceFullRefresh()` PŘEPSANÝ (ne zděděný) - jinak by globální
+ * "Aktualizovat vše" tlačítko v headeru a periodický background refresh volaly
+ * `this.list.forceFullRefresh()` (opět nepoužitá data), ne skutečný strom.
+ *
+ * `loadTree()` teď jde přes `ResourceCacheService` (2min TTL) - mount i drobné
+ * navigace v menu tak nemusí pokaždé znovu stahovat celý (potenciálně velký) strom.
+ * Force-bypass (parametr `force`) se použije všude, kde už PROBĚHLA mutace dat
+ * (create/update/toggle/delete kategorie, přiřazení/odebrání produktu) - tam musí
+ * uživatel vidět čerstvý stav okamžitě, ne až po vypršení TTL.
+ * `loadCategoryProducts()` (panel produktů dané kategorie) a `openAddProductSearch()`
+ * (seznam všech produktů k přidání) mají vlastní krátkou TTL cache (2 min) - typický
+ * admin otevírá/zavírá panel různých kategorií opakovaně během jedné návštěvy stránky.
  */
 
-import { Component, OnInit, ViewChildren, QueryList, ElementRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ViewChildren, QueryList, ElementRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
@@ -21,6 +44,7 @@ import { Button } from '../../../shared/interfaces/button';
 import { CATEGORY_TOOLBAR_BUTTONS, CATEGORY_ROW_BUTTONS } from './categories.config';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 
 /**
  * @description Orchestrates the category management interface, handling recursive tree display, editing, and side-panel product associations.
@@ -39,7 +63,17 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   @ViewChildren('editInput') editInputs!: QueryList<ElementRef>;
 
   override apiEndpoint = 'shop/categories';
+  override usesPaginatedList = false;
+
   categories: CategoryNode[] = [];
+
+  private resourceCache = inject(ResourceCacheService);
+  private readonly TREE_CACHE_KEY = 'shop-categories:tree';
+  private readonly TREE_TTL_MS = 2 * 60 * 1000;
+  private readonly CATEGORY_PRODUCTS_CACHE_PREFIX = 'shop-categories:products:';
+  private readonly CATEGORY_PRODUCTS_TTL_MS = 2 * 60 * 1000;
+  private readonly ALL_PRODUCTS_CACHE_KEY = 'shop-categories:all-products';
+  private readonly ALL_PRODUCTS_TTL_MS = 2 * 60 * 1000;
 
   // Produkt panel
   selectedCategory: CategoryNode | null = null;
@@ -69,8 +103,21 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.initWithAuthCheck(this.router);
   }
 
+  /**
+   * @description "Jemné" počáteční/navigační načtení stromu - respektuje TTL cache.
+   */
   override refreshData(): void {
-    this.loadTree();
+    this.loadTree(undefined, false, false);
+  }
+
+  /**
+   * @description "Tvrdý" refresh stromu - obchází TTL cache. Voláno globálním
+   * "Aktualizovat vše" tlačítkem v headeru a periodickým background refreshem (viz
+   * BaseDataComponent.initWithAuthCheck()). PŘEPISUJE zděděnou implementaci, která by
+   * jinak volala `this.list.forceFullRefresh()` - nepoužívaná data pro tuhle stránku.
+   */
+  override forceFullRefresh(_currentFilters: Core.FilterParams = this.defaultFilters): void {
+    this.loadTree(undefined, false, true);
   }
 
   /**
@@ -167,7 +214,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
       if (!node.name || node.name.trim().length === 0 || this.isDuplicateName(node)) return;
       if (node.id === 0) this.confirmAdd(node); else this.saveNode(node);
     } else {
-      if (node.id === 0) this.loadTree(); else this.cancelEdit(node);
+      if (node.id === 0) this.loadTree(undefined, false, true); else this.cancelEdit(node);
     }
   }
 
@@ -213,11 +260,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
       .subscribe({
         next: () => {
           this.alertDialogService.open('Úspěch', 'Kategorie byla vytvořena.', 'success');
-          this.loadTree();
+          this.loadTree(undefined, false, true);
         },
         error: (err) => {
           this.alertDialogService.open('Chyba', err.error?.message || 'Vytvoření selhalo.', 'danger');
-          this.loadTree();
+          this.loadTree(undefined, false, true);
         }
       });
   }
@@ -263,15 +310,21 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   /**
-   * @description Fetches the full category list and builds the recursive tree structure.
+   * @description Fetches the full category list (přes TTL cache - viz refactor-note
+   * v hlavičce souboru) and builds the recursive tree structure.
    * @param forceExpandId Optional ID to ensure specific branch remains open after refresh.
    * @param silent If true, suppresses global loading spinner.
+   * @param force If true, invaliduje cache a vynutí reálný fetch (po mutaci dat).
    */
-  loadTree(forceExpandId?: number | null, silent: boolean = false): void {
+  loadTree(forceExpandId?: number | null, silent: boolean = false, force: boolean = false): void {
     if (!silent) {
       this.loadingService.show();
     }
-    this.loadAllData().subscribe({
+    if (force) {
+      this.resourceCache.invalidate(this.TREE_CACHE_KEY);
+    }
+
+    this.resourceCache.get(this.TREE_CACHE_KEY, () => this.loadAllData(), this.TREE_TTL_MS).subscribe({
       next: (res) => {
         this.categories = this.buildTree(res, null, forceExpandId);
         this.cd.markForCheck();
@@ -343,6 +396,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
         next: () => {
           this.alertDialogService.open('Aktualizováno', 'Změny byly uloženy.', 'success');
           this.backupNames.delete(node.id);
+          this.resourceCache.invalidate(this.TREE_CACHE_KEY);
           this.cd.markForCheck();
         },
         error: (err) => {
@@ -364,7 +418,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
 
     this.updateData(node.id, { ...node, is_active: newStatus })
       .subscribe({
-        next: () => {},
+        next: () => { this.resourceCache.invalidate(this.TREE_CACHE_KEY); },
         error: () => {
           node.is_active = !newStatus;
           this.cd.markForCheck();
@@ -405,13 +459,14 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
         next: () => {
           this.alertDialogService.open('Smazáno', 'Kategorie byla odstraněna.', 'success');
           this.saveExpandedStates();
+          this.resourceCache.invalidate(this.TREE_CACHE_KEY);
           if (this.selectedCategory?.id === node.id) {
             this.closeProductPanel();
           }
         },
         error: (err) => {
           this.alertDialogService.open('Chyba', err.error?.message || 'Smazání selhalo.', 'danger');
-          this.loadTree();
+          this.loadTree(undefined, false, true);
         }
       });
     }
@@ -509,15 +564,23 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   /**
-   * @description Fetches all products currently assigned to the specific category.
+   * @description Fetches all products currently assigned to the specific category, přes
+   * krátkou TTL cache (viz refactor-note v hlavičce souboru).
    * @param categoryId The ID of the category.
+   * @param force Bypass cache (voláno po mutaci přiřazení produktu).
    */
-  loadCategoryProducts(categoryId: number): void {
+  loadCategoryProducts(categoryId: number, force: boolean = false): void {
     this.loadingProducts = true;
     this.cd.markForCheck();
 
-    const url = `shop/products?no_pagination=true&category_id=${categoryId}`;
-    this.dataHandler.getCollection<any>(url).subscribe({
+    const key = `${this.CATEGORY_PRODUCTS_CACHE_PREFIX}${categoryId}`;
+    if (force) this.resourceCache.invalidate(key);
+
+    this.resourceCache.get(
+      key,
+      () => this.dataHandler.getCollection<any>(`shop/products?no_pagination=true&category_id=${categoryId}`),
+      this.CATEGORY_PRODUCTS_TTL_MS
+    ).subscribe({
       next: (products) => {
         this.categoryProducts = products;
         this.loadingProducts = false;
@@ -559,14 +622,19 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   /**
-   * @description Prepares the add-product view and lazily loads all products if necessary.
+   * @description Prepares the add-product view and lazily loads all products (přes TTL
+   * cache - viz refactor-note v hlavičce souboru) if necessary.
    */
   openAddProductSearch(): void {
     this.showAddProduct = true;
     this.addProductSearch = '';
 
     if (this.allProducts.length === 0) {
-      this.dataHandler.getCollection<any>('shop/products?no_pagination=true').subscribe({
+      this.resourceCache.get(
+        this.ALL_PRODUCTS_CACHE_KEY,
+        () => this.dataHandler.getCollection<any>('shop/products?no_pagination=true'),
+        this.ALL_PRODUCTS_TTL_MS
+      ).subscribe({
         next: (products) => {
           this.allProducts = products;
           this.cd.markForCheck();
@@ -609,9 +677,9 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.dataHandler.patch<any>(url, payload).subscribe({
       next: () => {
         this.alertDialogService.open('Hotovo', 'Produkt byl odebrán z kategorie.', 'success');
-        this.loadTree(this.selectedCategory?.id, true);
+        this.loadTree(this.selectedCategory?.id, true, true);
         if (this.selectedCategory) {
-          this.loadCategoryProducts(this.selectedCategory.id);
+          this.loadCategoryProducts(this.selectedCategory.id, true);
         }
       },
       error: (error) => {
@@ -644,8 +712,8 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.dataHandler.patch<any>(url, payload).subscribe({
       next: () => {
         this.alertDialogService.open('Hotovo', `Produkt byl přidán do kategorie.`, 'success');
-        this.loadTree(this.selectedCategory?.id, true);
-        this.loadCategoryProducts(this.selectedCategory!.id);
+        this.loadTree(this.selectedCategory?.id, true, true);
+        this.loadCategoryProducts(this.selectedCategory!.id, true);
       },
       error: (error) => {
         console.error(`Přidání produktu SELHALO!`, error);

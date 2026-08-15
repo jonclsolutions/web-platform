@@ -11,12 +11,17 @@
  *              výhradně na Dashboardu, chráněném samostatným `web-view-dashboard` oprávněním.
  * @dependencies
  * - AuthService: Poskytuje roli/e-mail aktuálně přihlášeného uživatele ze session.
- * - DataHandler: Přímé volání GET `core/users/{id}` pro profil - žádný CRUD nad tabulkou
- *   tu nedává smysl, proto se nedědí BaseDataComponent (na rozdíl od Dashboardu, který
- *   pořád potřebuje agregační dotazy nad více zdroji).
- * @note `dataHandler.get()` se používá záměrně místo `dataHandler.getOne()` - endpoint
- *       `core/users/{id}` vrací zdroj NEobalený v `{ data: ... }` (viz UserController::show()),
- *       stejný vzorec, jaký už správně používá Dashboard přes `EntityCrudService.getOne()`.
+ * - CurrentUserProfileService: TTL-cached čtení vlastního profilu, sdílené s
+ *   PersonalInfoComponent - viz refactor-note (2026-08-8) níže.
+ * @note `dataHandler.get()` se používal záměrně místo `dataHandler.getOne()`, protože
+ *       endpoint `core/users/{id}` vrací zdroj NEobalený v `{ data: ... }` (viz
+ *       UserController::show()) - stejné chování teď zapouzdřuje `CurrentUserProfileService`.
+ * @refactor-note (2026-08-8) Zdroj profilu přepnut z přímého `dataHandler.get('core/users/
+ * {id}')` na sdílenou `CurrentUserProfileService` (backlog: "zbytečně moc dotazů na API") -
+ * tahle stránka je typický post-login landing point, takže uživatel co odsud pokračuje na
+ * "Osobní Informace" (PersonalInfoComponent) dřív vždy vyvolal DRUHÝ nezávislý požadavek
+ * na tentýž `core/users/{id}` záznam. Sdílená TTL cache (2 min) tomu předchází. `DataHandler`
+ * injekce už tu není potřeba, komponenta ji nikde jinde nepoužívala.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -24,7 +29,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
-import { DataHandler } from '../../../core/services/data-handler.service';
+import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { NavSection } from './welcome-page.interface';
 @Component({
@@ -36,7 +41,7 @@ import { NavSection } from './welcome-page.interface';
 })
 export class WelcomePageComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
-  private dataHandler = inject(DataHandler);
+  private profileService = inject(CurrentUserProfileService);
   private cd = inject(ChangeDetectorRef);
 
   userData: UserLogin | null = null;
@@ -69,7 +74,9 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Načte profil aktuálně přihlášeného uživatele (jméno, datum vytvoření účtu).
+   * @description Načte profil aktuálně přihlášeného uživatele (jméno, datum vytvoření
+   * účtu) přes sdílenou TTL-cached `CurrentUserProfileService` (viz refactor-note
+   * v hlavičce souboru).
    */
   private loadUserProfile(): void {
     const userId = this.authService.getUserId();
@@ -78,9 +85,9 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.dataHandler.get<any>(`core/users/${userId}`).subscribe({
+    this.profileService.getProfile().subscribe({
       next: (response) => {
-        this.userData = response?.data ?? response;
+        this.userData = (response as any)?.data ?? response;
         this.isLoadingProfile = false;
         this.cd.markForCheck();
       },

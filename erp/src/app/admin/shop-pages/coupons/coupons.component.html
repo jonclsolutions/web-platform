@@ -41,6 +41,8 @@
               [columns]="couponColumns"
               [currentFilters]="filters"
               [inputDefinitions]="formFields"
+              [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
               [isFullWidth]="isTableFullWidth"
               [tableCaption]="'Seznam aktivních kupónů'"
               [apiEndpoint]="apiEndpoint"

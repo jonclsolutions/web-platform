@@ -42,6 +42,8 @@
 [columns]="tableColumns"
 [inputDefinitions]="formFields"
 [isFullWidth]="isTableFullWidth"
+[lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
 [apiEndpoint]="apiEndpoint"
 (itemDeleted)="handleItemDeleted()"
 (editFormOpened)="handleEditFormOpened($event)"

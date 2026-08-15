@@ -1,11 +1,11 @@
 /**
- * @file edit-eshop.component.ts
- * @path src/app/admin/shop-pages/edit-eshop/edit-eshop.component.ts
+ * @file edit-website.component.ts
+ * @path src/app/admin/web-pages/edit-website/edit-website.component.ts
  * @project RPSW Web
  * @author RPSW
- * @created 2026
+ * @created 2025
  * @description Manages internationalization (i18n) settings, translation keys, and language
- * metadata for the shop module.
+ * metadata for the public web module.
  *
  * @refactor-note (2025) Tři metody (`confirmAddLang`, `confirmDeleteLang`, `toggleLangActive`)
  * dřív injektovaly vlastní `HttpClient` a volaly ho s ručně napsaným `/api/languages/{module}`
@@ -15,22 +15,42 @@
  * zbytek aplikace (bez `/api` prefixu — ten už řeší `DataHandler.baseUrl`). `HttpClient` už
  * komponenta vůbec nepotřebuje.
  *
+ * @refactor-note (2026-08-9) TTL CACHE (backlog: "zbytečně moc dotazů na API") - stejný
+ * vzor jako `EditEshopComponent` (shop-pages), jde o strukturně identickou komponentu pro
+ * jiný modul (`MODULE = 'web'` místo `'shop'`). Tři zdroje zbytečných requestů:
+ * 1) `loadLanguages()` se natahovalo znovu při každém vstupu na stránku (jazyky se mění
+ *    zřídka) - cache 10 min.
+ * 2) `loadCzReference()` a `refreshTranslations()` volaly STEJNÝ endpoint
+ *    (`translations/{module}/cz`) NEZÁVISLE na sobě, kdykoliv byl `cz` zrovna aktivní jazyk -
+ *    sjednoceno do jedné `fetchTranslations()` helper metody se sdíleným cache klíčem podle
+ *    jazyka (`edit-website:translations:{lang}`), takže načtení CZ reference při startu a
+ *    přepnutí na CZ tab později sdílí stejný cache záznam.
+ * 3) Přepínání mezi jazykovými taby přes `loadLang()` volalo `refreshTranslations()` vždy
+ *    znovu ze sítě - teď 2 min TTL, takže rychlé přepínání tam/zpět mezi jazyky nedělá
+ *    zbytečné requesty.
+ * Po KAŽDÉ mutaci (uložení překladu, upload JSON, přidání/smazání/toggle jazyka) se
+ * příslušný cache klíč explicitně invaliduje - žádná operace tak neukáže zastaralá data
+ * sama sobě po vlastní úspěšné akci.
+ *
  * @dependencies
  * - BaseDataComponent: Provides foundational CRUD state management.
  * - LoadingService: Manages application-wide loading indicators.
  * - DataHandler: Handles multipart/form-data and standard REST requests for language assets.
+ * - ResourceCacheService: TTL cache pro languages/translations fetch (viz refactor-note výše).
  */
 
 import {
   Component, ChangeDetectionStrategy, ChangeDetectorRef,
   inject, OnInit, OnDestroy
 } from '@angular/core';
+import { Observable } from 'rxjs';
 import * as Core from '../../../shared/imports/core-providers';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { LangMeta, FlatKey } from './';
 const LS_KEY = 'rpsw_languages';
 
@@ -55,9 +75,14 @@ export class EditWebsiteComponent
   implements OnInit, OnDestroy {
 
   public override loadingService = inject(LoadingService);
+  private resourceCache = inject(ResourceCacheService);
   override apiEndpoint = 'save_translations';
 
   private readonly MODULE = 'web';
+  private readonly LANGUAGES_CACHE_KEY = 'edit-website:languages';
+  private readonly LANGUAGES_TTL_MS = 10 * 60 * 1000;
+  private readonly TRANSLATIONS_CACHE_PREFIX = 'edit-website:translations:';
+  private readonly TRANSLATIONS_TTL_MS = 2 * 60 * 1000;
 
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
@@ -103,11 +128,20 @@ export class EditWebsiteComponent
   }
 
   /**
-   * @description Fetches language metadata from the server, falling back to local storage if
-   * necessary.
+   * @description Fetches language metadata from the server (přes TTL cache), falling back
+   * to local storage if necessary.
+   * @param force Bypass cache - voláno po přidání/smazání/toggle jazyka.
    */
-  private loadLanguages(): void {
-    this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.MODULE}`)
+  private loadLanguages(force: boolean = false): void {
+    if (force) {
+      this.resourceCache.invalidate(this.LANGUAGES_CACHE_KEY);
+    }
+
+    this.resourceCache.get(
+      this.LANGUAGES_CACHE_KEY,
+      () => this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.MODULE}`),
+      this.LANGUAGES_TTL_MS
+    )
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
@@ -142,12 +176,32 @@ export class EditWebsiteComponent
   }
 
   /**
+   * @description Sjednocené načtení překladů pro daný jazyk, přes TTL cache SDÍLENOU mezi
+   * `loadCzReference()` (referenční CZ struktura) a `refreshTranslations()` (aktivní
+   * jazyk) - viz refactor-note v hlavičce souboru. Stejný jazyk se tak nikdy nestahuje
+   * dvakrát nezávisle.
+   * @param lang Jazykový kód.
+   * @param force Bypass cache.
+   */
+  private fetchTranslations(lang: string, force: boolean = false): Observable<any> {
+    const key = `${this.TRANSLATIONS_CACHE_PREFIX}${lang}`;
+    if (force) {
+      this.resourceCache.invalidate(key);
+    }
+    return this.resourceCache.get(
+      key,
+      () => this.dataHandler.get<any>(`translations/${this.MODULE}/${lang}`),
+      this.TRANSLATIONS_TTL_MS
+    );
+  }
+
+  /**
    * @description Loads CZ as the master reference structure to identify missing keys in other
    * languages.
    * @param callback Optional hook to trigger once the reference data is fetched.
    */
   private loadCzReference(callback?: () => void): void {
-    this.dataHandler.get<any>(`translations/${this.MODULE}/cz`)
+    this.fetchTranslations('cz')
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
@@ -175,7 +229,7 @@ export class EditWebsiteComponent
     this.errorMessage = null;
     this.cd.markForCheck();
 
-    this.dataHandler.get<any>(`translations/${this.MODULE}/${this.currentLang}`)
+    this.fetchTranslations(this.currentLang)
       .pipe(
         Core.takeUntil(this.destroy$),
         Core.finalize(() => {
@@ -296,19 +350,41 @@ updateValue(path: string, newValue: string): void {
     el.style.height = el.scrollHeight + 'px';
   }
 
-  private resizeAllTextareas(): void {
-    document.querySelectorAll<HTMLTextAreaElement>('.ew-edit-input').forEach(ta => {
-      ta.style.height = 'auto';
-      ta.style.height = ta.scrollHeight + 'px';
-    });
-  }
+ /**
+ * @description Batch-resizuje všechny textarea prvky bez layout thrashingu. Původní
+ * verze prokládala čtení (scrollHeight) a zápis (style.height) v jedné smyčce pro
+ * KAŽDÝ element zvlášť - to nutí prohlížeč přepočítat layout znovu při každé iteraci
+ * (classic "layout thrashing"), což je skutečná příčina ~1s zamrznutí při vstupu na
+ * stránku s velkým počtem překladových klíčů. Řešení: tři oddělené průchody (reset ->
+ * hromadné čtení -> hromadný zápis) vynutí reflow jen jednou pro celou dávku místo
+ * jednou na element. NENÍ to problém s cachí ani s ukládáním - tahle metoda běží čistě
+ * na klientovi po tom, co data už dorazila (ze sítě nebo z cache), stejně zamrzne
+ * v obou případech.
+ */
+private resizeAllTextareas(): void {
+  const elements = Array.from(document.querySelectorAll<HTMLTextAreaElement>('.ew-edit-input'));
+  if (elements.length === 0) return;
 
+  // Průchod 1: reset (write)
+  elements.forEach(el => { el.style.height = 'auto'; });
+  // Průchod 2: čtení (jeden vynucený reflow pro celou dávku)
+  const heights = elements.map(el => el.scrollHeight);
+  // Průchod 3: zápis (write)
+  elements.forEach((el, i) => { el.style.height = `${heights[i]}px`; });
+}
+
+  /**
+   * @description Uloží aktuálně editovaný jazyk. Po úspěchu invaliduje cache klíč tohoto
+   * jazyka - viz refactor-note v hlavičce souboru (sdílený klíč s `loadCzReference()`, pokud
+   * je právě editovaným jazykem `cz`).
+   */
   onSubmit(): void {
     this.dataHandler.post(`save_translations/${this.MODULE}`, {
       lang: this.currentLang,
       data: this.translations
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
+        this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.currentLang}`);
         this.alertDialogService.open(
           'Admin',
           `Translations for „${this.currentLang}" saved.`,
@@ -374,7 +450,8 @@ updateValue(path: string, newValue: string): void {
 
   /**
    * @description Submits a new language definition using multipart/form-data to include flag
-   * imagery.
+   * imagery. Po úspěchu invaliduje cache jazykového seznamu (viz refactor-note v hlavičce
+   * souboru).
    */
   confirmAddLang(): void {
     const code = this.newLangCode.trim().toLowerCase();
@@ -418,7 +495,7 @@ updateValue(path: string, newValue: string): void {
         next: () => {
           this.showAddForm = false;
           this.cd.markForCheck();
-          this.loadLanguages();
+          this.loadLanguages(true);
 
           this.currentLang = code;
           this.translations = this.buildEmptyFromCz(this.czTranslations);
@@ -448,6 +525,10 @@ updateValue(path: string, newValue: string): void {
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Smaže jazyk. Po úspěchu invaliduje cache seznamu jazyků i překladů
+   * smazaného jazyka (viz refactor-note v hlavičce souboru).
+   */
   confirmDeleteLang(): void {
     if (!this.langToDelete) return;
     const code = this.langToDelete.code;
@@ -457,13 +538,14 @@ updateValue(path: string, newValue: string): void {
       .subscribe({
         next: () => {
           this.langToDelete = null;
+          this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${code}`);
 
           if (this.currentLang === code) {
             this.currentLang  = 'cz';
             this.translations = {};
           }
 
-          this.loadLanguages();
+          this.loadLanguages(true);
           this.cd.markForCheck();
         },
         error: (err) => {
@@ -477,7 +559,9 @@ updateValue(path: string, newValue: string): void {
 
   /**
    * @description Toggles language activation state by posting the full updated language metadata
-   * list to the server.
+   * list to the server. Po úspěchu invaliduje cache seznamu jazyků (viz refactor-note
+   * v hlavičce souboru) - lokální mutace `lang.active` je optimistická, ale cache by jinak
+   * mohla po vypršení TTL vrátit dřívější (neplatnou) hodnotu.
    */
   toggleLangActive(lang: LangMeta): void {
     lang.active = !lang.active;
@@ -490,6 +574,9 @@ updateValue(path: string, newValue: string): void {
     this.dataHandler.upload<{ status: string }>(`languages/${this.MODULE}`, fd)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
+        next: () => {
+          this.resourceCache.invalidate(this.LANGUAGES_CACHE_KEY);
+        },
         error: () => {
           lang.active = !lang.active;
           this.alertDialogService.open('Error', 'Change could not be saved.', 'danger');
@@ -530,12 +617,18 @@ updateValue(path: string, newValue: string): void {
     reader.readAsText(file);
   }
 
+  /**
+   * @description Nahraje JSON pro daný jazyk. Po úspěchu invaliduje cache klíč tohoto
+   * jazyka (viz refactor-note v hlavičce souboru), ať se při případném refreshi aktivního
+   * jazyka nezobrazí stará (pre-upload) data.
+   */
   private uploadJsonToServer(data: any): void {
     this.dataHandler.post(`save_translations/${this.MODULE}`, {
       lang: this.uploadLangCode,
       data
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
+        this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.uploadLangCode}`);
         this.uploadSuccess = `JSON for „${this.uploadLangCode}" successfully uploaded.`;
         this.uploadError   = '';
 

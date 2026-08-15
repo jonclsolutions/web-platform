@@ -39,6 +39,8 @@
               [buttons]="buttons"
               [data]="data"
               [inputDefinitions]="formFields"
+              [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
               [columns]="shippingColumns"
               [currentFilters]="filters"
               [isFullWidth]="isTableFullWidth"

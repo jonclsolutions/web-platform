@@ -31,18 +31,49 @@
  * komponenty zvlášť; `hasAnyPermission()` je zdarma pro každého, kdo už dědí
  * z BaseDataComponent (`permissionService` byl `public` už předtím).
  *
+ * @refactor-note (2026-08-6) OPTIMALIZACE NAČÍTÁNÍ TABULEK (backlog: "zbytečně moc
+ * dotazů na API"): `initWithAuthCheck()` už při mountu NEDĚLÁ tvrdý refetch
+ * (`refreshData()` → `forceFullRefresh()`), ale volá `list.loadInitial()`, který
+ * respektuje TTL cache v `GenericTableService` - pokud je stránka/filtry čerstvě
+ * cachovaná (viz `CACHE_TTL_MS`), proběhne bez síťového dotazu. `forceFullRefresh()`
+ * (ruční refresh tlačítko na tabulce, refresh po mutaci dat) TTL vždy obchází.
+ * Přidána podpora globálního "Aktualizovat vše" tlačítka v admin headeru
+ * (`TableRefreshBusService.refreshAll$`) a volitelný periodický background refresh
+ * (15 min, jen pokud je karta prohlížeče viditelná - `document.hidden` check).
+ * Přidány pass-through gettery `activeLastUpdatedAt$`/`trashLastUpdatedAt$` pro UI
+ * badge "Aktualizováno v HH:MM:SS" (viz TableBuilderComponent).
+ *
+ * @refactor-note (2026-08-9) PODPORA KOMPONENT MIMO `this.list` (backlog: "zbytečně
+ * moc dotazů na API" - shop moduly). Přidán `usesPaginatedList` přepínač (default
+ * `true`, beze změny pro naprostou většinu stránek). Některé komponenty (např.
+ * `CategoriesComponent` v shopu) NEPOUŽÍVAJÍ `this.list`/`this.data`
+ * (PaginatedListStore) vůbec - mají vlastní stromovou/agregovanou strukturu s vlastním
+ * `override refreshData()`. Bez tohoto přepínače by `initWithAuthCheck()` při mountu
+ * vždy volal `this.list.loadInitial()`, což by u takové komponenty potichu natáhlo
+ * NEPOUŽÍVANÁ stránkovaná data (žádná chyba, ale žádný efekt) a skutečná data by se
+ * při vstupu na stránku vůbec nenačetla. Komponenty, které `this.list` nepoužívají,
+ * nastaví `protected override usesPaginatedList = false;` - `initWithAuthCheck()` pak
+ * při mountu zavolá přímo `this.refreshData()` (a typicky si taková komponenta i
+ * přepíše `forceFullRefresh()`, ať globální refresh tlačítko a periodický background
+ * refresh mířily na její skutečný zdroj dat, ne na `this.list`).
+ *
  * @dependencies
  * - DataHandler: Facilitates HTTP communication.
  * - GenericTableService: Used internally by PaginatedListStore.
  * - EntityCrudService, PaginatedListStore: Extrahovaná byznys logika.
+ * - TableRefreshBusService: Globální "Aktualizovat vše" event bus (admin header).
  * - LoadingService, AlertDialogService, AuthService, PermissionService: Core infrastructure
  *   services for UI state and access control (skutečně cross-cutting, proto zůstávají zde).
  */
 
 import { Directive, inject } from '@angular/core';
+import { timer } from 'rxjs';
+import { filter as rxFilter } from 'rxjs/operators';
 import * as Core from '../../../shared/imports/core-providers';
 import { PaginatedListStore } from './paginated-list-store';
 import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
+import { TableRefreshBusService } from '../../../core/services/table-refresh-bus.service';
+
 /**
  * @description Serves as a base controller for all resource management components in the admin panel.
  * @usage Extended by specific feature components (e.g., UserComponent, ProductComponent) to eliminate
@@ -70,10 +101,25 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     sort_direction: 'desc'
   };
 
+  /**
+   * @description Řídí, jestli `initWithAuthCheck()` při mountu volá `this.list.loadInitial()`
+   * (default, standardní tabulkové stránky) nebo přímo `this.refreshData()` (komponenty
+   * s vlastním zdrojem dat mimo PaginatedListStore - viz refactor-note 2026-08-9 výše).
+   */
+  protected usesPaginatedList = true;
+
+  /**
+   * @description Perioda automatického refreshe na pozadí (viz `initWithAuthCheck()`).
+   * Nízká priorita (viz backlog task) - jen pokud je karta prohlížeče aktivní
+   * (`document.hidden` check), aby neaktivní karta negenerovala requesty donekonečna.
+   */
+  private static readonly BACKGROUND_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+
   public loadingService = inject(Core.LoadingService);
   public alertDialogService = inject(Core.AlertDialogService);
   public authService = inject(Core.AuthService);
   public permissionService = inject(Core.PermissionService);
+  public tableRefreshBus = inject(TableRefreshBusService);
 
   private _crud?: EntityCrudService<T>;
   private _list?: PaginatedListStore<T>;
@@ -150,6 +196,11 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   protected get currentActiveFilters(): Core.FilterParams { return this.list.currentActiveFilters; }
   protected get currentTrashFilters(): Core.FilterParams { return this.list.currentTrashFilters; }
 
+  /** Stream pro UI badge "Aktualizováno v HH:MM:SS" - aktivní tabulka. */
+  get activeLastUpdatedAt$(): Core.Observable<Date | null> { return this.list.activeLastUpdatedAt.asObservable(); }
+  /** Stream pro UI badge "Aktualizováno v HH:MM:SS" - koš tabulka. */
+  get trashLastUpdatedAt$(): Core.Observable<Date | null> { return this.list.trashLastUpdatedAt.asObservable(); }
+
   public refreshData(): void {}
 
   ngOnInit(): void {}
@@ -166,14 +217,41 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
 
   /**
    * @description Initializes component state with authentication guard logic.
+   * @note Mount-time load respektuje TTL cache (`list.loadInitial()`), ne tvrdý
+   * refetch - viz refactor-note (2026-08-6) v hlavičce souboru. Komponenty s
+   * `usesPaginatedList = false` (viz refactor-note 2026-08-9) místo toho zavolají
+   * přímo `this.refreshData()`. Zároveň napojuje globální "Aktualizovat vše" tlačítko
+   * a volitelný periodický background refresh.
    */
   protected initWithAuthCheck(router: Core.Router): void {
     this.authService.isLoggedIn$
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe(loggedIn => {
-        if (loggedIn) this.refreshData();
-        else router.navigate(['/auth/login']);
+        if (loggedIn) {
+          if (this.usesPaginatedList) {
+            this.list.loadInitial(this.defaultFilters);
+          } else {
+            this.refreshData();
+          }
+        } else {
+          router.navigate(['/auth/login']);
+        }
       });
+
+    // Globální "Aktualizovat vše" tlačítko v admin headeru (TableRefreshBusService).
+    this.tableRefreshBus.refreshAll$
+      .pipe(Core.takeUntil(this.destroy$))
+      .subscribe(() => this.forceFullRefresh(this.currentActiveFilters));
+
+    // Volitelný periodický refresh na pozadí - jen pokud je karta prohlížeče aktivní.
+    // Nízká priorita (viz backlog task) - lze snadno odstranit/vypnout bez dopadu
+    // na zbytek mechanismu.
+    timer(BaseDataComponent.BACKGROUND_REFRESH_INTERVAL_MS, BaseDataComponent.BACKGROUND_REFRESH_INTERVAL_MS)
+      .pipe(
+        Core.takeUntil(this.destroy$),
+        rxFilter(() => !document.hidden)
+      )
+      .subscribe(() => this.forceFullRefresh(this.currentActiveFilters));
   }
 
   /**

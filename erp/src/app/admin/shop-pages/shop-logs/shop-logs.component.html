@@ -38,6 +38,8 @@
             [buttons]="buttons"
             [data]="data"
             [currentFilters]="filters"
+            [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
             [columns]="tableColumns"
             [isFullWidth]="isTableFullWidth"
             [tableCaption]="'Seznam e-shopových událostí systému'"

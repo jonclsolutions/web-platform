@@ -22,10 +22,21 @@
  * potřeba. Endpoint `core/system_logs` (dočasně neexistující 404) nahrazen skutečnou
  * routou `core/logs` (`CoreLogController`).
  *
+ * @refactor-note (2026-08-8) TTL CACHE + RUČNÍ REFRESH (backlog: "zbytečně moc dotazů na
+ * API"). Dashboard je typicky NEJNAVŠTĚVOVANĚJŠÍ stránka v adminu (výchozí landing po
+ * přihlášení, k ní se často vracíme přes modul switcher) - `loadStats()`
+ * (5 souběžných requestů) a `loadRecentActivity()` dřív běžely při KAŽDÉM vstupu na
+ * stránku bez ohledu na to, jak nedávno se to samé stalo. Obě metody teď jdou přes
+ * `ResourceCacheService` (2min TTL - kratší než tabulkové 3min, protože dashboard je
+ * "co se teď děje" přehled, kde je čerstvost o něco důležitější). Přidáno ruční
+ * "Aktualizovat" tlačítko (`refresh()` - obchází TTL, invaliduje oba cache klíče a
+ * refetchne) a `lastUpdatedAt` timestamp zobrazovaný v hlavičce, stejný UX vzor jako u
+ * tabulek (TableBuilderComponent).
  * @dependencies
  * - BaseDataComponent: Provides errorMessage/cd/alertDialogService (no CRUD needed here).
  * - LoadingService: Manages global loading states.
  * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
+ * - ResourceCacheService: TTL cache pro stats/activity fetch (viz refactor-note výše).
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
  */
 
@@ -39,6 +50,7 @@ import * as Core from '../../../shared/imports/core-providers';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 
 /**
  * @description A single aggregated metric tile shown in the stats grid.
@@ -99,14 +111,23 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
 
   public override loadingService = inject(LoadingService);
   private sanitizer = inject(DomSanitizer);
+  private resourceCache = inject(ResourceCacheService);
 
   override apiEndpoint = 'core/users';
+
+  private readonly TTL_MS = 2 * 60 * 1000;
+  private readonly STATS_CACHE_KEY = 'core-dashboard:stats';
+  private readonly ACTIVITY_CACHE_KEY = 'core-dashboard:activity';
 
   quickStats: QuickStat[] = [];
   loadingStats = true;
 
   recentActivity: ActivityLog[] = [];
   loadingActivity = true;
+
+  /** Kdy naposledy proběhlo úspěšné načtení dashboardu - zobrazeno v hlavičce. */
+  lastUpdatedAt: Date | null = null;
+  isRefreshing = false;
 
   readonly navSections: NavSection[] = [
     {
@@ -194,8 +215,23 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   }
 
   /**
+   * @description Ruční "Aktualizovat" - obchází TTL cache pro obě sekce dashboardu
+   * (stats + activity) a vynutí čerstvý fetch. Stejný UX vzor jako refresh tlačítko u
+   * tabulek (TableBuilderComponent.refreshRequested).
+   */
+  refresh(): void {
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
+    this.resourceCache.invalidate(this.STATS_CACHE_KEY);
+    this.resourceCache.invalidate(this.ACTIVITY_CACHE_KEY);
+    this.loadStats();
+    this.loadRecentActivity();
+  }
+
+  /**
    * @description Aggregates resource counts from every Core-owned endpoint concurrently
-   * using forkJoin.
+   * using forkJoin. Cached přes ResourceCacheService (2min TTL) - viz refactor-note
+   * (2026-08-8) v hlavičce souboru.
    * @note If an individual request fails, it defaults to null so the rest of the
    * dashboard remains functional. `getPaginatedCollection` is used deliberately (not
    * `getCollection`) to keep `.total` from the response instead of just the unwrapped
@@ -204,13 +240,13 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   private loadStats(): void {
     this.loadingStats = true;
 
-    forkJoin({
+    this.resourceCache.get(this.STATS_CACHE_KEY, () => forkJoin({
       users:         this.dataHandler.getPaginatedCollection<any>('core/users?per_page=1').pipe(catchError(() => of(null))),
       roles:         this.dataHandler.getPaginatedCollection<any>('core/roles?per_page=1').pipe(catchError(() => of(null))),
       legalDocs:     this.dataHandler.getPaginatedCollection<any>('legal/document-sections?per_page=1').pipe(catchError(() => of(null))),
-      externalLinks: this.dataHandler.getPaginatedCollection<any>('web/external_links?per_page=1').pipe(catchError(() => of(null))),
+      externalLinks: this.dataHandler.getPaginatedCollection<any>('core/external_links?per_page=1').pipe(catchError(() => of(null))),
       coreLogs:      this.dataHandler.getPaginatedCollection<any>('core/logs?per_page=1').pipe(catchError(() => of(null))),
-    }).subscribe({
+    }), this.TTL_MS).subscribe({
       next: (res) => {
         this.quickStats = [
           { label: 'Uživatelé systému', value: res.users?.total ?? '—', icon: 'users', color: 'sky' },
@@ -220,10 +256,13 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
           { label: 'Systémové logy', value: res.coreLogs?.total ?? '—', icon: 'logs', color: 'amber' },
         ];
         this.loadingStats = false;
+        this.isRefreshing = false;
+        this.lastUpdatedAt = new Date();
         this.cd.markForCheck();
       },
       error: () => {
         this.loadingStats = false;
+        this.isRefreshing = false;
         this.cd.markForCheck();
       }
     });
@@ -231,23 +270,28 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
 
   /**
    * @description Fetches the latest system-level audit events (authentication, role/
-   * permission changes, legal document changes) for the activity feed.
+   * permission changes, legal document changes) for the activity feed. Cached přes
+   * ResourceCacheService (2min TTL) - viz refactor-note (2026-08-8) v hlavičce souboru.
    */
   private loadRecentActivity(): void {
     this.loadingActivity = true;
-    this.dataHandler.getPaginatedCollection<any>('core/logs?per_page=8&sort_by=created_at&sort_direction=desc')
-      .pipe(catchError(() => of(null)))
-      .subscribe({
-        next: (res) => {
-          this.recentActivity = Array.isArray(res) ? res : (res?.data ?? []);
-          this.loadingActivity = false;
-          this.cd.markForCheck();
-        },
-        error: () => {
-          this.loadingActivity = false;
-          this.cd.markForCheck();
-        }
-      });
+
+    this.resourceCache.get(
+      this.ACTIVITY_CACHE_KEY,
+      () => this.dataHandler.getPaginatedCollection<any>('core/logs?per_page=8&sort_by=created_at&sort_direction=desc')
+        .pipe(catchError(() => of(null))),
+      this.TTL_MS
+    ).subscribe({
+      next: (res) => {
+        this.recentActivity = Array.isArray(res) ? res : (res?.data ?? []);
+        this.loadingActivity = false;
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.loadingActivity = false;
+        this.cd.markForCheck();
+      }
+    });
   }
 
   formatDate(iso: string): string {

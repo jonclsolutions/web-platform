@@ -6,6 +6,10 @@
     @created: 2026 
     @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
         ('core-external-links-delete') - viz trash-table-builder.component.ts stejné datum.
+    @refactor-note (2026-08-6): app-table-builder dostal [lastUpdatedAt] a
+        (refreshRequested) - napojeno na PaginatedListStore.activeLastUpdatedAt přes
+        BaseDataComponent pass-through getter a forceFullRefresh() - viz backlog task
+        "zbytečně moc dotazů na API".
 -->
 <div class="suppliers-container container mx-auto p-4">
 @if (errorMessage) {
@@ -45,6 +49,8 @@
 [isFullWidth]="isTableFullWidth"
 [tableCaption]="'Seznam externích odkazů'"
 [apiEndpoint]="apiEndpoint"
+[lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
 (itemDeleted)="handleItemDeleted()"
 (createFormOpened)="handleCreateFormOpened()"
 (editFormOpened)="handleEditFormOpened($event)"

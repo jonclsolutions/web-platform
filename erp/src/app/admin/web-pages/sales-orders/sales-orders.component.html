@@ -41,6 +41,8 @@
 <app-table-builder #activeTable
 [buttons]="buttons"
 [data]="data"
+[lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
 [currentFilters]="filters"
 [inputDefinitions]="formFields"
 [columns]="columns"

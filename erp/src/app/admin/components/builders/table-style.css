@@ -195,3 +195,22 @@ td a:hover {
   margin: 0;
   border-radius: 4px;
 }
+.table-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-mid, #e0e0dd);
+  background: var(--surface, #fff);
+  color: var(--text-muted, #71717a);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.table-refresh-btn:hover { background: var(--surface-2, #fafafa); color: var(--text, #18181b); }
+.table-last-updated {
+  font-size: 0.78rem;
+  color: var(--text-dim, #a1a1aa);
+  margin-left: 4px;
+}

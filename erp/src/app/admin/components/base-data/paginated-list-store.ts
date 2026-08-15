@@ -4,19 +4,39 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Vlastní VŠECHNO, co se týká stránkovaného + cachovaného stavu
- * "aktivní vs. koš" tabulky: čítače stránek, cache per-stránka, aktivní filtry
- * a logiku fetch/refresh/změna stránky. Vyextrahováno z BaseDataComponent, aby
- * stránkování/cache bylo samostatně testovatelné a vyměnitelné, místo aby bylo
- * napevno zadrátované do KAŽDÉ admin stránkové komponenty (i těch, co ho vůbec
- * nepoužívají — viz TableBuilderComponent / PersonalInfoComponent).
+ * @description Vlastní stav "aktivní vs. koš" tabulky: čítače stránek, aktivní filtry
+ * a logiku fetch/refresh/změna stránky.
  *
- * @note Stejně jako EntityCrudService, i tohle je plain třída — instancuje ji
- * BaseDataComponent (lazy getter `this.list`) pro konkrétní `apiEndpoint`.
+ * @refactor-note (2026-08) ODSTRANĚNA vlastní lokální `Map` cache (`activeCache`/
+ * `trashCache`) - byla to druhá, nezávislá cache vrstva NAD `GenericTableService`
+ * (root singleton), navíc bez TTL a bez povědomí o mutacích dat. Protože je tahle
+ * třída (stejně jako celý BaseDataComponent) při KAŽDÉ navigaci zničena a znovu
+ * vytvořena, lokální cache navigaci mezi stránkami stejně nikdy nepřežila - jediná
+ * cache, která ji reálně přežije, je `GenericTableService.pageCache` (root singleton).
+ * Sjednoceno na jeden zdroj pravdy: `fetchPaginatedData()` teď vždy volá
+ * `genericTableService.getPaginatedData()`, který sám rozhodne network vs. cache podle
+ * TTL - transparentně, bez ohledu na to, jestli je tohle nový nebo starý mount.
+ *
+ * Přidány dvě odlišné metody pro dvě odlišné situace (klíčová oprava backlog tasku):
+ * - `loadInitial()` - "jemné" načtení při vstupu na stránku (mount). NEinvaliduje nic -
+ *   pokud je `GenericTableService` cache pro danou stránku/filtry ještě čerstvá (< TTL),
+ *   proběhne bez síťového dotazu.
+ * - `forceFullRefresh()` - "tvrdý" refresh. Napřed zavolá
+ *   `genericTableService.invalidateEndpoint()` (zahodí VŠECHNY cachované stránky
+ *   tohoto zdroje), pak refetchne. Použito: ruční refresh tlačítko na tabulce, refresh
+ *   po create/update/delete/restore (přes stávající `refreshData()` override v každé
+ *   stránkové komponentě), a globální refresh v headeru (přes TableRefreshBusService).
+ *
+ * Přidáno `activeLastUpdatedAt` / `trashLastUpdatedAt` (BehaviorSubject<Date | null>) -
+ * nastavuje se při KAŽDÉM úspěšném `fetchPaginatedData()` (ať data přišla ze sítě nebo
+ * z cache) - UI tak může zobrazit "Aktualizováno v HH:MM:SS", viz TableBuilderComponent.
+ *
+ * Přidáno volání `genericTableService.preloadAdjacentPages()` při změně stránky - dřív
+ * existující, ale nikde nevolaná metoda.
  */
 
 import { ChangeDetectorRef } from '@angular/core';
-import { Observable, Subject, forkJoin, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, forkJoin } from 'rxjs';
 import { takeUntil, retry, tap, finalize } from 'rxjs/operators';
 import { GenericTableService, FilterParams, PaginatedResponse } from '../../../core/services/generic-table.service';
 
@@ -39,8 +59,9 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
   currentActiveFilters: FilterParams = {};
   currentTrashFilters: FilterParams = {};
 
-  private activeCache = new Map<number, T[]>();
-  private trashCache = new Map<number, T[]>();
+  /** Kdy naposledy proběhlo úspěšné načtení aktivní/koš tabulky - pro UI badge "Aktualizováno v...". */
+  public activeLastUpdatedAt = new BehaviorSubject<Date | null>(null);
+  public trashLastUpdatedAt = new BehaviorSubject<Date | null>(null);
 
   constructor(
     private genericTableService: GenericTableService,
@@ -55,8 +76,8 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
   }
 
   /**
-   * @description Načte stránku dat z API (nebo z cache, pokud tam už je) pro
-   * aktivní nebo koš tabulku.
+   * @description Načte stránku dat z `GenericTableService` (ten sám rozhodne
+   * network vs. TTL cache) pro aktivní nebo koš tabulku.
    */
   fetchPaginatedData(
     isTrash: boolean,
@@ -64,30 +85,10 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
     perPage: number,
     filters: FilterParams
   ): Observable<PaginatedResponse<T>> {
-    const cache = isTrash ? this.trashCache : this.activeCache;
-    const currentStoredFilters = isTrash ? this.currentTrashFilters : this.currentActiveFilters;
-
-    if (JSON.stringify(filters) !== JSON.stringify(currentStoredFilters)) {
-      cache.clear();
-      if (isTrash) {
-        this.trashCurrentPage = 1;
-        this.currentTrashFilters = { ...filters };
-      } else {
-        this.currentPage = 1;
-        this.currentActiveFilters = { ...filters };
-      }
-    }
-
-    if (cache.has(page)) {
-      const cachedData = cache.get(page)!;
-      if (isTrash) this.trashData = cachedData; else this.data = cachedData;
-      this.cd.markForCheck();
-      return of({
-        data: cachedData,
-        current_page: page,
-        last_page: isTrash ? this.trashTotalPages : this.totalPages,
-        total: isTrash ? this.trashTotalItems : this.totalItems
-      } as PaginatedResponse<T>);
+    if (isTrash) {
+      this.currentTrashFilters = { ...filters };
+    } else {
+      this.currentActiveFilters = { ...filters };
     }
 
     const params: FilterParams = { ...filters };
@@ -102,25 +103,44 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
           this.trashTotalItems = response.total;
           this.trashTotalPages = response.last_page;
           this.trashCurrentPage = response.current_page;
+          this.trashLastUpdatedAt.next(new Date());
         } else {
           this.data = response.data;
           this.totalItems = response.total;
           this.totalPages = response.last_page;
           this.currentPage = response.current_page;
+          this.activeLastUpdatedAt.next(new Date());
         }
-        cache.set(page, response.data);
         this.cd.markForCheck();
       })
     );
   }
 
   /**
-   * @description Vyčistí obě cache a znovu načte aktuální stránku obou tabulek
-   * (aktivní i koš) najednou.
+   * @description "Jemné" počáteční načtení při vstupu na stránku (mount). Neinvaliduje
+   * žádnou cache - pokud je `GenericTableService` cache ještě čerstvá, proběhne bez
+   * síťového dotazu (viz refactor-note výše).
+   */
+  loadInitial(filters: FilterParams = this.defaultFilters): void {
+    forkJoin([
+      this.fetchPaginatedData(false, this.currentPage, this.itemsPerPage, filters),
+      this.fetchPaginatedData(true, this.trashCurrentPage, this.trashItemsPerPage, filters)
+    ]).pipe(
+      finalize(() => this.cd.markForCheck())
+    ).subscribe(() => {
+      this.genericTableService.preloadAdjacentPages(
+        this.endpoint, this.currentPage, this.totalPages, this.itemsPerPage, 1, filters
+      );
+    });
+  }
+
+  /**
+   * @description "Tvrdý" refresh - zneplatní VŠECHNY cachované stránky tohoto endpointu
+   * a znovu je natáhne. Použít po mutaci dat (create/update/delete/restore) a u
+   * ručního/globálního refresh tlačítka.
    */
   forceFullRefresh(currentFilters: FilterParams = this.defaultFilters): void {
-    this.activeCache.clear();
-    this.trashCache.clear();
+    this.genericTableService.invalidateEndpoint(this.endpoint);
     this.cd.markForCheck();
 
     forkJoin([
@@ -135,12 +155,21 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
     if (this.showTrashTable) {
       if (page >= 1 && page <= this.trashTotalPages && page !== this.trashCurrentPage) {
         this.trashCurrentPage = page;
-        this.fetchPaginatedData(true, page, this.trashItemsPerPage, filters).subscribe();
+        this.fetchPaginatedData(true, page, this.trashItemsPerPage, filters).subscribe(() => {
+          this.genericTableService.preloadAdjacentPages(
+            this.endpoint, page, this.trashTotalPages, this.trashItemsPerPage, 1,
+            { ...filters, only_trashed: 'true' }
+          );
+        });
       }
     } else {
       if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
         this.currentPage = page;
-        this.fetchPaginatedData(false, page, this.itemsPerPage, filters).subscribe();
+        this.fetchPaginatedData(false, page, this.itemsPerPage, filters).subscribe(() => {
+          this.genericTableService.preloadAdjacentPages(
+            this.endpoint, page, this.totalPages, this.itemsPerPage, 1, filters
+          );
+        });
       }
     }
   }
@@ -149,19 +178,17 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
     if (this.showTrashTable) {
       this.trashItemsPerPage = value;
       this.trashCurrentPage = 1;
-      this.trashCache.clear();
       this.fetchPaginatedData(true, 1, value, filters).subscribe();
     } else {
       this.itemsPerPage = value;
       this.currentPage = 1;
-      this.activeCache.clear();
       this.fetchPaginatedData(false, 1, value, filters).subscribe();
     }
   }
 
   toggleTable(): void {
     this.showTrashTable = !this.showTrashTable;
-    this.forceFullRefresh(this.showTrashTable ? this.currentTrashFilters : this.currentActiveFilters);
+    this.loadInitial(this.showTrashTable ? this.currentTrashFilters : this.currentActiveFilters);
   }
 
   /** Odebere položku z lokálních polí (aktivní i koš), bez API volání. */

@@ -278,8 +278,6 @@
   flex-shrink: 0;
 }
 
-.maintenance-label {}
-
 /* ── Header pravá skupina ─────────────────────────────────────── */
 .header-right {
   margin-left: auto;
@@ -945,3 +943,20 @@
   .header-brand { display: none; }
   .module-switcher > button span:not(:first-child) { display: none; }
 }
+.map-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 6px;
+  border-radius: var(--radius, 10px);
+  border: none;
+  background: none;
+  color: var(--text-muted, #71717a);
+  font-size: 0.84rem;
+  font-weight: 500;
+  font-family: var(--ff);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+.map-refresh-btn:hover { background: var(--surface-2, #fafafa); color: var(--text, #18181b); }

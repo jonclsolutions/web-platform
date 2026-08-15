@@ -41,6 +41,8 @@
 [data]="data"
 [columns]="salesLeadColumns"
 [inputDefinitions]="formFields"
+[lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
 [isFullWidth]="isTableFullWidth"
 [tableCaption]="'Seznam obchodních příležitostí'"
 [apiEndpoint]="apiEndpoint"

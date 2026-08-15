@@ -41,6 +41,8 @@
 [currentFilters]="filters"
 [columns]="columns"
 [isFullWidth]="isTableFullWidth"
+[lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
 [inputDefinitions]="formFields"
 [tableCaption]="'Seznam Support Ticketů'"
 [apiEndpoint]="apiEndpoint"

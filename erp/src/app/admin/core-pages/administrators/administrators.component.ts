@@ -8,6 +8,7 @@
  * @dependencies
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and state management.
  * - TableBuilderComponent: Used for rendering the administrators data grid.
+ * - RoleOptionsService: TTL-cached zdroj `core/roles` pro `role_id` select options.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
  * @bugfix-note (2026) `role_id` select options bývaly natvrdo `[{sysadmin},{admin}]`
  *       v administrators.config.ts. Teď, když jsou role spravovány dynamicky
@@ -15,6 +16,16 @@
  *       role nešlo přes tenhle formulář vůbec nikomu přiřadit.
  *       Options pro `role_id` (ve formuláři i ve filtru) se proto teď načítají
  *       dynamicky z `core/roles` při inicializaci komponenty - viz loadRoleOptions().
+ *
+ * @refactor-note (2026-08-6) `loadRoleOptions()` přepnut z přímého `dataHandler.
+ * getCollection('core/roles?no_pagination=true')` na `RoleOptionsService.getRoles()` -
+ * dřív šlo o jediné volání v celé komponentě, které obcházelo GenericTableService TTL
+ * cache mechanismus (viz backlog task "zbytečně moc dotazů na API"), takže se seznam
+ * rolí stahoval znovu při KAŽDÉM vstupu na stránku, bez ohledu na to, jak nedávno se
+ * to samé stalo. RoleOptionsService má vlastní krátkou TTL cache (5 min, sdílenou
+ * napříč celou appkou jako `providedIn: 'root'` singleton) - endpoint tedy zůstává
+ * čerstvý (role se nemění často), ale rychlé opakované návštěvy stránky ho už
+ * nezpůsobí opakovaně.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -22,13 +33,8 @@ import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
+import { RoleOptionsService } from '../../../core/services/role-options.service';
 import * as Config from './administrators.config';
-
-/** Tvar jedné položky v roles-endpointu, jen pole, která tu skutečně potřebujeme. */
-interface RoleOptionSource {
-  id: number;
-  role_name: string;
-}
 
 /**
  * @description Component for the administration of platform administrators.
@@ -69,6 +75,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
     protected override genericTableService: Core.GenericTableService,
+    private roleOptionsService: RoleOptionsService,
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
@@ -128,17 +135,18 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   }
 
   /**
-   * @description Načte aktuální seznam rolí z API a doplní jím `options` u pole `role_id`
-   *              ve formuláři i ve filtru. Bez tohoto by šlo uživatelům přiřazovat jen
-   *              natvrdo zadrátované role (sysadmin/admin), ne nově vytvořené custom role
+   * @description Načte aktuální seznam rolí (přes RoleOptionsService - viz refactor-note
+   *              v hlavičce souboru) a doplní jím `options` u pole `role_id` ve formuláři
+   *              i ve filtru. Bez tohoto by šlo uživatelům přiřazovat jen natvrdo
+   *              zadrátované role (sysadmin/admin), ne nově vytvořené custom role.
    * @note Endpoint vrací jen netrashnuté role (Eloquent SoftDeletes je defaultně vylučuje),
    *       takže smazané role se v nabídce logicky neobjeví.
    */
   private loadRoleOptions(): void {
-    this.dataHandler.getCollection<RoleOptionSource>('core/roles?no_pagination=true').subscribe({
+    this.roleOptionsService.getRoles().subscribe({
       next: (roles) => {
         this.roleOptions = (roles || [])
-          .filter((r): r is RoleOptionSource => !!r)
+          .filter((r): r is { id: number; role_name: string } => !!r)
           .map(r => ({ value: String(r.id), label: r.role_name }));
 
         // Nové pole objektů (ne mutace sdíleného Config exportu), ať se nic

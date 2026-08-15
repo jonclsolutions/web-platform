@@ -41,11 +41,25 @@
  * pole, shop sekci `CoreSiteSettingController::update()` nechá beze změny (viz jeho
  * `TOGGLE_GROUPS` mechanismus).
  *
+ * @refactor-note (2026-08-9) TTL CACHE + RUČNÍ REFRESH (backlog: "zbytečně moc dotazů na
+ * API"), stejný vzor jako `CoreDashboardComponent`/shop `DashboardComponent`. Dashboard
+ * je typický post-login landing point pro roli spravující obsah webu, ke kterému se admin
+ * často vrací modul switcherem. `loadStats()` (7 souběžných requestů), `loadRecentActivity()`
+ * a `loadWebMaintenanceStatus()` teď jdou přes `ResourceCacheService` (2 min TTL pro
+ * stats/activity, 1 min pro maintenance status - bezpečnostně/provozně citlivější).
+ * Přidáno ruční "Aktualizovat" tlačítko (`refresh()` - invaliduje všechny tři cache klíče
+ * a refetchne) a `lastUpdatedAt` timestamp v hlavičce, stejný UX vzor jako u tabulek a
+ * `CoreDashboardComponent`. `submitWebMaintenanceChange()` po úspěchu invaliduje
+ * maintenance cache klíč, ať další čtení (i jinde v adminu) odráží novou hodnotu.
+ * Poznámka: `initWithAuthCheck()` se v této komponentě NIKDY nevolala (viz `ngOnInit`
+ * override níže) - žádná regresní úprava `usesPaginatedList` tu proto není potřeba.
+ *
  * @dependencies
  * - BaseDataComponent: Poskytuje errorMessage/cd/alertDialogService (žádné CRUD tu není potřeba).
  * - LoadingService: Manages global loading states.
  * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
  * - HasPermissionDirective: Gate karty údržby na permission `web-set-maintenance-mode`.
+ * - ResourceCacheService: TTL cache pro stats/activity/maintenance fetch (viz refactor-note výše).
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
  */
 
@@ -60,6 +74,7 @@ import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
+import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { ActivityLog, QuickStat, NavSection } from './';
 
 /**
@@ -82,16 +97,27 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   public override loadingService = inject(LoadingService);
   private sanitizer = inject(DomSanitizer);
+  private resourceCache = inject(ResourceCacheService);
   // Pozn.: `alertDialogService` se ZDE ZÁMĚRNĚ znovu nedeklaruje - už ho poskytuje
   // zděděný BaseDataComponent (stejný vzor jako EditRolesComponent), stačí `this.alertDialogService`.
 
   override apiEndpoint = 'core/users';
+
+  private readonly STATS_TTL_MS = 2 * 60 * 1000;
+  private readonly MAINTENANCE_TTL_MS = 60 * 1000;
+  private readonly STATS_CACHE_KEY = 'web-dashboard:stats';
+  private readonly ACTIVITY_CACHE_KEY = 'web-dashboard:activity';
+  private readonly MAINTENANCE_CACHE_KEY = 'web-dashboard:maintenance';
 
   quickStats: QuickStat[] = [];
   loadingStats = true;
 
   recentActivity: ActivityLog[] = [];
   loadingActivity = true;
+
+  /** Kdy naposledy proběhlo úspěšné načtení dashboardu - zobrazeno v hlavičce. */
+  lastUpdatedAt: Date | null = null;
+  isRefreshing = false;
 
   // ── Režim údržby webu ────────────────────────────────────────────
   isWebActive = true;
@@ -199,8 +225,23 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   }
 
   /**
+   * @description Ruční "Aktualizovat" - obchází TTL cache pro všechny tři sekce
+   * dashboardu (stats + activity + maintenance) a vynutí čerstvý fetch.
+   */
+  refresh(): void {
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
+    this.resourceCache.invalidate(this.STATS_CACHE_KEY);
+    this.resourceCache.invalidate(this.ACTIVITY_CACHE_KEY);
+    this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
+    this.loadStats();
+    this.loadRecentActivity();
+    this.loadWebMaintenanceStatus();
+  }
+
+  /**
    * @description Aggregates statistical data from every website-content module
-   * concurrently using forkJoin.
+   * concurrently using forkJoin. Přes TTL cache (viz refactor-note v hlavičce souboru).
    * @note If an individual request fails, it defaults to null to ensure the rest of the
    * dashboard remains functional. `getPaginatedCollection` je zvolený záměrně (ne
    * `getCollection`), protože potřebujeme zachovat `.total` z odpovědi, ne jen odbalené
@@ -209,7 +250,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   private loadStats(): void {
     this.loadingStats = true;
 
-    forkJoin({
+    this.resourceCache.get(this.STATS_CACHE_KEY, () => forkJoin({
       news:          this.dataHandler.getPaginatedCollection<any>('web/news?per_page=1').pipe(catchError(() => of(null))),
       openTickets:   this.dataHandler.getPaginatedCollection<any>('web/support_tickets?status=open&per_page=1').pipe(catchError(() => of(null))),
       jobApps:       this.dataHandler.getPaginatedCollection<any>('web/job_applications?per_page=1').pipe(catchError(() => of(null))),
@@ -217,7 +258,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       salesOrders:   this.dataHandler.getPaginatedCollection<any>('web/sales_orders?per_page=1').pipe(catchError(() => of(null))),
       rawRequests:   this.dataHandler.getPaginatedCollection<any>('web/raw_request_commissions?per_page=1').pipe(catchError(() => of(null))),
       webLogs:       this.dataHandler.getPaginatedCollection<any>('web/logs?per_page=1').pipe(catchError(() => of(null))),
-    }).subscribe({
+    }), this.STATS_TTL_MS).subscribe({
       next: (res) => {
         this.quickStats = [
           { label: 'Novinky na webu', value: res.news?.total ?? '—', icon: 'newspaper', color: 'rose' },
@@ -234,10 +275,13 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
           { label: 'Záznamy v logu', value: res.webLogs?.total ?? '—', icon: 'logs', color: 'sky' },
         ];
         this.loadingStats = false;
+        this.isRefreshing = false;
+        this.lastUpdatedAt = new Date();
         this.cd.markForCheck();
       },
       error: () => {
         this.loadingStats = false;
+        this.isRefreshing = false;
         this.cd.markForCheck();
       }
     });
@@ -245,23 +289,28 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   /**
    * @description Fetches the latest business-level events for the activity feed
-   * (content changes, CRUD actions on web-owned resources).
+   * (content changes, CRUD actions on web-owned resources). Přes TTL cache (viz
+   * refactor-note v hlavičce souboru).
    */
   private loadRecentActivity(): void {
     this.loadingActivity = true;
-    this.dataHandler.getPaginatedCollection<any>('web/logs?per_page=8&sort_by=created_at&sort_direction=desc')
-      .pipe(catchError(() => of(null)))
-      .subscribe({
-        next: (res) => {
-          this.recentActivity = Array.isArray(res) ? res : (res?.data ?? []);
-          this.loadingActivity = false;
-          this.cd.markForCheck();
-        },
-        error: () => {
-          this.loadingActivity = false;
-          this.cd.markForCheck();
-        }
-      });
+
+    this.resourceCache.get(
+      this.ACTIVITY_CACHE_KEY,
+      () => this.dataHandler.getPaginatedCollection<any>('web/logs?per_page=8&sort_by=created_at&sort_direction=desc')
+        .pipe(catchError(() => of(null))),
+      this.STATS_TTL_MS
+    ).subscribe({
+      next: (res) => {
+        this.recentActivity = Array.isArray(res) ? res : (res?.data ?? []);
+        this.loadingActivity = false;
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.loadingActivity = false;
+        this.cd.markForCheck();
+      }
+    });
   }
 
   /**
@@ -303,11 +352,16 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   /**
    * @description Načte aktuální stav režimu údržby webu ze sdíleného `core/settings`
-   * endpointu. Volá se samostatně od `loadStats()`/`loadRecentActivity()`, ať výpadek
-   * jednoho z nich neblokuje zobrazení stavu údržby a naopak.
+   * endpointu, přes krátkou TTL cache (1 min - stav je bezpečnostně/provozně citlivý).
+   * Volá se samostatně od `loadStats()`/`loadRecentActivity()`, ať výpadek jednoho z nich
+   * neblokuje zobrazení stavu údržby a naopak.
    */
   private loadWebMaintenanceStatus(): void {
-    this.dataHandler.get<any>('core/settings').subscribe({
+    this.resourceCache.get(
+      this.MAINTENANCE_CACHE_KEY,
+      () => this.dataHandler.get<any>('core/settings'),
+      this.MAINTENANCE_TTL_MS
+    ).subscribe({
       next: (res: any) => {
         if (res) {
           this.isWebActive = !!res.is_web_active;
@@ -333,7 +387,8 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
    * @description Odešle změnu stavu webu na `core/settings`. Posílá jen
    * `is_web_active`/`web_maintenance_message` pole - `CoreSiteSettingController::update()`
    * je generický a upraví jen sekce, které se skutečně pošlou (viz TOGGLE_GROUPS), takže
-   * tímhle voláním se shop-maintenance sekce nedotkne.
+   * tímhle voláním se shop-maintenance sekce nedotkne. Po úspěchu invaliduje maintenance
+   * cache klíč, ať další čtení (i jinde v adminu) odráží novou hodnotu.
    */
   submitWebMaintenanceChange(): void {
     if (!this.webConfirmPasswordValue.trim()) {
@@ -349,6 +404,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       next: () => {
         this.isWebActive = this.pendingWebTargetState;
         this.showWebMaintenanceModal = false;
+        this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
         this.alertDialogService.open(
           'Úspěch',
           this.pendingWebTargetState ? 'Web je nyní aktivní.' : 'Režim údržby webu byl aktivován.',

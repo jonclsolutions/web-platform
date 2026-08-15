@@ -42,6 +42,13 @@
  * nemají rozdílný počet sloupců, když je nějaké tlačítko permission schované. Tlačítka
  * bez `permission` pole se chovají beze změny (viditelná dokud `isActive`).
  *
+ * @refactor-note (2026-08-6) Přidán table-level refresh: `@Input() lastUpdatedAt`
+ * (zobrazí "Aktualizováno v HH:MM:SS" v toolbaru) a `@Output() refreshRequested`
+ * (rodičovská stránka na to naváže voláním `forceFullRefresh()` z BaseDataComponent -
+ * viz backlog task "zbytečně moc dotazů na API"). Tahle komponenta sama žádnou cache
+ * ani TTL neřeší - to je odpovědnost GenericTableService/PaginatedListStore, komponenta
+ * jen emituje požadavek na tvrdý refresh a zobrazuje předaný timestamp.
+ *
  * @dependencies
  * - EntityCrudService: CRUD volání (delete řádku, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations.
@@ -55,7 +62,7 @@ import {
   Component, Input, Output, EventEmitter, ChangeDetectionStrategy,
   ChangeDetectorRef, OnDestroy, OnChanges, SimpleChanges, inject
 } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom, Subject } from 'rxjs';
 
@@ -98,7 +105,7 @@ const DEFAULT_EXPORT_EXCLUDED_KEYS = [
 @Component({
   selector: 'app-table-builder',
   standalone: true,
-  imports: [FormsModule, ExportPopupBuilderComponent],
+  imports: [CommonModule, FormsModule, ExportPopupBuilderComponent],
   templateUrl: './table-builder.component.html',
   styleUrls: ['../table-style.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -123,6 +130,14 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    */
   @Input() excludeFromExport: string[] = [];
 
+  /**
+   * @description Kdy naposledy proběhlo úspěšné načtení dat této tabulky (ze sítě
+   * nebo z čerstvé TTL cache) - zobrazuje se v toolbaru jako "Aktualizováno v HH:MM:SS".
+   * Předává rodičovská stránka přes `PaginatedListStore.activeLastUpdatedAt`/
+   * `trashLastUpdatedAt` (viz BaseDataComponent pass-through gettery).
+   */
+  @Input() lastUpdatedAt: Date | null = null;
+
   @Output() itemDeleted = new EventEmitter<any>();
   @Output() createFormOpened = new EventEmitter<void>();
   @Output() editFormOpened = new EventEmitter<any>();
@@ -132,6 +147,13 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Output() openImagesModal = new EventEmitter<any>();
   @Output() openVariantsModal = new EventEmitter<any>();
   @Output() customerOrdersOpened = new EventEmitter<any>();
+
+  /**
+   * @description Emitováno kliknutím na "Aktualizovat" v toolbaru téhle tabulky.
+   * Rodičovská stránka na to naváže voláním `forceFullRefresh(this.filters)`
+   * (BaseDataComponent) - tvrdý refresh, obchází TTL cache.
+   */
+  @Output() refreshRequested = new EventEmitter<void>();
 
   web_logs_endpoint: string = 'web/logs';
 
@@ -293,6 +315,15 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
       this.data.splice(index, 1);
       this.cd.markForCheck();
     }
+  }
+
+  /**
+   * @description Emits a refresh request for this specific table. The parent page is
+   * expected to respond by calling `forceFullRefresh()` (BaseDataComponent), which
+   * bypasses the GenericTableService TTL cache and forces a real network fetch.
+   */
+  onRefreshClick(): void {
+    this.refreshRequested.emit();
   }
 
   /**

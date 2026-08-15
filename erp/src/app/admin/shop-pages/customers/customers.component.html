@@ -41,6 +41,8 @@
               [columns]="customerColumns"
               [currentFilters]="filters"
               [inputDefinitions]="formFields"
+              [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
               [isFullWidth]="isTableFullWidth"
               [tableCaption]="'Seznam zákazníků'"
               [apiEndpoint]="apiEndpoint"

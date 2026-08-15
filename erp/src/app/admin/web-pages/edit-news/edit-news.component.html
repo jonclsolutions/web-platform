@@ -41,6 +41,8 @@
 [buttons]="buttons"
 [data]="data"
 [columns]="newsColumns"
+[lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+(refreshRequested)="forceFullRefresh(filters)"
 [currentFilters]="filters"
 [inputDefinitions]="formFields"
 [isFullWidth]="isTableFullWidth"
