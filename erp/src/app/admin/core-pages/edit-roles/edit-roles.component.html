@@ -4,11 +4,12 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @refactor-note (2026-08-7): checklist oprávnění nyní vykresluje DVĚ úrovně
-        (modul -> zdroj -> jednotlivé permission řádky) místo jedné plocné - viz
-        edit-roles.component.ts (visiblePermissionGroups, toggleResourceGroup).
-        Přidáno samostatné vyhledávací pole nad checklistem (permissionSearch),
-        nezávislé na existujícím hledání v seznamu rolí vlevo (roleSearch).
+    @refactor-note (2026-08-7): checklist oprávnění dvouúrovňové grupování + vyhledávání.
+    @refactor-note (2026-08-16): BACKLOG "captcha + 2FA na mail", bod 3: doplněn checkbox
+        "Vyžadovat 2FA pro tuto roli" - ve formuláři nové role i v editaci detailu
+        existující role (draftForcesTwoFa / newRoleForcesTwoFa v komponentě). Zobrazen
+        i jako informační odznak (forces-2fa-badge), když role vynucení má a zrovna
+        NENÍ v edit módu.
 -->
 
 <div class="roles-page">
@@ -39,6 +40,12 @@
       <div class="field-group field-group--wide">
         <label for="new-role-desc">Popis (nepovinné)</label>
         <input id="new-role-desc" type="text" [(ngModel)]="newRoleDescription" placeholder="Krátký popis účelu role" maxlength="255" />
+      </div>
+      <div class="field-group">
+        <label class="checkbox-inline-label">
+          <input type="checkbox" [(ngModel)]="newRoleForcesTwoFa" />
+          Vyžadovat 2FA pro tuto roli
+        </label>
       </div>
     </div>
     <p class="error-text" *ngIf="newRoleError">{{ newRoleError }}</p>
@@ -83,6 +90,10 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
               {{ role.role_name }}
+              <svg *ngIf="role.forces_2fa" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="twofa-icon" title="Vyžaduje 2FA">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9 12l2 2 4-4"/>
+              </svg>
             </span>
             <span class="users-badge" [class.users-badge--zero]="role.users_count === 0" title="Počet uživatelských účtů s touto rolí">{{ role.users_count }}</span>
           </div>
@@ -147,12 +158,27 @@
       </ng-container>
       <p class="detail-desc" *ngIf="!isEditingDetails && selectedRole.description">{{ selectedRole.description }}</p>
 
+      <div class="field-group" *ngIf="isEditingDetails">
+        <label class="checkbox-inline-label">
+          <input type="checkbox" [(ngModel)]="draftForcesTwoFa" />
+          Vyžadovat 2FA pro tuto roli
+        </label>
+      </div>
+      <div class="forces-2fa-badge" *ngIf="!isEditingDetails && selectedRole.forces_2fa">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        Tato role vyžaduje dvoufaktorové ověření pro všechny uživatele.
+      </div>
+
       <div class="protected-notice" *ngIf="selectedRole.is_protected">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
-        Toto je systémová role - název, popis i oprávnění jsou needitovatelné.
+        Toto je systémová role - název, popis i oprávnění jsou needitovatelné. 2FA je pro
+        tuto roli vynuceno vždy, bez ohledu na nastavení.
       </div>
 
       <!-- ── Vyhledávání v checklistu oprávnění (nezávislé na hledání rolí vlevo) ── -->

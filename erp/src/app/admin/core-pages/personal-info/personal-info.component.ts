@@ -6,39 +6,13 @@
  * @created 2025
  * @description Manages user profile information and security settings, specifically handling
  * password updates and the self-service 2FA toggle.
- *
- * @refactor-note (2025) Dříve dědil z BaseDataComponent jen kvůli `getItemDetails()` a
- * `updatePassword()` — čímž si zbytečně vláčel celý paginační/koš/cache aparát, který
- * vůbec nepoužíval. Nyní si skládá `EntityCrudService` přímo (stejnou třídu, na kterou
- * i BaseDataComponent interně deleguje) — je to jediné, co tato komponenta potřebuje.
- *
- * @refactor-note (2026-08) Legacy osobní/HR pole odstraněna - viz User.php. Formulář na
- * změnu hesla přesunut do `showPasswordPopup` popupu. Přidán self-service `enable_2fa`
- * toggle a `userRoleName` getter pro zobrazení role.
- *
- * @refactor-note (2026-08-2) `passwordsMatchValidator` přepsán bez `setErrors()`
- * manipulace (mohla přepisovat jiné chyby na `new_password_confirmation` controlu -
- * typicky `required`, pokud běžely validace v nešťastném pořadí) - teď je to čistý
- * group-level validator, chyba se čte přes `passwordForm.errors` v šabloně. Zároveň
- * opraven klíč `{ validator: ... }` → `{ validators: ... }` (jednotné číslo `validator`
- * NENÍ platný klíč `AbstractControlOptions` - Angular ho mohl tiše ignorovat, takže
- * cross-field validace hesel se pravděpodobně nikdy nespouštěla). Přidán `Validators.pattern`
- * na `new_password` dle sdílené `PASSWORD_PATTERN` a live checklist požadavků hesla.
- *
- * @refactor-note (2026-08-8) Zdroj profilu přepnut z přímého `EntityCrudService.getOne()`
- * na sdílenou `CurrentUserProfileService` (backlog: "zbytečně moc dotazů na API") -
- * WelcomePageComponent načítá TENTÝŽ `core/users/{id}` záznam nezávisle, takže uživatel
- * co po loginu prošel welcome-page a pak klikl na "Osobní Informace" dělal dva identické
- * requesty za sebou. `onToggle2fa()` a `onSubmit()` (změna hesla) teď po úspěchu volají
- * `profileService.invalidate()`, ať sdílená cache neukazuje starý stav jinde v adminu.
- * `EntityCrudService` zůstává jen pro `updatePassword()` (mutace, ne čtení - cache se
- * netýká).
- * @dependencies
- * - EntityCrudService: `updatePassword()` pro endpoint 'core/users'.
- * - CurrentUserProfileService: TTL-cached čtení vlastního profilu, sdílené s WelcomePageComponent.
- * - ReactiveFormsModule: Enables form group management and validation for password change inputs.
- * - AuthService: Used to identify the currently authenticated user for profile requests.
- * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla.
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", bod 4: uživatel má vidět
+ * JASNOU informaci o TOM, PROČ má/nemá 2FA - tři možné efektivní stavy: (a) role
+ * admin/sysadmin -> vždy vynuceno, nelze změnit; (b) sysadmin osobně vynutil 2FA tomuto
+ * konkrétnímu účtu (`two_fa_forced_by_admin`) -> vynuceno, nelze změnit, ALE z jiného
+ * důvodu než (a); (c) žádné vynucení -> běžný self-service toggle. `security2faStatusLabel`
+ * getter tohle rozlišuje pro zobrazení v šabloně. Checkbox zůstává disabled ve všech
+ * vynucených stavech (a)+(b), ne jen u (a) jako dřív.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -56,7 +30,7 @@ import { LoadingService } from '../../../core/services/loading.service';
 import { PASSWORD_PATTERN } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 
-/** Role s napevno vynuceným 2FA - musí sedět s UserController::FORCED_2FA_ROLE_NAMES. */
+/** Role s napevno vynuceným 2FA - musí sedět s User::FORCED_2FA_ROLE_NAMES na backendu. */
 const FORCED_2FA_ROLES = ['admin', 'sysadmin'];
 
 /**
@@ -96,9 +70,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  /** Sestaveno až v těle konstruktoru (ne jako property initializer) —
-   *  parametry konstruktoru (`dataHandler`, `cd`) jsou v JS/TS přiřazeny AŽ PO
-   *  doběhnutí property initializerů, takže by v initializeru byly ještě undefined. */
   private crud: EntityCrudService<UserLogin>;
 
   constructor(
@@ -131,10 +102,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  /**
-   * @description Retrieves the current user's details přes sdílenou TTL-cached
-   * `CurrentUserProfileService` (viz refactor-note 2026-08-8 v hlavičce souboru).
-   */
   private loadCurrentUserData(): void {
     this.profileService.getProfile()
       .pipe(takeUntil(this.destroy$))
@@ -150,9 +117,20 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
       });
   }
 
-  get isForced2fa(): boolean {
+  /** @description Role sama o sobě vynucuje 2FA (admin/sysadmin) - nejde vypnout vůbec. */
+  get isRoleForced2fa(): boolean {
     const roleName = (this.userData as any)?.roles?.[0]?.role_name;
     return FORCED_2FA_ROLES.includes(roleName);
+  }
+
+  /** @description Sysadmin osobně vynutil 2FA tomuto konkrétnímu účtu (nezávisle na roli). */
+  get isAdminForced2fa(): boolean {
+    return !!(this.userData as any)?.two_fa_forced_by_admin;
+  }
+
+  /** @description Kterýkoliv typ vynucení - checkbox je disabled v obou případech. */
+  get isForced2fa(): boolean {
+    return this.isRoleForced2fa || this.isAdminForced2fa;
   }
 
   get userRoleName(): string | null {
@@ -160,10 +138,27 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Přepne self-service 2FA. Po úspěchu invaliduje sdílenou profilovou
-   * cache (viz refactor-note v hlavičce souboru), ať WelcomePageComponent/další čtení
-   * neukazují starou hodnotu `enable_2fa`.
+   * @description Textová zpráva vysvětlující AKTUÁLNÍ efektivní stav 2FA a DŮVOD,
+   * proč je (ne)vynucena - viz refactor-note v hlavičce souboru, bod 4 z backlogu.
    */
+  get security2faStatusMessage(): string {
+    if (this.isRoleForced2fa) {
+      return `Pro vaši roli (${this.userRoleName}) je dvoufaktorové ověření povinné a nelze ho vypnout.`;
+    }
+    if (this.isAdminForced2fa) {
+      return 'Správce systému vynutil dvoufaktorové ověření pro váš účet. Nelze ho vypnout, obraťte se prosím na administrátora.';
+    }
+    return this.enable2faValue
+      ? 'Dvoufaktorové ověření je aktivní. Můžete si ho kdykoliv vypnout.'
+      : 'Dvoufaktorové ověření je vypnuté. Doporučujeme ho pro vyšší bezpečnost zapnout.';
+  }
+
+  /** @description Barevný stav banneru (pro CSS třídu v šabloně). */
+  get security2faStatusType(): 'forced' | 'enabled' | 'disabled' {
+    if (this.isForced2fa) return 'forced';
+    return this.enable2faValue ? 'enabled' : 'disabled';
+  }
+
   onToggle2fa(): void {
     if (this.isForced2fa || this.isSaving2fa) return;
 
@@ -208,13 +203,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * @description Group-level validator: srovnává `new_password` a
-   * `new_password_confirmation`. Nemutuje errors na jednotlivých controlech (viz
-   * @refactor-note 2026-08-2) - chyba se čte v šabloně přes `passwordForm.errors`.
-   * Prázdné potvrzení se nepovažuje za neshodu, ať se chyba neukáže dřív, než ho
-   * uživatel začne psát.
-   */
   private passwordsMatchValidator(group: AbstractControl): ValidationErrors | null {
     const newPassword = group.get('new_password')?.value;
     const confirmation = group.get('new_password_confirmation')?.value;
@@ -226,12 +214,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     return !!this.passwordForm.errors?.['passwordsNotMatching'];
   }
 
-  /**
-   * @description Submits the password change request to the server if form validation
-   * passes. Po úspěchu invaliduje sdílenou profilovou cache (heslo se nepromítá do
-   * `userData`, ale je to konzistentní bezpečnostní zvyk - jakákoliv mutace vlastního
-   * účtu invaliduje jeho cache).
-   */
   onSubmit(): void {
     if (this.passwordForm.invalid) return;
 
@@ -263,4 +245,10 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
         }
       });
   }
+  // doplnit do třídy PersonalInfoComponent, vedle isForced2fa
+
+/** @description Efektivní stav 2FA pro checkbox - true i když je enable_2fa=false, ale vynuceno jinak. */
+get effective2faChecked(): boolean {
+  return this.isForced2fa || this.enable2faValue;
+}
 }

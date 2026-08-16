@@ -6,18 +6,16 @@
  * @author RPSW
  * @created 2025
  * @description Core User model representing authentication and profile data.
- *
- * @refactor-note (2026-08) Odstraněny legacy HR/osobní sloupce, které aktuální verze
- * systému nepotřebuje a nikdy nevyžaduje k vyplnění (`birth_date`, `personal_id_num`,
- * `address`, `bank_account`, `health_insurance`, `contact_email`, `phone_number`) - byla
- * to mock data bez reálného využití, viz SQL migrace. Přidán `enable_2fa` (zatím jen
- * příznak, reálná 2FA logika bude dořešena později) - `admin`/`sysadmin` ho mají VŽDY
- * `true`, vynuceno na backendu v `UserController` (store/update).
- *
- * @refactor-note (2026-08-3) Odstraněny i `commission_rate` a `has_tax_declaration` -
- * ověřeno, že na ně nikde jinde v appce neváže žádná reálná obchodní logika (žádný
- * SalesLead/Order kontroler s nimi nepočítá), byla to nepoužívaná HR pole stejně jako
- * ostatní odstraněné sloupce. `dpp_hours_spent` ZŮSTÁVÁ - nebylo součástí požadavku.
+ * @refactor-note (2026-08) Odstraněny legacy HR/osobní sloupce. Přidán `enable_2fa`.
+ * @refactor-note (2026-08-3) Odstraněny `commission_rate` a `has_tax_declaration`.
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail": `requiresTwoFactor()`
+ * nyní kombinuje ČTYŘI nezávislé zdroje pravdy (v pořadí priority):
+ * (1) role admin/sysadmin - vždy vynuceno, hardcoded, nejde obejít úpravou dat;
+ * (2) libovolná přiřazená role má `forces_2fa=true` (CoreRole - hromadné vynucení pro
+ *     custom role, bod 3 backlogu);
+ * (3) `two_fa_forced_by_admin` - sysadmin override na KONKRÉTNÍM účtu;
+ * (4) `enable_2fa` - vlastní volba uživatele.
+ * Přidán `two_fa_forced_by_admin` sloupec (fillable/cast).
  */
 
 namespace App\Models;
@@ -33,14 +31,19 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @description Manages user credentials, profile information, and role-based access control (RBAC).
  * @property string $full_name User's display name.
- * @property bool $enable_2fa Whether two-factor auth is enabled for this account.
+ * @property bool $enable_2fa Whether two-factor auth is enabled by the user's own choice.
+ * @property bool $two_fa_forced_by_admin Whether a sysadmin forced 2FA on this specific account.
  * @property array $core_permissions Calculated list of permission keys.
  */
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-
+    /**
+     * @description Role names, pro které je 2FA vynuceno VŽDY, bez ohledu na jakýkoliv
+     * DB sloupec - kontrola je hardcoded v kódu, aby ji nešlo obejít úpravou dat.
+     * Musí sedět s FORCED_2FA_ROLES v personal-info.component.ts.
+     */
     public const FORCED_2FA_ROLE_NAMES = ['admin', 'sysadmin'];
 
     protected $fillable = [
@@ -49,44 +52,23 @@ class User extends Authenticatable
         'enable_2fa', 'two_fa_forced_by_admin',
     ];
 
+    protected $hidden = ['user_password_hash'];
+
+    protected $appends = ['core_permissions'];
+
     protected $casts = [
         'last_login_at' => 'datetime',
         'enable_2fa' => 'boolean',
         'two_fa_forced_by_admin' => 'boolean',
     ];
 
-    /**
-     * @var array<int, string> The attributes that should be hidden for serialization.
-     */
-    protected $hidden = ['user_password_hash'];
-
-    /**
-     * @var array<int, string> The accessors to append to model's array form.
-     */
-    protected $appends = ['core_permissions'];
-
-
-
-    /**
-     * Override the default password field.
-     */
     public function getAuthPassword() { return $this->user_password_hash; }
 
-    /**
-     * Get the roles assigned to this user.
-     *
-     * @return BelongsToMany
-     */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(CoreRole::class, 'user_roles', 'user_id', 'role_id');
     }
 
-    /**
-     * Get a flattened, unique list of all permission keys derived from assigned roles.
-     *
-     * @return array<int, string>
-     */
     public function getPermissionsAttribute(): array
     {
         return $this->roles->flatMap(function ($role) {
@@ -95,22 +77,22 @@ class User extends Authenticatable
     }
 
     /**
- * @description Vypočte, zda musí uživatel při loginu projít 2FA ověřením. Kombinuje
- * tři nezávislé zdroje pravdy (v pořadí priority): (1) role admin/sysadmin - vždy
- * vynuceno, (2) sysadmin override přes two_fa_forced_by_admin, (3) vlastní volba
- * uživatele enable_2fa.
- * @return bool
- */
-public function requiresTwoFactor(): bool
-{
-    $roleNames = $this->relationLoaded('roles')
-        ? $this->roles->pluck('role_name')
-        : $this->roles()->pluck('role_name');
+     * @description Vypočte, zda musí uživatel při loginu projít 2FA ověřením - viz
+     * priority zdrojů v refactor-note hlavičky souboru.
+     * @return bool
+     */
+    public function requiresTwoFactor(): bool
+    {
+        $roles = $this->relationLoaded('roles') ? $this->roles : $this->roles()->get();
 
-    if ($roleNames->intersect(self::FORCED_2FA_ROLE_NAMES)->isNotEmpty()) {
-        return true;
+        if ($roles->pluck('role_name')->intersect(self::FORCED_2FA_ROLE_NAMES)->isNotEmpty()) {
+            return true;
+        }
+
+        if ($roles->contains('forces_2fa', true)) {
+            return true;
+        }
+
+        return (bool) $this->enable_2fa || (bool) $this->two_fa_forced_by_admin;
     }
-
-    return (bool) $this->enable_2fa || (bool) $this->two_fa_forced_by_admin;
-}
 }

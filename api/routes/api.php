@@ -117,7 +117,6 @@ use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\PublicFileDownloadController;
-use App\Http\Controllers\Api\Core\TwoFactorAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -258,8 +257,6 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     |    (WEB sekce níže), shop maintenance pod `shop/settings` (SHOP sekce níže).
     */
     Route::prefix('core')->group(function () {
-
-        Route::put('users/{id}/two-factor-requirement', [TwoFactorAdminController::class, 'update']);
 
         // POST bez permission middleware - zápis vlastního audit záznamu (viz
         // @refactor-note 2026-08-2 v hlavičce souboru). GET (čtení historie) chráněno.

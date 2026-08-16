@@ -4,8 +4,9 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    @refactor-note (2026-08-16): přidán captcha widget kontejner (jen po
-        captchaRequired=true) a celý @if(step === 'otp') blok pro zadání 2FA kódu.
+    @refactor-note (2026-08-16): captcha widget kontejner (jen po captchaRequired=true)
+        a @if(step === 'otp') blok pro zadání 2FA kódu. Neshoda kódu se zobrazuje přes
+        errorMessage stejně jako všechny ostatní chyby (viz body níže).
 -->
 
 <div class="login-page">
@@ -120,6 +121,7 @@
             <div class="error-message" role="alert">Platnost kódu vypršela. Vyžádejte si prosím nový.</div>
           }
 
+          <!-- Neshoda kódu se zobrazuje přímo tady - stejný error-message blok jako u kroku 1. -->
           @if (errorMessage) {
             <div class="error-message" role="alert">{{ errorMessage }}</div>
           }

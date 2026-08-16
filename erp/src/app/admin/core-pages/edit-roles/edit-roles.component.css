@@ -606,3 +606,46 @@
   .role-detail-panel { padding: 18px 16px 20px; }
   .permission-resource { margin-left: 8px; padding-left: 9px; }
 }
+
+/* ── 2FA vynucení role (BACKLOG "captcha + 2FA na mail", bod 3) ─────────
+   Stylově navazuje na existující .protected-notice (stejný "badge" vzhled),
+   jen v success/tmavé variantě místo warning - 2FA vynucení je záměrné
+   bezpečnostní opatření, ne varování. .checkbox-inline-label sdílí vzhled
+   s běžnými .field-group labely, jen v jednom řádku vedle checkboxu. ── */
+
+.checkbox-inline-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.checkbox-inline-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.forces-2fa-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 13px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-dim-2);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.twofa-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}

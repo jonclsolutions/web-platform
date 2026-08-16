@@ -17,16 +17,20 @@
  *
  * @refactor-note (2026-08-12) `id` z route validováno přes ctype_digit() před použitím.
  *
- * @refactor-note (2026-08-7) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). ZÁROVEŇ OPRAVENA DOMÉNA: lokální verze logovala do
- * `WebLog::class`, ale správa uživatelských účtů je Core doména (`core-administrators-*`)
- * - loguje se nově do `CoreLog::class`. Lokální logAction() měla vlastní rozšířený seznam
- * SENSITIVE_KEYS (navíc old_password/new_password/new_password_confirmation oproti
- * tehdejšímu traitu) - tahle mezera byla opravena přímo v `LogsActivity::SENSITIVE_KEYS`
- * (viz trait hlavička), takže lokální kopii seznamu i vlastní normalizeLogId() už
- * nepotřebujeme: `$id` je v každé metodě před voláním logAction() už ověřené přes
- * ctype_digit() (nebo je to rovnou int z modelu), takže bezpečně proteče přes běžnou
- * PHP weak-typing koerci na `?int` parametr traitu.
+ * @refactor-note (2026-08-7) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait.
+ *
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", body 2+3+4 sloučeny do
+ * update(): (a) `resolveEnable2fa()` už NEPŘEPISUJE tiše požadavek na vypnutí 2FA u
+ * vynucené role/účtu - pokud je cíl vynucený (role admin/sysadmin, role s
+ * `forces_2fa=true`, nebo `two_fa_forced_by_admin=true`) a request explicitně žádá
+ * `enable_2fa: false`, vrací se 422 (frontend to zobrazí jako červenou notifikaci
+ * namísto tichého ignorování). (b) `two_fa_forced_by_admin` (sysadmin override na
+ * konkrétním účtu) se teď nastavuje TAKÉ přes tento endpoint (dřív samostatný
+ * TwoFactorAdminController - SLOUČENO na žádost, jeden formulář/jeden request) - smí ho
+ * měnit VÝHRADNĚ sysadmin (actorIsSysadmin()), a NELZE ho nastavit na cíl, který má 2FA
+ * vynucené už rolí (admin/sysadmin/forces_2fa role) - takový override by byl nesmyslný
+ * (2FA je vynuceno tak jako tak) a matoucí v UI, proto 422. `TwoFactorAdminController`
+ * lze smazat, jeho routa `PUT core/users/{id}/two-factor-requirement` z api.php odstraněna.
  */
 
 namespace App\Http\Controllers\Api;
@@ -43,14 +47,10 @@ use App\Http\Resources\UserResource;
 use Illuminate\Http\{Request, JsonResponse};
 use Illuminate\Support\Facades\{Hash, Log, DB, Mail, RateLimiter};
 
-/**
- * @description Controller responsible for user management operations.
- */
 class UserController extends Controller
 {
     use LogsActivity;
 
-    private const FORCED_2FA_ROLE_NAMES = ['admin', 'sysadmin'];
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
     private const PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS = 5;
     private const PASSWORD_CHANGE_NOTIFY_DECAY_SECONDS = 3600;
@@ -118,9 +118,16 @@ class UserController extends Controller
             return response()->json(['message' => 'Nový účet s rolí sysadmin smí vytvořit pouze jiný sysadmin.'], 403);
         }
 
+        // Při vytváření se explicitní "vypnutí" nemůže stát (frontend má checkbox
+        // disabled+checked pro vynucené role), proto zde stačí prosté vynucení bez 422 -
+        // 422 dává smysl až u UPDATE existujícího účtu, kde jde o aktivní pokus o vypnutí.
         DB::beginTransaction();
         try {
-            $validated['enable_2fa'] = $this->resolveEnable2fa($roleId, $validated['enable_2fa'] ?? false);
+            $forced = $this->isRoleForced2fa($roleId);
+            $validated['enable_2fa'] = $forced ? true : ($validated['enable_2fa'] ?? false);
+            // two_fa_forced_by_admin nelze nastavit při vytváření (nový účet nemá historii) -
+            // sysadmin ho případně nastaví následným update().
+            unset($validated['two_fa_forced_by_admin']);
 
             $user = User::create(array_merge($validated, [
                 'user_password_hash' => Hash::make($validated['user_password_hash']),
@@ -159,7 +166,9 @@ class UserController extends Controller
      * Updates an existing user's information.
      * @note KRITICKÁ OCHRANA: pokud je cílový účet sysadmin, NEBO request žádá o
      * povýšení cílového účtu na sysadmina, smí to provést jen volající, který je SÁM
-     * sysadmin.
+     * sysadmin. `enable_2fa` nelze u vynucených účtů/rolí explicitně vypnout (422).
+     * `two_fa_forced_by_admin` smí měnit jen sysadmin a jen na účtech, které NEMAJÍ 2FA
+     * vynucené jinak (rolí) - jinak by byl override bezpředmětný (422).
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
@@ -182,14 +191,45 @@ class UserController extends Controller
             return response()->json(['message' => 'Účet s rolí sysadmin smí upravovat, nebo na ni povyšovat, pouze jiný sysadmin.'], 403);
         }
 
+        // ── 2FA vynucení (role) - viz refactor-note v hlavičce souboru ─────────────────
+        $effectiveRoleId = $validated['role_id'] ?? $user->roles()->first()?->id;
+        $forcedByRole = $this->isRoleForced2fa($effectiveRoleId);
+
+        // Efektivní vynucení = rolí NEBO existující sysadmin override (pokud request
+        // two_fa_forced_by_admin nemění, bere se stávající hodnota z DB).
+        $effectiveAdminForced = array_key_exists('two_fa_forced_by_admin', $validated)
+            ? (bool) $validated['two_fa_forced_by_admin']
+            : (bool) $user->two_fa_forced_by_admin;
+
+        $isForced = $forcedByRole || $effectiveAdminForced;
+
+        if ($isForced && array_key_exists('enable_2fa', $validated) && !$validated['enable_2fa']) {
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Zamítnut pokus o vypnutí 2FA u vynuceného účtu: {$user->user_email}", (int) $id, 'User');
+            return response()->json(['message' => 'Dvoufaktorové ověření nelze u tohoto účtu vypnout - je vynuceno.'], 422);
+        }
+
+        $validated['enable_2fa'] = $isForced ? true : ($validated['enable_2fa'] ?? $user->enable_2fa);
+
+        // ── two_fa_forced_by_admin (sysadmin override) - viz refactor-note v hlavičce ──
+        if (array_key_exists('two_fa_forced_by_admin', $validated)) {
+            if (!$this->actorIsSysadmin($request)) {
+                $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Zamítnut pokus o změnu vynucení 2FA (není sysadmin): {$user->user_email}", (int) $id, 'User');
+                return response()->json(['message' => 'Vynucení 2FA smí měnit pouze sysadmin.'], 403);
+            }
+
+            if ($forcedByRole) {
+                return response()->json(['message' => '2FA je pro tuto roli vynuceno automaticky - ruční vynucení není potřeba ani možné.'], 422);
+            }
+        } else {
+            // Pole nebylo v requestu vůbec - nechat stávající hodnotu beze změny.
+            unset($validated['two_fa_forced_by_admin']);
+        }
+
         if (!empty($validated['user_password_hash'])) {
             $validated['user_password_hash'] = Hash::make($validated['user_password_hash']);
         } else {
             unset($validated['user_password_hash']);
         }
-
-        $effectiveRoleId = $validated['role_id'] ?? $user->roles()->first()?->id;
-        $validated['enable_2fa'] = $this->resolveEnable2fa($effectiveRoleId, $validated['enable_2fa'] ?? $user->enable_2fa);
 
         DB::beginTransaction();
         try {
@@ -401,19 +441,21 @@ class UserController extends Controller
     }
 
     /**
-     * @description Rozhoduje o výsledné hodnotě `enable_2fa` pro danou roli - pro
-     * admin/sysadmin VŽDY vrátí `true` bez ohledu na `$requestedValue`.
+     * @description Zjišťuje, jestli daná role vynucuje 2FA - buď protože je to
+     * admin/sysadmin (hardcoded, viz User::FORCED_2FA_ROLE_NAMES), nebo protože sysadmin
+     * nastavil `forces_2fa=true` na custom roli (viz CoreRole - bod 3 backlogu).
      */
-    private function resolveEnable2fa(?int $roleId, bool $requestedValue): bool
+    private function isRoleForced2fa(?int $roleId): bool
     {
         if (!$roleId) {
-            return $requestedValue;
+            return false;
         }
 
-        $isForcedRole = CoreRole::where('id', $roleId)
-            ->whereIn('role_name', self::FORCED_2FA_ROLE_NAMES)
-            ->exists();
+        $role = CoreRole::find($roleId);
+        if (!$role) {
+            return false;
+        }
 
-        return $isForcedRole ? true : $requestedValue;
+        return in_array($role->role_name, User::FORCED_2FA_ROLE_NAMES, true) || (bool) $role->forces_2fa;
     }
 }

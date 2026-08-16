@@ -73,11 +73,13 @@ interface CorePermission {
   module: string;
 }
 
+// do interface CoreRole doplnit pole:
 interface CoreRole {
   id?: number;
   role_name: string;
   description: string | null;
   is_protected: boolean;
+  forces_2fa: boolean;          // ← nové
   users_count: number;
   permissions: string[];
   deleted_at?: string | null;
@@ -130,6 +132,9 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   private readonly PERMISSIONS_TTL_MS = 10 * 60 * 1000;
   private readonly ROLES_CACHE_KEY = 'edit-roles:roles';
   private readonly ROLES_TTL_MS = 2 * 60 * 1000;
+
+  draftForcesTwoFa = false;
+  newRoleForcesTwoFa = false;
 
   constructor(
     dataHandler: Core.DataHandler,
@@ -378,20 +383,21 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   // ── Výběr role v levém seznamu ─────────────────────────────────────────
 
-  selectRole(role: CoreRole): void {
-    if (this.isPermissionsDirty || this.isEditingDetails) {
-      const confirmed = window.confirm('Máte neuložené změny u aktuální role. Přepnutím o ně přijdete. Pokračovat?');
-      if (!confirmed) return;
-    }
-
-    this.selectedRole = role;
-    this.currentPermissions = new Set(role.permissions);
-    this.isPermissionsDirty = false;
-    this.isEditingDetails = false;
-    this.draftName = role.role_name;
-    this.draftDescription = role.description ?? '';
-    this.permissionSearch = '';
+selectRole(role: CoreRole): void {
+  if (this.isPermissionsDirty || this.isEditingDetails) {
+    const confirmed = window.confirm('Máte neuložené změny u aktuální role. Přepnutím o ně přijdete. Pokračovat?');
+    if (!confirmed) return;
   }
+
+  this.selectedRole = role;
+  this.currentPermissions = new Set(role.permissions);
+  this.isPermissionsDirty = false;
+  this.isEditingDetails = false;
+  this.draftName = role.role_name;
+  this.draftDescription = role.description ?? '';
+  this.draftForcesTwoFa = !!role.forces_2fa;
+  this.permissionSearch = '';
+}
 
   // ── Checklist oprávnění vybrané role ───────────────────────────────────
 
@@ -515,19 +521,21 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   // ── Editace názvu / popisu vybrané role ────────────────────────────────
 
-  startEditingDetails(): void {
-    if (!this.selectedRole || this.selectedRole.is_protected) return;
-    this.draftName = this.selectedRole.role_name;
-    this.draftDescription = this.selectedRole.description ?? '';
-    this.isEditingDetails = true;
-  }
+startEditingDetails(): void {
+  if (!this.selectedRole || this.selectedRole.is_protected) return;
+  this.draftName = this.selectedRole.role_name;
+  this.draftDescription = this.selectedRole.description ?? '';
+  this.draftForcesTwoFa = !!this.selectedRole.forces_2fa;
+  this.isEditingDetails = true;
+}
 
-  cancelEditingDetails(): void {
-    if (!this.selectedRole) return;
-    this.draftName = this.selectedRole.role_name;
-    this.draftDescription = this.selectedRole.description ?? '';
-    this.isEditingDetails = false;
-  }
+cancelEditingDetails(): void {
+  if (!this.selectedRole) return;
+  this.draftName = this.selectedRole.role_name;
+  this.draftDescription = this.selectedRole.description ?? '';
+  this.draftForcesTwoFa = !!this.selectedRole.forces_2fa;
+  this.isEditingDetails = false;
+}
 
   /**
    * @description Uloží název/popis role. Po úspěchu invaliduje cache seznamu rolí
@@ -543,13 +551,14 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       return;
     }
 
-    const payload: CoreRole = {
-      role_name: name,
-      description: this.draftDescription.trim() || null,
-      is_protected: this.selectedRole.is_protected,
-      users_count: this.selectedRole.users_count,
-      permissions: this.selectedRole.permissions,
-    };
+const payload: CoreRole = {
+  role_name: name,
+  description: this.draftDescription.trim() || null,
+  is_protected: this.selectedRole.is_protected,
+  forces_2fa: this.draftForcesTwoFa,
+  users_count: this.selectedRole.users_count,
+  permissions: this.selectedRole.permissions,
+};
 
     const roleId = this.selectedRole.id;
     this.isSavingDetails = true;
@@ -596,12 +605,13 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   // ── Vytvoření nové role ───────────────────────────────────────────────
 
-  openNewRoleForm(): void {
-    this.newRoleName = '';
-    this.newRoleDescription = '';
-    this.newRoleError = '';
-    this.showNewRoleForm = true;
-  }
+openNewRoleForm(): void {
+  this.newRoleName = '';
+  this.newRoleDescription = '';
+  this.newRoleForcesTwoFa = false;
+  this.newRoleError = '';
+  this.showNewRoleForm = true;
+}
 
   closeNewRoleForm(): void {
     this.showNewRoleForm = false;
@@ -621,13 +631,14 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isCreatingRole = true;
     this.newRoleError = '';
 
-    const payload: CoreRole = {
-      role_name: name,
-      description: this.newRoleDescription.trim() || null,
-      is_protected: false,
-      users_count: 0,
-      permissions: [],
-    };
+const payload: CoreRole = {
+  role_name: name,
+  description: this.newRoleDescription.trim() || null,
+  is_protected: false,
+  forces_2fa: this.newRoleForcesTwoFa,
+  users_count: 0,
+  permissions: [],
+};
 
     this.postData(payload).subscribe({
       next: (created) => {

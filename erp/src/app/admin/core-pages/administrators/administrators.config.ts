@@ -6,31 +6,23 @@
  * @created 2025
  * @description Static configuration (buttons, form fields, table/filter/detail columns) for
  * the Administrators (core user account) management page.
- * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
- *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
- *      - TOOLBAR_BUTTONS: "Nový uživatel" -> `permission: 'core-administrators-create'`.
- *      - TABLE_BUTTONS: "Edit" -> `core-administrators-update`, "Smazat" ->
- *        `core-administrators-delete`. "Heslo" (password_reset) -> rovněž
- *        `core-administrators-update`, protože na backendu `PUT
- *        /core/users/{id}/change-password` sdílí STEJNÝ permission klíč jako běžný
- *        update (`core-administrators-update,id` - viz api.php), ne samostatný klíč.
- *        "Detaily" zůstává bez permission.
- *      @note Klíče přejmenovány z historického `web-manage-administrators` na
- *      `core-administrators-*`, protože stránka reálně žije pod `/core` routou - viz
- *      admin-routing.module.ts stejné datum.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU - permission klíče na
+ *      toolbar/table tlačítkách.
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", body 2+3+4: FORM_FIELDS
+ * rozděleno na DVĚ samostatná 2FA pole:
+ * - `enable_2fa` ("Zapnout 2FA") - self-service styl, editovatelné kýmkoliv s
+ *   core-administrators-update, ale AdministratorsComponent ho dynamicky disabluje,
+ *   pokud je cílová role vynucená (admin/sysadmin/forces_2fa role) - viz
+ *   computeFieldsForTarget() v komponentě. Backend navíc vždy vynucuje true a vrací
+ *   422 při pokusu explicitně vypnout (červená notifikace).
+ * - `two_fa_forced_by_admin` ("Vynutit 2FA") - VIDITELNÉ pouze pro sysadmin (filtrováno
+ *   v komponentě, ne staticky zde), umožňuje vynutit 2FA konkrétnímu účtu nezávisle na
+ *   jeho vlastní volbě. `show_in_create: false` - nelze nastavit při vytváření účtu
+ *   (backend to explicitně odmítá, dává smysl jen jako následná úprava).
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '../../../shared/constants/password-policy';
 
-/**
- * @description Výchozí (prázdný) seznam rolí pro select pole ve formuláři a filtru.
- * @note Dříve bylo natvrdo `[{sysadmin},{admin}]` - teď, když jsou role dynamické
- *       (viz /admin/edit-roles), by to znamenalo, že nově vytvořené custom role
- *       by v tomto formuláři nešlo vůbec vybrat/přiřadit.
- *       Skutečné hodnoty se doplňují za běhu v AdministratorsComponent.loadRoleOptions()
- *       (GET core/roles?no_pagination=true), tohle prázdné pole je jen bezpečný
- *       výchozí stav, než se ten požadavek stihne vrátit.
- */
 export const ROLE_OPTIONS: { value: string; label: string }[] = [];
 
 export const TABLE_BUTTONS: Core.TableButtons[] = [
@@ -61,38 +53,31 @@ export const RESET_PASSWORD_FORM_FIELDS: Core.InputDefinition[] = [
   },
 ];
 
-/**
- * @refactor-note (2026-08) Odstraněna legacy HR/osobní pole + `commission_rate` /
- * `has_tax_declaration` - viz User.php. `enable_2fa` zůstává ve formuláři/detailu,
- * ale byl odebrán z `TABLE_COLUMNS` (hlavní přehledová tabulka) na žádost - kdo má
- * 2FA zapnuté není informace důležitá na první pohled v přehledu, stačí v detailu
- * záznamu (`DETAILS_COLUMNS`).
- */
 export const FORM_FIELDS: Core.InputDefinition[] = [
-  { 
-    column_name: 'user_email', 
-    label: 'Přihlašovací e-mail', 
-    placeholder: 'jmeno@firma.cz', 
+  {
+    column_name: 'user_email',
+    label: 'Přihlašovací e-mail',
+    placeholder: 'jmeno@firma.cz',
     type: 'email',
-    required: true, 
-    pattern: '[^@]+@[^@]+\\.[^@]+', 
-    errorMessage: 'Zadejte platný přihlašovací e-mail.', 
-    editable: true, 
-    show_in_edit: true, 
-    show_in_create: true 
+    required: true,
+    pattern: '[^@]+@[^@]+\\.[^@]+',
+    errorMessage: 'Zadejte platný přihlašovací e-mail.',
+    editable: true,
+    show_in_edit: true,
+    show_in_create: true
   },
-  { 
-    column_name: 'full_name', 
-    label: 'Celé jméno', 
-    placeholder: 'Zadejte jméno a příjmení', 
-    type: 'text', 
-    required: true, 
-    errorMessage: 'Jméno je povinné', 
-    editable: true, 
-    show_in_edit: true, 
-    show_in_create: true 
+  {
+    column_name: 'full_name',
+    label: 'Celé jméno',
+    placeholder: 'Zadejte jméno a příjmení',
+    type: 'text',
+    required: true,
+    errorMessage: 'Jméno je povinné',
+    editable: true,
+    show_in_edit: true,
+    show_in_create: true
   },
- {
+  {
     column_name: 'user_password_hash',
     label: 'Heslo',
     placeholder: 'Zadejte silné heslo',
@@ -104,25 +89,29 @@ export const FORM_FIELDS: Core.InputDefinition[] = [
     show_in_edit: false,
     show_in_create: true
   },
-  // Options se doplňují za běhu (viz ROLE_OPTIONS výše) - toto pole tu zůstává
-  // prázdné, dokud AdministratorsComponent nedokončí loadRoleOptions().
   { column_name: 'role_id', label: 'Role', type: 'select', options: ROLE_OPTIONS, required: true, errorMessage: 'Vyberte roli uživatele.', editable: true, show_in_edit: true, show_in_create: true },
-  { 
-    column_name: 'enable_2fa', 
-    label: 'Dvoufaktorové ověření (2FA)', 
-    type: 'checkbox', 
-    required: false, 
-    editable: true, 
-    show_in_edit: true, 
-    show_in_create: true 
+  {
+    column_name: 'enable_2fa',
+    label: 'Zapnout 2FA',
+    type: 'checkbox',
+    required: false,
+    editable: true,
+    show_in_edit: true,
+    show_in_create: true
+  },
+  {
+    column_name: 'two_fa_forced_by_admin',
+    label: 'Vynutit 2FA (sysadmin)',
+    type: 'checkbox',
+    required: false,
+    editable: true,
+    show_in_edit: true,
+    show_in_create: false
   },
   { column_name: 'internal_note', label: 'Poznámka', type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
-
   { column_name: 'dpp_hours_spent', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true }
 ];
 
-// enable_2fa záměrně NENÍ v TABLE_COLUMNS - viz @refactor-note výše, dostupné jen
-// ve formuláři a v DETAILS_COLUMNS.
 export const TABLE_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'id', header: 'ID', type: 'text' },
   { key: 'full_name', header: 'Jméno', type: 'text' },
@@ -138,7 +127,6 @@ export const TRASH_TABLE_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'deleted_at', header: 'Smazáno', type: 'date', format: 'short' },
 ];
 
-// Options se doplňují za běhu (viz ROLE_OPTIONS výše).
 export const FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'id', header: 'ID', type: 'text', placeholder: 'ID', canSort: true },
   { key: 'full_name', header: 'Jméno', type: 'text', placeholder: 'Hledat jméno', canSort: true },
@@ -151,7 +139,7 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'full_name', displayName: 'Celé jméno', type: 'text' },
   { key: 'user_email', displayName: 'Přihlašovací E-mail', type: 'text' },
   { key: 'roles.0.role_name', displayName: 'Přiřazená role', type: 'text' },
-  { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření', type: 'text' },
+  { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření (vlastní volba)', type: 'text' },
   { key: 'two_fa_forced_by_admin', displayName: '2FA vynuceno sysadminem', type: 'text' },
   { key: 'internal_note', displayName: 'Interní poznámka', type: 'text' },
   { key: 'created_at', displayName: 'Účet vytvořen', type: 'date', format: 'medium' },

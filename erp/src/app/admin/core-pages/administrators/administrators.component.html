@@ -6,8 +6,13 @@
     @created: 2025 
     @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
         ('core-administrators-delete').
-    @refactor-note (2026-08-16): do detail panelu (showDetails) doplněno sysadmin-only
-        tlačítko pro vynucení/zrušení vynucení 2FA (toggleForced2fa()).
+    @refactor-note (2026-08-16): BACKLOG "captcha + 2FA na mail". `[inputDefinitions]`
+        přepnuto na `visibleFormFields` (dynamicky počítané v komponentě podle role
+        editovaného účtu a role přihlášeného actora - viz computeFieldsForTarget()).
+        Starší samostatný sysadmin-2fa-override-panel s toggleForced2fa() ODSTRANĚN -
+        `two_fa_forced_by_admin` se teď edituje PŘES BĚŽNÝ FORMULÁŘ (pole je ve
+        visibleFormFields, viditelné jen sysadminovi), ne přes zvláštní tlačítko v
+        detail náhledu. Detail náhled (`app-details-builder`) zůstává čistě read-only.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -42,7 +47,7 @@
 [data]="data"
 [tableCaption]="'Seznam Administrátorksých účtů'"
 [columns]="tableColumns"
-[inputDefinitions]="formFields"
+[inputDefinitions]="visibleFormFields"
 [isFullWidth]="isTableFullWidth"
 [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
 (refreshRequested)="forceFullRefresh(filters)"
@@ -80,7 +85,7 @@
 
 @if (showCreateForm) {
 <app-form-builder
-[inputDefinitions]="formFields"
+[inputDefinitions]="visibleFormFields"
 [formDataToEdit]="selectedItemForEdit"
 (formSubmitted)="handleFormSubmitted($event)"
 (formCanceled)="showCreateForm = false">
@@ -89,7 +94,6 @@
 
 @if (showResetPasswordForm) {
 <app-form-builder
-[inputDefinitions]="formFields"
 [headerText]="resetPasswordTitle"
 [inputDefinitions]="resetPasswordFormFields"
 [formDataToEdit]="selectedItemForEdit"
@@ -104,20 +108,4 @@
 [itemData]="selectedItemForDetails"
 (closeDetails)="showDetails = false">
 </app-details-builder>
-
-@if (isSysadmin && selectedItemForDetails) {
-  <div class="sysadmin-2fa-override-panel">
-    <label class="security-toggle-label">
-      <input
-        type="checkbox"
-        [checked]="selectedItemForDetails.two_fa_forced_by_admin"
-        [disabled]="isSavingForced2fa"
-        (change)="toggleForced2fa()">
-      Vynutit 2FA (sysadmin override)
-    </label>
-    <span class="security-hint">
-      Nezávisle na vlastní volbě uživatele - platí okamžitě od dalšího přihlášení.
-    </span>
-  </div>
-}
 }

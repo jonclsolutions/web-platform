@@ -1,6 +1,6 @@
 /**
  * @file administrators.component.ts
- * @path src/app/admin/web-pages/administrators/administrators.component.ts
+ * @path src/app/admin/core-pages/administrators/administrators.component.ts
  * @project RPSW Web
  * @author RPSW
  * @created 2025
@@ -10,26 +10,28 @@
  * - TableBuilderComponent: Used for rendering the administrators data grid.
  * - RoleOptionsService: TTL-cached zdroj `core/roles` pro `role_id` select options.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
- * @bugfix-note (2026) `role_id` select options bývaly natvrdo `[{sysadmin},{admin}]`
- *       v administrators.config.ts. Teď, když jsou role spravovány dynamicky
- *       (viz /admin/edit-roles - vytváření/mazání custom rolí), by nově vytvořené
- *       role nešlo přes tenhle formulář vůbec nikomu přiřadit.
- *       Options pro `role_id` (ve formuláři i ve filtru) se proto teď načítají
- *       dynamicky z `core/roles` při inicializaci komponenty - viz loadRoleOptions().
  *
- * @refactor-note (2026-08-6) `loadRoleOptions()` přepnut z přímého `dataHandler.
- * getCollection('core/roles?no_pagination=true')` na `RoleOptionsService.getRoles()` -
- * dřív šlo o jediné volání v celé komponentě, které obcházelo GenericTableService TTL
- * cache mechanismus, takže se seznam rolí stahoval znovu při KAŽDÉM vstupu na stránku.
- * RoleOptionsService má vlastní krátkou TTL cache (5 min, sdílenou napříč celou appkou).
+ * @refactor-note (2026-08-6) `loadRoleOptions()` přes `RoleOptionsService` (TTL cache).
  *
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail": přidán `toggleForced2fa()`
- * - umožňuje sysadminovi vynutit/zrušit vynucení 2FA u konkrétního uživatele (endpoint
- * `PUT core/users/{id}/two-factor-requirement`, chráněno VÝHRADNĚ backendem přes
- * role_name==='sysadmin' kontrolu v TwoFactorAdminController - frontend `isSysadmin`
- * getter je jen UX skrytí tlačítka, ne bezpečnostní hranice). Tlačítko je umístěno v
- * detail-panelu (`showDetails`), ne v TABLE_BUTTONS, protože TableBuilderComponent má
- * jen whitelistované akce (edit/delete/details/password_reset) s vlastními výstupy.
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", body 2+3+4:
+ * - `visibleFormFields` je NOVÁ property bindovaná do šablony (`[inputDefinitions]`)
+ *   místo přímo `formFields` - počítá se dynamicky při KAŽDÉM otevření formuláře
+ *   (`handleCreateFormOpened`/`handleEditFormOpened`) podle role editovaného účtu:
+ *   `enable_2fa` je disabled+checked, pokud je role vynucená (admin/sysadmin nebo
+ *   `forces_2fa=true`); `two_fa_forced_by_admin` je z formuláře úplně ODEBRÁNO, pokud
+ *   (a) přihlášený actor NENÍ sysadmin, nebo (b) role je už vynucená jinak (override by
+ *   byl bezpředmětný). `formFields` (baseline se stavem `role_id` options) se nemění a
+ *   slouží jen jako zdroj pro odvození `visibleFormFields` - díky tomu loadRoleOptions()
+ *   nemusí nic vědět o 2FA logice.
+ * - Toto je jen UX předvyplnění/optimistický náhled - SKUTEČNÉ vynucení dělá backend
+ *   (UserController::update()), který při rozporu vrací 422. Proto `handleFormSubmitted`
+ *   teď MÁ error handler (dřív chyběl úplně) - dřív FormBuilderComponent ukázal zelený
+ *   "success" toast HNED po emitu, ještě před odpovědí serveru, takže i selhání na
+ *   backendu vypadalo jako úspěch. Teď se po chybě zobrazí navazující červený toast se
+ *   skutečnou zprávou z backendu.
+ * - `loadRolesForces2fa()` načítá `core/roles?no_pagination=true` PŘÍMO (ne přes
+ *   RoleOptionsService, který v době psaní nebyl k dispozici pro kontrolu, zda vrací
+ *   `forces_2fa`) - staví si vlastní mapu roleId -> {role_name, forces_2fa}.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -38,14 +40,17 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
-import { AuthService } from '../../../core/auth/auth.service';
+import { InputDefinition } from '../../../shared/interfaces/input-definiton';
 import * as Config from './administrators.config';
 
-/**
- * @description Component for the administration of platform administrators.
- * @usage Provides secure management of user roles, account credentials, and system access.
- * @note Extends BaseDataComponent to handle standard entity lifecycles while adding specific password reset functionality.
- */
+/** Role s napevno vynuceným 2FA - musí sedět s backend User::FORCED_2FA_ROLE_NAMES. */
+const HARDCODED_FORCED_ROLE_NAMES = ['admin', 'sysadmin'];
+
+interface RoleMeta {
+  role_name: string;
+  forces_2fa: boolean;
+}
+
 @Component({
   selector: 'app-administrators',
   standalone: true,
@@ -60,7 +65,11 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   override apiEndpoint: string = 'core/users';
 
   buttons = Config.TABLE_BUTTONS;
+  /** Baseline definice (role_id options se sem promítají z loadRoleOptions()). */
   formFields = Config.FORM_FIELDS;
+  /** Co se REÁLNĚ vykresluje ve formuláři - viz computeFieldsForTarget(). */
+  visibleFormFields: InputDefinition[] = Config.FORM_FIELDS;
+
   tableColumns = Config.TABLE_COLUMNS;
   trashTableColumns = Config.TRASH_TABLE_COLUMNS;
   filterColumns = Config.FILTER_COLUMNS;
@@ -73,23 +82,23 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   resetPasswordTitle: string = 'Resetovat heslo';
   filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
 
-  /** Aktuální role načtené z API, ve tvaru pro select input (viz loadRoleOptions()). */
   roleOptions: { value: string; label: string }[] = [];
 
-  isSavingForced2fa = false;
+  /** Mapa role_id -> {role_name, forces_2fa}, pro dynamické disable/hide 2FA polí. */
+  private rolesMeta = new Map<number, RoleMeta>();
 
-constructor(
+  constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
     protected override genericTableService: Core.GenericTableService,
     private roleOptionsService: RoleOptionsService,
-    public override authService: AuthService,
+    public override authService: Core.AuthService,
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
   }
 
-  /** @description Jen UX skrytí tlačítka - reálné vynucení kontroluje backend (viz hlavička souboru). */
+  /** @description Jen UX - reálné oprávnění vynucuje backend (UserController). */
   get isSysadmin(): boolean {
     return this.authService.getUserRole() === 'sysadmin';
   }
@@ -136,6 +145,7 @@ constructor(
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
     this.loadRoleOptions();
+    this.loadRolesForces2fa();
   }
 
   private loadRoleOptions(): void {
@@ -148,6 +158,7 @@ constructor(
         this.formFields = this.formFields.map(field =>
           field.column_name === 'role_id' ? { ...field, options: this.roleOptions } : field
         );
+        this.visibleFormFields = this.formFields;
 
         this.filterColumns = this.filterColumns.map(col =>
           col.key === 'role_id' ? { ...col, options: this.roleOptions.map(o => o.label) } : col
@@ -165,6 +176,64 @@ constructor(
     });
   }
 
+  /**
+   * @description Načte 2FA-relevantní metadata rolí (role_name + forces_2fa) přímo,
+   * nezávisle na RoleOptionsService cache (viz refactor-note v hlavičce souboru).
+   */
+  private loadRolesForces2fa(): void {
+    this.dataHandler.get<any[]>('core/roles?no_pagination=true').subscribe({
+      next: (roles) => {
+        this.rolesMeta.clear();
+        (roles || []).forEach((r: any) => {
+          if (r?.id !== undefined) {
+            this.rolesMeta.set(Number(r.id), {
+              role_name: r.role_name,
+              forces_2fa: !!r.forces_2fa,
+            });
+          }
+        });
+      },
+      error: () => {
+        // Neblokující - v nejhorším případě jen frontend nebude předem disablovat
+        // políčka (backend 422 kontrolu má nezávisle na tomhle).
+      }
+    });
+  }
+
+  /** @description Jestli daná role (podle id) vynucuje 2FA - hardcoded role nebo forces_2fa. */
+  private isRoleForced(roleId: number | string | undefined | null): boolean {
+    if (roleId === undefined || roleId === null || roleId === '') return false;
+    const meta = this.rolesMeta.get(Number(roleId));
+    if (!meta) return false;
+    return HARDCODED_FORCED_ROLE_NAMES.includes(meta.role_name) || meta.forces_2fa;
+  }
+
+  /**
+   * @description Odvodí, jaké 2FA pole se má ve formuláři reálně zobrazit/disablovat
+   * pro danou cílovou roli - viz refactor-note v hlavičce souboru. `roleId` je `null`
+   * u nové (dosud nevybrané) role při vytváření účtu.
+   */
+private computeFieldsForTarget(
+  roleId: number | string | undefined | null,
+  adminForced: boolean = false
+): InputDefinition[] {
+  const forced = this.isRoleForced(roleId) || adminForced;
+
+  let fields = this.formFields.map(f => {
+    if (f.column_name === 'enable_2fa' && forced) {
+      return { ...f, editable: false };
+    }
+    return f;
+  });
+
+  const showOverrideField = this.isSysadmin && !this.isRoleForced(roleId);
+  if (!showOverrideField) {
+    fields = fields.filter(f => f.column_name !== 'two_fa_forced_by_admin');
+  }
+
+  return fields;
+}
+
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
   handlePageChange(page: number): void { this.onHandlePageChange(page, this.filters); }
@@ -179,23 +248,56 @@ constructor(
 
   handleCreateFormOpened(): void {
     this.selectedItemForEdit = null;
+    // Při vytváření zatím žádná role není vybraná - forced=false, override pole se
+    // stejně nezobrazí (show_in_create: false v configu), enable_2fa je editovatelné.
+    // Skutečné vynucení podle zvolené role v běhu formuláře řeší backend 422 při submitu.
+    this.visibleFormFields = this.computeFieldsForTarget(null);
     this.showCreateForm = true;
   }
 
-  handleEditFormOpened(item: any): void {
-    const itemToEdit = { ...item };
-    if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
-    this.selectedItemForEdit = itemToEdit;
-    this.showCreateForm = true;
+handleEditFormOpened(item: any): void {
+  const itemToEdit = { ...item };
+  if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
+
+  const forced = this.isRoleForced(itemToEdit.role_id) || !!itemToEdit.two_fa_forced_by_admin;
+  if (forced) {
+    itemToEdit.enable_2fa = true;
   }
 
-  handleFormSubmitted(formData: any): void {
-    const payload = { ...formData };
-    if (payload.role_id) payload.role_id = parseInt(payload.role_id, 10);
-    const request$ = payload.id ? this.updateData(payload.id, payload) : this.postData(payload);
-    request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); }))
-      .subscribe({ next: () => this.refreshData() });
-  }
+  this.visibleFormFields = this.computeFieldsForTarget(itemToEdit.role_id, !!itemToEdit.two_fa_forced_by_admin);
+  this.selectedItemForEdit = itemToEdit;
+  this.showCreateForm = true;
+}
+
+  /**
+   * @description Submits user data. Error handler DOPLNĚN (dřív chyběl) - viz
+   * refactor-note v hlavičce souboru: FormBuilderComponent ukazuje zelený toast hned po
+   * emitu, ještě před odpovědí serveru, takže reálná chyba backendu (např. 422 při
+   * pokusu vypnout vynucenou 2FA) se bez tohoto handleru vůbec neprojevila v UI.
+   */
+handleFormSubmitted(formData: any): void {
+  const payload = { ...formData };
+  if (payload.role_id) payload.role_id = parseInt(payload.role_id, 10);
+
+  // Needitovatelná pole se nesmí odesílat - i kdyby formData obsahovalo
+  // předvyplněnou vizuální hodnotu (viz handleEditFormOpened), odeslání by ji
+  // tiše zapsalo do DB při JAKÉKOLIV nesouvisející editaci. Backend při chybějícím
+  // klíči použije stávající hodnotu ($validated['enable_2fa'] ?? $user->enable_2fa).
+  const nonEditableFields = this.visibleFormFields
+    .filter(f => f.editable === false)
+    .map(f => f.column_name);
+  nonEditableFields.forEach(key => delete payload[key]);
+
+  const request$ = payload.id ? this.updateData(payload.id, payload) : this.postData(payload);
+  request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); }))
+    .subscribe({
+      next: () => this.refreshData(),
+      error: (err: any) => {
+        const message = err?.error?.message || 'Uložení se nezdařilo.';
+        this.alertDialogService.open('Chyba', message, 'danger');
+      }
+    });
+}
 
   handleResetPasswordFormOpened(item: any): void {
     this.resetPasswordTitle = `Resetovat heslo: ${item.user_email}`;
@@ -225,27 +327,6 @@ constructor(
       this.showDetails = true;
       this.cd.markForCheck();
     });
-  }
-
-  /**
-   * @description Přepne 2FA vynucení pro uživatele v aktuálně otevřeném detailu.
-   * Jen sysadmin (viz isSysadmin getter + backend TwoFactorAdminController kontrola).
-   */
-  toggleForced2fa(): void {
-    if (!this.isSysadmin || !this.selectedItemForDetails?.id || this.isSavingForced2fa) return;
-
-    const newValue = !this.selectedItemForDetails.two_fa_forced_by_admin;
-    this.isSavingForced2fa = true;
-
-    this.dataHandler.put(`core/users/${this.selectedItemForDetails.id}/two-factor-requirement`, { forced: newValue })
-      .pipe(Core.finalize(() => { this.isSavingForced2fa = false; this.cd.markForCheck(); }))
-      .subscribe({
-        next: () => {
-          this.selectedItemForDetails = { ...this.selectedItemForDetails, two_fa_forced_by_admin: newValue };
-          this.refreshData();
-        },
-        error: () => this.alertDialogService.open('Chyba', 'Nepodařilo se změnit vyžadování 2FA.', 'danger')
-      });
   }
 
   handleItemRestored(): void { this.refreshData(); }

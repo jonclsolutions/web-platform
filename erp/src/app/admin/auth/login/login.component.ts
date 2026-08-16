@@ -6,12 +6,18 @@
  * @created 2025
  * @description Authentication component: přihlašovací formulář, captcha (od 3.
  * neúspěšného pokusu) a navazující 2FA OTP krok.
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail". Přidán dvoukrokový flow:
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail". Dvoukrokový flow:
  * (1) 'credentials' - email/heslo, captcha widget se vyrenderuje AŽ po chybě s
  * captchaRequired=true; (2) 'otp' - zadání 6místného kódu. `loginToken` (pending-2FA
- * secret) se drží VÝHRADNĚ v paměti komponenty (`this.loginToken`), nikdy v
- * sessionStorage/localStorage - viz AuthService.persistSession() poznámka. Turnstile
- * token je jednorázový, proto se po každém neúspěšném pokusu resetuje.
+ * secret) se drží VÝHRADNĚ v paměti komponenty, nikdy v sessionStorage/localStorage.
+ * @bugfix-note (2026-08-16) BUG: pokud captcha widget už existoval (byl vyžádán při
+ * dřívějším pokusu) a přišel DALŠÍ neúspěšný pokus (opět s captcha_required=true),
+ * `activateCaptcha()` se kvůli guard podmínce `if (... || this.captchaWidgetId) return`
+ * vůbec nespustila - starý, už jednou spotřebovaný Turnstile token zůstal v
+ * `captchaToken` a poslal se znovu, což Turnstile vždy odmítne (token je jednorázový).
+ * Uživatel se tak zacyklil bez šance to opravit jinak než refreshem stránky. Oprava:
+ * error handler teď explicitně rozlišuje "widget už existuje -> jen reset()" vs.
+ * "widget ještě neexistuje -> poprvé render()".
  */
 
 import { Component, ChangeDetectorRef, ElementRef, OnDestroy, ViewChild } from '@angular/core';
@@ -118,11 +124,18 @@ export class LoginComponent implements OnDestroy {
         this.password = ''; // heslo se po neúspěchu nemá držet v paměti/inputu
 
         if (error.captchaRequired) {
-          this.activateCaptcha();
-        } else if (this.captchaRequired && this.captchaWidgetId) {
-          // Captcha byla vyžadována i dřív - token byl spotřebován, vynutit nový.
+          // Token (pokud nějaký byl) je po odeslaném requestu považován za spotřebovaný -
+          // Turnstile token je jednorázový bez ohledu na to, zda login uspěl nebo ne.
           this.captchaToken = null;
-          this.turnstile.reset(this.captchaWidgetId);
+
+          if (this.captchaWidgetId) {
+            // Widget už existuje z dřívějšího pokusu - jen vynutit vygenerování nového tokenu.
+            this.turnstile.reset(this.captchaWidgetId);
+            this.captchaRequired = true;
+          } else {
+            // První výskyt v této relaci - widget ještě neexistuje, vykreslit ho.
+            this.activateCaptcha();
+          }
         }
         this.cdr.detectChanges();
       }
@@ -130,14 +143,16 @@ export class LoginComponent implements OnDestroy {
   }
 
   /**
-   * @description Vyrenderuje Turnstile widget (poprvé, co je vyžadován). Volá se
-   * asynchronně po detekci chyby s captchaRequired=true.
+   * @description Vyrenderuje Turnstile widget POPRVÉ. Volá se jen když
+   * `captchaWidgetId` ještě neexistuje - opakované vynucení nového tokenu u JIŽ
+   * vykresleného widgetu řeší `turnstile.reset()` přímo v onLogin() error handleru
+   * (viz @bugfix-note v hlavičce souboru).
    */
   private activateCaptcha(): void {
     this.captchaRequired = true;
     // Kontejner existuje v DOM až po @if(captchaRequired) - počkat na change detection.
     setTimeout(async () => {
-      if (!this.captchaContainer || this.captchaWidgetId) return;
+      if (!this.captchaContainer) return;
       try {
         this.captchaWidgetId = await this.turnstile.render(
           this.captchaContainer.nativeElement,
@@ -165,7 +180,9 @@ export class LoginComponent implements OnDestroy {
   }
 
   /**
-   * @description Krok 2: ověří zadaný OTP kód a dokončí login.
+   * @description Krok 2: ověří zadaný OTP kód a dokončí login. Při neshodě kódu
+   * backend vrátí 422 s message "Neplatný ověřovací kód." - zobrazí se přímo v
+   * errorMessage (viz šablona), uživatel je tedy o neshodě VŽDY informován.
    */
   onVerifyOtp(): void {
     if (this.isSubmitting || !this.loginToken || this.otpCode.length !== 6) return;

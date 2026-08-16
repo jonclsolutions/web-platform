@@ -60,6 +60,7 @@ class UpdateUserRequest extends FormRequest
             'internal_note'       => ['nullable', 'string'],
             'dpp_hours_spent'     => ['nullable', 'integer', 'min:0'],
             'enable_2fa'          => ['nullable', 'boolean'],
+            'two_fa_forced_by_admin' => ['sometimes', 'boolean'],
         ];
     }
 
