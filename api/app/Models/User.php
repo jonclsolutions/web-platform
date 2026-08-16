@@ -40,13 +40,19 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    /**
-     * @var array<int, string> The attributes that are mass assignable.
-     */
+
+    public const FORCED_2FA_ROLE_NAMES = ['admin', 'sysadmin'];
+
     protected $fillable = [
         'user_email', 'user_password_hash', 'full_name',
         'dpp_hours_spent', 'internal_note', 'last_login_at',
-        'enable_2fa',
+        'enable_2fa', 'two_fa_forced_by_admin',
+    ];
+
+    protected $casts = [
+        'last_login_at' => 'datetime',
+        'enable_2fa' => 'boolean',
+        'two_fa_forced_by_admin' => 'boolean',
     ];
 
     /**
@@ -59,13 +65,7 @@ class User extends Authenticatable
      */
     protected $appends = ['core_permissions'];
 
-    /**
-     * @var array<string, string> The attributes that should be cast to native types.
-     */
-    protected $casts = [
-        'last_login_at' => 'datetime',
-        'enable_2fa' => 'boolean',
-    ];
+
 
     /**
      * Override the default password field.
@@ -93,4 +93,24 @@ class User extends Authenticatable
             return $role->permissions;
         })->pluck('permission_key')->unique()->values()->toArray();
     }
+
+    /**
+ * @description Vypočte, zda musí uživatel při loginu projít 2FA ověřením. Kombinuje
+ * tři nezávislé zdroje pravdy (v pořadí priority): (1) role admin/sysadmin - vždy
+ * vynuceno, (2) sysadmin override přes two_fa_forced_by_admin, (3) vlastní volba
+ * uživatele enable_2fa.
+ * @return bool
+ */
+public function requiresTwoFactor(): bool
+{
+    $roleNames = $this->relationLoaded('roles')
+        ? $this->roles->pluck('role_name')
+        : $this->roles()->pluck('role_name');
+
+    if ($roleNames->intersect(self::FORCED_2FA_ROLE_NAMES)->isNotEmpty()) {
+        return true;
+    }
+
+    return (bool) $this->enable_2fa || (bool) $this->two_fa_forced_by_admin;
+}
 }

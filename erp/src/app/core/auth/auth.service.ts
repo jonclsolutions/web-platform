@@ -8,6 +8,12 @@
  * @dependencies
  * - HttpClient: Facilitates API communication for authentication endpoints.
  * - PermissionService: Synchronizes user permissions within the application.
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail": login() už nemusí vždy
+ * vydat tokeny rovnou - pokud backend vrátí requires_2fa, tokeny NEJSOU uloženy do
+ * sessionStorage, dokud neproběhne verifyTwoFactor(). Persistence session logiky
+ * refaktorována do sdílené persistSession(), aby ji sdílel login() i verifyTwoFactor().
+ * Captcha token se posílá jako volitelný `captcha_token` - backend ho vyžaduje jen od
+ * 3. neúspěšného pokusu (viz handleLoginError - `captchaRequired` flag na chybě).
  */
 
 import { Injectable } from '@angular/core';
@@ -17,18 +23,23 @@ import { tap, catchError, switchMap, takeUntil } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { PermissionService } from './services/permission.service';
 
-/**
- * @description Handles user authentication, including JWT storage, automated token refreshing, and session cleanup.
- * @usage Injected into components and interceptors to verify session state and secure API communication.
- * @note Implements an automatic background refresh timer to maintain user sessions for the duration of activity.
- */
+/** Chyba loginu obohacená o informaci, zda je od teď nutná captcha. */
+export interface LoginError extends Error {
+  captchaRequired?: boolean;
+}
+
+/** Chyba 2FA endpointů obohacená o dobu, po které lze zkusit resend znovu (sekundy). */
+export interface TwoFactorError extends Error {
+  retryAfter?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private baseUrl = environment.base_api_url;
 
   private _isLoggedIn = new BehaviorSubject<boolean>(!!sessionStorage.getItem('accessToken'));
   public isLoggedIn$ = this._isLoggedIn.asObservable();
-  
+
   private _userEmailSubject = new BehaviorSubject<string | null>(sessionStorage.getItem('userEmail'));
   public userEmail$ = this._userEmailSubject.asObservable();
 
@@ -46,45 +57,51 @@ export class AuthService {
   }
 
   /**
-   * @description Authenticates the user and initializes the session state.
-   * @param credentials Login object containing email and password.
-   * @returns {Observable<any>} The authentication response from the API.
-   * @note Persists tokens and permission metadata into sessionStorage upon successful login.
+   * @description Krok 1 loginu: ověří heslo (+ captcha, pokud si ji backend vyžádal).
+   * @param credentials Email, heslo a volitelný captcha_token.
+   * @returns {Observable<any>} Buď plná session (token/refreshToken/user), nebo
+   * `LoginTwoFactorChallenge` ({ requires_2fa: true, login_token, ... }) - v TOM případě
+   * se NIC neukládá do sessionStorage, session vznikne až po verifyTwoFactor().
    */
-  login(credentials: { email: string; password: string }): Observable<any> {
+  login(credentials: { email: string; password: string; captcha_token?: string }): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/login`, credentials).pipe(
       tap((response: any) => {
-        const userId = (response.user.id || response.user.user_login_id).toString();
-        
-        sessionStorage.setItem('accessToken', response.token);
-        sessionStorage.setItem('refreshToken', response.refreshToken);
-        sessionStorage.setItem('userEmail', response.user.user_email);
-        sessionStorage.setItem('userId', userId);
-        
-        if (response.user_roles?.length > 0) {
-          sessionStorage.setItem('userRole', response.user_roles[0]); 
+        if (response?.requires_2fa) {
+          // Pending-2FA stav - záměrně se NEPERSISTUJE nikam (viz hlavička souboru).
+          return;
         }
-
-        if (response.user_permissions) {
-          sessionStorage.setItem('userPermissions', JSON.stringify(response.user_permissions));
-          this.permissionService.setPermissions(response.user_permissions);
-        }
-
-        this._userEmailSubject.next(response.user.user_email);
-        this._isLoggedIn.next(true);
-        this.startTokenRefreshTimer();
+        this.persistSession(response);
       }),
-      catchError(this.handleError)
+      catchError(this.handleLoginError)
+    );
+  }
+
+  /**
+   * @description Krok 2 loginu (jen pokud login() vrátil requires_2fa): ověří OTP kód
+   * a teprve po úspěchu založí skutečnou session (stejně jako dřív dělal login()).
+   * @param loginToken Opaque token z kroku 1 - drží se JEN v paměti volající komponenty,
+   * nikdy v sessionStorage (viz login.component.ts).
+   * @param code 6místný číselný kód z e-mailu.
+   */
+  verifyTwoFactor(loginToken: string, code: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code }).pipe(
+      tap((response: any) => this.persistSession(response)),
+      catchError(this.handleTwoFactorError)
+    );
+  }
+
+  /**
+   * @description Vyžádá nový OTP kód pro probíhající pending-2FA session. Backend má
+   * vlastní cooldown (60s) i strop počtu resendů - 429 odpověď obsahuje `retry_after`.
+   */
+  resendTwoFactor(loginToken: string): Observable<{ message: string; expires_in: number }> {
+    return this.http.post<any>(`${this.baseUrl}/login/resend-2fa`, { login_token: loginToken }).pipe(
+      catchError(this.handleTwoFactorError)
     );
   }
 
   /**
    * @description Requests a password reset link for the given email (step 1 of the recovery flow).
-   * @param email Email address of the admin account (also used as login).
-   * @returns {Observable<{ message: string }>} Generic confirmation message.
-   * @note The backend always returns the same message regardless of whether the account
-   *       exists, to protect against user enumeration. A 429 (throttle) is mapped to a
-   *       dedicated rate-limit message.
    */
   requestPasswordReset(email: string): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.baseUrl}/forgot-password`, { email }).pipe(
@@ -92,15 +109,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * @description Completes the password reset flow using the token received by email (step 2).
-   * @param token Raw token extracted from the reset link's query parameter.
-   * @param password New password.
-   * @param passwordConfirmation Confirmation of the new password.
-   * @returns {Observable<{ message: string }>} Success confirmation message.
-   * @note On success the backend invalidates all existing sessions for the account,
-   *       so the user must log in again with the new password.
-   */
   resetPassword(
     token: string,
     password: string,
@@ -115,26 +123,16 @@ export class AuthService {
     );
   }
 
-  /**
-   * @description Verifies the existence of a valid access token.
-   * @returns {Observable<boolean>} True if authorized, false otherwise.
-   */
   checkAuth(): Observable<boolean> {
     const token = this.getAccessToken();
     if (!token) {
       this._isLoggedIn.next(false);
       return of(false);
     }
-    
     this._isLoggedIn.next(true);
     return of(true);
   }
 
-  /**
-   * @description Requests a new access token using the stored refresh token.
-   * @returns {Observable<any>} The new token payload.
-   * @note If refresh fails (e.g., token expired), it clears local session data.
-   */
   refreshAccessToken(): Observable<any> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
@@ -155,9 +153,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * @description Wipes all session storage and resets authentication state.
-   */
   public clearAuthData(): void {
     sessionStorage.clear();
     this.permissionService.clearPermissions();
@@ -176,19 +171,11 @@ export class AuthService {
   public getAccessToken(): string | null { return sessionStorage.getItem('accessToken'); }
   public getRefreshToken(): string | null { return sessionStorage.getItem('refreshToken'); }
 
-  /**
-   * @description Retrieves and deserializes user permissions from storage.
-   * @returns {string[]} An array of permission strings.
-   * @note Fallback to empty array if no permissions found.
-   */
   public getUserPermissions(): string[] {
     const perms = sessionStorage.getItem('userPermissions');
     return perms ? JSON.parse(perms) : [];
   }
 
-  /**
-   * @description Logs out the user and invalidates the session on the backend.
-   */
   logout(): Observable<any> {
     const body = { refreshToken: this.getRefreshToken() };
     return this.http.post<any>(`${this.baseUrl}/logout`, body).pipe(
@@ -201,9 +188,32 @@ export class AuthService {
   }
 
   /**
-   * @description Initializes a periodic refresh timer for the access token.
-   * @note Uses takeUntil to ensure clean termination when the user logs out.
+   * @description Uloží plnou session (access/refresh token, uživatel, role, oprávnění)
+   * do sessionStorage. Sdíleno mezi přímým loginem (bez 2FA) a dokončením
+   * verifyTwoFactor() - stejná logika, jen jiný vstupní endpoint.
    */
+  private persistSession(response: any): void {
+    const userId = (response.user.id || response.user.user_login_id).toString();
+
+    sessionStorage.setItem('accessToken', response.token);
+    sessionStorage.setItem('refreshToken', response.refreshToken);
+    sessionStorage.setItem('userEmail', response.user.user_email);
+    sessionStorage.setItem('userId', userId);
+
+    if (response.user_roles?.length > 0) {
+      sessionStorage.setItem('userRole', response.user_roles[0]);
+    }
+
+    if (response.user_permissions) {
+      sessionStorage.setItem('userPermissions', JSON.stringify(response.user_permissions));
+      this.permissionService.setPermissions(response.user_permissions);
+    }
+
+    this._userEmailSubject.next(response.user.user_email);
+    this._isLoggedIn.next(true);
+    this.startTokenRefreshTimer();
+  }
+
   private startTokenRefreshTimer(): void {
     this.stopTokenRefreshTimer();
     timer(this.REFRESH_INTERVAL, this.REFRESH_INTERVAL).pipe(
@@ -212,8 +222,8 @@ export class AuthService {
     ).subscribe();
   }
 
-  private stopTokenRefreshTimer(): void { 
-    this.stopTokenRefresh$.next(); 
+  private stopTokenRefreshTimer(): void {
+    this.stopTokenRefresh$.next();
   }
 
   private syncPermissions(): void {
@@ -221,22 +231,37 @@ export class AuthService {
     this.permissionService.setPermissions(perms);
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'Login failed.';
-    if (error.status === 401) errorMessage = 'Invalid credentials.';
-    return throwError(() => new Error(errorMessage));
-  }
+  /**
+   * @description Mapuje chyby /login na uživatelskou zprávu a propaguje
+   * `captcha_required` flag z backendu, ať komponenta ví, kdy zobrazit widget.
+   */
+  private handleLoginError = (error: HttpErrorResponse) => {
+    const err: LoginError = new Error(
+      error.error?.message ||
+      (error.status === 429 ? 'Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.' : 'Přihlášení se nezdařilo.')
+    );
+    err.captchaRequired = !!error.error?.captcha_required;
+    return throwError(() => err);
+  };
 
   /**
-   * @description Maps errors from /forgot-password and /reset-password into user-facing
-   *              messages without leaking whether an account exists.
+   * @description Mapuje chyby /login/verify-2fa a /login/resend-2fa, propaguje
+   * `retry_after` (sekundy) z 429 odpovědi pro zobrazení countdownu na resend tlačítku.
    */
+  private handleTwoFactorError = (error: HttpErrorResponse) => {
+    const err: TwoFactorError = new Error(
+      error.error?.message || 'Ověření se nezdařilo. Zkuste to prosím znovu.'
+    );
+    if (error.status === 429 && error.error?.retry_after) {
+      err.retryAfter = Number(error.error.retry_after);
+    }
+    return throwError(() => err);
+  };
+
   private handlePasswordResetError(error: HttpErrorResponse) {
     if (error.status === 429) {
       return throwError(() => new Error('Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.'));
     }
-
-    // 400 z backendu = neplatný/expirovaný token nebo slabé heslo - zprávu lze zobrazit přímo.
     const backendMessage = error.error?.message;
     return throwError(() => new Error(backendMessage || 'Požadavek se nepodařilo odeslat. Zkuste to prosím znovu.'));
   }

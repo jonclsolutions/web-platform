@@ -5,7 +5,9 @@
     @author: RPSW
     @created: 2025 
     @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
-        ('core-administrators-delete') - viz trash-table-builder.component.ts stejné datum.
+        ('core-administrators-delete').
+    @refactor-note (2026-08-16): do detail panelu (showDetails) doplněno sysadmin-only
+        tlačítko pro vynucení/zrušení vynucení 2FA (toggleForced2fa()).
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -102,4 +104,20 @@
 [itemData]="selectedItemForDetails"
 (closeDetails)="showDetails = false">
 </app-details-builder>
+
+@if (isSysadmin && selectedItemForDetails) {
+  <div class="sysadmin-2fa-override-panel">
+    <label class="security-toggle-label">
+      <input
+        type="checkbox"
+        [checked]="selectedItemForDetails.two_fa_forced_by_admin"
+        [disabled]="isSavingForced2fa"
+        (change)="toggleForced2fa()">
+      Vynutit 2FA (sysadmin override)
+    </label>
+    <span class="security-hint">
+      Nezávisle na vlastní volbě uživatele - platí okamžitě od dalšího přihlášení.
+    </span>
+  </div>
+}
 }

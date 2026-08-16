@@ -4,127 +4,305 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Authentication component providing a user login interface and password recovery workflow.
- * @dependencies
- * - AuthService: Handles the secure authentication request and password reset requests.
- * - Router: Manages navigation upon successful authentication.
- * - ChangeDetectorRef: Manual change detection for UI updates during asynchronous operations.
- * @refactor-note (2026) Post-login navigace přesměrována z '/admin/welcome-page' na
- *      '/admin/core/dashboard' - nová výchozí přistávací stránka po přihlášení odpovídá
- *      novému Core modulu (viz admin-routing.module.ts).
+ * @description Authentication component: přihlašovací formulář, captcha (od 3.
+ * neúspěšného pokusu) a navazující 2FA OTP krok.
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail". Přidán dvoukrokový flow:
+ * (1) 'credentials' - email/heslo, captcha widget se vyrenderuje AŽ po chybě s
+ * captchaRequired=true; (2) 'otp' - zadání 6místného kódu. `loginToken` (pending-2FA
+ * secret) se drží VÝHRADNĚ v paměti komponenty (`this.loginToken`), nikdy v
+ * sessionStorage/localStorage - viz AuthService.persistSession() poznámka. Turnstile
+ * token je jednorázový, proto se po každém neúspěšném pokusu resetuje.
  */
 
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AuthService } from '../../../core/auth/auth.service';
+import { AuthService, LoginError, TwoFactorError } from '../../../core/auth/auth.service';
+import { TurnstileService } from '../../../core/services/turnstile.service';
 
-/**
- * @description Represents the login view of the administrative application.
- * @usage Used as the entry point for protected admin pages.
- * @note Manages local form state and a dynamic modal for password recovery.
- */
+type LoginStep = 'credentials' | 'otp';
+
 @Component({
-selector: 'app-login',
-standalone: true,
-imports: [FormsModule, RouterModule],
-templateUrl: './login.component.html',
-styleUrls: ['./login.component.css']
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule, RouterModule],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
-email = '';
-password = '';
-errorMessage = '';
-showPassword = false;
+export class LoginComponent implements OnDestroy {
+  @ViewChild('captchaContainer') captchaContainer?: ElementRef<HTMLDivElement>;
 
-showForgotModal = false;
-resetEmail = '';
-resetSent = false;
-resetSubmitting = false;
-resetErrorMessage = '';
+  step: LoginStep = 'credentials';
 
-constructor(
-private router: Router,
-private authService: AuthService,
-private cdr: ChangeDetectorRef
+  email = '';
+  password = '';
+  errorMessage = '';
+  showPassword = false;
+  isSubmitting = false;
+
+  // ── Captcha stav ────────────────────────────────────────────────────────
+  captchaRequired = false;
+  private captchaToken: string | null = null;
+  private captchaWidgetId: string | null = null;
+
+  // ── 2FA (OTP) stav ─────────────────────────────────────────────────────
+  /** Pending-login secret z kroku 1 - drží se JEN v paměti, nikdy v sessionStorage. */
+  private loginToken: string | null = null;
+  otpCode = '';
+  otpExpiresAt: number | null = null;
+  resendAvailableAt = 0;
+  private countdownIntervalId: any = null;
+  countdownDisplay = '';
+  resendCountdownDisplay = '';
+
+  showForgotModal = false;
+  resetEmail = '';
+  resetSent = false;
+  resetSubmitting = false;
+  resetErrorMessage = '';
+
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private turnstile: TurnstileService,
+    private cdr: ChangeDetectorRef
   ) {}
 
-/**
-   * @description Processes user credentials and navigates to the core dashboard upon success.
-   * @note Updates the errorMessage state if authentication fails.
+  ngOnDestroy(): void {
+    this.clearCountdown();
+    if (this.captchaWidgetId) {
+      this.turnstile.remove(this.captchaWidgetId);
+    }
+    // Bezpečnostní úklid - citlivé hodnoty nesmí přežít v paměti komponenty déle, než je nutné.
+    this.password = '';
+    this.otpCode = '';
+    this.loginToken = null;
+  }
+
+  /**
+   * @description Krok 1: odešle přihlašovací údaje. Pokud backend vyžaduje captcha
+   * (captchaRequired=true) a widget ještě nebyl vyplněn, request se ani neodešle.
    */
-onLogin(): void {
-this.errorMessage = '';
-this.authService.login({ email: this.email, password: this.password }).subscribe({
-next: () => {
-this.setInitialAdminModule();
-this.router.navigate(['/admin/core/welcome-page']);
+  onLogin(): void {
+    if (this.isSubmitting) return;
+
+    this.errorMessage = '';
+
+    if (this.captchaRequired && !this.captchaToken) {
+      this.errorMessage = 'Potvrďte prosím, že nejste robot.';
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    this.authService.login({
+      email: this.email,
+      password: this.password,
+      captcha_token: this.captchaToken ?? undefined,
+    }).subscribe({
+      next: (response: any) => {
+        this.isSubmitting = false;
+
+        if (response?.requires_2fa) {
+          this.enterOtpStep(response.login_token, response.expires_in);
+          this.cdr.detectChanges();
+          return;
+        }
+
+        this.setInitialAdminModule();
+        this.router.navigate(['/admin/core/welcome-page']);
       },
-error: (error) => {
-this.errorMessage = error.message || 'Incorrect credentials.';
-this.cdr.detectChanges();
+      error: (error: LoginError) => {
+        this.isSubmitting = false;
+        this.errorMessage = error.message || 'Neplatné přihlašovací údaje.';
+        this.password = ''; // heslo se po neúspěchu nemá držet v paměti/inputu
+
+        if (error.captchaRequired) {
+          this.activateCaptcha();
+        } else if (this.captchaRequired && this.captchaWidgetId) {
+          // Captcha byla vyžadována i dřív - token byl spotřebován, vynutit nový.
+          this.captchaToken = null;
+          this.turnstile.reset(this.captchaWidgetId);
+        }
+        this.cdr.detectChanges();
       }
     });
   }
 
-/**
-   * @description Zapíše do localStorage 'core' jako aktuální admin modul, ať AdminLayoutComponent
-   *              po přihlášení nezobrazí zbytek UI (přepínač, sidebar) podle modulu zvoleného
-   *              v předchozí relaci, ale podle skutečné cílové URL '/admin/core/dashboard'.
+  /**
+   * @description Vyrenderuje Turnstile widget (poprvé, co je vyžadován). Volá se
+   * asynchronně po detekci chyby s captchaRequired=true.
    */
-private setInitialAdminModule(): void {
-if (typeof window !== 'undefined') {
-localStorage.setItem('admin_current_module', 'core');
+  private activateCaptcha(): void {
+    this.captchaRequired = true;
+    // Kontejner existuje v DOM až po @if(captchaRequired) - počkat na change detection.
+    setTimeout(async () => {
+      if (!this.captchaContainer || this.captchaWidgetId) return;
+      try {
+        this.captchaWidgetId = await this.turnstile.render(
+          this.captchaContainer.nativeElement,
+          (token) => { this.captchaToken = token; },
+          () => { this.captchaToken = null; } // token vypršel - musí se ověřit znovu
+        );
+      } catch {
+        this.errorMessage = 'Nepodařilo se načíst ověření zabezpečení. Zkuste stránku obnovit.';
+        this.cdr.detectChanges();
+      }
+    }, 0);
+  }
+
+  /**
+   * @description Přepne UI do kroku zadání OTP kódu a spustí countdown platnosti
+   * kódu i cooldown pro resend tlačítko.
+   */
+  private enterOtpStep(loginToken: string, expiresInSeconds: number): void {
+    this.step = 'otp';
+    this.loginToken = loginToken;
+    this.otpCode = '';
+    this.otpExpiresAt = Date.now() + expiresInSeconds * 1000;
+    this.resendAvailableAt = Date.now() + 60_000; // sedí s backend RESEND_COOLDOWN_SECONDS
+    this.startCountdown();
+  }
+
+  /**
+   * @description Krok 2: ověří zadaný OTP kód a dokončí login.
+   */
+  onVerifyOtp(): void {
+    if (this.isSubmitting || !this.loginToken || this.otpCode.length !== 6) return;
+
+    this.isSubmitting = true;
+    this.errorMessage = '';
+
+    this.authService.verifyTwoFactor(this.loginToken, this.otpCode).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.loginToken = null;
+        this.otpCode = '';
+        this.setInitialAdminModule();
+        this.router.navigate(['/admin/core/welcome-page']);
+      },
+      error: (error: TwoFactorError) => {
+        this.isSubmitting = false;
+        this.otpCode = '';
+        this.errorMessage = error.message || 'Neplatný ověřovací kód.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * @description Vyžádá nový OTP kód. Respektuje frontend cooldown UI (tlačítko je
+   * disabled, dokud neuplyne resendAvailableAt) - i tak backend cooldown/limit vynucuje
+   * nezávisle, tohle je jen UX prevence zbytečných requestů.
+   */
+  onResendOtp(): void {
+    if (!this.loginToken || Date.now() < this.resendAvailableAt) return;
+
+    this.errorMessage = '';
+
+    this.authService.resendTwoFactor(this.loginToken).subscribe({
+      next: (response) => {
+        this.otpExpiresAt = Date.now() + response.expires_in * 1000;
+        this.resendAvailableAt = Date.now() + 60_000;
+        this.cdr.detectChanges();
+      },
+      error: (error: TwoFactorError) => {
+        this.errorMessage = error.message || 'Nový kód se nepodařilo odeslat.';
+        if (error.retryAfter) {
+          this.resendAvailableAt = Date.now() + error.retryAfter * 1000;
+        }
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * @description Návrat na krok zadání hesla - zahodí pending-2FA session i captcha
+   * stav (nová relace = nový login od začátku).
+   */
+  backToCredentials(): void {
+    this.step = 'credentials';
+    this.loginToken = null;
+    this.otpCode = '';
+    this.password = '';
+    this.clearCountdown();
+  }
+
+  /** @description Povolí v OTP inputu jen číslice, max 6 znaků (žádné vkládání jiných znaků). */
+  onOtpInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.otpCode = input.value.replace(/[^0-9]/g, '').slice(0, 6);
+  }
+
+  get isOtpExpired(): boolean {
+    return !!this.otpExpiresAt && Date.now() >= this.otpExpiresAt;
+  }
+
+  get canResend(): boolean {
+    return Date.now() >= this.resendAvailableAt;
+  }
+
+  private startCountdown(): void {
+    this.clearCountdown();
+    this.countdownIntervalId = setInterval(() => {
+      this.updateCountdownDisplay();
+      this.cdr.detectChanges();
+    }, 1000);
+    this.updateCountdownDisplay();
+  }
+
+  private clearCountdown(): void {
+    if (this.countdownIntervalId) {
+      clearInterval(this.countdownIntervalId);
+      this.countdownIntervalId = null;
     }
   }
 
-/**
-   * @description Resets the recovery form state and displays the password reset modal.
-   */
-openForgotModal(): void {
-this.resetEmail = '';
-this.resetSent = false;
-this.resetErrorMessage = '';
-this.showForgotModal = true;
-this.cdr.detectChanges();
+  private updateCountdownDisplay(): void {
+    if (this.otpExpiresAt) {
+      const remaining = Math.max(0, Math.floor((this.otpExpiresAt - Date.now()) / 1000));
+      this.countdownDisplay = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
+    }
+    const resendRemaining = Math.max(0, Math.ceil((this.resendAvailableAt - Date.now()) / 1000));
+    this.resendCountdownDisplay = resendRemaining > 0 ? `(${resendRemaining}s)` : '';
   }
 
-/**
-   * @description Closes the password recovery modal.
-   */
-closeForgotModal(): void {
-this.showForgotModal = false;
-this.cdr.detectChanges();
+  private setInitialAdminModule(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin_current_module', 'core');
+    }
   }
 
-/**
-   * @description Triggers the password reset request via the backend (POST /forgot-password).
-   * @note Backend always returns a generic success message regardless of whether the account
-   *       exists (user enumeration protection), so the UI shows the same confirmation either way.
-   *       The modal auto-closes 3 seconds after a successful request.
-   */
-onResetPassword(): void {
-if (!this.resetEmail.trim() || this.resetSubmitting) return;
+  openForgotModal(): void {
+    this.resetEmail = '';
+    this.resetSent = false;
+    this.resetErrorMessage = '';
+    this.showForgotModal = true;
+    this.cdr.detectChanges();
+  }
 
-this.resetSubmitting = true;
-this.resetErrorMessage = '';
+  closeForgotModal(): void {
+    this.showForgotModal = false;
+    this.cdr.detectChanges();
+  }
 
-this.authService.requestPasswordReset(this.resetEmail.trim()).subscribe({
-next: () => {
-this.resetSubmitting = false;
-this.resetSent = true;
-this.cdr.detectChanges();
+  onResetPassword(): void {
+    if (!this.resetEmail.trim() || this.resetSubmitting) return;
 
-setTimeout(() => {
-this.closeForgotModal();
-        }, 3000);
+    this.resetSubmitting = true;
+    this.resetErrorMessage = '';
+
+    this.authService.requestPasswordReset(this.resetEmail.trim()).subscribe({
+      next: () => {
+        this.resetSubmitting = false;
+        this.resetSent = true;
+        this.cdr.detectChanges();
+        setTimeout(() => this.closeForgotModal(), 3000);
       },
-error: (error) => {
-this.resetSubmitting = false;
-// auth.service.ts už mapuje HTTP chyby (429 apod.) na hotovou zprávu v error.message,
-// takže zde žádné další rozlišování podle status kódu neděláme.
-this.resetErrorMessage = error?.message || 'Požadavek se nepodařilo odeslat. Zkuste to prosím znovu.';
-this.cdr.detectChanges();
+      error: (error) => {
+        this.resetSubmitting = false;
+        this.resetErrorMessage = error?.message || 'Požadavek se nepodařilo odeslat. Zkuste to prosím znovu.';
+        this.cdr.detectChanges();
       }
     });
   }

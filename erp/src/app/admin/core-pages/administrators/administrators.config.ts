@@ -152,6 +152,7 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'user_email', displayName: 'Přihlašovací E-mail', type: 'text' },
   { key: 'roles.0.role_name', displayName: 'Přiřazená role', type: 'text' },
   { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření', type: 'text' },
+  { key: 'two_fa_forced_by_admin', displayName: '2FA vynuceno sysadminem', type: 'text' },
   { key: 'internal_note', displayName: 'Interní poznámka', type: 'text' },
   { key: 'created_at', displayName: 'Účet vytvořen', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Poslední změna údajů', type: 'date', format: 'medium' }

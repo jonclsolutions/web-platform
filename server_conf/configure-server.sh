@@ -15,9 +15,14 @@ composer install --no-dev --optimize-autoloader
 
 # --- 4. .env file setup ---
 if [ ! -f ".env" ]; then
-cp .env.example .env
-echo ".env file created. !!! YOU MUST EDIT IT MANUALLY (DB, URL, etc.) NOW !!!"
+    cp .env.example .env
+    echo ".env file created. !!! YOU MUST EDIT IT MANUALLY (DB, URL, etc.) NOW !!!"
 fi
+
+echo ""
+echo "!!! REMINDER: set TURNSTILE_SECRET_KEY in .env (captcha login protection) !!!"
+echo "    Get it from https://dash.cloudflare.com -> Turnstile -> your site."
+echo ""
 
 # Pause for .env configuration
 read -p "Have you edited the .env file? Press [Enter] to continue..."

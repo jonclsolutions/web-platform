@@ -117,6 +117,7 @@ use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\PublicFileDownloadController;
+use App\Http\Controllers\Api\Core\TwoFactorAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -194,7 +195,15 @@ Route::prefix('public')->group(function () {
 */
 Route::get('/sanctum/csrf-cookie', fn(Request $r) => response()->json([], 204));
 
-Route::post('/login',   [AuthController::class, 'login'])->middleware('throttle:5,1');
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:login');
+
+Route::post('/login/verify-2fa', [AuthController::class, 'verifyTwoFactor'])
+    ->middleware('throttle:10,1');
+
+Route::post('/login/resend-2fa', [AuthController::class, 'resendTwoFactor'])
+    ->middleware('throttle:login-2fa-resend');
+
 Route::post('/refresh', [AuthController::class, 'refresh']);
 
 /*
@@ -249,6 +258,8 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
     |    (WEB sekce níže), shop maintenance pod `shop/settings` (SHOP sekce níže).
     */
     Route::prefix('core')->group(function () {
+
+        Route::put('users/{id}/two-factor-requirement', [TwoFactorAdminController::class, 'update']);
 
         // POST bez permission middleware - zápis vlastního audit záznamu (viz
         // @refactor-note 2026-08-2 v hlavičce souboru). GET (čtení historie) chráněno.

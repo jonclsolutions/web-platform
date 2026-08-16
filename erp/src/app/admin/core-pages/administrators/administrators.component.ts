@@ -20,12 +20,16 @@
  * @refactor-note (2026-08-6) `loadRoleOptions()` přepnut z přímého `dataHandler.
  * getCollection('core/roles?no_pagination=true')` na `RoleOptionsService.getRoles()` -
  * dřív šlo o jediné volání v celé komponentě, které obcházelo GenericTableService TTL
- * cache mechanismus (viz backlog task "zbytečně moc dotazů na API"), takže se seznam
- * rolí stahoval znovu při KAŽDÉM vstupu na stránku, bez ohledu na to, jak nedávno se
- * to samé stalo. RoleOptionsService má vlastní krátkou TTL cache (5 min, sdílenou
- * napříč celou appkou jako `providedIn: 'root'` singleton) - endpoint tedy zůstává
- * čerstvý (role se nemění často), ale rychlé opakované návštěvy stránky ho už
- * nezpůsobí opakovaně.
+ * cache mechanismus, takže se seznam rolí stahoval znovu při KAŽDÉM vstupu na stránku.
+ * RoleOptionsService má vlastní krátkou TTL cache (5 min, sdílenou napříč celou appkou).
+ *
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail": přidán `toggleForced2fa()`
+ * - umožňuje sysadminovi vynutit/zrušit vynucení 2FA u konkrétního uživatele (endpoint
+ * `PUT core/users/{id}/two-factor-requirement`, chráněno VÝHRADNĚ backendem přes
+ * role_name==='sysadmin' kontrolu v TwoFactorAdminController - frontend `isSysadmin`
+ * getter je jen UX skrytí tlačítka, ne bezpečnostní hranice). Tlačítko je umístěno v
+ * detail-panelu (`showDetails`), ne v TABLE_BUTTONS, protože TableBuilderComponent má
+ * jen whitelistované akce (edit/delete/details/password_reset) s vlastními výstupy.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -34,6 +38,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import * as Config from './administrators.config';
 
 /**
@@ -71,20 +76,24 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   /** Aktuální role načtené z API, ve tvaru pro select input (viz loadRoleOptions()). */
   roleOptions: { value: string; label: string }[] = [];
 
-  constructor(
+  isSavingForced2fa = false;
+
+constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
     protected override genericTableService: Core.GenericTableService,
     private roleOptionsService: RoleOptionsService,
+    public override authService: AuthService,
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Constructs the toolbar configuration.
-   * @returns List of buttons updated based on user permissions, current view state, and UI toggle logic.
-   */
+  /** @description Jen UX skrytí tlačítka - reálné vynucení kontroluje backend (viz hlavička souboru). */
+  get isSysadmin(): boolean {
+    return this.authService.getUserRole() === 'sysadmin';
+  }
+
   get toolbarButtons(): Core.Button[] {
     return Config.TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -100,7 +109,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
-          // Hide actions when browsing the trash bin
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
@@ -114,10 +122,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     });
   }
 
-  /**
-   * @description Maps toolbar actions to component methods.
-   * @param action The action string defined in the config.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -134,14 +138,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.loadRoleOptions();
   }
 
-  /**
-   * @description Načte aktuální seznam rolí (přes RoleOptionsService - viz refactor-note
-   *              v hlavičce souboru) a doplní jím `options` u pole `role_id` ve formuláři
-   *              i ve filtru. Bez tohoto by šlo uživatelům přiřazovat jen natvrdo
-   *              zadrátované role (sysadmin/admin), ne nově vytvořené custom role.
-   * @note Endpoint vrací jen netrashnuté role (Eloquent SoftDeletes je defaultně vylučuje),
-   *       takže smazané role se v nabídce logicky neobjeví.
-   */
   private loadRoleOptions(): void {
     this.roleOptionsService.getRoles().subscribe({
       next: (roles) => {
@@ -149,9 +145,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
           .filter((r): r is { id: number; role_name: string } => !!r)
           .map(r => ({ value: String(r.id), label: r.role_name }));
 
-        // Nové pole objektů (ne mutace sdíleného Config exportu), ať se nic
-        // neděje ostatním instancím/importům, které by na Config.FORM_FIELDS
-        // odkazovaly jinde.
         this.formFields = this.formFields.map(field =>
           field.column_name === 'role_id' ? { ...field, options: this.roleOptions } : field
         );
@@ -173,33 +166,22 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   }
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
-  
+
   handlePageChange(page: number): void { this.onHandlePageChange(page, this.filters); }
-  
+
   handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
-  
-  /**
-   * @description Applies filters and resets pagination to the first page.
-   * @param newFilters The incoming filter criteria.
-   */
+
   applyFilters(newFilters: any): void { this.filters = { ...newFilters }; this.refreshData(); }
-  
-  /**
-   * @description Resets filter state to default sorting criteria.
-   */
+
   clearFilters(): void { this.filters = { sort_by: 'id', sort_direction: 'desc' }; this.refreshData(); }
-  
+
   exportActiveTable(): void { if (this.activeTable) this.activeTable.exportToCSV(); }
 
   handleCreateFormOpened(): void {
     this.selectedItemForEdit = null;
     this.showCreateForm = true;
   }
-  
-  /**
-   * @description Prepares item for editing, specifically normalizing the role ID for the form.
-   * @param item The user record to be updated.
-   */
+
   handleEditFormOpened(item: any): void {
     const itemToEdit = { ...item };
     if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
@@ -207,10 +189,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Submits user data and handles the distinction between update and creation requests.
-   * @param formData The form data payload.
-   */
   handleFormSubmitted(formData: any): void {
     const payload = { ...formData };
     if (payload.role_id) payload.role_id = parseInt(payload.role_id, 10);
@@ -219,10 +197,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       .subscribe({ next: () => this.refreshData() });
   }
 
-  /**
-   * @description Opens the password reset modal for a specific administrator.
-   * @param item The user data for the target account.
-   */
   handleResetPasswordFormOpened(item: any): void {
     this.resetPasswordTitle = `Resetovat heslo: ${item.user_email}`;
     this.selectedItemForEdit = { id: item.id, old_password: '', new_password: '' };
@@ -230,33 +204,20 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.cd.markForCheck();
   }
 
-  /**
- * @description Performs the password change request against the user endpoint.
- * @note `formData.new_password` je teď garantovaně shodné s tím, co admin zadal do
- * potvrzovacího pole - `RESET_PASSWORD_FORM_FIELDS` používá `confirm-password` typ
- * (viz administrators.config.ts), takže FormBuilderComponent odeslání zablokuje
- * (`hasPasswordMismatch`), dokud se obě hodnoty neshodují. `new_password_confirmation`
- * proto můžeme bezpečně syntetizovat stejnou hodnotou pro backend `confirmed` pravidlo.
- * @param formData Password change credentials.
- */
-handleResetPasswordFormSubmitted(formData: any): void {
-  const payload = { 
-      old_password: formData.old_password, 
-      new_password: formData.new_password, 
-      new_password_confirmation: formData.new_password 
-  };
-  this.dataHandler.put(`core/users/${formData.id}/change-password`, payload)
-    .pipe(Core.finalize(() => { this.showResetPasswordForm = false; this.cd.markForCheck(); }))
-    .subscribe({
-      next: () => this.alertDialogService.open('Úspěch', 'Heslo bylo změněno.', 'success'),
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
-    });
-}
+  handleResetPasswordFormSubmitted(formData: any): void {
+    const payload = {
+        old_password: formData.old_password,
+        new_password: formData.new_password,
+        new_password_confirmation: formData.new_password
+    };
+    this.dataHandler.put(`core/users/${formData.id}/change-password`, payload)
+      .pipe(Core.finalize(() => { this.showResetPasswordForm = false; this.cd.markForCheck(); }))
+      .subscribe({
+        next: () => this.alertDialogService.open('Úspěch', 'Heslo bylo změněno.', 'success'),
+        error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      });
+  }
 
-  /**
-   * @description Loads full entity details for inspection.
-   * @param item The selected user record.
-   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe(details => {
@@ -264,6 +225,27 @@ handleResetPasswordFormSubmitted(formData: any): void {
       this.showDetails = true;
       this.cd.markForCheck();
     });
+  }
+
+  /**
+   * @description Přepne 2FA vynucení pro uživatele v aktuálně otevřeném detailu.
+   * Jen sysadmin (viz isSysadmin getter + backend TwoFactorAdminController kontrola).
+   */
+  toggleForced2fa(): void {
+    if (!this.isSysadmin || !this.selectedItemForDetails?.id || this.isSavingForced2fa) return;
+
+    const newValue = !this.selectedItemForDetails.two_fa_forced_by_admin;
+    this.isSavingForced2fa = true;
+
+    this.dataHandler.put(`core/users/${this.selectedItemForDetails.id}/two-factor-requirement`, { forced: newValue })
+      .pipe(Core.finalize(() => { this.isSavingForced2fa = false; this.cd.markForCheck(); }))
+      .subscribe({
+        next: () => {
+          this.selectedItemForDetails = { ...this.selectedItemForDetails, two_fa_forced_by_admin: newValue };
+          this.refreshData();
+        },
+        error: () => this.alertDialogService.open('Chyba', 'Nepodařilo se změnit vyžadování 2FA.', 'danger')
+      });
   }
 
   handleItemRestored(): void { this.refreshData(); }

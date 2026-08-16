@@ -5,94 +5,281 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Manages user authentication, token-based session lifecycle (Access/Refresh tokens), and security-related audit logging.
+ * @description Manages user authentication, token-based session lifecycle (Access/Refresh
+ * tokens), CAPTCHA-gated brute-force protection, and mandatory/optional 2FA verification.
  *
- * @refactor-note (2026-08-7) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). ZÁROVEŇ OPRAVENA DOMÉNA: lokální verze logovala do
- * `WebLog::class`, ale autentizace (login/logout) je dle dohodnutého Core/Web/Shop
- * rozdělení doménou CORE (stejně jako role, permissions, správa uživatelů) - loguje se
- * nově do `CoreLog::class`. Zachováno vědomé zalogování i veřejného (bez-auth)
- * `login`/`login_failed` - přestože jde o "public" endpoint, jde o bezpečnostně kritickou
- * událost (kdo/odkud/kolikrát se pokusil přihlásit), ne o běžnou informační veřejnou akci,
- * takže tady auditní záznam zůstává navzdory obecné poznámce "veřejné GET akce logovat
- * netřeba" (ta se týká čistě informačních GET endpointů jako WebPublicController::getStatus()).
- * User-Agent (dřív posílaný ručně v context_data) je teď do `context_data` propsán tak,
- * že se před voláním logAction() domerguje do requestu (`$request->merge()`) - trait sám
- * o sobě žádný vlastní context nepřijímá, ale automaticky sbalí celé tělo requestu
- * (mimo SENSITIVE_KEYS), takto se do něj bezpečně přidá i user_agent bez zásahu do traitu.
+ * @refactor-note (2026-08-16) BACKLOG: "captcha na login + 2FA na mail". Login už
+ * nemusí vždy rovnou vydat token - pokud User::requiresTwoFactor() vrátí true, `login()`
+ * vytvoří pending-login session (TwoFactorCode), pošle OTP e-mailem a vrátí `login_token`
+ * misto access/refresh tokenu. Skutečné tokeny se vydávají až ve `verifyTwoFactor()`.
+ * CAPTCHA (Cloudflare Turnstile) se vyžaduje až od 3. neúspěšného pokusu PRO DANÝ E-MAIL
+ * (ne IP) - viz CaptchaVerificationService a RateLimiter klíč 'login-fail:'.
+ * IP+email throttle na route úrovni řeší AppServiceProvider::boot() (limiter 'login').
  */
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\VerifyTwoFactorRequest;
+use App\Http\Requests\Auth\ResendTwoFactorRequest;
+use App\Mail\Auth\TwoFactorCodeMail;
+use App\Services\Security\CaptchaVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\{User, RefreshToken};
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
+use App\Models\{User, RefreshToken, TwoFactorCode};
 use App\Models\Core\CoreLog;
 use App\Traits\LogsActivity;
 use Illuminate\Support\Str;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 
-/**
- * @description Handles the authentication flow for the application API.
- * @note Implements a secure token refresh pattern and logs all authentication attempts for compliance and monitoring.
- */
 class AuthController extends Controller
 {
     use LogsActivity;
 
+    /** Práh počtu neúspěšných pokusů (per e-mail), od kterého se vyžaduje captcha. */
+    private const CAPTCHA_THRESHOLD = 3;
+
+    /** Okno pro počítání neúspěšných pokusů per e-mail (sekundy). */
+    private const FAILED_ATTEMPTS_DECAY_SECONDS = 900; // 15 min
+
+    public function __construct(
+        private readonly CaptchaVerificationService $captcha
+    ) {}
+
     /**
-     * Authenticates a user and issues access and refresh tokens.
+     * @description Krok 1 loginu: ověří heslo (+ captcha od 3. neúspěšného pokusu).
+     * Pokud uživatel vyžaduje 2FA, NEVYDÁ tokeny, ale založí pending-login session a
+     * pošle OTP e-mailem. Jinak přihlásí rovnou (stávající chování).
      */
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|string',
-            'password' => 'required',
+            'email'         => 'required|string',
+            'password'      => 'required',
+            'captcha_token' => 'nullable|string',
         ]);
 
-        // User-Agent do requestu, ať se propíše do context_data automaticky přes trait
-        // (viz refactor-note výše) - nikdy nedomerguje citlivé pole, jen doplňkový string.
         $request->merge(['user_agent' => $request->userAgent()]);
 
-        if (Auth::attempt(['user_email' => $request->email, 'password' => $request->password])) {
-            /** @var \App\Models\User $user */
-            $user = Auth::user();
-            $user->update(['last_login_at' => now()]);
-            $user->load('roles.permissions');
+        $email = mb_strtolower(trim($request->input('email')));
+        $failedAttemptsKey = 'login-fail:' . $email;
+        $captchaRequired = RateLimiter::attempts($failedAttemptsKey) >= self::CAPTCHA_THRESHOLD;
 
-            // Token generation
-            $accessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
-            $refreshToken = Str::random(60);
+        if ($captchaRequired) {
+            $captchaToken = (string) $request->input('captcha_token');
+            if (!$this->captcha->verify($captchaToken, $request->ip())) {
+                $this->logAction($request, CoreLog::class, 'login_captcha_failed', 'Auth', "Neplatná/chybějící captcha pro: {$email}", null, 'User');
 
-            // Manage Refresh Token
-            RefreshToken::where('user_id', $user->id)->delete();
-            RefreshToken::create([
-                'user_id'    => $user->id,
-                'token'      => hash('sha256', $refreshToken),
-                'expires_at' => now()->addDays(7),
-            ]);
-
-            $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "Uživatel se úspěšně přihlásil: {$user->user_email}", $user->id, 'User');
-
-            return response()->json([
-                'message'          => 'Přihlášení úspěšné!',
-                'user'             => new UserResource($user),
-                'user_roles'       => $user->roles->pluck('role_name'),
-                'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
-                'token'            => $accessToken,
-                'refreshToken'     => $refreshToken,
-            ], 200);
+                return response()->json([
+                    'message'          => 'Ověření captcha selhalo. Zkuste to prosím znovu.',
+                    'captcha_required' => true,
+                ], 422);
+            }
         }
 
-        $this->logAction($request, CoreLog::class, 'login_failed', 'Auth', "Neúspěšný pokus o přihlášení na login: {$request->email}", null, 'User');
+        if (Auth::attempt(['user_email' => $request->email, 'password' => $request->password])) {
+            /** @var User $user */
+            $user = Auth::user();
 
-        return response()->json(['message' => 'Neplatné přihlašovací údaje.'], 401);
+            // Přihlašovací pokus byl úspěšný - vyčistit počítadlo neúspěchů pro tento e-mail.
+            RateLimiter::clear($failedAttemptsKey);
+
+            $user->load('roles.permissions');
+
+            if ($user->requiresTwoFactor()) {
+                return $this->beginTwoFactorChallenge($request, $user);
+            }
+
+            return $this->issueTokens($request, $user);
+        }
+
+        // Špatné heslo - zvýšit počítadlo, ihned odhlásit případnou částečnou auth session.
+        RateLimiter::hit($failedAttemptsKey, self::FAILED_ATTEMPTS_DECAY_SECONDS);
+
+        $this->logAction($request, CoreLog::class, 'login_failed', 'Auth', "Neúspěšný pokus o přihlášení na login: {$email}", null, 'User');
+
+        return response()->json([
+            'message'          => 'Neplatné přihlašovací údaje.',
+            'captcha_required' => RateLimiter::attempts($failedAttemptsKey) >= self::CAPTCHA_THRESHOLD,
+        ], 401);
     }
 
     /**
-     * Refreshes the access token using a valid refresh token.
+     * @description Založí pending-login 2FA session: vygeneruje 6místný kód, uloží jeho
+     * SHA-256 hash (nikdy raw), a odešle ho e-mailem (queued). Vrátí klientovi opaque
+     * `login_token` (raw, jeho hash jde do DB), který se použije ve verifyTwoFactor/resendTwoFactor.
+     */
+    private function beginTwoFactorChallenge(Request $request, User $user): JsonResponse
+    {
+        // Předchozí nedokončené pending-login session tohoto uživatele zneplatnit -
+        // platí jen ta nejnovější (stejný princip jako u password reset tokenů).
+        TwoFactorCode::where('user_id', $user->id)->whereNull('used_at')->delete();
+
+        $rawLoginToken = Str::random(64);
+        $code = (string) random_int(100000, 999999);
+
+        TwoFactorCode::create([
+            'user_id'          => $user->id,
+            'login_token_hash' => hash('sha256', $rawLoginToken),
+            'code_hash'        => hash('sha256', $code),
+            'attempts'         => 0,
+            'resend_count'     => 0,
+            'expires_at'       => now()->addMinutes(TwoFactorCode::CODE_TTL_MINUTES),
+            'last_sent_at'     => now(),
+            'ip_address'       => $request->ip(),
+        ]);
+
+        Mail::to($user->user_email)->send(
+            new TwoFactorCodeMail($user, $code, TwoFactorCode::CODE_TTL_MINUTES)
+        );
+
+        $this->logAction($request, CoreLog::class, 'login_2fa_challenge_sent', 'Auth', "2FA kód odeslán: {$user->user_email}", $user->id, 'User');
+
+        return response()->json([
+            'message'      => 'Zadejte ověřovací kód zaslaný na váš e-mail.',
+            'requires_2fa' => true,
+            'login_token'  => $rawLoginToken,
+            'expires_in'   => TwoFactorCode::CODE_TTL_MINUTES * 60,
+        ], 200);
+    }
+
+    /**
+     * @description Krok 2 loginu (jen pro uživatele s vynucenou 2FA): ověří OTP kód a
+     * teprve poté vydá access/refresh tokeny.
+     */
+    public function verifyTwoFactor(VerifyTwoFactorRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $tokenHash = hash('sha256', $data['login_token']);
+
+        $pending = TwoFactorCode::where('login_token_hash', $tokenHash)->first();
+
+        if (!$pending || !$pending->isValid()) {
+            return response()->json([
+                'message' => 'Přihlašovací relace vypršela nebo je neplatná. Přihlaste se prosím znovu.',
+            ], 401);
+        }
+
+        if (!hash_equals($pending->code_hash, hash('sha256', $data['code']))) {
+            $pending->increment('attempts');
+
+            $this->logAction($request, CoreLog::class, 'login_2fa_code_invalid', 'Auth', "Neplatný 2FA kód (user_id: {$pending->user_id})", $pending->user_id, 'User');
+
+            if ($pending->attempts >= TwoFactorCode::MAX_ATTEMPTS) {
+                $pending->delete();
+                return response()->json([
+                    'message' => 'Překročen počet pokusů. Přihlaste se prosím znovu.',
+                ], 401);
+            }
+
+            return response()->json(['message' => 'Neplatný ověřovací kód.'], 422);
+        }
+
+        $user = User::with('roles.permissions')->find($pending->user_id);
+        if (!$user) {
+            $pending->delete();
+            return response()->json(['message' => 'Účet nenalezen.'], 401);
+        }
+
+        $pending->used_at = now();
+        $pending->save();
+        $pending->delete();
+
+        return $this->issueTokens($request, $user);
+    }
+
+    /**
+     * @description Znovu odešle OTP kód pro existující pending-login session. Chráněno
+     * cooldownem (60s) a tvrdým stropem počtu resendů na session - viz TwoFactorCode
+     * konstanty. Route navíc nese throttle limiter 'login-2fa-resend' (viz AppServiceProvider).
+     */
+    public function resendTwoFactor(ResendTwoFactorRequest $request): JsonResponse
+    {
+        $tokenHash = hash('sha256', $request->validated()['login_token']);
+        $pending = TwoFactorCode::where('login_token_hash', $tokenHash)->first();
+
+        if (!$pending || is_null($pending->expires_at) || $pending->used_at) {
+            return response()->json(['message' => 'Přihlašovací relace vypršela nebo je neplatná.'], 401);
+        }
+
+        if ($pending->isInCooldown()) {
+            $waitSeconds = TwoFactorCode::RESEND_COOLDOWN_SECONDS - $pending->last_sent_at->diffInSeconds(now());
+            return response()->json([
+                'message'      => 'Nový kód lze vyžádat až po uplynutí ochranné doby.',
+                'retry_after'  => max(1, $waitSeconds),
+            ], 429);
+        }
+
+        if ($pending->resend_count >= TwoFactorCode::MAX_RESENDS) {
+            $pending->delete();
+            return response()->json([
+                'message' => 'Překročen počet vyžádání kódu. Přihlaste se prosím znovu.',
+            ], 429);
+        }
+
+        $user = User::find($pending->user_id);
+        if (!$user) {
+            $pending->delete();
+            return response()->json(['message' => 'Účet nenalezen.'], 401);
+        }
+
+        $code = (string) random_int(100000, 999999);
+
+        $pending->code_hash = hash('sha256', $code);
+        $pending->expires_at = now()->addMinutes(TwoFactorCode::CODE_TTL_MINUTES);
+        $pending->last_sent_at = now();
+        $pending->resend_count += 1;
+        $pending->attempts = 0; // nový kód = reset pokusů na uhodnutí
+        $pending->save();
+
+        Mail::to($user->user_email)->send(
+            new TwoFactorCodeMail($user, $code, TwoFactorCode::CODE_TTL_MINUTES)
+        );
+
+        $this->logAction($request, CoreLog::class, 'login_2fa_code_resent', 'Auth', "2FA kód znovu odeslán (user_id: {$user->id})", $user->id, 'User');
+
+        return response()->json([
+            'message'    => 'Nový kód byl odeslán.',
+            'expires_in' => TwoFactorCode::CODE_TTL_MINUTES * 60,
+        ], 200);
+    }
+
+    /**
+     * @description Vydá access + refresh token přihlášenému uživateli. Sdíleno mezi
+     * přímým loginem (bez 2FA) a dokončením 2FA verifikace.
+     */
+    private function issueTokens(Request $request, User $user): JsonResponse
+    {
+        $user->update(['last_login_at' => now()]);
+
+        $accessToken = $user->createToken('access-token', ['*'], now()->addMinutes(60))->plainTextToken;
+        $refreshToken = Str::random(60);
+
+        RefreshToken::where('user_id', $user->id)->delete();
+        RefreshToken::create([
+            'user_id'    => $user->id,
+            'token'      => hash('sha256', $refreshToken),
+            'expires_at' => now()->addDays(7),
+        ]);
+
+        $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "Uživatel se úspěšně přihlásil: {$user->user_email}", $user->id, 'User');
+
+        return response()->json([
+            'message'          => 'Přihlášení úspěšné!',
+            'user'             => new UserResource($user),
+            'user_roles'       => $user->roles->pluck('role_name'),
+            'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
+            'token'            => $accessToken,
+            'refreshToken'     => $refreshToken,
+        ], 200);
+    }
+
+    /**
+     * @description Refreshes the access token using a valid refresh token.
+     * @note Beze změny oproti předchozí verzi.
      */
     public function refresh(Request $request): JsonResponse
     {
@@ -132,7 +319,8 @@ class AuthController extends Controller
     }
 
     /**
-     * Revokes user access and refresh tokens.
+     * @description Revokes user access and refresh tokens.
+     * @note Beze změny oproti předchozí verzi.
      */
     public function logout(Request $request): JsonResponse
     {

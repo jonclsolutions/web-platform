@@ -4,6 +4,8 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08-16): přidán captcha widget kontejner (jen po
+        captchaRequired=true) a celý @if(step === 'otp') blok pro zadání 2FA kódu.
 -->
 
 <div class="login-page">
@@ -12,75 +14,133 @@
       <div class="login-card-header">
         <h1 class="login-title">Administrace</h1>
       </div>
-      <form (ngSubmit)="onLogin()" class="login-form" novalidate>
-        <div class="field-group">
-          <label class="field-label" for="email">Login</label>
-          <input
-            type="email"
-            id="email"
-            [(ngModel)]="email"
-            name="email"
-            placeholder="jannovak@studio.cz"
-            class="field-input"
-            required
-            autocomplete="username">
-        </div>
-        <div class="field-group">
-          <div class="field-label-row">
-            <label class="field-label" for="password">Heslo</label>
-            <button
-              type="button"
-              class="forgot-trigger"
-              (click)="openForgotModal()">
-              Zapomenuté heslo?
-            </button>
-          </div>
-          <div class="password-wrapper">
+
+      @if (step === 'credentials') {
+        <form (ngSubmit)="onLogin()" class="login-form" novalidate>
+          <div class="field-group">
+            <label class="field-label" for="email">Login</label>
             <input
-              [type]="showPassword ? 'text' : 'password'"
-              id="password"
-              [(ngModel)]="password"
-              name="password"
-              placeholder="••••••••"
+              type="email"
+              id="email"
+              [(ngModel)]="email"
+              name="email"
+              placeholder="jannovak@studio.cz"
               class="field-input"
               required
-              autocomplete="current-password">
-            <button
-              type="button"
-              class="toggle-password"
-              (click)="showPassword = !showPassword"
-              [title]="showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'"
-              [attr.aria-label]="showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'">
-              @if (showPassword) {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              } @else {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              }
-            </button>
+              autocomplete="username">
           </div>
-        </div>
-        @if (errorMessage) {
-          <div class="error-message" role="alert">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            {{ errorMessage }}
+          <div class="field-group">
+            <div class="field-label-row">
+              <label class="field-label" for="password">Heslo</label>
+              <button
+                type="button"
+                class="forgot-trigger"
+                (click)="openForgotModal()">
+                Zapomenuté heslo?
+              </button>
+            </div>
+            <div class="password-wrapper">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                [(ngModel)]="password"
+                name="password"
+                placeholder="••••••••"
+                class="field-input"
+                required
+                autocomplete="current-password">
+              <button
+                type="button"
+                class="toggle-password"
+                (click)="showPassword = !showPassword"
+                [title]="showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'"
+                [attr.aria-label]="showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'">
+                @if (showPassword) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                }
+              </button>
+            </div>
           </div>
-        }
-        <button type="submit" class="submit-btn">
-          Přihlásit se
-          <span class="submit-arrow" aria-hidden="true">→</span>
-        </button>
 
-      </form>
+          @if (captchaRequired) {
+            <div class="field-group">
+              <div #captchaContainer class="captcha-container"></div>
+            </div>
+          }
+
+          @if (errorMessage) {
+            <div class="error-message" role="alert">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              {{ errorMessage }}
+            </div>
+          }
+
+          <button type="submit" class="submit-btn" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Přihlašování...' : 'Přihlásit se' }}
+            <span class="submit-arrow" aria-hidden="true">→</span>
+          </button>
+        </form>
+      }
+
+      @if (step === 'otp') {
+        <form (ngSubmit)="onVerifyOtp()" class="login-form" novalidate>
+          <p class="modal-subtitle">
+            Na váš e-mail byl odeslán 6místný ověřovací kód.
+            @if (!isOtpExpired) { Kód je platný ještě {{ countdownDisplay }}. }
+          </p>
+
+          <div class="field-group">
+            <label class="field-label" for="otp">Ověřovací kód</label>
+            <input
+              type="text"
+              id="otp"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="one-time-code"
+              [value]="otpCode"
+              (input)="onOtpInput($event)"
+              class="field-input"
+              placeholder="123456"
+              required>
+          </div>
+
+          @if (isOtpExpired) {
+            <div class="error-message" role="alert">Platnost kódu vypršela. Vyžádejte si prosím nový.</div>
+          }
+
+          @if (errorMessage) {
+            <div class="error-message" role="alert">{{ errorMessage }}</div>
+          }
+
+          <button type="submit" class="submit-btn" [disabled]="isSubmitting || otpCode.length !== 6">
+            {{ isSubmitting ? 'Ověřování...' : 'Ověřit a přihlásit' }}
+          </button>
+
+          <button
+            type="button"
+            class="forgot-trigger"
+            [disabled]="!canResend"
+            (click)="onResendOtp()">
+            Odeslat nový kód {{ resendCountdownDisplay }}
+          </button>
+
+          <button type="button" class="forgot-trigger" (click)="backToCredentials()">
+            ← Zpět na přihlášení
+          </button>
+        </form>
+      }
 
       <div class="login-card-footer">
         <a routerLink="/home" class="back-link">
@@ -90,13 +150,12 @@
           Zpět na hlavní stránku
         </a>
       </div>
-
     </div>
   </div>
+
   @if (showForgotModal) {
     <div class="modal-overlay" (click)="closeForgotModal()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-card" (click)="$event.stopPropagation()">
-
         <button class="modal-close" (click)="closeForgotModal()" aria-label="Zavřít">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -147,7 +206,6 @@
             <span aria-hidden="true">→</span>
           </button>
         </div>
-
       </div>
     </div>
   }
