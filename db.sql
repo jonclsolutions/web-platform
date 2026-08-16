@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 15, 2026 at 04:10 PM
+-- Generation Time: Aug 16, 2026 at 03:46 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -38,13 +38,31 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9', 'i:24;', 1786803025),
-('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9:timer', 'i:1786803025;', 1786803025),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1786801298),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1786801298;', 1786801298),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:9;', 1786802968),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1786802968;', 1786802968),
-('laravel-cache-site_setting_active_web', 'O:31:\"App\\Models\\Core\\CoreSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:18:\"core_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:7:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:0;s:13:\"is_web_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"updated_at\";s:19:\"2026-08-12 15:44:06\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:11:\"\0*\0original\";a:7:{s:2:\"id\";i:1;s:14:\"is_shop_active\";i:0;s:13:\"is_web_active\";i:1;s:19:\"maintenance_message\";s:87:\"Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.\";s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"updated_at\";s:19:\"2026-08-12 15:44:06\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:14:\"is_shop_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:14:\"is_shop_active\";i:1;s:19:\"maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1786801509);
+('laravel-cache-08a35293e09f508494096c1c1b3819edb9df50db', 'i:32;', 1786887896),
+('laravel-cache-08a35293e09f508494096c1c1b3819edb9df50db:timer', 'i:1786887896;', 1786887896),
+('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9', 'i:5;', 1786887330),
+('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9:timer', 'i:1786887330;', 1786887330),
+('laravel-cache-54a3532e057dad0aaee884059fab91c3', 'i:1;', 1786887322),
+('laravel-cache-54a3532e057dad0aaee884059fab91c3:timer', 'i:1786887322;', 1786887322),
+('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e', 'i:1;', 1786887640),
+('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e:timer', 'i:1786887640;', 1786887640),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1786887647),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1786887647;', 1786887647),
+('laravel-cache-8555c1a11d44ab0bd4e6f29d888bc874', 'i:3;', 1786887553),
+('laravel-cache-8555c1a11d44ab0bd4e6f29d888bc874:timer', 'i:1786887553;', 1786887553),
+('laravel-cache-862e0a123663139c2a0be726ddb86842', 'i:1;', 1786887602),
+('laravel-cache-862e0a123663139c2a0be726ddb86842:timer', 'i:1786887602;', 1786887602),
+('laravel-cache-b1e57407edcf287f0410de814a2da740', 'i:1;', 1786887640),
+('laravel-cache-b1e57407edcf287f0410de814a2da740:timer', 'i:1786887640;', 1786887640),
+('laravel-cache-babf79d7e6993b354b018be8ec035fff', 'i:1;', 1786876010),
+('laravel-cache-babf79d7e6993b354b018be8ec035fff:timer', 'i:1786876010;', 1786876010),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:8;', 1786887612),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1786887612;', 1786887612),
+('laravel-cache-login-fail:test1@test.cz', 'i:3;', 1786888393),
+('laravel-cache-login-fail:test1@test.cz:timer', 'i:1786888393;', 1786888393),
+('laravel-cache-password-reset-email:test1@test.cz', 'i:1;', 1786888420),
+('laravel-cache-password-reset-email:test1@test.cz:timer', 'i:1786888420;', 1786888420),
+('laravel-cache-site_setting_active_web', 'O:29:\"App\\Models\\Web\\WebSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:17:\"web_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:5:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-15 17:58:16\";}s:11:\"\0*\0original\";a:5:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-15 17:58:16\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:13:\"is_web_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1786887388);
 
 -- --------------------------------------------------------
 
@@ -144,8 +162,6 @@ INSERT INTO `core_permissions` (`id`, `permission_key`, `description`, `module`,
 (68, 'core-legal-config-create', 'Vytvořit položku sociální sítě', 'core', '2026-08-13 08:53:39'),
 (69, 'core-legal-config-update', 'Upravit firemní konfiguraci / sociální síť', 'core', '2026-08-13 08:53:39'),
 (70, 'core-legal-config-delete', 'Smazat položku sociální sítě', 'core', '2026-08-13 08:53:39'),
-(71, 'core-settings-view', 'Zobrazit firemní údaje / nastavení webu', 'core', '2026-08-13 08:53:39'),
-(72, 'core-settings-update', 'Upravit firemní údaje / nastavení webu', 'core', '2026-08-13 08:53:39'),
 (73, 'web-user-requests-view', 'Zobrazit uživatelské požadavky (provize)', 'web', '2026-08-13 12:10:56'),
 (74, 'web-user-requests-create', 'Vytvořit uživatelský požadavek (provize)', 'web', '2026-08-13 12:10:56'),
 (75, 'web-user-requests-update', 'Upravit uživatelský požadavek (provize)', 'web', '2026-08-13 12:10:56'),
@@ -161,6 +177,7 @@ CREATE TABLE `core_roles` (
   `id` int(10) UNSIGNED NOT NULL,
   `role_name` varchar(50) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
+  `forces_2fa` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Sysadmin nastavil, že tato role vyžaduje 2FA pro všechny uživatele s touto rolí (hromadné vynucení bez nutnosti nastavovat per-uživatel). Netýká se sysadmin/admin - ty mají 2FA vynuceno natvrdo v kódu bez ohledu na tento sloupec.',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
@@ -170,11 +187,11 @@ CREATE TABLE `core_roles` (
 -- Dumping data for table `core_roles`
 --
 
-INSERT INTO `core_roles` (`id`, `role_name`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'sysadmin', 'Systémový administrátor - má vše', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(2, 'admin', 'Administrátor - správa webu', '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(12, 'test', 'test', '2026-08-10 22:56:00', '2026-08-10 22:56:00', NULL),
-(13, 'web-read-only', NULL, '2026-08-13 11:55:25', '2026-08-13 12:14:09', NULL);
+INSERT INTO `core_roles` (`id`, `role_name`, `description`, `forces_2fa`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'sysadmin', 'Systémový administrátor - má vše', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
+(2, 'admin', 'Administrátor - správa webu', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
+(12, 'test', 'test', 1, '2026-08-10 22:56:00', '2026-08-16 13:33:43', NULL),
+(13, 'web-read-only', NULL, 0, '2026-08-13 11:55:25', '2026-08-13 12:14:09', NULL);
 
 -- --------------------------------------------------------
 
@@ -250,8 +267,6 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (1, 68),
 (1, 69),
 (1, 70),
-(1, 71),
-(1, 72),
 (1, 73),
 (1, 74),
 (1, 75),
@@ -342,8 +357,6 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (12, 68),
 (12, 69),
 (12, 70),
-(12, 71),
-(12, 72),
 (12, 73),
 (12, 74),
 (12, 75),
@@ -361,29 +374,6 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (13, 47),
 (13, 51),
 (13, 73);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `core_site_settings`
---
-
-CREATE TABLE `core_site_settings` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `is_shop_active` tinyint(1) NOT NULL DEFAULT 1,
-  `is_web_active` tinyint(1) NOT NULL DEFAULT 1,
-  `maintenance_message` varchar(255) DEFAULT NULL,
-  `web_maintenance_message` varchar(500) DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `created_at` timestamp NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `core_site_settings`
---
-
-INSERT INTO `core_site_settings` (`id`, `is_shop_active`, `is_web_active`, `maintenance_message`, `web_maintenance_message`, `updated_at`, `created_at`) VALUES
-(1, 0, 1, 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.', 'Omlouváme se, web je momentálně v údržbě.', '2026-08-12 13:44:06', '2026-06-12 11:42:21');
 
 -- --------------------------------------------------------
 
@@ -626,8 +616,7 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (172, 'App\\Models\\User', 77, 'access-token', 'f783051fdb88711a863e9ccd4e5176a5a3f2a3606204c816754c3227d07698f8', '[\"*\"]', '2026-02-25 00:08:53', '2026-02-25 00:42:29', '2026-02-24 23:42:29', '2026-02-25 00:08:53'),
 (591, 'App\\Models\\User', 34, 'access-token', '68783429471135aedb98b9dd0c6fea1dda24afe7d6cbb225d9e9a8ab20236672', '[\"*\"]', '2026-07-26 20:10:52', '2026-07-26 21:08:21', '2026-07-26 20:08:21', '2026-07-26 20:10:52'),
 (695, 'App\\Models\\User', 86, 'access-token', 'c01dd389ec650634ad228e9a6534e6391de2ed139c2a50bae4be0e9f48265c71', '[\"*\"]', '2026-08-11 12:34:19', '2026-08-11 13:34:19', '2026-08-11 12:34:19', '2026-08-11 12:34:19'),
-(771, 'App\\Models\\User', 25, 'access-token', '2cb9f107963df4049984e63b73532099aff7ffa1085b2febd05db9c43f2f5c25', '[\"*\"]', '2026-08-15 14:08:29', '2026-08-15 14:40:38', '2026-08-15 13:40:38', '2026-08-15 14:08:29'),
-(772, 'App\\Models\\User', 90, 'access-token', '5e2ac7905d25054d3abf62caedc019dea8cfe121304cc7ed3cdb53b5f09eca9f', '[\"*\"]', '2026-08-15 14:09:45', '2026-08-15 15:00:06', '2026-08-15 14:00:06', '2026-08-15 14:09:45');
+(805, 'App\\Models\\User', 93, 'access-token', 'e85c973d7f4b4badfbb7ae366bdd52ae354d8ca2dda76c3070e6a27af64836e6', '[\"*\"]', '2026-08-16 13:44:25', '2026-08-16 14:39:47', '2026-08-16 13:39:47', '2026-08-16 13:44:25');
 
 -- --------------------------------------------------------
 
@@ -649,8 +638,7 @@ CREATE TABLE `refresh_tokens` (
 --
 
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`, `updated_at`) VALUES
-(770, 25, '9f9bc78454028cbfb5475c9803f08ac3b6b38b4775b946f6e08982fb7e6a84b0', '2026-08-22 13:40:38', '2026-08-15 13:40:38', '2026-08-15 13:40:38'),
-(771, 90, '77d7657749bf7a914d29853df194eabd3c6ac00b3b8cfe8a83c0bf084bf48e0f', '2026-08-22 14:00:06', '2026-08-15 14:00:06', '2026-08-15 14:00:06');
+(804, 93, '8046033c9914a1823b80cf32b3e9d1ccfee0e070a5f16382a5b4c03b68337934', '2026-08-23 13:39:47', '2026-08-16 13:39:47', '2026-08-16 13:39:47');
 
 -- --------------------------------------------------------
 
@@ -1046,6 +1034,27 @@ INSERT INTO `shop_shipping_methods` (`id`, `code`, `name`, `description`, `shipp
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `shop_site_settings`
+--
+
+CREATE TABLE `shop_site_settings` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `is_shop_active` tinyint(1) NOT NULL DEFAULT 1,
+  `maintenance_message` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `shop_site_settings`
+--
+
+INSERT INTO `shop_site_settings` (`id`, `is_shop_active`, `maintenance_message`, `created_at`, `updated_at`) VALUES
+(1, 0, 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.', '2026-06-12 11:42:21', '2026-08-15 16:21:24');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `shop_suppliers`
 --
 
@@ -1071,6 +1080,26 @@ CREATE TABLE `shop_suppliers` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `two_factor_codes`
+--
+
+CREATE TABLE `two_factor_codes` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `login_token_hash` varchar(64) NOT NULL COMMENT 'SHA-256 hash opaque tokenu pending-login session (raw hodnota jde jen klientovi)',
+  `code_hash` varchar(64) NOT NULL COMMENT 'SHA-256 hash 6místného OTP kódu odeslaného e-mailem, raw hodnota se NIKDY neukládá',
+  `attempts` tinyint(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Počet neúspěšných pokusů o ověření kódu - po dosažení limitu (5) session invalidovat',
+  `resend_count` tinyint(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Kolikrát byl v rámci téhle pending-login session vyžádán nový kód (anti-spam strop)',
+  `expires_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Platnost kódu, doporučeno +10 minut od vytvoření/posledního resendu',
+  `last_sent_at` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'Čas posledního odeslání e-mailu - použito pro resend cooldown (60s)',
+  `used_at` timestamp NULL DEFAULT NULL COMMENT 'NULL = dosud nepoužitý',
+  `ip_address` varchar(45) DEFAULT NULL COMMENT 'IP, ze které byl login zahájen - audit',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -1080,6 +1109,7 @@ CREATE TABLE `users` (
   `full_name` varchar(255) NOT NULL,
   `dpp_hours_spent` int(5) NOT NULL DEFAULT 0,
   `enable_2fa` tinyint(1) NOT NULL DEFAULT 0,
+  `two_fa_forced_by_admin` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Sysadmin vynutil 2FA tomuto uživateli nezávisle na jeho vlastní enable_2fa volbě',
   `internal_note` text DEFAULT NULL,
   `user_password_hash` varchar(255) NOT NULL,
   `user_password_salt` varchar(255) DEFAULT NULL,
@@ -1094,11 +1124,13 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `user_email`, `full_name`, `dpp_hours_spent`, `enable_2fa`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
-(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, NULL, '$2y$12$PSt4jxIj8qs47185wr149uoVtxUmdWI0srk4Mq.WHSeHlmNoFPvNS', NULL, '2026-08-15 15:40:38', '2026-02-14 08:12:31', '2026-08-15 15:40:38', NULL, 0),
-(34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-11 00:55:27', NULL, 0),
-(90, 'test@test.cz', 'asdadsd', 0, 1, NULL, '$2y$12$1xKhoRDFWyrfslg9Ubrr1e.l3BRd7ULcS8tEbFGyt4/rdc0UfbsrG', NULL, '2026-08-15 10:44:45', '2026-08-13 12:35:47', '2026-08-15 10:44:45', NULL, 0),
-(91, 'foner@foner.cz', 'askfjdslkf', 0, 0, NULL, '$2y$12$WEZmuC.izG6ThmGCAAop6.d7kZVb/atIamQkM/aPWxg3iaVAqhDg6', NULL, NULL, '2026-08-15 10:46:16', '2026-08-15 10:46:35', '2026-08-15 10:46:35', 0);
+INSERT INTO `users` (`id`, `user_email`, `full_name`, `dpp_hours_spent`, `enable_2fa`, `two_fa_forced_by_admin`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
+(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, 0, NULL, '$2y$12$PSt4jxIj8qs47185wr149uoVtxUmdWI0srk4Mq.WHSeHlmNoFPvNS', NULL, '2026-08-16 15:39:11', '2026-02-14 08:12:31', '2026-08-16 15:39:11', NULL, 0),
+(34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, 0, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-11 00:55:27', NULL, 0),
+(90, 'test@test.cz', 'asdadsd', 0, 1, 1, NULL, '$2y$12$1xKhoRDFWyrfslg9Ubrr1e.l3BRd7ULcS8tEbFGyt4/rdc0UfbsrG', NULL, '2026-08-16 15:34:30', '2026-08-13 12:35:47', '2026-08-16 15:37:32', NULL, 0),
+(91, 'foner@foner.cz', 'askfjdslkf', 0, 0, 0, NULL, '$2y$12$WEZmuC.izG6ThmGCAAop6.d7kZVb/atIamQkM/aPWxg3iaVAqhDg6', NULL, NULL, '2026-08-15 10:46:16', '2026-08-15 10:46:35', '2026-08-15 10:46:35', 0),
+(92, 'asd@asd.cz', 'asdasd', 0, 1, 0, NULL, '$2y$12$n3qBItP1l6Co.wfDJp.qB.prwDPFOuzbRNRROSJFkZX0kIMVB5jpG', NULL, NULL, '2026-08-16 12:32:21', '2026-08-16 15:31:01', '2026-08-16 15:31:01', 0),
+(93, 'test1@test1.cz', 'dadadsa', 0, 1, 0, NULL, '$2y$12$nPPogKYdr/y0W1dBAlt8kOzKvk8e1m/pEkuFpHd/vfXQUg6zKn0TC', NULL, '2026-08-16 15:39:47', '2026-08-16 15:37:58', '2026-08-16 15:39:47', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -1118,8 +1150,10 @@ CREATE TABLE `user_roles` (
 INSERT INTO `user_roles` (`user_id`, `role_id`) VALUES
 (25, 1),
 (34, 2),
-(90, 1),
-(91, 13);
+(90, 13),
+(91, 13),
+(92, 12),
+(93, 1);
 
 -- --------------------------------------------------------
 
@@ -1139,13 +1173,6 @@ CREATE TABLE `web_attachments` (
   `created_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `web_attachments`
---
-
-INSERT INTO `web_attachments` (`id`, `attachable_type`, `attachable_id`, `disk`, `path`, `original_filename`, `mime_type`, `size_bytes`, `created_at`) VALUES
-(24, 'App\\Models\\Web\\WebJobApplication', 9, 'public', 'cv_files/P2qFNkfDdO48ZRRWHmS7VTkaijTZJGRYD35RFjFV.txt', 'xxxxxx.mp3', 'audio/mpeg', 1616, '2026-08-12 22:36:16');
-
 -- --------------------------------------------------------
 
 --
@@ -1163,6 +1190,17 @@ CREATE TABLE `web_external_links` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `web_external_links`
+--
+
+INSERT INTO `web_external_links` (`id`, `user_id`, `name`, `url`, `position`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(4, 25, 'Google Analytics', 'https://analytics.google.com/analytics/web/', 0, 1, '2026-06-01 06:00:00', '2026-08-16 13:28:57', '2026-08-16 13:28:57'),
+(5, 25, 'Google Search Console', 'https://search.google.com/search-console', 1, 1, '2026-06-02 07:00:00', '2026-08-16 13:29:07', '2026-08-16 13:29:07'),
+(6, 25, 'Firemní GitHub', 'https://github.com/rpsw', 2, 1, '2026-06-03 08:00:00', '2026-08-16 13:29:00', '2026-08-16 13:29:00'),
+(7, 25, 'Starý CRM systém (nepoužívá se)', 'https://old-crm.rpsw.cz', 3, 0, '2026-05-01 06:00:00', '2026-08-16 13:29:03', '2026-08-16 13:29:03'),
+(8, 25, 'Interní Wiki', 'https://wiki.rpsw.cz', 4, 1, '2026-06-05 09:00:00', '2026-08-16 13:28:55', '2026-08-16 13:28:55');
 
 -- --------------------------------------------------------
 
@@ -1186,13 +1224,6 @@ CREATE TABLE `web_job_applications` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `web_job_applications`
---
-
-INSERT INTO `web_job_applications` (`id`, `first_name`, `last_name`, `email`, `phone`, `position_name`, `message`, `cv_path`, `cv_original_name`, `state`, `internal_note`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(9, 'sdnfskjdfhj', 'jsdkfh', 'sdfsd@sdfdsf.cu', NULL, 'UI/UX Designer', NULL, NULL, NULL, 'Nový', NULL, '2026-08-12 22:36:16', '2026-08-12 22:36:55', '2026-08-12 22:36:55');
 
 -- --------------------------------------------------------
 
@@ -1256,13 +1287,6 @@ CREATE TABLE `web_raw_request_commissions` (
   `note` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `web_raw_request_commissions`
---
-
-INSERT INTO `web_raw_request_commissions` (`id`, `thema`, `contact_email`, `contact_phone`, `order_description`, `status`, `priority`, `created_at`, `updated_at`, `deleted_at`, `note`) VALUES
-(23, 'est', 'sdfds@sdf.cz', NULL, 'sddfgf', 'Nově zadané', 'Nízká', '2026-08-13 08:57:13', '2026-08-15 11:59:46', '2026-08-15 11:59:46', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -1283,7 +1307,7 @@ CREATE TABLE `web_sales_leads` (
   `source_url` varchar(500) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `priority` varchar(255) DEFAULT 'Neutrální',
-  `status` varchar(255) DEFAULT 'nové',
+  `status` varchar(255) DEFAULT 'Nové',
   `last_contact_date` date DEFAULT NULL,
   `next_step` varchar(255) DEFAULT NULL,
   `rejection_reason` text DEFAULT NULL,
@@ -1311,10 +1335,33 @@ CREATE TABLE `web_sales_orders` (
   `client_phone` varchar(255) DEFAULT NULL,
   `client_email` varchar(255) DEFAULT NULL,
   `order_description` text DEFAULT NULL,
+  `data_processing_agreement` tinyint(1) NOT NULL DEFAULT 0,
+  `tos_agreement` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `web_site_settings`
+--
+
+CREATE TABLE `web_site_settings` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `is_web_active` tinyint(1) NOT NULL DEFAULT 1,
+  `web_maintenance_message` varchar(500) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `web_site_settings`
+--
+
+INSERT INTO `web_site_settings` (`id`, `is_web_active`, `web_maintenance_message`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Omlouváme se, web je momentálně v údržbě.', '2026-06-12 11:42:21', '2026-08-15 15:58:16');
 
 -- --------------------------------------------------------
 
@@ -1376,12 +1423,6 @@ ALTER TABLE `core_roles`
 ALTER TABLE `core_role_permissions`
   ADD PRIMARY KEY (`role_id`,`permission_id`),
   ADD KEY `fk_crp_permission_id` (`permission_id`);
-
---
--- Indexes for table `core_site_settings`
---
-ALTER TABLE `core_site_settings`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `document_sections`
@@ -1592,11 +1633,25 @@ ALTER TABLE `shop_shipping_methods`
   ADD UNIQUE KEY `code` (`code`);
 
 --
+-- Indexes for table `shop_site_settings`
+--
+ALTER TABLE `shop_site_settings`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `shop_suppliers`
 --
 ALTER TABLE `shop_suppliers`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `ico` (`ico`);
+
+--
+-- Indexes for table `two_factor_codes`
+--
+ALTER TABLE `two_factor_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_2fa_login_token_hash` (`login_token_hash`),
+  ADD KEY `fk_2fa_user_id` (`user_id`);
 
 --
 -- Indexes for table `users`
@@ -1667,6 +1722,12 @@ ALTER TABLE `web_sales_orders`
   ADD KEY `fk_web_sales_orders_lead_id` (`lead_id`);
 
 --
+-- Indexes for table `web_site_settings`
+--
+ALTER TABLE `web_site_settings`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `web_support_tickets`
 --
 ALTER TABLE `web_support_tickets`
@@ -1696,12 +1757,6 @@ ALTER TABLE `core_roles`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
--- AUTO_INCREMENT for table `core_site_settings`
---
-ALTER TABLE `core_site_settings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
 -- AUTO_INCREMENT for table `document_sections`
 --
 ALTER TABLE `document_sections`
@@ -1723,7 +1778,7 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `legal_site_settings`
@@ -1753,13 +1808,13 @@ ALTER TABLE `password_reset_tokens`
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=773;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=806;
 
 --
 -- AUTO_INCREMENT for table `refresh_tokens`
 --
 ALTER TABLE `refresh_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=772;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=805;
 
 --
 -- AUTO_INCREMENT for table `shop_categories`
@@ -1858,34 +1913,46 @@ ALTER TABLE `shop_shipping_methods`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `shop_site_settings`
+--
+ALTER TABLE `shop_site_settings`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `shop_suppliers`
 --
 ALTER TABLE `shop_suppliers`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `two_factor_codes`
+--
+ALTER TABLE `two_factor_codes`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
 
 --
 -- AUTO_INCREMENT for table `web_attachments`
 --
 ALTER TABLE `web_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `web_external_links`
 --
 ALTER TABLE `web_external_links`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `web_job_applications`
 --
 ALTER TABLE `web_job_applications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `web_logs`
@@ -1897,31 +1964,37 @@ ALTER TABLE `web_logs`
 -- AUTO_INCREMENT for table `web_news`
 --
 ALTER TABLE `web_news`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `web_raw_request_commissions`
 --
 ALTER TABLE `web_raw_request_commissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `web_sales_leads`
 --
 ALTER TABLE `web_sales_leads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `web_sales_orders`
 --
 ALTER TABLE `web_sales_orders`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `web_site_settings`
+--
+ALTER TABLE `web_site_settings`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `web_support_tickets`
 --
 ALTER TABLE `web_support_tickets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- Constraints for dumped tables
@@ -2039,6 +2112,12 @@ ALTER TABLE `shop_product_variants`
 ALTER TABLE `shop_reviews`
   ADD CONSTRAINT `fk_shop_reviews_customer` FOREIGN KEY (`customer_id`) REFERENCES `shop_customers` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_shop_reviews_product` FOREIGN KEY (`product_id`) REFERENCES `shop_products` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `two_factor_codes`
+--
+ALTER TABLE `two_factor_codes`
+  ADD CONSTRAINT `fk_2fa_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `user_roles`

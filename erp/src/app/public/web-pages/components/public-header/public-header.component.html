@@ -41,8 +41,6 @@
 <button class="lang-trigger" (click)="toggleLangDropdown()" [attr.aria-expanded]="isLangOpen" aria-haspopup="listbox">
   @if (getActiveLang(); as activeLang) {
     <img [src]="activeLang.flag" [alt]="activeLang.code" class="lang-trigger-flag">
-  } @else {
-    <div class="lang-trigger-flag lang-trigger-flag--placeholder" aria-hidden="true"></div>
   }
   <span class="lang-trigger-code">{{ (getActiveLang()?.code ?? 'cz') | uppercase }}</span>
   <svg class="lang-trigger-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">

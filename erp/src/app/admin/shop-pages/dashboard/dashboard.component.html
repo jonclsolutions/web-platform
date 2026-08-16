@@ -6,6 +6,12 @@
     @created: 2026 
     @refactor-note (2026-08): Přidána karta "Režim údržby e-shopu" (dash-row-quick sekce)
         + potvrzovací modál s heslem, přesunuto z admin-layout headeru.
+    @bugfix-note (2026-08-16): Řádek s grafem/stavy objednávek, tabulka posledních
+        objednávek, karta nízkého skladu a jednotlivé quick-staty teď obaleny
+        `*ngIf="canView*"` podle toho, ze kterého modulu data reálně čerpají - `kpiCards`
+        pole už z TS strany obsahuje jen povolené karty (viz dashboard.component.ts,
+        `buildKpiCards()`). Viz bugfix-note (2026-08-16) v dashboard.component.ts pro
+        plné vysvětlení permission mapování.
 -->
 
 <div class="dashboard">
@@ -19,7 +25,7 @@
       <span class="dash-refresh-label">
         Aktualizováno: {{ lastRefreshed | date:'HH:mm:ss' }}
       </span>
-      <button class="dash-refresh-btn" (click)="loadAll()" [disabled]="loading">
+      <button class="dash-refresh-btn" (click)="loadAll(true)" [disabled]="loading">
         <span [class.spin]="loading">↻</span> Obnovit
       </button>
     </div>
@@ -44,6 +50,9 @@
 
   @if (!loading || kpiCards.length) {
 
+    <!-- @component: KPI grid — `kpiCards` už obsahuje jen karty, na které má uživatel
+         právo (viz buildKpiCards() v dashboard.component.ts), žádný extra guard tu není
+         potřeba. -->
     <div class="kpi-grid">
       @for (card of kpiCards; track card.label) {
         <div class="kpi-card kpi-{{ card.color }}">
@@ -62,259 +71,280 @@
       }
     </div>
 
-    <div class="dash-row dash-row-main">
-      <div class="dash-card dash-card-chart">
-        <div class="dash-card-header">
-          <span class="dash-card-title">Tržby — posledních 30 dní</span>
-          <span class="dash-card-meta">{{ formatCurrency(totalRevenue) }} celkem</span>
-        </div>
-        <div class="chart-wrap">
-          <svg
-            [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
-            class="chart-svg"
-            (mouseleave)="hideTooltip()">
+    <!-- @component: Revenue chart + order status breakdown — both derive purely from
+         `shop/orders`, gated by `shop-view-orders` (canViewOrders). -->
+    @if (canViewOrders) {
+      <div class="dash-row dash-row-main">
+        <div class="dash-card dash-card-chart">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Tržby — posledních 30 dní</span>
+            <span class="dash-card-meta">{{ formatCurrency(totalRevenue) }} celkem</span>
+          </div>
+          <div class="chart-wrap">
+            <svg
+              [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+              class="chart-svg"
+              (mouseleave)="hideTooltip()">
 
-            @for (step of yGridLines; track step) {
-              <line
-                [attr.x1]="chartPadL"
-                [attr.y1]="yPos(step)"
-                [attr.x2]="chartWidth - chartPadR"
-                [attr.y2]="yPos(step)"
-                class="chart-grid-line"/>
-              <text
-                [attr.x]="chartPadL - 6"
-                [attr.y]="yPos(step) + 4"
-                class="chart-y-label">{{ yLabel(step) }}</text>
-            }
-
-            @if (chartPoints.length) {
-              <polygon [attr.points]="areaPoints" class="chart-area"/>
-              <polyline [attr.points]="polylinePoints" class="chart-line"/>
-
-              @for (point of chartPoints; track point.label) {
-                <circle
-                  [attr.cx]="point.x"
-                  [attr.cy]="point.y"
-                  r="3"
-                  class="chart-dot"
-                  (mouseenter)="showTooltip(point, $event)"
-                  (mouseleave)="hideTooltip()"/>
-              }
-            }
-
-            @for (point of xAxisLabels; track point.label) {
-              <text
-                [attr.x]="point.x"
-                [attr.y]="chartHeight - 6"
-                class="chart-x-label">{{ point.label }}</text>
-            }
-
-            @if (chartTooltip.visible) {
-              <g>
+              @for (step of yGridLines; track step) {
                 <line
-                  [attr.x1]="chartTooltip.x"
-                  [attr.y1]="chartPadT"
-                  [attr.x2]="chartTooltip.x"
-                  [attr.y2]="chartPadT + chartInnerH"
-                  class="chart-tooltip-line"/>
-                <rect
-                  [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 8 : chartTooltip.x - 118"
-                  [attr.y]="chartTooltip.y - 28"
-                  width="110" height="36"
-                  rx="5"
-                  class="chart-tooltip-bg"/>
+                  [attr.x1]="chartPadL"
+                  [attr.y1]="yPos(step)"
+                  [attr.x2]="chartWidth - chartPadR"
+                  [attr.y2]="yPos(step)"
+                  class="chart-grid-line"/>
                 <text
-                  [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 63 : chartTooltip.x - 63"
-                  [attr.y]="chartTooltip.y - 12"
-                  class="chart-tooltip-label" text-anchor="middle">{{ chartTooltip.label }}</text>
+                  [attr.x]="chartPadL - 6"
+                  [attr.y]="yPos(step) + 4"
+                  class="chart-y-label">{{ yLabel(step) }}</text>
+              }
+
+              @if (chartPoints.length) {
+                <polygon [attr.points]="areaPoints" class="chart-area"/>
+                <polyline [attr.points]="polylinePoints" class="chart-line"/>
+
+                @for (point of chartPoints; track point.label) {
+                  <circle
+                    [attr.cx]="point.x"
+                    [attr.cy]="point.y"
+                    r="3"
+                    class="chart-dot"
+                    (mouseenter)="showTooltip(point, $event)"
+                    (mouseleave)="hideTooltip()"/>
+                }
+              }
+
+              @for (point of xAxisLabels; track point.label) {
                 <text
-                  [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 63 : chartTooltip.x - 63"
-                  [attr.y]="chartTooltip.y + 4"
-                  class="chart-tooltip-value" text-anchor="middle">{{ chartTooltip.value }}</text>
-              </g>
-            }
-          </svg>
-        </div>
-      </div>
-
-      <div class="dash-card dash-card-status">
-        <div class="dash-card-header">
-          <span class="dash-card-title">Stavy objednávek</span>
-          <span class="dash-card-meta">{{ totalOrders }} celkem</span>
-        </div>
-        <div class="status-list">
-          @for (item of statusBreakdown; track item.label) {
-            <div class="status-row">
-              <div class="status-row-top">
-                <span class="status-dot" [style.background]="item.color"></span>
-                <span class="status-name">{{ item.label }}</span>
-                <span class="status-count">{{ item.count }}</span>
-                <span class="status-pct">{{ item.pct }}%</span>
-              </div>
-              <div class="status-bar-track">
-                <div class="status-bar-fill"
-                  [style.width.%]="item.pct"
-                  [style.background]="item.color">
-                </div>
-              </div>
-            </div>
-          }
-          @if (!statusBreakdown.length) {
-            <div class="dash-empty">Žádná data</div>
-          }
-        </div>
-      </div>
-    </div>
-
-    <div class="dash-row dash-row-bottom">
-      <div class="dash-card dash-card-orders">
-        <div class="dash-card-header">
-          <span class="dash-card-title">Poslední objednávky</span>
-          <span class="dash-card-meta">{{ totalOrders }} objednávek celkem</span>
-        </div>
-        <div class="orders-table-wrap">
-          <table class="orders-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Zákazník</th>
-                <th>Stav</th>
-                <th>Platba</th>
-                <th class="text-right">Částka</th>
-                <th>Datum</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (order of recentOrders; track order.id) {
-                <tr>
-                  <td>
-                    <span class="order-number-badge">#{{ order.order_number }}</span>
-                  </td>
-                  <td>
-                    <div class="customer-name">{{ order.customer?.full_name ?? '—' }}</div>
-                    <div class="customer-email">{{ order.customer?.email ?? '' }}</div>
-                  </td>
-                  <td>
-                    <span class="badge {{ statusClass(order.status) }}">
-                      {{ order.status_label }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge {{ paymentClass(order.payment_status) }}">
-                      {{ order.payment_status_label }}
-                    </span>
-                  </td>
-                  <td class="text-right amount-cell">
-                    {{ formatCurrency(order.final_amount) }}
-                  </td>
-                  <td class="date-cell">
-                    {{ formatDate(order.created_at) }}
-                  </td>
-                </tr>
+                  [attr.x]="point.x"
+                  [attr.y]="chartHeight - 6"
+                  class="chart-x-label">{{ point.label }}</text>
               }
-              @if (!recentOrders.length && !loading) {
-                <tr>
-                  <td colspan="6" class="dash-empty">Žádné objednávky</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
 
-      <div class="dash-card dash-card-stock">
-        <div class="dash-card-header">
-          <span class="dash-card-title dash-card-title-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              @if (chartTooltip.visible) {
+                <g>
+                  <line
+                    [attr.x1]="chartTooltip.x"
+                    [attr.y1]="chartPadT"
+                    [attr.x2]="chartTooltip.x"
+                    [attr.y2]="chartPadT + chartInnerH"
+                    class="chart-tooltip-line"/>
+                  <rect
+                    [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 8 : chartTooltip.x - 118"
+                    [attr.y]="chartTooltip.y - 28"
+                    width="110" height="36"
+                    rx="5"
+                    class="chart-tooltip-bg"/>
+                  <text
+                    [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 63 : chartTooltip.x - 63"
+                    [attr.y]="chartTooltip.y - 12"
+                    class="chart-tooltip-label" text-anchor="middle">{{ chartTooltip.label }}</text>
+                  <text
+                    [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 63 : chartTooltip.x - 63"
+                    [attr.y]="chartTooltip.y + 4"
+                    class="chart-tooltip-value" text-anchor="middle">{{ chartTooltip.value }}</text>
+                </g>
+              }
             </svg>
-            Nízký stav skladu
-          </span>
-          <span class="dash-card-meta">{{ lowStockProducts.length }} produktů</span>
+          </div>
         </div>
-        @if (lowStockProducts.length) {
-          <div class="stock-list">
-            @for (p of lowStockProducts; track p.id) {
-              <div class="stock-item">
-                <div class="stock-item-top">
-                  <span class="stock-name">{{ p.name }}</span>
-                  <span class="stock-qty" [class.stock-critical]="p.stock_quantity === 0">
-                    {{ p.stock_quantity }} ks
-                  </span>
+
+        <div class="dash-card dash-card-status">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Stavy objednávek</span>
+            <span class="dash-card-meta">{{ totalOrders }} celkem</span>
+          </div>
+          <div class="status-list">
+            @for (item of statusBreakdown; track item.label) {
+              <div class="status-row">
+                <div class="status-row-top">
+                  <span class="status-dot" [style.background]="item.color"></span>
+                  <span class="status-name">{{ item.label }}</span>
+                  <span class="status-count">{{ item.count }}</span>
+                  <span class="status-pct">{{ item.pct }}%</span>
                 </div>
-                <div class="stock-sku">{{ p.sku }}</div>
-                <div class="stock-bar-track">
-                  <div class="stock-bar-fill"
-                    [style.width.%]="stockPct(p)"
-                    [class.stock-bar-critical]="p.stock_quantity <= 2"
-                    [class.stock-bar-warning]="p.stock_quantity > 2 && p.stock_quantity <= p.stock_warning_level">
+                <div class="status-bar-track">
+                  <div class="status-bar-fill"
+                    [style.width.%]="item.pct"
+                    [style.background]="item.color">
                   </div>
                 </div>
-                <div class="stock-limit">Limit: {{ p.stock_warning_level }} ks</div>
               </div>
             }
+            @if (!statusBreakdown.length) {
+              <div class="dash-empty">Žádná data</div>
+            }
           </div>
-        } @else {
-          <div class="dash-empty dash-empty-good">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 17"/>
-            </svg>
-            Všechny produkty mají dostatek zásob
-          </div>
-        }
+        </div>
       </div>
+    }
+
+    <!-- @component: Recent orders table (shop-view-orders) + low stock card
+         (shop-manage-products) — independent permissions, each card guarded on its own
+         so the row still renders if only one of the two is granted. -->
+    <div class="dash-row dash-row-bottom">
+      @if (canViewOrders) {
+        <div class="dash-card dash-card-orders">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Poslední objednávky</span>
+            <span class="dash-card-meta">{{ totalOrders }} objednávek celkem</span>
+          </div>
+          <div class="orders-table-wrap">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Zákazník</th>
+                  <th>Stav</th>
+                  <th>Platba</th>
+                  <th class="text-right">Částka</th>
+                  <th>Datum</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of recentOrders; track order.id) {
+                  <tr>
+                    <td>
+                      <span class="order-number-badge">#{{ order.order_number }}</span>
+                    </td>
+                    <td>
+                      <div class="customer-name">{{ order.customer?.full_name ?? '—' }}</div>
+                      <div class="customer-email">{{ order.customer?.email ?? '' }}</div>
+                    </td>
+                    <td>
+                      <span class="badge {{ statusClass(order.status) }}">
+                        {{ order.status_label }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge {{ paymentClass(order.payment_status) }}">
+                        {{ order.payment_status_label }}
+                      </span>
+                    </td>
+                    <td class="text-right amount-cell">
+                      {{ formatCurrency(order.final_amount) }}
+                    </td>
+                    <td class="date-cell">
+                      {{ formatDate(order.created_at) }}
+                    </td>
+                  </tr>
+                }
+                @if (!recentOrders.length && !loading) {
+                  <tr>
+                    <td colspan="6" class="dash-empty">Žádné objednávky</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      @if (canViewProducts) {
+        <div class="dash-card dash-card-stock">
+          <div class="dash-card-header">
+            <span class="dash-card-title dash-card-title-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              Nízký stav skladu
+            </span>
+            <span class="dash-card-meta">{{ lowStockProducts.length }} produktů</span>
+          </div>
+          @if (lowStockProducts.length) {
+            <div class="stock-list">
+              @for (p of lowStockProducts; track p.id) {
+                <div class="stock-item">
+                  <div class="stock-item-top">
+                    <span class="stock-name">{{ p.name }}</span>
+                    <span class="stock-qty" [class.stock-critical]="p.stock_quantity === 0">
+                      {{ p.stock_quantity }} ks
+                    </span>
+                  </div>
+                  <div class="stock-sku">{{ p.sku }}</div>
+                  <div class="stock-bar-track">
+                    <div class="stock-bar-fill"
+                      [style.width.%]="stockPct(p)"
+                      [class.stock-bar-critical]="p.stock_quantity <= 2"
+                      [class.stock-bar-warning]="p.stock_quantity > 2 && p.stock_quantity <= p.stock_warning_level">
+                    </div>
+                  </div>
+                  <div class="stock-limit">Limit: {{ p.stock_warning_level }} ks</div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="dash-empty dash-empty-good">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 17"/>
+              </svg>
+              Všechny produkty mají dostatek zásob
+            </div>
+          }
+        </div>
+      }
     </div>
 
+    <!-- @component: Quick-stat row — each tile gated individually by the permission of
+         the module it reads from (coupons/orders/orders/products). -->
     <div class="dash-row dash-row-quick">
-      <div class="quick-stat">
-        <span class="quick-stat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
-            <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
-          </svg>
-        </span>
-        <div>
-          <div class="quick-stat-value">{{ activeCoupons }}</div>
-          <div class="quick-stat-label">Aktivní kupóny</div>
+      @if (canViewCoupons) {
+        <div class="quick-stat">
+          <span class="quick-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+              <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+            </svg>
+          </span>
+          <div>
+            <div class="quick-stat-value">{{ activeCoupons }}</div>
+            <div class="quick-stat-label">Aktivní kupóny</div>
+          </div>
         </div>
-      </div>
-      <div class="quick-stat">
-        <span class="quick-stat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-            <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>
-          </svg>
-        </span>
-        <div>
-          <div class="quick-stat-value">{{ pendingOrders }}</div>
-          <div class="quick-stat-label">Čeká na vyřízení</div>
+      }
+      @if (canViewOrders) {
+        <div class="quick-stat">
+          <span class="quick-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+              <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>
+            </svg>
+          </span>
+          <div>
+            <div class="quick-stat-value">{{ pendingOrders }}</div>
+            <div class="quick-stat-label">Čeká na vyřízení</div>
+          </div>
         </div>
-      </div>
-      <div class="quick-stat">
-        <span class="quick-stat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-          </svg>
-        </span>
-        <div>
-          <div class="quick-stat-value">{{ formatCurrency(revenueThisMonth) }}</div>
-          <div class="quick-stat-label">Tržby tento měsíc</div>
+      }
+      @if (canViewOrders) {
+        <div class="quick-stat">
+          <span class="quick-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </span>
+          <div>
+            <div class="quick-stat-value">{{ formatCurrency(revenueThisMonth) }}</div>
+            <div class="quick-stat-label">Tržby tento měsíc</div>
+          </div>
         </div>
-      </div>
-      <div class="quick-stat">
-        <span class="quick-stat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4l-6 5Z"/>
-            <path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/>
-          </svg>
-        </span>
-        <div>
-          <div class="quick-stat-value">{{ lowStockProducts.length }}</div>
-          <div class="quick-stat-label">Produkty pod limitem</div>
+      }
+      @if (canViewProducts) {
+        <div class="quick-stat">
+          <span class="quick-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4l-6 5Z"/>
+              <path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/>
+            </svg>
+          </span>
+          <div>
+            <div class="quick-stat-value">{{ lowStockProducts.length }}</div>
+            <div class="quick-stat-label">Produkty pod limitem</div>
+          </div>
         </div>
-      </div>
+      }
     </div>
 
     <div class="dash-row" *appHasPermission="'shop-set-maintenance-mode'">

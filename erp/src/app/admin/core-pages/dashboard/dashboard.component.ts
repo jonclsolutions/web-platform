@@ -32,10 +32,35 @@
  * "Aktualizovat" tlačítko (`refresh()` - obchází TTL, invaliduje oba cache klíče a
  * refetchne) a `lastUpdatedAt` timestamp zobrazovaný v hlavičce, stejný UX vzor jako u
  * tabulek (TableBuilderComponent).
+ *
+ * @bugfix-note (2026-08-16) KRITICKÁ OPRAVA - PERMISSION-AWARE DASHBOARD: `loadStats()`
+ * dřív pálila `forkJoin` na všech 5 endpointů (`core/users`, `core/roles`,
+ * `legal/document-sections`, `core/external_links`, `core/logs`) bez ohledu na
+ * oprávnění uživatele - stejný symptom jako u `WebDashboardComponent`/
+ * `ShopDashboardComponent` (viz jejich bugfix-note 2026-08-16). Zvláštní případ tady je
+ * `core/roles` - ten NENÍ gated permission klíčem vůbec (viz api.php hlavička a
+ * CoreRoleController), jen kontrolou `role_name === 'sysadmin'` přímo v controlleru, takže
+ * i s `core-administrators-view` by nesysadmin dostal 403 na "Role a oprávnění" kartu.
+ * ŘEŠENÍ: `quickStats`/`navSections` teď staví z deklarativního pole `STAT_DEFS`, kde má
+ * každá položka `isAllowed(): boolean` - u čtyř resources volá
+ * `permissionService.hasPermission(...)` (`core-administrators-view`,
+ * `core-legal-documents-view`, `core-external-links-view`, `view-core` pro logy - stejný
+ * klíč jako gate `core/logs` GET v api.php), u "roles" volá `isSysadmin()`.
+ * @TODO-CONFIRM `isSysadmin()` je DOČASNÝ placeholder (čte `localStorage.getItem('userRole')`,
+ * stejný vzor jako `PermissionService` čte `userPermissions`) - nahradit voláním skutečné
+ * role-check metody (pravděpodobně `AuthService`/`CurrentUserProfileService`, stejný zdroj
+ * jako `userRole` v `admin-layout.component.ts`), jakmile bude potvrzeno API té služby.
+ * Je to fail-closed (nesysadmin nikdy neuvidí kartu navíc), takže i beze změny je to
+ * bezpečné, jen nemusí být 100% konzistentní se zdrojem pravdy, pokud by se lišil formát
+ * uloženého klíče/hodnoty.
+ *
  * @dependencies
  * - BaseDataComponent: Provides errorMessage/cd/alertDialogService (no CRUD needed here).
  * - LoadingService: Manages global loading states.
  * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
+ * - HasPermissionDirective: Gate the "Poslední systémové události" section on `view-core`.
+ * - PermissionService: Synchronní kontrola permission klíčů - řídí, které dílčí stat/nav/
+ *   activity požadavky se vůbec pošlou (viz bugfix-note výše).
  * - ResourceCacheService: TTL cache pro stats/activity fetch (viz refactor-note výše).
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
  */
@@ -50,6 +75,7 @@ import * as Core from '../../../shared/imports/core-providers';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
+import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 
 /**
@@ -93,16 +119,42 @@ interface ActivityLog {
 }
 
 /**
+ * @description Declarative definition of a single dashboard stat tile - what to fetch,
+ * how to render it, and the predicate that decides whether the current user may see it.
+ * `isAllowed` is a function rather than a plain permission string because one entry
+ * (`roles`) is gated by a sysadmin role check, not a permission key - see bugfix-note in
+ * the file header. Adding a new module to the dashboard means adding one entry here,
+ * never touching `loadStats()`/the template.
+ */
+interface DashboardStatDef {
+  key: string;
+  label: string;
+  icon: string;
+  color: string;
+  endpoint: string;
+  isAllowed: () => boolean;
+}
+
+/**
+ * @description `NavSection` shortcut card, extended with the same `isAllowed` predicate
+ * used by `DashboardStatDef` (see above).
+ */
+interface NavSectionWithGuard extends NavSection {
+  isAllowed: () => boolean;
+}
+
+/**
  * @description Serves as the sensitive system-configuration overview for administrators
  * with Core access. Aggregates counts from every resource owned by the Core module and
  * offers one-click navigation into each management screen.
  * @note Implements component-level data aggregation from multiple API endpoints, same
- * pattern as `WebDashboardComponent`.
+ * pattern as `WebDashboardComponent`. Every aggregated piece is additionally gated by
+ * `PermissionService`/`isSysadmin()` - see bugfix-note (2026-08-16) in the file header.
  */
 @Component({
   selector: 'app-core-dashboard',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule, CommonModule, HasPermissionDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -119,6 +171,44 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   private readonly STATS_CACHE_KEY = 'core-dashboard:stats';
   private readonly ACTIVITY_CACHE_KEY = 'core-dashboard:activity';
 
+  /** Permission klíč gatující `core/logs` GET v api.php (`CheckPermission` middleware). */
+  private readonly LOGS_PERMISSION = 'view-core';
+
+  /**
+   * Jediné místo pravdy pro stat karty dashboardu - viz bugfix-note (2026-08-16) v
+   * hlavičce souboru. `loadStats()` z tohoto pole vyfiltruje jen položky, kde
+   * `isAllowed()` vrátí true, a JEN za ty pošle request.
+   */
+  private readonly STAT_DEFS: DashboardStatDef[] = [
+    {
+      key: 'users', label: 'Uživatelé systému', icon: 'users', color: 'sky',
+      endpoint: 'core/users?per_page=1',
+      isAllowed: () => this.permissionService.hasPermission('core-administrators-view'),
+    },
+    {
+      // core/roles NENÍ gated permission klíčem - jen sysadmin kontrolou v controlleru.
+      // Viz @TODO-CONFIRM v hlavičce souboru.
+      key: 'roles', label: 'Role a oprávnění', icon: 'shield', color: 'indigo',
+      endpoint: 'core/roles?per_page=1',
+      isAllowed: () => this.isSysadmin(),
+    },
+    {
+      key: 'legalDocs', label: 'Právní dokumenty', icon: 'legal', color: 'slate',
+      endpoint: 'legal/document-sections?per_page=1',
+      isAllowed: () => this.permissionService.hasPermission('core-legal-documents-view'),
+    },
+    {
+      key: 'externalLinks', label: 'Externí odkazy', icon: 'link', color: 'green',
+      endpoint: 'core/external_links?per_page=1',
+      isAllowed: () => this.permissionService.hasPermission('core-external-links-view'),
+    },
+    {
+      key: 'coreLogs', label: 'Systémové logy', icon: 'logs', color: 'amber',
+      endpoint: 'core/logs?per_page=1',
+      isAllowed: () => this.permissionService.hasPermission(this.LOGS_PERMISSION),
+    },
+  ];
+
   quickStats: QuickStat[] = [];
   loadingStats = true;
 
@@ -129,13 +219,14 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   lastUpdatedAt: Date | null = null;
   isRefreshing = false;
 
-  readonly navSections: NavSection[] = [
+  readonly navSections: NavSectionWithGuard[] = [
     {
       title: 'Administrátoři',
       icon: 'users',
       route: '/admin/core/administrators',
       description: 'Správa uživatelských účtů administrátorů',
       color: 'sky',
+      isAllowed: () => this.permissionService.hasPermission('core-administrators-view'),
     },
     {
       title: 'Role a oprávnění',
@@ -143,6 +234,9 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       route: '/admin/core/edit-roles',
       description: 'Definice rolí a jejich přístupových práv',
       color: 'indigo',
+      // core/edit-roles route je chráněná sysadminGuard, ne permission klíčem - viz
+      // admin-routing.module.ts a @TODO-CONFIRM v hlavičce souboru.
+      isAllowed: () => this.isSysadmin(),
     },
     {
       title: 'Právní dokumenty',
@@ -150,6 +244,7 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       route: '/admin/core/edit-legal',
       description: 'GDPR, obchodní podmínky a další dokumenty',
       color: 'slate',
+      isAllowed: () => this.permissionService.hasPermission('core-legal-documents-view'),
     },
     {
       title: 'Externí odkazy',
@@ -157,6 +252,7 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       route: '/admin/core/external-links',
       description: 'Odkazy na analytiku a externí nástroje',
       color: 'green',
+      isAllowed: () => this.permissionService.hasPermission('core-external-links-view'),
     },
     {
       title: 'Systémové logy',
@@ -164,6 +260,7 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       route: '/admin/core/logs',
       description: 'Auditní záznamy autentizace a systému',
       color: 'amber',
+      isAllowed: () => this.permissionService.hasPermission(this.LOGS_PERMISSION),
     },
     {
       title: 'Nastavení webu',
@@ -171,8 +268,21 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
       route: '/admin/core/web-settings',
       description: 'Globální konfigurace webu a e-shopu',
       color: 'rose',
+      // WebSettingsComponent volá legal/config/* (SiteConfigurationController) - stejný
+      // klíč jako menu položka "Firemní údaje" v admin-layout.component.html, viz
+      // bugfix-note (2026-08-6) v admin-routing.module.ts.
+      isAllowed: () => this.permissionService.hasPermission('core-legal-config-view'),
     },
   ];
+
+  /**
+   * @description Podmnožina `navSections`, na kterou má přihlášený uživatel právo -
+   * šablona nad tímto getterem iteruje místo nad `navSections` přímo (viz bugfix-note
+   * (2026-08-16) v hlavičce souboru).
+   */
+  get visibleNavSections(): NavSectionWithGuard[] {
+    return this.navSections.filter(section => section.isAllowed());
+  }
 
   /**
    * Icon library used on this dashboard - key matches the `icon` value in
@@ -217,7 +327,9 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   /**
    * @description Ruční "Aktualizovat" - obchází TTL cache pro obě sekce dashboardu
    * (stats + activity) a vynutí čerstvý fetch. Stejný UX vzor jako refresh tlačítko u
-   * tabulek (TableBuilderComponent.refreshRequested).
+   * tabulek (TableBuilderComponent.refreshRequested). Permission guardy v `loadStats()`/
+   * `loadRecentActivity()` platí i tady - ruční refresh nepřeskakuje kontrolu práv, jen
+   * obchází TTL cache.
    */
   refresh(): void {
     if (this.isRefreshing) return;
@@ -229,32 +341,35 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
   }
 
   /**
-   * @description Aggregates resource counts from every Core-owned endpoint concurrently
-   * using forkJoin. Cached přes ResourceCacheService (2min TTL) - viz refactor-note
-   * (2026-08-8) v hlavičce souboru.
+   * @description Aggregates resource counts from every Core-owned endpoint the current
+   * user is permitted to see, concurrently using forkJoin. Cached přes
+   * ResourceCacheService (2min TTL) - viz refactor-note (2026-08-8) v hlavičce souboru.
    * @note If an individual request fails, it defaults to null so the rest of the
    * dashboard remains functional. `getPaginatedCollection` is used deliberately (not
    * `getCollection`) to keep `.total` from the response instead of just the unwrapped
    * page of records.
+   * @bugfix-note (2026-08-16) Endpointy, na které uživatel nemá právo (viz
+   * `STAT_DEFS[].isAllowed`), se teď VŮBEC nevolají - žádný zbytečný 403 (`core/roles`
+   * pro nesysadminy, `core/logs`/`core/external_links`/`legal/document-sections`/
+   * `core/users` pro chybějící permission), žádná karta s "—" pro resource, který
+   * uživatel nesmí vidět. Viz hlavička souboru.
    */
   private loadStats(): void {
     this.loadingStats = true;
 
-    this.resourceCache.get(this.STATS_CACHE_KEY, () => forkJoin({
-      users:         this.dataHandler.getPaginatedCollection<any>('core/users?per_page=1').pipe(catchError(() => of(null))),
-      roles:         this.dataHandler.getPaginatedCollection<any>('core/roles?per_page=1').pipe(catchError(() => of(null))),
-      legalDocs:     this.dataHandler.getPaginatedCollection<any>('legal/document-sections?per_page=1').pipe(catchError(() => of(null))),
-      externalLinks: this.dataHandler.getPaginatedCollection<any>('core/external_links?per_page=1').pipe(catchError(() => of(null))),
-      coreLogs:      this.dataHandler.getPaginatedCollection<any>('core/logs?per_page=1').pipe(catchError(() => of(null))),
-    }), this.TTL_MS).subscribe({
-      next: (res) => {
-        this.quickStats = [
-          { label: 'Uživatelé systému', value: res.users?.total ?? '—', icon: 'users', color: 'sky' },
-          { label: 'Role a oprávnění', value: res.roles?.total ?? '—', icon: 'shield', color: 'indigo' },
-          { label: 'Právní dokumenty', value: res.legalDocs?.total ?? '—', icon: 'legal', color: 'slate' },
-          { label: 'Externí odkazy', value: res.externalLinks?.total ?? '—', icon: 'link', color: 'green' },
-          { label: 'Systémové logy', value: res.coreLogs?.total ?? '—', icon: 'logs', color: 'amber' },
-        ];
+    const allowedDefs = this.STAT_DEFS.filter(def => def.isAllowed());
+
+    this.resourceCache.get(this.STATS_CACHE_KEY, () => {
+      const calls: Record<string, ReturnType<typeof this.dataHandler.getPaginatedCollection<any>>> = {};
+      for (const def of allowedDefs) {
+        calls[def.key] = this.dataHandler.getPaginatedCollection<any>(def.endpoint).pipe(catchError(() => of(null)));
+      }
+      return forkJoin(calls);
+    }, this.TTL_MS).subscribe({
+      next: (res: Record<string, any>) => {
+        this.quickStats = allowedDefs.map(def => ({
+          label: def.label, value: res[def.key]?.total ?? '—', icon: def.icon, color: def.color,
+        }));
         this.loadingStats = false;
         this.isRefreshing = false;
         this.lastUpdatedAt = new Date();
@@ -272,8 +387,18 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
    * @description Fetches the latest system-level audit events (authentication, role/
    * permission changes, legal document changes) for the activity feed. Cached přes
    * ResourceCacheService (2min TTL) - viz refactor-note (2026-08-8) v hlavičce souboru.
+   * @bugfix-note (2026-08-16) `core/logs` (GET) vyžaduje `view-core` - bez kontroly by
+   * uživatel bez tohoto práva dostal 403 při každém vstupu na dashboard. Bez práva se
+   * teď rovnou vrátí prázdný seznam bez volání API - sekce navíc v šabloně obalena
+   * `*appHasPermission` (viz dashboard.component.html).
    */
   private loadRecentActivity(): void {
+    if (!this.permissionService.hasPermission(this.LOGS_PERMISSION)) {
+      this.recentActivity = [];
+      this.loadingActivity = false;
+      return;
+    }
+
     this.loadingActivity = true;
 
     this.resourceCache.get(
@@ -292,6 +417,22 @@ export class CoreDashboardComponent extends BaseDataComponent<UserLogin> impleme
         this.cd.markForCheck();
       }
     });
+  }
+
+  /**
+   * @TODO-CONFIRM DOČASNÝ placeholder pro kontrolu role sysadmina - `core/roles` (a
+   * route `/admin/core/edit-roles`) nejsou gated permission klíčem, jen kontrolou
+   * `role_name === 'sysadmin'` (viz `sysadmin.guard.ts`/`CoreRoleController` a
+   * bugfix-note v hlavičce souboru). Zrcadlí vzor `PermissionService`
+   * (`localStorage.getItem('userPermissions')`), ale klíč `userRole` v localStorage NENÍ
+   * potvrzený - `admin-layout.component.ts` má vlastní `userRole` property odjinud
+   * (pravděpodobně AuthService/CurrentUserProfileService). Nahradit voláním té stejné
+   * služby, jakmile bude její API potvrzené. Fail-closed: dokud klíč v localStorage
+   * chybí nebo nesedí, nesysadmin kartu/nav položku nikdy neuvidí.
+   * @returns True, pokud aktuálně přihlášený uživatel má roli 'sysadmin'.
+   */
+  private isSysadmin(): boolean {
+    return localStorage.getItem('userRole') === 'sysadmin';
   }
 
   formatDate(iso: string): string {

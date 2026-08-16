@@ -52,10 +52,33 @@
  * `is_shop_active`/`maintenance_message` shape, takže zbytek komponenty (šablona, optimistic
  * update) beze změny funguje správně.
  *
+ * @bugfix-note (2026-08-16) KRITICKÁ OPRAVA - PERMISSION-AWARE DASHBOARD: `loadAll()` dřív
+ * pálila `forkJoin` na 7 endpointů (`shop/orders` x3, `shop/customers`, `shop/products` x2,
+ * `shop/coupons`) bez ohledu na to, jestli na ně uživatel má právo - stejný symptom jako u
+ * `WebDashboardComponent`/`CoreDashboardComponent` (viz jejich bugfix-note 2026-08-16):
+ * zbytečné 403 + alert za každý resource navíc, karta se navíc pořád vykreslila (jen s
+ * nulovou/prázdnou hodnotou). Permission klíče převzaty z reálného gatingu v
+ * `admin-routing.module.ts` (`data: { permission }` na jednotlivých shop stránkách), ne
+ * vymyšlené nanovo - konkrétně `shop-view-orders` (objednávky, tržby, graf, stavy),
+ * `shop-manage-customers` (zákazníci), `shop-manage-products` (aktivní produkty + nízký
+ * sklad) a `shop-view-reports` (kupóny - `CouponsComponent` route v
+ * `admin-routing.module.ts` je gatovaná tímto klíčem, ne novým `shop-manage-coupons`,
+ * který v `core_permissions` zatím neexistuje - držíme se toho, co je reálně vynucené).
+ * ŘEŠENÍ: čtyři veřejné gettery (`canViewOrders`/`canViewCustomers`/`canViewProducts`/
+ * `canViewCoupons`) čtou `PermissionService` synchronně a používají se (a) v `loadAll()`
+ * k rozhodnutí, které dílčí volání se vůbec pošlou (nepovolené jdou rovnou `of(null)` bez
+ * síťového requestu), a (b) v šabloně k obalení jednotlivých karet/řádků/quick-statů, ať
+ * se sekce bez práva vůbec nevykreslí. `buildKpiCards()` stejně tak sestavuje pole jen z
+ * karet, na které má uživatel právo. `loadMaintenanceStatus()` dostal stejný guard pro
+ * `shop-set-maintenance-mode` (karta byla v šabloně schovaná `*appHasPermission` už dřív,
+ * ale fetch se volal bezpodmínečně).
+ *
  * @dependencies
  * - DataHandler: Centralizovaná HTTP komunikace (baseUrl + error handling) — nahrazuje HttpClient.
  * - AlertDialogService: Zpětná vazba při úspěchu/chybě změny režimu údržby.
  * - HasPermissionDirective: Gate karty údržby na permission `shop-set-maintenance-mode`.
+ * - PermissionService: Synchronní kontrola permission klíčů - řídí, které dílčí KPI/chart/
+ *   tabulkové požadavky se vůbec pošlou (viz bugfix-note výše).
  * - ResourceCacheService: TTL cache pro stats/maintenance fetch (viz refactor-note výše).
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
  */
@@ -63,10 +86,11 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { forkJoin, interval, Subscription, catchError, of } from 'rxjs';
+import { forkJoin, interval, Subscription, catchError, of, Observable } from 'rxjs';
 import { DataHandler } from '../../../core/services/data-handler.service';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
+import { PermissionService } from '../../../core/auth/services/permission.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } from './';
 
@@ -76,7 +100,8 @@ import { StatusBreakdown, ChartPoint, LowStockProduct, RecentOrder, KpiCard } fr
  * @usage Provides a high-level overview for store administrators to track sales, inventory, and
  * pending orders.
  * @note Implements an automatic data-polling mechanism to ensure the dashboard remains up-to-date
- * without page reloads.
+ * without page reloads. Every aggregated piece is additionally gated by `PermissionService` - see
+ * bugfix-note (2026-08-16) in the file header.
  */
 @Component({
   selector: 'app-dashboard',
@@ -90,12 +115,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private alertDialogService = inject(AlertDialogService);
   private resourceCache = inject(ResourceCacheService);
+  private permissionService = inject(PermissionService);
   private refreshSub?: Subscription;
 
   private readonly TTL_MS = 2 * 60 * 1000;
   private readonly STATS_CACHE_KEY = 'shop-dashboard:all';
   private readonly MAINTENANCE_CACHE_KEY = 'shop-dashboard:maintenance';
   private readonly MAINTENANCE_TTL_MS = 60 * 1000;
+
+  /** Permission klíče - přímo odpovídají `data: { permission }` v `admin-routing.module.ts`
+   *  pro danou shop stránku (viz bugfix-note (2026-08-16) v hlavičce souboru). */
+  private readonly PERM_ORDERS = 'shop-view-orders';
+  private readonly PERM_CUSTOMERS = 'shop-manage-customers';
+  private readonly PERM_PRODUCTS = 'shop-manage-products';
+  private readonly PERM_COUPONS = 'shop-view-reports';
+  private readonly PERM_MAINTENANCE = 'shop-set-maintenance-mode';
+
+  /** Objednávky, tržby, graf 30 dní, stavy objednávek - vše z `shop/orders`. */
+  get canViewOrders(): boolean { return this.permissionService.hasPermission(this.PERM_ORDERS); }
+  /** Počet zákazníků. */
+  get canViewCustomers(): boolean { return this.permissionService.hasPermission(this.PERM_CUSTOMERS); }
+  /** Aktivní produkty + nízký sklad. */
+  get canViewProducts(): boolean { return this.permissionService.hasPermission(this.PERM_PRODUCTS); }
+  /** Aktivní kupóny. */
+  get canViewCoupons(): boolean { return this.permissionService.hasPermission(this.PERM_COUPONS); }
 
   loading = true;
   loadingError = false;
@@ -187,14 +230,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Fetches all dashboard modules concurrently using forkJoin and handles global
-   * loading/error states. Přes TTL cache (viz refactor-note v hlavičce souboru).
+   * @description Fetches all dashboard modules the current user is permitted to see,
+   * concurrently using forkJoin, and handles global loading/error states. Přes TTL cache
+   * (viz refactor-note v hlavičce souboru).
    * @param force Bypass cache - použito ručním tlačítkem "Obnovit" a periodickým pollingem
    * (interval 120s), oba případy jsou vědomě vyžádaný čerstvý fetch, ne mount-time navigace.
    * @note Každé volání je zabaleno vlastním `catchError(() => of(null))` — jednotlivý selhavší
    * widget (např. výpadek endpointu s doporučeními) tak nespadne celý dashboard, jen se
    * příslušná karta nevykreslí. DataHandler přitom na pozadí případnou chybu ještě centrálně
    * nahlásí přes AlertDialogService, takže uživatel o výpadku ví.
+   * @bugfix-note (2026-08-16) Dílčí volání se teď posílají POUZE pro moduly, na které má
+   * uživatel permission (`canViewOrders`/`canViewCustomers`/`canViewProducts`/
+   * `canViewCoupons`) - bez práva jde rovnou `of(null)` bez síťového requestu, takže žádný
+   * zbytečný 403 ani AlertDialogService toast za resource, který uživatel nesmí vidět.
    */
   loadAll(force: boolean = false): void {
     this.loading = true;
@@ -204,14 +252,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.resourceCache.invalidate(this.STATS_CACHE_KEY);
     }
 
+    const skip = (): Observable<null> => of(null);
+
     this.resourceCache.get(this.STATS_CACHE_KEY, () => forkJoin({
-      orders: this.dataHandler.getPaginatedCollection<any>('shop/orders?per_page=10&sort_by=created_at&sort_direction=desc').pipe(catchError(() => of(null))),
-      allOrders: this.dataHandler.getPaginatedCollection<any>('shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc').pipe(catchError(() => of(null))),
-      customers: this.dataHandler.getPaginatedCollection<any>('shop/customers?per_page=1').pipe(catchError(() => of(null))),
-      products: this.dataHandler.getPaginatedCollection<any>('shop/products?per_page=1&is_active=true').pipe(catchError(() => of(null))),
-      lowStock: this.dataHandler.getPaginatedCollection<any>('shop/products?low_stock=true&no_pagination=true').pipe(catchError(() => of(null))),
-      coupons: this.dataHandler.getPaginatedCollection<any>('shop/coupons?is_active=true&per_page=1').pipe(catchError(() => of(null))),
-      pendingOrders: this.dataHandler.getPaginatedCollection<any>('shop/orders?status=pending&per_page=1').pipe(catchError(() => of(null))),
+      orders: this.canViewOrders
+        ? this.dataHandler.getPaginatedCollection<any>('shop/orders?per_page=10&sort_by=created_at&sort_direction=desc').pipe(catchError(() => of(null)))
+        : skip(),
+      allOrders: this.canViewOrders
+        ? this.dataHandler.getPaginatedCollection<any>('shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc').pipe(catchError(() => of(null)))
+        : skip(),
+      customers: this.canViewCustomers
+        ? this.dataHandler.getPaginatedCollection<any>('shop/customers?per_page=1').pipe(catchError(() => of(null)))
+        : skip(),
+      products: this.canViewProducts
+        ? this.dataHandler.getPaginatedCollection<any>('shop/products?per_page=1&is_active=true').pipe(catchError(() => of(null)))
+        : skip(),
+      lowStock: this.canViewProducts
+        ? this.dataHandler.getPaginatedCollection<any>('shop/products?low_stock=true&no_pagination=true').pipe(catchError(() => of(null)))
+        : skip(),
+      coupons: this.canViewCoupons
+        ? this.dataHandler.getPaginatedCollection<any>('shop/coupons?is_active=true&per_page=1').pipe(catchError(() => of(null)))
+        : skip(),
+      pendingOrders: this.canViewOrders
+        ? this.dataHandler.getPaginatedCollection<any>('shop/orders?status=pending&per_page=1').pipe(catchError(() => of(null)))
+        : skip(),
     }), this.TTL_MS).subscribe({
       next: (res) => {
         this.processData(res);
@@ -337,11 +401,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   /**
    * @description Constructs the KPI dashboard cards based on calculated revenue and order
-   * statistics.
+   * statistics. Only builds cards for modules the current user has permission to view - see
+   * bugfix-note (2026-08-16) in the file header.
    */
   private buildKpiCards(): void {
-    this.kpiCards = [
-      {
+    const cards: KpiCard[] = [];
+
+    if (this.canViewOrders) {
+      cards.push({
         label: 'Tržby tento měsíc',
         value: this.formatCurrency(this.revenueThisMonth),
         sub: `Celkem: ${this.formatCurrency(this.totalRevenue)}`,
@@ -349,8 +416,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         trend: 'up',
         trendValue: '',
         color: 'indigo',
-      },
-      {
+      });
+      cards.push({
         label: 'Objednávky celkem',
         value: this.totalOrders,
         sub: `${this.pendingOrders} čeká na vyřízení`,
@@ -358,8 +425,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         trend: this.pendingOrders > 0 ? 'down' : 'neutral',
         trendValue: `${this.pendingOrders} pending`,
         color: 'amber',
-      },
-      {
+      });
+    }
+
+    if (this.canViewCustomers) {
+      cards.push({
         label: 'Zákazníci',
         value: this.totalCustomers,
         sub: 'Registrovaní zákazníci',
@@ -367,8 +437,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
         trend: 'up',
         trendValue: '',
         color: 'sky',
-      },
-      {
+      });
+    }
+
+    if (this.canViewProducts) {
+      cards.push({
         label: 'Aktivní produkty',
         value: this.activeProducts,
         sub: `${this.lowStockProducts.length} pod limitem skladu`,
@@ -376,8 +449,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
         trend: this.lowStockProducts.length > 0 ? 'down' : 'neutral',
         trendValue: `${this.lowStockProducts.length} low stock`,
         color: this.lowStockProducts.length > 0 ? 'rose' : 'green',
-      },
-    ];
+      });
+    }
+
+    this.kpiCards = cards;
   }
 
   /**
@@ -476,9 +551,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * @bugfix-note (2026-08-15) Dříve volalo `core/settings` (sdílený Core endpoint) - po
    * přesunu shop maintenance do Shop domény ten endpoint `is_shop_active` už vůbec
    * nevrací. Přepojeno na `shop/settings` (ShopSiteSettingController::show).
+   * @bugfix-note (2026-08-16) `shop/settings` (GET i PUT) vyžaduje `shop-set-maintenance-mode`
+   * - karta je v šabloně už dřív schovaná za `*appHasPermission`, ale samotný fetch se
+   * volal bezpodmínečně, takže bez práva stejně přišel 403 hned při vstupu na stránku.
+   * Bez práva se teď fetch vůbec nevolá.
    * @param force Bypass cache - voláno po vlastní úspěšné změně stavu.
    */
   private loadMaintenanceStatus(force: boolean = false): void {
+    if (!this.permissionService.hasPermission(this.PERM_MAINTENANCE)) {
+      return;
+    }
+
     if (force) {
       this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
     }

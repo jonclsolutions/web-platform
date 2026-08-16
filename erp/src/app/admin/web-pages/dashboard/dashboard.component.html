@@ -6,13 +6,19 @@
     @created: 2026
     @description: System-wide overview - resource counters shared across Web and Shop,
         quick navigation into Web management screens, and the web_logs audit feed.
-    @dependencies: DashboardComponent (getIcon, quickStats, navSections, recentActivity,
+    @dependencies: DashboardComponent (getIcon, quickStats, visibleNavSections, recentActivity,
         maintenance toggle state)
     @refactor-note (2026-08): Přidána sekce "Režim údržby" + potvrzovací modál s heslem
         (přesunuto z admin-layout headeru).
     @refactor-note (2026-08-9): Přidáno "Aktualizovat" tlačítko + "Aktualizováno v
         HH:mm:ss" badge do hlavičky - viz dashboard.component.ts stejné datum, backlog
         "zbytečně moc dotazů na API".
+    @bugfix-note (2026-08-16): Rychlá navigace teď iteruje `visibleNavSections`
+        (permission-filtrovaný getter) místo `navSections` přímo - sekce "Poslední
+        aktivita" obalena `*appHasPermission="'web-view-web-logs'"`. Stats grid beze
+        změny - `quickStats` pole už z TS strany obsahuje jen povolené položky (viz
+        dashboard.component.ts, STAT_DEFS/loadStats()). Viz bugfix-note (2026-08-16) v
+        dashboard.component.ts pro plné vysvětlení.
 -->
 
 <div class="core-dashboard">
@@ -47,7 +53,10 @@
     </div>
   }
 
-  <!-- @component: Stats grid — resource counters for every Web-owned module -->
+  <!-- @component: Stats grid — resource counters for every Web-owned module the user
+       may see. `quickStats` already excludes anything the user lacks permission for
+       (filtered server-side of the request in dashboard.component.ts, not just hidden
+       here) - no extra guard needed in this loop. -->
   <div class="cd-section">
     <div class="cd-stats-grid">
       @if (loadingStats) {
@@ -67,11 +76,13 @@
     </div>
   </div>
 
-  <!-- @component: Quick navigation — one card per Web management screen -->
+  <!-- @component: Quick navigation — one card per Web management screen the user has
+       permission to open. Iterates `visibleNavSections` (permission-filtered getter),
+       not `navSections` directly - see bugfix-note (2026-08-16) in dashboard.component.ts. -->
   <div class="cd-section">
     <div class="cd-section-label">Rychlá navigace</div>
     <div class="cd-nav-grid">
-      @for (section of navSections; track section.route) {
+      @for (section of visibleNavSections; track section.route) {
         <a class="cd-nav-card cd-nav-{{ section.color }}" [routerLink]="section.route">
           <div class="cd-nav-icon" [innerHTML]="getIcon(section.icon)"></div>
           <div class="cd-nav-body">
@@ -84,8 +95,11 @@
     </div>
   </div>
 
-  <!-- @component: Recent web activity — content changes, CRUD on web-owned resources -->
-  <div class="cd-section">
+  <!-- @component: Recent web activity — content changes, CRUD on web-owned resources.
+       Requires `web-view-web-logs` (same permission that gates the `web/logs` GET
+       endpoint in api.php) - hidden entirely without it, not just emptied, so the fetch
+       in dashboard.component.ts and this section stay in sync. -->
+  <div class="cd-section" *appHasPermission="'web-view-web-logs'">
     <div class="cd-section-label">Poslední aktivita</div>
     <div class="cd-card cd-card-activity">
       <div class="cd-card-header">

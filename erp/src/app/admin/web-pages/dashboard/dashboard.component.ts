@@ -62,11 +62,37 @@
  * (WebSiteSettingController::show/update), který vrací/přijímá přesně
  * `is_web_active`/`web_maintenance_message` shape - zbytek komponenty beze změny.
  *
+ * @bugfix-note (2026-08-16) KRITICKÁ OPRAVA - PERMISSION-AWARE DASHBOARD: `loadStats()`
+ * dřív pálila `forkJoin` na VŠECH 7 endpointů bez ohledu na to, jestli na ně přihlášený
+ * uživatel má právo (`web-news-view`, `web-support-tickets-view`, ...). Uživatel, který má
+ * jen `web-view-dashboard` + např. `web-news-view`, tak při vstupu na dashboard dostal 403
+ * na zbylých 6 endpointů - `catchError(() => of(null))` sice zabránil pádu dashboardu, ale
+ * (a) DataHandler centrálně hlásí chyby přes AlertDialogService, takže se uživateli sype
+ * alert/toast za KAŽDÝ endpoint, na který nemá právo, a (b) karta se stejně vykreslila
+ * (jen s hodnotou "—"), místo aby zmizela úplně. Stejný bug měla `loadRecentActivity()`
+ * (`web/logs` vyžaduje `web-view-web-logs`) a `loadWebMaintenanceStatus()` (`web/settings`
+ * vyžaduje `web-set-maintenance-mode`) - obě se volaly bezpodmínečně v `ngOnInit()`.
+ * ŘEŠENÍ: `quickStats` se teď skládá z deklarativního pole `STAT_DEFS` (label/icon/color/
+ * endpoint/permission) - `loadStats()` před `forkJoin` vyfiltruje jen položky, na které má
+ * uživatel `permission`, a NEVOLÁ endpoint vůbec za ty ostatní (žádný 403, žádný alert,
+ * karta se v `quickStats` poli prostě neobjeví). `STAT_DEFS` je zvoleno záměrně jako
+ * jediné místo pravdy pro budoucí rozšíření (nový modul = nový řádek v poli, ne nová větev
+ * v `forkJoin`/šabloně). `navSections` dostalo `permission` pole a filtruje se přes nový
+ * getter `visibleNavSections` (šablona iteruje přes něj místo přes `navSections`).
+ * `loadRecentActivity()`/`loadWebMaintenanceStatus()` teď na začátku kontrolují
+ * `permissionService.hasPermission(...)` a bez práva se rovnou vrátí (žádný fetch).
+ * Sekce "Poslední aktivita" v šabloně navíc obalena `*appHasPermission="'web-view-web-logs'"`
+ * (belt & suspenders - i kdyby se logika v TS někdy rozjela jinak, sekce se v DOM vůbec
+ * nevytvoří). Karta údržby už `*appHasPermission="'web-set-maintenance-mode'"` měla dřív -
+ * beze změny v šabloně, jen doplněn stejný guard na stranu TS fetch volání.
+ *
  * @dependencies
  * - BaseDataComponent: Poskytuje errorMessage/cd/alertDialogService (žádné CRUD tu není potřeba).
  * - LoadingService: Manages global loading states.
  * - DataHandler: Facilitates API communication for dashboard aggregation endpoints.
- * - HasPermissionDirective: Gate karty údržby na permission `web-set-maintenance-mode`.
+ * - HasPermissionDirective: Gate karty údržby a aktivity na příslušný permission klíč.
+ * - PermissionService: Synchronní kontrola permission klíčů - řídí, které dílčí
+ *   stat/nav/activity/maintenance požadavky se vůbec pošlou (viz bugfix-note výše).
  * - ResourceCacheService: TTL cache pro stats/activity/maintenance fetch (viz refactor-note výše).
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
  */
@@ -82,8 +108,32 @@ import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
+import { PermissionService } from '../../../core/auth/services/permission.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { ActivityLog, QuickStat, NavSection } from './';
+
+/**
+ * @description Declarative definition of a single dashboard stat tile - what to fetch,
+ * how to render it, and which permission key gates it. Adding a new module to the
+ * dashboard means adding one entry here, never touching `loadStats()`/the template.
+ */
+interface DashboardStatDef {
+  key: string;
+  permission: string;
+  label: string;
+  icon: string;
+  endpoint: string;
+  color: QuickStat['color'];
+}
+
+/**
+ * @description `NavSection` shortcut card, extended with the permission key required to
+ * both see the card AND reach the page it links to (kept in sync with
+ * `admin-routing.module.ts` `data: { permission }` for the same route).
+ */
+interface NavSectionWithPermission extends NavSection {
+  permission: string;
+}
 
 /**
  * @description Serves as the website-content overview page for administrators with
@@ -91,7 +141,8 @@ import { ActivityLog, QuickStat, NavSection } from './';
  * System-wide/cross-module metrics (users, roles, legal, system logs) live on
  * `CoreDashboardComponent` instead.
  * @note Implements component-level data aggregation from multiple API endpoints to populate the
- * dashboard view.
+ * dashboard view. Every aggregated piece is additionally gated by `PermissionService` - see
+ * bugfix-note (2026-08-16) in the file header.
  */
 @Component({
   selector: 'app-dashboard',
@@ -106,6 +157,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   public override loadingService = inject(LoadingService);
   private sanitizer = inject(DomSanitizer);
   private resourceCache = inject(ResourceCacheService);
+  override permissionService = inject(PermissionService);
   // Pozn.: `alertDialogService` se ZDE ZÁMĚRNĚ znovu nedeklaruje - už ho poskytuje
   // zděděný BaseDataComponent (stejný vzor jako EditRolesComponent), stačí `this.alertDialogService`.
 
@@ -116,6 +168,26 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   private readonly STATS_CACHE_KEY = 'web-dashboard:stats';
   private readonly ACTIVITY_CACHE_KEY = 'web-dashboard:activity';
   private readonly MAINTENANCE_CACHE_KEY = 'web-dashboard:maintenance';
+
+  /** Permission klíč, který stránka `web/settings` (maintenance) v api.php vyžaduje. */
+  private readonly MAINTENANCE_PERMISSION = 'web-set-maintenance-mode';
+  /** Permission klíč, který endpoint `web/logs` (GET) v api.php vyžaduje. */
+  private readonly LOGS_PERMISSION = 'web-view-web-logs';
+
+  /**
+   * Jediné místo pravdy pro stat karty dashboardu - viz bugfix-note (2026-08-16) v
+   * hlavičce souboru. `loadStats()` z tohoto pole vyfiltruje jen položky, na které má
+   * přihlášený uživatel dané `permission`, a JEN za ty pošle request.
+   */
+  private readonly STAT_DEFS: DashboardStatDef[] = [
+    { key: 'news', permission: 'web-news-view', label: 'Novinky na webu', icon: 'newspaper', color: 'rose', endpoint: 'web/news?per_page=1' },
+    { key: 'openTickets', permission: 'web-support-tickets-view', label: 'Otevřené tickety', icon: 'ticket', color: 'amber', endpoint: 'web/support_tickets?status=open&per_page=1' },
+    { key: 'jobApps', permission: 'web-job-applications-view', label: 'Uchazeči', icon: 'file', color: 'slate', endpoint: 'web/job_applications?per_page=1' },
+    { key: 'leads', permission: 'web-sales-leads-view', label: 'Obchodní leady', icon: 'briefcase', color: 'green', endpoint: 'web/sales_leads?per_page=1' },
+    { key: 'salesOrders', permission: 'web-sales-orders-view', label: 'Nabídky a objednávky', icon: 'inbox', color: 'indigo', endpoint: 'web/sales_orders?per_page=1' },
+    { key: 'rawRequests', permission: 'web-user-requests-view', label: 'Poptávky', icon: 'mail', color: 'amber', endpoint: 'web/raw_request_commissions?per_page=1' },
+    { key: 'webLogs', permission: this.LOGS_PERMISSION, label: 'Záznamy v logu', icon: 'logs', color: 'sky', endpoint: 'web/logs?per_page=1' },
+  ];
 
   quickStats: QuickStat[] = [];
   loadingStats = true;
@@ -134,13 +206,14 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   webConfirmPasswordValue = '';
   pendingWebTargetState = true;
 
-  readonly navSections: NavSection[] = [
+  readonly navSections: NavSectionWithPermission[] = [
     {
       title: 'Novinky',
       icon: 'newspaper',
       route: '/admin/web/edit-news',
       description: 'Aktuality a oznámení publikovaná na webu',
       color: 'rose',
+      permission: 'web-news-view',
     },
     {
       title: 'Obsah webu',
@@ -148,6 +221,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       route: '/admin/web/edit-website',
       description: 'Texty a obsah veřejných stránek',
       color: 'sky',
+      permission: 'web-view-edit-website',
     },
     {
       title: 'Poptávky',
@@ -155,6 +229,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       route: '/admin/web/user-request',
       description: 'Poptávkový formulář z webu',
       color: 'amber',
+      permission: 'web-user-requests-view',
     },
     {
       title: 'Nabídky a objednávky',
@@ -162,6 +237,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       route: '/admin/web/sales-orders',
       description: 'Zpracované obchodní objednávky',
       color: 'indigo',
+      permission: 'web-sales-orders-view',
     },
     {
       title: 'Obchodní leady',
@@ -169,6 +245,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       route: '/admin/web/sales-leads',
       description: 'Pipeline obchodních příležitostí',
       color: 'green',
+      permission: 'web-sales-leads-view',
     },
     {
       title: 'Support tickety',
@@ -176,6 +253,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       route: '/admin/web/support-tickets',
       description: 'Přijaté požadavky na podporu',
       color: 'amber',
+      permission: 'web-support-tickets-view',
     },
     {
       title: 'Uchazeči',
@@ -183,6 +261,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       route: '/admin/web/job-applications',
       description: 'Reakce na pracovní pozice',
       color: 'slate',
+      permission: 'web-job-applications-view',
     },
     {
       title: 'Business logy',
@@ -190,8 +269,19 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
       route: '/admin/web/business-logs',
       description: 'Záznamy o aktivitách na webu',
       color: 'rose',
+      permission: this.LOGS_PERMISSION,
     },
   ];
+
+  /**
+   * @description Podmnožina `navSections`, na kterou má přihlášený uživatel právo -
+   * šablona nad tímto getterem iteruje místo nad `navSections` přímo, ať se nenabízí
+   * navigace do stránky, na kterou uživatel stejně nesmí (viz bugfix-note (2026-08-16)
+   * v hlavičce souboru).
+   */
+  get visibleNavSections(): NavSectionWithPermission[] {
+    return this.navSections.filter(section => this.permissionService.hasPermission(section.permission));
+  }
 
   /**
    * Knihovna ikon použitých na dashboardu - klíč odpovídá hodnotě `icon` v
@@ -234,7 +324,9 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   /**
    * @description Ruční "Aktualizovat" - obchází TTL cache pro všechny tři sekce
-   * dashboardu (stats + activity + maintenance) a vynutí čerstvý fetch.
+   * dashboardu (stats + activity + maintenance) a vynutí čerstvý fetch. Permission
+   * guardy v `loadStats()`/`loadRecentActivity()`/`loadWebMaintenanceStatus()` platí i
+   * tady - ruční refresh nepřeskakuje kontrolu práv, jen obchází TTL cache.
    */
   refresh(): void {
     if (this.isRefreshing) return;
@@ -248,40 +340,39 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
   }
 
   /**
-   * @description Aggregates statistical data from every website-content module
-   * concurrently using forkJoin. Přes TTL cache (viz refactor-note v hlavičce souboru).
+   * @description Aggregates statistical data from every website-content module the
+   * current user is permitted to see, concurrently using forkJoin. Přes TTL cache (viz
+   * refactor-note v hlavičce souboru).
    * @note If an individual request fails, it defaults to null to ensure the rest of the
    * dashboard remains functional. `getPaginatedCollection` je zvolený záměrně (ne
    * `getCollection`), protože potřebujeme zachovat `.total` z odpovědi, ne jen odbalené
    * pole záznamů.
+   * @bugfix-note (2026-08-16) Endpointy, na které uživatel nemá permission (viz
+   * `STAT_DEFS[].permission`), se teď VŮBEC nevolají - žádný zbytečný 403, žádná
+   * karta s "—" pro resource, který uživatel nesmí vidět. Viz hlavička souboru.
    */
-  private loadStats(): void {
+private loadStats(): void {
     this.loadingStats = true;
 
-    this.resourceCache.get(this.STATS_CACHE_KEY, () => forkJoin({
-      news:          this.dataHandler.getPaginatedCollection<any>('web/news?per_page=1').pipe(catchError(() => of(null))),
-      openTickets:   this.dataHandler.getPaginatedCollection<any>('web/support_tickets?status=open&per_page=1').pipe(catchError(() => of(null))),
-      jobApps:       this.dataHandler.getPaginatedCollection<any>('web/job_applications?per_page=1').pipe(catchError(() => of(null))),
-      leads:         this.dataHandler.getPaginatedCollection<any>('web/sales_leads?per_page=1').pipe(catchError(() => of(null))),
-      salesOrders:   this.dataHandler.getPaginatedCollection<any>('web/sales_orders?per_page=1').pipe(catchError(() => of(null))),
-      rawRequests:   this.dataHandler.getPaginatedCollection<any>('web/raw_request_commissions?per_page=1').pipe(catchError(() => of(null))),
-      webLogs:       this.dataHandler.getPaginatedCollection<any>('web/logs?per_page=1').pipe(catchError(() => of(null))),
-    }), this.STATS_TTL_MS).subscribe({
-      next: (res) => {
-        this.quickStats = [
-          { label: 'Novinky na webu', value: res.news?.total ?? '—', icon: 'newspaper', color: 'rose' },
-          {
-            label: 'Otevřené tickety',
-            value: res.openTickets?.total ?? '—',
-            icon: 'ticket',
-            color: res.openTickets?.total > 0 ? 'amber' : 'green'
-          },
-          { label: 'Uchazeči', value: res.jobApps?.total ?? '—', icon: 'file', color: 'slate' },
-          { label: 'Obchodní leady', value: res.leads?.total ?? '—', icon: 'briefcase', color: 'green' },
-          { label: 'Nabídky a objednávky', value: res.salesOrders?.total ?? '—', icon: 'inbox', color: 'indigo' },
-          { label: 'Poptávky', value: res.rawRequests?.total ?? '—', icon: 'mail', color: 'amber' },
-          { label: 'Záznamy v logu', value: res.webLogs?.total ?? '—', icon: 'logs', color: 'sky' },
-        ];
+    const allowedDefs = this.STAT_DEFS.filter(def => this.permissionService.hasPermission(def.permission));
+
+    this.resourceCache.get(this.STATS_CACHE_KEY, () => {
+      const calls: Record<string, ReturnType<typeof this.dataHandler.getPaginatedCollection<any>>> = {};
+      for (const def of allowedDefs) {
+        calls[def.key] = this.dataHandler.getPaginatedCollection<any>(def.endpoint).pipe(catchError(() => of(null)));
+      }
+      return forkJoin(calls);
+    }, this.STATS_TTL_MS).subscribe({
+      next: (res: Record<string, any>) => {
+        this.quickStats = allowedDefs.map((def): QuickStat => {
+          const total = res[def.key]?.total ?? '—';
+          // "Otevřené tickety" mění barvu podle počtu (amber když > 0, jinak green) -
+          // stejné chování jako dřív, jen teď dopočítané z dynamického pole.
+          const color: QuickStat['color'] = def.key === 'openTickets' && typeof total === 'number'
+            ? (total > 0 ? 'amber' : 'green')
+            : def.color;
+          return { label: def.label, value: total, icon: def.icon, color };
+        });
         this.loadingStats = false;
         this.isRefreshing = false;
         this.lastUpdatedAt = new Date();
@@ -299,8 +390,18 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
    * @description Fetches the latest business-level events for the activity feed
    * (content changes, CRUD actions on web-owned resources). Přes TTL cache (viz
    * refactor-note v hlavičce souboru).
+   * @bugfix-note (2026-08-16) `web/logs` (GET) vyžaduje `web-view-web-logs` - bez
+   * kontroly by uživatel bez tohoto práva dostal 403 při každém vstupu na dashboard.
+   * Bez práva se teď rovnou vrátí prázdný seznam bez volání API - sekce navíc v šabloně
+   * obalena `*appHasPermission` (viz dashboard.component.html).
    */
   private loadRecentActivity(): void {
+    if (!this.permissionService.hasPermission(this.LOGS_PERMISSION)) {
+      this.recentActivity = [];
+      this.loadingActivity = false;
+      return;
+    }
+
     this.loadingActivity = true;
 
     this.resourceCache.get(
@@ -365,8 +466,16 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
    * neblokuje zobrazení stavu údržby a naopak.
    * @bugfix-note (2026-08-15) Dříve volalo `core/settings` (sdílený, nyní zrušený Core
    * endpoint) - přepojeno na `web/settings` (WebSiteSettingController::show).
+   * @bugfix-note (2026-08-16) `web/settings` (GET i PUT) vyžaduje `web-set-maintenance-mode`
+   * - karta je v šabloně už dřív schovaná za `*appHasPermission`, ale samotný fetch se
+   * volal bezpodmínečně, takže bez práva stejně přišel 403 hned při vstupu na stránku.
+   * Bez práva se teď fetch vůbec nevolá.
    */
   private loadWebMaintenanceStatus(): void {
+    if (!this.permissionService.hasPermission(this.MAINTENANCE_PERMISSION)) {
+      return;
+    }
+
     this.resourceCache.get(
       this.MAINTENANCE_CACHE_KEY,
       () => this.dataHandler.get<any>('web/settings'),
