@@ -36,6 +36,16 @@
  *      signál, na který aktuálně mountnutá stránka s tabulkou zareaguje reálným
  *      refetchem (viz BaseDataComponent.initWithAuthCheck()). Součást řešení backlog
  *      tasku "zbytečně moc dotazů na API" / lepší UX správy tabulek.
+ * @refactor-note (2026-08-17) Přidána metoda `hasAnyPermission()` + sada getterů
+ *      `show*Group` (jeden pro každou sekci levého menu ve všech třech modulech).
+ *      Šablona (admin-layout.component.html) je používá jako `*ngIf` na `.nav-group`.
+ *      Důvod: `*appHasPermission` na jednotlivých `<li>` sama o sobě neumí schovat
+ *      nadpis sekce (`.nav-group-label`), pokud uživateli po vyhodnocení oprávnění
+ *      nezůstane v sekci ani jedna viditelná položka - bez tohoto by v menu zbýval
+ *      "prázdný" nadpis s prázdným seznamem. Gettery drží 1:1 stejné permission klíče
+ *      (včetně OR syntaxe '|'), jaké má odpovídající `*appHasPermission` v šabloně u
+ *      jednotlivých položek dané sekce - při přidání/odebrání položky do/ze sekce je
+ *      nutné getter ručně zaktualizovat (viz komentáře u jednotlivých getterů níže).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID } from '@angular/core';
@@ -68,18 +78,18 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   userEmail: string | null = null;
   userRole: string | null = null;
   isLoggedIn: boolean = false;
-  
+
   currentModule: 'web' | 'core' | 'shop' = 'web';
 
   isLoadingGlobal$: Observable<boolean>;
-  
+
   currentDate$: Observable<Date> = interval(1000).pipe(
     startWith(0),
     map(() => new Date())
   );
-  
+
   isMenuOpen: boolean = true;
-  sidebarWidth: number = 200; 
+  sidebarWidth: number = 200;
   isResizing: boolean = false;
 
   /** Vysouvací panel na mobilu (hamburger vpravo nahoře) - uživatel, role, hodiny, moduly, odkazy. */
@@ -91,13 +101,13 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private userEmailSubscription: Subscription | undefined;
 
   constructor(
-    private router: Router, 
+    private router: Router,
     private authService: AuthService,
     private permissionService: PermissionService,
     private cdr: ChangeDetectorRef,
     private loadingService: LoadingService,
     private tableRefreshBus: TableRefreshBusService
-  ) { 
+  ) {
     this.isLoadingGlobal$ = this.loadingService.isLoading$;
   }
 
@@ -109,13 +119,13 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     if (typeof window !== 'undefined') {
       const savedWidth = localStorage.getItem('admin_sidebar_width');
       if (savedWidth) this.sidebarWidth = parseInt(savedWidth, 10);
-      
+
       const savedState = localStorage.getItem('admin_menu_open');
       const savedModule = localStorage.getItem('admin_current_module') as 'web' | 'core' | 'shop';
       if (savedModule) this.currentModule = savedModule;
 
       if (window.innerWidth <= 768) {
-        this.isMenuOpen = false; 
+        this.isMenuOpen = false;
       } else {
         this.isMenuOpen = savedState !== null ? savedState === 'true' : true;
       }
@@ -124,7 +134,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.authSubscription = this.authService.isLoggedIn$.subscribe(loggedIn => {
       this.isLoggedIn = loggedIn;
       this.userRole = loggedIn ? this.authService.getUserRole() : null;
-      this.cdr.markForCheck(); 
+      this.cdr.markForCheck();
     });
 
     this.userEmailSubscription = this.authService.userEmail$.subscribe(email => {
@@ -228,6 +238,136 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       },
       error: () => this.router.navigate(['/auth/login'])
     });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // VIDITELNOST SEKCÍ LEVÉHO MENU (nav-group)
+  // ══════════════════════════════════════════════════════════════════════
+
+  /**
+   * @description Ověří, zda má aktuální uživatel ALESPOŇ JEDNO z předaných oprávnění.
+   *      Používá se ke skrytí celé sekce menu (nav-group), pokud by v ní po vyhodnocení
+   *      *appHasPermission na jednotlivých položkách nezůstala viditelná ani jedna -
+   *      direktiva sama o sobě neumí "schovat rodiče, když zmizí všechny děti", proto
+   *      se viditelnost sekce počítá zde a řídí se přes *ngIf na .nav-group v šabloně.
+   * @param keys Seznam permission klíčů odpovídající položkám v sekci. Každý prvek
+   *      pole může sám obsahovat OR syntaxi ('core-legal-documents-view|core-legal-config-view')
+   *      stejně jako *appHasPermission - viz has-permission.directive.ts.
+   * @returns true, pokud uživatel splňuje alespoň jeden z klíčů (resp. alespoň jednu
+   *      stranu některé OR skupiny).
+   * @refactor-note (2026-08-17) Přidáno kvůli požadavku: sekce v menu s 0 viditelnými
+   *      položkami se nemá vůbec renderovat (prázdný nadpis sekce bez obsahu).
+   */
+  hasAnyPermission(keys: string[]): boolean {
+    return keys.some(key =>
+      key.split('|').some(single => this.permissionService.hasPermission(single.trim()))
+    );
+  }
+
+  // ── Web modul ────────────────────────────────────────────────────────
+
+  /** @description Sekce "Přehled" (Web) - viditelná, pokud uživatel vidí web dashboard. */
+  get showWebOverviewGroup(): boolean {
+    return this.hasAnyPermission(['web-view-dashboard']);
+  }
+
+  /** @description Sekce "Obchod" (Web) - webový formulář, obchodní leady, přijaté poptávky. */
+  get showWebBusinessGroup(): boolean {
+    return this.hasAnyPermission([
+      'web-user-requests-view',
+      'web-sales-leads-view',
+      'web-sales-orders-view'
+    ]);
+  }
+
+  /** @description Sekce "Obsah webu" (Web) - správa webu, správa novinek. */
+  get showWebContentGroup(): boolean {
+    return this.hasAnyPermission(['web-view-edit-website', 'web-news-view']);
+  }
+
+  /** @description Sekce "Lidé" (Web) - uchazeči, helpdesk tikety. */
+  get showWebPeopleGroup(): boolean {
+    return this.hasAnyPermission(['web-job-applications-view', 'web-support-tickets-view']);
+  }
+
+  /** @description Sekce "Systém" (Web) - serverové logy. */
+  get showWebSystemGroup(): boolean {
+    return this.hasAnyPermission(['web-view-web-logs']);
+  }
+
+  // ── Core modul ───────────────────────────────────────────────────────
+
+  /** @description Sekce "Přehled" (Core) - vítejte, core dashboard. */
+  get showCoreOverviewGroup(): boolean {
+    return this.hasAnyPermission(['core-view-welcome-page', 'view-core']);
+  }
+
+  /** @description Sekce "Právní a firemní" (Core) - GDPR/TOS/COOKIES, firemní údaje, externí odkazy. */
+  get showCoreLegalGroup(): boolean {
+    return this.hasAnyPermission([
+      'core-legal-documents-view|core-legal-config-view',
+      'core-legal-config-view',
+      'core-external-links-view'
+    ]);
+  }
+
+  /**
+   * @description Sekce "Uživatelé" (Core) - správa účtů, osobní informace.
+   *      "Správa rolí" je v šabloně vázaná na `userRole === 'sysadmin'`, ne na
+   *      permission klíč (viz sysadminGuard), proto je zohledněná zvlášť přes OR.
+   */
+  get showCoreUsersGroup(): boolean {
+    return this.hasAnyPermission(['core-administrators-view', 'web-view-personal-info'])
+      || this.userRole === 'sysadmin';
+  }
+
+  /** @description Sekce "Systém" (Core) - core logy. */
+  get showCoreSystemGroup(): boolean {
+    return this.hasAnyPermission(['view-core']);
+  }
+
+  // ── Shop modul ───────────────────────────────────────────────────────
+
+  /** @description Sekce "Přehled" (Shop) - e-shop dashboard. */
+  get showShopOverviewGroup(): boolean {
+    return this.hasAnyPermission(['shop-view-dashboard']);
+  }
+
+  /** @description Sekce "Katalog" (Shop) - produkty, kategorie, dodavatelé. */
+  get showShopCatalogGroup(): boolean {
+    return this.hasAnyPermission([
+      'shop-manage-products',
+      'shop-manage-categories',
+      'shop-manage-suppliers'
+    ]);
+  }
+
+  /** @description Sekce "Transakce" (Shop) - objednávky, slevové kupóny. */
+  get showShopTransactionsGroup(): boolean {
+    return this.hasAnyPermission(['shop-view-orders', 'shop-view-reports']);
+  }
+
+  /** @description Sekce "Zákazníci" (Shop). */
+  get showShopCustomersGroup(): boolean {
+    return this.hasAnyPermission(['shop-manage-customers']);
+  }
+
+  /** @description Sekce "Logistika" (Shop) - způsoby dopravy, způsoby platby. */
+  get showShopLogisticsGroup(): boolean {
+    return this.hasAnyPermission([
+      'shop-manage-shipping-methods',
+      'shop-manage-payment-methods'
+    ]);
+  }
+
+  /** @description Sekce "Obsah webu" (Shop) - správa e-shopu (texty). */
+  get showShopContentGroup(): boolean {
+    return this.hasAnyPermission(['shop-view-edit-eshop']);
+  }
+
+  /** @description Sekce "Systém" (Shop) - e-shop logování. */
+  get showShopSystemGroup(): boolean {
+    return this.hasAnyPermission(['shop-view-logs']);
   }
 
   ngOnDestroy(): void {

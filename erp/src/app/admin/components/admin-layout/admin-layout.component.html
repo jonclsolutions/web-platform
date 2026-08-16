@@ -18,6 +18,14 @@
     @refactor-note (2026-08-6): Přidáno globální "Aktualizovat vše" tlačítko - desktop
         (.header-right, vedle Wiki/Bug) i mobilní vysouvací panel (.map-links) - viz
         admin-layout.component.ts stejné datum, refreshAllTables().
+    @refactor-note (2026-08-17): Každý `.nav-group` v levém menu (všechny tři moduly)
+        nyní má `*ngIf="show...Group"` navázaný na odpovídající getter v
+        admin-layout.component.ts. Důvod: `*appHasPermission` na jednotlivých `<li>`
+        sama o sobě nedokáže schovat nadpis sekce (`.nav-group-label`), pokud po
+        vyhodnocení oprávnění nezůstane v sekci ani jedna viditelná položka - bez
+        tohoto by v menu zůstával "prázdný" nadpis s prázdným seznamem pod ním.
+        Spodní `nav-group--bottom` (odhlášení) je záměrně beze změny - musí být
+        vidět vždy bez ohledu na oprávnění.
 -->
 
 <header class="admin-header">
@@ -249,7 +257,7 @@
 
       @if (currentModule === 'web') {
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showWebOverviewGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Přehled</div>
           <ul>
             <li *appHasPermission="'web-view-dashboard'">
@@ -266,7 +274,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showWebBusinessGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obchod</div>
           <ul>
             <li *appHasPermission="'web-user-requests-view'">
@@ -305,7 +313,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showWebContentGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obsah webu</div>
           <ul>
             <li *appHasPermission="'web-view-edit-website'">
@@ -332,7 +340,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showWebPeopleGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Lidé</div>
           <ul>
             <li *appHasPermission="'web-job-applications-view'">
@@ -362,7 +370,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showWebSystemGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Systém</div>
           <ul>
             <li *appHasPermission="'web-view-web-logs'">
@@ -385,7 +393,7 @@
 
       @if (currentModule === 'core') {
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showCoreOverviewGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Přehled</div>
           <ul>
             <li *appHasPermission="'core-view-welcome-page'">
@@ -413,7 +421,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showCoreLegalGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Právní a firemní</div>
           <ul>
             <li *appHasPermission="'core-legal-documents-view|core-legal-config-view'">
@@ -457,7 +465,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showCoreUsersGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Uživatelé</div>
           <ul>
             <li *appHasPermission="'core-administrators-view'">
@@ -496,7 +504,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showCoreSystemGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Systém</div>
           <ul>
             <li *appHasPermission="'view-core'">
@@ -519,7 +527,7 @@
 
       @if (currentModule === 'shop') {
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showShopOverviewGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Přehled</div>
           <ul>
             <li *appHasPermission="'shop-view-dashboard'">
@@ -536,7 +544,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showShopCatalogGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Katalog</div>
           <ul>
             <li *appHasPermission="'shop-manage-products'">
@@ -575,7 +583,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showShopTransactionsGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Transakce</div>
           <ul>
             <li *appHasPermission="'shop-view-orders'">
@@ -603,7 +611,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showShopCustomersGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Zákazníci</div>
           <ul>
             <li *appHasPermission="'shop-manage-customers'">
@@ -621,7 +629,7 @@
           </ul>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showShopLogisticsGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Logistika</div>
           <ul>
             <li *appHasPermission="'shop-manage-shipping-methods'">
@@ -648,7 +656,7 @@
             </li>
           </ul>
         </div>
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showShopContentGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obsah webu</div>
           <ul>
             <li *appHasPermission="'shop-view-edit-eshop'">
@@ -663,7 +671,7 @@
             </li>
           </ul>
         </div>
-        <div class="nav-group">
+        <div class="nav-group" *ngIf="showShopSystemGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Systém</div>
           <ul>
             <li *appHasPermission="'shop-view-logs'">

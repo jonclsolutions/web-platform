@@ -24,6 +24,28 @@
  * tlačítkem "Aktualizovat" na jedné tabulce) a `invalidateAll()` (globální refresh
  * tlačítko v headeru). `preloadAdjacentPages()` nyní respektuje TTL při rozhodování,
  * jestli sousední stránku má smysl znovu stahovat.
+ *
+ * @bugfix-note (2026-08-17) KRITICKÝ BEZPEČNOSTNÍ BUG - CROSS-USER CACHE LEAK (primární
+ * oprava, viz auth.service.ts): cache klíč nikdy neobsahoval identitu uživatele, jen
+ * `endpoint-page-perPage-filters`. Protože je tahle služba `providedIn: 'root'` (jedna
+ * sdílená `pageCache` mapa pro celou SPA session), po přepnutí uživatele BEZ reloadu
+ * stránky (běžný SPA flow: logout -> login jiným účtem) mohl uživatel B do vypršení
+ * `CACHE_TTL_MS` dostat cache hit s daty uživatele A, aniž by se poslal jakýkoliv nový
+ * HTTP request - backendový `user_id` scoping (viz CoreExternalLinkController) tak byl
+ * úplně obejitý, protože se vůbec nezavolal. Primární oprava je v `AuthService`
+ * (`persistSession()`/`clearAuthData()` teď volají `invalidateAll()` při KAŽDÉ změně
+ * identity uživatele).
+ *
+ * TOTO je DRUHÁ VRSTVA OCHRANY (defense in depth): `getCacheKey()` nově zahrnuje i ID
+ * aktuálně přihlášeného uživatele (`sessionStorage.getItem('userId')`, stejný klíč, který
+ * plní `AuthService.persistSession()`). I kdyby v budoucnu vznikla jiná cesta, jak se
+ * změní přihlášený uživatel BEZ zavolání `AuthService.persistSession()`/`clearAuthData()`
+ * (např. budoucí "přepnout účet"/impersonation feature, které by na `invalidateAll()`
+ * zapomnělo), cache klíče dvou různých uživatelů se přirozeně nikdy nepotkají - cache je
+ * teď per-user už ze své podstaty, ne jen díky tomu, že ji někdo v tu správnou chvíli
+ * ručně zneplatní. Vědomě NEinjektuje `AuthService` (kruhová závislost - `AuthService`
+ * injektuje `GenericTableService`), čte se přímo `sessionStorage`, stejně jako
+ * `AuthService.getUserId()` dělá interně.
  */
 
 import { Injectable } from '@angular/core';
@@ -63,6 +85,9 @@ interface CacheEntry {
  * @note Cache je bezpečná i pro velké (desetitisícové) tabulky - cachuje se vždy jen
  * konkrétní REQUESTOVANÁ stránka (15-50 řádků), nikdy "vše". Paměťová stopa roste jen
  * s tím, kolik stránek/filtrů uživatel reálně navštívil, ne s velikostí tabulky.
+ * @note Cache klíč je per-uživatel (viz bugfix-note 2026-08-17 výše) - přepnutí
+ * přihlášeného uživatele automaticky znamená nové (prázdné) cache klíče, nikdy sdílené
+ * s předchozím uživatelem.
  */
 @Injectable({
   providedIn: 'root'
@@ -77,6 +102,12 @@ export class GenericTableService {
    * TTL vždy obcházejí.
    */
   public readonly CACHE_TTL_MS = 3 * 60 * 1000;
+
+  /** @description Klíč v sessionStorage, pod kterým `AuthService.persistSession()` ukládá ID přihlášeného uživatele. Musí zůstat v souladu s auth.service.ts. */
+  private readonly USER_ID_STORAGE_KEY = 'userId';
+
+  /** @description Fallback segment cache klíče, když žádný uživatel není přihlášený (sessionStorage prázdný) - odlišuje "nepřihlášeno" od reálného ID, ať se náhodou nesrazí. */
+  private readonly ANONYMOUS_CACHE_SEGMENT = '__anon__';
 
   private pageCache = new Map<string, CacheEntry>();
 
@@ -156,28 +187,45 @@ export class GenericTableService {
   }
 
   /**
-   * @description Zneplatní VŠECHNY cachované stránky/filtry pro daný endpoint (napříč
-   * všemi kombinacemi page/perPage/filters). Použít po mutaci dat (create/update/
-   * delete/restore) nebo tlačítkem "Aktualizovat" na konkrétní tabulce - ENDPOINT-SCOPED,
-   * ostatní tabulky zůstávají nedotčené (opravuje starý bug s globálním `clearCache()`).
+   * @description Zneplatní VŠECHNY cachované stránky/filtry pro daný endpoint NAPŘÍČ
+   * VŠEMI uživateli (napříč všemi kombinacemi page/perPage/filters/userId). Použít po
+   * mutaci dat (create/update/delete/restore) nebo tlačítkem "Aktualizovat" na konkrétní
+   * tabulce - ENDPOINT-SCOPED, ostatní tabulky zůstávají nedotčené (opravuje starý bug
+   * s globálním `clearCache()`).
+   * @bugfix-note (2026-08-17) Prefix match upraven na nový formát klíče (viz
+   * `getCacheKey()`) - endpoint je pořád první segment, takže logika zůstává funkčně
+   * stejná jako předtím, jen se změnil oddělovač.
    */
   invalidateEndpoint(endpoint: string): void {
-    const prefix = `${endpoint}-`;
+    const prefix = `${endpoint}|`;
     Array.from(this.pageCache.keys())
       .filter(key => key.startsWith(prefix))
       .forEach(key => this.pageCache.delete(key));
   }
 
   /**
-   * @description Zneplatní ÚPLNĚ CELOU cache napříč všemi endpointy - použito výhradně
-   * globálním refresh tlačítkem v admin headeru (viz TableRefreshBusService). Samo o
-   * sobě nevyvolá žádný síťový dotaz - jen zajistí, že příští čtení (aktuálně otevřené
-   * stránky i budoucí navigace) bude vždy reálný fetch, ne stará data.
+   * @description Zneplatní ÚPLNĚ CELOU cache napříč všemi endpointy a všemi uživateli -
+   * použito globálním refresh tlačítkem v admin headeru (viz TableRefreshBusService) a
+   * (jako bezpečnostní opatření, viz bugfix-note 2026-08-17) automaticky při KAŽDÉ změně
+   * přihlášeného uživatele - viz `AuthService.persistSession()` / `clearAuthData()`.
+   * Samo o sobě nevyvolá žádný síťový dotaz - jen zajistí, že příští čtení (aktuálně
+   * otevřené stránky i budoucí navigace) bude vždy reálný fetch, ne stará data.
    */
   invalidateAll(): void {
     this.pageCache.clear();
   }
 
+  /**
+   * @description Sestaví cache klíč jednoznačně identifikující kombinaci
+   * endpoint + stránkování + filtry + PŘIHLÁŠENÝ UŽIVATEL.
+   * @bugfix-note (2026-08-17) Přidán `userId` jako samostatný segment klíče (druhý,
+   * hned za endpointem, aby `invalidateEndpoint()` mohl dál fungovat jako prostý prefix
+   * match nezávisle na uživateli). Bez tohoto segmentu byla cache sdílená napříč
+   * uživateli, viz hlavička souboru - CROSS-USER CACHE LEAK. `|` jako oddělovač místo
+   * `-` je záměrná změna proti staršímu formátu, ať se žádný segment (endpoint cesty
+   * typicky obsahuje `-`, např. `web-external-links`) nemůže náhodou zaměnit za hranici
+   * mezi segmenty.
+   */
   private getCacheKey(
     endpoint: string,
     page: number,
@@ -192,7 +240,20 @@ export class GenericTableService {
       }
       return acc;
     }, {} as Record<string, any>);
-    return `${endpoint}-${page}-${perPage}-${JSON.stringify(normalizedFilters)}`;
+
+    const userId = this.getCurrentUserIdForCacheKey();
+    return `${endpoint}|${userId}|${page}|${perPage}|${JSON.stringify(normalizedFilters)}`;
+  }
+
+  /**
+   * @description Vrátí ID přihlášeného uživatele pro účely cache klíče, nebo neutrální
+   * placeholder, pokud nikdo přihlášený není. Čte přímo `sessionStorage` (stejný klíč,
+   * jaký nastavuje `AuthService.persistSession()`), aby nevznikla kruhová DI závislost
+   * na `AuthService` (ten sám injektuje `GenericTableService` kvůli `invalidateAll()`
+   * při loginu/logoutu - viz auth.service.ts).
+   */
+  private getCurrentUserIdForCacheKey(): string {
+    return sessionStorage.getItem(this.USER_ID_STORAGE_KEY) ?? this.ANONYMOUS_CACHE_SEGMENT;
   }
 
   /**
