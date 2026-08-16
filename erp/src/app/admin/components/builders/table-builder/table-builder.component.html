@@ -11,7 +11,65 @@
     @refactor-note (2026-08-6): Do toolbaru přidáno tlačítko "Aktualizovat"
         (onRefreshClick()) a badge "Aktualizováno v HH:MM:SS" (lastUpdatedAt Input) -
         viz table-builder.component.ts stejné datum, backlog "zbytečně moc dotazů na API".
+    @refactor-note (2026-08-16): HROMADNÝ VÝBĚR + HROMADNÉ MAZÁNÍ. Sloupec checkboxů
+        (`canBulkSelect`) vlevo od prvního datového sloupce - hlavičkový checkbox řídí
+        `toggleSelectAllOnPage()`/`isAllOnPageSelected`/`isSomeOnPageSelected`
+        (indeterminate stav), řádkový `toggleSelection()`/`isSelected()`. Nad tabulkou se
+        objeví `.bulk-actions-bar`, jen když je něco vybrané - obsahuje počet + dropdown
+        "Akce" (šipka dolů) s položkami "Exportovat vybrané" a "Smazat vybrané".
+        `(click)="$event.stopPropagation()"` na dropdownu je NUTNÝ - `onDocumentClick()`
+        v TS zavírá menu při libovolném kliku mimo něj, bez stopPropagation by se menu
+        zavřelo hned v okamžiku otevření.
+    @refactor-note (2026-08-16v2): "Exportovat vybrané" otevírá STEJNÝ
+        `app-export-popup-builder` popup jako toolbar export - `[itemCount]` binding se
+        přepíná mezi `selectedIds.size` (bulk export) a `data.length` (plný export) podle
+        `exportSelectedOnly` flagu v komponentě.
+    @refactor-note (2026-08-16v3): ROZPOJENO "checkbox sloupec" od "delete_button".
+        `canBulkSelect` je teď VŽDY true (export je bezpečný na jakékoliv tabulce, kterou
+        uživatel vůbec vidí) - checkboxy se tak zobrazí i na tabulkách bez mazání (např.
+        logy). "Smazat vybrané" v dropdownu je nadále podmíněné `canBulkDelete` (existuje
+        aktivní `delete_button` s dostatečným oprávněním) - na tabulkách bez mazání se
+        v menu jednoduše nezobrazí, přesně jako u řádkových tlačítek.
 -->
+
+@if (selectedIds.size > 0) {
+  <div class="bulk-actions-bar">
+    <span class="bulk-actions-count">{{ selectedIds.size }} vybráno</span>
+
+    <div class="bulk-actions-dropdown" (click)="$event.stopPropagation()">
+      <button type="button" class="bulk-actions-btn" [disabled]="bulkDeleting" (click)="toggleBulkMenu()">
+        {{ bulkDeleting ? 'Mažu…' : 'Akce' }}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" [class.bulk-actions-chevron-open]="showBulkMenu" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      @if (showBulkMenu) {
+        <div class="bulk-actions-menu">
+          <button type="button" class="bulk-actions-menu-item" (click)="onBulkExportClick()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Exportovat vybrané
+          </button>
+          @if (canBulkDelete) {
+            <button type="button" class="bulk-actions-menu-item bulk-actions-menu-item-danger" (click)="onBulkDeleteClick()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Smazat vybrané
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <button type="button" class="bulk-actions-clear" (click)="clearSelection()">Zrušit výběr</button>
+  </div>
+}
 
 <div class="table-responsive">
 <table [class.fit-content-table]="!isFullWidth">
@@ -26,6 +84,15 @@
     }
 <thead>
 <tr>
+@if (canBulkSelect) {
+<th class="checkbox-header">
+<input type="checkbox"
+[checked]="isAllOnPageSelected"
+[indeterminate]="isSomeOnPageSelected"
+(change)="toggleSelectAllOnPage($event)"
+aria-label="Vybrat vše na stránce">
+</th>
+        }
 @for (col of columnDefinitions; track col) {
 <th>
 <ng-container>
@@ -47,7 +114,16 @@
 <tbody>
 @if (data && data.length > 0) {
 @for (item of data; track item) {
-<tr>
+<tr [class.row-selected]="isSelected(item.id)">
+@if (canBulkSelect) {
+<td class="checkbox-cell">
+<input type="checkbox"
+[checked]="isSelected(item.id)"
+[disabled]="isSelectionDisabled(item)"
+(change)="toggleSelection(item.id, $event)"
+[attr.aria-label]="'Vybrat řádek ' + item.id">
+</td>
+              }
 @for (col of columnDefinitions; track col) {
 @if (!col.hidden) {
 <td>
@@ -123,7 +199,7 @@
 
 @if (showExportPopup) {
 <app-export-popup-builder
-[itemCount]="data.length"
+[itemCount]="exportSelectedOnly ? selectedIds.size : data.length"
 [isExporting]="isExporting"
 (formatSelected)="handleExportFormatSelected($event)"
 (closed)="closeExportPopup()">

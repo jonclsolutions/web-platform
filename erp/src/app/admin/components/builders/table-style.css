@@ -8,209 +8,431 @@
                zaoblený kontejner (18px), jemnější dělící linky, tmavý akcent (#18181b)
                místo modré/indigo pro odkazy a checkboxy, plně zaoblená ("pill")
                tlačítka v toolbaru. Struktura/třídy a logika beze změny.
+    @redesign-note (2026-08-16a) TOOLBAR LAYOUT: `.toolbar` přepnut na `flex-wrap` layout,
+        kde `.checkbox-container` má `flex-basis: 100%` - donutí ho zabrat celý řádek,
+        takže "Aktualizovat" tlačítko + timestamp badge se automaticky zalomí NA ŘÁDEK
+        POD checkbox (bez zásahu do HTML, čistě pořadím/`order` ve flexboxu). Přidán
+        media query pro mobil (`max-width: 640px`) - toolbar se srovná na střed a
+        tlačítko/timestamp zůstanou vedle sebe, jen užší mezery.
+    @redesign-note (2026-08-16b) HROMADNÝ VÝBĚR + HROMADNÉ MAZÁNÍ: přidán styl pro
+        sloupec výběrových checkboxů (`.checkbox-header`/`.checkbox-cell`, úzký pevný
+        sloupec jako u akčních tlačítek) a `.bulk-actions-bar` nad tabulkou (počet
+        vybraných + dropdown "Akce" se šipkou + "Zrušit výběr") - viz
+        table-builder.component.ts/.html stejné datum.
 */
 
 .table-responsive {
-  overflow-x: auto;
-  border: 1px solid #ececea;
-  border-radius: 18px;
-  background-color: #ffffff;
-  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
+overflow-x: auto;
+border: 1px solid #ececea;
+border-radius: 18px;
+background-color: #ffffff;
+box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  font-size: 0.85rem;
-  table-layout: fixed;
+width: 100%;
+border-collapse: collapse;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+font-size: 0.85rem;
+table-layout: fixed;
 }
 
 table.fit-content-table {
-  width: auto;
-  table-layout: auto;
+width: auto;
+table-layout: auto;
 }
 
 caption {
-  display: none;
+display: none;
 }
 
 th, td {
-  padding: 10px 14px;
-  text-align: left;
-  border-bottom: 1px solid #f4f4f5;
-  vertical-align: middle;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #18181b;
+padding: 10px 14px;
+text-align: left;
+border-bottom: 1px solid #f4f4f5;
+vertical-align: middle;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+color: #18181b;
 }
 
 th {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #71717a;
+font-size: 0.72rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+color: #71717a;
 }
 
 th.button-header {
-  text-align: center;
-  width: 48px !important;
-  padding: 8px 2px;
-  font-size: 0.68rem;
-  color: #a1a1aa;
-  white-space: nowrap;
+text-align: center;
+width: 48px !important;
+padding: 8px 2px;
+font-size: 0.68rem;
+color: #a1a1aa;
+white-space: nowrap;
 }
 
 td.action-button-cell {
-  text-align: center;
-  width: 40px !important;
-  min-width: 40px !important;
-  padding: 2px !important;
+text-align: center;
+width: 40px !important;
+min-width: 40px !important;
+padding: 2px !important;
 }
 
 .action-button-cell button {
-  padding: 6px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 1rem;
-  border-radius: 999px;
-  transition: background 0.15s ease, transform 0.1s ease;
+padding: 6px;
+border: none;
+background: transparent;
+cursor: pointer;
+font-size: 1rem;
+border-radius: 999px;
+transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .action-button-cell button:hover:not(:disabled) {
-  background: #f4f4f5;
-  transform: scale(1.12);
+background: #f4f4f5;
+transform: scale(1.12);
 }
 
 thead {
-  background-color: #fafafa;
+background-color: #fafafa;
 }
 
 tr:nth-child(even) {
-  background-color: #fafafa;
+background-color: #fafafa;
 }
 
 tr:hover {
-  background-color: #f4f4f5;
+background-color: #f4f4f5;
 }
 
 .table-cell-image {
-  width: 28px;
-  height: 28px;
-  object-fit: cover;
-  border-radius: 8px;
-  display: block;
-  margin: 0 auto;
+width: 28px;
+height: 28px;
+object-fit: cover;
+border-radius: 8px;
+display: block;
+margin: 0 auto;
 }
 
 td a {
-  color: #18181b;
-  font-weight: 600;
-  text-decoration: none;
-  border-bottom: 1px solid #d4d4d8;
+color: #18181b;
+font-weight: 600;
+text-decoration: none;
+border-bottom: 1px solid #d4d4d8;
 }
 td a:hover {
-  border-bottom-color: #18181b;
+border-bottom-color: #18181b;
 }
-
 .no-data-msg {
-  color: #a1a1aa;
-  padding: 28px !important;
-  text-align: center;
+color: #a1a1aa;
+padding: 28px !important;
+text-align: center;
 }
 
 @media (max-width: 1024px) {
-  .table-responsive {
-    width: 100%;
+.table-responsive {
+width: 100%;
   }
 }
 
 .delete_button:disabled {
-  filter: grayscale(1);
-  opacity: 0.4;
-  cursor: not-allowed;
+filter: grayscale(1);
+opacity: 0.4;
+cursor: not-allowed;
 }
 
 .toolbar-trash {
-  display: flex;
-  justify-content: space-between; 
-  align-items: center;
-  padding-top: 8px;
+display: flex;
+justify-content: space-between; 
+align-items: center;
+padding-top: 8px;
 }
+
+/*
+ * .toolbar obsahuje v HTML v tomto pořadí: [refresh tlačítko] [timestamp badge]
+ * [checkbox "Zobrazit tabulku na šířce stránky"]. Chceme ale VIZUÁLNĚ checkbox nahoře
+ * a refresh+timestamp pod ním - řeší se čistě flexboxem, bez zásahu do HTML:
+ *   1) `flex-wrap: wrap` dovolí položkám zalomit se na další řádek
+ *   2) `.checkbox-container` dostane `flex-basis: 100%`, takže i když je v DOM
+ *      poslední, zabere celý dostupný řádek -> zbylé dvě položky (refresh + timestamp)
+ *      se automaticky zalomí NA VLASTNÍ ŘÁDEK
+ *   3) `order` na checkboxu (-1) ho posune vizuálně NAD refresh+timestamp řádek,
+ *      i když je v HTML zapsaný jako poslední
+ */
 .toolbar {
-  display: flex;
-  justify-content: end; 
-  align-items: center;
-  padding-top: 8px;
+display: flex;
+flex-wrap: wrap;
+justify-content: flex-end;
+align-items: center;
+gap: 10px 14px;
+padding-top: 8px;
+}
+
+.toolbar .checkbox-container {
+order: -1;
+flex-basis: 100%;
+justify-content: flex-end;
+}
+
+.toolbar .table-refresh-btn,
+.toolbar .table-last-updated {
+order: 0;
 }
 
 .small-btn {
-  padding: 7px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 999px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid transparent;
-  font-family: inherit;
-  transition: background-color 0.15s ease, transform 0.12s ease;
+padding: 7px 14px;
+font-size: 13px;
+font-weight: 600;
+border-radius: 999px;
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 6px;
+border: 1px solid transparent;
+font-family: inherit;
+transition: background-color 0.15s ease, transform 0.12s ease;
 }
 .small-btn:hover { transform: translateY(-1px); }
 
 .btn-trash {
-  background-color: #fff1f2;
-  color: #be123c;
-  border-color: #fecdd3;
+background-color: #fff1f2;
+color: #be123c;
+border-color: #fecdd3;
 }
 .btn-trash:hover { background-color: #ffe4e6; }
 
 /* Kontejner pro checkbox a text */
 .checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #71717a;
-  cursor: pointer;
-  user-select: none;
-  font-weight: 500;
-  transition: color 0.15s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 13px;
+color: #71717a;
+cursor: pointer;
+user-select: none;
+font-weight: 500;
+transition: color 0.15s ease;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
 .checkbox-container:hover {
-  color: #18181b;
+color: #18181b;
 }
 
 .checkbox-container input[type="checkbox"] {
-  cursor: pointer;
-  width: 15px;
-  height: 15px;
-  accent-color: #18181b;
-  margin: 0;
-  border-radius: 4px;
+cursor: pointer;
+width: 15px;
+height: 15px;
+accent-color: #18181b;
+margin: 0;
+border-radius: 4px;
 }
 .table-refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border-mid, #e0e0dd);
-  background: var(--surface, #fff);
-  color: var(--text-muted, #71717a);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 6px 12px;
+border-radius: 999px;
+border: 1px solid var(--border-mid, #e0e0dd);
+background: var(--surface, #fff);
+color: var(--text-muted, #71717a);
+font-size: 0.8rem;
+font-weight: 600;
+cursor: pointer;
+white-space: nowrap;
 }
 .table-refresh-btn:hover { background: var(--surface-2, #fafafa); color: var(--text, #18181b); }
 .table-last-updated {
-  font-size: 0.78rem;
-  color: var(--text-dim, #a1a1aa);
-  margin-left: 4px;
+font-size: 0.78rem;
+color: var(--text-dim, #a1a1aa);
+margin-left: 4px;
+white-space: nowrap;
+}
+
+/*
+ * Responzivní chování toolbaru na užších obrazovkách (mobil/tablet na výšku):
+ * - checkbox zůstává nahoře, ale text se zalomí pod sebe místo přetékání
+ * - refresh tlačítko + timestamp badge se srovnají na střed a zmenší mezery
+ * - tlačítko dostane trochu větší dotykovou plochu (min-height)
+ */
+@media (max-width: 640px) {
+  .toolbar {
+    justify-content: center;
+    gap: 8px 10px;
+  }
+
+  .toolbar .checkbox-container {
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .table-refresh-btn {
+    min-height: 34px;
+  }
+
+  .table-last-updated {
+    margin-left: 0;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HROMADNÝ VÝBĚR - sloupec checkboxů
+   ══════════════════════════════════════════════════════════════════════ */
+
+th.checkbox-header,
+td.checkbox-cell {
+width: 36px !important;
+min-width: 36px !important;
+padding: 8px 2px !important;
+text-align: center;
+}
+
+.checkbox-header input[type="checkbox"],
+.checkbox-cell input[type="checkbox"] {
+cursor: pointer;
+width: 15px;
+height: 15px;
+accent-color: #18181b;
+margin: 0;
+border-radius: 4px;
+vertical-align: middle;
+}
+
+.checkbox-cell input[type="checkbox"]:disabled {
+cursor: not-allowed;
+opacity: 0.35;
+}
+
+/* Jemné zvýraznění vybraného řádku - zůstává čitelné i přes zebra (nth-child) pruhování. */
+tr.row-selected {
+background-color: #f4f4f5;
+}
+tr.row-selected:hover {
+background-color: #ececea;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HROMADNÉ AKCE - lišta nad tabulkou (počet vybraných + dropdown "Akce")
+   ══════════════════════════════════════════════════════════════════════ */
+
+.bulk-actions-bar {
+display: flex;
+flex-wrap: wrap;
+align-items: center;
+gap: 10px 12px;
+padding: 10px 14px;
+margin-bottom: 10px;
+border: 1px solid #e4e4e7;
+border-radius: 14px;
+background-color: #fafafa;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.bulk-actions-count {
+font-size: 0.82rem;
+font-weight: 700;
+color: #18181b;
+}
+
+.bulk-actions-dropdown {
+position: relative;
+margin-left: auto;
+}
+
+.bulk-actions-btn {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+padding: 6px 12px;
+border-radius: 999px;
+border: 1px solid #d4d4d8;
+background: #ffffff;
+color: #18181b;
+font-size: 0.8rem;
+font-weight: 600;
+cursor: pointer;
+font-family: inherit;
+transition: background-color 0.15s ease;
+}
+.bulk-actions-btn:hover:not(:disabled) { background: #f4f4f5; }
+.bulk-actions-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.bulk-actions-btn svg {
+transition: transform 0.15s ease;
+}
+.bulk-actions-btn svg.bulk-actions-chevron-open {
+transform: rotate(180deg);
+}
+
+.bulk-actions-menu {
+position: absolute;
+top: calc(100% + 6px);
+right: 0;
+min-width: 190px;
+background: #ffffff;
+border: 1px solid #e4e4e7;
+border-radius: 12px;
+box-shadow: 0 6px 20px rgba(24, 24, 27, 0.12);
+padding: 6px;
+z-index: 20;
+}
+
+.bulk-actions-menu-item {
+display: flex;
+align-items: center;
+gap: 8px;
+width: 100%;
+padding: 8px 10px;
+border: none;
+background: transparent;
+border-radius: 8px;
+font-size: 0.82rem;
+font-weight: 600;
+font-family: inherit;
+color: #18181b;
+cursor: pointer;
+text-align: left;
+transition: background-color 0.12s ease;
+}
+.bulk-actions-menu-item:hover { background: #f4f4f5; }
+
+.bulk-actions-menu-item-danger {
+color: #be123c;
+}
+.bulk-actions-menu-item-danger:hover {
+background: #fff1f2;
+}
+
+.bulk-actions-clear {
+padding: 6px 10px;
+border: none;
+background: transparent;
+color: #71717a;
+font-size: 0.8rem;
+font-weight: 600;
+font-family: inherit;
+cursor: pointer;
+border-radius: 999px;
+transition: background-color 0.15s ease, color 0.15s ease;
+}
+.bulk-actions-clear:hover {
+background: #f4f4f5;
+color: #18181b;
+}
+
+@media (max-width: 640px) {
+  .bulk-actions-bar {
+    justify-content: center;
+  }
+  .bulk-actions-dropdown {
+    margin-left: 0;
+  }
+  .bulk-actions-count {
+    flex-basis: 100%;
+    text-align: center;
+  }
 }

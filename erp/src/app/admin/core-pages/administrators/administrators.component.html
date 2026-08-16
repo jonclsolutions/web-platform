@@ -43,19 +43,20 @@
 <div class="table-and-pagination-container">
 @if (!showTrashTable) {
 <app-table-builder #activeTable
-[buttons]="buttons"
-[data]="data"
-[tableCaption]="'Seznam Administrátorksých účtů'"
-[columns]="tableColumns"
-[inputDefinitions]="visibleFormFields"
-[isFullWidth]="isTableFullWidth"
-[lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
-(refreshRequested)="forceFullRefresh(filters)"
-[apiEndpoint]="apiEndpoint"
-(itemDeleted)="handleItemDeleted()"
-(editFormOpened)="handleEditFormOpened($event)"
-(viewDetailsOpened)="handleViewDetails($event)"
-(resetPasswordFormOpened)="handleResetPasswordFormOpened($event)">
+  [buttons]="buttons"
+  [data]="data"
+  [tableCaption]="'Seznam Administrátorksých účtů'"
+  [columns]="tableColumns"
+  [inputDefinitions]="visibleFormFields"
+  [isFullWidth]="isTableFullWidth"
+  [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
+  [excludeFromExport]="['roles', 'user_permissions', 'permissions']"
+  (refreshRequested)="forceFullRefresh(filters)"
+  [apiEndpoint]="apiEndpoint"
+  (itemDeleted)="handleItemDeleted()"
+  (editFormOpened)="handleEditFormOpened($event)"
+  (viewDetailsOpened)="handleViewDetails($event)"
+  (resetPasswordFormOpened)="handleResetPasswordFormOpened($event)">
 </app-table-builder>
           }
 @if (showTrashTable) {

@@ -269,35 +269,55 @@ handleEditFormOpened(item: any): void {
   this.showCreateForm = true;
 }
 
-  /**
+ /**
    * @description Submits user data. Error handler DOPLNĚN (dřív chyběl) - viz
    * refactor-note v hlavičce souboru: FormBuilderComponent ukazuje zelený toast hned po
    * emitu, ještě před odpovědí serveru, takže reálná chyba backendu (např. 422 při
    * pokusu vypnout vynucenou 2FA) se bez tohoto handleru vůbec neprojevila v UI.
+   * @bugfix-note (2026-08-16v2) KRITICKÁ OPRAVA: `visibleFormFields`/`nonEditableFields`
+   * odráží roli, která byla vybraná PŘI OTEVŘENÍ formuláře
+   * (`handleEditFormOpened`/`handleCreateFormOpened`) - pokud sysadmin roli PŘÍMO VE
+   * FORMULÁŘI přepne na admin/sysadmin (nebo jinou `forces_2fa` roli),
+   * `visibleFormFields` se nepřepočítá a `enable_2fa`/`two_fa_forced_by_admin` tak
+   * zůstanou v payloadu jako klíče odpovídající PŮVODNÍ roli. Backend
+   * (`UserController::update()`) to pak vyhodnotí jako explicitní pokus o obejití
+   * vynucení a vrátí 422, i když uživatel nic vědomě nezměnil - jen povýšil roli.
+   * ŘEŠENÍ: `forcedNow` se přepočítá znovu podle role, která se REÁLNĚ odesílá
+   * (`payload.role_id`), ne podle stavu formuláře při otevření - pokud je nová role
+   * vynucená, `enable_2fa`/`two_fa_forced_by_admin` se z payloadu smažou úplně (backend
+   * pak `enable_2fa` sám vynutí na `true` - viz `UserController::update()`,
+   * `$validated['enable_2fa'] = $isForced ? true : ...`).
    */
-handleFormSubmitted(formData: any): void {
-  const payload = { ...formData };
-  if (payload.role_id) payload.role_id = parseInt(payload.role_id, 10);
+  handleFormSubmitted(formData: any): void {
+    const payload = { ...formData };
+    if (payload.role_id) payload.role_id = parseInt(payload.role_id, 10);
 
-  // Needitovatelná pole se nesmí odesílat - i kdyby formData obsahovalo
-  // předvyplněnou vizuální hodnotu (viz handleEditFormOpened), odeslání by ji
-  // tiše zapsalo do DB při JAKÉKOLIV nesouvisející editaci. Backend při chybějícím
-  // klíči použije stávající hodnotu ($validated['enable_2fa'] ?? $user->enable_2fa).
-  const nonEditableFields = this.visibleFormFields
-    .filter(f => f.editable === false)
-    .map(f => f.column_name);
-  nonEditableFields.forEach(key => delete payload[key]);
+    // Needitovatelná pole se nesmí odesílat - i kdyby formData obsahovalo
+    // předvyplněnou vizuální hodnotu (viz handleEditFormOpened), odeslání by ji
+    // tiše zapsalo do DB při JAKÉKOLIV nesouvisející editaci. Backend při chybějícím
+    // klíči použije stávající hodnotu ($validated['enable_2fa'] ?? $user->enable_2fa).
+    const nonEditableFields = this.visibleFormFields
+      .filter(f => f.editable === false)
+      .map(f => f.column_name);
+    nonEditableFields.forEach(key => delete payload[key]);
 
-  const request$ = payload.id ? this.updateData(payload.id, payload) : this.postData(payload);
-  request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); }))
-    .subscribe({
-      next: () => this.refreshData(),
-      error: (err: any) => {
-        const message = err?.error?.message || 'Uložení se nezdařilo.';
-        this.alertDialogService.open('Chyba', message, 'danger');
-      }
-    });
-}
+    // Znovu vyhodnotit "forced" podle role, která se reálně odesílá - viz bugfix-note výše.
+    const forcedNow = this.isRoleForced(payload.role_id);
+    if (forcedNow) {
+      delete payload.enable_2fa;
+      delete payload.two_fa_forced_by_admin;
+    }
+
+    const request$ = payload.id ? this.updateData(payload.id, payload) : this.postData(payload);
+    request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); }))
+      .subscribe({
+        next: () => this.refreshData(),
+        error: (err: any) => {
+          const message = err?.error?.message || 'Uložení se nezdařilo.';
+          this.alertDialogService.open('Chyba', message, 'danger');
+        }
+      });
+  }
 
   handleResetPasswordFormOpened(item: any): void {
     this.resetPasswordTitle = `Resetovat heslo: ${item.user_email}`;
