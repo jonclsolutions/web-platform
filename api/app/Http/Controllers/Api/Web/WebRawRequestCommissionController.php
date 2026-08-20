@@ -20,6 +20,16 @@
  * viz LogsActivity trait hlavička). Trait navíc stripuje citlivá pole a ořezává
  * description/context_data na bezpečnou velikost, což lokální verze vůbec nedělala.
  * Doménově zůstává WebLog::class beze změny (Web sekce).
+ *
+ * @bugfix-note (2026-08-19) `index()` NEEAGER-LOADOVAL vztah `attachments` -
+ * `WebRawRequestCommissionResource::toArray()` používá `$this->whenLoaded('attachments')`,
+ * který bez `->with('attachments')` na dotazu vrátí "chybějící hodnotu" a klíč
+ * `attachments` se z JSON odpovědi ÚPLNĚ VYNECHÁ (ne prázdné pole - klíč tam vůbec
+ * není). Admin frontend přitom řádek z TÉTO odpovědi (ne z `show()`) používá i pro
+ * předvyplnění editačního formuláře (`editFormOpened` event nese objekt přímo z
+ * tabulky) - existující přílohy tak v editaci nebyly vůbec vidět, i když v detailu
+ * (který interně volá `show()`, ten `->with('attachments')` už měl) se zobrazovaly
+ * správně. Přidáno `->with('attachments')` i sem, ať jsou obě cesty konzistentní.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -53,13 +63,14 @@ class WebRawRequestCommissionController extends Controller
 
     /**
      * Retrieves a paginated or full collection of commission requests with search and filtering.
+     * @bugfix-note (2026-08-19) `->with('attachments')` doplněno - viz hlavička souboru.
      */
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 15);
         $onlyTrashed = filter_var($request->input('only_trashed', false), FILTER_VALIDATE_BOOLEAN);
 
-        $query = WebRawRequestCommission::query();
+        $query = WebRawRequestCommission::query()->with('attachments');
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
         if ($s = $request->input('search')) {
@@ -138,16 +149,27 @@ class WebRawRequestCommissionController extends Controller
 
     /**
      * Updates an existing request. Newly uploaded attachments are ADDED to the existing
-     * set (not replaced) - admin can remove individual old attachments via a separate
-     * endpoint (part 2 of this task).
+     * set (not replaced). Attachments listed in `attachments_removed_ids` (UI-only
+     * staged removal - see FormBuilderComponent/MultiFileUploadComponent) are deleted
+     * BEFORE new ones are stored, so a "replace" (remove old + add new in one save)
+     * works correctly in a single request.
+     * @bugfix-note (2026-08-19) `attachments_removed_ids` doplněno - viz
+     * `HandlesAttachments::deleteAttachmentsByIds()`, scoped na `$rawRequestCommission`,
+     * takže cizí ID poslaná klientem se tiše ignorují (nelze smazat přílohu jiného
+     * záznamu).
      */
     public function update(UpdateWebRawRequestCommissionRequest $request, $id): JsonResponse
     {
         try {
             $rawRequestCommission = WebRawRequestCommission::findOrFail($id);
 
-            $validated = $request->safe()->except(['attachments']);
+            $validated = $request->safe()->except(['attachments', 'attachments_removed_ids']);
             $rawRequestCommission->update($validated);
+
+            $removedIds = $request->input('attachments_removed_ids', []);
+            if (!empty($removedIds)) {
+                $this->deleteAttachmentsByIds($rawRequestCommission, $removedIds);
+            }
 
             $this->storeAttachments($request, $rawRequestCommission, self::ATTACHMENT_FOLDER);
 

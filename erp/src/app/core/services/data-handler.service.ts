@@ -8,6 +8,22 @@
  * @dependencies
  * - HttpClient: Facilitates secure API communication.
  * - AlertDialogService: Displays user-facing error dialogs upon API failure.
+ *
+ * @bugfix-note (2026-08-19) KRITICKÝ BUG - MULTIPART PUT/PATCH SE TICHE ZTRATÍ:
+ * PHP (nezávisle na Laravelu - je to limitace samotného PHP/SAPI vrstvy) NEPARSUJE
+ * `multipart/form-data` tělo requestu pro metody `PUT`/`PATCH`, jen pro `POST` -
+ * `$_FILES`/`$_POST` se u skutečného HTTP PUT s multipart tělem nikdy nenaplní. `put()`/
+ * `patch()` posílaly `FormData` payload (soubory) jako opravdový HTTP PUT/PATCH - backend
+ * takové tělo nikdy nerozparsoval, takže se tiše neuložila ANI přiložená příloha, ANI
+ * běžná textová pole (validace prošla, protože vše bylo `sometimes`/nepovinné, ale
+ * `$validated`/`$request->file()` byly ve skutečnosti prázdné). Standardní Laravel
+ * řešení pro tenhle přesný případ: METHOD SPOOFING - při multipart payloadu se pošle
+ * skutečný HTTP `POST` s polem `_method=PUT`/`PATCH` v těle; Laravel router při
+ * detekci `_method` pole v POST requestu automaticky nasměruje na cílovou PUT/PATCH
+ * route (vestavěné chování, žádná úprava routes/controllerů není potřeba). PHP tak
+ * korektně naparsuje multipart tělo (protože transportní metoda je opravdu POST), a
+ * Laravel uvnitř aplikace i tak vidí požadovaný PUT/PATCH (permission middleware,
+ * route model binding apod. fungují stejně, jako by šlo o "opravdový" PUT/PATCH).
  */
 
 import { Injectable } from '@angular/core';
@@ -180,8 +196,14 @@ export class DataHandler {
 
   /**
    * @description Performs a PUT request (full update) and unwraps the result.
+   * @bugfix-note (2026-08-19) `FormData` payload (soubory) se teď posílá jako `POST`
+   * s method-override polem `_method=PUT` - viz hlavička souboru. Bez multipart obsahu
+   * (běžný JSON payload) beze změny - skutečný HTTP PUT, jako dřív.
    */
   put<T>(apiUrl: string, data: any): Observable<T> {
+    if (data instanceof FormData) {
+      return this.postWithMethodOverride<T>(apiUrl, data, 'PUT');
+    }
     return this.http.put<{ data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
       map(response => response.data),
       catchError(this.handleError)
@@ -190,9 +212,34 @@ export class DataHandler {
 
   /**
    * @description Performs a PATCH request (partial update) and unwraps the result.
+   * @bugfix-note (2026-08-19) `FormData` payload (soubory) se teď posílá jako `POST`
+   * s method-override polem `_method=PATCH` - viz hlavička souboru. Bez multipart obsahu
+   * (běžný JSON payload) beze změny - skutečný HTTP PATCH, jako dřív.
    */
   patch<T>(apiUrl: string, data: any): Observable<T> {
+    if (data instanceof FormData) {
+      return this.postWithMethodOverride<T>(apiUrl, data, 'PATCH');
+    }
     return this.http.patch<{ data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+      map(response => response.data),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * @description Pošle `FormData` payload jako skutečný HTTP `POST` s Laravel method-
+   * override polem `_method` v těle requestu - jediný spolehlivý způsob, jak dostat
+   * multipart (soubory) tělo do PUT/PATCH endpointu, protože PHP samo o sobě multipart
+   * tělo pro PUT/PATCH nikdy neparsuje (viz bugfix-note v hlavičce souboru). Laravel
+   * router `_method` pole v POST requestu automaticky rozpozná a nasměruje na
+   * odpovídající PUT/PATCH route - žádná úprava backend routes není potřeba.
+   * @param apiUrl Cílová cesta (stejná, na kterou by šel "opravdový" PUT/PATCH).
+   * @param formData Multipart payload, do kterého se přidá `_method` pole.
+   * @param method Metoda, kterou má Laravel uvnitř aplikace použít místo transportního POST.
+   */
+  private postWithMethodOverride<T>(apiUrl: string, formData: FormData, method: 'PUT' | 'PATCH'): Observable<T> {
+    formData.append('_method', method);
+    return this.http.post<{ data: T }>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
       map(response => response.data),
       catchError(this.handleError)
     );

@@ -16,6 +16,13 @@
  *      stavěná (očekává pole souborů z `<input multiple>`, `foreach` přes jeden
  *      UploadedFile by dopadl špatně), proto samostatná metoda místo předělávání
  *      původní (funkční, use'ované na 2 místech) storeAttachments().
+ * @refactor-note (2026-08-19) BACKLOG "mazání jednotlivých existujících příloh v editu":
+ *      přidána `deleteAttachmentsByIds()` - na rozdíl od `deleteAllAttachments()` (maže
+ *      VŠECHNY přílohy modelu, použito při force-delete) maže jen VYBRANÁ ID. Striktně
+ *      SCOPED přes `$model->attachments()` relaci (ne globální `WebAttachment::whereIn()`),
+ *      takže cizí ID poslané klientem (ať už omylem, nebo záměrně) se prostě nenajdou a
+ *      tiše se ignorují - nelze takhle smazat přílohu jiného záznamu. Volající kontroler
+ *      (viz WebRawRequestCommissionController::update()) nemusí sám ověřovat vlastnictví.
  */
 
 namespace App\Traits;
@@ -111,6 +118,30 @@ protected function deleteAllAttachments(Model $model): void
 foreach ($model->attachments as $attachment) {
             \Illuminate\Support\Facades\Storage::disk($attachment->disk)->delete($attachment->path);
 $attachment->delete();
+        }
+    }
+
+    /**
+     * @description Smaže VYBRANÉ přílohy podle ID (ne všechny) - použito pro odebrání
+     * jednotlivých existujících příloh při update (viz backlog "mazání příloh v editu").
+     * Striktně SCOPED na `$model` přes `$model->attachments()` relaci - `$ids`, které
+     * nepatří tomuto modelu, se prostě nenajdou a tiše se ignorují (nelze takhle smazat
+     * přílohu cizího záznamu, i kdyby klient poslal cizí ID).
+     * @param Model $model Model s morphMany('attachments') vztahem.
+     * @param array $ids ID příloh k odstranění (soubor z disku i DB záznam).
+     * @return void
+     */
+    protected function deleteAttachmentsByIds(Model $model, array $ids): void
+    {
+        if (empty($ids)) {
+            return;
+        }
+
+        $attachments = $model->attachments()->whereIn('id', $ids)->get();
+
+        foreach ($attachments as $attachment) {
+            \Illuminate\Support\Facades\Storage::disk($attachment->disk)->delete($attachment->path);
+            $attachment->delete();
         }
     }
 }

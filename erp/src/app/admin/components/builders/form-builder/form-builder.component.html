@@ -6,6 +6,12 @@
     @created: 2025
     @refactor-note (2026-08-2): Přidán @case ('files') - sdílená <app-multi-file-upload>
         pro vícenásobný upload, viz form-builder.component.ts.
+    @refactor-note (2026-08-19): `<app-multi-file-upload>` dostal `[existingFiles]`
+        binding - v edit módu (formDataToEdit existuje) pošle existující přílohy dané
+        položky (`formDataToEdit[input.column_name]`, pole objektů z API) do widgetu,
+        který je zobrazí jako read-only seznam nad dropzonou pro nové soubory. V create
+        módu (formDataToEdit je null) se posílá prázdné pole - viz
+        multi-file-upload.component.ts stejné datum.
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -43,7 +49,9 @@
                       [maxFiles]="10"
                       [maxFileSizeMb]="20"
                       [maxTotalSizeMb]="50"
-                      (filesChanged)="onFilesChange($event, input.column_name)">
+                      [existingFiles]="formDataToEdit ? (formDataToEdit[input.column_name] || []) : []"
+                      (filesChanged)="onFilesChange($event, input.column_name)"
+                      (existingFileRemoved)="onExistingFilesRemoved($event, input.column_name)">
                     </app-multi-file-upload>
                   }
                   @case ('text') {

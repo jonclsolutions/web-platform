@@ -28,6 +28,28 @@
  * aby detekoval jak jednotlivý `File` (typ `'file'`), tak pole `File[]` (typ `'files'`) a
  * do `FormData` je serializoval odpovídajícím způsobem (`key` vs. `key[]`).
  *
+ * @bugfix-note (2026-08-19) KRITICKÝ BUG - EDIT SE SOUBOREM VYTVOŘIL NOVÝ ZÁZNAM MÍSTO
+ * AKTUALIZACE: `FormData` instance nepodporuje čtení hodnot přes tečkovou notaci
+ * (`payload.id`), jen `.get('id')`. Konzumentské komponenty napříč adminem (např.
+ * `UserRequestComponent.handleFormSubmitted()`) ale rozhodují mezi update/create přes
+ * `formData.id ? update() : create()` - na `FormData` instanci to VŽDY vyhodnotilo
+ * `undefined`, tedy `create()`, i při editaci existujícího záznamu s přiloženým
+ * souborem. Bez souboru je `payload` plain objekt, kde `.id` funguje normálně - proto
+ * se bug projevoval JEN v kombinaci "edit" + "alespoň jeden soubor". Oprava v
+ * `onSubmit()`: `id` se navíc nastaví jako obyčejná vlastnost JS objektu přímo na
+ * `FormData` instanci (nijak neovlivní multipart serializaci - Angular `HttpClient`
+ * posílá `FormData` podle jejích interních `entries`, ne podle vlastností objektu).
+ * Oprava je na jednom místě (zde), takže platí automaticky pro VŠECHNY stránky s
+ * file/files poli, ne jen pro user-request.
+ *
+ * @refactor-note (2026-08-19v2) BACKLOG "mazání existujících příloh v editu - staged":
+ * `onExistingFilesRemoved()` ukládá ID příloh označených ke smazání pod
+ * `${columnName}_removed_ids` do `formData` - viz MultiFileUploadComponent. Zároveň
+ * opraven latentní bug v `onSubmit()`: multipart (`FormData`) větev dřív TICHO
+ * ZAHAZOVALA jakékoliv nesouborové pole typu pole (array), takže `..._removed_ids` by
+ * se při současném přidání nového souboru nikdy nedostalo na server - teď se neprázdná
+ * pole serializují jako `key[]`, stejně jako pole souborů.
+ *
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.
  * - AlertDialogService: Provides user feedback for submission outcomes.
@@ -176,6 +198,18 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     this.formData[columnName] = files;
   }
 
+  /**
+   * @description Přijímá aktuální seznam ID existujících příloh označených ke smazání
+   * (STAGED - žádné API volání zatím neproběhlo, viz MultiFileUploadComponent). Uloží
+   * je pod `${columnName}_removed_ids` do `formData`, odkud je `onSubmit()` pošle na
+   * server AŽ při reálném uložení celého formuláře. Storno formuláře tenhle stav nikam
+   * neodešle - `formData` se prostě zahodí spolu s celou komponentou.
+   * @bugfix-note (2026-08-19v2) BACKLOG "mazání existujících příloh v editu - staged".
+   */
+  onExistingFilesRemoved(removedIds: number[], columnName: string): void {
+    this.formData[`${columnName}_removed_ids`] = removedIds;
+  }
+
   private isFileArray(value: any): value is File[] {
     return Array.isArray(value) && value.length > 0 && value.every(v => v instanceof File);
   }
@@ -243,13 +277,44 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
           } else if (this.isFileArray(value)) {
             value.forEach((file: File) => payload.append(`${key}[]`, file, file.name));
           } else if (Array.isArray(value)) {
-            // Prázdné/nesouborové pole ('files' pole bez vybraného souboru apod.) -
-            // nemá smysl posílat, backend ho stejně bere jako 'sometimes'.
-            return;
+            /**
+             * @bugfix-note (2026-08-19v2) DŘÍV se JAKÉKOLIV nesouborové pole (array)
+             * v multipart větvi TICHO ZAHAZOVALO ("nemá smysl posílat" - platilo jen
+             * pro prázdné 'files' pole bez výběru, ale zasáhlo úplně všechny array
+             * hodnoty). To by mimo jiné znamenalo, že nově zavedené
+             * `attachments_removed_ids` (viz onExistingFilesRemoved()) by se při
+             * SOUČASNÉM přidání nového souboru na server nikdy nedostalo - staged
+             * smazání staré přílohy by se ztratilo, kdykoliv admin zároveň nahrával i
+             * něco nového. Oprava: prázdné pole se pořád přeskočí (nic k poslání), ale
+             * neprázdné se serializuje jako `key[]` - stejná PHP/Laravel konvence jako
+             * u pole souborů o pár řádků výš.
+             */
+            if (value.length === 0) return;
+            value.forEach((item: any) => payload.append(`${key}[]`, String(item)));
           } else if (value !== null && value !== undefined) {
             payload.append(key, String(value));
           }
         });
+
+        /**
+         * @bugfix-note (2026-08-19) `FormData` instance NEPODPORUJE čtení hodnot přes
+         * tečkovou notaci (`payload.id`) - jen přes `.get('id')`. `id` je sice výše
+         * správně přidané do multipart dat (`payload.append('id', ...)`), ale
+         * konzumentské komponenty napříč adminem (např.
+         * `UserRequestComponent.handleFormSubmitted()`) rozhodují mezi update/create
+         * přes `formData.id ? update() : create()` - na `FormData` instanci to bez
+         * tohoto řádku VŽDY vyhodnotí `undefined`, tedy vždy `create()`, i při editaci
+         * existujícího záznamu. Řešení: nastavit `id` NAVÍC jako obyčejnou vlastnost JS
+         * objektu přímo na `FormData` instanci - nijak to neovlivní multipart
+         * serializaci (Angular `HttpClient` posílá `FormData` podle jejích interních
+         * `entries`, ne podle vlastností objektu), ale `formData.id` v konzumentských
+         * komponentách bude fungovat stejně spolehlivě jako u běžného JSON payloadu.
+         * Oprava na jednom místě - platí automaticky pro všechny stránky s file/files
+         * poli, ne jen pro tu, kde byl bug nahlášen.
+         */
+        if (this.formData['id'] !== undefined && this.formData['id'] !== null) {
+          (payload as any).id = this.formData['id'];
+        }
       } else {
         payload = { ...this.formData };
       }

@@ -1,32 +1,68 @@
-<!-- multi-file-upload.component.html -->
+<!-- 
+  multi-file-upload.component.html
+  @refactor-note (2026-08-19): Přidán read-only seznam existujících příloh
+      (existingFiles) NAD dropzonu pro nové soubory - viz multi-file-upload.component.ts
+      stejné datum. Počítadlo dole ("mfu-total") ukazuje combinedCount (neodebrané
+      existující + nově vybrané), ne jen nově vybrané.
+  @refactor-note (2026-08-19v2): Existující přílohy teď mají tlačítko "✕"
+      (removeExistingFile(id)) - STAGED odebrání, žádné API volání odsud (viz
+      multi-file-upload.component.ts stejné datum). Seznam iteruje přes
+      `visibleExistingFiles` (ne `existingFiles`), takže odebraná položka z UI hned
+      zmizí, i když se reálně smaže až s uložením formuláře.
+-->
 <div class="mfu-container">
-  <label class="mfu-label">{{ label }} <span class="mfu-hint">(max. {{ maxFiles }} souborů, {{ maxFileSizeMb }} MB/soubor, {{ maxTotalSizeMb }} MB celkem)</span></label>
+<label class="mfu-label">{{ label }} <span class="mfu-hint">(max. {{ maxFiles }} souborů, {{ maxFileSizeMb }} MB/soubor, {{ maxTotalSizeMb }} MB celkem)</span></label>
 
-  <div class="mfu-dropzone"
-    [class.dragging]="isDragging"
-    (drop)="onDrop($event)"
-    (dragover)="onDragOver($event)"
-    (dragleave)="onDragLeave()">
-    <input type="file" multiple (change)="onFileInputChange($event)" id="mfu-input" class="mfu-input">
-    <label for="mfu-input" class="mfu-dropzone-label">
-      <span>↑ Vyberte soubory nebo je přetáhněte sem</span>
-    </label>
-  </div>
-
-  @if (errorMessage) {
-    <div class="mfu-error">{{ errorMessage }}</div>
+@if (visibleExistingFiles.length > 0) {
+<div class="mfu-existing-section">
+<div class="mfu-existing-title">Již nahrané přílohy ({{ visibleExistingFiles.length }})</div>
+<ul class="mfu-file-list mfu-existing-list">
+@for (attachment of visibleExistingFiles; track attachment.id) {
+<li class="mfu-file-item mfu-existing-item">
+@if (attachment.view_url || attachment.download_url) {
+<a class="mfu-file-name mfu-existing-link"
+[href]="attachment.view_url || attachment.download_url"
+target="_blank"
+rel="noopener noreferrer">{{ attachment.original_filename }}</a>
+              } @else {
+<span class="mfu-file-name">{{ attachment.original_filename }}</span>
+              }
+<span class="mfu-file-size">{{ formatSize(attachment.size_bytes) }}</span>
+<button type="button" class="mfu-remove-btn" title="Odebrat přílohu" (click)="removeExistingFile(attachment.id)">✕</button>
+</li>
+        }
+</ul>
+</div>
   }
 
-  @if (files.length > 0) {
-    <ul class="mfu-file-list">
-      @for (file of files; track file.name + file.size; let i = $index) {
-        <li class="mfu-file-item">
-          <span class="mfu-file-name">{{ file.name }}</span>
-          <span class="mfu-file-size">{{ formatSize(file.size) }}</span>
-          <button type="button" class="mfu-remove-btn" (click)="removeFile(i)">✕</button>
-        </li>
+<div class="mfu-dropzone"
+[class.dragging]="isDragging"
+(drop)="onDrop($event)"
+(dragover)="onDragOver($event)"
+(dragleave)="onDragLeave()">
+<input type="file" multiple (change)="onFileInputChange($event)" id="mfu-input" class="mfu-input">
+<label for="mfu-input" class="mfu-dropzone-label">
+<span>↑ Vyberte soubory nebo je přetáhněte sem</span>
+</label>
+</div>
+
+@if (errorMessage) {
+<div class="mfu-error">{{ errorMessage }}</div>
+  }
+
+@if (files.length > 0) {
+<ul class="mfu-file-list">
+@for (file of files; track file.name + file.size; let i = $index) {
+<li class="mfu-file-item">
+<span class="mfu-file-name">{{ file.name }}</span>
+<span class="mfu-file-size">{{ formatSize(file.size) }}</span>
+<button type="button" class="mfu-remove-btn" (click)="removeFile(i)">✕</button>
+</li>
       }
-    </ul>
-    <div class="mfu-total">Celkem: {{ files.length }} / {{ maxFiles }} souborů, {{ totalSizeLabel }}</div>
+</ul>
+  }
+
+@if (combinedCount > 0) {
+<div class="mfu-total">Celkem: {{ combinedCount }} / {{ maxFiles }} souborů{{ files.length > 0 ? ' (' + totalSizeLabel + ' nových)' : '' }}</div>
   }
 </div>
