@@ -6,6 +6,11 @@
     @created: 2026
     @description: Format-picker popup shown when the admin clicks "Export" on any table.
     @dependencies: ExportPopupBuilderComponent (visibleFormatOptions, itemCount, isExporting)
+    @refactor-note (2026-08-18): Přidána sekce výběru sloupců (`columns` Input) mezi
+        header a formátové karty - viditelná jen když `columns` není prázdné (zpětně
+        kompatibilní pro případ, že by volající sloupce vůbec nepředal). Formátové karty
+        i "Zavřít" tlačítko respektují nově `formatGridDisabled` (isExporting NEBO
+        neprázdné `columns` s prázdným výběrem) - viz export-popup-builder.component.ts.
 -->
 
 <div class="export-popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -29,12 +34,44 @@
       </button>
     </div>
 
-    <div class="export-format-grid" [class.disabled]="isExporting">
+    @if (columns.length > 0) {
+      <div class="export-columns-section">
+        <div class="export-columns-header">
+          <span class="export-columns-title">Sloupce k exportu</span>
+          <button
+            type="button"
+            class="export-columns-toggle-all"
+            [disabled]="isExporting"
+            (click)="toggleSelectAllColumns()">
+            {{ isAllColumnsSelected ? 'Zrušit vše' : 'Vybrat vše' }}
+          </button>
+        </div>
+
+        <div class="export-columns-list">
+          @for (col of columns; track col.key) {
+            <label class="export-column-item">
+              <input
+                type="checkbox"
+                [checked]="isColumnSelected(col.key)"
+                [disabled]="isExporting"
+                (change)="toggleColumn(col.key, $event)">
+              <span>{{ col.label }}</span>
+            </label>
+          }
+        </div>
+
+        @if (selectedColumnKeys.size === 0) {
+          <p class="export-columns-warning">Vyberte alespoň jeden sloupec pro export.</p>
+        }
+      </div>
+    }
+
+    <div class="export-format-grid" [class.disabled]="formatGridDisabled">
       @for (option of visibleFormatOptions; track option.value) {
         <button
           type="button"
           class="export-format-card"
-          [disabled]="isExporting"
+          [disabled]="formatGridDisabled"
           (click)="onSelect(option.value)">
           <div class="export-format-icon" [innerHTML]="getIcon(option.icon)"></div>
           <div class="export-format-body">

@@ -87,10 +87,28 @@
  * vyloučený stejně jako u řádkového tlačítka (`selectableIds`/`isSelected` respektují
  * stejnou podmínku jako `[disabled]` na řádkovém Smazat tlačítku).
  *
+ * @refactor-note (2026-08-18) VÝBĚR SLOUPCŮ K EXPORTU - viz backlog task "export:
+ * uživatelský výběr sloupců přes checkboxy". `ExportPopupBuilderComponent` teď dostává
+ * `[columns]="exportableColumnOptions"` - stabilní property (viz bugfix-note
+ * 2026-08-18v2 u samotné property). Popup nabídne checkbox seznam (default vše
+ * zaškrtnuto) a při volbě formátu vrátí `ExportSelection` (`{format, columnKeys}`)
+ * místo dřívějšího prostého `ExportFormat`. `buildExportRows()` teď dostává
+ * `selectedColumnKeys: string[] | null` jako druhý parametr.
+ *
+ * @refactor-note (2026-08-18v8 - FINÁLNÍ) Export je VÝHRADNĚ řízen `detailsColumns` -
+ * `columnDefinitions` (tabulka) do exportu NEZASAHUJE VŮBEC, ani na výběr, jaká pole
+ * se nabídnou, ani na jejich formátování. Dřívější varianta (v7) sice extra pole brala
+ * z `detailsColumns`, ale KOMBINOVALA je se sloupci tabulky (a normalizovala tečkové
+ * cesty, aby se předešlo duplicitám) - zjednodušeno na jediný, nezávislý zdroj.
+ * `detailsColumns` teď nese i volitelné `type`/`format` (zatím využité pro `'date'`),
+ * takže export dokáže formátovat datum stejně jako to dřív dělala tabulka. Stránka bez
+ * `[detailsColumns]` bindingu nemá v exportu ŽÁDNÁ pole (ani z tabulky) - binding je
+ * nutný vždy, pokud má export na dané stránce něco obsahovat.
+ *
  * @dependencies
  * - EntityCrudService: CRUD volání (delete řádku/hromadné delete po jednom, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations (single i bulk).
- * - ExportPopupBuilderComponent: Formátový picker popup pro export dat.
+ * - ExportPopupBuilderComponent: Formátový picker popup pro export dat, včetně výběru sloupců.
  * - PermissionService: Vyhodnocení `TableButtons.permission` pro řádková tlačítka i
  *   viditelnost "Smazat vybrané" v dropdownu (`canBulkDelete`).
  * - CurrencyPipe, DatePipe: Standard pipes for data formatting.
@@ -115,7 +133,7 @@ import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.s
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { ExportFormat } from '../../../../shared/interfaces/export-format';
-import { ExportPopupBuilderComponent } from '../export-popup-builder/export-popup-builder.component';
+import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../export-popup-builder/export-popup-builder.component';
 
 /**
  * @description Technická pole, která se z exportu vynechávají VŽDY, napříč všemi
@@ -133,6 +151,40 @@ const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'is_deleted',
   'deleted_at',
 ];
+
+/**
+ * @description Klíče, které se REDAKUJÍ (nahradí `'••••••••'`), kdykoliv se objeví
+ * UVNITŘ vnořeného JSON objektu/pole exportovaného jako "extra pole" (viz
+ * `getExportValueForKey()`) - typicky auditní `context_data`/payload sloupce u logů,
+ * které mohou obsahovat 2FA kódy, přihlašovací tokeny apod. Na rozdíl od
+ * `DEFAULT_EXPORT_EXCLUDED_KEYS` (celé TOP-LEVEL pole pryč) tohle redaguje jen KONKRÉTNÍ
+ * klíč UVNITŘ objektu, zbytek payloadu zůstává čitelný a užitečný pro audit.
+ * @bugfix-note (2026-08-18v4) Přidáno po zjištění, že `context_data` u
+ * `login_success`/`login_2fa_challenge_sent` obsahuje `login_token` a `code` (2FA
+ * ověřovací kód) v čitelném tvaru - export do souboru bez ochrany by tak z auditního
+ * logu udělal cestu k úniku aktivních přihlašovacích tokenů/OTP kódů.
+ * @note KOMPROMIS: `code` je poměrně obecný název a teoreticky by mohl kolidovat s
+ * legitimním business polem (např. slevový/produktový kód) v JSON payloadu JINÉ
+ * entity než auth logy. Prioritou je zabránit úniku citlivých autentizačních údajů;
+ * pokud by tahle redakce v budoucnu způsobila false-positive u jiné tabulky, lze
+ * seznam zúžit/rozšířit o kontext (např. jen uvnitř `context_data` konkrétního modulu).
+ */
+const SENSITIVE_JSON_KEYS = new Set([
+  'password',
+  'password_hash',
+  'password_confirmation',
+  'token',
+  'access_token',
+  'refresh_token',
+  'login_token',
+  'secret',
+  'api_key',
+  'api_secret',
+  'otp',
+  'code',
+  'pin',
+  'authorization',
+]);
 
 /**
  * @description Renders a dynamic data table with support for pagination, sorting, filtering,
@@ -163,11 +215,34 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Doplňkové klíče k vynechání z exportu, nad rámec
-   * `DEFAULT_EXPORT_EXCLUDED_KEYS` - pro pole, která jsou technická/nezajímavá jen na
-   * konkrétní stránce (např. interní vazební ID, které nemá pro danou entitu smysl
-   * exportovat), ne globálně napříč celou appkou.
+   * `DEFAULT_EXPORT_EXCLUDED_KEYS` - pro pole, která jsou technická/nezajímavá/citlivá
+   * jen na konkrétní stránce (např. `permissions` u administrátorů - desítky klíčů,
+   * které nemá smysl v exportu vidět, nebo interní vazební ID), ne globálně napříč
+   * celou appkou. ZERO-TOUCH pro stránky, které tenhle problém nemají - default `[]`
+   * znamená beze změny; binding se přidává jen na těch pár stránkách, kde je to
+   * relevantní, ne plošně napříč celým adminem.
    */
   @Input() excludeFromExport: string[] = [];
+
+  /**
+   * @description JEDINÝ zdroj sloupců, které export smí nabídnout jako checkbox -
+   * `columnDefinitions` (tabulka) do exportu VŮBEC NEZASAHUJE, ani na určení, co se
+   * nabídne, ani na formátování hodnot. Typicky stejné pole, jaké stránka předává do
+   * `[itemDetailColumns]` na `app-details-builder` (`Core.ItemDetailsColumns[]`) - typ
+   * je zde záměrně minimální (`key`/`displayName`/volitelně `type`/`format`), aby
+   * `TableBuilderComponent` nemusel importovat konkrétní interface. `type`/`format` se
+   * použijí pro formátování hodnoty v exportu (zatím jen `type: 'date'` - viz
+   * `getExportValueForKey()`); ostatní typy se exportují jako syrová/best-effort
+   * hodnota. Default `[]` = stránka žádná pole v exportu nenabízí.
+   * @bugfix-note (2026-08-18v8) DŘÍV se checkbox seznam skládal ze DVOU zdrojů -
+   * `columnDefinitions` (sloupce tabulky) PLUS `detailsColumns` (pole navíc), s
+   * dodatečnou normalizací tečkových cest, aby se předešlo duplicitám (`roles` vs.
+   * `roles.0.role_name`). Zjednodušeno na JEDINÝ zdroj - `detailsColumns` - aby tabulka
+   * do exportu nezasahovala vůbec, ne jen "aby se sloupce nepotkaly duplicitně". Stránka,
+   * která `detailsColumns` nepředá, tak nemá v exportu ŽÁDNÁ pole (ani ta z tabulky) -
+   * je nutné binding vždy přidat, pokud má export na dané stránce něco obsahovat.
+   */
+  @Input() detailsColumns: { key: string; displayName: string; type?: string; format?: string }[] = [];
 
   /**
    * @description Kdy naposledy proběhlo úspěšné načtení dat této tabulky (ze sítě
@@ -567,6 +642,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     if (this.selectedIds.size === 0) return;
     this.showBulkMenu = false;
     this.exportSelectedOnly = true;
+    this.exportableColumnOptions = this.computeExportableColumnOptions();
     this.showExportPopup = true;
     this.cd.markForCheck();
   }
@@ -588,6 +664,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    */
   exportToCSV(): void {
     this.exportSelectedOnly = false;
+    this.exportableColumnOptions = this.computeExportableColumnOptions();
     this.showExportPopup = true;
     this.cd.markForCheck();
   }
@@ -601,6 +678,52 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     this.showExportPopup = false;
     this.exportSelectedOnly = false;
     this.cd.markForCheck();
+  }
+
+  /**
+   * @description Columns the admin may choose to include/exclude from the export,
+   * shown as checkboxes in `ExportPopupBuilderComponent`. Built from `columnDefinitions`
+   * filtered to `exportable !== false` (see `ColumnDefinition.exportable`) - columns
+   * explicitly marked `exportable: false` (passwords, permission-key dumps, etc.) never
+   * appear here, so the admin has no way to accidentally re-enable them. Empty array
+   * (e.g. a table whose columns never opt out of export) means the popup renders no
+   * column picker at all and export behaves exactly as before this feature.
+   * @bugfix-note (2026-08-18) KRITICKÝ BUG - VÝBĚR SLOUPCŮ SE IGNOROVAL PŘI EXPORTU:
+   * tohle bývalo GETTER (`get exportableColumnOptions()`), vyhodnocovaný Angularem PŘI
+   * KAŽDÉM change detection průchodu (protože je bindovaný v šabloně jako `[columns]`).
+   * `.filter().map()` pokaždé vrátil NOVOU INSTANCI pole - stejný obsah, jiná reference.
+   * Jenže i jediná interakce UVNITŘ `ExportPopupBuilderComponent` (zaškrtnutí checkboxu)
+   * spustí CD tick, který kvůli OnPush "dirty" propagaci nahoru přes rodiče přepočítal
+   * i tenhle getter zde - `ExportPopupBuilderComponent.columns` Input tak dostal PŘI
+   * KAŽDÉM KLIKU novou referenci pole, Angular to vyhodnotil jako změněný Input a
+   * zavolal `ngOnChanges` na popupu, který (viz refactor-note tamtéž) NEPODMÍNĚNĚ
+   * resetoval uživatelský výběr zpátky na "vše zaškrtnuto" - fakticky ihned po každém
+   * kliknutí, ještě předtím, než uživatel stihl zvolit formát. Výsledkem byl vždy export
+   * úplně všech sloupců bez ohledu na to, co bylo (dočasně) odškrtnuté.
+   *
+   * Oprava: `exportableColumnOptions` je teď PLAIN PROPERTY (ne getter), počítaná
+   * VÝSLOVNĚ JEN JEDNOU - při otevření popupu (`exportToCSV()`/`onBulkExportClick()`,
+   * přes `computeExportableColumnOptions()`). Po celou dobu, co je popup otevřený, tak
+   * `columns` Input drží STABILNÍ referenci - žádný další CD průchod ji nemění, takže
+   * `ngOnChanges` na popupu se po prvním otevření znovu nespustí a uživatelský výběr
+   * přežije až do kliknutí na formát. Doplněna i druhá vrstva ochrany přímo v
+   * `ExportPopupBuilderComponent.ngOnChanges()` (reset jen při reálné změně OBSAHU
+   * klíčů, ne pouhé reference) pro případ, že by se podobný vzor objevil jinde.
+   */
+  exportableColumnOptions: ExportColumnOption[] = [];
+
+  /**
+   * @description Vypočítá aktuální seznam exportovatelných sloupců VÝHRADNĚ z
+   * `detailsColumns` - `columnDefinitions` (tabulka) do toho nijak nezasahuje, viz
+   * `detailsColumns` bugfix-note. Volá se výslovně při otevření export popupu, ne
+   * automaticky při každé změně detekci.
+   */
+  private computeExportableColumnOptions(): ExportColumnOption[] {
+    const excludedKeys = new Set([...DEFAULT_EXPORT_EXCLUDED_KEYS, ...this.excludeFromExport]);
+
+    return this.detailsColumns
+      .filter(col => !excludedKeys.has(col.key))
+      .map(col => ({ key: col.key, label: col.displayName || col.key }));
   }
 
   /**
@@ -620,15 +743,20 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Builds and downloads the file in the chosen format, from either the
-   * full dataset or just the selected rows (see `resolveExportData()`).
-   * @param format Format chosen by the user in ExportPopupBuilderComponent.
+   * full dataset or just the selected rows (see `resolveExportData()`), restricted to
+   * the columns the admin left checked in the popup.
+   * @param selection Format + column selection chosen by the user in
+   * `ExportPopupBuilderComponent` - `columnKeys: null` means no column restriction
+   * (either the popup had no `exportable` columns to offer, or that concept simply
+   * doesn't apply - see `buildExportRows()`).
    */
-  async handleExportFormatSelected(format: ExportFormat): Promise<void> {
+  async handleExportFormatSelected(selection: ExportSelection): Promise<void> {
     if (this.isExporting) return;
     this.isExporting = true;
     this.cd.markForCheck();
 
     const selectedOnly = this.exportSelectedOnly;
+    const { format, columnKeys } = selection;
 
     try {
       const allData = await this.resolveExportData();
@@ -638,7 +766,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
         return;
       }
 
-      const rows = this.buildExportRows(allData);
+      const rows = this.buildExportRows(allData, columnKeys);
       const baseFilename = this.tableCaption || 'export';
       const filename = selectedOnly ? `${baseFilename}-vybrane` : baseFilename;
 
@@ -663,76 +791,48 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Maps raw records to plain header->formatted-value objects. Exportuje
-   * CELÝ řádek dat z API (kromě vyloučených klíčů - viz `DEFAULT_EXPORT_EXCLUDED_KEYS`
-   * a `@Input() excludeFromExport`), ne jen sloupce viditelné v tabulce. Sloupce z
-   * `columnDefinitions` se formátují stejně jako dřív přes `getCellValue()`; pole navíc
-   * se formátují best-effort podle odpovídající `InputDefinition`.
+   * VÝHRADNĚ pole z `detailsColumns` - `columnDefinitions` (tabulka) do toho nijak
+   * nezasahuje, viz `detailsColumns` bugfix-note. Formátování hodnot řeší
+   * `getExportValueForKey()`.
    * @param data Raw records fetched from the API (unpaginated).
+   * @param selectedColumnKeys Klíče polí, které admin nechal zaškrtnuté v popupu, nebo
+   * `null` pro "bez omezení" (export všech `detailsColumns`).
    * @returns Array of plain objects keyed by header label, ready for any format builder.
    */
-  private buildExportRows(data: any[]): Record<string, any>[] {
-    const columnKeys = this.columnDefinitions.map(c => c.key);
+  private buildExportRows(data: any[], selectedColumnKeys: string[] | null = null): Record<string, any>[] {
     const excludedKeys = new Set([...DEFAULT_EXPORT_EXCLUDED_KEYS, ...this.excludeFromExport]);
-    const extraKeys = this.collectExtraKeys(data, columnKeys, excludedKeys);
+
+    const exportColumns = this.detailsColumns
+      .filter(col => !excludedKeys.has(col.key))
+      .filter(col => selectedColumnKeys === null || selectedColumnKeys.includes(col.key));
 
     return data.map(item => {
       const row: Record<string, any> = {};
-
-      this.columnDefinitions.forEach(col => {
-        if (excludedKeys.has(col.key)) return;
-        row[col.header || col.key] = this.getCellValue(item, col) ?? '';
+      exportColumns.forEach(col => {
+        row[col.displayName || col.key] = this.getExportValueForKey(item, col);
       });
-
-      extraKeys.forEach(key => {
-        row[this.getExportHeaderForKey(key)] = this.getExportValueForKey(item, key);
-      });
-
       return row;
     });
   }
 
   /**
-   * @description Zjistí všechny klíče přítomné v datech, které nejsou pokryté
-   * `columnDefinitions` ani vyloučené (`excludedKeys`) - napříč VŠEMI záznamy (ne jen
-   * prvním), pro případ, že by nějaké pole bylo `null`/chybělo jen u některých řádků.
-   * Pořadí zachovává první výskyt klíče v datech.
+   * @description Best-effort formátování hodnoty pole z `detailsColumns`. Podporuje
+   * tečkové cesty (`roles.0.role_name`). Priorita formátování: (1) `InputDefinition`
+   * podle `column_name` (checkbox -> syrový `'true'`/`'false'` string, ne lokalizované
+   * "Yes"/"No" - jde o pole mimo přehled, kde je přesná strojově čitelná hodnota
+   * žádanější; select -> label z options), (2) `detailCol.type === 'date'` -> formát
+   * datem přes `DatePipe` (`detailCol.format`, default `'d.M.yyyy'`), (3) objekty/pole
+   * (např. `context_data` payload u logů) se serializují do JSON stringu - PŘED
+   * serializací projdou `redactSensitiveJson()`, aby citlivé klíče (2FA kódy, tokeny
+   * apod. - viz `SENSITIVE_JSON_KEYS`) skryté uvnitř payloadu neunikly do exportu,
+   * (4) syrová hodnota.
    */
-  private collectExtraKeys(data: any[], columnKeys: string[], excludedKeys: Set<string>): string[] {
-    const seen = new Set<string>([...columnKeys, ...excludedKeys]);
-    const ordered: string[] = [];
-    data.forEach(item => {
-      Object.keys(item || {}).forEach(key => {
-        if (seen.has(key)) return;
-        seen.add(key);
-        ordered.push(key);
-      });
-    });
-    return ordered;
-  }
-
-  /**
-   * @description Hlavička sloupce navíc - použije label z odpovídající `InputDefinition`,
-   * pokud existuje, jinak surový klíč z API.
-   */
-  private getExportHeaderForKey(key: string): string {
-    const inputDef = this.inputDefinitions.find(i => i.column_name === key);
-    return inputDef?.label || key;
-  }
-
-  /**
-   * @description Best-effort formátování hodnoty pole navíc podle odpovídající
-   * `InputDefinition`. Checkbox se exportuje jako syrový `'true'`/`'false'` string (ne
-   * přeložené "Yes"/"No" jako u viditelných sloupců typu `boolean` - jde o pole mimo
-   * přehled, kde je přesná strojově čitelná hodnota žádanější než lokalizovaný text).
-   * Select pole dostane label z options, jinak se použije syrová hodnota; objekty/pole
-   * (např. `roles` relace) se serializují do JSON stringu.
-   */
-  private getExportValueForKey(item: any, key: string): any {
-    const value = item?.[key];
+  private getExportValueForKey(item: any, detailCol: { key: string; type?: string; format?: string }): any {
+    const keys = detailCol.key.split('.');
+    const value = keys.reduce((obj, k) => obj?.[k], item);
     if (value === null || value === undefined) return '';
 
-    const inputDef = this.inputDefinitions.find(i => i.column_name === key);
-
+    const inputDef = this.inputDefinitions.find(i => i.column_name === detailCol.key);
     if (inputDef?.type === 'checkbox') {
       return (value === true || value === 'true' || value == 1) ? 'true' : 'false';
     }
@@ -740,8 +840,40 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
       const option = inputDef.options.find(opt => String(opt.value) === String(value));
       if (option) return option.label;
     }
+
+    if (detailCol.type === 'date') {
+      try {
+        return (new DatePipe('cs-CZ')).transform(value, detailCol.format || 'd.M.yyyy') ?? String(value);
+      } catch {
+        return String(value);
+      }
+    }
+
     if (typeof value === 'object') {
-      try { return JSON.stringify(value); } catch { return String(value); }
+      try { return JSON.stringify(this.redactSensitiveJson(value)); } catch { return String(value); }
+    }
+    return value;
+  }
+
+  /**
+   * @description Rekurzivně projde objekt/pole a nahradí hodnotu jakéhokoliv klíče
+   * uvedeného v `SENSITIVE_JSON_KEYS` (case-insensitive) placeholderem `'••••••••'`.
+   * Zbytek payloadu zůstává nedotčený a čitelný - jde o cílenou redakci konkrétních
+   * klíčů, ne o skrytí celého pole (to řeší `DEFAULT_EXPORT_EXCLUDED_KEYS`/
+   * `excludeFromExport` na úrovni celých top-level polí).
+   */
+  private redactSensitiveJson(value: any): any {
+    if (Array.isArray(value)) {
+      return value.map(v => this.redactSensitiveJson(v));
+    }
+    if (value && typeof value === 'object') {
+      const result: Record<string, any> = {};
+      for (const [k, v] of Object.entries(value)) {
+        result[k] = SENSITIVE_JSON_KEYS.has(k.toLowerCase())
+          ? '••••••••'
+          : this.redactSensitiveJson(v);
+      }
+      return result;
     }
     return value;
   }

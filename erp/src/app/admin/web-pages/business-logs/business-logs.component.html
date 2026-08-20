@@ -36,6 +36,7 @@
           <app-table-builder #activeTable
             [buttons]="buttons"
             [data]="data"
+            [detailsColumns]="detailsColumns"
             [currentFilters]="filters"
             [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
 (refreshRequested)="forceFullRefresh(filters)"

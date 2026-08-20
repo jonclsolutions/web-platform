@@ -30,6 +30,10 @@
         logy). "Smazat vybrané" v dropdownu je nadále podmíněné `canBulkDelete` (existuje
         aktivní `delete_button` s dostatečným oprávněním) - na tabulkách bez mazání se
         v menu jednoduše nezobrazí, přesně jako u řádkových tlačítek.
+    @refactor-note (2026-08-18): `app-export-popup-builder` dostal nový
+        `[columns]="exportableColumnOptions"` binding - viz table-builder.component.ts
+        stejné datum. Popup si sám rozhodne, jestli sloupcový picker vůbec zobrazí
+        (prázdné pole = beze změny oproti dřívějšku).
 -->
 
 @if (selectedIds.size > 0) {
@@ -201,6 +205,7 @@ aria-label="Vybrat vše na stránce">
 <app-export-popup-builder
 [itemCount]="exportSelectedOnly ? selectedIds.size : data.length"
 [isExporting]="isExporting"
+[columns]="exportableColumnOptions"
 (formatSelected)="handleExportFormatSelected($event)"
 (closed)="closeExportPopup()">
 </app-export-popup-builder>

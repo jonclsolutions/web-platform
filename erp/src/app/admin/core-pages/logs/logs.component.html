@@ -4,65 +4,70 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08-18v4): `[detailsColumns]="detailsColumns"` binding na
+        `app-table-builder` - VOLITELNÝ, jen pro hezčí popisky extra polí v exportu
+        (`context_data` -> "Payload / JSON Data" místo syrového klíče). Která extra
+        pole se vůbec nabídnou se určuje skenem dat (zero-touch), tenhle binding na to
+        nemá vliv - viz table-builder.component.ts stejné datum.
 -->
-    
 <div class="user-request-container container mx-auto p-4">
-  @if (errorMessage) {
-    <div class="error-banner">
+@if (errorMessage) {
+<div class="error-banner">
       ⚠️ {{ errorMessage }}
-    </div>
+</div>
   }
-  @if (!errorMessage) {
-    <div>
-      <div class="toolbar-actions m-b-t-5">
-        <div class="table-header">Auditní záznamy (Business Logs)</div>
-        <div class="toolbar-actions-in">
-          <app-button-builder
-            [configs]="toolbarButtons"
-            (actionTriggered)="handleToolbarAction($event)">
-          </app-button-builder>
-        </div>
-      </div>
-      <div class="main-content-layout">
-        <div class="filter-side-panel" [class.active]="isFilterVisible">
-          <app-filter-form-builder
-            [filterColumns]="filterColumns"
-            [initialFilters]="filters"
-            (filtersApplied)="applyFilters($event)"
-            (filtersCleared)="clearFilters()">
-          </app-filter-form-builder>
-        </div>
-        <div class="table-and-pagination-container">
-          <app-table-builder #activeTable
-            [buttons]="buttons"
-            [data]="data"
-            [currentFilters]="filters"
-            [columns]="tableColumns"
-            [isFullWidth]="isTableFullWidth"
-            [tableCaption]="'Seznam událostí systému'"
-            [apiEndpoint]="apiEndpoint"
-            (viewDetailsOpened)="handleViewDetails($event)">
-          </app-table-builder>
-          <div class="flex justify-between items-center mt-4">
-            <app-pagination-buttons-builder
-              [currentPage]="currentPage"
-              [totalPages]="totalPages"
-              [totalItems]="totalItems"
-              [itemsPerPage]="itemsPerPage"
-              [dataLength]="data.length"
-              (pageChange)="handlePageChange($event)"
-              (itemsPerPageChange)="handleItemsPerPageChange($event)">
-            </app-pagination-buttons-builder>
-          </div>
-        </div>
-      </div>
-    </div>
+@if (!errorMessage) {
+<div>
+<div class="toolbar-actions m-b-t-5">
+<div class="table-header">Auditní záznamy (Business Logs)</div>
+<div class="toolbar-actions-in">
+<app-button-builder
+[configs]="toolbarButtons"
+(actionTriggered)="handleToolbarAction($event)">
+</app-button-builder>
+</div>
+</div>
+<div class="main-content-layout">
+<div class="filter-side-panel" [class.active]="isFilterVisible">
+<app-filter-form-builder
+[filterColumns]="filterColumns"
+[initialFilters]="filters"
+(filtersApplied)="applyFilters($event)"
+(filtersCleared)="clearFilters()">
+</app-filter-form-builder>
+</div>
+<div class="table-and-pagination-container">
+<app-table-builder #activeTable
+[buttons]="buttons"
+[data]="data"
+[currentFilters]="filters"
+[columns]="tableColumns"
+[detailsColumns]="detailsColumns"
+[isFullWidth]="isTableFullWidth"
+[tableCaption]="'Seznam událostí systému'"
+[apiEndpoint]="apiEndpoint"
+(viewDetailsOpened)="handleViewDetails($event)">
+</app-table-builder>
+<div class="flex justify-between items-center mt-4">
+<app-pagination-buttons-builder
+[currentPage]="currentPage"
+[totalPages]="totalPages"
+[totalItems]="totalItems"
+[itemsPerPage]="itemsPerPage"
+[dataLength]="data.length"
+(pageChange)="handlePageChange($event)"
+(itemsPerPageChange)="handleItemsPerPageChange($event)">
+</app-pagination-buttons-builder>
+</div>
+</div>
+</div>
+</div>
   }
 </div>
 @if (showDetails) {
-  <app-details-builder
-    [itemDetailColumns]="detailsColumns"
-    [itemData]="selectedItemForDetails"
-    (closeDetails)="handleCloseDetails()">
-  </app-details-builder>
+<app-details-builder
+[itemDetailColumns]="detailsColumns"
+[itemData]="selectedItemForDetails"
+(closeDetails)="handleCloseDetails()">
+</app-details-builder>
 }

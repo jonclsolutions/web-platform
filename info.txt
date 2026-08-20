@@ -1,1 +1,7 @@
 smtpd_tls_security_level = may //TOTO ZMENIT ZPET NA PRODUKCI
+
+
+
+
+
+[detailsColumns]="detailsColumns"   - pridat do vse table-builder-app (kvuli exportu)
