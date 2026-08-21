@@ -17,6 +17,10 @@
  * `selectedFiles: File[]` (max 10, viz StoreWebSalesOrderRequest) - `onFileSelected()`
  * nahrazeno `onFilesChanged()`, napojeno na sdílenou `MultiFileUploadComponent`. FormData
  * teď posílá `attachments[]` (pole) místo `attachment` (jeden soubor).
+ * @bugfix-note (2026-08-19) Regex validátoru telefonu `^\+?[0-9]*$` NEPOVOLOVAL mezery,
+ * takže i validní formát ve stylu vlastního placeholderu ("+420 123 456 789") padal na
+ * chybu - opraveno na `^\+?[0-9 ]*$` (číslice i mezery povoleny, `+` jen na začátku).
+ * Stejná oprava provedena i v contact.component.ts, který měl identický regex/stejnou chybu.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -106,7 +110,7 @@ export class OrderFormComponent extends BasePublicComponent {
       client_name: ['', Validators.required],
       ico: ['', [Validators.pattern('^[0-9]*$')]],
       client_address: [''],
-      client_phone: ['', [Validators.pattern('^\\+?[0-9]*$'), Validators.maxLength(20)]],
+      client_phone: ['', [Validators.pattern('^\\+?[0-9 ]*$'), Validators.maxLength(20)]],
       client_email: ['', [Validators.required, Validators.email]],
       order_description: ['', Validators.required],
       dataProcessingAgreement: [false, Validators.requiredTrue],

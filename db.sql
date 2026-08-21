@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 16, 2026 at 03:46 PM
+-- Generation Time: Aug 21, 2026 at 03:24 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -38,31 +38,36 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('laravel-cache-08a35293e09f508494096c1c1b3819edb9df50db', 'i:32;', 1786887896),
-('laravel-cache-08a35293e09f508494096c1c1b3819edb9df50db:timer', 'i:1786887896;', 1786887896),
-('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9', 'i:5;', 1786887330),
-('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9:timer', 'i:1786887330;', 1786887330),
-('laravel-cache-54a3532e057dad0aaee884059fab91c3', 'i:1;', 1786887322),
-('laravel-cache-54a3532e057dad0aaee884059fab91c3:timer', 'i:1786887322;', 1786887322),
-('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e', 'i:1;', 1786887640),
-('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e:timer', 'i:1786887640;', 1786887640),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1786887647),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1786887647;', 1786887647),
+('laravel-cache-08a35293e09f508494096c1c1b3819edb9df50db', 'i:3;', 1786889213),
+('laravel-cache-08a35293e09f508494096c1c1b3819edb9df50db:timer', 'i:1786889213;', 1786889213),
+('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9', 'i:9;', 1787262358),
+('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9:timer', 'i:1787262358;', 1787262358),
+('laravel-cache-3fa1d25a9f34b76ef6c342f0409f077f', 'i:1;', 1787311029),
+('laravel-cache-3fa1d25a9f34b76ef6c342f0409f077f:timer', 'i:1787311029;', 1787311029),
+('laravel-cache-54a3532e057dad0aaee884059fab91c3', 'i:1;', 1786921033),
+('laravel-cache-54a3532e057dad0aaee884059fab91c3:timer', 'i:1786921033;', 1786921033),
+('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e', 'i:1;', 1787315153),
+('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e:timer', 'i:1787315153;', 1787315153),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1787315919),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787315919;', 1787315919),
 ('laravel-cache-8555c1a11d44ab0bd4e6f29d888bc874', 'i:3;', 1786887553),
 ('laravel-cache-8555c1a11d44ab0bd4e6f29d888bc874:timer', 'i:1786887553;', 1786887553),
-('laravel-cache-862e0a123663139c2a0be726ddb86842', 'i:1;', 1786887602),
-('laravel-cache-862e0a123663139c2a0be726ddb86842:timer', 'i:1786887602;', 1786887602),
+('laravel-cache-862e0a123663139c2a0be726ddb86842', 'i:1;', 1787315153),
+('laravel-cache-862e0a123663139c2a0be726ddb86842:timer', 'i:1787315153;', 1787315153),
 ('laravel-cache-b1e57407edcf287f0410de814a2da740', 'i:1;', 1786887640),
 ('laravel-cache-b1e57407edcf287f0410de814a2da740:timer', 'i:1786887640;', 1786887640),
 ('laravel-cache-babf79d7e6993b354b018be8ec035fff', 'i:1;', 1786876010),
 ('laravel-cache-babf79d7e6993b354b018be8ec035fff:timer', 'i:1786876010;', 1786876010),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:8;', 1786887612),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1786887612;', 1786887612),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:7;', 1787318738),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1787318738;', 1787318738),
+('laravel-cache-illuminate:queue:restart', 'i:1787314191;', 2102674191),
+('laravel-cache-login-fail:jonasbucina@rpsw.cz', 'i:1;', 1787315993),
+('laravel-cache-login-fail:jonasbucina@rpsw.cz:timer', 'i:1787315993;', 1787315993),
 ('laravel-cache-login-fail:test1@test.cz', 'i:3;', 1786888393),
 ('laravel-cache-login-fail:test1@test.cz:timer', 'i:1786888393;', 1786888393),
 ('laravel-cache-password-reset-email:test1@test.cz', 'i:1;', 1786888420),
 ('laravel-cache-password-reset-email:test1@test.cz:timer', 'i:1786888420;', 1786888420),
-('laravel-cache-site_setting_active_web', 'O:29:\"App\\Models\\Web\\WebSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:17:\"web_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:5:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-15 17:58:16\";}s:11:\"\0*\0original\";a:5:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-15 17:58:16\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:13:\"is_web_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1786887388);
+('laravel-cache-site_setting_active_web', 'O:29:\"App\\Models\\Web\\WebSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:17:\"web_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:5:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-15 17:58:16\";}s:11:\"\0*\0original\";a:5:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-15 17:58:16\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:13:\"is_web_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1787317646);
 
 -- --------------------------------------------------------
 
@@ -104,68 +109,68 @@ CREATE TABLE `core_permissions` (
 --
 
 INSERT INTO `core_permissions` (`id`, `permission_key`, `description`, `module`, `created_at`) VALUES
-(2, 'web-view-web-logs', 'Prohlížení web logů', 'web', '2026-02-14 08:12:31'),
-(3, 'web-view-personal-info', 'Zobrazení osobních údajů', 'web', '2026-02-14 08:12:31'),
-(5, 'web-view-dashboard', 'Přístup k nástěnce', 'web', '2026-02-14 08:12:31'),
-(6, 'web-view-edit-website', 'Možnost editovat web', 'web', '2026-02-14 08:12:31'),
-(7, 'view-deleted', 'Zobrazit softdeleted záznamy', 'web', '2026-02-14 08:12:31'),
-(13, 'shop-manage-products', 'Správa produktů v e-shopu', 'shop', '2026-03-22 08:12:31'),
-(14, 'shop-manage-categories', 'Správa kategorií produktů', 'shop', '2026-03-22 08:12:31'),
-(15, 'shop-view-orders', 'Prohlížení objednávek e-shopu', 'shop', '2026-03-22 08:12:31'),
+(2, 'web-view-web-logs', 'Zobrazit historii logů (auditní záznam akcí) webové sekce', 'web', '2026-02-14 08:12:31'),
+(3, 'web-view-personal-info', 'Zobrazit a upravit vlastní osobní údaje přihlášeného uživatele', 'web', '2026-02-14 08:12:31'),
+(5, 'web-view-dashboard', '[doporučení: vždy zapnuto] Zobrazit úvodní nástěnku webové sekce (výchozí stránka po vstupu do menu Web)', 'web', '2026-02-14 08:12:31'),
+(6, 'web-view-edit-website', 'Upravit texty a nastavení veřejné webové prezentace', 'web', '2026-02-14 08:12:31'),
+(7, 'view-deleted', 'Zobrazit softdeleted (smazané) záznamy v koši napříč moduly', 'web', '2026-02-14 08:12:31'),
+(13, 'shop-manage-products', 'Správa produktů e-shopu (vytváření, úprava, mazání)', 'shop', '2026-03-22 08:12:31'),
+(14, 'shop-manage-categories', 'Správa kategorií produktů e-shopu', 'shop', '2026-03-22 08:12:31'),
+(15, 'shop-view-orders', 'Zobrazit objednávky e-shopu', 'shop', '2026-03-22 08:12:31'),
 (16, 'shop-manage-customers', 'Správa zákazníků e-shopu', 'shop', '2026-03-22 08:12:31'),
-(17, 'shop-view-reports', 'Prohlížení reportů e-shopu', 'shop', '2026-03-22 08:12:31'),
-(18, 'view-web', 'Zobrazit Web sekci Administrace.', 'core', '2026-03-25 11:37:06'),
-(19, 'view-eshop', 'Zobrazit Eshop sekci Administrace.', 'core', '2026-03-25 11:37:06'),
-(20, 'shop-view-dashboard', 'Zobrazit dashboard Eshop sekce administrace.', 'core', '2026-03-25 11:42:21'),
-(21, 'shop-view-logs', 'Může zobrazit logy eshopu.', 'core', '2026-03-26 22:39:15'),
-(22, 'shop-manage-shipping-methods', 'Zobrazit metody dopravy.', 'core', '2026-03-27 14:41:13'),
-(23, 'shop-manage-suppliers', 'Zobrazit dodavatele.', 'core', '2026-03-27 14:41:13'),
-(24, 'shop-manage-payment-methods', 'Zobrazit způsoby plateb.', 'core', '2026-03-27 14:49:37'),
-(26, 'shop-set-maintenance-mode', 'Může přepnout eshop do stavu údržby.', 'shop', '2026-06-12 13:09:55'),
-(29, 'shop-view-edit-eshop', 'Možnost Editovat shop texty.', 'core', '2026-06-30 10:01:32'),
-(30, 'core-view-welcome-page', 'Zobrazit uvítací stránku po přihlášení.', 'web', '2026-07-26 20:08:46'),
-(32, 'view-core', 'Zobrazit Core / System založku v administraci.', 'core', '2026-08-07 07:23:39'),
-(33, 'web-set-maintenance-mode', 'Může přepnout web do stavu údržby.', 'web', '2026-08-11 22:30:26'),
-(35, 'web-support-tickets-view', 'Zobrazit tickety podpory', 'web', '2026-08-13 08:53:39'),
-(36, 'web-support-tickets-create', 'Vytvořit ticket podpory (interní)', 'web', '2026-08-13 08:53:39'),
-(37, 'web-support-tickets-update', 'Upravit ticket podpory', 'web', '2026-08-13 08:53:39'),
-(38, 'web-support-tickets-delete', 'Smazat / obnovit ticket podpory', 'web', '2026-08-13 08:53:39'),
-(39, 'web-sales-leads-view', 'Zobrazit sales leady', 'web', '2026-08-13 08:53:39'),
-(40, 'web-sales-leads-create', 'Vytvořit sales lead', 'web', '2026-08-13 08:53:39'),
-(41, 'web-sales-leads-update', 'Upravit sales lead', 'web', '2026-08-13 08:53:39'),
-(42, 'web-sales-leads-delete', 'Smazat / obnovit sales lead', 'web', '2026-08-13 08:53:39'),
-(43, 'web-news-view', 'Zobrazit novinky', 'web', '2026-08-13 08:53:39'),
-(44, 'web-news-create', 'Vytvořit novinku', 'web', '2026-08-13 08:53:39'),
-(45, 'web-news-update', 'Upravit novinku', 'web', '2026-08-13 08:53:39'),
-(46, 'web-news-delete', 'Smazat / obnovit novinku', 'web', '2026-08-13 08:53:39'),
-(47, 'web-sales-orders-view', 'Zobrazit poptávkové objednávky', 'web', '2026-08-13 08:53:39'),
-(48, 'web-sales-orders-create', 'Vytvořit poptávkovou objednávku (interně)', 'web', '2026-08-13 08:53:39'),
+(17, 'shop-view-reports', 'Zobrazit reporty a statistiky e-shopu', 'shop', '2026-03-22 08:12:31'),
+(18, 'view-web', '[doporučení: vždy zapnuto] Zobrazit záložku Web v menu administrace - bez tohoto práva se do sekce nelze dostat', 'core', '2026-03-25 11:37:06'),
+(19, 'view-eshop', '[doporučení: vždy zapnuto] Zobrazit záložku Eshop v menu administrace - bez tohoto práva se do sekce nelze dostat', 'core', '2026-03-25 11:37:06'),
+(20, 'shop-view-dashboard', '[doporučení: vždy zapnuto] Zobrazit úvodní nástěnku e-shop sekce (výchozí stránka po vstupu do menu Eshop)', 'core', '2026-03-25 11:42:21'),
+(21, 'shop-view-logs', 'Zobrazit historii logů (auditní záznam akcí) e-shopu', 'core', '2026-03-26 22:39:15'),
+(22, 'shop-manage-shipping-methods', 'Správa metod dopravy e-shopu', 'core', '2026-03-27 14:41:13'),
+(23, 'shop-manage-suppliers', 'Správa dodavatelů e-shopu', 'core', '2026-03-27 14:41:13'),
+(24, 'shop-manage-payment-methods', 'Správa způsobů platby e-shopu', 'core', '2026-03-27 14:49:37'),
+(26, 'shop-set-maintenance-mode', 'Přepnout e-shop do režimu údržby (nepřístupný pro zákazníky)', 'shop', '2026-06-12 13:09:55'),
+(29, 'shop-view-edit-eshop', 'Upravit texty a nastavení e-shopu', 'core', '2026-06-30 10:01:32'),
+(30, 'core-view-welcome-page', '[doporučení: vždy zapnuto] Zobrazit uvítací stránku, na kterou je uživatel přesměrován hned po přihlášení', 'web', '2026-07-26 20:08:46'),
+(32, 'view-core', '[doporučení: vždy zapnuto] Zobrazit záložku Core / System v menu administrace - bez tohoto práva se do sekce nelze dostat', 'core', '2026-08-07 07:23:39'),
+(33, 'web-set-maintenance-mode', 'Přepnout web do režimu údržby (nepřístupný pro veřejnost)', 'web', '2026-08-11 22:30:26'),
+(35, 'web-support-tickets-view', 'Zobrazit tickety podpory od zákazníků', 'web', '2026-08-13 08:53:39'),
+(36, 'web-support-tickets-create', 'Vytvořit ticket podpory ručně (interně administrátorem)', 'web', '2026-08-13 08:53:39'),
+(37, 'web-support-tickets-update', 'Upravit / zpracovat ticket podpory', 'web', '2026-08-13 08:53:39'),
+(38, 'web-support-tickets-delete', 'Smazat / obnovit ticket podpory z koše', 'web', '2026-08-13 08:53:39'),
+(39, 'web-sales-leads-view', 'Zobrazit poptávkové leady (kontakty potenciálních zákazníků)', 'web', '2026-08-13 08:53:39'),
+(40, 'web-sales-leads-create', 'Vytvořit poptávkový lead ručně (interně administrátorem)', 'web', '2026-08-13 08:53:39'),
+(41, 'web-sales-leads-update', 'Upravit poptávkový lead', 'web', '2026-08-13 08:53:39'),
+(42, 'web-sales-leads-delete', 'Smazat / obnovit poptávkový lead z koše', 'web', '2026-08-13 08:53:39'),
+(43, 'web-news-view', 'Zobrazit novinky / články na webu', 'web', '2026-08-13 08:53:39'),
+(44, 'web-news-create', 'Vytvořit novou novinku / článek', 'web', '2026-08-13 08:53:39'),
+(45, 'web-news-update', 'Upravit existující novinku / článek', 'web', '2026-08-13 08:53:39'),
+(46, 'web-news-delete', 'Smazat / obnovit novinku z koše', 'web', '2026-08-13 08:53:39'),
+(47, 'web-sales-orders-view', 'Zobrazit poptávkové objednávky vzniklé z webového formuláře', 'web', '2026-08-13 08:53:39'),
+(48, 'web-sales-orders-create', 'Vytvořit poptávkovou objednávku ručně (interně administrátorem)', 'web', '2026-08-13 08:53:39'),
 (49, 'web-sales-orders-update', 'Upravit poptávkovou objednávku', 'web', '2026-08-13 08:53:39'),
-(50, 'web-sales-orders-delete', 'Smazat / obnovit poptávkovou objednávku', 'web', '2026-08-13 08:53:39'),
-(51, 'web-job-applications-view', 'Zobrazit uchazeče', 'web', '2026-08-13 08:53:39'),
-(52, 'web-job-applications-create', 'Vytvořit záznam uchazeče (interně)', 'web', '2026-08-13 08:53:39'),
-(53, 'web-job-applications-update', 'Upravit uchazeče', 'web', '2026-08-13 08:53:39'),
-(54, 'web-job-applications-delete', 'Smazat / obnovit uchazeče', 'web', '2026-08-13 08:53:39'),
-(55, 'core-administrators-view', 'Zobrazit administrátorské účty', 'core', '2026-08-13 08:53:39'),
-(56, 'core-administrators-create', 'Vytvořit administrátorský účet', 'core', '2026-08-13 08:53:39'),
+(50, 'web-sales-orders-delete', 'Smazat / obnovit poptávkovou objednávku z koše', 'web', '2026-08-13 08:53:39'),
+(51, 'web-job-applications-view', 'Zobrazit uchazeče, kteří reagovali na pracovní nabídku', 'web', '2026-08-13 08:53:39'),
+(52, 'web-job-applications-create', 'Vytvořit záznam uchazeče ručně (interně administrátorem)', 'web', '2026-08-13 08:53:39'),
+(53, 'web-job-applications-update', 'Upravit záznam uchazeče', 'web', '2026-08-13 08:53:39'),
+(54, 'web-job-applications-delete', 'Smazat / obnovit záznam uchazeče z koše', 'web', '2026-08-13 08:53:39'),
+(55, 'core-administrators-view', 'Zobrazit seznam administrátorských účtů', 'core', '2026-08-13 08:53:39'),
+(56, 'core-administrators-create', 'Vytvořit nový administrátorský účet', 'core', '2026-08-13 08:53:39'),
 (57, 'core-administrators-update', 'Upravit administrátorský účet', 'core', '2026-08-13 08:53:39'),
-(58, 'core-administrators-delete', 'Smazat / obnovit administrátorský účet', 'core', '2026-08-13 08:53:39'),
-(59, 'core-external-links-view', 'Zobrazit externí odkazy', 'core', '2026-08-13 08:53:39'),
+(58, 'core-administrators-delete', 'Smazat / obnovit administrátorský účet z koše', 'core', '2026-08-13 08:53:39'),
+(59, 'core-external-links-view', 'Zobrazit externí odkazy zobrazené v administraci', 'core', '2026-08-13 08:53:39'),
 (60, 'core-external-links-create', 'Vytvořit externí odkaz', 'core', '2026-08-13 08:53:39'),
 (61, 'core-external-links-update', 'Upravit externí odkaz', 'core', '2026-08-13 08:53:39'),
-(62, 'core-external-links-delete', 'Smazat / obnovit externí odkaz', 'core', '2026-08-13 08:53:39'),
-(63, 'core-legal-documents-view', 'Zobrazit právní dokumenty (GDPR/TOS/Cookies)', 'core', '2026-08-13 08:53:39'),
-(64, 'core-legal-documents-create', 'Vytvořit sekci právního dokumentu', 'core', '2026-08-13 08:53:39'),
+(62, 'core-external-links-delete', 'Smazat / obnovit externí odkaz z koše', 'core', '2026-08-13 08:53:39'),
+(63, 'core-legal-documents-view', 'Zobrazit právní dokumenty webu (GDPR, obchodní podmínky, cookies)', 'core', '2026-08-13 08:53:39'),
+(64, 'core-legal-documents-create', 'Vytvořit novou sekci právního dokumentu', 'core', '2026-08-13 08:53:39'),
 (65, 'core-legal-documents-update', 'Upravit sekci právního dokumentu', 'core', '2026-08-13 08:53:39'),
 (66, 'core-legal-documents-delete', 'Smazat sekci právního dokumentu', 'core', '2026-08-13 08:53:39'),
-(67, 'core-legal-config-view', 'Zobrazit firemní konfiguraci / sociální sítě', 'core', '2026-08-13 08:53:39'),
-(68, 'core-legal-config-create', 'Vytvořit položku sociální sítě', 'core', '2026-08-13 08:53:39'),
-(69, 'core-legal-config-update', 'Upravit firemní konfiguraci / sociální síť', 'core', '2026-08-13 08:53:39'),
-(70, 'core-legal-config-delete', 'Smazat položku sociální sítě', 'core', '2026-08-13 08:53:39'),
-(73, 'web-user-requests-view', 'Zobrazit uživatelské požadavky (provize)', 'web', '2026-08-13 12:10:56'),
-(74, 'web-user-requests-create', 'Vytvořit uživatelský požadavek (provize)', 'web', '2026-08-13 12:10:56'),
-(75, 'web-user-requests-update', 'Upravit uživatelský požadavek (provize)', 'web', '2026-08-13 12:10:56'),
-(76, 'web-user-requests-delete', 'Smazat / obnovit uživatelský požadavek (provize)', 'web', '2026-08-13 12:10:56');
+(67, 'core-legal-config-view', 'Zobrazit firemní údaje a odkazy na sociální sítě', 'core', '2026-08-13 08:53:39'),
+(68, 'core-legal-config-create', 'Vytvořit odkaz na sociální síť', 'core', '2026-08-13 08:53:39'),
+(69, 'core-legal-config-update', 'Upravit firemní údaje / odkaz na sociální síť', 'core', '2026-08-13 08:53:39'),
+(70, 'core-legal-config-delete', 'Smazat odkaz na sociální síť', 'core', '2026-08-13 08:53:39'),
+(73, 'web-user-requests-view', 'Zobrazit uživatelské požadavky na výplatu provize', 'web', '2026-08-13 12:10:56'),
+(74, 'web-user-requests-create', 'Vytvořit uživatelský požadavek na provizi ručně', 'web', '2026-08-13 12:10:56'),
+(75, 'web-user-requests-update', 'Upravit uživatelský požadavek na provizi (např. schválení)', 'web', '2026-08-13 12:10:56'),
+(76, 'web-user-requests-delete', 'Smazat / obnovit uživatelský požadavek na provizi z koše', 'web', '2026-08-13 12:10:56');
 
 -- --------------------------------------------------------
 
@@ -190,8 +195,8 @@ CREATE TABLE `core_roles` (
 INSERT INTO `core_roles` (`id`, `role_name`, `description`, `forces_2fa`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'sysadmin', 'Systémový administrátor - má vše', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
 (2, 'admin', 'Administrátor - správa webu', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(12, 'test', 'test', 1, '2026-08-10 22:56:00', '2026-08-16 13:33:43', NULL),
-(13, 'web-read-only', NULL, 0, '2026-08-13 11:55:25', '2026-08-13 12:14:09', NULL);
+(12, 'test', 'test', 0, '2026-08-10 22:56:00', '2026-08-16 14:04:36', NULL),
+(13, 'test2', NULL, 0, '2026-08-13 11:55:25', '2026-08-16 14:53:09', NULL);
 
 -- --------------------------------------------------------
 
@@ -314,12 +319,6 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (12, 7),
 (12, 18),
 (12, 19),
-(12, 20),
-(12, 21),
-(12, 22),
-(12, 23),
-(12, 24),
-(12, 29),
 (12, 30),
 (12, 32),
 (12, 33),
@@ -327,16 +326,8 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (12, 36),
 (12, 37),
 (12, 38),
-(12, 39),
-(12, 40),
-(12, 41),
-(12, 42),
 (12, 43),
 (12, 45),
-(12, 47),
-(12, 48),
-(12, 49),
-(12, 50),
 (12, 51),
 (12, 52),
 (12, 53),
@@ -370,9 +361,12 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (13, 32),
 (13, 35),
 (13, 39),
-(13, 43),
 (13, 47),
 (13, 51),
+(13, 55),
+(13, 56),
+(13, 57),
+(13, 58),
 (13, 73);
 
 -- --------------------------------------------------------
@@ -461,13 +455,6 @@ CREATE TABLE `failed_jobs` (
   `exception` longtext NOT NULL,
   `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `failed_jobs`
---
-
-INSERT INTO `failed_jobs` (`id`, `uuid`, `connection`, `queue`, `payload`, `exception`, `failed_at`) VALUES
-(1, 'e95c8af1-1fdc-44f0-a995-0f07f46b8b37', 'database', 'default', '{\"uuid\":\"e95c8af1-1fdc-44f0-a995-0f07f46b8b37\",\"displayName\":\"App\\\\Mail\\\\Web\\\\WebSalesOrderReceived\",\"job\":\"Illuminate\\\\Queue\\\\CallQueuedHandler@call\",\"maxTries\":null,\"maxExceptions\":null,\"failOnTimeout\":false,\"backoff\":null,\"timeout\":null,\"retryUntil\":null,\"data\":{\"commandName\":\"Illuminate\\\\Mail\\\\SendQueuedMailable\",\"command\":\"O:34:\\\"Illuminate\\\\Mail\\\\SendQueuedMailable\\\":15:{s:8:\\\"mailable\\\";O:34:\\\"App\\\\Mail\\\\Web\\\\WebSalesOrderReceived\\\":3:{s:5:\\\"order\\\";O:45:\\\"Illuminate\\\\Contracts\\\\Database\\\\ModelIdentifier\\\":5:{s:5:\\\"class\\\";s:28:\\\"App\\\\Models\\\\Web\\\\WebSalesOrder\\\";s:2:\\\"id\\\";i:6;s:9:\\\"relations\\\";a:0:{}s:10:\\\"connection\\\";s:5:\\\"mysql\\\";s:15:\\\"collectionClass\\\";N;}s:2:\\\"to\\\";a:1:{i:0;a:2:{s:4:\\\"name\\\";N;s:7:\\\"address\\\";s:15:\\\"sdfsssdf@sdf.cz\\\";}}s:6:\\\"mailer\\\";s:4:\\\"smtp\\\";}s:5:\\\"tries\\\";N;s:7:\\\"timeout\\\";N;s:13:\\\"maxExceptions\\\";N;s:17:\\\"shouldBeEncrypted\\\";b:0;s:10:\\\"connection\\\";N;s:5:\\\"queue\\\";N;s:5:\\\"delay\\\";N;s:11:\\\"afterCommit\\\";N;s:10:\\\"middleware\\\";a:0:{}s:7:\\\"chained\\\";a:0:{}s:15:\\\"chainConnection\\\";N;s:10:\\\"chainQueue\\\";N;s:19:\\\"chainCatchCallbacks\\\";N;s:3:\\\"job\\\";N;}\"},\"createdAt\":1786310243,\"delay\":null}', 'Symfony\\Component\\Mailer\\Exception\\TransportException: Connection could not be established with host \"127.0.0.1:1025\": stream_socket_client(): Unable to connect to 127.0.0.1:1025 (Connection refused) in /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/mailer/Transport/Smtp/Stream/SocketStream.php:154\nStack trace:\n#0 [internal function]: Symfony\\Component\\Mailer\\Transport\\Smtp\\Stream\\SocketStream->{closure:Symfony\\Component\\Mailer\\Transport\\Smtp\\Stream\\SocketStream::initialize():153}()\n#1 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/mailer/Transport/Smtp/Stream/SocketStream.php(157): stream_socket_client()\n#2 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/mailer/Transport/Smtp/SmtpTransport.php(279): Symfony\\Component\\Mailer\\Transport\\Smtp\\Stream\\SocketStream->initialize()\n#3 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/mailer/Transport/Smtp/SmtpTransport.php(211): Symfony\\Component\\Mailer\\Transport\\Smtp\\SmtpTransport->start()\n#4 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/mailer/Transport/AbstractTransport.php(69): Symfony\\Component\\Mailer\\Transport\\Smtp\\SmtpTransport->doSend()\n#5 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/mailer/Transport/Smtp/SmtpTransport.php(138): Symfony\\Component\\Mailer\\Transport\\AbstractTransport->send()\n#6 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Mail/Mailer.php(584): Symfony\\Component\\Mailer\\Transport\\Smtp\\SmtpTransport->send()\n#7 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Mail/Mailer.php(331): Illuminate\\Mail\\Mailer->sendSymfonyMessage()\n#8 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Mail/Mailable.php(207): Illuminate\\Mail\\Mailer->send()\n#9 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Support/Traits/Localizable.php(19): Illuminate\\Mail\\Mailable->{closure:Illuminate\\Mail\\Mailable::send():200}()\n#10 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Mail/Mailable.php(200): Illuminate\\Mail\\Mailable->withLocale()\n#11 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Mail/SendQueuedMailable.php(82): Illuminate\\Mail\\Mailable->send()\n#12 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Mail\\SendQueuedMailable->handle()\n#13 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()\n#14 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()\n#15 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()\n#16 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/Container.php(754): Illuminate\\Container\\BoundMethod::call()\n#17 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Bus/Dispatcher.php(132): Illuminate\\Container\\Container->call()\n#18 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(169): Illuminate\\Bus\\Dispatcher->{closure:Illuminate\\Bus\\Dispatcher::dispatchNow():129}()\n#19 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(126): Illuminate\\Pipeline\\Pipeline->{closure:Illuminate\\Pipeline\\Pipeline::prepareDestination():167}()\n#20 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Bus/Dispatcher.php(136): Illuminate\\Pipeline\\Pipeline->then()\n#21 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(125): Illuminate\\Bus\\Dispatcher->dispatchNow()\n#22 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(169): Illuminate\\Queue\\CallQueuedHandler->{closure:Illuminate\\Queue\\CallQueuedHandler::dispatchThroughMiddleware():120}()\n#23 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(126): Illuminate\\Pipeline\\Pipeline->{closure:Illuminate\\Pipeline\\Pipeline::prepareDestination():167}()\n#24 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(120): Illuminate\\Pipeline\\Pipeline->then()\n#25 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(68): Illuminate\\Queue\\CallQueuedHandler->dispatchThroughMiddleware()\n#26 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Jobs/Job.php(102): Illuminate\\Queue\\CallQueuedHandler->call()\n#27 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(444): Illuminate\\Queue\\Jobs\\Job->fire()\n#28 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(394): Illuminate\\Queue\\Worker->process()\n#29 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(180): Illuminate\\Queue\\Worker->runJob()\n#30 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(148): Illuminate\\Queue\\Worker->daemon()\n#31 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(131): Illuminate\\Queue\\Console\\WorkCommand->runWorker()\n#32 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Queue\\Console\\WorkCommand->handle()\n#33 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()\n#34 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()\n#35 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()\n#36 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/Container.php(754): Illuminate\\Container\\BoundMethod::call()\n#37 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Console/Command.php(211): Illuminate\\Container\\Container->call()\n#38 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute()\n#39 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Console/Command.php(180): Symfony\\Component\\Console\\Command\\Command->run()\n#40 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(1092): Illuminate\\Console\\Command->run()\n#41 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(341): Symfony\\Component\\Console\\Application->doRunCommand()\n#42 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(192): Symfony\\Component\\Console\\Application->doRun()\n#43 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(197): Symfony\\Component\\Console\\Application->run()\n#44 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1234): Illuminate\\Foundation\\Console\\Kernel->handle()\n#45 /home/joncl/prg/Typescript/rp_website/api/artisan(16): Illuminate\\Foundation\\Application->handleCommand()\n#46 {main}', '2026-08-09 21:17:23');
 
 -- --------------------------------------------------------
 
@@ -584,8 +571,8 @@ CREATE TABLE `password_reset_tokens` (
 --
 
 INSERT INTO `password_reset_tokens` (`id`, `user_id`, `token_hash`, `expires_at`, `used_at`, `created_at`) VALUES
-(4, 25, 'b09b5f673bb4c9dc44a99ebd2a987b44b9e1b59cdbe7772a2551599a816231fe', '2026-07-26 09:51:32', NULL, '2026-07-26 09:36:32'),
-(8, 34, '3332713ea59d425c9776eb4830344e203c5801f67323798ab47a53d95323b869', '2026-07-26 19:28:05', '2026-07-26 19:28:05', '2026-07-26 19:27:03');
+(8, 34, '3332713ea59d425c9776eb4830344e203c5801f67323798ab47a53d95323b869', '2026-07-26 19:28:05', '2026-07-26 19:28:05', '2026-07-26 19:27:03'),
+(10, 25, 'b18288396cb80060517c9963e4ac751f6bbc8c9f6e216e44d9a62117c6dd7d0c', '2026-08-21 11:15:49', '2026-08-21 11:15:49', '2026-08-21 11:14:57');
 
 -- --------------------------------------------------------
 
@@ -616,7 +603,7 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (172, 'App\\Models\\User', 77, 'access-token', 'f783051fdb88711a863e9ccd4e5176a5a3f2a3606204c816754c3227d07698f8', '[\"*\"]', '2026-02-25 00:08:53', '2026-02-25 00:42:29', '2026-02-24 23:42:29', '2026-02-25 00:08:53'),
 (591, 'App\\Models\\User', 34, 'access-token', '68783429471135aedb98b9dd0c6fea1dda24afe7d6cbb225d9e9a8ab20236672', '[\"*\"]', '2026-07-26 20:10:52', '2026-07-26 21:08:21', '2026-07-26 20:08:21', '2026-07-26 20:10:52'),
 (695, 'App\\Models\\User', 86, 'access-token', 'c01dd389ec650634ad228e9a6534e6391de2ed139c2a50bae4be0e9f48265c71', '[\"*\"]', '2026-08-11 12:34:19', '2026-08-11 13:34:19', '2026-08-11 12:34:19', '2026-08-11 12:34:19'),
-(805, 'App\\Models\\User', 93, 'access-token', 'e85c973d7f4b4badfbb7ae366bdd52ae354d8ca2dda76c3070e6a27af64836e6', '[\"*\"]', '2026-08-16 13:44:25', '2026-08-16 14:39:47', '2026-08-16 13:39:47', '2026-08-16 13:44:25');
+(840, 'App\\Models\\User', 25, 'access-token', 'f2aaa6b5e9be6e19724bf2be30a2e4cc965cdcae55c248b15072f0a600086fc9', '[\"*\"]', '2026-08-21 13:24:40', '2026-08-21 14:22:35', '2026-08-21 13:22:35', '2026-08-21 13:24:40');
 
 -- --------------------------------------------------------
 
@@ -638,7 +625,7 @@ CREATE TABLE `refresh_tokens` (
 --
 
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`, `updated_at`) VALUES
-(804, 93, '8046033c9914a1823b80cf32b3e9d1ccfee0e070a5f16382a5b4c03b68337934', '2026-08-23 13:39:47', '2026-08-16 13:39:47', '2026-08-16 13:39:47');
+(839, 25, 'd54ec2407b01cd9dcc098410b6786be21fc88cbc93af6c2fd3ce7077de9b7a2f', '2026-08-28 13:22:35', '2026-08-21 13:22:35', '2026-08-21 13:22:35');
 
 -- --------------------------------------------------------
 
@@ -1125,12 +1112,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `user_email`, `full_name`, `dpp_hours_spent`, `enable_2fa`, `two_fa_forced_by_admin`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
-(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, 0, NULL, '$2y$12$PSt4jxIj8qs47185wr149uoVtxUmdWI0srk4Mq.WHSeHlmNoFPvNS', NULL, '2026-08-16 15:39:11', '2026-02-14 08:12:31', '2026-08-16 15:39:11', NULL, 0),
-(34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, 0, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-11 00:55:27', NULL, 0),
-(90, 'test@test.cz', 'asdadsd', 0, 1, 1, NULL, '$2y$12$1xKhoRDFWyrfslg9Ubrr1e.l3BRd7ULcS8tEbFGyt4/rdc0UfbsrG', NULL, '2026-08-16 15:34:30', '2026-08-13 12:35:47', '2026-08-16 15:37:32', NULL, 0),
-(91, 'foner@foner.cz', 'askfjdslkf', 0, 0, 0, NULL, '$2y$12$WEZmuC.izG6ThmGCAAop6.d7kZVb/atIamQkM/aPWxg3iaVAqhDg6', NULL, NULL, '2026-08-15 10:46:16', '2026-08-15 10:46:35', '2026-08-15 10:46:35', 0),
-(92, 'asd@asd.cz', 'asdasd', 0, 1, 0, NULL, '$2y$12$n3qBItP1l6Co.wfDJp.qB.prwDPFOuzbRNRROSJFkZX0kIMVB5jpG', NULL, NULL, '2026-08-16 12:32:21', '2026-08-16 15:31:01', '2026-08-16 15:31:01', 0),
-(93, 'test1@test1.cz', 'dadadsa', 0, 1, 0, NULL, '$2y$12$nPPogKYdr/y0W1dBAlt8kOzKvk8e1m/pEkuFpHd/vfXQUg6zKn0TC', NULL, '2026-08-16 15:39:47', '2026-08-16 15:37:58', '2026-08-16 15:39:47', NULL, 0);
+(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, 0, NULL, '$2y$12$MF8zzdDCIKktF2CN3QjzDuTr3i1krOrgJIYEy5WeVHbiuIwZ7QdbG', NULL, '2026-08-21 13:25:19', '2026-02-14 08:12:31', '2026-08-21 13:25:19', NULL, 0),
+(34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, 0, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-11 00:55:27', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -1149,11 +1132,7 @@ CREATE TABLE `user_roles` (
 
 INSERT INTO `user_roles` (`user_id`, `role_id`) VALUES
 (25, 1),
-(34, 2),
-(90, 13),
-(91, 13),
-(92, 12),
-(93, 1);
+(34, 2);
 
 -- --------------------------------------------------------
 
@@ -1190,17 +1169,6 @@ CREATE TABLE `web_external_links` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `web_external_links`
---
-
-INSERT INTO `web_external_links` (`id`, `user_id`, `name`, `url`, `position`, `is_active`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(4, 25, 'Google Analytics', 'https://analytics.google.com/analytics/web/', 0, 1, '2026-06-01 06:00:00', '2026-08-16 13:28:57', '2026-08-16 13:28:57'),
-(5, 25, 'Google Search Console', 'https://search.google.com/search-console', 1, 1, '2026-06-02 07:00:00', '2026-08-16 13:29:07', '2026-08-16 13:29:07'),
-(6, 25, 'Firemní GitHub', 'https://github.com/rpsw', 2, 1, '2026-06-03 08:00:00', '2026-08-16 13:29:00', '2026-08-16 13:29:00'),
-(7, 25, 'Starý CRM systém (nepoužívá se)', 'https://old-crm.rpsw.cz', 3, 0, '2026-05-01 06:00:00', '2026-08-16 13:29:03', '2026-08-16 13:29:03'),
-(8, 25, 'Interní Wiki', 'https://wiki.rpsw.cz', 4, 1, '2026-06-05 09:00:00', '2026-08-16 13:28:55', '2026-08-16 13:28:55');
 
 -- --------------------------------------------------------
 
@@ -1778,7 +1746,7 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `legal_site_settings`
@@ -1802,19 +1770,19 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `password_reset_tokens`
 --
 ALTER TABLE `password_reset_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=806;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=841;
 
 --
 -- AUTO_INCREMENT for table `refresh_tokens`
 --
 ALTER TABLE `refresh_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=805;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=840;
 
 --
 -- AUTO_INCREMENT for table `shop_categories`
@@ -1928,7 +1896,7 @@ ALTER TABLE `shop_suppliers`
 -- AUTO_INCREMENT for table `two_factor_codes`
 --
 ALTER TABLE `two_factor_codes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -1940,13 +1908,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `web_attachments`
 --
 ALTER TABLE `web_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `web_external_links`
 --
 ALTER TABLE `web_external_links`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `web_job_applications`
@@ -1970,19 +1938,19 @@ ALTER TABLE `web_news`
 -- AUTO_INCREMENT for table `web_raw_request_commissions`
 --
 ALTER TABLE `web_raw_request_commissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `web_sales_leads`
 --
 ALTER TABLE `web_sales_leads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `web_sales_orders`
 --
 ALTER TABLE `web_sales_orders`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `web_site_settings`
@@ -1994,7 +1962,7 @@ ALTER TABLE `web_site_settings`
 -- AUTO_INCREMENT for table `web_support_tickets`
 --
 ALTER TABLE `web_support_tickets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- Constraints for dumped tables

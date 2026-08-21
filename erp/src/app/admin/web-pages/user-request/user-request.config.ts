@@ -11,6 +11,12 @@
  *      - USER_REQUEST_TOOLBAR_BUTTONS: "Přidat" -> `permission: 'web-user-requests-create'`.
  *      - USER_REQUEST_BUTTONS: "Edit" -> `web-user-requests-update`,
  *        "Smazat" -> `web-user-requests-delete`. "Detaily" zůstává bez permission.
+ * @refactor-note (2026-08-19) BACKLOG "editovatelný obsah potvrzovacího e-mailu":
+ *      přidáno toolbar tlačítko "Potvrzovací e-mail" (`openEmailTemplateEditor`) -
+ *      znovupoužívá STEJNÉ oprávnění `web-user-requests-update` jako editace
+ *      jednotlivého požadavku (žádný nový permission klíč, žádná migrace
+ *      core_permissions/core_role_permissions potřeba). Otevírá modal se šablonou
+ *      potvrzovacího e-mailu - viz UserRequestComponent.openEmailTemplateEditor().
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -24,6 +30,7 @@ export const USER_REQUEST_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-user-requests-create' },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'openEmailTemplateEditor', label: 'Potvrzovací e-mail', icon: '✉️', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-update' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 

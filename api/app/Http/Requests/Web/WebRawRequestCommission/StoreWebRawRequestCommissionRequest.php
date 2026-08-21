@@ -6,6 +6,16 @@
  * @author RPSW
  * @created 2025
  * @description Validation logic for creating new commission requests from the web, including secure file attachment handling.
+ *
+ * @bugfix-note (2026-08-19) KRITICKÝ BUG - JAZYK POTVRZOVACÍHO E-MAILU SE IGNOROVAL:
+ * `rules()` neobsahovala `lang` - Laravel FormRequest validace propouští do
+ * `$request->safe()`/`validated()` VÝHRADNĚ pole definovaná v `rules()`, takže i když
+ * frontend (`ContactComponent`) `lang` v FormData reálně posílal, `store()`
+ * (`$request->safe()->except(['attachments'])`) ho nikdy nedostal a
+ * `WebRawRequestCommission::lang` zůstával na defaultu `'cz'` bez ohledu na to, v jakém
+ * jazyce byl web přepnutý. Potvrzovací e-mail (`RawRequestEmailTemplate::forLang()`)
+ * tak vždy vybíral českou variantu šablony. Přidáno `'lang' => ['sometimes', 'nullable',
+ * 'string', 'max:5']` - stejné pravidlo, jaké má `UpdateWebRawRequestCommissionRequest`.
  */
 
 namespace App\Http\Requests\Web\WebRawRequestCommission;
@@ -44,6 +54,7 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
             'status'            => ['sometimes', 'string', 'in:Nově zadané,Zpracovává se,Dokončeno,Zrušeno'],
             'priority'          => ['sometimes', 'string', 'in:Nízká,Neutrální,Vysoká'],
             'note'              => ['nullable', 'string'],
+            'lang'              => ['sometimes', 'nullable', 'string', 'max:5'],
             'attachment'        => ['nullable', 'file', 'max:10240', $this->attachmentExtensionRule()],
         ];
     }

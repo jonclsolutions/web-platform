@@ -1,0 +1,334 @@
+/* 
+    @file: email-template-modal.component.css
+    @path: /src/app/admin/web-pages/user-request/email-template-modal.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description Styly pro modal "Editovat potvrzovací e-mail" - dřív inline v šabloně,
+    přesunuto do vlastního component-scoped souboru (Angular Emulated encapsulation),
+    přidáno VEDLE sdíleného `../default-style.css` (ne místo něj), viz styleUrls
+    v user-request.component.ts.
+
+    @bugfix-note (2026-08-19) KRITICKÝ BUG - NEJDE PSÁT DO INPUTŮ V MODALU: kurzor nad
+    polem správně ukazoval textový I-beam (input samo o sobě `cursor` správně dostává),
+    ale klik focus nezpůsobil - typický příznak NEVIDITELNÉHO ELEMENTU LEŽÍCÍHO NAD
+    inputem, který "vyhraje" hit-test pro klik, i když vizuálně nic vidět není (např.
+    zapomenutý fixed/absolute overlay jinde v appce - sidebar-overlay v
+    AdminLayoutComponent, bulk-actions dropdown v TableBuilderComponent apod. - který
+    zůstává v DOMu i "zavřený" a nemá explicitně `pointer-events: none` v neaktivním
+    stavu). Oprava: `z-index` overlaye zvednut z 1100 na 99999 (bezpečně nad JAKÝMKOLIV
+    jiným z-indexem v appce), a `pointer-events: auto` explicitně vynuceno na
+    inputy/textarey, ať nemůže být nic zděděno/přebito zvenčí.
+*/
+
+.email-tpl-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+}
+
+.email-tpl-card {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  position: relative;
+  z-index: 100000;
+}
+
+.email-tpl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #ececea;
+}
+
+.email-tpl-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.email-tpl-subtitle {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: #71717a;
+}
+
+.email-tpl-close {
+  border: none;
+  background: transparent;
+  color: #a1a1aa;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px;
+}
+.email-tpl-close:hover:not(:disabled) { color: #18181b; }
+.email-tpl-close:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.email-tpl-body {
+  padding: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.email-tpl-loading {
+  color: #71717a;
+  font-size: 13px;
+}
+
+.email-tpl-lang-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.email-tpl-lang-tab {
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #f4f4f5;
+  color: #52525b;
+}
+.email-tpl-lang-tab.active {
+  background: #18181b;
+  color: #ffffff;
+}
+
+.email-tpl-field {
+  margin-bottom: 16px;
+}
+
+.email-tpl-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #3f3f46;
+  margin-bottom: 6px;
+}
+
+.email-tpl-input,
+.email-tpl-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #18181b;
+  font-family: inherit;
+  /* Explicitní pojistka proti jakémukoliv globálnímu pravidlu, které by mohlo
+     nechtěně vypnout interaktivitu - viz bugfix-note v hlavičce souboru. */
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+}
+
+.email-tpl-textarea {
+  resize: vertical;
+}
+
+.email-tpl-summary-box {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #fafafa;
+  border: 1px solid #ececea;
+  border-radius: 8px;
+}
+
+.email-tpl-summary-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #a1a1aa;
+}
+
+.email-tpl-summary-text {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: #71717a;
+  line-height: 1.5;
+}
+
+.email-tpl-hint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #a1a1aa;
+}
+
+.email-tpl-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #ececea;
+}
+
+.email-tpl-btn-cancel {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid #ececea;
+  background: #ffffff;
+  color: #52525b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.email-tpl-btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.email-tpl-btn-save {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: none;
+  background: #18181b;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.email-tpl-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* @refactor-note (2026-08-19v3) BACKLOG "editace vsech textu + live preview" */
+
+.email-tpl-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a1a1aa;
+  margin: 24px 0 12px;
+  padding-top: 16px;
+  border-top: 1px dashed #ececea;
+}
+
+.email-tpl-labels-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+}
+.email-tpl-labels-grid .email-tpl-field {
+  margin-bottom: 12px;
+}
+
+.email-tpl-label-hint {
+  font-weight: 400;
+  color: #a1a1aa;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 11px;
+}
+
+.email-tpl-preview-subject-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border: 1px solid #ececea;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 12px;
+}
+.email-tpl-preview-subject-label {
+  font-weight: 700;
+  color: #71717a;
+  flex-shrink: 0;
+}
+.email-tpl-preview-subject-value {
+  color: #18181b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email-tpl-preview-frame {
+  border: 1px solid #ececea;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+  background: #f4f4f5;
+  margin-bottom: 16px;
+}
+
+.email-tpl-preview-header {
+  background: #18181b;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 12px 18px;
+}
+
+.email-tpl-preview-body {
+  background: #ffffff;
+  padding: 18px;
+}
+
+.email-tpl-preview-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.email-tpl-preview-text {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #3f3f46;
+  white-space: pre-line;
+}
+
+.email-tpl-preview-outro {
+  margin-top: 14px;
+  color: #71717a;
+}
+
+.email-tpl-preview-summary-label {
+  margin: 14px 0 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #71717a;
+}
+
+.email-tpl-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #ececea;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.email-tpl-preview-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #ececea;
+}
+.email-tpl-preview-table tr:last-child td {
+  border-bottom: none;
+}
+.email-tpl-preview-td-label {
+  background: #fafafa;
+  font-weight: 600;
+  color: #52525b;
+  width: 38%;
+}
+.email-tpl-preview-td-value {
+  color: #18181b;
+}

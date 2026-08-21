@@ -480,6 +480,10 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
                 ->middleware('permission:web-set-maintenance-mode');
             Route::put('/', [WebSiteSettingController::class, 'update'])
                 ->middleware('permission:web-set-maintenance-mode');
+                 Route::get('/raw-request-email-template', [WebSiteSettingController::class, 'showRawRequestEmailTemplate'])
+                ->middleware('permission:web-user-requests-update');
+            Route::put('/raw-request-email-template', [WebSiteSettingController::class, 'updateRawRequestEmailTemplate'])
+                ->middleware('permission:web-user-requests-update');
         });
 
         // ── web/job_applications ─────────────────────────────────────────

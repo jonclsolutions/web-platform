@@ -7,7 +7,9 @@
  * @created 2026
  * @description Manages public-web maintenance mode - toggling web availability and the
  * visitor-facing maintenance message, with mandatory password re-confirmation for the
- * write action.
+ * write action. Také spravuje editovatelný obsah potvrzovacího e-mailu
+ * WebRawRequestCommission (nadpis/úvod/závěr, per jazyk) - viz refactor-note
+ * (2026-08-19) níže.
  *
  * @refactor-note (2026-08-15) Replaces the web branch of `CoreSiteSettingController`
  * (now deleted, along with `App\Models\Core\CoreSiteSetting` and the `core_site_settings`
@@ -18,6 +20,15 @@
  * @note No `publicShow()` here - the unauthenticated public consumer for web status was
  * already `WebPublicController::getStatus()` (`GET /api/web/public/status`) before this
  * refactor and remains the single public entry point; no new public route was introduced.
+ *
+ * @refactor-note (2026-08-19) BACKLOG "editovatelný obsah potvrzovacího e-mailu":
+ * přidány `showRawRequestEmailTemplate()`/`updateRawRequestEmailTemplate()` - sdílí
+ * stejný singleton `WebSiteSetting` řádek jako maintenance nastavení (je to pořád
+ * Web-doménová konfigurace), ale ZÁMĚRNĚ BEZ `confirm_password` požadavku jako u
+ * `update()` výše - editace textu potvrzovacího e-mailu není bezpečnostně citlivá
+ * akce jako přepnutí dostupnosti celého webu. Gatováno permission middlewarem
+ * `web-user-requests-update` na route úrovni (viz api.php) - stejné oprávnění, jaké
+ * už řídí editaci jednotlivého požadavku na admin stránce "Požadavky na provize".
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -32,7 +43,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * @description Controller responsible for public-web-wide maintenance status settings.
+ * @description Controller responsible for public-web-wide maintenance status settings
+ * and the editable raw-request-commission confirmation email template.
  * @note Uses Cache invalidation (`site_setting_active_web`) so `CheckWebActive` middleware
  * and the public status endpoint react instantly to configuration changes.
  */
@@ -120,6 +132,64 @@ class WebSiteSettingController extends Controller
                 'WebSiteSetting'
             );
         }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $settings,
+        ]);
+    }
+
+    /**
+     * @description Vrátí jen editovatelná pole šablony potvrzovacího e-mailu
+     * WebRawRequestCommission (nadpis/úvod/závěr, každé jako i18n objekt keyed
+     * jazykovým kódem). Vrací PŘÍMO objekt (ne obalený v `{data: ...}`) - konzistentní
+     * s tím, jak `DataHandler.get<T>()` na frontendu odpověď NEobaluje, na rozdíl od
+     * `put()`.
+     */
+    public function showRawRequestEmailTemplate(): JsonResponse
+    {
+        $settings = WebSiteSetting::first() ?? WebSiteSetting::create([
+            'is_web_active'           => true,
+            'web_maintenance_message' => 'Omlouváme se, web je momentálně v údržbě.',
+        ]);
+
+        return response()->json([
+            'raw_request_email_subject_i18n' => $settings->raw_request_email_subject_i18n,
+            'raw_request_email_title_i18n'   => $settings->raw_request_email_title_i18n,
+            'raw_request_email_intro_i18n'   => $settings->raw_request_email_intro_i18n,
+            'raw_request_email_outro_i18n'   => $settings->raw_request_email_outro_i18n,
+            'raw_request_email_labels_i18n'  => $settings->raw_request_email_labels_i18n,
+        ]);
+    }
+
+    /**
+     * @description Uloží editovatelnou šablonu potvrzovacího e-mailu
+     * WebRawRequestCommission. ZÁMĚRNĚ BEZ `confirm_password` (viz refactor-note
+     * v hlavičce souboru) - jen permission middleware na route úrovni.
+     */
+    public function updateRawRequestEmailTemplate(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'raw_request_email_subject_i18n' => 'sometimes|nullable|array',
+            'raw_request_email_title_i18n'  => 'sometimes|nullable|array',
+            'raw_request_email_intro_i18n'  => 'sometimes|nullable|array',
+            'raw_request_email_outro_i18n'  => 'sometimes|nullable|array',
+            'raw_request_email_labels_i18n' => 'sometimes|nullable|array',
+        ]);
+
+        $settings = WebSiteSetting::first() ?? new WebSiteSetting();
+        $settings->fill($validated);
+        $settings->save();
+
+        $this->logAction(
+            $request,
+            WebLog::class,
+            'update',
+            'Web',
+            'Upravena šablona potvrzovacího e-mailu (Požadavky na provize).',
+            $settings->id,
+            'WebSiteSetting'
+        );
 
         return response()->json([
             'success' => true,

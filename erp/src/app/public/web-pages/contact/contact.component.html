@@ -6,6 +6,12 @@
     @created: 2025
     @refactor-note (2026-08): Jednosouborový file-zone nahrazen sdílenou
         <app-multi-file-upload> komponentou (max. 10 souborů, 20 MB/soubor, 50 MB celkem).
+    @refactor-note (2026-08-19): Pole telefonu dostalo stejnou real-time validaci jako
+        order-form.component.html - `[class.is-error]="fieldInvalid('phone')"` +
+        chybové hlášky pro `pattern`/`maxlength` (viz contact.component.ts stejné datum,
+        `Validators.pattern('^\\+?[0-9]*$')` + `Validators.maxLength(20)`). Přidán i
+        native `maxlength="20"` atribut na input, ať se nedá napsat víc znaků, než
+        validátor stejně povolí - stejný vzor jako u order-form.
 -->
 <div *ngIf="t">
 
@@ -90,7 +96,7 @@
 <option value="web">{{ t.options?.web }}</option>
 <option value="desktop">{{ t.options?.desktop }}</option>
 <option value="mobile">{{ t.options?.mobile }}</option>
-<option value="ai">{{ t.options?.ai }}</option>
+<option value="artificial intelligence">{{ t.options?.ai }}</option>
 <option value="other">{{ t.options?.other }}</option>
 </select>
 <span class="select-arrow" aria-hidden="true">↓</span>
@@ -122,8 +128,16 @@ id="phone"
 type="tel"
 formControlName="phone"
 [placeholder]="t.placeholders?.phone"
+maxlength="20"
 class="field-input"
+[class.is-error]="fieldInvalid('phone')"
 autocomplete="tel">
+@if (fieldInvalid('phone')) {
+<span class="field-error">
+@if (contactForm.get('phone')?.hasError('pattern')) { {{ t.errors?.phone_pattern }} }
+@else if (contactForm.get('phone')?.hasError('maxlength')) { {{ t.errors?.phone_max }} }
+</span>
+              }
 </div>
 </div>
           <div class="field-group">
