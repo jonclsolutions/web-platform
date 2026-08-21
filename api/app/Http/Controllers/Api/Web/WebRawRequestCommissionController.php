@@ -30,6 +30,18 @@
  * tabulky) - existující přílohy tak v editaci nebyly vůbec vidět, i když v detailu
  * (který interně volá `show()`, ten `->with('attachments')` už měl) se zobrazovaly
  * správně. Přidáno `->with('attachments')` i sem, ať jsou obě cesty konzistentní.
+ *
+ * @bugfix-note (2026-08-19v2) `->send()` PŘEPNUTO NA `->queue()` - sjednoceno
+ * s `WebSalesOrderController::store()`, který potvrzovací e-mail už dřív posílal přes
+ * frontu. Vedlejší efekt konzistentního chování: `->send()` (synchronní) vždy použije
+ * aktuální kód/šablonu ze souborového systému v okamžiku HTTP requestu, zatímco fronta
+ * jede v dlouhoběžícím `queue:work` procesu, který má PHP kód natažený v paměti od
+ * svého startu - po úpravě Mailable třídy/Blade šablony je proto nutné frontu
+ * restartovat (`php artisan queue:restart`, případně `horizon:terminate`), jinak
+ * worker dál posílá podle staré verze, dokud se sám nerestartuje. Tohle byl přesně
+ * důvod, proč `WebSalesOrderReceived` (fronta) poslal starý vzhled e-mailu, zatímco
+ * tento (dřív `->send()`) šel vždy s aktuální šablonou - teď mají OBĚ stejné chování
+ * (a stejnou nutnost restartu fronty po každé úpravě šablony).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -126,7 +138,7 @@ class WebRawRequestCommissionController extends Controller
 
             try {
                 Mail::to($commission->contact_email)
-                    ->send(new WebRawRequestCommissionReceived($commission));
+                    ->queue(new WebRawRequestCommissionReceived($commission));
             } catch (\Throwable $e) {
                 $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Nepodařilo se odeslat potvrzovací e-mail: " . $e->getMessage(), $commission->id, 'WebRawRequestCommission');
             }

@@ -12,7 +12,49 @@
  * @dependencies
  * - App\Models\User: administrátorský účet (login = user_email)
  * - App\Models\PasswordResetToken: jednorázový token s expirací
+ * - App\Models\Core\CoreLog / App\Traits\LogsActivity: sdílený audit log (viz bugfix-note
+ *   2026-08-19v2 níže) - stejná tabulka, do které AuthController zapisuje
+ *   login_success/login_failed/logout apod., ať je celá auth audit stopa na jednom místě.
  * - App\Mail\Auth\PasswordResetRequested / PasswordChangedNotification: e-mailové notifikace
+ *
+ * @bugfix-note (2026-08-19) OBA maily (žádost o reset, potvrzení změny) přepnuty
+ * z `->send()` (synchronní) na `->queue()` - sjednoceno s
+ * `WebRawRequestCommissionController`/`WebSalesOrderController`, které potvrzovací
+ * maily posílají stejným způsobem. Na rozdíl od 2FA přihlašovacího kódu
+ * (`AuthController::beginTwoFactorChallenge()`/`resendTwoFactor()` - ZÁMĚRNĚ ponecháno
+ * synchronní) tady zpoždění z fronty nevadí: odkaz pro reset má 15minutovou platnost
+ * (pár vteřin navíc je zanedbatelných) a notifikace o změně hesla je čistě
+ * informativní, nic v UI na ni nečeká. Navíc realisticky nehrozí, že by si najednou
+ * o reset požádaly tisíce uživatelů (na rozdíl od přihlašovacího 2FA kódu, který
+ * potřebuje KAŽDÝ uživatel s vynucenou 2FA při KAŽDÉM přihlášení) - i kdyby worker
+ * chvíli nefungoval, dopad je omezený na hrstku lidí, co si zrovna resetují heslo,
+ * ne na schopnost přihlásit se vůbec.
+ * @note Stejně jako u ostatních převedených mailů platí: po úpravě této třídy nebo
+ * jejích Blade šablon je nutné restartovat queue worker (`php artisan queue:restart`),
+ * jinak běžící worker dál pojede se starou verzí kódu z paměti.
+ *
+ * @bugfix-note (2026-08-19v2) KRITICKÁ OPRAVA - AUDIT LOG RESETU HESLA SE NIKDY
+ * NEZAPISOVAL: `logAttempt()` dřív dělala přímý `DB::table('web_system_logs')->insert()`
+ * do tabulky, která V DB DUMPU NIKDY NEEXISTOVALA - každý pokus o reset hesla tiše
+ * selhával na `SQLSTATE[42S02]: Base table or view not found` (zachyceno v try/catch,
+ * takže request neshodilo, ale žádná auditní stopa nevznikla). Namísto vytváření nové
+ * tabulky přepsáno na sdílený `LogsActivity` trait (`logAction()`) zapisující do
+ * `core_logs`, module `'Auth'` - STEJNÁ tabulka a stejný modul, do kterého
+ * `AuthController` už zapisuje `login_success`/`login_failed`/2FA kroky/`logout`. Reset
+ * hesla je věcně stejná doména (autentizace) - admin tak uvidí celou historii
+ * přihlašovacích i reset pokusů pohromadě, filtrovatelnou přes `module = 'Auth'`, místo
+ * dvou paralelních, oddělených tabulek.
+ *
+ * ROZSAH ZMĚNY ZÁMĚRNĚ MINIMÁLNÍ: mění se VÝHRADNĚ vnitřní implementace privátní
+ * `logAttempt()` - všechna 4 volací místa (`$this->logAttempt($eventType, $request,
+ * $userId, $context)`) zůstávají beze změny (stejný podpis, stejné argumenty), takže
+ * zbytek `forgotPassword()`/`resetPassword()` logiky (rate limiting, token handling,
+ * generická odpověď proti enumeraci) je NEDOTČENÝ. `LogsActivity::logAction()` sama o
+ * sobě automaticky natáhne request payload (např. `email` pole) do `context_data` -
+ * `context`/`$userId` parametry `logAttempt()` se teď promítají do čitelného textu
+ * `description`, ne do zvláštního pole, ať nebylo nutné rozšiřovat sdílený trait (ten
+ * používá i řada jiných controllerů - jakákoliv změna jeho signatury by měla mnohem
+ * širší dopad, než jen tenhle soubor).
  */
 
 namespace App\Http\Controllers\Api\Auth;
@@ -22,8 +64,10 @@ use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Mail\Auth\PasswordChangedNotification;
 use App\Mail\Auth\PasswordResetRequested;
+use App\Models\Core\CoreLog;
 use App\Models\PasswordResetToken;
 use App\Models\User;
+use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -33,6 +77,8 @@ use Illuminate\Support\Str;
 
 class PasswordResetController extends Controller
 {
+    use LogsActivity;
+
     /** Doba platnosti odkazu v minutách (dle rozhodnutí: 15 minut) */
     private const TOKEN_TTL_MINUTES = 15;
 
@@ -106,7 +152,7 @@ class PasswordResetController extends Controller
         // (viz app.routes.ts, mimo AdminRoutingModule/AuthGuard).
         $resetUrl = "{$frontendUrl}/auth/reset-password?token={$rawToken}";
 
-        Mail::to($user->user_email)->send(
+        Mail::to($user->user_email)->queue(
             new PasswordResetRequested($user, $resetUrl, self::TOKEN_TTL_MINUTES)
         );
 
@@ -167,7 +213,7 @@ class PasswordResetController extends Controller
 
         $this->logAttempt('password_reset_completed', $request, $user->id, []);
 
-        Mail::to($user->user_email)->send(
+        Mail::to($user->user_email)->queue(
             new PasswordChangedNotification($user, now()->format('d.m.Y H:i'))
         );
 
@@ -180,26 +226,46 @@ class PasswordResetController extends Controller
     }
 
     /**
-     * @description Zaloguje pokus o reset hesla do web_system_logs pro účely auditu.
-     *              Chyba při logování nesmí shodit hlavní flow, proto try/catch.
+     * @description Zaloguje pokus o reset hesla do sdíleného auth audit logu (`core_logs`,
+     * module 'Auth') přes `LogsActivity::logAction()` - viz bugfix-note (2026-08-19v2)
+     * v hlavičce souboru. Chyba při logování nesmí shodit hlavní flow -
+     * `logAction()` má vlastní try/catch a nikdy nevyhazuje.
+     * @param string $eventType password_reset_requested / password_reset_email_rate_limited
+     *   / password_reset_failed / password_reset_completed.
+     * @param Request $request Aktuální request (FormRequest instance - je to podtyp
+     *   Illuminate\Http\Request, takže sedí na `logAction()` typový hint beze změny).
+     * @param int|null $userId Cílový uživatel resetu (ne přihlášený actor - tahle routa
+     *   je veřejná/nepřihlášená) - promítá se do `affected_entity_id`/`description`.
+     * @param array $context Doplňkové okolnosti specifické pro daný event
+     *   (`email_requested` u požadavku/rate-limitu, `reason` u selhání) - promítají se
+     *   do čitelného textu `description`; `email_requested`/ostatní request pole se navíc
+     *   automaticky objeví v `context_data` samotným `logAction()` (natahuje request
+     *   payload sám, viz LogsActivity::safeContextData()).
      */
     private function logAttempt(string $eventType, $request, ?int $userId, array $context): void
     {
-        try {
-            DB::table('web_system_logs')->insert([
-                'created_at'  => now(),
-                'origin'      => $request->ip(),
-                'event_type'  => $eventType,
-                'module'      => 'auth',
-                'description' => "Pokus o reset hesla (user_id: " . ($userId ?? 'neznámý') . ")",
-                'context_data' => json_encode(array_merge($context, [
-                    'ip'         => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                    'user_id'    => $userId,
-                ])),
-            ]);
-        } catch (\Throwable $e) {
-            report($e);
-        }
+        $description = match ($eventType) {
+            'password_reset_requested' => isset($context['email_requested'])
+                ? "Vyžádán reset hesla pro e-mail: {$context['email_requested']}"
+                : 'Vyžádán reset hesla',
+            'password_reset_email_rate_limited' => isset($context['email_requested'])
+                ? "Limit počtu pokusů o reset hesla překročen pro e-mail: {$context['email_requested']}"
+                : 'Limit počtu pokusů o reset hesla překročen',
+            'password_reset_failed' => ($context['reason'] ?? null) === 'expired_or_used'
+                ? 'Reset hesla selhal - odkaz byl již použit nebo vypršel'
+                : 'Reset hesla selhal - neplatný odkaz',
+            'password_reset_completed' => 'Heslo bylo úspěšně změněno',
+            default => "Pokus o reset hesla (user_id: " . ($userId ?? 'neznámý') . ')',
+        };
+
+        $this->logAction(
+            $request,
+            CoreLog::class,
+            $eventType,
+            'Auth',
+            $description,
+            $userId,
+            $userId ? 'User' : null
+        );
     }
 }
