@@ -26,6 +26,10 @@
         tohoto by v menu zůstával "prázdný" nadpis s prázdným seznamem pod ním.
         Spodní `nav-group--bottom` (odhlášení) je záměrně beze změny - musí být
         vidět vždy bez ohledu na oprávnění.
+    @refactor-note (2026-08-22): BEZPEČNOSTNÍ MONITORING - přidána položka
+        "Bezpečnostní monitoring" do sekce Core → Systém, za "Core Logy", chráněná
+        `*appHasPermission="'core-security-view'"`. Odkazuje na
+        `/admin/core/security-events` (SecurityEventsComponent).
 -->
 
 <header class="admin-header">
@@ -518,6 +522,16 @@
                   </svg>
                 </span>
                 <span class="nav-text">Core Logy</span>
+              </a>
+            </li>
+            <li *appHasPermission="'core-security-view'">
+              <a routerLink="/admin/core/security-events" routerLinkActive="active" (click)="onLinkClick()" title="Bezpečnostní monitoring">
+                <span class="nav-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </span>
+                <span class="nav-text">Bezpečnostní monitoring</span>
               </a>
             </li>
           </ul>

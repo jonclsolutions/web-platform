@@ -15,6 +15,19 @@
  * CAPTCHA (Cloudflare Turnstile) se vyžaduje až od 3. neúspěšného pokusu PRO DANÝ E-MAIL
  * (ne IP) - viz CaptchaVerificationService a RateLimiter klíč 'login-fail:'.
  * IP+email throttle na route úrovni řeší AppServiceProvider::boot() (limiter 'login').
+ *
+ * @refactor-note (2026-08-22) KROK 2 BEZPEČNOSTNÍHO MONITORINGU: doplněny reálné zápisy
+ * do `core_security_events` (přes `CoreSecurityEvent::record()`) na všech místech, kde
+ * dřív existoval jen `core_logs` audit záznam:
+ * - `login_failed` při každém špatném heslu (bucketované, viz model - nezahltí DB).
+ * - `login_brute_force_suspected` (severity `critical`) v okamžiku, kdy počet
+ *   neúspěšných pokusů pro daný e-mail PRVNÍ e-mail teprve co dosáhne prahu pro captchu
+ *   (`CAPTCHA_THRESHOLD`) - signalizuje admin monitoringu reálný pokus o uhodnutí hesla,
+ *   ne jen jeden překlep.
+ * - `login_2fa_invalid` při špatně zadaném OTP kódu.
+ * - `login_2fa_exhausted` (severity `critical`) při vyčerpání pokusů na OTP kód.
+ * `core_logs` (audit) zůstává beze změny - obě tabulky mají jiný účel (audit vs.
+ * bezpečnostní diagnostika), viz CoreSecurityEvent.php hlavička.
  */
 
 namespace App\Http\Controllers\Api;
@@ -23,6 +36,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\VerifyTwoFactorRequest;
 use App\Http\Requests\Auth\ResendTwoFactorRequest;
 use App\Mail\Auth\TwoFactorCodeMail;
+use App\Models\Core\CoreSecurityEvent;
 use App\Services\Security\CaptchaVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,11 +80,15 @@ class AuthController extends Controller
 
         $email = mb_strtolower(trim($request->input('email')));
         $failedAttemptsKey = 'login-fail:' . $email;
-        $captchaRequired = RateLimiter::attempts($failedAttemptsKey) >= self::CAPTCHA_THRESHOLD;
+        $attemptsBefore = RateLimiter::attempts($failedAttemptsKey);
+        $captchaRequired = $attemptsBefore >= self::CAPTCHA_THRESHOLD;
 
         if ($captchaRequired) {
             $captchaToken = (string) $request->input('captcha_token');
-            if (!$this->captcha->verify($captchaToken, $request->ip())) {
+            $context = CoreSecurityEvent::contextFromRequest($request, ['email' => $email]);
+
+            if (!$this->captcha->verify($captchaToken, $request->ip(), $context)) {
+                // Captcha selhání samo zapisuje CaptchaVerificationService::verify().
                 $this->logAction($request, CoreLog::class, 'login_captcha_failed', 'Auth', "Neplatná/chybějící captcha pro: {$email}", null, 'User');
 
                 return response()->json([
@@ -98,12 +116,23 @@ class AuthController extends Controller
 
         // Špatné heslo - zvýšit počítadlo, ihned odhlásit případnou částečnou auth session.
         RateLimiter::hit($failedAttemptsKey, self::FAILED_ATTEMPTS_DECAY_SECONDS);
+        $attemptsAfter = RateLimiter::attempts($failedAttemptsKey);
+
+        $securityContext = CoreSecurityEvent::contextFromRequest($request, ['email' => $email]);
+        CoreSecurityEvent::record('login_failed', 'warning', $request->ip(), $securityContext);
+
+        // Práh pro captchu byl PRÁVĚ TEĎ (tímto pokusem) poprvé překročen - signalizuje
+        // reálné brute-force podezření, ne jen jeden překlep v heslu. Zaznamenáno jako
+        // 'critical', aby se v adminu odlišilo od běžných jednotlivých login_failed.
+        if ($attemptsBefore < self::CAPTCHA_THRESHOLD && $attemptsAfter >= self::CAPTCHA_THRESHOLD) {
+            CoreSecurityEvent::record('login_brute_force_suspected', 'critical', $request->ip(), $securityContext);
+        }
 
         $this->logAction($request, CoreLog::class, 'login_failed', 'Auth', "Neúspěšný pokus o přihlášení na login: {$email}", null, 'User');
 
         return response()->json([
             'message'          => 'Neplatné přihlašovací údaje.',
-            'captcha_required' => RateLimiter::attempts($failedAttemptsKey) >= self::CAPTCHA_THRESHOLD,
+            'captcha_required' => $attemptsAfter >= self::CAPTCHA_THRESHOLD,
         ], 401);
     }
 
@@ -166,9 +195,14 @@ class AuthController extends Controller
         if (!hash_equals($pending->code_hash, hash('sha256', $data['code']))) {
             $pending->increment('attempts');
 
+            $securityContext = CoreSecurityEvent::contextFromRequest($request, ['user_id' => $pending->user_id]);
+            CoreSecurityEvent::record('login_2fa_invalid', 'warning', $request->ip(), $securityContext);
+
             $this->logAction($request, CoreLog::class, 'login_2fa_code_invalid', 'Auth', "Neplatný 2FA kód (user_id: {$pending->user_id})", $pending->user_id, 'User');
 
             if ($pending->attempts >= TwoFactorCode::MAX_ATTEMPTS) {
+                CoreSecurityEvent::record('login_2fa_exhausted', 'critical', $request->ip(), $securityContext);
+
                 $pending->delete();
                 return response()->json([
                     'message' => 'Překročen počet pokusů. Přihlaste se prosím znovu.',
@@ -214,6 +248,13 @@ class AuthController extends Controller
         }
 
         if ($pending->resend_count >= TwoFactorCode::MAX_RESENDS) {
+            CoreSecurityEvent::record(
+                'login_2fa_resend_exhausted',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['user_id' => $pending->user_id])
+            );
+
             $pending->delete();
             return response()->json([
                 'message' => 'Překročen počet vyžádání kódu. Přihlaste se prosím znovu.',
@@ -295,6 +336,16 @@ class AuthController extends Controller
                                      ->first();
 
         if (!$dbRefreshToken || !$dbRefreshToken->user) {
+            // 'info', ne 'warning' - vypršelý refresh token je běžný legitimní jev
+            // (uživatel se dlouho nepřihlásil), ne sám o sobě signál útoku. Opakovaný
+            // vysoký objem ze stejné IP je i tak vidět přes `occurrences` v adminu.
+            CoreSecurityEvent::record(
+                'refresh_token_invalid',
+                'info',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request)
+            );
+
             return response()->json(['message' => 'Neplatný nebo expirovaný token.'], 401);
         }
 

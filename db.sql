@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 21, 2026 at 03:24 PM
+-- Generation Time: Aug 22, 2026 at 10:25 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -46,28 +46,26 @@ INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
 ('laravel-cache-3fa1d25a9f34b76ef6c342f0409f077f:timer', 'i:1787311029;', 1787311029),
 ('laravel-cache-54a3532e057dad0aaee884059fab91c3', 'i:1;', 1786921033),
 ('laravel-cache-54a3532e057dad0aaee884059fab91c3:timer', 'i:1786921033;', 1786921033),
-('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e', 'i:1;', 1787315153),
-('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e:timer', 'i:1787315153;', 1787315153),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1787315919),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787315919;', 1787315919),
+('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e', 'i:2;', 1787386957),
+('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e:timer', 'i:1787386957;', 1787386957),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:2;', 1787386976),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787386976;', 1787386976),
 ('laravel-cache-8555c1a11d44ab0bd4e6f29d888bc874', 'i:3;', 1786887553),
 ('laravel-cache-8555c1a11d44ab0bd4e6f29d888bc874:timer', 'i:1786887553;', 1786887553),
-('laravel-cache-862e0a123663139c2a0be726ddb86842', 'i:1;', 1787315153),
-('laravel-cache-862e0a123663139c2a0be726ddb86842:timer', 'i:1787315153;', 1787315153),
+('laravel-cache-862e0a123663139c2a0be726ddb86842', 'i:2;', 1787386957),
+('laravel-cache-862e0a123663139c2a0be726ddb86842:timer', 'i:1787386957;', 1787386957),
 ('laravel-cache-b1e57407edcf287f0410de814a2da740', 'i:1;', 1786887640),
 ('laravel-cache-b1e57407edcf287f0410de814a2da740:timer', 'i:1786887640;', 1786887640),
-('laravel-cache-babf79d7e6993b354b018be8ec035fff', 'i:1;', 1786876010),
-('laravel-cache-babf79d7e6993b354b018be8ec035fff:timer', 'i:1786876010;', 1786876010),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:7;', 1787318738),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1787318738;', 1787318738),
+('laravel-cache-babf79d7e6993b354b018be8ec035fff', 'i:1;', 1787386915),
+('laravel-cache-babf79d7e6993b354b018be8ec035fff:timer', 'i:1787386915;', 1787386915),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:19;', 1787387071),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1787387071;', 1787387071),
 ('laravel-cache-illuminate:queue:restart', 'i:1787314191;', 2102674191),
-('laravel-cache-login-fail:jonasbucina@rpsw.cz', 'i:1;', 1787315993),
-('laravel-cache-login-fail:jonasbucina@rpsw.cz:timer', 'i:1787315993;', 1787315993),
 ('laravel-cache-login-fail:test1@test.cz', 'i:3;', 1786888393),
 ('laravel-cache-login-fail:test1@test.cz:timer', 'i:1786888393;', 1786888393),
 ('laravel-cache-password-reset-email:test1@test.cz', 'i:1;', 1786888420),
 ('laravel-cache-password-reset-email:test1@test.cz:timer', 'i:1786888420;', 1786888420),
-('laravel-cache-site_setting_active_web', 'O:29:\"App\\Models\\Web\\WebSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:17:\"web_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:5:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-15 17:58:16\";}s:11:\"\0*\0original\";a:5:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-15 17:58:16\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:1:{s:13:\"is_web_active\";s:7:\"boolean\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:2:{i:0;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1787317646);
+('laravel-cache-site_setting_active_web', 'O:29:\"App\\Models\\Web\\WebSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:17:\"web_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:10:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-22 00:06:58\";s:28:\"raw_request_email_title_i18n\";s:88:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Your request has been accepted\"}\";s:28:\"raw_request_email_intro_i18n\";s:240:\"{\"cz\":\"d\\u011bkujeme za Va\\u0161i popt\\u00e1vku. Byla \\u00fasp\\u011b\\u0161n\\u011b p\\u0159ijate a n\\u00e1\\u0161 t\\u00fdm se j\\u00ed bude v nejbli\\u017e\\u0161\\u00ed dob\\u011b v\\u011bnovat.\",\"en\":\"thank you for order we will take look at it.\"}\";s:28:\"raw_request_email_outro_i18n\";s:121:\"{\"cz\":\"V p\\u0159\\u00edpad\\u011b dotaz\\u016f n\\u00e1s nev\\u00e1hejte kontaktovat.\",\"en\":\"If you have questing contact us\"}\";s:29:\"raw_request_email_labels_i18n\";s:236:\"{\"cz\":[],\"en\":{\"greeting\":\"Hello,\",\"summary_header\":\"Recapitulation\",\"label_thema\":\"Thema\",\"label_email\":\"Contact Email\",\"label_phone\":\"Telephone\",\"label_description\":\"Description\",\"label_attachments\":\"Accessments\",\"label_date\":\"Date\"}}\";s:30:\"raw_request_email_subject_i18n\";s:75:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Order information\"}\";}s:11:\"\0*\0original\";a:10:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-22 00:06:58\";s:28:\"raw_request_email_title_i18n\";s:88:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Your request has been accepted\"}\";s:28:\"raw_request_email_intro_i18n\";s:240:\"{\"cz\":\"d\\u011bkujeme za Va\\u0161i popt\\u00e1vku. Byla \\u00fasp\\u011b\\u0161n\\u011b p\\u0159ijate a n\\u00e1\\u0161 t\\u00fdm se j\\u00ed bude v nejbli\\u017e\\u0161\\u00ed dob\\u011b v\\u011bnovat.\",\"en\":\"thank you for order we will take look at it.\"}\";s:28:\"raw_request_email_outro_i18n\";s:121:\"{\"cz\":\"V p\\u0159\\u00edpad\\u011b dotaz\\u016f n\\u00e1s nev\\u00e1hejte kontaktovat.\",\"en\":\"If you have questing contact us\"}\";s:29:\"raw_request_email_labels_i18n\";s:236:\"{\"cz\":[],\"en\":{\"greeting\":\"Hello,\",\"summary_header\":\"Recapitulation\",\"label_thema\":\"Thema\",\"label_email\":\"Contact Email\",\"label_phone\":\"Telephone\",\"label_description\":\"Description\",\"label_attachments\":\"Accessments\",\"label_date\":\"Date\"}}\";s:30:\"raw_request_email_subject_i18n\";s:75:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Order information\"}\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:6:{s:13:\"is_web_active\";s:7:\"boolean\";s:28:\"raw_request_email_title_i18n\";s:5:\"array\";s:28:\"raw_request_email_intro_i18n\";s:5:\"array\";s:28:\"raw_request_email_outro_i18n\";s:5:\"array\";s:29:\"raw_request_email_labels_i18n\";s:5:\"array\";s:30:\"raw_request_email_subject_i18n\";s:5:\"array\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:7:{i:0;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";i:2;s:28:\"raw_request_email_title_i18n\";i:3;s:28:\"raw_request_email_intro_i18n\";i:4;s:28:\"raw_request_email_outro_i18n\";i:5;s:29:\"raw_request_email_labels_i18n\";i:6;s:30:\"raw_request_email_subject_i18n\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1787386993);
 
 -- --------------------------------------------------------
 
@@ -194,9 +192,7 @@ CREATE TABLE `core_roles` (
 
 INSERT INTO `core_roles` (`id`, `role_name`, `description`, `forces_2fa`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'sysadmin', 'Systémový administrátor - má vše', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(2, 'admin', 'Administrátor - správa webu', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(12, 'test', 'test', 0, '2026-08-10 22:56:00', '2026-08-16 14:04:36', NULL),
-(13, 'test2', NULL, 0, '2026-08-13 11:55:25', '2026-08-16 14:53:09', NULL);
+(2, 'admin', 'Administrátor - správa webu', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL);
 
 -- --------------------------------------------------------
 
@@ -311,63 +307,7 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (2, 73),
 (2, 74),
 (2, 75),
-(2, 76),
-(12, 2),
-(12, 3),
-(12, 5),
-(12, 6),
-(12, 7),
-(12, 18),
-(12, 19),
-(12, 30),
-(12, 32),
-(12, 33),
-(12, 35),
-(12, 36),
-(12, 37),
-(12, 38),
-(12, 43),
-(12, 45),
-(12, 51),
-(12, 52),
-(12, 53),
-(12, 54),
-(12, 55),
-(12, 56),
-(12, 57),
-(12, 58),
-(12, 59),
-(12, 60),
-(12, 61),
-(12, 62),
-(12, 63),
-(12, 64),
-(12, 65),
-(12, 66),
-(12, 67),
-(12, 68),
-(12, 69),
-(12, 70),
-(12, 73),
-(12, 74),
-(12, 75),
-(12, 76),
-(13, 2),
-(13, 3),
-(13, 5),
-(13, 6),
-(13, 18),
-(13, 30),
-(13, 32),
-(13, 35),
-(13, 39),
-(13, 47),
-(13, 51),
-(13, 55),
-(13, 56),
-(13, 57),
-(13, 58),
-(13, 73);
+(2, 76);
 
 -- --------------------------------------------------------
 
@@ -603,7 +543,8 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (172, 'App\\Models\\User', 77, 'access-token', 'f783051fdb88711a863e9ccd4e5176a5a3f2a3606204c816754c3227d07698f8', '[\"*\"]', '2026-02-25 00:08:53', '2026-02-25 00:42:29', '2026-02-24 23:42:29', '2026-02-25 00:08:53'),
 (591, 'App\\Models\\User', 34, 'access-token', '68783429471135aedb98b9dd0c6fea1dda24afe7d6cbb225d9e9a8ab20236672', '[\"*\"]', '2026-07-26 20:10:52', '2026-07-26 21:08:21', '2026-07-26 20:08:21', '2026-07-26 20:10:52'),
 (695, 'App\\Models\\User', 86, 'access-token', 'c01dd389ec650634ad228e9a6534e6391de2ed139c2a50bae4be0e9f48265c71', '[\"*\"]', '2026-08-11 12:34:19', '2026-08-11 13:34:19', '2026-08-11 12:34:19', '2026-08-11 12:34:19'),
-(840, 'App\\Models\\User', 25, 'access-token', 'f2aaa6b5e9be6e19724bf2be30a2e4cc965cdcae55c248b15072f0a600086fc9', '[\"*\"]', '2026-08-21 13:24:40', '2026-08-21 14:22:35', '2026-08-21 13:22:35', '2026-08-21 13:24:40');
+(848, 'App\\Models\\User', 25, 'access-token', '81bc1551a74c3c331df2cfc4838aca4b54e86ea3c64ff7a0568aef02f33a52de', '[\"*\"]', '2026-08-21 22:31:18', '2026-08-21 23:31:18', '2026-08-21 22:31:18', '2026-08-21 22:31:18'),
+(849, 'App\\Models\\User', 25, 'access-token', '197258bee280c57b69321a4b0a93775eac41971cac40bebf12b1cf3a3789e284', '[\"*\"]', '2026-08-22 08:24:28', '2026-08-22 09:22:26', '2026-08-22 08:22:26', '2026-08-22 08:24:28');
 
 -- --------------------------------------------------------
 
@@ -625,7 +566,7 @@ CREATE TABLE `refresh_tokens` (
 --
 
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`, `updated_at`) VALUES
-(839, 25, 'd54ec2407b01cd9dcc098410b6786be21fc88cbc93af6c2fd3ce7077de9b7a2f', '2026-08-28 13:22:35', '2026-08-21 13:22:35', '2026-08-21 13:22:35');
+(848, 25, 'b77deab232378141d8d4841172f09d6f9a6c4fb82d1bb388a9da18854ce2a130', '2026-08-29 08:22:26', '2026-08-22 08:22:26', '2026-08-22 08:22:26');
 
 -- --------------------------------------------------------
 
@@ -1112,7 +1053,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `user_email`, `full_name`, `dpp_hours_spent`, `enable_2fa`, `two_fa_forced_by_admin`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
-(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, 0, NULL, '$2y$12$MF8zzdDCIKktF2CN3QjzDuTr3i1krOrgJIYEy5WeVHbiuIwZ7QdbG', NULL, '2026-08-21 13:25:19', '2026-02-14 08:12:31', '2026-08-21 13:25:19', NULL, 0),
+(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, 0, NULL, '$2y$12$MF8zzdDCIKktF2CN3QjzDuTr3i1krOrgJIYEy5WeVHbiuIwZ7QdbG', NULL, '2026-08-22 10:22:26', '2026-02-14 08:12:31', '2026-08-22 10:22:26', NULL, 0),
 (34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, 0, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-11 00:55:27', NULL, 0);
 
 -- --------------------------------------------------------
@@ -1252,7 +1193,8 @@ CREATE TABLE `web_raw_request_commissions` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  `note` text DEFAULT NULL
+  `note` text DEFAULT NULL,
+  `lang` varchar(5) NOT NULL DEFAULT 'cz'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1321,15 +1263,20 @@ CREATE TABLE `web_site_settings` (
   `is_web_active` tinyint(1) NOT NULL DEFAULT 1,
   `web_maintenance_message` varchar(500) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `raw_request_email_title_i18n` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `raw_request_email_intro_i18n` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `raw_request_email_outro_i18n` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `raw_request_email_labels_i18n` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `raw_request_email_subject_i18n` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `web_site_settings`
 --
 
-INSERT INTO `web_site_settings` (`id`, `is_web_active`, `web_maintenance_message`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Omlouváme se, web je momentálně v údržbě.', '2026-06-12 11:42:21', '2026-08-15 15:58:16');
+INSERT INTO `web_site_settings` (`id`, `is_web_active`, `web_maintenance_message`, `created_at`, `updated_at`, `raw_request_email_title_i18n`, `raw_request_email_intro_i18n`, `raw_request_email_outro_i18n`, `raw_request_email_labels_i18n`, `raw_request_email_subject_i18n`) VALUES
+(1, 1, 'Omlouváme se, web je momentálně v údržbě.', '2026-06-12 11:42:21', '2026-08-21 22:06:58', '{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Your request has been accepted\"}', '{\"cz\":\"d\\u011bkujeme za Va\\u0161i popt\\u00e1vku. Byla \\u00fasp\\u011b\\u0161n\\u011b p\\u0159ijate a n\\u00e1\\u0161 t\\u00fdm se j\\u00ed bude v nejbli\\u017e\\u0161\\u00ed dob\\u011b v\\u011bnovat.\",\"en\":\"thank you for order we will take look at it.\"}', '{\"cz\":\"V p\\u0159\\u00edpad\\u011b dotaz\\u016f n\\u00e1s nev\\u00e1hejte kontaktovat.\",\"en\":\"If you have questing contact us\"}', '{\"cz\":[],\"en\":{\"greeting\":\"Hello,\",\"summary_header\":\"Recapitulation\",\"label_thema\":\"Thema\",\"label_email\":\"Contact Email\",\"label_phone\":\"Telephone\",\"label_description\":\"Description\",\"label_attachments\":\"Accessments\",\"label_date\":\"Date\"}}', '{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Order information\"}');
 
 -- --------------------------------------------------------
 
@@ -1746,7 +1693,7 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `legal_site_settings`
@@ -1776,13 +1723,13 @@ ALTER TABLE `password_reset_tokens`
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=841;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=850;
 
 --
 -- AUTO_INCREMENT for table `refresh_tokens`
 --
 ALTER TABLE `refresh_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=840;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=849;
 
 --
 -- AUTO_INCREMENT for table `shop_categories`
@@ -1896,7 +1843,7 @@ ALTER TABLE `shop_suppliers`
 -- AUTO_INCREMENT for table `two_factor_codes`
 --
 ALTER TABLE `two_factor_codes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -1908,7 +1855,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `web_attachments`
 --
 ALTER TABLE `web_attachments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `web_external_links`
@@ -1938,7 +1885,7 @@ ALTER TABLE `web_news`
 -- AUTO_INCREMENT for table `web_raw_request_commissions`
 --
 ALTER TABLE `web_raw_request_commissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT for table `web_sales_leads`

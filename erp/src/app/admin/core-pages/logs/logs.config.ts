@@ -32,6 +32,17 @@
  * force_delete_all_denied, password_change_denied) - bezpečnostně nejcitlivější kategorie
  * v celém logu (zamítnuté pokusy o privilege escalation / zásah do cizího/sysadmin účtu),
  * dřív úplně nefiltrovatelná stejně jako unauthorized_maintenance_toggle_attempt.
+ *
+ * @refactor-note (2026-08-22) BEZPEČNOSTNÍ MONITORING - AUDIT ADMINISTRÁTORSKÝCH AKCÍ:
+ * doplněny 4 nové event_type hodnoty zapisované z `CoreSecurityEventController` a
+ * `CoreSecuritySettingController` (module zůstává 'Core', stejně jako CoreRole/User/
+ * Legal) - `security_retention_updated` (změna GDPR retenční doby),
+ * `security_event_triaged` (změna stavu bezpečnostního eventu), `security_event_deleted`
+ * (ruční smazání jednoho záznamu), `security_events_purged` (hromadné vyčištění starých
+ * záznamů). Samotné zápisy diagnostických eventů (`CoreSecurityEvent::record()` -
+ * captcha_failed, throttle_exceeded, scan_probe apod.) se do `core_logs` NEZAPISUJÍ -
+ * ty žijí výhradně v `core_security_events` (jiná stránka, jiný účel, viz
+ * core-pages/security-events). Tady se loguje jen ADMINISTRÁTORSKÁ AKCE nad monitoringem.
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -97,7 +108,11 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
       "login_failed",
       "logout",
       "export",
-      "error"
+      "error",
+      "security_retention_updated",
+      "security_event_triaged",
+      "security_event_deleted",
+      "security_events_purged"
     ],
     placeholder: '-- Typ akce --',
     canSort: true
@@ -110,7 +125,8 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
       "Auth",
       "CoreRole",
       "User",
-      "Legal"
+      "Legal",
+      "Core"
     ],
     placeholder: '-- Modul --',
     canSort: true

@@ -49,6 +49,10 @@
  *      skutečně čte/zapisuje. `core-settings-*` zůstává platný pro `core/settings`
  *      route v api.php, jen k němu momentálně žádná frontend stránka nesahá (dřívější
  *      přepínač údržby v headeru byl odstraněn, viz admin-layout.component.html).
+ * @refactor-note (2026-08-22) BEZPEČNOSTNÍ MONITORING: přidána route
+ *      `core/security-events` (SecurityEventsComponent), chráněná novou permission
+ *      `core-security-view` (`core-security-update`/`core-security-delete` se
+ *      vyhodnocují až uvnitř komponenty/API pro konkrétní akce - triage, purge).
  */
 
 import { NgModule } from '@angular/core';
@@ -83,6 +87,7 @@ import { EditRolesComponent } from './core-pages/edit-roles/edit-roles.component
 import { AdministratorsComponent } from './core-pages/administrators/administrators.component';
 import { CoreLogsComponent } from './core-pages/logs/logs.component';
 import { WelcomePageComponent } from './core-pages/welcome-page/welcome-page.component';
+import { SecurityEventsComponent } from './core-pages/security-events/security-events.component';
 
 // Shop module components
 import { DashboardComponent as ShopDashboardComponent } from './shop-pages/dashboard/dashboard.component';
@@ -144,6 +149,7 @@ const routes: Routes = [
           { path: 'administrators', component: AdministratorsComponent, data: { permission: 'core-administrators-view' } },
           // Placeholder - dočasně čte ze stejného zdroje jako web/business-logs, viz poznámka v logs.component.ts.
           { path: 'logs', component: CoreLogsComponent, data: { permission: 'view-core' } },
+          { path: 'security-events', component: SecurityEventsComponent, data: { permission: 'core-security-view' } },
         ]
       },
 

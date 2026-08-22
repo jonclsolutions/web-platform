@@ -79,6 +79,18 @@
  *      `view-web`, `view-eshop`, `view-core`, `core-view-welcome-page`, celá shop sekce
  *      (nižší priorita, granularizace plánována v budoucím tasku) a `core/roles` +
  *      `core/permissions` (chráněno sysadmin kontrolou) - beze změny.
+ * @refactor-note (2026-08-22) BEZPEČNOSTNÍ MONITORING (krok 1+2 backlogu "podezřelá
+ *      aktivita / captcha / throttle / scanning"): nová sekce `core/security_events`
+ *      (čtení + triage bezpečnostních eventů zapsaných backendem přes
+ *      `CoreSecurityEvent::record()` - viz CaptchaVerificationService, AuthController,
+ *      `bootstrap/app.php` throttle handler) a `core/security_settings` (retenční doba
+ *      pro GDPR úklid, viz PurgeSecurityEventsCommand). Na rozdíl od `core/logs` tu
+ *      NEEXISTUJE veřejná/interní `POST /` - zápis dělá výhradně backend interně, admin
+ *      přes UI jen čte a mění stav (triage) nebo maže. Dále přidán `Route::fallback()`
+ *      NA KONEC SOUBORU (musí být registrován až po všech ostatních routách, jinak by
+ *      "spolykal" i platné, ale výše nezaregistrované cesty) - zachytává požadavky na
+ *      neexistující endpointy (typický scanning/probing vzorec - `.env`, `wp-login.php`,
+ *      `.git/config` apod.) a zapisuje je jako `scan_probe` do bezpečnostního monitoringu.
  */
 
 use Illuminate\Http\Request;
@@ -90,6 +102,8 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\Core\CoreRoleController;
 use App\Http\Controllers\Api\Core\CorePermissionController;
+use App\Http\Controllers\Api\Core\CoreSecurityEventController;
+use App\Http\Controllers\Api\Core\CoreSecuritySettingController;
 use App\Http\Controllers\Api\Legal\DocumentSectionController;
 use App\Http\Controllers\Api\Legal\SiteConfigurationController;
 use App\Http\Controllers\Api\Web\WebRawRequestCommissionController;
@@ -117,6 +131,7 @@ use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\PublicFileDownloadController;
+use App\Models\Core\CoreSecurityEvent;
 
 /*
 |--------------------------------------------------------------------------
@@ -266,6 +281,43 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
             Route::post('/',    [CoreLogController::class, 'store']);
             Route::get('/{id}', [CoreLogController::class, 'show'])
                 ->middleware('permission:view-core');
+        });
+
+        // ── core/security_events ────────────────────────────────────────────
+        // @refactor-note (2026-08-22): Diagnostický monitoring podezřelé aktivity
+        // (captcha, throttle, brute-force login, scanning...), oddělený od core/logs
+        // (audit přihlášených uživatelů). ŽÁDNÁ POST routa - zápis dělá výhradně
+        // backend interně přes CoreSecurityEvent::record() (CaptchaVerificationService,
+        // AuthController, throttle exception handler v bootstrap/app.php, fallback
+        // routa na konci tohoto souboru). `/stats` a `/purge` MUSÍ být definované
+        // PŘED `/{id}` routami - stejný důvod jako `force-delete-all` jinde v souboru
+        // (Laravel by jinak string "stats"/"purge" spadl do parametru {id}).
+        Route::prefix('security_events')->group(function () {
+            Route::get('/stats', [CoreSecurityEventController::class, 'stats'])
+                ->middleware('permission:core-security-view');
+            Route::delete('/purge', [CoreSecurityEventController::class, 'purge'])
+                ->middleware('permission:core-security-delete');
+            Route::get('/',      [CoreSecurityEventController::class, 'index'])
+                ->middleware('permission:core-security-view');
+            Route::get('/{id}',  [CoreSecurityEventController::class, 'show'])
+                ->middleware('permission:core-security-view');
+            Route::put('/{id}',  [CoreSecurityEventController::class, 'update'])
+                ->middleware('permission:core-security-update');
+            Route::patch('/{id}', [CoreSecurityEventController::class, 'update'])
+                ->middleware('permission:core-security-update');
+            Route::delete('/{id}', [CoreSecurityEventController::class, 'destroy'])
+                ->middleware('permission:core-security-delete');
+        });
+
+        // ── core/security_settings ──────────────────────────────────────────
+        // @refactor-note (2026-08-22): Singleton nastavení retenční doby bezpečnostního
+        // monitoringu (core_security_settings, id=1) - GDPR úklid, viz
+        // PurgeSecurityEventsCommand a routes/console.php.
+        Route::prefix('security_settings')->group(function () {
+            Route::get('/',  [CoreSecuritySettingController::class, 'show'])
+                ->middleware('permission:core-security-view');
+            Route::put('/', [CoreSecuritySettingController::class, 'update'])
+                ->middleware('permission:core-security-update');
         });
 
         // ── core/users ────────────────────────────────────────────────────
@@ -509,7 +561,7 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
                 ->middleware('permission:web-job-applications-delete');
         });
 
-        
+
         // web/logs — stejný princip: POST (zápis exportu/akce z libovolné web stránky)
         // bez permission middleware, GET (čtení historie) s permission.
         Route::prefix('logs')->group(function () {
@@ -675,3 +727,31 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
         });
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| SCANNING / PROBING DETECTION — MUSÍ zůstat úplně na konci souboru
+|--------------------------------------------------------------------------
+| @refactor-note (2026-08-22) BEZPEČNOSTNÍ MONITORING (krok 2): `Route::fallback()`
+| se aktivuje jen tehdy, když žádná jiná routa výše (public, protected, apiResource,
+| ...) požadavek nezachytí. Proto MUSÍ být registrována jako úplně poslední - kdyby
+| byla výše, "spolykala" by i platné cesty definované až za ní.
+|
+| Typický vzorec automatizovaného skenování zranitelností (boti hledající zapomenuté
+| .env soubory, staré WordPress instalace, exponovaný .git adresář apod.) jsou
+| requesty na cesty, které v téhle aplikaci nikdy nemohou existovat. Throttle
+| `throttle:30,1` chrání SAMOTNOU fallback routu před tím, aby se stala novým zdrojem
+| zátěže při masivním skenování - `CoreSecurityEvent::record()` je navíc bucketované
+| (viz model), takže i bez tohoto throttle by DB zápis zůstal levný, ale HTTP odpověď
+| samotná (byť jen 404 JSON) má svou cenu, kterou throttle omezuje.
+*/
+Route::fallback(function (Request $request) {
+    CoreSecurityEvent::record(
+        'scan_probe',
+        'warning',
+        $request->ip(),
+        CoreSecurityEvent::contextFromRequest($request)
+    );
+
+    return response()->json(['message' => 'Not Found.'], 404);
+})->middleware('throttle:30,1');
