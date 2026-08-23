@@ -6,10 +6,19 @@
  * @author RPSW
  * @created 2025
  * @description Controller responsible for managing sales lead lifecycle, including filtering, lifecycle state management (soft-delete), and comprehensive administrative audit logging.
- * @refactor-note (2026) Přidány `generateLink()` a `showByToken()` - viz metody níže pro
+ * @refactor-note (2026) Přidány generateLink() a showByToken() - viz metody níže pro
  *      detaily o veřejném/adminovém rozdělení a bezpečnostních poznámkách.
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
+ * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený LogsActivity trait místo
  * lokální duplicitní logAction(). Doménově beze změny (WebLog::class).
+ *
+ * @refactor-note (2026-08-23) HROMADNÉ MAZÁNÍ V JEDNOM REQUESTU: přidána bulkDestroy() -
+ * viz TableBuilderComponent.onBulkDeleteClick() (volá POST web/sales_leads/bulk-delete).
+ * destroy() nemá žádný vedlejší efekt na soubory (žádné přílohy) - jediný rozdíl oproti
+ * generickému Model::destroy($ids) je explicitní forceDelete()/delete() volba, stejně
+ * jako u WebNewsController.
+ * @note `public_token`/`public_token_used_at` (viz generateLink()/showByToken()) NEJSOU
+ * a NESMÍ být součástí případného budoucího importu - jde o systémem generovaná pole,
+ * ne uživatelský vstup.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -22,6 +31,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Web\WebSalesLead\StoreWebSalesLeadRequest;
 use App\Http\Resources\Web\WebSalesLeadResource;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @description Manages sales lead data operations within the CRM subsystem.
@@ -160,6 +170,61 @@ class WebSalesLeadController extends Controller
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při mazání leadu ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Smazání leadu selhalo.'], 500);
         }
+    }
+
+    /**
+     * @description Hromadně smaže vybrané leady JEDNÍM requestem - viz
+     * TableBuilderComponent.onBulkDeleteClick() (volá POST web/sales_leads/bulk-delete).
+     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids'          => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*'        => ['integer'],
+            'force_delete' => ['sometimes', 'boolean'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $validated['ids'])));
+        $forceDelete = filter_var($validated['force_delete'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $requestedCount = count($ids);
+        $deletedCount = 0;
+
+        try {
+            DB::transaction(function () use ($ids, $forceDelete, &$deletedCount) {
+                $items = WebSalesLead::withTrashed()->whereIn('id', $ids)->get();
+
+                foreach ($items as $item) {
+                    // Explicitní forceDelete()/delete() - Model::destroy($ids) by interně
+                    // vždy volalo jen delete(), což by u SoftDeletes modelu znamenalo
+                    // opakovaný soft-delete, ne skutečné trvalé smazání.
+                    $forceDelete ? $item->forceDelete() : $item->delete();
+                    $deletedCount++;
+                }
+            });
+        } catch (\Exception $e) {
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při hromadném mazání leadů: " . $e->getMessage());
+            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+        }
+
+        $skippedCount = $requestedCount - $deletedCount;
+        $idsPreview = implode(',', array_slice($ids, 0, 50)) . (count($ids) > 50 ? '...' : '');
+
+        $this->logAction(
+            $request,
+            WebLog::class,
+            $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
+            'WebSalesLead',
+            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} leadů (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            null,
+            'WebSalesLead'
+        );
+
+        return response()->json(['data' => [
+            'deleted_count' => $deletedCount,
+            'skipped_count' => $skippedCount,
+            'requested'     => $requestedCount,
+        ]]);
     }
 
     /**

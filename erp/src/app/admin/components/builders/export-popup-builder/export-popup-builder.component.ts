@@ -14,18 +14,23 @@
  * - DomSanitizer: Safely renders inline SVG icons via [innerHTML].
  *
  * @refactor-note (2026-08-18) SLOUPCOVÝ VÝBĚR PŘI EXPORTU - viz backlog task "export:
- * uživatelský výběr sloupců přes checkboxy". Přidán `@Input() columns` (jen `{key,
- * label}` páry, sestavené voláním komponentou z `ColumnDefinition[]` filtrovaných na
- * `exportable !== false` - viz `TableBuilderComponent.exportableColumnOptions` a
- * `ColumnDefinition.exportable` v generic-form-column-definiton.ts). Když je `columns`
- * neprázdné, nad formátovými kartami se zobrazí checkbox seznam (výchozí stav: VŠE
- * zaškrtnuto) + "Vybrat vše"/"Zrušit vše" přepínač. `formatSelected` output nyní
- * emituje `ExportSelection` (`{ format, columnKeys }`) místo prostého `ExportFormat` -
- * `columnKeys: null` značí "žádné omezení" (zpětně kompatibilní větev pro případ, že by
- * volající `columns` vůbec nepředal - komponenta se pak chová přesně jako předtím).
- * Formátové karty i "Zavřít"/"Zrušit" tlačítka se navíc zablokují, pokud je `columns`
- * neprázdné, ale výběr je prázdný (export s 0 sloupci nemá smysl) - viz
- * `formatGridDisabled` a `.export-columns-warning` v šabloně.
+ * uživatelský výběr sloupců přes checkboxy". Přidán `@Input() columns`.
+ *
+ * @refactor-note (2026-08-23) EXPORT V "SUROVÉM" (IMPORT-KOMPATIBILNÍM) FORMÁTU - viz
+ * backlog task "raw_request_commissions: plně funkční bulk import/export/delete".
+ * Přidán volitelný přepínač "Exportovat v surovém formátu" - dostupný jen pokud
+ * caller předá `showRawFormatOption = true` (tj. daná tabulka má aspoň jeden sloupec
+ * označený `importable: true` v `detailsColumns`, viz TableBuilderComponent).
+ * V zapnutém stavu:
+ * 1) Sloupcový checkbox seznam se přepne z PLNÉHO seznamu (`columns`) na podmnožinu
+ *    `importableColumns` - jen sloupce, které daný resource umí přijmout zpátky přes
+ *    import (syrové technické názvy sloupců jako hlavičky, ne české popisky).
+ * 2) XLSX se z nabídky formátů SCHOVÁ - import aktuálně podporuje jen CSV/JSON/TXT
+ *    (viz ImportFileParser), takže surový export do XLSX by stejně nešel zpětně
+ *    naimportovat.
+ * `ExportSelection` nese nové pole `rawFormat: boolean` - `TableBuilderComponent` podle
+ * něj přepíná mezi zpracovaným (`getExportValueForKey`, české popisky) a syrovým
+ * (`getRawExportValueForKey`, technické názvy sloupců, needitované hodnoty) exportem.
  */
 
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -47,25 +52,30 @@ export interface ExportColumnOption {
 /**
  * @description Payload emitted by `formatSelected` once the admin picks a format.
  * @property columnKeys Keys of the columns the admin left checked, in the same order as
- * the `columns` Input - or `null` when this popup instance was never given any columns
- * to pick from (`columns` empty), meaning "no restriction, export everything the caller
- * would export by default". Callers that don't care about column selection can safely
- * ignore this field's distinction and always export everything when it's `null`.
+ * the active `columns` source (`columns` or, in raw mode, `importableColumns`) - or
+ * `null` when this popup instance was never given any columns to pick from.
+ * @property rawFormat True když admin zaškrtl "Exportovat v surovém formátu" - viz
+ * refactor-note (2026-08-23) v hlavičce souboru. Vždy `false`, pokud `showRawFormatOption`
+ * nebyl daný resource vůbec nabídnut.
  */
 export interface ExportSelection {
   format: ExportFormat;
   columnKeys: string[] | null;
+  rawFormat: boolean;
 }
 
 /**
  * @description Modal popup letting the admin pick a file format (and, optionally, which
- * columns to include) before exporting the currently loaded (unpaginated) table dataset.
+ * columns to include, and whether to export in raw import-compatible form) before
+ * exporting the currently loaded (unpaginated) table dataset.
  * @usage `<app-export-popup-builder [itemCount]="data.length" [isExporting]="isExporting"
  *          [columns]="exportableColumnOptions"
+ *          [importableColumns]="importableColumnOptions"
+ *          [showRawFormatOption]="hasImportableColumns"
  *          (formatSelected)="onFormat($event)" (closed)="onClose()" />`
  * @note Purely presentational regarding export logic - the parent table decides how each
  * format is actually generated and downloaded, and which raw data feeds the export; this
- * component only emits the admin's choice (format + selected column keys).
+ * component only emits the admin's choice (format + selected column keys + raw mode flag).
  */
 @Component({
   selector: 'app-export-popup-builder',
@@ -83,60 +93,90 @@ export class ExportPopupBuilderComponent implements OnChanges {
   /** Which formats to offer - defaults to all four supported formats. */
   @Input() formats: ExportFormat[] = ['csv', 'xlsx', 'json', 'txt'];
   /**
-   * @description Columns the admin may choose to include/exclude from the export, in
-   * display order. Empty (default) = column picker section is not rendered at all and
-   * `formatSelected` emits `columnKeys: null` (pure backward-compatible behaviour).
+   * @description Columns the admin may choose to include/exclude from the STANDARD
+   * (zpracovaný, česky popsaný) export, in display order. Empty (default) = column
+   * picker section is not rendered at all.
    */
   @Input() columns: ExportColumnOption[] = [];
+  /**
+   * @description Podmnožina sloupců, které resource umí přijmout ZPĚT přes import -
+   * nabízí se místo `columns` v okamžiku, kdy admin zaškrtne "Exportovat v surovém
+   * formátu". Prázdné pole = raw export by neměl co exportovat, `showRawFormatOption`
+   * by v takovém případě neměl být `true` vůbec.
+   */
+  @Input() importableColumns: ExportColumnOption[] = [];
+  /**
+   * @description Zda vůbec nabídnout přepínač "Exportovat v surovém formátu" - má
+   * smysl jen u resources, které mají hotový i import (jinak by export nikam zpátky
+   * nešel naimportovat). Caller (TableBuilderComponent) tohle vyhodnocuje podle toho,
+   * jestli `detailsColumns` obsahuje aspoň jeden sloupec s `importable: true`.
+   */
+  @Input() showRawFormatOption: boolean = false;
 
   @Output() formatSelected = new EventEmitter<ExportSelection>();
   @Output() closed = new EventEmitter<void>();
 
   /**
    * @description Keys of currently checked columns. Reset to "all checked" every time
-   * a new `columns` array arrives (covers both the normal case - popup re-created fresh
-   * on every open, since the parent renders it behind `@if` - and the defensive case of
-   * the same instance receiving a different `columns` set later).
+   * a new active columns source arrives.
    */
   selectedColumnKeys = new Set<string>();
+
+  /** @description Stav přepínače "Exportovat v surovém formátu" - viz refactor-note (2026-08-23). */
+  rawFormat = false;
 
   private sanitizer = inject(DomSanitizer);
   private readonly formatOptions = EXPORT_FORMAT_OPTIONS;
 
   /**
-   * @bugfix-note (2026-08-18) KRITICKÝ BUG - VÝBĚR SLOUPCŮ SE IGNOROVAL: dřív se tady
-   * `selectedColumnKeys` resetoval NEPODMÍNĚNĚ pokaždé, když Angular vyhodnotil `columns`
-   * Input jako "změněný" - a protože `TableBuilderComponent.exportableColumnOptions` byl
-   * getter vracející PŘI KAŽDÉM CD PRŮCHODU novou instanci pole (stejný obsah, jiná
-   * reference), stačilo zaškrtnout/odškrtnout JEDINÝ checkbox (což samo o sobě spustí CD
-   * tick) a tenhle handler okamžitě vrátil výběr zpátky na "vše zaškrtnuto" - uživatel
-   * tak fakticky nikdy nemohl nic reálně vyloučit z exportu. Primární oprava je v
-   * `TableBuilderComponent` (`exportableColumnOptions` je teď stabilní property počítaná
-   * jen JEDNOU při otevření popupu, ne getter). TOTO je druhá vrstva ochrany (defense in
-   * depth): i kdyby `columns` dorazily s novou referencí, reset proběhne JEN pokud se
-   * SKUTEČNĚ liší obsah (sada klíčů) oproti předchozí hodnotě - mere reference change se
-   * signálem změny nepovažuje.
+   * @description Zdroj sloupců pro checkbox seznam - PODLE AKTUÁLNÍHO stavu `rawFormat`.
+   * V raw módu se nabízí jen `importableColumns`, jinak plný `columns` seznam.
+   */
+  get activeColumnSource(): ExportColumnOption[] {
+    return this.rawFormat ? this.importableColumns : this.columns;
+  }
+
+  /**
+   * @bugfix-note (2026-08-18) KRITICKÝ BUG - VÝBĚR SLOUPCŮ SE IGNOROVAL - viz
+   * TableBuilderComponent.exportableColumnOptions bugfix-note stejné datum (stabilní
+   * property místo getteru, aby se `columns`/`importableColumns` reference neměnila
+   * při každém CD průchodu). Reset proběhne JEN při reálné změně OBSAHU klíčů zdroje,
+   * který je zrovna aktivní (`activeColumnSource`), ne mere reference change.
    */
   ngOnChanges(changes: SimpleChanges): void {
     const columnsChange = changes['columns'];
-    if (!columnsChange) return;
+    const importableChange = changes['importableColumns'];
+    if (!columnsChange && !importableChange) return;
 
-    const previousKeys = ((columnsChange.previousValue as ExportColumnOption[] | undefined) ?? []).map(c => c.key);
-    const currentKeys = this.columns.map(c => c.key);
-    const sameKeys = previousKeys.length === currentKeys.length
-      && previousKeys.every((key, i) => key === currentKeys[i]);
+    this.resetSelectionToActiveSource();
+  }
 
-    if (columnsChange.firstChange || !sameKeys) {
-      this.selectedColumnKeys = new Set(currentKeys);
-    }
+  private resetSelectionToActiveSource(): void {
+    this.selectedColumnKeys = new Set(this.activeColumnSource.map(c => c.key));
   }
 
   get visibleFormatOptions(): ExportFormatOption[] {
-    return this.formatOptions.filter(opt => this.formats.includes(opt.value));
+    // V raw módu se XLSX schovává - import ho nepodporuje, surový export do XLSX by
+    // stejně nešel zpětně naimportovat (viz refactor-note 2026-08-23 v hlavičce souboru).
+    const allowed = this.rawFormat ? this.formats.filter(f => f !== 'xlsx') : this.formats;
+    return this.formatOptions.filter(opt => allowed.includes(opt.value));
   }
 
   getIcon(svg: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(svg);
+  }
+
+  // ── Přepínač surového (import-kompatibilního) formátu ────────────────────
+
+  /**
+   * @description Přepne mezi standardním a surovým exportem - při přepnutí se
+   * checkbox výběr sloupců přenastaví na "vše zaškrtnuto" z nově aktivního zdroje
+   * (`columns` vs `importableColumns`), ať staré zaškrtnutí z jiného seznamu
+   * nezůstane matoucně "napůl" aplikované.
+   */
+  toggleRawFormat(): void {
+    this.rawFormat = !this.rawFormat;
+    this.resetSelectionToActiveSource();
   }
 
   // ── Výběr sloupců k exportu ───────────────────────────────────────────
@@ -155,26 +195,30 @@ export class ExportPopupBuilderComponent implements OnChanges {
   }
 
   get isAllColumnsSelected(): boolean {
-    return this.columns.length > 0 && this.selectedColumnKeys.size === this.columns.length;
+    const source = this.activeColumnSource;
+    return source.length > 0 && this.selectedColumnKeys.size === source.length;
   }
 
   toggleSelectAllColumns(): void {
     if (this.isAllColumnsSelected) {
       this.selectedColumnKeys.clear();
     } else {
-      this.selectedColumnKeys = new Set(this.columns.map(c => c.key));
+      this.selectedColumnKeys = new Set(this.activeColumnSource.map(c => c.key));
     }
   }
 
   /**
-   * @description Zda mají být formátové karty i export zablokované, protože byl dán
-   * výběr sloupců (`columns` neprázdné), ale admin momentálně nemá zaškrtnutý ani
-   * jeden - export bez jediného sloupce by vyprodukoval nesmyslně prázdný soubor.
-   * Tabulky, které `columns` vůbec nepředávají (`columns.length === 0`), tímto nejsou
-   * nijak dotčené - pro ně žádný sloupcový výběr neexistuje.
+   * @description Zda mají být formátové karty i export zablokované - buď se ještě
+   * generuje soubor, nebo je aktivní zdroj sloupců neprázdný, ale výběr je prázdný
+   * (export s 0 sloupci nemá smysl), nebo je zapnutý raw mód a `importableColumns`
+   * je prázdné (nemělo by se to stát, pokud `showRawFormatOption` bylo nastavené
+   * správně, ale kontrola tu je jako pojistka).
    */
   get formatGridDisabled(): boolean {
-    return this.isExporting || (this.columns.length > 0 && this.selectedColumnKeys.size === 0);
+    if (this.isExporting) return true;
+    if (this.rawFormat && this.importableColumns.length === 0) return true;
+    const source = this.activeColumnSource;
+    return source.length > 0 && this.selectedColumnKeys.size === 0;
   }
 
   // ── Overlay / zavírání ────────────────────────────────────────────────
@@ -193,7 +237,8 @@ export class ExportPopupBuilderComponent implements OnChanges {
   onSelect(format: ExportFormat): void {
     if (this.formatGridDisabled) return;
 
-    const columnKeys = this.columns.length > 0 ? Array.from(this.selectedColumnKeys) : null;
-    this.formatSelected.emit({ format, columnKeys });
+    const source = this.activeColumnSource;
+    const columnKeys = source.length > 0 ? Array.from(this.selectedColumnKeys) : null;
+    this.formatSelected.emit({ format, columnKeys, rawFormat: this.rawFormat });
   }
 }

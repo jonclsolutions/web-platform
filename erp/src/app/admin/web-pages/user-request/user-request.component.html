@@ -49,6 +49,7 @@
 [currentFilters]="filters"
 [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
 (refreshRequested)="forceFullRefresh(filters)"
+(importCompleted)="forceFullRefresh(filters)"
 [inputDefinitions]="formFields"
 [isFullWidth]="isTableFullWidth"
 [tableCaption]="'Seznam aktivních požadavků'"

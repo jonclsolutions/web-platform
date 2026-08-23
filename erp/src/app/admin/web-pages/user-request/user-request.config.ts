@@ -17,6 +17,19 @@
  *      jednotlivého požadavku (žádný nový permission klíč, žádná migrace
  *      core_permissions/core_role_permissions potřeba). Otevírá modal se šablonou
  *      potvrzovacího e-mailu - viz UserRequestComponent.openEmailTemplateEditor().
+ *
+ * @refactor-note (2026-08-23) BULK IMPORT/EXPORT: `USER_REQUEST_DETAILS_COLUMNS` má
+ *      u 7 polí nově `importable: true` - MUSÍ přesně sedět s
+ *      `WebRawRequestCommissionController::IMPORTABLE_COLUMNS` (backend whitelist pro
+ *      import). Tahle množina slouží dvěma věcem zároveň:
+ *      1) `TableBuilderComponent` podle ní nabídne v export popupu přepínač
+ *         "Exportovat v surovém formátu" (viz export-popup-builder.component.ts) -
+ *         hlavičky souboru pak budou technické názvy sloupců (ne české popisky),
+ *         hodnoty neformátované - takový export jde rovnou zpětně naimportovat.
+ *      2) Slouží jako jediný zdroj pravdy pro to, co je u tohohle resource vůbec
+ *         "importovatelné pole" - `id`/`attachments`/`created_at`/`updated_at`
+ *         importable ZÁMĚRNĚ NEDOSTÁVAJÍ (systémová/needitovatelná pole, `attachments`
+ *         navíc tabulkový import neumí přenést jako soubor).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -53,8 +66,7 @@ export const USER_REQUEST_FORM_FIELDS: Core.InputDefinition[] = [
     pattern: '^[a-zA-Z0-9ěščřžýáíéóúůďťňĚŠČŘŽÝÁÍÉÚŮĎŤŇ\\s\\.\\-]{3,255}$',
     errorMessage: 'Téma musí mít 3-255 znaků.',
     editable: true, show_in_edit: true, show_in_create: true,
-  },
-  {
+  },{
     column_name: 'contact_email',
     label: 'Kontaktní e-mail',
     placeholder: 'priklad@email.cz',
@@ -144,16 +156,21 @@ export const USER_REQUEST_FILTER_COLUMNS: Core.FilterColumns[] = [
 /**
  * @refactor-note (2026-08-2) `file_url` (type: 'file') nahrazeno `attachments`
  * (type: 'files') - detail teď vypíše VŠECHNY přílohy požadavku, ne jen jednu.
+ *
+ * @refactor-note (2026-08-23) `importable: true` u 7 polí - viz refactor-note v
+ * hlavičce souboru. `id`, `attachments`, `created_at`, `updated_at` ZÁMĚRNĚ bez tohoto
+ * příznaku (systémová/needitovatelná pole nebo pole, které tabulkový import neumí
+ * přenést - viz WebRawRequestCommissionController::IMPORTABLE_COLUMNS).
  */
 export const USER_REQUEST_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID požadavku', type: 'text' },
-  { key: 'thema', displayName: 'Téma', type: 'text' },
-  { key: 'contact_email', displayName: 'Email', type: 'text' },
-  { key: 'contact_phone', displayName: 'Telefon', type: 'text' },
-  { key: 'status', displayName: 'Stav', type: 'text' },
-  { key: 'priority', displayName: 'Priorita', type: 'text' },
-  { key: 'order_description', displayName: 'Popis požadavku', type: 'text' },
-  { key: 'note', displayName: 'Poznámka', type: 'text' },
+  { key: 'thema', displayName: 'Téma', type: 'text', importable: true },
+  { key: 'contact_email', displayName: 'Email', type: 'text', importable: true },
+  { key: 'contact_phone', displayName: 'Telefon', type: 'text', importable: true },
+  { key: 'status', displayName: 'Stav', type: 'text', importable: true },
+  { key: 'priority', displayName: 'Priorita', type: 'text', importable: true },
+  { key: 'order_description', displayName: 'Popis požadavku', type: 'text', importable: true },
+  { key: 'note', displayName: 'Poznámka', type: 'text', importable: true },
   { key: 'attachments', displayName: 'Přílohy', type: 'files' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Naposledy změněno', type: 'date', format: 'medium' },

@@ -7,19 +7,20 @@
  * @created 2026
  * @description Manages news article lifecycle, including categorization, content management, and soft-delete administrative workflows.
  *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Lokální verze si ručně dopisovala vlastní
- * Str::limit(description, 990) a Str::limit(json_encode(context_data), 60000) ochranu -
- * trait dělá totéž centrálně (viz LogsActivity::safeContextData()), takže lokální
- * duplicita mizí beze změny chování. Doménově beze změny (WebLog::class).
+ * @refactor-note (2026-08-6) MIGRACE LOGOVANI na sdileny LogsActivity trait misto
+ * lokalni duplicitni logAction(). Domenove beze zmeny (WebLog::class).
  *
- * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA FILTRŮ: `index()` vůbec nezpracovával
- * filtry `id` a `title`, přestože `NEWS_FILTER_COLUMNS` (frontend) je nabízí. Laravel
- * neznámé query parametry mlčky ignoruje, takže `?id=17` nebo `?title=...` neměly
- * žádný efekt - jediné, co se z requestu vždy aplikovalo, bylo `sort_by`/`sort_direction`,
- * proto to navenek vypadalo, že filtr "jen otočí pořadí". Doplněno `id` (přesná shoda)
- * a `title` (částečná shoda přes LIKE, konzistentně s `author`) - stejný vzor, jaký už
- * správně používá např. WebSalesOrderController::index().
+ * @bugfix-note (2026-08-15) KRITICKA OPRAVA FILTRU: index() vubec nezpracovaval
+ * filtry id a title, prestoze NEWS_FILTER_COLUMNS (frontend) je nabizi. Doplneno
+ * id (presna shoda) a title (castecna shoda pres LIKE, konzistentne s author).
+ *
+ * @refactor-note (2026-08-23) HROMADNE MAZANI V JEDNOM REQUESTU: pridana bulkDestroy()
+ * - viz TableBuilderComponent.onBulkDeleteClick() na frontendu (vola
+ * POST web/news/bulk-delete). Na rozdil od WebJobApplicationController tady destroy()
+ * NEMA zadny vedlejsi efekt na soubory/jine tabulky (zadne prilohy) - jediny rozdil
+ * oproti generickemu Model::destroy($ids) je nutnost explicitne zavolat forceDelete()
+ * pro force_delete=true vetev (Model::destroy() interne vzdy vola delete(), coz by
+ * u SoftDeletes modelu znamenalo znovu jen soft-delete, ne trvale smazani).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -33,18 +34,12 @@ use App\Http\Requests\Web\WebNews\UpdateWebNewsRequest;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
-/**
- * @description Controller responsible for processing and managing news content on the website.
- * @note Integrates with the logging system to maintain an audit trail for all content modifications.
- */
 class WebNewsController extends Controller
 {
     use LogsActivity;
 
-    /**
-     * Retrieves a paginated list of news articles with support for search and filtering.
-     */
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 15);
@@ -59,12 +54,10 @@ class WebNewsController extends Controller
                 ->orWhere('message', 'like', "%$s%"));
         }
 
-        // Přesná shoda - ID je číselný identifikátor, částečná shoda by tu nedávala smysl.
         if ($request->filled('id')) {
             $query->where('id', $request->input('id'));
         }
 
-        // Částečná shoda (stejně jako 'author' níže) - uživatel typicky zná jen část titulku.
         if ($request->filled('title')) {
             $query->where('title', 'like', '%' . $request->input('title') . '%');
         }
@@ -97,9 +90,6 @@ class WebNewsController extends Controller
         ]);
     }
 
-    /**
-     * Persists a new news article.
-     */
     public function store(StoreWebNewsRequest $request): JsonResponse
     {
         try {
@@ -114,18 +104,12 @@ class WebNewsController extends Controller
         }
     }
 
-    /**
-     * Retrieves the details of a single news article by ID, including soft-deleted ones.
-     */
     public function show($id): JsonResponse
     {
         $news = WebNews::withTrashed()->findOrFail($id);
         return response()->json(new WebNewsResource($news));
     }
 
-    /**
-     * Updates an existing news article.
-     */
     public function update(UpdateWebNewsRequest $request, $id): JsonResponse
     {
         try {
@@ -142,9 +126,6 @@ class WebNewsController extends Controller
         }
     }
 
-    /**
-     * Deletes a news article (Soft or Hard).
-     */
     public function destroy(Request $request, $id): JsonResponse
     {
         try {
@@ -164,8 +145,61 @@ class WebNewsController extends Controller
     }
 
     /**
-     * Restores a soft-deleted news article.
+     * @description Hromadně smaže vybrané novinky JEDNÍM requestem - viz
+     * TableBuilderComponent.onBulkDeleteClick() na frontendu (volá
+     * POST web/news/bulk-delete).
+     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
      */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids'          => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*'        => ['integer'],
+            'force_delete' => ['sometimes', 'boolean'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $validated['ids'])));
+        $forceDelete = filter_var($validated['force_delete'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $requestedCount = count($ids);
+        $deletedCount = 0;
+
+        try {
+            DB::transaction(function () use ($ids, $forceDelete, &$deletedCount) {
+                $items = WebNews::withTrashed()->whereIn('id', $ids)->get();
+
+                foreach ($items as $item) {
+                    // Explicitní forceDelete()/delete() - Model::destroy($ids) by interně
+                    // vždy volalo jen delete(), což by u SoftDeletes modelu znamenalo
+                    // opakovaný soft-delete, ne skutečné trvalé smazání.
+                    $forceDelete ? $item->forceDelete() : $item->delete();
+                    $deletedCount++;
+                }
+            });
+        } catch (\Exception $e) {
+            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při hromadném mazání novinek: " . $e->getMessage());
+            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+        }
+
+        $skippedCount = $requestedCount - $deletedCount;
+        $idsPreview = implode(',', array_slice($ids, 0, 50)) . (count($ids) > 50 ? '...' : '');
+
+        $this->logAction(
+            $request,
+            WebLog::class,
+            $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
+            'WebNews',
+            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} novinek (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            null,
+            'WebNews'
+        );
+
+        return response()->json(['data' => [
+            'deleted_count' => $deletedCount,
+            'skipped_count' => $skippedCount,
+            'requested'     => $requestedCount,
+        ]]);
+    }
+
     public function restore(Request $request, $id): JsonResponse
     {
         try {
@@ -181,9 +215,6 @@ class WebNewsController extends Controller
         }
     }
 
-    /**
-     * Permanently deletes all soft-deleted news articles.
-     */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {

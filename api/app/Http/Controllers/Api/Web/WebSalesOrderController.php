@@ -6,25 +6,26 @@
  * @author RPSW
  * @created 2025
  * @description Manages sales order (realizace) lifecycle, including integration with sales leads, multiple file attachment handling, and comprehensive audit logging.
- * @refactor-note (2026) `store()` resolvuje lead výhradně přes neuhodnutelný `lead_token`
- *      (public_token) v transakci s `lockForUpdate()`, což atomicky brání dvojímu
- *      odeslání stejného objednávkového formuláře.
- * @refactor-note (2026-2) Potvrzovací e-mail přepnut na Mail::queue().
- * @refactor-note (2026-08) `attachment_path` odstraněno, nahrazeno `web_attachments`.
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (WebLog::class).
+ * @refactor-note (2026) store() resolvuje lead vyhradne pres neuhodnutelny lead_token
+ *      (public_token) v transakci s lockForUpdate(), coz atomicky brani dvojimu
+ *      odeslani stejneho objednavkoveho formulare.
+ * @refactor-note (2026-2) Potvrzovaci e-mail prepnut na Mail::queue().
+ * @refactor-note (2026-08) attachment_path odstraneno, nahrazeno web_attachments.
+ * @refactor-note (2026-08-6) MIGRACE LOGOVANI na sdileny LogsActivity trait misto
+ * lokalni duplicitni logAction(). Domenove beze zmeny (WebLog::class).
  *
- * @bugfix-note (2026-08-15) KRITICKÁ OPRAVA (GDPR): `store()` teď explicitně přemapuje
- * `dataProcessingAgreement`/`tosAgreement` (camelCase klíče, jak je posílá
- * order-form.component.ts/html a jak je validuje StoreWebSalesOrderRequest) na
- * snake_case DB sloupce `data_processing_agreement`/`tos_agreement` PŘED voláním
- * `WebSalesOrder::create()`. Dřív se tyto klíče posílaly do `create()` beze změny -
- * `$fillable` je neznal (ani sloupce v DB neexistovaly), takže Eloquent je mlčky
- * zahodil navzdory tomu, že `StoreWebSalesOrderRequest` vyžadovala `required|accepted`
- * u obou. Viz WebSalesOrder.php pro doplněný `$fillable`/`$casts` a přiloženou SQL
- * migraci pro nové sloupce. `update()` tyto hodnoty záměrně NEPŘIJÍMÁ a nemění -
- * `UpdateWebSalesOrderRequest` o nich vůbec neví - administrátor při editaci záznamu
- * souhlas dodatečně needituje, jde o jednorázový zápis v okamžiku podání.
+ * @bugfix-note (2026-08-15) KRITICKA OPRAVA (GDPR): store() ted explicitne premapuje
+ * dataProcessingAgreement/tosAgreement na snake_case DB sloupce PRED volanim
+ * WebSalesOrder::create().
+ *
+ * @refactor-note (2026-08-23) HROMADNE MAZANI V JEDNOM REQUESTU: pridana bulkDestroy() -
+ * viz TableBuilderComponent.onBulkDeleteClick() (vola POST web/sales_orders/bulk-delete).
+ * ZAMERNE replikuje STEJNOU logiku jako destroy() (uklid priloh z disku pres
+ * deleteAllAttachments() pri force_delete=true), ne genericky Model::destroy($ids).
+ * @note Tenhle resource NENI dobry kandidat na budouci hromadny import - store() ma
+ * atomickou vazbu na lead_token (lockForUpdate transakce spotrebovavajici jednorazovy
+ * odkaz) a vyzaduje explicitni GDPR souhlas (data_processing_agreement/tos_agreement),
+ * ktery nelze smysluplne "odsouhlasit" retroaktivne za historicka importovana data.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -74,7 +75,6 @@ class WebSalesOrderController extends Controller
                 ->orWhere('ico', 'like', "%$s%")
                 ->orWhere('client_email', 'like', "%$s%"));
         }
-
         foreach (['id', 'lead_id', 'ico'] as $f) {
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
@@ -118,10 +118,6 @@ class WebSalesOrderController extends Controller
         try {
             $validated = $request->safe()->except(['attachments', 'lead_id']);
 
-            // Přemapování camelCase klíčů z formuláře (viz StoreWebSalesOrderRequest
-            // validation rules) na snake_case DB sloupce - viz bugfix-note v hlavičce
-            // souboru. Bez tohoto kroku Eloquent tyto klíče mlčky zahodí (nejsou ve
-            // $fillable pod camelCase názvem) a souhlas se nikam neuloží.
             $validated['data_processing_agreement'] = (bool) ($validated['dataProcessingAgreement'] ?? false);
             $validated['tos_agreement'] = (bool) ($validated['tosAgreement'] ?? false);
             unset($validated['dataProcessingAgreement'], $validated['tosAgreement']);
@@ -234,6 +230,66 @@ class WebSalesOrderController extends Controller
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Chyba při mazání realizace ID $id: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
             return response()->json(['message' => 'Smazání realizace selhalo.'], 500);
         }
+    }
+
+    /**
+     * @description Hromadně smaže vybrané realizace JEDNÍM requestem - viz
+     * TableBuilderComponent.onBulkDeleteClick() (volá POST web/sales_orders/bulk-delete).
+     * Replikuje STEJNOU logiku jako destroy() (úklid příloh z disku při
+     * force_delete=true) - ne generický Model::destroy($ids), který by tenhle úklid
+     * potichu přeskočil a nechal osiřelé soubory ve storage/app/public/sales_orders.
+     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids'          => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*'        => ['integer'],
+            'force_delete' => ['sometimes', 'boolean'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $validated['ids'])));
+        $forceDelete = filter_var($validated['force_delete'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $requestedCount = count($ids);
+        $deletedCount = 0;
+
+        try {
+            DB::transaction(function () use ($ids, $forceDelete, &$deletedCount) {
+                $items = WebSalesOrder::withTrashed()->with('attachments')->whereIn('id', $ids)->get();
+
+                foreach ($items as $item) {
+                    if ($forceDelete) {
+                        $this->deleteAllAttachments($item);
+                        $item->forceDelete();
+                    } else {
+                        $item->delete();
+                    }
+                    $deletedCount++;
+                }
+            });
+        } catch (\Exception $e) {
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Chyba při hromadném mazání realizací: " . $e->getMessage());
+            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+        }
+
+        $skippedCount = $requestedCount - $deletedCount;
+        $idsPreview = implode(',', array_slice($ids, 0, 50)) . (count($ids) > 50 ? '...' : '');
+
+        $this->logAction(
+            $request,
+            WebLog::class,
+            $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
+            'WebSalesOrder',
+            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} realizací (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            null,
+            'WebSalesOrder'
+        );
+
+        return response()->json(['data' => [
+            'deleted_count' => $deletedCount,
+            'skipped_count' => $skippedCount,
+            'requested'     => $requestedCount,
+        ]]);
     }
 
     /**

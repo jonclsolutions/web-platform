@@ -5,12 +5,10 @@
     @author: RPSW
     @created: 2026
     @description: Format-picker popup shown when the admin clicks "Export" on any table.
-    @dependencies: ExportPopupBuilderComponent (visibleFormatOptions, itemCount, isExporting)
-    @refactor-note (2026-08-18): Přidána sekce výběru sloupců (`columns` Input) mezi
-        header a formátové karty - viditelná jen když `columns` není prázdné (zpětně
-        kompatibilní pro případ, že by volající sloupce vůbec nepředal). Formátové karty
-        i "Zavřít" tlačítko respektují nově `formatGridDisabled` (isExporting NEBO
-        neprázdné `columns` s prázdným výběrem) - viz export-popup-builder.component.ts.
+    @refactor-note (2026-08-18): Přidána sekce výběru sloupců.
+    @refactor-note (2026-08-23): Přidán přepínač "Exportovat v surovém formátu" (jen
+        pokud showRawFormatOption) a sloupcový seznam teď čte z activeColumnSource
+        (přepíná se mezi columns/importableColumns podle stavu rawFormat).
 -->
 
 <div class="export-popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -34,10 +32,20 @@
       </button>
     </div>
 
-    @if (columns.length > 0) {
+    @if (showRawFormatOption) {
+      <label class="export-raw-toggle">
+        <input type="checkbox" [checked]="rawFormat" [disabled]="isExporting" (change)="toggleRawFormat()">
+        <span class="export-raw-toggle-text">
+          <strong>Exportovat v surovém formátu</strong>
+          <small>Technické názvy sloupců, needitované hodnoty - soubor půjde rovnou zpětně naimportovat (do stejné nebo jiné instance systému).</small>
+        </span>
+      </label>
+    }
+
+    @if (activeColumnSource.length > 0) {
       <div class="export-columns-section">
         <div class="export-columns-header">
-          <span class="export-columns-title">Sloupce k exportu</span>
+          <span class="export-columns-title">{{ rawFormat ? 'Sloupce k exportu (import-kompatibilní)' : 'Sloupce k exportu' }}</span>
           <button
             type="button"
             class="export-columns-toggle-all"
@@ -48,7 +56,7 @@
         </div>
 
         <div class="export-columns-list">
-          @for (col of columns; track col.key) {
+          @for (col of activeColumnSource; track col.key) {
             <label class="export-column-item">
               <input
                 type="checkbox"

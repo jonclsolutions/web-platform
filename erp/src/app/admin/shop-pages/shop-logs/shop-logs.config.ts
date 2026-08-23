@@ -40,7 +40,7 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
     key: 'event_type',
     header: 'Událost',
     type: 'select',
-    options: ["create", "update", "soft_delete", "hard_delete", "restore", "login", "bulk_hard_delete", "order_status_change"],
+    options: ["create", "update", "soft_delete", "hard_delete", "delete_bulk","restore", "login", "bulk_hard_delete", "order_status_change"],
     placeholder: '-- Typ akce --',
     canSort: true
   },

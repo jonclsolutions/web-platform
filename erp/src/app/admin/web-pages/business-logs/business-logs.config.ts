@@ -69,6 +69,7 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
       "force_delete_all",
       "export",
       "error",
+      "delete_bulk",
       "generate_link",
       "maintenance_status_changed",
       "unauthorized_maintenance_toggle_attempt"

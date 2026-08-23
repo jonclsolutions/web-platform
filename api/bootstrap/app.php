@@ -21,13 +21,27 @@
  *
  * @refactor-note (2026-08-22) KROK 2 BEZPEČNOSTNÍHO MONITORINGU: doplněn `render()` handler
  * pro `ThrottleRequestsException` (Laravel ji vyhazuje při zásahu JAKÉHOKOLIV `throttle:*`
- * middlewaru - `throttle:100,1` na chráněných routách, `throttle:login`, `throttle:5,1` na
+ * middlewaru - `throttle:300,1` na chráněných routách, `throttle:login`, `throttle:5,1` na
  * password reset, `throttle:10,1` na sales_orders atd.). Handler zapíše
  * `throttle_exceeded` do `core_security_events` (přes `CoreSecurityEvent::record()`, tedy
  * bucketovaně - nezpůsobí DB zátěž ani při skutečném útoku) a teprve poté vrátí standardní
  * 429 JSON odpověď se zachovaným `Retry-After` hlavičkovým polem. Bez tohoto handleru by
  * throttle limity fungovaly (request by byl odmítnut), ale admin by o překročení limitu
  * neměl v UI žádnou viditelnou stopu.
+ *
+ * @bugfix-note (2026-08-23) ZAPISOVAT JEN U NEPŘIHLÁŠENÝCH (CIZÍCH) REQUESTŮ. Bezpečnostní
+ * monitoring má smysl jako signál o CIZÍ podezřelé aktivitě - ne o vlastním přihlášeném
+ * adminovi, který jen intenzivně používá vlastní funkci (velké hromadné mazání = desítky
+ * paralelních DELETE requestů, hromadný import apod.). Throttle na CHRÁNĚNÝCH admin
+ * routách sdílí jeden "kbelík" per uživatel napříč celou admin sekcí (Laravel throttle
+ * klíčuje anonymní `throttle:X,Y` jen podle `user_id`), takže běžná těžká práce v adminu
+ * dřív vytvářela falešné "útoky" v core_security_events a monitoring tím ztrácel smysl -
+ * admin nemá důvod hlídat sám sebe. `$request->user() === null` rozlišuje: throttle na
+ * VEŘEJNÝCH endpointech (login, forgot-password, sales_orders, ...) je pořád skutečně
+ * "cizí" aktivita a loguje se dál beze změny; throttle na CHRÁNĚNÝCH admin routách u
+ * PŘIHLÁŠENÉHO uživatele se do bezpečnostního monitoringu už nezapisuje - 429 odpověď
+ * samotná (skutečná ochrana/blokace) proběhne úplně stejně, mění se jen to, že se to
+ * nezaznamená jako bezpečnostní incident.
  */
 
 use Illuminate\Foundation\Application;
@@ -81,18 +95,24 @@ return Application::configure(basePath: dirname(__DIR__))
         /**
          * @description Zachytí vyhození throttle limitu na kterékoliv routě (viz
          * refactor-note výše) a zapíše bezpečnostní event PŘED vrácením standardní 429
-         * odpovědi. `Retry-After` hlavička z původní výjimky se přenáší dál, ať se
-         * chování API pro klienta nijak neliší od výchozího Laravel throttle handlingu.
+         * odpovědi - ALE JEN pokud request nemá přihlášeného uživatele (veřejný/cizí
+         * provoz). Throttle na chráněných admin routách u PŘIHLÁŠENÉHO uživatele je
+         * jen kapacitní ochrana vlastní práce, ne bezpečnostní incident - viz
+         * bugfix-note (2026-08-23) v hlavičce souboru. `Retry-After` hlavička z
+         * původní výjimky se přenáší dál v OBOU případech, ať se chování API pro
+         * klienta nijak neliší od výchozího Laravel throttle handlingu.
          * @param ThrottleRequestsException $e
          * @param Request $request
          */
         $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
-            CoreSecurityEvent::record(
-                'throttle_exceeded',
-                'warning',
-                $request->ip(),
-                CoreSecurityEvent::contextFromRequest($request)
-            );
+            if ($request->user() === null) {
+                CoreSecurityEvent::record(
+                    'throttle_exceeded',
+                    'warning',
+                    $request->ip(),
+                    CoreSecurityEvent::contextFromRequest($request)
+                );
+            }
 
             if ($request->expectsJson()) {
                 $headers = $e->getHeaders();

@@ -32,11 +32,6 @@ export interface ColumnDefinition {
   format?: string;
   hidden?: boolean;
   currencyCode?: 'CZK' | 'EUR' | 'USD' | 'GBP' | string;
-  /**
-   * @description Zda tento sloupec smí být vůbec součástí exportu (CSV/XLSX/JSON/TXT).
-   * `false` = sloupec se nezobrazí v checkbox výběru sloupců a nikdy se neexportuje,
-   * bez ohledu na uživatelský výběr. Chybějící hodnota = `true` (zpětně kompatibilní
-   * výchozí chování). Viz refactor-note (2026-08-18) výše.
-   */
   exportable?: boolean;
+  importable?: boolean;
 }

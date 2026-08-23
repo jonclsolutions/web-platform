@@ -105,6 +105,7 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
       "password_change_denied",
       "password_notification_rate_limited",
       "login_success",
+      "delete_bulk",
       "login_failed",
       "logout",
       "export",

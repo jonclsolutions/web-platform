@@ -6,9 +6,14 @@
  * @author RPSW
  * @created 2026
  * @description Manages the support ticket lifecycle, including creation, status tracking, file attachment management, and audit logging.
- * @refactor-note (2026-08-2) Attachment storage moved to the polymorphic `web_attachments` table.
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (WebLog::class).
+ * @refactor-note (2026-08-2) Attachment storage moved to the polymorphic web_attachments table.
+ * @refactor-note (2026-08-6) MIGRACE LOGOVANI na sdileny LogsActivity trait misto
+ * lokalni duplicitni logAction(). Domenove beze zmeny (WebLog::class).
+ *
+ * @refactor-note (2026-08-23) HROMADNE MAZANI V JEDNOM REQUESTU: pridana bulkDestroy() -
+ * viz TableBuilderComponent.onBulkDeleteClick() (vola POST web/support_tickets/bulk-delete).
+ * ZAMERNE replikuje STEJNOU logiku jako destroy() (uklid prilohy z disku pres
+ * deleteAllAttachments() pri force_delete=true), ne genericky Model::destroy($ids).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -23,6 +28,7 @@ use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @description Controller responsible for processing customer support tickets.
@@ -64,7 +70,6 @@ class WebSupportTicketController extends Controller
         if ($request->filled('status')) {
             $query->where('state', $request->input('status'));
         }
-
         $sortBy = $request->input('sort_by', 'created_at');
         $direction = strtolower($request->input('sort_direction', 'desc'));
         $sortDirection = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
@@ -174,6 +179,66 @@ class WebSupportTicketController extends Controller
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při mazání ticketu ID $id: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
             return response()->json(['message' => 'Smazání ticketu selhalo.'], 500);
         }
+    }
+
+    /**
+     * @description Hromadně smaže vybrané tickety JEDNÍM requestem - viz
+     * TableBuilderComponent.onBulkDeleteClick() (volá POST web/support_tickets/bulk-delete).
+     * Replikuje STEJNOU logiku jako destroy() (úklid přílohy z disku při
+     * force_delete=true) - ne generický Model::destroy($ids), který by tenhle úklid
+     * potichu přeskočil a nechal osiřelé soubory ve storage/app/public/tickets.
+     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids'          => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*'        => ['integer'],
+            'force_delete' => ['sometimes', 'boolean'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $validated['ids'])));
+        $forceDelete = filter_var($validated['force_delete'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $requestedCount = count($ids);
+        $deletedCount = 0;
+
+        try {
+            DB::transaction(function () use ($ids, $forceDelete, &$deletedCount) {
+                $items = WebSupportTicket::withTrashed()->with('attachments')->whereIn('id', $ids)->get();
+
+                foreach ($items as $item) {
+                    if ($forceDelete) {
+                        $this->deleteAllAttachments($item);
+                        $item->forceDelete();
+                    } else {
+                        $item->delete();
+                    }
+                    $deletedCount++;
+                }
+            });
+        } catch (\Exception $e) {
+            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při hromadném mazání ticketů: " . $e->getMessage());
+            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+        }
+
+        $skippedCount = $requestedCount - $deletedCount;
+        $idsPreview = implode(',', array_slice($ids, 0, 50)) . (count($ids) > 50 ? '...' : '');
+
+        $this->logAction(
+            $request,
+            WebLog::class,
+            $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
+            'WebSupportTicket',
+            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} ticketů (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            null,
+            'WebSupportTicket'
+        );
+
+        return response()->json(['data' => [
+            'deleted_count' => $deletedCount,
+            'skipped_count' => $skippedCount,
+            'requested'     => $requestedCount,
+        ]]);
     }
 
     /**

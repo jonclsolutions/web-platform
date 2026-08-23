@@ -1,4 +1,4 @@
-/*     
+/*
     @file: export-popup-builder.component.css
     @path: /src/app/admin/components/builders/export-popup-builder/export-popup-builder.component.css
     @project: RPSW Web
@@ -6,10 +6,8 @@
     @created: 2026
     @description: Format-picker popup styling - same visual language as the rest of the
         admin (Kravio style): rounded corners, soft shadows, muted color-coded icon tiles.
-    @dependencies: none (self-contained component styles)
-    @refactor-note (2026-08-18): Přidány styly pro sekci výběru sloupců
-        (`.export-columns-*`) mezi header a formátové karty - stejný vizuální jazyk
-        (zaoblení, barvy, typografie) jako zbytek popupu/admin systému.
+    @refactor-note (2026-08-18): Přidány styly pro sekci výběru sloupců.
+    @refactor-note (2026-08-23): Přidány styly pro přepínač "Exportovat v surovém formátu".
 */
 
 .export-popup-overlay {
@@ -82,6 +80,53 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+   PŘEPÍNAČ SUROVÉHO (IMPORT-KOMPATIBILNÍHO) FORMÁTU
+   ══════════════════════════════════════════════════════════════════════ */
+
+.export-raw-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 20px 0;
+  padding: 11px 13px;
+  border: 1px solid #ececea;
+  border-radius: 14px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.export-raw-toggle:hover {
+  border-color: #d4d4d8;
+  background: #f4f4f5;
+}
+.export-raw-toggle input[type="checkbox"] {
+  margin-top: 2px;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: #18181b;
+  cursor: pointer;
+}
+.export-raw-toggle input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+.export-raw-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.export-raw-toggle-text strong {
+  font-size: 0.84rem;
+  color: #18181b;
+  font-weight: 700;
+}
+.export-raw-toggle-text small {
+  font-size: 0.74rem;
+  color: #71717a;
+  line-height: 1.4;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
    VÝBĚR SLOUPCŮ K EXPORTU
    ══════════════════════════════════════════════════════════════════════ */
 
@@ -137,7 +182,6 @@
   overflow-y: auto;
   padding-right: 2px;
 }
-
 .export-column-item {
   display: flex;
   align-items: center;
@@ -219,7 +263,6 @@ border-color: #d4d4d8;
 transform: translateY(-1px);
 box-shadow: 0 4px 12px rgba(24, 24, 27, 0.06);
 }
-
 .export-format-card:disabled {
 cursor: not-allowed;
 }

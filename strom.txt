@@ -1,6 +1,10 @@
 .
 ├── api
 │   ├── app
+│   │   ├── Console
+│   │   │   └── Commands
+│   │   │       ├── PurgeImportBatchesCommand.php
+│   │   │       └── PurgeSecurityEventsCommand.php
 │   │   ├── Http
 │   │   │   ├── Controllers
 │   │   │   │   ├── Api
@@ -12,7 +16,9 @@
 │   │   │   │   │   │   ├── CoreLogController.php
 │   │   │   │   │   │   ├── CorePermissionController.php
 │   │   │   │   │   │   ├── CoreRoleController.php
-│   │   │   │   │   │   └── CoreSiteSettingController.php
+│   │   │   │   │   │   ├── CoreSecurityEventController.php
+│   │   │   │   │   │   ├── CoreSecuritySettingController.php
+│   │   │   │   │   │   └── ImportController.php
 │   │   │   │   │   ├── Legal
 │   │   │   │   │   │   ├── DocumentSectionController.php
 │   │   │   │   │   │   ├── DocumentTypeController.php
@@ -29,6 +35,7 @@
 │   │   │   │   │   │   ├── ShopProductController.php
 │   │   │   │   │   │   ├── ShopPublicController.php
 │   │   │   │   │   │   ├── ShopShippingMethodController.php
+│   │   │   │   │   │   ├── ShopSiteSettingController.php
 │   │   │   │   │   │   └── ShopSupplierController.php
 │   │   │   │   │   ├── TranslationController.php
 │   │   │   │   │   ├── UserController.php
@@ -40,23 +47,28 @@
 │   │   │   │   │       ├── WebRawRequestCommissionController.php
 │   │   │   │   │       ├── WebSalesLeadController.php
 │   │   │   │   │       ├── WebSalesOrderController.php
+│   │   │   │   │       ├── WebSiteSettingController.php
 │   │   │   │   │       └── WebSupportTicketController.php
 │   │   │   │   └── Controller.php
 │   │   │   ├── Middleware
-│   │   │   │   ├── CheckCoreShopActive.php
-│   │   │   │   ├── CheckCoreWebActive.php
-│   │   │   │   └── CheckPermission.php
+│   │   │   │   ├── CheckPermission.php
+│   │   │   │   ├── CheckShopActive.php
+│   │   │   │   └── CheckWebActive.php
 │   │   │   ├── Requests
 │   │   │   │   ├── Auth
 │   │   │   │   │   ├── ForgotPasswordRequest.php
-│   │   │   │   │   └── ResetPasswordRequest.php
+│   │   │   │   │   ├── ResendTwoFactorRequest.php
+│   │   │   │   │   ├── ResetPasswordRequest.php
+│   │   │   │   │   └── VerifyTwoFactorRequest.php
 │   │   │   │   ├── Core
 │   │   │   │   │   ├── CoreRole
 │   │   │   │   │   │   ├── StoreCoreRoleRequest.php
 │   │   │   │   │   │   ├── SyncRolePermissionsRequest.php
 │   │   │   │   │   │   └── UpdateCoreRoleRequest.php
-│   │   │   │   │   └── CoreSiteSetting
-│   │   │   │   │       └── UpdateCoreSiteSettingRequest.php
+│   │   │   │   │   ├── CoreSecurityEvent
+│   │   │   │   │   │   └── UpdateCoreSecurityEventRequest.php
+│   │   │   │   │   └── CoreSecuritySetting
+│   │   │   │   │       └── UpdateCoreSecuritySettingRequest.php
 │   │   │   │   ├── Legal
 │   │   │   │   │   ├── Config
 │   │   │   │   │   │   ├── StoreSocialLinkRequest.php
@@ -119,7 +131,8 @@
 │   │   │   └── Resources
 │   │   │       ├── Core
 │   │   │       │   ├── CoreLogResource.php
-│   │   │       │   └── CoreRoleResource.php
+│   │   │       │   ├── CoreRoleResource.php
+│   │   │       │   └── CoreSecurityEventResource.php
 │   │   │       ├── Legal
 │   │   │       │   └── DocumentSectionResource.php
 │   │   │       ├── Shop
@@ -145,20 +158,25 @@
 │   │   │           ├── WebSalesLeadResource.php
 │   │   │           ├── WebSalesOrderResource.php
 │   │   │           └── WebSupportTicketResource.php
+│   │   ├── Jobs
+│   │   │   └── ImportRowsJob.php
 │   │   ├── Mail
 │   │   │   ├── Auth
 │   │   │   │   ├── PasswordChangedNotification.php
-│   │   │   │   └── PasswordResetRequested.php
+│   │   │   │   ├── PasswordResetRequested.php
+│   │   │   │   └── TwoFactorCodeMail.php
 │   │   │   └── Web
 │   │   │       ├── WebRawRequestCommissionReceived.php
 │   │   │       └── WebSalesOrderReceived.php
 │   │   ├── Models
 │   │   │   ├── Core
 │   │   │   │   ├── CoreExternalLink.php
+│   │   │   │   ├── CoreImportBatch.php
 │   │   │   │   ├── CoreLog.php
 │   │   │   │   ├── CorePermission.php
 │   │   │   │   ├── CoreRole.php
-│   │   │   │   └── CoreSiteSetting.php
+│   │   │   │   ├── CoreSecurityEvent.php
+│   │   │   │   └── CoreSecuritySetting.php
 │   │   │   ├── Legal
 │   │   │   │   ├── DocumentSection.php
 │   │   │   │   ├── DocumentType.php
@@ -179,7 +197,9 @@
 │   │   │   │   ├── ShopProductPrice.php
 │   │   │   │   ├── ShopProductVariant.php
 │   │   │   │   ├── ShopShippingMethod.php
+│   │   │   │   ├── ShopSiteSetting.php
 │   │   │   │   └── ShopSupplier.php
+│   │   │   ├── TwoFactorCode.php
 │   │   │   ├── User.php
 │   │   │   └── Web
 │   │   │       ├── WebAttachment.php
@@ -189,12 +209,27 @@
 │   │   │       ├── WebRawRequestCommission.php
 │   │   │       ├── WebSalesLead.php
 │   │   │       ├── WebSalesOrder.php
+│   │   │       ├── WebSiteSetting.php
 │   │   │       └── WebSupportTicket.php
 │   │   ├── Providers
 │   │   │   ├── AppServiceProvider.php
 │   │   │   └── RouteServiceProvider.php
 │   │   ├── Rules
 │   │   │   └── AttachmentsTotalSize.php
+│   │   ├── Services
+│   │   │   ├── Import
+│   │   │   │   ├── ImportBatchProcessor.php
+│   │   │   │   ├── ImportFileParser.php
+│   │   │   │   ├── ImportPermissionChecker.php
+│   │   │   │   ├── ImportRowValidator.php
+│   │   │   │   └── ImportRowWriter.php
+│   │   │   └── Security
+│   │   │       ├── CaptchaVerificationService.php
+│   │   │       └── ResourcePermissionChecker.php
+│   │   ├── Support
+│   │   │   └── Mail
+│   │   │       ├── CompanyContactInfo.php
+│   │   │       └── RawRequestEmailTemplate.php
 │   │   └── Traits
 │   │       ├── HandlesAttachments.php
 │   │       ├── HandlesFileUploads.php
@@ -215,6 +250,7 @@
 │   │   ├── cors.php
 │   │   ├── database.php
 │   │   ├── filesystems.php
+│   │   ├── importable_resources.php
 │   │   ├── logging.php
 │   │   ├── mail.php
 │   │   ├── queue.php
@@ -261,7 +297,10 @@
 │   │       ├── emails
 │   │       │   ├── auth
 │   │       │   │   ├── password-changed.blade.php
-│   │       │   │   └── password-reset.blade.php
+│   │       │   │   ├── password-reset.blade.php
+│   │       │   │   └── two-factor-code.blade.php
+│   │       │   ├── partials
+│   │       │   │   └── footer.blade.php
 │   │       │   └── web
 │   │       │       ├── raw-request-commission-received.blade.php
 │   │       │       └── sales-order-received.blade.php
@@ -270,12 +309,23 @@
 │   │   ├── api.php
 │   │   ├── console.php
 │   │   └── web.php
+│   ├── scripts
+│   │   └── setup-queue-cron.sh
 │   ├── storage
 │   │   ├── app
 │   │   │   ├── private
+│   │   │   │   └── imports
+│   │   │   │       ├── 00cc83ec-61cb-4074-bd5a-755b51b86a58.json
+│   │   │   │       ├── 038bf1cb-4d5a-4be1-bac6-702f39df73be.csv
+│   │   │   │       ├── 2e613900-c57a-40d9-96ab-ae57a693e06b.json
+│   │   │   │       ├── 36b4902c-ac6e-4d38-9df8-c2854fcce025.json
+│   │   │   │       ├── 392427b6-8ad7-4b98-ad29-39c35892cfa7.json
+│   │   │   │       ├── 4ba158ac-e553-4a1d-9d8b-6604541943ba.csv
+│   │   │   │       ├── 515bd16d-f2bd-48d8-b8dd-81a1dff5a0f6.json
+│   │   │   │       ├── 77c00620-db81-4363-96e3-e3aa9cb0321d.json
+│   │   │   │       └── 8c5d2f2d-b1c7-49d5-b395-90480fb3e227.json
 │   │   │   └── public
 │   │   │       ├── cv_files
-│   │   │       │   └── P2qFNkfDdO48ZRRWHmS7VTkaijTZJGRYD35RFjFV.txt
 │   │   │       ├── orders
 │   │   │       ├── payment-methods-images
 │   │   │       │   ├── apple-pay.png
@@ -304,23 +354,24 @@
 │   │   │       │   ├── shop
 │   │   │       │   │   └── czech-republic-default.png
 │   │   │       │   └── web
-│   │   │       │       ├── czech-republic-default.png
-│   │   │       │       └── en_ab9892ef-36a5-4725-acb1-99b0eb1daef3.png
+│   │   │       │       └── czech-republic-default.png
 │   │   │       └── translations
 │   │   │           ├── languages.json
 │   │   │           ├── shop
 │   │   │           │   └── cz.json
 │   │   │           └── web
-│   │   │               ├── cz.json
-│   │   │               └── en.json
+│   │   │               └── cz.json
 │   │   ├── framework
 │   │   │   ├── cache
 │   │   │   │   └── data
 │   │   │   ├── sessions
 │   │   │   ├── testing
 │   │   │   └── views
+│   │   │       ├── d0eb0c286836f0d72964121b8011c144.php
+│   │   │       └── 0027900651bad22e3942926df53ef454.php
 │   │   └── logs
-│   │       └── laravel.log
+│   │       ├── laravel.log
+│   │       └── queue-cron.log
 │   ├── tests
 │   │   ├── Feature
 │   │   │   └── ExampleTest.php
@@ -329,6 +380,7 @@
 │   │       └── ExampleTest.php
 │   └── vite.config.js
 ├── app_build
+├── attack_security_monitoring.sh
 ├── build-and-deploy.sh
 ├── db.sql
 ├── delete_all_db_tables.txt
@@ -514,6 +566,11 @@
 │   │   │   │   │   │   │   ├── form-builder.component.html
 │   │   │   │   │   │   │   ├── form-builder.component.spec.ts
 │   │   │   │   │   │   │   └── form-builder.component.ts
+│   │   │   │   │   │   ├── import-popup-builder
+│   │   │   │   │   │   │   ├── import-popup-builder.component.css
+│   │   │   │   │   │   │   ├── import-popup-builder.component.html
+│   │   │   │   │   │   │   ├── import-popup-builder.component.spec.ts
+│   │   │   │   │   │   │   └── import-popup-builder.component.ts
 │   │   │   │   │   │   ├── pagination-buttons-builder
 │   │   │   │   │   │   │   ├── pagination-buttons-builder.component.css
 │   │   │   │   │   │   │   ├── pagination-buttons-builder.component.html
@@ -573,6 +630,12 @@
 │   │   │   │   │   │   ├── personal-info.component.html
 │   │   │   │   │   │   ├── personal-info.component.spec.ts
 │   │   │   │   │   │   └── personal-info.component.ts
+│   │   │   │   │   ├── security-events
+│   │   │   │   │   │   ├── security-events.component.css
+│   │   │   │   │   │   ├── security-events.component.html
+│   │   │   │   │   │   ├── security-events.component.spec.ts
+│   │   │   │   │   │   ├── security-events.component.ts
+│   │   │   │   │   │   └── security-events.config.ts
 │   │   │   │   │   ├── web-settings
 │   │   │   │   │   │   ├── index.ts
 │   │   │   │   │   │   ├── web-settings.component.css
@@ -765,6 +828,7 @@
 │   │   │   │       │   ├── support-tickets.component.ts
 │   │   │   │       │   └── support-tickets.config.ts
 │   │   │   │       └── user-request
+│   │   │   │           ├── email-template-modal.css
 │   │   │   │           ├── user-request.component.css
 │   │   │   │           ├── user-request.component.html
 │   │   │   │           ├── user-request.component.spec.ts
@@ -816,7 +880,9 @@
 │   │   │   │       ├── role-options.service.spec.ts
 │   │   │   │       ├── role-options.service.ts
 │   │   │   │       ├── table-refresh-bus.service.spec.ts
-│   │   │   │       └── table-refresh-bus.service.ts
+│   │   │   │       ├── table-refresh-bus.service.ts
+│   │   │   │       ├── turnstile.service.spec.ts
+│   │   │   │       └── turnstile.service.ts
 │   │   │   ├── public
 │   │   │   │   ├── base-public.component.ts
 │   │   │   │   ├── shop-pages
@@ -1107,6 +1173,7 @@
 ├── generate-ssh.sh
 ├── id_ed25519_server
 ├── id_ed25519_server.pub
+├── import_task.txt
 ├── info.txt
 ├── README.md
 ├── remove_cookies_from_local_storage.txt
@@ -1118,4 +1185,4 @@
 ├── TODO_SHOP_PERMISSIONS.json
 └── verify-file-downloads.sh
 
-248 directories, 871 files
+262 directories, 924 files

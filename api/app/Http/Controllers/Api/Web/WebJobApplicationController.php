@@ -21,6 +21,14 @@
  * vlastní přesnou shodu (`where('id', ...)`), oddělenou od LIKE smyčky pro textová pole -
  * konzistentní s WebSalesLeadController/WebRawRequestCommissionController, které tenhle
  * vzor už měly správně.
+ *
+ * @refactor-note (2026-08-23) HROMADNÉ MAZÁNÍ V JEDNOM REQUESTU: přidána `bulkDestroy()`
+ * - viz TableBuilderComponent.onBulkDeleteClick() na frontendu (volá `{apiEndpoint}/bulk-delete`).
+ * ZÁMĚRNĚ NENÍ generický `Model::destroy($ids)` - `destroy()` u tohoto resource má
+ * netriviální vedlejší efekt (`force_delete` maže i přílohy z disku přes
+ * `deleteAllAttachments()`), který by generická zkratka potichu přeskočila a nechala by
+ * osiřelé soubory na disku. `bulkDestroy()` proto replikuje STEJNOU logiku jako
+ * `destroy()`, jen ve smyčce nad více záznamy v jedné transakci.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -35,6 +43,7 @@ use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @description Controller responsible for processing incoming job applications and managing applicant records.
@@ -197,6 +206,70 @@ class WebJobApplicationController extends Controller
             $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Chyba při mazání uchazeče ID: $id. Chyba: " . $e->getMessage(), (int) $id, 'WebJobApplication');
             return response()->json(['message' => 'Smazání se nezdařilo.'], 500);
         }
+    }
+
+    /**
+     * @description Hromadně smaže vybrané uchazeče JEDNÍM requestem - viz
+     * `TableBuilderComponent.onBulkDeleteClick()` na frontendu (volá
+     * `POST web/job_applications/bulk-delete`).
+     *
+     * @note ZÁMĚRNĚ replikuje STEJNOU logiku jako `destroy()` (viz jeho refactor-note
+     * v hlavičce třídy) - ne generický `Model::destroy($ids)`. Ten by u `force_delete=true`
+     * potichu přeskočil úklid příloh z disku (`deleteAllAttachments()`) a nechal by
+     * osiřelé CV soubory ve `storage/app/public/cv_files`.
+     *
+     * @param Request $request Tělo obsahuje `{ ids: number[], force_delete?: boolean }`.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids'          => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*'        => ['integer'],
+            'force_delete' => ['sometimes', 'boolean'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $validated['ids'])));
+        $forceDelete = filter_var($validated['force_delete'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $requestedCount = count($ids);
+        $deletedCount = 0;
+
+        try {
+            DB::transaction(function () use ($ids, $forceDelete, &$deletedCount) {
+                $items = WebJobApplication::withTrashed()->with('attachments')->whereIn('id', $ids)->get();
+
+                foreach ($items as $item) {
+                    if ($forceDelete) {
+                        $this->deleteAllAttachments($item);
+                        $item->forceDelete();
+                    } else {
+                        $item->delete();
+                    }
+                    $deletedCount++;
+                }
+            });
+        } catch (\Exception $e) {
+            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Chyba při hromadném mazání uchazečů: " . $e->getMessage());
+            return response()->json(['message' => 'Hromadné mazání se nezdařilo.'], 500);
+        }
+
+        $skippedCount = $requestedCount - $deletedCount;
+        $idsPreview = implode(',', array_slice($ids, 0, 50)) . (count($ids) > 50 ? '...' : '');
+
+        $this->logAction(
+            $request,
+            WebLog::class,
+            $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
+            'WebJobApplication',
+            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} uchazečů (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            null,
+            'WebJobApplication'
+        );
+
+        return response()->json(['data' => [
+            'deleted_count' => $deletedCount,
+            'skipped_count' => $skippedCount,
+            'requested'     => $requestedCount,
+        ]]);
     }
 
     /**

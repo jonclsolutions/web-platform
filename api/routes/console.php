@@ -26,6 +26,7 @@ use App\Console\Commands\PurgeSecurityEventsCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use App\Console\Commands\PurgeImportBatchesCommand;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -37,5 +38,15 @@ Artisan::command('inspire', function () {
  */
 Schedule::command(PurgeSecurityEventsCommand::class)
     ->dailyAt('03:15')
+    ->withoutOverlapping()
+    ->runInBackground();
+
+/**
+ * @description Denní úklid nevyzvednutých importních dávek (dry-run bez commitu,
+ * nebo se selhaným zpracováním) a jejich dočasných souborů na disku - viz
+ * PurgeImportBatchesCommand.
+ */
+Schedule::command(PurgeImportBatchesCommand::class)
+    ->dailyAt('03:30')
     ->withoutOverlapping()
     ->runInBackground();

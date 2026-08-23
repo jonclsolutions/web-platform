@@ -1,0 +1,147 @@
+<!--
+    @file: import-popup-builder.component.html
+    @path: src/app/admin/components/builders/import-popup-builder/import-popup-builder.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description Stejný vizuální jazyk jako export-popup-builder - kartový výběr formátu,
+    pak upload, pak dry-run souhrn s možností potvrdit/zrušit.
+-->
+
+<div class="import-popup-overlay" (mousedown)="onOverlayClick($event)">
+  <div class="import-popup-card" (click)="$event.stopPropagation()">
+
+    <div class="import-popup-header">
+      <div class="import-popup-header-text">
+        <h2 class="import-popup-title">Import dat</h2>
+        <p class="import-popup-subtitle">Hromadné přidání nových záznamů ze souboru. Existující data se nikdy nepřepisují ani nemažou.</p>
+      </div>
+      <button class="import-popup-close" (click)="onClose()" [disabled]="isValidating || isCommitting" aria-label="Zavřít">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── Krok 1: formát ─────────────────────────────────────────────── -->
+    @if (step === 'format') {
+      <div class="import-format-grid">
+        @for (option of formatOptions; track option.value) {
+          <button type="button" class="import-format-card" (click)="selectFormat(option.value)">
+            <div class="import-format-body">
+              <div class="import-format-label">{{ option.label }}</div>
+              <div class="import-format-desc">{{ option.description }}</div>
+            </div>
+            <div class="import-format-ext">{{ option.extension }}</div>
+          </button>
+        }
+      </div>
+    }
+
+    <!-- ── Krok 2: šablona + upload ───────────────────────────────────── -->
+    @if (step === 'upload') {
+      <div class="import-body">
+        <button type="button" class="import-template-btn" (click)="downloadTemplate()" [disabled]="isDownloadingTemplate">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Stáhnout prázdnou šablonu ({{ selectedFormat }})
+        </button>
+
+        <p class="import-hint">
+          Nahrajte soubor se stejnými hlavičkami sloupců, jako má šablona. Nové řádky se přidají k existujícím datům - nic se nepřepíše ani nesmaže.
+          Řádky, které kolidují s existujícím záznamem, se přeskočí.
+        </p>
+
+        <label class="import-file-drop">
+          <input type="file" (change)="onFileSelected($event)" class="import-file-input">
+          @if (!selectedFile) {
+            <span class="import-file-drop-text">Klikněte pro výběr souboru</span>
+          } @else {
+            <span class="import-file-drop-text import-file-drop-selected">📄 {{ selectedFile.name }}</span>
+          }
+        </label>
+
+        @if (selectedFile) {
+          <button type="button" class="import-clear-file-btn" (click)="clearSelectedFile()">Zrušit výběr souboru</button>
+        }
+      </div>
+
+      <div class="import-popup-footer">
+        <button type="button" class="import-popup-secondary" (click)="backToFormat()" [disabled]="isValidating">Zpět</button>
+        <button type="button" class="import-popup-primary" (click)="runValidation()" [disabled]="!selectedFile || isValidating">
+          @if (isValidating) { <span class="import-mini-spin"></span> }
+          Zkontrolovat soubor
+        </button>
+      </div>
+    }
+
+    <!-- ── Krok 3: souhrn dry-run ─────────────────────────────────────── -->
+    @if (step === 'summary' && validation) {
+      <div class="import-body">
+        <div class="import-summary-grid">
+          <div class="import-summary-stat">
+            <span class="import-summary-number">{{ validation.total_rows }}</span>
+            <span class="import-summary-label">řádků celkem</span>
+          </div>
+          <div class="import-summary-stat import-summary-stat-ok">
+            <span class="import-summary-number">{{ validation.valid_rows }}</span>
+            <span class="import-summary-label">validních</span>
+          </div>
+          <div class="import-summary-stat import-summary-stat-error">
+            <span class="import-summary-number">{{ validation.invalid_rows }}</span>
+            <span class="import-summary-label">chybných</span>
+          </div>
+        </div>
+
+        @if (hasErrors) {
+          <div class="import-errors-list">
+            <div class="import-errors-title">Chyby v souboru</div>
+            @for (err of validation.errors; track err.row) {
+              <div class="import-error-row">
+                <span class="import-error-row-num">Řádek {{ err.row }}</span>
+                <span class="import-error-row-text">
+                  @for (fieldErrors of err.errors | keyvalue; track fieldErrors.key) {
+                    <span>{{ fieldErrors.key }}: {{ fieldErrors.value.join(', ') }}</span>
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        }
+
+        @if (validation.valid_rows === 0) {
+          <p class="import-fatal-warning">Žádný řádek není validní - import nelze potvrdit. Opravte soubor podle chyb výše a nahrajte ho znovu.</p>
+        }
+      </div>
+
+      <div class="import-popup-footer">
+        <button type="button" class="import-popup-secondary" (click)="backToFormat()" [disabled]="isCommitting">Zrušit</button>
+        <button type="button" class="import-popup-primary" (click)="confirmCommit()" [disabled]="!validation.can_commit || isCommitting">
+          @if (isCommitting) { <span class="import-mini-spin"></span> }
+          Potvrdit a přidat {{ validation.valid_rows }} záznamů
+        </button>
+      </div>
+    }
+
+    <!-- ── Krok 4: hotovo ─────────────────────────────────────────────── -->
+    @if (step === 'done' && commitResult) {
+      <div class="import-body">
+        @if (commitResult.queued) {
+          <p class="import-done-text">Import byl zařazen do fronty na pozadí kvůli velkému množství záznamů. Výsledek uvidíte v auditním logu, jakmile doběhne.</p>
+        } @else {
+          <p class="import-done-text">
+            Přidáno <strong>{{ commitResult.imported_count }}</strong> záznamů,
+            přeskočeno <strong>{{ commitResult.skipped_count }}</strong>.
+          </p>
+        }
+      </div>
+
+      <div class="import-popup-footer">
+        <button type="button" class="import-popup-primary" (click)="onClose()">Zavřít</button>
+      </div>
+    }
+
+  </div>
+</div>
