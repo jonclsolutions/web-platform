@@ -1,4 +1,0 @@
-I-----------------------------------------------------------------------------I
-tree -I "vendor|node_modules|.angular|*/vendor|*/node_modules|*/.angular"
-tree -I "vendor|node_modules|.angular|*/vendor|*/node_modules|*/.angular" > strom.txt
-I-----------------------------------------------------------------------------I
