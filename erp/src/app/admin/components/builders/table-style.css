@@ -19,12 +19,18 @@
         sloupec jako u akčních tlačítek) a `.bulk-actions-bar` nad tabulkou (počet
         vybraných + dropdown "Akce" se šipkou + "Zrušit výběr") - viz
         table-builder.component.ts/.html stejné datum.
-    @redesign-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK: `.table-refresh-btn`
+    @redesign-note (2026-08-24a) KONSOLIDACE TOOLBAR TLAČÍTEK: `.table-refresh-btn`
         (textové tlačítko sdílené dřív pro "Aktualizovat" i "Import") nahrazeno
         `.table-refresh-icon-btn` - malé kulaté ikonové tlačítko bez popisku, protože
         "Import" se přesunul do stránkového "Akce" dropdownu (ActionMenuBuilderComponent)
         a v tomto interním toolbaru už nežije. `.toolbar` layout (flex-wrap, pořadí
         checkboxu) zůstává beze změny - jen je teď v řádku o jedno tlačítko méně.
+    @redesign-note (2026-08-24b) TOOLBAR NA JEDNÉ ŘÁDCE: opuštěn trik s
+        `flex-basis: 100%` na `.checkbox-container` (dřív ho posílal na vlastní řádek
+        NAD refresh+timestamp). Teď `justify-content: flex-start` nechá refresh ikonu
+        a timestamp v přirozeném pořadí VLEVO a `margin-left: auto` na
+        `.checkbox-container` ho odtlačí VPRAVO - obě skupiny tak sedí na stejné řádce,
+        každá na svém konci. HTML se vůbec nemění.
 */
 
 .table-responsive {
@@ -156,35 +162,18 @@ align-items: center;
 padding-top: 8px;
 }
 
-/*
- * .toolbar obsahuje v HTML v tomto pořadí: [refresh ikona] [timestamp badge]
- * [checkbox "Zobrazit tabulku na šířce stránky"]. Chceme ale VIZUÁLNĚ checkbox nahoře
- * a refresh+timestamp pod ním - řeší se čistě flexboxem, bez zásahu do HTML:
- *   1) `flex-wrap: wrap` dovolí položkám zalomit se na další řádek
- *   2) `.checkbox-container` dostane `flex-basis: 100%`, takže i když je v DOM
- *      poslední, zabere celý dostupný řádek -> zbylé dvě položky (refresh + timestamp)
- *      se automaticky zalomí NA VLASTNÍ ŘÁDEK
- *   3) `order` na checkboxu (-1) ho posune vizuálně NAD refresh+timestamp řádek,
- *      i když je v HTML zapsaný jako poslední
- */
 .toolbar {
 display: flex;
 flex-wrap: wrap;
-justify-content: flex-end;
+justify-content: flex-start;
 align-items: center;
 gap: 10px 14px;
 padding-top: 8px;
 }
 
 .toolbar .checkbox-container {
-order: -1;
-flex-basis: 100%;
+margin-left: auto;
 justify-content: flex-end;
-}
-
-.toolbar .table-refresh-icon-btn,
-.toolbar .table-last-updated {
-order: 0;
 }
 
 .small-btn {
@@ -236,12 +225,6 @@ margin: 0;
 border-radius: 4px;
 }
 
-/*
- * Malé kulaté ikonové tlačítko pro "Aktualizovat" - nahrazuje dřívější textové
- * `.table-refresh-btn`. Bez popisku, jen ikona + tooltip (title atribut) - zabírá
- * minimum místa v toolbaru. Rotace ikony při :active dává vizuální feedback kliknutí
- * bez nutnosti řešit loading stav ve zvláštní CSS třídě.
- */
 .table-refresh-icon-btn {
 display: inline-flex;
 align-items: center;
@@ -275,18 +258,13 @@ margin-left: 4px;
 white-space: nowrap;
 }
 
-/*
- * Responzivní chování toolbaru na užších obrazovkách (mobil/tablet na výšku):
- * - checkbox zůstává nahoře, ale text se zalomí pod sebe místo přetékání
- * - refresh ikona + timestamp badge se srovnají na střed a zmenší mezery
- */
 @media (max-width: 640px) {
   .toolbar {
     justify-content: center;
-    gap: 8px 10px;
   }
 
   .toolbar .checkbox-container {
+    margin-left: 0;
     justify-content: center;
     text-align: center;
     white-space: normal;
@@ -325,7 +303,6 @@ cursor: not-allowed;
 opacity: 0.35;
 }
 
-/* Jemné zvýraznění vybraného řádku - zůstává čitelné i přes zebra (nth-child) pruhování. */
 tr.row-selected {
 background-color: #f4f4f5;
 }
