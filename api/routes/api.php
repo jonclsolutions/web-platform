@@ -305,6 +305,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:core-external-links-view');
             Route::post('/',     [CoreExternalLinkController::class, 'store'])
                 ->middleware('permission:core-external-links-create');
+                  Route::post('/bulk-delete', [CoreExternalLinkController::class, 'bulkDestroy'])
+        ->middleware('permission:core-external-links-delete');
             Route::get('/{id}',  [CoreExternalLinkController::class, 'show'])
                 ->middleware('permission:core-external-links-view');
             Route::put('/{id}',  [CoreExternalLinkController::class, 'update'])
@@ -387,10 +389,14 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
         // Suppliers
         Route::prefix('suppliers')->middleware('permission:shop-manage-suppliers')->group(function () {
-            // TODO: Route::post('/bulk-delete', [ShopSupplierController::class, 'bulkDestroy']);
-            // TODO: Route::get('/import/template', [ShopSupplierController::class, 'importTemplate']);
-            // TODO: Route::post('/import/validate', [ShopSupplierController::class, 'importValidate'])->middleware('throttle:30,1');
-            // TODO: Route::post('/import/commit', [ShopSupplierController::class, 'importCommit'])->middleware('throttle:30,1');
+            Route::post('/bulk-delete', [ShopSupplierController::class, 'bulkDestroy'])
+        ->middleware('permission:shop-manage-suppliers');
+    Route::get('/import/template', [ShopSupplierController::class, 'importTemplate'])
+        ->middleware('permission:shop-manage-suppliers');
+    Route::post('/import/validate', [ShopSupplierController::class, 'importValidate'])
+        ->middleware(['throttle:30,1', 'permission:shop-manage-suppliers']);
+    Route::post('/import/commit', [ShopSupplierController::class, 'importCommit'])
+        ->middleware(['throttle:30,1', 'permission:shop-manage-suppliers']);
             Route::get('/{id}',                [ShopSupplierController::class, 'show']);
             Route::post('/{id}/restore',       [ShopSupplierController::class, 'restore']);
             Route::delete('/force-delete-all', [ShopSupplierController::class, 'forceDeleteAllTrashed']);
@@ -512,6 +518,12 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-support-tickets-delete');
             Route::delete('/force-delete-all', [WebSupportTicketController::class, 'forceDeleteAllTrashed'])
                 ->middleware('permission:web-support-tickets-delete');
+                Route::get('/import/template', [WebSupportTicketController::class, 'importTemplate'])
+        ->middleware('permission:web-support-tickets-create');
+    Route::post('/import/validate', [WebSupportTicketController::class, 'importValidate'])
+        ->middleware(['throttle:30,1', 'permission:web-support-tickets-create']);
+    Route::post('/import/commit', [WebSupportTicketController::class, 'importCommit'])
+        ->middleware(['throttle:30,1', 'permission:web-support-tickets-create']);
             Route::get('/',      [WebSupportTicketController::class, 'index'])
                 ->middleware('permission:web-support-tickets-view');
             Route::post('/',     [WebSupportTicketController::class, 'store'])
@@ -589,6 +601,12 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-news-delete');
             Route::delete('/force-delete-all', [WebNewsController::class, 'forceDeleteAllTrashed'])
                 ->middleware('permission:web-news-delete');
+                  Route::get('/import/template', [WebNewsController::class, 'importTemplate'])
+        ->middleware('permission:web-news-create');
+    Route::post('/import/validate', [WebNewsController::class, 'importValidate'])
+        ->middleware(['throttle:30,1', 'permission:web-news-create']);
+    Route::post('/import/commit', [WebNewsController::class, 'importCommit'])
+        ->middleware(['throttle:30,1', 'permission:web-news-create']);
             Route::get('/',      [WebNewsController::class, 'index'])
                 ->middleware('permission:web-news-view');
             Route::post('/',     [WebNewsController::class, 'store'])
@@ -613,6 +631,13 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-sales-leads-delete');
             Route::delete('/force-delete-all', [WebSalesLeadController::class, 'forceDeleteAllTrashed'])
                 ->middleware('permission:web-sales-leads-delete');
+                 Route::get('/import/template', [WebSalesLeadController::class, 'importTemplate'])
+        ->middleware('permission:web-sales-leads-create');
+    Route::post('/import/validate', [WebSalesLeadController::class, 'importValidate'])
+        ->middleware(['throttle:30,1', 'permission:web-sales-leads-create']);
+    Route::post('/import/commit', [WebSalesLeadController::class, 'importCommit'])
+        ->middleware(['throttle:30,1', 'permission:web-sales-leads-create']);
+ 
             Route::get('/',      [WebSalesLeadController::class, 'index'])
                 ->middleware('permission:web-sales-leads-view');
             Route::post('/',     [WebSalesLeadController::class, 'store'])

@@ -41,6 +41,7 @@
 [data]="data"
 [columns]="salesLeadColumns"
 [inputDefinitions]="formFields"
+(importCompleted)="forceFullRefresh(filters)"
 [detailsColumns]="detailsColumns"
 [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
 (refreshRequested)="forceFullRefresh(filters)"

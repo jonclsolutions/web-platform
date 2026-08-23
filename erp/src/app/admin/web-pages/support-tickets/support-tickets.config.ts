@@ -14,6 +14,15 @@
  *        jediný způsob, jak ticket vůbec vznikne (viz api.php refactor-note 2026-08-5).
  *      - SUPPORT_TICKET_BUTTONS: "Edit" -> `web-support-tickets-update`,
  *        "Smazat" -> `web-support-tickets-delete`. "Detaily" zůstává bez permission.
+ *
+ * @refactor-note (2026-08-23) BULK IMPORT/EXPORT: `SUPPORT_TICKET_DETAILS_COLUMNS` má
+ *      u 6 polí nově `importable: true` - musí přesně sedět s
+ *      `WebSupportTicketController::IMPORTABLE_COLUMNS`. `user_id` a `attachments`
+ *      ZÁMĚRNĚ bez příznaku - import nezná reálné propojení na existující účet a
+ *      tabulkový soubor nemůže nést nahraný soubor jako přílohu. `state` je
+ *      importovatelné, i když ho `store()` vůbec nepřijímá (viz backend
+ *      WebSupportTicketController::buildImportRules()) - import historických/
+ *      archivních ticketů může chtít rovnou nastavit finální stav.
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -103,8 +112,7 @@ export const SUPPORT_TICKET_FORM_FIELDS: Core.InputDefinition[] = [
     ],
     editable: true, show_in_edit: true, show_in_create: true
   },
-  {
-    column_name: 'state',
+  {   column_name: 'state',
     label: 'Stav tiketu',
     type: 'select',
     required: false,
@@ -179,15 +187,20 @@ export const SUPPORT_TICKET_FILTER_COLUMNS: Core.FilterColumns[] = [
   }
 ];
 
+/**
+ * @refactor-note (2026-08-23) `importable: true` u 6 polí - viz refactor-note v
+ * hlavičce souboru. `id`, `user_id`, `attachments`, `created_at` ZÁMĚRNĚ bez tohoto
+ * příznaku.
+ */
 export const SUPPORT_TICKET_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Ticketu', type: 'text' },
-  { key: 'state', displayName: 'Stav', type: 'text' },
-  { key: 'subject', displayName: 'Předmět', type: 'text' },
-  { key: 'user_name_plain', displayName: 'Žadatel', type: 'text' },
-  { key: 'user_plain', displayName: 'Email', type: 'text' },
-  { key: 'category', displayName: 'Kategorie', type: 'text' },
-  { key: 'priority', displayName: 'Priorita', type: 'text' },
-  { key: 'description', displayName: 'Popis problému', type: 'text' },
-{ key: 'attachments', displayName: 'Příloha', type: 'files' },
+  { key: 'state', displayName: 'Stav', type: 'text', importable: true },
+  { key: 'subject', displayName: 'Předmět', type: 'text', importable: true },
+  { key: 'user_name_plain', displayName: 'Žadatel', type: 'text', importable: true },
+  { key: 'user_plain', displayName: 'Email', type: 'text', importable: true },
+  { key: 'category', displayName: 'Kategorie', type: 'text', importable: true },
+  { key: 'priority', displayName: 'Priorita', type: 'text', importable: true },
+  { key: 'description', displayName: 'Popis problému', type: 'text', importable: true },
+  { key: 'attachments', displayName: 'Příloha', type: 'files' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' }
 ];

@@ -8,30 +8,29 @@
  * @description Spravuje seznam externích odkazů zobrazovaných v adminu (Google Analytics
  * dashboard, webmail, Search Console apod.) - čisté odkazy ven, žádné živé statistiky.
  *
- * @refactor-note (2026-08) Odkazy jsou nyní PLNĚ SOUKROMÉ per-uživatel:
- * - KAŽDÝ dotaz (index/show/update/destroy/restore/forceDeleteAllTrashed) je scoped na
- *   `where('user_id', $request->user()->id)` - dřív `show()`/`update()`/`destroy()` braly
- *   záznam jen podle `$id` bez ověření vlastnictví, což byl IDOR (Insecure Direct Object
- *   Reference): kterýkoliv přihlášený admin mohl uhodnutím/inkrementací ID číst, editovat
- *   i mazat odkazy jiných uživatelů. Teď `findOrFail()` na cizí ID vrátí 404 (ne 403 -
- *   záměrně, aby útočník nemohl z rozdílu 403 vs. 404 zjistit, že záznam s daným ID vůbec
- *   existuje, jen patří někomu jinému).
- * - `store()` ignoruje jakýkoliv `user_id` poslaný klientem a vždy dosadí
- *   `$request->user()->id` - nikdy nedůvěřovat vlastnictví z requestu.
- * - Logování přepsáno z lokální `logAction()` (chybně mířila do `shop_logs`) na sdílený
- *   `LogsActivity` trait, zapisující do `WebLog::class` (externí odkazy patří dle
- *   Core/Web/Shop rozdělení do Web domény - viz `web_external_links` tabulka).
+ * @refactor-note (2026-08) Odkazy jsou nyní PLNĚ SOUKROMÉ per-uživatel - viz IDOR bugfix
+ * popsaný níže v historii souboru.
  *
- * @bugfix-note (2026-08-15) `destroy()` (soft-delete do koše) a `forceDeleteAllTrashed()`
- * (trvalé smazání) obě logovaly stejný `event_type = 'delete'`, na rozdíl od konvence
- * `soft_delete`/`force_delete_all` používané zbytkem web/core controllerů v aplikaci - z
- * auditní stopy tak nešlo poznat, jestli šlo o vratné, nebo nevratné smazání. Sjednoceno:
- * `destroy()` teď loguje `soft_delete`, `forceDeleteAllTrashed()` loguje
- * `force_delete_all` - konzistentní s WebNewsController/WebSalesOrderController/
- * UserController/CoreRoleController atd.
+ * @bugfix-note (2026-08-15) `destroy()`/`forceDeleteAllTrashed()` sjednoceny na
+ * `soft_delete`/`force_delete_all` event_type.
  *
- * @note Struktura kontroleru (index/store/show/update/destroy/restore/forceDeleteAllTrashed)
- * zrcadlí ostatní resource controllery v aplikaci pro konzistenci.
+ * @refactor-note (2026-08-23) HROMADNÉ MAZÁNÍ V JEDNOM REQUESTU: přidána `bulkDestroy()` -
+ * viz TableBuilderComponent.onBulkDeleteClick() (volá POST core/external_links/bulk-delete).
+ * KRITICKÉ: MUSÍ zůstat scoped na `user_id` přihlášeného uživatele, stejně jako VŠECHNY
+ * ostatní metody v tomto kontroleru (`show`/`update`/`destroy`/`restore` výše) - bez
+ * tohohle scope by šlo hromadně smazat cizí odkazy jen uhodnutím/inkrementací ID, přesně
+ * ten IDOR bug, který byl u jednotlivých akcí už opravený (viz refactor-note 2026-08).
+ * ID, která patří jinému uživateli, se v `whereIn()` prostě nenajdou - stejné chování
+ * jako 404 u jednotlivých akcí (žádný rozdíl mezi "neexistuje" a "patří někomu jinému"),
+ * jen se to promítne do `skipped_count` bez zvláštního rozlišení důvodu.
+ *
+ * Logování ZŮSTÁVÁ zapnuté i pro tenhle typ dat (osobní odkazy) - i když jde o čistě
+ * soukromý obsah, zachování stejné auditní konvence napříč VŠEMI resources má cenu samo
+ * o sobě (konzistence, žádná výjimka, na kterou je nutné pamatovat) a cena zápisu jednoho
+ * řádku do `web_logs` je zanedbatelná.
+ *
+ * IMPORT ZÁMĚRNĚ NEIMPLEMENTOVÁN - jde o osobní seznam bookmarků (typicky pár položek na
+ * uživatele), hromadný import ze souboru pro tenhle typ dat nemá reálné praktické využití.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -42,6 +41,7 @@ use App\Models\Web\WebLog;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class CoreExternalLinkController extends Controller
 {
@@ -153,6 +153,68 @@ class CoreExternalLinkController extends Controller
 
         $this->logAction($request, WebLog::class, 'soft_delete', 'Web', "Smazán externí odkaz: {$name}", (int) $id, 'CoreExternalLink');
         return response()->json(null, 204);
+    }
+
+    /**
+     * @description Hromadně smaže vybrané externí odkazy JEDNÍM requestem - viz
+     * TableBuilderComponent.onBulkDeleteClick() (volá POST core/external_links/bulk-delete).
+     * KRITICKY scoped na `user_id` přihlášeného uživatele - viz refactor-note v hlavičce
+     * třídy. ID patřící jinému uživateli se prostě nenajdou (whereIn na scoped query),
+     * promítnou se do `skipped_count` bez rozlišení důvodu (stejný princip jako 404 vs.
+     * "cizí" u jednotlivých akcí výše).
+     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids'          => ['required', 'array', 'min:1', 'max:1000'],
+            'ids.*'        => ['integer'],
+            'force_delete' => ['sometimes', 'boolean'],
+        ]);
+
+        $ids = array_values(array_unique(array_map('intval', $validated['ids'])));
+        $forceDelete = filter_var($validated['force_delete'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $requestedCount = count($ids);
+        $deletedCount = 0;
+        $userId = $request->user()->id;
+
+        try {
+            DB::transaction(function () use ($ids, $forceDelete, $userId, &$deletedCount) {
+                // KRITICKÉ: where('user_id', $userId) - bez tohohle by šlo hromadně
+                // smazat cizí odkazy jen uhodnutím ID. Stejný scope jako destroy() výše.
+                $items = CoreExternalLink::withTrashed()
+                    ->where('user_id', $userId)
+                    ->whereIn('id', $ids)
+                    ->get();
+
+                foreach ($items as $item) {
+                    $forceDelete ? $item->forceDelete() : $item->delete();
+                    $deletedCount++;
+                }
+            });
+        } catch (\Exception $e) {
+            $this->logAction($request, WebLog::class, 'error', 'Web', "Chyba při hromadném mazání externích odkazů: " . $e->getMessage());
+            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+        }
+
+        $skippedCount = $requestedCount - $deletedCount;
+        $idsPreview = implode(',', array_slice($ids, 0, 50)) . (count($ids) > 50 ? '...' : '');
+
+        $this->logAction(
+            $request,
+            WebLog::class,
+            $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
+            'Web',
+            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} externích odkazů (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            null,
+            'CoreExternalLink'
+        );
+
+        return response()->json(['data' => [
+            'deleted_count' => $deletedCount,
+            'skipped_count' => $skippedCount,
+            'requested'     => $requestedCount,
+        ]]);
     }
 
     /**

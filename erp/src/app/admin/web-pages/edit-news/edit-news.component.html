@@ -44,6 +44,7 @@
 [detailsColumns]="detailsColumns"
 [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
 (refreshRequested)="forceFullRefresh(filters)"
+(importCompleted)="forceFullRefresh(filters)"
 [currentFilters]="filters"
 [inputDefinitions]="formFields"
 [isFullWidth]="isTableFullWidth"

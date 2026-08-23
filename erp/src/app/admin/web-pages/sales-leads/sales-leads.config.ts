@@ -6,14 +6,14 @@
  * @created 2025
  * @description Static configuration (buttons, form fields, table/filter/detail columns) for
  * the Sales Leads (CRM) management page.
- * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
- *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
- *      - SALES_LEAD_TOOLBAR_BUTTONS: "Přidat lead" -> `permission: 'web-sales-leads-create'`.
- *      - SALES_LEAD_BUTTONS: "Edit" -> `web-sales-leads-update`,
- *        "Smazat" -> `web-sales-leads-delete`. "Link" (generate_form, generuje
- *        public_token pro OrderFormComponent) -> `web-sales-leads-update`, protože na
- *        backendu je to `POST /{id}/generate-link` gatovaný stejným update klíčem jako
- *        editace leadu (viz api.php). "Detaily" zůstává bez permission.
+ * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTEMU: SALES_LEAD_TOOLBAR_BUTTONS
+ * "Pridat lead" -> permission web-sales-leads-create; SALES_LEAD_BUTTONS Edit/Link/Smazat
+ * -> web-sales-leads-update/-delete.
+ *
+ * @refactor-note (2026-08-23) BULK IMPORT/EXPORT: importable: true u VSECH poli ze
+ * StoreWebSalesLeadRequest KROME user_id - viz WebSalesLeadController::IMPORTABLE_COLUMNS.
+ * user_id zustava vzdy null u importovanych leadu, salesman_name se PREBIRA ZE SOUBORU
+ * (ne automaticky podle importujiciho admina, jak to dela store()).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -225,20 +225,28 @@ export const SALES_LEAD_FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'salesman_name', header: 'Obchodník', type: 'text', placeholder: 'Jméno...', canSort: true },
 ];
 
+/**
+ * @refactor-note (2026-08-23) importable: true u VSECH poli krome user_id - viz
+ * refactor-note v hlavicce souboru. id/created_at (systemova pole) importable
+ * nedostavaji.
+ */
 export const SALES_LEAD_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Leadů', type: 'text' },
-  { key: 'subject_name', displayName: 'Název subjektu', type: 'text' },
-  { key: 'contact_person', displayName: 'Kontaktní osoba', type: 'text' },
-  { key: 'contact_email', displayName: 'Email', type: 'text' },
-  { key: 'contact_phone', displayName: 'Telefon', type: 'text' },
-  { key: 'salesman_name', displayName: 'Obchodník', type: 'text' },
-  { key: 'source_channel', displayName: 'Zdroj oslovení', type: 'text' },
-  { key: 'status', displayName: 'Stav', type: 'text' },
-  { key: 'priority', displayName: 'Priorita', type: 'text' },
-  { key: 'first_contact_date', displayName: 'První oslovení', type: 'date', format: 'd.M.yyyy' },
-  { key: 'last_contact_date', displayName: 'Poslední kontakt', type: 'date', format: 'd.M.yyyy' },
-  { key: 'next_step', displayName: 'Následný krok', type: 'text' },
-  { key: 'description', displayName: 'Popis/Poznámka', type: 'text' },
-  { key: 'rejection_reason', displayName: 'Důvod zamítnutí', type: 'text' },
+  { key: 'subject_name', displayName: 'Název subjektu', type: 'text', importable: true },
+  { key: 'contact_person', displayName: 'Kontaktní osoba', type: 'text', importable: true },
+  { key: 'contact_email', displayName: 'Email', type: 'text', importable: true },
+  { key: 'contact_phone', displayName: 'Telefon', type: 'text', importable: true },
+  { key: 'contact_other', displayName: 'Jiný kontakt', type: 'text', importable: true },
+  { key: 'location', displayName: 'Lokalita', type: 'text', importable: true },
+  { key: 'salesman_name', displayName: 'Obchodník', type: 'text', importable: true },
+  { key: 'source_channel', displayName: 'Zdroj oslovení', type: 'text', importable: true },
+  { key: 'source_url', displayName: 'Zdrojová URL', type: 'text', importable: true },
+  { key: 'status', displayName: 'Stav', type: 'text', importable: true },
+  { key: 'priority', displayName: 'Priorita', type: 'text', importable: true },
+  { key: 'first_contact_date', displayName: 'První oslovení', type: 'date', format: 'd.M.yyyy', importable: true },
+  { key: 'last_contact_date', displayName: 'Poslední kontakt', type: 'date', format: 'd.M.yyyy', importable: true },
+  { key: 'next_step', displayName: 'Následný krok', type: 'text', importable: true },
+  { key: 'description', displayName: 'Popis/Poznámka', type: 'text', importable: true },
+  { key: 'rejection_reason', displayName: 'Důvod zamítnutí', type: 'text', importable: true },
   { key: 'created_at', displayName: 'Vytvořeno v systému', type: 'date', format: 'd.M.yyyy H:mm' }
 ];

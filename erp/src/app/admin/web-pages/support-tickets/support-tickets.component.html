@@ -6,6 +6,9 @@
     @created: 2026 
     @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
         ('web-support-tickets-delete') - viz trash-table-builder.component.ts stejné datum.
+    @refactor-note (2026-08-23): Přidán (importCompleted)="forceFullRefresh(filters)" -
+        stejný jednořádkový vzor jako (itemDeleted)/(refreshRequested), ať se po importu
+        nové záznamy hned zobrazí bez nutnosti ručního refreshe.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -44,6 +47,7 @@
 [isFullWidth]="isTableFullWidth"
 [lastUpdatedAt]="(activeLastUpdatedAt$ | async)"
 (refreshRequested)="forceFullRefresh(filters)"
+(importCompleted)="forceFullRefresh(filters)"
 [inputDefinitions]="formFields"
 [tableCaption]="'Seznam Support Ticketů'"
 [apiEndpoint]="apiEndpoint"

@@ -20,6 +20,13 @@
  *      support-tickets, job-applications, administrators, external-links...) - stejný
  *      princip: `create`/`update`/`delete` klíče doplnit podle konvence
  *      `{resource}-{akce}` zavedené v api.php.
+ *
+ * @refactor-note (2026-08-23) BULK IMPORT/EXPORT: `NEWS_DETAILS_COLUMNS` má u VŠECH
+ *      8 obsahových polí `importable: true` - odpovídá 1:1
+ *      `WebNewsController::IMPORTABLE_COLUMNS`. Jen `id`/`created_at`/`updated_at`
+ *      (systémová pole) importable NEDOSTÁVAJÍ - nejjednodušší dosavadní import ze
+ *      všech resources, žádná výjimka jako u support_tickets (`state`) nebo
+ *      raw_request_commissions (bez e-mailu/přílohy).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -188,16 +195,21 @@ export const NEWS_FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'thema', header: 'Téma', type: 'select', options: NEWS_THEMA_OPTIONS, placeholder: '-- Vybrat téma --', canSort: true }
 ];
 
+/**
+ * @refactor-note (2026-08-23) `importable: true` u VŠECH 8 obsahových polí - viz
+ * refactor-note v hlavičce souboru. `id`/`created_at`/`updated_at` ZÁMĚRNĚ bez
+ * příznaku (systémová pole).
+ */
 export const NEWS_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID záznamu', type: 'text' },
-  { key: 'title', displayName: 'Titulek', type: 'text' },
-  { key: 'thema', displayName: 'Kategorie', type: 'text' },
-  { key: 'author', displayName: 'Autor', type: 'text' },
-  { key: 'message', displayName: 'Hlavní zpráva', type: 'text' },
-  { key: 'bullet_1', displayName: 'Bod 1', type: 'text' },
-  { key: 'bullet_2', displayName: 'Bod 2', type: 'text' },
-  { key: 'bullet_3', displayName: 'Bod 3', type: 'text' },
-  { key: 'bullet_4', displayName: 'Bod 4', type: 'text' },
+  { key: 'title', displayName: 'Titulek', type: 'text', importable: true },
+  { key: 'thema', displayName: 'Kategorie', type: 'text', importable: true },
+  { key: 'author', displayName: 'Autor', type: 'text', importable: true },
+  { key: 'message', displayName: 'Hlavní zpráva', type: 'text', importable: true },
+  { key: 'bullet_1', displayName: 'Bod 1', type: 'text', importable: true },
+  { key: 'bullet_2', displayName: 'Bod 2', type: 'text', importable: true },
+  { key: 'bullet_3', displayName: 'Bod 3', type: 'text', importable: true },
+  { key: 'bullet_4', displayName: 'Bod 4', type: 'text', importable: true },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Upraveno', type: 'date', format: 'medium' }
 ];
