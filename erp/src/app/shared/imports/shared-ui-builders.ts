@@ -8,6 +8,7 @@ import { DetailsBuilderComponent } from '../../admin/components/builders/details
 import { PaginationButtonsBuilderComponent } from '../../admin/components/builders/pagination-buttons-builder/pagination-buttons-builder.component';
 import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
 import { ButtonBuilderComponent } from '../../admin/components/builders/button-builder/button-builder.component';
+import { ActionMenuBuilderComponent } from '../../admin/components/builders/action-menu-builder/action-menu-builder.component';
 export const SHARED_UI_BUILDERS = [
   CommonModule,
   FormsModule,
@@ -19,5 +20,6 @@ export const SHARED_UI_BUILDERS = [
   DetailsBuilderComponent,
   PaginationButtonsBuilderComponent,
   HasPermissionDirective,
-  ButtonBuilderComponent
+  ButtonBuilderComponent,
+  ActionMenuBuilderComponent
 ] as const;

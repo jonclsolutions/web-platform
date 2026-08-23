@@ -10,7 +10,8 @@ export const CUSTOMER_BUTTONS: Core.TableButtons[] = [
 export const CUSTOMER_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Nový zákazník', icon: '➕', class: 'btn-create', showIf: true },
-  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },   
+  { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
@@ -143,17 +144,17 @@ export const CUSTOMER_FILTER_COLUMNS: Core.FilterColumns[] = [
 
 export const CUSTOMER_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID', type: 'text' },
-  { key: 'first_name', displayName: 'Jméno', type: 'text' },
-  { key: 'last_name', displayName: 'Příjmení', type: 'text' },
-  { key: 'email', displayName: 'Email', type: 'text' },
-  { key: 'phone', displayName: 'Telefon', type: 'text' },
-  { key: 'company', displayName: 'Společnost', type: 'text' },
-  { key: 'address', displayName: 'Adresa', type: 'text' },
-  { key: 'city', displayName: 'Město', type: 'text' },
-  { key: 'postal_code', displayName: 'PSČ', type: 'text' },
-  { key: 'country', displayName: 'Země', type: 'text' },
-  { key: 'total_spent', displayName: 'Celková útrata', type: 'text' },
-  { key: 'is_active', displayName: 'Aktivní', type: 'text' },
-  { key: 'notes', displayName: 'Poznámky', type: 'text' },
+  { key: 'first_name', displayName: 'Jméno', type: 'text', importable: true },
+  { key: 'last_name', displayName: 'Příjmení', type: 'text' , importable: true},
+  { key: 'email', displayName: 'Email', type: 'text' , importable: true},
+  { key: 'phone', displayName: 'Telefon', type: 'text' , importable: true},
+  { key: 'company', displayName: 'Společnost', type: 'text' , importable: true},
+  { key: 'address', displayName: 'Adresa', type: 'text' , importable: true},
+  { key: 'city', displayName: 'Město', type: 'text' , importable: true},
+  { key: 'postal_code', displayName: 'PSČ', type: 'text' , importable: true},
+  { key: 'country', displayName: 'Země', type: 'text' , importable: true},
+  { key: 'total_spent', displayName: 'Celková útrata', type: 'text' , importable: true},
+  { key: 'is_active', displayName: 'Aktivní', type: 'text' , importable: true},
+  { key: 'notes', displayName: 'Poznámky', type: 'text' , importable: true},
   { key: 'created_at', displayName: 'Registrace', type: 'date', format: 'medium' },
 ];

@@ -103,7 +103,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     return this.authService.getUserRole() === 'sysadmin';
   }
 
-  get toolbarButtons(): Core.Button[] {
+get toolbarButtons(): Core.Button[] {
     return Config.TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
 
@@ -113,23 +113,26 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
+        case 'triggerImport':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Smazané';
+          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.isActive = this.showTrashTable;
           break;
       }
 
       return updatedBtn;
     });
   }
+
 
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {

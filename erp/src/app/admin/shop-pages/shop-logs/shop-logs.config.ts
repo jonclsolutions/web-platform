@@ -18,7 +18,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     icon: '📥',
     class: 'btn-export',
     showIf: true
-  }
+  },
 ];
 
 export const FORM_FIELDS: Core.InputDefinition[] = [];

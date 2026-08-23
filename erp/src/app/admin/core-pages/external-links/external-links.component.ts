@@ -67,7 +67,7 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
    * @description Computes the toolbar configuration.
    * @returns List of buttons updated based on user permissions, current view state (active/trash), and UI filter state.
    */
-  get toolbarButtons(): Core.Button[] {
+get toolbarButtons(): Core.Button[] {
     return Config.EXTERNAL_LINK_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
 
@@ -77,23 +77,26 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
+        case 'triggerImport':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.isActive = this.showTrashTable;
           break;
       }
 
       return updatedBtn;
     });
   }
+
 
   /**
    * @description Dispatches actions triggered by the UI toolbar.

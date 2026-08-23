@@ -1,0 +1,55 @@
+<!--
+    @file: action-menu-builder.component.html
+    @path: /src/app/admin/components/builders/action-menu-builder/action-menu-builder.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @note: (click)="$event.stopPropagation()" na .action-menu-list NENÍ potřeba -
+        HostListener v TS zavírá menu jen při kliknutí MIMO host element komponenty
+        (viz onDocumentClick), takže klik uvnitř seznamu ho nezavře dřív, než
+        onSelect() stihne emitovat akci.
+    @refactor-note (2026-08-24v2): přidány template ref proměnné #trigger a #menu -
+        `positionMenu()` v TS je potřebuje pro `getBoundingClientRect()` (viz
+        action-menu-builder.component.ts stejné datum). `[style.top.px]`/
+        `[style.left.px]` a `[style.visibility]` řídí fixed pozicování - dokud
+        `menuPosition` je `null` (mezi otevřením a prvním změřením), menu je
+        vykreslené ale neviditelné, aby nebylo vidět "cuknutí" ze špatné pozice.
+-->
+<div class="action-menu">
+  <button
+    #trigger
+    type="button"
+    class="action-menu-trigger"
+    [class.active]="isOpen"
+    (click)="toggleMenu()"
+    aria-haspopup="true"
+    [attr.aria-expanded]="isOpen">
+    <span class="btn-icon">{{ triggerIcon }}</span>
+    <span class="btn-label">{{ triggerLabel }}</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+         stroke-linecap="round" stroke-linejoin="round"
+         [class.action-menu-chevron-open]="isOpen" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+
+  @if (isOpen) {
+    <div #menu class="action-menu-list"
+         [style.top.px]="menuPosition?.top ?? 0"
+         [style.left.px]="menuPosition?.left ?? 0"
+         [style.visibility]="menuPosition ? 'visible' : 'hidden'">
+      @for (btn of configs; track btn) {
+        @if (btn.showIf !== false) {
+          <button
+            type="button"
+            class="action-menu-item"
+            [class.active]="btn.isActive"
+            (click)="onSelect(btn.action)">
+            @if (btn.icon) { <span class="btn-icon">{{ btn.icon }}</span> }
+            <span class="btn-label">{{ btn.label }}</span>
+          </button>
+        }
+      }
+    </div>
+  }
+</div>

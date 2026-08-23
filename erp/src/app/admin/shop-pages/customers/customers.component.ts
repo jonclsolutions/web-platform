@@ -77,12 +77,14 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
    * @description Configures toolbar buttons dynamically based on current module state (e.g., trash view, filter visibility).
    * @returns {Core.Button[]} A collection of enabled and configured toolbar buttons.
    */
-  get toolbarButtons(): Core.Button[] {
+get toolbarButtons(): Core.Button[] {
     return Config.CUSTOMER_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
+
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
         updatedBtn.showIf = false;
       }
+
       switch (btn.action) {
         case 'toggleFilters':
           updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
@@ -90,12 +92,17 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
-          if (updatedBtn.showIf !== false) updatedBtn.showIf = !this.showTrashTable;
+        case 'triggerImport':
+          if (updatedBtn.showIf !== false) {
+            updatedBtn.showIf = !this.showTrashTable;
+          }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Zpět na seznam' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.isActive = this.showTrashTable;
           break;
       }
+
       return updatedBtn;
     });
   }

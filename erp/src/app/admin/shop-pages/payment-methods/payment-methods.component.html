@@ -18,10 +18,11 @@
       <div class="toolbar-actions m-b-t-5">
         <div class="table-header">Správa Platebních Metod</div>
         <div class="toolbar-actions-in">
-          <app-button-builder
-            [configs]="toolbarButtons"
-            (actionTriggered)="handleToolbarAction($event)">
-          </app-button-builder>
+           <app-action-menu-builder
+[configs]="toolbarButtons"
+triggerLabel="Akce"
+(actionTriggered)="handleToolbarAction($event)">
+</app-action-menu-builder>
         </div>
       </div>
       <div class="main-content-layout">

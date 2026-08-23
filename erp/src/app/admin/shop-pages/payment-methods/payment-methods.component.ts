@@ -63,18 +63,32 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
    * @description Computes the toolbar configuration dynamically.
    * @returns Array of buttons, filtered by user permissions and current UI state (e.g., filter visibility).
    */
-  get toolbarButtons(): Core.Button[] {
+get toolbarButtons(): Core.Button[] {
     return Config.PAYMENT_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
+
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
         updatedBtn.showIf = false;
       }
+
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
           updatedBtn.isActive = this.isFilterVisible;
           break;
+        case 'handleCreateFormOpened':
+        case 'exportActiveTable':
+        case 'triggerImport':
+          if (updatedBtn.showIf !== false) {
+            updatedBtn.showIf = !this.showTrashTable;
+          }
+          break;
+        case 'toggleTable':
+          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.isActive = this.showTrashTable;
+          break;
       }
+
       return updatedBtn;
     });
   }

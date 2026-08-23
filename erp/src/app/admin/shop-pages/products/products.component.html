@@ -17,10 +17,11 @@
         <div class="toolbar-header">
           <h1>Produkty</h1>
           <div class="toolbar-actions">
-            <app-button-builder
-              [configs]="showTrashTable ? getTrashToolbarButtons() : toolbarButtons"
-              (actionTriggered)="handleToolbarAction($event)">
-            </app-button-builder>
+            <app-action-menu-builder
+[configs]="toolbarButtons"
+triggerLabel="Akce"
+(actionTriggered)="handleToolbarAction($event)">
+</app-action-menu-builder>
           </div>
         </div>
       </div>

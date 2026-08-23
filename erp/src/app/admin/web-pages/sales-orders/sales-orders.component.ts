@@ -64,32 +64,36 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
    * @description Generates the toolbar configuration dynamically based on active filters, trash visibility, and user permissions.
    * @returns Array of configured Core.Button items.
    */
+
   get toolbarButtons(): Core.Button[] {
-    return Config.SALES_ORDER_TOOLBAR_BUTTONS.map(btn => {
-      let updatedBtn = { ...btn };
-
-      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
-        updatedBtn.showIf = false;
-      }
-
-      switch (btn.action) {
-        case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
-          updatedBtn.isActive = this.isFilterVisible;
-          break;
-        case 'exportActiveTable':
-          if (updatedBtn.showIf !== false) {
-            updatedBtn.showIf = !this.showTrashTable;
-          }
-          break;
-        case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Smazané';
-          break;
-      }
-
-      return updatedBtn;
-    });
-  }
+      return Config.SALES_ORDER_TOOLBAR_BUTTONS.map(btn => {
+        let updatedBtn = { ...btn };
+  
+        if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+          updatedBtn.showIf = false;
+        }
+  
+        switch (btn.action) {
+          case 'toggleFilters':
+            updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+            updatedBtn.isActive = this.isFilterVisible;
+            break;
+          case 'handleCreateFormOpened':
+          case 'exportActiveTable':
+          case 'triggerImport':
+            if (updatedBtn.showIf !== false) {
+              updatedBtn.showIf = !this.showTrashTable;
+            }
+            break;
+          case 'toggleTable':
+            updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+            updatedBtn.isActive = this.showTrashTable;
+            break;
+        }
+  
+        return updatedBtn;
+      });
+    }
 
   /**
    * @description Maps toolbar button actions to their corresponding class methods.

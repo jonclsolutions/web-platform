@@ -1,0 +1,94 @@
+/*
+    @file: action-menu-builder.component.css
+    @path: /src/app/admin/components/builders/action-menu-builder/action-menu-builder.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @note: Vizuálně 1:1 odvozeno z `.bulk-actions-dropdown`/`.bulk-actions-menu`
+        v table-style.css - stejný "Kravio" jazyk (zaoblení, tlumené barvy, #18181b
+        jako akcent aktivního stavu), aby uživatel poznal stejný vzorec chování
+        (tlačítko -> šipka -> seznam pod ním) na obou místech aplikace.
+    @refactor-note (2026-08-24v2): `.action-menu-list` přepnut z `position: absolute`
+        (vůči `.action-menu`, `left: 0`) na `position: fixed` - přesné `top`/`left`
+        teď dodává JS (`positionMenu()` v .ts, clampované na viewport), CSS už žádnou
+        pozici nenastavuje, jen vzhled. `max-width` navíc zabraňuje tomu, aby menu na
+        úzkém mobilu bylo širší než obrazovka i po JS clampingu x-ové souřadnice -
+        dlouhé popisky (např. "Potvrzovací e-mail") se v takovém případě zalomí na
+        druhý řádek místo přetečení.
+*/
+
+.action-menu {
+  position: relative;
+  display: inline-block;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.action-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #e4e4e7;
+  background: #f4f4f5;
+  color: #3f3f46;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.action-menu-trigger:hover { background: #e4e4e7; }
+
+.action-menu-trigger.active {
+  background: #18181b;
+  color: #ffffff;
+  border-color: #18181b;
+}
+
+.action-menu-trigger svg { transition: transform 0.15s ease; flex-shrink: 0; }
+.action-menu-trigger svg.action-menu-chevron-open { transform: rotate(180deg); }
+
+.action-menu-list {
+  /* top/left dodává JS (positionMenu()) - viz action-menu-builder.component.ts. */
+  position: fixed;
+  width: max-content;
+  min-width: 210px;
+  max-width: min(280px, calc(100vw - 16px));
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(24, 24, 27, 0.12);
+  padding: 6px;
+  z-index: 1000;
+}
+
+.action-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #18181b;
+  cursor: pointer;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  transition: background-color 0.12s ease;
+}
+.action-menu-item:hover { background: #f4f4f5; }
+
+/* Přepínací akce (Filtry zapnuté, Koš zobrazený...) - stejná konvence jako
+   .small-btn.active v buttons-builder.component.css, jen v kontextu seznamu. */
+.action-menu-item.active {
+  background: #f4f4f5;
+  box-shadow: inset 2px 0 0 #18181b;
+}
+
+.btn-icon { flex-shrink: 0; }

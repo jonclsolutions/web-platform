@@ -19,6 +19,12 @@
         sloupec jako u akčních tlačítek) a `.bulk-actions-bar` nad tabulkou (počet
         vybraných + dropdown "Akce" se šipkou + "Zrušit výběr") - viz
         table-builder.component.ts/.html stejné datum.
+    @redesign-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK: `.table-refresh-btn`
+        (textové tlačítko sdílené dřív pro "Aktualizovat" i "Import") nahrazeno
+        `.table-refresh-icon-btn` - malé kulaté ikonové tlačítko bez popisku, protože
+        "Import" se přesunul do stránkového "Akce" dropdownu (ActionMenuBuilderComponent)
+        a v tomto interním toolbaru už nežije. `.toolbar` layout (flex-wrap, pořadí
+        checkboxu) zůstává beze změny - jen je teď v řádku o jedno tlačítko méně.
 */
 
 .table-responsive {
@@ -90,7 +96,6 @@ font-size: 1rem;
 border-radius: 999px;
 transition: background 0.15s ease, transform 0.1s ease;
 }
-
 .action-button-cell button:hover:not(:disabled) {
 background: #f4f4f5;
 transform: scale(1.12);
@@ -152,7 +157,7 @@ padding-top: 8px;
 }
 
 /*
- * .toolbar obsahuje v HTML v tomto pořadí: [refresh tlačítko] [timestamp badge]
+ * .toolbar obsahuje v HTML v tomto pořadí: [refresh ikona] [timestamp badge]
  * [checkbox "Zobrazit tabulku na šířce stránky"]. Chceme ale VIZUÁLNĚ checkbox nahoře
  * a refresh+timestamp pod ním - řeší se čistě flexboxem, bez zásahu do HTML:
  *   1) `flex-wrap: wrap` dovolí položkám zalomit se na další řádek
@@ -177,7 +182,7 @@ flex-basis: 100%;
 justify-content: flex-end;
 }
 
-.toolbar .table-refresh-btn,
+.toolbar .table-refresh-icon-btn,
 .toolbar .table-last-updated {
 order: 0;
 }
@@ -230,21 +235,39 @@ accent-color: #18181b;
 margin: 0;
 border-radius: 4px;
 }
-.table-refresh-btn {
+
+/*
+ * Malé kulaté ikonové tlačítko pro "Aktualizovat" - nahrazuje dřívější textové
+ * `.table-refresh-btn`. Bez popisku, jen ikona + tooltip (title atribut) - zabírá
+ * minimum místa v toolbaru. Rotace ikony při :active dává vizuální feedback kliknutí
+ * bez nutnosti řešit loading stav ve zvláštní CSS třídě.
+ */
+.table-refresh-icon-btn {
 display: inline-flex;
 align-items: center;
-gap: 6px;
-padding: 6px 12px;
+justify-content: center;
+width: 30px;
+height: 30px;
+padding: 0;
 border-radius: 999px;
 border: 1px solid var(--border-mid, #e0e0dd);
 background: var(--surface, #fff);
 color: var(--text-muted, #71717a);
-font-size: 0.8rem;
-font-weight: 600;
 cursor: pointer;
-white-space: nowrap;
+transition: background-color 0.15s ease, color 0.15s ease;
+flex-shrink: 0;
 }
-.table-refresh-btn:hover { background: var(--surface-2, #fafafa); color: var(--text, #18181b); }
+.table-refresh-icon-btn:hover {
+background: var(--surface-2, #fafafa);
+color: var(--text, #18181b);
+}
+.table-refresh-icon-btn svg {
+transition: transform 0.5s ease;
+}
+.table-refresh-icon-btn:active svg {
+transform: rotate(180deg);
+}
+
 .table-last-updated {
 font-size: 0.78rem;
 color: var(--text-dim, #a1a1aa);
@@ -255,8 +278,7 @@ white-space: nowrap;
 /*
  * Responzivní chování toolbaru na užších obrazovkách (mobil/tablet na výšku):
  * - checkbox zůstává nahoře, ale text se zalomí pod sebe místo přetékání
- * - refresh tlačítko + timestamp badge se srovnají na střed a zmenší mezery
- * - tlačítko dostane trochu větší dotykovou plochu (min-height)
+ * - refresh ikona + timestamp badge se srovnají na střed a zmenší mezery
  */
 @media (max-width: 640px) {
   .toolbar {
@@ -268,10 +290,6 @@ white-space: nowrap;
     justify-content: center;
     text-align: center;
     white-space: normal;
-  }
-
-  .table-refresh-btn {
-    min-height: 34px;
   }
 
   .table-last-updated {

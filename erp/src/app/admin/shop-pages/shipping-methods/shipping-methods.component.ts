@@ -64,27 +64,32 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
    * @description Constructs the toolbar configuration.
    * @returns List of toolbar buttons adjusted for permissions and current UI context (archive/active state).
    */
-  get toolbarButtons(): Core.Button[] {
+get toolbarButtons(): Core.Button[] {
     return Config.SHIPPING_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
+
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
         updatedBtn.showIf = false;
       }
+
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
-          // Hide context-dependent actions when viewing the trash table
-          if (updatedBtn.showIf !== false) updatedBtn.showIf = !this.showTrashTable;
+        case 'triggerImport':
+          if (updatedBtn.showIf !== false) {
+            updatedBtn.showIf = !this.showTrashTable;
+          }
           break;
         case 'toggleTable':
-          // Toggle label based on current data view
-          updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.isActive = this.showTrashTable;
           break;
       }
+
       return updatedBtn;
     });
   }

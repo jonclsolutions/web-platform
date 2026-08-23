@@ -63,15 +63,32 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
    * @description Generates toolbar buttons with dynamic state representation.
    * @returns List of buttons with active states applied based on filter visibility.
    */
-  get toolbarButtons(): Core.Button[] {
+get toolbarButtons(): Core.Button[] {
     return Config.TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
+
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
+      }
+
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
           updatedBtn.isActive = this.isFilterVisible;
           break;
+        case 'handleCreateFormOpened':
+        case 'exportActiveTable':
+        case 'triggerImport':
+          if (updatedBtn.showIf !== false) {
+            updatedBtn.showIf = !this.showTrashTable;
+          }
+          break;
+        case 'toggleTable':
+          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.isActive = this.showTrashTable;
+          break;
       }
+
       return updatedBtn;
     });
   }

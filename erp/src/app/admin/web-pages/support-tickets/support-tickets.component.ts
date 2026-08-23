@@ -64,33 +64,36 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
    * @description Dynamically constructs toolbar buttons based on user permissions and component state.
    * @returns Array of buttons configured for the current context (filters, export, or trash toggle).
    */
-  get toolbarButtons(): Core.Button[] {
-    return Config.SUPPORT_TICKET_TOOLBAR_BUTTONS.map(btn => {
-      let updatedBtn = { ...btn };
 
-      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
-        updatedBtn.showIf = false;
-      }
-
-      switch (btn.action) {
-        case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
-          updatedBtn.isActive = this.isFilterVisible;
-          break;
-        case 'handleCreateFormOpened':
-        case 'exportActiveTable':
-          if (updatedBtn.showIf !== false) {
-            updatedBtn.showIf = !this.showTrashTable;
-          }
-          break;
-        case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Smazané';
-          break;
-      }
-
-      return updatedBtn;
-    });
-  }
+   get toolbarButtons(): Core.Button[] {
+      return Config.SUPPORT_TICKET_TOOLBAR_BUTTONS.map(btn => {
+        let updatedBtn = { ...btn };
+  
+        if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+          updatedBtn.showIf = false;
+        }
+  
+        switch (btn.action) {
+          case 'toggleFilters':
+            updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+            updatedBtn.isActive = this.isFilterVisible;
+            break;
+          case 'handleCreateFormOpened':
+          case 'exportActiveTable':
+          case 'triggerImport':
+            if (updatedBtn.showIf !== false) {
+              updatedBtn.showIf = !this.showTrashTable;
+            }
+            break;
+          case 'toggleTable':
+            updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+            updatedBtn.isActive = this.showTrashTable;
+            break;
+        }
+  
+        return updatedBtn;
+      });
+    }
 
   /**
    * @description Maps toolbar action strings to specific component methods.

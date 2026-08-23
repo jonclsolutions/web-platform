@@ -7,7 +7,7 @@ export const PAYMENT_BUTTONS: Core.TableButtons[] = [
 
 export const PAYMENT_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
-  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true }
+  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
 ];
 
 export const PAYMENT_FORM_FIELDS: Core.InputDefinition[] = [

@@ -7,7 +7,8 @@
  * @description Administrative component for managing user-submitted requests (raw commissions), handling data lifecycle, filtering, and detail views.
  * @dependencies
  * - BaseDataComponent: Core logic for API interactions and state management.
- * - TableBuilderComponent: UI component for rendering the request data tables and handling CSV exports.
+ * - TableBuilderComponent: UI component for rendering the request data tables and handling CSV exports and imports.
+ * - ActionMenuBuilderComponent: Dropdown ("Akce") rendering `toolbarButtons` config - viz refactor-note (2026-08-24).
  * - USER_REQUEST Config: Domain-specific definitions for form fields, table columns, and button configurations.
  *
  * @refactor-note (2026-08-19) BACKLOG "editovatelný obsah potvrzovacího e-mailu":
@@ -32,6 +33,16 @@
  * ŠPATNÝ typ eventu (`click`, ne `mousedown`) - opraveno na
  * `(mousedown)="$event.stopPropagation()"`, takže `mousedown` z karty už k overlayi
  * vůbec nedobublá a `preventDefault()` se nikdy nezavolá.
+ *
+ * @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK (viz action-menu-builder
+ * a user-request.config.ts stejné datum): `<app-button-builder>` v šabloně nahrazeno
+ * `<app-action-menu-builder>` - stejný `toolbarButtons` config, jen se teď vykresluje
+ * jako jedno tlačítko "Akce" s vysouvacím seznamem místo řady pilulek vedle sebe.
+ * `handleToolbarAction()` dostal novou větev `triggerImport` -> deleguje na
+ * `this.activeTable.importData()` (stejný princip jako `exportActiveTable` ->
+ * `this.activeTable.exportToCSV()`). Tlačítko "Aktualizovat" zmizelo z hlavního
+ * toolbaru úplně - žije teď jen jako malá ikona uvnitř `TableBuilderComponent`
+ * (`table-refresh-icon-btn`), tahle stránka ho nijak neřídí.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -41,7 +52,6 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './user-request.config';
-
 /** Jeden jazyk z `GET languages/{module}` - stejný tvar, jaký používá WebSettingsComponent. */
 interface EmailTemplateLang {
   code: string;
@@ -165,17 +175,19 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
+        case 'triggerImport':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.isActive = this.showTrashTable;
           break;
       }
 
@@ -192,6 +204,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      triggerImport: () => this.activeTable?.importData(),
       openEmailTemplateEditor: () => this.openEmailTemplateEditor(),
       toggleTable: () => this.toggleTable()
     };

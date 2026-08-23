@@ -30,6 +30,15 @@
  *         "importovatelné pole" - `id`/`attachments`/`created_at`/`updated_at`
  *         importable ZÁMĚRNĚ NEDOSTÁVAJÍ (systémová/needitovatelná pole, `attachments`
  *         navíc tabulkový import neumí přenést jako soubor).
+ *
+ * @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK (viz action-menu-builder
+ *      a table-builder.component.ts/.html stejné datum): `USER_REQUEST_TOOLBAR_BUTTONS`
+ *      teď obsahuje i položku `triggerImport` - dřív bylo tlačítko "Import" výhradně
+ *      uvnitř `TableBuilderComponent` toolbaru, mimo tenhle config. Stránka na něj
+ *      deleguje přes `ViewChild` (`activeTable.importData()`), stejně jako už dřív
+ *      dělala pro export. Tahle položka je resource-specifická - stránky, kde import
+ *      nedává smysl (např. administrators), ji do svého `*_TOOLBAR_BUTTONS` prostě
+ *      NEPŘIDÁVAJÍ, žádný další přepínač/podmínka není potřeba.
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -43,6 +52,7 @@ export const USER_REQUEST_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-user-requests-create' },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
   { action: 'openEmailTemplateEditor', label: 'Potvrzovací e-mail', icon: '✉️', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-update' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];

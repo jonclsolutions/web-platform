@@ -64,6 +64,7 @@ export const NEWS_TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-export',
     showIf: true
   },
+   { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
   {
     action: 'toggleTable',
     label: 'Koš',

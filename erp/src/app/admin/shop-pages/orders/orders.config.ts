@@ -47,7 +47,8 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     icon: '📥',
     class: 'btn-export',
     showIf: true
-  }
+  },
+     { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
 ];
 
 /**

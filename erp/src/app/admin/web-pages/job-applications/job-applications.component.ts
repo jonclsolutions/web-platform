@@ -64,32 +64,35 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
    * @description Dynamically constructs the toolbar buttons based on user permissions and current component state.
    * @returns Array of configured buttons for the toolbar.
    */
-  get toolbarButtons(): Core.Button[] {
-    return Config.JOB_APPLICATION_TOOLBAR_BUTTONS.map(btn => {
-      let updatedBtn = { ...btn };
-
-      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
-        updatedBtn.showIf = false;
-      }
-
-      switch (btn.action) {
-        case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
-          updatedBtn.isActive = this.isFilterVisible;
-          break;
-        case 'exportActiveTable':
-          if (updatedBtn.showIf !== false) {
-            updatedBtn.showIf = !this.showTrashTable;
-          }
-          break;
-        case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Smazané';
-          break;
-      }
-
-      return updatedBtn;
-    });
-  }
+get toolbarButtons(): Core.Button[] {
+      return Config.JOB_APPLICATION_TOOLBAR_BUTTONS.map(btn => {
+        let updatedBtn = { ...btn };
+  
+        if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+          updatedBtn.showIf = false;
+        }
+  
+        switch (btn.action) {
+          case 'toggleFilters':
+            updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+            updatedBtn.isActive = this.isFilterVisible;
+            break;
+          case 'handleCreateFormOpened':
+          case 'exportActiveTable':
+          case 'triggerImport':
+            if (updatedBtn.showIf !== false) {
+              updatedBtn.showIf = !this.showTrashTable;
+            }
+            break;
+          case 'toggleTable':
+            updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+            updatedBtn.isActive = this.showTrashTable;
+            break;
+        }
+  
+        return updatedBtn;
+      });
+    }
 
   /**
    * @description Orchestrates toolbar button click events by mapping actions to class methods.
