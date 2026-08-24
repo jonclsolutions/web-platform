@@ -29,12 +29,21 @@
  *   delete/importu - viz zakomentované TODO bloky u shopu níže. `core/users` a
  *   `core/external_links` mají per-row byznys logiku (sysadmin ochrana, vlastnictví),
  *   která vyžaduje vlastní bezpečnostní rozbor před přidáním - ne mechanické doplnění.
+ *
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": nové veřejné
+ * (nepřihlášené) endpointy `account-activation/{token}` (GET ověří odkaz, POST nastaví
+ * heslo a aktivuje účet) - viz AccountActivationController. Do chráněné `core/users`
+ * skupiny přidána `POST /{id}/resend-activation` (znovu odeslat aktivační odkaz účtu,
+ * který se ještě nikdy neaktivoval). Účty teď vznikají BEZ hesla
+ * (`UserController::store()`) - uživatel si ho nastaví sám přes aktivační odkaz, nikdo
+ * jiný (ani admin) tak nikdy nezná cizí heslo.
  */
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AccountActivationController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TranslationController;
@@ -137,6 +146,24 @@ Route::prefix('public/legal')->group(function () {
 */
 Route::prefix('public')->group(function () {
     Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| ACCOUNT ACTIVATION — public, token-based (účet založený adminem bez hesla)
+|--------------------------------------------------------------------------
+| @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": odkaz z
+| AccountActivationMail (viz UserController::store()/resendActivation()). GET ověří
+| platnost tokenu bez jeho spotřebování, POST nastaví heslo, aktivuje účet
+| (`activated_at`) a token spotřebuje. Throttle chrání proti hrubému hádání tokenů
+| (token samotný je 64znakový random string, ale defense-in-depth se nevyplácí
+| přeskakovat ani tady).
+*/
+Route::prefix('account-activation')->group(function () {
+    Route::get('/{token}',  [AccountActivationController::class, 'show'])
+        ->middleware('throttle:20,1');
+    Route::post('/{token}', [AccountActivationController::class, 'activate'])
+        ->middleware('throttle:10,1');
 });
 
 /*
@@ -255,6 +282,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         // jen sysadmin smí smazat jiného sysadmina) - bulkDestroy() by musel tuhle logiku
         // přesně replikovat, ne obejít. Import navíc musí řešit hashování hesla a
         // přiřazení role - vyžaduje samostatný bezpečnostní rozbor před implementací.
+        //
+        // @refactor-note (2026-08-24) `resend-activation` přidána vedle `change-password` -
+        // znovu odešle aktivační odkaz účtu, který se ještě nikdy neaktivoval (viz
+        // UserController::resendActivation()).
         Route::prefix('users')->group(function () {
             Route::delete('/force-delete-all', [UserController::class, 'forceDeleteAllTrashed'])
                 ->middleware('permission:core-administrators-delete');
@@ -271,6 +302,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:core-administrators-update,id');
             Route::put('/{id}/change-password', [UserController::class, 'changePassword'])
                 ->middleware('permission:core-administrators-update,id');
+            Route::post('/{id}/resend-activation', [UserController::class, 'resendActivation'])
+                ->middleware('permission:core-administrators-update');
             Route::post('/{id}/restore', [UserController::class, 'restore'])
                 ->middleware('permission:core-administrators-delete');
             Route::delete('/{id}', [UserController::class, 'destroy'])

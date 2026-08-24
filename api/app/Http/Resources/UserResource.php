@@ -9,6 +9,10 @@
  * @refactor-note (2026-08) Odstraněna legacy HR/osobní pole.
  * @refactor-note (2026-08-16) Přidáno pole `two_fa_forced_by_admin` (BACKLOG "captcha +
  * 2FA na mail", bod 4) - bez něj by frontend neviděl aktuální stav sysadmin override.
+ * @refactor-note (2026-08-24) Přidána pole `is_blocked` a `activated_at` (BACKLOG
+ * "workflow zakládání účtů z adminu") - frontend je potřebuje pro zobrazení stavu účtu
+ * v tabulce (badge "Blokován"/"Čeká na aktivaci") a pro rozhodnutí, jestli zobrazit
+ * tlačítko "Poslat znovu" (jen když `activated_at` je `null`).
  */
 
 namespace App\Http\Resources;
@@ -30,6 +34,8 @@ class UserResource extends JsonResource
             'dpp_hours_spent'        => (int) $this->dpp_hours_spent,
             'enable_2fa'             => (bool) $this->enable_2fa,
             'two_fa_forced_by_admin' => (bool) $this->two_fa_forced_by_admin,
+            'is_blocked'             => (bool) $this->is_blocked,
+            'activated_at'           => $this->activated_at?->format('Y-m-d H:i:s'),
             'internal_note'          => $this->internal_note,
             'last_login_at'          => $this->last_login_at?->format('Y-m-d H:i:s'),
             'created_at'             => $this->created_at?->format('Y-m-d H:i:s'),

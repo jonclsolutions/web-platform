@@ -32,11 +32,26 @@
  * - `loadRolesForces2fa()` načítá `core/roles?no_pagination=true` PŘÍMO (ne přes
  *   RoleOptionsService, který v době psaní nebyl k dispozici pro kontrolu, zda vrací
  *   `forces_2fa`) - staví si vlastní mapu roleId -> {role_name, forces_2fa}.
+ *
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu":
+ * - `computeFieldsForTarget()` rozšířeno o `is_blocked` - stejný vzor jako `enable_2fa`:
+ *   pole zůstává ve formuláři vidět, ale je `editable: false` (disabled), pokud cílová
+ *   role je admin/sysadmin (`isNeverBlockableRole()`) - skutečné vynucení dělá backend
+ *   (UserController::update(), 422 při pokusu obejít), tohle je jen UX předvyplnění.
+ * - Nová metoda `handleResendActivation()` napojená na nový `(resendActivationOpened)`
+ *   output z `TableBuilderComponent` - volá `POST core/users/{id}/resend-activation`.
+ *   Klientská kontrola `item.activated_at` je jen rychlá zpětná vazba bez zbytečného
+ *   HTTP requestu - skutečnou kontrolu ("účet už je aktivovaný") dělá i backend.
+ * - `handleFormSubmitted()`: needitovatelná pole (`nonEditableFields`) se dřív mazala
+ *   jen kvůli 2FA scénáři, teď stejná logika automaticky ochrání i `is_blocked`, pokud
+ *   ho `computeFieldsForTarget()` označí jako `editable: false` - žádná further úprava
+ *   v tomhle handleru nebyla potřeba.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
@@ -46,6 +61,14 @@ import * as Config from './administrators.config';
 /** Role s napevno vynuceným 2FA - musí sedět s backend User::FORCED_2FA_ROLE_NAMES. */
 const HARDCODED_FORCED_ROLE_NAMES = ['admin', 'sysadmin'];
 
+/**
+ * Role, jejichž účty NELZE NIKDY zablokovat - stejný seznam jako
+ * HARDCODED_FORCED_ROLE_NAMES (obě ochrany se týkají stejných "trvale chráněných"
+ * rolí), ale drženo jako samostatná konstanta, ať jde v budoucnu nezávisle měnit.
+ * Musí sedět s backend UserController::NEVER_BLOCK_ROLE_NAMES.
+ */
+const NEVER_BLOCKABLE_ROLE_NAMES = ['admin', 'sysadmin'];
+
 interface RoleMeta {
   role_name: string;
   forces_2fa: boolean;
@@ -54,7 +77,9 @@ interface RoleMeta {
 @Component({
   selector: 'app-administrators',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  // ActionMenuBuilderComponent přidán explicitně, dokud není zařazen do
+  // SHARED_UI_BUILDERS bundle.
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './administrators.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -103,7 +128,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     return this.authService.getUserRole() === 'sysadmin';
   }
 
-get toolbarButtons(): Core.Button[] {
+  get toolbarButtons(): Core.Button[] {
     return Config.TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
 
@@ -132,7 +157,6 @@ get toolbarButtons(): Core.Button[] {
       return updatedBtn;
     });
   }
-
 
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
@@ -182,6 +206,7 @@ get toolbarButtons(): Core.Button[] {
   /**
    * @description Načte 2FA-relevantní metadata rolí (role_name + forces_2fa) přímo,
    * nezávisle na RoleOptionsService cache (viz refactor-note v hlavičce souboru).
+   * Stejná mapa se znovupoužívá i pro rozhodnutí "je role nikdy-neblokovatelná?".
    */
   private loadRolesForces2fa(): void {
     this.dataHandler.get<any[]>('core/roles?no_pagination=true').subscribe({
@@ -212,30 +237,44 @@ get toolbarButtons(): Core.Button[] {
   }
 
   /**
-   * @description Odvodí, jaké 2FA pole se má ve formuláři reálně zobrazit/disablovat
-   * pro danou cílovou roli - viz refactor-note v hlavičce souboru. `roleId` je `null`
-   * u nové (dosud nevybrané) role při vytváření účtu.
+   * @description Jestli daná role (podle id) NIKDY nesmí být zablokována - čistě UX
+   * předvyplnění/disable, skutečné vynucení dělá backend (UserController::update()).
    */
-private computeFieldsForTarget(
-  roleId: number | string | undefined | null,
-  adminForced: boolean = false
-): InputDefinition[] {
-  const forced = this.isRoleForced(roleId) || adminForced;
-
-  let fields = this.formFields.map(f => {
-    if (f.column_name === 'enable_2fa' && forced) {
-      return { ...f, editable: false };
-    }
-    return f;
-  });
-
-  const showOverrideField = this.isSysadmin && !this.isRoleForced(roleId);
-  if (!showOverrideField) {
-    fields = fields.filter(f => f.column_name !== 'two_fa_forced_by_admin');
+  private isNeverBlockableRole(roleId: number | string | undefined | null): boolean {
+    if (roleId === undefined || roleId === null || roleId === '') return false;
+    const meta = this.rolesMeta.get(Number(roleId));
+    return !!meta && NEVER_BLOCKABLE_ROLE_NAMES.includes(meta.role_name);
   }
 
-  return fields;
-}
+  /**
+   * @description Odvodí, jaké pole se má ve formuláři reálně zobrazit/disablovat pro
+   * danou cílovou roli - viz refactor-note v hlavičce souboru. `roleId` je `null` u
+   * nové (dosud nevybrané) role při vytváření účtu.
+   */
+  private computeFieldsForTarget(
+    roleId: number | string | undefined | null,
+    adminForced: boolean = false
+  ): InputDefinition[] {
+    const forced = this.isRoleForced(roleId) || adminForced;
+    const neverBlockable = this.isNeverBlockableRole(roleId);
+
+    let fields = this.formFields.map(f => {
+      if (f.column_name === 'enable_2fa' && forced) {
+        return { ...f, editable: false };
+      }
+      if (f.column_name === 'is_blocked' && neverBlockable) {
+        return { ...f, editable: false };
+      }
+      return f;
+    });
+
+    const showOverrideField = this.isSysadmin && !this.isRoleForced(roleId);
+    if (!showOverrideField) {
+      fields = fields.filter(f => f.column_name !== 'two_fa_forced_by_admin');
+    }
+
+    return fields;
+  }
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
@@ -253,30 +292,38 @@ private computeFieldsForTarget(
     this.selectedItemForEdit = null;
     // Při vytváření zatím žádná role není vybraná - forced=false, override pole se
     // stejně nezobrazí (show_in_create: false v configu), enable_2fa je editovatelné.
-    // Skutečné vynucení podle zvolené role v běhu formuláře řeší backend 422 při submitu.
+    // is_blocked má show_in_create: false, takže se v tomto formuláři nezobrazí vůbec.
     this.visibleFormFields = this.computeFieldsForTarget(null);
     this.showCreateForm = true;
   }
 
-handleEditFormOpened(item: any): void {
-  const itemToEdit = { ...item };
-  if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
+  handleEditFormOpened(item: any): void {
+    const itemToEdit = { ...item };
+    if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
 
-  const forced = this.isRoleForced(itemToEdit.role_id) || !!itemToEdit.two_fa_forced_by_admin;
-  if (forced) {
-    itemToEdit.enable_2fa = true;
+    const forced = this.isRoleForced(itemToEdit.role_id) || !!itemToEdit.two_fa_forced_by_admin;
+    if (forced) {
+      itemToEdit.enable_2fa = true;
+    }
+
+    // Chráněná role nesmí být zablokovaná - i kdyby v DB nějak přesto `is_blocked: true`
+    // bylo (nemělo by, backend to nedovolí), formulář to nezobrazí jako zaškrtnuté true,
+    // aby se neomylem znovu neodeslalo.
+    if (this.isNeverBlockableRole(itemToEdit.role_id)) {
+      itemToEdit.is_blocked = false;
+    }
+
+    this.visibleFormFields = this.computeFieldsForTarget(itemToEdit.role_id, !!itemToEdit.two_fa_forced_by_admin);
+    this.selectedItemForEdit = itemToEdit;
+    this.showCreateForm = true;
   }
 
-  this.visibleFormFields = this.computeFieldsForTarget(itemToEdit.role_id, !!itemToEdit.two_fa_forced_by_admin);
-  this.selectedItemForEdit = itemToEdit;
-  this.showCreateForm = true;
-}
-
- /**
+  /**
    * @description Submits user data. Error handler DOPLNĚN (dřív chyběl) - viz
    * refactor-note v hlavičce souboru: FormBuilderComponent ukazuje zelený toast hned po
    * emitu, ještě před odpovědí serveru, takže reálná chyba backendu (např. 422 při
-   * pokusu vypnout vynucenou 2FA) se bez tohoto handleru vůbec neprojevila v UI.
+   * pokusu vypnout vynucenou 2FA, nebo zablokovat chráněný účet) se bez tohoto handleru
+   * vůbec neprojevila v UI.
    * @bugfix-note (2026-08-16v2) KRITICKÁ OPRAVA: `visibleFormFields`/`nonEditableFields`
    * odráží roli, která byla vybraná PŘI OTEVŘENÍ formuláře
    * (`handleEditFormOpened`/`handleCreateFormOpened`) - pokud sysadmin roli PŘÍMO VE
@@ -289,7 +336,10 @@ handleEditFormOpened(item: any): void {
    * (`payload.role_id`), ne podle stavu formuláře při otevření - pokud je nová role
    * vynucená, `enable_2fa`/`two_fa_forced_by_admin` se z payloadu smažou úplně (backend
    * pak `enable_2fa` sám vynutí na `true` - viz `UserController::update()`,
-   * `$validated['enable_2fa'] = $isForced ? true : ...`).
+   * `$validated['enable_2fa'] = $isForced ? true : ...`). Stejný princip teď platí i
+   * pro `is_blocked` - pokud je nová role NEVER_BLOCKABLE, `is_blocked` se z payloadu
+   * smaže (backend by ho stejně odmítl 422, tohle jen ušetří zbytečný request s chybou
+   * u legitimní změny, kdy uživatel jen mění roli, ne blokaci).
    */
   handleFormSubmitted(formData: any): void {
     const payload = { ...formData };
@@ -309,6 +359,11 @@ handleEditFormOpened(item: any): void {
     if (forcedNow) {
       delete payload.enable_2fa;
       delete payload.two_fa_forced_by_admin;
+    }
+
+    // Stejný princip pro blokaci - nová role je NEVER_BLOCKABLE, is_blocked nedává smysl.
+    if (this.isNeverBlockableRole(payload.role_id)) {
+      delete payload.is_blocked;
     }
 
     const request$ = payload.id ? this.updateData(payload.id, payload) : this.postData(payload);
@@ -341,6 +396,24 @@ handleEditFormOpened(item: any): void {
         next: () => this.alertDialogService.open('Úspěch', 'Heslo bylo změněno.', 'success'),
         error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
       });
+  }
+
+  /**
+   * @description Znovu odešle aktivační e-mail účtu, který se ještě nikdy neaktivoval.
+   * `item.activated_at` kontrola na klientu je jen rychlá zpětná vazba bez zbytečného
+   * HTTP requestu - backend (`UserController::resendActivation()`) dělá stejnou
+   * kontrolu nezávisle, takže tohle nelze obejít úpravou frontendu.
+   */
+  handleResendActivation(item: any): void {
+    if (item.activated_at) {
+      this.alertDialogService.open('Info', 'Účet je již aktivovaný.', 'info');
+      return;
+    }
+
+    this.dataHandler.post(`core/users/${item.id}/resend-activation`, {}).subscribe({
+      next: () => this.alertDialogService.open('Odesláno', 'Aktivační e-mail byl odeslán znovu.', 'success'),
+      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Odeslání se nezdařilo.', 'danger')
+    });
   }
 
   handleViewDetails(item: any): void {

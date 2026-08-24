@@ -15,6 +15,15 @@
  *      zpětně kompatibilní se stávajícími konfiguracemi, které pole ještě nemají.
  *      Vyhodnocuje TableBuilderComponent.isButtonVisible() / TrashTableBuilderComponent
  *      přes vlastní `@Input() deletePermission`.
+ * @refactor-note (2026-08-24) BACKLOG "efektivnější tlačítko pro akci 0-1x na účet":
+ *      přidáno volitelné `visibleWhen` - funkce vyhodnocovaná PRO KAŽDÝ ŘÁDEK zvlášť
+ *      (na rozdíl od `permission`, což je globální per-uživatel kontrola). Umožňuje
+ *      tlačítko zobrazit jen na řádcích, které danou akci reálně potřebují (např.
+ *      "Aktivace" jen u účtů s `activated_at === null`) - `TableBuilderComponent` navíc
+ *      celý sloupec v hlavičce vůbec nevykreslí, pokud žádný řádek na aktuální stránce
+ *      podmínku nesplňuje (viz `hasAnyRowForButton()`), takže zbytečně neplýtvá místem
+ *      u tabulek, kde je akce potřeba jen výjimečně. Bez `visibleWhen` se tlačítko chová
+ *      přesně jako dřív (na všech řádcích, kde `isActive`+`permission` projde).
  */
 export interface TableButtons {
   display_name: string;
@@ -27,4 +36,10 @@ export interface TableButtons {
    * zobrazení tohoto tlačítka. Bez tohoto pole se tlačítko řídí pouze `isActive`.
    */
   permission?: string;
+  /**
+   * Volitelná podmínka viditelnosti VYHODNOCOVANÁ PRO KONKRÉTNÍ ŘÁDEK (item z `data`).
+   * Vrať `true`, pokud se má tlačítko na tomto řádku zobrazit. Bez tohoto pole je
+   * tlačítko na všech řádcích stejné (řízeno jen `isActive`/`permission`).
+   */
+  visibleWhen?: (item: any) => boolean;
 }

@@ -1,0 +1,57 @@
+{
+  "backlog_task": {
+    "id": "core-admin-email-domain-restriction",
+    "title": "Omezení domén e-mailů pro administrátorské účty",
+    "created": "2026-08-24",
+    "status": "planned",
+    "priority": "low",
+    "category": "security-hardening",
+    "context": {
+      "problem": "V administraci lze v současnosti vytvořit uživatelský účet s libovolnou e-mailovou doménou. Pokud by útočník získal neoprávněný přístup k core/users store() (ukradený token, zneužitá zranitelnost, kompromitovaný admin účet), mohl by si založit vlastní 'zadní vrátka' - účet na mail, ke kterému má sám přístup, dokončit aktivaci a mít trvalý přístup do systému nezávislý na původním vektoru útoku.",
+      "threat_model": {
+        "solves": "Persistence-after-compromise - útočník bez přístupu k firemní mailové schránce nemůže dokončit aktivaci nově založeného účtu (nedostane se k aktivačnímu odkazu), i kdyby uměl zavolat store().",
+        "does_not_solve": [
+          "Kompromitaci EXISTUJÍCÍHO účtu s firemní doménou (ukradené heslo/token legitimního zaměstnance) - jiná hrozba, doména s tím nic nedělá.",
+          "Insider threat - zaměstnanec s legitimním firemním mailem a špatnými úmysly projde bez omezení.",
+          "Obejití na úrovni DB - pokud útočník umí zapsat přímo do databáze, backend validace ho nezastaví. Nejde o náhradu za zabezpečení samotného store() endpointu, jen o doplňkovou vrstvu."
+        ],
+        "conclusion": "Doplňková (defense-in-depth) vrstva, ne náhrada za MFA/rotaci hesel/monitoring. Musí být vynucena VÝHRADNĚ na backendu, nikdy jen jako frontendová/UI kontrola - jinak jde o bezpečnost naoko."
+      }
+    },
+    "requirements": {
+      "primary_domain": {
+        "description": "Jedna hlavní doména, na které firma reálně provozuje web/e-shop (např. rpsw.cz). Nové administrátorské účty musí mít e-mail na této doméně, pokud nejsou pokryty whitelistem/výjimkou níže.",
+        "storage": "core_security_settings (existující tabulka, stejné místo jako ostatní bezpečnostní politiky, viz CoreSecuritySettingController).",
+        "default_behavior": "Prázdná/nenastavená hodnota = beze změny oproti současnému stavu (žádné omezení) - zpětně kompatibilní, nikoho to nerozbije při nasazení."
+      },
+      "whitelist_or_specific_users": {
+        "description": "Pro externí spolupracovníky/kontraktory/konzultanty s jinou doménou, kteří legitimně potřebují administrátorský přístup. Řešeno JEDNÍM ze dvou způsobů (rozhodnout při implementaci, případně kombinovat):",
+        "option_a": "Whitelist dalších povolených domén (seznam stringů) - vhodné, pokud firma spolupracuje s jinou konkrétní organizací jako celkem.",
+        "option_b": "Whitelist konkrétních e-mailových adres jako výjimka nad rámec domény - vhodné pro jednotlivé externí uživatele bez ohledu na jejich doménu.",
+        "preference_note": "Uživatel (zadavatel) preferuje kombinaci: jedna hlavní doména + možnost přidat konkrétní jednotlivé e-maily jako výjimky, ne nutně celé další domény."
+      },
+      "enforcement": {
+        "layer": "Backend výhradně - validace v StoreUserRequest / UserController::store(), NIKDY jen na frontendu.",
+        "who_can_configure": "Pouze sysadmin (stejná úroveň oprávnění jako u two_fa_forced_by_admin a dalších bezpečnostních přepínačů) - nejde o běžnou administrátorskou operaci.",
+        "who_is_affected": "Kontrola se týká POUZE vytváření NOVÝCH účtů (store()). Existující účty se zpětně neruší/neblokují, i kdyby jejich doména neodpovídala aktuálně nastavené politice (politika mohla být nastavena později).",
+        "logging": "Pokus o vytvoření účtu s nepovolenou doménou/e-mailem se loguje do core_security_events (ne jen core_logs) jako potenciální bezpečnostní signál, ne jako běžná uživatelská chyba - konzistentní se zbytkem bezpečnostního monitoringu v projektu (login_failed, login_brute_force_suspected, atd.)."
+      }
+    },
+    "open_questions_for_implementation": [
+      "Přesná shoda domény, nebo i subdomény (např. mail@sub.rpsw.cz)?",
+      "Validace case-insensitive na doméně (RPSW.cz vs rpsw.cz) - pravděpodobně ano.",
+      "UI pro správu whitelistu - součást core/security_settings stránky (SecuritySettingsComponent), stejné místo jako ostatní bezpečnostní přepínače.",
+      "Chybová hláška uživateli při pokusu o nepovolenou doménu - konkrétní ('doména X není povolena') vs. obecná (bezpečnostní zvážení, zda konkrétní hláška něco neprozrazuje - v uzavřeném interním systému pravděpodobně netřeba tajit)."
+    ],
+    "explicitly_out_of_scope_for_now": [
+      "Zpětná validace/čištění existujících účtů se 'špatnou' doménou.",
+      "Automatická synchronizace domény z jiného zdroje (např. z DNS/firemního adresáře) - ruční nastavení sysadminem stačí.",
+      "Omezení domén pro NEadministrátorské účty (pokud by v budoucnu vznikly jiné typy uživatelů mimo core/users)."
+    ],
+    "related_existing_mechanisms": [
+      "two_fa_forced_by_admin (CoreRole/User) - podobný vzor 'sysadmin-only bezpečnostní přepínač'.",
+      "CoreSecurityEvent (core_security_events) - cílové místo pro logování pokusů o obejití.",
+      "AccountActivationToken / account-activation flow - důvod, proč tahle ochrana vůbec funguje (útočník bez přístupu k mailu nedokončí aktivaci)."
+    ]
+  }
+}

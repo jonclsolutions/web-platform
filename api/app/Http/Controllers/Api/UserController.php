@@ -31,13 +31,30 @@
  * vynucené už rolí (admin/sysadmin/forces_2fa role) - takový override by byl nesmyslný
  * (2FA je vynuceno tak jako tak) a matoucí v UI, proto 422. `TwoFactorAdminController`
  * lze smazat, jeho routa `PUT core/users/{id}/two-factor-requirement` z api.php odstraněna.
+ *
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu":
+ * - `store()` už NEPŘIJÍMÁ heslo (viz StoreUserRequest - `user_password_hash` z
+ *   validace úplně odstraněno). Účet se vytváří s `user_password_hash = null`,
+ *   `is_blocked = false`, `activated_at = null`. Ihned po commitu (aby selhání mailu
+ *   nikdy nerollbacklo už založený účet) se pošle aktivační e-mail s odkazem na
+ *   nastavení hesla - viz `sendActivationEmail()`/`AccountActivationController`.
+ * - Nová metoda `resendActivation()` - umožňuje adminovi znovu odeslat aktivační odkaz
+ *   (nový token, starý zaniká) u účtu, který se ještě nikdy neaktivoval. Route chráněná
+ *   `core-administrators-update` (viz api.php).
+ * - `update()` dostal kontrolu blokace: `is_blocked` NELZE nastavit na `true` (a) na
+ *   vlastní účet, (b) na účet s rolí admin/sysadmin - ABSOLUTNÍ zákaz, i pro sysadmina
+ *   (rozhodnuto v backlogu: "nesmí zablokovat v žádném případě"). Přechod
+ *   false -> true navíc OKAMŽITĚ revokuje všechny aktivní Sanctum tokeny i refresh
+ *   token daného účtu - zablokovaný účet tak nemůže dál používat systém, dokud mu
+ *   access token sám nevyprší.
  */
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Auth\AccountActivationMail;
 use App\Mail\Auth\PasswordChangedNotification;
-use App\Models\{User};
+use App\Models\{AccountActivationToken, RefreshToken, User};
 use App\Models\Core\CoreRole;
 use App\Models\Core\CoreLog;
 use App\Traits\LogsActivity;
@@ -54,6 +71,14 @@ class UserController extends Controller
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
     private const PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS = 5;
     private const PASSWORD_CHANGE_NOTIFY_DECAY_SECONDS = 3600;
+
+    /**
+     * @description Role, jejichž účty NELZE NIKDY zablokovat - absolutní zákaz, platí
+     * i pro sysadmina samotného (rozhodnuto v backlogu). Stejný seznam jako
+     * `User::FORCED_2FA_ROLE_NAMES` - obě ochrany se týkají stejných "trvale
+     * chráněných" rolí, ale jsou to nezávislé kontroly (2FA vynucení vs. blokace).
+     */
+    private const NEVER_BLOCK_ROLE_NAMES = ['admin', 'sysadmin'];
 
     /**
      * Retrieves a paginated list of users with filtering and role-based sorting.
@@ -104,7 +129,8 @@ class UserController extends Controller
     }
 
     /**
-     * Creates a new user and assigns an initial role.
+     * Creates a new user WITHOUT a password and sends an activation e-mail so the user
+     * can set their own password (no one, not even the admin, ever knows it).
      * @note KRITICKÁ OCHRANA: vytvořit nový účet s rolí sysadmin smí jen volající, který
      * je sám sysadmin.
      */
@@ -118,9 +144,6 @@ class UserController extends Controller
             return response()->json(['message' => 'Nový účet s rolí sysadmin smí vytvořit pouze jiný sysadmin.'], 403);
         }
 
-        // Při vytváření se explicitní "vypnutí" nemůže stát (frontend má checkbox
-        // disabled+checked pro vynucené role), proto zde stačí prosté vynucení bez 422 -
-        // 422 dává smysl až u UPDATE existujícího účtu, kde jde o aktivní pokus o vypnutí.
         DB::beginTransaction();
         try {
             $forced = $this->isRoleForced2fa($roleId);
@@ -129,18 +152,40 @@ class UserController extends Controller
             // sysadmin ho případně nastaví následným update().
             unset($validated['two_fa_forced_by_admin']);
 
-            $user = User::create(array_merge($validated, [
-                'user_password_hash' => Hash::make($validated['user_password_hash']),
-            ]));
+            // Účet vzniká BEZ hesla - nastaví si ho sám uživatel přes aktivační odkaz
+            // (viz AccountActivationController::activate()). Dokud tak neučiní, login
+            // je zablokovaný na úrovni AuthController::login() (user_password_hash IS NULL).
+            $validated['user_password_hash'] = null;
+            $validated['is_blocked'] = false;
+            $validated['activated_at'] = null;
+
+            $user = User::create($validated);
 
             if ($roleId) {
                 $user->roles()->attach($roleId);
             }
 
             DB::commit();
-            $this->logAction($request, CoreLog::class, 'create', 'User', "Vytvořen uživatel: {$user->user_email}", $user->id, 'User');
 
-            return response()->json(new UserResource($user->load('roles.permissions')), 201);
+            // Mail se posílá AŽ PO commitu - selhání odeslání (SMTP výpadek apod.)
+            // nesmí rollbacknout už vytvořený účet. Admin má řádkovou akci "Aktivace"
+            // (resendActivation()) pro případ, že se e-mail ztratí, vyprší, nebo se
+            // nepodaří odeslat hned teď - viz $emailSent níže, které frontend zobrazí
+            // jako varování místo tichého "úspěchu".
+            $emailSent = $this->sendActivationEmail($user);
+
+            $this->logAction(
+                $request,
+                CoreLog::class,
+                'create',
+                'User',
+                "Vytvořen uživatel (čeká na aktivaci): {$user->user_email}" . (!$emailSent ? ' [AKTIVAČNÍ E-MAIL SE NEPODAŘILO ODESLAT]' : ''),
+                $user->id,
+                'User'
+            );
+
+            $response = new UserResource($user->load('roles.permissions'));
+            return response()->json($response->additional(['activation_email_sent' => $emailSent]), 201);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při vytváření uživatele: " . $e->getMessage());
@@ -168,7 +213,9 @@ class UserController extends Controller
      * povýšení cílového účtu na sysadmina, smí to provést jen volající, který je SÁM
      * sysadmin. `enable_2fa` nelze u vynucených účtů/rolí explicitně vypnout (422).
      * `two_fa_forced_by_admin` smí měnit jen sysadmin a jen na účtech, které NEMAJÍ 2FA
-     * vynucené jinak (rolí) - jinak by byl override bezpředmětný (422).
+     * vynucené jinak (rolí) - jinak by byl override bezpředmětný (422). `is_blocked`
+     * nelze NIKDY nastavit na účet admin/sysadmin ani na vlastní účet (422) - viz
+     * refactor-note v hlavičce souboru. Přechod na `is_blocked = true` revokuje tokeny.
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
@@ -225,6 +272,29 @@ class UserController extends Controller
             unset($validated['two_fa_forced_by_admin']);
         }
 
+        // ── is_blocked (blokace účtu) - ABSOLUTNÍ ochrana admin/sysadmin ───────────────
+        // Kontrola PŘED update() - potřebujeme rozhodnout ještě než se cokoliv zapíše.
+        if (array_key_exists('is_blocked', $validated) && $validated['is_blocked']) {
+            if ((int) $request->user()->id === (int) $user->id) {
+                return response()->json(['message' => 'Nelze zablokovat vlastní účet.'], 422);
+            }
+
+            // Efektivní role po případné změně v tomto requestu (stejná logika jako
+            // $effectiveRoleId výše, ale explicitně přes jméno role kvůli čitelnosti).
+            $effectiveRoleName = $effectiveRoleId ? CoreRole::find($effectiveRoleId)?->role_name : null;
+            $currentRoleNames = $user->roles()->pluck('role_name');
+
+            $isProtectedRole = in_array($effectiveRoleName, self::NEVER_BLOCK_ROLE_NAMES, true)
+                || $currentRoleNames->intersect(self::NEVER_BLOCK_ROLE_NAMES)->isNotEmpty();
+
+            if ($isProtectedRole) {
+                $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Zamítnut pokus o zablokování chráněného účtu: {$user->user_email}", (int) $id, 'User');
+                return response()->json(['message' => 'Účty s rolí admin/sysadmin nelze nikdy zablokovat.'], 422);
+            }
+        }
+
+        $wasBlocked = (bool) $user->is_blocked;
+
         if (!empty($validated['user_password_hash'])) {
             $validated['user_password_hash'] = Hash::make($validated['user_password_hash']);
         } else {
@@ -239,6 +309,15 @@ class UserController extends Controller
                 if ($request->user()->id !== $user->id) {
                     $user->roles()->sync([$validated['role_id']]);
                 }
+            }
+
+            // Přechod false -> true: OKAMŽITĚ zneplatnit veškerý aktivní přístup, jinak
+            // by kompromitovaný účet mohl dál používat systém, dokud mu access token
+            // sám nevyprší (viz backlog rozhodnutí o smyslu blokace).
+            if (!$wasBlocked && $user->is_blocked) {
+                $user->tokens()->delete();
+                RefreshToken::where('user_id', $user->id)->delete();
+                $this->logAction($request, CoreLog::class, 'account_blocked', 'User', "Účet zablokován, aktivní tokeny zneplatněny: {$user->user_email}", $user->id, 'User');
             }
 
             DB::commit();
@@ -391,6 +470,54 @@ class UserController extends Controller
         } catch (\Exception $e) {
             $this->logAction(request(), CoreLog::class, 'error', 'User', "Chyba při vysypávání koše uživatelů: " . $e->getMessage());
             return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+        }
+    }
+
+    /**
+     * @description Znovu odešle aktivační e-mail (nový token, starý přestane platit) -
+     * jen pro účty, které se ještě nikdy neaktivovaly. Účet, který už má nastavené
+     * heslo (`activated_at` vyplněno), by tímto šlo obejít - proto je to zablokováno.
+     */
+    public function resendActivation(Request $request, string $id): JsonResponse
+    {
+        if (!ctype_digit($id)) {
+            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+        }
+
+        $user = User::findOrFail($id);
+
+        if ($user->activated_at) {
+            return response()->json(['message' => 'Účet je již aktivovaný.'], 422);
+        }
+
+        $emailSent = $this->sendActivationEmail($user);
+
+        if (!$emailSent) {
+            $this->logAction($request, CoreLog::class, 'resend_activation_failed', 'User', "Opětovné odeslání aktivačního e-mailu selhalo: {$user->user_email}", $user->id, 'User');
+            return response()->json(['message' => 'Odeslání e-mailu se nezdařilo. Zkontrolujte konfiguraci pošty a zkuste to znovu.'], 500);
+        }
+
+        $this->logAction($request, CoreLog::class, 'resend_activation', 'User', "Aktivační e-mail odeslán znovu: {$user->user_email}", $user->id, 'User');
+
+        return response()->json(['message' => 'Aktivační e-mail byl odeslán znovu.']);
+    }
+
+    /**
+     * @description Vygeneruje nový aktivační token a pošle e-mail. Chyba odeslání se
+     * NIKDY nesmí shodit request, který uživatele vytváří/opakovaně aktivuje (proto
+     * try/catch), ale volající (store()/resendActivation()) dostane návratovou hodnotu
+     * a promítne ji do odpovědi - žádné tiché selhání, admin uvidí varování v UI a může
+     * použít řádkovou akci "Aktivace" (viditelnou jen u neaktivovaných účtů).
+     */
+    private function sendActivationEmail(User $user): bool
+    {
+        $rawToken = AccountActivationToken::issueFor($user);
+        try {
+            Mail::to($user->user_email)->send(new AccountActivationMail($user, $rawToken));
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Activation email failed for user {$user->id}: " . $e->getMessage());
+            return false;
         }
     }
 

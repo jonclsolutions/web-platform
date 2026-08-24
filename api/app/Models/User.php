@@ -16,6 +16,12 @@
  * (3) `two_fa_forced_by_admin` - sysadmin override na KONKRÉTNÍM účtu;
  * (4) `enable_2fa` - vlastní volba uživatele.
  * Přidán `two_fa_forced_by_admin` sloupec (fillable/cast).
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": přidány
+ * `is_blocked` (nezávislý na aktivaci - "smí se PRÁVĚ TEĎ přihlásit?") a `activated_at`
+ * ("byl účet vůbec kdy nastartovaný uživatelem?" - vyplní se až po nastavení hesla
+ * přes AccountActivationController::activate()). `user_password_hash` je teď nullable -
+ * `null` znamená "účet čeká na aktivaci", kontrolováno explicitně v
+ * AuthController::login() PŘED Auth::attempt().
  */
 
 namespace App\Models;
@@ -31,8 +37,11 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @description Manages user credentials, profile information, and role-based access control (RBAC).
  * @property string $full_name User's display name.
+ * @property string|null $user_password_hash NULL dokud si uživatel přes aktivační odkaz nenastaví heslo.
  * @property bool $enable_2fa Whether two-factor auth is enabled by the user's own choice.
  * @property bool $two_fa_forced_by_admin Whether a sysadmin forced 2FA on this specific account.
+ * @property bool $is_blocked Whether login is currently disabled for this account (independent of activation).
+ * @property \Illuminate\Support\Carbon|null $activated_at When the user first set their own password.
  * @property array $core_permissions Calculated list of permission keys.
  */
 class User extends Authenticatable
@@ -50,6 +59,7 @@ class User extends Authenticatable
         'user_email', 'user_password_hash', 'full_name',
         'dpp_hours_spent', 'internal_note', 'last_login_at',
         'enable_2fa', 'two_fa_forced_by_admin',
+        'is_blocked', 'activated_at',
     ];
 
     protected $hidden = ['user_password_hash'];
@@ -60,6 +70,8 @@ class User extends Authenticatable
         'last_login_at' => 'datetime',
         'enable_2fa' => 'boolean',
         'two_fa_forced_by_admin' => 'boolean',
+        'is_blocked' => 'boolean',
+        'activated_at' => 'datetime',
     ];
 
     public function getAuthPassword() { return $this->user_password_hash; }

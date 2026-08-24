@@ -16,6 +16,12 @@
  * od `shopMaintenanceGuard`, který je duplikovaný per-child uvnitř 'shop' skupiny. Nová
  * routa 'web-maintenance' mimo AuthGuard i webMaintenanceGuard (jinak by se sama
  * zablokovala - ochranu proti smyčce navíc řeší i guard samotný, viz jeho komentář).
+ *
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": přidána
+ * `auth/activate-account/:token` - veřejná stránka pro nastavení hesla a aktivaci účtu
+ * založeného adminem (odkaz z AccountActivationMail). STEJNÝ vzorec jako
+ * `auth/reset-password` výše - mimo AdminLayoutComponent i AuthGuard, protože uživatel
+ * v tu chvíli ještě nemá platnou session.
  */
 
 import { Routes } from '@angular/router';
@@ -108,6 +114,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./admin/auth/reset-password/reset-password.component')
         .then(m => m.ResetPasswordComponent)
+  },
+  {
+    // Veřejná stránka mimo AdminLayoutComponent i AuthGuard - cílová stránka odkazu z
+    // AccountActivationMail (účet založený adminem, čeká na nastavení hesla).
+    path: 'auth/activate-account/:token',
+    loadComponent: () =>
+      import('./admin/auth/activate-account/activate-account.component')
+        .then(m => m.ActivateAccountComponent)
   },
   { path: 'admin', loadChildren: () => import('./admin/admin-routing.module').then(m => m.AdminRoutingModule) },
 

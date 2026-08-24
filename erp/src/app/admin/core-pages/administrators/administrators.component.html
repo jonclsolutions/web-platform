@@ -1,6 +1,6 @@
 <!-- 
     @file: administrators.component.html
-    @path: /src/app/admin/core-pages/administrators/administrators.component.html
+    @path: src/app/admin/core-pages/administrators/administrators.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2025 
@@ -13,6 +13,13 @@
         `two_fa_forced_by_admin` se teď edituje PŘES BĚŽNÝ FORMULÁŘ (pole je ve
         visibleFormFields, viditelné jen sysadminovi), ne přes zvláštní tlačítko v
         detail náhledu. Detail náhled (`app-details-builder`) zůstává čistě read-only.
+    @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu":
+    - `<app-button-builder>` nahrazeno `<app-action-menu-builder>` (konsolidace toolbar
+      tlačítek, viz action-menu-builder.component.ts).
+    - Přidán info banner při otevření formuláře PRO VYTVOŘENÍ (ne editaci) - vysvětluje,
+      že účet vzniká bez hesla a aktivuje se přes e-mail.
+    - Nový `(resendActivationOpened)` output z `TableBuilderComponent` napojen na
+      `handleResendActivation()` - tlačítko "Aktivace" v řádku tabulky.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -58,7 +65,8 @@ triggerLabel="Akce"
   (itemDeleted)="handleItemDeleted()"
   (editFormOpened)="handleEditFormOpened($event)"
   (viewDetailsOpened)="handleViewDetails($event)"
-  (resetPasswordFormOpened)="handleResetPasswordFormOpened($event)">
+  (resetPasswordFormOpened)="handleResetPasswordFormOpened($event)"
+  (resendActivationOpened)="handleResendActivation($event)">
 </app-table-builder>
           }
 @if (showTrashTable) {
@@ -87,6 +95,12 @@ triggerLabel="Akce"
 </div>
 
 @if (showCreateForm) {
+@if (!selectedItemForEdit) {
+<div class="info-banner">
+    ℹ️ Účet se vytvoří <strong>bez hesla</strong>. Uživatel obdrží e-mail s odkazem pro
+    nastavení hesla a aktivaci účtu (platnost odkazu 48 hodin).
+</div>
+  }
 <app-form-builder
 [inputDefinitions]="visibleFormFields"
 [formDataToEdit]="selectedItemForEdit"

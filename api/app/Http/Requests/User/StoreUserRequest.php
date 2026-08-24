@@ -14,13 +14,18 @@
  * napříč aplikací (8-16 znaků, alespoň 1 písmeno, 1 číslice, 1 speciální znak) - viz
  * odpovídající frontend `password-policy.ts`. Dřív jen `min:8` bez horní hranice a bez
  * požadavků na složení hesla.
+ *
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": validace
+ * hesla ÚPLNĚ ODSTRANĚNA - formulář na vytvoření účtu už heslo nesbírá. Účet vzniká s
+ * `user_password_hash = null` (viz UserController::store()) a uživatel si heslo
+ * nastaví sám přes aktivační e-mail (AccountActivationController::activate()), kde
+ * platí STEJNÁ politika hesla, jen validovaná odděleně na tamním endpointu.
  */
 
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use App\Models\Core\CoreRole;
 
 /**
@@ -44,16 +49,12 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_email'          => ['required', 'email', 'max:255', 'unique:users,user_email'],
-            'full_name'           => ['required', 'string', 'max:255'],
-            'user_password_hash'  => [
-                'required', 'string', 'max:16',
-                Password::min(8)->letters()->numbers()->symbols(),
-            ],
-            'role_id'             => ['required', 'numeric', Rule::exists(CoreRole::class, 'id')],
-            'internal_note'       => ['nullable', 'string'],
-            'dpp_hours_spent'     => ['nullable', 'integer', 'min:0'],
-            'enable_2fa'          => ['nullable', 'boolean'],
+            'user_email'      => ['required', 'email', 'max:255', 'unique:users,user_email'],
+            'full_name'       => ['required', 'string', 'max:255'],
+            'role_id'         => ['required', 'numeric', Rule::exists(CoreRole::class, 'id')],
+            'internal_note'   => ['nullable', 'string'],
+            'dpp_hours_spent' => ['nullable', 'integer', 'min:0'],
+            'enable_2fa'      => ['nullable', 'boolean'],
         ];
     }
 
@@ -78,15 +79,13 @@ class StoreUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_email.required'         => 'Přihlašovací e-mail je povinný.',
-            'user_email.email'            => 'Zadejte platnou e-mailovou adresu pro přihlášení.',
-            'user_email.max'              => 'E-mail může obsahovat maximálně 255 znaků.',
-            'user_email.unique'           => 'Tento přihlašovací e-mail je již obsazen.',
-            'full_name.required'          => 'Jméno je povinné.',
-            'user_password_hash.required' => 'Heslo je povinné.',
-            'user_password_hash.max'      => 'Heslo může mít maximálně 16 znaků.',
-            'role_id.required'            => 'Vyberte roli uživatele.',
-            'role_id.exists'              => 'Vybraná role neexistuje.',
+            'user_email.required' => 'Přihlašovací e-mail je povinný.',
+            'user_email.email'    => 'Zadejte platnou e-mailovou adresu pro přihlášení.',
+            'user_email.max'      => 'E-mail může obsahovat maximálně 255 znaků.',
+            'user_email.unique'   => 'Tento přihlašovací e-mail je již obsazen.',
+            'full_name.required'  => 'Jméno je povinné.',
+            'role_id.required'    => 'Vyberte roli uživatele.',
+            'role_id.exists'      => 'Vybraná role neexistuje.',
         ];
     }
 }

@@ -28,6 +28,23 @@
  * - `login_2fa_exhausted` (severity `critical`) při vyčerpání pokusů na OTP kód.
  * `core_logs` (audit) zůstává beze změny - obě tabulky mají jiný účel (audit vs.
  * bezpečnostní diagnostika), viz CoreSecurityEvent.php hlavička.
+ *
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": `login()`
+ * dostal NOVOU kontrolu, zařazenou HNED PO captcha bloku a PŘED `Auth::attempt()`:
+ * - `is_blocked = true` -> 403 s jasnou hláškou, zapsáno do core_security_events
+ *   (`login_blocked_account`, warning) i core_logs. Nejde o account-enumeration riziko
+ *   navíc oproti běžnému "neplatné údaje" - jde o UZAVŘENÉ interní prostředí (jen
+ *   zaměstnanci), kde transparentní hláška > falešná bezpečnost přes nejasnou odpověď.
+ * - `user_password_hash IS NULL` (účet ještě neaktivovaný přes AccountActivationMail
+ *   odkaz) -> 403 s odlišnou hláškou. BEZ TOHOHLE by `Auth::attempt()` zavolalo
+ *   `Hash::check($password, null)` uvnitř Laravel guardu, což by u některých PHP/Hash
+ *   driver kombinací skončilo výjimkou (`null` není platný `string` argument), místo
+ *   aby to vrátilo hezkou JSON chybu - proto se kontroluje explicitně a DŘÍVE, ne se
+ *   spoléhá na to, že `Auth::attempt()` prostě vrátí `false`.
+ * Obě kontroly čtou uživatele jedním dodatečným dotazem `User::where('user_email', ...)`
+ * PŘED `Auth::attempt()` - mírně dražší než dřív (jeden extra SELECT na neúspěšný i
+ * úspěšný pokus), ale nutné pro to, aby šlo rozlišit "zablokovaný"/"neaktivovaný" od
+ * "špatné heslo" ještě předtím, než se heslo vůbec ověřuje.
  */
 
 namespace App\Http\Controllers\Api;
@@ -65,8 +82,10 @@ class AuthController extends Controller
 
     /**
      * @description Krok 1 loginu: ověří heslo (+ captcha od 3. neúspěšného pokusu).
-     * Pokud uživatel vyžaduje 2FA, NEVYDÁ tokeny, ale založí pending-login session a
-     * pošle OTP e-mailem. Jinak přihlásí rovnou (stávající chování).
+     * PŘED ověřením hesla zamítne zablokované a dosud neaktivované účty (viz
+     * refactor-note v hlavičce souboru). Pokud uživatel vyžaduje 2FA, NEVYDÁ tokeny,
+     * ale založí pending-login session a pošle OTP e-mailem. Jinak přihlásí rovnou
+     * (stávající chování).
      */
     public function login(Request $request): JsonResponse
     {
@@ -95,6 +114,31 @@ class AuthController extends Controller
                     'message'          => 'Ověření captcha selhalo. Zkuste to prosím znovu.',
                     'captcha_required' => true,
                 ], 422);
+            }
+        }
+
+        // ── Blokace / neaktivovaný účet - MUSÍ se ověřit PŘED Auth::attempt() ──────────
+        // (viz refactor-note v hlavičce souboru - Auth::attempt by s NULL heslem mohlo
+        // spadnout do Hash::check() s neplatným argumentem místo hezké JSON odpovědi).
+        $targetUser = User::where('user_email', $request->input('email'))->first();
+
+        if ($targetUser) {
+            if ($targetUser->is_blocked) {
+                CoreSecurityEvent::record(
+                    'login_blocked_account',
+                    'warning',
+                    $request->ip(),
+                    CoreSecurityEvent::contextFromRequest($request, ['email' => $email])
+                );
+                $this->logAction($request, CoreLog::class, 'login_blocked', 'Auth', "Pokus o přihlášení na zablokovaný účet: {$email}", $targetUser->id, 'User');
+
+                return response()->json(['message' => 'Tento účet byl zablokován. Kontaktujte administrátora.'], 403);
+            }
+
+            if (is_null($targetUser->user_password_hash)) {
+                return response()->json([
+                    'message' => 'Účet ještě není aktivovaný. Zkontrolujte svůj e-mail, nebo požádejte administrátora o zaslání nového aktivačního odkazu.',
+                ], 403);
             }
         }
 
@@ -218,6 +262,14 @@ class AuthController extends Controller
             return response()->json(['message' => 'Účet nenalezen.'], 401);
         }
 
+        // Dodatečná pojistka: kdyby byl účet zablokován MEZI odesláním OTP kódu a jeho
+        // ověřením (admin zasáhl uprostřed pending-login session), tokeny se přesto
+        // nesmí vydat.
+        if ($user->is_blocked) {
+            $pending->delete();
+            return response()->json(['message' => 'Tento účet byl zablokován. Kontaktujte administrátora.'], 403);
+        }
+
         $pending->used_at = now();
         $pending->save();
         $pending->delete();
@@ -320,7 +372,9 @@ class AuthController extends Controller
 
     /**
      * @description Refreshes the access token using a valid refresh token.
-     * @note Beze změny oproti předchozí verzi.
+     * @note Dodatečná kontrola `is_blocked` - pokud byl účet zablokován MEZI vydáním
+     * refresh tokenu a jeho použitím (`update()` mezitím smazal Sanctum access tokeny,
+     * ale samotný refresh token flow jde jinou cestou), nesmí se vydat nový access token.
      */
     public function refresh(Request $request): JsonResponse
     {
@@ -350,6 +404,17 @@ class AuthController extends Controller
         }
 
         $user = $dbRefreshToken->user;
+
+        if ($user->is_blocked) {
+            $dbRefreshToken->delete();
+            CoreSecurityEvent::record(
+                'refresh_blocked_account',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
+            );
+            return response()->json(['message' => 'Tento účet byl zablokován. Kontaktujte administrátora.'], 403);
+        }
 
         $dbRefreshToken->delete();
         $user->tokens()->delete();

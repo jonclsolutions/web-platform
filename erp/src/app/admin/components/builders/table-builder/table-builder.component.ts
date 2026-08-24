@@ -50,6 +50,28 @@
  * po dokonceni preda importCompleted nahoru, at si stranka muze natvrdo refreshnout
  * data (nove radky se jinak do this.data samy nepromitnou).
  *
+ * @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK: vlastní tlačítko "Import"
+ * ODSTRANĚNO z interního toolbaru (viz .html stejné datum) - stěhuje se do stránkového
+ * "Akce" dropdownu (ActionMenuBuilderComponent), který na `importData()` deleguje přes
+ * ViewChild, stejně jako už dřív dělal `exportToCSV()`. `importData()` samotná zůstává
+ * beze změny (public, volaná zvenku). Nový `@Output() resendActivationOpened` - stejný
+ * vzor jako `resetPasswordFormOpened`, používá administrators.component.ts pro tlačítko
+ * "Aktivace" (viz refactor-note 2026-08-24v2 níže).
+ *
+ * @refactor-note (2026-08-24v2) BACKLOG "efektivnější tlačítko pro akci 0-1x na účet":
+ * `TableButtons` může nově nést volitelné `visibleWhen: (item) => boolean` (per-řádková
+ * podmínka, na rozdíl od `permission`, což je globální per-uživatel kontrola). Přidány:
+ * - `isButtonVisibleForItem(button, item)` - kombinuje permission + visibleWhen pro
+ *   KONKRÉTNÍ řádek, používá se u vykreslení samotného <button> v <td>.
+ * - `hasAnyRowForButton(button)` - zda alespoň jeden řádek na aktuální stránce (`data`)
+ *   tlačítko potřebuje; bez `visibleWhen` vždy `true` (beze změny oproti dřívějšku).
+ * - `isButtonColumnVisible(button)` - kombinace permission + hasAnyRowForButton, řídí
+ *   vykreslení CELÉHO sloupce (hlavička i colspanValue) - u tabulek, kde žádný řádek na
+ *   aktuální stránce podmínku nesplňuje, sloupec zmizí úplně, místo aby zůstal prázdný.
+ * `isButtonVisible(button)` (jen permission) zůstává BEZE ZMĚNY - používají ji ostatní
+ * metody výše jako stavební kámen, žádné volající místo mimo tento soubor se nemuselo
+ * upravovat.
+ *
  * @dependencies
  * - EntityCrudService: CRUD volani (delete radku/hromadne delete po jednom, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations (single i bulk).
@@ -140,6 +162,13 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Output() viewDetailsOpened = new EventEmitter<any>();
   @Output() generateFormOpened = new EventEmitter<any>();
   @Output() resetPasswordFormOpened = new EventEmitter<any>();
+  /**
+   * @description Tlačítko "Aktivace" v řádku (viditelné jen u řádků splňujících
+   * `visibleWhen`, viz administrators.config.ts) - stránka na něj napojuje
+   * POST core/users/{id}/resend-activation. Stejný vzor jako ostatní *Opened eventy -
+   * TableBuilderComponent jen přeposílá, žádnou byznys logiku neřeší.
+   */
+  @Output() resendActivationOpened = new EventEmitter<any>();
   @Output() openImagesModal = new EventEmitter<any>();
   @Output() openVariantsModal = new EventEmitter<any>();
   @Output() customerOrdersOpened = new EventEmitter<any>();
@@ -253,9 +282,45 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     }
   }
 
+  /**
+   * @description Permission-only kontrola (globální, per-přihlášený-uživatel) - beze
+   * změny oproti dřívějšku. Stavební kámen pro isButtonVisibleForItem()/
+   * isButtonColumnVisible() níže, ale sama zůstává použitelná nezávisle.
+   */
   isButtonVisible(button: TableButtons): boolean {
     if (!button.permission) return true;
     return button.permission.split('|').some(p => this.permissionService.hasPermission(p));
+  }
+
+  /**
+   * @description Vyhodnotí, zda se má tlačítko zobrazit na KONKRÉTNÍM řádku - kombinuje
+   * permission kontrolu (isButtonVisible) s volitelnou per-řádkovou podmínkou
+   * (`button.visibleWhen`). Bez `visibleWhen` je výsledek identický s isButtonVisible().
+   * Použito při vykreslení samotného <button> uvnitř <td> (viz .html).
+   */
+  isButtonVisibleForItem(button: TableButtons, item: any): boolean {
+    if (!this.isButtonVisible(button)) return false;
+    return !button.visibleWhen || button.visibleWhen(item);
+  }
+
+  /**
+   * @description Zda alespoň JEDEN řádek na aktuální stránce (`this.data`) tlačítko
+   * potřebuje - řídí, jestli se sloupec v hlavičce vůbec vykreslí. Bez `visibleWhen`
+   * (tlačítko nemá per-řádkovou podmínku) se chová jako dřív - sloupec se ukáže vždy,
+   * když projde permission kontrola, bez ohledu na obsah dat.
+   */
+  hasAnyRowForButton(button: TableButtons): boolean {
+    if (!button.visibleWhen) return true;
+    return (this.data || []).some(item => button.visibleWhen!(item));
+  }
+
+  /**
+   * @description Kombinovaná podmínka pro vykreslení CELÉHO sloupce (hlavička i
+   * colspanValue) - permission i "má to na téhle stránce dat vůbec smysl" zároveň.
+   * Používá se v šabloně u hlavičkových buněk místo samotného isButtonVisible().
+   */
+  isButtonColumnVisible(button: TableButtons): boolean {
+    return this.isButtonVisible(button) && this.hasAnyRowForButton(button);
   }
 
   handleAction(item: any, buttonAction: string): void {
@@ -274,6 +339,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
           case 'edit': this.editFormOpened.emit(item); break;
           case 'delete': this.onDeleteAction(item); break;
           case 'password_reset': this.resetPasswordFormOpened.emit(item); break;
+          case 'resend_activation': this.resendActivationOpened.emit(item); break;
           case 'custom_prod_var': this.openVariantsModal.emit(item); break;
           case 'custom_prod_img': this.openImagesModal.emit(item); break;
           case 'customer_orders': this.customerOrdersOpened.emit(item); break;
@@ -744,7 +810,9 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   /**
    * @description Otevre import popup. Na rozdil od exportu neni potreba nic
    * predpocitavat - popup si sablonu i validaci resi sam volanim core/import/*
-   * endpointu s resource = this.apiEndpoint. Viz refactor-note (2026-08-22).
+   * endpointu s resource = this.apiEndpoint. Voláno zvenku přes ViewChild
+   * (stránkový "Akce" dropdown, akce `triggerImport`) - viz refactor-note 2026-08-24
+   * v hlavičce souboru. Bez vlastního tlačítka v interním toolbaru.
    */
   importData(): void {
     this.showImportPopup = true;
@@ -767,6 +835,6 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
   get colspanValue(): number {
     const checkboxColumn = this.canBulkSelect ? 1 : 0;
-    return checkboxColumn + this.columnDefinitions.length + (this.buttons?.filter(b => b.isActive && this.isButtonVisible(b)).length || 0);
+    return checkboxColumn + this.columnDefinitions.length + (this.buttons?.filter(b => b.isActive && this.isButtonColumnVisible(b)).length || 0);
   }
 }

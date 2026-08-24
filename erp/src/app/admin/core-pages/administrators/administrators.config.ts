@@ -19,6 +19,17 @@
  *   v komponentě, ne staticky zde), umožňuje vynutit 2FA konkrétnímu účtu nezávisle na
  *   jeho vlastní volbě. `show_in_create: false` - nelze nastavit při vytváření účtu
  *   (backend to explicitně odmítá, dává smysl jen jako následná úprava).
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu":
+ * - Pole `user_password_hash` ÚPLNĚ ODSTRANĚNO z `FORM_FIELDS` - formulář na vytvoření
+ *   účtu už heslo nesbírá vůbec. Uživatel si ho nastaví sám přes aktivační e-mail (viz
+ *   info banner v administrators.component.html).
+ * - Přidáno `is_blocked` ("Blokovat účet") - `show_in_create: false` (nový účet nikdy
+ *   nevzniká rovnou zablokovaný), editovatelnost u chráněných rolí (admin/sysadmin)
+ *   řeší dynamicky komponenta stejným vzorem jako `enable_2fa` (viz
+ *   computeFieldsForTarget() - `isNeverBlockableRole()`).
+ * - `TABLE_BUTTONS` doplněno o "Aktivace" (resend_activation) - vždy viditelné (klient
+ *   i backend samostatně kontrolují, že dává smysl jen pro neaktivované účty).
+ * - `TABLE_COLUMNS`/`DETAILS_COLUMNS` doplněny o `is_blocked`/`activated_at`.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '../../../shared/constants/password-policy';
@@ -29,6 +40,15 @@ export const TABLE_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
   { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'core-administrators-update' },
   { display_name: '🔑', header_name: 'Heslo', isActive: true, type: 'neutral_button', action: 'password_reset', permission: 'core-administrators-update' },
+  {
+    display_name: '📧', header_name: 'Aktivace', isActive: true, type: 'neutral_button',
+    action: 'resend_activation', permission: 'core-administrators-update',
+    // NOVÉ (2026-08-24): tlačítko se použije 0-1x na účet, proto se zobrazí JEN u
+    // účtů, které se ještě nikdy neaktivovaly - viz visibleWhen v table-buttons.ts.
+    // U aktivovaných účtů celý sloupec zmizí (žádné prázdné místo v tabulce), jakmile
+    // na aktuální stránce není žádný neaktivovaný účet.
+    visibleWhen: (item: any) => !item.activated_at,
+  },
   { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-administrators-delete' },
 ];
 
@@ -53,6 +73,10 @@ export const RESET_PASSWORD_FORM_FIELDS: Core.InputDefinition[] = [
   },
 ];
 
+/**
+ * @refactor-note (2026-08-24) `user_password_hash` pole SMAZÁNO celé - účet vzniká bez
+ * hesla, viz hlavička souboru. Přidáno `is_blocked`.
+ */
 export const FORM_FIELDS: Core.InputDefinition[] = [
   {
     column_name: 'user_email',
@@ -77,18 +101,6 @@ export const FORM_FIELDS: Core.InputDefinition[] = [
     show_in_edit: true,
     show_in_create: true
   },
-  {
-    column_name: 'user_password_hash',
-    label: 'Heslo',
-    placeholder: 'Zadejte silné heslo',
-    type: 'confirm-password',
-    required: true,
-    pattern: PASSWORD_PATTERN,
-    errorMessage: PASSWORD_ERROR_MESSAGE,
-    editable: true,
-    show_in_edit: false,
-    show_in_create: true
-  },
   { column_name: 'role_id', label: 'Role', type: 'select', options: ROLE_OPTIONS, required: true, errorMessage: 'Vyberte roli uživatele.', editable: true, show_in_edit: true, show_in_create: true },
   {
     column_name: 'enable_2fa',
@@ -108,6 +120,15 @@ export const FORM_FIELDS: Core.InputDefinition[] = [
     show_in_edit: true,
     show_in_create: false
   },
+  {
+    column_name: 'is_blocked',
+    label: 'Blokovat účet',
+    type: 'checkbox',
+    required: false,
+    editable: true,
+    show_in_edit: true,
+    show_in_create: false
+  },
   { column_name: 'internal_note', label: 'Poznámka', type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
   { column_name: 'dpp_hours_spent', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true }
 ];
@@ -117,6 +138,7 @@ export const TABLE_COLUMNS: Core.ColumnDefinition[] = [
   { key: 'full_name', header: 'Jméno', type: 'text' },
   { key: 'user_email', header: 'E-mail (Login)', type: 'text' },
   { key: 'roles.0.role_name', header: 'Role', type: 'text' },
+  { key: 'is_blocked', header: 'Blokován', type: 'boolean' },
   { key: 'last_login_at', header: 'Poslední log', type: 'date', format: 'short' },
 ];
 
@@ -139,6 +161,8 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'full_name', displayName: 'Celé jméno', type: 'text' },
   { key: 'user_email', displayName: 'Přihlašovací E-mail', type: 'text' },
   { key: 'roles.0.role_name', displayName: 'Přiřazená role', type: 'text' },
+  { key: 'is_blocked', displayName: 'Účet zablokován', type: 'text' },
+  { key: 'activated_at', displayName: 'Aktivováno', type: 'date', format: 'medium' },
   { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření (vlastní volba)', type: 'text' },
   { key: 'two_fa_forced_by_admin', displayName: '2FA vynuceno sysadminem', type: 'text' },
   { key: 'internal_note', displayName: 'Interní poznámka', type: 'text' },

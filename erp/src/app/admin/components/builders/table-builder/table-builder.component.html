@@ -44,6 +44,19 @@
         souboru zůstávají BEZE ZMĚNY - jen se teď spouští zvenku, ne z vlastního tlačítka.
         "Aktualizovat" už nemá textový popisek, je to malé kulaté ikonové tlačítko
         (`.table-refresh-icon-btn`) - zabírá minimum místa, `title` atribut nese tooltip.
+    @refactor-note (2026-08-24v2) BACKLOG "efektivnější tlačítko pro akci 0-1x na účet":
+        hlavička i řádkové buňky akčních tlačítek teď rozlišují DVĚ různé kontroly:
+        - `isButtonColumnVisible(button)` (hlavička, `<th>`) - permission KOMBINOVANÁ s
+          "má tenhle sloupec vůbec smysl na aktuální stránce dat" (aspoň jeden řádek
+          splňuje `button.visibleWhen`, pokud ho tlačítko má definované).
+        - `isButtonVisibleForItem(button, item)` (řádek, uvnitř `<td>`) - stejná
+          kombinace, ale pro KONKRÉTNÍ řádek. Buňka `<td>` se renderuje VŽDY, když je
+          sloupec viditelný (zachovává zarovnání), ale samotné `<button>` uvnitř jen
+          pokud `visibleWhen` pro daný řádek vrátí `true` - jinak zůstane buňka prázdná.
+        Tlačítka BEZ `visibleWhen` (naprostá většina) se chovají identicky jako dřív -
+        `isButtonColumnVisible`/`isButtonVisibleForItem` se v tom případě redukují na
+        původní `isButtonVisible(button)`. Viz table-builder.component.ts a
+        table-buttons.ts (interface) stejné datum.
 -->
 
 @if (selectedIds.size > 0) {
@@ -117,7 +130,7 @@ aria-label="Vybrat vše na stránce">
 </th>
         }
 @for (button of buttons; track button) {
-@if (button.isActive && isButtonVisible(button)) {
+@if (button.isActive && isButtonColumnVisible(button)) {
 <th class="button-header">
               {{ button.header_name }}
 </th>
@@ -165,14 +178,16 @@ aria-label="Vybrat vše na stránce">
               }
             }
 @for (button of buttons; track button) {
-@if (button.isActive && isButtonVisible(button)) {
+@if (button.isActive && isButtonColumnVisible(button)) {
 <td class="action-button-cell">
+@if (isButtonVisibleForItem(button, item)) {
 <button
 [class]="button.type"
 [disabled]="button.type === 'delete_button' && item.id == authService.getUserId() && isAdminTable == true"
 (click)="handleAction(item, button.action)">
                     {{ button.display_name }}
 </button>
+                  }
 </td>
               }
             }

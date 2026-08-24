@@ -1,0 +1,50 @@
+// ═══════════════════════════════════════════════════════════════════════
+// 1) Import na začátek souboru, vedle ostatních use App\Http\Controllers\Api\...
+// ═══════════════════════════════════════════════════════════════════════
+use App\Http\Controllers\Api\AccountActivationController;
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// 2) PUBLIC ROUTY - vlož vedle "Public web forms" bloku (kde je
+//    raw_request_commissions/sales_orders/job_applications), PŘED
+//    "Protected Routes" skupinou:
+// ═══════════════════════════════════════════════════════════════════════
+
+// Account activation (public) - odkaz z AccountActivationMail po založení účtu adminem.
+Route::get('account-activation/{token}', [AccountActivationController::class, 'show'])
+    ->middleware('throttle:20,1');
+Route::post('account-activation/{token}', [AccountActivationController::class, 'activate'])
+    ->middleware('throttle:10,1');
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// 3) core/users skupina (uvnitř chráněné auth:sanctum sekce) - přidej
+//    NOVOU routu HNED PO Route::put('/{id}/change-password', ...) a PŘED
+//    Route::post('/{id}/restore', ...):
+// ═══════════════════════════════════════════════════════════════════════
+
+Route::prefix('users')->group(function () {
+    Route::delete('/force-delete-all', [UserController::class, 'forceDeleteAllTrashed'])
+        ->middleware('permission:core-administrators-delete');
+
+    Route::get('/',    [UserController::class, 'index'])
+        ->middleware('permission:core-administrators-view');
+    Route::post('/',   [UserController::class, 'store'])
+        ->middleware('permission:core-administrators-create');
+    Route::get('/{id}', [UserController::class, 'show'])
+        ->middleware('permission:core-administrators-view,id');
+    Route::put('/{id}', [UserController::class, 'update'])
+        ->middleware('permission:core-administrators-update,id');
+    Route::patch('/{id}', [UserController::class, 'update'])
+        ->middleware('permission:core-administrators-update,id');
+    Route::put('/{id}/change-password', [UserController::class, 'changePassword'])
+        ->middleware('permission:core-administrators-update,id');
+    // NOVÉ (2026-08-24): znovu odeslat aktivační odkaz - jen pro dosud neaktivované účty
+    // (kontrola uvnitř UserController::resendActivation()).
+    Route::post('/{id}/resend-activation', [UserController::class, 'resendActivation'])
+        ->middleware('permission:core-administrators-update');
+    Route::post('/{id}/restore', [UserController::class, 'restore'])
+        ->middleware('permission:core-administrators-delete');
+    Route::delete('/{id}', [UserController::class, 'destroy'])
+        ->middleware('permission:core-administrators-delete');
+});

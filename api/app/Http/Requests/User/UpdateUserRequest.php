@@ -13,7 +13,13 @@
  * @refactor-note (2026-08-2) `user_password_hash` sjednoceno na politiku hesla platnou
  * napříč aplikací (8-16 znaků, alespoň 1 písmeno, 1 číslice, 1 speciální znak) - viz
  * odpovídající frontend `password-policy.ts`. Zůstává `nullable` (update hesla je
- * volitelný), ale pokud se pošle, musí splnit stejná pravidla jako všude jinde.
+ * volitelný - typicky přes samostatný `changePassword()` endpoint, ne přes update()),
+ * ale pokud se pošle, musí splnit stejná pravidla jako všude jinde.
+ *
+ * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": přidáno
+ * `is_blocked` (boolean) - skutečné bezpečnostní ověření (admin/sysadmin nikdy nelze
+ * zablokovat, nelze zablokovat sám sebe) dělá `UserController::update()`, tady je jen
+ * typová validace vstupu.
  */
 
 namespace App\Http\Requests\User;
@@ -51,16 +57,17 @@ class UpdateUserRequest extends FormRequest
                 'sometimes', 'required', 'email', 'max:255',
                 Rule::unique('users', 'user_email')->ignore($userId),
             ],
-            'full_name'           => ['sometimes', 'required', 'string', 'max:255'],
-            'user_password_hash'  => [
+            'full_name'              => ['sometimes', 'required', 'string', 'max:255'],
+            'user_password_hash'     => [
                 'nullable', 'string', 'max:16',
                 Password::min(8)->letters()->numbers()->symbols(),
             ],
-            'role_id'             => ['sometimes', 'required', 'integer', Rule::exists(CoreRole::class, 'id')],
-            'internal_note'       => ['nullable', 'string'],
-            'dpp_hours_spent'     => ['nullable', 'integer', 'min:0'],
-            'enable_2fa'          => ['nullable', 'boolean'],
+            'role_id'                => ['sometimes', 'required', 'integer', Rule::exists(CoreRole::class, 'id')],
+            'internal_note'          => ['nullable', 'string'],
+            'dpp_hours_spent'        => ['nullable', 'integer', 'min:0'],
+            'enable_2fa'             => ['nullable', 'boolean'],
             'two_fa_forced_by_admin' => ['sometimes', 'boolean'],
+            'is_blocked'             => ['sometimes', 'boolean'],
         ];
     }
 
@@ -72,13 +79,13 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_email.required'        => 'Přihlašovací e-mail je povinný.',
-            'user_email.email'           => 'Zadejte platnou e-mailovou adresu pro přihlášení.',
-            'user_email.unique'          => 'Tento přihlašovací e-mail je již obsazen.',
-            'full_name.required'         => 'Jméno je povinné.',
-            'user_password_hash.max'     => 'Heslo může mít maximálně 16 znaků.',
-            'role_id.required'           => 'Vyberte roli uživatele.',
-            'role_id.exists'             => 'Vybraná role neexistuje.',
+            'user_email.required'    => 'Přihlašovací e-mail je povinný.',
+            'user_email.email'       => 'Zadejte platnou e-mailovou adresu pro přihlášení.',
+            'user_email.unique'      => 'Tento přihlašovací e-mail je již obsazen.',
+            'full_name.required'     => 'Jméno je povinné.',
+            'user_password_hash.max' => 'Heslo může mít maximálně 16 znaků.',
+            'role_id.required'       => 'Vyberte roli uživatele.',
+            'role_id.exists'         => 'Vybraná role neexistuje.',
         ];
     }
 }
