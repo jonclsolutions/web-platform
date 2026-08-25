@@ -45,6 +45,7 @@ triggerLabel="Akce"
 [filterColumns]="filterColumns"
 [initialFilters]="filters"
 (filtersApplied)="applyFilters($event)"
+(closed)="toggleFilters()"
 (filtersCleared)="clearFilters()">
 </app-filter-form-builder>
 </div>

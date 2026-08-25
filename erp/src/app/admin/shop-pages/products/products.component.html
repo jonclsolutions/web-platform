@@ -30,6 +30,7 @@ triggerLabel="Akce"
           <app-filter-form-builder
             [filterColumns]="filterColumns"
             [initialFilters]="filters"
+            (closed)="toggleFilters()"
             [filterFormTitle]="'Filtry produktů'"
             (filtersApplied)="applyFilters($event)"
             (filtersCleared)="clearFilters()">

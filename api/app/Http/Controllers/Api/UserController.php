@@ -83,6 +83,23 @@ class UserController extends Controller
     /**
      * Retrieves a paginated list of users with filtering and role-based sorting.
      */
+/**
+     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální `search`
+     * parametr (OR napříč `full_name`/`user_email`) - stejné dva textové sloupce, které
+     * tahle metoda už dřív filtrovala jednotlivě. `search` je zabalený do vlastního
+     * `where(function ($q) { ... })` bloku - viz CoreExternalLinkController pro
+     * podrobné vysvětlení, proč holý `orWhere()` na hlavní `$query` builder je
+     * nebezpečný (rozbil by AND spojení s předchozími podmínkami, konkrétně tady by to
+     * ovlivnilo `onlyTrashed()`/`withoutTrashed()` scoping z Eloquent SoftDeletes -
+     * bez obalení by `search` mohl vrátit i smazané/nesmazané záznamy mimo aktuálně
+     * zvolený pohled).
+     *
+     * @note Search NEPOKRÝVÁ `role_name` (přiřazenou roli) - to by vyžadovalo vždy
+     * aktivní JOIN na `user_roles`/`roles`, zatímco dnes se joinuje jen podmíněně (při
+     * řazení podle role_name, viz blok níže). Pokud bude v budoucnu potřeba hledat i
+     * podle role, je to samostatné rozšíření (trvalý LEFT JOIN), ne triviální přidání
+     * do stávajícího search bloku.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
@@ -98,6 +115,14 @@ class UserController extends Controller
 
         if ($request->filled('full_name')) $query->where('full_name', 'like', "%{$request->full_name}%");
         if ($request->filled('user_email')) $query->where('user_email', 'like', "%{$request->user_email}%");
+
+        // Globální fulltextový search napříč full_name/user_email - viz bugfix-note výše.
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                  ->orWhere('user_email', 'like', "%{$search}%");
+            });
+        }
 
         if ($sortBy === 'role_name') {
             $query->select('users.*')
@@ -127,7 +152,6 @@ class UserController extends Controller
             'last_page' => $users->lastPage(),
         ]);
     }
-
     /**
      * Creates a new user WITHOUT a password and sends an activation e-mail so the user
      * can set their own password (no one, not even the admin, ever knows it).

@@ -36,6 +36,7 @@ triggerLabel="Akce"
           <app-filter-form-builder
             [filterColumns]="filterColumns"
             [initialFilters]="filters"
+            (closed)="toggleFilters()"
             [filterFormTitle]="'Filtry objednávek'"
             (filtersApplied)="applyFilters($event)"
             (filtersCleared)="clearFilters()">

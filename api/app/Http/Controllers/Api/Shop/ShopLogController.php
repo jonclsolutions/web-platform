@@ -33,6 +33,14 @@ class ShopLogController extends Controller
      * @param Request $request Incoming request containing filters and pagination.
      * @return JsonResponse
      */
+/**
+     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": stejná oprava jako
+     * `CoreLogController::index()` - `search` param TADY UŽ EXISTOVAL, ale hledal
+     * VÝHRADNĚ v `description`, přejmenováno na skutečně GLOBÁLNÍ search napříč VŠEMI
+     * textovými sloupci, které tahle metoda už dřív filtrovala jednotlivě
+     * (`event_type`, `module`, `user_plain`, `origin`, `description`). `id` záměrně
+     * VYNECHÁN ze search - numerický přesný identifikátor, ne fulltextové pole.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
@@ -61,8 +69,17 @@ class ShopLogController extends Controller
             $query->where('origin', 'like', '%' . $request->input('origin') . '%');
         }
 
-        if ($s = $request->input('search')) {
-            $query->where('description', 'like', "%$s%");
+        // Globální fulltextový search napříč VŠEMI relevantními textovými sloupci -
+        // viz bugfix-note výše. Nezávislý na jednotlivých sloupcových filtrech nad ním
+        // (AND, ne náhrada).
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('event_type', 'like', "%{$search}%")
+                  ->orWhere('module', 'like', "%{$search}%")
+                  ->orWhere('user_plain', 'like', "%{$search}%")
+                  ->orWhere('origin', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
         }
 
         $sortBy = $request->input('sort_by', 'created_at');

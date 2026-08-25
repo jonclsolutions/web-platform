@@ -29,6 +29,7 @@ triggerLabel="Akce"
 <div class="filter-side-panel" [class.active]="isFilterVisible">
 <app-filter-form-builder
 [filterColumns]="filterColumns"
+(closed)="toggleFilters()"
 [initialFilters]="filters"
 (filtersApplied)="applyFilters($event)"
 (filtersCleared)="clearFilters()">

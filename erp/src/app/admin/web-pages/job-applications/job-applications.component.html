@@ -30,6 +30,7 @@ triggerLabel="Akce"
 <app-filter-form-builder
 [filterColumns]="filterColumns"
 [initialFilters]="filters"
+(closed)="toggleFilters()"
 (filtersApplied)="applyFilters($event)"
 (filtersCleared)="clearFilters()">
 </app-filter-form-builder>

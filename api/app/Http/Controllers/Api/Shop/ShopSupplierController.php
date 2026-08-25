@@ -34,6 +34,13 @@ class ShopSupplierController extends Controller
     /**
      * Retrieves a paginated or full collection of suppliers based on filter criteria.
      */
+/**
+     * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": `search` rozšířen o
+     * `phone`, `country`, `payment_terms` - tyhle 3 sloupce už byly dostupné jako
+     * jednotlivé filtry v `$likeFields` níže, ale v globálním `search` chyběly. Teď
+     * `search` pokrývá STEJNOU množinu textových sloupců jako jednotlivé filtry
+     * dohromady, konzistentně s ostatními kontrolery v projektu.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
@@ -47,7 +54,10 @@ class ShopSupplierController extends Controller
                 ->orWhere('ico', 'like', "%$s%")
                 ->orWhere('email', 'like', "%$s%")
                 ->orWhere('contact_person', 'like', "%$s%")
-                ->orWhere('city', 'like', "%$s%"));
+                ->orWhere('city', 'like', "%$s%")
+                ->orWhere('phone', 'like', "%$s%")
+                ->orWhere('country', 'like', "%$s%")
+                ->orWhere('payment_terms', 'like', "%$s%"));
         }
 
         foreach (['id', 'is_active'] as $f) {
@@ -86,7 +96,6 @@ class ShopSupplierController extends Controller
             'last_page'    => $data->lastPage(),
         ]);
     }
-
     /**
      * Stores a new supplier entity.
      */

@@ -4,10 +4,43 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální
+        fulltextový input NAD sloupcovými filtry - vždy viditelný, nezávislý na
+        `filterColumns` (na rozdíl od bloku pod ním, který se generuje z konfigurace
+        dané stránky). Váže se na `filterForm[globalSearchKey]` (viz .ts,
+        `globalSearchKey = 'search'`), Enter aplikuje filtry stejně jako u ostatních
+        textových polí níže.
+    @refactor-note (2026-08-25v2) Přidán `.filter-form-header` řádek (titulek + křížek
+        vpravo nahoře) - `onClose()` emituje `closed`, rodičovská stránka na to naváže
+        stejně, jako už dnes váže "Akce" dropdown na `toggleFilters()` (obě cesty
+        zavírání fungují souběžně, žádná nenahrazuje druhou).
 -->
 
 <div class="filter-form-container">
-  <h3 class="filter-form-title">{{ filterFormTitle }}</h3>
+  <div class="filter-form-header">
+    <h3 class="filter-form-title">{{ filterFormTitle }}</h3>
+    <button type="button" class="filter-form-close-btn" (click)="onClose()" aria-label="Zavřít filtr">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="filter-global-search">
+    <label for="filterGlobalSearch" class="filter-label">Hledat ve všech sloupcích</label>
+    <input
+      type="search"
+      id="filterGlobalSearch"
+      [(ngModel)]="filterForm[globalSearchKey]"
+      (keyup.enter)="applyFilters()"
+      class="filter-input"
+      placeholder="Zadejte hledaný výraz...">
+  </div>
+
+  <hr>
+
   <div class="filter-grid">
     @for (column of filterColumns; track column) {
       @if (column.type !== 'hidden') {

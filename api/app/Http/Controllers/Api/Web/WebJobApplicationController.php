@@ -62,6 +62,14 @@ class WebJobApplicationController extends Controller
     /**
      * Retrieves a paginated list of job applications with optional search and filtering.
      */
+/**
+     * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": `search` rozšířen o
+     * `state` - tenhle sloupec byl už dřív dostupný jako individuální filtr (a to
+     * přes LIKE, ne přesnou shodu - na rozdíl třeba od `WebSupportTicket.status`,
+     * který je enum s exaktní shodou a proto do fulltextového search záměrně
+     * NEPATŘÍ). `state` je tady fuzzy-filtrovatelné pole stejně jako ostatní, takže
+     * patří i do globálního search pro konzistenci.
+     */
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 15);
@@ -74,7 +82,8 @@ class WebJobApplicationController extends Controller
             $query->where(fn($q) => $q->where('first_name', 'like', "%$s%")
                 ->orWhere('last_name', 'like', "%$s%")
                 ->orWhere('email', 'like', "%$s%")
-                ->orWhere('position_name', 'like', "%$s%"));
+                ->orWhere('position_name', 'like', "%$s%")
+                ->orWhere('state', 'like', "%$s%"));
         }
 
         // Přesná shoda - ID je číselný identifikátor, LIKE by tu nedávalo smysl.

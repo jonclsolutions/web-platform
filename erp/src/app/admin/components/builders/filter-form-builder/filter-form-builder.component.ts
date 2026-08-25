@@ -8,11 +8,38 @@
  * @dependencies
  * - FormsModule: Angular template-driven form support.
  * - FilterColumns: Interface defining the structure and metadata of filterable columns.
+ *
+ * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální fulltextový
+ * input NEZÁVISLÝ na `filterColumns` - vždy zobrazený nahoře formuláře (na rozdíl od
+ * jednotlivých sloupcových filtrů, které se řídí konfigurací dané stránky), odesílaný
+ * pod rezervovaným klíčem `search` (`GLOBAL_SEARCH_KEY`). Backend (jednotlivé
+ * kontrolery) si sám rozhodne, přes které textové sloupce `search` OR-matchuje - viz
+ * `WebSalesLeadController::index()` jako existující vzor (`search` param tam už
+ * fungoval, jen ne z UI). Klíč `search` je záměrně VYŇATÝ z `filterColumns` iterace ve
+ * `setFilterFormValues()`/`applyFilters()`/`clearFilters()` - stará se o něj zvlášť
+ * pár řádků navíc, ať zůstává nezávislý na tom, jaké sloupcové filtry daná stránka má
+ * nebo nemá nakonfigurované.
+ *
+ * @refactor-note (2026-08-25v2) Přidán `@Output() closed` - křížek přímo v rohu
+ * filtru pro jeho rychlé zavření, NEZÁVISLE na stávajícím přepínání přes "Akce"
+ * dropdown v mateřské komponentě (ten zůstává, obě cesty fungují souběžně). Komponenta
+ * sama NEZNÁ `isFilterVisible` stav rodiče (ten drží `BaseDataComponent`/stránka), jen
+ * emituje `closed` - rodičovská stránka na to naváže stejně, jako už dnes váže
+ * `toggleFilters()` na "Akce" dropdown (typicky `(closed)="toggleFilters()"`, protože
+ * filtr je viditelný jen když `isFilterVisible` je `true`, takže druhé zavolání
+ * `toggleFilters()` ho spolehlivě přepne zpět na `false`).
  */
 
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FilterColumns } from '../../../../shared/interfaces/filter-columns';
+
+/**
+ * @description Klíč, pod kterým se globální fulltextový filtr posílá v emitovaném
+ * filtrů objektu (`{ search: '...', sort_by: ..., sort_direction: ... }`). Sdílený
+ * konstantou, ať se stejný literál neopisuje na třech místech v týhle třídě zvlášť.
+ */
+const GLOBAL_SEARCH_KEY = 'search';
 
 /**
  * @description Automatically generates form controls for filtering and sorting data lists.
@@ -39,10 +66,16 @@ export class FilterFormBuilderComponent implements OnChanges {
 
   @Output() filtersApplied = new EventEmitter<any>();
   @Output() filtersCleared = new EventEmitter<void>();
+  /** Emitováno kliknutím na křížek v rohu filtru - viz refactor-note (2026-08-25v2). */
+  @Output() closed = new EventEmitter<void>();
 
   public filterForm: any = {};
   public sortBy: string = '';
   public sortDirection: 'asc' | 'desc' = 'asc';
+
+  /** Zpřístupněno šabloně pro `[(ngModel)]="filterForm[globalSearchKey]"` bez nutnosti
+   *  literál `'search'` opisovat i v .html souboru. */
+  public readonly globalSearchKey = GLOBAL_SEARCH_KEY;
 
   /**
    * @description Synchronizes input properties with the internal form state when external data changes.
@@ -74,7 +107,14 @@ export class FilterFormBuilderComponent implements OnChanges {
         this.filterForm[column.key] = '';
       }
     });
-    
+
+    // Globální search - stejná logika jako u sloupcových filtrů výše (nepřepisovat
+    // rozepsanou hodnotu uživatele), ale mimo `filterColumns` smyčku, protože na
+    // konfiguraci stránky vůbec nezávisí.
+    if (this.filterForm[GLOBAL_SEARCH_KEY] === undefined || this.filterForm[GLOBAL_SEARCH_KEY] === '') {
+      this.filterForm[GLOBAL_SEARCH_KEY] = this.initialFilters?.[GLOBAL_SEARCH_KEY] ?? '';
+    }
+
     this.sortBy = this.sortBy || this.initialSortBy || '';
     this.sortDirection = this.sortDirection || this.initialSortDirection || 'asc';
   }
@@ -91,6 +131,12 @@ export class FilterFormBuilderComponent implements OnChanges {
       }
     });
 
+    // Prázdný globální search se stejně jako prázdné sloupcové filtry vůbec neposílá -
+    // backend tak nemusí řešit rozdíl mezi "nevyplněno" a "vyplněno prázdným řetězcem".
+    if (rawFilters[GLOBAL_SEARCH_KEY] === '') {
+      delete rawFilters[GLOBAL_SEARCH_KEY];
+    }
+
     const filters = {
       ...rawFilters,
       sort_by: this.sortBy,
@@ -101,14 +147,24 @@ export class FilterFormBuilderComponent implements OnChanges {
   }
 
   /**
+   * @description Emituje `closed` - kliknutí na křížek v rohu filtru. Komponenta sama
+   * neřídí svoji viditelnost (tu drží rodičovská stránka přes `isFilterVisible`), jen
+   * o zavření požádá.
+   */
+  onClose(): void {
+    this.closed.emit();
+  }
+
+  /**
    * @description Resets the internal form state to initial/empty values and notifies the parent.
    */
   clearFilters(): void {
     this.filterForm = {};
-    
+
     this.filterColumns.forEach(column => {
       this.filterForm[column.key] = '';
     });
+    this.filterForm[GLOBAL_SEARCH_KEY] = '';
     this.sortBy = '';
     this.sortDirection = 'asc';
     this.filtersCleared.emit();

@@ -52,6 +52,29 @@ class CoreExternalLinkController extends Controller
      *              (aktivních, nebo košových podle ?only_trashed=) s podporou filtrování,
      *              řazení a volitelného stránkování.
      */
+/**
+     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální `search`
+     * parametr (OR napříč `name`/`url`) - viz FilterFormBuilderComponent na frontendu,
+     * který ho teď posílá vždy vedle ostatních sloupcových filtrů. Sloupce vybrané pro
+     * `search` jsou VŠECHNY textové sloupce, které tahle metoda už dřív filtrovala
+     * jednotlivě (`name`, `url`) - žádný nový sloupec navíc, jen stejné dva pod jedním
+     * univerzálním polem.
+     *
+     * DŮLEŽITÉ: `search` je zabalený do VLASTNÍHO `where(function ($q) { ... })` bloku a
+     * uvnitř používá `orWhere()` - kdyby se `orWhere('url', ...)` napsalo přímo na
+     * `$query` bez obalení, spojilo by se to s PŘEDCHOZÍMI podmínkami (`user_id`
+     * scoping!) operátorem OR místo AND, a request by mohl vrátit i cizí odkazy jiných
+     * uživatelů, jen proto že jejich `url` obsahuje hledaný řetězec - klasická
+     * "OR bez závorek" díra. Obalení do jednoho `where(function...)` bloku zaručuje, že
+     * se CELÁ search podmínka chová jako jedna uzavřená jednotka v rámci AND řetězce
+     * (`user_id = ? AND (name LIKE ? OR url LIKE ?)`), a `search` tak nijak neobchází
+     * vlastnický scope ani žádný jiný existující filtr.
+     *
+     * `search` a jednotlivé sloupcové filtry (`name`, `url`) jsou navzájem NEZÁVISLÉ -
+     * pokud by frontend někdy poslal oboje najednou, výsledek se dál zužuje (AND), ne
+     * nahrazuje. To odpovídá tomu, jak `FilterFormBuilderComponent` filtry sestavuje -
+     * `search` je jen DALŠÍ klíč v tom samém objektu, ne náhrada za existující pole.
+     */
     public function index(Request $request): JsonResponse
     {
         $query = $request->boolean('only_trashed')
@@ -68,6 +91,15 @@ class CoreExternalLinkController extends Controller
         }
         if ($request->has('is_active') && !$request->boolean('only_trashed')) {
             $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        // Globální fulltextový search napříč VŠEMI relevantními textovými sloupci -
+        // viz bugfix-note výše. Obalené where(function...) je NUTNÉ kvůli user_id scopu.
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('url', 'like', "%{$search}%");
+            });
         }
 
         $sortBy  = $request->input('sort_by', 'position');

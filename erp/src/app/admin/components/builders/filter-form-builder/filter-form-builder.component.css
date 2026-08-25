@@ -137,3 +137,54 @@ hr {
 .filter-button.apply:hover {
   background-color: #000000;
 }
+
+.filter-global-search {
+  margin-bottom: 14px;
+}
+
+.filter-global-search .filter-input {
+  width: 100%;
+}
+/*
+  DOPLNIT do existujícího filter-form-builder.component.css - žádná stávající třída
+  se neruší ani nemění, jen nové třídy pro header řádek s křížkem a globální search.
+*/
+
+.filter-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* .filter-form-title zůstává beze změny (existující styl) - jen teď žije uvnitř
+   .filter-form-header místo přímo v .filter-form-container. */
+
+.filter-form-close-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  color: #71717a;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.filter-form-close-btn:hover {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+.filter-global-search {
+  margin-bottom: 14px;
+}
+
+.filter-global-search .filter-input {
+  width: 100%;
+}

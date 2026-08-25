@@ -86,6 +86,13 @@ class WebSalesLeadController extends Controller
     /**
      * Retrieves a list of sales leads based on filtering and pagination criteria.
      */
+/**
+     * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": `search` rozšířen o
+     * `contact_phone`, `location`, `salesman_name` - tyhle sloupce už byly dostupné
+     * jako individuální LIKE filtry níže, ale v globálním `search` chyběly. Teď
+     * `search` pokrývá STEJNOU množinu textových sloupců jako jednotlivé filtry,
+     * konzistentně s ostatními kontrolery v projektu.
+     */
     public function index(Request $request): JsonResponse
     {
         $perPage = $request->input('per_page', 15);
@@ -99,7 +106,10 @@ class WebSalesLeadController extends Controller
             $query->where(fn($q) => $q->where('subject_name', 'like', "%$s%")
                 ->orWhere('contact_person', 'like', "%$s%")
                 ->orWhere('contact_email', 'like', "%$s%")
-                ->orWhere('description', 'like', "%$s%"));
+                ->orWhere('description', 'like', "%$s%")
+                ->orWhere('contact_phone', 'like', "%$s%")
+                ->orWhere('location', 'like', "%$s%")
+                ->orWhere('salesman_name', 'like', "%$s%"));
         }
 
         foreach (['id', 'status', 'priority', 'source_channel'] as $f) {
