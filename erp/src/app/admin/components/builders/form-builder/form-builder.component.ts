@@ -50,6 +50,23 @@
  * se při současném přidání nového souboru nikdy nedostalo na server - teď se neprázdná
  * pole serializují jako `key[]`, stejně jako pole souborů.
  *
+ * @bugfix-note (2026-08-24) KRITICKÝ BUG - VÍCENÁSOBNÉ ODESLÁNÍ PŘI RYCHLÉM OPAKOVANÉM
+ * KLIKNUTÍ NA "POTVRDIT": `this.isSubmitting = false;` se dřív volalo ihned po
+ * `formSubmitted.emit(payload)`, ve STEJNÉM synchronním běhu `onSubmit()`. Jenže emit
+ * je jen vyhození události, NE čekání na dokončení skutečného HTTP requestu (ten běží
+ * až v rodičovské komponentě přes `postData()/updateData().subscribe()`). Guard
+ * `if (this.isSubmitting) return;` na začátku metody byl tak fakticky bezvýznamný -
+ * `isSubmitting` bylo `true` a hned zase `false` dřív, než uživatel stihl kliknout
+ * podruhé, takže každý další klik prošel guardem znovu a emitoval další
+ * `formSubmitted` -> další HTTP POST -> duplicitní záznamy (3 kliky = 3 záznamy).
+ * ŘEŠENÍ: `isSubmitting` se nastaví na `true` a UŽ SE NIKDY neresetuje zpátky odsud -
+ * tlačítko zůstane `disabled` (viz `.html` binding), dokud rodičovská stránka po
+ * dokončení requestu (úspěch i chyba - konzistentně napříč projektem přes
+ * `finalize(() => showCreateForm = false)`) modal nezavře, čímž se tahle komponenta
+ * kompletně zničí (`@if` v rodičovské šabloně). Uživatel může formulář kdykoliv zavřít
+ * tlačítkem "Zrušit" (`onCancel()` na `isSubmitting` nezávisí), takže ani výpadek sítě
+ * nevede do slepé uličky.
+ *
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.
  * - AlertDialogService: Provides user feedback for submission outcomes.
@@ -248,6 +265,9 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
    * `File[]` from a `'files'` field) are detected. Single files se posílají pod svým
    * klíčem beze změny (`key`), pole souborů pod `key[]` (Laravel/PHP konvence pro
    * vícenásobný upload, sedí s `attachments[]` očekávaným backendem).
+   * @bugfix-note (2026-08-24) `isSubmitting` se po úspěšném emitu záměrně JIŽ
+   * NERESETUJE zpátky na `false` - viz refactor-note v hlavičce souboru (fix
+   * vícenásobného odeslání při rychlém opakovaném kliknutí).
    */
   onSubmit(form: NgForm, event?: Event): void {
     event?.preventDefault();
@@ -286,7 +306,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
              * SOUČASNÉM přidání nového souboru na server nikdy nedostalo - staged
              * smazání staré přílohy by se ztratilo, kdykoliv admin zároveň nahrával i
              * něco nového. Oprava: prázdné pole se pořád přeskočí (nic k poslání), ale
-             * neprázdné se serializuje jako `key[]` - stejná PHP/Laravel konvence jako
+             * neprázdné se serializuje jako `key[]`, stejná PHP/Laravel konvence jako
              * u pole souborů o pár řádků výš.
              */
             if (value.length === 0) return;
@@ -323,8 +343,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
       const actionText = this.formDataToEdit ? 'updated' : 'created';
       this.alertDialogService.open('Information', `Record successfully ${actionText}.`, 'success');
-      
-      this.isSubmitting = false; 
+
+      // `isSubmitting` ZÁMĚRNĚ zůstává `true` - viz bugfix-note (2026-08-24) v hlavičce
+      // souboru. Tlačítko "Potvrdit" tak zůstane disabled, dokud rodičovská stránka po
+      // dokončení HTTP requestu modal nezavře (tahle komponenta se tím zničí úplně).
     } else {
       this.alertDialogService.open('Invalid Form', 'Please check all required fields.', 'warning');
     }
