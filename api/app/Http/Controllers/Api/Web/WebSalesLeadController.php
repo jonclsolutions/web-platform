@@ -33,6 +33,14 @@
  * @note `public_token`/`public_token_used_at` (viz generateLink()/showByToken()) NEJSOU
  * a NESMÍ být součástí případného budoucího importu - jde o systémem generovaná pole,
  * ne uživatelský vstup.
+ *
+ * @bugfix-note (2026-08-24) BACKLOG "security_events musí pokrýt VŠECHNY typy útoku":
+ * `showByToken()` je VEŘEJNÝ, nepřihlášený endpoint vracející osobní údaje kontaktu
+ * (jméno, e-mail, telefon) podle uhodnutelnosti tokenu - neplatný nebo už jednou použitý
+ * token se dřív nezapisoval NIKAM (ani do `core_logs`, ani do bezpečnostního
+ * monitoringu). Přidán zápis `sales_lead_token_invalid` (warning) pro oba případy (token
+ * neexistuje / token existuje, ale byl už použit) - opakované pokusy o různé neplatné
+ * tokeny ze stejné IP jsou signál enumerace veřejných lead odkazů.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -41,6 +49,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Web\WebSalesLead;
 use App\Models\Web\WebLog;
 use App\Models\Core\CoreImportBatch;
+use App\Models\Core\CoreSecurityEvent;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -497,16 +506,34 @@ class WebSalesLeadController extends Controller
      *              formuláře. Vrací jen úzkou, bezpečnou podmnožinu polí.
      * @note Musí být zaregistrována v routes/api.php MIMO auth middleware skupinu.
      * @note Vrací 410 Gone, pokud byl odkaz už jednou použit.
+     * @bugfix-note (2026-08-24) Neplatný i už použitý token teď zapisuje
+     * `sales_lead_token_invalid` do core_security_events - viz bugfix-note v hlavičce
+     * třídy. Endpoint vrací osobní údaje kontaktu, takže enumerace tokenů je citlivější
+     * než u čistě informačních veřejných endpointů.
      */
-    public function showByToken(string $token): JsonResponse
+    public function showByToken(Request $request, string $token): JsonResponse
     {
         $lead = WebSalesLead::where('public_token', $token)->first();
 
         if (!$lead) {
+            CoreSecurityEvent::record(
+                'sales_lead_token_invalid',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['reason' => 'not_found'])
+            );
+
             return response()->json(['message' => 'Odkaz je neplatný nebo již expiroval.'], 404);
         }
 
         if ($lead->public_token_used_at) {
+            CoreSecurityEvent::record(
+                'sales_lead_token_invalid',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['reason' => 'already_used', 'lead_id' => $lead->id])
+            );
+
             return response()->json(['message' => 'Tento formulář již byl jednou odeslán a odkaz není možné použít znovu.'], 410);
         }
 

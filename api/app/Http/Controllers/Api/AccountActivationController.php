@@ -13,6 +13,21 @@
  * @dependencies
  * - AccountActivationToken: model tokenu, hashovaný v DB, viz jeho hlavička.
  * - LogsActivity: sdílený audit trait, stejné volání jako zbytek admin kontrolerů.
+ * - CoreSecurityEvent: bezpečnostní monitoring, viz refactor-note níže.
+ *
+ * @bugfix-note (2026-08-24) BACKLOG "security_events musí pokrýt VŠECHNY typy útoku":
+ * neplatný/expirovaný aktivační token a pokus aktivovat zablokovaný účet se dřív
+ * nezapisovaly VŮBEC - ani do `core_logs`, ani do `core_security_events`. Token je
+ * 64znakový náhodný string, takže hádání jednoho konkrétního tokenu je prakticky
+ * nemožné, ALE endpoint dává útočníkovi možnost NASTAVIT HESLO cizímu účtu, pokud by
+ * token uhodl nebo unikl (log leak, sdílený odkaz omylem) - proto i tady platí defense
+ * in depth. Přidány dva zápisy:
+ * - `account_activation_token_invalid` (warning) v `findValidToken()` - token
+ *   neexistuje nebo vypršel. Sdíleno oběma veřejnými metodami (`show()`/`activate()`).
+ * - `account_activation_blocked_account` (warning) v `activate()` - token je platný,
+ *   ale účet byl mezitím zablokován. Signalizuje, že někdo drží odkaz na účet, který
+ *   admin mezitím vědomě zablokoval (např. zaměstnanec odešel dřív, než si stihl
+ *   nastavit heslo).
  */
 
 namespace App\Http\Controllers\Api;
@@ -20,6 +35,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AccountActivationToken;
 use App\Models\Core\CoreLog;
+use App\Models\Core\CoreSecurityEvent;
 use App\Models\User;
 use App\Traits\LogsActivity;
 use Illuminate\Http\{JsonResponse, Request};
@@ -35,9 +51,9 @@ class AccountActivationController extends Controller
      * podle výsledku zobrazí buď formulář na heslo, nebo chybovou hlášku. Token se tu
      * nijak neinvaliduje, jen se čte.
      */
-    public function show(string $token): JsonResponse
+    public function show(Request $request, string $token): JsonResponse
     {
-        $record = $this->findValidToken($token);
+        $record = $this->findValidToken($request, $token);
         if ($record instanceof JsonResponse) {
             return $record;
         }
@@ -61,7 +77,7 @@ class AccountActivationController extends Controller
      */
     public function activate(Request $request, string $token): JsonResponse
     {
-        $record = $this->findValidToken($token);
+        $record = $this->findValidToken($request, $token);
         if ($record instanceof JsonResponse) {
             return $record;
         }
@@ -73,6 +89,13 @@ class AccountActivationController extends Controller
         }
 
         if ($user->is_blocked) {
+            CoreSecurityEvent::record(
+                'account_activation_blocked_account',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
+            );
+
             return response()->json(['message' => 'Účet byl zablokován. Kontaktujte administrátora.'], 403);
         }
 
@@ -99,13 +122,23 @@ class AccountActivationController extends Controller
     /**
      * @description Sdílené ověření tokenu pro show()/activate() - musí existovat a
      * nesmí být expirovaný. Vrací buď platný model, nebo hotovou chybovou JsonResponse
-     * (union return typ - volající kontroluje `instanceof JsonResponse`).
+     * (union return typ - volající kontroluje `instanceof JsonResponse`). Neplatný/
+     * expirovaný token zapisuje bezpečnostní event - viz bugfix-note v hlavičce třídy.
      */
-    private function findValidToken(string $token): AccountActivationToken|JsonResponse
+    private function findValidToken(Request $request, string $token): AccountActivationToken|JsonResponse
     {
         $record = AccountActivationToken::where('token_hash', hash('sha256', $token))->first();
 
         if (!$record || !$record->isValid()) {
+            CoreSecurityEvent::record(
+                'account_activation_token_invalid',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, [
+                    'reason' => $record ? 'expired' : 'not_found',
+                ])
+            );
+
             return response()->json(['message' => 'Odkaz je neplatný nebo vypršel.'], 410);
         }
 

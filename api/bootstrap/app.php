@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file bootstrap/app.php
  * @path bootstrap/app.php
@@ -42,6 +43,19 @@
  * PŘIHLÁŠENÉHO uživatele se do bezpečnostního monitoringu už nezapisuje - 429 odpověď
  * samotná (skutečná ochrana/blokace) proběhne úplně stejně, mění se jen to, že se to
  * nezaznamená jako bezpečnostní incident.
+ *
+ * @refactor-note (2026-08-24) BACKLOG "security_events musí pokrýt VŠECHNY typy
+ * útoku/nesrovnalosti": doplněn `render()` handler pro `AuthenticationException` (dosud
+ * vracel jen 401 JSON, bez jakékoliv stopy v bezpečnostním monitoringu). Tahle výjimka je
+ * NEJČASTĚJŠÍ cesta, jak reálně vznikne "neautentizovaný pokus o přístup na chráněnou
+ * routu" - `auth:sanctum` middleware ji vyhodí ještě DŘÍV, než request vůbec dorazí ke
+ * `CheckPermission` (ten svoji vlastní `if (!$user)` větev proto v praxi skoro nikdy
+ * nespustí - zůstává tam jen jako obrana do hloubky, kdyby se pořadí middlewarů někdy
+ * změnilo). Použit STEJNÝ `event_type` (`unauthenticated_access_attempt`) jako
+ * v `CheckPermission`, ať se oba zdroje agregují pod jedním jménem v adminu, ne jako dva
+ * uměle odlišné jevy se stejným významem. Severity `info` - chybějící/expirovaný token je
+ * běžný legitimní jev (odhlášená karta prohlížeče, vypršelá session), ne sám o sobě důkaz
+ * útoku; opakovaný vysoký objem ze stejné IP je i tak vidět přes `occurrences`.
  */
 
 use Illuminate\Foundation\Application;
@@ -80,14 +94,25 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         /**
-         * Customize the rendering of AuthenticationException.
-         * Ensures API requests receive a JSON response with a 401 status code instead of a redirect.
+         * @description Customize the rendering of AuthenticationException. Ensures API
+         * requests receive a JSON response with a 401 status code instead of a redirect,
+         * a zapíše bezpečnostní event - viz refactor-note (2026-08-24) v hlavičce
+         * souboru. Tohle je NEJČASTĚJŠÍ místo, kde reálně vzniká "chybějící/expirovaný
+         * token na chráněné routě", protože `auth:sanctum` middleware vyhazuje tuhle
+         * výjimku dřív, než request vůbec dorazí ke `CheckPermission`.
          *
          * @param AuthenticationException $e
          * @param Request $request
          */
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->expectsJson()) {
+                CoreSecurityEvent::record(
+                    'unauthenticated_access_attempt',
+                    'info',
+                    $request->ip(),
+                    CoreSecurityEvent::contextFromRequest($request)
+                );
+
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }
         });

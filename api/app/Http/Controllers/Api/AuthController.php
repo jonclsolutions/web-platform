@@ -231,6 +231,18 @@ class AuthController extends Controller
         $pending = TwoFactorCode::where('login_token_hash', $tokenHash)->first();
 
         if (!$pending || !$pending->isValid()) {
+            // Neplatná/expirovaná/vyčerpaná pending-login session - hádání login_token
+            // by (na rozdíl od hádání 6místného OTP kódu, což už hlásí login_2fa_invalid)
+            // znamenalo přeskočení ověření hesla úplně. Severity 'info' - běžně jde o
+            // legitimně vypršelou session (uživatel neklikl včas), ne o útok; opakovaný
+            // vysoký objem ze stejné IP je i tak vidět přes occurrences.
+            CoreSecurityEvent::record(
+                'login_2fa_session_invalid',
+                'info',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request)
+            );
+
             return response()->json([
                 'message' => 'Přihlašovací relace vypršela nebo je neplatná. Přihlaste se prosím znovu.',
             ], 401);
@@ -288,6 +300,16 @@ class AuthController extends Controller
         $pending = TwoFactorCode::where('login_token_hash', $tokenHash)->first();
 
         if (!$pending || is_null($pending->expires_at) || $pending->used_at) {
+            // Stejný event_type jako ve verifyTwoFactor() - obě metody řeší tentýž
+            // scénář (neplatný/expirovaný/použitý login_token), jen na jiném kroku
+            // 2FA flow (žádost o nový kód vs. ověření kódu).
+            CoreSecurityEvent::record(
+                'login_2fa_session_invalid',
+                'info',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request)
+            );
+
             return response()->json(['message' => 'Přihlašovací relace vypršela nebo je neplatná.'], 401);
         }
 

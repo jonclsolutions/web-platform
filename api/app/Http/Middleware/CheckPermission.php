@@ -28,10 +28,35 @@
  * tenhle endpoint obsluhuje jak plný formulář firemních údajů (web-view-web-settings),
  * tak rychlý přepínač údržby e-shopu v headeru (shop-set-maintenance-mode), a jsou to
  * dvě různé skupiny uživatelů, které se nemusí překrývat.
+ *
+ * @bugfix-note (2026-08-24) KRITICKÁ MEZERA V BEZPEČNOSTNÍM MONITORINGU: tento middleware
+ * chrání VŠECHNY permission-gated endpointy v aplikaci (desítky routes napříč core/web/
+ * shop sekcemi), ale zamítnuté pokusy (401 chybějící auth, 403 nedostatečné oprávnění)
+ * se NIKDY nezapisovaly do `core_security_events` - jen se tiše vrátila chybová
+ * odpověď. To znamená, že klasický vzorec privilege-escalation pokusu (přihlášený, ale
+ * nízko-privilegovaný účet zkoušející endpointy, na které nemá právo - ať už omylem,
+ * zvědavostí, nebo protože byl účet kompromitován) byl pro administrátora zcela
+ * neviditelný, přestože jde přesně o typ hrozby, který má bezpečnostní monitoring
+ * odhalovat.
+ *
+ * ŘEŠENÍ: přidány dva zápisy do `CoreSecurityEvent::record()`:
+ * - `unauthenticated_access_attempt` (severity `info`) - request bez platného
+ *   přihlášení dorazil až sem. V praxi vzácné (routa je navíc uvnitř
+ *   `auth:sanctum` middleware skupiny, který neautentizované requesty typicky odmítne
+ *   ještě DŘÍV, než se dostanou k `CheckPermission` - viz globální
+ *   `AuthenticationException` handler v `bootstrap/app.php`, plánovaný jako
+ *   doplňkový zápis v další vlně). `info`, ne `warning` - samotný `auth:sanctum` handler
+ *   je primární místo pro tenhle scénář, tady jde jen o obranu do hloubky.
+ * - `permission_denied` (severity `warning`) - PŘIHLÁŠENÝ uživatel nemá požadované
+ *   oprávnění. Kontext obsahuje `required_permission`, ať je z monitoringu hned vidět,
+ *   o co se uživatel pokoušel, ne jen že "něco" bylo zamítnuto.
+ * Sysadmin a legitimní `$selfParam` průchod (vlastní účet) logování NESPOUŠTÍ - nejde
+ * o odepřený pokus, ale o platný, očekávaný scénář.
  */
 
 namespace App\Http\Middleware;
 
+use App\Models\Core\CoreSecurityEvent;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -59,6 +84,13 @@ class CheckPermission
         $user = $request->user();
 
         if (!$user) {
+            CoreSecurityEvent::record(
+                'unauthenticated_access_attempt',
+                'info',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['required_permission' => $permission])
+            );
+
             return response()->json(['message' => 'Nepřihlášeno.'], 401);
         }
 
@@ -81,6 +113,13 @@ class CheckPermission
         if (array_intersect($requiredPermissions, $userPermissions)) {
             return $next($request);
         }
+
+        CoreSecurityEvent::record(
+            'permission_denied',
+            'warning',
+            $request->ip(),
+            CoreSecurityEvent::contextFromRequest($request, ['required_permission' => $permission])
+        );
 
         return response()->json(['message' => 'Nedostatečná oprávnění.'], 403);
     }

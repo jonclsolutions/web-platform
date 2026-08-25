@@ -15,6 +15,8 @@
  * - App\Models\Core\CoreLog / App\Traits\LogsActivity: sdílený audit log (viz bugfix-note
  *   2026-08-19v2 níže) - stejná tabulka, do které AuthController zapisuje
  *   login_success/login_failed/logout apod., ať je celá auth audit stopa na jednom místě.
+ * - App\Models\Core\CoreSecurityEvent: bezpečnostní monitoring, viz refactor-note
+ *   (2026-08-24) níže - oddělené od `core_logs` (audit vs. diagnostika hrozeb).
  * - App\Mail\Auth\PasswordResetRequested / PasswordChangedNotification: e-mailové notifikace
  *
  * @bugfix-note (2026-08-19) OBA maily (žádost o reset, potvrzení změny) přepnuty
@@ -55,6 +57,24 @@
  * `description`, ne do zvláštního pole, ať nebylo nutné rozšiřovat sdílený trait (ten
  * používá i řada jiných controllerů - jakákoliv změna jeho signatury by měla mnohem
  * širší dopad, než jen tenhle soubor).
+ *
+ * @refactor-note (2026-08-24) BACKLOG "security_events musí pokrýt VŠECHNY typy útoku":
+ * reset hesla je klasický vektor pro token brute-force/enumeraci (uhodnutý token =
+ * převzetí cizího účtu) a pro mail-bombing konkrétní schránky - oba scénáře se dřív
+ * zapisovaly JEN do `core_logs` (audit), ne do bezpečnostního monitoringu
+ * (`core_security_events`). Přidány dva zápisy, NEZÁVISLE na stávajícím `logAttempt()`
+ * volání (obě tabulky mají svůj účel, viz CoreSecurityEvent.php hlavička - `core_logs`
+ * se nemění vůbec):
+ * - `password_reset_email_rate_limited` (warning) ve `forgotPassword()` - vlastní
+ *   per-e-mail limiter (`EMAIL_MAX_ATTEMPTS`) byl překročen. Na rozdíl od IP throttle
+ *   na routě (ten už hlásí `throttle_exceeded` přes globální handler v
+ *   `bootstrap/app.php`) je tohle SAMOSTATNÝ, jemnější limiter cílený na konkrétní
+ *   e-mailovou schránku bez ohledu na IP - útočník rotující IP adresy by jinak zůstal
+ *   pro monitoring neviditelný.
+ * - `password_reset_token_invalid` (warning) v `resetPassword()` - token neexistuje,
+ *   vypršel, nebo byl už použit. Token je 64znakový náhodný string (prakticky
+ *   nehádatelný jednotlivě), ale opakované pokusy o různé neplatné tokeny ze stejné IP
+ *   jsou přesně ten vzorec, který by admin chtěl vidět dřív, než se to jednou povede.
  */
 
 namespace App\Http\Controllers\Api\Auth;
@@ -65,6 +85,7 @@ use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Mail\Auth\PasswordChangedNotification;
 use App\Mail\Auth\PasswordResetRequested;
 use App\Models\Core\CoreLog;
+use App\Models\Core\CoreSecurityEvent;
 use App\Models\PasswordResetToken;
 use App\Models\User;
 use App\Traits\LogsActivity;
@@ -114,6 +135,16 @@ class PasswordResetController extends Controller
             $this->logAttempt('password_reset_email_rate_limited', $request, null, [
                 'email_requested' => $email,
             ]);
+
+            // Samostatný, per-e-mail cílený limiter (na rozdíl od IP throttle na routě,
+            // který hlásí 'throttle_exceeded' přes globální handler) - viz refactor-note
+            // (2026-08-24) v hlavičce souboru.
+            CoreSecurityEvent::record(
+                'password_reset_email_rate_limited',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['email_requested' => $email])
+            );
 
             // Tiché odmítnutí - stejná generická odpověď, žádný e-mail se neposílá,
             // útočník ani napohled nepozná, že narazil na limit.
@@ -171,9 +202,20 @@ class PasswordResetController extends Controller
         $resetToken = PasswordResetToken::where('token_hash', $tokenHash)->first();
 
         if (!$resetToken || !$resetToken->isValid()) {
+            $reason = $resetToken ? 'expired_or_used' : 'invalid_token';
+
             $this->logAttempt('password_reset_failed', $request, $resetToken?->user_id, [
-                'reason' => $resetToken ? 'expired_or_used' : 'invalid_token',
+                'reason' => $reason,
             ]);
+
+            // Token brute-force/enumerace = potenciální převzetí cizího účtu - viz
+            // refactor-note (2026-08-24) v hlavičce souboru.
+            CoreSecurityEvent::record(
+                'password_reset_token_invalid',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['reason' => $reason])
+            );
 
             return response()->json([
                 'message' => 'Odkaz pro reset hesla je neplatný nebo již vypršel. Vyžádejte si prosím nový.',
