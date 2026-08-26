@@ -6,8 +6,15 @@
  * @author RPSW
  * @created 2026
  * @description Singleton nastavení bezpečnostního monitoringu (core_security_events) -
- * aktuálně jen retenční doba ve dnech. Stejný "jeden řádek" vzor jako WebSiteSetting.
- * Čte/upravuje se vždy záznam s `id = 1` (viz CoreSecuritySettingController).
+ * retenční doba ve dnech + hlavní e-mailová doména pro whitelist při vytváření admin
+ * účtů. Stejný "jeden řádek" vzor jako WebSiteSetting. Čte/upravuje se vždy záznam
+ * s `id = 1` (viz CoreSecuritySettingController).
+ *
+ * @bugfix-note (2026-08-25) KRITICKÝ BUG - `primary_email_domain` SE TICHE
+ * NEUKLÁDALA: sloupec byl přidán do DB (viz email-domain-whitelist.sql), ale
+ * zapomenutý v `$fillable` - `$setting->update(['primary_email_domain' => ...])` proto
+ * Eloquent mass-assignment ochrana TICHE IGNOROVALA (žádná výjimka, žádná chybová
+ * odpověď - request vrátil 200 "úspěch", ale do DB se nic nezapsalo). Doplněno.
  */
 
 namespace App\Models\Core;
@@ -21,6 +28,7 @@ class CoreSecuritySetting extends Model
 
     protected $fillable = [
         'retention_days',
+        'primary_email_domain',
     ];
 
     protected $casts = [

@@ -1,0 +1,209 @@
+/**
+ * @file email-access-policy-modal.css
+ * @path src/app/admin/core-pages/administrators/email-access-policy-modal.css
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2026
+ * @description Styly pro modal "Domény e-mailů" (BACKLOG
+ * "core-admin-email-domain-restriction"). Stejná paleta jako ostatní inline modaly
+ * v projektu (#18181b/#71717a/#ececea) - Kravio styl, konzistentní se zbytkem adminu.
+ */
+
+.email-policy-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 20px;
+}
+
+.email-policy-card {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(24, 24, 27, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.email-policy-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px 0;
+}
+
+.email-policy-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.email-policy-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: #71717a;
+  max-width: 380px;
+}
+
+.email-policy-close {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  color: #71717a;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.email-policy-close:hover:not(:disabled) { background: #f4f4f5; color: #18181b; }
+.email-policy-close:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.email-policy-body {
+  padding: 16px 24px 4px;
+}
+
+.email-policy-loading {
+  color: #71717a;
+  font-size: 0.9rem;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.email-policy-section {
+  margin-bottom: 22px;
+}
+
+.email-policy-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #18181b;
+  margin-bottom: 4px;
+}
+
+.email-policy-hint {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  color: #71717a;
+  line-height: 1.5;
+}
+
+.email-policy-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.email-policy-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: #18181b;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.email-policy-input:focus { border-color: #18181b; }
+.email-policy-input:disabled { background: #f4f4f5; cursor: not-allowed; }
+
+.email-policy-select {
+  padding: 9px 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #18181b;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.email-policy-btn-save,
+.email-policy-btn-add {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #18181b;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+.email-policy-btn-save:hover:not(:disabled),
+.email-policy-btn-add:hover { background: #3f3f46; }
+.email-policy-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.email-policy-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #a1a1aa;
+  font-style: italic;
+}
+
+.email-policy-rule-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fafafa;
+  border: 1px solid #ececea;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.email-policy-rule-value {
+  color: #18181b;
+  word-break: break-all;
+}
+
+.email-policy-btn-remove {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  color: #a1a1aa;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.email-policy-btn-remove:hover { background: #fff1f2; color: #be123c; }
+
+.email-policy-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 24px 20px;
+}
+
+.email-policy-btn-cancel {
+  padding: 9px 18px;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #3f3f46;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.email-policy-btn-cancel:hover:not(:disabled) { background: #f4f4f5; }
+.email-policy-btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }

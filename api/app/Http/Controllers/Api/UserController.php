@@ -47,6 +47,19 @@
  *   false -> true navíc OKAMŽITĚ revokuje všechny aktivní Sanctum tokeny i refresh
  *   token daného účtu - zablokovaný účet tak nemůže dál používat systém, dokud mu
  *   access token sám nevyprší.
+ *
+ * @refactor-note (2026-08-25) BACKLOG "core-admin-email-domain-restriction": `store()`
+ * dostal NOVOU kontrolu `assertEmailDomainAllowed()`, volanou HNED na začátku (ještě
+ * před sysadmin-role kontrolou) - pokud je nastavena `primary_email_domain`
+ * (CoreSecuritySetting) a e-mail nového účtu neodpovídá ani jí, ani žádné položce
+ * whitelistu (CoreEmailAccessRule - doména nebo konkrétní e-mail), vrací se 422 a
+ * pokus se zapisuje do `core_security_events` (`user_create_domain_not_whitelisted`) -
+ * jde o potenciální signál persistence-after-compromise (útočník s přístupem k
+ * store() by si jinak mohl založit vlastní účet na mail, ke kterému má přístup). Prázdná/
+ * nenastavená `primary_email_domain` = beze změny oproti dřívějšku (žádné omezení,
+ * zpětně kompatibilní). Správu domény/whitelistu řeší výhradně
+ * `CoreEmailAccessPolicyController` (sysadmin-only) - tenhle kontroler jen VYNUCUJE
+ * už nastavenou politiku, sám nic nekonfiguruje.
  */
 
 namespace App\Http\Controllers\Api;
@@ -55,8 +68,11 @@ use App\Http\Controllers\Controller;
 use App\Mail\Auth\AccountActivationMail;
 use App\Mail\Auth\PasswordChangedNotification;
 use App\Models\{AccountActivationToken, RefreshToken, User};
+use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CoreRole;
 use App\Models\Core\CoreLog;
+use App\Models\Core\CoreSecurityEvent;
+use App\Models\Core\CoreSecuritySetting;
 use App\Traits\LogsActivity;
 use App\Http\Requests\User\{StoreUserRequest, UpdateUserRequest};
 use App\Http\Requests\PasswordChangeRequest;
@@ -81,9 +97,6 @@ class UserController extends Controller
     private const NEVER_BLOCK_ROLE_NAMES = ['admin', 'sysadmin'];
 
     /**
-     * Retrieves a paginated list of users with filtering and role-based sorting.
-     */
-/**
      * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální `search`
      * parametr (OR napříč `full_name`/`user_email`) - stejné dva textové sloupce, které
      * tahle metoda už dřív filtrovala jednotlivě. `search` je zabalený do vlastního
@@ -152,15 +165,24 @@ class UserController extends Controller
             'last_page' => $users->lastPage(),
         ]);
     }
+
     /**
      * Creates a new user WITHOUT a password and sends an activation e-mail so the user
      * can set their own password (no one, not even the admin, ever knows it).
      * @note KRITICKÁ OCHRANA: vytvořit nový účet s rolí sysadmin smí jen volající, který
-     * je sám sysadmin.
+     * je sám sysadmin. E-mailová doména se ověřuje PŘED touto kontrolou - viz
+     * `assertEmailDomainAllowed()`.
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
+
+        // ── Whitelist e-mailové domény - viz refactor-note (2026-08-25) v hlavičce ──────
+        $domainCheck = $this->assertEmailDomainAllowed($request, $validated['user_email']);
+        if ($domainCheck instanceof JsonResponse) {
+            return $domainCheck;
+        }
+
         $roleId = $validated['role_id'] ?? null;
 
         if ($roleId && $this->isSysadminRoleId((int) $roleId) && !$this->actorIsSysadmin($request)) {
@@ -240,6 +262,8 @@ class UserController extends Controller
      * vynucené jinak (rolí) - jinak by byl override bezpředmětný (422). `is_blocked`
      * nelze NIKDY nastavit na účet admin/sysadmin ani na vlastní účet (422) - viz
      * refactor-note v hlavičce souboru. Přechod na `is_blocked = true` revokuje tokeny.
+     * @note Doménová whitelist kontrola se NEAPLIKUJE zde - týká se výhradně vytváření
+     * nových účtů (`store()`), viz backlog "existující účty se zpětně neruší".
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
@@ -543,6 +567,72 @@ class UserController extends Controller
             Log::error("Activation email failed for user {$user->id}: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * @description Ověří, zda e-mail nového účtu odpovídá povolené politice domén -
+     * viz refactor-note (2026-08-25) v hlavičce souboru a backlog
+     * "core-admin-email-domain-restriction". Prázdná/nenastavená
+     * `primary_email_domain` znamená "bez omezení" (beze změny oproti dřívějšku).
+     * Povoleno, pokud e-mail odpovídá KTERÉKOLIV z těchto podmínek:
+     * 1) doména se shoduje s hlavní doménou firmy,
+     * 2) doména je na whitelistu (`CoreEmailAccessRule` typu `domain`),
+     * 3) celý e-mail je na whitelistu jako konkrétní výjimka (typu `email`).
+     * @return JsonResponse|null `null` = povoleno, jinak hotová 422 odpověď k vrácení.
+     */
+    private function assertEmailDomainAllowed(Request $request, string $email): ?JsonResponse
+    {
+        $primaryDomain = CoreSecuritySetting::current()->primary_email_domain;
+
+        if (empty($primaryDomain)) {
+            return null;
+        }
+
+        $emailLower = strtolower(trim($email));
+        $atPosition = strrpos($emailLower, '@');
+        $domain = $atPosition !== false ? substr($emailLower, $atPosition + 1) : '';
+
+        if ($domain === strtolower(trim($primaryDomain))) {
+            return null;
+        }
+
+        $domainWhitelisted = CoreEmailAccessRule::where('type', 'domain')
+            ->where('value', $domain)
+            ->exists();
+
+        if ($domainWhitelisted) {
+            return null;
+        }
+
+        $emailWhitelisted = CoreEmailAccessRule::where('type', 'email')
+            ->where('value', $emailLower)
+            ->exists();
+
+        if ($emailWhitelisted) {
+            return null;
+        }
+
+        CoreSecurityEvent::record(
+            'user_create_domain_not_whitelisted',
+            'warning',
+            $request->ip(),
+            CoreSecurityEvent::contextFromRequest($request, [
+                'attempted_email'  => $emailLower,
+                'attempted_domain' => $domain,
+            ])
+        );
+
+        $this->logAction(
+            $request,
+            CoreLog::class,
+            'create_denied',
+            'User',
+            "Zamítnut pokus o vytvoření účtu s nepovolenou e-mailovou doménou: {$emailLower}"
+        );
+
+        return response()->json([
+            'message' => "E-mailová doména \"{$domain}\" není povolena pro vytváření nových účtů. Kontaktujte sysadmina pro přidání výjimky.",
+        ], 422);
     }
 
     /**

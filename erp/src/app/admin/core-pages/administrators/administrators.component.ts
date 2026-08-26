@@ -46,6 +46,16 @@
  *   jen kvůli 2FA scénáři, teď stejná logika automaticky ochrání i `is_blocked`, pokud
  *   ho `computeFieldsForTarget()` označí jako `editable: false` - žádná further úprava
  *   v tomhle handleru nebyla potřeba.
+ *
+ * @refactor-note (2026-08-25) BACKLOG "core-admin-email-domain-restriction": nové
+ * tlačítko "Domény e-mailů" v toolbaru (VÝHRADNĚ pro sysadmina - viz `toolbarButtons`
+ * getter, case `openEmailAccessPolicy`), otevírající modal se dvěma sekcemi:
+ * (1) hlavní e-mailová doména firmy, (2) whitelist dalších domén/konkrétních e-mailů
+ * (přidání/smazání). Modal je inline v tomhle souboru (stejný vzor jako
+ * `UserRequestComponent`'s email template modal) - je to malá, jednoúčelová
+ * administrátorská obrazovka, ne znovupoužitelná komponenta. Backend
+ * (`CoreEmailAccessPolicyController`) se chrání sám (403 pro ne-sysadmina) nezávisle
+ * na tomhle UI, takže skrytí tlačítka je jen UX pohodlí, ne bezpečnostní hranice.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -74,6 +84,13 @@ interface RoleMeta {
   forces_2fa: boolean;
 }
 
+/** Jedna položka whitelistu - viz CoreEmailAccessRule na backendu. */
+interface EmailAccessRule {
+  id: number;
+  type: 'domain' | 'email';
+  value: string;
+}
+
 @Component({
   selector: 'app-administrators',
   standalone: true,
@@ -81,7 +98,7 @@ interface RoleMeta {
   // SHARED_UI_BUILDERS bundle.
   imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './administrators.component.html',
-  styleUrl: '../default-style.css',
+  styleUrls: ['../default-style.css', './email-access-policy-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdministratorsComponent extends BaseDataComponent<any> implements OnInit {
@@ -111,6 +128,15 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   /** Mapa role_id -> {role_name, forces_2fa}, pro dynamické disable/hide 2FA polí. */
   private rolesMeta = new Map<number, RoleMeta>();
+
+  // ── Email access policy modal (BACKLOG "core-admin-email-domain-restriction") ──────
+  showEmailAccessPolicyModal = false;
+  emailAccessPolicyLoading = false;
+  emailAccessPolicySaving = false;
+  primaryEmailDomain: string | null = null;
+  emailAccessRules: EmailAccessRule[] = [];
+  newRuleType: 'domain' | 'email' = 'domain';
+  newRuleValue = '';
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -148,6 +174,11 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
             updatedBtn.showIf = !this.showTrashTable;
           }
           break;
+        case 'openEmailAccessPolicy':
+          // VÝHRADNĚ sysadmin - viz refactor-note (2026-08-25) v hlavičce souboru.
+          // Backend se chrání sám nezávisle na tomhle - jde jen o UX skrytí tlačítka.
+          updatedBtn.showIf = this.isSysadmin;
+          break;
         case 'toggleTable':
           updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
           updatedBtn.isActive = this.showTrashTable;
@@ -163,6 +194,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      openEmailAccessPolicy: () => this.openEmailAccessPolicyModal(),
       toggleTable: () => this.toggleTable()
     };
     if (actions[action]) actions[action]();
@@ -322,7 +354,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    * @description Submits user data. Error handler DOPLNĚN (dřív chyběl) - viz
    * refactor-note v hlavičce souboru: FormBuilderComponent ukazuje zelený toast hned po
    * emitu, ještě před odpovědí serveru, takže reálná chyba backendu (např. 422 při
-   * pokusu vypnout vynucenou 2FA, nebo zablokovat chráněný účet) se bez tohoto handleru
+   * pokusu vypnout vynucenou 2FA, nebo zablokovat chráněný účet, NEBO nově i 422 při
+   * pokusu vytvořit účet s nepovolenou e-mailovou doménou) se bez tohoto handleru
    * vůbec neprojevila v UI.
    * @bugfix-note (2026-08-16v2) KRITICKÁ OPRAVA: `visibleFormFields`/`nonEditableFields`
    * odráží roli, která byla vybraná PŘI OTEVŘENÍ formuláře
@@ -427,4 +460,106 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   handleItemRestored(): void { this.refreshData(); }
   handleItemDeleted(): void { this.refreshData(); }
+
+  // ── Email access policy modal (BACKLOG "core-admin-email-domain-restriction") ──────
+
+  /**
+   * @description Otevře modal a načte aktuální hlavní doménu + celý whitelist.
+   * Bez TTL cache - modal se otevírá příležitostně (sysadmin only), čerstvý fetch při
+   * každém otevření je v pořádku.
+   */
+  openEmailAccessPolicyModal(): void {
+    this.showEmailAccessPolicyModal = true;
+    this.emailAccessPolicyLoading = true;
+    this.newRuleType = 'domain';
+    this.newRuleValue = '';
+    this.cd.markForCheck();
+
+    this.dataHandler.get<{ primary_email_domain: string | null; rules: EmailAccessRule[] }>('core/email-access-policy').subscribe({
+      next: (res) => {
+        this.primaryEmailDomain = res.primary_email_domain;
+        this.emailAccessRules = res.rules || [];
+        this.emailAccessPolicyLoading = false;
+        this.cd.markForCheck();
+      },
+      error: (err: any) => {
+        this.emailAccessPolicyLoading = false;
+        this.alertDialogService.open('Chyba', err?.error?.message || 'Nepodařilo se načíst nastavení domén.', 'danger');
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  closeEmailAccessPolicyModal(): void {
+    if (this.emailAccessPolicySaving) return;
+    this.showEmailAccessPolicyModal = false;
+  }
+
+  /**
+   * @description Uloží hlavní e-mailovou doménu (nebo ji vynuluje na prázdno = "bez
+   * omezení", pokud uživatel pole smaže). Backend normalizuje/validuje formát domény
+   * nezávisle na frontendu.
+   */
+  savePrimaryDomain(): void {
+    if (this.emailAccessPolicySaving) return;
+    this.emailAccessPolicySaving = true;
+    this.cd.markForCheck();
+
+    this.dataHandler.put<any>('core/email-access-policy/primary-domain', {
+      primary_email_domain: this.primaryEmailDomain?.trim() || null,
+    }).subscribe({
+      next: (setting: any) => {
+        this.emailAccessPolicySaving = false;
+        this.primaryEmailDomain = setting?.primary_email_domain ?? this.primaryEmailDomain;
+        this.alertDialogService.open('Uloženo', 'Hlavní e-mailová doména byla uložena.', 'success');
+        this.cd.markForCheck();
+      },
+      error: (err: any) => {
+        this.emailAccessPolicySaving = false;
+        this.alertDialogService.open('Chyba', err?.error?.message || 'Uložení se nezdařilo.', 'danger');
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * @description Přidá novou položku whitelistu (doménu nebo konkrétní e-mail) podle
+   * aktuálně zvoleného `newRuleType`. Backend vrací plný objekt nové položky (včetně
+   * `id`), který se rovnou přidá do lokálního seznamu bez nutnosti dalšího refetch.
+   */
+  addEmailAccessRule(): void {
+    const value = this.newRuleValue.trim();
+    if (!value) return;
+
+    this.dataHandler.post<EmailAccessRule>('core/email-access-policy/rules', {
+      type: this.newRuleType,
+      value,
+    }).subscribe({
+      next: (rule) => {
+        this.emailAccessRules = [...this.emailAccessRules, rule];
+        this.newRuleValue = '';
+        this.cd.markForCheck();
+      },
+      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Přidání se nezdařilo.', 'danger')
+    });
+  }
+
+  removeEmailAccessRule(id: number): void {
+    this.dataHandler.delete(`core/email-access-policy/rules/${id}`).subscribe({
+      next: () => {
+        this.emailAccessRules = this.emailAccessRules.filter(r => r.id !== id);
+        this.cd.markForCheck();
+      },
+      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Smazání se nezdařilo.', 'danger')
+    });
+  }
+
+  /** @description Whitelist rozdělený na dvě samostatné pole pro přehlednější zobrazení v šabloně. */
+  get domainRules(): EmailAccessRule[] {
+    return this.emailAccessRules.filter(r => r.type === 'domain');
+  }
+
+  get emailRules(): EmailAccessRule[] {
+    return this.emailAccessRules.filter(r => r.type === 'email');
+  }
 }

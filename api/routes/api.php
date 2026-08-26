@@ -110,6 +110,7 @@ use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\PublicFileDownloadController;
 use App\Models\Core\CoreSecurityEvent;
+use App\Http\Controllers\Api\Core\CoreEmailAccessPolicyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -314,6 +315,14 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:core-security-view');
             Route::put('/', [CoreSecuritySettingController::class, 'update'])
                 ->middleware('permission:core-security-update');
+        });
+
+        // ── core/email-access-policy ────────────────────────────────────────────
+        Route::prefix('email-access-policy')->group(function () {
+            Route::get('/',                [CoreEmailAccessPolicyController::class, 'show']);
+            Route::put('/primary-domain',  [CoreEmailAccessPolicyController::class, 'updatePrimaryDomain']);
+            Route::post('/rules',          [CoreEmailAccessPolicyController::class, 'storeRule']);
+            Route::delete('/rules/{id}',   [CoreEmailAccessPolicyController::class, 'destroyRule']);
         });
 
         // ── core/users ────────────────────────────────────────────────────

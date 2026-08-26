@@ -20,6 +20,11 @@
       že účet vzniká bez hesla a aktivuje se přes e-mail.
     - Nový `(resendActivationOpened)` output z `TableBuilderComponent` napojen na
       `handleResendActivation()` - tlačítko "Aktivace" v řádku tabulky.
+    @refactor-note (2026-08-25) BACKLOG "core-admin-email-domain-restriction": přidán
+        modal "Domény e-mailů" na konci souboru (otevírá se přes toolbar tlačítko
+        `openEmailAccessPolicy`, viditelné jen sysadminovi - viz component.ts).
+        Struktura/styl shodný s ostatními inline modaly v projektu (overlay + card,
+        mousedown stopPropagation proti zavření kliknutím dovnitř karty).
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -126,4 +131,97 @@ triggerLabel="Akce"
 [itemData]="selectedItemForDetails"
 (closeDetails)="showDetails = false">
 </app-details-builder>
+}
+
+@if (showEmailAccessPolicyModal) {
+<div class="email-policy-overlay"
+     (mousedown)="$event.target === $event.currentTarget && closeEmailAccessPolicyModal()">
+<div class="email-policy-card" (mousedown)="$event.stopPropagation()">
+
+<div class="email-policy-header">
+<div>
+<h2 class="email-policy-title">Domény e-mailů</h2>
+<p class="email-policy-subtitle">Omezení, z jakých e-mailových adres lze zakládat nové administrátorské účty.</p>
+</div>
+<button type="button" class="email-policy-close" (click)="closeEmailAccessPolicyModal()" [disabled]="emailAccessPolicySaving">✕</button>
+</div>
+
+<div class="email-policy-body">
+
+@if (emailAccessPolicyLoading) {
+<p class="email-policy-loading">Načítám…</p>
+} @else {
+
+<div class="email-policy-section">
+<label class="email-policy-label">Hlavní doména</label>
+<p class="email-policy-hint">
+ⓘ Doporučujeme zde mít stejnou doménu, na které běží stránky. Ponechte prázdné pro zrušení omezení - kdokoliv pak bude moci založit účet s libovolnou e-mailovou doménou.
+</p>
+<div class="email-policy-input-row">
+<input type="text" class="email-policy-input"
+       [(ngModel)]="primaryEmailDomain"
+       placeholder="např. rpsw.cz"
+       [disabled]="emailAccessPolicySaving">
+<button type="button" class="email-policy-btn-save" (click)="savePrimaryDomain()" [disabled]="emailAccessPolicySaving">
+{{ emailAccessPolicySaving ? 'Ukládám…' : 'Uložit' }}
+</button>
+</div>
+</div>
+
+<div class="email-policy-section">
+<label class="email-policy-label">Přidat výjimku</label>
+<p class="email-policy-hint">
+ⓘ Doména povolí založit účet komukoliv s tímto koncem e-mailu. E-mail povolí jen jednu konkrétní adresu bez ohledu na doménu (např. pro externího spolupracovníka).
+</p>
+<div class="email-policy-input-row">
+<select class="email-policy-select" [(ngModel)]="newRuleType">
+<option value="domain">Doména</option>
+<option value="email">Konkrétní e-mail</option>
+</select>
+<input type="text" class="email-policy-input"
+       [(ngModel)]="newRuleValue"
+       (keyup.enter)="addEmailAccessRule()"
+       [placeholder]="newRuleType === 'domain' ? 'napr. partner.com' : 'napr. externista@gmail.com'">
+<button type="button" class="email-policy-btn-add" (click)="addEmailAccessRule()">
+    Přidat
+</button>
+</div>
+</div>
+
+<div class="email-policy-section">
+<label class="email-policy-label">Povolené domény</label>
+@if (domainRules.length === 0) {
+<p class="email-policy-empty">Žádné další povolené domény.</p>
+}
+@for (rule of domainRules; track rule.id) {
+<div class="email-policy-rule-row">
+<span class="email-policy-rule-value">{{ rule.value }}</span>
+<button type="button" class="email-policy-btn-remove" (click)="removeEmailAccessRule(rule.id)" aria-label="Smazat">✕</button>
+</div>
+  }
+</div>
+
+<div class="email-policy-section">
+<label class="email-policy-label">Povolené konkrétní e-maily</label>
+@if (emailRules.length === 0) {
+<p class="email-policy-empty">Žádné povolené jednotlivé e-maily.</p>
+}
+@for (rule of emailRules; track rule.id) {
+<div class="email-policy-rule-row">
+<span class="email-policy-rule-value">{{ rule.value }}</span>
+<button type="button" class="email-policy-btn-remove" (click)="removeEmailAccessRule(rule.id)" aria-label="Smazat">✕</button>
+</div>
+  }
+</div>
+
+    }
+
+</div>
+
+<div class="email-policy-footer">
+<button type="button" class="email-policy-btn-cancel" (click)="closeEmailAccessPolicyModal()" [disabled]="emailAccessPolicySaving">Zavřít</button>
+</div>
+
+</div>
+</div>
 }
