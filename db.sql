@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 22, 2026 at 10:25 AM
+-- Generation Time: Aug 26, 2026 at 01:20 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -24,6 +24,20 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `account_activation_tokens`
+--
+
+CREATE TABLE `account_activation_tokens` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `token_hash` varchar(64) NOT NULL,
+  `expires_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `cache`
 --
 
@@ -38,34 +52,127 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('laravel-cache-08a35293e09f508494096c1c1b3819edb9df50db', 'i:3;', 1786889213),
-('laravel-cache-08a35293e09f508494096c1c1b3819edb9df50db:timer', 'i:1786889213;', 1786889213),
-('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9', 'i:9;', 1787262358),
-('laravel-cache-2d0c8af807ef45ac17cafb2973d866ba8f38caa9:timer', 'i:1787262358;', 1787262358),
-('laravel-cache-3fa1d25a9f34b76ef6c342f0409f077f', 'i:1;', 1787311029),
-('laravel-cache-3fa1d25a9f34b76ef6c342f0409f077f:timer', 'i:1787311029;', 1787311029),
-('laravel-cache-54a3532e057dad0aaee884059fab91c3', 'i:1;', 1786921033),
-('laravel-cache-54a3532e057dad0aaee884059fab91c3:timer', 'i:1786921033;', 1786921033),
-('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e', 'i:2;', 1787386957),
-('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e:timer', 'i:1787386957;', 1787386957),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:2;', 1787386976),
-('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787386976;', 1787386976),
-('laravel-cache-8555c1a11d44ab0bd4e6f29d888bc874', 'i:3;', 1786887553),
-('laravel-cache-8555c1a11d44ab0bd4e6f29d888bc874:timer', 'i:1786887553;', 1786887553),
-('laravel-cache-862e0a123663139c2a0be726ddb86842', 'i:2;', 1787386957),
-('laravel-cache-862e0a123663139c2a0be726ddb86842:timer', 'i:1787386957;', 1787386957),
-('laravel-cache-b1e57407edcf287f0410de814a2da740', 'i:1;', 1786887640),
-('laravel-cache-b1e57407edcf287f0410de814a2da740:timer', 'i:1786887640;', 1786887640),
-('laravel-cache-babf79d7e6993b354b018be8ec035fff', 'i:1;', 1787386915),
-('laravel-cache-babf79d7e6993b354b018be8ec035fff:timer', 'i:1787386915;', 1787386915),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:19;', 1787387071),
-('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1787387071;', 1787387071),
-('laravel-cache-illuminate:queue:restart', 'i:1787314191;', 2102674191),
-('laravel-cache-login-fail:test1@test.cz', 'i:3;', 1786888393),
-('laravel-cache-login-fail:test1@test.cz:timer', 'i:1786888393;', 1786888393),
-('laravel-cache-password-reset-email:test1@test.cz', 'i:1;', 1786888420),
-('laravel-cache-password-reset-email:test1@test.cz:timer', 'i:1786888420;', 1786888420),
-('laravel-cache-site_setting_active_web', 'O:29:\"App\\Models\\Web\\WebSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:17:\"web_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:10:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-22 00:06:58\";s:28:\"raw_request_email_title_i18n\";s:88:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Your request has been accepted\"}\";s:28:\"raw_request_email_intro_i18n\";s:240:\"{\"cz\":\"d\\u011bkujeme za Va\\u0161i popt\\u00e1vku. Byla \\u00fasp\\u011b\\u0161n\\u011b p\\u0159ijate a n\\u00e1\\u0161 t\\u00fdm se j\\u00ed bude v nejbli\\u017e\\u0161\\u00ed dob\\u011b v\\u011bnovat.\",\"en\":\"thank you for order we will take look at it.\"}\";s:28:\"raw_request_email_outro_i18n\";s:121:\"{\"cz\":\"V p\\u0159\\u00edpad\\u011b dotaz\\u016f n\\u00e1s nev\\u00e1hejte kontaktovat.\",\"en\":\"If you have questing contact us\"}\";s:29:\"raw_request_email_labels_i18n\";s:236:\"{\"cz\":[],\"en\":{\"greeting\":\"Hello,\",\"summary_header\":\"Recapitulation\",\"label_thema\":\"Thema\",\"label_email\":\"Contact Email\",\"label_phone\":\"Telephone\",\"label_description\":\"Description\",\"label_attachments\":\"Accessments\",\"label_date\":\"Date\"}}\";s:30:\"raw_request_email_subject_i18n\";s:75:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Order information\"}\";}s:11:\"\0*\0original\";a:10:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-22 00:06:58\";s:28:\"raw_request_email_title_i18n\";s:88:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Your request has been accepted\"}\";s:28:\"raw_request_email_intro_i18n\";s:240:\"{\"cz\":\"d\\u011bkujeme za Va\\u0161i popt\\u00e1vku. Byla \\u00fasp\\u011b\\u0161n\\u011b p\\u0159ijate a n\\u00e1\\u0161 t\\u00fdm se j\\u00ed bude v nejbli\\u017e\\u0161\\u00ed dob\\u011b v\\u011bnovat.\",\"en\":\"thank you for order we will take look at it.\"}\";s:28:\"raw_request_email_outro_i18n\";s:121:\"{\"cz\":\"V p\\u0159\\u00edpad\\u011b dotaz\\u016f n\\u00e1s nev\\u00e1hejte kontaktovat.\",\"en\":\"If you have questing contact us\"}\";s:29:\"raw_request_email_labels_i18n\";s:236:\"{\"cz\":[],\"en\":{\"greeting\":\"Hello,\",\"summary_header\":\"Recapitulation\",\"label_thema\":\"Thema\",\"label_email\":\"Contact Email\",\"label_phone\":\"Telephone\",\"label_description\":\"Description\",\"label_attachments\":\"Accessments\",\"label_date\":\"Date\"}}\";s:30:\"raw_request_email_subject_i18n\";s:75:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Order information\"}\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:6:{s:13:\"is_web_active\";s:7:\"boolean\";s:28:\"raw_request_email_title_i18n\";s:5:\"array\";s:28:\"raw_request_email_intro_i18n\";s:5:\"array\";s:28:\"raw_request_email_outro_i18n\";s:5:\"array\";s:29:\"raw_request_email_labels_i18n\";s:5:\"array\";s:30:\"raw_request_email_subject_i18n\";s:5:\"array\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:7:{i:0;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";i:2;s:28:\"raw_request_email_title_i18n\";i:3;s:28:\"raw_request_email_intro_i18n\";i:4;s:28:\"raw_request_email_outro_i18n\";i:5;s:29:\"raw_request_email_labels_i18n\";i:6;s:30:\"raw_request_email_subject_i18n\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1787386993);
+('laravel-cache-54a3532e057dad0aaee884059fab91c3', 'i:1;', 1787572132),
+('laravel-cache-54a3532e057dad0aaee884059fab91c3:timer', 'i:1787572132;', 1787572132),
+('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e', 'i:1;', 1787734112),
+('laravel-cache-5696cb0a09ed2d5fdc602f10842aec0e:timer', 'i:1787734112;', 1787734112),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba', 'i:20;', 1787671204),
+('laravel-cache-5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787671204;', 1787671204),
+('laravel-cache-6fb84aed32facd1299ee1e77c8fd2b1a6352669e', 'i:1;', 1787571757),
+('laravel-cache-6fb84aed32facd1299ee1e77c8fd2b1a6352669e:timer', 'i:1787571757;', 1787571757),
+('laravel-cache-812ed4562d3211363a7b813aa9cd2cf042b63bb2', 'i:3;', 1787572133),
+('laravel-cache-812ed4562d3211363a7b813aa9cd2cf042b63bb2:timer', 'i:1787572133;', 1787572133),
+('laravel-cache-862e0a123663139c2a0be726ddb86842', 'i:1;', 1787734112),
+('laravel-cache-862e0a123663139c2a0be726ddb86842:timer', 'i:1787734112;', 1787734112),
+('laravel-cache-8e123e8d24ec68e7f5368b44433ec751', 'i:1;', 1787571558),
+('laravel-cache-8e123e8d24ec68e7f5368b44433ec751:timer', 'i:1787571558;', 1787571558),
+('laravel-cache-account-activation-activate5c785c036466adea360111aa28563bfd556b5fba', 'i:3;', 1787691820),
+('laravel-cache-account-activation-activate5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787691820;', 1787691820),
+('laravel-cache-account-activation-show5c785c036466adea360111aa28563bfd556b5fba', 'i:5;', 1787691820),
+('laravel-cache-account-activation-show5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787691820;', 1787691820),
+('laravel-cache-ae6983357c75cd0504c65f79682f5e6e', 'i:1;', 1787571812),
+('laravel-cache-ae6983357c75cd0504c65f79682f5e6e:timer', 'i:1787571812;', 1787571812),
+('laravel-cache-babf79d7e6993b354b018be8ec035fff', 'i:3;', 1787691822),
+('laravel-cache-babf79d7e6993b354b018be8ec035fff:timer', 'i:1787691822;', 1787691822),
+('laravel-cache-f57842f6d821fe7713b8263d8fc90fb3', 'i:5;', 1787691813),
+('laravel-cache-f57842f6d821fe7713b8263d8fc90fb3:timer', 'i:1787691813;', 1787691813),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400', 'i:2;', 1787742905),
+('laravel-cache-f6e1126cedebf23e1463aee73f9df08783640400:timer', 'i:1787742905;', 1787742905),
+('laravel-cache-login-fail:joner@test.cz', 'i:2;', 1787572236),
+('laravel-cache-login-fail:joner@test.cz:timer', 'i:1787572236;', 1787572236),
+('laravel-cache-login-fail:utok-test@example.com', 'i:3;', 1787692653),
+('laravel-cache-login-fail:utok-test@example.com:timer', 'i:1787692653;', 1787692653),
+('laravel-cache-login-verify-2fa5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1787734123),
+('laravel-cache-login-verify-2fa5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787734123;', 1787734123),
+('laravel-cache-password-forgot5c785c036466adea360111aa28563bfd556b5fba', 'i:5;', 1787691815),
+('laravel-cache-password-forgot5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787691815;', 1787691815),
+('laravel-cache-password-reset-email:utok-test@example.com', 'i:3;', 1787692655),
+('laravel-cache-password-reset-email:utok-test@example.com:timer', 'i:1787692655;', 1787692655),
+('laravel-cache-password-reset5c785c036466adea360111aa28563bfd556b5fba', 'i:5;', 1787691821),
+('laravel-cache-password-reset5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787691821;', 1787691821),
+('laravel-cache-sales-orders5c785c036466adea360111aa28563bfd556b5fba', 'i:10;', 1787691815),
+('laravel-cache-sales-orders5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787691815;', 1787691815),
+('laravel-cache-scan-probe5c785c036466adea360111aa28563bfd556b5fba', 'i:10;', 1787691817),
+('laravel-cache-scan-probe5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1787691817;', 1787691817),
+('laravel-cache-site_setting_active_web', 'O:29:\"App\\Models\\Web\\WebSiteSetting\":33:{s:13:\"\0*\0connection\";s:5:\"mysql\";s:8:\"\0*\0table\";s:17:\"web_site_settings\";s:13:\"\0*\0primaryKey\";s:2:\"id\";s:10:\"\0*\0keyType\";s:3:\"int\";s:12:\"incrementing\";b:1;s:7:\"\0*\0with\";a:0:{}s:12:\"\0*\0withCount\";a:0:{}s:19:\"preventsLazyLoading\";b:0;s:10:\"\0*\0perPage\";i:15;s:6:\"exists\";b:1;s:18:\"wasRecentlyCreated\";b:0;s:28:\"\0*\0escapeWhenCastingToString\";b:0;s:13:\"\0*\0attributes\";a:10:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-22 00:06:58\";s:28:\"raw_request_email_title_i18n\";s:88:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Your request has been accepted\"}\";s:28:\"raw_request_email_intro_i18n\";s:240:\"{\"cz\":\"d\\u011bkujeme za Va\\u0161i popt\\u00e1vku. Byla \\u00fasp\\u011b\\u0161n\\u011b p\\u0159ijate a n\\u00e1\\u0161 t\\u00fdm se j\\u00ed bude v nejbli\\u017e\\u0161\\u00ed dob\\u011b v\\u011bnovat.\",\"en\":\"thank you for order we will take look at it.\"}\";s:28:\"raw_request_email_outro_i18n\";s:121:\"{\"cz\":\"V p\\u0159\\u00edpad\\u011b dotaz\\u016f n\\u00e1s nev\\u00e1hejte kontaktovat.\",\"en\":\"If you have questing contact us\"}\";s:29:\"raw_request_email_labels_i18n\";s:236:\"{\"cz\":[],\"en\":{\"greeting\":\"Hello,\",\"summary_header\":\"Recapitulation\",\"label_thema\":\"Thema\",\"label_email\":\"Contact Email\",\"label_phone\":\"Telephone\",\"label_description\":\"Description\",\"label_attachments\":\"Accessments\",\"label_date\":\"Date\"}}\";s:30:\"raw_request_email_subject_i18n\";s:75:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Order information\"}\";}s:11:\"\0*\0original\";a:10:{s:2:\"id\";i:1;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";s:47:\"Omlouváme se, web je momentálně v údržbě.\";s:10:\"created_at\";s:19:\"2026-06-12 13:42:21\";s:10:\"updated_at\";s:19:\"2026-08-22 00:06:58\";s:28:\"raw_request_email_title_i18n\";s:88:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Your request has been accepted\"}\";s:28:\"raw_request_email_intro_i18n\";s:240:\"{\"cz\":\"d\\u011bkujeme za Va\\u0161i popt\\u00e1vku. Byla \\u00fasp\\u011b\\u0161n\\u011b p\\u0159ijate a n\\u00e1\\u0161 t\\u00fdm se j\\u00ed bude v nejbli\\u017e\\u0161\\u00ed dob\\u011b v\\u011bnovat.\",\"en\":\"thank you for order we will take look at it.\"}\";s:28:\"raw_request_email_outro_i18n\";s:121:\"{\"cz\":\"V p\\u0159\\u00edpad\\u011b dotaz\\u016f n\\u00e1s nev\\u00e1hejte kontaktovat.\",\"en\":\"If you have questing contact us\"}\";s:29:\"raw_request_email_labels_i18n\";s:236:\"{\"cz\":[],\"en\":{\"greeting\":\"Hello,\",\"summary_header\":\"Recapitulation\",\"label_thema\":\"Thema\",\"label_email\":\"Contact Email\",\"label_phone\":\"Telephone\",\"label_description\":\"Description\",\"label_attachments\":\"Accessments\",\"label_date\":\"Date\"}}\";s:30:\"raw_request_email_subject_i18n\";s:75:\"{\"cz\":\"Va\\u0161e popt\\u00e1vka byla p\\u0159ijata\",\"en\":\"Order information\"}\";}s:10:\"\0*\0changes\";a:0:{}s:11:\"\0*\0previous\";a:0:{}s:8:\"\0*\0casts\";a:6:{s:13:\"is_web_active\";s:7:\"boolean\";s:28:\"raw_request_email_title_i18n\";s:5:\"array\";s:28:\"raw_request_email_intro_i18n\";s:5:\"array\";s:28:\"raw_request_email_outro_i18n\";s:5:\"array\";s:29:\"raw_request_email_labels_i18n\";s:5:\"array\";s:30:\"raw_request_email_subject_i18n\";s:5:\"array\";}s:17:\"\0*\0classCastCache\";a:0:{}s:21:\"\0*\0attributeCastCache\";a:0:{}s:13:\"\0*\0dateFormat\";N;s:10:\"\0*\0appends\";a:0:{}s:19:\"\0*\0dispatchesEvents\";a:0:{}s:14:\"\0*\0observables\";a:0:{}s:12:\"\0*\0relations\";a:0:{}s:10:\"\0*\0touches\";a:0:{}s:27:\"\0*\0relationAutoloadCallback\";N;s:26:\"\0*\0relationAutoloadContext\";N;s:10:\"timestamps\";b:1;s:13:\"usesUniqueIds\";b:0;s:9:\"\0*\0hidden\";a:0:{}s:10:\"\0*\0visible\";a:0:{}s:11:\"\0*\0fillable\";a:7:{i:0;s:13:\"is_web_active\";i:1;s:23:\"web_maintenance_message\";i:2;s:28:\"raw_request_email_title_i18n\";i:3;s:28:\"raw_request_email_intro_i18n\";i:4;s:28:\"raw_request_email_outro_i18n\";i:5;s:29:\"raw_request_email_labels_i18n\";i:6;s:30:\"raw_request_email_subject_i18n\";}s:10:\"\0*\0guarded\";a:1:{i:0;s:1:\"*\";}}', 1787741944);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `core_email_access_rules`
+--
+
+CREATE TABLE `core_email_access_rules` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `type` enum('domain','email') NOT NULL,
+  `value` varchar(255) NOT NULL COMMENT 'Domena (bez @) nebo cely email - vzdy ulozeno lowercase/trim',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `core_email_access_rules`
+--
+
+INSERT INTO `core_email_access_rules` (`id`, `type`, `value`, `created_at`, `updated_at`) VALUES
+(4, 'domain', 'gmail.com', '2026-08-26 11:00:28', '2026-08-26 11:00:28'),
+(5, 'email', 'fonet@test.cz', '2026-08-26 11:23:45', '2026-08-26 11:23:45');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `core_import_batches`
+--
+
+CREATE TABLE `core_import_batches` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `resource` varchar(100) NOT NULL COMMENT 'Klíč z config/importable_resources.php, stejný string jako apiEndpoint na frontendu',
+  `user_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'Kdo import spustil - NULL pokud mezitím účet zanikl (ON DELETE SET NULL)',
+  `original_filename` varchar(255) DEFAULT NULL,
+  `format` varchar(10) NOT NULL COMMENT 'csv, xlsx, json, txt',
+  `temp_path` varchar(500) DEFAULT NULL COMMENT 'Cesta k dočasně uloženému souboru na disku - mazána po commitu nebo purge příkazem',
+  `status` enum('validated','queued','processing','completed','failed') NOT NULL DEFAULT 'validated',
+  `total_rows` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `valid_rows` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `invalid_rows` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `imported_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `skipped_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `error_summary` text DEFAULT NULL COMMENT 'JSON pole {row, reason} - jen prvních N chyb, ne nutně všechny (viz ImportFileParser::MAX_STORED_ERRORS)',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `completed_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `core_import_batches`
+--
+
+INSERT INTO `core_import_batches` (`id`, `resource`, `user_id`, `original_filename`, `format`, `temp_path`, `status`, `total_rows`, `valid_rows`, `invalid_rows`, `imported_count`, `skipped_count`, `error_summary`, `created_at`, `updated_at`, `completed_at`) VALUES
+(1, 'web/raw_request_commissions', 25, 'import-validni.json', 'json', 'imports/36b4902c-ac6e-4d38-9df8-c2854fcce025.json', 'validated', 5, 5, 0, 0, 0, '[]', '2026-08-22 23:19:42', '2026-08-22 23:19:42', NULL),
+(2, 'web/raw_request_commissions', 25, 'import-validni.json', 'json', 'imports/392427b6-8ad7-4b98-ad29-39c35892cfa7.json', 'validated', 5, 5, 0, 0, 0, '[]', '2026-08-22 23:27:42', '2026-08-22 23:27:42', NULL),
+(3, 'web/raw_request_commissions', 25, 'import-validni.json', 'json', 'imports/8c5d2f2d-b1c7-49d5-b395-90480fb3e227.json', 'validated', 5, 5, 0, 0, 0, '[]', '2026-08-22 23:32:06', '2026-08-22 23:32:06', NULL),
+(4, 'web/raw_request_commissions', 25, 'import-validni.json', 'json', 'imports/7e5e69b6-b88f-4908-bbc1-b4bc5520b18c.json', 'completed', 5, 5, 0, 5, 0, '[]', '2026-08-22 23:36:00', '2026-08-22 23:36:04', '2026-08-22 23:36:04'),
+(5, 'web/raw_request_commissions', 25, 'import-validni.json', 'json', 'imports/1d86aca1-0ee8-40fc-ad5b-51d45be16554.json', 'completed', 5, 5, 0, 5, 0, '[]', '2026-08-22 23:41:27', '2026-08-22 23:41:29', '2026-08-22 23:41:29'),
+(6, 'web/raw_request_commissions', 25, 'import-validni.csv', 'csv', 'imports/4ba158ac-e553-4a1d-9d8b-6604541943ba.csv', 'validated', 5, 5, 0, 0, 0, '[]', '2026-08-22 23:41:59', '2026-08-22 23:41:59', NULL),
+(7, 'web/raw_request_commissions', 25, 'import-validni-60.csv', 'csv', 'imports/038bf1cb-4d5a-4be1-bac6-702f39df73be.csv', 'validated', 60, 0, 60, 0, 0, '[{\"row\":2,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":3,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":4,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":5,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":6,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":7,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":8,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":9,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":10,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":11,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":12,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":13,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":14,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":15,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":16,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":17,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":18,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":19,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":20,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":21,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":22,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":23,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":24,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":25,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":26,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":27,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":28,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":29,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":30,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":31,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":32,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":33,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":34,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":35,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":36,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":37,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":38,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":39,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":40,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":41,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":42,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":43,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":44,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":45,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":46,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":47,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":48,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":49,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":50,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":51,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":52,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":53,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":54,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":55,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":56,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":57,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":58,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":59,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":60,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":61,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}}]', '2026-08-22 23:50:20', '2026-08-22 23:50:20', NULL),
+(8, 'web/raw_request_commissions', 25, 'import-validni-60.json', 'json', 'imports/2e613900-c57a-40d9-96ab-ae57a693e06b.json', 'validated', 60, 0, 60, 0, 0, '[{\"row\":2,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":3,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":4,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":5,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":6,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":7,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":8,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":9,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":10,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":11,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":12,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":13,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":14,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":15,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":16,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":17,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":18,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":19,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":20,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":21,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":22,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":23,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":24,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":25,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":26,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":27,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":28,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":29,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":30,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":31,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":32,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":33,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":34,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":35,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":36,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":37,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":38,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":39,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":40,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":41,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":42,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":43,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":44,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":45,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":46,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":47,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":48,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":49,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":50,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":51,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":52,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":53,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":54,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":55,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":56,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":57,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":58,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":59,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":60,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":61,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}}]', '2026-08-22 23:53:51', '2026-08-22 23:53:51', NULL),
+(9, 'web/raw_request_commissions', 25, 'import-validni.json', 'json', 'imports/77c00620-db81-4363-96e3-e3aa9cb0321d.json', 'validated', 5, 5, 0, 0, 0, '[]', '2026-08-22 23:54:14', '2026-08-22 23:54:14', NULL),
+(10, 'web/raw_request_commissions', 25, 'import-validni-60.json', 'json', 'imports/00cc83ec-61cb-4074-bd5a-755b51b86a58.json', 'validated', 60, 0, 60, 0, 0, '[{\"row\":2,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":3,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":4,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":5,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":6,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":7,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":8,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":9,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":10,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":11,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":12,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":13,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":14,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":15,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":16,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":17,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":18,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":19,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":20,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":21,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":22,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":23,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":24,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":25,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":26,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":27,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":28,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":29,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":30,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":31,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":32,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":33,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":34,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":35,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":36,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":37,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":38,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":39,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":40,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":41,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":42,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":43,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":44,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":45,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":46,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":47,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":48,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":49,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":50,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":51,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":52,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":53,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":54,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":55,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":56,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":57,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":58,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":59,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":60,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}},{\"row\":61,\"errors\":{\"thema\":[\"The thema field format is invalid.\"]}}]', '2026-08-22 23:54:22', '2026-08-22 23:54:22', NULL),
+(11, 'web/raw_request_commissions', 25, 'import-validni-60.csv', 'csv', 'imports/ad307694-07e7-451c-8c4f-27a0fdcf0312.csv', 'completed', 60, 60, 0, 60, 0, '[]', '2026-08-22 23:58:00', '2026-08-22 23:58:02', '2026-08-22 23:58:02'),
+(12, 'web/raw_request_commissions', 25, 'import-validni-60.json', 'json', 'imports/7568e504-550e-4253-a63e-54e9bc4eb1f0.json', 'completed', 60, 60, 0, 60, 0, '[]', '2026-08-22 23:58:19', '2026-08-22 23:58:21', '2026-08-22 23:58:21'),
+(13, 'web/raw_request_commissions', 25, 'import-validni.csv', 'csv', 'imports/bf41459e-9537-400b-a8e1-fccae950d2c9.csv', 'completed', 5, 5, 0, 5, 0, '[]', '2026-08-22 23:58:31', '2026-08-22 23:58:33', '2026-08-22 23:58:33'),
+(14, 'web/raw_request_commissions', 25, 'import-nevalidni.json', 'json', 'imports/515bd16d-f2bd-48d8-b8dd-81a1dff5a0f6.json', 'validated', 5, 0, 5, 0, 0, '[{\"row\":2,\"errors\":{\"thema\":[\"The thema field must be at least 3 characters.\"]}},{\"row\":3,\"errors\":{\"contact_email\":[\"The contact email field must be a valid email address.\"]}},{\"row\":4,\"errors\":{\"order_description\":[\"The order description field is required.\"]}},{\"row\":5,\"errors\":{\"status\":[\"The selected status is invalid.\"]}},{\"row\":6,\"errors\":{\"thema\":[\"The thema field format is invalid.\"],\"contact_phone\":[\"The contact phone field format is invalid.\"],\"priority\":[\"The selected priority is invalid.\"]}}]', '2026-08-23 00:24:29', '2026-08-23 00:24:29', NULL),
+(15, 'web/raw_request_commissions', 25, 'import-validni.json', 'json', 'imports/8dc5a5a9-18da-4839-a977-c8f9b539021c.json', 'completed', 5, 5, 0, 5, 0, '[]', '2026-08-23 10:50:40', '2026-08-23 10:50:42', '2026-08-23 10:50:42'),
+(16, 'web/raw_request_commissions', 25, 'Seznam aktivních požadavků-raw.txt', 'txt', 'imports/0b6ae2ac-c9c1-4dfe-85df-4c48b867ca43.txt', 'completed', 9, 9, 0, 9, 0, '[]', '2026-08-23 12:55:03', '2026-08-23 12:55:05', '2026-08-23 12:55:05'),
+(17, 'web/raw_request_commissions', 25, 'Seznam aktivních požadavků-raw.json', 'json', 'imports/5ff801c8-844b-4535-9bc0-cfcfdf328eed.json', 'completed', 9, 9, 0, 9, 0, '[]', '2026-08-23 13:00:33', '2026-08-23 13:00:35', '2026-08-23 13:00:35'),
+(18, 'web/raw_request_commissions', 25, 'Seznam aktivních požadavků-vybrane-raw.csv', 'csv', 'imports/0a68d7cc-69b7-47c1-b60e-78ee1763db48.csv', 'completed', 1, 1, 0, 1, 0, '[]', '2026-08-23 13:12:40', '2026-08-23 13:12:43', '2026-08-23 13:12:43'),
+(19, 'web/raw_request_commissions', 25, 'Seznam aktivních požadavků-vybrane-raw.txt', 'txt', 'imports/834b6177-0a55-4fa9-bcbe-e44e8cc4b5b2.txt', 'completed', 1, 1, 0, 1, 0, '[]', '2026-08-23 13:20:35', '2026-08-23 13:20:37', '2026-08-23 13:20:37'),
+(20, 'web/raw_request_commissions', 25, 'Seznam aktivních požadavků-vybrane-raw.json', 'json', 'imports/d32bcdd0-e395-4076-b580-50b93cc1e8aa.json', 'completed', 2, 2, 0, 2, 0, '[]', '2026-08-23 13:20:57', '2026-08-23 13:20:58', '2026-08-23 13:20:58'),
+(21, 'web/raw_request_commissions', 25, 'Seznam aktivních požadavků-vybrane-raw.json', 'json', 'imports/4fb87b0a-5d76-418a-84d1-b1fa5599ee7b.json', 'completed', 2, 1, 1, 1, 1, '[{\"row\":2,\"errors\":{\"thema\":[\"The thema field is required.\"],\"contact_email\":[\"The contact email field must be a valid email address.\"]}}]', '2026-08-23 13:21:39', '2026-08-23 13:21:48', '2026-08-23 13:21:48'),
+(22, 'web/support_tickets', 25, 'Seznam Support Ticketů-raw.csv', 'csv', 'imports/66ddddf3-849e-477c-b499-b5099f36275e.csv', 'completed', 2, 2, 0, 2, 0, '[]', '2026-08-23 15:57:02', '2026-08-23 15:57:03', '2026-08-23 15:57:03'),
+(23, 'web/support_tickets', 25, 'Seznam Support Ticketů-vybrane-raw.csv', 'csv', 'imports/9f223ab9-2af2-4cbe-8ac6-7235979fa76d.csv', 'completed', 3, 3, 0, 3, 0, '[]', '2026-08-23 19:53:04', '2026-08-23 19:53:05', '2026-08-23 19:53:05'),
+(24, 'web/sales_leads', 25, 'Seznam obchodních příležitostí-raw.csv', 'csv', 'imports/b191c623-9bd9-4e8f-a95a-d2940f69ffd9.csv', 'completed', 1, 1, 0, 1, 0, '[]', '2026-08-23 20:03:35', '2026-08-23 20:03:37', '2026-08-23 20:03:37'),
+(25, 'shop/suppliers', 25, 'Seznam aktivních dodavatelů-vybrane-raw.csv', 'csv', 'imports/68cc6c16-5d39-4eca-8e03-bf190400c6c5.csv', 'validated', 2, 0, 2, 0, 0, '[{\"row\":2,\"errors\":{\"is_active\":[\"The is active field must be true or false.\"]}},{\"row\":3,\"errors\":{\"is_active\":[\"The is active field must be true or false.\"]}}]', '2026-08-23 20:45:23', '2026-08-23 20:45:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -87,6 +194,236 @@ CREATE TABLE `core_logs` (
   `user_id_plain` varchar(255) DEFAULT NULL,
   `user_plain` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `core_logs`
+--
+
+INSERT INTO `core_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
+(1, '2026-08-22 15:01:15', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(2, '2026-08-22 15:01:23', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(3, '2026-08-22 15:01:33', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"BCNsvuBXl5f07Avbqg1tK22RriqA2mX6duE1Vfx3Ig6JvxpZNgdI3zNXZWUkNnef\",\"code\":\"852729\"}', '0', 'system'),
+(4, '2026-08-22 15:04:26', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(5, '2026-08-22 15:04:33', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(6, '2026-08-22 15:04:42', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"x9mNpaSbkzUynwzeS9DCNv5L5quWrLHhhDoafhGv5QjZUFLAN3hPEOmqwksgZo0m\",\"code\":\"460818\"}', '0', 'system'),
+(7, '2026-08-22 15:08:25', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(8, '2026-08-22 15:08:34', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(9, '2026-08-22 15:08:41', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"9bE8hhQa7Jh9UIqZUO2bV5ulkH1Stpe0InFXl2RhWezKqxyadiFefSxfWmRuE8ZM\",\"code\":\"283934\"}', '0', 'system'),
+(10, '2026-08-22 16:07:09', '127.0.0.1', 'security_retention_updated', 'Core', 'Retenční doba bezpečnostního monitoringu změněna z 90 na 14 dní.', 'CoreSecuritySetting', 1, 25, '{\"retention_days\":\"14\"}', '25', 'jonasbucina@rpsw.cz'),
+(11, '2026-08-22 16:07:11', '127.0.0.1', 'security_events_purged', 'Core', 'Ruční vyčištění bezpečnostního monitoringu: smazáno 0 záznamů starších než 14 dní.', 'CoreSecurityEvent', NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(12, '2026-08-22 16:13:13', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(13, '2026-08-22 16:13:13', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(14, '2026-08-22 16:13:13', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(15, '2026-08-22 16:13:13', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(16, '2026-08-22 16:13:13', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(17, '2026-08-22 16:13:14', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(18, '2026-08-22 16:13:14', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(19, '2026-08-22 16:13:14', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(20, '2026-08-22 16:13:14', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(21, '2026-08-22 16:13:14', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(22, '2026-08-22 16:18:18', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #98 (refresh_token_invalid, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 98, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(23, '2026-08-22 16:18:18', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #88 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 88, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(24, '2026-08-22 16:18:18', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #71 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 71, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(25, '2026-08-22 16:18:18', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #70 (login_brute_force_suspected, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 70, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(26, '2026-08-22 16:18:18', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #67 (login_failed, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 67, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(27, '2026-08-22 16:18:24', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(28, '2026-08-22 16:18:24', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(29, '2026-08-22 16:18:24', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(30, '2026-08-22 16:18:24', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(31, '2026-08-22 16:18:24', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(32, '2026-08-22 16:18:25', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(33, '2026-08-22 16:18:25', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(34, '2026-08-22 16:18:25', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(35, '2026-08-22 16:18:25', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(36, '2026-08-22 16:18:25', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(37, '2026-08-22 16:21:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #120 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 120, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(38, '2026-08-22 16:21:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #130 (refresh_token_invalid, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 130, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(39, '2026-08-22 16:21:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #103 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 103, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(40, '2026-08-22 16:23:42', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(41, '2026-08-22 16:23:43', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(42, '2026-08-22 16:23:43', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(43, '2026-08-22 16:23:43', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(44, '2026-08-22 16:23:43', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(45, '2026-08-22 16:23:44', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(46, '2026-08-22 16:23:44', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(47, '2026-08-22 16:23:44', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(48, '2026-08-22 16:23:44', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(49, '2026-08-22 16:23:44', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(50, '2026-08-22 17:22:29', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #166 (refresh_token_invalid, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 166, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(51, '2026-08-22 17:22:29', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #156 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 156, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(52, '2026-08-22 17:22:29', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #139 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 139, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(53, '2026-08-22 17:22:29', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #138 (login_brute_force_suspected, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 138, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(54, '2026-08-22 17:22:29', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #135 (login_failed, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 135, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(55, '2026-08-22 17:23:17', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(56, '2026-08-22 17:23:18', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(57, '2026-08-22 17:23:18', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(58, '2026-08-22 17:23:18', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(59, '2026-08-22 17:23:18', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(60, '2026-08-22 17:23:19', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(61, '2026-08-22 17:23:19', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(62, '2026-08-22 17:23:19', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(63, '2026-08-22 17:23:19', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(64, '2026-08-22 17:23:19', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(65, '2026-08-22 17:31:06', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #202 (refresh_token_invalid, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 202, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(66, '2026-08-22 17:31:06', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #192 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 192, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(67, '2026-08-22 17:31:06', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #175 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 175, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(68, '2026-08-22 17:31:06', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #174 (login_brute_force_suspected, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 174, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(69, '2026-08-22 17:31:07', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #171 (login_failed, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 171, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(70, '2026-08-22 17:31:46', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(71, '2026-08-22 17:31:46', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(72, '2026-08-22 17:31:47', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(73, '2026-08-22 17:31:47', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(74, '2026-08-22 17:31:47', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(75, '2026-08-22 17:31:47', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(76, '2026-08-22 17:31:48', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(77, '2026-08-22 17:31:48', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(78, '2026-08-22 17:31:48', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(79, '2026-08-22 17:31:48', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(80, '2026-08-22 17:43:06', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #238 (refresh_token_invalid, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 238, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(81, '2026-08-22 17:43:06', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #228 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 228, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(82, '2026-08-22 17:43:07', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #211 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 211, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(83, '2026-08-22 17:43:07', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #210 (login_brute_force_suspected, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 210, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(84, '2026-08-22 17:43:07', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #207 (login_failed, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 207, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(85, '2026-08-22 17:43:12', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(86, '2026-08-22 17:43:12', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(87, '2026-08-22 17:43:12', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(88, '2026-08-22 17:43:12', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(89, '2026-08-22 17:43:12', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(90, '2026-08-22 17:43:13', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(91, '2026-08-22 17:43:13', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(92, '2026-08-22 17:43:13', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(93, '2026-08-22 17:43:13', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(94, '2026-08-22 17:43:13', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(95, '2026-08-22 17:46:39', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #270 (refresh_token_invalid, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 270, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(96, '2026-08-22 17:46:39', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #263 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 263, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(97, '2026-08-22 17:46:40', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #264 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 264, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(98, '2026-08-22 17:46:40', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #265 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 265, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(99, '2026-08-22 17:46:40', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #266 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 266, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(100, '2026-08-22 17:46:40', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #267 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 267, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(101, '2026-08-22 17:46:40', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #268 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 268, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(102, '2026-08-22 17:46:41', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #269 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 269, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(103, '2026-08-22 17:46:41', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #260 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 260, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(104, '2026-08-22 17:46:41', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #261 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 261, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(105, '2026-08-22 17:46:41', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #262 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 262, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(106, '2026-08-22 17:46:42', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #251 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 251, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(107, '2026-08-22 17:46:42', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #248 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 248, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(108, '2026-08-22 17:46:42', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #243 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 243, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(109, '2026-08-22 17:46:53', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(110, '2026-08-22 17:46:54', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(111, '2026-08-22 17:46:54', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(112, '2026-08-22 17:46:54', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(113, '2026-08-22 17:46:54', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(114, '2026-08-22 17:46:55', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(115, '2026-08-22 17:46:55', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(116, '2026-08-22 17:46:55', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(117, '2026-08-22 17:46:55', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(118, '2026-08-22 17:46:56', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(119, '2026-08-22 21:01:30', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(120, '2026-08-22 21:01:37', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(121, '2026-08-22 21:01:47', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"j7lFsvnu1X2T3p9GniKOXPUhHoStwKtgpUQenGIs4iOh06GlmNOPhP6PswAMrkjc\",\"code\":\"495198\"}', '0', 'system'),
+(122, '2026-08-22 23:05:30', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(123, '2026-08-22 23:05:39', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"PGj6CeLgXVwmOJliVbXhSJJN8LNmeaW9UvhQXITlyYB8lTmjLJNrbobVTzK1fVHM\",\"code\":\"947757\"}', '0', 'system'),
+(124, '2026-08-22 23:49:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #311 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 311, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(125, '2026-08-22 23:49:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #306 (refresh_token_invalid, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 306, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(126, '2026-08-22 23:49:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #296 (scan_probe, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 296, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(127, '2026-08-22 23:49:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #287 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 287, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(128, '2026-08-22 23:49:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #284 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 284, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(129, '2026-08-22 23:49:23', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #279 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 279, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(130, '2026-08-22 23:49:24', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #278 (login_brute_force_suspected, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 278, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(131, '2026-08-22 23:49:24', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #275 (login_failed, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 275, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(132, '2026-08-23 00:23:51', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #319 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 319, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(133, '2026-08-23 00:23:51', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #318 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 318, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(134, '2026-08-23 00:23:51', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #317 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 317, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(135, '2026-08-23 00:23:52', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #316 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 316, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(136, '2026-08-23 00:23:52', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #315 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 315, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(137, '2026-08-23 00:23:52', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #314 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 314, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(138, '2026-08-23 00:23:52', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #313 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 313, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(139, '2026-08-23 00:23:52', '127.0.0.1', 'security_event_deleted', 'Core', 'Bezpečnostní event #312 (throttle_exceeded, IP: 127.0.0.1) byl ručně smazán.', 'CoreSecurityEvent', 312, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(140, '2026-08-23 00:23:58', '127.0.0.1', 'security_retention_updated', 'Core', 'Retenční doba bezpečnostního monitoringu změněna z 14 na 60 dní.', 'CoreSecuritySetting', 1, 25, '{\"retention_days\":\"60\"}', '25', 'jonasbucina@rpsw.cz'),
+(141, '2026-08-23 15:28:16', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(142, '2026-08-23 15:28:29', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"cUC3KcCM0mQzonfomscAeOPuBl7Ce6iHAYxZ0s2zlaudXxKagr00PQJe3mk5qdDP\",\"code\":\"134768\"}', '0', 'system'),
+(143, '2026-08-23 19:52:01', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(144, '2026-08-23 19:52:09', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"kjphejYjfphLyslVCJyfVVYUy0GnyeW9dwbFg3TLhkClnWxiihdUwZE1JoRwYX4t\",\"code\":\"763941\"}', '0', 'system'),
+(145, '2026-08-24 09:19:31', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(146, '2026-08-24 09:19:42', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"email\":\"jonasbucina@rpsw.cz\"}', '0', 'system'),
+(147, '2026-08-24 11:24:14', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(148, '2026-08-24 11:24:22', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"PMbCOTr2E3jsATVsta9IoUxs7CablDwjT0XAaKCKfBabdYKOyu148Cfu2h9hoSdM\",\"code\":\"533220\"}', '0', 'system'),
+(149, '2026-08-24 11:25:29', '127.0.0.1', 'create', 'User', 'Vytvořen uživatel (čeká na aktivaci): joner@rpsw.cz', 'User', 94, 25, '{\"user_email\":\"joner@rpsw.cz\",\"full_name\":\"Joner Foner\",\"role_id\":2,\"internal_note\":\"noper\",\"dpp_hours_spent\":0,\"enable_2fa\":false}', '25', 'jonasbucina@rpsw.cz'),
+(150, '2026-08-24 11:43:13', '127.0.0.1', 'create', 'User', 'Vytvořen uživatel (čeká na aktivaci): test@test.cz [AKTIVAČNÍ E-MAIL SE NEPODAŘILO ODESLAT]', 'User', 95, 25, '{\"user_email\":\"test@test.cz\",\"full_name\":\"test\",\"role_id\":2,\"internal_note\":null,\"dpp_hours_spent\":0,\"enable_2fa\":false}', '25', 'jonasbucina@rpsw.cz'),
+(151, '2026-08-24 11:49:54', '127.0.0.1', 'resend_activation_failed', 'User', 'Opětovné odeslání aktivačního e-mailu selhalo: test@test.cz', 'User', 95, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(152, '2026-08-24 11:54:37', '127.0.0.1', 'resend_activation_failed', 'User', 'Opětovné odeslání aktivačního e-mailu selhalo: test@test.cz', 'User', 95, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(153, '2026-08-24 11:57:30', '127.0.0.1', 'resend_activation', 'User', 'Aktivační e-mail odeslán znovu: test@test.cz', 'User', 95, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(154, '2026-08-24 12:15:57', '127.0.0.1', 'soft_delete', 'User', 'Smazáno ID: 95', 'User', 95, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(155, '2026-08-24 12:16:23', '127.0.0.1', 'hard_delete', 'User', 'Smazáno ID: 95', 'User', 95, 25, '{\"force_delete\":\"true\"}', '25', 'jonasbucina@rpsw.cz'),
+(156, '2026-08-24 12:16:39', '127.0.0.1', 'create', 'User', 'Vytvořen uživatel (čeká na aktivaci): joner@rpsw.cz', 'User', 96, 25, '{\"user_email\":\"joner@rpsw.cz\",\"full_name\":\"JOnerTEST\",\"role_id\":2,\"internal_note\":null,\"dpp_hours_spent\":0,\"enable_2fa\":false}', '25', 'jonasbucina@rpsw.cz'),
+(157, '2026-08-24 13:35:19', '127.0.0.1', 'account_activated', 'User', 'Účet aktivován: joner@rpsw.cz', 'User', 96, NULL, '[]', '0', 'system'),
+(158, '2026-08-24 13:35:36', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: joner@test.cz', 'User', NULL, NULL, '{\"email\":\"joner@test.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '0', 'system'),
+(159, '2026-08-24 13:38:19', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: joner@test.cz', 'User', NULL, NULL, '{\"email\":\"joner@test.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '0', 'system'),
+(160, '2026-08-24 13:38:24', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: joner@rpsw.cz', 'User', 96, 96, '{\"email\":\"joner@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '96', 'joner@rpsw.cz'),
+(161, '2026-08-24 13:38:37', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: joner@rpsw.cz', 'User', 96, NULL, '{\"login_token\":\"KKJINvhO68pTAjVTWMbty5Ah66PjcbIxMLRE6ZhIbYNy185XQnW2GFb85fi4GoPj\",\"code\":\"252360\"}', '0', 'system'),
+(162, '2026-08-24 13:38:54', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: joner@rpsw.cz', 'User', 96, 96, '{\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '96', 'joner@rpsw.cz'),
+(163, '2026-08-24 13:39:30', '127.0.0.1', 'create', 'CoreRole', 'Created role: test', 'CoreRole', 14, 25, '{\"role_name\":\"test\",\"description\":null,\"is_protected\":false,\"forces_2fa\":false,\"users_count\":0,\"permissions\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(164, '2026-08-24 13:39:40', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: joner@rpsw.cz', 'User', 96, 25, '{\"id\":96,\"user_email\":\"joner@rpsw.cz\",\"full_name\":\"JOnerTEST\",\"two_fa_forced_by_admin\":false,\"activated_at\":\"2026-08-24 13:35:19\",\"internal_note\":null,\"last_login_at\":\"2026-08-24 13:38:37\",\"created_at\":\"2026-08-24 12:16:39\",\"updated_at\":\"2026-08-24 13:38:37\",\"deleted_at\":null,\"role_id\":14,\"roles\":[{\"id\":2,\"role_name\":\"admin\",\"description\":\"Administr\\u00e1tor - spr\\u00e1va webu\",\"is_protected\":true,\"forces_2fa\":false,\"users_count\":2,\"permissions\":[\"web-view-personal-info\",\"web-view-dashboard\",\"view-deleted\",\"shop-manage-products\",\"shop-manage-categories\",\"shop-view-orders\",\"shop-manage-customers\",\"view-web\",\"view-eshop\",\"shop-view-dashboard\",\"shop-view-logs\",\"core-view-welcome-page\",\"web-support-tickets-view\",\"web-support-tickets-create\",\"web-support-tickets-update\",\"web-support-tickets-delete\",\"web-sales-leads-view\",\"web-sales-leads-create\",\"web-sales-leads-update\",\"web-sales-leads-delete\",\"web-news-view\",\"web-news-create\",\"web-news-update\",\"web-news-delete\",\"web-sales-orders-view\",\"web-sales-orders-create\",\"web-sales-orders-update\",\"web-sales-orders-delete\",\"web-job-applications-view\",\"web-job-applications-create\",\"web-job-applications-update\",\"web-job-applications-delete\",\"web-user-requests-view\",\"web-user-requests-create\",\"web-user-requests-update\",\"web-user-requests-delete\"],\"created_at\":\"2026-02-14 09:12:31\",\"updated_at\":\"2026-02-14 09:12:31\"}],\"user_permissions\":[\"web-view-personal-info\",\"web-view-dashboard\",\"view-deleted\",\"shop-manage-products\",\"shop-manage-categories\",\"shop-view-orders\",\"shop-manage-customers\",\"view-web\",\"view-eshop\",\"shop-view-dashboard\",\"shop-view-logs\",\"core-view-welcome-page\",\"web-support-tickets-view\",\"web-support-tickets-create\",\"web-support-tickets-update\",\"web-support-tickets-delete\",\"web-sales-leads-view\",\"web-sales-leads-create\",\"web-sales-leads-update\",\"web-sales-leads-delete\",\"web-news-view\",\"web-news-create\",\"web-news-update\",\"web-news-delete\",\"web-sales-orders-view\",\"web-sales-orders-create\",\"web-sales-orders-update\",\"web-sales-orders-delete\",\"web-job-applications-view\",\"web-job-applications-create\",\"web-job-applications-update\",\"web-job-applications-delete\",\"web-user-requests-view\",\"web-user-requests-create\",\"web-user-requests-update\",\"web-user-requests-delete\"],\"permissions\":[\"web-view-personal-info\",\"web-view-dashboard\",\"view-deleted\",\"shop-manage-products\",\"shop-manage-categories\",\"shop-view-orders\",\"shop-manage-customers\",\"view-web\",\"view-eshop\",\"shop-view-dashboard\",\"shop-view-logs\",\"core-view-welcome-page\",\"web-support-tickets-view\",\"web-support-tickets-create\",\"web-support-tickets-update\",\"web-support-tickets-delete\",\"web-sales-leads-view\",\"web-sales-leads-create\",\"web-sales-leads-update\",\"web-sales-leads-delete\",\"web-news-view\",\"web-news-create\",\"web-news-update\",\"web-news-delete\",\"web-sales-orders-view\",\"web-sales-orders-create\",\"web-sales-orders-update\",\"web-sales-orders-delete\",\"web-job-applications-view\",\"web-job-applications-create\",\"web-job-applications-update\",\"web-job-applications-delete\",\"web-user-requests-view\",\"web-user-requests-create\",\"web-user-requests-update\",\"web-user-requests-delete\"]}', '25', 'jonasbucina@rpsw.cz'),
+(165, '2026-08-24 13:39:40', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: joner@rpsw.cz', 'User', 96, 25, '{\"id\":96,\"user_email\":\"joner@rpsw.cz\",\"full_name\":\"JOnerTEST\",\"two_fa_forced_by_admin\":false,\"activated_at\":\"2026-08-24 13:35:19\",\"internal_note\":null,\"last_login_at\":\"2026-08-24 13:38:37\",\"created_at\":\"2026-08-24 12:16:39\",\"updated_at\":\"2026-08-24 13:38:37\",\"deleted_at\":null,\"role_id\":14,\"roles\":[{\"id\":2,\"role_name\":\"admin\",\"description\":\"Administr\\u00e1tor - spr\\u00e1va webu\",\"is_protected\":true,\"forces_2fa\":false,\"users_count\":2,\"permissions\":[\"web-view-personal-info\",\"web-view-dashboard\",\"view-deleted\",\"shop-manage-products\",\"shop-manage-categories\",\"shop-view-orders\",\"shop-manage-customers\",\"view-web\",\"view-eshop\",\"shop-view-dashboard\",\"shop-view-logs\",\"core-view-welcome-page\",\"web-support-tickets-view\",\"web-support-tickets-create\",\"web-support-tickets-update\",\"web-support-tickets-delete\",\"web-sales-leads-view\",\"web-sales-leads-create\",\"web-sales-leads-update\",\"web-sales-leads-delete\",\"web-news-view\",\"web-news-create\",\"web-news-update\",\"web-news-delete\",\"web-sales-orders-view\",\"web-sales-orders-create\",\"web-sales-orders-update\",\"web-sales-orders-delete\",\"web-job-applications-view\",\"web-job-applications-create\",\"web-job-applications-update\",\"web-job-applications-delete\",\"web-user-requests-view\",\"web-user-requests-create\",\"web-user-requests-update\",\"web-user-requests-delete\"],\"created_at\":\"2026-02-14 09:12:31\",\"updated_at\":\"2026-02-14 09:12:31\"}],\"user_permissions\":[\"web-view-personal-info\",\"web-view-dashboard\",\"view-deleted\",\"shop-manage-products\",\"shop-manage-categories\",\"shop-view-orders\",\"shop-manage-customers\",\"view-web\",\"view-eshop\",\"shop-view-dashboard\",\"shop-view-logs\",\"core-view-welcome-page\",\"web-support-tickets-view\",\"web-support-tickets-create\",\"web-support-tickets-update\",\"web-support-tickets-delete\",\"web-sales-leads-view\",\"web-sales-leads-create\",\"web-sales-leads-update\",\"web-sales-leads-delete\",\"web-news-view\",\"web-news-create\",\"web-news-update\",\"web-news-delete\",\"web-sales-orders-view\",\"web-sales-orders-create\",\"web-sales-orders-update\",\"web-sales-orders-delete\",\"web-job-applications-view\",\"web-job-applications-create\",\"web-job-applications-update\",\"web-job-applications-delete\",\"web-user-requests-view\",\"web-user-requests-create\",\"web-user-requests-update\",\"web-user-requests-delete\"],\"permissions\":[\"web-view-personal-info\",\"web-view-dashboard\",\"view-deleted\",\"shop-manage-products\",\"shop-manage-categories\",\"shop-view-orders\",\"shop-manage-customers\",\"view-web\",\"view-eshop\",\"shop-view-dashboard\",\"shop-view-logs\",\"core-view-welcome-page\",\"web-support-tickets-view\",\"web-support-tickets-create\",\"web-support-tickets-update\",\"web-support-tickets-delete\",\"web-sales-leads-view\",\"web-sales-leads-create\",\"web-sales-leads-update\",\"web-sales-leads-delete\",\"web-news-view\",\"web-news-create\",\"web-news-update\",\"web-news-delete\",\"web-sales-orders-view\",\"web-sales-orders-create\",\"web-sales-orders-update\",\"web-sales-orders-delete\",\"web-job-applications-view\",\"web-job-applications-create\",\"web-job-applications-update\",\"web-job-applications-delete\",\"web-user-requests-view\",\"web-user-requests-create\",\"web-user-requests-update\",\"web-user-requests-delete\"]}', '25', 'jonasbucina@rpsw.cz'),
+(166, '2026-08-24 13:41:08', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: joner@rpsw.cz', 'User', 96, 96, '{\"email\":\"joner@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '96', 'joner@rpsw.cz'),
+(167, '2026-08-24 13:41:37', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: joner@rpsw.cz', 'User', 96, NULL, '{\"login_token\":\"nBxScm50C7Bnv5cX4QRWhBxN3JCwHq9XUSioWZ5NDZystruSOEXyOjFBgY52Lpkn\",\"code\":\"995414\"}', '0', 'system'),
+(168, '2026-08-24 13:41:55', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: joner@rpsw.cz', 'User', 96, 25, '{\"id\":96,\"user_email\":\"joner@rpsw.cz\",\"full_name\":\"JOnerTEST\",\"enable_2fa\":false,\"two_fa_forced_by_admin\":false,\"is_blocked\":false,\"activated_at\":\"2026-08-24 13:35:19\",\"internal_note\":null,\"last_login_at\":\"2026-08-24 13:38:37\",\"created_at\":\"2026-08-24 12:16:39\",\"updated_at\":\"2026-08-24 13:38:37\",\"deleted_at\":null,\"role_id\":14,\"roles\":[{\"id\":14,\"role_name\":\"test\",\"description\":null,\"is_protected\":false,\"forces_2fa\":false,\"users_count\":1,\"permissions\":[],\"created_at\":\"2026-08-24 13:39:30\",\"updated_at\":\"2026-08-24 13:39:30\"}],\"user_permissions\":[],\"permissions\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(169, '2026-08-24 13:42:06', '127.0.0.1', 'account_blocked', 'User', 'Účet zablokován, aktivní tokeny zneplatněny: joner@rpsw.cz', 'User', 96, 25, '{\"id\":96,\"user_email\":\"joner@rpsw.cz\",\"full_name\":\"JOnerTEST\",\"enable_2fa\":false,\"two_fa_forced_by_admin\":false,\"is_blocked\":true,\"activated_at\":\"2026-08-24 13:35:19\",\"internal_note\":null,\"last_login_at\":\"2026-08-24 13:41:37\",\"created_at\":\"2026-08-24 12:16:39\",\"updated_at\":\"2026-08-24 13:41:55\",\"deleted_at\":null,\"role_id\":14,\"roles\":[{\"id\":14,\"role_name\":\"test\",\"description\":null,\"is_protected\":false,\"forces_2fa\":false,\"users_count\":1,\"permissions\":[],\"created_at\":\"2026-08-24 13:39:30\",\"updated_at\":\"2026-08-24 13:39:30\"}],\"user_permissions\":[],\"permissions\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(170, '2026-08-24 13:42:06', '127.0.0.1', 'update', 'User', 'Aktualizace uživatele: joner@rpsw.cz', 'User', 96, 25, '{\"id\":96,\"user_email\":\"joner@rpsw.cz\",\"full_name\":\"JOnerTEST\",\"enable_2fa\":false,\"two_fa_forced_by_admin\":false,\"is_blocked\":true,\"activated_at\":\"2026-08-24 13:35:19\",\"internal_note\":null,\"last_login_at\":\"2026-08-24 13:41:37\",\"created_at\":\"2026-08-24 12:16:39\",\"updated_at\":\"2026-08-24 13:41:55\",\"deleted_at\":null,\"role_id\":14,\"roles\":[{\"id\":14,\"role_name\":\"test\",\"description\":null,\"is_protected\":false,\"forces_2fa\":false,\"users_count\":1,\"permissions\":[],\"created_at\":\"2026-08-24 13:39:30\",\"updated_at\":\"2026-08-24 13:39:30\"}],\"user_permissions\":[],\"permissions\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(171, '2026-08-24 13:42:32', '127.0.0.1', 'login_blocked', 'Auth', 'Pokus o přihlášení na zablokovaný účet: joner@rpsw.cz', 'User', 96, NULL, '{\"email\":\"joner@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '0', 'system');
+INSERT INTO `core_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
+(172, '2026-08-24 13:47:23', '127.0.0.1', 'create', 'User', 'Vytvořen uživatel (čeká na aktivaci): test@test.cz', 'User', 97, 25, '{\"user_email\":\"test@test.cz\",\"full_name\":\"sdksdlfj\",\"role_id\":14,\"enable_2fa\":false,\"internal_note\":null,\"dpp_hours_spent\":0}', '25', 'jonasbucina@rpsw.cz'),
+(173, '2026-08-24 13:47:42', '127.0.0.1', 'account_activated', 'User', 'Účet aktivován: test@test.cz', 'User', 97, NULL, '[]', '0', 'system'),
+(174, '2026-08-24 13:47:53', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: test@test.cz', 'User', 97, 97, '{\"email\":\"test@test.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '97', 'test@test.cz'),
+(175, '2026-08-24 13:48:49', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: test@test.cz', 'User', 97, 97, '{\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '97', 'test@test.cz'),
+(176, '2026-08-25 17:19:02', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(177, '2026-08-25 17:19:03', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(178, '2026-08-25 17:19:03', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(179, '2026-08-25 17:19:03', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(180, '2026-08-25 17:19:04', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(181, '2026-08-25 17:19:04', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(182, '2026-08-25 17:19:04', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(183, '2026-08-25 17:19:04', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(184, '2026-08-25 17:19:05', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(185, '2026-08-25 17:19:05', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(186, '2026-08-25 23:02:33', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(187, '2026-08-25 23:02:33', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(188, '2026-08-25 23:02:34', '127.0.0.1', 'login_failed', 'Auth', 'Neúspěšný pokus o přihlášení na login: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(189, '2026-08-25 23:02:34', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(190, '2026-08-25 23:02:34', '127.0.0.1', 'login_captcha_failed', 'Auth', 'Neplatná/chybějící captcha pro: utok-test@example.com', 'User', NULL, NULL, '{\"email\":\"utok-test@example.com\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\"}', '0', 'system'),
+(191, '2026-08-25 23:02:35', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(192, '2026-08-25 23:02:35', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(193, '2026-08-25 23:02:35', '127.0.0.1', 'password_reset_requested', 'Auth', 'Vyžádán reset hesla pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(194, '2026-08-25 23:02:35', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(195, '2026-08-25 23:02:35', '127.0.0.1', 'password_reset_email_rate_limited', 'Auth', 'Limit počtu pokusů o reset hesla překročen pro e-mail: utok-test@example.com', NULL, NULL, NULL, '{\"email\":\"utok-test@example.com\"}', '0', 'system'),
+(196, '2026-08-25 23:02:41', '127.0.0.1', 'password_reset_failed', 'Auth', 'Reset hesla selhal - neplatný odkaz', NULL, NULL, NULL, '[]', '0', 'system'),
+(197, '2026-08-25 23:02:41', '127.0.0.1', 'password_reset_failed', 'Auth', 'Reset hesla selhal - neplatný odkaz', NULL, NULL, NULL, '[]', '0', 'system'),
+(198, '2026-08-25 23:02:41', '127.0.0.1', 'password_reset_failed', 'Auth', 'Reset hesla selhal - neplatný odkaz', NULL, NULL, NULL, '[]', '0', 'system'),
+(199, '2026-08-25 23:02:41', '127.0.0.1', 'password_reset_failed', 'Auth', 'Reset hesla selhal - neplatný odkaz', NULL, NULL, NULL, '[]', '0', 'system'),
+(200, '2026-08-25 23:02:41', '127.0.0.1', 'password_reset_failed', 'Auth', 'Reset hesla selhal - neplatný odkaz', NULL, NULL, NULL, '[]', '0', 'system'),
+(201, '2026-08-26 10:46:53', '127.0.0.1', 'email_access_primary_domain_updated', 'Core', 'Hlavní e-mailová doména změněna z (bez omezení) na rpsw.cz.', 'CoreSecuritySetting', 1, 25, '{\"primary_email_domain\":\"rpsw.cz\"}', '25', 'jonasbucina@rpsw.cz'),
+(202, '2026-08-26 10:47:26', '127.0.0.1', 'logout', 'Auth', 'Uživatel se odhlásil: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(203, '2026-08-26 10:47:32', '127.0.0.1', 'login_2fa_challenge_sent', 'Auth', '2FA kód odeslán: jonasbucina@rpsw.cz', 'User', 25, 25, '{\"email\":\"jonasbucina@rpsw.cz\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\"}', '25', 'jonasbucina@rpsw.cz'),
+(204, '2026-08-26 10:47:43', '127.0.0.1', 'login_success', 'Auth', 'Uživatel se úspěšně přihlásil: jonasbucina@rpsw.cz', 'User', 25, NULL, '{\"login_token\":\"bo1ynXHruxorLiUydmwQTb16QAprBfUYDRPf9lEoK9mkAjBWO4r1oTABGHdcrPYC\",\"code\":\"362347\"}', '0', 'system'),
+(205, '2026-08-26 10:48:00', '127.0.0.1', 'email_access_primary_domain_updated', 'Core', 'Hlavní e-mailová doména změněna z (bez omezení) na rpsw.cz.', 'CoreSecuritySetting', 1, 25, '{\"primary_email_domain\":\"rpsw.cz\"}', '25', 'jonasbucina@rpsw.cz'),
+(206, '2026-08-26 10:48:53', '127.0.0.1', 'email_access_rule_created', 'Core', 'Přidána whitelist položka (domain): foner.com', 'CoreEmailAccessRule', 1, 25, '{\"type\":\"domain\",\"value\":\"foner.com\"}', '25', 'jonasbucina@rpsw.cz'),
+(207, '2026-08-26 10:49:30', '127.0.0.1', 'email_access_rule_created', 'Core', 'Přidána whitelist položka (email): exter@gmail.com', 'CoreEmailAccessRule', 2, 25, '{\"type\":\"email\",\"value\":\"exter@gmail.com\"}', '25', 'jonasbucina@rpsw.cz'),
+(208, '2026-08-26 10:50:22', '127.0.0.1', 'email_access_rule_created', 'Core', 'Přidána whitelist položka (email): asd@sadf.cu', 'CoreEmailAccessRule', 3, 25, '{\"type\":\"email\",\"value\":\"asd@sadf.cu\"}', '25', 'jonasbucina@rpsw.cz'),
+(209, '2026-08-26 10:51:24', '127.0.0.1', 'email_access_rule_deleted', 'Core', 'Smazána whitelist položka (email): asd@sadf.cu', 'CoreEmailAccessRule', 3, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(210, '2026-08-26 10:51:25', '127.0.0.1', 'email_access_rule_deleted', 'Core', 'Smazána whitelist položka (domain): foner.com', 'CoreEmailAccessRule', 1, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(211, '2026-08-26 11:00:09', '127.0.0.1', 'email_access_primary_domain_updated', 'Core', 'Hlavní e-mailová doména změněna z (bez omezení) na rpsw.cz.', 'CoreSecuritySetting', 1, 25, '{\"primary_email_domain\":\"rpsw.cz\"}', '25', 'jonasbucina@rpsw.cz'),
+(212, '2026-08-26 11:00:17', '127.0.0.1', 'email_access_rule_deleted', 'Core', 'Smazána whitelist položka (email): exter@gmail.com', 'CoreEmailAccessRule', 2, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(213, '2026-08-26 11:00:28', '127.0.0.1', 'email_access_rule_created', 'Core', 'Přidána whitelist položka (domain): gmail.com', 'CoreEmailAccessRule', 4, 25, '{\"type\":\"domain\",\"value\":\"gmail.com\"}', '25', 'jonasbucina@rpsw.cz'),
+(214, '2026-08-26 11:22:30', '127.0.0.1', 'create', 'User', 'Vytvořen uživatel (čeká na aktivaci): figaro@rpsw.cz', 'User', 98, 25, '{\"user_email\":\"figaro@rpsw.cz\",\"full_name\":\"figaro\",\"role_id\":1,\"internal_note\":null,\"dpp_hours_spent\":0,\"enable_2fa\":false}', '25', 'jonasbucina@rpsw.cz'),
+(215, '2026-08-26 11:23:00', '127.0.0.1', 'create_denied', 'User', 'Zamítnut pokus o vytvoření účtu s nepovolenou e-mailovou doménou: test@test.cu', NULL, NULL, 25, '{\"user_email\":\"test@test.cu\",\"full_name\":\"dasdasd\",\"role_id\":1,\"internal_note\":null,\"dpp_hours_spent\":0,\"enable_2fa\":false}', '25', 'jonasbucina@rpsw.cz'),
+(216, '2026-08-26 11:23:45', '127.0.0.1', 'email_access_rule_created', 'Core', 'Přidána whitelist položka (email): fonet@test.cz', 'CoreEmailAccessRule', 5, 25, '{\"type\":\"email\",\"value\":\"fonet@test.cz\"}', '25', 'jonasbucina@rpsw.cz'),
+(217, '2026-08-26 11:23:53', '127.0.0.1', 'create', 'User', 'Vytvořen uživatel (čeká na aktivaci): fonet@test.cz', 'User', 99, 25, '{\"user_email\":\"fonet@test.cz\",\"full_name\":\"fonet\",\"role_id\":1,\"internal_note\":null,\"dpp_hours_spent\":0,\"enable_2fa\":false}', '25', 'jonasbucina@rpsw.cz'),
+(218, '2026-08-26 11:31:14', '127.0.0.1', 'create_denied', 'User', 'Zamítnut pokus o vytvoření účtu s nepovolenou e-mailovou doménou: test@testasdasd.cz', NULL, NULL, 25, '{\"user_email\":\"test@testasdasd.cz\",\"full_name\":\"asld\\u016falskd\",\"role_id\":1,\"internal_note\":null,\"dpp_hours_spent\":0,\"enable_2fa\":false}', '25', 'jonasbucina@rpsw.cz'),
+(219, '2026-08-26 12:55:00', '127.0.0.1', 'soft_delete', 'User', 'Smazáno ID: 99', 'User', 99, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(220, '2026-08-26 12:55:03', '127.0.0.1', 'soft_delete', 'User', 'Smazáno ID: 98', 'User', 98, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(221, '2026-08-26 12:55:06', '127.0.0.1', 'soft_delete', 'User', 'Smazáno ID: 97', 'User', 97, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(222, '2026-08-26 12:55:10', '127.0.0.1', 'soft_delete', 'User', 'Smazáno ID: 96', 'User', 96, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(223, '2026-08-26 12:55:16', '127.0.0.1', 'force_delete_all', 'User', 'Vysypání koše. Smazáno: 4', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz');
 
 -- --------------------------------------------------------
 
@@ -168,7 +505,10 @@ INSERT INTO `core_permissions` (`id`, `permission_key`, `description`, `module`,
 (73, 'web-user-requests-view', 'Zobrazit uživatelské požadavky na výplatu provize', 'web', '2026-08-13 12:10:56'),
 (74, 'web-user-requests-create', 'Vytvořit uživatelský požadavek na provizi ručně', 'web', '2026-08-13 12:10:56'),
 (75, 'web-user-requests-update', 'Upravit uživatelský požadavek na provizi (např. schválení)', 'web', '2026-08-13 12:10:56'),
-(76, 'web-user-requests-delete', 'Smazat / obnovit uživatelský požadavek na provizi z koše', 'web', '2026-08-13 12:10:56');
+(76, 'web-user-requests-delete', 'Smazat / obnovit uživatelský požadavek na provizi z koše', 'web', '2026-08-13 12:10:56'),
+(77, 'core-security-view', 'Zobrazit bezpečnostní monitoring (podezřelé requesty, captcha, throttle)', 'core', '2026-08-22 11:34:11'),
+(78, 'core-security-update', 'Změnit stav bezpečnostního záznamu (vyřešeno/false positive) a nastavit retenci logů', 'core', '2026-08-22 11:34:11'),
+(79, 'core-security-delete', 'Ručně smazat bezpečnostní záznam nebo spustit okamžitý purge starých záznamů', 'core', '2026-08-22 11:34:11');
 
 -- --------------------------------------------------------
 
@@ -192,7 +532,8 @@ CREATE TABLE `core_roles` (
 
 INSERT INTO `core_roles` (`id`, `role_name`, `description`, `forces_2fa`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'sysadmin', 'Systémový administrátor - má vše', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
-(2, 'admin', 'Administrátor - správa webu', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL);
+(2, 'admin', 'Administrátor - správa webu', 0, '2026-02-14 08:12:31', '2026-02-14 08:12:31', NULL),
+(14, 'test', NULL, 0, '2026-08-24 11:39:30', '2026-08-24 11:39:30', NULL);
 
 -- --------------------------------------------------------
 
@@ -272,6 +613,9 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (1, 74),
 (1, 75),
 (1, 76),
+(1, 77),
+(1, 78),
+(1, 79),
 (2, 3),
 (2, 5),
 (2, 7),
@@ -308,6 +652,91 @@ INSERT INTO `core_role_permissions` (`role_id`, `permission_id`) VALUES
 (2, 74),
 (2, 75),
 (2, 76);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `core_security_events`
+--
+
+CREATE TABLE `core_security_events` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `fingerprint` char(64) NOT NULL COMMENT 'SHA-256(event_type|ip|time_bucket) - bucketovací klíč proti zahlcení tabulky při útoku, viz CoreSecurityEvent::record()',
+  `event_type` varchar(50) NOT NULL COMMENT 'captcha_failed, throttle_exceeded, login_failed_spike, scan_probe, oversized_upload, ...',
+  `severity` enum('info','warning','critical') NOT NULL DEFAULT 'warning',
+  `ip_address` varchar(45) DEFAULT NULL COMMENT 'IPv4/IPv6 - osobní údaj dle GDPR, viz retence v core_security_settings',
+  `user_agent` varchar(255) DEFAULT NULL,
+  `route` varchar(255) DEFAULT NULL,
+  `method` varchar(10) DEFAULT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
+  `occurrences` int(10) UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Počet výskytů v rámci časového okna - viz bucketing',
+  `first_seen_at` datetime NOT NULL,
+  `last_seen_at` datetime NOT NULL,
+  `status` varchar(20) NOT NULL DEFAULT 'new' COMMENT 'new, reviewed, false_positive, confirmed_attack',
+  `notes` varchar(1000) DEFAULT NULL,
+  `context_data` text DEFAULT NULL COMMENT 'Krátký JSON kontext - NIKDY celý request payload (GDPR minimalizace dat)',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `core_security_events`
+--
+
+INSERT INTO `core_security_events` (`id`, `fingerprint`, `event_type`, `severity`, `ip_address`, `user_agent`, `route`, `method`, `user_id`, `occurrences`, `first_seen_at`, `last_seen_at`, `status`, `notes`, `context_data`, `created_at`, `updated_at`) VALUES
+(1, 'fe049d80a7df659612a9a7aaf9657395650c099e284f95c93bdd3f93074132ba', 'unauthenticated_access_attempt', 'info', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'api/core/security_events', 'GET', NULL, 2, '2026-08-25 23:01:55', '2026-08-25 23:01:55', 'new', NULL, '{\"route\":\"api\\/core\\/security_events\",\"method\":\"GET\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\",\"user_id\":null}', '2026-08-25 23:01:55', '2026-08-25 23:01:55'),
+(3, '8a5c310457daf1c17ea3ccb5101df07ede3967e472e874876bb68f17566179aa', 'login_failed', 'warning', '127.0.0.1', 'Mozilla/5.0 (SecurityTestScript)', 'api/login', 'POST', NULL, 3, '2026-08-25 23:02:33', '2026-08-25 23:02:34', 'new', NULL, '{\"route\":\"api\\/login\",\"method\":\"POST\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\",\"user_id\":null,\"email\":\"utok-test@example.com\"}', '2026-08-25 23:02:33', '2026-08-25 23:02:34'),
+(6, 'aebbd04daa163e5ee4b1288619fdb945767ab96aec7a45441cb00b9f6f08dfdd', 'login_brute_force_suspected', 'critical', '127.0.0.1', 'Mozilla/5.0 (SecurityTestScript)', 'api/login', 'POST', NULL, 1, '2026-08-25 23:02:34', '2026-08-25 23:02:34', 'new', NULL, '{\"route\":\"api\\/login\",\"method\":\"POST\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\",\"user_id\":null,\"email\":\"utok-test@example.com\"}', '2026-08-25 23:02:34', '2026-08-25 23:02:34'),
+(7, '4420de438697858f30962835eb42e8bc82d4b85895b64f255a04aaf618f84342', 'login_captcha_failed', 'warning', '127.0.0.1', 'Mozilla/5.0 (SecurityTestScript)', 'api/login', 'POST', NULL, 2, '2026-08-25 23:02:34', '2026-08-25 23:02:34', 'new', NULL, '{\"route\":\"api\\/login\",\"method\":\"POST\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\",\"user_id\":null,\"email\":\"utok-test@example.com\",\"reason\":\"empty_token\"}', '2026-08-25 23:02:34', '2026-08-25 23:02:34'),
+(9, '3b1a20a69d49044b0d210932af9afaa42cbb5c168c532fe3932e1fd2bb869a82', 'throttle_exceeded', 'warning', '127.0.0.1', 'Mozilla/5.0 (SecurityTestScript)', 'api/login', 'POST', NULL, 5, '2026-08-25 23:02:34', '2026-08-25 23:02:34', 'new', NULL, '{\"route\":\"api\\/login\",\"method\":\"POST\",\"user_agent\":\"Mozilla\\/5.0 (SecurityTestScript)\",\"user_id\":null}', '2026-08-25 23:02:34', '2026-08-25 23:02:34'),
+(14, '1b3950c69f857b3a44aa2376a44bcadec947bb6532a051c91178b1701ca9a67b', 'password_reset_email_rate_limited', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/forgot-password', 'POST', NULL, 2, '2026-08-25 23:02:35', '2026-08-25 23:02:35', 'new', NULL, '{\"route\":\"api\\/forgot-password\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"email_requested\":\"utok-test@example.com\"}', '2026-08-25 23:02:35', '2026-08-25 23:02:35'),
+(16, '25c8473949257cbd55bcaf365a6e611f47f8e1c202d05f1f074c982ec5421164', 'throttle_exceeded', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/forgot-password', 'POST', NULL, 3, '2026-08-25 23:02:35', '2026-08-25 23:02:35', 'new', NULL, '{\"route\":\"api\\/forgot-password\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null}', '2026-08-25 23:02:35', '2026-08-25 23:02:35'),
+(19, 'c109c95bde1e6235678b9d15ee3f60b4d240f089fa15a54a7dca3cf300fa9a0c', 'throttle_exceeded', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/sales_orders', 'POST', NULL, 4, '2026-08-25 23:02:37', '2026-08-25 23:02:37', 'new', NULL, '{\"route\":\"api\\/sales_orders\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null}', '2026-08-25 23:02:37', '2026-08-25 23:02:37'),
+(23, '290c7584f94d27a00da93a003c8bd100024d910f749b63828c35f49aca2a5a90', 'scan_probe', 'warning', '127.0.0.1', 'Mozilla/5.0 (compatible; SecurityTestBot/1.0)', 'api/.env', 'GET', NULL, 10, '2026-08-25 23:02:37', '2026-08-25 23:02:38', 'new', NULL, '{\"route\":\"api\\/.env\",\"method\":\"GET\",\"user_agent\":\"Mozilla\\/5.0 (compatible; SecurityTestBot\\/1.0)\",\"user_id\":null}', '2026-08-25 23:02:37', '2026-08-25 23:02:38'),
+(33, 'd3be1b26ae0bc8fef07a5cba096af42749b136396bd0076abcbd491b17f91a42', 'refresh_token_invalid', 'info', '127.0.0.1', 'curl/8.11.1', 'api/refresh', 'POST', NULL, 5, '2026-08-25 23:02:38', '2026-08-25 23:02:39', 'new', NULL, '{\"route\":\"api\\/refresh\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null}', '2026-08-25 23:02:38', '2026-08-25 23:02:39'),
+(38, '115d3fe39cb0328cc946ea5778ba35f9b5cd019b6c0a5c58479c0b9f4b07e20b', 'unauthenticated_access_attempt', 'info', '127.0.0.1', 'curl/8.11.1', 'api/core/users', 'GET', NULL, 10, '2026-08-25 23:02:39', '2026-08-25 23:02:40', 'new', NULL, '{\"route\":\"api\\/core\\/users\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null}', '2026-08-25 23:02:39', '2026-08-25 23:02:40'),
+(48, '334e9442e0815ae94096f1ba4c0b5ced61d0f0715c50ff944fb0a612c855dce9', 'account_activation_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/account-activation/neplatny-aktivacni-token-1', 'GET', NULL, 1, '2026-08-25 23:02:40', '2026-08-25 23:02:40', 'new', NULL, '{\"route\":\"api\\/account-activation\\/neplatny-aktivacni-token-1\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:40', '2026-08-25 23:02:40'),
+(49, '46dbb66da76c8f3c3b00d0d3512aca88905766571d613233aca966422b00d492', 'account_activation_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/account-activation/neplatny-aktivacni-token-2', 'GET', NULL, 1, '2026-08-25 23:02:40', '2026-08-25 23:02:40', 'new', NULL, '{\"route\":\"api\\/account-activation\\/neplatny-aktivacni-token-2\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:40', '2026-08-25 23:02:40'),
+(50, '01ff30b47963b14565aa9ad61fdcd36dadf605bd6db1d56ad1ecb6bc49ad4821', 'account_activation_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/account-activation/neplatny-aktivacni-token-3', 'GET', NULL, 1, '2026-08-25 23:02:40', '2026-08-25 23:02:40', 'new', NULL, '{\"route\":\"api\\/account-activation\\/neplatny-aktivacni-token-3\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:40', '2026-08-25 23:02:40'),
+(51, 'eec7fa879a2f30be6280854d621b425981c4a730882d2ff3ca7640330b42a8b1', 'account_activation_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/account-activation/neplatny-aktivacni-token-4', 'GET', NULL, 1, '2026-08-25 23:02:40', '2026-08-25 23:02:40', 'new', NULL, '{\"route\":\"api\\/account-activation\\/neplatny-aktivacni-token-4\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:40', '2026-08-25 23:02:40'),
+(52, '2a7c6fa9bb1e60a801bffb7d496a2fabceeab2672506e309286878a101cf2c15', 'account_activation_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/account-activation/neplatny-aktivacni-token-5', 'GET', NULL, 1, '2026-08-25 23:02:40', '2026-08-25 23:02:40', 'new', NULL, '{\"route\":\"api\\/account-activation\\/neplatny-aktivacni-token-5\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:40', '2026-08-25 23:02:40'),
+(53, 'a300d77f7c21c7cf125c21a01994135caae469d9554eb121ce31f9b4e512c63d', 'account_activation_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/account-activation/neplatny-aktivacni-token-post-1', 'POST', NULL, 1, '2026-08-25 23:02:40', '2026-08-25 23:02:40', 'new', NULL, '{\"route\":\"api\\/account-activation\\/neplatny-aktivacni-token-post-1\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:40', '2026-08-25 23:02:40'),
+(54, '82b3c09f8323af7d1c93d9b000c20e3766964723f7fdbf928e046ef84da19f08', 'account_activation_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/account-activation/neplatny-aktivacni-token-post-2', 'POST', NULL, 1, '2026-08-25 23:02:41', '2026-08-25 23:02:41', 'new', NULL, '{\"route\":\"api\\/account-activation\\/neplatny-aktivacni-token-post-2\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:41', '2026-08-25 23:02:41'),
+(55, 'f497f1fdb53c9c7cb2bf44389ca9ad52252089d2b880ac24493cc611899a0618', 'account_activation_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/account-activation/neplatny-aktivacni-token-post-3', 'POST', NULL, 1, '2026-08-25 23:02:41', '2026-08-25 23:02:41', 'new', NULL, '{\"route\":\"api\\/account-activation\\/neplatny-aktivacni-token-post-3\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:41', '2026-08-25 23:02:41'),
+(56, 'c6bc7911a08458da153e2f06f8eca6075633499484ce8fcad16a015350b664a8', 'password_reset_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/reset-password', 'POST', NULL, 5, '2026-08-25 23:02:41', '2026-08-25 23:02:41', 'new', NULL, '{\"route\":\"api\\/reset-password\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"invalid_token\"}', '2026-08-25 23:02:41', '2026-08-25 23:02:41'),
+(61, 'a38f643f26f242364f44403642c53006ba49b4ec16bf73bbcf48f7e62dc6a984', 'login_2fa_session_invalid', 'info', '127.0.0.1', 'curl/8.11.1', 'api/login/verify-2fa', 'POST', NULL, 3, '2026-08-25 23:02:41', '2026-08-25 23:02:42', 'new', NULL, '{\"route\":\"api\\/login\\/verify-2fa\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null}', '2026-08-25 23:02:41', '2026-08-25 23:02:42'),
+(64, 'f886754ac60d2c1cc3a2433570d02144a0aaa1ceaf16533cf41ba2de431d1039', 'login_2fa_session_invalid', 'info', '127.0.0.1', 'curl/8.11.1', 'api/login/resend-2fa', 'POST', NULL, 3, '2026-08-25 23:02:42', '2026-08-25 23:02:42', 'new', NULL, '{\"route\":\"api\\/login\\/resend-2fa\",\"method\":\"POST\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null}', '2026-08-25 23:02:42', '2026-08-25 23:02:42'),
+(67, '6e4f62b3de60c215c59d79c7f2a34f2a4e774eba07601f0d1987d78adffb0e5d', 'sales_lead_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/public/sales-leads/neexistujici-lead-token-1', 'GET', NULL, 1, '2026-08-25 23:02:42', '2026-08-25 23:02:42', 'new', NULL, '{\"route\":\"api\\/public\\/sales-leads\\/neexistujici-lead-token-1\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:42', '2026-08-25 23:02:42'),
+(68, '51a99440d8d437c4003e581ca4a71e4d6479d99d1c7498a15103edb495652dde', 'sales_lead_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/public/sales-leads/neexistujici-lead-token-2', 'GET', NULL, 1, '2026-08-25 23:02:42', '2026-08-25 23:02:42', 'new', NULL, '{\"route\":\"api\\/public\\/sales-leads\\/neexistujici-lead-token-2\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:42', '2026-08-25 23:02:42'),
+(69, 'b7c608a4b2ad9d6a0c40c2af4cd81972362901df22db36c582adb81a13700932', 'sales_lead_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/public/sales-leads/neexistujici-lead-token-3', 'GET', NULL, 1, '2026-08-25 23:02:42', '2026-08-25 23:02:42', 'new', NULL, '{\"route\":\"api\\/public\\/sales-leads\\/neexistujici-lead-token-3\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:42', '2026-08-25 23:02:42'),
+(70, '9ff0ff4580b118c576181c3a17e9a1ce82d1732e692047a76850cdb89e99c4d6', 'sales_lead_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/public/sales-leads/neexistujici-lead-token-4', 'GET', NULL, 1, '2026-08-25 23:02:42', '2026-08-25 23:02:42', 'new', NULL, '{\"route\":\"api\\/public\\/sales-leads\\/neexistujici-lead-token-4\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:42', '2026-08-25 23:02:42'),
+(71, '0b7bfe55c9e6308b8caecc658ea8fe9acac1b5312fc3287a35697a232694686e', 'sales_lead_token_invalid', 'warning', '127.0.0.1', 'curl/8.11.1', 'api/public/sales-leads/neexistujici-lead-token-5', 'GET', NULL, 1, '2026-08-25 23:02:43', '2026-08-25 23:02:43', 'new', NULL, '{\"route\":\"api\\/public\\/sales-leads\\/neexistujici-lead-token-5\",\"method\":\"GET\",\"user_agent\":\"curl\\/8.11.1\",\"user_id\":null,\"reason\":\"not_found\"}', '2026-08-25 23:02:43', '2026-08-25 23:02:43'),
+(72, '78cb6704834e29df204a3d2419bcebbae77150879eaa0529349c1135c9129a17', 'unauthenticated_access_attempt', 'info', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'api/core/users', 'GET', NULL, 2, '2026-08-26 10:43:40', '2026-08-26 10:43:40', 'new', NULL, '{\"route\":\"api\\/core\\/users\",\"method\":\"GET\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\",\"user_id\":null}', '2026-08-26 10:43:40', '2026-08-26 10:43:40'),
+(74, '70118802803a5bbf5066dfe39a749d38768c2667d469ac5af31c8b090ab6aba2', 'unauthenticated_access_attempt', 'info', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'api/core/roles', 'GET', NULL, 2, '2026-08-26 10:43:40', '2026-08-26 10:43:40', 'new', NULL, '{\"route\":\"api\\/core\\/roles\",\"method\":\"GET\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\",\"user_id\":null}', '2026-08-26 10:43:40', '2026-08-26 10:43:40'),
+(76, '7beb53c9688c891877c04d26197ad11a0907aee82047f837195b80cbdaef5f6e', 'user_create_domain_not_whitelisted', 'warning', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'api/core/users', 'POST', 25, 1, '2026-08-26 11:23:00', '2026-08-26 11:23:00', 'new', NULL, '{\"route\":\"api\\/core\\/users\",\"method\":\"POST\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\",\"user_id\":25,\"attempted_email\":\"test@test.cu\",\"attempted_domain\":\"test.cu\"}', '2026-08-26 11:23:00', '2026-08-26 11:23:00'),
+(77, '8e1ff3d259a9d29f47fd42f06c2fb0ea5327b628d3fda4e23b2c53efbc3aac2e', 'user_create_domain_not_whitelisted', 'warning', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'api/core/users', 'POST', 25, 1, '2026-08-26 11:31:14', '2026-08-26 11:31:14', 'new', NULL, '{\"route\":\"api\\/core\\/users\",\"method\":\"POST\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\",\"user_id\":25,\"attempted_email\":\"test@testasdasd.cz\",\"attempted_domain\":\"testasdasd.cz\"}', '2026-08-26 11:31:14', '2026-08-26 11:31:14'),
+(78, '44502d4ec120e6ef3305e1f70fff43ef5c8c42d8a8d630a7b33a974ee7447d82', 'unauthenticated_access_attempt', 'info', '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'api/web/sales_leads', 'GET', NULL, 2, '2026-08-26 11:54:50', '2026-08-26 11:54:50', 'new', NULL, '{\"route\":\"api\\/web\\/sales_leads\",\"method\":\"GET\",\"user_agent\":\"Mozilla\\/5.0 (X11; Linux x86_64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/151.0.0.0 Safari\\/537.36\",\"user_id\":null}', '2026-08-26 11:54:50', '2026-08-26 11:54:50');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `core_security_settings`
+--
+
+CREATE TABLE `core_security_settings` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `retention_days` smallint(5) UNSIGNED NOT NULL DEFAULT 90 COMMENT 'Po kolika dnech se core_security_events automaticky maže (GDPR retence)',
+  `primary_email_domain` varchar(255) DEFAULT NULL COMMENT 'Hlavni povolena domena pro nove admin ucty (napr. rpsw.cz). NULL = bez omezeni.',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `core_security_settings`
+--
+
+INSERT INTO `core_security_settings` (`id`, `retention_days`, `primary_email_domain`, `created_at`, `updated_at`) VALUES
+(1, 60, 'rpsw.cz', '2026-08-22 13:34:11', '2026-08-26 11:00:09');
 
 -- --------------------------------------------------------
 
@@ -395,6 +824,14 @@ CREATE TABLE `failed_jobs` (
   `exception` longtext NOT NULL,
   `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `failed_jobs`
+--
+
+INSERT INTO `failed_jobs` (`id`, `uuid`, `connection`, `queue`, `payload`, `exception`, `failed_at`) VALUES
+(2, '34d96d26-7a41-4cce-9f6b-1e91a8900966', 'database', 'default', '{\"uuid\":\"34d96d26-7a41-4cce-9f6b-1e91a8900966\",\"displayName\":\"App\\\\Mail\\\\Web\\\\WebRawRequestCommissionReceived\",\"job\":\"Illuminate\\\\Queue\\\\CallQueuedHandler@call\",\"maxTries\":null,\"maxExceptions\":null,\"failOnTimeout\":false,\"backoff\":null,\"timeout\":null,\"retryUntil\":null,\"data\":{\"commandName\":\"Illuminate\\\\Mail\\\\SendQueuedMailable\",\"command\":\"O:34:\\\"Illuminate\\\\Mail\\\\SendQueuedMailable\\\":15:{s:8:\\\"mailable\\\";O:44:\\\"App\\\\Mail\\\\Web\\\\WebRawRequestCommissionReceived\\\":3:{s:17:\\\"requestCommission\\\";O:45:\\\"Illuminate\\\\Contracts\\\\Database\\\\ModelIdentifier\\\":5:{s:5:\\\"class\\\";s:38:\\\"App\\\\Models\\\\Web\\\\WebRawRequestCommission\\\";s:2:\\\"id\\\";i:231;s:9:\\\"relations\\\";a:0:{}s:10:\\\"connection\\\";s:5:\\\"mysql\\\";s:15:\\\"collectionClass\\\";N;}s:2:\\\"to\\\";a:1:{i:0;a:2:{s:4:\\\"name\\\";N;s:7:\\\"address\\\";s:10:\\\"dgfd@dfg.z\\\";}}s:6:\\\"mailer\\\";s:4:\\\"smtp\\\";}s:5:\\\"tries\\\";N;s:7:\\\"timeout\\\";N;s:13:\\\"maxExceptions\\\";N;s:17:\\\"shouldBeEncrypted\\\";b:0;s:10:\\\"connection\\\";N;s:5:\\\"queue\\\";N;s:5:\\\"delay\\\";N;s:11:\\\"afterCommit\\\";N;s:10:\\\"middleware\\\";a:0:{}s:7:\\\"chained\\\";a:0:{}s:15:\\\"chainConnection\\\";N;s:10:\\\"chainQueue\\\";N;s:19:\\\"chainCatchCallbacks\\\";N;s:3:\\\"job\\\";N;}\"},\"createdAt\":1787741663,\"delay\":null}', 'Illuminate\\Database\\Eloquent\\ModelNotFoundException: No query results for model [App\\Models\\Web\\WebRawRequestCommission]. in /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:750\nStack trace:\n#0 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/SerializesAndRestoresModelIdentifiers.php(110): Illuminate\\Database\\Eloquent\\Builder->firstOrFail()\n#1 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/SerializesAndRestoresModelIdentifiers.php(63): App\\Mail\\Web\\WebRawRequestCommissionReceived->restoreModel()\n#2 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/SerializesModels.php(97): App\\Mail\\Web\\WebRawRequestCommissionReceived->getRestoredPropertyValue()\n#3 [internal function]: App\\Mail\\Web\\WebRawRequestCommissionReceived->__unserialize()\n#4 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(95): unserialize()\n#5 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(62): Illuminate\\Queue\\CallQueuedHandler->getCommand()\n#6 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Jobs/Job.php(102): Illuminate\\Queue\\CallQueuedHandler->call()\n#7 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(444): Illuminate\\Queue\\Jobs\\Job->fire()\n#8 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(394): Illuminate\\Queue\\Worker->process()\n#9 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(180): Illuminate\\Queue\\Worker->runJob()\n#10 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(148): Illuminate\\Queue\\Worker->daemon()\n#11 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(131): Illuminate\\Queue\\Console\\WorkCommand->runWorker()\n#12 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Queue\\Console\\WorkCommand->handle()\n#13 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()\n#14 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()\n#15 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()\n#16 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/Container.php(754): Illuminate\\Container\\BoundMethod::call()\n#17 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Console/Command.php(211): Illuminate\\Container\\Container->call()\n#18 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute()\n#19 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Console/Command.php(180): Symfony\\Component\\Console\\Command\\Command->run()\n#20 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(1092): Illuminate\\Console\\Command->run()\n#21 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(341): Symfony\\Component\\Console\\Application->doRunCommand()\n#22 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(192): Symfony\\Component\\Console\\Application->doRun()\n#23 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(197): Symfony\\Component\\Console\\Application->run()\n#24 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1234): Illuminate\\Foundation\\Console\\Kernel->handle()\n#25 /home/joncl/prg/Typescript/rp_website/api/artisan(16): Illuminate\\Foundation\\Application->handleCommand()\n#26 {main}', '2026-08-26 10:55:00'),
+(3, '7f4aa0c0-7cc9-4c4a-9705-9b3807972bc4', 'database', 'default', '{\"uuid\":\"7f4aa0c0-7cc9-4c4a-9705-9b3807972bc4\",\"displayName\":\"App\\\\Mail\\\\Web\\\\WebRawRequestCommissionReceived\",\"job\":\"Illuminate\\\\Queue\\\\CallQueuedHandler@call\",\"maxTries\":null,\"maxExceptions\":null,\"failOnTimeout\":false,\"backoff\":null,\"timeout\":null,\"retryUntil\":null,\"data\":{\"commandName\":\"Illuminate\\\\Mail\\\\SendQueuedMailable\",\"command\":\"O:34:\\\"Illuminate\\\\Mail\\\\SendQueuedMailable\\\":15:{s:8:\\\"mailable\\\";O:44:\\\"App\\\\Mail\\\\Web\\\\WebRawRequestCommissionReceived\\\":3:{s:17:\\\"requestCommission\\\";O:45:\\\"Illuminate\\\\Contracts\\\\Database\\\\ModelIdentifier\\\":5:{s:5:\\\"class\\\";s:38:\\\"App\\\\Models\\\\Web\\\\WebRawRequestCommission\\\";s:2:\\\"id\\\";i:232;s:9:\\\"relations\\\";a:0:{}s:10:\\\"connection\\\";s:5:\\\"mysql\\\";s:15:\\\"collectionClass\\\";N;}s:2:\\\"to\\\";a:1:{i:0;a:2:{s:4:\\\"name\\\";N;s:7:\\\"address\\\";s:15:\\\"asd.asd@sdf.dsf\\\";}}s:6:\\\"mailer\\\";s:4:\\\"smtp\\\";}s:5:\\\"tries\\\";N;s:7:\\\"timeout\\\";N;s:13:\\\"maxExceptions\\\";N;s:17:\\\"shouldBeEncrypted\\\";b:0;s:10:\\\"connection\\\";N;s:5:\\\"queue\\\";N;s:5:\\\"delay\\\";N;s:11:\\\"afterCommit\\\";N;s:10:\\\"middleware\\\";a:0:{}s:7:\\\"chained\\\";a:0:{}s:15:\\\"chainConnection\\\";N;s:10:\\\"chainQueue\\\";N;s:19:\\\"chainCatchCallbacks\\\";N;s:3:\\\"job\\\";N;}\"},\"createdAt\":1787741674,\"delay\":null}', 'Illuminate\\Database\\Eloquent\\ModelNotFoundException: No query results for model [App\\Models\\Web\\WebRawRequestCommission]. in /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:750\nStack trace:\n#0 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/SerializesAndRestoresModelIdentifiers.php(110): Illuminate\\Database\\Eloquent\\Builder->firstOrFail()\n#1 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/SerializesAndRestoresModelIdentifiers.php(63): App\\Mail\\Web\\WebRawRequestCommissionReceived->restoreModel()\n#2 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/SerializesModels.php(97): App\\Mail\\Web\\WebRawRequestCommissionReceived->getRestoredPropertyValue()\n#3 [internal function]: App\\Mail\\Web\\WebRawRequestCommissionReceived->__unserialize()\n#4 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(95): unserialize()\n#5 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(62): Illuminate\\Queue\\CallQueuedHandler->getCommand()\n#6 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Jobs/Job.php(102): Illuminate\\Queue\\CallQueuedHandler->call()\n#7 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(444): Illuminate\\Queue\\Jobs\\Job->fire()\n#8 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(394): Illuminate\\Queue\\Worker->process()\n#9 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(180): Illuminate\\Queue\\Worker->runJob()\n#10 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(148): Illuminate\\Queue\\Worker->daemon()\n#11 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(131): Illuminate\\Queue\\Console\\WorkCommand->runWorker()\n#12 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Queue\\Console\\WorkCommand->handle()\n#13 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::{closure:Illuminate\\Container\\BoundMethod::call():35}()\n#14 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()\n#15 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()\n#16 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Container/Container.php(754): Illuminate\\Container\\BoundMethod::call()\n#17 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Console/Command.php(211): Illuminate\\Container\\Container->call()\n#18 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute()\n#19 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Console/Command.php(180): Symfony\\Component\\Console\\Command\\Command->run()\n#20 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(1092): Illuminate\\Console\\Command->run()\n#21 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(341): Symfony\\Component\\Console\\Application->doRunCommand()\n#22 /home/joncl/prg/Typescript/rp_website/api/vendor/symfony/console/Application.php(192): Symfony\\Component\\Console\\Application->doRun()\n#23 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(197): Symfony\\Component\\Console\\Application->run()\n#24 /home/joncl/prg/Typescript/rp_website/api/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1234): Illuminate\\Foundation\\Console\\Kernel->handle()\n#25 /home/joncl/prg/Typescript/rp_website/api/artisan(16): Illuminate\\Foundation\\Application->handleCommand()\n#26 {main}', '2026-08-26 10:55:00');
 
 -- --------------------------------------------------------
 
@@ -512,7 +949,7 @@ CREATE TABLE `password_reset_tokens` (
 
 INSERT INTO `password_reset_tokens` (`id`, `user_id`, `token_hash`, `expires_at`, `used_at`, `created_at`) VALUES
 (8, 34, '3332713ea59d425c9776eb4830344e203c5801f67323798ab47a53d95323b869', '2026-07-26 19:28:05', '2026-07-26 19:28:05', '2026-07-26 19:27:03'),
-(10, 25, 'b18288396cb80060517c9963e4ac751f6bbc8c9f6e216e44d9a62117c6dd7d0c', '2026-08-21 11:15:49', '2026-08-21 11:15:49', '2026-08-21 11:14:57');
+(15, 25, '731576aa255ecc4ec0b9a56df2c4a85e04f2f03545b6a5abf8e7104cbb6289a3', '2026-08-24 07:34:42', NULL, '2026-08-24 07:19:42');
 
 -- --------------------------------------------------------
 
@@ -543,8 +980,7 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 (172, 'App\\Models\\User', 77, 'access-token', 'f783051fdb88711a863e9ccd4e5176a5a3f2a3606204c816754c3227d07698f8', '[\"*\"]', '2026-02-25 00:08:53', '2026-02-25 00:42:29', '2026-02-24 23:42:29', '2026-02-25 00:08:53'),
 (591, 'App\\Models\\User', 34, 'access-token', '68783429471135aedb98b9dd0c6fea1dda24afe7d6cbb225d9e9a8ab20236672', '[\"*\"]', '2026-07-26 20:10:52', '2026-07-26 21:08:21', '2026-07-26 20:08:21', '2026-07-26 20:10:52'),
 (695, 'App\\Models\\User', 86, 'access-token', 'c01dd389ec650634ad228e9a6534e6391de2ed139c2a50bae4be0e9f48265c71', '[\"*\"]', '2026-08-11 12:34:19', '2026-08-11 13:34:19', '2026-08-11 12:34:19', '2026-08-11 12:34:19'),
-(848, 'App\\Models\\User', 25, 'access-token', '81bc1551a74c3c331df2cfc4838aca4b54e86ea3c64ff7a0568aef02f33a52de', '[\"*\"]', '2026-08-21 22:31:18', '2026-08-21 23:31:18', '2026-08-21 22:31:18', '2026-08-21 22:31:18'),
-(849, 'App\\Models\\User', 25, 'access-token', '197258bee280c57b69321a4b0a93775eac41971cac40bebf12b1cf3a3789e284', '[\"*\"]', '2026-08-22 08:24:28', '2026-08-22 09:22:26', '2026-08-22 08:22:26', '2026-08-22 08:24:28');
+(913, 'App\\Models\\User', 25, 'access-token', 'dda5373e155e5694d38753ebbf7b60e3831d20c9ac2f1a25ce4cd04c49721573', '[\"*\"]', '2026-08-26 11:14:05', '2026-08-26 12:14:05', '2026-08-26 11:14:05', '2026-08-26 11:14:05');
 
 -- --------------------------------------------------------
 
@@ -566,7 +1002,7 @@ CREATE TABLE `refresh_tokens` (
 --
 
 INSERT INTO `refresh_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`, `updated_at`) VALUES
-(848, 25, 'b77deab232378141d8d4841172f09d6f9a6c4fb82d1bb388a9da18854ce2a130', '2026-08-29 08:22:26', '2026-08-22 08:22:26', '2026-08-22 08:22:26');
+(912, 25, 'e0f708fa240b16ef0c44251692db90fbaa0a4b75acfb3e282d5acea0e7c7cc99', '2026-09-02 11:14:05', '2026-08-26 11:14:05', '2026-08-26 11:14:05');
 
 -- --------------------------------------------------------
 
@@ -672,6 +1108,14 @@ CREATE TABLE `shop_logs` (
   `user_id_plain` varchar(255) DEFAULT NULL,
   `user_plain` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `shop_logs`
+--
+
+INSERT INTO `shop_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
+(1, '2026-08-25 23:48:06', '127.0.0.1', 'create', 'ShopSupplier', 'Vytvořen dodavatel: fonetika', 'ShopSupplier', 11, 25, '{\"name\":\"fonetika\",\"ico\":null,\"contact_person\":null,\"email\":null,\"phone\":null,\"address\":null,\"city\":null,\"postal_code\":null,\"country\":null,\"payment_terms\":null,\"is_active\":\"1\",\"notes\":null}', '25', 'jonasbucina@rpsw.cz'),
+(2, '2026-08-25 23:48:16', '127.0.0.1', 'create', 'ShopSupplier', 'Vytvořen dodavatel: joner', 'ShopSupplier', 12, 25, '{\"name\":\"joner\",\"ico\":null,\"contact_person\":null,\"email\":null,\"phone\":null,\"address\":null,\"city\":null,\"postal_code\":null,\"country\":null,\"payment_terms\":null,\"is_active\":\"1\",\"notes\":null}', '25', 'jonasbucina@rpsw.cz');
 
 -- --------------------------------------------------------
 
@@ -1005,6 +1449,14 @@ CREATE TABLE `shop_suppliers` (
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `shop_suppliers`
+--
+
+INSERT INTO `shop_suppliers` (`id`, `name`, `ico`, `contact_person`, `email`, `phone`, `address`, `city`, `postal_code`, `country`, `payment_terms`, `is_active`, `notes`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(11, 'fonetika', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, '2026-08-25 21:48:06', '2026-08-25 21:48:06', NULL),
+(12, 'joner', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, '2026-08-25 21:48:16', '2026-08-25 21:48:16', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1037,9 +1489,11 @@ CREATE TABLE `users` (
   `full_name` varchar(255) NOT NULL,
   `dpp_hours_spent` int(5) NOT NULL DEFAULT 0,
   `enable_2fa` tinyint(1) NOT NULL DEFAULT 0,
+  `is_blocked` tinyint(1) NOT NULL DEFAULT 0,
+  `activated_at` timestamp NULL DEFAULT NULL,
   `two_fa_forced_by_admin` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Sysadmin vynutil 2FA tomuto uživateli nezávisle na jeho vlastní enable_2fa volbě',
   `internal_note` text DEFAULT NULL,
-  `user_password_hash` varchar(255) NOT NULL,
+  `user_password_hash` varchar(255) DEFAULT NULL,
   `user_password_salt` varchar(255) DEFAULT NULL,
   `last_login_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -1052,9 +1506,9 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `user_email`, `full_name`, `dpp_hours_spent`, `enable_2fa`, `two_fa_forced_by_admin`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
-(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, 0, NULL, '$2y$12$MF8zzdDCIKktF2CN3QjzDuTr3i1krOrgJIYEy5WeVHbiuIwZ7QdbG', NULL, '2026-08-22 10:22:26', '2026-02-14 08:12:31', '2026-08-22 10:22:26', NULL, 0),
-(34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, 0, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-11 00:55:27', NULL, 0);
+INSERT INTO `users` (`id`, `user_email`, `full_name`, `dpp_hours_spent`, `enable_2fa`, `is_blocked`, `activated_at`, `two_fa_forced_by_admin`, `internal_note`, `user_password_hash`, `user_password_salt`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`, `is_deleted`) VALUES
+(25, 'jonasbucina@rpsw.cz', 'Jonáš Bučina', 0, 1, 0, '2026-08-24 09:42:32', 0, NULL, '$2y$12$MF8zzdDCIKktF2CN3QjzDuTr3i1krOrgJIYEy5WeVHbiuIwZ7QdbG', NULL, '2026-08-26 10:47:43', '2026-02-14 08:12:31', '2026-08-26 10:47:43', NULL, 0),
+(34, 'lindicka@mazliva.cz', 'Lindička Trýbíčková Mazliva', 0, 1, 0, '2026-08-24 09:30:24', 0, NULL, '$2y$12$Xni0XZTdDsb22F686yDryefjAJKvlDDnh9G646kl90dDjwGLvSqtS', NULL, '2026-08-11 00:55:27', '2026-02-14 08:12:31', '2026-08-24 11:30:49', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -1154,6 +1608,105 @@ CREATE TABLE `web_logs` (
   `user_id_plain` varchar(255) DEFAULT NULL,
   `user_plain` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `web_logs`
+--
+
+INSERT INTO `web_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `description`, `affected_entity_type`, `affected_entity_id`, `user_id`, `context_data`, `user_id_plain`, `user_plain`) VALUES
+(1, '2026-08-23 10:48:45', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 3 požadavků (požadováno 3, ID: 187,185,186).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[187,185,186]}', '25', 'jonasbucina@rpsw.cz'),
+(2, '2026-08-23 10:48:59', '127.0.0.1', 'export_json', 'web/logs', 'User exported 1 selected records (JSON) from table: Seznam událostí systému.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(3, '2026-08-23 10:50:42', '127.0.0.1', 'import', 'WebRawRequestCommission', 'Hromadný import: přidáno 5 požadavků, přeskočeno 0 (soubor \'import-validni.json\').', 'WebRawRequestCommission', NULL, 25, '{\"import_token\":15}', '25', 'jonasbucina@rpsw.cz'),
+(4, '2026-08-23 10:51:22', '127.0.0.1', 'export_json', 'web/logs', 'User exported 1 selected records (JSON) from table: Seznam událostí systému.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(5, '2026-08-23 11:44:53', '127.0.0.1', 'export_csv', 'web/raw_request_commissions', 'User exported 9 records (CSV) from table: Seznam aktivních požadavků.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(6, '2026-08-23 12:54:18', '127.0.0.1', 'export_raw_txt', 'web/raw_request_commissions', 'User exported 9 records (TXT, RAW/import-compatible) from table: Seznam aktivních požadavků.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(7, '2026-08-23 12:54:41', '127.0.0.1', 'export_raw_json', 'web/raw_request_commissions', 'User exported 9 records (JSON, RAW/import-compatible) from table: Seznam aktivních požadavků.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(8, '2026-08-23 12:54:52', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 9 požadavků (požadováno 9, ID: 192,191,190,189,188,184,183,177,176).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[192,191,190,189,188,184,183,177,176]}', '25', 'jonasbucina@rpsw.cz'),
+(9, '2026-08-23 12:55:05', '127.0.0.1', 'import', 'WebRawRequestCommission', 'Hromadný import: přidáno 9 požadavků, přeskočeno 0 (soubor \'Seznam aktivních požadavků-raw.txt\').', 'WebRawRequestCommission', NULL, 25, '{\"import_token\":16}', '25', 'jonasbucina@rpsw.cz'),
+(10, '2026-08-23 12:59:34', '127.0.0.1', 'export_json', 'web/raw_request_commissions', 'User exported 9 records (JSON) from table: Seznam aktivních požadavků.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(11, '2026-08-23 13:00:35', '127.0.0.1', 'import', 'WebRawRequestCommission', 'Hromadný import: přidáno 9 požadavků, přeskočeno 0 (soubor \'Seznam aktivních požadavků-raw.json\').', 'WebRawRequestCommission', NULL, 25, '{\"import_token\":17}', '25', 'jonasbucina@rpsw.cz'),
+(12, '2026-08-23 13:02:26', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 15 požadavků (požadováno 15, ID: 210,209,208,207,206,205,204,203,202,201,200,199,198,197,196).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[210,209,208,207,206,205,204,203,202,201,200,199,198,197,196]}', '25', 'jonasbucina@rpsw.cz'),
+(13, '2026-08-23 13:02:34', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 3 požadavků (požadováno 3, ID: 195,194,193).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[195,194,193]}', '25', 'jonasbucina@rpsw.cz'),
+(14, '2026-08-23 13:02:45', '127.0.0.1', 'force_delete_all', 'WebRawRequestCommission', 'Hromadné smazání koše provizí. Počet: 152', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(15, '2026-08-23 13:08:24', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: sakdsa.md', 'WebRawRequestCommission', 211, 25, '{\"thema\":\"sakdsa.md\",\"contact_email\":\"sdf@sdf.cu\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"sfsdfsdffsf\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(16, '2026-08-23 13:08:34', '127.0.0.1', 'export_raw_csv', 'web/raw_request_commissions', 'User exported 1 selected records (CSV, RAW/import-compatible) from table: Seznam aktivních požadavků.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(17, '2026-08-23 13:08:47', '127.0.0.1', 'soft_delete', 'WebRawRequestCommission', 'Smazání požadavku na provizi ID: 211', 'WebRawRequestCommission', 211, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(18, '2026-08-23 13:12:43', '127.0.0.1', 'import', 'WebRawRequestCommission', 'Hromadný import: přidáno 1 požadavků, přeskočeno 0 (soubor \'Seznam aktivních požadavků-vybrane-raw.csv\').', 'WebRawRequestCommission', NULL, 25, '{\"import_token\":18}', '25', 'jonasbucina@rpsw.cz'),
+(19, '2026-08-23 13:20:21', '127.0.0.1', 'export_raw_txt', 'web/raw_request_commissions', 'User exported 1 selected records (TXT, RAW/import-compatible) from table: Seznam aktivních požadavků.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(20, '2026-08-23 13:20:37', '127.0.0.1', 'import', 'WebRawRequestCommission', 'Hromadný import: přidáno 1 požadavků, přeskočeno 0 (soubor \'Seznam aktivních požadavků-vybrane-raw.txt\').', 'WebRawRequestCommission', NULL, 25, '{\"import_token\":19}', '25', 'jonasbucina@rpsw.cz'),
+(21, '2026-08-23 13:20:46', '127.0.0.1', 'export_raw_json', 'web/raw_request_commissions', 'User exported 2 selected records (JSON, RAW/import-compatible) from table: Seznam aktivních požadavků.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(22, '2026-08-23 13:20:58', '127.0.0.1', 'import', 'WebRawRequestCommission', 'Hromadný import: přidáno 2 požadavků, přeskočeno 0 (soubor \'Seznam aktivních požadavků-vybrane-raw.json\').', 'WebRawRequestCommission', NULL, 25, '{\"import_token\":20}', '25', 'jonasbucina@rpsw.cz'),
+(23, '2026-08-23 13:21:10', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 3 požadavků (požadováno 3, ID: 214,213,212).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[214,213,212]}', '25', 'jonasbucina@rpsw.cz'),
+(24, '2026-08-23 13:21:48', '127.0.0.1', 'import', 'WebRawRequestCommission', 'Hromadný import: přidáno 1 požadavků, přeskočeno 1 (soubor \'Seznam aktivních požadavků-vybrane-raw.json\').', 'WebRawRequestCommission', NULL, 25, '{\"import_token\":21}', '25', 'jonasbucina@rpsw.cz'),
+(25, '2026-08-23 14:57:23', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: test', 'WebNews', 19, 25, '{\"title\":\"test\",\"thema\":\"Miln\\u00edk\",\"author\":\"sdfsdf\",\"message\":\"asdasdasd\",\"bullet_1\":null,\"bullet_2\":null,\"bullet_3\":null,\"bullet_4\":null}', '25', 'jonasbucina@rpsw.cz'),
+(26, '2026-08-23 14:57:33', '127.0.0.1', 'create', 'WebNews', 'Vytvořena novinka: askdmakmdalsd', 'WebNews', 20, 25, '{\"title\":\"askdmakmdalsd\",\"thema\":\"Miln\\u00edk\",\"author\":\"asdasdad\",\"message\":\"asdaspld\\u016fa\\u00a7d\",\"bullet_1\":null,\"bullet_2\":null,\"bullet_3\":null,\"bullet_4\":null}', '25', 'jonasbucina@rpsw.cz'),
+(27, '2026-08-23 14:57:54', '127.0.0.1', 'soft_delete_bulk', 'WebNews', 'Hromadné smazání 2 novinek (požadováno 2, ID: 20,19).', 'WebNews', NULL, 25, '{\"ids\":[20,19]}', '25', 'jonasbucina@rpsw.cz'),
+(28, '2026-08-23 14:58:09', '127.0.0.1', 'restore', 'WebNews', 'Obnovení novinky: askdmakmdalsd', 'WebNews', 20, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(29, '2026-08-23 14:58:12', '127.0.0.1', 'restore', 'WebNews', 'Obnovení novinky: test', 'WebNews', 19, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(30, '2026-08-23 14:58:34', '127.0.0.1', 'export_csv', 'web/news', 'User exported 2 records (CSV) from table: Seznam aktualit a novinek.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(31, '2026-08-23 15:47:22', '127.0.0.1', 'soft_delete_bulk', 'WebNews', 'Hromadné smazání 2 novinek (požadováno 2, ID: 20,19).', 'WebNews', NULL, 25, '{\"ids\":[20,19]}', '25', 'jonasbucina@rpsw.cz'),
+(32, '2026-08-23 15:47:27', '127.0.0.1', 'force_delete_all', 'WebNews', 'Hromadné smazání koše novinek. Počet: 4', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(33, '2026-08-23 15:56:05', '127.0.0.1', 'create', 'WebSupportTicket', 'Nový ticket: test', 'WebSupportTicket', 23, 25, '{\"subject\":\"test\",\"category\":\"it\",\"priority\":\"low\",\"description\":\"asdsdsf\",\"attachment\":null}', '25', 'jonasbucina@rpsw.cz'),
+(34, '2026-08-23 15:56:19', '127.0.0.1', 'create', 'WebSupportTicket', 'Nový ticket: s.sfs,dfm.sd', 'WebSupportTicket', 24, 25, '{\"subject\":\"s.sfs,dfm.sd\",\"category\":\"obchod\",\"priority\":\"medium\",\"description\":\"sdssdf\",\"attachment\":null}', '25', 'jonasbucina@rpsw.cz'),
+(35, '2026-08-23 15:56:26', '127.0.0.1', 'export', 'WebSupportTicket', 'Hromadný export support ticketů.', NULL, NULL, 25, '{\"sort_by\":\"id\",\"sort_direction\":\"desc\",\"no_pagination\":\"true\"}', '25', 'jonasbucina@rpsw.cz'),
+(36, '2026-08-23 15:56:27', '127.0.0.1', 'export_csv', 'web/support_tickets', 'User exported 2 records (CSV) from table: Seznam Support Ticketů.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(37, '2026-08-23 15:56:42', '127.0.0.1', 'export', 'WebSupportTicket', 'Hromadný export support ticketů.', NULL, NULL, 25, '{\"sort_by\":\"id\",\"sort_direction\":\"desc\",\"no_pagination\":\"true\"}', '25', 'jonasbucina@rpsw.cz'),
+(38, '2026-08-23 15:56:42', '127.0.0.1', 'export_raw_csv', 'web/support_tickets', 'User exported 2 records (CSV, RAW/import-compatible) from table: Seznam Support Ticketů.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(39, '2026-08-23 15:57:03', '127.0.0.1', 'import', 'WebSupportTicket', 'Hromadný import: přidáno 2 ticketů, přeskočeno 0 (soubor \'Seznam Support Ticketů-raw.csv\').', 'WebSupportTicket', NULL, 25, '{\"import_token\":22}', '25', 'jonasbucina@rpsw.cz'),
+(40, '2026-08-23 19:52:32', '127.0.0.1', 'export', 'WebSupportTicket', 'Hromadný export support ticketů.', NULL, NULL, 25, '{\"sort_by\":\"id\",\"sort_direction\":\"desc\",\"no_pagination\":\"true\"}', '25', 'jonasbucina@rpsw.cz'),
+(41, '2026-08-23 19:52:33', '127.0.0.1', 'export_json', 'web/support_tickets', 'User exported 4 records (JSON) from table: Seznam Support Ticketů.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(42, '2026-08-23 19:52:52', '127.0.0.1', 'export_raw_csv', 'web/support_tickets', 'User exported 3 selected records (CSV, RAW/import-compatible) from table: Seznam Support Ticketů.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(43, '2026-08-23 19:53:05', '127.0.0.1', 'import', 'WebSupportTicket', 'Hromadný import: přidáno 3 ticketů, přeskočeno 0 (soubor \'Seznam Support Ticketů-vybrane-raw.csv\').', 'WebSupportTicket', NULL, 25, '{\"import_token\":23}', '25', 'jonasbucina@rpsw.cz'),
+(44, '2026-08-23 20:01:01', '127.0.0.1', 'create', 'WebSalesLead', 'Vytvořen nový lead: kaslkda', 'WebSalesLead', 23, 25, '{\"subject_name\":\"kaslkda\",\"user_id\":null,\"salesman_name\":null,\"contact_other\":null,\"source_url\":null,\"first_contact_date\":null,\"contact_person\":null,\"contact_email\":null,\"contact_phone\":null,\"location\":null,\"source_channel\":\"LinkedIn - Direct Message\",\"status\":\"Nov\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"last_contact_date\":null,\"next_step\":null,\"description\":null}', '25', 'jonasbucina@rpsw.cz'),
+(45, '2026-08-23 20:01:08', '127.0.0.1', 'export', 'WebSalesLead', 'Hromadný export obchodních leadů.', NULL, NULL, 25, '{\"sort_by\":\"id\",\"sort_direction\":\"desc\",\"no_pagination\":\"true\"}', '25', 'jonasbucina@rpsw.cz'),
+(46, '2026-08-23 20:01:08', '127.0.0.1', 'export_raw_csv', 'web/sales_leads', 'User exported 1 records (CSV, RAW/import-compatible) from table: Seznam obchodních příležitostí.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(47, '2026-08-23 20:03:23', '127.0.0.1', 'export', 'WebSalesLead', 'Hromadný export obchodních leadů.', NULL, NULL, 25, '{\"sort_by\":\"id\",\"sort_direction\":\"desc\",\"no_pagination\":\"true\"}', '25', 'jonasbucina@rpsw.cz'),
+(48, '2026-08-23 20:03:23', '127.0.0.1', 'export_raw_csv', 'web/sales_leads', 'User exported 1 records (CSV, RAW/import-compatible) from table: Seznam obchodních příležitostí.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(49, '2026-08-23 20:03:37', '127.0.0.1', 'import', 'WebSalesLead', 'Hromadný import: přidáno 1 leadů, přeskočeno 0 (soubor \'Seznam obchodních příležitostí-raw.csv\').', 'WebSalesLead', NULL, 25, '{\"import_token\":24}', '25', 'jonasbucina@rpsw.cz'),
+(50, '2026-08-23 20:21:35', '127.0.0.1', 'create', 'Web', 'Vytvořen externí odkaz: asd', 'CoreExternalLink', 14, 25, '{\"name\":\"asd\",\"url\":\"https:\\/\\/analytics.google.com\",\"position\":null,\"is_active\":\"1\"}', '25', 'jonasbucina@rpsw.cz'),
+(51, '2026-08-23 20:41:06', '127.0.0.1', 'create', 'Web', 'Vytvořen externí odkaz: kfmsdjfsd', 'CoreExternalLink', 15, 25, '{\"name\":\"kfmsdjfsd\",\"url\":\"https:\\/\\/analytics.google.com\",\"position\":null,\"is_active\":\"1\"}', '25', 'jonasbucina@rpsw.cz'),
+(52, '2026-08-23 20:41:18', '127.0.0.1', 'soft_delete_bulk', 'Web', 'Hromadné smazání 2 externích odkazů (požadováno 2, ID: 14,15).', 'CoreExternalLink', NULL, 25, '{\"ids\":[14,15]}', '25', 'jonasbucina@rpsw.cz'),
+(53, '2026-08-23 20:41:24', '127.0.0.1', 'force_delete_all', 'Web', 'Trvale smazáno 2 externích odkazů z koše', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(54, '2026-08-23 20:44:59', '127.0.0.1', 'export_json', 'shop/suppliers', 'User exported 2 selected records (JSON) from table: Seznam aktivních dodavatelů.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(55, '2026-08-23 20:45:11', '127.0.0.1', 'export_raw_csv', 'shop/suppliers', 'User exported 2 selected records (CSV, RAW/import-compatible) from table: Seznam aktivních dodavatelů.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(56, '2026-08-23 22:08:43', '127.0.0.1', 'create', 'Web', 'Vytvořen externí odkaz: asd,nas,d', 'CoreExternalLink', 16, 25, '{\"name\":\"asd,nas,d\",\"url\":\"https:\\/\\/analytics.google.com\",\"position\":null,\"is_active\":\"1\"}', '25', 'jonasbucina@rpsw.cz'),
+(57, '2026-08-23 22:08:52', '127.0.0.1', 'soft_delete', 'Web', 'Smazán externí odkaz: asd,nas,d', 'CoreExternalLink', 16, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(58, '2026-08-25 16:34:11', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 2 požadavků (požadováno 2, ID: 216,215).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[216,215]}', '25', 'jonasbucina@rpsw.cz'),
+(59, '2026-08-25 16:34:28', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: testsdfsf', 'WebRawRequestCommission', 217, 25, '{\"thema\":\"testsdfsf\",\"contact_email\":\"sfd@sdf.cu\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"dasdksjdk\\u016f\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(60, '2026-08-25 16:34:28', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: testsdfsf', 'WebRawRequestCommission', 218, 25, '{\"thema\":\"testsdfsf\",\"contact_email\":\"sfd@sdf.cu\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"dasdksjdk\\u016f\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(61, '2026-08-25 16:34:38', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 2 požadavků (požadováno 2, ID: 218,217).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[218,217]}', '25', 'jonasbucina@rpsw.cz'),
+(62, '2026-08-25 16:35:19', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: kfsdf', 'WebRawRequestCommission', 219, 25, '{\"thema\":\"kfsdf\",\"contact_email\":\"d@saf.cz\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"sdlfsd\\u016ffkdsl\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(63, '2026-08-25 16:35:20', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: kfsdf', 'WebRawRequestCommission', 220, 25, '{\"thema\":\"kfsdf\",\"contact_email\":\"d@saf.cz\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"sdlfsd\\u016ffkdsl\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(64, '2026-08-25 16:35:20', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: kfsdf', 'WebRawRequestCommission', 221, 25, '{\"thema\":\"kfsdf\",\"contact_email\":\"d@saf.cz\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"sdlfsd\\u016ffkdsl\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(65, '2026-08-25 16:35:21', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: kfsdf', 'WebRawRequestCommission', 222, 25, '{\"thema\":\"kfsdf\",\"contact_email\":\"d@saf.cz\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"sdlfsd\\u016ffkdsl\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(66, '2026-08-25 16:35:21', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: kfsdf', 'WebRawRequestCommission', 223, 25, '{\"thema\":\"kfsdf\",\"contact_email\":\"d@saf.cz\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"sdlfsd\\u016ffkdsl\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(67, '2026-08-25 16:41:18', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 5 požadavků (požadováno 5, ID: 223,222,221,220,219).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[223,222,221,220,219]}', '25', 'jonasbucina@rpsw.cz'),
+(68, '2026-08-25 16:41:27', '127.0.0.1', 'force_delete_all', 'WebRawRequestCommission', 'Hromadné smazání koše provizí. Počet: 13', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(69, '2026-08-25 16:46:45', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: sdkfmsd.f', 'WebRawRequestCommission', 224, 25, '{\"thema\":\"sdkfmsd.f\",\"contact_email\":\"dgfd@dfg.z\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"slkfsd\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(70, '2026-08-25 16:46:45', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: sdkfmsd.f', 'WebRawRequestCommission', 225, 25, '{\"thema\":\"sdkfmsd.f\",\"contact_email\":\"dgfd@dfg.z\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"slkfsd\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(71, '2026-08-25 16:46:46', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: sdkfmsd.f', 'WebRawRequestCommission', 226, 25, '{\"thema\":\"sdkfmsd.f\",\"contact_email\":\"dgfd@dfg.z\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"slkfsd\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(72, '2026-08-25 16:46:46', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: sdkfmsd.f', 'WebRawRequestCommission', 227, 25, '{\"thema\":\"sdkfmsd.f\",\"contact_email\":\"dgfd@dfg.z\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"slkfsd\\u016ff\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(73, '2026-08-25 16:47:05', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 4 požadavků (požadováno 4, ID: 227,226,225,224).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[227,226,225,224]}', '25', 'jonasbucina@rpsw.cz'),
+(74, '2026-08-25 16:47:42', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: asdn', 'WebRawRequestCommission', 228, 25, '{\"thema\":\"asdn\",\"contact_email\":\"d@saf.cz\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"fks\\u016flfsdkf\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(75, '2026-08-25 16:47:58', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: sdfmad', 'WebRawRequestCommission', 229, 25, '{\"thema\":\"sdfmad\",\"contact_email\":\"d@saf.cz\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"dsklfjsd\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(76, '2026-08-25 17:20:24', '127.0.0.1', 'export_json', 'core/security_events', 'User exported 15 records (JSON) from table: Bezpečnostní monitoring.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(77, '2026-08-25 23:03:32', '127.0.0.1', 'export_json', 'core/security_events', 'User exported 15 records (JSON) from table: Bezpečnostní monitoring.', NULL, NULL, 25, NULL, '25', 'jonasbucina@rpsw.cz'),
+(78, '2026-08-25 23:31:41', '127.0.0.1', 'create', 'Web', 'Vytvořen externí odkaz: Fonetický Express', 'CoreExternalLink', 17, 25, '{\"name\":\"Fonetick\\u00fd Express\",\"url\":\"https:\\/\\/analytics.google.com\",\"position\":null,\"is_active\":\"1\"}', '25', 'jonasbucina@rpsw.cz'),
+(79, '2026-08-25 23:31:56', '127.0.0.1', 'create', 'Web', 'Vytvořen externí odkaz: jonas', 'CoreExternalLink', 18, 25, '{\"name\":\"jonas\",\"url\":\"https:\\/\\/www.google.com\\/?hl=cs\",\"position\":null,\"is_active\":\"1\"}', '25', 'jonasbucina@rpsw.cz'),
+(80, '2026-08-26 11:33:13', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: asdaasd', 'WebRawRequestCommission', 230, 25, '{\"thema\":\"asdaasd\",\"contact_email\":\"dgfd@dfg.z\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"dsdsdsddsd\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(81, '2026-08-26 11:35:38', '127.0.0.1', 'create', 'WebSalesLead', 'Vytvořen nový lead: asdkasds', 'WebSalesLead', 25, 25, '{\"subject_name\":\"asdkasds\",\"user_id\":null,\"salesman_name\":null,\"contact_other\":null,\"source_url\":null,\"first_contact_date\":null,\"contact_person\":null,\"contact_email\":null,\"contact_phone\":null,\"location\":null,\"source_channel\":\"LinkedIn - Direct Message\",\"status\":\"Nov\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"last_contact_date\":null,\"next_step\":null,\"description\":null}', '25', 'jonasbucina@rpsw.cz'),
+(82, '2026-08-26 12:44:25', '127.0.0.1', 'soft_delete', 'Web', 'Smazán externí odkaz: jonas', 'CoreExternalLink', 18, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(83, '2026-08-26 12:44:27', '127.0.0.1', 'soft_delete', 'Web', 'Smazán externí odkaz: Fonetický Express', 'CoreExternalLink', 17, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(84, '2026-08-26 12:44:34', '127.0.0.1', 'force_delete_all', 'Web', 'Trvale smazáno 3 externích odkazů z koše', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(85, '2026-08-26 12:46:31', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 3 požadavků (požadováno 3, ID: 230,229,228).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[230,229,228]}', '25', 'jonasbucina@rpsw.cz'),
+(86, '2026-08-26 12:46:39', '127.0.0.1', 'force_delete_all', 'WebRawRequestCommission', 'Hromadné smazání koše provizí. Počet: 7', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(87, '2026-08-26 12:46:46', '127.0.0.1', 'soft_delete_bulk', 'WebSalesLead', 'Hromadné smazání 3 leadů (požadováno 3, ID: 25,24,23).', 'WebSalesLead', NULL, 25, '{\"ids\":[25,24,23]}', '25', 'jonasbucina@rpsw.cz'),
+(88, '2026-08-26 12:46:53', '127.0.0.1', 'force_delete_all', 'WebSalesLead', 'Hromadné smazání koše leadů. Počet: 3', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz'),
+(89, '2026-08-26 12:47:14', '127.0.0.1', 'soft_delete_bulk', 'WebSupportTicket', 'Hromadné smazání 7 ticketů (požadováno 7, ID: 29,28,27,26,25,24,23).', 'WebSupportTicket', NULL, 25, '{\"ids\":[29,28,27,26,25,24,23]}', '25', 'jonasbucina@rpsw.cz'),
+(90, '2026-08-26 12:54:23', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: sdfsd', 'WebRawRequestCommission', 231, 25, '{\"thema\":\"sdfsd\",\"contact_email\":\"dgfd@dfg.z\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"sdfdsf\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(91, '2026-08-26 12:54:34', '127.0.0.1', 'create', 'WebRawRequestCommission', 'Vytvořen požadavek na provizi: asmnd', 'WebRawRequestCommission', 232, 25, '{\"thema\":\"asmnd\",\"contact_email\":\"asd.asd@sdf.dsf\",\"contact_phone\":null,\"status\":\"Nov\\u011b zadan\\u00e9\",\"priority\":\"N\\u00edzk\\u00e1\",\"order_description\":\"sdfsdfs\",\"note\":null,\"attachments\":[]}', '25', 'jonasbucina@rpsw.cz'),
+(92, '2026-08-26 12:54:42', '127.0.0.1', 'soft_delete_bulk', 'WebRawRequestCommission', 'Hromadné smazání 2 požadavků (požadováno 2, ID: 232,231).', 'WebRawRequestCommission', NULL, 25, '{\"ids\":[232,231]}', '25', 'jonasbucina@rpsw.cz'),
+(93, '2026-08-26 12:54:48', '127.0.0.1', 'force_delete_all', 'WebRawRequestCommission', 'Hromadné smazání koše provizí. Počet: 2', NULL, NULL, 25, '[]', '25', 'jonasbucina@rpsw.cz');
 
 -- --------------------------------------------------------
 
@@ -1302,14 +1855,51 @@ CREATE TABLE `web_support_tickets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
+-- Dumping data for table `web_support_tickets`
+--
+
+INSERT INTO `web_support_tickets` (`id`, `user_id`, `user_name_plain`, `user_plain`, `category`, `priority`, `state`, `subject`, `description`, `attachment_path`, `attachment_original_name`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(23, 25, 'Jonáš Bučina', 'jonasbucina@rpsw.cz', 'it', 'low', 'new', 'test', 'asdsdsf', NULL, NULL, '2026-08-23 13:56:05', '2026-08-26 10:47:14', '2026-08-26 10:47:14'),
+(24, 25, 'Jonáš Bučina', 'jonasbucina@rpsw.cz', 'obchod', 'medium', 'new', 's.sfs,dfm.sd', 'sdssdf', NULL, NULL, '2026-08-23 13:56:19', '2026-08-26 10:47:14', '2026-08-26 10:47:14'),
+(25, NULL, 'Jonáš Bučina', 'jonasbucina@rpsw.cz', 'obchod', 'medium', 'new', 's.sfs,dfm.sd', 'sdssdf', NULL, NULL, '2026-08-23 13:57:03', '2026-08-26 10:47:14', '2026-08-26 10:47:14'),
+(26, NULL, 'Jonáš Bučina', 'jonasbucina@rpsw.cz', 'it', 'low', 'new', 'test', 'asdsdsf', NULL, NULL, '2026-08-23 13:57:03', '2026-08-26 10:47:14', '2026-08-26 10:47:14'),
+(27, NULL, 'Jonáš Bučina', 'jonasbucina@rpsw.cz', 'it', 'low', 'new', 'test', 'asdsdsf', NULL, NULL, '2026-08-23 17:53:05', '2026-08-26 10:47:14', '2026-08-26 10:47:14'),
+(28, NULL, 'Jonáš Bučina', 'jonasbucina@rpsw.cz', 'obchod', 'medium', 'new', 's.sfs,dfm.sd', 'sdssdf', NULL, NULL, '2026-08-23 17:53:05', '2026-08-26 10:47:14', '2026-08-26 10:47:14'),
+(29, NULL, 'Jonáš Bučina', 'jonasbucina@rpsw.cz', 'obchod', 'medium', 'new', 's.sfs,dfm.sd', 'sdssdf', NULL, NULL, '2026-08-23 17:53:05', '2026-08-26 10:47:14', '2026-08-26 10:47:14');
+
+--
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `account_activation_tokens`
+--
+ALTER TABLE `account_activation_tokens`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `account_activation_tokens_token_hash_unique` (`token_hash`),
+  ADD KEY `account_activation_tokens_user_id_index` (`user_id`);
 
 --
 -- Indexes for table `cache`
 --
 ALTER TABLE `cache`
   ADD PRIMARY KEY (`key`);
+
+--
+-- Indexes for table `core_email_access_rules`
+--
+ALTER TABLE `core_email_access_rules`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `core_email_access_rules_type_value_unique` (`type`,`value`);
+
+--
+-- Indexes for table `core_import_batches`
+--
+ALTER TABLE `core_import_batches`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_import_batches_resource` (`resource`),
+  ADD KEY `idx_import_batches_status` (`status`),
+  ADD KEY `fk_import_batches_user_id` (`user_id`);
 
 --
 -- Indexes for table `core_logs`
@@ -1338,6 +1928,22 @@ ALTER TABLE `core_roles`
 ALTER TABLE `core_role_permissions`
   ADD PRIMARY KEY (`role_id`,`permission_id`),
   ADD KEY `fk_crp_permission_id` (`permission_id`);
+
+--
+-- Indexes for table `core_security_events`
+--
+ALTER TABLE `core_security_events`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_security_event_fingerprint` (`fingerprint`),
+  ADD KEY `fk_security_events_user_id` (`user_id`),
+  ADD KEY `idx_security_events_event_type` (`event_type`),
+  ADD KEY `idx_security_events_last_seen_at` (`last_seen_at`);
+
+--
+-- Indexes for table `core_security_settings`
+--
+ALTER TABLE `core_security_settings`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `document_sections`
@@ -1654,22 +2260,52 @@ ALTER TABLE `web_support_tickets`
 --
 
 --
+-- AUTO_INCREMENT for table `account_activation_tokens`
+--
+ALTER TABLE `account_activation_tokens`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `core_email_access_rules`
+--
+ALTER TABLE `core_email_access_rules`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `core_import_batches`
+--
+ALTER TABLE `core_import_batches`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+
+--
 -- AUTO_INCREMENT for table `core_logs`
 --
 ALTER TABLE `core_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=224;
 
 --
 -- AUTO_INCREMENT for table `core_permissions`
 --
 ALTER TABLE `core_permissions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
 
 --
 -- AUTO_INCREMENT for table `core_roles`
 --
 ALTER TABLE `core_roles`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `core_security_events`
+--
+ALTER TABLE `core_security_events`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+
+--
+-- AUTO_INCREMENT for table `core_security_settings`
+--
+ALTER TABLE `core_security_settings`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `document_sections`
@@ -1687,13 +2323,13 @@ ALTER TABLE `document_types`
 -- AUTO_INCREMENT for table `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `legal_site_settings`
@@ -1717,19 +2353,19 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT for table `password_reset_tokens`
 --
 ALTER TABLE `password_reset_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=850;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=914;
 
 --
 -- AUTO_INCREMENT for table `refresh_tokens`
 --
 ALTER TABLE `refresh_tokens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=849;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=913;
 
 --
 -- AUTO_INCREMENT for table `shop_categories`
@@ -1753,7 +2389,7 @@ ALTER TABLE `shop_customers`
 -- AUTO_INCREMENT for table `shop_logs`
 --
 ALTER TABLE `shop_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `shop_orders`
@@ -1837,19 +2473,19 @@ ALTER TABLE `shop_site_settings`
 -- AUTO_INCREMENT for table `shop_suppliers`
 --
 ALTER TABLE `shop_suppliers`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `two_factor_codes`
 --
 ALTER TABLE `two_factor_codes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100;
 
 --
 -- AUTO_INCREMENT for table `web_attachments`
@@ -1861,7 +2497,7 @@ ALTER TABLE `web_attachments`
 -- AUTO_INCREMENT for table `web_external_links`
 --
 ALTER TABLE `web_external_links`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `web_job_applications`
@@ -1873,25 +2509,25 @@ ALTER TABLE `web_job_applications`
 -- AUTO_INCREMENT for table `web_logs`
 --
 ALTER TABLE `web_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
 
 --
 -- AUTO_INCREMENT for table `web_news`
 --
 ALTER TABLE `web_news`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `web_raw_request_commissions`
 --
 ALTER TABLE `web_raw_request_commissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=233;
 
 --
 -- AUTO_INCREMENT for table `web_sales_leads`
 --
 ALTER TABLE `web_sales_leads`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `web_sales_orders`
@@ -1909,11 +2545,23 @@ ALTER TABLE `web_site_settings`
 -- AUTO_INCREMENT for table `web_support_tickets`
 --
 ALTER TABLE `web_support_tickets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `account_activation_tokens`
+--
+ALTER TABLE `account_activation_tokens`
+  ADD CONSTRAINT `account_activation_tokens_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `core_import_batches`
+--
+ALTER TABLE `core_import_batches`
+  ADD CONSTRAINT `fk_import_batches_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `core_role_permissions`
@@ -1921,6 +2569,12 @@ ALTER TABLE `web_support_tickets`
 ALTER TABLE `core_role_permissions`
   ADD CONSTRAINT `fk_crp_permission_id` FOREIGN KEY (`permission_id`) REFERENCES `core_permissions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_crp_role_id` FOREIGN KEY (`role_id`) REFERENCES `core_roles` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `core_security_events`
+--
+ALTER TABLE `core_security_events`
+  ADD CONSTRAINT `fk_security_events_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `document_sections`

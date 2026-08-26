@@ -156,6 +156,16 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
   @Input() lastUpdatedAt: Date | null = null;
 
+  /**
+   * @description Vypne položku "Smazat vybrané" v bulk-actions dropdownu, i když má
+   * tabulka aktivní `delete_button` s dostatečným oprávněním. Použito na tabulkách,
+   * kde je HROMADNÉ mazání záměrně nepodporováno na backendu (chybí `bulkDestroy()`)
+   * kvůli citlivé per-záznam byznys logice, kterou nelze mechanicky replikovat -
+   * viz core/users (UserController, sysadmin ochrana). Jednotlivé mazání (řádkové
+   * tlačítko) tímto NENÍ dotčeno.
+   */
+  @Input() bulkDeleteDisabled: boolean = false;
+
   @Output() itemDeleted = new EventEmitter<any>();
   @Output() createFormOpened = new EventEmitter<void>();
   @Output() editFormOpened = new EventEmitter<any>();
@@ -388,9 +398,10 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   get canBulkDelete(): boolean {
-    const deleteBtn = this.buttons?.find(b => b.type === 'delete_button' && b.isActive);
-    return !!deleteBtn && this.isButtonVisible(deleteBtn);
-  }
+  if (this.bulkDeleteDisabled) return false;
+  const deleteBtn = this.buttons?.find(b => b.type === 'delete_button' && b.isActive);
+  return !!deleteBtn && this.isButtonVisible(deleteBtn);
+}
 
   get selectableIds(): any[] {
     return (this.data || [])
