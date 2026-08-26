@@ -67,6 +67,21 @@
  * tlačítkem "Zrušit" (`onCancel()` na `isSubmitting` nezávisí), takže ani výpadek sítě
  * nevede do slepé uličky.
  *
+ * @bugfix-note (2026-08-25) KRITICKÝ BUG - SOUČASNÉ ZOBRAZENÍ ZELENÉHO "ÚSPĚCH" I
+ * ČERVENÉHO CHYBOVÉHO TOASTU: `onSubmit()` volal `this.alertDialogService.open('Information',
+ * ...)` HNED po `emit()`, tedy ještě PŘED skutečným HTTP requestem (ten běží až
+ * v konzumentské stránce). Pokud backend request zamítl (např. 422 - nepovolená
+ * e-mailová doména, vynucená 2FA, atd.), uživatel viděl NEJDŘÍV zelený "úspěch" a
+ * hned poté červenou chybu - matoucí a věcně nesprávné. ŘEŠENÍ: `FormBuilderComponent`
+ * už NEUKAZUJE žádný toast o výsledku uložení vůbec - jen emituje `payload`.
+ * Vyhodnocení úspěch/neúspěch (zelený/červený toast) je VÝHRADNĚ na konzumentské
+ * stránce v `subscribe({next, error})`, protože jen tam je v okamžiku volání known
+ * skutečný výsledek z API - nikdy tak nemůže dojít k zobrazení obou toastů najednou,
+ * ani k "falešně pozitivnímu" zelenému toastu. KAŽDÁ stránka používající
+ * `FormBuilderComponent` musí mít vlastní `next: () => this.alertDialogService.open('Úspěch',
+ * ..., 'success')` volání - bez toho po tomhle bugfixu uživatel neuvidí ŽÁDNÉ
+ * potvrzení úspěchu (jen ticho + refresh dat), což je regrese, ne oprava.
+ *
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.
  * - AlertDialogService: Provides user feedback for submission outcomes.
@@ -341,11 +356,25 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
       this.formSubmitted.emit(payload);
 
-      const actionText = this.formDataToEdit ? 'updated' : 'created';
-      this.alertDialogService.open('Information', `Record successfully ${actionText}.`, 'success');
+      /**
+       * @bugfix-note (2026-08-25) KRITICKÝ BUG - ZELENÝ "ÚSPĚCH" TOAST SE ZOBRAZOVAL
+       * VŽDY, I KDYŽ BACKEND POŽADAVEK NAKONEC ZAMÍTL: dřív se tady volalo
+       * `this.alertDialogService.open('Information', ...)` HNED po `emit()`, tedy
+       * ještě PŘED tím, než vůbec proběhl skutečný HTTP request (ten běží až
+       * v konzumentské stránce přes `postData()/updateData().subscribe()`). Uživatel
+       * tak viděl zelený "úspěch", a hned vzápětí (po doběhnutí requestu) i červenou
+       * chybu z reálného 422/500 - obě najednou, což nedává smysl a matoucí to je.
+       *
+       * ŘEŠENÍ: `FormBuilderComponent` už NEUKAZUJE ŽÁDNÝ toast o výsledku uložení -
+       * jen emituje `payload` a je na KONZUMENTSKÉ STRÁNCE (přes `subscribe({next,
+       * error})`), aby zobrazila zelený toast při úspěchu (`next`) a červený při chybě
+       * (`error`) - teprve TEHDY je totiž známý skutečný výsledek z API. Toast se tak
+       * nikdy nemůže objevit "špatně" ani zdvojeně, protože existuje přesně JEDNO
+       * místo (odpověď HTTP requestu), které o něm rozhoduje.
+       */
 
-      // `isSubmitting` ZÁMĚRNĚ zůstává `true` - viz bugfix-note (2026-08-24) v hlavičce
-      // souboru. Tlačítko "Potvrdit" tak zůstane disabled, dokud rodičovská stránka po
+      // `isSubmitting` ZÁMĚRNĚ zůstává `true` - viz bugfix-note (2026-08-24) výše.
+      // Tlačítko "Potvrdit" tak zůstane disabled, dokud rodičovská stránka po
       // dokončení HTTP requestu modal nezavře (tahle komponenta se tím zničí úplně).
     } else {
       this.alertDialogService.open('Invalid Form', 'Please check all required fields.', 'warning');

@@ -17,7 +17,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './support-tickets.config';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Manages the lifecycle of support tickets within the web administration module.
  * @usage Provides an interface for tracking, creating, updating, and exporting support inquiries.
@@ -26,7 +26,7 @@ import * as Config from './support-tickets.config';
 @Component({
   selector: 'app-support-tickets',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './support-tickets.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -203,7 +203,10 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
         this.cd.markForCheck();
       })
     ).subscribe({
-      next: () => this.refreshData(),
+      next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },
       error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
     });
   }

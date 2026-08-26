@@ -17,7 +17,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './coupons.config';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Serves as the primary controller for the Coupons management page.
  * @usage Used by shop administrators to create, edit, delete, or restore discount coupons.
@@ -26,7 +26,7 @@ import * as Config from './coupons.config';
 @Component({
   selector: 'app-coupons',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './coupons.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -161,7 +161,10 @@ export class CouponsComponent extends BaseDataComponent<any> implements Core.OnI
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); })).subscribe({
-      next: () => this.refreshData(),
+      next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },
       error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
     });
   }

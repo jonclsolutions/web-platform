@@ -17,7 +17,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './suppliers.config';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Component for managing business relationships with suppliers.
  * @usage Provides a comprehensive interface for administrators to list, create, edit, and archive supplier records.
@@ -26,7 +26,7 @@ import * as Config from './suppliers.config';
 @Component({
   selector: 'app-suppliers',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './suppliers.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -184,7 +184,10 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
         this.cd.markForCheck();
       })
     ).subscribe({
-      next: () => this.refreshData(),
+      next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },
       error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
     });
   }

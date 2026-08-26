@@ -18,7 +18,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './customers.config';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Orchestrates the customer management dashboard, handling client lists, profile details, and associated order history.
  * @usage Used by store administrators to view and manage customer accounts.
@@ -27,7 +27,7 @@ import * as Config from './customers.config';
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, SHARED_UI_BUILDERS],
+  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -184,7 +184,10 @@ get toolbarButtons(): Core.Button[] {
       this.showCreateForm = false;
       this.cd.markForCheck();
     })).subscribe({
-      next: () => this.refreshData(),
+      next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },
       error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Uložení zákazníka selhalo.', 'danger')
     });
   }

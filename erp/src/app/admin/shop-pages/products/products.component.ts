@@ -33,7 +33,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { PRODUCT_BUTTONS, PRODUCT_COLUMNS, TRASH_PRODUCT_COLUMNS, FILTER_COLUMNS, TOOLBAR_BUTTONS, PRODUCT_FORM_FIELDS } from './products.config';
 import { Variant, ProductImage, Category, Supplier, Product } from './';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Controller for the product administration module.
  * @usage Orchestrates product data flow, including category/supplier associations, variant management, and complex image uploads.
@@ -42,7 +42,7 @@ import { Variant, ProductImage, Category, Supplier, Product } from './';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -17,7 +17,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './sales-leads.config';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Manages the Sales Leads module.
  * @usage Provides administrative oversight for lead generation, editing, and tracking through centralized configuration.
@@ -26,7 +26,7 @@ import * as Config from './sales-leads.config';
 @Component({
   selector: 'app-sales-leads',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './sales-leads.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -214,7 +214,10 @@ handleGenerateFormLink(item: any): void {
         this.showCreateForm = false;
         this.cd.markForCheck();
       })
-    ).subscribe(() => this.refreshData());
+    ).subscribe({next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },});
   }
 
   handleViewDetails(item: any): void {

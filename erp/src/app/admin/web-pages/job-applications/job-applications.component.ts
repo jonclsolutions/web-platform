@@ -17,7 +17,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './job-applications.config';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Administrative component for viewing and editing incoming job applications.
  * @usage Provides a data-driven interface to manage candidate submissions via the administrative dashboard.
@@ -26,7 +26,7 @@ import * as Config from './job-applications.config';
 @Component({
   selector: 'app-job-applications',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './job-applications.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -194,7 +194,10 @@ get toolbarButtons(): Core.Button[] {
         this.cd.markForCheck();
       })
     ).subscribe({
-      next: () => this.refreshData(),
+      next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },
       error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
     });
   }

@@ -19,7 +19,7 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { LoadingService } from '../../../core/services/loading.service';
 import * as Config from './edit-news.config';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Component for the management of news content on the web platform.
  * @usage Enables administrators to create, edit, filter, and archive news articles.
@@ -28,7 +28,7 @@ import * as Config from './edit-news.config';
 @Component({
   selector: 'app-news',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './edit-news.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -177,7 +177,10 @@ get toolbarButtons(): Core.Button[] {
         this.cd.markForCheck();
       })
     ).subscribe({
-      next: () => this.refreshData(),
+      next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },
       error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
     });
   }

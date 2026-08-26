@@ -17,7 +17,7 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './payment-methods.config';
-
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 /**
  * @description Component for managing shop payment method settings.
  * @usage Enables administrators to view, filter, edit, and export payment method configurations.
@@ -26,7 +26,7 @@ import * as Config from './payment-methods.config';
 @Component({
   selector: 'app-payment-methods',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
   templateUrl: './payment-methods.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -160,7 +160,10 @@ get toolbarButtons(): Core.Button[] {
     this.updateData(formData.id, formData)
       .pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); }))
       .subscribe({
-        next: () => this.refreshData(),
+        next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },
         error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Aktualizace selhala.', 'danger')
       });
   }

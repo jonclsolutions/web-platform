@@ -50,8 +50,10 @@ import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
+import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './user-request.config';
+
 /** Jeden jazyk z `GET languages/{module}` - stejný tvar, jaký používá WebSettingsComponent. */
 interface EmailTemplateLang {
   code: string;
@@ -88,7 +90,10 @@ interface EmailTemplateState {
 @Component({
   selector: 'app-user-request',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, FormsModule],
+  // ActionMenuBuilderComponent je zde přidán explicitně, dokud ho nezařadíš do
+  // SHARED_UI_BUILDERS bundle (viz refactor-note 2026-08-24) - jakmile tam bude,
+  // tenhle jednotlivý import lze zase odebrat.
+  imports: [SHARED_UI_BUILDERS, FormsModule, ActionMenuBuilderComponent],
   templateUrl: './user-request.component.html',
   styleUrls: ['../default-style.css', './email-template-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -274,6 +279,13 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * @description Processes form submission, routing to either create or update API endpoints based on entity ID presence.
    * @param formData The data object derived from the form interaction.
    */
+  /**
+   * @bugfix-note (2026-08-25) BACKLOG "alert dialogy až podle API odpovědi":
+   * `FormBuilderComponent` už neukazuje žádný zelený toast sám od sebe (dřív ho
+   * ukazoval hned po emitu, ještě před HTTP requestem, takže při 422 chybě uživatel
+   * viděl NEJDŘÍV zelený "úspěch" a hned poté červenou chybu). Zelený toast se teď
+   * zobrazuje VÝHRADNĚ tady, v `next()` callbacku - tedy až po reálném úspěchu z API.
+   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id
       ? this.updateData(formData.id, formData)
@@ -285,7 +297,10 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
         this.cd.markForCheck();
       })
     ).subscribe({
-      next: () => this.refreshData(),
+      next: () => {
+        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.refreshData();
+      },
       error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
     });
   }

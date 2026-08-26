@@ -56,6 +56,14 @@
  * administrátorská obrazovka, ne znovupoužitelná komponenta. Backend
  * (`CoreEmailAccessPolicyController`) se chrání sám (403 pro ne-sysadmina) nezávisle
  * na tomhle UI, takže skrytí tlačítka je jen UX pohodlí, ne bezpečnostní hranice.
+ *
+ * @bugfix-note (2026-08-25v2) BACKLOG "alert dialogy až podle API odpovědi":
+ * `FormBuilderComponent` už neukazuje žádný zelený toast sám od sebe (dřív ho ukazoval
+ * HNED po emitu, ještě před HTTP requestem - viz jeho vlastní bugfix-note - takže
+ * uživatel při 422 chybě viděl NEJDŘÍV zelený "úspěch" a hned poté červenou chybu).
+ * `handleFormSubmitted()` teď zobrazuje zelený toast VÝHRADNĚ v `next()` callbacku
+ * (tedy až po reálném úspěchu z API) - červený zůstává v `error()` beze změny. Nikdy
+ * tak nemůže dojít k zobrazení obou najednou.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -402,7 +410,10 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     const request$ = payload.id ? this.updateData(payload.id, payload) : this.postData(payload);
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); }))
       .subscribe({
-        next: () => this.refreshData(),
+        next: () => {
+          this.alertDialogService.open('Úspěch', payload.id ? 'Účet byl upraven.' : 'Účet byl vytvořen.', 'success');
+          this.refreshData();
+        },
         error: (err: any) => {
           const message = err?.error?.message || 'Uložení se nezdařilo.';
           this.alertDialogService.open('Chyba', message, 'danger');
