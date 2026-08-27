@@ -1,0 +1,233 @@
+<!--
+    @file: graph-builder.component.html
+    @path: /src/app/admin/components/builders/graph-builder/graph-builder.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @bugfix-note (2026-08-27v8) BACKLOG "křížek překrytý hamburgerem / nadpisem
+        sidebaru 'Nastavení reportu / Období'": `.graph-window-close` už není
+        absolutně pozicované tlačítko přes celou kartu (kolidovalo s obsahem POD
+        sebou), ale žije v NOVÉ vlastní liště `.graph-window-topbar` NAD celým
+        dvoupanelovým layoutem (sidebar + hlavní obsah) - viz .css stejné datum.
+        Se žádným jiným prvkem se tak nemůže překrývat na žádné šířce obrazovky.
+-->
+
+<div class="graph-popup-overlay" (mousedown)="onOverlayMouseDown($event)">
+  <div class="graph-popup-card" (mousedown)="$event.stopPropagation()">
+
+    <div class="graph-window-topbar">
+      <button type="button" class="graph-window-close" (click)="onClose()" [disabled]="isExportingPdf" aria-label="Zavřít">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="graph-body-row">
+
+      <div class="graph-sidebar-backdrop" [class.visible]="mobileSidebarOpen" (click)="mobileSidebarOpen = false"></div>
+
+      <aside class="graph-sidebar" [class.open]="mobileSidebarOpen">
+        <div class="graph-sidebar-header">
+          <span class="graph-sidebar-title">Nastavení reportu</span>
+          <button type="button" class="graph-sidebar-mobile-close" (click)="mobileSidebarOpen = false" aria-label="Zavřít nastavení">✕</button>
+        </div>
+
+        <div class="graph-sidebar-scroll">
+
+          <div class="graph-sidebar-section">
+            <div class="graph-sidebar-section-title">Období</div>
+            <div class="graph-date-row">
+              <label class="graph-field">
+                <span class="graph-field-label">Od</span>
+                <input type="date" class="graph-date-input" [(ngModel)]="dateFrom" [max]="dateTo">
+              </label>
+              <label class="graph-field">
+                <span class="graph-field-label">Do</span>
+                <input type="date" class="graph-date-input" [(ngModel)]="dateTo" [min]="dateFrom">
+              </label>
+            </div>
+            <span class="graph-field-hint">Prázdné pole = bez omezení</span>
+          </div>
+
+          <div class="graph-sidebar-section">
+            <div class="graph-sidebar-section-title">Doplňkové grafy</div>
+            <label class="graph-col-checkbox">
+              <input type="checkbox" [checked]="showOverallTrend" (change)="toggleShowOverallTrend($event)">
+              <span>Celkový vývoj v čase</span>
+            </label>
+          </div>
+
+          <div class="graph-sidebar-section graph-sidebar-section-grow">
+            <div class="graph-sidebar-section-title graph-sidebar-section-title-row">
+              <span>Sloupce a typ grafu</span>
+              @if (columns.length > 0) {
+                <button type="button" class="graph-columns-toggle-all" (click)="toggleSelectAllColumns()">
+                  {{ isAllColumnsSelected ? 'Zrušit vše' : 'Vybrat vše' }}
+                </button>
+              }
+            </div>
+
+            <div class="graph-col-list">
+              @for (col of columns; track col.key) {
+                <div class="graph-col-item">
+                  <div class="graph-col-item-row">
+                    <label class="graph-col-checkbox">
+                      <input type="checkbox" [checked]="isColumnSelected(col.key)" (change)="toggleColumn(col.key, $event)">
+                      <span>{{ col.label }}</span>
+                    </label>
+                    <span class="graph-col-badge">{{ aggregationLabel(col.aggregation) }}</span>
+                  </div>
+
+                  @if (isColumnSelected(col.key)) {
+
+                    @if (col.aggregation === 'count') {
+                      <select class="graph-col-select"
+                              [ngModel]="columnChartModes.get(col.key)"
+                              (ngModelChange)="setColumnChartMode(col.key, $event)">
+                        @for (opt of columnChartModeOptions; track opt.value) {
+                          <option [value]="opt.value" [title]="opt.description">{{ opt.label }}</option>
+                        }
+                      </select>
+
+                      <button type="button" class="graph-value-filter-toggle" (click)="toggleValueFilterPanel(col.key)">
+                        {{ isValueFilterExpanded(col.key) ? '▲ Skrýt hodnoty' : '▼ Hodnoty' }}
+                        @if (!isAllColumnValuesSelected(col.key)) {
+                          <span class="graph-value-filter-active-badge">filtr aktivní</span>
+                        }
+                      </button>
+
+                      @if (isValueFilterExpanded(col.key)) {
+                        <div class="graph-value-filter-panel">
+                          <div class="graph-value-filter-header">
+                            <span>Zahrnuté hodnoty</span>
+                            <button type="button" class="graph-columns-toggle-all" (click)="toggleAllColumnValues(col.key)">
+                              {{ isAllColumnValuesSelected(col.key) ? 'Zrušit vše' : 'Vybrat vše' }}
+                            </button>
+                          </div>
+                          <div class="graph-value-filter-list">
+                            @for (entry of columnValueCatalog.get(col.key); track entry.value) {
+                              <label class="graph-value-filter-item">
+                                <input type="checkbox"
+                                       [checked]="isColumnValueSelected(col.key, entry.value)"
+                                       (change)="toggleColumnValue(col.key, entry.value, $event)">
+                                <span class="graph-value-filter-label">{{ entry.value }}</span>
+                                <span class="graph-value-filter-count">{{ entry.count }}×</span>
+                              </label>
+                            }
+                          </div>
+                        </div>
+                      }
+                    } @else {
+                      <select class="graph-col-select"
+                              [ngModel]="metricChartModes.get(col.key)"
+                              (ngModelChange)="setMetricChartMode(col.key, $event)">
+                        @for (opt of metricChartModeOptions; track opt.value) {
+                          <option [value]="opt.value" [title]="opt.description">{{ opt.label }}</option>
+                        }
+                      </select>
+                    }
+                  }
+                </div>
+              }
+            </div>
+
+            @if (selectedColumnKeys.size === 0) {
+              <p class="graph-columns-warning">Vyberte alespoň jeden sloupec pro vygenerování reportu.</p>
+            }
+          </div>
+
+        </div>
+      </aside>
+
+      <div class="graph-main">
+
+        <div class="graph-topbar">
+          <button type="button" class="graph-mobile-settings-btn" (click)="mobileSidebarOpen = true" aria-label="Nastavení reportu">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+              <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+              <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+            </svg>
+          </button>
+
+          <h2 class="graph-topbar-title">Grafy a analýzy{{ tableCaption ? ' — ' + tableCaption : '' }}</h2>
+
+          <div class="graph-topbar-actions">
+            <button type="button" class="graph-generate-btn" [disabled]="!canGenerate" (click)="generateReport()">
+              {{ isLoading ? 'Načítám…' : 'Generovat' }}
+            </button>
+            <button type="button" class="graph-popup-export" [disabled]="!reportGenerated || isExportingPdf" (click)="exportToPdf()">
+              {{ isExportingPdf ? 'Exportuji…' : '📄 PDF' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="graph-report-body">
+          @if (isLoading) {
+            <div class="graph-empty-state">
+              <div class="graph-spinner"></div>
+              <span>Připravuji report…</span>
+            </div>
+          } @else if (!reportGenerated) {
+            <div class="graph-empty-state">
+              <span>Nastavte období a sloupce v postranním panelu a klikněte na „Generovat“.</span>
+            </div>
+          } @else {
+
+            <div class="graph-pdf-offscreen" aria-hidden="true">
+              <div #pdfHeader class="graph-pdf-header">
+                <div class="graph-pdf-header-title">{{ reportTitle }}</div>
+                <div class="graph-pdf-header-meta">
+                  @for (line of reportMetaLines; track $index) {
+                    <div class="graph-pdf-header-meta-row">{{ line }}</div>
+                  }
+                </div>
+              </div>
+              <div #pdfFooterTitle class="graph-pdf-footer-title">{{ reportTitle }}</div>
+            </div>
+
+            <div class="graph-report-content">
+
+              <div class="graph-report-meta">
+                @for (line of reportMetaLines; track $index) {
+                  <div class="graph-report-meta-row">{{ line }}</div>
+                }
+              </div>
+
+              <div class="graph-charts-stack">
+                @for (descriptor of chartSectionDescriptors; track $index) {
+                  <div class="graph-chart-card" #pdfCard>
+                    <h3 class="graph-chart-title">{{ sectionTitle(descriptor) }}</h3>
+
+                    <div class="graph-chart-canvas-wrap">
+                      <canvas #chartCanvas></canvas>
+                    </div>
+
+                    @if (legendItemsFor(descriptor); as legendItems) {
+                      <div class="graph-chart-legend">
+                        @for (item of legendItems; track item.label) {
+                          <span class="graph-legend-chip">
+                            <span class="graph-legend-dot" [style.background]="item.color"></span>
+                            {{ item.label }}
+                          </span>
+                        }
+                      </div>
+                    }
+
+                    <p class="graph-chart-desc">{{ sectionDescription(descriptor) }}</p>
+                  </div>
+                }
+              </div>
+
+            </div>
+          }
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

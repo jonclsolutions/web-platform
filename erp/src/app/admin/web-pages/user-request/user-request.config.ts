@@ -48,14 +48,15 @@ export const USER_REQUEST_BUTTONS: Core.TableButtons[] = [
   { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-user-requests-delete' },
 ];
 
-export const USER_REQUEST_TOOLBAR_BUTTONS: Core.Button[] = [
-  { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-user-requests-create' },
-  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
-  { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
-  { action: 'openEmailTemplateEditor', label: 'Potvrzovací e-mail', icon: '✉️', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-update' },
-  { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
-];
+ export const USER_REQUEST_TOOLBAR_BUTTONS: Core.Button[] = [
+   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
+   { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-user-requests-create' },
+   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+   { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+   { action: 'openEmailTemplateEditor', label: 'Potvrzovací e-mail', icon: '✉️', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-update' },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
+ ];
 
 export const USER_REQUEST_STATUS_OPTIONS: string[] = ['Nově zadané', 'Zpracovává se', 'Dokončeno', 'Zrušeno'];
 export const USER_REQUEST_PRIORITY_OPTIONS: string[] = ['Nízká', 'Neutrální', 'Vysoká'];
@@ -174,11 +175,11 @@ export const USER_REQUEST_FILTER_COLUMNS: Core.FilterColumns[] = [
  */
 export const USER_REQUEST_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID požadavku', type: 'text' },
-  { key: 'thema', displayName: 'Téma', type: 'text', importable: true },
+  { key: 'thema', displayName: 'Téma', type: 'text', importable: true, chartable: true, chartPossibleValues: USER_REQUEST_THEMA_OPTIONS },
   { key: 'contact_email', displayName: 'Email', type: 'text', importable: true },
   { key: 'contact_phone', displayName: 'Telefon', type: 'text', importable: true },
-  { key: 'status', displayName: 'Stav', type: 'text', importable: true },
-  { key: 'priority', displayName: 'Priorita', type: 'text', importable: true },
+  { key: 'status', displayName: 'Stav', type: 'text', importable: true, chartable: true,chartPossibleValues: USER_REQUEST_STATUS_OPTIONS },
+  { key: 'priority', displayName: 'Priorita', type: 'text', importable: true, chartable: true , chartPossibleValues: USER_REQUEST_PRIORITY_OPTIONS},
   { key: 'order_description', displayName: 'Popis požadavku', type: 'text', importable: true },
   { key: 'note', displayName: 'Poznámka', type: 'text', importable: true },
   { key: 'attachments', displayName: 'Přílohy', type: 'files' },

@@ -9,6 +9,7 @@
  * - BaseDataComponent: Core logic for API interactions and state management.
  * - TableBuilderComponent: UI component for rendering the request data tables and handling CSV exports and imports.
  * - ActionMenuBuilderComponent: Dropdown ("Akce") rendering `toolbarButtons` config - viz refactor-note (2026-08-24).
+ * - GraphBuilderComponent: Generic date-range analytics/report popup (charts + PDF export) - viz refactor-note (2026-08-26).
  * - USER_REQUEST Config: Domain-specific definitions for form fields, table columns, and button configurations.
  *
  * @refactor-note (2026-08-19) BACKLOG "editovatelný obsah potvrzovacího e-mailu":
@@ -32,7 +33,8 @@
  * `(click)="$event.stopPropagation()"` na kartě tohle neřešilo, protože zastavovalo
  * ŠPATNÝ typ eventu (`click`, ne `mousedown`) - opraveno na
  * `(mousedown)="$event.stopPropagation()"`, takže `mousedown` z karty už k overlayi
- * vůbec nedobublá a `preventDefault()` se nikdy nezavolá.
+ * vůbec nedobublá a `preventDefault()` se nikdy nezavolá. GraphBuilderComponent
+ * (2026-08-26) používá STEJNÝ vzor od začátku - viz onOverlayMouseDown() tam.
  *
  * @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK (viz action-menu-builder
  * a user-request.config.ts stejné datum): `<app-button-builder>` v šabloně nahrazeno
@@ -43,6 +45,17 @@
  * `this.activeTable.exportToCSV()`). Tlačítko "Aktualizovat" zmizelo z hlavního
  * toolbaru úplně - žije teď jen jako malá ikona uvnitř `TableBuilderComponent`
  * (`table-refresh-icon-btn`), tahle stránka ho nijak neřídí.
+ *
+ * @refactor-note (2026-08-26) BACKLOG "graph-builder: grafy a reporty nad tabulkami":
+ * přidán modal "Grafy a reporty" (`openGraphBuilder` toolbar akce, `showGraphBuilder`
+ * flag) - generický `<app-graph-builder>` popup (viz graph-builder.component.ts),
+ * řízený `graphColumns` getterem, který z `USER_REQUEST_DETAILS_COLUMNS` vybírá jen
+ * sloupce s `chartable: true` (viz user-request.config.ts a item-details-columns.ts
+ * stejné datum). Gatováno `web-user-requests-view` (čtecí, read-only report), ne
+ * `-update`/`-create` jako ostatní nová tlačítka výše - report nic nemění, jen čte
+ * a agreguje existující data. `GraphBuilderComponent` je zde importován JEDNOTLIVĚ,
+ * stejně jako `ActionMenuBuilderComponent` (viz poznámka u @Component níže) - dokud
+ * nejsou obě součástí `SHARED_UI_BUILDERS` bundle.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -51,6 +64,8 @@ import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './user-request.config';
 
@@ -90,10 +105,11 @@ interface EmailTemplateState {
 @Component({
   selector: 'app-user-request',
   standalone: true,
-  // ActionMenuBuilderComponent je zde přidán explicitně, dokud ho nezařadíš do
-  // SHARED_UI_BUILDERS bundle (viz refactor-note 2026-08-24) - jakmile tam bude,
-  // tenhle jednotlivý import lze zase odebrat.
-  imports: [SHARED_UI_BUILDERS, FormsModule, ActionMenuBuilderComponent],
+  // ActionMenuBuilderComponent a GraphBuilderComponent jsou zde přidány explicitně,
+  // dokud nejsou zařazeny do SHARED_UI_BUILDERS bundle (viz refactor-note 2026-08-24
+  // a 2026-08-26 v hlavičce souboru) - jakmile tam budou, tyhle jednotlivé importy
+  // lze zase odebrat.
+  imports: [SHARED_UI_BUILDERS, FormsModule, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './user-request.component.html',
   styleUrls: ['../default-style.css', './email-template-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -157,6 +173,27 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     date: '21.08.2026 15:32',
   };
 
+  // ── Grafy a reporty (modal) ─────────────────────────────────────────────
+
+  /** Řídí viditelnost `<app-graph-builder>` popupu - viz refactor-note (2026-08-26) v hlavičce souboru. */
+  showGraphBuilder = false;
+
+  /**
+   * @description Chartable podmnožina `USER_REQUEST_DETAILS_COLUMNS` namapovaná na
+   * minimální tvar, který `GraphBuilderComponent` potřebuje. Sloupce s osobními údaji
+   * (email, telefon, volný text) v `USER_REQUEST_DETAILS_COLUMNS` záměrně NEMAJÍ
+   * `chartable: true` - report tak z podstaty configu nikdy neobsahuje PII, viz
+   * item-details-columns.ts (2026-08-26).
+   */
+     readonly graphColumns: GraphColumnOption[] = Config.USER_REQUEST_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -211,6 +248,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       exportActiveTable: () => this.exportActiveTable(),
       triggerImport: () => this.activeTable?.importData(),
       openEmailTemplateEditor: () => this.openEmailTemplateEditor(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       toggleTable: () => this.toggleTable()
     };
     if (actions[action]) actions[action]();
@@ -497,5 +535,22 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   }
   get previewLabelDate(): string {
     return this.currentEmailLabels.label_date || this.emailTemplateDefaults.labelDate;
+  }
+
+  // ── Grafy a reporty (modal) ─────────────────────────────────────────────
+
+  /**
+   * @description Otevře popup s grafy/reporty (`GraphBuilderComponent`) - narozdíl
+   * od šablony e-mailu výše nemá co dopředu natahovat (popup si data i granularitu
+   * bucketů řeší sám, viz graph-builder.component.ts), stačí jen zobrazit.
+   */
+  openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
   }
 }

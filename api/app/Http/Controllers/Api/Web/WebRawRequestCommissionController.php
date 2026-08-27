@@ -89,6 +89,14 @@ class WebRawRequestCommissionController extends Controller
     /**
      * Retrieves a paginated or full collection of commission requests with search and filtering.
      */
+    /**
+     * Retrieves a paginated or full collection of commission requests with search and filtering.
+     * @refactor-note (2026-08-26) Přidán volitelný date-range filtr `date_from`/`date_to`
+     * (whereDate na `created_at`, >= / <=) - slouží GraphBuilderComponent (admin
+     * analytika/reporty), viz graph-builder.component.ts. Záměrně ODDĚLENÝ od
+     * stávajícího jednodenního `created_at` filtru níže (tabulkový filtr UI) - obě
+     * varianty tak spolu nekonfliktně koexistují, žádné jiné chování metody se nemění.
+     */
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 15);
@@ -113,6 +121,16 @@ class WebRawRequestCommissionController extends Controller
         }
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
+
+        // GraphBuilderComponent date-range filter (admin analytics popup) - viz
+        // refactor-note výše. Nezávislé na jednodenním 'created_at' filtru nad tímto
+        // blokem, obě podmínky se mohou (ale nemusí) uplatnit zároveň.
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->input('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->input('date_to'));
+        }
 
         $sortBy = $request->input('sort_by', 'id');
         $sortDirection = $request->input('sort_direction', 'desc');

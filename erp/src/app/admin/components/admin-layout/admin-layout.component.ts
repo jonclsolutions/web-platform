@@ -92,6 +92,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   sidebarWidth: number = 200;
   isResizing: boolean = false;
 
+  private isMobileViewport: boolean = false;
+
   /** Vysouvací panel na mobilu (hamburger vpravo nahoře) - uživatel, role, hodiny, moduly, odkazy. */
   isMobileActionsOpen: boolean = false;
 
@@ -129,6 +131,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       } else {
         this.isMenuOpen = savedState !== null ? savedState === 'true' : true;
       }
+      this.isMobileViewport = window.innerWidth <= 768;
     }
 
     this.authSubscription = this.authService.isLoggedIn$.subscribe(loggedIn => {
@@ -141,6 +144,35 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.userEmail = email;
       this.cdr.markForCheck();
     });
+  }
+
+  /**
+   * @description Reaguje POUZE na přechod přes hranici 768px (mobil/desktop) - viz
+   * bugfix-note výše. Nikdy nemění `isMenuOpen`, pokud viewport zůstává ve stejné
+   * kategorii, takže běžné plynulé zmenšování/zvětšování okna žádný panel
+   * nerozbaluje ani nesbaluje samo od sebe.
+   */
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (typeof window === 'undefined') return;
+
+    const nowMobile = window.innerWidth <= 768;
+    if (nowMobile === this.isMobileViewport) return;
+
+    this.isMobileViewport = nowMobile;
+
+    if (nowMobile) {
+      // Přechod DO mobilu - panel VŽDY zavřít, bez ohledu na předchozí desktopový stav.
+      this.isMenuOpen = false;
+      this.isMobileActionsOpen = false;
+    } else {
+      // Návrat NA desktop - obnovit uloženou desktopovou preferenci, ne transientní
+      // hodnotu z mobilního režimu.
+      const savedState = localStorage.getItem('admin_menu_open');
+      this.isMenuOpen = savedState !== null ? savedState === 'true' : true;
+    }
+
+    this.cdr.markForCheck();
   }
 
   /**

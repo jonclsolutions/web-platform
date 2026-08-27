@@ -18,6 +18,13 @@
         (Filtry/Přidat/Export/Import/Potvrzovací e-mail/Koš) místo řady pilulek vedle
         sebe. Viz action-menu-builder.component.ts a user-request.component.ts/.config.ts
         stejné datum.
+    @refactor-note (2026-08-26) Přidán `<app-graph-builder>` popup (na konci souboru,
+        za e-mailovým modalem) - vlastní full-page overlay komponenta (viz
+        graph-builder.component.html), řízená `showGraphBuilder`/`graphColumns` -
+        viz user-request.component.ts a user-request.config.ts stejné datum. Toolbar
+        tlačítko "Grafy a reporty" je součástí `USER_REQUEST_TOOLBAR_BUTTONS`
+        (action: 'openGraphBuilder'), takže se vykresluje automaticky přes stávající
+        `<app-action-menu-builder>` výše, žádná úprava toolbar markupu není potřeba.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -275,4 +282,15 @@ triggerLabel="Akce"
 
 </div>
 </div>
+}
+
+@if (showGraphBuilder) {
+<app-graph-builder
+[apiEndpoint]="apiEndpoint"
+[tableCaption]="'Seznam aktivních požadavků'"
+[columns]="graphColumns"
+[dateField]="'created_at'"
+[dateFieldLabel]="'Datum vytvoření'"
+(closed)="closeGraphBuilder()">
+</app-graph-builder>
 }
