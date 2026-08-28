@@ -29,6 +29,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
 
 /**
  * @description Manages commercial sales order data linked to a specific sales lead.
@@ -73,5 +75,15 @@ class WebSalesOrder extends Model
     public function attachments(): MorphMany
     {
         return $this->morphMany(WebAttachment::class, 'attachable');
+    }
+
+    /**
+     * @description Zda a jaký projekt už z téhle realizace vznikl - viz backlog
+     * "1 realizace = max 1 projekt". `web_projects.order_id` má UNIQUE constraint
+     * v DB, takže tenhle vztah může vrátit nejvýš jeden záznam.
+     */
+    public function project(): HasOne
+    {
+        return $this->hasOne(\App\Models\Web\WebProject::class, 'order_id');
     }
 }

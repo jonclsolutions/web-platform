@@ -1,0 +1,244 @@
+/* 
+    @file: project-manage-modal.css
+    @path: src/app/admin/web-pages/projects/project-manage-modal.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Styly pro "Správu projektu" - sdíleno mezi ProjectsComponent
+        (panel Správa u konkrétního projektu) a ProjectThreadsComponent (rychlý
+        detail vlákna z cross-project tabulky) - stejná paleta jako email-tpl modal.
+    @redesign-note (2026-08-29a) BACKLOG "kompletní UI refactor - levý panel /
+        pravá pracovní plocha, přehledné": `.pm-body` je teď DVOUPANELOVÝ CSS Grid
+        (`grid-template-areas`) - žádná úprava HTML nebyla potřeba, layout se
+        naváže čistě strukturálně přes `:nth-of-type()` na existující pořadí
+        `.pm-section` prvků (Přístup -> Checkpointy -> Konverzace), které v šabloně
+        ProjectsComponent přesně odpovídá pořadí sidebar/hlavní obsah/hlavní obsah.
+        `:has(> .pm-section)` scopuje tenhle grid VÝHRADNĚ na modal, který má
+        aspoň jednu `.pm-section` (tj. "Správa projektu") - modal ve
+        ProjectThreadsComponent (jen zprávy + odpověď, žádné sekce) tak zůstává
+        jednoduchý vycentrovaný jednosloupcový pohled, sidebar by tam neměl z čeho
+        vzniknout.
+        Sidebar ("Přístup") je teď vizuálně odlišený panel (`#fafafa` pozadí,
+        pravý okraj, tlačítka na plnou šířku) s vlastním scrollem; hlavní plocha
+        (Checkpointy nahoře s vlastním omezeným scrollem, Konverzace dole
+        vyplňující zbytek výšky s vlastním scrollem) - obě části se scrollují
+        NEZÁVISLE na sobě, žádný "jeden dlouhý formulář".
+*/
+
+.pm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.45);
+  z-index: 1200;
+}
+
+.pm-card {
+  background: #fff;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.pm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #ececea;
+  flex-shrink: 0;
+}
+
+.pm-title { margin: 0; font-size: 1.15rem; font-weight: 700; color: #18181b; }
+
+.pm-close {
+  border: 1px solid #d4d4d8;
+  background: #fff;
+  color: #52525b;
+  cursor: pointer;
+  font-size: 1rem;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pm-close:hover { background: #f4f4f5; color: #18181b; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   .pm-body - DVA REŽIMY:
+   1) Výchozí: jednosloupcový, vycentrovaný, scrolluje jako celek
+      (ProjectThreadsComponent modal - jen zprávy + odpověď, žádné sekce).
+   2) `:has(> .pm-section)`: dvoupanelový grid (ProjectsComponent "Správa" modal).
+   ══════════════════════════════════════════════════════════════════════ */
+
+.pm-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px;
+  max-width: 880px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.pm-body:has(> .pm-section) {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "sidebar checkpoints"
+    "sidebar conversation";
+  max-width: 1300px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.pm-loading, .pm-empty { color: #a1a1aa; font-size: 0.85rem; padding: 4px 2px; }
+
+/* ── Levý panel: Přístup (URL, heslo, regenerace) ────────────────────── */
+.pm-body > .pm-section:nth-of-type(1) {
+  grid-area: sidebar;
+  overflow-y: auto;
+  background: #fafafa;
+  border-right: 1px solid #ececea;
+  padding: 26px 20px;
+  margin: 0;
+}
+
+.pm-body > .pm-section:nth-of-type(1) .pm-btn-small {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── Pravá plocha, horní blok: Checkpointy (omezená výška, vlastní scroll) ── */
+.pm-body > .pm-section:nth-of-type(2) {
+  grid-area: checkpoints;
+  padding: 22px 28px 16px;
+  border-bottom: 1px solid #ececea;
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+/* ── Pravá plocha, dolní blok: Konverzace (vyplní zbytek výšky, vlastní scroll) ── */
+.pm-body > .pm-section:nth-of-type(3) {
+  grid-area: conversation;
+  padding: 20px 28px 24px;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.pm-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #71717a;
+  margin-bottom: 12px;
+}
+
+/* ── Přístup (sidebar) ─────────────────────────────────────────────── */
+.pm-access-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.pm-url {
+  padding: 8px 10px; background: #ffffff; border: 1px solid #ececea; border-radius: 8px;
+  font-size: 0.78rem; color: #18181b; overflow-x: auto; white-space: nowrap;
+}
+.pm-password-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 14px; }
+.pm-password-label { font-size: 0.78rem; font-weight: 600; color: #71717a; }
+.pm-password-value {
+  padding: 8px 10px; background: #ffffff; border: 1px solid #ececea; border-radius: 8px;
+  font-size: 0.85rem; color: #18181b; letter-spacing: 0.05em; text-align: center;
+}
+.pm-password-hint { margin: 10px 0 14px; font-size: 0.74rem; color: #a1a1aa; line-height: 1.5; }
+
+/* ── Obecné prvky (sdíleno napříč oběma režimy) ──────────────────────── */
+.pm-btn-small {
+  padding: 7px 14px; border-radius: 999px; border: 1px solid #d4d4d8; background: #fff;
+  color: #18181b; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s ease;
+}
+.pm-btn-small:hover:not(:disabled) { background: #f4f4f5; }
+.pm-btn-small:disabled { opacity: 0.5; cursor: not-allowed; }
+.pm-btn-warn { border-color: #fecdd3; color: #be123c; }
+.pm-btn-warn:hover:not(:disabled) { background: #fff1f2; }
+
+.pm-input, .pm-textarea { padding: 8px 10px; border: 1px solid #d4d4d8; border-radius: 8px; font-size: 0.85rem; font-family: inherit; }
+
+/* ── Checkpointy ──────────────────────────────────────────────────────── */
+.pm-checkpoint-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.pm-checkpoint-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #ececea; border-radius: 10px; background: #fafafa; }
+.pm-checkpoint-badge { border: none; border-radius: 999px; padding: 4px 10px; font-size: 0.7rem; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.pm-checkpoint-badge.status-new { background: #f4f4f5; color: #71717a; }
+.pm-checkpoint-badge.status-active { background: #fef3c7; color: #b45309; }
+.pm-checkpoint-badge.status-done { background: #ecfdf5; color: #059669; }
+.pm-checkpoint-label { flex: 1; font-size: 0.85rem; color: #18181b; }
+.pm-checkpoint-delete { border: none; background: transparent; color: #a1a1aa; cursor: pointer; flex-shrink: 0; }
+.pm-checkpoint-delete:hover { color: #be123c; }
+.pm-add-checkpoint { display: flex; gap: 8px; }
+.pm-add-checkpoint .pm-input { flex: 1; }
+
+/* ── Konverzace ───────────────────────────────────────────────────────── */
+.pm-thread-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.pm-thread-item {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 10px 12px; border: 1px solid #ececea; border-radius: 10px; background: #fff;
+  cursor: pointer; text-align: left; transition: background 0.15s ease;
+}
+.pm-thread-item:hover { background: #fafafa; }
+.pm-thread-subject { font-size: 0.85rem; font-weight: 600; color: #18181b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-thread-status { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+.pm-thread-status.status-active { background: #ecfdf5; color: #059669; }
+.pm-thread-status.status-closed { background: #f4f4f5; color: #71717a; }
+.pm-thread-priority { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+.pm-thread-priority.priority-low { background: #f4f4f5; color: #71717a; }
+.pm-thread-priority.priority-medium { background: #eef2ff; color: #4338ca; }
+.pm-thread-priority.priority-high { background: #fef3c7; color: #b45309; }
+.pm-thread-priority.priority-critic { background: #fff1f2; color: #be123c; }
+
+.pm-thread-detail-subject { margin: 10px 0; font-size: 0.98rem; font-weight: 700; color: #18181b; }
+.pm-thread-status-row { display: flex; align-items: center; gap: 8px; margin: 4px 0 14px; }
+.pm-thread-status-label { font-size: 0.78rem; color: #71717a; font-weight: 600; }
+.pm-thread-status-select { width: auto; margin: 0; }
+
+.pm-message-list { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 100px; overflow-y: auto; margin-bottom: 12px; }
+.pm-message { padding: 10px 12px; border-radius: 10px; background: #f4f4f5; }
+.pm-message-admin { background: #eef2ff; }
+.pm-message-meta { font-size: 0.68rem; color: #71717a; margin-bottom: 4px; }
+.pm-message-body { font-size: 0.85rem; color: #18181b; white-space: pre-wrap; }
+.pm-reply-box { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MOBILE (<=860px) - sidebar se z levého sloupce přesune nahoru, hlavní
+   plocha zůstane jednosloupcová, každý blok scrolluje nezávisle jako dřív.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .pm-body:has(> .pm-section) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "sidebar"
+      "checkpoints"
+      "conversation";
+  }
+  .pm-body > .pm-section:nth-of-type(1) {
+    border-right: none;
+    border-bottom: 1px solid #ececea;
+    max-height: 240px;
+  }
+  .pm-body > .pm-section:nth-of-type(2),
+  .pm-body > .pm-section:nth-of-type(3) {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .pm-body { padding: 16px; }
+}

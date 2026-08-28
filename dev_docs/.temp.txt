@@ -1,0 +1,27 @@
+ted kdyz zahajim nejaky projekt s zakaznikem tak mu chci davat ruzne aktualizace a ja chci na public udelat separatni stranku component treba projects/xxx/token treba neco takoveho a vlastne postup je jednoduchy z sales leadu se udela sales order a ze sales orderu se zalozi projekt, a ja chci mit v sales orderu tlacitko zalozit projekt a to vytvorit novy projekt, a na adminu v sekci /web chci mit dalsi page klasicky table builder form builder pagonation builder atd vsechno a ja budu moct jednat zalozit projekt z leadu a to bude na sebe nalinkovane a nebo muzu zalozit projekt jen tak bez leadu vysledke bude stejny zapise se projekt do tabulky ja tam budu moct nastavit public/private (budeme potrebovat pozdeji - bude ovlivnovat jestli projketu bude aktivni a uzivatel se do nej bude moct prihlasit nebo ne) a nastavim tam ruzne kriteria nazev projketu popis projektu typ platforma vedouci projektu atd kontaktni cislo kontaktni email atd a pak tam bude dynamicka cast checkpoints a do checkpointu budu moct definovat treba navrh struktury, navrh ui, navrh databaze, navrh home page, testovani, regresni testovani, deploy, .... a to budou ruzne checkpointy, a zaroven se take vygeneruje odkaz na kterem tento projekt (pokud bude public bude videt), zakaznik dostane tuto adresu webovou a pristupove heslo, jakmile klikne na odkaz otevre se mi prihlaseni do projektu nazev "xxx" on zada sve heslo (ktere nejde zmenit je vygenerovane mnou) a pak se zakaznikovi otevre page kde bude nazev projektu popis vedouci atd atd technologie, a je to informace pro zakaznika v levo ve sloupecku bude nazev zakaznika takze treba firma mail cislo atd. a nekde i odhlasit (to zakaznika odhlasi), a na pravo bude nazev projektu prave zminene checkpointy ktere ja jakozto lead budu moct dat checked a zakaznik to uvidi a bude tam dole tak kratky formular pro konktakt, staci jen tema, priority (low, medium, high, critic), a obsah textu, a pri odeslani se mi to odesle a ja chci v te me konponente projektu videt jednkt vsechny pozadavky v jedne tabulce at nemusim proklikavat vsechny projkty ale kdyz kliknu na projekt chci tam videt i jestli tam je nejaka konverzace, zaroven chci dokazat na ty pozadavky odpovidat treba odpovedet na pozadavek z adminu a napsat odpoved, napr uzivatel napise z public/projects bude mit homepage modrou barvu a ja z adminu odpovim ano bude, a vzdy se budou moct zalozit zakaznik nove vlakno a vse bude viditelne na public casti historie atd rozklikavani atd neco jako outlook vlaky a pujde zalozit i novy, vse musi udrzovat bezpecnost komunikace, zadne bezpecnostni uniky, prihlaseny zakaznik bude mit ulozeny svuj token a ten se po 24h zneplatni a zakaznik se bude muset znovu prihlasit
+
+poznamky po konzultaci ktere je potreba zahrnout:
+1. Bezpečnost a časová platnost tokenu (24h limit)
+Píšeš, že zákaznický token / přihlášení bude platit 24 hodin.
+
+Pozor na UX: Pokud klient dostane odkaz, klikne na něj za 2 dny a systém mu napíše „Platnost vypršela, zadejte heslo znovu“, bude zmatený.
+
+Jak to vyřešit: 24hodinový limit je skvělý pro aktivní relaci (session / JWT) po přihlášení, ale samotný trvalý odkaz (URL s tokenem) musí mít platnost neomezenou (nebo platnou po celou dobu trvání projektu). Po zadání generovaného hesla se klientovi založí šifrovaná session, která po 24 hodinách nečinnosti vyprší a vyžádá si znovuzadání hesla.
+
+2. Izolace konverzací (Vlákna vs. Projekt)
+Plánuješ, že v administraci uvidíš všechny požadavky ze všech projektů v jedné hromadné tabulce, což je skvělé na rychlé vyřízení.
+
+Riziko: Pokud budeš mít v tabulce požadavky z 10 projektů pohromadě, hrozí lidská chyba – omylem odpovíš na ticket klienta A v kontextu klienta B, nebo se ti stane, že odpovíš z nesprávného účtu.
+
+Jak to vyřešit: V tabulce požadavků v adminu musí být silný vizuální prvek (badge s názvem projektu) a při kliknutí na „Odpovědět“ musí systém tvrdě vynutit vazbu na konkrétní project_id a thread_id.
+
+3. Smazání nebo změna hesla
+Píšeš, že heslo je vygenerované tebou a nejde změnit.
+
+Co když ho klient ztratí? Určitě budeš v administraci projektu potřebovat tlačítko „Vygenerovat nové heslo / Zresetovat přístup“, které staré heslo zneplatní a vygeneruje nové (případně ho klientovi pošle e-mailem). Bez toho budeš muset sahnat do databáze ručně pokaždé, když klient zapomene heslo.
+
+4. Stav projektu a archivace (Visibility: public / private)
+Zmiňuješ, že v budoucnu budeš potřebovat public/private přepínač.
+
+Mysli na to už teď v datovém modelu (visibility enum). Pokud dáš projekt do stavu private, veřejná URL (/projects/{id}/{token}) musí okamžitě vrátit HTTP 404 nebo 403, aby se kdekdo nedostal k interním datům, i když zná odkaz.
+

@@ -21,10 +21,13 @@
  *
  * Stav k tomuto datu:
  * - bulkDestroy() hotovo: web/raw_request_commissions, web/job_applications, web/news,
- *   web/sales_leads, web/sales_orders, web/support_tickets.
+ *   web/sales_leads, web/sales_orders, web/support_tickets, web/projects.
  * - Import hotovo: web/raw_request_commissions (BEZ potvrzovacího e-mailu - záměr).
  * - Import se VĚDOMĚ NEDĚLÁ pro web/sales_orders (atomická vazba na lead_token + GDPR
- *   souhlas, který nelze retroaktivně "odsouhlasit" za importovaná data).
+ *   souhlas, který nelze retroaktivně "odsouhlasit" za importovaná data) ani pro
+ *   web/projects (obsahuje generovaná bezpečnostní pole - access_token/heslo - která
+ *   nedávají smysl jako uživatelský vstup, stejný princip jako u sales_leads
+ *   public_token).
  * - Shop sekce a `core/users`/`core/roles`/`core/external_links` zatím BEZ bulk
  *   delete/importu - viz zakomentované TODO bloky u shopu níže. `core/users` a
  *   `core/external_links` mají per-row byznys logiku (sysadmin ochrana, vlastnictví),
@@ -68,6 +71,20 @@
  * ne víc. Pojmenované limitery (`throttle:login`, `throttle:login-2fa-resend`, viz
  * `AppServiceProvider::boot()`) NEBYLY dotčeny - ty už mají vlastní explicitní klíče
  * (`login-ip:`/`login-email:`/`2fa-resend-ip:`) a byly izolované správně už předtím.
+ *
+ * @refactor-note (2026-08-28) BACKLOG "customer project portal" (checkpointy + vlákna
+ * + veřejné přihlášení projektu): přidány DVĚ zcela nové, VZÁJEMNĚ NEZÁVISLÉ auth domény
+ * vedle sebe:
+ * - `web/projects` + `web/project-threads` - standardní ADMIN CRUD (stejný vzor jako
+ *   `web/sales_orders` výše, permission klíče `web-projects-*`).
+ * - `projects/public/{token}/*` - VEŘEJNÝ zákaznický portál, chráněný VLASTNÍM
+ *   middlewarem `project.session` (viz CheckProjectSession.php) - NENÍ to
+ *   `auth:sanctum`, je to úplně samostatný 24h-sliding session mechanismus vázaný na
+ *   `web_projects`/`web_project_sessions`, ne na `users`/`personal_access_tokens`.
+ *   `login()` je jediný nepřihlášený endpoint v téhle skupině; zbytek visí za
+ *   `project.session`, který navíc na KAŽDÉM requestu ověřuje `visibility === 'public'`
+ *   (ne jen při loginu), takže přepnutí projektu na 'private' okamžitě odhlásí i
+ *   aktivní relaci.
  */
 
 use Illuminate\Http\Request;
@@ -92,6 +109,9 @@ use App\Http\Controllers\Api\Web\WebSalesOrderController;
 use App\Http\Controllers\Api\Web\WebSupportTicketController;
 use App\Http\Controllers\Api\Web\WebJobApplicationController;
 use App\Http\Controllers\Api\Web\WebSiteSettingController;
+use App\Http\Controllers\Api\Web\WebProjectController;
+use App\Http\Controllers\Api\Web\WebProjectThreadController;
+use App\Http\Controllers\Api\Web\WebProjectPublicController;
 use App\Http\Controllers\Api\Shop\ShopLogController;
 use App\Http\Controllers\Api\Shop\ShopSupplierController;
 use App\Http\Controllers\Api\Shop\ShopCouponController;
@@ -180,6 +200,39 @@ Route::prefix('public/legal')->group(function () {
 Route::prefix('public')->group(function () {
     Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC PROJECT PORTAL — customer login by permanent access_token, then a
+| 24h-sliding session (CheckProjectSession middleware, alias 'project.session')
+|--------------------------------------------------------------------------
+| @refactor-note (2026-08-28) VLASTNÍ, na Sanctum NEZÁVISLÁ auth doména - viz
+| CheckProjectSession.php a WebProjectSession model pro plný bezpečnostní rozbor.
+| `login()` je jediný nepřihlášený krok; vše ostatní visí za `project.session`,
+| který na KAŽDÉM requestu (ne jen při loginu) ověřuje, že daný projekt je pořád
+| `visibility = 'public'` - přepnutí na 'private' tak okamžitě odhlásí i právě
+| aktivní zákaznickou relaci, ne jen zablokuje budoucí přihlášení.
+| Throttle prefixy 'project-login'/'project-thread-create'/'project-message-create'/
+| 'project-session' - každý vlastní bucket, stejný princip jako bugfix-note
+| (2026-08-25) výše (žádné sdílení bucketů mezi nesouvisejícími endpointy).
+*/
+Route::post('projects/public/{token}/login', [WebProjectPublicController::class, 'login'])
+    ->middleware('throttle:10,1,project-login');
+
+Route::prefix('projects/public/{token}')
+    ->middleware(['project.session', 'throttle:120,1,project-session'])
+    ->group(function () {
+        Route::get('/',       [WebProjectPublicController::class, 'me']);
+        Route::post('logout', [WebProjectPublicController::class, 'logout']);
+
+        Route::get('threads',            [WebProjectPublicController::class, 'threadsIndex']);
+        Route::get('threads/{threadId}', [WebProjectPublicController::class, 'threadShow']);
+        Route::post('threads', [WebProjectPublicController::class, 'threadStore'])
+            ->middleware('throttle:20,1,project-thread-create');
+        Route::post('threads/{threadId}/messages', [WebProjectPublicController::class, 'messageStore'])
+            ->middleware('throttle:30,1,project-message-create');
+        Route::post('threads/{threadId}/close', [WebProjectPublicController::class, 'threadClose']);
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -750,6 +803,66 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-sales-leads-delete');
             Route::post('/{id}/generate-link', [WebSalesLeadController::class, 'generateLink'])
                 ->middleware('permission:web-sales-leads-update');
+        });
+
+        // ── web/projects ─────────────────────────────────────────────────────
+        // @refactor-note (2026-08-28) BACKLOG "customer project portal". Vzniká buď
+        // z web/sales_orders ("Založit projekt" tlačítko, `order_id` v těle requestu)
+        // nebo úplně samostatně ("Nový projekt", bez lead_id/order_id) - store() to
+        // řeší identicky, viz WebProjectController hlavička. Import ZÁMĚRNĚ NENÍ -
+        // access_token/heslo jsou systémem generovaná pole, ne uživatelský vstup
+        // (stejný princip jako u sales_leads public_token).
+        Route::prefix('projects')->group(function () {
+            Route::post('/bulk-delete', [WebProjectController::class, 'bulkDestroy'])
+                ->middleware('permission:web-projects-delete');
+            Route::delete('/force-delete-all', [WebProjectController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:web-projects-delete');
+
+            Route::get('/',      [WebProjectController::class, 'index'])
+                ->middleware('permission:web-projects-view');
+            Route::post('/',     [WebProjectController::class, 'store'])
+                ->middleware('permission:web-projects-create');
+            Route::get('/{id}',  [WebProjectController::class, 'show'])
+                ->middleware('permission:web-projects-view');
+            Route::put('/{id}',  [WebProjectController::class, 'update'])
+                ->middleware('permission:web-projects-update');
+            Route::patch('/{id}', [WebProjectController::class, 'update'])
+                ->middleware('permission:web-projects-update');
+            Route::post('/{id}/restore', [WebProjectController::class, 'restore'])
+                ->middleware('permission:web-projects-delete');
+            Route::delete('/{id}', [WebProjectController::class, 'destroy'])
+                ->middleware('permission:web-projects-delete');
+
+            // Heslo je bezpečnostně citlivá akce (zneplatní i všechny aktivní
+            // zákaznické relace - viz WebProjectController::regeneratePassword()),
+            // ale žádané chování je "kdokoliv smí editovat projekt může resetovat
+            // přístup" - stejné oprávnění jako update(), žádný nový permission klíč.
+            Route::post('/{id}/regenerate-password', [WebProjectController::class, 'regeneratePassword'])
+                ->middleware('permission:web-projects-update');
+
+            // ── Checkpointy (nested pod konkrétní projekt) ──────────────────
+            Route::post('/{projectId}/checkpoints', [WebProjectController::class, 'storeCheckpoint'])
+                ->middleware('permission:web-projects-update');
+            Route::put('/{projectId}/checkpoints/{checkpointId}', [WebProjectController::class, 'updateCheckpoint'])
+                ->middleware('permission:web-projects-update');
+            Route::delete('/{projectId}/checkpoints/{checkpointId}', [WebProjectController::class, 'destroyCheckpoint'])
+                ->middleware('permission:web-projects-update');
+        });
+
+        // ── web/project-threads ───────────────────────────────────────────────
+        // @refactor-note (2026-08-28) NAPŘÍČ VŠEMI PROJEKTY najednou (konzultační
+        // poznámka 2 - "jedna hromadná tabulka" místo proklikávání jednotlivých
+        // projektů). `project_id` query filtr umožňuje TUTÉŽ routu použít i uvnitř
+        // detailu jednoho konkrétního projektu.
+        Route::prefix('project-threads')->group(function () {
+            Route::get('/',    [WebProjectThreadController::class, 'index'])
+                ->middleware('permission:web-projects-view');
+            Route::get('/{id}', [WebProjectThreadController::class, 'show'])
+                ->middleware('permission:web-projects-view');
+            Route::post('/{threadId}/reply', [WebProjectThreadController::class, 'reply'])
+                ->middleware('permission:web-projects-update');
+            Route::put('/{threadId}/status', [WebProjectThreadController::class, 'updateStatus'])
+                ->middleware('permission:web-projects-update');
         });
     });
 

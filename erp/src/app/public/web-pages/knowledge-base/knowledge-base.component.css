@@ -6,12 +6,17 @@
     @created: 2025
     @description: Klidný, "dokumentační" vizuál - žádné hravé tvary ani animace
     navíc, jen konzistentní tmavé karty a typografie sdílená se zbytkem webu.
+    @redesign-note (2026-08-28) BACKLOG "levý postranní seznam sekcí, vpravo obsah
+        s nadpisem": `.kb-main-content` rozšířen na 1180px, přidán `.kb-layout`
+        (grid: sticky `.kb-sidebar` + `.kb-content`). Dosavadní `.kb-toc` (vodorovné
+        pilulky) zůstává, ale JEN pro mobil (<=960px) - na desktopu ho nahrazuje
+        `.kb-sidebar`.
 */
 
 .kb-main-content {
     font-family: "Source Sans Pro", sans-serif;
     position: relative;
-    max-width: 980px;
+    max-width: 1180px;
     margin: 0 auto;
     padding: 0 24px;
 }
@@ -47,15 +52,66 @@
     margin: 0 auto;
 }
 
-/* ── Obsah / rychlá navigace ──────────────────────── */
-.kb-toc {
+/* ── Dvousloupcový layout: postranní seznam + obsah ── */
+.kb-layout {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 760px);
+    gap: 56px;
+    justify-content: center;
+    align-items: start;
+}
+
+/* ── Postranní seznam sekcí (desktop, "scrollspy") ── */
+.kb-sidebar {
+    position: sticky;
+    top: 96px;
+    align-self: start;
+    max-height: calc(100vh - 130px);
+    overflow-y: auto;
+}
+
+.kb-sidebar-nav {
     display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.kb-sidebar-link {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #8a8a9c;
+    text-decoration: none;
+    padding: 9px 14px;
+    border-radius: 8px;
+    border-left: 2px solid transparent;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.kb-sidebar-link:hover {
+    color: #e0e0f0;
+    background: rgba(166, 125, 255, 0.06);
+}
+
+.kb-sidebar-link.active {
+    color: #e0e0f0;
+    background: rgba(166, 125, 255, 0.1);
+    border-left-color: #a67dff;
+    font-weight: 700;
+}
+
+.kb-content {
+    min-width: 0;
+}
+
+/* ── Obsah / rychlá navigace (JEN mobil, viz media query níže) ── */
+.kb-toc {
+    display: none;
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
-    padding: 24px 0 60px;
+    padding: 24px 0 40px;
     border-bottom: 1px solid rgba(166, 125, 255, 0.14);
-    margin-bottom: 50px;
+    margin-bottom: 40px;
 }
 
 .kb-toc-item {
@@ -112,7 +168,6 @@
     align-items: center;
     justify-content: center;
 }
-
 .kb-section-eyebrow {
     font-size: 0.72rem;
     font-weight: 700;
@@ -201,7 +256,6 @@
 .kb-glossary-checkbox:checked ~ .kb-glossary-body {
     grid-template-rows: 1fr;
 }
-
 .kb-glossary-checkbox:checked ~ .kb-glossary-trigger .kb-glossary-chevron {
     transform: rotate(180deg);
 }
@@ -319,6 +373,15 @@
 }
 
 /* ── Responzivita ─────────────────────────────────── */
+
+/* Pod 960px se sidebar nevejde smysluplně vedle 760px obsahu - přepneme na
+   jednosloupcový layout a vrátíme se k vodorovným "pilulkám" nahoře. */
+@media (max-width: 960px) {
+    .kb-layout { grid-template-columns: 1fr; gap: 0; }
+    .kb-sidebar { display: none; }
+    .kb-toc { display: flex; }
+}
+
 @media (max-width: 760px) {
     .kb-hero { padding: 100px 0 30px; }
     .kb-hero-heading { font-size: 1.9rem; }

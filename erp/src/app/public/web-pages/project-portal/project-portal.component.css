@@ -1,0 +1,224 @@
+/*
+    @file: project-portal.component.css
+    @path: src/app/public/web-pages/project-portal/project-portal.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @redesign-note (2026-08-29) BACKLOG "kompletní UI refactor - bílá/černá místo
+        tmavé/fialové, SVG ikonky, levý info panel + pravý obsah": stejná paleta
+        jako admin panel (--accent #18181b, --border #ececea, --text-muted #71717a).
+        Layout: `.pp-shell` (flex row) - `.pp-sidebar` (trvalý, fixní šířka, info +
+        akce) + `.pp-main` (scrollovatelný obsah: popis / checkpointy / konverzace).
+*/
+
+:host {
+  --bg:          #f7f6f3;
+  --surface:     #ffffff;
+  --surface-2:   #fafafa;
+  --border:      #ececea;
+  --border-mid:  #e0e0dd;
+  --accent:      #18181b;
+  --text:        #18181b;
+  --text-muted:  #71717a;
+  --text-dim:    #a1a1aa;
+  --success:     #059669;
+  --success-dim: #ecfdf5;
+  --warning:     #b45309;
+  --warning-dim: #fef3c7;
+  --danger:      #be123c;
+  --danger-dim:  #fff1f2;
+  --info:        #4338ca;
+  --info-dim:    #eef2ff;
+  --ff:          -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.pp-page { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--ff); }
+
+/* ── Loading / invalid states ─────────────────────────────────────────── */
+.pp-center { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.pp-spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: pp-spin 0.8s linear infinite; }
+@keyframes pp-spin { to { transform: rotate(360deg); } }
+
+.pp-invalid-card { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--text-dim); }
+.pp-error-text { color: var(--text-muted); font-size: 0.92rem; margin: 0; }
+
+/* ── Login ─────────────────────────────────────────────────────────────── */
+.pp-login-card {
+  width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 36px 32px; text-align: center; box-shadow: 0 1px 2px rgba(24,24,27,0.04);
+}
+.pp-login-icon {
+  width: 44px; height: 44px; margin: 0 auto 16px; border-radius: 12px; background: var(--surface-2);
+  border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--accent);
+}
+.pp-login-title { font-size: 1.3rem; font-weight: 700; margin: 0 0 8px; color: var(--text); }
+.pp-login-lead { font-size: 0.88rem; color: var(--text-muted); margin: 0 0 20px; line-height: 1.5; }
+.pp-login-error { color: var(--danger); font-size: 0.83rem; margin: 8px 0 0; }
+
+/* ── Form controls (shared) ───────────────────────────────────────────── */
+.pp-input, .pp-textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text); font-size: 0.88rem; font-family: inherit; margin-bottom: 10px;
+}
+.pp-input:focus, .pp-textarea:focus { outline: none; border-color: var(--accent); }
+.pp-textarea { resize: vertical; }
+
+.pp-btn-primary {
+  width: 100%; padding: 11px; border-radius: 999px; border: none; background: var(--accent);
+  color: #fff; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease;
+}
+.pp-btn-primary:hover:not(:disabled) { background: #3f3f46; }
+.pp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pp-btn-primary-small {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 999px; border: none; background: var(--accent);
+  color: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease;
+}
+.pp-btn-primary-small:hover:not(:disabled) { background: #3f3f46; }
+.pp-btn-primary-small:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pp-btn-small {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface);
+  color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease;
+}
+.pp-btn-small:hover:not(:disabled) { background: var(--surface-2); }
+.pp-btn-small:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SHELL - levý sidebar + pravý obsah
+   ══════════════════════════════════════════════════════════════════════ */
+
+.pp-shell { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ───────────────────────────────────────────────────────────── */
+.pp-sidebar {
+  width: 280px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 28px 22px;
+}
+
+.pp-sidebar-top { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+.pp-avatar {
+  width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 700; flex-shrink: 0;
+}
+.pp-sidebar-project-name { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+
+.pp-sidebar-divider { height: 1px; background: var(--border); margin: 6px 0 18px; }
+
+.pp-sidebar-info-list { display: flex; flex-direction: column; gap: 12px; }
+.pp-sidebar-info-row { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-muted); }
+.pp-sidebar-icon { flex-shrink: 0; color: var(--text-dim); display: flex; }
+.pp-sidebar-info-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-header{font-weight: bold; padding-bottom: 15px;}
+.pp-sidebar-spacer { flex: 1; }
+
+.pp-sidebar-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 18px; border-top: 1px solid var(--border); }
+.pp-sidebar-action-btn {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border-mid); background: var(--surface);
+  color: var(--text-muted); font-size: 0.82rem; font-weight: 600; font-family: var(--ff); cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pp-sidebar-action-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.pp-sidebar-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.pp-spin-icon { animation: pp-spin 0.7s linear infinite; }
+
+/* ── Main content ──────────────────────────────────────────────────────── */
+.pp-main { flex: 1; min-width: 0; overflow-y: auto; padding: 40px; }
+.pp-main-inner { max-width: 720px; margin: 0 auto; }
+
+.pp-intro-section { margin-bottom: 30px; }
+.pp-project-desc { color: var(--text-muted); line-height: 1.65; margin: 0; font-size: 0.95rem; }
+
+.pp-section { margin-bottom: 36px; }
+.pp-section-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; }
+.pp-section-title {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 1rem; font-weight: 700; margin: 0; color: var(--text);
+}
+.pp-section-icon { color: var(--text-dim); display: flex; flex-shrink: 0; }
+
+.pp-empty { color: var(--text-dim); font-size: 0.85rem; }
+
+/* ── Checkpointy ───────────────────────────────────────────────────────── */
+.pp-checkpoint-list { display: flex; flex-direction: column; gap: 8px; }
+.pp-checkpoint-item {
+  display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--border); font-size: 0.88rem;
+}
+.pp-checkpoint-status-icon { flex-shrink: 0; display: flex; color: var(--text-dim); }
+.pp-checkpoint-item.status-active .pp-checkpoint-status-icon { color: var(--warning); }
+.pp-checkpoint-item.status-done .pp-checkpoint-status-icon { color: var(--success); }
+
+.pp-checkpoint-label { flex: 1; color: var(--text); }
+
+.pp-checkpoint-badge { font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; flex-shrink: 0; }
+.pp-checkpoint-badge.status-new { background: var(--surface-2); color: var(--text-muted); }
+.pp-checkpoint-badge.status-active { background: var(--warning-dim); color: var(--warning); }
+.pp-checkpoint-badge.status-done { background: var(--success-dim); color: var(--success); }
+
+/* ── Nové vlákno formulář ──────────────────────────────────────────────── */
+.pp-new-thread-form { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+.pp-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── Seznam vláken ─────────────────────────────────────────────────────── */
+.pp-thread-list { display: flex; flex-direction: column; gap: 6px; }
+.pp-thread-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer; font-size: 0.87rem; font-family: inherit; text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.pp-thread-item:hover { background: var(--surface-2); border-color: var(--border-mid); }
+.pp-thread-item-icon { flex-shrink: 0; display: flex; color: var(--text-dim); }
+.pp-thread-item-subject { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+
+.pp-status-chip { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; background: var(--success-dim); color: var(--success); }
+.pp-status-chip.pp-status-closed { background: var(--surface-2); color: var(--text-dim); }
+
+.pp-priority-chip { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+.pp-priority-chip.priority-low { background: var(--surface-2); color: var(--text-muted); }
+.pp-priority-chip.priority-medium { background: var(--info-dim); color: var(--info); }
+.pp-priority-chip.priority-high { background: var(--warning-dim); color: var(--warning); }
+.pp-priority-chip.priority-critic { background: var(--danger-dim); color: var(--danger); }
+
+/* ── Detail vlákna ─────────────────────────────────────────────────────── */
+.pp-thread-detail { display: flex; flex-direction: column; }
+.pp-back-btn {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  border: none; background: transparent; color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
+  font-family: inherit; cursor: pointer; padding: 4px 2px; margin-bottom: 8px;
+}
+.pp-back-btn:hover { color: var(--text); }
+
+.pp-thread-detail-subject { font-size: 1.05rem; font-weight: 700; margin: 0 0 12px; color: var(--text); }
+
+.pp-close-thread-btn { color: var(--success); border-color: #a7f3d0; background: var(--success-dim); margin-bottom: 14px; }
+.pp-close-thread-btn:hover:not(:disabled) { background: #d1fae5; }
+.pp-thread-closed-hint { font-size: 0.82rem; color: var(--text-dim); margin: 0 0 14px; }
+
+.pp-message-list { display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; margin-bottom: 14px; }
+.pp-message { padding: 11px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.pp-message-mine { background: var(--info-dim); border-color: transparent; }
+.pp-message-meta { font-size: 0.68rem; font-weight: 700; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+.pp-message-body { font-size: 0.88rem; color: var(--text); white-space: pre-wrap; line-height: 1.5; }
+
+.pp-reply-box { display: flex; flex-direction: column; gap: 8px; }
+.pp-send-btn { align-self: flex-end; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MOBILE (<=760px)
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  .pp-shell { flex-direction: column; }
+  .pp-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 18px 20px; gap: 14px; }
+  .pp-sidebar-top { flex-direction: row; align-items: center; margin-bottom: 0; }
+  .pp-sidebar-divider { display: none; }
+  .pp-sidebar-info-list { flex-direction: row; flex-wrap: wrap; gap: 14px; }
+  .pp-sidebar-spacer { display: none; flex-basis: 100%; }
+  .pp-sidebar-actions { flex-direction: row; border-top: none; padding-top: 0; margin-left: auto; }
+  .pp-main { padding: 24px 18px; }
+}

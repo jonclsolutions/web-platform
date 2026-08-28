@@ -25,11 +25,21 @@
  * ukládá (viz WebSalesOrderController::store() a WebSalesOrder.php) - patří do Detailů,
  * kde admin/compliance audit reálně kontroluje, jestli klient souhlas dal, ne do
  * needitovatelného formuláře.
+ * @refactor-note (2026-08-29) BACKLOG "založit projekt přímo z realizace": přidáno
++ *      řádkové tlačítko "Projekt" (action: 'generate_form', gatováno
++ *      `web-projects-create`) - `TableBuilderComponent` ho vykreslí a při kliknutí
++ *      emituje `generateFormOpened(item)` (viz table-builder.component.ts
++ *      handleAction() case 'generate_form' - dosud v téhle stránce nevyužitý output,
++ *      žádná kolize s ostatními handlery). `SalesOrdersComponent.createProject()`
++ *      na něj naváže navigací na `/admin/web/projects?order_id=<id>` -
++ *      ProjectsComponent tenhle query parametr už umí přečíst a rovnou předvyplnit
++ *      create formulář (viz projects.component.ts `checkQueryParamsForPrefill()`).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const SALES_ORDER_BUTTONS: Core.TableButtons[] = [
   { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
+  { display_name: '📁', header_name: 'Projekt', isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-projects-create' },
   { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-sales-orders-update' },
   { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-sales-orders-delete' },
 ];

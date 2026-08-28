@@ -67,6 +67,7 @@ class WebSalesOrderController extends Controller
         $onlyTrashed = filter_var($request->input('only_trashed', false), FILTER_VALIDATE_BOOLEAN);
 
         $query = WebSalesOrder::query()->with('lead');
+        $query->with(['project:id,order_id']);
         $onlyTrashed ? $query->onlyTrashed() : $query->withoutTrashed();
 
         if ($s = $request->input('search')) {

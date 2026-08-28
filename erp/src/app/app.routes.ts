@@ -105,6 +105,12 @@ export const routes: Routes = [
     path: 'web-maintenance',
     loadComponent: () => import('./public/web-pages/web-maintenance/web-maintenance.component').then(m => m.WebMaintenanceComponent)
   },
+  {
+    path: 'projects/:token',
+    loadComponent: () =>
+      import('./public/web-pages/project-portal/project-portal.component')
+        .then(m => m.ProjectPortalComponent)
+  },
 
   // --- 4. ADMIN & AUTH ---
   { path: 'auth/login', component: LoginComponent },

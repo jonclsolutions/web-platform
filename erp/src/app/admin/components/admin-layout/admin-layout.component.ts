@@ -308,7 +308,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     return this.hasAnyPermission([
       'web-user-requests-view',
       'web-sales-leads-view',
-      'web-sales-orders-view'
+      'web-sales-orders-view',
+      'web-projects-view'
     ]);
   }
 

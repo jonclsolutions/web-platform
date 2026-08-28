@@ -90,6 +90,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'shop.active'  => \App\Http\Middleware\CheckShopActive::class,
             'web.active'   => \App\Http\Middleware\CheckWebActive::class,
             'permission'   => \App\Http\Middleware\CheckPermission::class,
+            'project.session' => \App\Http\Middleware\CheckProjectSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

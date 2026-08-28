@@ -9,6 +9,13 @@
  * - BaseDataComponent: Standardized CRUD and state management.
  * - TableBuilderComponent: Handling tabular views and CSV exports.
  * - SalesOrders Config: Domain-specific definitions for UI columns, form fields, and toolbar actions.
+ *
+ * @refactor-note (2026-08-29) BACKLOG "založit projekt přímo z realizace": přidán
+ * `createProject(item)`, navázaný na nový řádkový button 'generate_form' (viz
+ * sales-orders.config.ts stejné datum) přes `(generateFormOpened)` output
+ * `TableBuilderComponent`. Čistě navigační akce - žádné vlastní API volání zde,
+ * `ProjectsComponent` si při otevření z query parametru `order_id` sám natáhne
+ * detail dané realizace a předvyplní formulář (viz projects.component.ts).
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -174,6 +181,22 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
       },
       error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
     });
+  }
+
+  /**
+   * @description "Založit projekt" - čistě navigační přesměrování na ProjectsComponent
+   * s `order_id` query parametrem. Žádné API volání se tady neděje - cílová stránka si
+   * podle parametru sama natáhne detail realizace a předvyplní create formulář (viz
+   * projects.component.ts `checkQueryParamsForPrefill()`/`loadOrderOptions()`).
+   * @param item Realizace (sales order), ze které se má projekt založit.
+   */
+  createProject(item: any): void {
+    if (!item?.id) return;
+        if (item.project_id) {
+      this.router.navigate(['/admin/web/projects'], { queryParams: { open_project: item.project_id } });
+    } else {
+      this.router.navigate(['/admin/web/projects'], { queryParams: { order_id: item.id } });
+    }
   }
 
   /**

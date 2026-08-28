@@ -36,6 +36,22 @@ export class AuthTokenInterceptor implements HttpInterceptor {
    * @returns {Observable<HttpEvent<unknown>>} The request stream.
    */
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // @bugfix-note (2026-08-29) BACKLOG "zákazníka na veřejném portálu projektu
+    // vyhodilo na admin /auth/login": tenhle interceptor běží globálně na VŠECHNY
+    // HTTP requesty, ale zákaznický portál (`projects/public/{token}/...`) je
+    // ÚPLNĚ SAMOSTATNÁ auth doména - nepoužívá admin access/refresh token vůbec,
+    // řídí se vlastním `session_token` (viz CheckProjectSession middleware/
+    // WebProjectSession na backendu). Bez téhle výjimky interceptor (a) nalepil
+    // irelevantní/škodlivý admin Authorization header na zákaznické requesty a
+    // (b) při 401 z veřejného endpointu spustil ADMIN refresh flow, který selhal
+    // a zavolal `clearAuthData()` + `router.navigate(['/auth/login'])` - i pro
+    // návštěvníka, který se sebe sama do admin sekce nikdy nepřihlašoval.
+    // `ProjectPortalComponent` si svoje 401 (neplatná/vypršelá zákaznická session)
+    // řeší SÁM (viz jeho `loadProject()` - `clearSession()` + zpět na login stav
+    // portálu), tenhle interceptor do toho nemá vůbec zasahovat.
+    if (request.url.includes('/projects/public/')) {
+      return next.handle(request);
+    }
     const accessToken = this.authService.getAccessToken();
     if (accessToken) {
       request = this.addToken(request, accessToken);

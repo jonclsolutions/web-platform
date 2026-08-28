@@ -76,6 +76,8 @@ import { NewsComponent } from './intranet/knowledge-base/pages/news/news.compone
 import { SecurityComponent } from './intranet/knowledge-base/pages/security/security.component';
 import { ContactsComponent } from './intranet/knowledge-base/pages/contacts/contacts.component';
 import { SupportFormComponent } from './intranet/knowledge-base/pages/support-form/support-form.component';
+import { ProjectThreadsComponent } from './web-pages/project-threads/project-threads.component';
+import { ProjectsComponent } from './web-pages/projects/projects.component';
 
 // Core module components (přesunuto z web-pages do core-pages skriptem create-core-pages.sh)
 import { CoreDashboardComponent } from './core-pages/dashboard/dashboard.component';
@@ -130,7 +132,9 @@ const routes: Routes = [
           { path: 'sales-orders', component: SalesOrdersComponent, data: { permission: 'web-sales-orders-view' } },
           { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-support-tickets-view' } },
           { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-job-applications-view' } },
-        ]
+          { path: 'projects', component: ProjectsComponent, data: { permission: 'web-projects-view' } },
+          { path: 'project-threads', component: ProjectThreadsComponent, data: { permission: 'web-projects-view' } },
+         ]
       },
 
       // 🧩 CORE STRÁNKY (systémové/sdílené napříč Web a E-shop)
