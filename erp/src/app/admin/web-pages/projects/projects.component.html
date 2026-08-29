@@ -4,11 +4,22 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
+    @refactor-note (2026-08-29b) BACKLOG "sjednotit projects a project-threads":
+        pod tabulku projektů přidána DRUHÁ, nezávislá tabulka "Požadavky ze všech
+        projektů" (dřív ProjectThreadsComponent) - vlastní toolbar/filtr/stránkování,
+        vlastní lehký modal (pm-* třídy, sdíleno s "Správa" modalem níže).
+    @bugfix-note (2026-08-29c) BACKLOG "obrovská mezera mezi tabulkami": druhá
+        sekce už nemá vlastní duplicitní `.user-request-container.container.mx-auto.p-4`
+        obal (ten způsoboval sčítání paddingů/marginů) - obě tabulky teď žijí
+        v JEDNOM společném vnějším obalu, oddělené jen `.projects-threads-section`
+        (viz project-manage-modal.css) s pevným malým odstupem/dělicí čárou.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
-<div class="error-banner">⚠️ {{ errorMessage }}</div>
-}
+<div class="error-banner">
+      ⚠️ {{ errorMessage }}
+</div>
+  }
 @if (!errorMessage) {
 <div>
 <div class="toolbar-actions m-b-t-5">
@@ -46,9 +57,9 @@ triggerLabel="Akce"
 [tableCaption]="'Seznam projektů'"
 [apiEndpoint]="apiEndpoint"
 (itemDeleted)="handleItemDeleted()"
-(generateFormOpened)="openManageModal($event)"
 (createFormOpened)="handleCreateFormOpened()"
 (editFormOpened)="handleEditFormOpened($event)"
+(generateFormOpened)="openManageModal($event)"
 (viewDetailsOpened)="handleViewDetails($event)">
 </app-table-builder>
 }
@@ -76,7 +87,60 @@ triggerLabel="Akce"
 </div>
 </div>
 </div>
-}
+  }
+
+<!-- ═══════════ Cross-project tabulka požadavků (dřív samostatná stránka) - STEJNÝ
+     vnější obal jako tabulka projektů výše, ne nový .user-request-container -
+     zabraňuje sčítání paddingů/marginů (viz bugfix-note výše). ── -->
+<div class="projects-threads-section">
+<div class="toolbar-actions m-b-t-5">
+<div class="table-header">Požadavky ze všech projektů</div>
+<div class="toolbar-actions-in">
+<app-action-menu-builder
+[configs]="threadsToolbarButtons"
+triggerLabel="Akce"
+(actionTriggered)="handleThreadsToolbarAction($event)">
+</app-action-menu-builder>
+</div>
+</div>
+<div class="main-content-layout">
+<div class="filter-side-panel" [class.active]="isThreadsFilterVisible">
+<app-filter-form-builder
+[filterColumns]="threadFilterColumns"
+[initialFilters]="threadsFilters"
+(closed)="isThreadsFilterVisible = false"
+(filtersApplied)="applyThreadsFilters($event)"
+(filtersCleared)="clearThreadsFilters()">
+</app-filter-form-builder>
+</div>
+<div class="table-and-pagination-container">
+<app-table-builder #threadsTable
+[buttons]="threadButtons"
+[data]="threadsData"
+[detailsColumns]="threadDetailsColumns"
+[columns]="threadColumns"
+[currentFilters]="threadsFilters"
+[inputDefinitions]="threadFormFields"
+[isFullWidth]="isTableFullWidth"
+[tableCaption]="'Požadavky'"
+[apiEndpoint]="threadsApiEndpoint"
+(viewDetailsOpened)="openThreadModal($event)">
+</app-table-builder>
+<div class="flex justify-between items-center mt-4">
+<app-pagination-buttons-builder
+[currentPage]="threadsCurrentPage"
+[totalPages]="threadsTotalPages"
+[totalItems]="threadsTotalItems"
+[itemsPerPage]="threadsItemsPerPage"
+[dataLength]="threadsData.length"
+(pageChange)="handleThreadsPageChange($event)"
+(itemsPerPageChange)="handleThreadsItemsPerPageChange($event)">
+</app-pagination-buttons-builder>
+</div>
+</div>
+</div>
+</div>
+
 </div>
 
 @if (showCreateForm) {
@@ -96,7 +160,7 @@ triggerLabel="Akce"
 </app-details-builder>
 }
 
-<!-- ═══════════ "Správa" modal - checkpointy + heslo/URL + vlákna ═══════════ -->
+<!-- ═══════════ "Správa" modal - checkpointy + heslo/URL + vlákna JEDNOHO projektu ═══════════ -->
 @if (showManageModal) {
 <div class="pm-overlay" (mousedown)="$event.target === $event.currentTarget && closeManageModal()">
 <div class="pm-card" (mousedown)="$event.stopPropagation()">
@@ -117,6 +181,7 @@ triggerLabel="Akce"
           <code class="pm-url">{{ managingProject.public_url }}</code>
           <button type="button" class="pm-btn-small" (click)="copyPublicUrl()">Kopírovat odkaz</button>
         </div>
+
         @if (revealedPassword) {
           <div class="pm-password-row">
             <span class="pm-password-label">Heslo:</span>
@@ -176,13 +241,15 @@ triggerLabel="Akce"
           <div class="pm-thread-detail">
             <button type="button" class="pm-btn-small" (click)="closeThread()">← Zpět na seznam</button>
             <h3 class="pm-thread-detail-subject">{{ selectedThread.subject }}</h3>
+
             <div class="pm-thread-status-row">
-                          <span class="pm-thread-status-label">Stav vlákna:</span>
-                          <select class="pm-input pm-thread-status-select" [ngModel]="selectedThread.status" (ngModelChange)="changeThreadStatus($event)">
-                            <option value="active">Aktivní</option>
-                            <option value="closed">Uzavřeno</option>
-                          </select>
+              <span class="pm-thread-status-label">Stav vlákna:</span>
+              <select class="pm-input pm-thread-status-select" [ngModel]="selectedThread.status" (ngModelChange)="changeThreadStatus($event)">
+                <option value="active">Aktivní</option>
+                <option value="closed">Uzavřeno</option>
+              </select>
             </div>
+
             @if (threadDetailLoading) {
               <p class="pm-loading">Načítám…</p>
             } @else {
@@ -209,6 +276,38 @@ triggerLabel="Akce"
     }
   </div>
 
+</div>
+</div>
+}
+
+<!-- ═══════════ Lehký modal na jedno konkrétní vlákno z cross-project tabulky ═══════════ -->
+@if (showThreadModal) {
+<div class="pm-overlay" (mousedown)="$event.target === $event.currentTarget && closeThreadModal()">
+<div class="pm-card" (mousedown)="$event.stopPropagation()">
+  <div class="pm-header">
+    <h2 class="pm-title">{{ activeThread?.subject }} @if (activeThread?.project_name) { — {{ activeThread?.project_name }} }</h2>
+    <button type="button" class="pm-close" (click)="closeThreadModal()">✕</button>
+  </div>
+  <div class="pm-body">
+    @if (threadModalLoading) {
+      <p class="pm-loading">Načítám…</p>
+    } @else {
+      <div class="pm-message-list">
+        @for (msg of activeThread?.messages; track msg.id) {
+          <div class="pm-message" [class.pm-message-admin]="msg.author_type === 'admin'">
+            <div class="pm-message-meta">{{ msg.author_label || (msg.author_type === 'admin' ? 'Administrátor' : 'Zákazník') }} · {{ msg.created_at }}</div>
+            <div class="pm-message-body">{{ msg.body }}</div>
+          </div>
+        }
+      </div>
+      <div class="pm-reply-box">
+        <textarea class="pm-textarea" rows="3" placeholder="Napište odpověď…" [(ngModel)]="threadModalReplyBody"></textarea>
+        <button type="button" class="pm-btn-small" [disabled]="threadModalReplySending || !threadModalReplyBody.trim()" (click)="sendThreadModalReply()">
+          {{ threadModalReplySending ? 'Odesílám…' : 'Odeslat odpověď' }}
+        </button>
+      </div>
+    }
+  </div>
 </div>
 </div>
 }

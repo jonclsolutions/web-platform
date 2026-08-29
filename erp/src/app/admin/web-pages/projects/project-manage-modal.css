@@ -242,3 +242,14 @@
   }
   .pm-body { padding: 16px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   BACKLOG "obrovská mezera mezi tabulkou projektů a tabulkou požadavků":
+   .projects-threads-section nahrazuje druhý (duplicitní) .user-request-container
+   obal - žádné sčítání paddingů/marginů, jen pevný malý odstup shora.
+   ══════════════════════════════════════════════════════════════════════ */
+.projects-threads-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid #ececea;
+}

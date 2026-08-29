@@ -5,11 +5,20 @@
  * @author RPSW
  * @created 2026
  * @description Administrative component for managing customer Projects.
- * @bugfix-note (2026-08-29e) `changeThreadStatus()` teď spoléhá na to, že backend
- * `updateStatus()` vrací `['data' => ...]` obálku (opraveno na backendu) - `updated`
- * tak přestane být `undefined` a select se korektně předvyplní na aktuální hodnotu
- * (`[ngModel]="selectedThread.status"` funguje, protože `status` teď skutečně
- * přichází z `WebProjectThreadResource`).
+ *
+ * @refactor-note (2026-08-29b) BACKLOG "sjednotit web/projects a web/project-threads
+ * do jedné feature": bývalý samostatný `ProjectThreadsComponent` (cross-project
+ * tabulka VŠECH vláken) je teď DRUHÁ tabulka na téže stránce, POD tabulkou
+ * projektů - vlastní nezávislé stránkování/filtrování (jiný `apiEndpoint':
+ * 'web/project-threads', jiné `threadsFilters`/`threadsCurrentPage` atd., protože
+ * BaseDataComponent spravuje pouze JEDEN primární `apiEndpoint` - projekty - takže
+ * druhá tabulka je natahována ručně přes `genericTableService.getPaginatedData()`,
+ * stejný nízkoúrovňový mechanismus, jaký BaseDataComponent používá interně pro tu
+ * primární). Otevření řádku ("💬") ukáže LEHKÝ modal (`showThreadModal`/
+ * `activeThread`) s odpovědí - nezávislý na "Správa" modalu (`showManageModal`/
+ * `selectedThread`), který řeší vlákna SCOPOVANÁ na jeden konkrétní spravovaný
+ * projekt. Obě modální okna sdílí stejné `pm-*` CSS třídy (project-manage-modal.css)
+ * - proto "project-threads nemělo vlastní CSS", bylo to vždy sdílené odsud.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -41,6 +50,8 @@ interface ProjectThreadMessage {
 
 interface ProjectThread {
   id: number;
+  project_id?: number;
+  project_name?: string;
   subject: string;
   priority: string;
   status: string;
@@ -64,6 +75,7 @@ interface RevealedPassword {
 })
 export class ProjectsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  @ViewChild('threadsTable') threadsTable!: TableBuilderComponent;
 
   override apiEndpoint: string = 'web/projects';
 
@@ -80,7 +92,8 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
 
   private prefillOrderId: string | null = null;
-  private savedScrollY = 0;
+
+  // ── "Správa" modal (jeden konkrétní projekt: Přístup / Checkpointy / Konverzace) ──
   showManageModal = false;
   manageLoading = false;
   managingProject: any | null = null;
@@ -102,6 +115,31 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   readonly checkpointStatusLabels = Config.CHECKPOINT_STATUS_LABELS;
 
   private readonly PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
+
+  /** Scroll pozice ULOŽENÁ při otevření libovolného modalu ("Správa" i "Vlákno") - viz lockBackgroundScroll()/unlockBackgroundScroll(). */
+  private savedScrollY = 0;
+
+  // ── Cross-project tabulka požadavků (dřív ProjectThreadsComponent) ─────────
+  readonly threadsApiEndpoint = 'web/project-threads';
+  threadColumns = Config.PROJECT_THREAD_COLUMNS;
+  threadButtons = Config.PROJECT_THREAD_BUTTONS;
+  threadFilterColumns = Config.PROJECT_THREAD_FILTER_COLUMNS;
+  threadDetailsColumns = Config.PROJECT_THREAD_DETAILS_COLUMNS;
+  threadFormFields: Core.InputDefinition[] = [];
+
+  threadsData: any[] = [];
+  threadsFilters: Core.FilterParams = { sort_by: 'last_message_at', sort_direction: 'desc' };
+  threadsCurrentPage = 1;
+  threadsItemsPerPage = 15;
+  threadsTotalPages = 1;
+  threadsTotalItems = 0;
+  isThreadsFilterVisible = false;
+
+  showThreadModal = false;
+  activeThread: any | null = null;
+  threadModalLoading = false;
+  threadModalReplyBody = '';
+  threadModalReplySending = false;
 
   private _checkpointsCrud?: EntityCrudService<ProjectCheckpoint>;
   private get checkpointsCrud(): EntityCrudService<ProjectCheckpoint> {
@@ -164,6 +202,17 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
+  get threadsToolbarButtons(): Core.Button[] {
+    return Config.PROJECT_THREAD_TOOLBAR_BUTTONS.map(btn => {
+      const updated = { ...btn };
+      if (btn.action === 'toggleThreadsFilters') {
+        updated.label = this.isThreadsFilterVisible ? 'Skrýt filtry' : 'Filtry';
+        updated.isActive = this.isThreadsFilterVisible;
+      }
+      return updated;
+    });
+  }
+
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -174,10 +223,19 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     if (actions[action]) actions[action]();
   }
 
+  handleThreadsToolbarAction(action: string): void {
+    const actions: { [key: string]: () => void } = {
+      toggleThreadsFilters: () => { this.isThreadsFilterVisible = !this.isThreadsFilterVisible; this.cd.markForCheck(); },
+      exportThreadsTable: () => this.threadsTable?.exportToCSV(),
+    };
+    if (actions[action]) actions[action]();
+  }
+
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
     this.checkQueryParamsForPrefill();
+    this.loadThreadsTable();
   }
 
   private checkQueryParamsForPrefill(): void {
@@ -303,6 +361,8 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   handleItemRestored(): void { this.refreshData(); }
   handleItemDeleted(): void { this.refreshData(); }
 
+  // ── "Správa" modal ────────────────────────────────────────────────────
+
   openManageModal(item: any): void {
     this.showManageModal = true;
     this.manageLoading = true;
@@ -324,6 +384,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       error: () => {
         this.manageLoading = false;
         this.showManageModal = false;
+        this.unlockBackgroundScroll();
         this.alertDialogService.open('Chyba', 'Nepodařilo se načíst detail projektu.', 'danger');
         this.cd.markForCheck();
       }
@@ -346,33 +407,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.selectedThread = null;
     this.revealedPassword = null;
     this.unlockBackgroundScroll();
-  }
-
-  /**
-   * @description "Přibije" `body` na jeho aktuální scroll pozici pomocí
-   * `position:fixed` - stejný princip jako GraphBuilderComponent (viz
-   * graph-builder.component.ts bugfix-note 2026-08-27v9) - plain
-   * `overflow:hidden` na `body` nespolehlivě zablokuje scroll-chaining z
-   * vnitřních panelů popupu.
-   */
-  private lockBackgroundScroll(): void {
-    this.savedScrollY = window.scrollY;
-    const body = document.body.style;
-    body.position = 'fixed';
-    body.top = `-${this.savedScrollY}px`;
-    body.left = '0';
-    body.right = '0';
-    body.width = '100%';
-  }
-
-  private unlockBackgroundScroll(): void {
-    const body = document.body.style;
-    body.position = '';
-    body.top = '';
-    body.left = '';
-    body.right = '';
-    body.width = '';
-    window.scrollTo(0, this.savedScrollY);
   }
 
   private storeRevealedPassword(projectId: number, password: string, url: string): void {
@@ -501,11 +535,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.replyBody = '';
   }
 
-  /**
-   * @bugfix-note (2026-08-29e) Backend `updateStatus()` teď obaluje odpověď do
-   * `['data' => ...]` (viz WebProjectThreadController) - `dataHandler.put<T>()` ji
-   * proto správně rozbalí a `updated` už nikdy není `undefined`.
-   */
   changeThreadStatus(status: string): void {
     if (!this.selectedThread) return;
     this.dataHandler.put<ProjectThread>(`web/project-threads/${this.selectedThread.id}/status`, { status })
@@ -532,11 +561,112 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       this.replyBody = '';
       this.openThread(this.selectedThread);
       if (this.managingProject) this.loadManagingThreads(this.managingProject.id);
+      this.loadThreadsTable();
     } catch (err: any) {
       this.alertDialogService.open('Chyba', err?.error?.message || 'Odeslání odpovědi selhalo.', 'danger');
     } finally {
       this.replySending = false;
       this.cd.markForCheck();
     }
+  }
+
+  // ── Cross-project tabulka požadavků (dřív ProjectThreadsComponent) ─────────
+
+  private loadThreadsTable(): void {
+    this.genericTableService.getPaginatedData<any>(this.threadsApiEndpoint, this.threadsCurrentPage, this.threadsItemsPerPage, this.threadsFilters)
+      .subscribe({
+        next: (res) => {
+          this.threadsData = res.data;
+          this.threadsTotalItems = res.total;
+          this.threadsTotalPages = res.last_page;
+          this.cd.markForCheck();
+        },
+        error: () => {}
+      });
+  }
+
+  applyThreadsFilters(newFilters: Core.FilterParams): void {
+    this.threadsFilters = { ...this.threadsFilters, ...newFilters };
+    this.threadsCurrentPage = 1;
+    this.loadThreadsTable();
+  }
+
+  clearThreadsFilters(): void {
+    this.threadsFilters = { sort_by: 'last_message_at', sort_direction: 'desc' };
+    this.threadsCurrentPage = 1;
+    this.loadThreadsTable();
+  }
+
+  handleThreadsPageChange(page: number): void {
+    this.threadsCurrentPage = page;
+    this.loadThreadsTable();
+  }
+
+  handleThreadsItemsPerPageChange(value: number): void {
+    this.threadsItemsPerPage = value;
+    this.threadsCurrentPage = 1;
+    this.loadThreadsTable();
+  }
+
+  openThreadModal(item: any): void {
+    this.showThreadModal = true;
+    this.threadModalLoading = true;
+    this.threadModalReplyBody = '';
+    this.activeThread = item;
+    this.lockBackgroundScroll();
+    this.cd.markForCheck();
+
+    this.dataHandler.get<any>(`web/project-threads/${item.id}`).subscribe({
+      next: (full) => { this.activeThread = full; this.threadModalLoading = false; this.cd.markForCheck(); },
+      error: () => { this.threadModalLoading = false; this.cd.markForCheck(); }
+    });
+  }
+
+  closeThreadModal(): void {
+    this.showThreadModal = false;
+    this.activeThread = null;
+    this.unlockBackgroundScroll();
+  }
+
+  async sendThreadModalReply(): Promise<void> {
+    const body = this.threadModalReplyBody.trim();
+    if (!body || !this.activeThread || this.threadModalReplySending) return;
+
+    this.threadModalReplySending = true;
+    this.cd.markForCheck();
+
+    try {
+      await firstValueFrom(this.dataHandler.post(`web/project-threads/${this.activeThread.id}/reply`, { body }));
+      this.threadModalReplyBody = '';
+      this.openThreadModal(this.activeThread);
+      this.loadThreadsTable();
+    } catch (err: any) {
+      this.alertDialogService.open('Chyba', err?.error?.message || 'Odeslání odpovědi selhalo.', 'danger');
+    } finally {
+      this.threadModalReplySending = false;
+      this.cd.markForCheck();
+    }
+  }
+
+  // ── Scroll lock (sdíleno mezi oběma modaly - jen jeden je vždy otevřený) ──
+
+  private lockBackgroundScroll(): void {
+    this.savedScrollY = window.scrollY;
+    const body = document.body.style;
+    body.position = 'fixed';
+    body.top = `-${this.savedScrollY}px`;
+    body.left = '0';
+    body.right = '0';
+    body.width = '100%';
+  }
+
+  private unlockBackgroundScroll(): void {
+    const body = document.body.style;
+    body.position = '';
+    body.top = '';
+    body.left = '';
+    body.right = '';
+    body.width = '';
+    window.scrollTo(0, this.savedScrollY);
   }
 }

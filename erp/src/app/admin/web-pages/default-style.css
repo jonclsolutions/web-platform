@@ -139,6 +139,7 @@
   }
   .filter-side-panel {
     width: 0;
+    height: 0;
     max-height: none;
     margin-right: 0;
     padding: 0;
@@ -146,6 +147,7 @@
   }
   .filter-side-panel.active {
     width: 250px;
+    height: auto;
     margin-left: 5px;
   }
 }

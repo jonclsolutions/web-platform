@@ -5,14 +5,11 @@
  * @author RPSW
  * @created 2026
  * @description Static configuration for the customer Project management page.
- * @bugfix-note (2026-08-29) BACKLOG "ID políčka jsou matoucí": `order_id` textový
- * input nahrazen `select` dropdownem - options se plní DYNAMICKY za běhu
- * (ProjectsComponent.loadOrderOptions()), protože statická konstanta v configu
- * nemůže znát seznam realizací z API. Samostatné `lead_id` pole ODSTRANĚNO z
- * formuláře úplně - objednávka (order) už na leada odkazuje sama
- * (`WebSalesOrder.lead_id`), není potřeba ho vybírat znovu zvlášť.
- * @bugfix-note (2026-08-29) `visibility` má `required: true` - viz backend
- * StoreWebProjectRequest stejné datum (nesmí zůstat implicitní/null).
+ * @refactor-note (2026-08-29b) BACKLOG "sjednotit web/projects a web/project-threads
+ * do jedné feature": PROJECT_THREAD_* konstanty (dřív ve zvlášť souboru
+ * project-threads.config.ts) přesunuty sem - cross-project tabulka požadavků teď
+ * žije jako druhá tabulka POD tabulkou projektů v `ProjectsComponent`, ne jako
+ * samostatná stránka/routa.
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -42,11 +39,6 @@ export const PROJECT_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' },
 ];
 
-/**
- * @description `order_id` options je PRÁZDNÉ pole - `ProjectsComponent.loadOrderOptions()`
- * ho před otevřením formuláře doplní reálným seznamem realizací (viz component pro
- * detaily). Bez vybrané realizace vznikne samostatný projekt bez vazby na lead/order.
- */
 export const PROJECT_FORM_FIELDS: Core.InputDefinition[] = [
   {
     column_name: 'order_id',
@@ -61,7 +53,7 @@ export const PROJECT_FORM_FIELDS: Core.InputDefinition[] = [
   { column_name: 'platform', label: 'Platforma', type: 'select', options: PROJECT_PLATFORM_OPTIONS.map(v => ({ value: v, label: v })), required: false, editable: true, show_in_edit: true, show_in_create: true },
   { column_name: 'project_lead', label: 'Vedoucí projektu', type: 'text', required: false, editable: true, show_in_edit: true, show_in_create: true },
   { column_name: 'contact_phone', label: 'Kontaktní telefon', type: 'tel', required: false, editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'contact_email', label: 'Kontaktní e-mail', type: 'email', required: false, editable: true, show_in_edit: true, show_in_create: true },
+  { column_name: 'contact_email', label: 'Kontaktní e-mail (i notifikace o aktivitě zákazníka)', type: 'email', required: false, editable: true, show_in_edit: true, show_in_create: true },
   { column_name: 'technologies', label: 'Technologie', type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
   { column_name: 'visibility', label: 'Viditelnost', type: 'select', options: PROJECT_VISIBILITY_OPTIONS, required: true, editable: true, show_in_edit: true, show_in_create: true },
   { column_name: 'status', label: 'Stav projektu', type: 'select', options: PROJECT_STATUS_OPTIONS, required: false, editable: true, show_in_edit: true, show_in_create: true },
@@ -116,3 +108,42 @@ export const CHECKPOINT_STATUS_LABELS: Record<string, string> = {
   active: 'Rozpracováno',
   done: 'Hotovo',
 };
+
+// ── Cross-project tabulka požadavků (dřív project-threads.config.ts) ────────
+
+export const PROJECT_THREAD_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'active', label: 'Aktivní' },
+  { value: 'closed', label: 'Uzavřeno' },
+];
+
+export const PROJECT_THREAD_COLUMNS: Core.ColumnDefinition[] = [
+  { key: 'id', header: 'ID', type: 'text' },
+  { key: 'project_name', header: 'Projekt', type: 'text' },
+  { key: 'subject', header: 'Téma', type: 'text' },
+  { key: 'priority', header: 'Priorita', type: 'text' },
+  { key: 'status', header: 'Stav', type: 'text' },
+  { key: 'last_message_at', header: 'Poslední zpráva', type: 'date', format: 'short' },
+];
+
+export const PROJECT_THREAD_BUTTONS: Core.TableButtons[] = [
+  { display_name: '💬', header_name: 'Vlákno', isActive: true, type: 'info_button', action: 'details' },
+];
+
+export const PROJECT_THREAD_TOOLBAR_BUTTONS: Core.Button[] = [
+  { action: 'toggleThreadsFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
+  { action: 'exportThreadsTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+];
+
+export const PROJECT_THREAD_FILTER_COLUMNS: Core.FilterColumns[] = [
+  { key: 'project_id', header: 'ID projektu', type: 'text', placeholder: 'ID projektu...', canSort: false },
+  { key: 'priority', header: 'Priorita', type: 'select', options: ['low', 'medium', 'high', 'critic'], placeholder: '-- Priorita --', canSort: true },
+  { key: 'status', header: 'Stav', type: 'select', options: PROJECT_THREAD_STATUS_OPTIONS, placeholder: '-- Stav --', canSort: true },
+];
+
+export const PROJECT_THREAD_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
+  { key: 'id', displayName: 'ID', type: 'text' },
+  { key: 'project_name', displayName: 'Projekt', type: 'text' },
+  { key: 'subject', displayName: 'Téma', type: 'text' },
+  { key: 'priority', displayName: 'Priorita', type: 'text' },
+  { key: 'status', displayName: 'Stav', type: 'text' },
+];
