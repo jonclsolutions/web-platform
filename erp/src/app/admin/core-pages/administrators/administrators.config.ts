@@ -61,6 +61,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
   // `this.isSysadmin` v toolbarButtons getteru, stejný vzor jako filtrování
   // `two_fa_forced_by_admin` pole ve formuláři).
   { action: 'openEmailAccessPolicy', label: 'Domény e-mailů', icon: '🌐', class: 'btn-neutral', showIf: true },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
@@ -166,10 +167,10 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'full_name', displayName: 'Celé jméno', type: 'text' },
   { key: 'user_email', displayName: 'Přihlašovací E-mail', type: 'text' },
   { key: 'roles.0.role_name', displayName: 'Přiřazená role', type: 'text' },
-  { key: 'is_blocked', displayName: 'Účet zablokován', type: 'text' },
+  { key: 'is_blocked', displayName: 'Účet zablokován', type: 'text', chartable: true },
   { key: 'activated_at', displayName: 'Aktivováno', type: 'date', format: 'medium' },
-  { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření (vlastní volba)', type: 'text' },
-  { key: 'two_fa_forced_by_admin', displayName: '2FA vynuceno sysadminem', type: 'text' },
+  { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření (vlastní volba)', type: 'text', chartable: true },
+  { key: 'two_fa_forced_by_admin', displayName: '2FA vynuceno sysadminem', type: 'text', chartable: true },
   { key: 'internal_note', displayName: 'Interní poznámka', type: 'text' },
   { key: 'created_at', displayName: 'Účet vytvořen', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Poslední změna údajů', type: 'date', format: 'medium' }

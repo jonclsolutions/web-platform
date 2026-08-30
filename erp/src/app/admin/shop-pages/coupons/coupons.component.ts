@@ -18,6 +18,8 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './coupons.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 /**
  * @description Serves as the primary controller for the Coupons management page.
  * @usage Used by shop administrators to create, edit, delete, or restore discount coupons.
@@ -26,7 +28,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 @Component({
   selector: 'app-coupons',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './coupons.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -50,7 +52,15 @@ export class CouponsComponent extends BaseDataComponent<any> implements Core.OnI
     sort_by: 'id',
     sort_direction: 'desc'
   };
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.COUPON_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -103,6 +113,7 @@ export class CouponsComponent extends BaseDataComponent<any> implements Core.OnI
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       toggleTable: () => this.toggleTable()
     };
     if (actions[action]) actions[action]();
@@ -185,4 +196,13 @@ export class CouponsComponent extends BaseDataComponent<any> implements Core.OnI
   onCancelForm(): void { this.showCreateForm = false; this.selectedItemForEdit = null; this.cd.markForCheck(); }
   handleItemRestored(): void { this.refreshData(); }
   handleItemDeleted(): void { this.refreshData(); }
+  openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
+  }
 }

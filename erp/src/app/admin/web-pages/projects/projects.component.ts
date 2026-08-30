@@ -32,6 +32,8 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import * as Config from './projects.config';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
 interface ProjectCheckpoint {
   id: number;
@@ -68,7 +70,7 @@ interface RevealedPassword {
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, FormsModule],
+  imports: [SHARED_UI_BUILDERS, FormsModule,GraphBuilderComponent],
   templateUrl: './projects.component.html',
   styleUrls: ['../default-style.css', './project-manage-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -166,7 +168,15 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     }
     return this._projectThreadsCrud;
   }
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.PROJECT_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -219,6 +229,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
       toggleTable: () => this.toggleTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
     };
     if (actions[action]) actions[action]();
   }
@@ -668,5 +679,14 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     body.right = '';
     body.width = '';
     window.scrollTo(0, this.savedScrollY);
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
   }
 }

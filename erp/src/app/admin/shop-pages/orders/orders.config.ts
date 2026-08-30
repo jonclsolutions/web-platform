@@ -41,6 +41,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-create',
     showIf: true
   },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'exportActiveTable',
     label: 'Export',
@@ -163,8 +164,14 @@ export const ORDER_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'customer.full_name', displayName: 'Zákazník', type: 'text' },
   { key: 'customer.email', displayName: 'Email', type: 'text' },
   { key: 'customer.phone', displayName: 'Telefon', type: 'text' },
-  { key: 'status_label', displayName: 'Stav objednávky', type: 'text' },
-  { key: 'payment_status_label', displayName: 'Stav platby', type: 'text' },
+  {
+    key: 'status_label', displayName: 'Stav objednávky', type: 'text',
+    chartable: true, chartPossibleValues: STATUS_OPTIONS.map(o => o.label),
+  },
+  {
+    key: 'payment_status_label', displayName: 'Stav platby', type: 'text',
+    chartable: true, chartPossibleValues: PAYMENT_STATUS_OPTIONS.map(o => o.label),
+  },
   { key: 'total_amount', displayName: 'Částka za zboží', type: 'text' },
   { key: 'shipping_amount', displayName: 'Doprava', type: 'text' },
   { key: 'discount_amount', displayName: 'Sleva', type: 'text' },

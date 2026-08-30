@@ -65,6 +65,7 @@ export const NEWS_TOOLBAR_BUTTONS: Core.Button[] = [
     showIf: true
   },
    { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+   { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'toggleTable',
     label: 'Koš',
@@ -204,8 +205,11 @@ export const NEWS_FILTER_COLUMNS: Core.FilterColumns[] = [
 export const NEWS_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID záznamu', type: 'text' },
   { key: 'title', displayName: 'Titulek', type: 'text', importable: true },
-  { key: 'thema', displayName: 'Kategorie', type: 'text', importable: true },
-  { key: 'author', displayName: 'Autor', type: 'text', importable: true },
+  {
+    key: 'thema', displayName: 'Kategorie', type: 'text', importable: true,
+    chartable: true, chartPossibleValues: NEWS_THEMA_OPTIONS,
+  },
+  { key: 'author', displayName: 'Autor', type: 'text', importable: true, chartable: true },
   { key: 'message', displayName: 'Hlavní zpráva', type: 'text', importable: true },
   { key: 'bullet_1', displayName: 'Bod 1', type: 'text', importable: true },
   { key: 'bullet_2', displayName: 'Bod 2', type: 'text', importable: true },

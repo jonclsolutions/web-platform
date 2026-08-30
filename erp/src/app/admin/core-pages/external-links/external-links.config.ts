@@ -26,7 +26,7 @@ export const EXTERNAL_LINK_BUTTONS: Core.TableButtons[] = [
 export const EXTERNAL_LINK_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true, permission: 'core-external-links-create' },
-  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },{ action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
@@ -98,7 +98,7 @@ export const EXTERNAL_LINK_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'name', displayName: 'Název', type: 'text' },
   { key: 'url', displayName: 'URL adresa', type: 'text' },
   { key: 'position', displayName: 'Pořadí', type: 'text' },
-  { key: 'is_active', displayName: 'Aktivní', type: 'text' },
+  { key: 'is_active', displayName: 'Aktivní', type: 'text', chartable: true },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Naposledy změněno', type: 'date', format: 'medium' },
 ];

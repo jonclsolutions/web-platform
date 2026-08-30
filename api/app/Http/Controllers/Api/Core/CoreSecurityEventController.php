@@ -79,7 +79,11 @@ class CoreSecurityEventController extends Controller
         $sortBy = $request->input('sort_by', 'last_seen_at');
         $sortDirection = $request->input('sort_direction', 'desc');
         $query->orderBy($sortBy, $sortDirection);
+$noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
+    if ($noPagination) {
+        return response()->json(CoreSecurityEventResource::collection($query->get()));
+    }
         $data = $query->paginate($perPage);
 
         return response()->json([

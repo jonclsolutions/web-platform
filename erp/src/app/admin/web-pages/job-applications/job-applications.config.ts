@@ -40,7 +40,8 @@ export const JOB_APPLICATION_TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-export',
     showIf: true
   },
-   { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+  { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'toggleTable',
     label: 'Koš',
@@ -134,12 +135,15 @@ export const JOB_APPLICATION_FILTER_COLUMNS: Core.FilterColumns[] = [
 export const JOB_APPLICATION_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Žádosti', type: 'text' },
   { key: 'full_name', displayName: 'Celé jméno', type: 'text' },
-  { key: 'position_name', displayName: 'Hlášená pozice', type: 'text' },
+  { key: 'position_name', displayName: 'Hlášená pozice', type: 'text', chartable: true },
   { key: 'email', displayName: 'E-mail', type: 'text' },
   { key: 'phone', displayName: 'Telefon', type: 'text' },
-  { key: 'state', displayName: 'Aktuální stav', type: 'text' },
+  {
+    key: 'state', displayName: 'Aktuální stav', type: 'text',
+    chartable: true, chartPossibleValues: JOB_APP_STATUS_OPTIONS.map(o => o.value),
+  },
   { key: 'message', displayName: 'Průvodní dopis / Zpráva', type: 'text' },
   { key: 'internal_note', displayName: 'Interní poznámka HR', type: 'text' },
-{ key: 'attachments', displayName: 'Životopis', type: 'files' },
+  { key: 'attachments', displayName: 'Životopis', type: 'files' },
   { key: 'created_at', displayName: 'Datum doručení', type: 'date', format: 'medium' }
 ];

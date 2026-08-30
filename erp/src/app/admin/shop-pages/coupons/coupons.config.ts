@@ -11,6 +11,7 @@ export const COUPON_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
      { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+     { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
@@ -128,16 +129,25 @@ export const COUPON_FILTER_COLUMNS: Core.FilterColumns[] = [
 
 export const COUPON_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID', type: 'text', importable: true },
-  { key: 'code', displayName: 'Kód kupónu', type: 'text' , importable: true},
-  { key: 'description', displayName: 'Popis', type: 'text' , importable: true},
-  { key: 'discount_type', displayName: 'Typ slevy', type: 'text' , importable: true},
-  { key: 'discount_value', displayName: 'Hodnota slevy', type: 'text' , importable: true},
+  { key: 'code', displayName: 'Kód kupónu', type: 'text', importable: true },
+  { key: 'description', displayName: 'Popis', type: 'text', importable: true },
+  {
+    key: 'discount_type', displayName: 'Typ slevy', type: 'text', importable: true,
+    chartable: true, chartPossibleValues: ['percent', 'fixed'],
+  },
+  { key: 'discount_value', displayName: 'Hodnota slevy', type: 'text', importable: true },
   { key: 'max_usage', displayName: 'Max. použití', type: 'text', importable: true },
-  { key: 'usage_count', displayName: 'Aktuálně použito', type: 'text' , importable: true},
+  { key: 'usage_count', displayName: 'Aktuálně použito', type: 'text', importable: true },
   { key: 'min_order_amount', displayName: 'Min. objednávka', type: 'text', importable: true },
-  { key: 'applies_to', displayName: 'Platí pro', type: 'text', importable: true },
-  { key: 'valid_from', displayName: 'Platí od', type: 'date', format: 'medium' , importable: true},
-  { key: 'valid_until', displayName: 'Platí do', type: 'date', format: 'medium' , importable: true},
-  { key: 'is_active', displayName: 'Aktivní', type: 'text' , importable: true},
+  {
+    key: 'applies_to', displayName: 'Platí pro', type: 'text', importable: true,
+    chartable: true, chartPossibleValues: ['all', 'products', 'categories'],
+  },
+  { key: 'valid_from', displayName: 'Platí od', type: 'date', format: 'medium', importable: true },
+  { key: 'valid_until', displayName: 'Platí do', type: 'date', format: 'medium', importable: true },
+  {
+    key: 'is_active', displayName: 'Aktivní', type: 'text', importable: true,
+    chartable: true, chartPossibleValues: ['1', '0'],
+  },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
 ];

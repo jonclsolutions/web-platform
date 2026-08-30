@@ -60,6 +60,7 @@ export const SALES_ORDER_TOOLBAR_BUTTONS: Core.Button[] = [
     showIf: true
   },
   { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'toggleTable',
     label: 'Koš',
@@ -69,15 +70,7 @@ export const SALES_ORDER_TOOLBAR_BUTTONS: Core.Button[] = [
   }
 ];
 
-/**
- * @refactor-note (2026-08-2) `attachment` (jednosouborové pole, type: 'file') nahrazeno
- * `attachments` (type: 'files', vícenásobný upload) - sedí s backendem, který teď ukládá
- * přílohy do `web_attachments` (viz WebSalesOrderController). `show_in_edit` nastaveno na
- * `true` (dřív `false`) - backend `update()` teď umí přílohy přidávat i při editaci
- * záznamu, ne jen při vytvoření (přidávají se k existujícím, nenahrazují je).
- * @bugfix-note (2026-08-15) Mrtvý `dataProcessingAgreement` field odstraněn - viz
- * hlavička souboru. Souhlas se nyní zobrazuje jen v DETAILS_COLUMNS (read-only).
- */
+
 export const SALES_ORDER_FORM_FIELDS: Core.InputDefinition[] = [
   {
     column_name: 'client_name',
@@ -162,24 +155,17 @@ export const SALES_ORDER_FILTER_COLUMNS: Core.FilterColumns[] = [
   { key: 'ico', header: 'IČO', type: 'text', placeholder: 'Hledat IČO', canSort: true }
 ];
 
-/**
- * @refactor-note (2026-08-2) `attachment_url` (type: 'file') nahrazeno `attachments`
- * (type: 'files') - detail teď vypíše VŠECHNY přílohy záznamu, ne jen jednu.
- * @bugfix-note (2026-08-15) Doplněny `data_processing_agreement` a `tos_agreement`
- * (read-only, typ boolean) - viz hlavička souboru. Umístěny hned za `order_description`,
- * ať jsou v detailu vidět pohromadě s obsahem objednávky, kterého se souhlas týká.
- */
 export const SALES_ORDER_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Objednávky', type: 'text' },
   { key: 'client_name', displayName: 'Klient', type: 'text' },
   { key: 'ico', displayName: 'IČO', type: 'text' },
-  { key: 'salesman_name', displayName: 'Obchodník', type: 'text' },
+  { key: 'salesman_name', displayName: 'Obchodník', type: 'text', chartable: true },
   { key: 'client_email', displayName: 'Email', type: 'text' },
   { key: 'client_phone', displayName: 'Telefon', type: 'text' },
   { key: 'client_address', displayName: 'Adresa', type: 'text' },
   { key: 'order_description', displayName: 'Popis realizace', type: 'text' },
-  { key: 'data_processing_agreement', displayName: 'Souhlas se zpracováním údajů (GDPR)', type: 'boolean' },
-  { key: 'tos_agreement', displayName: 'Souhlas s obchodními podmínkami', type: 'boolean' },
+  { key: 'data_processing_agreement', displayName: 'Souhlas se zpracováním údajů (GDPR)', type: 'boolean', chartable: true, chartPossibleValues: ['1', '0'] },
+  { key: 'tos_agreement', displayName: 'Souhlas s obchodními podmínkami', type: 'boolean', chartable: true, chartPossibleValues: ['1', '0'] },
   { key: 'attachments', displayName: 'Přílohy / Smlouva', type: 'files' },
   { key: 'created_at', displayName: 'Datum vytvoření', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Poslední změna', type: 'date', format: 'medium' }

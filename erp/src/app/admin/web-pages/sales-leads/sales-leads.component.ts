@@ -18,6 +18,8 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './sales-leads.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 /**
  * @description Manages the Sales Leads module.
  * @usage Provides administrative oversight for lead generation, editing, and tracking through centralized configuration.
@@ -26,7 +28,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 @Component({
   selector: 'app-sales-leads',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './sales-leads.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -52,7 +54,15 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     sort_by: 'id',
     sort_direction: 'desc'
   };
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.SALES_LEAD_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -105,6 +115,7 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       toggleTable: () => this.toggleTable()
     };
     if (actions[action]) actions[action]();
@@ -237,6 +248,15 @@ handleGenerateFormLink(item: any): void {
   handleCloseDetails(): void {
     this.showDetails = false;
     this.selectedItemForDetails = null;
+    this.cd.markForCheck();
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
     this.cd.markForCheck();
   }
 }

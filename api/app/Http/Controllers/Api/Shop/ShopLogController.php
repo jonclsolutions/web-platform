@@ -41,61 +41,74 @@ class ShopLogController extends Controller
      * (`event_type`, `module`, `user_plain`, `origin`, `description`). `id` záměrně
      * VYNECHÁN ze search - numerický přesný identifikátor, ne fulltextové pole.
      */
-    public function index(Request $request): JsonResponse
-    {
-        $perPage = $request->input('per_page', 15);
+public function index(Request $request): JsonResponse
+{
+    $perPage = $request->input('per_page', 15);
 
-        $query = ShopLog::query();
+    $query = ShopLog::query();
 
-        // Přesná shoda - ID je číselný identifikátor.
-        if ($request->filled('id')) {
-            $query->where('id', $request->input('id'));
-        }
-
-        if ($request->filled('event_type')) {
-            $query->where('event_type', $request->event_type);
-        }
-
-        if ($request->filled('module')) {
-            $query->where('module', $request->module);
-        }
-
-        // Částečná shoda - uživatel typicky zná jen část e-mailu.
-        if ($request->filled('user_plain')) {
-            $query->where('user_plain', 'like', '%' . $request->input('user_plain') . '%');
-        }
-
-        if ($request->filled('origin')) {
-            $query->where('origin', 'like', '%' . $request->input('origin') . '%');
-        }
-
-        // Globální fulltextový search napříč VŠEMI relevantními textovými sloupci -
-        // viz bugfix-note výše. Nezávislý na jednotlivých sloupcových filtrech nad ním
-        // (AND, ne náhrada).
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('event_type', 'like', "%{$search}%")
-                  ->orWhere('module', 'like', "%{$search}%")
-                  ->orWhere('user_plain', 'like', "%{$search}%")
-                  ->orWhere('origin', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
-
-        $data = $query->paginate($perPage);
-
-        return response()->json([
-            'data'         => ShopLogResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+    // Přesná shoda - ID je číselný identifikátor.
+    if ($request->filled('id')) {
+        $query->where('id', $request->input('id'));
     }
+
+    if ($request->filled('event_type')) {
+        $query->where('event_type', $request->event_type);
+    }
+
+    if ($request->filled('module')) {
+        $query->where('module', $request->module);
+    }
+
+    // Částečná shoda - uživatel typicky zná jen část e-mailu.
+    if ($request->filled('user_plain')) {
+        $query->where('user_plain', 'like', '%' . $request->input('user_plain') . '%');
+    }
+
+    if ($request->filled('origin')) {
+        $query->where('origin', 'like', '%' . $request->input('origin') . '%');
+    }
+
+    // Globální fulltextový search napříč VŠEMI relevantními textovými sloupci -
+    // viz bugfix-note výše. Nezávislý na jednotlivých sloupcových filtrech nad ním
+    // (AND, ne náhrada).
+    if ($search = $request->input('search')) {
+        $query->where(function ($q) use ($search) {
+            $q->where('event_type', 'like', "%{$search}%")
+              ->orWhere('module', 'like', "%{$search}%")
+              ->orWhere('user_plain', 'like', "%{$search}%")
+              ->orWhere('origin', 'like', "%{$search}%")
+              ->orWhere('description', 'like', "%{$search}%");
+        });
+    }
+
+    $sortBy = $request->input('sort_by', 'created_at');
+    $sortDirection = $request->input('sort_direction', 'desc');
+    $query->orderBy($sortBy, $sortDirection);
+
+    /**
+     * @bugfix-note (2026-08-29) BACKLOG "graph builder vidí jen 15 z X záznamů" -
+     * stejná oprava jako WebLogController::index() stejné datum. GraphBuilderComponent
+     * posílá `no_pagination=true` pro plný dataset; bez téhle větve se to dřív tiše
+     * ignorovalo a vždy vrátila jen jedna stránka (15 položek). Běžná paginovaná
+     * tabulka tenhle parametr neposílá, takže její chování se nemění.
+     */
+    $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
+
+    if ($noPagination) {
+        return response()->json(ShopLogResource::collection($query->get()));
+    }
+
+    $data = $query->paginate($perPage);
+
+    return response()->json([
+        'data'         => ShopLogResource::collection($data->items()),
+        'total'        => $data->total(),
+        'per_page'     => $data->perPage(),
+        'current_page' => $data->currentPage(),
+        'last_page'    => $data->lastPage(),
+    ]);
+}
 
     /**
      * Persists a new shop audit event. Exposed mainly for consistency with

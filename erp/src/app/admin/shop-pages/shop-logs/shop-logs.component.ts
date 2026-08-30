@@ -17,7 +17,8 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './shop-logs.config';
-
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 /**
  * @description Component for viewing shop-related logs.
  * @usage Provides administrators with a read-only interface to monitor system events with advanced filtering and export capabilities.
@@ -26,7 +27,7 @@ import * as Config from './shop-logs.config';
 @Component({
   selector: 'app-shop-logs',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS,GraphBuilderComponent],
   templateUrl: './shop-logs.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -49,7 +50,15 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
     sort_by: 'id',
     sort_direction: 'desc'
   };
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -100,7 +109,8 @@ get toolbarButtons(): Core.Button[] {
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
-      exportActiveTable: () => this.exportActiveTable()
+      exportActiveTable: () => this.exportActiveTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
     };
     if (actions[action]) actions[action]();
   }
@@ -174,6 +184,15 @@ get toolbarButtons(): Core.Button[] {
   handleCloseDetails(): void {
     this.selectedItemForDetails = null;
     this.showDetails = false;
+    this.cd.markForCheck();
+  }
+  openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
     this.cd.markForCheck();
   }
 }

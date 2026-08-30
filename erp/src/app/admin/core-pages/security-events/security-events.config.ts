@@ -43,6 +43,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-filter',
     isActive: false
   },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'exportActiveTable',
     label: 'Export',
@@ -148,15 +149,37 @@ export const FILTER_COLUMNS: Core.FilterColumns[] = [
 
 export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID záznamu', type: 'text' },
-  { key: 'event_type', displayName: 'Typ události', type: 'text' },
-  { key: 'severity', displayName: 'Závažnost', type: 'text' },
+  {
+    key: 'event_type',
+    displayName: 'Typ události',
+    type: 'text',
+    chartable: true,
+    chartPossibleValues: [
+      'captcha_failed', 'captcha_provider_error', 'throttle_exceeded', 'login_failed',
+      'login_brute_force_suspected', 'login_2fa_invalid', 'login_2fa_exhausted',
+      'login_2fa_resend_exhausted', 'refresh_token_invalid', 'scan_probe',
+    ],
+  },
+  {
+    key: 'severity',
+    displayName: 'Závažnost',
+    type: 'text',
+    chartable: true,
+    chartPossibleValues: ['info', 'warning', 'critical'],
+  },
   { key: 'ip_address', displayName: 'IP adresa', type: 'text' },
   { key: 'user_agent', displayName: 'User-Agent', type: 'text' },
   { key: 'route', displayName: 'Route', type: 'text' },
   { key: 'method', displayName: 'HTTP metoda', type: 'text' },
   { key: 'user_id', displayName: 'ID uživatele (pokud přihlášený)', type: 'text' },
   { key: 'occurrences', displayName: 'Počet výskytů v okně', type: 'text' },
-  { key: 'status', displayName: 'Stav triage', type: 'text' },
+  {
+    key: 'status',
+    displayName: 'Stav triage',
+    type: 'text',
+    chartable: true,
+    chartPossibleValues: ['new', 'reviewed', 'false_positive', 'confirmed_attack'],
+  },
   { key: 'notes', displayName: 'Poznámka administrátora', type: 'text' },
   { key: 'context_data', displayName: 'Kontext (JSON)', type: 'text' },
   { key: 'first_seen_at', displayName: 'První výskyt', type: 'date', format: 'medium' },

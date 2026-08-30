@@ -20,6 +20,8 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import { LoadingService } from '../../../core/services/loading.service';
 import * as Config from './edit-news.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 /**
  * @description Component for the management of news content on the web platform.
  * @usage Enables administrators to create, edit, filter, and archive news articles.
@@ -28,7 +30,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 @Component({
   selector: 'app-news',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './edit-news.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -56,7 +58,15 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
     sort_by: 'id',
     sort_direction: 'desc'
   };
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.NEWS_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -109,6 +119,7 @@ get toolbarButtons(): Core.Button[] {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       toggleTable: () => this.toggleTable()
     };
     if (actions[action]) actions[action]();
@@ -210,6 +221,15 @@ get toolbarButtons(): Core.Button[] {
   onCancelForm(): void {
     this.showCreateForm = false;
     this.selectedItemForEdit = null;
+    this.cd.markForCheck();
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
     this.cd.markForCheck();
   }
 }

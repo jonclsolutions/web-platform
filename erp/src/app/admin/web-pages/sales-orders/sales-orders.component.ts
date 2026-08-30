@@ -25,6 +25,8 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './sales-orders.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 /**
  * @description Manages the lifecycle and administrative view of sales orders.
  * @usage Provides a data-driven interface to review order submissions, edit order details, and export reports via CSV.
@@ -33,7 +35,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 @Component({
   selector: 'app-sales-orders',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './sales-orders.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -57,7 +59,15 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     sort_by: 'id',
     sort_direction: 'desc'
   };
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.SALES_ORDER_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -110,6 +120,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       exportActiveTable: () => this.exportActiveTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       toggleTable: () => this.toggleTable()
     };
     if (actions[action]) actions[action]();
@@ -221,6 +232,15 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
   onCancelForm(): void {
     this.showCreateForm = false;
     this.selectedItemForEdit = null;
+    this.cd.markForCheck();
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
     this.cd.markForCheck();
   }
 }

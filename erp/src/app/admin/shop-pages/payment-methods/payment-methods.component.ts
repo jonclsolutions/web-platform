@@ -18,6 +18,8 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './payment-methods.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 /**
  * @description Component for managing shop payment method settings.
  * @usage Enables administrators to view, filter, edit, and export payment method configurations.
@@ -26,7 +28,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 @Component({
   selector: 'app-payment-methods',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './payment-methods.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -49,7 +51,15 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
     sort_by: 'sort_order',
     sort_direction: 'asc'
   };
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.PAYMENT_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -100,6 +110,7 @@ get toolbarButtons(): Core.Button[] {
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable: () => this.exportActiveTable()
     };
     if (actions[action]) actions[action]();
@@ -182,4 +193,13 @@ get toolbarButtons(): Core.Button[] {
 
   handleCloseDetails(): void { this.selectedItemForDetails = null; this.showDetails = false; }
   onCancelForm(): void { this.showCreateForm = false; this.selectedItemForEdit = null; this.cd.markForCheck(); }
+  openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
+  }
 }

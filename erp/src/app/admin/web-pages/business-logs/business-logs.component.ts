@@ -17,6 +17,8 @@ import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './business-logs.config';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
 /**
  * @description Component for monitoring business logs.
@@ -26,7 +28,7 @@ import * as Config from './business-logs.config';
 @Component({
   selector: 'app-business-logs',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS],
+  imports: [SHARED_UI_BUILDERS,GraphBuilderComponent],
   templateUrl: './business-logs.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -49,7 +51,15 @@ export class BusinessLogsComponent extends BaseDataComponent<any> implements Cor
     sort_by: 'created_at',
     sort_direction: 'desc'
   };
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -83,7 +93,8 @@ export class BusinessLogsComponent extends BaseDataComponent<any> implements Cor
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
-      exportActiveTable: () => this.exportActiveTable()
+      exportActiveTable: () => this.exportActiveTable(),
+      openGraphBuilder: () => this.openGraphBuilder()
     };
     if (actions[action]) actions[action]();
   }
@@ -157,6 +168,15 @@ export class BusinessLogsComponent extends BaseDataComponent<any> implements Cor
   handleCloseDetails(): void {
     this.selectedItemForDetails = null;
     this.showDetails = false;
+    this.cd.markForCheck();
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
     this.cd.markForCheck();
   }
 }

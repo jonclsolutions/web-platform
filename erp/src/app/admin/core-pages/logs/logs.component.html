@@ -72,3 +72,13 @@
 (closeDetails)="handleCloseDetails()">
 </app-details-builder>
 }
+@if (showGraphBuilder) {
+<app-graph-builder
+[apiEndpoint]="apiEndpoint"
+[tableCaption]="'Seznam aktivních požadavků'"
+[columns]="graphColumns"
+[dateField]="'created_at'"
+[dateFieldLabel]="'Datum vytvoření'"
+(closed)="closeGraphBuilder()">
+</app-graph-builder>
+}

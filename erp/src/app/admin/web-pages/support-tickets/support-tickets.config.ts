@@ -55,6 +55,7 @@ export const SUPPORT_TICKET_TOOLBAR_BUTTONS: Core.Button[] = [
     showIf: true
   },
   { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'toggleTable',
     label: 'Koš',
@@ -195,12 +196,12 @@ export const SUPPORT_TICKET_FILTER_COLUMNS: Core.FilterColumns[] = [
  */
 export const SUPPORT_TICKET_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Ticketu', type: 'text' },
-  { key: 'state', displayName: 'Stav', type: 'text', importable: true },
+  { key: 'state', displayName: 'Stav', type: 'text', importable: true, chartable: true, chartPossibleValues: ['new', 'open', 'closed'] },
   { key: 'subject', displayName: 'Předmět', type: 'text', importable: true },
   { key: 'user_name_plain', displayName: 'Žadatel', type: 'text', importable: true },
   { key: 'user_plain', displayName: 'Email', type: 'text', importable: true },
-  { key: 'category', displayName: 'Kategorie', type: 'text', importable: true },
-  { key: 'priority', displayName: 'Priorita', type: 'text', importable: true },
+  { key: 'category', displayName: 'Kategorie', type: 'text', importable: true, chartable: true, chartPossibleValues: ['it', 'obchod', 'chyba', 'ostatni'] },
+  { key: 'priority', displayName: 'Priorita', type: 'text', importable: true, chartable: true, chartPossibleValues: ['low', 'medium', 'high'] },
   { key: 'description', displayName: 'Popis problému', type: 'text', importable: true },
   { key: 'attachments', displayName: 'Příloha', type: 'files' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' }

@@ -342,3 +342,13 @@ triggerLabel="Akce"
     </div>
   </div>
 }
+@if (showGraphBuilder) {
+<app-graph-builder
+[apiEndpoint]="apiEndpoint"
+[tableCaption]="'Seznam aktivních požadavků'"
+[columns]="graphColumns"
+[dateField]="'created_at'"
+[dateFieldLabel]="'Datum vytvoření'"
+(closed)="closeGraphBuilder()">
+</app-graph-builder>
+}

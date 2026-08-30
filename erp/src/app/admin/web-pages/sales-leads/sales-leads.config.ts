@@ -29,6 +29,7 @@ export const SALES_LEAD_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'handleCreateFormOpened', label: 'Přidat lead', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-sales-leads-create' },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
     { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+    { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
@@ -239,11 +240,20 @@ export const SALES_LEAD_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'contact_phone', displayName: 'Telefon', type: 'text', importable: true },
   { key: 'contact_other', displayName: 'Jiný kontakt', type: 'text', importable: true },
   { key: 'location', displayName: 'Lokalita', type: 'text', importable: true },
-  { key: 'salesman_name', displayName: 'Obchodník', type: 'text', importable: true },
-  { key: 'source_channel', displayName: 'Zdroj oslovení', type: 'text', importable: true },
+  { key: 'salesman_name', displayName: 'Obchodník', type: 'text', importable: true, chartable: true },
+  {
+    key: 'source_channel', displayName: 'Zdroj oslovení', type: 'text', importable: true,
+    chartable: true, chartPossibleValues: SALES_LEAD_SOURCE_CHANNELS,
+  },
   { key: 'source_url', displayName: 'Zdrojová URL', type: 'text', importable: true },
-  { key: 'status', displayName: 'Stav', type: 'text', importable: true },
-  { key: 'priority', displayName: 'Priorita', type: 'text', importable: true },
+  {
+    key: 'status', displayName: 'Stav', type: 'text', importable: true,
+    chartable: true, chartPossibleValues: SALES_LEAD_STATUS_OPTIONS,
+  },
+  {
+    key: 'priority', displayName: 'Priorita', type: 'text', importable: true,
+    chartable: true, chartPossibleValues: SALES_LEAD_PRIORITY_OPTIONS,
+  },
   { key: 'first_contact_date', displayName: 'První oslovení', type: 'date', format: 'd.M.yyyy', importable: true },
   { key: 'last_contact_date', displayName: 'Poslední kontakt', type: 'date', format: 'd.M.yyyy', importable: true },
   { key: 'next_step', displayName: 'Následný krok', type: 'text', importable: true },

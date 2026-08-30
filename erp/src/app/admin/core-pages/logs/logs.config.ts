@@ -58,6 +58,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-filter',
     isActive: false
   },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'exportActiveTable',
     label: 'Export',
@@ -139,8 +140,28 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Záznamu', type: 'text' },
   { key: 'created_at', displayName: 'Čas události', type: 'date', format: 'medium' },
   { key: 'origin', displayName: 'IP adresa zdroje', type: 'text' },
-  { key: 'event_type', displayName: 'Typ události', type: 'text' },
-  { key: 'module', displayName: 'Systémový modul', type: 'text' },
+  {
+    key: 'event_type',
+    displayName: 'Typ události',
+    type: 'text',
+    chartable: true,
+    chartPossibleValues: [
+      "create", "create_denied", "update", "update_denied", "soft_delete", "hard_delete",
+      "delete", "delete_denied", "restore", "restore_denied", "force_delete_all",
+      "force_delete_all_denied", "sync_permissions", "sync_permissions_denied",
+      "PasswordChanged", "password_change_denied", "password_notification_rate_limited",
+      "login_success", "delete_bulk", "login_failed", "logout", "export", "error",
+      "security_retention_updated", "security_event_triaged", "security_event_deleted",
+      "security_events_purged"
+    ],
+  },
+  {
+    key: 'module',
+    displayName: 'Systémový modul',
+    type: 'text',
+    chartable: true,
+    chartPossibleValues: ["Auth", "CoreRole", "User", "Legal", "Core"],
+  },
   { key: 'description', displayName: 'Podrobný popis', type: 'text' },
   { key: 'affected_entity_type', displayName: 'Tabulka / Entita', type: 'text' },
   { key: 'affected_entity_id', displayName: 'ID záznamu entity', type: 'text' },

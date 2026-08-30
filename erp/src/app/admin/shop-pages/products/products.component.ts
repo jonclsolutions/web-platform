@@ -34,6 +34,9 @@ import { ResourceCacheService } from '../../../core/services/resource-cache.serv
 import { PRODUCT_BUTTONS, PRODUCT_COLUMNS, TRASH_PRODUCT_COLUMNS, FILTER_COLUMNS, TOOLBAR_BUTTONS, PRODUCT_FORM_FIELDS } from './products.config';
 import { Variant, ProductImage, Category, Supplier, Product } from './';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import * as Config from './products.config';
 /**
  * @description Controller for the product administration module.
  * @usage Orchestrates product data flow, including category/supplier associations, variant management, and complex image uploads.
@@ -42,7 +45,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -82,7 +85,15 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   toolbarButtons     = TOOLBAR_BUTTONS;
   formFields: any[]  = [];
   selectedFormCategories: Category[] = [];
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.PRODUCT_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -150,6 +161,7 @@ override loadData(): void {
       toggleFilters:          () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       toggleTrash:            () => this.toggleTrash(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable:      () => this.exportActiveTable(),
     };
     actions[action]?.();
@@ -841,5 +853,14 @@ override loadData(): void {
     return variantId
       ? images.filter((img: any) => !img._delete && img.image_path && img.variant_id === variantId)
       : images.filter((img: any) => !img._delete && !img.variant_id);
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
   }
 }

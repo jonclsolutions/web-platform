@@ -12,6 +12,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-filter',
     isActive: false
   },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'exportActiveTable',
     label: 'Export',
@@ -59,8 +60,16 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Záznamu', type: 'text' },
   { key: 'created_at', displayName: 'Čas události', type: 'date', format: 'medium' },
   { key: 'origin', displayName: 'IP adresa zdroje', type: 'text' },
-  { key: 'event_type', displayName: 'Typ události', type: 'text' },
-  { key: 'module', displayName: 'Systémový modul', type: 'text' },
+  {
+    key: 'event_type', displayName: 'Typ události', type: 'text',
+    chartable: true,
+    chartPossibleValues: ['create', 'update', 'soft_delete', 'hard_delete', 'delete_bulk', 'restore', 'login', 'bulk_hard_delete', 'order_status_change'],
+  },
+  {
+    key: 'module', displayName: 'Systémový modul', type: 'text',
+    chartable: true,
+    chartPossibleValues: ['shop-products', 'shop-categories', 'shop-orders', 'shop-customers', 'shop-suppliers', 'shop-logs'],
+  },
   { key: 'description', displayName: 'Podrobný popis', type: 'text' },
   { key: 'affected_entity_type', displayName: 'Tabulka / Entita', type: 'text' },
   { key: 'affected_entity_id', displayName: 'ID entity', type: 'text' },

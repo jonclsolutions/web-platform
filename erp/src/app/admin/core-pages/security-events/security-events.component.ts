@@ -106,6 +106,8 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import * as Config from './security-events.config';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
 /** @description Tvar singleton nastavení retence vraceného `GET core/security_settings`. */
 interface SecuritySetting {
@@ -132,7 +134,7 @@ interface ChartDay {
 @Component({
   selector: 'app-core-security-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS,GraphBuilderComponent],
   templateUrl: './security-events.component.html',
   styleUrls: ['../default-style.css', './security-events.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -203,7 +205,15 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   ];
 
   readonly retentionOptions = [7, 14, 30, 60, 90, 180, 365];
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -227,6 +237,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable: () => this.exportActiveTable(),
     };
     if (actions[action]) actions[action]();
@@ -647,5 +658,14 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   handleItemDeleted(): void {
     this.refreshData();
     this.loadStats();
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
   }
 }

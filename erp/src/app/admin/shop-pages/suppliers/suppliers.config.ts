@@ -11,6 +11,7 @@ export const SUPPLIER_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
      { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+     { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
@@ -153,11 +154,11 @@ export const SUPPLIER_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'email', displayName: 'Email', type: 'text' },
   { key: 'phone', displayName: 'Telefon', type: 'text' },
   { key: 'address', displayName: 'Ulice', type: 'text' },
-  { key: 'city', displayName: 'Město', type: 'text' },
+  { key: 'city', displayName: 'Město', type: 'text', chartable: true },
   { key: 'postal_code', displayName: 'PSČ', type: 'text' },
-  { key: 'country', displayName: 'Země', type: 'text' },
+  { key: 'country', displayName: 'Země', type: 'text', chartable: true },
   { key: 'payment_terms', displayName: 'Platební podmínky', type: 'text' },
-  { key: 'is_active', displayName: 'Aktivní', type: 'text' },
+  { key: 'is_active', displayName: 'Aktivní', type: 'text', chartable: true, chartPossibleValues: ['1', '0'] },
   { key: 'notes', displayName: 'Poznámka', type: 'text' },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Naposledy změněno', type: 'date', format: 'medium' },

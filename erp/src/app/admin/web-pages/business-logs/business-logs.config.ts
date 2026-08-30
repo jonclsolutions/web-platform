@@ -31,6 +31,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-filter',
     isActive: false
   },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'exportActiveTable',
     label: 'Export',
@@ -101,8 +102,16 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID Záznamu', type: 'text' },
   { key: 'created_at', displayName: 'Čas události', type: 'date', format: 'medium' },
   { key: 'origin', displayName: 'IP adresa zdroje', type: 'text' },
-  { key: 'event_type', displayName: 'Typ události', type: 'text' },
-  { key: 'module', displayName: 'Systémový modul', type: 'text' },
+  {
+    key: 'event_type', displayName: 'Typ události', type: 'text',
+    chartable: true,
+    chartPossibleValues: ['create', 'update', 'delete', 'soft_delete', 'hard_delete', 'restore', 'force_delete_all', 'export', 'error', 'delete_bulk', 'generate_link', 'maintenance_status_changed', 'unauthorized_maintenance_toggle_attempt'],
+  },
+  {
+    key: 'module', displayName: 'Systémový modul', type: 'text',
+    chartable: true,
+    chartPossibleValues: ['WebNews', 'WebJobApplication', 'WebSalesLead', 'WebSalesOrder', 'WebSupportTicket', 'WebRawRequestCommission', 'Web', 'Translation:web'],
+  },
   { key: 'description', displayName: 'Podrobný popis', type: 'text' },
   { key: 'affected_entity_type', displayName: 'Tabulka / Entita', type: 'text' },
   { key: 'affected_entity_id', displayName: 'ID záznamu entity', type: 'text' },

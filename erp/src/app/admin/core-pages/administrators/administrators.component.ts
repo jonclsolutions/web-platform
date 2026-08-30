@@ -75,6 +75,8 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import { RoleOptionsService } from '../../../core/services/role-options.service';
 import { InputDefinition } from '../../../shared/interfaces/input-definiton';
 import * as Config from './administrators.config';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
 /** Role s napevno vynuceným 2FA - musí sedět s backend User::FORCED_2FA_ROLE_NAMES. */
 const HARDCODED_FORCED_ROLE_NAMES = ['admin', 'sysadmin'];
@@ -104,7 +106,7 @@ interface EmailAccessRule {
   standalone: true,
   // ActionMenuBuilderComponent přidán explicitně, dokud není zařazen do
   // SHARED_UI_BUILDERS bundle.
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './administrators.component.html',
   styleUrls: ['../default-style.css', './email-access-policy-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -145,6 +147,15 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   emailAccessRules: EmailAccessRule[] = [];
   newRuleType: 'domain' | 'email' = 'domain';
   newRuleValue = '';
+  showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -202,6 +213,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       openEmailAccessPolicy: () => this.openEmailAccessPolicyModal(),
       toggleTable: () => this.toggleTable()
     };
@@ -572,5 +584,14 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   get emailRules(): EmailAccessRule[] {
     return this.emailAccessRules.filter(r => r.type === 'email');
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
   }
 }

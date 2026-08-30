@@ -5,6 +5,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'handleCreateFormOpened', label: 'Nový produkt', icon: '➕', class: 'btn-create', showIf: true },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
      { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+     { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTrash', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'shop-products-delete' }
 ];
 
@@ -98,13 +99,13 @@ export const PRODUCT_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'name', displayName: 'Název', type: 'text' },
   { key: 'slug', displayName: 'Slug (URL)', type: 'text' },
   { key: 'sku', displayName: 'SKU kód', type: 'text' },
-  { key: 'category_name', displayName: 'Kategorie', type: 'text' },
-  { key: 'supplier_name', displayName: 'Dodavatel', type: 'text' },
+  { key: 'category_name', displayName: 'Kategorie', type: 'text', chartable: true },
+  { key: 'supplier_name', displayName: 'Dodavatel', type: 'text', chartable: true },
   { key: 'price_eur', displayName: 'Cena EUR (s DPH)', type: 'text' },
   { key: 'stock_quantity', displayName: 'Celkový sklad', type: 'text' },
   { key: 'description', displayName: 'Popis', type: 'text' },
-  { key: 'is_active', displayName: 'Stav aktivace', type: 'boolean' },
-  { key: 'is_featured', displayName: 'Doporučený produkt', type: 'boolean' },
+  { key: 'is_active', displayName: 'Stav aktivace', type: 'boolean', chartable: true, chartPossibleValues: ['1', '0'] },
+  { key: 'is_featured', displayName: 'Doporučený produkt', type: 'boolean', chartable: true, chartPossibleValues: ['1', '0'] },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
   { key: 'updated_at', displayName: 'Naposledy upraveno', type: 'date', format: 'medium' }
 ];

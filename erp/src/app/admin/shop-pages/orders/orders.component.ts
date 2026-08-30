@@ -28,7 +28,9 @@ import {
   PAYMENT_STATUS_OPTIONS
 } from './orders.config';
 import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './';
-
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import * as Config from './orders.config';
 interface CouponValidationResult {
   valid: boolean;
   error?: string;
@@ -44,7 +46,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS,GraphBuilderComponent],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -93,7 +95,15 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   trashOrderColumns = TRASH_ORDER_COLUMNS;
   filterColumns = FILTER_COLUMNS;
   toolbarButtons = TOOLBAR_BUTTONS;
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.ORDER_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -272,6 +282,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       toggleTable: () => this.setTableMode(this.currentMode === 'trash' ? 'all' : 'trash'),
       exportActiveTable: () => this.exportActiveTable()
     };
@@ -880,5 +891,14 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
 
   getVisibleItems(order: Order | null): OrderItem[] {
     return (order?.items || []).filter(i => !i._delete);
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
   }
 }

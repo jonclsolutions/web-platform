@@ -36,6 +36,7 @@ export const PROJECT_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Nový projekt', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-projects-create' },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' },
 ];
 
@@ -87,16 +88,15 @@ export const PROJECT_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID', type: 'text' },
   { key: 'name', displayName: 'Název', type: 'text' },
   { key: 'description', displayName: 'Popis', type: 'text' },
-  { key: 'platform', displayName: 'Platforma', type: 'text' },
+  { key: 'platform', displayName: 'Platforma', type: 'text', chartable: true, chartPossibleValues: PROJECT_PLATFORM_OPTIONS },
   { key: 'project_lead', displayName: 'Vedoucí', type: 'text' },
   { key: 'contact_phone', displayName: 'Telefon', type: 'text' },
   { key: 'contact_email', displayName: 'E-mail', type: 'text' },
   { key: 'technologies', displayName: 'Technologie', type: 'text' },
-  { key: 'visibility', displayName: 'Viditelnost', type: 'text' },
-  { key: 'status', displayName: 'Stav projektu', type: 'text' },
+  { key: 'visibility', displayName: 'Viditelnost', type: 'text', chartable: true, chartPossibleValues: PROJECT_VISIBILITY_OPTIONS.map(o => o.value) },
+  { key: 'status', displayName: 'Stav projektu', type: 'text', chartable: true, chartPossibleValues: PROJECT_STATUS_OPTIONS.map(o => o.value) },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium' },
 ];
-
 export const CHECKPOINT_STATUS_CYCLE: Record<string, string> = {
   new: 'active',
   active: 'done',
@@ -142,8 +142,8 @@ export const PROJECT_THREAD_FILTER_COLUMNS: Core.FilterColumns[] = [
 
 export const PROJECT_THREAD_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'id', displayName: 'ID', type: 'text' },
-  { key: 'project_name', displayName: 'Projekt', type: 'text' },
+  { key: 'project_name', displayName: 'Projekt', type: 'text', chartable: true },
   { key: 'subject', displayName: 'Téma', type: 'text' },
-  { key: 'priority', displayName: 'Priorita', type: 'text' },
-  { key: 'status', displayName: 'Stav', type: 'text' },
+  { key: 'priority', displayName: 'Priorita', type: 'text', chartable: true, chartPossibleValues: ['low', 'medium', 'high', 'critic'] },
+  { key: 'status', displayName: 'Stav', type: 'text', chartable: true, chartPossibleValues: PROJECT_THREAD_STATUS_OPTIONS.map(o => o.value) },
 ];

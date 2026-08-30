@@ -19,6 +19,8 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './customers.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 /**
  * @description Orchestrates the customer management dashboard, handling client lists, profile details, and associated order history.
  * @usage Used by store administrators to view and manage customer accounts.
@@ -27,7 +29,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -63,7 +65,15 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     sort_by: 'created_at',
     sort_direction: 'desc'
   };
-
+showGraphBuilder = false;
+  readonly graphColumns: GraphColumnOption[] = Config.CUSTOMER_DETAILS_COLUMNS
+     .filter(col => col.chartable === true)
+     .map(col => ({
+       key: col.key,
+       label: col.displayName,
+      aggregation: col.chartAggregation ?? 'count',
+      possibleValues: col.chartPossibleValues
+     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -115,6 +125,7 @@ get toolbarButtons(): Core.Button[] {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
+      openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable: () => this.exportActiveTable(),
       toggleTable: () => this.toggleTable()
     };
@@ -365,4 +376,13 @@ get toolbarButtons(): Core.Button[] {
 
   handleItemRestored(): void { this.refreshData(); }
   handleItemDeleted(): void { this.refreshData(); }
+  openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
+  }
 }

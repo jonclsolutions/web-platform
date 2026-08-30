@@ -18,6 +18,8 @@ import { TableBuilderComponent } from '../../components/builders/table-builder/t
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './support-tickets.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
+import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
+import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 /**
  * @description Manages the lifecycle of support tickets within the web administration module.
  * @usage Provides an interface for tracking, creating, updating, and exporting support inquiries.
@@ -26,7 +28,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 @Component({
   selector: 'app-support-tickets',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './support-tickets.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -50,6 +52,15 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     sort_by: 'id',
     sort_direction: 'desc'
   };
+  showGraphBuilder = false;
+    readonly graphColumns: GraphColumnOption[] = Config.SUPPORT_TICKET_DETAILS_COLUMNS
+       .filter(col => col.chartable === true)
+       .map(col => ({
+         key: col.key,
+         label: col.displayName,
+        aggregation: col.chartAggregation ?? 'count',
+        possibleValues: col.chartPossibleValues
+       }));
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -104,7 +115,8 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
-      toggleTable: () => this.toggleTable()
+      toggleTable: () => this.toggleTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
     };
     if (actions[action]) actions[action]();
   }
@@ -214,6 +226,15 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
   onCancelForm(): void {
     this.showCreateForm = false;
     this.selectedItemForEdit = null;
+    this.cd.markForCheck();
+  }
+    openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
     this.cd.markForCheck();
   }
 }

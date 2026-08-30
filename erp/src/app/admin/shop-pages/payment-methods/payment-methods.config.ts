@@ -7,6 +7,7 @@ export const PAYMENT_BUTTONS: Core.TableButtons[] = [
 
 export const PAYMENT_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
 ];
 
@@ -107,11 +108,14 @@ export const PAYMENT_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'name', displayName: 'Název platby', type: 'text' },
   { key: 'code', displayName: 'Kód', type: 'text' },
   { key: 'price', displayName: 'Cena', type: 'currency' },
-  { key: 'provider', displayName: 'Poskytovatel', type: 'text' },
+  { key: 'provider', displayName: 'Poskytovatel', type: 'text', chartable: true, chartPossibleValues: ['manual', 'stripe', 'paypal'] },
   { key: 'bank_account_number', displayName: 'Číslo účtu', type: 'text' },
   { key: 'bank_account_code', displayName: 'Kód banky', type: 'text' },
-  { key: 'variable_symbol_type', displayName: 'Typ VS', type: 'text' },
-  { key: 'is_active', displayName: 'Aktivní', type: 'boolean' },
+  {
+    key: 'variable_symbol_type', displayName: 'Typ VS', type: 'text',
+    chartable: true, chartPossibleValues: ['order_number', 'phone_number', 'none'],
+  },
+  { key: 'is_active', displayName: 'Aktivní', type: 'boolean', chartable: true, chartPossibleValues: ['1', '0'] },
   { key: 'sort_order', displayName: 'Pořadí', type: 'text' },
   { key: 'config', displayName: 'Konfigurace (JSON)', type: 'text' },
   { key: 'description', displayName: 'Popis', type: 'text' },

@@ -93,6 +93,12 @@ class CoreLogController extends Controller
         $sortDirection = $request->input('sort_direction', 'desc');
         $query->orderBy($sortBy, $sortDirection);
 
+        $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
+
+    if ($noPagination) {
+        return response()->json(CoreLogResource::collection($query->get()));
+    }
+
         $data = $query->paginate($perPage);
 
         return response()->json([

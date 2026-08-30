@@ -11,6 +11,7 @@ export const SHIPPING_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true },
   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
      { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+     { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
@@ -163,16 +164,19 @@ export const SHIPPING_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'code', displayName: 'Interní kód', type: 'text', importable: true },
   { key: 'name', displayName: 'Název dopravy', type: 'text', importable: true },
   { key: 'description', displayName: 'Popis', type: 'text', importable: true },
-  { key: 'shipping_type', displayName: 'Typ dopravy', type: 'text' , importable: true},
-  { key: 'base_price', displayName: 'Základní cena', type: 'text' , importable: true},
-  { key: 'allows_cod', displayName: 'Podpora dobírky', type: 'boolean' , importable: true},
-  { key: 'cod_price', displayName: 'Cena dobírky', type: 'text' , importable: true},
-  { key: 'free_shipping_threshold', displayName: 'Zdarma od', type: 'text' , importable: true},
-  { key: 'max_weight', displayName: 'Max. váha', type: 'text' , importable: true},
-  { key: 'requires_pickup_point', displayName: 'Vyžaduje výdejnu', type: 'boolean', importable: true },
-  { key: 'delivery_days_min', displayName: 'Min. dny', type: 'text' , importable: true},
-  { key: 'delivery_days_max', displayName: 'Max. dny', type: 'text' , importable: true},
-  { key: 'tracking_url', displayName: 'Sledovací URL', type: 'text' , importable: true},
-  { key: 'is_active', displayName: 'Aktivní', type: 'boolean', importable: true },
+  {
+    key: 'shipping_type', displayName: 'Typ dopravy', type: 'text', importable: true,
+    chartable: true, chartPossibleValues: ['address', 'pickup_point', 'store'],
+  },
+  { key: 'base_price', displayName: 'Základní cena', type: 'text', importable: true },
+  { key: 'allows_cod', displayName: 'Podpora dobírky', type: 'boolean', importable: true, chartable: true, chartPossibleValues: ['1', '0'] },
+  { key: 'cod_price', displayName: 'Cena dobírky', type: 'text', importable: true },
+  { key: 'free_shipping_threshold', displayName: 'Zdarma od', type: 'text', importable: true },
+  { key: 'max_weight', displayName: 'Max. váha', type: 'text', importable: true },
+  { key: 'requires_pickup_point', displayName: 'Vyžaduje výdejnu', type: 'boolean', importable: true, chartable: true, chartPossibleValues: ['1', '0'] },
+  { key: 'delivery_days_min', displayName: 'Min. dny', type: 'text', importable: true },
+  { key: 'delivery_days_max', displayName: 'Max. dny', type: 'text', importable: true },
+  { key: 'tracking_url', displayName: 'Sledovací URL', type: 'text', importable: true },
+  { key: 'is_active', displayName: 'Aktivní', type: 'boolean', importable: true, chartable: true, chartPossibleValues: ['1', '0'] },
   { key: 'created_at', displayName: 'Vytvořeno', type: 'date', format: 'medium', importable: true },
 ];
