@@ -4,13 +4,20 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @bugfix-note (2026-08-31): Rozsah "Zobrazuji X-Y z Z záznamů" nyní čte
+        `rangeStart`/`rangeEnd` gettery (odvozené z currentPage/itemsPerPage/totalItems)
+        místo dřívějšího přímého výpočtu z `dataLength` - viz
+        pagination-buttons-builder.component.ts stejné datum. Přidána @if větev pro
+        `totalItems === 0` (dřív se i u prázdné tabulky zobrazoval nesmyslný "1-0 z 0").
 -->
 
 <div class="pagination-controls-wrapper">
   <div class="pagination-info text-sm text-gray-700 p-b-10">
-    Zobrazuji {{ (currentPage - 1) * itemsPerPage + 1 }} -
-    {{ (currentPage - 1) * itemsPerPage + dataLength }}
-    z celkem {{ totalItems }} záznamů.
+    @if (totalItems === 0) {
+      Nebyly nalezeny žádné záznamy.
+    } @else {
+      Zobrazuji {{ rangeStart }} - {{ rangeEnd }} z celkem {{ totalItems }} záznamů.
+    }
   </div>
 
   <div class="pagination-actions">

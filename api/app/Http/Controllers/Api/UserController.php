@@ -6,60 +6,6 @@
  * @author RPSW
  * @created 2025
  * @description Manages user account lifecycles, including creation, role assignment, password security policies, and administrative audit logging.
- * @note (2026) Jediné trvale chráněné role jsou 'sysadmin' a 'admin'.
- *
- * @refactor-note (2026-08-3) KRITICKÁ BEZPEČNOSTNÍ OCHRANA "jen sysadmin smí zasáhnout
- * sysadmina" je aplikovaná na store(), update(), changePassword(), destroy() a
- * forceDeleteAllTrashed().
- *
- * @refactor-note (2026-08-4) changePassword() odesílá PasswordChangedNotification PŘI
- * KAŽDÉ změně hesla, s per-cílový-účet rate limitem proti zahlcení příjemce.
- *
- * @refactor-note (2026-08-12) `id` z route validováno přes ctype_digit() před použitím.
- *
- * @refactor-note (2026-08-7) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait.
- *
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", body 2+3+4 sloučeny do
- * update(): (a) `resolveEnable2fa()` už NEPŘEPISUJE tiše požadavek na vypnutí 2FA u
- * vynucené role/účtu - pokud je cíl vynucený (role admin/sysadmin, role s
- * `forces_2fa=true`, nebo `two_fa_forced_by_admin=true`) a request explicitně žádá
- * `enable_2fa: false`, vrací se 422 (frontend to zobrazí jako červenou notifikaci
- * namísto tichého ignorování). (b) `two_fa_forced_by_admin` (sysadmin override na
- * konkrétním účtu) se teď nastavuje TAKÉ přes tento endpoint (dřív samostatný
- * TwoFactorAdminController - SLOUČENO na žádost, jeden formulář/jeden request) - smí ho
- * měnit VÝHRADNĚ sysadmin (actorIsSysadmin()), a NELZE ho nastavit na cíl, který má 2FA
- * vynucené už rolí (admin/sysadmin/forces_2fa role) - takový override by byl nesmyslný
- * (2FA je vynuceno tak jako tak) a matoucí v UI, proto 422. `TwoFactorAdminController`
- * lze smazat, jeho routa `PUT core/users/{id}/two-factor-requirement` z api.php odstraněna.
- *
- * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu":
- * - `store()` už NEPŘIJÍMÁ heslo (viz StoreUserRequest - `user_password_hash` z
- *   validace úplně odstraněno). Účet se vytváří s `user_password_hash = null`,
- *   `is_blocked = false`, `activated_at = null`. Ihned po commitu (aby selhání mailu
- *   nikdy nerollbacklo už založený účet) se pošle aktivační e-mail s odkazem na
- *   nastavení hesla - viz `sendActivationEmail()`/`AccountActivationController`.
- * - Nová metoda `resendActivation()` - umožňuje adminovi znovu odeslat aktivační odkaz
- *   (nový token, starý zaniká) u účtu, který se ještě nikdy neaktivoval. Route chráněná
- *   `core-administrators-update` (viz api.php).
- * - `update()` dostal kontrolu blokace: `is_blocked` NELZE nastavit na `true` (a) na
- *   vlastní účet, (b) na účet s rolí admin/sysadmin - ABSOLUTNÍ zákaz, i pro sysadmina
- *   (rozhodnuto v backlogu: "nesmí zablokovat v žádném případě"). Přechod
- *   false -> true navíc OKAMŽITĚ revokuje všechny aktivní Sanctum tokeny i refresh
- *   token daného účtu - zablokovaný účet tak nemůže dál používat systém, dokud mu
- *   access token sám nevyprší.
- *
- * @refactor-note (2026-08-25) BACKLOG "core-admin-email-domain-restriction": `store()`
- * dostal NOVOU kontrolu `assertEmailDomainAllowed()`, volanou HNED na začátku (ještě
- * před sysadmin-role kontrolou) - pokud je nastavena `primary_email_domain`
- * (CoreSecuritySetting) a e-mail nového účtu neodpovídá ani jí, ani žádné položce
- * whitelistu (CoreEmailAccessRule - doména nebo konkrétní e-mail), vrací se 422 a
- * pokus se zapisuje do `core_security_events` (`user_create_domain_not_whitelisted`) -
- * jde o potenciální signál persistence-after-compromise (útočník s přístupem k
- * store() by si jinak mohl založit vlastní účet na mail, ke kterému má přístup). Prázdná/
- * nenastavená `primary_email_domain` = beze změny oproti dřívějšku (žádné omezení,
- * zpětně kompatibilní). Správu domény/whitelistu řeší výhradně
- * `CoreEmailAccessPolicyController` (sysadmin-only) - tenhle kontroler jen VYNUCUJE
- * už nastavenou politiku, sám nic nekonfiguruje.
  */
 
 namespace App\Http\Controllers\Api;

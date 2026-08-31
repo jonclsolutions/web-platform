@@ -8,22 +8,6 @@
  * @dependencies
  * - HttpClient: Facilitates secure API communication.
  * - AlertDialogService: Displays user-facing error dialogs upon API failure.
- *
- * @bugfix-note (2026-08-19) KRITICKÝ BUG - MULTIPART PUT/PATCH SE TICHE ZTRATÍ:
- * PHP (nezávisle na Laravelu - je to limitace samotného PHP/SAPI vrstvy) NEPARSUJE
- * `multipart/form-data` tělo requestu pro metody `PUT`/`PATCH`, jen pro `POST` -
- * `$_FILES`/`$_POST` se u skutečného HTTP PUT s multipart tělem nikdy nenaplní. `put()`/
- * `patch()` posílaly `FormData` payload (soubory) jako opravdový HTTP PUT/PATCH - backend
- * takové tělo nikdy nerozparsoval, takže se tiše neuložila ANI přiložená příloha, ANI
- * běžná textová pole (validace prošla, protože vše bylo `sometimes`/nepovinné, ale
- * `$validated`/`$request->file()` byly ve skutečnosti prázdné). Standardní Laravel
- * řešení pro tenhle přesný případ: METHOD SPOOFING - při multipart payloadu se pošle
- * skutečný HTTP `POST` s polem `_method=PUT`/`PATCH` v těle; Laravel router při
- * detekci `_method` pole v POST requestu automaticky nasměruje na cílovou PUT/PATCH
- * route (vestavěné chování, žádná úprava routes/controllerů není potřeba). PHP tak
- * korektně naparsuje multipart tělo (protože transportní metoda je opravdu POST), a
- * Laravel uvnitř aplikace i tak vidí požadovaný PUT/PATCH (permission middleware,
- * route model binding apod. fungují stejně, jako by šlo o "opravdový" PUT/PATCH).
  */
 
 import { Injectable } from '@angular/core';

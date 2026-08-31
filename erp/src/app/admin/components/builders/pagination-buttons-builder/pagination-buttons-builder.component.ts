@@ -7,6 +7,22 @@
  * @description A dynamic pagination controller that provides page navigation and items-per-page selection.
  * @dependencies
  * - FormsModule: Enables template-driven bindings for the select element.
+ *
+ * @bugfix-note (2026-08-31) BACKLOG "špatný rozsah v 'Zobrazuji X-Y z Z záznamů'":
+ * Výpočet rozsahu ("Zobrazuji X-Y") byl dřív odvozen z `dataLength` (`data.length`
+ * předané rodičem, typicky `data.length` nebo `trashData.length`). Tahle hodnota se
+ * ale u některých komponent rozcházela s reálným počtem záznamů na stránce
+ * (např. AdministratorsComponent hlásilo 2 záznamy v `totalItems`, ale `dataLength`
+ * bylo 0 - lokální `data` pole šlo mimo synchronizaci s paginačními meta daty), což
+ * způsobovalo nesmyslné rozsahy typu "1-0 z 2 záznamů" nebo "1-0 z 0 záznamů".
+ * ŘEŠENÍ: `rangeStart`/`rangeEnd` gettery teď počítají VÝHRADNĚ z `currentPage`,
+ * `itemsPerPage` a `totalItems` - to jsou hodnoty přímo z paginačních meta dat API
+ * (`current_page`/`per_page`/`total` z Laravel `paginate()`), takže jsou vždy
+ * konzistentní bez ohledu na to, jak si který z ~20 resource kontrolerů/komponent
+ * spravuje svoje lokální `data` pole. `dataLength` @Input zůstává zachováno (zpětná
+ * kompatibilita s existujícími bindingy `[dataLength]="data.length"` napříč
+ * stránkami), ale už se nepoužívá pro výpočet rozsahu - žádná úprava rodičovských
+ * šablon není potřeba.
  */
 
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
@@ -30,10 +46,42 @@ export class PaginationButtonsBuilderComponent {
   @Input() totalPages: number = 1;
   @Input() totalItems: number = 0;
   @Input() itemsPerPage: number = 15;
+
+  /**
+   * @deprecated (2026-08-31) Už se nepoužívá pro výpočet zobrazovaného rozsahu
+   * (viz `rangeStart`/`rangeEnd` níže a bugfix-note v hlavičce souboru) - `data.length`
+   * se u některých komponent rozcházel s `totalItems`. @Input je zachováno jen kvůli
+   * zpětné kompatibilitě se stávajícími bindingy v ~20 rodičovských šablonách; nová
+   * logika je na jeho hodnotě nezávislá.
+   */
   @Input() dataLength: number = 0;
 
   @Output() pageChange = new EventEmitter<number>();
   @Output() itemsPerPageChange = new EventEmitter<number>();
+
+  /**
+   * @description Počáteční číslo rozsahu ("Zobrazuji X - ..."). `0` u prázdné tabulky -
+   * šablona v tom případě zobrazí speciální hlášku místo rozsahu (viz .html).
+   * `Math.max(1, currentPage)` je obranná pojistka proti stavu `currentPage === 0`
+   * (např. krátce po resetu filtrů, než store dokončí `loadInitial()`).
+   */
+  get rangeStart(): number {
+    if (this.totalItems === 0) return 0;
+    const page = Math.max(1, this.currentPage);
+    return (page - 1) * this.itemsPerPage + 1;
+  }
+
+  /**
+   * @description Koncové číslo rozsahu ("... - Y z Z záznamů"). Odvozeno čistě z
+   * `currentPage`/`itemsPerPage`, oříznuté na `totalItems` - takže na poslední (i
+   * jediné) stránce správně skončí přesně na skutečném počtu záznamů, ne na
+   * teoretické kapacitě stránky.
+   */
+  get rangeEnd(): number {
+    if (this.totalItems === 0) return 0;
+    const page = Math.max(1, this.currentPage);
+    return Math.min(page * this.itemsPerPage, this.totalItems);
+  }
 
   /**
    * @description Calculates a rolling window of up to 5 page numbers centered around the current page.

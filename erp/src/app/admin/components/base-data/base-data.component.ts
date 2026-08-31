@@ -7,56 +7,6 @@
  * @description Abstract base class providing standardized CRUD operations, pagination, and
  * caching logic for administrative data components.
  *
- * @refactor-note (2025) Tato třída už NEOBSAHUJE implementaci CRUD volání ani
- * stránkování/cache — to bylo vyextrahováno do dvou samostatných, jednoúčelových
- * tříd, na které tato komponenta pouze DELEGUJE přes lazy gettery:
- *   - `EntityCrudService<T>` (get/create/update/delete/restore/upload/updatePassword)
- *   - `PaginatedListStore<T>` (stránkování, cache, duplicita aktivní/koš tabulka)
- *
- * Veřejné API (`this.data`, `this.postData()`, `this.toggleTable()`, …) zůstává
- * BEZE ZMĚNY, takže existující stránkové komponenty (Orders, Products, EditLegal…)
- * nepotřebují žádnou úpravu. Komponenty, které z celého balíku potřebují jen
- * zlomek (např. PersonalInfoComponent, TableBuilderComponent), už z této třídy
- * vůbec nedědí — skládají si `EntityCrudService` přímo (viz jejich soubory).
- *
- * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php,
- * table-builder.component.ts a has-permission.directive.ts stejné datum): přidána
- * `hasAnyPermission()` - sdílený helper pro komponenty, jejichž šablona NEPOUŽÍVÁ
- * TableBuilderComponent (tedy nemá k dispozici jeho `isButtonVisible()`), typicky
- * vlastní inline UI jako EditLegalComponent nebo jednoduché formulářové stránky jako
- * WebSettingsComponent. Vyhodnocuje stejnou OR syntaxi (`klic1|klic2`) jako
- * *appHasPermission direktiva a backend CheckPermission middleware, ale jako obyčejná
- * metoda volatelná přímo z `@if` bloku v šabloně - `*appHasPermission` (strukturální
- * direktiva) sice funguje i zde, ale její import by musely přidat všechny standalone
- * komponenty zvlášť; `hasAnyPermission()` je zdarma pro každého, kdo už dědí
- * z BaseDataComponent (`permissionService` byl `public` už předtím).
- *
- * @refactor-note (2026-08-6) OPTIMALIZACE NAČÍTÁNÍ TABULEK (backlog: "zbytečně moc
- * dotazů na API"): `initWithAuthCheck()` už při mountu NEDĚLÁ tvrdý refetch
- * (`refreshData()` → `forceFullRefresh()`), ale volá `list.loadInitial()`, který
- * respektuje TTL cache v `GenericTableService` - pokud je stránka/filtry čerstvě
- * cachovaná (viz `CACHE_TTL_MS`), proběhne bez síťového dotazu. `forceFullRefresh()`
- * (ruční refresh tlačítko na tabulce, refresh po mutaci dat) TTL vždy obchází.
- * Přidána podpora globálního "Aktualizovat vše" tlačítka v admin headeru
- * (`TableRefreshBusService.refreshAll$`) a volitelný periodický background refresh
- * (15 min, jen pokud je karta prohlížeče viditelná - `document.hidden` check).
- * Přidány pass-through gettery `activeLastUpdatedAt$`/`trashLastUpdatedAt$` pro UI
- * badge "Aktualizováno v HH:MM:SS" (viz TableBuilderComponent).
- *
- * @refactor-note (2026-08-9) PODPORA KOMPONENT MIMO `this.list` (backlog: "zbytečně
- * moc dotazů na API" - shop moduly). Přidán `usesPaginatedList` přepínač (default
- * `true`, beze změny pro naprostou většinu stránek). Některé komponenty (např.
- * `CategoriesComponent` v shopu) NEPOUŽÍVAJÍ `this.list`/`this.data`
- * (PaginatedListStore) vůbec - mají vlastní stromovou/agregovanou strukturu s vlastním
- * `override refreshData()`. Bez tohoto přepínače by `initWithAuthCheck()` při mountu
- * vždy volal `this.list.loadInitial()`, což by u takové komponenty potichu natáhlo
- * NEPOUŽÍVANÁ stránkovaná data (žádná chyba, ale žádný efekt) a skutečná data by se
- * při vstupu na stránku vůbec nenačetla. Komponenty, které `this.list` nepoužívají,
- * nastaví `protected override usesPaginatedList = false;` - `initWithAuthCheck()` pak
- * při mountu zavolá přímo `this.refreshData()` (a typicky si taková komponenta i
- * přepíše `forceFullRefresh()`, ať globální refresh tlačítko a periodický background
- * refresh mířily na její skutečný zdroj dat, ne na `this.list`).
- *
  * @dependencies
  * - DataHandler: Facilitates HTTP communication.
  * - GenericTableService: Used internally by PaginatedListStore.
