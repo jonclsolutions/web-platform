@@ -4,6 +4,10 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-08-31) EMOJI -> SVG: `{{ btn.icon }}` (textový emoji string)
+        nahrazeno `<app-icon [name]="btn.icon">` - viz icon.component.ts/.html.
+        `btn.icon` je teď očekáváno jako `IconName` klíč (např. 'edit', 'plus'), NE
+        jako text/emoji - viz *.config.ts soubory používající `Button[]`.
 -->
 
 <div class="toolbar-actions-in">
@@ -16,7 +20,9 @@
         [class.active]="btn.isActive"
         class="small-btn">
         @if (btn.icon) {
-          <span class="btn-icon">{{ btn.icon }}</span>
+          <span class="btn-icon">
+            <app-icon [name]="btn.icon"></app-icon>
+          </span>
         }
         <span class="btn-label">{{ btn.label }}</span>
       </button>

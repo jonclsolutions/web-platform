@@ -11,6 +11,7 @@
 
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { Button } from '../../../../shared/interfaces/button';
+import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
 /**
  * @description A reusable utility component that constructs UI button groups from provided configuration objects.
@@ -20,7 +21,7 @@ import { Button } from '../../../../shared/interfaces/button';
 @Component({
   selector: 'app-button-builder',
   standalone: true,
-  imports: [],
+  imports: [IconComponent],
   templateUrl: './button-builder.component.html',
   styleUrl: './button-builder.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

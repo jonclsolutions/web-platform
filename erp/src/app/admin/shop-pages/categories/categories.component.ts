@@ -132,15 +132,16 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Dynamically generates action buttons for individual category rows, adjusting labels and classes based on status.
    * @param node The category node being rendered.
    * @returns {Button[]} Array of action buttons.
-   * @icons-note (2026) Emoji odstraněny - stav (aktivní/neaktivní) teď nese jen text +
-   *      barva tlačítka (btn-export = zelená / btn-filter = neutrální šedá), bez
-   *      barevných emoji teček.
+   * @icons-note (2026-08-31) EMOJI -> SVG: dřív se barevný stav (aktivní/neaktivní)
+   *      kódoval jako text přímo v `icon` poli (`'Aktivní'`/`'Neaktivní'`), teď se
+   *      mění `label` (viditelný text) - `icon` zůstává pevně `'circle'` (SVG tečka),
+   *      barvu nese `class` (btn-export = zelená / btn-filter = neutrální šedá).
    */
   getRowButtons(node: CategoryNode): Button[] {
     return CATEGORY_ROW_BUTTONS.map(btn => {
       const updatedBtn = { ...btn };
       if (btn.action === 'toggleStatus') {
-        updatedBtn.icon = node.is_active ? 'Aktivní' : 'Neaktivní';
+        updatedBtn.label = node.is_active ? 'Aktivní' : 'Neaktivní';
         updatedBtn.class = node.is_active ? 'btn-export' : 'btn-filter';
       }
       return updatedBtn;
@@ -151,16 +152,16 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Returns save/cancel buttons for nodes currently in editing mode.
    * @param node The category node in edit state.
    * @returns {Button[]} Array of edit action buttons.
-   * @icons-note (2026) Emoji (✅/❌) nahrazeny prostými znaky (✓/✕) - stejné ✕, jaké se
-   *      v komponentě už používá jinde (zavírací tlačítka), ať je to konzistentní.
+   * @icons-note (2026-08-31) EMOJI -> SVG: `✓`/`✕` nahrazeny IconName klíči
+   *      `check`/`x` (viz icon.component.ts/.html stejné datum).
    */
   getEditButtons(node: CategoryNode): Button[] {
     const isDuplicate = this.isDuplicateName(node);
     const isEmpty = !node.name || node.name.trim().length === 0;
 
     return [
-      { action: 'submit', label: 'Uložit', icon: '✓', class: 'btn-create', disabled: isDuplicate || isEmpty },
-      { action: 'cancel', label: 'Zrušit', icon: '✕', class: 'btn-trash' }
+      { action: 'submit', label: 'Uložit', icon: 'check', class: 'btn-create', disabled: isDuplicate || isEmpty },
+      { action: 'cancel', label: 'Zrušit', icon: 'x', class: 'btn-trash' }
     ];
   }
 

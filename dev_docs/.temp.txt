@@ -1,6 +1,1 @@
-Přidat záznam
-Otevřít filtry
-Generovat grafy a reporty
-Exportovat data
-Importovat data
-Zobrazit koš
+tak jo muzeme na dalsi complexni tasku ? je to docela slozity refaktor ktery se bude tykat skoro celeho projektu zacneme s user-request commision (soubory jiz mas a momentalne ukladam vsechny souboru v /public slozce v laravelu ale treba zivotopisy nebo dokumenty z user requestu atd atd... musim ukladat v /private samozrejme nejake media treba obrazky k produktum budou muset byt v public casti ale zamerme se nyni na ty veci ktere musi byt v private budeme upravovat jeden controler po druhym ano a hlavne at je to jednoduche 100% fukcni a rozsiritelne a v poradku mas nejaky navrh jak to udelat protoze treba abych nacetl ty media z api budu muset posilat s requestem i ten token od prihlaseneho uzivatele nebo tak nejak to udelat?

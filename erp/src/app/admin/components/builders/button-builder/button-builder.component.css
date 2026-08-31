@@ -37,6 +37,10 @@
   transform: translateY(-1px);
 }
 
+.btn-icon{
+  display: flex;
+}
+
 /* Specifické barvy a okraje - odlišené podle akce */
 .btn-filter {
   background-color: #f4f4f5;

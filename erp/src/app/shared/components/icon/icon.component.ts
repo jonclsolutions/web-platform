@@ -18,9 +18,9 @@ import { CommonModule } from '@angular/common';
 export type IconName =
   | 'search' | 'edit' | 'delete' | 'restore' | 'purge'
   | 'filter' | 'plus' | 'export' | 'import' | 'mail' | 'chart' | 'trash'
-  | 'link' | 'settings' | 'folder' | 'chat'
-  | 'package' | 'image' | 'key';
-  
+  | 'link' | 'settings' | 'folder' | 'chat' | 'package' | 'image' | 'key'
+  | 'folder-open' | 'sparkles' | 'circle' | 'check' | 'x';
+
 @Component({
   selector: 'app-icon',
   standalone: true,
@@ -31,7 +31,7 @@ export type IconName =
 })
 export class IconComponent {
   /** Which icon to render. Undefined renders nothing (caller falls back to text). */
-  @Input() name?: IconName;
+  @Input() name?: string;
   /** Square size in px, applied to both width and height. */
   @Input() size: number = 16;
 }
