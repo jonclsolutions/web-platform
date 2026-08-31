@@ -49,7 +49,7 @@ triggerLabel="Akce"
 (refreshRequested)="forceFullRefresh(filters)"
             [columns]="tableColumns"
             [isFullWidth]="isTableFullWidth"
-            [tableCaption]="'Seznam e-shopových událostí systému'"
+            [tableCaption]="tableCaption"
             [apiEndpoint]="apiEndpoint"
             (viewDetailsOpened)="handleViewDetails($event)">
           </app-table-builder>

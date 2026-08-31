@@ -79,6 +79,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   @ViewChild('threadsTable') threadsTable!: TableBuilderComponent;
   tableCaption: string = 'Projekty';
+  threadsTableCaption: string = 'Zákaznická vlákna';
 
   override apiEndpoint: string = 'web/projects';
 
