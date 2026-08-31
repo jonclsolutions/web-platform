@@ -54,6 +54,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 export class OrdersComponent extends BaseDataComponent<Order> implements OnInit, OnDestroy {
   override apiEndpoint: string = 'shop/orders';
   @ViewChild('activeTable') activeTable!: any;
+  tableCaption: string = 'Přijaté objednávky';
 
   currentMode: TableMode = 'all';
 

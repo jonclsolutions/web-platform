@@ -156,10 +156,10 @@
 
           <div class="graph-topbar-actions">
             <button type="button" class="graph-generate-btn" [disabled]="!canGenerate" (click)="generateReport()">
-              {{ isLoading ? 'Načítám…' : 'Generovat' }}
+              {{ isLoading ? 'Načítám…' : 'Generovat report' }}
             </button>
             <button type="button" class="graph-popup-export" [disabled]="!reportGenerated || isExportingPdf" (click)="exportToPdf()">
-              {{ isExportingPdf ? 'Exportuji…' : '📄 PDF' }}
+              {{ isExportingPdf ? 'Exportuji…' : 'Exportovat do PDF' }}
             </button>
           </div>
         </div>

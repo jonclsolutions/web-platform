@@ -38,15 +38,15 @@ export const BUTTONS: Core.TableButtons[] = [
 export const TOOLBAR_BUTTONS: Core.Button[] = [
   {
     action: 'toggleFilters',
-    label: 'Filtry',
+    label: 'Otevřít filtry',
     icon: '',
     class: 'btn-filter',
     isActive: false
   },
-  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'exportActiveTable',
-    label: 'Export',
+    label: 'Exportovat data',
     icon: '',
     class: 'btn-export',
     showIf: true

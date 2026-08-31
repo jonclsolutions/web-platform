@@ -35,6 +35,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class SupportTicketsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Helpdesk tickety';
 
   override apiEndpoint: string = 'web/support_tickets';
 

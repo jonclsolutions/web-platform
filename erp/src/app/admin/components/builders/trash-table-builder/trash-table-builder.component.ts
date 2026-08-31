@@ -132,8 +132,8 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
     return [
       {
         action: 'deleteAll',
-        label: 'Delete All',
-        icon: '🗑️',
+        label: 'Vysypat koš',
+        icon: '',
         class: 'btn-trash small-btn',
         isActive: false,
         showIf: this.canManageTrash

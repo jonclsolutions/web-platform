@@ -78,6 +78,7 @@ interface RevealedPassword {
 export class ProjectsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   @ViewChild('threadsTable') threadsTable!: TableBuilderComponent;
+  tableCaption: string = 'Projekty';
 
   override apiEndpoint: string = 'web/projects';
 

@@ -49,13 +49,13 @@ export const USER_REQUEST_BUTTONS: Core.TableButtons[] = [
 ];
 
  export const USER_REQUEST_TOOLBAR_BUTTONS: Core.Button[] = [
-   { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
-   { action: 'handleCreateFormOpened', label: 'Přidat', icon: '➕', class: 'btn-create', showIf: true, permission: 'web-user-requests-create' },
-   { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
-   { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
-   { action: 'openEmailTemplateEditor', label: 'Potvrzovací e-mail', icon: '✉️', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-update' },
-  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
-   { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
+   { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
+   { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'web-user-requests-create' },
+   { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
+   { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
+   { action: 'openEmailTemplateEditor', label: 'Editovat potvrzovací e-mail', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-update' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+   { action: 'toggleTable', label: 'Zobrazit koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
  ];
 
 export const USER_REQUEST_STATUS_OPTIONS: string[] = ['Nově zadané', 'Zpracovává se', 'Dokončeno', 'Zrušeno'];

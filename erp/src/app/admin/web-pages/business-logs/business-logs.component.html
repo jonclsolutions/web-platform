@@ -15,7 +15,7 @@
   @if (!errorMessage) {
     <div>
       <div class="toolbar-actions m-b-t-5">
-        <div class="table-header">Auditní záznamy (Business Logs)</div>
+        <div class="table-header">Webové logy</div>
         <div class="toolbar-actions-in">
  <app-action-menu-builder
 [configs]="toolbarButtons"
@@ -74,7 +74,7 @@ triggerLabel="Akce"
 @if (showGraphBuilder) {
 <app-graph-builder
 [apiEndpoint]="apiEndpoint"
-[tableCaption]="'Seznam aktivních požadavků'"
+[tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
 [dateFieldLabel]="'Datum vytvoření'"

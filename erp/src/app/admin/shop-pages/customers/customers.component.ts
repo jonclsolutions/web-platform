@@ -36,6 +36,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class CustomersComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Zákazníci';
 
   override apiEndpoint: string = 'shop/customers';
 

@@ -16,7 +16,11 @@
 @if (!errorMessage) {
 <div>
 <div class="toolbar-actions m-b-t-5">
-<div class="table-header">Obchodní leady (CRM)</div>
+@if(!showTrashTable){
+<div class="table-header">Obchodní leady</div>
+} @else {
+<div class="table-header">Koš</div>
+}
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
@@ -102,7 +106,7 @@ triggerLabel="Akce"
 @if (showGraphBuilder) {
 <app-graph-builder
 [apiEndpoint]="apiEndpoint"
-[tableCaption]="'Seznam aktivních požadavků'"
+[tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
 [dateFieldLabel]="'Datum vytvoření'"

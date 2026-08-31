@@ -6,9 +6,9 @@ export const PAYMENT_BUTTONS: Core.TableButtons[] = [
 ];
 
 export const PAYMENT_TOOLBAR_BUTTONS: Core.Button[] = [
-  { action: 'toggleFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
-  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
-  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
 ];
 
 export const PAYMENT_FORM_FIELDS: Core.InputDefinition[] = [

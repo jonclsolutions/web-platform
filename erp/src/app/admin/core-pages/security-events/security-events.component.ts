@@ -141,6 +141,7 @@ interface ChartDay {
 })
 export class SecurityEventsComponent extends BaseDataComponent<any> implements OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Bezpečnostní monitoring';
 
   override apiEndpoint: string = 'core/security_events';
 

@@ -35,6 +35,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class ShippingMethodsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Způsoby dopravy';
 
   override apiEndpoint: string = 'shop/shipping_methods';
 

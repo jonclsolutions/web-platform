@@ -35,6 +35,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class JobApplicationsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Pracovní formulář';
 
   override apiEndpoint: string = 'web/job_applications';
 

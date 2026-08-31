@@ -42,6 +42,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class SalesOrdersComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Přijaté objednávky';
 
   override apiEndpoint: string = 'web/sales_orders';
 

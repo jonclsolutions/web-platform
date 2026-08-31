@@ -38,6 +38,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class ExternalLinksComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Externí odkazy';
 
   override apiEndpoint: string = 'core/external_links';
 

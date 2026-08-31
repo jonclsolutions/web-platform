@@ -161,10 +161,11 @@
       <div class="toolbar-actions m-b-t-5">
         <div class="table-header">Bezpečnostní monitoring</div>
         <div class="toolbar-actions-in">
-          <app-button-builder
+          <app-action-menu-builder
             [configs]="toolbarButtons"
+            [triggerLabel]="'Akce'"
             (actionTriggered)="handleToolbarAction($event)">
-          </app-button-builder>
+          </app-action-menu-builder>
         </div>
       </div>
       <div class="main-content-layout">
@@ -291,7 +292,7 @@
 @if (showGraphBuilder) {
 <app-graph-builder
 [apiEndpoint]="apiEndpoint"
-[tableCaption]="'Bezpečnostní monitoring'"
+[tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'last_seen_at'"
 [dateFieldLabel]="'Poslední výskyt'"

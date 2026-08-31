@@ -34,32 +34,32 @@ export const SUPPORT_TICKET_BUTTONS: Core.TableButtons[] = [
 export const SUPPORT_TICKET_TOOLBAR_BUTTONS: Core.Button[] = [
   {
     action: 'toggleFilters',
-    label: 'Filtry',
-    icon: '🔍',
+    label: 'Otevřít filtry',
+    icon: '',
     class: 'btn-filter',
     isActive: false
   },
   {
     action: 'handleCreateFormOpened',
-    label: 'Přidat tiket',
-    icon: '➕',
+    label: 'Přidat záznam',
+    icon: '',
     class: 'btn-create',
     showIf: true,
     permission: 'web-support-tickets-create'
   },
   {
     action: 'exportActiveTable',
-    label: 'Export',
-    icon: '📥',
+    label: 'Exportovat data',
+    icon: '',
     class: 'btn-export',
     showIf: true
   },
-  { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
-  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'toggleTable',
-    label: 'Koš',
-    icon: '🗑️',
+    label: 'Zobrazit koš',
+    icon: '',
     class: 'btn-trash',
     permission: 'view-deleted'
   }

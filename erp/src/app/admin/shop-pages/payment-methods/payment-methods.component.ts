@@ -35,6 +35,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class PaymentMethodsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Platební metody';
 
   override apiEndpoint: string = 'shop/payment_methods';
 

@@ -105,10 +105,6 @@ interface EmailTemplateState {
 @Component({
   selector: 'app-user-request',
   standalone: true,
-  // ActionMenuBuilderComponent a GraphBuilderComponent jsou zde přidány explicitně,
-  // dokud nejsou zařazeny do SHARED_UI_BUILDERS bundle (viz refactor-note 2026-08-24
-  // a 2026-08-26 v hlavičce souboru) - jakmile tam budou, tyhle jednotlivé importy
-  // lze zase odebrat.
   imports: [SHARED_UI_BUILDERS, FormsModule, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './user-request.component.html',
   styleUrls: ['../default-style.css', './email-template-modal.css'],
@@ -116,6 +112,8 @@ interface EmailTemplateState {
 })
 export class UserRequestComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+
+  tableCaption: string = 'Webový formulář';
 
   override apiEndpoint: string = 'web/raw_request_commissions';
 

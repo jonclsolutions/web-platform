@@ -53,6 +53,7 @@ import * as Config from './products.config';
 export class ProductsComponent extends BaseDataComponent<Product> implements OnInit, OnDestroy {
   override apiEndpoint: string = 'shop/products';
   @ViewChild('activeTable') activeTable!: any;
+  tableCaption: string = 'Produkty';
 
   private resourceCache = inject(ResourceCacheService);
   private readonly CATEGORIES_CACHE_KEY = 'shop-products:categories';

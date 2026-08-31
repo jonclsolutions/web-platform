@@ -35,6 +35,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class CoreLogsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Systémové logy';
 
   override apiEndpoint: string = 'core/logs';
 

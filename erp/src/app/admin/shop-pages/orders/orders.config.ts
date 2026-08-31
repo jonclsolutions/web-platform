@@ -29,27 +29,27 @@ export const PAYMENT_STATUS_OPTIONS = [
 export const TOOLBAR_BUTTONS: Core.Button[] = [
   {
     action: 'toggleFilters',
-    label: 'Filtry',
-    icon: '🔍',
+    label: 'Otevřít filtry',
+    icon: '',
     class: 'btn-filter',
     isActive: false
   },
   {
     action: 'handleCreateFormOpened',
-    label: 'Nová objednávka',
-    icon: '➕',
+    label: 'Přidat záznam',
+    icon: '',
     class: 'btn-create',
     showIf: true
   },
-  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'exportActiveTable',
-    label: 'Export',
-    icon: '📥',
+    label: 'Exportovat data',
+    icon: '',
     class: 'btn-export',
     showIf: true
   },
-     { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
+     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
 ];
 
 /**

@@ -113,6 +113,7 @@ interface EmailAccessRule {
 })
 export class AdministratorsComponent extends BaseDataComponent<any> implements OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Uživatelské účty';
 
   override apiEndpoint: string = 'core/users';
 

@@ -35,6 +35,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  tableCaption: string = 'Obchodní leady';
 
   override apiEndpoint: string = 'web/sales_leads';
   /** Endpoint for activity logging system */

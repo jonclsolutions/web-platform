@@ -53,9 +53,9 @@ export const TABLE_BUTTONS: Core.TableButtons[] = [
 ];
 
 export const TOOLBAR_BUTTONS: Core.Button[] = [
-  { action: 'toggleFilters', label: 'Filtrovat', icon: '🔍', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Nový uživatel', icon: '➕', class: 'btn-create', showIf: true, permission: 'core-administrators-create' },
-  { action: 'exportActiveTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
+  { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'core-administrators-create' },
+  { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
   // NOVÉ (2026-08-25): BACKLOG "core-admin-email-domain-restriction" - VÝHRADNĚ
   // sysadmin (žádné `permission` pole zde - viditelnost řídí komponenta přes
   // `this.isSysadmin` v toolbarButtons getteru, stejný vzor jako filtrování
