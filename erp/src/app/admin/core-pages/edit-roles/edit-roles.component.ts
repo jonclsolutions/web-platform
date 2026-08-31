@@ -49,11 +49,20 @@
  *              2026-08-8 výše) - žádná akce tak neukáže sama sobě zastaralý stav.
  *              `core/permissions` se nikdy nemutuje z téhle stránky, proto se jeho cache
  *              nikdy neinvaliduje.
+ * @refactor-note (2026-08-29) BACKLOG "export mechanismus i na negenerické stránky":
+ *              tahle stránka NENÍ TableBuilderComponent, takže export si generuje sama
+ *              (buildExportRows()/download*() metody), ale znovupoužívá stejnou
+ *              ExportPopupBuilderComponent (formátový picker CSV/XLSX/JSON/TXT) jako
+ *              zbytek admin sekce. `this.roles` je vždy kompletní seznam (loadAllData(),
+ *              žádná paginace), takže export vždy pokrývá VŠECHNY role. Import záměrně
+ *              NENÍ implementován (role/oprávnění nemají smysl jako uživatelský vstup
+ *              přes import, stejný princip jako u sales_leads public_token).
  * @dependencies
  * - BaseDataComponent: Standardní CRUD (create/update/delete/loadAll) nad apiEndpoint 'core/roles'.
  * - DataHandler: Přímé volání pro core/permissions a sync oprávnění (mimo EntityCrudService).
  * - ResourceCacheService: TTL cache pro seznam rolí i oprávnění (viz refactor-note výše).
  * - RoleOptionsService: Invalidace sdílené cache seznamu rolí po mutaci (AdministratorsComponent).
+ * - ExportPopupBuilderComponent: Sdílený formátový picker pro export (viz refactor-note 2026-08-29).
  * @note Access to this page/route is restricted to the 'sysadmin' role via sysadminGuard,
  *       independent of the regular permission-key system.
  */
@@ -61,10 +70,12 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import * as XLSX from 'xlsx';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
+import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../../components/builders/export-popup-builder/export-popup-builder.component';
 
 interface CorePermission {
   id: number;
@@ -117,10 +128,27 @@ const MODULE_LABELS: Record<string, string> = {
   core: 'Systém (Core)',
 };
 
+/**
+ * @description Sloupce nabízené v exportním popupu - EditRolesComponent NENÍ
+ * `TableBuilderComponent`, takže si generování souboru řeší sama (viz
+ * `buildExportRows()`/`downloadExportFile()` níže), ale znovupoužívá stejnou
+ * `ExportPopupBuilderComponent` (formátový picker) jako zbytek admin sekce, ať má
+ * export napříč appkou konzistentní vzhled/UX. `permissions` je jediné pole, které
+ * není přímo na `CoreRole` jako string - viz `getExportValue()`.
+ */
+const ROLE_EXPORT_COLUMNS: ExportColumnOption[] = [
+  { key: 'role_name', label: 'Název role' },
+  { key: 'description', label: 'Popis' },
+  { key: 'is_protected', label: 'Systémová role' },
+  { key: 'forces_2fa', label: 'Vynucené 2FA' },
+  { key: 'users_count', label: 'Počet uživatelů' },
+  { key: 'permissions', label: 'Oprávnění' },
+];
+
 @Component({
   selector: 'app-edit-roles',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ExportPopupBuilderComponent],
   templateUrl: './edit-roles.component.html',
   styleUrl: './edit-roles.component.css',
 })
@@ -135,6 +163,11 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   draftForcesTwoFa = false;
   newRoleForcesTwoFa = false;
+
+  // ── Export (BACKLOG "export mechanismus i na negenerické stránky") ─────
+  showExportPopup = false;
+  isExporting = false;
+  readonly exportColumnOptions = ROLE_EXPORT_COLUMNS;
 
   constructor(
     dataHandler: Core.DataHandler,
@@ -383,21 +416,21 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   // ── Výběr role v levém seznamu ─────────────────────────────────────────
 
-selectRole(role: CoreRole): void {
-  if (this.isPermissionsDirty || this.isEditingDetails) {
-    const confirmed = window.confirm('Máte neuložené změny u aktuální role. Přepnutím o ně přijdete. Pokračovat?');
-    if (!confirmed) return;
-  }
+  selectRole(role: CoreRole): void {
+    if (this.isPermissionsDirty || this.isEditingDetails) {
+      const confirmed = window.confirm('Máte neuložené změny u aktuální role. Přepnutím o ně přijdete. Pokračovat?');
+      if (!confirmed) return;
+    }
 
-  this.selectedRole = role;
-  this.currentPermissions = new Set(role.permissions);
-  this.isPermissionsDirty = false;
-  this.isEditingDetails = false;
-  this.draftName = role.role_name;
-  this.draftDescription = role.description ?? '';
-  this.draftForcesTwoFa = !!role.forces_2fa;
-  this.permissionSearch = '';
-}
+    this.selectedRole = role;
+    this.currentPermissions = new Set(role.permissions);
+    this.isPermissionsDirty = false;
+    this.isEditingDetails = false;
+    this.draftName = role.role_name;
+    this.draftDescription = role.description ?? '';
+    this.draftForcesTwoFa = !!role.forces_2fa;
+    this.permissionSearch = '';
+  }
 
   // ── Checklist oprávnění vybrané role ───────────────────────────────────
 
@@ -521,21 +554,21 @@ selectRole(role: CoreRole): void {
 
   // ── Editace názvu / popisu vybrané role ────────────────────────────────
 
-startEditingDetails(): void {
-  if (!this.selectedRole || this.selectedRole.is_protected) return;
-  this.draftName = this.selectedRole.role_name;
-  this.draftDescription = this.selectedRole.description ?? '';
-  this.draftForcesTwoFa = !!this.selectedRole.forces_2fa;
-  this.isEditingDetails = true;
-}
+  startEditingDetails(): void {
+    if (!this.selectedRole || this.selectedRole.is_protected) return;
+    this.draftName = this.selectedRole.role_name;
+    this.draftDescription = this.selectedRole.description ?? '';
+    this.draftForcesTwoFa = !!this.selectedRole.forces_2fa;
+    this.isEditingDetails = true;
+  }
 
-cancelEditingDetails(): void {
-  if (!this.selectedRole) return;
-  this.draftName = this.selectedRole.role_name;
-  this.draftDescription = this.selectedRole.description ?? '';
-  this.draftForcesTwoFa = !!this.selectedRole.forces_2fa;
-  this.isEditingDetails = false;
-}
+  cancelEditingDetails(): void {
+    if (!this.selectedRole) return;
+    this.draftName = this.selectedRole.role_name;
+    this.draftDescription = this.selectedRole.description ?? '';
+    this.draftForcesTwoFa = !!this.selectedRole.forces_2fa;
+    this.isEditingDetails = false;
+  }
 
   /**
    * @description Uloží název/popis role. Po úspěchu invaliduje cache seznamu rolí
@@ -551,14 +584,14 @@ cancelEditingDetails(): void {
       return;
     }
 
-const payload: CoreRole = {
-  role_name: name,
-  description: this.draftDescription.trim() || null,
-  is_protected: this.selectedRole.is_protected,
-  forces_2fa: this.draftForcesTwoFa,
-  users_count: this.selectedRole.users_count,
-  permissions: this.selectedRole.permissions,
-};
+    const payload: CoreRole = {
+      role_name: name,
+      description: this.draftDescription.trim() || null,
+      is_protected: this.selectedRole.is_protected,
+      forces_2fa: this.draftForcesTwoFa,
+      users_count: this.selectedRole.users_count,
+      permissions: this.selectedRole.permissions,
+    };
 
     const roleId = this.selectedRole.id;
     this.isSavingDetails = true;
@@ -605,13 +638,13 @@ const payload: CoreRole = {
 
   // ── Vytvoření nové role ───────────────────────────────────────────────
 
-openNewRoleForm(): void {
-  this.newRoleName = '';
-  this.newRoleDescription = '';
-  this.newRoleForcesTwoFa = false;
-  this.newRoleError = '';
-  this.showNewRoleForm = true;
-}
+  openNewRoleForm(): void {
+    this.newRoleName = '';
+    this.newRoleDescription = '';
+    this.newRoleForcesTwoFa = false;
+    this.newRoleError = '';
+    this.showNewRoleForm = true;
+  }
 
   closeNewRoleForm(): void {
     this.showNewRoleForm = false;
@@ -631,15 +664,14 @@ openNewRoleForm(): void {
     this.isCreatingRole = true;
     this.newRoleError = '';
 
-const payload: CoreRole = {
-  role_name: name,
-  description: this.newRoleDescription.trim() || null,
-  is_protected: false,
-  forces_2fa: this.newRoleForcesTwoFa,
-  users_count: 0,
-  permissions: [],
-};
-
+    const payload: CoreRole = {
+      role_name: name,
+      description: this.newRoleDescription.trim() || null,
+      is_protected: false,
+      forces_2fa: this.newRoleForcesTwoFa,
+      users_count: 0,
+      permissions: [],
+    };
     this.postData(payload).subscribe({
       next: (created) => {
         this.isCreatingRole = false;
@@ -732,5 +764,113 @@ const payload: CoreRole = {
         this.cd.markForCheck();
       }
     });
+  }
+
+  // ── Export do CSV/XLSX/JSON/TXT ───────────────────────────────────────
+
+  /** @description `this.roles` je VŽDY kompletní (viz `loadAllData()`/`loadRoles()` výše - žádná paginace) - export tak vždy pokrývá úplně všechny role, ne jen aktuálně zobrazenou stránku. */
+  openExportPopup(): void {
+    if (this.roles.length === 0) {
+      this.alertDialogService.open('Export', 'Není co exportovat - seznam rolí je prázdný.', 'danger');
+      return;
+    }
+    this.showExportPopup = true;
+    this.cd.markForCheck();
+  }
+
+  closeExportPopup(): void {
+    if (this.isExporting) return;
+    this.showExportPopup = false;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description `columnKeys` je `null`, pokud caller (`ExportPopupBuilderComponent`)
+   * nedostal žádné `[columns]` - u nás se to nestane (`ROLE_EXPORT_COLUMNS` vždy
+   * neprázdné), ale ošetřeno defenzivně stejně jako `TableBuilderComponent` to dělá.
+   */
+  handleExportFormatSelected(selection: ExportSelection): void {
+    const keys = selection.columnKeys ?? ROLE_EXPORT_COLUMNS.map(c => c.key);
+    this.isExporting = true;
+    this.cd.markForCheck();
+
+    try {
+      const rows = this.buildExportRows(keys);
+      const labels = keys.map(k => ROLE_EXPORT_COLUMNS.find(c => c.key === k)?.label ?? k);
+      const filename = `role-a-opravneni-export-${new Date().toISOString().slice(0, 10)}`;
+
+      switch (selection.format) {
+        case 'csv': this.downloadCsv(rows, labels, filename); break;
+        case 'txt': this.downloadTxt(rows, labels, filename); break;
+        case 'json': this.downloadJson(keys, labels, rows, filename); break;
+        case 'xlsx': this.downloadXlsx(rows, labels, filename); break;
+      }
+
+      this.showExportPopup = false;
+    } catch {
+      this.alertDialogService.open('Chyba', 'Export se nezdařil.', 'danger');
+    } finally {
+      this.isExporting = false;
+      this.cd.markForCheck();
+    }
+  }
+
+  /** @description Vrátí pole řádků (pole stringů, ve stejném pořadí jako `keys`) - jedna položka pole = jedna role. */
+  private buildExportRows(keys: string[]): string[][] {
+    return this.roles.map(role => keys.map(key => this.getExportValue(role, key)));
+  }
+
+  /**
+   * @description Formátuje jednu hodnotu pro export - `permissions` (pole klíčů) se
+   * spojí středníkem (je jich typicky desítky, nedávají smysl jako samostatné
+   * sloupce), boolean pole se přeloží na Ano/Ne (čitelnější v Excelu než 1/0/true/false).
+   */
+  private getExportValue(role: CoreRole, key: string): string {
+    if (key === 'permissions') return (role.permissions ?? []).join('; ');
+    if (key === 'is_protected' || key === 'forces_2fa') return (role as any)[key] ? 'Ano' : 'Ne';
+    const value = (role as any)[key];
+    return value === null || value === undefined ? '' : String(value);
+  }
+
+  private escapeCsvValue(value: string): string {
+    if (/[",\n;]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+    return value;
+  }
+
+  private downloadCsv(rows: string[][], labels: string[], filename: string): void {
+    const lines = [labels, ...rows].map(line => line.map(v => this.escapeCsvValue(v)).join(','));
+    this.triggerDownload(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' }), `${filename}.csv`);
+  }
+
+  private downloadTxt(rows: string[][], labels: string[], filename: string): void {
+    const lines = [labels, ...rows].map(line => line.join('\t'));
+    this.triggerDownload(new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8;' }), `${filename}.txt`);
+  }
+
+  private downloadJson(keys: string[], labels: string[], rows: string[][], filename: string): void {
+    const objects = rows.map(row => {
+      const obj: Record<string, string> = {};
+      keys.forEach((key, i) => { obj[key] = row[i]; });
+      return obj;
+    });
+    this.triggerDownload(new Blob([JSON.stringify(objects, null, 2)], { type: 'application/json;charset=utf-8;' }), `${filename}.json`);
+  }
+
+  private downloadXlsx(rows: string[][], labels: string[], filename: string): void {
+    const worksheet = XLSX.utils.aoa_to_sheet([labels, ...rows]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Role');
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
+  }
+
+  private triggerDownload(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 }

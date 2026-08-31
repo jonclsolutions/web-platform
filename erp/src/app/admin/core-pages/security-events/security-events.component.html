@@ -291,10 +291,10 @@
 @if (showGraphBuilder) {
 <app-graph-builder
 [apiEndpoint]="apiEndpoint"
-[tableCaption]="'Seznam aktivních požadavků'"
+[tableCaption]="'Bezpečnostní monitoring'"
 [columns]="graphColumns"
-[dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateField]="'last_seen_at'"
+[dateFieldLabel]="'Poslední výskyt'"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }
