@@ -18,10 +18,10 @@
 import * as Core from '../../../shared/imports/core-providers';
 
 export const SALES_LEAD_BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-sales-leads-update' },
-  { display_name: '🔗', header_name: 'Link', isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-sales-leads-update' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-sales-leads-delete' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-sales-leads-update', icon: 'edit' },
+  { display_name: 'Link', header_name: 'Link', isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-sales-leads-update', icon: 'link' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-sales-leads-delete', icon: 'delete' },
 ];
 
 export const SALES_LEAD_TOOLBAR_BUTTONS: Core.Button[] = [

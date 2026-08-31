@@ -38,10 +38,10 @@
 import * as Core from '../../../shared/imports/core-providers';
 
 export const SALES_ORDER_BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '📁', header_name: 'Projekt', isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-projects-create' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-sales-orders-update' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-sales-orders-delete' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+  { display_name: 'Projekt', header_name: 'Projekt', isActive: true, type: 'neutral_button', action: 'generate_form', permission: 'web-projects-create', icon: 'folder' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-sales-orders-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-sales-orders-delete', icon: 'delete' },
 ];
 
 export const SALES_ORDER_TOOLBAR_BUTTONS: Core.Button[] = [

@@ -183,9 +183,15 @@ aria-label="Vybrat vše na stránce">
 @if (isButtonVisibleForItem(button, item)) {
 <button
 [class]="button.type"
+[attr.title]="button.display_name"
+[attr.aria-label]="button.display_name"
 [disabled]="button.type === 'delete_button' && item.id == authService.getUserId() && isAdminTable == true"
 (click)="handleAction(item, button.action)">
+@if (button.icon) {
+<app-icon [name]="button.icon"></app-icon>
+} @else {
                     {{ button.display_name }}
+                  }
 </button>
                   }
 </td>

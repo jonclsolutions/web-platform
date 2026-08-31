@@ -25,6 +25,8 @@
  *      u tabulek, kde je akce potřeba jen výjimečně. Bez `visibleWhen` se tlačítko chová
  *      přesně jako dřív (na všech řádcích, kde `isActive`+`permission` projde).
  */
+import { IconName } from '../components/icon/icon.component'; // adjust path to your icon.component.ts
+
 export interface TableButtons {
   display_name: string;
   header_name: string;
@@ -32,14 +34,12 @@ export interface TableButtons {
   action: string;
   type: string;
   /**
-   * Volitelný permission klíč (nebo víc klíčů oddělených `|` - OR) požadovaný k
-   * zobrazení tohoto tlačítka. Bez tohoto pole se tlačítko řídí pouze `isActive`.
+   * SVG icon rendered instead of `display_name` inside the row action <button>
+   * (see IconComponent). `display_name` is kept as the required fallback / aria
+   * text for buttons that haven't been migrated yet — once `icon` is set it takes
+   * rendering priority, see table-builder.component.html / trash-table-builder...html.
    */
+  icon?: IconName;
   permission?: string;
-  /**
-   * Volitelná podmínka viditelnosti VYHODNOCOVANÁ PRO KONKRÉTNÍ ŘÁDEK (item z `data`).
-   * Vrať `true`, pokud se má tlačítko na tomto řádku zobrazit. Bez tohoto pole je
-   * tlačítko na všech řádcích stejné (řízeno jen `isActive`/`permission`).
-   */
   visibleWhen?: (item: any) => boolean;
 }

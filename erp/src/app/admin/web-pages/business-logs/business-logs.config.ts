@@ -20,7 +20,7 @@
 import * as Core from '../../../shared/imports/core-providers';
 
 export const BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
 ];
 
 export const TOOLBAR_BUTTONS: Core.Button[] = [

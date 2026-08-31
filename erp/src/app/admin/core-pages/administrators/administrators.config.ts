@@ -37,19 +37,15 @@ import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '../../../shared/consta
 export const ROLE_OPTIONS: { value: string; label: string }[] = [];
 
 export const TABLE_BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'core-administrators-update' },
-  { display_name: '🔑', header_name: 'Heslo', isActive: true, type: 'neutral_button', action: 'password_reset', permission: 'core-administrators-update' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'core-administrators-update', icon: 'edit' },
+  { display_name: 'Heslo', header_name: 'Heslo', isActive: true, type: 'neutral_button', action: 'password_reset', permission: 'core-administrators-update', icon: 'key' },
   {
-    display_name: '📧', header_name: 'Aktivace', isActive: true, type: 'neutral_button',
-    action: 'resend_activation', permission: 'core-administrators-update',
-    // NOVÉ (2026-08-24): tlačítko se použije 0-1x na účet, proto se zobrazí JEN u
-    // účtů, které se ještě nikdy neaktivovaly - viz visibleWhen v table-buttons.ts.
-    // U aktivovaných účtů celý sloupec zmizí (žádné prázdné místo v tabulce), jakmile
-    // na aktuální stránce není žádný neaktivovaný účet.
+    display_name: 'Aktivace', header_name: 'Aktivace', isActive: true, type: 'neutral_button',
+    action: 'resend_activation', permission: 'core-administrators-update', icon: 'mail',
     visibleWhen: (item: any) => !item.activated_at,
   },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-administrators-delete' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-administrators-delete', icon: 'delete' },
 ];
 
 export const TOOLBAR_BUTTONS: Core.Button[] = [

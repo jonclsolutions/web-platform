@@ -35,6 +35,7 @@
 /* ── Lišta se zavíracím tlačítkem - NAD celým dvoupanelovým layoutem, nemůže se s ničím překrýt ── */
 .graph-window-topbar {
   display: flex;
+  justify-content: end;
   align-items: center;
   padding: 8px 12px;
   border-bottom: 1px solid #ececea;

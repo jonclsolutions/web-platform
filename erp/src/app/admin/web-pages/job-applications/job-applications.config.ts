@@ -51,9 +51,9 @@ export const JOB_APPLICATION_TOOLBAR_BUTTONS: Core.Button[] = [
   }
 ];
 export const JOB_APPLICATION_BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Stav / Poznámka', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-job-applications-update' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-job-applications-delete' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+  { display_name: 'Stav / Poznámka', header_name: 'Stav / Poznámka', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-job-applications-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-job-applications-delete', icon: 'delete' },
 ];
 
 export const JOB_APPLICATION_FORM_FIELDS: Core.InputDefinition[] = [

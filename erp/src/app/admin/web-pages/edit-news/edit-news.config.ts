@@ -44,43 +44,42 @@ export const NEWS_THEMA_OPTIONS: string[] = [
 export const NEWS_TOOLBAR_BUTTONS: Core.Button[] = [
   {
     action: 'toggleFilters',
-    label: 'Filtry',
-    icon: '🔍',
+    label: 'Otevřít filtry',
+    icon: '',
     class: 'btn-filter',
     isActive: false
   },
   {
     action: 'handleCreateFormOpened',
-    label: 'Přidat novinku',
-    icon: '➕',
+    label: 'Přidat záznam',
+    icon: '',
     class: 'btn-create',
     showIf: true,
     permission: 'web-news-create'
   },
   {
     action: 'exportActiveTable',
-    label: 'Export',
-    icon: '📥',
+    label: 'Exportovat data',
+    icon: '',
     class: 'btn-export',
     showIf: true
   },
-   { action: 'triggerImport', label: 'Import', icon: '📤', class: 'btn-neutral', showIf: true },
-   { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+   { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
+   { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'toggleTable',
-    label: 'Koš',
-    icon: '🗑️',
+    label: 'Zobrazit koš',
+    icon: '',
     class: 'btn-trash',
     permission: 'view-deleted'
   }
 ];
 
 export const NEWS_BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-news-update' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-news-delete' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-news-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-news-delete', icon: 'delete' },
 ];
-
 export const NEWS_FORM_FIELDS: Core.InputDefinition[] = [
   {
     column_name: 'title',

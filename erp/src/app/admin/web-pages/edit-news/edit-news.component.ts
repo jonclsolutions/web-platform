@@ -37,7 +37,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 })
 export class EditNewsComponent extends BaseDataComponent<any> implements Core.OnInit {
   public override loadingService = inject(LoadingService);
-
+  tableCaption: string = 'Edit sekce novinky';
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   override apiEndpoint: string = 'web/news';

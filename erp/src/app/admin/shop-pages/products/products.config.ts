@@ -10,11 +10,11 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
 ];
 
 export const PRODUCT_BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit' },
-  { display_name: '⚙️', header_name: 'Varianty', isActive: true, type: 'neutral_button', action: 'custom_prod_var' },
-  { display_name: '🖼️', header_name: 'Obrázky', isActive: true, type: 'neutral_button', action: 'custom_prod_img' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', icon: 'edit' },
+  { display_name: 'Varianty', header_name: 'Varianty', isActive: true, type: 'neutral_button', action: 'custom_prod_var', icon: 'settings' },
+  { display_name: 'Obrázky', header_name: 'Obrázky', isActive: true, type: 'neutral_button', action: 'custom_prod_img', icon: 'image' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', icon: 'delete' },
 ];
 
 export const PRODUCT_FORM_FIELDS: Core.InputDefinition[] = [

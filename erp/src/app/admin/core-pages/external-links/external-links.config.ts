@@ -18,9 +18,9 @@
 import * as Core from '../../../shared/imports/core-providers';
 
 export const EXTERNAL_LINK_BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔍', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'core-external-links-update' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-external-links-delete' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'core-external-links-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-external-links-delete', icon: 'delete' },
 ];
 
 export const EXTERNAL_LINK_TOOLBAR_BUTTONS: Core.Button[] = [

@@ -45,7 +45,7 @@ import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.s
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import * as Core from '../../../../shared/imports/core-providers';
 import { ButtonBuilderComponent } from '../button-builder/button-builder.component';
-
+import { IconComponent } from '../../../../shared/components/icon/icon.component';
 /**
  * @description A dedicated table view for displaying soft-deleted records with utility actions
  * to restore or purge data.
@@ -59,7 +59,8 @@ import { ButtonBuilderComponent } from '../button-builder/button-builder.compone
   standalone: true,
   imports: [
     FormsModule,
-    ButtonBuilderComponent
+    ButtonBuilderComponent,
+    IconComponent
   ],
   templateUrl: './trash-table-builder.component.html',
   styleUrls: ['../table-style.css'],
@@ -82,8 +83,8 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
   @Input() deletePermission?: string;
 
   buttons: TableButtons[] = [
-    { display_name: '♻️', header_name: "Restore", isActive: true, type: 'confirm_button', action: "restore" },
-    { display_name: '🧨', header_name: "Delete Permanently", isActive: true, type: 'delete_button', action: "delete" },
+    { display_name: 'Restore', header_name: 'Restore', isActive: true, type: 'confirm_button', action: 'restore', icon: 'restore' },
+    { display_name: 'Delete Permanently', header_name: 'Delete Permanently', isActive: true, type: 'delete_button', action: 'delete', icon: 'purge' },
   ];
 
   public isFullWidth: boolean = true;

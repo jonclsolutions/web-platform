@@ -27,9 +27,9 @@ export const PROJECT_VISIBILITY_OPTIONS: { value: string; label: string }[] = [
 ];
 
 export const PROJECT_BUTTONS: Core.TableButtons[] = [
-  { display_name: '⚙️', header_name: 'Správa', isActive: true, type: 'neutral_button', action: 'generate_form' },
-  { display_name: '✒️', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-projects-update' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-projects-delete' },
+  { display_name: 'Správa', header_name: 'Správa', isActive: true, type: 'neutral_button', action: 'generate_form', icon: 'settings' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-projects-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-projects-delete', icon: 'delete' },
 ];
 
 export const PROJECT_TOOLBAR_BUTTONS: Core.Button[] = [
@@ -126,7 +126,7 @@ export const PROJECT_THREAD_COLUMNS: Core.ColumnDefinition[] = [
 ];
 
 export const PROJECT_THREAD_BUTTONS: Core.TableButtons[] = [
-  { display_name: '💬', header_name: 'Vlákno', isActive: true, type: 'info_button', action: 'details' },
+  { display_name: 'Vlákno', header_name: 'Vlákno', isActive: true, type: 'info_button', action: 'details', icon: 'chat' },
 ];
 
 export const PROJECT_THREAD_TOOLBAR_BUTTONS: Core.Button[] = [

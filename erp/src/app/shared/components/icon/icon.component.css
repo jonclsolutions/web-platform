@@ -1,0 +1,22 @@
+/**
+ * @file icon.component.css
+ * @path src/app/shared/components/icon/icon.component.css
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2026
+ * @description Fixed solid-black rendering for all table action icons (table
+ * background is white, so icons are never tinted per button type). Hover/press
+ * feedback belongs to the parent <button> (see table-style.css), not the icon
+ * itself - this file intentionally has no :hover rule.
+ */
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #18181b; /* solid black-ish, matches admin palette (#18181b) instead of pure #000 */
+  line-height: 0;
+}
+
+:host svg {
+  display: block;
+}

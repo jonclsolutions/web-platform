@@ -103,7 +103,7 @@ import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { ExportFormat } from '../../../../shared/interfaces/export-format';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../export-popup-builder/export-popup-builder.component';
 import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popup-builder.component';
-
+import { IconComponent } from '../../../../shared/components/icon/icon.component';
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -133,7 +133,7 @@ const SENSITIVE_JSON_KEYS = new Set([
 @Component({
   selector: 'app-table-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule, ExportPopupBuilderComponent, ImportPopupBuilderComponent],
+  imports: [CommonModule, FormsModule, ExportPopupBuilderComponent, ImportPopupBuilderComponent, IconComponent],
   templateUrl: './table-builder.component.html',
   styleUrls: ['../table-style.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

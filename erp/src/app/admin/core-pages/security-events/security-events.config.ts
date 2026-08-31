@@ -28,11 +28,10 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 
-
 export const BUTTONS: Core.TableButtons[] = [
-  { display_name: '🔎', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
-  { display_name: '📝', header_name: 'Řešit', isActive: true, type: 'edit_button', action: 'edit', permission: 'core-security-update' },
-  { display_name: '🗑️', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-security-delete' },
+  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+  { display_name: 'Řešit', header_name: 'Řešit', isActive: true, type: 'edit_button', action: 'edit', permission: 'core-security-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-security-delete', icon: 'delete' },
 ];
 
 export const TOOLBAR_BUTTONS: Core.Button[] = [
