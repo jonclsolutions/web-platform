@@ -12,6 +12,21 @@
  * - SHARED_UI_BUILDERS: Collection of reusable UI components for the dashboard.
  * @note Struktura je záměrně 1:1 stejná jako u SuppliersComponent, aby zůstala konzistentní
  * s ostatními jednoduchými CRUD stránkami v adminu.
+ *
+ * @bugfix-note (2026-08-31) KRITICKÝ BUG - 500 PŘI KAŽDÉM REFRESHI: `filters`/
+ * `clearFilters()` posílaly natvrdo `sort_by: 'position'` - sloupec `position` byl ale
+ * mezitím z `core_external_links` odstraněn (viz CoreExternalLink model a
+ * CoreExternalLinkController stejné datum), takže KAŽDÝ request s tímto řazením spadl
+ * na backendu na 500 (`orderBy('position', ...)` na neexistujícím sloupci). Nejviditelněji
+ * se to projevovalo po vytvoření/úpravě záznamu - zelený "Úspěch" toast (POST/PUT prošel
+ * v pořádku), hned následovaný červeným 500 toastem z navazujícího `refreshData()`.
+ * Výchozí řazení změněno na `sort_by: 'name'` - odpovídá i backendovému výchozímu
+ * řazení v `CoreExternalLinkController::index()`.
+ *
+ * @bugfix-note (2026-08-31v2) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+ * z `error:` callbacku v `handleFormSubmitted()` - `DataHandler.handleError()` je od
+ * tohoto data jediné a autoritativní místo, které smí chybový toast zobrazit (viz
+ * data-handler.service.ts bugfix-note stejné datum).
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -53,7 +68,7 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
   selectedItemForDetails: any | null = null;
 
   filters: Core.FilterParams = {
-    sort_by: 'position',
+    sort_by: 'name',
     sort_direction: 'asc'
   };
 showGraphBuilder = false;
@@ -147,7 +162,7 @@ get toolbarButtons(): Core.Button[] {
    * @description Resets filter configuration to initial sorting criteria.
    */
   clearFilters(): void {
-    this.filters = { sort_by: 'position', sort_direction: 'asc' };
+    this.filters = { sort_by: 'name', sort_direction: 'asc' };
     this.currentPage = 1;
     this.refreshData();
   }
@@ -204,8 +219,7 @@ get toolbarButtons(): Core.Button[] {
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 
@@ -220,8 +234,7 @@ get toolbarButtons(): Core.Button[] {
         this.selectedItemForDetails = details;
         this.showDetails = true;
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      }
     });
   }
 

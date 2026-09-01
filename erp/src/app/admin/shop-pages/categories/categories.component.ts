@@ -32,6 +32,17 @@
  * `loadCategoryProducts()` (panel produktů dané kategorie) a `openAddProductSearch()`
  * (seznam všech produktů k přidání) mají vlastní krátkou TTL cache (2 min) - typický
  * admin otevírá/zavírá panel různých kategorií opakovaně během jedné návštěvy stránky.
+ *
+ * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněna
+ * VŠECHNA vlastní `alertDialogService.open('Chyba', ...)` volání z `error:` callbacků
+ * (confirmAdd, saveNode, toggleStatus, deleteCategory) - `DataHandler.handleError()` je
+ * od tohoto data JEDINÉ a AUTORITATIVNÍ místo, které smí chybový toast zobrazit (viz
+ * data-handler.service.ts bugfix-note stejné datum). Veškerá NON-toast logika v těchto
+ * `error:` callbacích (rollback lokálního stavu - `node.isEditing = true`, vrácení
+ * `node.is_active`, `loadTree()` refetch) ZŮSTÁVÁ beze změny - odstraněno je výhradně
+ * volání `alertDialogService.open(...)`. `removeProductFromCategory()`,
+ * `addProductToCategory()`, `loadCategoryProducts()`, `openAddProductSearch()` a
+ * `loadTree()` už žádný vlastní toast neměly, beze změny.
  */
 
 import { Component, OnInit, ViewChildren, QueryList, ElementRef, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -132,10 +143,9 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Dynamically generates action buttons for individual category rows, adjusting labels and classes based on status.
    * @param node The category node being rendered.
    * @returns {Button[]} Array of action buttons.
-   * @icons-note (2026-08-31) EMOJI -> SVG: dřív se barevný stav (aktivní/neaktivní)
-   *      kódoval jako text přímo v `icon` poli (`'Aktivní'`/`'Neaktivní'`), teď se
-   *      mění `label` (viditelný text) - `icon` zůstává pevně `'circle'` (SVG tečka),
-   *      barvu nese `class` (btn-export = zelená / btn-filter = neutrální šedá).
+   * @icons-note (2026) Emoji odstraněny - stav (aktivní/neaktivní) teď nese jen text +
+   *      barva tlačítka (btn-export = zelená / btn-filter = neutrální šedá), bez
+   *      barevných emoji teček.
    */
   getRowButtons(node: CategoryNode): Button[] {
     return CATEGORY_ROW_BUTTONS.map(btn => {
@@ -247,6 +257,8 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Persists a newly created category node to the backend API.
    * @param node The new node to be created.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - `loadTree()` refetch ZŮSTÁVÁ. Viz bugfix-note v hlavičce souboru.
    */
   confirmAdd(node: CategoryNode): void {
     const parentId = node.parent_id;
@@ -263,8 +275,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
           this.alertDialogService.open('Úspěch', 'Kategorie byla vytvořena.', 'success');
           this.loadTree(undefined, false, true);
         },
-        error: (err) => {
-          this.alertDialogService.open('Chyba', err.error?.message || 'Vytvoření selhalo.', 'danger');
+        error: () => {
           this.loadTree(undefined, false, true);
         }
       });
@@ -387,6 +398,9 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Updates an existing category's properties via the API.
    * @param node The updated node object.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - rollback `node.isEditing = true` ZŮSTÁVÁ. Viz bugfix-note
+   * v hlavičce souboru.
    */
   saveNode(node: CategoryNode): void {
     node.isEditing = false;
@@ -400,10 +414,9 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
           this.resourceCache.invalidate(this.TREE_CACHE_KEY);
           this.cd.markForCheck();
         },
-        error: (err) => {
+        error: () => {
           node.isEditing = true;
           this.cd.markForCheck();
-          this.alertDialogService.open('Chyba', err.error?.message || 'Uložení selhalo.', 'danger');
         }
       });
   }
@@ -411,6 +424,9 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Toggles category active status and propagates the change to the API.
    * @param node The category to update.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - rollback `node.is_active` ZŮSTÁVÁ. Viz bugfix-note v hlavičce
+   * souboru.
    */
   toggleStatus(node: CategoryNode): void {
     const newStatus = !node.is_active;
@@ -423,7 +439,6 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
         error: () => {
           node.is_active = !newStatus;
           this.cd.markForCheck();
-          this.alertDialogService.open('Chyba', 'Změna stavu selhala.', 'danger');
         }
       });
   }
@@ -431,6 +446,11 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   /**
    * @description Validates delete conditions and removes a category node from the database.
    * @param node The category to delete.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - `loadTree()` refetch ZŮSTÁVÁ. Viz bugfix-note v hlavičce
+   * souboru. Pre-check `alertDialogService.open('Nelze smazat', ...)` volání NÍŽE
+   * (validace podkategorií/přiřazených produktů) NEJSOU chyby z API, jsou to lokální
+   * validace PŘED odesláním requestu - zůstávají beze změny, nejde o duplicitu.
    */
   async deleteCategory(node: CategoryNode): Promise<void> {
     if (node.children?.length) {
@@ -465,8 +485,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
             this.closeProductPanel();
           }
         },
-        error: (err) => {
-          this.alertDialogService.open('Chyba', err.error?.message || 'Smazání selhalo.', 'danger');
+        error: () => {
           this.loadTree(undefined, false, true);
         }
       });

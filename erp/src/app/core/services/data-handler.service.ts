@@ -7,7 +7,31 @@
  * @description Centralized HTTP data handler service for administrative operations, providing standard CRUD methods with integrated error reporting.
  * @dependencies
  * - HttpClient: Facilitates secure API communication.
- * - AlertDialogService: Displays user-facing error dialogs upon API failure.
+ * - AlertDialogService: Displays the single, authoritative user-facing error dialog upon API failure.
+ *
+ * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY + ZTRACENÁ
+ * BACKEND ZPRÁVA: `handleError()` už PŘED touto opravou zobrazoval globální toast, ale
+ * zároveň chybu PŘEBALIL do prostého `Error` objektu (`throwError(() => new Error(errorMessage))`),
+ * který NEMÁ `.error` vlastnost. Desítky konzumentských komponent napříč adminem mají
+ * vlastní `.subscribe({ error: (err) => this.alertDialogService.open('Chyba', err.error?.message
+ * || '...', 'danger') })` - to způsobilo DVA nezávislé problémy naráz:
+ * 1) Každá taková komponenta zobrazila DRUHÝ, DUPLICITNÍ toast pro TU SAMOU chybu
+ *    (uživatel viděl 2-3 červené hlášky na jeden neúspěšný request).
+ * 2) `err.error?.message` v těch komponentách bylo VŽDY `undefined` (přebalený `Error`
+ *    žádnou `.error` property nemá), takže i ten duplicitní toast padal na obecný
+ *    fallback text - konkrétní backend zpráva (validace, business pravidlo) se
+ *    k uživateli nikdy nedostala, ani z jednoho z těch dvou toastů.
+ * ŘEŠENÍ (ZÁMĚRNĚ CENTRALIZOVANÉ, ne rozptýlené do komponent - viz diskuze v týmu):
+ * `handleError()` ZŮSTÁVÁ jediné a jediné místo v CELÉ aplikaci, které smí zobrazit
+ * chybový toast při selhání API volání. Přebalování chyby bylo opraveno tak, aby
+ * `throwError(() => error)` posílal dál PŮVODNÍ `HttpErrorResponse` (se zachovanou
+ * `.error` vlastností) - konzumentské komponenty tak můžou `err`/`err.status`/`err.error`
+ * číst pro VLASTNÍ (ne-toastovou) logiku po chybě (např. `isSubmitting = false`,
+ * ponechání formuláře otevřeného, node.isEditing = true), ale NESMÍ už volat
+ * `alertDialogService.open(...)` samy - to by zase vedlo ke stejnému duplicitnímu
+ * bugu. Viz konzumentské komponenty (např. UserRequestComponent, ExternalLinksComponent)
+ * - jejich `error:` callbacky byly zbaveny vlastního `alertDialogService.open(...)`
+ * volání ve stejném refactoru.
  */
 
 import { Injectable } from '@angular/core';
@@ -20,7 +44,10 @@ import { environment } from '../../../environments/environment';
 /**
  * @description Handles REST API interactions, including header management, serialization, and global error processing.
  * @usage Used exclusively within the 'admin' module for managing authenticated data resources.
- * @note Implements a centralized error handling strategy that transforms technical HTTP errors into human-readable alerts.
+ * @note SINGLE SOURCE OF TRUTH for error toasts - see bugfix-note above. Consuming
+ * components must NOT show their own error toast; they may still branch on
+ * `err.status`/`err.error` in their `error:` callback for non-toast cleanup logic
+ * (resetting a loading flag, restoring edit state, etc).
  */
 @Injectable({
   providedIn: 'root'
@@ -52,10 +79,13 @@ export class DataHandler {
   }
 
   /**
-   * @description Processes and standardizes HTTP error responses from the backend.
+   * @description Processes and standardizes HTTP error responses from the backend,
+   * shows the SINGLE authoritative toast for it, then rethrows the ORIGINAL
+   * `HttpErrorResponse` unchanged (not a repackaged plain `Error`) so consuming
+   * components can still inspect `err.status`/`err.error` for their own non-toast
+   * cleanup logic without ever showing a second toast themselves.
    * @param error The raw HttpErrorResponse object.
-   * @returns {Observable<never>} An observable that throws a normalized error.
-   * @note Handles various HTTP status codes (403, 422, 500) and displays a modal dialog to the end user.
+   * @returns {Observable<never>} An observable that throws the original error.
    */
   private handleError = (error: HttpErrorResponse): Observable<never> => {
     let errorMessage = 'An unknown error occurred!';
@@ -97,7 +127,10 @@ export class DataHandler {
 
     this.alertDialogService.open('API Error', errorMessage, 'danger');
 
-    return throwError(() => new Error(errorMessage));
+    // @bugfix-note (2026-08-31): rethrow the ORIGINAL error (not a repackaged plain
+    // Error) - see bugfix-note in file header. Consuming components can inspect
+    // err.status/err.error for non-toast logic, but must never show a second toast.
+    return throwError(() => error);
   };
 
   /**

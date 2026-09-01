@@ -10,6 +10,9 @@
  * - TableBuilderComponent: Used for rendering the news listing and supporting export features.
  * - LoadingService: Manages global UI loading states.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
+ * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -51,9 +54,6 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
 
-  /**
-   * @description Default filter settings ensuring the most recent articles appear at the top.
-   */
   filters: Core.FilterParams = {
     sort_by: 'id',
     sort_direction: 'desc'
@@ -76,10 +76,6 @@ showGraphBuilder = false;
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Constructs the toolbar configuration.
-   * @returns List of toolbar buttons adjusted for permissions and current UI context (archive/active state).
-   */
 get toolbarButtons(): Core.Button[] {
       return Config.NEWS_TOOLBAR_BUTTONS.map(btn => {
         let updatedBtn = { ...btn };
@@ -110,10 +106,6 @@ get toolbarButtons(): Core.Button[] {
       });
     }
 
-  /**
-   * @description Maps toolbar action strings to their respective handler methods.
-   * @param action Identifier for the action to execute.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -134,19 +126,12 @@ get toolbarButtons(): Core.Button[] {
     this.forceFullRefresh(this.filters);
   }
 
-  /**
-   * @description Merges new filter criteria and triggers a data refresh from page one.
-   * @param newFilters The incoming filter parameters.
-   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  /**
-   * @description Resets filter set to default sort criteria.
-   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.refreshData();
@@ -174,10 +159,6 @@ get toolbarButtons(): Core.Button[] {
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Handles form submission by either updating an existing record or creating a new one.
-   * @param formData Data captured from the form component.
-   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id
       ? this.updateData(formData.id, formData)
@@ -191,15 +172,10 @@ get toolbarButtons(): Core.Button[] {
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description Fetches and opens detail view for a specific news item.
-   * @param item Target record to view.
-   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -207,8 +183,7 @@ get toolbarButtons(): Core.Button[] {
         this.selectedItemForDetails = details;
         this.showDetails = true;
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      }
     });
   }
 

@@ -497,8 +497,9 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
       this.reportGenerated = true;
       this.reportGeneratedAt = new Date();
       this.logReportActivity(this.lastRowCount, false);
-    } catch {
-      this.alertDialogService.open('Chyba', 'Nepodařilo se načíst data pro report.', 'danger');
+       } catch {
+      // DataHandler.handleError() už zobrazil toast pro tuto HTTP chybu - viz
+      // bugfix-note (2026-08-31) v data-handler.service.ts.
     } finally {
       this.isLoading = false;
       this.cd.markForCheck();

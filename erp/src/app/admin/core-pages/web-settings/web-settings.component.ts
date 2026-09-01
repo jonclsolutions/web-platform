@@ -8,20 +8,14 @@
  * @dependencies
  * - BaseDataComponent: Provides base CRUD and state management.
  * - ConfirmDialogService: Orchestrates user confirmation for destructive actions (e.g., deleting social links).
- * - ResourceCacheService: TTL cache pro languages/settings fetch (viz refactor-note 2026-08-8).
- * - CommonModule/FormsModule: Standard Angular modules for structural directives and two-way data binding.
- *
- * @refactor-note (2026) Přidáno `google_analytics_id` do `settings` state a do obou větví
- * `saveSettings()` (FormData i JSON) - GA4 Measurement ID se ukládá stejnou cestou jako
- * ostatní firemní údaje (`legal/config/settings`), žádný nový endpoint nebyl potřeba.
- *
- * @refactor-note (2026-08-8) TTL CACHE (backlog: "zbytečně moc dotazů na API").
- * `loadLanguages()` (10 min TTL - jazyky se mění zřídka) a `loadAll()` (2 min TTL -
- * firemní údaje + sociální sítě) teď jdou přes `ResourceCacheService` místo přímého
- * `dataHandler` volání při každém vstupu na stránku. Po KAŽDÉ úspěšné mutaci (uložení
- * nastavení, uložení/smazání sociální sítě) se cache klíč `web-settings:all` explicitně
- * invaliduje PŘED voláním `loadAll()` - jinak by `loadAll()` po vlastní úspěšné mutaci
- * vrátil čerstvě neplatná (stará) cachovaná data místo právě uložené hodnoty.
+ * - ResourceCacheService: TTL cache pro languages (10 min) / settings (2 min) fetch.
+ * Po KAŽDÉ úspěšné mutaci se cache klíč `web-settings:all` explicitně invaliduje
+ * PŘED voláním `loadAll()`.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z HTTP `error:` callbacků (onSettingsError, saveSocialLink onError,
+ * deleteSocialLink error) - `DataHandler.handleError()` je jediné autoritativní místo
+ * pro chybový toast. Reset stavových flagů (`settingsSaving`, `_saving`) ZŮSTÁVÁ.
+ * `onSettingsError()` je teď jen cleanup metoda bez vlastní zprávy.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -33,11 +27,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { environment } from '../../../../environments/environment';
 import { LangMeta, SiteSetting, SocialLink } from './'
-/**
- * @description Component for managing site-wide configuration.
- * @usage Provides an interface to update company profile, localized site text, branding (logo), and a dynamic list of social links.
- * @note Implements lazy loading of languages to ensure localized fields are correctly initialized for two-way binding.
- */
+
 @Component({
   selector: 'app-web-settings',
   standalone: true,
@@ -95,10 +85,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.loadLanguages();
   }
 
-  /**
-   * @description Fetches available active languages for the module to enable localization
-   * support. Cache 10 min (viz refactor-note v hlavičce souboru).
-   */
   private loadLanguages(): void {
     this.resourceCache.get(
       `web-settings:languages:${this.LANG_MODULE}`,
@@ -121,29 +107,16 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     });
   }
 
-  /**
-   * @description Updates the currently active language code for localized fields.
-   * @param code The target language code.
-   */
   switchLang(code: string): void {
     if (this.currentLang === code) return;
     this.currentLang = code;
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Resolves the display name for a specific language code.
-   * @param code The language identifier.
-   * @returns The human-readable name of the language or the uppercase code as a fallback.
-   */
   getLangName(code: string): string {
     return this.languages.find(l => l.code === code)?.name ?? code.toUpperCase();
   }
 
-  /**
-   * @description Populates missing translation keys to avoid runtime binding errors in the template.
-   * @note Ensures every configured language has an entry in the i18n maps.
-   */
   private ensureI18nDefaults(): void {
     if (!this.settings.brand_tagline_i18n)  this.settings.brand_tagline_i18n  = {};
     if (!this.settings.copyright_text_i18n) this.settings.copyright_text_i18n = {};
@@ -162,11 +135,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }
   }
 
-  /**
-   * @description Synchronizes all site settings and social links from the server. Cache
-   * 2 min (viz refactor-note v hlavičce souboru) - volající, kteří data právě změnili,
-   * musí PŘED tímto voláním zavolat `resourceCache.invalidate(SETTINGS_CACHE_KEY)`.
-   */
   private loadAll(): void {
     this.settingsLoading = true;
     this.socialLoading   = true;
@@ -219,10 +187,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.loadAll();
   }
 
-  /**
-   * @description Handles local selection and validation of a new logo file.
-   * @param event The file input change event.
-   */
   onLogoSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -244,9 +208,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Discards the locally selected logo file and its temporary preview.
-   */
   cancelLogoSelection(): void {
     if (this.logoPreview) URL.revokeObjectURL(this.logoPreview);
     this.logoFile    = null;
@@ -254,9 +215,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Saves company settings. Uses FormData if a logo file is present for multi-part upload, otherwise uses JSON.
-   */
   saveSettings(): void {
     if (this.settingsSaving) return;
     this.settingsSaving = true;
@@ -279,7 +237,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
       this.dataHandler.upload<SiteSetting>('legal/config/settings', fd).subscribe({
         next: (res: any) => this.onSettingsSaved(res),
-        error: (err: any) => this.onSettingsError(err),
+        error: () => this.onSettingsError(),
       });
     } else {
       const payload = {
@@ -297,17 +255,11 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
       this.dataHandler.put<SiteSetting>('legal/config/settings', payload as any).subscribe({
         next: (res: any) => this.onSettingsSaved(res),
-        error: (err: any) => this.onSettingsError(err),
+        error: () => this.onSettingsError(),
       });
     }
   }
 
-  /**
-   * @description Handles successful settings save and cleanup of local file states.
-   * Invaliduje cache PŘED `loadAll()` (viz refactor-note v hlavičce souboru), ať se
-   * znovu nenačte právě zneplatněná stará hodnota.
-   * @param res The updated settings returned by the server.
-   */
   private onSettingsSaved(res: any): void {
     if (res) {
       this.settings = {
@@ -334,37 +286,24 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
 
   /**
-   * @description Parses and notifies the user of server-side validation or processing errors.
-   * @param err The error response object.
+   * @description Cleanup po neúspěšném uložení nastavení - toast už zobrazil
+   * `DataHandler.handleError()`.
    */
-  private onSettingsError(err: any): void {
+  private onSettingsError(): void {
     this.settingsSaving = false;
-    const msg = err?.error?.message ?? err?.error?.errors
-      ? Object.values(err.error.errors).flat().join(', ')
-      : 'Uložení selhalo.';
-    this.alertDialogService.open('Chyba', String(msg), 'danger');
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Resolves the URI for the current logo; falls back to default if no file is selected.
-   */
   get logoSrc(): string | null {
     if (this.logoPreview)        return this.logoPreview;
     if (this.settings.logo_path) return environment.public_storage_url+`/${this.settings.logo_path}`;
     return null;
   }
 
-  /**
-   * @description Checks if a logo currently exists (either locally selected or saved).
-   */
   get hasLogo(): boolean {
     return !!(this.logoPreview || this.settings.logo_path);
   }
 
-  /**
-   * @description Appends a new empty row to the social links list to allow user entry.
-   */
   addSocialLink(): void {
     this.socialLinks = [...this.socialLinks, {
       name: '', url: '', icon_path: '',
@@ -383,11 +322,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }, 60);
   }
 
-  /**
-   * @description Validates and processes a new icon file for a specific social link row.
-   * @param event The input event.
-   * @param index The index of the link within the list.
-   */
   onIconSelected(event: Event, index: number): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -414,12 +348,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Submits a single social link row update or creation to the server.
-   * Invaliduje cache PŘED `loadAll()` v `onSuccess`, ze stejného důvodu jako
-   * `onSettingsSaved()`.
-   * @param index The index of the row to save.
-   */
   saveSocialLink(index: number): void {
     const link = this.socialLinks[index];
     if (link._saving) return;
@@ -443,9 +371,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
       this.loadAll();
     };
-    const onError = (err: any) => {
-      const msg = err?.error?.message ?? 'Uložení selhalo.';
-      this.alertDialogService.open('Chyba', msg, 'danger');
+    const onError = () => {
       const failed = [...this.socialLinks];
       failed[index] = { ...failed[index], _saving: false };
       this.socialLinks = failed;
@@ -474,11 +400,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }
   }
 
-  /**
-   * @description Requests confirmation and deletes a social network link from the server.
-   * Invaliduje cache PŘED `loadAll()`, ze stejného důvodu jako výše.
-   * @param index The index of the row to delete.
-   */
   async deleteSocialLink(index: number): Promise<void> {
     const link = this.socialLinks[index];
 
@@ -501,16 +422,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
         this.alertDialogService.open('Smazáno', `Odkaz „${link.name}" byl smazán.`, 'success');
         this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
         this.loadAll();
-      },
-      error: (err: any) =>
-        this.alertDialogService.open('Chyba', err?.error?.message ?? 'Smazání selhalo.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description Marks a social link row as modified.
-   * @param index The row index.
-   */
   markDirty(index: number): void {
     if (!this.socialLinks[index]?._dirty) {
       const updated = [...this.socialLinks];
@@ -519,21 +434,11 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }
   }
 
-  /**
-   * @description Resolves the URI for a social link icon.
-   * @param link The social link object.
-   * @returns The resolved icon URL or null if undefined.
-   */
   iconSrc(link: SocialLink): string | null {
     if (link._iconPreview) return link._iconPreview;
     if (link.icon_path)    return environment.public_storage_url+`/${link.icon_path}`;
     return null;
   }
 
-  /**
-   * @description Tracks row rendering by index for optimal performance.
-   * @param index Row index.
-   * @returns The index.
-   */
   trackByIndex(index: number): number { return index; }
 }

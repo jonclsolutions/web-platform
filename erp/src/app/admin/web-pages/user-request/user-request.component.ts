@@ -56,6 +56,15 @@
  * a agreguje existující data. `GraphBuilderComponent` je zde importován JEDNOTLIVĚ,
  * stejně jako `ActionMenuBuilderComponent` (viz poznámka u @Component níže) - dokud
  * nejsou obě součástí `SHARED_UI_BUILDERS` bundle.
+ *
+ * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněna
+ * VŠECHNA vlastní `alertDialogService.open('Chyba', ...)` volání z `error:` callbacků
+ * (handleFormSubmitted, handleViewDetails, openEmailTemplateEditor, saveEmailTemplate) -
+ * `DataHandler.handleError()` je od tohoto data JEDINÉ a AUTORITATIVNÍ místo, které smí
+ * chybový toast zobrazit (viz data-handler.service.ts bugfix-note stejné datum).
+ * Dřívější duplicitní volání způsobovala DVĚ červené hlášky na jednu chybu. Reset
+ * stavových flagů (emailTemplateLoading/emailTemplateSaving) ZŮSTÁVÁ - odstraněno je
+ * výhradně volání `alertDialogService.open(...)`.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -321,6 +330,8 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * ukazoval hned po emitu, ještě před HTTP requestem, takže při 422 chybě uživatel
    * viděl NEJDŘÍV zelený "úspěch" a hned poté červenou chybu). Zelený toast se teď
    * zobrazuje VÝHRADNĚ tady, v `next()` callbacku - tedy až po reálném úspěchu z API.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - viz bugfix-note v hlavičce souboru.
    */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id
@@ -336,14 +347,15 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 
   /**
    * @description Retrieves detailed information for a specific request record.
    * @param item The request item to be inspected.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - viz bugfix-note v hlavičce souboru.
    */
   handleViewDetails(item: any): void {
     if (!item.id) return;
@@ -352,8 +364,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
         this.selectedItemForDetails = details;
         this.showDetails = true;
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      }
     });
   }
 
@@ -379,6 +390,9 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * WebSettingsComponent) a (2) aktuálně uložené texty
    * (`GET web/settings/raw-request-email-template`). Bez TTL cache - modal se otevírá
    * příležitostně, čerstvý fetch při každém otevření je v pořádku.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku šablony (jazykový fallback beze změny, žádný toast tam nikdy
+   * nebyl) - viz bugfix-note v hlavičce souboru.
    */
   openEmailTemplateEditor(): void {
     this.showEmailTemplateModal = true;
@@ -421,7 +435,6 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       },
       error: () => {
         this.emailTemplateLoading = false;
-        this.alertDialogService.open('Chyba', 'Nepodařilo se načíst šablonu e-mailu.', 'danger');
         this.cd.markForCheck();
       }
     });
@@ -457,6 +470,9 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * @description Uloží šablonu potvrzovacího e-mailu. Endpoint je záměrně BEZ
    * `confirm_password` (na rozdíl od maintenance toggle) - editace textu e-mailu není
    * bezpečnostně citlivá akce, jen `web-user-requests-update` permission na route úrovni.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - reset `emailTemplateSaving` ZŮSTÁVÁ, jen se odstranilo
+   * volání toastu. Viz bugfix-note v hlavičce souboru.
    */
   saveEmailTemplate(): void {
     if (this.emailTemplateSaving) return;
@@ -478,9 +494,8 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
         this.alertDialogService.open('Uloženo', 'Šablona potvrzovacího e-mailu byla uložena.', 'success');
         this.cd.markForCheck();
       },
-      error: (err: any) => {
+      error: () => {
         this.emailTemplateSaving = false;
-        this.alertDialogService.open('Chyba', err?.error?.message || 'Uložení se nezdařilo.', 'danger');
         this.cd.markForCheck();
       }
     });

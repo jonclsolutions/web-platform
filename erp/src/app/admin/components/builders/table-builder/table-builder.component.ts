@@ -72,6 +72,24 @@
  * metody výše jako stavební kámen, žádné volající místo mimo tento soubor se nemuselo
  * upravovat.
  *
+ * @icons-note (2026-08-31) EMOJI -> SVG: přidán `IconComponent` do `imports` - řádková
+ * tlačítka teď renderují `<app-icon [name]="button.icon">` místo textového emoji (viz
+ * table-builder.component.html stejné datum).
+ *
+ * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněn
+ * duplicitní `alertDialogService.open('Error', ...)` z `onDeleteAction()` - byl to čistý
+ * HTTP-only error path (přes `crud.remove()`, který interně používá DataHandler), takže
+ * `DataHandler.handleError()` už toast zobrazil (viz data-handler.service.ts bugfix-note
+ * stejné datum). `onBulkDeleteClick()` a `handleExportFormatSelected()` mají SMÍŠENOU
+ * logiku (HTTP volání + čistě klientská logika - generování XLSX/CSV/JSON souboru) -
+ * jejich `catch` bloky teď rozlišují `instanceof HttpErrorResponse`: pro HTTP chyby
+ * (už toastnuté DataHandlerem) se toast NEUKAZUJE znovu, pro neHTTP chyby (selhání
+ * lokálního generování souboru) toast ZŮSTÁVÁ, protože ty DataHandler nikdy neuvidí.
+ * `onBulkDeleteClick()` tím ztratil svoje specifické 404/403 hlášky ("Hromadné mazání
+ * pro tuto tabulku zatím není implementováno."/"Nedostatečná oprávnění...") - pokud je
+ * bude potřeba obnovit, patří rozšíření přímo do `DataHandler.handleError()`, ne sem,
+ * ať zůstane jediné autoritativní místo pro toast.
+ *
  * @dependencies
  * - EntityCrudService: CRUD volani (delete radku/hromadne delete po jednom, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations (single i bulk).
@@ -81,6 +99,7 @@
  *   viditelnost "Smazat vybrane" v dropdownu (canBulkDelete).
  * - CurrencyPipe, DatePipe: Standard pipes for data formatting.
  * - xlsx (SheetJS): Lazy-loaded jen pri volbe XLSX exportu, viz downloadXlsx().
+ * - IconComponent: Sdílená sada SVG ikon pro řádková tlačítka.
  */
 
 import {
@@ -89,6 +108,7 @@ import {
 } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Subject } from 'rxjs';
 
 import { DataHandler } from '../../../../core/services/data-handler.service';
@@ -104,6 +124,7 @@ import { ExportFormat } from '../../../../shared/interfaces/export-format';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../export-popup-builder/export-popup-builder.component';
 import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popup-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
+
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -362,6 +383,12 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     }, 0);
   }
 
+  /**
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Error', ...)`
+   * z `error:` callbacku - `crud.remove()` je čistě HTTP volání (přes DataHandler),
+   * takže toast už zobrazil `DataHandler.handleError()`. Cleanup `processingItemIds`
+   * ZŮSTÁVÁ. Viz bugfix-note v hlavičce souboru.
+   */
   public onDeleteAction(item: any): void {
     this.confirmDialogService.open('Delete Confirmation', 'Are you sure you want to delete this item?')
       .then(result => {
@@ -375,7 +402,6 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
             },
             error: () => {
               this.processingItemIds.delete(item.id);
-              this.alertDialogService.open('Error', 'Deletion failed.', 'danger');
             }
           });
         } else {
@@ -475,6 +501,12 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * @note Endpoint musí existovat na daném resource, jinak backend vrátí 404
    * (zachyceno v `catch` bloku níže) - tabulky, které `bulkDestroy()` ještě nemají
    * implementovaný, prostě dostanou chybovou hlášku místo tichého selhání.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní toast z `catch` bloku - jediné
+   * volání uvnitř `try` (`firstValueFrom(dataHandler.post(...))`) je čistě HTTP, takže
+   * chyba je VŽDY `HttpErrorResponse` a `DataHandler.handleError()` už toast zobrazil.
+   * Specifické 404/403 hlášky ("Hromadné mazání pro tuto tabulku zatím není
+   * implementováno."/"Nedostatečná oprávnění...") byly odstraněny - viz bugfix-note
+   * v hlavičce souboru.
    */
   async onBulkDeleteClick(): Promise<void> {
     if (!this.canBulkDelete || this.selectedIds.size === 0 || this.bulkDeleting) return;
@@ -517,13 +549,9 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
       }
 
       this.itemDeleted.emit(ids);
-    } catch (err: any) {
-      const msg = err?.status === 404
-        ? 'Hromadné mazání pro tuto tabulku zatím není implementováno.'
-        : err?.status === 403
-          ? 'Nedostatečná oprávnění k hromadnému mazání.'
-          : 'Hromadné mazání se nezdařilo.';
-      this.alertDialogService.open('Chyba', msg, 'danger');
+    } catch (err) {
+      // DataHandler.handleError() už zobrazil toast pro tuto HTTP chybu - viz
+      // bugfix-note v hlavičce souboru. Žádná další akce tady není potřeba.
     } finally {
       this.bulkDeleting = false;
       this.cd.markForCheck();
@@ -606,6 +634,15 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     return Array.isArray(responseData) ? responseData : [];
   }
 
+  /**
+   * @bugfix-note (2026-08-31) `catch` blok teď rozlišuje `instanceof HttpErrorResponse`:
+   * pokud data selhala na HTTP úrovni (`resolveExportData()` -> `loadDataAsCollection()`
+   * -> `dataHandler.getCollection()`), `DataHandler.handleError()` už toast zobrazil,
+   * takže se tady NEUKAZUJE znovu. Pokud selhal ČISTĚ LOKÁLNÍ krok (generování
+   * XLSX/CSV/JSON souboru, `downloadXlsx()`/`downloadCsv()`/`downloadJson()`/
+   * `downloadTxt()`), DataHandler o něm neví - toast tady ZŮSTÁVÁ, jinak by uživatel
+   * neviděl žádnou chybovou hlášku vůbec. Viz bugfix-note v hlavičce souboru.
+   */
   async handleExportFormatSelected(selection: ExportSelection): Promise<void> {
     if (this.isExporting) return;
     this.isExporting = true;
@@ -639,8 +676,10 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
       this.logExportActivity(allData.length, format, selectedOnly, rawFormat);
     } catch (error) {
-      console.error('Export error:', error);
-      this.alertDialogService.open('Error', 'An error occurred during export.', 'danger');
+      if (!(error instanceof HttpErrorResponse)) {
+        console.error('Export error:', error);
+        this.alertDialogService.open('Error', 'An error occurred during export.', 'danger');
+      }
     } finally {
       this.isExporting = false;
       this.showExportPopup = false;

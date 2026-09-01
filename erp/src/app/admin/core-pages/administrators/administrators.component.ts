@@ -64,6 +64,17 @@
  * `handleFormSubmitted()` teď zobrazuje zelený toast VÝHRADNĚ v `next()` callbacku
  * (tedy až po reálném úspěchu z API) - červený zůstává v `error()` beze změny. Nikdy
  * tak nemůže dojít k zobrazení obou najednou.
+ *
+ * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněna
+ * VŠECHNA vlastní `alertDialogService.open('Chyba', ...)` volání z `error:` callbacků
+ * napříč celým souborem (handleFormSubmitted, handleResetPasswordFormSubmitted,
+ * handleResendActivation, openEmailAccessPolicyModal, savePrimaryDomain,
+ * addEmailAccessRule, removeEmailAccessRule) - `DataHandler.handleError()` je od
+ * tohoto data JEDINÉ a AUTORITATIVNÍ místo, které smí chybový toast zobrazit (viz
+ * data-handler.service.ts bugfix-note stejné datum). Dřívější duplicitní volání
+ * způsobovala DVĚ červené hlášky na jednu chybu. Tam, kde `error:` callback dělal i
+ * něco jiného než toast (reset `emailAccessPolicyLoading`/`emailAccessPolicySaving`),
+ * ten zbytek logiky ZŮSTÁVÁ - odstraněno je výhradně volání `alertDialogService.open(...)`.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -245,13 +256,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         );
 
         this.cd.markForCheck();
-      },
-      error: () => {
-        this.alertDialogService.open(
-          'Chyba',
-          'Nepodařilo se načíst aktuální seznam rolí pro formulář. Zkuste prosím stránku obnovit.',
-          'danger'
-        );
       }
     });
   }
@@ -372,12 +376,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   }
 
   /**
-   * @description Submits user data. Error handler DOPLNĚN (dřív chyběl) - viz
-   * refactor-note v hlavičce souboru: FormBuilderComponent ukazuje zelený toast hned po
-   * emitu, ještě před odpovědí serveru, takže reálná chyba backendu (např. 422 při
-   * pokusu vypnout vynucenou 2FA, nebo zablokovat chráněný účet, NEBO nově i 422 při
-   * pokusu vytvořit účet s nepovolenou e-mailovou doménou) se bez tohoto handleru
-   * vůbec neprojevila v UI.
+   * @description Submits user data.
    * @bugfix-note (2026-08-16v2) KRITICKÁ OPRAVA: `visibleFormFields`/`nonEditableFields`
    * odráží roli, která byla vybraná PŘI OTEVŘENÍ formuláře
    * (`handleEditFormOpened`/`handleCreateFormOpened`) - pokud sysadmin roli PŘÍMO VE
@@ -394,6 +393,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    * pro `is_blocked` - pokud je nová role NEVER_BLOCKABLE, `is_blocked` se z payloadu
    * smaže (backend by ho stejně odmítl 422, tohle jen ušetří zbytečný request s chybou
    * u legitimní změny, kdy uživatel jen mění roli, ne blokaci).
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - `DataHandler.handleError()` už toast zobrazil, viz bugfix-note
+   * v hlavičce souboru.
    */
   handleFormSubmitted(formData: any): void {
     const payload = { ...formData };
@@ -426,10 +428,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         next: () => {
           this.alertDialogService.open('Úspěch', payload.id ? 'Účet byl upraven.' : 'Účet byl vytvořen.', 'success');
           this.refreshData();
-        },
-        error: (err: any) => {
-          const message = err?.error?.message || 'Uložení se nezdařilo.';
-          this.alertDialogService.open('Chyba', message, 'danger');
         }
       });
   }
@@ -441,6 +439,10 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.cd.markForCheck();
   }
 
+  /**
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - viz bugfix-note v hlavičce souboru.
+   */
   handleResetPasswordFormSubmitted(formData: any): void {
     const payload = {
         old_password: formData.old_password,
@@ -450,8 +452,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.dataHandler.put(`core/users/${formData.id}/change-password`, payload)
       .pipe(Core.finalize(() => { this.showResetPasswordForm = false; this.cd.markForCheck(); }))
       .subscribe({
-        next: () => this.alertDialogService.open('Úspěch', 'Heslo bylo změněno.', 'success'),
-        error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+        next: () => this.alertDialogService.open('Úspěch', 'Heslo bylo změněno.', 'success')
       });
   }
 
@@ -460,6 +461,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    * `item.activated_at` kontrola na klientu je jen rychlá zpětná vazba bez zbytečného
    * HTTP requestu - backend (`UserController::resendActivation()`) dělá stejnou
    * kontrolu nezávisle, takže tohle nelze obejít úpravou frontendu.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - viz bugfix-note v hlavičce souboru.
    */
   handleResendActivation(item: any): void {
     if (item.activated_at) {
@@ -468,8 +471,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     }
 
     this.dataHandler.post(`core/users/${item.id}/resend-activation`, {}).subscribe({
-      next: () => this.alertDialogService.open('Odesláno', 'Aktivační e-mail byl odeslán znovu.', 'success'),
-      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Odeslání se nezdařilo.', 'danger')
+      next: () => this.alertDialogService.open('Odesláno', 'Aktivační e-mail byl odeslán znovu.', 'success')
     });
   }
 
@@ -491,6 +493,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    * @description Otevře modal a načte aktuální hlavní doménu + celý whitelist.
    * Bez TTL cache - modal se otevírá příležitostně (sysadmin only), čerstvý fetch při
    * každém otevření je v pořádku.
+   * @bugfix-note (2026-08-31) Odstraněno duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - reset `emailAccessPolicyLoading` ZŮSTÁVÁ, jen se odstranilo
+   * volání toastu. Viz bugfix-note v hlavičce souboru.
    */
   openEmailAccessPolicyModal(): void {
     this.showEmailAccessPolicyModal = true;
@@ -506,9 +511,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         this.emailAccessPolicyLoading = false;
         this.cd.markForCheck();
       },
-      error: (err: any) => {
+      error: () => {
         this.emailAccessPolicyLoading = false;
-        this.alertDialogService.open('Chyba', err?.error?.message || 'Nepodařilo se načíst nastavení domén.', 'danger');
         this.cd.markForCheck();
       }
     });
@@ -523,6 +527,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    * @description Uloží hlavní e-mailovou doménu (nebo ji vynuluje na prázdno = "bez
    * omezení", pokud uživatel pole smaže). Backend normalizuje/validuje formát domény
    * nezávisle na frontendu.
+   * @bugfix-note (2026-08-31) Odstraněno duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku - reset `emailAccessPolicySaving` ZŮSTÁVÁ. Viz bugfix-note
+   * v hlavičce souboru.
    */
   savePrimaryDomain(): void {
     if (this.emailAccessPolicySaving) return;
@@ -538,9 +545,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         this.alertDialogService.open('Uloženo', 'Hlavní e-mailová doména byla uložena.', 'success');
         this.cd.markForCheck();
       },
-      error: (err: any) => {
+      error: () => {
         this.emailAccessPolicySaving = false;
-        this.alertDialogService.open('Chyba', err?.error?.message || 'Uložení se nezdařilo.', 'danger');
         this.cd.markForCheck();
       }
     });
@@ -550,6 +556,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    * @description Přidá novou položku whitelistu (doménu nebo konkrétní e-mail) podle
    * aktuálně zvoleného `newRuleType`. Backend vrací plný objekt nové položky (včetně
    * `id`), který se rovnou přidá do lokálního seznamu bez nutnosti dalšího refetch.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku (byl jediná náplň callbacku, celý klíč tak odpadl) - viz
+   * bugfix-note v hlavičce souboru.
    */
   addEmailAccessRule(): void {
     const value = this.newRuleValue.trim();
@@ -563,18 +572,21 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         this.emailAccessRules = [...this.emailAccessRules, rule];
         this.newRuleValue = '';
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Přidání se nezdařilo.', 'danger')
+      }
     });
   }
 
+  /**
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+   * z `error:` callbacku (byl jediná náplň callbacku, celý klíč tak odpadl) - viz
+   * bugfix-note v hlavičce souboru.
+   */
   removeEmailAccessRule(id: number): void {
     this.dataHandler.delete(`core/email-access-policy/rules/${id}`).subscribe({
       next: () => {
         this.emailAccessRules = this.emailAccessRules.filter(r => r.id !== id);
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Smazání se nezdařilo.', 'danger')
+      }
     });
   }
 

@@ -8,19 +8,12 @@
  * @dependencies
  * - BaseDataComponent: Provides base CRUD functionality.
  * - ConfirmDialogService: Facilitates user confirmation for deletion actions.
- * - Core Providers: Handles API communication and state management.
- * - ResourceCacheService: TTL cache pro lookup data (kategorie, dodavatelé) - viz
- *   refactor-note 2026-08-9.
- *
- * @refactor-note (2026-08-9) TTL CACHE pro lookup data (backlog: "zbytečně moc dotazů na
- * API"). `loadCategories()`/`loadSuppliers()` (plní `category_id`/`supplier_id` select
- * options ve formuláři a filtru) se dřív natahovaly znovu při KAŽDÉM vstupu na stránku -
- * stejný vzor jako `RoleOptionsService` u administrátorů. Cache 5 min (stejný řád jako
- * ostatní "select lookup" zdroje v adminu). Pozn.: na rozdíl od `RoleOptionsService`
- * (sdílená napříč stránkami, protože roli lze editovat jen na jednom místě) tahle cache
- * NENÍ invalidovaná při editaci kategorií na `CategoriesComponent` - cross-page invalidace
- * by vyžadovala sdílenou službu (podobně jako `RoleOptionsService`), což zatím není nutné:
- * TTL 5 min je dostatečně krátké a kategorie se nemění tak často jako role.
+ * - ResourceCacheService: TTL cache pro lookup data (kategorie, dodavatelé), 5 min.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z HTTP `error:` callbacků (handleViewDetails, openEditProductForm,
+ * openVariantsModal, openImagesModal, saveProduct) - `DataHandler.handleError()` je
+ * jediné autoritativní místo pro chybový toast. `loadCategories()`/`loadSuppliers()`
+ * měly jen `console.error`, beze změny.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
@@ -37,11 +30,7 @@ import { ActionMenuBuilderComponent } from '../../components/builders/action-men
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import * as Config from './products.config';
-/**
- * @description Controller for the product administration module.
- * @usage Orchestrates product data flow, including category/supplier associations, variant management, and complex image uploads.
- * @note Implements a multi-modal editing experience to handle nested product data (variants and images) within the main product form.
- */
+
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -118,21 +107,10 @@ showGraphBuilder = false;
     this.toggleBodyScroll(false);
   }
 
-  /**
-   * @description Overrides base paginated fetch to transform raw API responses into UI-friendly product structures.
-   * @param isTrash Indicates whether to fetch from the trash endpoint.
-   * @param page Target page number.
-   * @param perPage Number of items per page.
-   * @param filters Active filter parameters.
-   * @returns Observable of paginated product data.
-   */
-  // V ProductsComponent použij tuto logiku namísto override fetchPaginatedData
 override loadData(): void {
-  // Zavoláme standardní načtení
   this.list.fetchPaginatedData(this.showTrashTable, this.currentPage, this.itemsPerPage, this.filters)
     .pipe(
       Core.map((response) => {
-        // Zde provedeš svoji transformaci dat
         response.data = response.data.map((product: any) => {
           product.price_eur     = product.prices?.price_eur_with_vat ?? 0;
           product.category_name = product.category?.name ?? '-';
@@ -144,18 +122,10 @@ override loadData(): void {
     ).subscribe();
 }
 
-  /**
-   * @description Utility to prevent background page scroll when modal overlays are displayed.
-   * @param lock Boolean flag to enable/disable modal scroll locking.
-   */
   private toggleBodyScroll(lock: boolean): void {
     document.body.classList.toggle('modal-open', lock);
   }
 
-  /**
-   * @description Maps toolbar button clicks to specific component methods.
-   * @param action The string action key from the toolbar configuration.
-   */
   handleToolbarAction(action: string): void {
     if (this.isProcessing) return;
     const actions: Record<string, () => void> = {
@@ -207,10 +177,6 @@ override loadData(): void {
   handlePageChange(page: number): void        { this.onHandlePageChange(page, this.filters); }
   handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
 
-  /**
-   * @description Fetches all available categories to populate dropdowns and filter
-   * selectors, přes TTL cache (viz refactor-note v hlavičce souboru).
-   */
   private loadCategories(): void {
     this.resourceCache.get(
       this.CATEGORIES_CACHE_KEY,
@@ -224,10 +190,6 @@ override loadData(): void {
       });
   }
 
-  /**
-   * @description Fetches all available suppliers for product assignment, přes TTL cache
-   * (viz refactor-note v hlavičce souboru).
-   */
   private loadSuppliers(): void {
     this.resourceCache.get(
       this.SUPPLIERS_CACHE_KEY,
@@ -241,9 +203,6 @@ override loadData(): void {
       });
   }
 
-  /**
-   * @description Synchronizes categories and suppliers into dynamic form field and filter options.
-   */
   private updateFormFieldsOptions(): void {
     this.formFields.forEach(field => {
       if (field.column_name === 'category_id')
@@ -259,10 +218,6 @@ override loadData(): void {
     });
   }
 
-  /**
-   * @description Loads full product entity details for the detail view modal, including price/variant normalization.
-   * @param item The summary product record.
-   */
   handleViewDetails(item: any): void {
     if (this.isProcessing || !item.id) return;
     this.isProcessing = true;
@@ -291,8 +246,7 @@ override loadData(): void {
         this.showDetailsModal = true;
         this.toggleBodyScroll(true);
         this.cd.markForCheck();
-      },
-      error: () => this.alertDialogService.open('Chyba', 'Nepodařilo se načíst detaily.', 'danger')
+      }
     });
   }
 
@@ -303,11 +257,6 @@ override loadData(): void {
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Loads a product's full data into the editor for general information updates.
-   * @param product The product summary object.
-   * @param event Mouse event to stop propagation.
-   */
   openEditProductForm(product: Product, event?: Event): void {
     if (event) event.stopPropagation();
     if (this.isProcessing || !product.id) return;
@@ -337,14 +286,10 @@ override loadData(): void {
         this.showProductForm = true;
         this.toggleBodyScroll(true);
         this.cd.markForCheck();
-      },
-      error: () => this.alertDialogService.open('Chyba', 'Nepodařilo se načíst detail produktu.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description Initializes the variant management modal.
-   */
   openVariantsModal(product: Product, event?: Event): void {
     if (event) event.stopPropagation();
     if (this.isProcessing) return;
@@ -373,16 +318,10 @@ override loadData(): void {
         this.toggleBodyScroll(true);
         this.cd.markForCheck();
       },
-      error: () => {
-        this.isProcessing = false;
-        this.alertDialogService.open('Chyba', 'Nepodařilo se načíst produkt.', 'danger');
-      }
+      error: () => { this.isProcessing = false; }
     });
   }
 
-  /**
-   * @description Appends a default variant object to the current editing product.
-   */
   addVariant(): void {
     if (!this.editingProduct) return;
     this.editingProduct.variants ??= [];
@@ -395,10 +334,6 @@ override loadData(): void {
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Removes a variant from the local editing state or flags it for server-side deletion.
-   * @param index The index of the variant to delete.
-   */
   async deleteVariant(index: number): Promise<void> {
     if (!this.editingProduct?.variants) return;
     const variant = this.editingProduct.variants[index];
@@ -413,9 +348,6 @@ override loadData(): void {
     }
   }
 
-  /**
-   * @description Sets the current variant context for image editing.
-   */
   editVariantImages(index: number, event?: Event): void {
     if (event) event.stopPropagation();
     this.editingVariantIdx = index;
@@ -486,9 +418,6 @@ override loadData(): void {
     return this.editingProduct.variants[this.editingVariantIdx];
   }
 
-  /**
-   * @description Persists temporary variant image changes to the product model.
-   */
   saveVariantImages(): void {
     if (this.editingVariantIdx !== null && this.editingProduct?.variants?.[this.editingVariantIdx]) {
       this.editingProduct.variants[this.editingVariantIdx].images = this.editingVariantImages.map(img => ({
@@ -509,9 +438,6 @@ override loadData(): void {
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Automatically calculates the net price whenever VAT or gross price is changed.
-   */
   onVATRateChange(variant: any): void        { this.calcVariantPricesWithoutVat(variant); this.cd.markForCheck(); }
   onPriceWithVATChange(variant: any): void   { this.calcVariantPricesWithoutVat(variant); this.cd.markForCheck(); }
 
@@ -523,9 +449,6 @@ override loadData(): void {
       : 0;
   }
 
-  /**
-   * @description Initializes the modal for editing global product imagery.
-   */
   openImagesModal(product: Product, event?: Event): void {
     if (event) event.stopPropagation();
     if (this.isProcessing) return;
@@ -545,10 +468,7 @@ override loadData(): void {
         this.toggleBodyScroll(true);
         this.cd.markForCheck();
       },
-      error: () => {
-        this.isProcessing = false;
-        this.alertDialogService.open('Chyba', 'Nepodařilo se načíst produkt.', 'danger');
-      }
+      error: () => { this.isProcessing = false; }
     });
   }
 
@@ -592,10 +512,6 @@ override loadData(): void {
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Validates the form state, ensuring required fields (name, SKU, categories) and pricing are correctly set.
-   * @returns {boolean} True if the form data is valid for submission.
-   */
   validateProduct(): boolean {
     if (!this.editingProduct) return false;
 
@@ -655,9 +571,6 @@ override loadData(): void {
     return true;
   }
 
-  /**
-   * @description Constructs FormData and submits the product (including all nested variants and media) to the API.
-   */
   saveProduct(): void {
     if (!this.editingProduct || !this.validateProduct()) return;
 
@@ -754,11 +667,6 @@ override loadData(): void {
         this.closeVariantsModal();
         this.closeImagesModal();
         this.refreshData();
-      },
-      error: (err: any) => {
-        console.error('Chyba uložení produktu:', err);
-        const msg = err?.error?.message ?? 'Uložení produktu selhalo.';
-        this.alertDialogService.open('Chyba', msg, 'danger');
       }
     });
   }

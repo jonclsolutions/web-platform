@@ -9,6 +9,9 @@
  * - BaseDataComponent: Core logic for data fetching, pagination, and state management.
  * - TableBuilderComponent: Used for tabular data rendering and CSV export functionality.
  * - JOB_APPLICATION_* configs: Centralized definition for UI columns, form fields, and toolbar actions.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z `error:` callbacků (handleViewDetails, handleFormSubmitted) -
+ * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -71,10 +74,6 @@ showGraphBuilder = false;
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Dynamically constructs the toolbar buttons based on user permissions and current component state.
-   * @returns Array of configured buttons for the toolbar.
-   */
 get toolbarButtons(): Core.Button[] {
       return Config.JOB_APPLICATION_TOOLBAR_BUTTONS.map(btn => {
         let updatedBtn = { ...btn };
@@ -105,10 +104,6 @@ get toolbarButtons(): Core.Button[] {
       });
     }
 
-  /**
-   * @description Orchestrates toolbar button click events by mapping actions to class methods.
-   * @param action Identifier string provided by the button configuration.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -128,19 +123,12 @@ get toolbarButtons(): Core.Button[] {
     this.forceFullRefresh(this.filters);
   }
 
-  /**
-   * @description Updates current filters and refreshes table data.
-   * @param newFilters The filter object containing sorting and filtering criteria.
-   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  /**
-   * @description Resets the filter object to default sort parameters and refreshes data.
-   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -155,17 +143,10 @@ get toolbarButtons(): Core.Button[] {
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
-  /**
-   * @description Triggers the CSV export functionality on the referenced active table component.
-   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
 
-  /**
-   * @description Prepares the edit modal by deep-copying the selected item and toggling visibility.
-   * @param item The job application record selected for editing.
-   */
   handleEditFormOpened(item: any): void {
     this.selectedItemForEdit = null;
     this.showCreateForm = false;
@@ -178,10 +159,6 @@ get toolbarButtons(): Core.Button[] {
     }, 50);
   }
 
-  /**
-   * @description Fetches full details for a specific record to display in a detail view.
-   * @param item The job application to view.
-   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -189,15 +166,10 @@ get toolbarButtons(): Core.Button[] {
         this.selectedItemForDetails = res;
         this.showDetails = true;
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description Performs a PUT/PATCH request to update existing job application data.
-   * @param formData The data object retrieved from the form.
-   */
   handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
       Core.finalize(() => {
@@ -209,8 +181,7 @@ get toolbarButtons(): Core.Button[] {
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 

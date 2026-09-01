@@ -6,13 +6,13 @@
  * @created 2025
  * @description Manages user profile information and security settings, specifically handling
  * password updates and the self-service 2FA toggle.
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", bod 4: uživatel má vidět
- * JASNOU informaci o TOM, PROČ má/nemá 2FA - tři možné efektivní stavy: (a) role
- * admin/sysadmin -> vždy vynuceno, nelze změnit; (b) sysadmin osobně vynutil 2FA tomuto
- * konkrétnímu účtu (`two_fa_forced_by_admin`) -> vynuceno, nelze změnit, ALE z jiného
- * důvodu než (a); (c) žádné vynucení -> běžný self-service toggle. `security2faStatusLabel`
- * getter tohle rozlišuje pro zobrazení v šabloně. Checkbox zůstává disabled ve všech
- * vynucených stavech (a)+(b), ne jen u (a) jako dřív.
+ * @note Tři efektivní stavy 2FA: (a) role admin/sysadmin vynucuje vždy; (b) sysadmin
+ * osobně vynutil `two_fa_forced_by_admin`; (c) běžný self-service toggle. Checkbox je
+ * disabled v obou vynucených stavech (a)+(b).
+ * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+ * z `error:` callbacku v `onToggle2fa()` - `DataHandler.handleError()` je jediné
+ * autoritativní místo pro chybový toast. `onSubmit()` používá inline `errorMessage`
+ * (ne toast), beze změny.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -30,15 +30,8 @@ import { LoadingService } from '../../../core/services/loading.service';
 import { PASSWORD_PATTERN } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 
-/** Role s napevno vynuceným 2FA - musí sedět s User::FORCED_2FA_ROLE_NAMES na backendu. */
 const FORCED_2FA_ROLES = ['admin', 'sysadmin'];
 
-/**
- * @description Component for managing authenticated user profile and security credentials.
- * @usage Provides a UI to view personal user details, toggle 2FA, and securely update the
- * account password via a popup form.
- * @note Uses custom cross-field validation to ensure password confirmation matches the new password.
- */
 @Component({
   selector: 'app-personal-info',
   standalone: true,
@@ -55,10 +48,8 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   userData: UserLogin | null = null;
   errorMessage: string | null = null;
 
-  /** Řídí viditelnost popupu se změnou hesla - dřív bylo natvrdo v layoutu. */
   showPasswordPopup = false;
 
-  /** Lokální stav checkboxu, nezávislý na `userData` dokud se uložení nepotvrdí. */
   enable2faValue = false;
   isSaving2fa = false;
 
@@ -117,18 +108,15 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** @description Role sama o sobě vynucuje 2FA (admin/sysadmin) - nejde vypnout vůbec. */
   get isRoleForced2fa(): boolean {
     const roleName = (this.userData as any)?.roles?.[0]?.role_name;
     return FORCED_2FA_ROLES.includes(roleName);
   }
 
-  /** @description Sysadmin osobně vynutil 2FA tomuto konkrétnímu účtu (nezávisle na roli). */
   get isAdminForced2fa(): boolean {
     return !!(this.userData as any)?.two_fa_forced_by_admin;
   }
 
-  /** @description Kterýkoliv typ vynucení - checkbox je disabled v obou případech. */
   get isForced2fa(): boolean {
     return this.isRoleForced2fa || this.isAdminForced2fa;
   }
@@ -137,10 +125,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     return (this.userData as any)?.roles?.[0]?.role_name ?? null;
   }
 
-  /**
-   * @description Textová zpráva vysvětlující AKTUÁLNÍ efektivní stav 2FA a DŮVOD,
-   * proč je (ne)vynucena - viz refactor-note v hlavičce souboru, bod 4 z backlogu.
-   */
   get security2faStatusMessage(): string {
     if (this.isRoleForced2fa) {
       return `Pro vaši roli (${this.userRoleName}) je dvoufaktorové ověření povinné a nelze ho vypnout.`;
@@ -153,7 +137,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
       : 'Dvoufaktorové ověření je vypnuté. Doporučujeme ho pro vyšší bezpečnost zapnout.';
   }
 
-  /** @description Barevný stav banneru (pro CSS třídu v šabloně). */
   get security2faStatusType(): 'forced' | 'enabled' | 'disabled' {
     if (this.isForced2fa) return 'forced';
     return this.enable2faValue ? 'enabled' : 'disabled';
@@ -179,7 +162,6 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.isSaving2fa = false;
-          this.alertDialogService.open('Chyba', 'Nepodařilo se uložit nastavení 2FA.', 'danger');
           this.cd.markForCheck();
         }
       });
@@ -245,9 +227,7 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
         }
       });
   }
-  // doplnit do třídy PersonalInfoComponent, vedle isForced2fa
 
-/** @description Efektivní stav 2FA pro checkbox - true i když je enable_2fa=false, ale vynuceno jinak. */
 get effective2faChecked(): boolean {
   return this.isForced2fa || this.enable2faValue;
 }

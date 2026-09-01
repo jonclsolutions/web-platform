@@ -8,7 +8,9 @@
  * @dependencies
  * - BaseDataComponent: Provides foundational CRUD operations and state management.
  * - TableBuilderComponent: Used for rendering the shipping method registry.
- * - SHARED_UI_BUILDERS: Provides UI building blocks for forms and toolbars.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
+ * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -20,11 +22,7 @@ import * as Config from './shipping-methods.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
-/**
- * @description Component responsible for the CRUD operations of store shipping methods.
- * @usage Enables administrators to create, update, and manage the visibility of shipping options, including archival via trash functionality.
- * @note Leverages BaseDataComponent for standardized data handling and integrates specific logic for toggling between active and archived views.
- */
+
 @Component({
   selector: 'app-shipping-methods',
   standalone: true,
@@ -71,10 +69,6 @@ showGraphBuilder = false;
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Constructs the toolbar configuration.
-   * @returns List of toolbar buttons adjusted for permissions and current UI context (archive/active state).
-   */
 get toolbarButtons(): Core.Button[] {
     return Config.SHIPPING_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -105,10 +99,6 @@ get toolbarButtons(): Core.Button[] {
     });
   }
 
-  /**
-   * @description Maps toolbar action strings to their respective handler methods.
-   * @param action Identifier for the action to execute.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -127,19 +117,12 @@ get toolbarButtons(): Core.Button[] {
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
-  /**
-   * @description Merges new filter criteria and triggers a data refresh from page one.
-   * @param newFilters The incoming filter parameters.
-   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  /**
-   * @description Resets filter set to default sort criteria.
-   */
   clearFilters(): void {
     this.filters = { sort_by: 'sort_order', sort_direction: 'asc' };
     this.currentPage = 1;
@@ -163,30 +146,20 @@ get toolbarButtons(): Core.Button[] {
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Handles form submission by either updating an existing record or creating a new one.
-   * @param formData Data captured from the form component.
-   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); })).subscribe({
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description Fetches and opens detail view for a specific shipping method.
-   * @param item Target record to view.
-   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
-      next: (details) => { this.selectedItemForDetails = details; this.showDetails = true; this.cd.markForCheck(); },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      next: (details) => { this.selectedItemForDetails = details; this.showDetails = true; this.cd.markForCheck(); }
     });
   }
 

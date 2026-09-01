@@ -9,13 +9,11 @@
  * - BaseDataComponent: Standardized CRUD and state management.
  * - TableBuilderComponent: Handling tabular views and CSV exports.
  * - SalesOrders Config: Domain-specific definitions for UI columns, form fields, and toolbar actions.
- *
- * @refactor-note (2026-08-29) BACKLOG "založit projekt přímo z realizace": přidán
- * `createProject(item)`, navázaný na nový řádkový button 'generate_form' (viz
- * sales-orders.config.ts stejné datum) přes `(generateFormOpened)` output
- * `TableBuilderComponent`. Čistě navigační akce - žádné vlastní API volání zde,
- * `ProjectsComponent` si při otevření z query parametru `order_id` sám natáhne
- * detail dané realizace a předvyplní formulář (viz projects.component.ts).
+ * @note `createProject(item)` je čistě navigační přesměrování na ProjectsComponent
+ * s `order_id`/`open_project` query parametrem - žádné vlastní API volání zde.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z `error:` callbacků (handleViewDetails, handleFormSubmitted) -
+ * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -78,11 +76,6 @@ showGraphBuilder = false;
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Generates the toolbar configuration dynamically based on active filters, trash visibility, and user permissions.
-   * @returns Array of configured Core.Button items.
-   */
-
   get toolbarButtons(): Core.Button[] {
       return Config.SALES_ORDER_TOOLBAR_BUTTONS.map(btn => {
         let updatedBtn = { ...btn };
@@ -113,10 +106,6 @@ showGraphBuilder = false;
       });
     }
 
-  /**
-   * @description Maps toolbar button actions to their corresponding class methods.
-   * @param action Identifier string provided by configuration.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -136,19 +125,12 @@ showGraphBuilder = false;
     this.forceFullRefresh(this.filters);
   }
 
-  /**
-   * @description Updates current view filters and resets pagination to the first page.
-   * @param newFilters Filter parameters to apply.
-   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  /**
-   * @description Reverts filters to system default sorting and refreshes the data set.
-   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -163,26 +145,15 @@ showGraphBuilder = false;
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
-  /**
-   * @description Invokes CSV export mechanism on the primary data table component.
-   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
 
-  /**
-   * @description Prepares the selected item for the editing modal.
-   * @param item The order record selected for modification.
-   */
   handleEditFormOpened(item: any): void {
     this.selectedItemForEdit = { ...item };
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Fetches detailed record data and displays it within a detail view modal.
-   * @param item The order record for which to view details.
-   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -190,18 +161,10 @@ showGraphBuilder = false;
         this.selectedItemForDetails = res;
         this.showDetails = true;
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description "Založit projekt" - čistě navigační přesměrování na ProjectsComponent
-   * s `order_id` query parametrem. Žádné API volání se tady neděje - cílová stránka si
-   * podle parametru sama natáhne detail realizace a předvyplní create formulář (viz
-   * projects.component.ts `checkQueryParamsForPrefill()`/`loadOrderOptions()`).
-   * @param item Realizace (sales order), ze které se má projekt založit.
-   */
   createProject(item: any): void {
     if (!item?.id) return;
         if (item.project_id) {
@@ -211,10 +174,6 @@ showGraphBuilder = false;
     }
   }
 
-  /**
-   * @description Submits updated order information and refreshes the table upon success.
-   * @param formData The object containing order data to be persisted.
-   */
   handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
       Core.finalize(() => {
@@ -225,8 +184,7 @@ showGraphBuilder = false;
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 

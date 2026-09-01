@@ -31,11 +31,24 @@
  *
  * IMPORT ZÁMĚRNĚ NEIMPLEMENTOVÁN - jde o osobní seznam bookmarků (typicky pár položek na
  * uživatele), hromadný import ze souboru pro tenhle typ dat nemá reálné praktické využití.
+ *
+ * @refactor-note (2026-08-31) ODSTRANĚNY `position`/`is_active` - viz CoreExternalLink
+ * model a external-links.config.ts stejné datum (SQL migrace DROP COLUMN spuštěna
+ * přímo na serveru). Dopady:
+ * - `index()`: výchozí `sort_by` změněn z `'position'` na `'name'` (abecední řazení
+ *   nahrazuje dřívější ruční pořadí); `?is_active=` filtr odstraněn.
+ * - `store()`/`update()`: validace přesunuta do nových `StoreCoreExternalLinkRequest`/
+ *   `UpdateCoreExternalLinkRequest` (jen `name`/`url`, bez `position`/`is_active`).
+ * - Všechny odpovědi teď jdou přes `CoreExternalLinkResource` (jednotný tvar,
+ *   `user_id` se nikdy nevrací klientovi).
  */
 
 namespace App\Http\Controllers\Api\Core;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Core\CoreExternalLink\StoreCoreExternalLinkRequest;
+use App\Http\Requests\Core\CoreExternalLink\UpdateCoreExternalLinkRequest;
+use App\Http\Resources\Core\CoreExternalLinkResource;
 use App\Models\Core\CoreExternalLink;
 use App\Models\Web\WebLog;
 use App\Traits\LogsActivity;
@@ -52,7 +65,7 @@ class CoreExternalLinkController extends Controller
      *              (aktivních, nebo košových podle ?only_trashed=) s podporou filtrování,
      *              řazení a volitelného stránkování.
      */
-/**
+    /**
      * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální `search`
      * parametr (OR napříč `name`/`url`) - viz FilterFormBuilderComponent na frontendu,
      * který ho teď posílá vždy vedle ostatních sloupcových filtrů. Sloupce vybrané pro
@@ -74,6 +87,10 @@ class CoreExternalLinkController extends Controller
      * pokud by frontend někdy poslal oboje najednou, výsledek se dál zužuje (AND), ne
      * nahrazuje. To odpovídá tomu, jak `FilterFormBuilderComponent` filtry sestavuje -
      * `search` je jen DALŠÍ klíč v tom samém objektu, ne náhrada za existující pole.
+     *
+     * @refactor-note (2026-08-31) Výchozí `sort_by` změněn z `'position'` na `'name'`
+     * (sloupec `position` byl odstraněn - viz hlavička souboru). `?is_active=` filtr
+     * odstraněn (sloupec `is_active` byl odstraněn).
      */
     public function index(Request $request): JsonResponse
     {
@@ -89,9 +106,6 @@ class CoreExternalLinkController extends Controller
         if ($url = $request->input('url')) {
             $query->where('url', 'like', "%{$url}%");
         }
-        if ($request->has('is_active') && !$request->boolean('only_trashed')) {
-            $query->where('is_active', $request->boolean('is_active'));
-        }
 
         // Globální fulltextový search napříč VŠEMI relevantními textovými sloupci -
         // viz bugfix-note výše. Obalené where(function...) je NUTNÉ kvůli user_id scopu.
@@ -102,16 +116,24 @@ class CoreExternalLinkController extends Controller
             });
         }
 
-        $sortBy  = $request->input('sort_by', 'position');
+        $sortBy  = $request->input('sort_by', 'name');
         $sortDir = $request->input('sort_direction', 'asc');
         $query->orderBy($sortBy, $sortDir);
 
         if ($request->boolean('no_pagination')) {
-            return response()->json($query->get());
+            return response()->json(CoreExternalLinkResource::collection($query->get()));
         }
 
         $perPage = (int) $request->input('per_page', 15);
-        return response()->json($query->paginate($perPage));
+        $paginated = $query->paginate($perPage);
+
+        return response()->json([
+            'data'         => CoreExternalLinkResource::collection($paginated->items()),
+            'total'        => $paginated->total(),
+            'per_page'     => $paginated->perPage(),
+            'current_page' => $paginated->currentPage(),
+            'last_page'    => $paginated->lastPage(),
+        ]);
     }
 
     /**
@@ -124,53 +146,39 @@ class CoreExternalLinkController extends Controller
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
-        return response()->json($link);
+        return response()->json(new CoreExternalLinkResource($link));
     }
 
     /**
      * @description Vytvoří nový externí odkaz - vlastníkem je vždy přihlášený uživatel,
      *              bez ohledu na to, co (případně) přijde v requestu.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCoreExternalLinkRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name'      => 'required|string|max:150',
-            'url'       => 'required|url|max:500',
-            'position'  => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $link = CoreExternalLink::create([
-            'user_id'   => $request->user()->id,
-            'name'      => $validated['name'],
-            'url'       => $validated['url'],
-            'position'  => $validated['position'] ?? 0,
-            'is_active' => $validated['is_active'] ?? true,
+            'user_id' => $request->user()->id,
+            'name'    => $validated['name'],
+            'url'     => $validated['url'],
         ]);
 
         $this->logAction($request, WebLog::class, 'create', 'Web', "Vytvořen externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
-        return response()->json($link, 201);
+        return response()->json(new CoreExternalLinkResource($link), 201);
     }
 
     /**
      * @description Aktualizuje existující externí odkaz - jen pokud patří přihlášenému
      *              uživateli.
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(UpdateCoreExternalLinkRequest $request, $id): JsonResponse
     {
         $link = CoreExternalLink::where('user_id', $request->user()->id)->findOrFail($id);
 
-        $validated = $request->validate([
-            'name'      => 'required|string|max:150',
-            'url'       => 'required|url|max:500',
-            'position'  => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $link->update($validated);
+        $link->update($request->validated());
 
         $this->logAction($request, WebLog::class, 'update', 'Web', "Upraven externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
-        return response()->json($link);
+        return response()->json(new CoreExternalLinkResource($link));
     }
 
     /**
@@ -262,7 +270,7 @@ class CoreExternalLinkController extends Controller
         $link->restore();
 
         $this->logAction($request, WebLog::class, 'restore', 'Web', "Obnoven externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
-        return response()->json($link);
+        return response()->json(new CoreExternalLinkResource($link));
     }
 
     /**

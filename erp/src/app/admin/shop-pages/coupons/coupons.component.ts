@@ -8,7 +8,9 @@
  * @dependencies
  * - TableBuilderComponent: Used for rendering the data grids.
  * - BaseDataComponent: Inherits core API interaction and pagination state management.
- * - Config: Contains column, button, and field definitions for the coupon module.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
+ * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -20,11 +22,7 @@ import * as Config from './coupons.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
-/**
- * @description Serves as the primary controller for the Coupons management page.
- * @usage Used by shop administrators to create, edit, delete, or restore discount coupons.
- * @note Implements ViewChild to access the TableBuilder instance for triggering export functionality.
- */
+
 @Component({
   selector: 'app-coupons',
   standalone: true,
@@ -71,10 +69,6 @@ showGraphBuilder = false;
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Generates the toolbar button configuration, injecting permission checks and view-state labels.
-   * @returns {Core.Button[]} List of buttons adapted for the current UI state.
-   */
  get toolbarButtons(): Core.Button[] {
      return Config.COUPON_TOOLBAR_BUTTONS.map(btn => {
        let updatedBtn = { ...btn };
@@ -105,10 +99,6 @@ showGraphBuilder = false;
      });
    }
 
-  /**
-   * @description Routes toolbar clicks to appropriate methods based on action strings.
-   * @param action The string identifier of the triggered button.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -127,19 +117,12 @@ showGraphBuilder = false;
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
-  /**
-   * @description Updates filter state and resets pagination for a fresh query.
-   * @param newFilters Partial set of filter parameters to apply.
-   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  /**
-   * @description Resets active filters to default sorting and fetches fresh data.
-   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -149,9 +132,6 @@ showGraphBuilder = false;
   handlePageChange(page: number): void { this.onHandlePageChange(page, this.filters); }
   handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
 
-  /**
-   * @description Delegates export request to the current child table instance.
-   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
@@ -166,30 +146,20 @@ showGraphBuilder = false;
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Processes form submission for new or existing coupon entries.
-   * @param formData The data object from the form component.
-   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); })).subscribe({
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description Fetches and opens a detail modal for a specific coupon item.
-   * @param item The coupon object to view.
-   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
-      next: (details) => { this.selectedItemForDetails = details; this.showDetails = true; this.cd.markForCheck(); },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      next: (details) => { this.selectedItemForDetails = details; this.showDetails = true; this.cd.markForCheck(); }
     });
   }
 

@@ -22,10 +22,22 @@
  * (`klic1|klic2`) jako *appHasPermission direktiva. Bez nastaveného `deletePermission`
  * zůstává komponenta zpětně kompatibilní - vše viditelné jako dřív.
  *
+ * @icons-note (2026-08-31) EMOJI -> SVG: přidán `IconComponent` do `imports`, interní
+ * `buttons` pole nese `icon: 'restore'`/`icon: 'purge'` (viz table-builder.component.ts
+ * stejné datum pro sdílenou ikonovou sadu).
+ *
+ * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněna
+ * VŠECHNA vlastní `alertDialogService.open('Error', ...)` volání z `error:` callbacků
+ * (handleAction restore/delete, deleteAll) - všechna tři jsou čistě HTTP volání přes
+ * `crud.restore()`/`crud.remove()`/`crud.hardDeleteAllTrashed()` (interně DataHandler),
+ * takže `DataHandler.handleError()` už toast zobrazil (viz data-handler.service.ts
+ * bugfix-note stejné datum).
+ *
  * @dependencies
  * - EntityCrudService: Inherits core CRUD and data lifecycle management.
  * - ConfirmDialogService: Ensures safe irreversible operations (permanent delete).
  * - PermissionService: Vyhodnocení `deletePermission` pro restore/delete/delete-all.
+ * - IconComponent: Sdílená sada SVG ikon pro řádková tlačítka.
  */
 
 import {
@@ -46,6 +58,7 @@ import { TableButtons } from '../../../../shared/interfaces/table-buttons';
 import * as Core from '../../../../shared/imports/core-providers';
 import { ButtonBuilderComponent } from '../button-builder/button-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
+
 /**
  * @description A dedicated table view for displaying soft-deleted records with utility actions
  * to restore or purge data.
@@ -199,6 +212,9 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Manages row-level restoration and deletion logic.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Error', ...)`
+   * z obou `error:` callbacků (restore i delete) - `DataHandler.handleError()` už toast
+   * zobrazil. Viz bugfix-note v hlavičce souboru.
    */
   handleAction(item: any, action: string): void {
     if (!item.id) return;
@@ -212,9 +228,6 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
                 this.alertDialogService.open('Success', 'Item successfully restored.', 'success');
                 this.removeItemFromLocalData(item.id);
                 this.itemRestored.emit();
-              },
-              error: () => {
-                this.alertDialogService.open('Error', 'An error occurred while restoring the item.', 'danger');
               }
             });
           }
@@ -229,9 +242,6 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
                 this.alertDialogService.open('Success', 'Item permanently deleted.', 'success');
                 this.removeItemFromLocalData(item.id);
                 this.itemDeletedPermanently.emit();
-              },
-              error: () => {
-                this.alertDialogService.open('Error', 'An error occurred while deleting the item.', 'danger');
               }
             });
           }
@@ -250,6 +260,9 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Executes a permanent wipe of all trashed items after user confirmation.
+   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Error', ...)`
+   * z `error:` callbacku - `DataHandler.handleError()` už toast zobrazil. Viz
+   * bugfix-note v hlavičce souboru.
    */
   deleteAll(): void {
     if (this.data.length === 0) {
@@ -266,9 +279,6 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
               this.data = [];
               this.itemDeletedPermanently.emit();
               this.cd.markForCheck();
-            },
-            error: () => {
-              this.alertDialogService.open('Error', 'An error occurred during mass deletion.', 'danger');
             }
           });
         }

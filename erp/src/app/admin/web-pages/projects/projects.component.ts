@@ -4,21 +4,18 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Administrative component for managing customer Projects.
- *
- * @refactor-note (2026-08-29b) BACKLOG "sjednotit web/projects a web/project-threads
- * do jedné feature": bývalý samostatný `ProjectThreadsComponent` (cross-project
- * tabulka VŠECH vláken) je teď DRUHÁ tabulka na téže stránce, POD tabulkou
- * projektů - vlastní nezávislé stránkování/filtrování (jiný `apiEndpoint':
- * 'web/project-threads', jiné `threadsFilters`/`threadsCurrentPage` atd., protože
- * BaseDataComponent spravuje pouze JEDEN primární `apiEndpoint` - projekty - takže
- * druhá tabulka je natahována ručně přes `genericTableService.getPaginatedData()`,
- * stejný nízkoúrovňový mechanismus, jaký BaseDataComponent používá interně pro tu
- * primární). Otevření řádku ("💬") ukáže LEHKÝ modal (`showThreadModal`/
- * `activeThread`) s odpovědí - nezávislý na "Správa" modalu (`showManageModal`/
- * `selectedThread`), který řeší vlákna SCOPOVANÁ na jeden konkrétní spravovaný
- * projekt. Obě modální okna sdílí stejné `pm-*` CSS třídy (project-manage-modal.css)
- * - proto "project-threads nemělo vlastní CSS", bylo to vždy sdílené odsud.
+ * @description Administrative component for managing customer Projects, including a
+ * secondary independently-paginated table of cross-project customer threads.
+ * @note Druhá tabulka (`threadsData`/`threadsFilters`/...) je natahována ručně přes
+ * `genericTableService.getPaginatedData()`, protože `BaseDataComponent` spravuje jen
+ * jeden primární `apiEndpoint` (projekty). Dva modaly ("Správa" pro konkrétní projekt,
+ * "Vlákno" pro cross-project tabulku) sdílí stejný scroll-lock mechanismus a `pm-*` CSS.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání ze VŠECH `error:`/`catch` bloků čistě HTTP volání (handleViewDetails,
+ * handleFormSubmitted, regeneratePassword, addCheckpoint, deleteCheckpoint,
+ * changeThreadStatus, sendReply, sendThreadModalReply) - `DataHandler.handleError()`
+ * je jediné autoritativní místo pro chybový toast. `loadOrderOptions()` už žádný toast
+ * neměl, beze změny.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -120,10 +117,9 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   private readonly PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
 
-  /** Scroll pozice ULOŽENÁ při otevření libovolného modalu ("Správa" i "Vlákno") - viz lockBackgroundScroll()/unlockBackgroundScroll(). */
   private savedScrollY = 0;
 
-  // ── Cross-project tabulka požadavků (dřív ProjectThreadsComponent) ─────────
+  // ── Cross-project tabulka požadavků ─────────────────────────────────────
   readonly threadsApiEndpoint = 'web/project-threads';
   threadColumns = Config.PROJECT_THREAD_COLUMNS;
   threadButtons = Config.PROJECT_THREAD_BUTTONS;
@@ -342,8 +338,7 @@ showGraphBuilder = false;
           this.alertDialogService.open('Úspěch', 'Projekt byl upraven.', 'success');
           this.refreshData();
         }
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 
@@ -354,8 +349,7 @@ showGraphBuilder = false;
         this.selectedItemForDetails = details;
         this.showDetails = true;
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      }
     });
   }
 
@@ -398,7 +392,6 @@ showGraphBuilder = false;
         this.manageLoading = false;
         this.showManageModal = false;
         this.unlockBackgroundScroll();
-        this.alertDialogService.open('Chyba', 'Nepodařilo se načíst detail projektu.', 'danger');
         this.cd.markForCheck();
       }
     });
@@ -407,8 +400,7 @@ showGraphBuilder = false;
   private loadManagingThreads(projectId: number): void {
     this.projectThreadsCrud.getCollection({ project_id: projectId, no_pagination: 'true' })
       .subscribe({
-        next: (threads) => { this.managingThreads = threads; this.cd.markForCheck(); },
-        error: () => {}
+        next: (threads) => { this.managingThreads = threads; this.cd.markForCheck(); }
       });
   }
 
@@ -476,9 +468,8 @@ showGraphBuilder = false;
           this.alertDialogService.open('Nové heslo vygenerováno', 'Nové heslo je zobrazené v panelu Přístup.', 'success');
           this.cd.markForCheck();
         },
-        error: (err: any) => {
+        error: () => {
           this.passwordRegenerating = false;
-          this.alertDialogService.open('Chyba', err?.error?.message || 'Vygenerování hesla selhalo.', 'danger');
           this.cd.markForCheck();
         }
       });
@@ -493,8 +484,7 @@ showGraphBuilder = false;
         this.managingCheckpoints = [...this.managingCheckpoints, checkpoint];
         this.newCheckpointLabel = '';
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Přidání checkpointu selhalo.', 'danger')
+      }
     });
   }
 
@@ -522,8 +512,7 @@ showGraphBuilder = false;
       next: () => {
         this.managingCheckpoints = this.managingCheckpoints.filter(c => c.id !== checkpoint.id);
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Smazání checkpointu selhalo.', 'danger')
+      }
     });
   }
 
@@ -557,8 +546,7 @@ showGraphBuilder = false;
           const inList = this.managingThreads.find(t => t.id === this.selectedThread!.id);
           if (inList) inList.status = updated.status;
           this.cd.markForCheck();
-        },
-        error: (err: any) => this.alertDialogService.open('Chyba', err?.error?.message || 'Změna stavu vlákna selhala.', 'danger')
+        }
       });
   }
 
@@ -575,15 +563,15 @@ showGraphBuilder = false;
       this.openThread(this.selectedThread);
       if (this.managingProject) this.loadManagingThreads(this.managingProject.id);
       this.loadThreadsTable();
-    } catch (err: any) {
-      this.alertDialogService.open('Chyba', err?.error?.message || 'Odeslání odpovědi selhalo.', 'danger');
+    } catch {
+      // DataHandler.handleError() už zobrazil toast pro tuto HTTP chybu.
     } finally {
       this.replySending = false;
       this.cd.markForCheck();
     }
   }
 
-  // ── Cross-project tabulka požadavků (dřív ProjectThreadsComponent) ─────────
+  // ── Cross-project tabulka požadavků ─────────────────────────────────────
 
   private loadThreadsTable(): void {
     this.genericTableService.getPaginatedData<any>(this.threadsApiEndpoint, this.threadsCurrentPage, this.threadsItemsPerPage, this.threadsFilters)
@@ -593,8 +581,7 @@ showGraphBuilder = false;
           this.threadsTotalItems = res.total;
           this.threadsTotalPages = res.last_page;
           this.cd.markForCheck();
-        },
-        error: () => {}
+        }
       });
   }
 
@@ -653,8 +640,8 @@ showGraphBuilder = false;
       this.threadModalReplyBody = '';
       this.openThreadModal(this.activeThread);
       this.loadThreadsTable();
-    } catch (err: any) {
-      this.alertDialogService.open('Chyba', err?.error?.message || 'Odeslání odpovědi selhalo.', 'danger');
+    } catch {
+      // DataHandler.handleError() už zobrazil toast pro tuto HTTP chybu.
     } finally {
       this.threadModalReplySending = false;
       this.cd.markForCheck();

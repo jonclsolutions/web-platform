@@ -8,7 +8,11 @@
  * @dependencies
  * - BaseDataComponent: Provides base CRUD functionality and pagination state management.
  * - TableBuilderComponent: Used for rendering the primary customer data grid.
- * - SHARED_UI_BUILDERS: Provides common UI components used throughout the module.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
+ * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
+ * `loadCustomerOrders()` používá lokální `customerOrdersError` stav (ne toast),
+ * beze změny.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -21,11 +25,7 @@ import * as Config from './customers.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
-/**
- * @description Orchestrates the customer management dashboard, handling client lists, profile details, and associated order history.
- * @usage Used by store administrators to view and manage customer accounts.
- * @note Supports modal-based order history viewing with specialized formatting for statuses and financial data.
- */
+
 @Component({
   selector: 'app-customers',
   standalone: true,
@@ -50,7 +50,6 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
 
-  // Order management state
   showOrdersModal = false;
   selectedCustomerForOrders: any | null = null;
   customerOrders: any[] = [];
@@ -84,10 +83,6 @@ showGraphBuilder = false;
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Configures toolbar buttons dynamically based on current module state (e.g., trash view, filter visibility).
-   * @returns {Core.Button[]} A collection of enabled and configured toolbar buttons.
-   */
 get toolbarButtons(): Core.Button[] {
     return Config.CUSTOMER_TOOLBAR_BUTTONS.map(btn => {
       let updatedBtn = { ...btn };
@@ -118,10 +113,6 @@ get toolbarButtons(): Core.Button[] {
     });
   }
 
-  /**
-   * @description Maps toolbar action identifiers to corresponding component methods.
-   * @param action Identifier of the clicked toolbar button.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -142,19 +133,12 @@ get toolbarButtons(): Core.Button[] {
     this.forceFullRefresh(this.filters);
   }
 
-  /**
-   * @description Applies user-selected filters and resets the current page to one.
-   * @param newFilters The filter parameters to merge.
-   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  /**
-   * @description Clears current filters and resets the list to default sort order.
-   */
   clearFilters(): void {
     this.filters = { sort_by: 'created_at', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -169,9 +153,6 @@ get toolbarButtons(): Core.Button[] {
     this.onHandleItemsPerPageChange(value, this.filters);
   }
 
-  /**
-   * @description Triggers the CSV export functionality on the active table component.
-   */
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
   }
@@ -186,10 +167,6 @@ get toolbarButtons(): Core.Button[] {
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Submits customer form data and refreshes the data grid upon success.
-   * @param formData The form data to be persisted.
-   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => {
@@ -199,15 +176,10 @@ get toolbarButtons(): Core.Button[] {
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Uložení zákazníka selhalo.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description Fetches and displays deep-dive details for a specific customer.
-   * @param item The customer record to inspect.
-   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -215,8 +187,7 @@ get toolbarButtons(): Core.Button[] {
         this.selectedItemForDetails = details;
         this.showDetails = true;
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail zákazníka.', 'danger')
+      }
     });
   }
 
@@ -224,10 +195,6 @@ get toolbarButtons(): Core.Button[] {
   // ORDER HISTORY MODAL
   // =============================================
 
-  /**
-   * @description Opens the orders history modal for the specified customer.
-   * @param item The target customer record.
-   */
   showCustomerOrders(item: any): void {
     this.selectedCustomerForOrders = item;
     this.showOrdersModal = true;
@@ -240,9 +207,6 @@ get toolbarButtons(): Core.Button[] {
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Closes the modal and cleans up the UI/body state.
-   */
   closeOrdersModal(): void {
     this.showOrdersModal = false;
     this.selectedCustomerForOrders = null;
@@ -253,10 +217,6 @@ get toolbarButtons(): Core.Button[] {
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Loads a paginated list of orders for the currently selected customer.
-   * @param page The target page index.
-   */
   loadCustomerOrders(page: number): void {
     if (!this.selectedCustomerForOrders?.id) return;
 
@@ -296,10 +256,6 @@ get toolbarButtons(): Core.Button[] {
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Generates a pagination array for the order history view, including ellipsis logic.
-   * @returns {number[]} Array of page numbers or indicators.
-   */
   getOrderPages(): number[] {
     const pages: number[] = [];
     const total = this.ordersTotalPages;
@@ -324,11 +280,6 @@ get toolbarButtons(): Core.Button[] {
     return Math.min(this.ordersCurrentPage * this.ordersPerPage, this.ordersTotalItems);
   }
 
-  /**
-   * @description Returns the CSS class for order statuses based on status type.
-   * @param status The status string from the API.
-   * @returns {string} The CSS class name.
-   */
   getStatusClass(status: string): string {
     const map: Record<string, string> = {
       pending: 'status-pending',
@@ -361,8 +312,6 @@ get toolbarButtons(): Core.Button[] {
     if (!iso) return '—';
     return new Intl.DateTimeFormat('cs-CZ', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
   }
-
-  // =============================================
 
   handleCloseDetails(): void {
     this.selectedItemForDetails = null;

@@ -9,6 +9,9 @@
  * - BaseDataComponent: Inheritance for base CRUD and state management.
  * - TableBuilderComponent: Used for tabular data rendering and CSV export.
  * - SUPPORT_TICKET_* configs: Centralized definitions for UI elements and column configurations.
+ * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
+ * volání z `error:` callbacků (handleViewDetails, handleFormSubmitted) -
+ * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -72,12 +75,7 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Dynamically constructs toolbar buttons based on user permissions and component state.
-   * @returns Array of buttons configured for the current context (filters, export, or trash toggle).
-   */
-
-   get toolbarButtons(): Core.Button[] {
+  get toolbarButtons(): Core.Button[] {
       return Config.SUPPORT_TICKET_TOOLBAR_BUTTONS.map(btn => {
         let updatedBtn = { ...btn };
   
@@ -107,10 +105,6 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
       });
     }
 
-  /**
-   * @description Maps toolbar action strings to specific component methods.
-   * @param action Identifier provided by the configuration.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -131,19 +125,12 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     this.forceFullRefresh(this.filters);
   }
 
-  /**
-   * @description Updates filtering parameters and refreshes the data set starting from page 1.
-   * @param newFilters The criteria object to apply.
-   */
   applyFilters(newFilters: Core.FilterParams): void {
     this.filters = { ...this.filters, ...newFilters };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  /**
-   * @description Resets filtering criteria to system defaults.
-   */
   clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.currentPage = 1;
@@ -172,10 +159,6 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Fetches detailed information for a specific ticket.
-   * @param item The ticket record.
-   */
   handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
@@ -183,15 +166,10 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
         this.selectedItemForDetails = res;
         this.showDetails = true;
         this.cd.markForCheck();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      }
     });
   }
 
-  /**
-   * @description Handles submission of ticket data, detecting if the payload requires FormData (attachments) or standard JSON.
-   * @param formData The data payload (either FormData object or standard object).
-   */
   handleFormSubmitted(formData: any): void {
     const isFormData = formData instanceof FormData;
     const id = isFormData ? formData.get('id') : formData.id;
@@ -200,7 +178,6 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
 
     if (id) {
       if (isFormData) {
-        // Handle multipart updates using a PUT override if necessary by API design
         formData.append('_method', 'PUT');
         request = this.dataHandler.post(`${this.apiEndpoint}/${id}`, formData);
       } else {
@@ -219,8 +196,7 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
       next: () => {
         this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
         this.refreshData();
-      },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Akce selhala.', 'danger')
+      }
     });
   }
 

@@ -9,6 +9,10 @@
  * - BaseDataComponent: Inheritance for base table/data handling.
  * - TableBuilderComponent: For UI rendering of lead collections.
  * - SalesLeads Config: Domain-specific definitions for forms, columns, and toolbar buttons.
+ * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
+ * z HTTP `error:` callbacku v `handleGenerateFormLink()` - `DataHandler.handleError()`
+ * je jediné autoritativní místo pro chybový toast. Klientský clipboard `.catch(...)`
+ * toast ZŮSTÁVÁ - selhání zápisu do schránky není HTTP chyba, DataHandler o ní neví.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -38,7 +42,6 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
   tableCaption: string = 'Obchodní leady';
 
   override apiEndpoint: string = 'web/sales_leads';
-  /** Endpoint for activity logging system */
   private logEndpoint: string = 'web/logs';
 
   buttons = Config.SALES_LEAD_BUTTONS;
@@ -73,10 +76,6 @@ showGraphBuilder = false;
     super(dataHandler, cd, genericTableService);
   }
 
-  /**
-   * @description Constructs the toolbar buttons based on current component state and user permissions.
-   * @returns List of buttons with conditional rendering (e.g., hiding export when trash is active).
-   */
   get toolbarButtons(): Core.Button[] {
         return Config.SALES_LEAD_TOOLBAR_BUTTONS.map(btn => {
           let updatedBtn = { ...btn };
@@ -107,10 +106,6 @@ showGraphBuilder = false;
         });
       }
 
-  /**
-   * @description Maps toolbar action strings to specific component methods for execution.
-   * @param action The action identifier from configuration.
-   */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -131,8 +126,7 @@ showGraphBuilder = false;
  * @description Vyžádá (nebo znovu použije) unikátní veřejný odkaz na objednávkový
  *              formulář pro daný lead a zkopíruje ho do schránky.
  * @param item Konkrétní obchodní lead.
- * @note Token se generuje/ověřuje na backendu (WebSalesLeadController::generateLink) -
- *       frontend URL nikdy neskládá sám z `item.id`, ať se do ní nedostane interní ID.
+ * @note Token se generuje/ověřuje na backendu - frontend URL nikdy neskládá sám.
  */
 handleGenerateFormLink(item: any): void {
   this.dataHandler.post<{ token: string; url: string }>(`web/sales_leads/${item.id}/generate-link`, {})
@@ -143,17 +137,10 @@ handleGenerateFormLink(item: any): void {
         }).catch(() => {
           this.alertDialogService.open('Chyba', 'Nepodařilo se zkopírovat odkaz.', 'danger');
         });
-      },
-      error: () => {
-        this.alertDialogService.open('Chyba', 'Nepodařilo se vygenerovat odkaz.', 'danger');
       }
     });
 }
 
-  /**
-   * @description Sends an audit log entry to the server regarding specific user actions on a lead.
-   * @param item The lead record associated with the action.
-   */
   private logAction(item: any): void {
     const logData = {
       event_type: 'LINK_GENERATED',
@@ -175,19 +162,12 @@ handleGenerateFormLink(item: any): void {
     this.forceFullRefresh(this.filters);
   }
 
-  /**
-   * @description Updates current filtering parameters and resets pagination to page 1.
-   * @param f The new filter criteria.
-   */
   applyFilters(f: Core.FilterParams): void {
     this.filters = { ...this.filters, ...f };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  /**
-   * @description Resets active filters to system defaults.
-   */
   clearFilters(): void {
     this.filters = { ...this.defaultFilters };
     this.refreshData();
@@ -215,10 +195,6 @@ handleGenerateFormLink(item: any): void {
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Handles form submission, deciding whether to perform an update or creation based on presence of entity ID.
-   * @param formData The object submitted via the edit/create form.
-   */
   handleFormSubmitted(formData: any): void {
     const req = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     req.pipe(
