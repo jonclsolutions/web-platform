@@ -32,7 +32,7 @@
  * AKTUALIZACE: `FormData` instance nepodporuje čtení hodnot přes tečkovou notaci
  * (`payload.id`), jen `.get('id')`. Konzumentské komponenty napříč adminem (např.
  * `UserRequestComponent.handleFormSubmitted()`) ale rozhodují mezi update/create přes
- * `formData.id ? update() : create()` - na `FormData` instanci to VŽDY vyhodnotilo
+ * `formData.id ? update() : create()` - na `FormData` instanci to VŽDY vyhodnotí
  * `undefined`, tedy `create()`, i při editaci existujícího záznamu s přiloženým
  * souborem. Bez souboru je `payload` plain objekt, kde `.id` funguje normálně - proto
  * se bug projevoval JEN v kombinaci "edit" + "alespoň jeden soubor". Oprava v
@@ -76,11 +76,12 @@
  * už NEUKAZUJE žádný toast o výsledku uložení vůbec - jen emituje `payload`.
  * Vyhodnocení úspěch/neúspěch (zelený/červený toast) je VÝHRADNĚ na konzumentské
  * stránce v `subscribe({next, error})`, protože jen tam je v okamžiku volání known
- * skutečný výsledek z API - nikdy tak nemůže dojít k zobrazení obou toastů najednou,
- * ani k "falešně pozitivnímu" zelenému toastu. KAŽDÁ stránka používající
- * `FormBuilderComponent` musí mít vlastní `next: () => this.alertDialogService.open('Úspěch',
- * ..., 'success')` volání - bez toho po tomhle bugfixu uživatel neuvidí ŽÁDNÉ
- * potvrzení úspěchu (jen ticho + refresh dat), což je regrese, ne oprava.
+ * skutečný výsledek z API. Toast se tak nikdy nemůže objevit "špatně" ani zdvojeně,
+ * protože existuje přesně JEDNO místo (odpověď HTTP requestu), které o něm rozhoduje.
+ *
+ * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - dřív přímé
+ * `document.body.style.overflow = 'hidden'/'auto'` v ngOnInit/ngOnDestroy, teď
+ * deleguje na sdílený `ScrollLockService` (viz scroll-lock.service.ts).
  *
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.
@@ -88,14 +89,16 @@
  * - InputDefinition: Interface for rendering dynamic form inputs and validation metadata.
  * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla.
  * - MultiFileUploadComponent: Sdílený drag&drop multi-file upload, viz `'files'` case.
+ * - ScrollLockService: Sdílený zámek scrollu na pozadí.
  */
 
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy, inject } from '@angular/core';
 import { FormsModule, NgForm, FormControl } from '@angular/forms';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { PasswordRequirementsChecklistComponent } from '../../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { MultiFileUploadComponent } from '../../../../shared/components/multi-file-upload/multi-file-upload.component';
+import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 
 /**
  * @description Renders a dynamic form based on an array of field definitions.
@@ -124,6 +127,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   visibleInputDefinitions: InputDefinition[] = [];
 
+  private scrollLock = inject(ScrollLockService);
+
   constructor(
     private cd: ChangeDetectorRef,
     private alertDialogService: AlertDialogService
@@ -133,7 +138,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
    * @description Initializes the form state based on the provided data or default settings.
    */
   ngOnInit(): void {
-    document.body.style.overflow = 'hidden';
+    this.scrollLock.lock();
 
     if (this.formDataToEdit) {
       this.formData = { ...this.formDataToEdit };
@@ -184,7 +189,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    document.body.style.overflow = 'auto';
+    this.scrollLock.unlock();
   }
 
   /**

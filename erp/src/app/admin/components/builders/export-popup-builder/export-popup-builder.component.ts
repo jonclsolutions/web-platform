@@ -12,6 +12,7 @@
  * @dependencies
  * - CommonModule: @if/@for control flow.
  * - DomSanitizer: Safely renders inline SVG icons via [innerHTML].
+ * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
  *
  * @refactor-note (2026-08-18) SLOUPCOVÝ VÝBĚR PŘI EXPORTU - viz backlog task "export:
  * uživatelský výběr sloupců přes checkboxy". Přidán `@Input() columns`.
@@ -31,12 +32,18 @@
  * `ExportSelection` nese nové pole `rawFormat: boolean` - `TableBuilderComponent` podle
  * něj přepíná mezi zpracovaným (`getExportValueForKey`, české popisky) a syrovým
  * (`getRawExportValueForKey`, technické názvy sloupců, needitované hodnoty) exportem.
+ *
+ * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - dřív vlastní statický
+ * `scrollLockCount` + přímé `document.body.style.overflow`, teď deleguje na sdílený
+ * `ScrollLockService` (stejný mechanismus jako u všech ostatních overlay komponent -
+ * viz scroll-lock.service.ts).
  */
 
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, OnInit, OnDestroy, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ExportFormat, EXPORT_FORMAT_OPTIONS, ExportFormatOption } from '../../../../shared/interfaces/export-format';
+import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 
 /**
  * @description Minimal shape needed to render one row in the column-picker checklist -
@@ -85,7 +92,7 @@ export interface ExportSelection {
   styleUrl: './export-popup-builder.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ExportPopupBuilderComponent implements OnChanges {
+export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy {
   /** Number of records that will be exported - shown for context, no functional effect. */
   @Input() itemCount: number = 0;
   /** Disables format buttons and shows a spinner while the parent is building the file. */
@@ -126,6 +133,7 @@ export class ExportPopupBuilderComponent implements OnChanges {
   rawFormat = false;
 
   private sanitizer = inject(DomSanitizer);
+  private scrollLock = inject(ScrollLockService);
   private readonly formatOptions = EXPORT_FORMAT_OPTIONS;
 
   /**
@@ -134,6 +142,14 @@ export class ExportPopupBuilderComponent implements OnChanges {
    */
   get activeColumnSource(): ExportColumnOption[] {
     return this.rawFormat ? this.importableColumns : this.columns;
+  }
+
+  ngOnInit(): void {
+    this.scrollLock.lock();
+  }
+
+  ngOnDestroy(): void {
+    this.scrollLock.unlock();
   }
 
   /**

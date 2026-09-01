@@ -20,6 +20,7 @@
  * - HttpClient: přímé volání pro stažení šablony jako blob (DataHandler.get() nemá
  *   responseType 'blob' variantu - stejný důvod, proč TableBuilderComponent pro XLSX
  *   export taky nepoužívá DataHandler, ale volá SheetJS přímo).
+ * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
  *
  * @refactor-note (2026-08-23) PŘECHOD Z CENTRÁLNÍHO `core/import/*` NA PER-RESOURCE
  * ENDPOINTY (`{resource}/import/template`, `/import/validate`, `/import/commit`) -
@@ -39,13 +40,20 @@
  * moduly) by to zbytečně komplikovalo nasazení kvůli jedinému formátu s plnohodnotnou
  * náhradou (CSV). `formatOptions` proto XLSX z nabídky vyřazuje jen pro IMPORT popup -
  * `EXPORT_FORMAT_OPTIONS` samotné pole zůstává nedotčené (export ho pořád nabízí).
+ *
+ * @bugfix-note (2026-08-31) BACKLOG "zablokovat scroll na pozadí u popup builderů":
+ * tahle komponenta dřív scroll na pozadí VŮBEC nezamykala (na rozdíl od
+ * ExportPopupBuilderComponent) - přidán `implements OnInit, OnDestroy` +
+ * `ScrollLockService.lock()/unlock()`, stejný mechanismus jako u všech ostatních
+ * overlay komponent v aplikaci - viz scroll-lock.service.ts.
  */
 
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
+import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { environment } from '../../../../../environments/environment';
 import { ExportFormat, EXPORT_FORMAT_OPTIONS, ExportFormatOption } from '../../../../shared/interfaces/export-format';
 
@@ -90,7 +98,7 @@ type ImportStep = 'format' | 'upload' | 'summary' | 'done';
   styleUrl: './import-popup-builder.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ImportPopupBuilderComponent {
+export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   /** @description Resource klíč - MUSÍ přesně odpovídat `apiEndpoint` stránky a klíči v backendovém registru. */
   @Input({ required: true }) resource!: string;
 
@@ -101,6 +109,7 @@ export class ImportPopupBuilderComponent {
   private http = inject(HttpClient);
   private alertDialogService = inject(AlertDialogService);
   private cd = inject(ChangeDetectorRef);
+  private scrollLock = inject(ScrollLockService);
 
   step: ImportStep = 'format';
   selectedFormat: ExportFormat | null = null;
@@ -116,6 +125,14 @@ export class ImportPopupBuilderComponent {
   readonly formatOptions: ExportFormatOption[] = EXPORT_FORMAT_OPTIONS.filter(opt => opt.value !== 'xlsx');
 
   private readonly baseUrl = environment.base_api_url;
+
+  ngOnInit(): void {
+    this.scrollLock.lock();
+  }
+
+  ngOnDestroy(): void {
+    this.scrollLock.unlock();
+  }
 
   // ── Krok 1: volba formátu ────────────────────────────────────────────────
 

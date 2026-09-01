@@ -7,9 +7,24 @@
  * @description A reusable modal dialog component for capturing user confirmation before executing critical or destructive actions.
  * @dependencies
  * - Angular core: Component, EventEmitter, Input, Output decorators.
+ * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
+ *
+ * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - dřív vlastní `no-scroll` CSS
+ * třída přidávaná/odebíraná na `<body>` v `blockBackgroundScroll()`/
+ * `unblockBackgroundScroll()`. Na rozdíl od ostatních overlay komponent (které vznikají
+ * a zanikají 1:1 s viditelností přes `@if` v rodičovské šabloně, takže zámek šel do
+ * `ngOnInit`/`ngOnDestroy`) je tahle komponenta typicky DLOUHOŽIJÍCÍ SINGLETON řízený
+ * `ConfirmDialogService` - `show()`/`hide()` se volají IMPERATIVNĚ na stále existující
+ * instanci, ne přes vznik/zánik komponenty. Zámek proto žije přímo v `show()`/`hide()`,
+ * ne v lifecycle hoocích, a deleguje na sdílený `ScrollLockService` (stejné referenční
+ * počítadlo jako u všech ostatních modalů v aplikaci - viz scroll-lock.service.ts),
+ * takže se správně chová i když je confirm dialog otevřený NAD jiným už zamčeným
+ * overlayem (např. potvrzení mazání nad export popupem) - zavření confirm dialogu pak
+ * neodemkne scroll předčasně, dokud je pořád otevřený ten vnější overlay.
  */
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 
 /**
  * @description Renders a modal confirmation dialog to prevent accidental user actions.
@@ -36,12 +51,14 @@ export class ConfirmDialogComponent {
 
   isVisible: boolean = false;
 
+  private scrollLock = inject(ScrollLockService);
+
   /**
    * @description Displays the dialog and locks the background scroll.
    */
   show(): void {
     this.isVisible = true;
-    this.blockBackgroundScroll();
+    this.scrollLock.lock();
   }
 
   /**
@@ -49,7 +66,7 @@ export class ConfirmDialogComponent {
    */
   public hide(): void {
     this.isVisible = false;
-    this.unblockBackgroundScroll();
+    this.scrollLock.unlock();
   }
 
   /**
@@ -66,19 +83,5 @@ export class ConfirmDialogComponent {
   cancel(): void {
     this.onCancel.emit();
     this.hide(); 
-  }
-
-  /**
-   * @description Adds a class to the body element to disable scrolling.
-   */
-  private blockBackgroundScroll(): void {
-    document.body.classList.add('no-scroll');
-  }
-
-  /**
-   * @description Removes the scroll-blocking class from the body.
-   */
-  private unblockBackgroundScroll(): void {
-    document.body.classList.remove('no-scroll');
   }
 }

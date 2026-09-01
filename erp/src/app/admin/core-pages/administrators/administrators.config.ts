@@ -56,9 +56,9 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
   // sysadmin (žádné `permission` pole zde - viditelnost řídí komponenta přes
   // `this.isSysadmin` v toolbarButtons getteru, stejný vzor jako filtrování
   // `two_fa_forced_by_admin` pole ve formuláři).
-  { action: 'openEmailAccessPolicy', label: 'Domény e-mailů', icon: '🌐', class: 'btn-neutral', showIf: true },
-  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '📊', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
-  { action: 'toggleTable', label: 'Koš', icon: '🗑️', class: 'btn-trash', permission: 'view-deleted' }
+  { action: 'openEmailAccessPolicy', label: 'Domény e-mailů', icon: '', class: 'btn-neutral', showIf: true },
+  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'toggleTable', label: 'Koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
 export const RESET_PASSWORD_FORM_FIELDS: Core.InputDefinition[] = [

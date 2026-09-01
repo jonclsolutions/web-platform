@@ -67,6 +67,12 @@
  * - polarArea: zobrazí se (Chart.js dělí úhel rovnoměrně mezi kategorie bez ohledu na
  *   hodnotu, jen poloměr výseče odpovídá hodnotě - nulová hodnota = viditelný "bod").
  *
+ * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - vlastní `lockBackgroundScroll()`/
+ * `unlockBackgroundScroll()` (position:fixed pinning, viz bugfix-note 2026-08-27v9)
+ * nahrazeny sdíleným `ScrollLockService`, který používá STEJNÝ mechanismus (position:
+ * fixed) napříč všemi overlay komponentami v aplikaci - viz scroll-lock.service.ts.
+ * Chování beze změny, jen sdílené referenční počítadlo s ostatními modaly.
+ *
  * @note GDPR/data-minimization by design: the report can only ever show columns the
  * page config explicitly marks `chartable`, so a generated PDF report structurally
  * cannot leak personal data.
@@ -76,6 +82,7 @@
  * - EntityCrudService: single POST to `web/logs` for audit trail.
  * - chart.js (`chart.js/auto`, dynamic import): renders one <canvas> per section.
  * - jsPDF + html2canvas (dynamic import): client-side PDF snapshot of the report body.
+ * - ScrollLockService: Sdílený zámek scrollu na pozadí.
  */
 
 import {
@@ -91,6 +98,7 @@ import { DataHandler } from '../../../../core/services/data-handler.service';
 import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import {
   GraphColumnOption, ColumnChartMode, MetricChartMode, DistributionChartType,
   ChartModeOption, COLUMN_CHART_MODE_OPTIONS, METRIC_CHART_MODE_OPTIONS
@@ -330,15 +338,13 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   /** Sdílené časové "buckety" (stejná osa X) pro VŠECHNY časové grafy v reportu. */
   private canonicalBuckets: BucketDescriptor[] = [];
 
-  /** Scroll pozice stránky ULOŽENÁ při otevření popupu - viz lockBackgroundScroll()/unlockBackgroundScroll(). */
-  private savedScrollY = 0;
-
   private destroy$ = new Subject<void>();
   private ChartJS: any = null;
   private chartInstances: any[] = [];
 
   public alertDialogService = inject(AlertDialogService);
   public authService = inject(AuthService);
+  private scrollLock = inject(ScrollLockService);
 
   private readonly webLogsEndpoint = 'web/logs';
   private _logCrud?: EntityCrudService<any>;
@@ -383,7 +389,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   /** @description Locks background scroll and auto-generates the report immediately on open (all columns, no date restriction). */
   ngOnInit(): void {
-    this.lockBackgroundScroll();
+    this.scrollLock.lock();
     this.generateReport();
   }
 
@@ -392,32 +398,10 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   }
 
   ngOnDestroy(): void {
-    this.unlockBackgroundScroll();
+    this.scrollLock.unlock();
     this.destroyCharts();
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  // ── Background scroll lock ─────────────────────────────────────────────
-
-  private lockBackgroundScroll(): void {
-    this.savedScrollY = window.scrollY;
-    const body = document.body.style;
-    body.position = 'fixed';
-    body.top = `-${this.savedScrollY}px`;
-    body.left = '0';
-    body.right = '0';
-    body.width = '100%';
-  }
-
-  private unlockBackgroundScroll(): void {
-    const body = document.body.style;
-    body.position = '';
-    body.top = '';
-    body.left = '';
-    body.right = '';
-    body.width = '';
-    window.scrollTo(0, this.savedScrollY);
   }
 
   // ── Sidebar: column inclusion + per-column chart type ────────────────────

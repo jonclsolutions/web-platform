@@ -9,6 +9,7 @@
  * - CommonModule, DatePipe, CurrencyPipe: Formatting utilities.
  * - ItemDetailsColumns: Interface for column metadata.
  * - InputDefinition: Interface for field configuration and options.
+ * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
  *
  * @refactor-note (2026-08) Přidán typ `'files'` (množné číslo) - zobrazuje seznam VÍCE
  * příloh (z `web_attachments` relace, pole objektů `{id, original_filename, mime_type,
@@ -22,12 +23,17 @@
  *      (`/download-file/...`) - `getViewUrl()` dělá to samé, jen pro protějškovou
  *      inline-preview routu (`/view-file/...`), viz PublicFileDownloadController
  *      na backendu.
+ * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - dřív přímé
+ *      `document.body.style.overflow = 'hidden'/'auto'` v ngOnInit/ngOnDestroy,
+ *      teď deleguje na sdílený `ScrollLockService` (referenční počítadlo napříč
+ *      všemi overlay komponentami v aplikaci - viz scroll-lock.service.ts).
  */
 
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { ItemDetailsColumns } from '../../../../shared/interfaces/item-details-columns';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
+import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { environment } from '../../../../../environments/environment';
 
 /**
@@ -48,6 +54,9 @@ export class DetailsBuilderComponent implements OnInit, OnDestroy {
   @Input() itemDetailColumns: ItemDetailsColumns[] = [];
   @Input() inputDefinitions: InputDefinition[] = [];
   @Output() closeDetails = new EventEmitter<void>();
+
+  private scrollLock = inject(ScrollLockService);
+
   constructor(
 private datePipe: DatePipe,
 private currencyPipe: CurrencyPipe
@@ -57,14 +66,14 @@ private currencyPipe: CurrencyPipe
    * @description Locks page scrolling while the detail modal is active.
    */
 ngOnInit(): void {
-document.body.style.overflow = 'hidden';
+    this.scrollLock.lock();
   }
 
 /**
    * @description Restores page scrolling upon component destruction.
    */
 ngOnDestroy(): void {
-document.body.style.overflow = 'auto';
+    this.scrollLock.unlock();
   }
 
 onClose(): void {
