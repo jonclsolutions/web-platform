@@ -6,41 +6,24 @@
  * @author RPSW
  * @created 2025
  * @description Controller responsible for managing sales lead lifecycle, including filtering, lifecycle state management (soft-delete), and comprehensive administrative audit logging.
- * @refactor-note (2026) Přidány generateLink() a showByToken() - viz metody níže pro
- *      detaily o veřejném/adminovém rozdělení a bezpečnostních poznámkách.
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený LogsActivity trait místo
- * lokální duplicitní logAction(). Doménově beze změny (WebLog::class).
+ * @refactor-note (2026) Přidány generateLink() a showByToken().
+ * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený LogsActivity trait.
  *
- * @refactor-note (2026-08-23a) HROMADNÉ MAZÁNÍ V JEDNOM REQUESTU: přidána bulkDestroy() -
- * viz TableBuilderComponent.onBulkDeleteClick() (volá POST web/sales_leads/bulk-delete).
- * destroy() nemá žádný vedlejší efekt na soubory (žádné přílohy) - jediný rozdíl oproti
- * generickému Model::destroy($ids) je explicitní forceDelete()/delete() volba, stejně
- * jako u WebNewsController.
+ * @refactor-note (2026-08-23a) HROMADNÉ MAZÁNÍ V JEDNOM REQUESTU: přidána bulkDestroy().
  *
- * @refactor-note (2026-08-23b) HROMADNÝ IMPORT (importTemplate/importValidate/
- * importCommit) - per-controller vzor. Dvě záměrné odchylky od store():
- * 1) `user_id` NENÍ importovatelné pole - import nezná reálné propojení na existující
- *    účet, na rozdíl od store() (kde se dá poslat ručně nebo doplní podle přihlášeného
- *    uživatele). Vždy zůstává `null` u importovaných leadů.
- * 2) `salesman_name` se PŘEBÍRÁ ZE SOUBORU beze změny - na rozdíl od store(), který
- *    (pokud pole chybí) automaticky doplní jméno PŘIHLÁŠENÉHO uživatele. U importu
- *    (typicky historická data z jiného systému/CSV od obchodního týmu) dává větší
- *    smysl zachovat, kdo lead skutečně vlastnil, ne přiřadit všechno tomu, kdo import
- *    spustil.
- * `public_token`/`public_token_used_at` (viz generateLink()/showByToken()) zůstávají
- * MIMO import - jde o systémem generovaná pole, ne uživatelský vstup (viz i předchozí
- * @note níže, zachováno beze změny).
- * @note `public_token`/`public_token_used_at` (viz generateLink()/showByToken()) NEJSOU
- * a NESMÍ být součástí případného budoucího importu - jde o systémem generovaná pole,
- * ne uživatelský vstup.
+ * @refactor-note (2026-08-23b) HROMADNÝ IMPORT - dvě záměrné odchylky od store():
+ * 1) `user_id` NENÍ importovatelné pole - vždy zůstává `null` u importovaných leadů.
+ * 2) `salesman_name` se PŘEBÍRÁ ZE SOUBORU beze změny.
+ * `public_token`/`public_token_used_at` zůstávají MIMO import.
  *
- * @bugfix-note (2026-08-24) BACKLOG "security_events musí pokrýt VŠECHNY typy útoku":
- * `showByToken()` je VEŘEJNÝ, nepřihlášený endpoint vracející osobní údaje kontaktu
- * (jméno, e-mail, telefon) podle uhodnutelnosti tokenu - neplatný nebo už jednou použitý
- * token se dřív nezapisoval NIKAM (ani do `core_logs`, ani do bezpečnostního
- * monitoringu). Přidán zápis `sales_lead_token_invalid` (warning) pro oba případy (token
- * neexistuje / token existuje, ale byl už použit) - opakované pokusy o různé neplatné
- * tokeny ze stejné IP jsou signál enumerace veřejných lead odkazů.
+ * @bugfix-note (2026-08-24) `showByToken()` teď zapisuje `sales_lead_token_invalid`
+ * do core_security_events pro neplatný i už použitý token.
+ *
+ * @refactor-note (2026-08-31) BACKLOG "osiřelé importní soubory": import
+ * validate/commit flow přepsán na sdílený `HandlesImportBatches` trait - dřív
+ * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
+ * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
+ * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -48,8 +31,8 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Web\WebSalesLead;
 use App\Models\Web\WebLog;
-use App\Models\Core\CoreImportBatch;
 use App\Models\Core\CoreSecurityEvent;
+use App\Traits\HandlesImportBatches;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -57,10 +40,7 @@ use App\Http\Requests\Web\WebSalesLead\StoreWebSalesLeadRequest;
 use App\Http\Resources\Web\WebSalesLeadResource;
 use App\Services\Import\ImportFileParser;
 use App\Services\Import\ImportRowValidator;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * @description Manages sales lead data operations within the CRM subsystem.
@@ -69,6 +49,7 @@ use Illuminate\Support\Str;
 class WebSalesLeadController extends Controller
 {
     use LogsActivity;
+    use HandlesImportBatches;
 
     /**
      * @description Sloupce, které smí přijít z importního souboru - všechna pole ze
@@ -81,17 +62,12 @@ class WebSalesLeadController extends Controller
         'last_contact_date', 'next_step', 'rejection_reason',
     ];
 
-    private const TEMP_DISK = 'local';
-
     /**
      * Retrieves a list of sales leads based on filtering and pagination criteria.
      */
-/**
+    /**
      * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": `search` rozšířen o
-     * `contact_phone`, `location`, `salesman_name` - tyhle sloupce už byly dostupné
-     * jako individuální LIKE filtry níže, ale v globálním `search` chyběly. Teď
-     * `search` pokrývá STEJNOU množinu textových sloupců jako jednotlivé filtry,
-     * konzistentně s ostatními kontrolery v projektu.
+     * `contact_phone`, `location`, `salesman_name`.
      */
     public function index(Request $request): JsonResponse
     {
@@ -225,8 +201,7 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * @description Hromadně smaže vybrané leady JEDNÍM requestem - viz
-     * TableBuilderComponent.onBulkDeleteClick() (volá POST web/sales_leads/bulk-delete).
+     * @description Hromadně smaže vybrané leady JEDNÍM requestem.
      * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
      */
     public function bulkDestroy(Request $request): JsonResponse
@@ -247,9 +222,6 @@ class WebSalesLeadController extends Controller
                 $items = WebSalesLead::withTrashed()->whereIn('id', $ids)->get();
 
                 foreach ($items as $item) {
-                    // Explicitní forceDelete()/delete() - Model::destroy($ids) by interně
-                    // vždy volalo jen delete(), což by u SoftDeletes modelu znamenalo
-                    // opakovaný soft-delete, ne skutečné trvalé smazání.
                     $forceDelete ? $item->forceDelete() : $item->delete();
                     $deletedCount++;
                 }
@@ -281,8 +253,7 @@ class WebSalesLeadController extends Controller
 
     /**
      * @description Stáhne prázdnou importní šablonu (CSV/TXT/JSON) se sloupci
-     * z IMPORTABLE_COLUMNS. CSV/TXT používá STEJNÝ oddělovač jako
-     * TableBuilderComponent.downloadCsv()/downloadTxt() (středník / tabulátor).
+     * z IMPORTABLE_COLUMNS.
      */
     public function importTemplate(Request $request)
     {
@@ -312,6 +283,8 @@ class WebSalesLeadController extends Controller
 
     /**
      * @description Dry-run validace importního souboru - NEZAPISUJE nic do DB.
+     * @refactor-note (2026-08-31) Uložení souboru + vytvoření CoreImportBatch teď jde
+     * přes `startImportBatch()` (HandlesImportBatches trait).
      */
     public function importValidate(
         Request $request,
@@ -346,21 +319,15 @@ class WebSalesLeadController extends Controller
             }
         }
 
-        $tempPath = 'imports/' . Str::uuid() . '.' . $validated['format'];
-        Storage::disk(self::TEMP_DISK)->put($tempPath, file_get_contents($request->file('file')->getRealPath()));
-
-        $batch = CoreImportBatch::create([
-            'resource'          => 'web/sales_leads',
-            'user_id'           => $request->user()->id,
-            'original_filename' => $request->file('file')->getClientOriginalName(),
-            'format'            => $validated['format'],
-            'temp_path'         => $tempPath,
-            'status'            => 'validated',
-            'total_rows'        => count($parsed['rows']),
-            'valid_rows'        => count($validRows),
-            'invalid_rows'      => $invalidCount,
-            'error_summary'     => $errors,
-        ]);
+        $batch = $this->startImportBatch(
+            $request,
+            'web/sales_leads',
+            $validated['format'],
+            count($parsed['rows']),
+            count($validRows),
+            $invalidCount,
+            $errors
+        );
 
         return response()->json([
             'import_token' => $batch->id,
@@ -373,10 +340,11 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * @description Potvrdí a provede skutečný zápis importu. NEVOLÁ store() - viz
-     * refactor-note v hlavičce třídy (žádné automatické přiřazení user_id/salesman_name
-     * podle přihlášeného admina - salesman_name se zachovává ze souboru, user_id
-     * zůstává vždy null).
+     * @description Potvrdí a provede skutečný zápis importu. NEVOLÁ store() - žádné
+     * automatické přiřazení user_id/salesman_name podle přihlášeného admina.
+     * @refactor-note (2026-08-31) Přepsáno na `findPendingImportBatch()` +
+     * `runImportCommit()` (HandlesImportBatches trait) - dočasný soubor se teď maže
+     * VŽDY (i při selhání), viz trait hlavička.
      */
     public function importCommit(
         Request $request,
@@ -384,66 +352,56 @@ class WebSalesLeadController extends Controller
         ImportRowValidator $rowValidator
     ): JsonResponse {
         $validated = $request->validate(['import_token' => ['required', 'integer']]);
-        $batch = CoreImportBatch::find($validated['import_token']);
+        $batch = $this->findPendingImportBatch($request, $validated['import_token']);
 
-        if ($batch === null || $batch->user_id !== $request->user()->id || $batch->status !== 'validated') {
+        if ($batch === null) {
             return response()->json(['message' => 'Import nebyl nalezen nebo už byl zpracován.'], 404);
         }
 
-        if (!Storage::disk(self::TEMP_DISK)->exists($batch->temp_path)) {
-            return response()->json(['message' => 'Dočasný soubor importu vypršel. Nahrajte prosím soubor znovu.'], 410);
-        }
-
-        $batch->update(['status' => 'processing']);
-
         try {
-            $realPath = Storage::disk(self::TEMP_DISK)->path($batch->temp_path);
-            $uploadedFile = new UploadedFile($realPath, $batch->original_filename ?? 'import', null, null, true);
-            $parsed = $parser->parse($uploadedFile, $batch->format, self::IMPORTABLE_COLUMNS, 20000);
-            $rules = $rowValidator->buildRules(StoreWebSalesLeadRequest::class, self::IMPORTABLE_COLUMNS);
+            $result = $this->runImportCommit($batch, function ($uploadedFile) use ($parser, $rowValidator, $batch) {
+                $parsed = $parser->parse($uploadedFile, $batch->format, self::IMPORTABLE_COLUMNS, 20000);
+                $rules = $rowValidator->buildRules(StoreWebSalesLeadRequest::class, self::IMPORTABLE_COLUMNS);
 
-            $imported = 0;
-            DB::transaction(function () use ($parsed, $rules, $rowValidator, &$imported) {
-                foreach ($parsed['rows'] as $row) {
-                    if ($rowValidator->validateRow($row, $rules) !== null) {
-                        continue;
+                $imported = 0;
+                DB::transaction(function () use ($parsed, $rules, $rowValidator, &$imported) {
+                    foreach ($parsed['rows'] as $row) {
+                        if ($rowValidator->validateRow($row, $rules) !== null) {
+                            continue;
+                        }
+                        // user_id ZÁMĚRNĚ chybí z IMPORTABLE_COLUMNS - array_intersect_key
+                        // ho tak z $row nikdy nevezme.
+                        WebSalesLead::create(array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS)));
+                        $imported++;
                     }
-                    // user_id ZÁMĚRNĚ chybí z IMPORTABLE_COLUMNS - array_intersect_key
-                    // ho tak z $row nikdy nevezme, i kdyby náhodou byl v souboru přítomný
-                    // sloupec navíc (což by ostatně assertHeadersMatch() odmítl už dřív).
-                    WebSalesLead::create(array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS)));
-                    $imported++;
-                }
+                });
+
+                return [
+                    'imported_count' => $imported,
+                    'skipped_count'  => count($parsed['rows']) - $imported,
+                ];
             });
-
-            $skipped = count($parsed['rows']) - $imported;
-
-            $batch->update([
-                'status'         => 'completed',
-                'imported_count' => $imported,
-                'skipped_count'  => $skipped,
-                'completed_at'   => now(),
-            ]);
-            Storage::disk(self::TEMP_DISK)->delete($batch->temp_path);
 
             $this->logAction(
                 $request,
                 WebLog::class,
                 'import',
                 'WebSalesLead',
-                "Hromadný import: přidáno {$imported} leadů, přeskočeno {$skipped} (soubor '{$batch->original_filename}').",
+                "Hromadný import: přidáno {$result['imported_count']} leadů, přeskočeno {$result['skipped_count']} (soubor '{$batch->original_filename}').",
                 null,
                 'WebSalesLead'
             );
 
             return response()->json(['data' => [
                 'queued'         => false,
-                'imported_count' => $imported,
-                'skipped_count'  => $skipped,
+                'imported_count' => $result['imported_count'],
+                'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
             ]]);
+        } catch (\RuntimeException $e) {
+            // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
+            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            $batch->update(['status' => 'failed']);
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při importu: " . $e->getMessage());
             return response()->json(['message' => 'Import selhal.'], 500);
         }
@@ -516,10 +474,6 @@ class WebSalesLeadController extends Controller
      *              formuláře. Vrací jen úzkou, bezpečnou podmnožinu polí.
      * @note Musí být zaregistrována v routes/api.php MIMO auth middleware skupinu.
      * @note Vrací 410 Gone, pokud byl odkaz už jednou použit.
-     * @bugfix-note (2026-08-24) Neplatný i už použitý token teď zapisuje
-     * `sales_lead_token_invalid` do core_security_events - viz bugfix-note v hlavičce
-     * třídy. Endpoint vrací osobní údaje kontaktu, takže enumerace tokenů je citlivější
-     * než u čistě informačních veřejných endpointů.
      */
     public function showByToken(Request $request, string $token): JsonResponse
     {

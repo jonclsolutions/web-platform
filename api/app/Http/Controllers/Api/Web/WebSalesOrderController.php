@@ -56,7 +56,7 @@ class WebSalesOrderController extends Controller
     /**
      * Storage folder for attachments within public disk.
      */
-    private const ATTACHMENT_FOLDER = 'sales_orders';
+    private const ATTACHMENT_FOLDER = 'web/sales_orders';
 
     /**
      * Retrieves a paginated list of sales orders with filtering and eager-loaded lead data.

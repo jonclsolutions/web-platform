@@ -40,7 +40,6 @@ export const JOB_APPLICATION_TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-export',
     showIf: true
   },
-  { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
   { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   {
     action: 'toggleTable',

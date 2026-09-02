@@ -27,9 +27,9 @@
 import * as Core from '../../../shared/imports/core-providers';
 
 export const SUPPORT_TICKET_BUTTONS: Core.TableButtons[] = [
-  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-support-tickets-update', icon: 'edit' },
-  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-support-tickets-delete', icon: 'delete' },
+  { display_name: '', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details' },
+  { display_name: '', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-support-tickets-update' },
+  { display_name: '', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-support-tickets-delete' },
 ];
 export const SUPPORT_TICKET_TOOLBAR_BUTTONS: Core.Button[] = [
   {

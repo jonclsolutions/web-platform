@@ -6,10 +6,14 @@
     @created: 2025
     @refactor-note (2026-08-2): Přidán @case ('files') - výpis VÍCE příloh, viz
         details-builder.component.ts.
-    @refactor-note (2026-08-3): "Zobrazit" odkaz u @case('file') i @case('files') přepnut
-        z přímého [href]="fileUrl"/[href]="file.url" (veřejný storage symlink, vždy
-        hashované jméno) na [href]="getViewUrl(...)" (API proxy, inline preview pod
-        originálním jménem) - viz getViewUrl() v details-builder.component.ts.
+    @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": @case
+        ('files') teď používá `file.view_url`/`file.download_url` PŘÍMO (hotové,
+        backendem podepsané URL z WebAttachmentResource) místo volání
+        getViewUrl(file.url)/downloadFile(file.url) - ty skládaly URL ze starého,
+        dnes neplatného route vzoru a navíc `file.url` u příloh na `private` disku
+        beztak nefunguje (žádný symlink). @case ('file') (legacy - jednoduchý URL
+        string sloupec, ne objekt přílohy) zůstává na getViewUrl()/downloadFile()
+        beze změny, viz poznámka v details-builder.component.ts.
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -60,8 +64,8 @@
 <span class="details-file-size">{{ formatFileSize(file.size_bytes) }}</span>
 </div>
 <div class="file-actions">
-<a [href]="getViewUrl(file.url)" target="_blank" class="btn-action view">📄 Zobrazit</a>
-<button type="button" (click)="downloadFile(file.url)" class="btn-action download">
+<a [href]="file.view_url" target="_blank" class="btn-action view">📄 Zobrazit</a>
+<button type="button" (click)="downloadFile(file.download_url)" class="btn-action download">
                                     📥 Stáhnout
 </button>
 </div>

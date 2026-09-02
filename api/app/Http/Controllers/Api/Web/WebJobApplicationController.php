@@ -57,7 +57,7 @@ class WebJobApplicationController extends Controller
     /**
      * Storage folder for CV uploads within the public disk.
      */
-    private const CV_FOLDER = 'cv_files';
+    private const CV_FOLDER = 'web/cv_files';
 
     /**
      * Retrieves a paginated list of job applications with optional search and filtering.

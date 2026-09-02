@@ -130,8 +130,8 @@ export const PROJECT_THREAD_BUTTONS: Core.TableButtons[] = [
 ];
 
 export const PROJECT_THREAD_TOOLBAR_BUTTONS: Core.Button[] = [
-  { action: 'toggleThreadsFilters', label: 'Filtry', icon: '🔍', class: 'btn-filter', isActive: false },
-  { action: 'exportThreadsTable', label: 'Export', icon: '📥', class: 'btn-export', showIf: true },
+  { action: 'toggleThreadsFilters', label: 'Filtry', icon: '', class: 'btn-filter', isActive: false },
+  { action: 'exportThreadsTable', label: 'Export', icon: '', class: 'btn-export', showIf: true },
 ];
 
 export const PROJECT_THREAD_FILTER_COLUMNS: Core.FilterColumns[] = [

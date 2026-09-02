@@ -20,16 +20,26 @@
  * Dve zamerne odchylky od store():
  * 1) `state` (stav tiketu) NENI vubec v StoreWebSupportTicketRequest::rules()
  *    (na store() se nikdy nenastavuje, DB defaultuje na 'new'), ale pro IMPORT
- *    historickych/archivnich ticketu dava smysl umet rovnou nastavit finalni stav
- *    (napr. hromadne naimportovat uz uzavrene stare tickety). Doplneno VLASTNI
- *    validacni pravidlo pro state navic k tomu, co vraci ImportRowValidator::buildRules()
- *    (ta bere jen pravidla, ktera uz Store request zna) - bez tohohle by state
- *    prosel do DB BEZ JAKEKOLIV validace (zadne pravidlo = Laravel ho tise preskoci).
+ *    historickych/archivnich ticketu dava smysl umet rovnou nastavit finalni stav.
+ *    Doplneno VLASTNI validacni pravidlo pro state navic k tomu, co vraci
+ *    ImportRowValidator::buildRules() (ta bere jen pravidla, ktera uz Store request zna).
  * 2) Import NEPRIRAZUJE user_id/user_name_plain/user_plain podle prihlaseneho
  *    admina (jak to dela store() pro logged-in uzivatele) - naopak ZACHOVAVA hodnoty
  *    user_name_plain/user_plain primo ze souboru (historicky zadatel), user_id
  *    zustava vzdy null (import nezna realne propojeni na existujici ucet).
  * attachment (upload souboru) neni a nemuze byt soucasti tabulkoveho importu.
+ *
+ * @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": přílohy
+ * teď jdou na disk 'private' (default v HandlesAttachments) a do modulově prefixované
+ * složky `web/tickets` (viz ATTACHMENT_FOLDER). Staré legacy záznamy (attachment_path
+ * sloupec, předcházející přechod na web_attachments) zůstávají beze změny na 'tickets'/
+ * disk 'public' - viz AttachmentDownloadController::FOLDER_MAP.
+ *
+ * @refactor-note (2026-08-31v2) BACKLOG "osiřelé importní soubory": import
+ * validate/commit flow přepsán na sdílený `HandlesImportBatches` trait - dřív
+ * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
+ * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
+ * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -37,20 +47,17 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Web\WebSupportTicket;
 use App\Models\Web\WebLog;
-use App\Models\Core\CoreImportBatch;
 use App\Http\Requests\Web\WebSupportTicket\StoreWebSupportTicketRequest;
 use App\Http\Requests\Web\WebSupportTicket\UpdateWebSupportTicketRequest;
 use App\Http\Resources\Web\WebSupportTicketResource;
 use App\Services\Import\ImportFileParser;
 use App\Services\Import\ImportRowValidator;
 use App\Traits\HandlesAttachments;
+use App\Traits\HandlesImportBatches;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 /**
  * @description Controller responsible for processing customer support tickets.
@@ -59,12 +66,13 @@ use Illuminate\Support\Str;
 class WebSupportTicketController extends Controller
 {
     use HandlesAttachments;
+    use HandlesImportBatches;
     use LogsActivity;
 
     /**
-     * Storage folder for ticket attachments within the public disk.
+     * Storage folder for ticket attachments within the private disk.
      */
-    private const ATTACHMENT_FOLDER = 'tickets';
+    private const ATTACHMENT_FOLDER = 'web/tickets';
 
     /**
      * @description Sloupce, ktere smi prijit z importniho souboru. attachment (soubor)
@@ -74,8 +82,6 @@ class WebSupportTicketController extends Controller
     private const IMPORTABLE_COLUMNS = [
         'user_name_plain', 'user_plain', 'category', 'subject', 'description', 'priority', 'state',
     ];
-
-    private const TEMP_DISK = 'local';
 
     /**
      * Retrieves a paginated list of support tickets based on filters and sorting criteria.
@@ -218,7 +224,7 @@ class WebSupportTicketController extends Controller
      * TableBuilderComponent.onBulkDeleteClick() (volá POST web/support_tickets/bulk-delete).
      * Replikuje STEJNOU logiku jako destroy() (úklid přílohy z disku při
      * force_delete=true) - ne generický Model::destroy($ids), který by tenhle úklid
-     * potichu přeskočil a nechal osiřelé soubory ve storage/app/public/tickets.
+     * potichu přeskočil a nechal osiřelé soubory na disku.
      * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
      */
     public function bulkDestroy(Request $request): JsonResponse
@@ -318,6 +324,9 @@ class WebSupportTicketController extends Controller
 
     /**
      * @description Dry-run validace importního souboru - NEZAPISUJE nic do DB.
+     * @refactor-note (2026-08-31) Uložení souboru + vytvoření CoreImportBatch teď jde
+     * přes `startImportBatch()` (HandlesImportBatches trait) místo ručního
+     * `Storage::put()`/`CoreImportBatch::create()`.
      */
     public function importValidate(
         Request $request,
@@ -352,21 +361,15 @@ class WebSupportTicketController extends Controller
             }
         }
 
-        $tempPath = 'imports/' . Str::uuid() . '.' . $validated['format'];
-        Storage::disk(self::TEMP_DISK)->put($tempPath, file_get_contents($request->file('file')->getRealPath()));
-
-        $batch = CoreImportBatch::create([
-            'resource'          => 'web/support_tickets',
-            'user_id'           => $request->user()->id,
-            'original_filename' => $request->file('file')->getClientOriginalName(),
-            'format'            => $validated['format'],
-            'temp_path'         => $tempPath,
-            'status'            => 'validated',
-            'total_rows'        => count($parsed['rows']),
-            'valid_rows'        => count($validRows),
-            'invalid_rows'      => $invalidCount,
-            'error_summary'     => $errors,
-        ]);
+        $batch = $this->startImportBatch(
+            $request,
+            'web/support_tickets',
+            $validated['format'],
+            count($parsed['rows']),
+            count($validRows),
+            $invalidCount,
+            $errors
+        );
 
         return response()->json([
             'import_token' => $batch->id,
@@ -383,6 +386,9 @@ class WebSupportTicketController extends Controller
      * refactor-note v hlavičce třídy (žádné automatické přiřazení přihlášenému
      * adminovi, žádná příloha; state defaultuje na 'new', pokud v souboru chybí,
      * stejně jako by to udělal DB default při běžném vytvoření).
+     * @refactor-note (2026-08-31) Přepsáno na `findPendingImportBatch()` +
+     * `runImportCommit()` (HandlesImportBatches trait) - dočasný soubor se teď maže
+     * VŽDY (i při selhání), viz trait hlavička.
      */
     public function importCommit(
         Request $request,
@@ -390,71 +396,62 @@ class WebSupportTicketController extends Controller
         ImportRowValidator $rowValidator
     ): JsonResponse {
         $validated = $request->validate(['import_token' => ['required', 'integer']]);
-        $batch = CoreImportBatch::find($validated['import_token']);
+        $batch = $this->findPendingImportBatch($request, $validated['import_token']);
 
-        if ($batch === null || $batch->user_id !== $request->user()->id || $batch->status !== 'validated') {
+        if ($batch === null) {
             return response()->json(['message' => 'Import nebyl nalezen nebo už byl zpracován.'], 404);
         }
 
-        if (!Storage::disk(self::TEMP_DISK)->exists($batch->temp_path)) {
-            return response()->json(['message' => 'Dočasný soubor importu vypršel. Nahrajte prosím soubor znovu.'], 410);
-        }
-
-        $batch->update(['status' => 'processing']);
-
         try {
-            $realPath = Storage::disk(self::TEMP_DISK)->path($batch->temp_path);
-            $uploadedFile = new UploadedFile($realPath, $batch->original_filename ?? 'import', null, null, true);
-            $parsed = $parser->parse($uploadedFile, $batch->format, self::IMPORTABLE_COLUMNS, 20000);
-            $rules = $this->buildImportRules($rowValidator);
+            $result = $this->runImportCommit($batch, function ($uploadedFile) use ($parser, $rowValidator, $batch) {
+                $parsed = $parser->parse($uploadedFile, $batch->format, self::IMPORTABLE_COLUMNS, 20000);
+                $rules = $this->buildImportRules($rowValidator);
 
-            $imported = 0;
-            DB::transaction(function () use ($parsed, $rules, $rowValidator, &$imported) {
-                foreach ($parsed['rows'] as $row) {
-                    if ($rowValidator->validateRow($row, $rules) !== null) {
-                        continue;
+                $imported = 0;
+                DB::transaction(function () use ($parsed, $rules, $rowValidator, &$imported) {
+                    foreach ($parsed['rows'] as $row) {
+                        if ($rowValidator->validateRow($row, $rules) !== null) {
+                            continue;
+                        }
+
+                        $safeData = array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS));
+                        // 'state' prázdné/chybějící -> 'new', stejně jako DB default při
+                        // běžném vytvoření přes store() (které 'state' vůbec neposílá).
+                        if (empty($safeData['state'])) {
+                            $safeData['state'] = 'new';
+                        }
+
+                        WebSupportTicket::create($safeData);
+                        $imported++;
                     }
+                });
 
-                    $safeData = array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS));
-                    // 'state' prázdné/chybějící -> 'new', stejně jako DB default při
-                    // běžném vytvoření přes store() (které 'state' vůbec neposílá).
-                    if (empty($safeData['state'])) {
-                        $safeData['state'] = 'new';
-                    }
-
-                    WebSupportTicket::create($safeData);
-                    $imported++;
-                }
+                return [
+                    'imported_count' => $imported,
+                    'skipped_count'  => count($parsed['rows']) - $imported,
+                ];
             });
-
-            $skipped = count($parsed['rows']) - $imported;
-
-            $batch->update([
-                'status'         => 'completed',
-                'imported_count' => $imported,
-                'skipped_count'  => $skipped,
-                'completed_at'   => now(),
-            ]);
-            Storage::disk(self::TEMP_DISK)->delete($batch->temp_path);
 
             $this->logAction(
                 $request,
                 WebLog::class,
                 'import',
                 'WebSupportTicket',
-                "Hromadný import: přidáno {$imported} ticketů, přeskočeno {$skipped} (soubor '{$batch->original_filename}').",
+                "Hromadný import: přidáno {$result['imported_count']} ticketů, přeskočeno {$result['skipped_count']} (soubor '{$batch->original_filename}').",
                 null,
                 'WebSupportTicket'
             );
 
             return response()->json(['data' => [
                 'queued'         => false,
-                'imported_count' => $imported,
-                'skipped_count'  => $skipped,
+                'imported_count' => $result['imported_count'],
+                'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
             ]]);
+        } catch (\RuntimeException $e) {
+            // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
+            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            $batch->update(['status' => 'failed']);
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při importu: " . $e->getMessage());
             return response()->json(['message' => 'Import selhal.'], 500);
         }

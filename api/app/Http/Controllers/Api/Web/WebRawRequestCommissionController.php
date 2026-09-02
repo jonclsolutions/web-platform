@@ -29,14 +29,24 @@
  *
  * @refactor-note (2026-08-23b) HROMADNY IMPORT PRIMO V KONTROLERU (importTemplate/
  * importValidate/importCommit) - nahrazuje driv testovanou centralni verzi pres
- * ImportController/importable_resources.php (zahozeno, viz historie tasku). Duvod
- * prechodu: genericky zapis by u JINYCH resources (napr. core/users) obesel dulezite
- * vedlejsi efekty ve store() - tady konkretne store() posila potvrzovaci e-mail
- * (Mail::queue(WebRawRequestCommissionReceived)), CO IMPORT ZAMERNE NEDELA (rozhodnuto
- * drive v tasku - hromadny import historickych/cizich dat nema rozesilat notifikace
- * kontaktum ze souboru). importCommit() proto NEVOLA store()/Mail::queue() primo, jen
+ * ImportController/importable_resources.php. importCommit() NEVOLA store()/Mail::queue() -
+ * import zamerne neposila potvrzovaci e-mail (rozhodnuto drive v tasku - hromadny
+ * import historickych/cizich dat nema rozesilat notifikace kontaktum ze souboru).
+ * importCommit() proto NEVOLA store()/Mail::queue() primo, jen
  * WebRawRequestCommission::create() se stejnym whitelistem sloupcu jako store(), bez
  * emailu a bez prilohy (tabulkovy import neumi prenest soubor per radek).
+ *
+ * @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": přílohy
+ * teď jdou na disk 'private' (default v HandlesAttachments, žádná změna zdejšího
+ * volání storeAttachments() nebyla potřeba) a do modulově prefixované složky
+ * `web/raw_request_commissions` (viz ATTACHMENT_FOLDER) - viz AttachmentDownloadController
+ * a WebAttachmentResource pro autorizovaný přístup přes krátkodobě podepsané URL.
+ *
+ * @refactor-note (2026-08-31v2) BACKLOG "osiřelé importní soubory": import
+ * validate/commit flow přepsán na sdílený `HandlesImportBatches` trait - dřív
+ * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
+ * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
+ * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -44,8 +54,8 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Web\WebRawRequestCommission;
 use App\Models\Web\WebLog;
-use App\Models\Core\CoreImportBatch;
 use App\Traits\HandlesAttachments;
+use App\Traits\HandlesImportBatches;
 use App\Traits\LogsActivity;
 use App\Http\Resources\Web\WebRawRequestCommissionResource;
 use App\Http\Requests\Web\WebRawRequestCommission\StoreWebRawRequestCommissionRequest;
@@ -54,10 +64,7 @@ use App\Services\Import\ImportFileParser;
 use App\Services\Import\ImportRowValidator;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use App\Mail\Web\WebRawRequestCommissionReceived;
 use Illuminate\Support\Facades\Mail;
 
@@ -68,12 +75,13 @@ use Illuminate\Support\Facades\Mail;
 class WebRawRequestCommissionController extends Controller
 {
     use HandlesAttachments;
+    use HandlesImportBatches;
     use LogsActivity;
 
     /**
-     * Storage folder for attachments within public disk.
+     * Storage folder for attachments within the private disk.
      */
-    private const ATTACHMENT_FOLDER = 'raw_request_commissions';
+    private const ATTACHMENT_FOLDER = 'web/raw_request_commissions';
 
     /**
      * @description Sloupce, které smí přijít z importního souboru - whitelist. `lang`
@@ -83,8 +91,6 @@ class WebRawRequestCommissionController extends Controller
     private const IMPORTABLE_COLUMNS = [
         'thema', 'contact_email', 'contact_phone', 'order_description', 'status', 'priority', 'note',
     ];
-
-    private const TEMP_DISK = 'local';
 
     /**
      * Retrieves a paginated or full collection of commission requests with search and filtering.
@@ -248,8 +254,7 @@ class WebRawRequestCommissionController extends Controller
      * TableBuilderComponent.onBulkDeleteClick() (volá POST
      * web/raw_request_commissions/bulk-delete). Replikuje STEJNOU logiku jako destroy()
      * (úklid příloh z disku při force_delete=true) - ne generický Model::destroy($ids),
-     * který by tenhle úklid potichu přeskočil a nechal osiřelé soubory ve
-     * storage/app/public/raw_request_commissions.
+     * který by tenhle úklid potichu přeskočil a nechal osiřelé soubory na disku.
      * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
      */
     public function bulkDestroy(Request $request): JsonResponse
@@ -307,8 +312,6 @@ class WebRawRequestCommissionController extends Controller
     /**
      * @description Stáhne prázdnou importní šablonu (CSV/TXT/JSON) se sloupci
      * z IMPORTABLE_COLUMNS.
-     * @refactor-note (2026-08-23) XLSX odebráno - viz refactor-note v hlavičce třídy
-     * a ImportFileParser (zbavuje se závislosti na phpoffice/phpspreadsheet + ext-gd).
      */
     public function importTemplate(Request $request)
     {
@@ -340,6 +343,9 @@ class WebRawRequestCommissionController extends Controller
     /**
      * @description Dry-run validace importního souboru - NEZAPISUJE nic do DB. Uloží
      * soubor dočasně a vrátí import_token pro navazující importCommit().
+     * @refactor-note (2026-08-31) Uložení souboru + vytvoření CoreImportBatch teď jde
+     * přes `startImportBatch()` (HandlesImportBatches trait) místo ručního
+     * `Storage::put()`/`CoreImportBatch::create()`.
      */
     public function importValidate(
         Request $request,
@@ -374,21 +380,15 @@ class WebRawRequestCommissionController extends Controller
             }
         }
 
-        $tempPath = 'imports/' . Str::uuid() . '.' . $validated['format'];
-        Storage::disk(self::TEMP_DISK)->put($tempPath, file_get_contents($request->file('file')->getRealPath()));
-
-        $batch = CoreImportBatch::create([
-            'resource'          => 'web/raw_request_commissions',
-            'user_id'           => $request->user()->id,
-            'original_filename' => $request->file('file')->getClientOriginalName(),
-            'format'            => $validated['format'],
-            'temp_path'         => $tempPath,
-            'status'            => 'validated',
-            'total_rows'        => count($parsed['rows']),
-            'valid_rows'        => count($validRows),
-            'invalid_rows'      => $invalidCount,
-            'error_summary'     => $errors,
-        ]);
+        $batch = $this->startImportBatch(
+            $request,
+            'web/raw_request_commissions',
+            $validated['format'],
+            count($parsed['rows']),
+            count($validRows),
+            $invalidCount,
+            $errors
+        );
 
         return response()->json([
             'import_token' => $batch->id,
@@ -403,8 +403,10 @@ class WebRawRequestCommissionController extends Controller
     /**
      * @description Potvrdí a provede skutečný zápis importu. ZNOVU parsuje a validuje
      * soubor (nikdy nedůvěřuje dry-run výsledku bez ověření). NEVOLÁ store()/Mail::queue() -
-     * viz refactor-note v hlavičce třídy: import záměrně neposílá potvrzovací e-mail a
-     * neumí přenést přílohu (tabulkový formát na to nemá prostor).
+     * import záměrně neposílá potvrzovací e-mail a neumí přenést přílohu.
+     * @refactor-note (2026-08-31) Přepsáno na `findPendingImportBatch()` +
+     * `runImportCommit()` (HandlesImportBatches trait) - dočasný soubor se teď maže
+     * VŽDY (i při selhání), viz trait hlavička.
      */
     public function importCommit(
         Request $request,
@@ -412,67 +414,58 @@ class WebRawRequestCommissionController extends Controller
         ImportRowValidator $rowValidator
     ): JsonResponse {
         $validated = $request->validate(['import_token' => ['required', 'integer']]);
-        $batch = CoreImportBatch::find($validated['import_token']);
+        $batch = $this->findPendingImportBatch($request, $validated['import_token']);
 
-        if ($batch === null || $batch->user_id !== $request->user()->id || $batch->status !== 'validated') {
+        if ($batch === null) {
             return response()->json(['message' => 'Import nebyl nalezen nebo už byl zpracován.'], 404);
         }
 
-        if (!Storage::disk(self::TEMP_DISK)->exists($batch->temp_path)) {
-            return response()->json(['message' => 'Dočasný soubor importu vypršel. Nahrajte prosím soubor znovu.'], 410);
-        }
-
-        $batch->update(['status' => 'processing']);
-
         try {
-            $realPath = Storage::disk(self::TEMP_DISK)->path($batch->temp_path);
-            $uploadedFile = new UploadedFile($realPath, $batch->original_filename ?? 'import', null, null, true);
-            $parsed = $parser->parse($uploadedFile, $batch->format, self::IMPORTABLE_COLUMNS, 20000);
-            $rules = $rowValidator->buildRules(StoreWebRawRequestCommissionRequest::class, self::IMPORTABLE_COLUMNS);
+            $result = $this->runImportCommit($batch, function ($uploadedFile) use ($parser, $rowValidator, $batch) {
+                $parsed = $parser->parse($uploadedFile, $batch->format, self::IMPORTABLE_COLUMNS, 20000);
+                $rules = $rowValidator->buildRules(StoreWebRawRequestCommissionRequest::class, self::IMPORTABLE_COLUMNS);
 
-            $imported = 0;
-            DB::transaction(function () use ($parsed, $rules, $rowValidator, &$imported) {
-                foreach ($parsed['rows'] as $row) {
-                    if ($rowValidator->validateRow($row, $rules) !== null) {
-                        continue;
+                $imported = 0;
+                DB::transaction(function () use ($parsed, $rules, $rowValidator, &$imported) {
+                    foreach ($parsed['rows'] as $row) {
+                        if ($rowValidator->validateRow($row, $rules) !== null) {
+                            continue;
+                        }
+                        // Stejný whitelist sloupců jako store(), ale ZÁMĚRNĚ BEZ přílohy a
+                        // BEZ Mail::queue() - viz refactor-note v hlavičce třídy.
+                        WebRawRequestCommission::create(
+                            array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS))
+                        );
+                        $imported++;
                     }
-                    // Stejný whitelist sloupců jako store(), ale ZÁMĚRNĚ BEZ přílohy a
-                    // BEZ Mail::queue() - viz refactor-note v hlavičce třídy.
-                    WebRawRequestCommission::create(
-                        array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS))
-                    );
-                    $imported++;
-                }
+                });
+
+                return [
+                    'imported_count' => $imported,
+                    'skipped_count'  => count($parsed['rows']) - $imported,
+                ];
             });
-
-            $skipped = count($parsed['rows']) - $imported;
-
-            $batch->update([
-                'status'         => 'completed',
-                'imported_count' => $imported,
-                'skipped_count'  => $skipped,
-                'completed_at'   => now(),
-            ]);
-            Storage::disk(self::TEMP_DISK)->delete($batch->temp_path);
 
             $this->logAction(
                 $request,
                 WebLog::class,
                 'import',
                 'WebRawRequestCommission',
-                "Hromadný import: přidáno {$imported} požadavků, přeskočeno {$skipped} (soubor '{$batch->original_filename}').",
+                "Hromadný import: přidáno {$result['imported_count']} požadavků, přeskočeno {$result['skipped_count']} (soubor '{$batch->original_filename}').",
                 null,
                 'WebRawRequestCommission'
             );
 
             return response()->json(['data' => [
                 'queued'         => false,
-                'imported_count' => $imported,
-                'skipped_count'  => $skipped,
+                'imported_count' => $result['imported_count'],
+                'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
             ]]);
+        } catch (\RuntimeException $e) {
+            // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
+            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            $batch->update(['status' => 'failed']);
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při importu: " . $e->getMessage());
             return response()->json(['message' => 'Import selhal.'], 500);
         }

@@ -13,20 +13,25 @@
  *
  * @refactor-note (2026-08) Přidán typ `'files'` (množné číslo) - zobrazuje seznam VÍCE
  * příloh (z `web_attachments` relace, pole objektů `{id, original_filename, mime_type,
- * size_bytes, url, created_at}`) místo jediného souboru, jak to řešil dosavadní `'file'`
- * case. `formatFileSize()` přidán jako pomocná metoda pro čitelný výpis velikosti.
- * @refactor-note (2026-08-3) Přidán `getViewUrl()` - "Zobrazit" odkaz (u obou `'file'`
- *      i `'files'` case v šabloně) dřív mířil PŘÍMO na `fileUrl`/`file.url`, tedy na
- *      veřejný storage symlink se souborem pod interním hashovaným jménem (žádná
- *      možnost ovlivnit Content-Disposition/jméno u přímého odkazu na statický soubor).
- *      `downloadFile()` už dávno správně přesměrovává přes API proxy
- *      (`/download-file/...`) - `getViewUrl()` dělá to samé, jen pro protějškovou
- *      inline-preview routu (`/view-file/...`), viz PublicFileDownloadController
- *      na backendu.
- * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - dřív přímé
- *      `document.body.style.overflow = 'hidden'/'auto'` v ngOnInit/ngOnDestroy,
- *      teď deleguje na sdílený `ScrollLockService` (referenční počítadlo napříč
- *      všemi overlay komponentami v aplikaci - viz scroll-lock.service.ts).
+ * size_bytes, url, download_url, view_url, created_at}`) místo jediného souboru, jak to
+ * řešil dosavadní `'file'` case. `formatFileSize()` přidán jako pomocná metoda pro
+ * čitelný výpis velikosti.
+ *
+ * @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": `downloadFile()`
+ * a `getViewUrl()` dřív RUČNĚ skládaly URL z `file.url` (přímý storage odkaz) přes
+ * starý vzor `/download-file/{folder}/{file}` / `/view-file/{folder}/{file}`
+ * (`PublicFileDownloadController`, dva route parametry) - ten vzor už NEEXISTUJE (viz
+ * `AttachmentDownloadController`, `routes/api.php`, jeden wildcard `{path}` +
+ * `signed` middleware). `WebAttachmentResource` teď navíc VŽDY posílá HOTOVÉ,
+ * krátkodobě podepsané (10 min TTL) `download_url`/`view_url` pro každou přílohu -
+ * šablona (viz `@case ('files')`) je používá PŘÍMO, žádné skládání na frontendu není
+ * potřeba ani žádoucí (frontend nezná/nemá znát interní route strukturu ani podpis).
+ * `downloadFile()` proto zjednodušen na prosté `window.location.href = downloadUrl`
+ * (vstup je už hotová `download_url`, ne syrový storage `url`). `getViewUrl()` zůstává
+ * jako tenký passthrough kvůli zpětné kompatibilitě `@case ('file')` (legacy sloupce
+ * nesoucí přímý URL string, ne objekt přílohy) - u zdrojů na `private` disku ale
+ * fungovat NEBUDE (žádný symlink, žádná signed URL), dokud takový sloupec
+ * nepřejde na typ `'files'` s reálnou `web_attachments` vazbou.
  */
 
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
@@ -34,7 +39,6 @@ import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { ItemDetailsColumns } from '../../../../shared/interfaces/item-details-columns';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
-import { environment } from '../../../../../environments/environment';
 
 /**
  * @description Provides a reusable way to display object details in a modal overlay with automatic formatting based on column metadata.
@@ -133,42 +137,24 @@ return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
   /**
-   * @description Initiates a file download through the API storage proxy.
-   * @param fullUrl The absolute file path.
+   * @description Spustí stažení souboru přesměrováním na už hotovou, backendem
+   * vygenerovanou `download_url` (podepsaná, viz refactor-note v hlavičce souboru).
+   * @param downloadUrl Hotová `download_url` z WebAttachmentResource.
    */
-downloadFile(fullUrl: string): void {
-const pathParts = fullUrl.split('/storage/');
-if (pathParts.length < 2) {
-window.open(fullUrl, '_blank');
-return;
-    }
-const storagePath = pathParts[1];
-const downloadUrl = `${environment.base_api_url}/download-file/${storagePath}`;
-window.location.href = downloadUrl;
+downloadFile(downloadUrl: string): void {
+    if (!downloadUrl) return;
+    window.location.href = downloadUrl;
   }
 
   /**
-   * @description Builds an in-browser PREVIEW url through the API storage
-   *              proxy, mirroring downloadFile() above but targeting the
-   *              inline-preview route (Content-Disposition: inline,
-   *              original file name) instead of the forced-download one.
-   *              Used for the "Zobrazit" (view) action's [href] - linking
-   *              directly to the raw storage URL (as before) always served
-   *              the file under its internal hashed on-disk name, with no
-   *              way to influence it from the frontend.
-   * @param fullUrl The raw storage asset URL (WebAttachment.url / *_url field).
-   * @returns URL routed through PublicFileDownloadController::view(), or the original URL unchanged if it doesn't look like a "/storage/..." asset URL.
+   * @description Tenký passthrough pro zpětnou kompatibilitu `@case ('file')` (legacy
+   * sloupce s přímým URL stringem) - viz refactor-note v hlavičce souboru. Pro
+   * `@case ('files')` (reálné přílohy) šablona používá `file.view_url` PŘÍMO, tahle
+   * metoda se pro ně nevolá.
+   * @param fullUrl Syrová hodnota sloupce (typicky `itemData[column.key]`).
    */
   getViewUrl(fullUrl: string): string {
-    if (!fullUrl) {
-      return fullUrl;
-    }
-    const pathParts = fullUrl.split('/storage/');
-    if (pathParts.length < 2) {
-      return fullUrl;
-    }
-    const storagePath = pathParts[1];
-    return `${environment.base_api_url}/view-file/${storagePath}`;
+    return fullUrl || '';
   }
 
 /**

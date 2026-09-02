@@ -128,7 +128,7 @@ use App\Http\Controllers\Api\Legal\DocumentTypeController;
 use App\Http\Controllers\Api\Core\CoreExternalLinkController;
 use App\Http\Controllers\Api\Core\CoreLogController;
 use App\Http\Controllers\Api\Web\WebPublicController;
-use App\Http\Controllers\Api\PublicFileDownloadController;
+use App\Http\Controllers\Api\AttachmentDownloadController;
 use App\Models\Core\CoreSecurityEvent;
 use App\Http\Controllers\Api\Core\CoreEmailAccessPolicyController;
 
@@ -293,11 +293,29 @@ Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
     ->middleware('throttle:10,1,sales-orders');
 Route::post('job_applications',        [WebJobApplicationController::class, 'store']);
 
-Route::get('/download-file/{folder}/{file}', [PublicFileDownloadController::class, 'download'])
-    ->where('file', '.*');
+/*
+|--------------------------------------------------------------------------
+| ATTACHMENT DOWNLOAD / VIEW — signed URLs only
+|--------------------------------------------------------------------------
+| @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh":
+| PublicFileDownloadController -> AttachmentDownloadController. `signed` middleware
+| ověřuje kryptografický podpis vygenerovaný WebAttachmentResource (10 min TTL) -
+| bez platného/nevypršeného podpisu 403. Autentizace/oprávnění se řeší NEPŘÍMO,
+| v okamžiku vydání URL (admin musí projít auth:sanctum + permission na endpointu,
+| který detail se seznamem příloh vrátil), ne tady - proto tyto routy NEJSOU uvnitř
+| auth:sanctum skupiny. Jeden wildcard `{path}` (ne dva segmenty `{folder}/{file}`) -
+| moduly teď mají prefixované cesty (`web/raw_request_commissions/...`), folder
+| segment tak sám obsahuje lomítko.
+*/
+Route::get('/attachments/download/{path}', [AttachmentDownloadController::class, 'download'])
+    ->where('path', '.*')
+    ->middleware('signed')
+    ->name('attachments.download');
 
-Route::get('/view-file/{folder}/{file}', [PublicFileDownloadController::class, 'view'])
-    ->where('file', '.*');
+Route::get('/attachments/view/{path}', [AttachmentDownloadController::class, 'view'])
+    ->where('path', '.*')
+    ->middleware('signed')
+    ->name('attachments.view');
 
 /*
 |--------------------------------------------------------------------------

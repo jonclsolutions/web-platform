@@ -22,11 +22,14 @@
  *
  * @refactor-note (2026-08-23b) HROMADNY IMPORT (importTemplate/importValidate/
  * importCommit) - NEJJEDNODUSSI dosavadni pripad: store() nema zadny upload souboru,
- * zadnou automatickou logiku (auto-priradeni uzivatele, notifikacni e-mail apod.) -
- * je to cisty `WebNews::create($request->validated())`. IMPORTABLE_COLUMNS proto
- * odpovida 1:1 VSEM polim ve StoreWebNewsRequest::rules(), zadna vyjimka/dodatecne
- * pravidlo navic (na rozdil od WebSupportTicketController, kde bylo potreba dopsat
- * pravidlo pro 'state', ktere Store request vubec neznal).
+ * zadnou automatickou logiku - je to cisty `WebNews::create($request->validated())`.
+ * IMPORTABLE_COLUMNS odpovida 1:1 VSEM polim ve StoreWebNewsRequest::rules().
+ *
+ * @refactor-note (2026-08-31) BACKLOG "osiřelé importní soubory": import
+ * validate/commit flow přepsán na sdílený `HandlesImportBatches` trait - dřív
+ * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
+ * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
+ * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -34,23 +37,21 @@ namespace App\Http\Controllers\Api\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Web\WebNews;
 use App\Models\Web\WebLog;
-use App\Models\Core\CoreImportBatch;
 use App\Http\Resources\Web\WebNewsResource;
 use App\Http\Requests\Web\WebNews\StoreWebNewsRequest;
 use App\Http\Requests\Web\WebNews\UpdateWebNewsRequest;
 use App\Services\Import\ImportFileParser;
 use App\Services\Import\ImportRowValidator;
+use App\Traits\HandlesImportBatches;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class WebNewsController extends Controller
 {
     use LogsActivity;
+    use HandlesImportBatches;
 
     /**
      * @description Sloupce, které smí přijít z importního souboru - odpovídá 1:1
@@ -59,8 +60,6 @@ class WebNewsController extends Controller
     private const IMPORTABLE_COLUMNS = [
         'title', 'thema', 'author', 'message', 'bullet_1', 'bullet_2', 'bullet_3', 'bullet_4',
     ];
-
-    private const TEMP_DISK = 'local';
 
     public function index(Request $request)
     {
@@ -189,9 +188,6 @@ class WebNewsController extends Controller
                 $items = WebNews::withTrashed()->whereIn('id', $ids)->get();
 
                 foreach ($items as $item) {
-                    // Explicitní forceDelete()/delete() - Model::destroy($ids) by interně
-                    // vždy volalo jen delete(), což by u SoftDeletes modelu znamenalo
-                    // opakovaný soft-delete, ne skutečné trvalé smazání.
                     $forceDelete ? $item->forceDelete() : $item->delete();
                     $deletedCount++;
                 }
@@ -222,8 +218,7 @@ class WebNewsController extends Controller
 
     /**
      * @description Stáhne prázdnou importní šablonu (CSV/TXT/JSON) se sloupci
-     * z IMPORTABLE_COLUMNS. CSV/TXT používá STEJNÝ oddělovač jako
-     * TableBuilderComponent.downloadCsv()/downloadTxt() (středník / tabulátor).
+     * z IMPORTABLE_COLUMNS.
      */
     public function importTemplate(Request $request)
     {
@@ -253,6 +248,9 @@ class WebNewsController extends Controller
 
     /**
      * @description Dry-run validace importního souboru - NEZAPISUJE nic do DB.
+     * @refactor-note (2026-08-31) Uložení souboru + vytvoření CoreImportBatch teď jde
+     * přes `startImportBatch()` (HandlesImportBatches trait) místo ručního
+     * `Storage::put()`/`CoreImportBatch::create()`.
      */
     public function importValidate(
         Request $request,
@@ -287,21 +285,15 @@ class WebNewsController extends Controller
             }
         }
 
-        $tempPath = 'imports/' . Str::uuid() . '.' . $validated['format'];
-        Storage::disk(self::TEMP_DISK)->put($tempPath, file_get_contents($request->file('file')->getRealPath()));
-
-        $batch = CoreImportBatch::create([
-            'resource'          => 'web/news',
-            'user_id'           => $request->user()->id,
-            'original_filename' => $request->file('file')->getClientOriginalName(),
-            'format'            => $validated['format'],
-            'temp_path'         => $tempPath,
-            'status'            => 'validated',
-            'total_rows'        => count($parsed['rows']),
-            'valid_rows'        => count($validRows),
-            'invalid_rows'      => $invalidCount,
-            'error_summary'     => $errors,
-        ]);
+        $batch = $this->startImportBatch(
+            $request,
+            'web/news',
+            $validated['format'],
+            count($parsed['rows']),
+            count($validRows),
+            $invalidCount,
+            $errors
+        );
 
         return response()->json([
             'import_token' => $batch->id,
@@ -316,6 +308,12 @@ class WebNewsController extends Controller
     /**
      * @description Potvrdí a provede skutečný zápis importu. Znovu parsuje a validuje
      * soubor (nikdy nedůvěřuje dry-run výsledku bez ověření).
+     * @refactor-note (2026-08-31) Přepsáno na `findPendingImportBatch()` +
+     * `runImportCommit()` (HandlesImportBatches trait) - dočasný soubor se teď maže
+     * VŽDY (i při selhání), viz trait hlavička. `catch` blok tady zůstává jen pro
+     * zpracování HTTP odpovědi (chybová zpráva/status kód), NE pro mazání souboru -
+     * to zajišťuje `finally` uvnitř `runImportCommit()` bez ohledu na to, jestli sem
+     * vůbec doběhneme.
      */
     public function importCommit(
         Request $request,
@@ -323,63 +321,54 @@ class WebNewsController extends Controller
         ImportRowValidator $rowValidator
     ): JsonResponse {
         $validated = $request->validate(['import_token' => ['required', 'integer']]);
-        $batch = CoreImportBatch::find($validated['import_token']);
+        $batch = $this->findPendingImportBatch($request, $validated['import_token']);
 
-        if ($batch === null || $batch->user_id !== $request->user()->id || $batch->status !== 'validated') {
+        if ($batch === null) {
             return response()->json(['message' => 'Import nebyl nalezen nebo už byl zpracován.'], 404);
         }
 
-        if (!Storage::disk(self::TEMP_DISK)->exists($batch->temp_path)) {
-            return response()->json(['message' => 'Dočasný soubor importu vypršel. Nahrajte prosím soubor znovu.'], 410);
-        }
-
-        $batch->update(['status' => 'processing']);
-
         try {
-            $realPath = Storage::disk(self::TEMP_DISK)->path($batch->temp_path);
-            $uploadedFile = new UploadedFile($realPath, $batch->original_filename ?? 'import', null, null, true);
-            $parsed = $parser->parse($uploadedFile, $batch->format, self::IMPORTABLE_COLUMNS, 20000);
-            $rules = $rowValidator->buildRules(StoreWebNewsRequest::class, self::IMPORTABLE_COLUMNS);
+            $result = $this->runImportCommit($batch, function ($uploadedFile) use ($parser, $rowValidator, $batch) {
+                $parsed = $parser->parse($uploadedFile, $batch->format, self::IMPORTABLE_COLUMNS, 20000);
+                $rules = $rowValidator->buildRules(StoreWebNewsRequest::class, self::IMPORTABLE_COLUMNS);
 
-            $imported = 0;
-            DB::transaction(function () use ($parsed, $rules, $rowValidator, &$imported) {
-                foreach ($parsed['rows'] as $row) {
-                    if ($rowValidator->validateRow($row, $rules) !== null) {
-                        continue;
+                $imported = 0;
+                DB::transaction(function () use ($parsed, $rules, $rowValidator, &$imported) {
+                    foreach ($parsed['rows'] as $row) {
+                        if ($rowValidator->validateRow($row, $rules) !== null) {
+                            continue;
+                        }
+                        WebNews::create(array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS)));
+                        $imported++;
                     }
-                    WebNews::create(array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS)));
-                    $imported++;
-                }
+                });
+
+                return [
+                    'imported_count' => $imported,
+                    'skipped_count'  => count($parsed['rows']) - $imported,
+                ];
             });
-
-            $skipped = count($parsed['rows']) - $imported;
-
-            $batch->update([
-                'status'         => 'completed',
-                'imported_count' => $imported,
-                'skipped_count'  => $skipped,
-                'completed_at'   => now(),
-            ]);
-            Storage::disk(self::TEMP_DISK)->delete($batch->temp_path);
 
             $this->logAction(
                 $request,
                 WebLog::class,
                 'import',
                 'WebNews',
-                "Hromadný import: přidáno {$imported} novinek, přeskočeno {$skipped} (soubor '{$batch->original_filename}').",
+                "Hromadný import: přidáno {$result['imported_count']} novinek, přeskočeno {$result['skipped_count']} (soubor '{$batch->original_filename}').",
                 null,
                 'WebNews'
             );
 
             return response()->json(['data' => [
                 'queued'         => false,
-                'imported_count' => $imported,
-                'skipped_count'  => $skipped,
+                'imported_count' => $result['imported_count'],
+                'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
             ]]);
+        } catch (\RuntimeException $e) {
+            // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
+            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            $batch->update(['status' => 'failed']);
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při importu: " . $e->getMessage());
             return response()->json(['message' => 'Import selhal.'], 500);
         }
