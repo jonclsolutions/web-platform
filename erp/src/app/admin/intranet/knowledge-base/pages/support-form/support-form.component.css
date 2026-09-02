@@ -4,8 +4,10 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
+    @refactor-note (2026) RETHEME: black&white admin paletou (--accent = #18181b místo
+        purple #a67dff). Layout, rozměry, breakpointy BEZE ZMĚNY.
 */
-    
+
 .kb-form-container {
   max-width: 800px;
   animation: fadeIn 0.3s ease-out;
@@ -17,7 +19,7 @@
 
 .kb-form-header h1 {
   font-size: 1.8rem;
-  color: #fff;
+  color: #18181b;
   margin: 10px 0;
 }
 
@@ -25,6 +27,8 @@
   color: #71717a;
   font-size: 0.9rem;
 }
+
+.doc-code { font-family: monospace; color: #18181b; font-size: 0.7rem; }
 
 .kb-form-row {
   display: flex;
@@ -49,15 +53,15 @@
   letter-spacing: 0.5px;
 }
 
-.req { color: #a67dff; margin-left: 2px; }
+.req { color: #e11d48; margin-left: 2px; }
 
 input[type="text"], 
 select, 
 textarea {
-  background: #0d0d0f;
-  border: 1px solid #1e1e20;
+  background: #ffffff;
+  border: 1px solid #ececea;
   border-radius: 4px;
-  color: #e4e4e7;
+  color: #18181b;
   padding: 10px 12px;
   font-size: 0.9rem;
   transition: all 0.2s ease;
@@ -65,19 +69,18 @@ textarea {
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #a67dff;
-  background: #111114;
+  border-color: #18181b;
+  background: #fafafa;
 }
-
 .kb-file-upload {
   position: relative;
-  border: 1px dashed #1e1e20;
+  border: 1px dashed #ececea;
   border-radius: 4px;
-  background: #0d0d0f;
+  background: #fafafa;
   transition: all 0.2s ease;
 }
 
-.kb-file-upload:hover { border-color: #3f3f46; }
+.kb-file-upload:hover { border-color: #a1a1aa; }
 
 .file-label {
   display: flex;
@@ -90,8 +93,8 @@ input:focus, select:focus, textarea:focus {
 .file-icon {
   width: 24px;
   height: 24px;
-  background: rgba(166, 125, 255, 0.1);
-  color: #a67dff;
+  background: #f4f4f5;
+  color: #18181b;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -109,12 +112,12 @@ input:focus, select:focus, textarea:focus {
 }
 
 .kb-file-upload.has-file {
-  border-color: #a67dff;
-  background: rgba(166, 125, 255, 0.02);
+  border-color: #18181b;
+  background: #fafafa;
 }
 
 .kb-btn-primary {
-  background: #a67dff;
+  background: #18181b;
   color: #fff;
   border: none;
   padding: 12px 24px;
@@ -125,13 +128,13 @@ input:focus, select:focus, textarea:focus {
   transition: opacity 0.2s;
 }
 
-.kb-btn-primary:hover:not(:disabled) { opacity: 0.9; }
-.kb-btn-primary:disabled { background: #27272a; cursor: not-allowed; }
+.kb-btn-primary:hover:not(:disabled) { opacity: 0.85; }
+.kb-btn-primary:disabled { background: #e4e4e7; color: #a1a1aa; cursor: not-allowed; }
 
 .kb-btn-outline {
   background: transparent;
-  border: 1px solid #1e1e20;
-  color: #71717a;
+  border: 1px solid #ececea;
+  color: #52525b;
   padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
@@ -143,7 +146,7 @@ input:focus, select:focus, textarea:focus {
 
 .success-check {
   font-size: 3rem;
-  color: #a67dff;
+  color: #18181b;
   margin-bottom: 20px;
 }
 

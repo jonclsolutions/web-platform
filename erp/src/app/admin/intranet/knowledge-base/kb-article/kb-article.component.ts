@@ -1,52 +1,47 @@
 /**
  * @file kb-article.component.ts
- * @path src/app/admin/components/instranet/knowledge-base/kb-article/kb-article.component.ts
+ * @path src/app/admin/intranet/knowledge-base/kb-article/kb-article.component.ts
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description A detail view component for displaying Knowledge Base articles based on route identifiers.
+ * @description Generický renderer JEDNÉ stránky Knowledge Base - vezme `id` z route
+ * parametru, dohledá odpovídající `KBPage` v `KB_PAGES` (viz kb-pages.data.ts) a
+ * vykreslí ji podle `page.sections`/`block.type`. JEDINÁ komponenta pro VŠECHNY
+ * statické stránky manuálu - přidání nové stránky nevyžaduje žádnou novou komponentu,
+ * jen nový záznam v datovém poli.
  * @dependencies
- * - ActivatedRoute: Used to extract article IDs from the URL parameters.
+ * - ActivatedRoute: Čte `:pageId` route parametr.
+ * - KB_PAGES: Statická data všech stránek manuálu.
  */
 
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-
-/**
- * @description Renders a specific knowledge base article by resolving an ID against an internal data store.
- * @usage Used in the admin portal to provide employees with documentation and guidelines.
- * @note Currently utilizes an in-memory data object; should be extended to fetch data from an API service for production use.
- */
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, ActivatedRoute } from '@angular/router';
+import { KB_PAGES } from '../data/kb-pages.data';
+import { KBPage } from '../../../../shared/interfaces/kb-content';
 @Component({
   selector: 'app-kb-article',
   standalone: true,
-  imports: [],
+  imports: [CommonModule, RouterModule],
   templateUrl: './kb-article.component.html',
-  styleUrls: ['./kb-article.component.css']
+  styleUrl: './kb-article.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KbArticleComponent implements OnInit {
-  article: any;
+  page: KBPage | null = null;
 
-  private kbData: any = {
-    'uvod-pro-zamestnance': {
-      title: 'Vítejte v týmu',
-      content: '<p>Tento dokument obsahuje základní informace o fungování naší společnosti...</p><ul><li>Pracovní doba: Flexibilní</li><li>Komunikace: Discord / Email</li></ul>'
-    },
-    'prace-s-figmou': {
-      title: 'Návod pro UI Designéry',
-      content: '<p>Při práci ve Figmě dodržujte následující pravidla:</p><ol><li>Vždy používejte auto-layout.</li><li>Pojmenovávejte vrstvy anglicky.</li></ol>'
-    }
-  };
+  constructor(
+    private route: ActivatedRoute,
+    private cd: ChangeDetectorRef
+  ) {}
 
-  constructor(private route: ActivatedRoute) {}
-
-  /**
-   * @description Subscribes to route parameters to identify the requested article ID and retrieve corresponding data.
-   */
-  ngOnInit() {
-    this.route.params.subscribe(params => {
-      const id = params['id'];
-      this.article = this.kbData[id];
+  ngOnInit(): void {
+    // paramMap subscribe (ne snapshot) - stránka se dá přepnout i pouhou navigací mezi
+    // dvěma :pageId routami stejné komponenty, Angular by ji jinak znovu nevytvořil.
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('pageId');
+      this.page = KB_PAGES.find(p => p.id === id) ?? null;
+      this.cd.markForCheck();
     });
   }
 }

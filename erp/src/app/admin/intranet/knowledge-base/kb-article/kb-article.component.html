@@ -1,15 +1,99 @@
 <!-- 
     @file: kb-article.component.html
-    @path: /src/app/admin/intranet/knowlegge-base/kb-article/kb-article.component.html
+    @path: /src/app/admin/intranet/knowledge-base/kb-article/kb-article.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2026 
+    @created: 2026
+    @description Generický renderer - iteruje page.sections a uvnitř section.blocks,
+        vykresluje podle block.type. Viz kb-content.ts pro popis jednotlivých typů bloků.
 -->
-    
-@if (article) {
-  <div class="article-container">
-    <h1>{{ article.title }}</h1>
-    <hr class="kb-divider">
-    <div class="article-body" [innerHTML]="article.content"></div>
+
+@if (page) {
+  <div class="kb-article-container">
+    <header class="article-header">
+      <div class="breadcrumb">{{ page.breadcrumb }}</div>
+      <h1>{{ page.header }}</h1>
+    </header>
+
+    <hr class="section-divider">
+
+    @for (section of page.sections; track $index) {
+      <section class="kb-section">
+        @if (section.heading) {
+          <h2>{{ section.heading }}</h2>
+        }
+
+        @for (block of section.blocks; track $index) {
+          @switch (block.type) {
+            @case ('lead') {
+              <p class="lead-text">{{ block.content }}</p>
+            }
+            @case ('text') {
+              <p>{{ block.content }}</p>
+            }
+            @case ('alert') {
+              <div class="alert-box" [class]="'alert-' + block.variant">
+                {{ block.content }}
+              </div>
+            }
+            @case ('note') {
+              <div class="note-box" [class.highlight-note]="block.highlight">
+                {{ block.content }}
+              </div>
+            }
+            @case ('image') {
+              <figure class="kb-figure">
+                <img [src]="'/assets/kb/' + block.path" [alt]="block.alt">
+                @if (block.caption) {
+                  <figcaption>{{ block.caption }}</figcaption>
+                }
+              </figure>
+            }
+            @case ('link') {
+              @if (block.external) {
+                <a [href]="block.url" target="_blank" rel="noopener noreferrer" class="kb-link">{{ block.label }}</a>
+              } @else {
+                <a [routerLink]="block.url" class="kb-link">{{ block.label }}</a>
+              }
+            }
+            @case ('list') {
+              @if (block.ordered) {
+                <ol class="kb-list">
+                  @for (item of block.items; track $index) { <li>{{ item }}</li> }
+                </ol>
+              } @else {
+                <ul class="kb-list">
+                  @for (item of block.items; track $index) { <li>{{ item }}</li> }
+                </ul>
+              }
+            }
+            @case ('grid') {
+              <div class="grid-layout">
+                @for (card of block.cards; track $index) {
+                  <div class="info-card">
+                    <h3>{{ card.title }}</h3>
+                    <p class="small-text">{{ card.text }}</p>
+                  </div>
+                }
+              </div>
+            }
+            @case ('flow') {
+              <div class="process-flow">
+                @for (step of block.steps; track $index) {
+                  <div class="flow-item" [class.active]="step.active">
+                    <span class="step">{{ step.label }}</span>
+                    <p>{{ step.text }}</p>
+                  </div>
+                }
+              </div>
+            }
+          }
+        }
+      </section>
+    }
+  </div>
+} @else {
+  <div class="kb-article-container">
+    <p>Stránka nebyla nalezena.</p>
   </div>
 }

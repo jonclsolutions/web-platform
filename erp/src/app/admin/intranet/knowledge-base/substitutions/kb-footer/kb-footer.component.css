@@ -4,20 +4,24 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
+    @refactor-note (2026) Odstraněn zastaralý Discord kontakt - JonclSolutions branding.
 */
 
 .article-footer {
   margin-top: 60px;
   padding: 30px 0;
-  border-top: 1px solid #1e1e20;
-  color: #52525b;
+  border-top: 1px solid #ececea;
+  color: #71717a;
 }
 
 .footer-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  gap: 20px;
+}
+
+.footer-contact {
+  text-align: center;
 }
 
 .footer-contact p {
@@ -26,33 +30,21 @@
 }
 
 .footer-contact strong {
-  color: #a0a0a4;
+  color: #18181b;
 }
 
 .tiny-text {
   font-size: 0.7rem;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
-.discord-link-small {
-  color: #5865F2;
-  text-decoration: none;
-  font-size: 0.75rem;
-  font-weight: 800;
-  padding: 8px 16px;
-  border: 1px solid rgba(88, 101, 242, 0.3);
-  border-radius: 4px;
-  transition: all 0.2s ease;
+.footer-mail-link {
+  color: #18181b;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.discord-link-small:hover {
-  background: rgba(88, 101, 242, 0.1);
-  border-color: #5865F2;
-}
-
-@media (max-width: 768px) {
-  .footer-content { 
-    flex-direction: column; 
-    text-align: center; 
-  }
+.footer-mail-link:hover {
+  color: #000000;
 }

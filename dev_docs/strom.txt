@@ -44,6 +44,9 @@
 │   │   │   │   │       ├── WebJobApplicationController.php
 │   │   │   │   │       ├── WebLogController.php
 │   │   │   │   │       ├── WebNewsController.php
+│   │   │   │   │       ├── WebProjectController.php
+│   │   │   │   │       ├── WebProjectPublicController.php
+│   │   │   │   │       ├── WebProjectThreadController.php
 │   │   │   │   │       ├── WebPublicController.php
 │   │   │   │   │       ├── WebRawRequestCommissionController.php
 │   │   │   │   │       ├── WebSalesLeadController.php
@@ -53,6 +56,7 @@
 │   │   │   │   └── Controller.php
 │   │   │   ├── Middleware
 │   │   │   │   ├── CheckPermission.php
+│   │   │   │   ├── CheckProjectSession.php
 │   │   │   │   ├── CheckShopActive.php
 │   │   │   │   └── CheckWebActive.php
 │   │   │   ├── Requests
@@ -62,6 +66,9 @@
 │   │   │   │   │   ├── ResetPasswordRequest.php
 │   │   │   │   │   └── VerifyTwoFactorRequest.php
 │   │   │   │   ├── Core
+│   │   │   │   │   ├── CoreExternalLink
+│   │   │   │   │   │   ├── StoreCoreExternalLinkRequest.php
+│   │   │   │   │   │   └── UpdateCoreExternalLinkRequest.php
 │   │   │   │   │   ├── CoreRole
 │   │   │   │   │   │   ├── StoreCoreRoleRequest.php
 │   │   │   │   │   │   ├── SyncRolePermissionsRequest.php
@@ -116,6 +123,14 @@
 │   │   │   │       ├── WebNews
 │   │   │   │       │   ├── StoreWebNewsRequest.php
 │   │   │   │       │   └── UpdateWebNewsRequest.php
+│   │   │   │       ├── WebProject
+│   │   │   │       │   ├── ProjectLoginRequest.php
+│   │   │   │       │   ├── StoreProjectCheckpointRequest.php
+│   │   │   │       │   ├── StoreProjectThreadMessageRequest.php
+│   │   │   │       │   ├── StoreProjectThreadRequest.php
+│   │   │   │       │   ├── StoreWebProjectRequest.php
+│   │   │   │       │   ├── UpdateProjectCheckpointRequest.php
+│   │   │   │       │   └── UpdateWebProjectRequest.php
 │   │   │   │       ├── WebRawRequestCommission
 │   │   │   │       │   ├── StoreWebRawRequestCommissionRequest.php
 │   │   │   │       │   ├── UpdateWebRawRequestCommissionRequest.php
@@ -131,6 +146,7 @@
 │   │   │   │           └── UpdateWebSupportTicketRequest.php
 │   │   │   └── Resources
 │   │   │       ├── Core
+│   │   │       │   ├── CoreExternalLinkResource.php
 │   │   │       │   ├── CoreLogResource.php
 │   │   │       │   ├── CoreRoleResource.php
 │   │   │       │   └── CoreSecurityEventResource.php
@@ -155,6 +171,11 @@
 │   │   │           ├── WebJobApplicationResource.php
 │   │   │           ├── WebLogResource.php
 │   │   │           ├── WebNewsResource.php
+│   │   │           ├── WebProjectCheckpointResource.php
+│   │   │           ├── WebProjectPublicResource.php
+│   │   │           ├── WebProjectResource.php
+│   │   │           ├── WebProjectThreadMessageResource.php
+│   │   │           ├── WebProjectThreadResource.php
 │   │   │           ├── WebRawRequestCommissionResource.php
 │   │   │           ├── WebSalesLeadResource.php
 │   │   │           ├── WebSalesOrderResource.php
@@ -168,6 +189,7 @@
 │   │   │   │   ├── PasswordResetRequested.php
 │   │   │   │   └── TwoFactorCodeMail.php
 │   │   │   └── Web
+│   │   │       ├── ProjectThreadActivityMail.php
 │   │   │       ├── WebRawRequestCommissionReceived.php
 │   │   │       └── WebSalesOrderReceived.php
 │   │   ├── Models
@@ -210,6 +232,11 @@
 │   │   │       ├── WebJobApplication.php
 │   │   │       ├── WebLog.php
 │   │   │       ├── WebNews.php
+│   │   │       ├── WebProjectCheckpoint.php
+│   │   │       ├── WebProject.php
+│   │   │       ├── WebProjectSession.php
+│   │   │       ├── WebProjectThreadMessage.php
+│   │   │       ├── WebProjectThread.php
 │   │   │       ├── WebRawRequestCommission.php
 │   │   │       ├── WebSalesLead.php
 │   │   │       ├── WebSalesOrder.php
@@ -303,6 +330,7 @@
 │   │       │   ├── partials
 │   │       │   │   └── footer.blade.php
 │   │       │   └── web
+│   │       │       ├── project-thread-activity.blade.php
 │   │       │       ├── raw-request-commission-received.blade.php
 │   │       │       └── sales-order-received.blade.php
 │   │       └── welcome.blade.php
@@ -369,7 +397,9 @@
 │   │   │   ├── sessions
 │   │   │   ├── testing
 │   │   │   └── views
+│   │   │       ├── c01436b0ab8e4d76735f9b9e42064cea.php
 │   │   │       ├── d0eb0c286836f0d72964121b8011c144.php
+│   │   │       ├── d7c0f7e76430f808cb28d429fc735b3b.php
 │   │   │       ├── d73787b501c491196576390876d68bd9.php
 │   │   │       ├── 0027900651bad22e3942926df53ef454.php
 │   │   │       └── 65728ec46b6bc1fdf7350b699411ce69.php
@@ -592,6 +622,11 @@
 │   │   │   │   │   │   │   ├── form-builder.component.html
 │   │   │   │   │   │   │   ├── form-builder.component.spec.ts
 │   │   │   │   │   │   │   └── form-builder.component.ts
+│   │   │   │   │   │   ├── graph-builder
+│   │   │   │   │   │   │   ├── graph-builder.component.css
+│   │   │   │   │   │   │   ├── graph-builder.component.html
+│   │   │   │   │   │   │   ├── graph-builder.component.spec.ts
+│   │   │   │   │   │   │   └── graph-builder.component.ts
 │   │   │   │   │   │   ├── import-popup-builder
 │   │   │   │   │   │   │   ├── import-popup-builder.component.css
 │   │   │   │   │   │   │   ├── import-popup-builder.component.html
@@ -836,6 +871,12 @@
 │   │   │   │       │   ├── job-applications.component.spec.ts
 │   │   │   │       │   ├── job-applications.component.ts
 │   │   │   │       │   └── job-applications.config.ts
+│   │   │   │       ├── projects
+│   │   │   │       │   ├── project-manage-modal.css
+│   │   │   │       │   ├── projects.component.html
+│   │   │   │       │   ├── projects.component.spec.ts
+│   │   │   │       │   ├── projects.component.ts
+│   │   │   │       │   └── projects.config.ts
 │   │   │   │       ├── sales-leads
 │   │   │   │       │   ├── sales-leads.component.css
 │   │   │   │       │   ├── sales-leads.component.html
@@ -906,6 +947,8 @@
 │   │   │   │       ├── resource-cache.service.ts
 │   │   │   │       ├── role-options.service.spec.ts
 │   │   │   │       ├── role-options.service.ts
+│   │   │   │       ├── scroll-lock.service.spec.ts
+│   │   │   │       ├── scroll-lock.service.ts
 │   │   │   │       ├── table-refresh-bus.service.spec.ts
 │   │   │   │       ├── table-refresh-bus.service.ts
 │   │   │   │       ├── turnstile.service.spec.ts
@@ -1055,6 +1098,11 @@
 │   │   │   │       │   ├── privacy-policy.component.html
 │   │   │   │       │   ├── privacy-policy.component.spec.ts
 │   │   │   │       │   └── privacy-policy.component.ts
+│   │   │   │       ├── project-portal
+│   │   │   │       │   ├── project-portal.component.css
+│   │   │   │       │   ├── project-portal.component.html
+│   │   │   │       │   ├── project-portal.component.spec.ts
+│   │   │   │       │   └── project-portal.component.ts
 │   │   │   │       ├── references
 │   │   │   │       │   ├── references.component.css
 │   │   │   │       │   ├── references.component.html
@@ -1084,6 +1132,11 @@
 │   │   │   │           └── web-maintenance.component.ts
 │   │   │   └── shared
 │   │   │       ├── components
+│   │   │       │   ├── icon
+│   │   │       │   │   ├── icon.component.css
+│   │   │       │   │   ├── icon.component.html
+│   │   │       │   │   ├── icon.component.spec.ts
+│   │   │       │   │   └── icon.component.ts
 │   │   │       │   ├── multi-file-upload
 │   │   │       │   │   ├── multi-file-upload.component.css
 │   │   │       │   │   ├── multi-file-upload.component.html
@@ -1106,6 +1159,7 @@
 │   │   │       │   ├── export-format.ts
 │   │   │       │   ├── filter-columns.ts
 │   │   │       │   ├── generic-form-column-definiton.ts
+│   │   │       │   ├── graph-format.ts
 │   │   │       │   ├── input-definiton.ts
 │   │   │       │   ├── item-details-columns.ts
 │   │   │       │   ├── table-buttons.ts
@@ -1200,4 +1254,4 @@
 └── server_conf
     └── configure-server.sh
 
-264 directories, 937 files
+270 directories, 985 files

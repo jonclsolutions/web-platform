@@ -1,31 +1,210 @@
 /*     
     @file: kb-article.component.css
-    @path: /src/app/admin/intranet/knowlegge-base/kb-article/kb-article.component.css
+    @path: /src/app/admin/intranet/knowledge-base/kb-article/kb-article.component.css
     @project: RPSW Web
     @author: RPSW
-    @created: 2026 
+    @created: 2026
+    @refactor-note (2026) KNOWLEDGE BASE REFACTOR: tato komponenta je od teď GENERICKÝ
+    renderer pro všechny statické stránky manuálu (viz kb-article.component.ts) -
+    styly pro jednotlivé typy bloků (.lead-text/.alert-box/.grid-layout/.process-flow/
+    .note-box/...) dřív žily jen v introductions.component.css (jediná stránka, co je
+    používala) - teď musí žít TADY, protože je sdílí libovolná stránka z KB_PAGES.
+    Černobílá admin paleta - stejné proměnné jako knowledge-base.component.css.
 */
 
-.article-container { 
+.kb-article-container { 
   animation: fadeIn 0.4s ease-out; 
 }
 
+.breadcrumb {
+  font-size: 0.75rem;
+  color: #a1a1aa;
+  margin-bottom: 8px;
+}
+
 h1 { 
-  color: #a67dff; 
+  color: #18181b; 
   font-size: 2rem; 
   margin-bottom: 10px; 
+  font-weight: 700;
 }
 
-.kb-divider { 
+h2 {
+  color: #18181b;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 14px;
+}
+
+h3 {
+  color: #18181b;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.section-divider { 
   border: 0; 
-  border-top: 1px solid #2f2f2f; 
-  margin: 20px 0; 
+  border-top: 1px solid #ececea; 
+  margin: 20px 0 30px; 
 }
 
-.article-body { 
+.kb-section {
+  margin-bottom: 36px;
+}
+
+.kb-section p { 
   line-height: 1.7; 
-  color: #d0d0d0; 
-  font-size: 1.1rem; 
+  color: #3f3f46; 
+  font-size: 0.95rem;
+  margin: 0 0 14px;
+}
+
+.lead-text {
+  font-size: 1.1rem;
+  color: #71717a;
+  line-height: 1.7;
+  margin-bottom: 8px;
+}
+
+/* ── Alert box ─────────────────────────────────────────────────────────── */
+
+.alert-box {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  border: 1px solid #ececea;
+  background: #fafafa;
+  color: #3f3f46;
+  margin: 14px 0;
+}
+
+.alert-info    { border-color: #e0e0dd; background: #f4f4f5; color: #18181b; }
+.alert-warning { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+.alert-success { border-color: #a7f3d0; background: #ecfdf5; color: #065f46; }
+.alert-danger  { border-color: #fecdd3; background: #fff1f2; color: #9f1239; }
+
+/* ── Note box ───────────────────────────────────────────────────────────── */
+
+.note-box {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #71717a;
+  border: 1px dashed #e0e0dd;
+  background: #fafafa;
+  margin: 14px 0;
+}
+
+.note-box.highlight-note {
+  border: 1px solid #18181b;
+  background: #f4f4f5;
+  color: #18181b;
+  font-weight: 500;
+}
+
+/* ── Grid (info cards) ─────────────────────────────────────────────────── */
+
+.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.info-card {
+  border: 1px solid #ececea;
+  border-radius: 12px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.info-card .small-text {
+  font-size: 0.82rem;
+  color: #71717a;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Process flow ──────────────────────────────────────────────────────── */
+
+.process-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.flow-item {
+  flex: 1 1 200px;
+  border: 1px solid #ececea;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #fafafa;
+}
+
+.flow-item.active {
+  border-color: #18181b;
+  background: #ffffff;
+}
+
+.flow-item .step {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #18181b;
+  margin-bottom: 6px;
+}
+
+.flow-item p {
+  font-size: 0.82rem;
+  color: #71717a;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── List ───────────────────────────────────────────────────────────────── */
+
+.kb-list {
+  margin: 0 0 14px;
+  padding-left: 22px;
+  color: #3f3f46;
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+/* ── Link ───────────────────────────────────────────────────────────────── */
+
+.kb-link {
+  color: #18181b;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.kb-link:hover { color: #000000; }
+
+/* ── Image ──────────────────────────────────────────────────────────────── */
+
+.kb-figure {
+  margin: 16px 0;
+}
+
+.kb-figure img {
+  max-width: 100%;
+  border-radius: 10px;
+  border: 1px solid #ececea;
+  display: block;
+}
+
+.kb-figure figcaption {
+  font-size: 0.78rem;
+  color: #a1a1aa;
+  margin-top: 6px;
 }
 
 @keyframes fadeIn { 

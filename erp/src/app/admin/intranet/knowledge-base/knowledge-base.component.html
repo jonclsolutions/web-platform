@@ -3,9 +3,13 @@
     @path: /src/app/admin/intranet/knowledge-base/knowledge-base.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2026 
+    @created: 2026
+    @refactor-note (2026) Menu generováno dynamicky z `navGroups` (viz
+        knowledge-base.component.ts). `support-form` a `news` jsou jediné ručně psané
+        položky - obě mají vlastní logiku (formulář / real-time obsah), nejsou
+        v KB_PAGES statických datech.
 -->
-    
+
 <div class="kb-fullscreen-wrapper" [class.menu-open]="isMenuOpen">
   <header class="kb-top-bar">
     <div class="kb-brand">
@@ -25,22 +29,27 @@
   <div class="kb-container">
     <aside class="kb-sidebar" [class.open]="isMenuOpen">
       <nav class="kb-nav">
-        <div class="nav-group">
-          <span class="group-title">General</span>
-          <ul>
-            <li><a routerLink="introductions" (click)="closeMenu()" routerLinkActive="active-kb"><span class="num">01.</span> Introductions</a></li>
-            <li><a routerLink="news" (click)="closeMenu()" routerLinkActive="active-kb"><span class="num">02.</span> Novinky</a></li>
-            <li><a routerLink="security" (click)="closeMenu()" routerLinkActive="active-kb"><span class="num">03.</span> Přístup</a></li>
-            <li><a routerLink="contacts" (click)="closeMenu()" routerLinkActive="active-kb"><span class="num">04.</span> Kontakty</a></li>
-          </ul>
-        </div>
-
-        <div class="nav-group">
-          <span class="group-title">Roles</span>
-          <ul>
-            <li><a routerLink="sales-rep" (click)="closeMenu()" routerLinkActive="active-kb"><span class="num">05.</span> Sales Rep</a></li>
-          </ul>
-        </div>
+        @for (group of navGroups; track group.name) {
+          <div class="nav-group">
+            <span class="group-title">{{ group.name }}</span>
+            <ul>
+              @for (page of group.pages; track page.id) {
+                <li>
+                  <a [routerLink]="page.id" (click)="closeMenu()" routerLinkActive="active-kb">
+                    <span class="num">{{ page.navOrder }}.</span> {{ page.navLabel }}
+                  </a>
+                </li>
+              }
+              @if (group.name === 'General') {
+                <li>
+                  <a routerLink="news" (click)="closeMenu()" routerLinkActive="active-kb">
+                    <span class="num">02.</span> Novinky
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
 
         <div class="nav-group">
           <span class="group-title">Support</span>

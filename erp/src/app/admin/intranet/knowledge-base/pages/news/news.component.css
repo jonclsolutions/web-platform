@@ -4,17 +4,19 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
+    @refactor-note (2026) RETHEME: black&white admin paletou. Layout, rozměry,
+        breakpointy BEZE ZMĚNY.
 */
 
 .node-author {
   margin-top: 15px;
   padding-top: 10px;
-  border-top: 1px solid #1e1e20;
+  border-top: 1px solid #ececea;
 }
 
 .author-label {
   font-size: 0.65rem;
-  color: #52525b;
+  color: #a1a1aa;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -22,7 +24,7 @@
 
 .author-name {
   font-size: 0.75rem;
-  color: #a1a1aa;
+  color: #71717a;
   font-weight: 500;
   margin-top: 2px;
 }
@@ -31,22 +33,22 @@
   max-width: 950px;
   margin: 0 auto;
   padding: 30px;
-  font-family: 'Inter', -apple-system, sans-serif;
-  color: #d4d4d8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #3f3f46;
   line-height: 1.6;
 }
 
 .breadcrumb {
   font-family: monospace;
   font-size: 0.7rem;
-  color: #52525b;
+  color: #a1a1aa;
   text-transform: uppercase;
   margin-bottom: 10px;
 }
 
 h1 {
   font-size: 2.4rem;
-  color: #fff;
+  color: #18181b;
   font-weight: 800;
   margin-bottom: 15px;
   letter-spacing: -0.02em;
@@ -56,14 +58,14 @@ p { margin: 0; }
 
 .lead-text {
   font-size: 1.05rem;
-  color: #a1a1aa;
+  color: #71717a;
   max-width: 800px;
   margin-bottom: 40px;
 }
 
 .section-divider {
   border: 0;
-  border-top: 1px solid #1e1e20;
+  border-top: 1px solid #ececea;
   margin: 40px 0;
 }
 
@@ -74,28 +76,28 @@ p { margin: 0; }
 .news-node {
   display: flex;
   gap: 30px;
-  background: #111113;
-  border: 1px solid #27272a;
+  background: #ffffff;
+  border: 1px solid #ececea;
   border-radius: 8px;
   padding: 25px;
   margin-bottom: 20px;
 }
 
 .news-node.highlighted {
-  border-color: rgba(166, 125, 255, 0.4);
-  background: rgba(166, 125, 255, 0.02);
+  border-color: #18181b;
+  background: #fafafa;
 }
 
 .node-sidebar {
   flex: 0 0 120px;
-  border-right: 1px solid #1e1e20;
+  border-right: 1px solid #ececea;
   padding-right: 20px;
 }
 
 .node-date {
   font-family: monospace;
   font-size: 0.8rem;
-  color: #fff;
+  color: #18181b;
   font-weight: 700;
   margin-bottom: 8px;
 }
@@ -104,28 +106,28 @@ p { margin: 0; }
   display: inline-block;
   font-size: 0.65rem;
   text-transform: uppercase;
-  background: rgba(161, 161, 170, 0.1);
-  color: #a1a1aa;
+  background: #f4f4f5;
+  color: #52525b;
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 800;
 }
 
-.node-tag.milestone { background: rgba(166, 125, 255, 0.2); color: #a67dff; }
-.node-tag.update { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
-.node-tag.fix { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.node-tag.milestone { background: #18181b; color: #ffffff; }
+.node-tag.update { background: #e4e4e7; color: #18181b; }
+.node-tag.fix { background: #fff1f2; color: #e11d48; }
 
 .node-content { flex: 1; }
 
 .node-content h3 {
   font-size: 1.1rem;
-  color: #fff;
+  color: #18181b;
   margin: 0 0 10px 0;
 }
 
 .node-content p {
   font-size: 0.9rem;
-  color: #a1a1aa;
+  color: #52525b;
   margin-bottom: 15px;
 }
 
@@ -141,7 +143,7 @@ p { margin: 0; }
 }
 
 .accent {
-  color: #a67dff;
+  color: #18181b;
   font-weight: bold;
   margin-right: 5px;
 }
@@ -154,8 +156,8 @@ p { margin: 0; }
 
 .load-more-btn {
   background: transparent;
-  color: #a67dff;
-  border: 1px solid rgba(166, 125, 255, 0.4);
+  color: #18181b;
+  border: 1px solid #e0e0dd;
   padding: 12px 24px;
   border-radius: 6px;
   font-weight: 600;
@@ -164,21 +166,21 @@ p { margin: 0; }
 }
 
 .load-more-btn:hover:not(:disabled) {
-  background: rgba(166, 125, 255, 0.1);
-  border-color: #a67dff;
+  background: #f4f4f5;
+  border-color: #18181b;
 }
 
 .load-more-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  color: #71717a;
+  color: #a1a1aa;
 }
 
 @media (max-width: 768px) {
   .news-node { flex-direction: column; gap: 15px; }
   .node-sidebar {
     border-right: none;
-    border-bottom: 1px solid #1e1e20;
+    border-bottom: 1px solid #ececea;
     padding-right: 0;
     padding-bottom: 10px;
     flex: none;

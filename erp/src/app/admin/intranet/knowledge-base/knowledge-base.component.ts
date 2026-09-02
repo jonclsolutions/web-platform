@@ -4,22 +4,26 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description The main shell component for the Knowledge Base module, managing layout, navigation state, and sub-module routing.
+ * @description Shell komponenta Knowledge Base - layout, responzivní menu, a GENEROVÁNÍ
+ * bočního menu z `KB_PAGES` dat (viz kb-pages.data.ts). Přidání nové stránky do
+ * KB_PAGES se v menu projeví automaticky, bez úpravy téhle komponenty nebo šablony.
  * @dependencies
- * - RouterModule: Facilitates nested routing for KB content.
- * - KbFooterComponent: Reusable footer for the knowledge base interface.
+ * - RouterModule: Nested routing (`:pageId` -> KbArticleComponent) + samostatná
+ *   `support-form` route.
+ * - KB_PAGES: Zdroj dat pro menu i obsah jednotlivých stránek.
  */
 
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-
 import { KbFooterComponent } from './substitutions/kb-footer/kb-footer.component';
+import { KB_PAGES } from './data/kb-pages.data';
+import { KBPage } from '../../../shared/interfaces/kb-content';
+/** Jedna skupina v bočním menu ("General", "Roles", "Web", ...) se svými seřazenými stránkami. */
+interface NavGroup {
+  name: string;
+  pages: KBPage[];
+}
 
-/**
- * @description Acts as a layout wrapper for the Knowledge Base section, providing responsive menu controls.
- * @usage Used as the entry point for the Knowledge Base module in the admin navigation hierarchy.
- * @note Implements path detection logic to conditionally display UI elements based on the current navigation state.
- */
 @Component({
   selector: 'app-knowledge-base',
   standalone: true,
@@ -28,30 +32,40 @@ import { KbFooterComponent } from './substitutions/kb-footer/kb-footer.component
   styleUrl: './knowledge-base.component.css'
 })
 export class KnowledgeBaseComponent {
-  /** * @description Tracks the expansion state of the side/mobile navigation menu. */
   isMenuOpen = false;
 
   constructor(private router: Router) {}
 
   /**
-   * @description Toggles the visibility of the mobile menu.
+   * @description Seskupí KB_PAGES podle `navGroup`, seřadí uvnitř skupiny podle
+   * `navOrder` a skupiny samotné podle nejnižšího `navOrder` v nich obsaženém - tak,
+   * aby přidání nové stránky s vlastním `navOrder` řídilo pořadí i bez ruční úpravy
+   * pořadí skupin.
    */
-  toggleMenu() {
+  get navGroups(): NavGroup[] {
+    const groups = new Map<string, KBPage[]>();
+    for (const page of KB_PAGES) {
+      if (!groups.has(page.navGroup)) groups.set(page.navGroup, []);
+      groups.get(page.navGroup)!.push(page);
+    }
+
+    return Array.from(groups.entries())
+      .map(([name, pages]) => ({
+        name,
+        pages: pages.slice().sort((a, b) => a.navOrder - b.navOrder)
+      }))
+      .sort((a, b) => Math.min(...a.pages.map(p => p.navOrder)) - Math.min(...b.pages.map(p => p.navOrder)));
+  }
+
+  toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
-  /**
-   * @description Collapses the navigation menu.
-   */
-  closeMenu() {
+  closeMenu(): void {
     this.isMenuOpen = false;
   }
 
-  /**
-   * @description Checks if the user is currently at the root of the Knowledge Base.
-   * @returns {boolean} True if the current URL matches the KB base path.
-   */
   isRootPath(): boolean {
-    return this.router.url === '/company-pages/knowledge-base';
+    return this.router.url === '/admin/intranet/knowledge-base';
   }
 }

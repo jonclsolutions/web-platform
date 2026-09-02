@@ -9,50 +9,14 @@
  * - RouterModule: Core Angular routing service.
  * - AuthGuard: Authentication middleware ensuring restricted access to administrative routes.
  * - AdminLayoutComponent: Main wrapper layout for the admin section.
- * @refactor-note (2026) Přidána `welcome-page` jako samostatná stránka dostupná z menu
- *      (odkaz "Vítejte"). Výchozí post-login přistávací stránka je od refactoru (2026-2)
- *      `core/dashboard`, ne `welcome-page` - viz redirect '' -> 'core/dashboard' níže
- *      a login.component.ts.
- * @refactor-note (2026-2) Vyčleněna nová sekce `core` (systémové/sdílené stránky napříč
- *      Web a E-shop): GDPR/TOS, osobní informace, firemní údaje, externí odkazy, správa
- *      rolí, správa účtů, welcome-page - přesunuty z `web-pages` do `core-pages` beze
- *      změny permission klíčů (přejmenování řešeno v samostatném tasku). Nové
- *      `core/dashboard` a `core/logs` jsou zatím placeholder stránky chráněné novou
- *      permission `view-core` (nutno ručně doplnit do core_permissions v DB).
- *      `business-logs` zůstává i nadále dostupná ve `web` sekci beze změny - core/logs
- *      je samostatná, dočasně na stejná data napojená stránka, ne přesun.
- * @refactor-note (2026-3) Web stránky sjednoceny pod prefix `web/...` (dřív byly na
- *      kořenové úrovni `/admin/xxx`), stejně jako `core/...` a `shop/...` - konzistentní
- *      URL struktura napříč všemi třemi sekcemi. Zároveň doplněna chybějící route
- *      `web/edit-website` (existoval jen odkaz v menu, route v modulu chyběla).
- * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php stejné datum):
- *      permission klíče přejmenovány tak, aby "vidět stránku" jednotně odpovídalo
- *      `-view` variantě nového granulárního klíče (`{resource}-view/create/update/delete`),
- *      místo dřívějšího nekonzistentního mixu `web-view-*` / `web-manage-*` / `web-edit-*`,
- *      který matoucím způsobem pojmenovával stejnou věc (přístup na stránku) různě.
- *      Zdroje přesunuté pod core-* (administrators, external-links, settings) mají nově
- *      i klíč s prefixem core- místo historického web-. `edit-legal` reálně kombinuje dva
- *      zdroje (document-sections + config/social) rozdělené na `core-legal-documents-*` a
- *      `core-legal-config-*`, proto používá OR syntaxi `core-legal-documents-view|
- *      core-legal-config-view` (`*appHasPermission` direktiva ji od tohoto data podporuje
- *      stejně jako backend CheckPermission middleware) - ať položka v menu zůstane
- *      viditelná i uživateli s právem jen na jeden z těch dvou zdrojů. POZOR: pokud
- *      `AuthGuard` čte `data.permission` a validuje ho samostatně (ne přes direktivu),
- *      zkontrolovat, že i on tuhle OR syntaxi podporuje - jinak by menu položku ukázal,
- *      ale kliknutí by guard odmítl.
- * @bugfix-note (2026-08-6) `web-settings` route měla omylem `core-settings-view`
- *      (permission pro CoreSiteSettingController / `core/settings` - přepínače údržby
- *      webu/eshopu). `WebSettingsComponent` ale reálně volá `legal/config`,
- *      `legal/config/settings`, `legal/config/social/*` (SiteConfigurationController) -
- *      stejný backend jako `edit-legal` config podsekce. Opraveno na
- *      `core-legal-config-view`, ať permission klíč odpovídá tomu, co komponenta
- *      skutečně čte/zapisuje. `core-settings-*` zůstává platný pro `core/settings`
- *      route v api.php, jen k němu momentálně žádná frontend stránka nesahá (dřívější
- *      přepínač údržby v headeru byl odstraněn, viz admin-layout.component.html).
- * @refactor-note (2026-08-22) BEZPEČNOSTNÍ MONITORING: přidána route
- *      `core/security-events` (SecurityEventsComponent), chráněná novou permission
- *      `core-security-view` (`core-security-update`/`core-security-delete` se
- *      vyhodnocují až uvnitř komponenty/API pro konkrétní akce - triage, purge).
+ *
+ * @refactor-note (2026) KNOWLEDGE BASE REFACTOR: `pages/introductions|security|contacts|
+ * sales-rep` komponenty odstraněny - jejich obsah je teď statická data v
+ * `kb-pages.data.ts`, vykreslovaná JEDNÍM generickým `KbArticleComponent` přes
+ * `:pageId` route. `support-form` a `news` ZŮSTÁVAJÍ vlastní explicitní komponenty
+ * (mají skutečnou logiku, ne statický text) - musí být v `children` PŘED `:pageId`,
+ * jinak by je Angular router zachytil jako hodnotu parametru dřív, než by došel
+ * k jejich explicitní route (router matchuje shora dolů).
  */
 
 import { NgModule } from '@angular/core';
@@ -70,11 +34,8 @@ import { SalesOrdersComponent } from './web-pages/sales-orders/sales-orders.comp
 import { SupportTicketsComponent } from './web-pages/support-tickets/support-tickets.component';
 import { JobApplicationsComponent } from './web-pages/job-applications/job-applications.component';
 import { KnowledgeBaseComponent } from './intranet/knowledge-base/knowledge-base.component';
-import { IntroductionsComponent } from './intranet/knowledge-base/pages/introductions/introductions.component';
-import { SalesRepComponent } from './intranet/knowledge-base/pages/sales-rep/sales-rep.component';
+import { KbArticleComponent } from './intranet/knowledge-base/kb-article/kb-article.component';
 import { NewsComponent } from './intranet/knowledge-base/pages/news/news.component';
-import { SecurityComponent } from './intranet/knowledge-base/pages/security/security.component';
-import { ContactsComponent } from './intranet/knowledge-base/pages/contacts/contacts.component';
 import { SupportFormComponent } from './intranet/knowledge-base/pages/support-form/support-form.component';
 import { ProjectsComponent } from './web-pages/projects/projects.component';
 
@@ -183,12 +144,13 @@ const routes: Routes = [
         path: 'knowledge-base',
         component: KnowledgeBaseComponent,
         children: [
-          { path: 'introductions', component: IntroductionsComponent },
-          { path: 'sales-rep', component: SalesRepComponent },
-          { path: 'news', component: NewsComponent },
-          { path: 'security', component: SecurityComponent },
-          { path: 'contacts', component: ContactsComponent },
+          // Vlastní explicitní komponenty (reálná logika, ne statický text) - MUSÍ
+          // být před ':pageId', jinak by je router zachytil jako parametr.
           { path: 'support-form', component: SupportFormComponent },
+          { path: 'news', component: NewsComponent },
+          // Generický renderer pro VŠECHNY ostatní stránky manuálu - viz
+          // kb-pages.data.ts pro přidání nové stránky (žádná nová route potřeba).
+          { path: ':pageId', component: KbArticleComponent },
           { path: '', redirectTo: 'introductions', pathMatch: 'full' }
         ]
       }
