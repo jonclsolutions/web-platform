@@ -4,14 +4,26 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    @refactor-note (2026-08-2): Přidán @case ('files') - sdílená <app-multi-file-upload>
-        pro vícenásobný upload, viz form-builder.component.ts.
-    @refactor-note (2026-08-19): `<app-multi-file-upload>` dostal `[existingFiles]`
-        binding - v edit módu (formDataToEdit existuje) pošle existující přílohy dané
-        položky (`formDataToEdit[input.column_name]`, pole objektů z API) do widgetu,
-        který je zobrazí jako read-only seznam nad dropzonou pro nové soubory. V create
-        módu (formDataToEdit je null) se posílá prázdné pole - viz
-        multi-file-upload.component.ts stejné datum.
+    (Earlier refactor-notes for the 'files' case are unchanged - see version history.)
+
+    @refactor-note (2026-09-02): Added @case ('multiselect') - a checkbox group bound
+        via FormBuilderComponent.isMultiselectChecked()/onMultiselectToggle(), see
+        form-builder.component.ts. Each checkbox is intentionally NOT wired through
+        ngModel/name into the Angular form's own control tree (unlike every other
+        case here) - a checkbox-per-option group doesn't map onto a single
+        FormControl the way a single input does, so it's driven as plain DOM state
+        via [checked]/(change) instead. This field is never `required`, so it does
+        not need to participate in `genericForm`'s validity for submission to work.
+
+    @refactor-note (2026-09-05): Added `isOptionDisabled()` binding + a "(z role)"
+        badge on each disabled option, so an admin can see WHY a permission appears
+        checked - it's granted by the account's role, not an explicit extra grant.
+
+    @refactor-note (2026-09-06): The `'select'` case now also emits
+        `(ngModelChange)="onFieldChange(input.column_name, $event)"` alongside its
+        existing `[(ngModel)]` binding, so a consumer page can react to a live
+        change (see FormBuilderComponent's new `(fieldChanged)` output and
+        AdministratorsComponent.handleFieldChanged()).
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -26,7 +38,7 @@
       <form #genericForm="ngForm" (ngSubmit)="onSubmit(genericForm, $event)" novalidate>
         <div class="form-grid-layout">
           @for (input of visibleInputDefinitions; track input) {
-            <div class="form-row-item" [class.full-width]="input.type === 'textarea' || input.type === 'files'">
+            <div class="form-row-item" [class.full-width]="input.type === 'textarea' || input.type === 'files' || input.type === 'multiselect'">
               <label [for]="input.column_name" class="field-label">
                 {{ input.label }}
                 @if (input.required) {
@@ -54,6 +66,28 @@
                       (existingFileRemoved)="onExistingFilesRemoved($event, input.column_name)">
                     </app-multi-file-upload>
                   }
+                  @case ('multiselect') {
+                    <div class="multiselect-wrapper">
+                      @for (option of input.options; track option.value) {
+                        <div class="checkbox-wrapper multiselect-option">
+                          <input type="checkbox"
+                            [id]="input.column_name + '_' + option.value"
+                            [checked]="isMultiselectChecked(input.column_name, option.value)"
+                            [disabled]="input.editable === false || isOptionDisabled(input, option.value)"
+                            (change)="onMultiselectToggle(input.column_name, option.value, $event)" />
+                          <label [for]="input.column_name + '_' + option.value">
+                            {{ option.label }}
+                            @if (isOptionDisabled(input, option.value)) {
+                              <span class="multiselect-role-badge"> (z role)</span>
+                            }
+                          </label>
+                        </div>
+                      }
+                      @if (!input.options || input.options.length === 0) {
+                        <div class="multiselect-empty">Žádné možnosti k výběru.</div>
+                      }
+                    </div>
+                  }
                   @case ('text') {
                     <input type="text" [id]="input.column_name" [placeholder]="input.placeholder" 
                       [required]="!!input.required" [pattern]="input.pattern || '.*'" [name]="input.column_name" 
@@ -70,7 +104,10 @@
                       [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
                   @case ('select') {
-                    <select [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false">
+                    <select [id]="input.column_name" [required]="!!input.required" [name]="input.column_name"
+                      [(ngModel)]="formData[input.column_name]"
+                      (ngModelChange)="onFieldChange(input.column_name, $event)"
+                      class="custom-input" [disabled]="input.editable === false">
                       <option value="" disabled selected>-- Vyberte --</option>
                       @for (option of input.options; track option) {
                         <option [value]="option.value">{{ option.label }}</option>

@@ -5,7 +5,60 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Manages user account lifecycles, including creation, role assignment, password security policies, and administrative audit logging.
+ * @description Manages user account lifecycles, including creation, role assignment,
+ * explicit permission grants, password security policies, and administrative audit
+ * logging.
+ * @refactor-note (2026-09-02) BACKLOG "explicit user permissions + admin role
+ * removal":
+ * - `NEVER_BLOCK_ROLE_NAMES` narrowed to `['sysadmin']` - the 'admin' role has been
+ *   removed from the system entirely (see migration SQL
+ *   001_explicit_user_permissions_and_admin_role_removal.sql). Any account that
+ *   used to be 'admin' was migrated to the ordinary 'manager' role, which is not
+ *   hardcoded anywhere and can be edited/deleted like any other role.
+ * - `changePassword()`'s legacy `whereIn('role_name', ['admin', 'sysadmin'])` check
+ *   is replaced with a permission-key check (`core-administrators-update`) against
+ *   the actor's EFFECTIVE permissions (role ∪ explicit) - see
+ *   `User::getPermissionsAttribute()`. This was the only remaining place in this
+ *   controller that hardcoded the 'admin' role name.
+ * - `store()`/`update()` now accept an optional `permission_ids` array and persist
+ *   it to the new `user_permissions` pivot via `applyExplicitPermissions()`. A
+ *   critical anti-privilege-escalation guard is applied: an actor can only
+ *   grant/revoke explicit permissions that are themselves within the actor's OWN
+ *   effective permission set (sysadmin is exempt, matching how `CheckPermission`
+ *   middleware already treats sysadmin). Permissions already granted by the
+ *   target's role are silently ignored (explicit grants only make sense for
+ *   permissions the role does NOT already carry - see project decision log).
+ * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security":
+ * - NEW `actorCanAssignRole()` guard, checked in both `store()` (assigning a role to
+ *   a brand-new account) and `update()` (reassigning an existing account's role):
+ *   an actor may only assign a role whose ENTIRE permission set is already within
+ *   their own effective permissions (role ∪ explicit). Sysadmin is exempt. This is
+ *   the SAME anti-privilege-escalation principle as `applyExplicitPermissions()`
+ *   below, just applied to whole-role assignment instead of individual permission
+ *   keys - without it, any account holding `core-administrators-update` could
+ *   reassign a user (or create a new one) onto a role carrying MORE permissions
+ *   than the actor themselves holds, a direct escalation path one level above the
+ *   explicit-permissions guard.
+ * - `update()` now detects an actual role CHANGE (captured via `$oldRoleId`,
+ *   read fresh from the DB before any mutation in this request) and, whenever the
+ *   role assignment changes, unconditionally wipes ALL of the target's explicit
+ *   permission grants BEFORE any newly submitted `permission_ids` are applied -
+ *   regardless of who requests the change or what the frontend sends. Two
+ *   independent problems motivated this:
+ *   1) STALE ELEVATED ACCESS: an account promoted to a broad role and later
+ *      demoted could otherwise be left holding leftover explicit grants from
+ *      before the promotion, silently carrying more access into the new role than
+ *      that role is supposed to represent.
+ *   2) ACCIDENTAL PRIVILEGE COPY-OVER IN A SINGLE SUBMIT: the admin edit form seeds
+ *      `permission_ids` with the CURRENTLY selected role's own permissions
+ *      (rendered checked+disabled, purely for display -
+ *      see `AdministratorsComponent.handleEditFormOpened()`). If an admin changes
+ *      the role field and submits in the same request, permissions checked only
+ *      because the OLD role granted them could otherwise be accepted as legitimate
+ *      explicit grants on the NEW, supposedly narrower role.
+ *   Wiping unconditionally on role change closes both paths at once: the new role
+ *   starts from zero explicit grants, and the admin must deliberately re-add
+ *   anything extra afterwards ("naklikat od nuly", per project decision).
  */
 
 namespace App\Http\Controllers\Api;
@@ -15,6 +68,7 @@ use App\Mail\Auth\AccountActivationMail;
 use App\Mail\Auth\PasswordChangedNotification;
 use App\Models\{AccountActivationToken, RefreshToken, User};
 use App\Models\Core\CoreEmailAccessRule;
+use App\Models\Core\CorePermission;
 use App\Models\Core\CoreRole;
 use App\Models\Core\CoreLog;
 use App\Models\Core\CoreSecurityEvent;
@@ -35,29 +89,29 @@ class UserController extends Controller
     private const PASSWORD_CHANGE_NOTIFY_DECAY_SECONDS = 3600;
 
     /**
-     * @description Role, jejichž účty NELZE NIKDY zablokovat - absolutní zákaz, platí
-     * i pro sysadmina samotného (rozhodnuto v backlogu). Stejný seznam jako
-     * `User::FORCED_2FA_ROLE_NAMES` - obě ochrany se týkají stejných "trvale
-     * chráněných" rolí, ale jsou to nezávislé kontroly (2FA vynucení vs. blokace).
+     * @description Role names whose accounts can NEVER be blocked - an absolute
+     * prohibition that applies even to sysadmin itself (project decision).
+     * @refactor-note (2026-09-02) Narrowed to sysadmin-only - the 'admin' role no
+     * longer exists. Must match `User::FORCED_2FA_ROLE_NAMES`.
      */
-    private const NEVER_BLOCK_ROLE_NAMES = ['admin', 'sysadmin'];
+    private const NEVER_BLOCK_ROLE_NAMES = ['sysadmin'];
 
     /**
-     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální `search`
-     * parametr (OR napříč `full_name`/`user_email`) - stejné dva textové sloupce, které
-     * tahle metoda už dřív filtrovala jednotlivě. `search` je zabalený do vlastního
-     * `where(function ($q) { ... })` bloku - viz CoreExternalLinkController pro
-     * podrobné vysvětlení, proč holý `orWhere()` na hlavní `$query` builder je
-     * nebezpečný (rozbil by AND spojení s předchozími podmínkami, konkrétně tady by to
-     * ovlivnilo `onlyTrashed()`/`withoutTrashed()` scoping z Eloquent SoftDeletes -
-     * bez obalení by `search` mohl vrátit i smazané/nesmazané záznamy mimo aktuálně
-     * zvolený pohled).
+     * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": added a global `search`
+     * parameter (OR across `full_name`/`user_email`) - the same two text columns this
+     * method already filtered individually. `search` is wrapped in its own
+     * `where(function ($q) { ... })` block - see CoreExternalLinkController for a
+     * detailed explanation of why a bare `orWhere()` on the main `$query` builder is
+     * dangerous (it would break the AND-composition with previous conditions,
+     * specifically the `onlyTrashed()`/`withoutTrashed()` scoping from Eloquent
+     * SoftDeletes here - without wrapping, `search` could return deleted/non-deleted
+     * records outside the currently selected view).
      *
-     * @note Search NEPOKRÝVÁ `role_name` (přiřazenou roli) - to by vyžadovalo vždy
-     * aktivní JOIN na `user_roles`/`roles`, zatímco dnes se joinuje jen podmíněně (při
-     * řazení podle role_name, viz blok níže). Pokud bude v budoucnu potřeba hledat i
-     * podle role, je to samostatné rozšíření (trvalý LEFT JOIN), ne triviální přidání
-     * do stávajícího search bloku.
+     * @note Search does NOT cover `role_name` (the assigned role) - that would
+     * require an always-active JOIN onto `user_roles`/`roles`, whereas today it is
+     * only joined conditionally (when sorting by role_name, see the block below). If
+     * searching by role is needed in the future, that is a separate extension
+     * (permanent LEFT JOIN), not a trivial addition to the existing search block.
      */
     public function index(Request $request): JsonResponse
     {
@@ -75,7 +129,7 @@ class UserController extends Controller
         if ($request->filled('full_name')) $query->where('full_name', 'like', "%{$request->full_name}%");
         if ($request->filled('user_email')) $query->where('user_email', 'like', "%{$request->user_email}%");
 
-        // Globální fulltextový search napříč full_name/user_email - viz bugfix-note výše.
+        // Global fulltext search across full_name/user_email - see bugfix-note above.
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%")
@@ -96,12 +150,12 @@ class UserController extends Controller
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
         if ($noPagination) {
-            $this->logAction($request, CoreLog::class, 'export', 'User', "Hromadný export uživatelů.");
-            $users = $query->with('roles.permissions')->get();
+            $this->logAction($request, CoreLog::class, 'export', 'User', "Bulk export of users.");
+            $users = $query->with(['roles.permissions', 'explicitPermissions'])->get();
             return response()->json(UserResource::collection($users));
         }
 
-        $users = $query->with('roles.permissions')->paginate($perPage);
+        $users = $query->with(['roles.permissions', 'explicitPermissions'])->paginate($perPage);
 
         return response()->json([
             'data' => UserResource::collection($users->items()),
@@ -115,15 +169,17 @@ class UserController extends Controller
     /**
      * Creates a new user WITHOUT a password and sends an activation e-mail so the user
      * can set their own password (no one, not even the admin, ever knows it).
-     * @note KRITICKÁ OCHRANA: vytvořit nový účet s rolí sysadmin smí jen volající, který
-     * je sám sysadmin. E-mailová doména se ověřuje PŘED touto kontrolou - viz
-     * `assertEmailDomainAllowed()`.
+     * @note CRITICAL PROTECTION: only a caller who is themselves sysadmin may create a
+     * new account with the sysadmin role. E-mail domain is checked BEFORE this check -
+     * see `assertEmailDomainAllowed()`. A caller may also only assign a role whose
+     * permissions are within the caller's own effective permissions - see
+     * `actorCanAssignRole()`.
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
-        // ── Whitelist e-mailové domény - viz refactor-note (2026-08-25) v hlavičce ──────
+        // ── Email domain whitelist - see refactor-note (2026-08-25) in the header ──────
         $domainCheck = $this->assertEmailDomainAllowed($request, $validated['user_email']);
         if ($domainCheck instanceof JsonResponse) {
             return $domainCheck;
@@ -132,21 +188,32 @@ class UserController extends Controller
         $roleId = $validated['role_id'] ?? null;
 
         if ($roleId && $this->isSysadminRoleId((int) $roleId) && !$this->actorIsSysadmin($request)) {
-            $this->logAction($request, CoreLog::class, 'create_denied', 'User', "Zamítnut pokus o vytvoření nového sysadmin účtu: {$validated['user_email']}");
-            return response()->json(['message' => 'Nový účet s rolí sysadmin smí vytvořit pouze jiný sysadmin.'], 403);
+            $this->logAction($request, CoreLog::class, 'create_denied', 'User', "Denied attempt to create a new sysadmin account: {$validated['user_email']}");
+            return response()->json(['message' => 'Only another sysadmin may create a new account with the sysadmin role.'], 403);
         }
+
+        if ($roleId && !$this->actorCanAssignRole($request, (int) $roleId)) {
+            $this->logAction($request, CoreLog::class, 'create_denied', 'User', "Denied attempt to create an account with a role granting more than the actor's own permissions: {$validated['user_email']}");
+            return response()->json(['message' => 'You cannot assign a role that grants permissions you do not yourself have.'], 403);
+        }
+
+        // permission_ids is handled separately after the user exists (pivot needs a
+        // user_id) - strip it out of the mass-assignable payload here.
+        $requestedPermissionIds = $validated['permission_ids'] ?? null;
+        unset($validated['permission_ids']);
 
         DB::beginTransaction();
         try {
             $forced = $this->isRoleForced2fa($roleId);
             $validated['enable_2fa'] = $forced ? true : ($validated['enable_2fa'] ?? false);
-            // two_fa_forced_by_admin nelze nastavit při vytváření (nový účet nemá historii) -
-            // sysadmin ho případně nastaví následným update().
+            // two_fa_forced_by_admin cannot be set at creation time (a new account has
+            // no history yet) - a sysadmin can set it in a follow-up update().
             unset($validated['two_fa_forced_by_admin']);
 
-            // Účet vzniká BEZ hesla - nastaví si ho sám uživatel přes aktivační odkaz
-            // (viz AccountActivationController::activate()). Dokud tak neučiní, login
-            // je zablokovaný na úrovni AuthController::login() (user_password_hash IS NULL).
+            // The account is created WITHOUT a password - the user sets their own via
+            // the activation link (see AccountActivationController::activate()). Until
+            // then, login is blocked at the AuthController::login() level
+            // (user_password_hash IS NULL).
             $validated['user_password_hash'] = null;
             $validated['is_blocked'] = false;
             $validated['activated_at'] = null;
@@ -157,13 +224,17 @@ class UserController extends Controller
                 $user->roles()->attach($roleId);
             }
 
+            if ($requestedPermissionIds !== null) {
+                $this->applyExplicitPermissions($request, $user, $requestedPermissionIds, (int) $roleId);
+            }
+
             DB::commit();
 
-            // Mail se posílá AŽ PO commitu - selhání odeslání (SMTP výpadek apod.)
-            // nesmí rollbacknout už vytvořený účet. Admin má řádkovou akci "Aktivace"
-            // (resendActivation()) pro případ, že se e-mail ztratí, vyprší, nebo se
-            // nepodaří odeslat hned teď - viz $emailSent níže, které frontend zobrazí
-            // jako varování místo tichého "úspěchu".
+            // The e-mail is sent AFTER the commit - a send failure (SMTP outage etc.)
+            // must not roll back the account that was already created. The admin has a
+            // row action "Activate" (resendActivation()) in case the e-mail gets lost,
+            // expires, or fails to send right now - see $emailSent below, surfaced to
+            // the frontend as a warning instead of a silent "success".
             $emailSent = $this->sendActivationEmail($user);
 
             $this->logAction(
@@ -171,17 +242,17 @@ class UserController extends Controller
                 CoreLog::class,
                 'create',
                 'User',
-                "Vytvořen uživatel (čeká na aktivaci): {$user->user_email}" . (!$emailSent ? ' [AKTIVAČNÍ E-MAIL SE NEPODAŘILO ODESLAT]' : ''),
+                "Created user (pending activation): {$user->user_email}" . (!$emailSent ? ' [ACTIVATION E-MAIL FAILED TO SEND]' : ''),
                 $user->id,
                 'User'
             );
 
-            $response = new UserResource($user->load('roles.permissions'));
+            $response = new UserResource($user->load(['roles.permissions', 'explicitPermissions']));
             return response()->json($response->additional(['activation_email_sent' => $emailSent]), 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při vytváření uživatele: " . $e->getMessage());
-            return response()->json(['message' => 'Chyba při vytváření uživatele.'], 500);
+            $this->logAction($request, CoreLog::class, 'error', 'User', "Error creating user: " . $e->getMessage());
+            return response()->json(['message' => 'Error creating user.'], 500);
         }
     }
 
@@ -191,30 +262,40 @@ class UserController extends Controller
     public function show(string $id): JsonResponse
     {
         if (!ctype_digit($id)) {
-            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+            return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
         $user = User::withTrashed()->findOrFail($id);
 
-        return response()->json(new UserResource($user->load('roles.permissions')));
+        return response()->json(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
     }
 
-    /**
+      /**
      * Updates an existing user's information.
-     * @note KRITICKÁ OCHRANA: pokud je cílový účet sysadmin, NEBO request žádá o
-     * povýšení cílového účtu na sysadmina, smí to provést jen volající, který je SÁM
-     * sysadmin. `enable_2fa` nelze u vynucených účtů/rolí explicitně vypnout (422).
-     * `two_fa_forced_by_admin` smí měnit jen sysadmin a jen na účtech, které NEMAJÍ 2FA
-     * vynucené jinak (rolí) - jinak by byl override bezpředmětný (422). `is_blocked`
-     * nelze NIKDY nastavit na účet admin/sysadmin ani na vlastní účet (422) - viz
-     * refactor-note v hlavičce souboru. Přechod na `is_blocked = true` revokuje tokeny.
-     * @note Doménová whitelist kontrola se NEAPLIKUJE zde - týká se výhradně vytváření
-     * nových účtů (`store()`), viz backlog "existující účty se zpětně neruší".
+     * @note CRITICAL PROTECTION: if the target account is sysadmin, OR the request
+     * asks to promote the target to sysadmin, only a caller who is THEMSELVES
+     * sysadmin may perform it. A caller may also only reassign a role whose
+     * permissions are within the caller's own effective permissions - see
+     * `actorCanAssignRole()`. `enable_2fa` cannot be explicitly turned off on
+     * forced accounts/roles (422). `two_fa_forced_by_admin` may only be changed by a
+     * sysadmin and only on accounts that do NOT already have 2FA forced some other
+     * way (otherwise the override would be pointless - 422). `is_blocked` can NEVER
+     * be set on a sysadmin account nor on the caller's own account (422). Any actual
+     * ROLE CHANGE unconditionally wipes all of the target's explicit permission
+     * grants BEFORE `permission_ids` (if present) is applied - see header
+     * refactor-note (2026-09-06). Transitioning to `is_blocked = true` revokes all
+     * active tokens. `permission_ids` is applied via `applyExplicitPermissions()`,
+     * which enforces that an actor can only grant/revoke permissions they
+     * themselves effectively hold - a hard anti-privilege-escalation guard, not a
+     * UX nicety, and cannot be bypassed by the frontend.
+     * @note The domain whitelist check does NOT apply here - it is exclusive to
+     * account creation (`store()`), see backlog "existing accounts are not
+     * retroactively revoked".
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
         if (!ctype_digit($id)) {
-            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+            return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
         $user = User::findOrFail($id);
@@ -226,18 +307,51 @@ class UserController extends Controller
 
         if (($targetIsSysadmin || $promotingToSysadmin) && !$this->actorIsSysadmin($request)) {
             $reason = $targetIsSysadmin
-                ? "Zamítnuta úprava sysadmin účtu: {$user->user_email}"
-                : "Zamítnut pokus o povýšení účtu na sysadmina: {$user->user_email}";
+                ? "Denied edit of sysadmin account: {$user->user_email}"
+                : "Denied attempt to promote account to sysadmin: {$user->user_email}";
             $this->logAction($request, CoreLog::class, 'update_denied', 'User', $reason, (int) $id, 'User');
-            return response()->json(['message' => 'Účet s rolí sysadmin smí upravovat, nebo na ni povyšovat, pouze jiný sysadmin.'], 403);
+            return response()->json(['message' => 'Only another sysadmin may edit, or promote an account to, the sysadmin role.'], 403);
         }
 
-        // ── 2FA vynucení (role) - viz refactor-note v hlavičce souboru ─────────────────
-        $effectiveRoleId = $validated['role_id'] ?? $user->roles()->first()?->id;
+        // ── Role-change detection - captured BEFORE any mutation, using the ACTUAL
+        // current role (not $effectiveRoleId below, which already folds in the
+        // requested change and would make this comparison always false).
+        //
+        // @bugfix-note (2026-09-06) A self-edit NEVER actually changes the target's
+        // role - see the pre-existing `$request->user()->id !== $user->id` guard
+        // around `$user->roles()->sync(...)` further down, which silently skips the
+        // sync when an actor edits their own account. `$roleWillActuallyApply`
+        // reflects that same condition, so `$roleChanged` (used below both for the
+        // authority check and for the explicit-permissions wipe) is FALSE whenever
+        // no real role change is about to happen - previously it was computed only
+        // from the submitted payload, so a self-edit that merely INCLUDED a
+        // different `role_id` (which was always going to be silently ignored)
+        // could still trigger the "wipe all explicit permissions" side effect below
+        // even though the account's role never actually changed.
+        $oldRoleId = $user->roles()->first()?->id;
+        $roleWillActuallyApply = $request->user()->id !== $user->id;
+        $roleChanged = $roleWillActuallyApply
+            && isset($validated['role_id'])
+            && (int) $validated['role_id'] !== (int) $oldRoleId;
+
+        if ($roleChanged && !$this->actorCanAssignRole($request, (int) $validated['role_id'])) {
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to assign a role granting more than the actor's own permissions: {$user->user_email}", (int) $id, 'User');
+            return response()->json(['message' => 'You cannot assign a role that grants permissions you do not yourself have.'], 403);
+        }
+
+        // ── 2FA enforcement (role) - see refactor-note in the header ─────────────────
+        // @bugfix-note (2026-09-06) Uses $oldRoleId whenever the role change won't
+        // actually apply (self-edit) - same principle as $roleChanged above. Without
+        // this, a self-edit that merely INCLUDED a different (never-applied) role_id
+        // would evaluate 2FA enforcement, the is_blocked protected-role check, and
+        // applyExplicitPermissions()'s redundant-permission filtering against a role
+        // the account doesn't actually end up with.
+        $effectiveRoleId = $roleWillActuallyApply ? ($validated['role_id'] ?? $oldRoleId) : $oldRoleId;
         $forcedByRole = $this->isRoleForced2fa($effectiveRoleId);
 
-        // Efektivní vynucení = rolí NEBO existující sysadmin override (pokud request
-        // two_fa_forced_by_admin nemění, bere se stávající hodnota z DB).
+        // Effective enforcement = role OR an existing sysadmin override (if the
+        // request does not change two_fa_forced_by_admin, the existing DB value is
+        // used).
         $effectiveAdminForced = array_key_exists('two_fa_forced_by_admin', $validated)
             ? (bool) $validated['two_fa_forced_by_admin']
             : (bool) $user->two_fa_forced_by_admin;
@@ -245,36 +359,37 @@ class UserController extends Controller
         $isForced = $forcedByRole || $effectiveAdminForced;
 
         if ($isForced && array_key_exists('enable_2fa', $validated) && !$validated['enable_2fa']) {
-            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Zamítnut pokus o vypnutí 2FA u vynuceného účtu: {$user->user_email}", (int) $id, 'User');
-            return response()->json(['message' => 'Dvoufaktorové ověření nelze u tohoto účtu vypnout - je vynuceno.'], 422);
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to disable 2FA on a forced account: {$user->user_email}", (int) $id, 'User');
+            return response()->json(['message' => 'Two-factor authentication cannot be disabled on this account - it is enforced.'], 422);
         }
 
         $validated['enable_2fa'] = $isForced ? true : ($validated['enable_2fa'] ?? $user->enable_2fa);
 
-        // ── two_fa_forced_by_admin (sysadmin override) - viz refactor-note v hlavičce ──
+        // ── two_fa_forced_by_admin (sysadmin override) - see refactor-note in the header ──
         if (array_key_exists('two_fa_forced_by_admin', $validated)) {
             if (!$this->actorIsSysadmin($request)) {
-                $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Zamítnut pokus o změnu vynucení 2FA (není sysadmin): {$user->user_email}", (int) $id, 'User');
-                return response()->json(['message' => 'Vynucení 2FA smí měnit pouze sysadmin.'], 403);
+                $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to change 2FA enforcement (not sysadmin): {$user->user_email}", (int) $id, 'User');
+                return response()->json(['message' => 'Only sysadmin may change 2FA enforcement.'], 403);
             }
 
             if ($forcedByRole) {
-                return response()->json(['message' => '2FA je pro tuto roli vynuceno automaticky - ruční vynucení není potřeba ani možné.'], 422);
+                return response()->json(['message' => '2FA is automatically enforced for this role - a manual override is unnecessary and not allowed.'], 422);
             }
         } else {
-            // Pole nebylo v requestu vůbec - nechat stávající hodnotu beze změny.
+            // Key was not present in the request at all - leave the existing value unchanged.
             unset($validated['two_fa_forced_by_admin']);
         }
 
-        // ── is_blocked (blokace účtu) - ABSOLUTNÍ ochrana admin/sysadmin ───────────────
-        // Kontrola PŘED update() - potřebujeme rozhodnout ještě než se cokoliv zapíše.
+        // ── is_blocked (account lock) - ABSOLUTE protection for sysadmin ───────────────
+        // Checked BEFORE update() - we need to decide this before anything is written.
         if (array_key_exists('is_blocked', $validated) && $validated['is_blocked']) {
             if ((int) $request->user()->id === (int) $user->id) {
-                return response()->json(['message' => 'Nelze zablokovat vlastní účet.'], 422);
+                return response()->json(['message' => 'You cannot block your own account.'], 422);
             }
 
-            // Efektivní role po případné změně v tomto requestu (stejná logika jako
-            // $effectiveRoleId výše, ale explicitně přes jméno role kvůli čitelnosti).
+            // Effective role after any change in this request (same logic as
+            // $effectiveRoleId above, but explicitly through the role name for
+            // readability).
             $effectiveRoleName = $effectiveRoleId ? CoreRole::find($effectiveRoleId)?->role_name : null;
             $currentRoleNames = $user->roles()->pluck('role_name');
 
@@ -282,12 +397,17 @@ class UserController extends Controller
                 || $currentRoleNames->intersect(self::NEVER_BLOCK_ROLE_NAMES)->isNotEmpty();
 
             if ($isProtectedRole) {
-                $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Zamítnut pokus o zablokování chráněného účtu: {$user->user_email}", (int) $id, 'User');
-                return response()->json(['message' => 'Účty s rolí admin/sysadmin nelze nikdy zablokovat.'], 422);
+                $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to block a protected account: {$user->user_email}", (int) $id, 'User');
+                return response()->json(['message' => 'Accounts with the sysadmin role can never be blocked.'], 422);
             }
         }
 
         $wasBlocked = (bool) $user->is_blocked;
+
+        // permission_ids is handled separately via applyExplicitPermissions() - strip
+        // it out of the mass-assignable payload before $user->update().
+        $requestedPermissionIds = array_key_exists('permission_ids', $validated) ? $validated['permission_ids'] : null;
+        unset($validated['permission_ids']);
 
         if (!empty($validated['user_password_hash'])) {
             $validated['user_password_hash'] = Hash::make($validated['user_password_hash']);
@@ -305,35 +425,73 @@ class UserController extends Controller
                 }
             }
 
-            // Přechod false -> true: OKAMŽITĚ zneplatnit veškerý aktivní přístup, jinak
-            // by kompromitovaný účet mohl dál používat systém, dokud mu access token
-            // sám nevyprší (viz backlog rozhodnutí o smyslu blokace).
+            // ── Role-change wipe - see header refactor-note (2026-09-06). MUST
+            // happen before applyExplicitPermissions() reads the account's current
+            // explicit grants, otherwise it would treat pre-change grants as
+            // "outside the actor's authority, leave untouched" and effectively
+            // undo the wipe.
+            if ($roleChanged) {
+                $user->explicitPermissions()->sync([]);
+                $this->logAction(
+                    $request,
+                    CoreLog::class,
+                    'update',
+                    'User',
+                    "Role changed for {$user->user_email} - all explicit permission grants were reset to zero.",
+                    $user->id,
+                    'User'
+                );
+            }
+
+            // @bugfix-note (2026-09-06) Uses $effectiveRoleId directly (already
+            // resolved above to reflect the role the account will ACTUALLY end up
+            // with, self-edit-aware) instead of re-preferring $validated['role_id'] -
+            // the previous `$validated['role_id'] ?? $effectiveRoleId` expression
+            // would silently reintroduce the same self-edit bug this whole patch
+            // fixes, by feeding a never-applied role_id into the redundant-
+            // permission filtering inside applyExplicitPermissions().
+            if ($requestedPermissionIds !== null) {
+                $this->applyExplicitPermissions($request, $user, $requestedPermissionIds, (int) $effectiveRoleId);
+            }
+
+            // Transition false -> true: IMMEDIATELY invalidate all active access,
+            // otherwise a compromised account could keep using the system until its
+            // access token expires on its own (see backlog decision on the purpose of
+            // blocking).
             if (!$wasBlocked && $user->is_blocked) {
                 $user->tokens()->delete();
                 RefreshToken::where('user_id', $user->id)->delete();
-                $this->logAction($request, CoreLog::class, 'account_blocked', 'User', "Účet zablokován, aktivní tokeny zneplatněny: {$user->user_email}", $user->id, 'User');
+                $this->logAction($request, CoreLog::class, 'account_blocked', 'User', "Account blocked, active tokens invalidated: {$user->user_email}", $user->id, 'User');
             }
 
             DB::commit();
-            $this->logAction($request, CoreLog::class, 'update', 'User', "Aktualizace uživatele: {$user->user_email}", $user->id, 'User');
-            return response()->json(new UserResource($user->load('roles.permissions')));
+            $this->logAction($request, CoreLog::class, 'update', 'User', "User updated: {$user->user_email}", $user->id, 'User');
+            return response()->json(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při updatu uživatele ID {$id}: " . $e->getMessage(), (int) $id, 'User');
-            return response()->json(['message' => 'Chyba serveru při ukládání.'], 500);
+            $this->logAction($request, CoreLog::class, 'error', 'User', "Error updating user ID {$id}: " . $e->getMessage(), (int) $id, 'User');
+            return response()->json(['message' => 'Server error while saving.'], 500);
         }
     }
 
+
     /**
      * Handles password changes with administrative validation requirements.
-     * @note KRITICKÁ OCHRANA: cizí sysadmin účet smí heslo změnit jen jiný sysadmin.
-     * Po úspěšné změně se VŽDY odešle PasswordChangedNotification s rate limitem.
+     * @note CRITICAL PROTECTION: another sysadmin's account password may only be
+     * changed by a fellow sysadmin. A success notification (PasswordChangedNotification)
+     * is ALWAYS sent afterwards, rate-limited.
+     * @refactor-note (2026-09-02) Replaced the legacy hardcoded
+     * `whereIn('role_name', ['admin', 'sysadmin'])` "is this caller an admin" check
+     * with a permission-key check against the caller's EFFECTIVE permission set
+     * (`core-administrators-update`, which already unions role + explicit grants -
+     * see `User::getPermissionsAttribute()`). This was the last hardcoded reference
+     * to the 'admin' role name in this controller.
      */
     public function changePassword(PasswordChangeRequest $request, string $id): JsonResponse
     {
         if (!ctype_digit($id)) {
-            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+            return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
         try {
@@ -347,19 +505,19 @@ class UserController extends Controller
             if ($targetIsSysadmin && !$isOwner) {
                 $actorIsSysadmin = $auth->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
                 if (!$actorIsSysadmin) {
-                    $this->logAction($request, CoreLog::class, 'password_change_denied', 'User', "Zamítnut pokus o změnu hesla sysadmin účtu: {$user->user_email}", (int) $id, 'User');
-                    return response()->json(['message' => 'Heslo účtu s rolí sysadmin smí změnit pouze jiný sysadmin.'], 403);
+                    $this->logAction($request, CoreLog::class, 'password_change_denied', 'User', "Denied attempt to change a sysadmin account's password: {$user->user_email}", (int) $id, 'User');
+                    return response()->json(['message' => "Only another sysadmin may change a sysadmin account's password."], 403);
                 }
             }
 
-            $isAdmin = $auth->roles()->whereIn('role_name', ['admin', 'sysadmin'])->exists();
+            $canManageAdministrators = in_array('core-administrators-update', $auth->permissions ?? [], true);
 
-            if (!$isOwner && !$isAdmin) {
-                return response()->json(['message' => 'Nedostatečná oprávnění.'], 403);
+            if (!$isOwner && !$canManageAdministrators) {
+                return response()->json(['message' => 'Insufficient permissions.'], 403);
             }
 
             if (!isset($validated['old_password']) || !Hash::check($validated['old_password'], $auth->user_password_hash)) {
-                return response()->json(['message' => 'Vaše potvrzovací heslo (aktuální heslo) je nesprávné.'], 403);
+                return response()->json(['message' => 'Your confirmation (current) password is incorrect.'], 403);
             }
 
             $user->update(['user_password_hash' => Hash::make($validated['new_password'])]);
@@ -369,17 +527,17 @@ class UserController extends Controller
                 CoreLog::class,
                 'PasswordChanged',
                 'User',
-                "Změna hesla u: {$user->user_email} " . ($isAdmin && !$isOwner ? "(provedl admin: {$auth->user_email})" : ""),
+                "Password changed for: {$user->user_email} " . ($canManageAdministrators && !$isOwner ? "(performed by admin: {$auth->user_email})" : ""),
                 $user->id,
                 'User'
             );
 
             $this->notifyPasswordChanged($request, $user);
 
-            return response()->json(['message' => 'Heslo úspěšně změněno.']);
+            return response()->json(['message' => 'Password changed successfully.']);
         } catch (\Exception $e) {
-            $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při změně hesla ID {$id}: " . $e->getMessage(), (int) $id, 'User');
-            return response()->json(['message' => 'Změna hesla selhala.'], 500);
+            $this->logAction($request, CoreLog::class, 'error', 'User', "Error changing password for ID {$id}: " . $e->getMessage(), (int) $id, 'User');
+            return response()->json(['message' => 'Password change failed.'], 500);
         }
     }
 
@@ -389,61 +547,62 @@ class UserController extends Controller
     public function restore(string $id): JsonResponse
     {
         if (!ctype_digit($id)) {
-            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+            return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
         try {
             $user = User::withTrashed()->findOrFail($id);
             $user->restore();
 
-            $this->logAction(request(), CoreLog::class, 'restore', 'User', "Obnoven uživatel: {$user->user_email}", $user->id, 'User');
-            return response()->json(new UserResource($user->load('roles.permissions')));
+            $this->logAction(request(), CoreLog::class, 'restore', 'User', "Restored user: {$user->user_email}", $user->id, 'User');
+            return response()->json(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
         } catch (\Exception $e) {
-            $this->logAction(request(), CoreLog::class, 'error', 'User', "Chyba při obnově uživatele ID {$id}: " . $e->getMessage(), (int) $id, 'User');
-            return response()->json(['message' => 'Obnova uživatele selhala.'], 500);
+            $this->logAction(request(), CoreLog::class, 'error', 'User', "Error restoring user ID {$id}: " . $e->getMessage(), (int) $id, 'User');
+            return response()->json(['message' => 'Restoring user failed.'], 500);
         }
     }
 
     /**
      * Handles soft or hard deletion of a user.
-     * @note Uživatel nemůže smazat sám sebe. KRITICKÁ OCHRANA: účet s rolí 'sysadmin'
-     * smí smazat výhradně jiný sysadmin.
+     * @note A user cannot delete themselves. CRITICAL PROTECTION: an account with the
+     * 'sysadmin' role may only be deleted by another sysadmin.
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
         if (!ctype_digit($id)) {
-            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+            return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
         try {
             $user = User::withTrashed()->findOrFail($id);
 
             if ($request->user()?->id == $id) {
-                return response()->json(['message' => 'Nelze smazat vlastní účet.'], 403);
+                return response()->json(['message' => 'You cannot delete your own account.'], 403);
             }
 
             $targetIsSysadmin = $user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
 
             if ($targetIsSysadmin && !$this->actorIsSysadmin($request)) {
-                $this->logAction($request, CoreLog::class, 'delete_denied', 'User', "Zamítnut pokus o smazání sysadmin účtu: {$user->user_email}", (int) $id, 'User');
-                return response()->json(['message' => 'Účet s rolí sysadmin smí smazat pouze jiný sysadmin.'], 403);
+                $this->logAction($request, CoreLog::class, 'delete_denied', 'User', "Denied attempt to delete a sysadmin account: {$user->user_email}", (int) $id, 'User');
+                return response()->json(['message' => 'Only another sysadmin may delete a sysadmin account.'], 403);
             }
 
             $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
             $force ? $user->forceDelete() : $user->delete();
 
-            $this->logAction($request, CoreLog::class, $force ? 'hard_delete' : 'soft_delete', 'User', "Smazáno ID: $id", (int) $id, 'User');
+            $this->logAction($request, CoreLog::class, $force ? 'hard_delete' : 'soft_delete', 'User', "Deleted ID: $id", (int) $id, 'User');
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, CoreLog::class, 'error', 'User', "Chyba při mazání uživatele ID {$id}: " . $e->getMessage(), (int) $id, 'User');
-            return response()->json(['message' => 'Smazání uživatele selhalo.'], 500);
+            $this->logAction($request, CoreLog::class, 'error', 'User', "Error deleting user ID {$id}: " . $e->getMessage(), (int) $id, 'User');
+            return response()->json(['message' => 'Deleting user failed.'], 500);
         }
     }
 
     /**
      * Permanently deletes all soft-deleted users.
-     * @note KRITICKÁ OCHRANA: trashnuté účty s rolí 'sysadmin' se z hromadného
-     * vyprázdnění koše vyjímají, pokud sám volající není sysadmin.
+     * @note CRITICAL PROTECTION: trashed accounts with the 'sysadmin' role are
+     * excluded from a bulk trash-empty operation unless the caller is themselves
+     * sysadmin.
      */
     public function forceDeleteAllTrashed(): JsonResponse
     {
@@ -459,49 +618,164 @@ class UserController extends Controller
             $count = $query->count();
             $query->forceDelete();
 
-            $this->logAction(request(), CoreLog::class, 'force_delete_all', 'User', "Vysypání koše. Smazáno: $count");
+            $this->logAction(request(), CoreLog::class, 'force_delete_all', 'User', "Trash emptied. Deleted: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction(request(), CoreLog::class, 'error', 'User', "Chyba při vysypávání koše uživatelů: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+            $this->logAction(request(), CoreLog::class, 'error', 'User', "Error emptying user trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 
     /**
-     * @description Znovu odešle aktivační e-mail (nový token, starý přestane platit) -
-     * jen pro účty, které se ještě nikdy neaktivovaly. Účet, který už má nastavené
-     * heslo (`activated_at` vyplněno), by tímto šlo obejít - proto je to zablokováno.
+     * @description Resends the activation e-mail (new token, old one becomes invalid) -
+     * only for accounts that have never been activated. An account that already has a
+     * password set (`activated_at` filled) could otherwise be bypassed this way -
+     * hence the block below.
      */
     public function resendActivation(Request $request, string $id): JsonResponse
     {
         if (!ctype_digit($id)) {
-            return response()->json(['message' => 'Neplatné ID uživatele.'], 422);
+            return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
         $user = User::findOrFail($id);
 
         if ($user->activated_at) {
-            return response()->json(['message' => 'Účet je již aktivovaný.'], 422);
+            return response()->json(['message' => 'This account is already activated.'], 422);
         }
 
         $emailSent = $this->sendActivationEmail($user);
 
         if (!$emailSent) {
-            $this->logAction($request, CoreLog::class, 'resend_activation_failed', 'User', "Opětovné odeslání aktivačního e-mailu selhalo: {$user->user_email}", $user->id, 'User');
-            return response()->json(['message' => 'Odeslání e-mailu se nezdařilo. Zkontrolujte konfiguraci pošty a zkuste to znovu.'], 500);
+            $this->logAction($request, CoreLog::class, 'resend_activation_failed', 'User', "Resending activation e-mail failed: {$user->user_email}", $user->id, 'User');
+            return response()->json(['message' => 'Sending the e-mail failed. Check the mail configuration and try again.'], 500);
         }
 
-        $this->logAction($request, CoreLog::class, 'resend_activation', 'User', "Aktivační e-mail odeslán znovu: {$user->user_email}", $user->id, 'User');
+        $this->logAction($request, CoreLog::class, 'resend_activation', 'User', "Activation e-mail resent: {$user->user_email}", $user->id, 'User');
 
-        return response()->json(['message' => 'Aktivační e-mail byl odeslán znovu.']);
+        return response()->json(['message' => 'The activation e-mail has been resent.']);
     }
 
     /**
-     * @description Vygeneruje nový aktivační token a pošle e-mail. Chyba odeslání se
-     * NIKDY nesmí shodit request, který uživatele vytváří/opakovaně aktivuje (proto
-     * try/catch), ale volající (store()/resendActivation()) dostane návratovou hodnotu
-     * a promítne ji do odpovědi - žádné tiché selhání, admin uvidí varování v UI a může
-     * použít řádkovou akci "Aktivace" (viditelnou jen u neaktivovaných účtů).
+     * @description Whether the acting user may assign the given role to a target
+     * account - the SAME anti-privilege-escalation principle already applied to
+     * explicit permission grants (see `applyExplicitPermissions()`), extended to
+     * whole-role assignment: an actor may only hand out a role whose ENTIRE
+     * permission set is already within their own effective permissions (role ∪
+     * explicit - see `User::getPermissionsAttribute()`). Sysadmin is exempt, same
+     * as everywhere else in this controller. Without this check, any account with
+     * `core-administrators-update` could reassign a user (or, via `store()`, create
+     * a new one) onto ANY role - including one with more permissions than the actor
+     * themselves holds - a direct privilege-escalation path one level above the
+     * explicit-permissions guard.
+     * @refactor-note (2026-09-06) BACKLOG "who can change roles".
+     */
+    private function actorCanAssignRole(Request $request, int $roleId): bool
+    {
+        if ($this->actorIsSysadmin($request)) {
+            return true;
+        }
+
+        $role = CoreRole::with('permissions')->find($roleId);
+        if (!$role) {
+            return false;
+        }
+
+        $rolePermissionKeys = $role->permissions->pluck('permission_key')->all();
+        $actorPermissionKeys = $request->user()->permissions ?? [];
+
+        return empty(array_diff($rolePermissionKeys, $actorPermissionKeys));
+    }
+
+    /**
+     * @description Applies an explicit-permission request (`permission_ids`) to a
+     * user's `user_permissions` pivot, protected by an anti-privilege-escalation
+     * guard.
+     *
+     * SECURITY: an actor may only grant or revoke explicit permissions that they
+     * THEMSELVES effectively hold (role ∪ their own explicit grants) - see
+     * `User::getPermissionsAttribute()`. Sysadmin is exempt, matching how
+     * `CheckPermission` middleware already treats sysadmin everywhere else. Without
+     * this guard, any account with `core-administrators-update` could hand out
+     * permissions it does not itself possess - a direct privilege-escalation path -
+     * so this check is not optional and cannot be skipped by the caller.
+     *
+     * Permissions the TARGET's role already grants are silently filtered out before
+     * saving: explicit grants only make sense for permissions the role does NOT
+     * already carry (project decision log - "K roli půjde uživateli přidat volitelné
+     * explicitní permissions navíc - jen ty, které role sama nemá").
+     *
+     * Any existing explicit grant on the target that falls OUTSIDE the actor's own
+     * authority (i.e. was granted earlier by someone with broader permissions, most
+     * likely sysadmin) is left untouched - the actor can only add/remove within the
+     * slice of permission-space they themselves control. (Note: on an actual ROLE
+     * CHANGE, `update()` wipes the pivot to empty BEFORE calling this method - see
+     * header refactor-note (2026-09-06) - so this "leave untouched" behaviour only
+     * ever applies when the role is NOT changing.)
+     *
+     * @param Request $request The current request (used for the acting user and audit log).
+     * @param User $target The user whose explicit permissions are being updated.
+     * @param array<int> $requestedPermissionIds Permission ids the caller wants the target to explicitly have.
+     * @param int|null $targetRoleId The role_id the target will end up with, used to filter out redundant grants.
+     * @return void
+     */
+    private function applyExplicitPermissions(Request $request, User $target, array $requestedPermissionIds, ?int $targetRoleId): void
+    {
+        $actor = $request->user();
+        $actorIsSysadmin = $this->actorIsSysadmin($request);
+
+        // The set of permission ids the actor is allowed to touch. Sysadmin may touch
+        // anything; everyone else is limited to permission keys they themselves
+        // effectively hold.
+        if ($actorIsSysadmin) {
+            $allowedPermissionIds = CorePermission::pluck('id')->all();
+        } else {
+            $actorPermissionKeys = $actor->permissions ?? [];
+            $allowedPermissionIds = CorePermission::whereIn('permission_key', $actorPermissionKeys)->pluck('id')->all();
+        }
+
+        // Permissions the target's role already carries - explicit grants for these
+        // would be redundant, so they are filtered out rather than stored.
+        $rolePermissionIds = $targetRoleId
+            ? CoreRole::find($targetRoleId)?->permissions()->pluck('core_permissions.id')->all() ?? []
+            : [];
+
+        $requestedWithinAuthority = array_values(array_intersect($requestedPermissionIds, $allowedPermissionIds));
+        $requestedFinal = array_values(array_diff($requestedWithinAuthority, $rolePermissionIds));
+
+        $existingExplicitIds = $target->explicitPermissions()->pluck('core_permissions.id')->all();
+        $outsideActorAuthority = array_values(array_diff($existingExplicitIds, $allowedPermissionIds));
+
+        // Final pivot state = (existing grants outside the actor's authority, left
+        // untouched) UNION (whatever the actor is requesting, within their authority
+        // and not already covered by the role).
+        $finalIds = array_values(array_unique(array_merge($outsideActorAuthority, $requestedFinal)));
+
+        $syncData = [];
+        foreach ($finalIds as $permissionId) {
+            $syncData[$permissionId] = ['granted_by' => $actor->id];
+        }
+
+        $target->explicitPermissions()->sync($syncData);
+
+        $this->logAction(
+            $request,
+            CoreLog::class,
+            'update',
+            'User',
+            "Explicit permissions updated for: {$target->user_email} (" . count($finalIds) . ' active grant(s))',
+            $target->id,
+            'User'
+        );
+    }
+
+    /**
+     * @description Generates a new activation token and sends the e-mail. A send
+     * failure must NEVER fail the request that creates/re-activates the user (hence
+     * the try/catch), but the caller (store()/resendActivation()) gets the return
+     * value and reflects it in the response - no silent failure, the admin sees a
+     * warning in the UI and can use the row action "Activate" (visible only for
+     * non-activated accounts).
      */
     private function sendActivationEmail(User $user): bool
     {
@@ -516,15 +790,15 @@ class UserController extends Controller
     }
 
     /**
-     * @description Ověří, zda e-mail nového účtu odpovídá povolené politice domén -
-     * viz refactor-note (2026-08-25) v hlavičce souboru a backlog
-     * "core-admin-email-domain-restriction". Prázdná/nenastavená
-     * `primary_email_domain` znamená "bez omezení" (beze změny oproti dřívějšku).
-     * Povoleno, pokud e-mail odpovídá KTERÉKOLIV z těchto podmínek:
-     * 1) doména se shoduje s hlavní doménou firmy,
-     * 2) doména je na whitelistu (`CoreEmailAccessRule` typu `domain`),
-     * 3) celý e-mail je na whitelistu jako konkrétní výjimka (typu `email`).
-     * @return JsonResponse|null `null` = povoleno, jinak hotová 422 odpověď k vrácení.
+     * @description Verifies that a new account's e-mail matches the allowed domain
+     * policy - see refactor-note (2026-08-25) in the header and backlog
+     * "core-admin-email-domain-restriction". An empty/unset `primary_email_domain`
+     * means "no restriction" (unchanged from before). Allowed if the e-mail matches
+     * ANY of these conditions:
+     * 1) the domain matches the company's primary domain,
+     * 2) the domain is on the whitelist (`CoreEmailAccessRule` of type `domain`),
+     * 3) the whole e-mail is on the whitelist as a specific exception (type `email`).
+     * @return JsonResponse|null `null` = allowed, otherwise a ready-made 422 response to return.
      */
     private function assertEmailDomainAllowed(Request $request, string $email): ?JsonResponse
     {
@@ -573,24 +847,25 @@ class UserController extends Controller
             CoreLog::class,
             'create_denied',
             'User',
-            "Zamítnut pokus o vytvoření účtu s nepovolenou e-mailovou doménou: {$emailLower}"
+            "Denied attempt to create an account with a non-whitelisted e-mail domain: {$emailLower}"
         );
 
         return response()->json([
-            'message' => "E-mailová doména \"{$domain}\" není povolena pro vytváření nových účtů. Kontaktujte sysadmina pro přidání výjimky.",
+            'message' => "The e-mail domain \"{$domain}\" is not allowed for creating new accounts. Contact sysadmin to add an exception.",
         ], 422);
     }
 
     /**
-     * @description Odešle PasswordChangedNotification na účet, kterému se heslo právě
-     * změnilo, chráněné per-cílový-účet rate limiterem proti zahlcení příjemce.
+     * @description Sends PasswordChangedNotification to the account whose password
+     * was just changed, protected by a per-target rate limiter against flooding the
+     * recipient.
      */
     private function notifyPasswordChanged(Request $request, User $user): void
     {
         $notifyKey = 'password-change-notify:' . $user->id;
 
         if (RateLimiter::tooManyAttempts($notifyKey, self::PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS)) {
-            $this->logAction($request, CoreLog::class, 'password_notification_rate_limited', 'User', "Notifikace o změně hesla potlačena (limit) pro: {$user->user_email}", $user->id, 'User');
+            $this->logAction($request, CoreLog::class, 'password_notification_rate_limited', 'User', "Password-change notification suppressed (rate limit) for: {$user->user_email}", $user->id, 'User');
             return;
         }
 
@@ -606,8 +881,8 @@ class UserController extends Controller
     }
 
     /**
-     * @description Zjišťuje, jestli přihlášený uživatel z daného requestu má roli
-     * sysadmin.
+     * @description Checks whether the logged-in user from the given request has the
+     * sysadmin role.
      */
     private function actorIsSysadmin(Request $request): bool
     {
@@ -618,7 +893,7 @@ class UserController extends Controller
     }
 
     /**
-     * @description Zjišťuje, jestli daná role odpovídá roli sysadmin.
+     * @description Checks whether the given role corresponds to the sysadmin role.
      */
     private function isSysadminRoleId(int $roleId): bool
     {
@@ -628,9 +903,9 @@ class UserController extends Controller
     }
 
     /**
-     * @description Zjišťuje, jestli daná role vynucuje 2FA - buď protože je to
-     * admin/sysadmin (hardcoded, viz User::FORCED_2FA_ROLE_NAMES), nebo protože sysadmin
-     * nastavil `forces_2fa=true` na custom roli (viz CoreRole - bod 3 backlogu).
+     * @description Checks whether the given role forces 2FA - either because it is
+     * sysadmin (hardcoded, see User::FORCED_2FA_ROLE_NAMES), or because sysadmin set
+     * `forces_2fa=true` on a custom role (see CoreRole - backlog point 3).
      */
     private function isRoleForced2fa(?int $roleId): bool
     {

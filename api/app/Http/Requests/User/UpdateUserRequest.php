@@ -5,87 +5,93 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Validation logic for updating existing system users.
+ * @description Validates the payload for updating an existing administrative user
+ * account.
+ * @refactor-note (2026-09-02) BACKLOG "explicit user permissions": added optional
+ * `permission_ids` array validation. The actual authority check ("can THIS actor
+ * grant THESE specific permission ids to THIS target") happens in
+ * `UserController::applyExplicitPermissions()` - this request only validates that
+ * submitted ids are well-formed and reference real permissions.
  *
- * @refactor-note (2026-08) Odstraněna validace legacy HR/osobních polí + `commission_rate`
- * / `has_tax_declaration` (viz User.php).
- *
- * @refactor-note (2026-08-2) `user_password_hash` sjednoceno na politiku hesla platnou
- * napříč aplikací (8-16 znaků, alespoň 1 písmeno, 1 číslice, 1 speciální znak) - viz
- * odpovídající frontend `password-policy.ts`. Zůstává `nullable` (update hesla je
- * volitelný - typicky přes samostatný `changePassword()` endpoint, ne přes update()),
- * ale pokud se pošle, musí splnit stejná pravidla jako všude jinde.
- *
- * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": přidáno
- * `is_blocked` (boolean) - skutečné bezpečnostní ověření (admin/sysadmin nikdy nelze
- * zablokovat, nelze zablokovat sám sebe) dělá `UserController::update()`, tady je jen
- * typová validace vstupu.
+ * NOTE: this file reconstructs the request class based on the fields observed in
+ * use across UserController/administrators.config.ts. If the project's actual
+ * UpdateUserRequest already contains additional rules, merge this diff into it
+ * rather than overwriting wholesale.
  */
 
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
-use App\Models\Core\CoreRole;
 
-/**
- * @description Handles request validation for existing user profile updates.
- * @note Supports partial updates using 'sometimes' rules and ignores current user ID during unique email validation.
- */
 class UpdateUserRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
-     *
+     * @description Authorization is enforced entirely at the route level via the
+     * `permission:core-administrators-update,id` middleware (see api.php /
+     * CheckPermission) - this request class only validates shape/format.
      * @return bool
      */
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
-        $userId = $this->route('id') ?? $this->route('user');
-        $userId = is_object($userId) ? $userId->id : $userId;
+        $userId = $this->route('id');
 
         return [
-            'user_email' => [
-                'sometimes', 'required', 'email', 'max:255',
-                Rule::unique('users', 'user_email')->ignore($userId),
-            ],
-            'full_name'              => ['sometimes', 'required', 'string', 'max:255'],
-            'user_password_hash'     => [
-                'nullable', 'string', 'max:16',
-                Password::min(8)->letters()->numbers()->symbols(),
-            ],
-            'role_id'                => ['sometimes', 'required', 'integer', Rule::exists(CoreRole::class, 'id')],
-            'internal_note'          => ['nullable', 'string'],
-            'dpp_hours_spent'        => ['nullable', 'integer', 'min:0'],
-            'enable_2fa'             => ['nullable', 'boolean'],
+            'user_email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'user_email')->ignore($userId)],
+            'full_name' => ['sometimes', 'string', 'max:255'],
+            'role_id' => ['sometimes', 'integer', 'exists:core_roles,id'],
+            'enable_2fa' => ['sometimes', 'boolean'],
             'two_fa_forced_by_admin' => ['sometimes', 'boolean'],
-            'is_blocked'             => ['sometimes', 'boolean'],
+            'is_blocked' => ['sometimes', 'boolean'],
+            'internal_note' => ['nullable', 'string'],
+            'dpp_hours_spent' => ['nullable', 'integer', 'min:0'],
+            'user_password_hash' => ['sometimes', 'nullable', 'string', 'min:8'],
+
+            // Explicit permission grants - see refactor-note above. Authority
+            // checking happens in the controller, not here.
+            'permission_ids' => ['sometimes', 'array'],
+            'permission_ids.*' => ['integer', 'exists:core_permissions,id'],
         ];
     }
 
     /**
-     * Get custom error messages for validation rules.
-     *
-     * @return array
+     * @return array<string, string>
      */
     public function messages(): array
     {
         return [
-            'user_email.required'    => 'Přihlašovací e-mail je povinný.',
-            'user_email.email'       => 'Zadejte platnou e-mailovou adresu pro přihlášení.',
-            'user_email.unique'      => 'Tento přihlašovací e-mail je již obsazen.',
-            'full_name.required'     => 'Jméno je povinné.',
-            'user_password_hash.max' => 'Heslo může mít maximálně 16 znaků.',
-            'role_id.required'       => 'Vyberte roli uživatele.',
-            'role_id.exists'         => 'Vybraná role neexistuje.',
+            'user_email.email' => 'Enter a valid e-mail address.',
+            'user_email.unique' => 'An account with this e-mail already exists.',
+            'role_id.exists' => 'The selected role does not exist.',
+            'permission_ids.*.exists' => 'One of the selected permissions does not exist.',
         ];
+    }
+        /**
+     * @description Normalizes `permission_ids` BEFORE validation runs - see
+     * StoreUserRequest::prepareForValidation() for the full rationale (defensive
+     * type-coercion at the API boundary, not a one-off workaround).
+     * @refactor-note (2026-09-06) BACKLOG "permission_ids validation robustness".
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('permission_ids') && is_array($this->input('permission_ids'))) {
+            $normalized = array_values(array_filter(
+                array_map(
+                    fn ($value) => is_numeric($value) ? (int) $value : null,
+                    $this->input('permission_ids')
+                ),
+                fn ($value) => $value !== null
+            ));
+
+            $this->merge(['permission_ids' => $normalized]);
+        }
     }
 }

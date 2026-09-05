@@ -512,10 +512,20 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isPermissionsDirty = true;
   }
 
-  /**
-   * @description Uloží oprávnění role. Po úspěchu invaliduje cache seznamu rolí (obě
-   * větve - `permissions[]` se mění, `RoleOptionsService` se netýká, protože ten cachuje
-   * jen `id`/`role_name`, ne oprávnění).
+   /**
+   * @description Uloží oprávnění role. Po úspěchu invaliduje cache seznamu rolí.
+   * @bugfix-note (2026-09-05) KRITICKÝ BUG - MATOUCÍ "NEOČEKÁVANÝ FORMÁT" HLÁŠKA PŘI
+   * KAŽDÉM ÚSPĚŠNÉM ULOŽENÍ: `CoreRoleController::syncPermissions()` vrací
+   * `response()->json(new CoreRoleResource(...))` BEZ obálky `{ data: ... }`, kterou
+   * `DataHandler.put()` bezpodmínečně očekává a rozbaluje přes `response.data` (viz
+   * data-handler.service.ts). `response.data` je proto u tohoto endpointu VŽDY
+   * `undefined` - nejde o občasnou vadnou odpověď, jak předpokládala stará
+   * `if (!updated || updated.id === undefined)` větev, která se tak spouštěla při
+   * KAŽDÉM úspěšném uložení a mátla uživatele hláškou "pravděpodobně uloženo, ale...".
+   * Řešení SCOPOVANÉ jen na tuhle komponentu (bez zásahu do sdílené DataHandler vrstvy,
+   * na kterou spoléhá zbytek adminu): aktualizovaný stav role sestavíme lokálně - přesně
+   * víme, co jsme odeslali (`keys`), server na úspěšný request odpovídá jen 2xx/chybou,
+   * nikdy částečně, takže žádné dohadování z odpovědi není potřeba.
    */
   savePermissions(): void {
     if (!this.selectedRole || this.selectedRole.is_protected || this.isSavingPermissions) return;
@@ -525,22 +535,13 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isSavingPermissions = true;
 
     this.dataHandler.put<CoreRole>(`core/roles/${role.id}/permissions`, { permission_keys: keys }).subscribe({
-      next: (updated) => {
+      next: () => {
         this.isSavingPermissions = false;
-
-        if (!updated || updated.id === undefined) {
-          console.warn('[EditRolesComponent] PUT core/roles/{id}/permissions vrátil neočekávanou odpověď:', updated);
-          this.isPermissionsDirty = false;
-          this.alertDialogService.open('Uloženo', 'Oprávnění byla pravděpodobně uložena, ale odpověď serveru nebyla v očekávaném formátu. Obnovuji seznam ze serveru.', 'success');
-          this.loadRoles({ id: role.id, name: role.role_name }, true);
-          this.cd.markForCheck();
-          return;
-        }
-
+        const updated: CoreRole = { ...role, permissions: keys };
         this.applyUpdatedRole(updated);
         this.isPermissionsDirty = false;
         this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
-        this.alertDialogService.open('Uloženo', `Oprávnění role "${updated.role_name}" byla aktualizována.`, 'success');
+        this.alertDialogService.open('Uloženo', `Oprávnění role "${role.role_name}" byla aktualizována.`, 'success');
         this.cd.markForCheck();
       },
       error: (err) => {
@@ -572,8 +573,12 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   /**
    * @description Uloží název/popis role. Po úspěchu invaliduje cache seznamu rolí
-   * i sdílenou `RoleOptionsService` cache (viz refactor-note 2026-08-8/10 v hlavičce
-   * souboru) - `role_name` se mohl změnit.
+   * i sdílenou `RoleOptionsService` cache.
+   * @bugfix-note (2026-09-05) Stejný kořenový problém jako u `savePermissions()` výše -
+   * `CoreRoleController::update()` vrací roli bez `{ data: ... }` obálky, takže
+   * `EntityCrudService.update()` -> `DataHandler.put()` vždy vrátí `undefined`. Řešeno
+   * stejně: `payload`, který jsme sami odeslali, JE novým stavem role - sestavíme
+   * `updated` z něj, žádný dohad z odpovědi serveru.
    */
   saveDetails(): void {
     if (!this.selectedRole || this.selectedRole.is_protected || this.isSavingDetails) return;
@@ -597,19 +602,9 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isSavingDetails = true;
 
     this.updateData(this.selectedRole.id, payload).subscribe({
-      next: (updated) => {
+      next: () => {
         this.isSavingDetails = false;
-
-        if (!updated || updated.id === undefined) {
-          console.warn('[EditRolesComponent] PUT core/roles/{id} vrátil neočekávanou odpověď:', updated);
-          this.isEditingDetails = false;
-          this.roleOptionsService.invalidate();
-          this.alertDialogService.open('Uloženo', 'Údaje byly pravděpodobně uloženy, ale odpověď serveru nebyla v očekávaném formátu. Obnovuji seznam ze serveru.', 'success');
-          this.loadRoles({ id: roleId, name }, true);
-          this.cd.markForCheck();
-          return;
-        }
-
+        const updated: CoreRole = { id: roleId, ...payload };
         this.applyUpdatedRole(updated);
         this.isEditingDetails = false;
         this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
@@ -652,7 +647,12 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   /**
    * @description Vytvoří novou roli. Po úspěchu invaliduje cache seznamu rolí i sdílenou
-   * `RoleOptionsService` cache (viz refactor-note 2026-08-8/10 v hlavičce souboru).
+   * `RoleOptionsService` cache.
+   * @bugfix-note (2026-09-05) Stejný kořenový problém jako u save*() výše, ALE tady ho
+   * nejde obejít sestavením lokálně - nové `id` přiděluje výhradně server, takže reload
+   * přes `loadRoles({name}, true)` musí zůstat. Rozdíl je jen v tom, že tahle cesta je
+   * TEĎ prezentovaná jako normální/očekávaný průběh (viz zpráva), ne jako fallback pro
+   * vzácně "poškozenou" odpověď - protože poškozená není, jen záměrně nezabalená.
    */
   createRole(): void {
     const name = this.newRoleName.trim();
@@ -673,29 +673,12 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       permissions: [],
     };
     this.postData(payload).subscribe({
-      next: (created) => {
+      next: () => {
         this.isCreatingRole = false;
-
-        if (!created || created.id === undefined) {
-          console.warn('[EditRolesComponent] POST core/roles vrátil neočekávanou odpověď:', created);
-          this.showNewRoleForm = false;
-          this.roleOptionsService.invalidate();
-          this.alertDialogService.open(
-            'Vytvořeno',
-            `Role "${name}" byla pravděpodobně vytvořena, ale odpověď serveru nebyla v očekávaném formátu. Obnovuji seznam ze serveru.`,
-            'success'
-          );
-          this.loadRoles({ name }, true);
-          this.cd.markForCheck();
-          return;
-        }
-
-        this.roles = [...this.roles, created];
         this.showNewRoleForm = false;
-        this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
         this.roleOptionsService.invalidate();
-        this.alertDialogService.open('Vytvořeno', `Role "${created.role_name}" byla vytvořena.`, 'success');
-        this.selectRole(created);
+        this.alertDialogService.open('Vytvořeno', `Role "${name}" byla vytvořena.`, 'success');
+        this.loadRoles({ name }, true);
         this.cd.markForCheck();
       },
       error: (err) => {

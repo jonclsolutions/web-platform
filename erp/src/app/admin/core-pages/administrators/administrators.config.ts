@@ -6,35 +6,38 @@
  * @created 2025
  * @description Static configuration (buttons, form fields, table/filter/detail columns) for
  * the Administrators (core user account) management page.
- * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU - permission klíče na
- *      toolbar/table tlačítkách.
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", body 2+3+4: FORM_FIELDS
- * rozděleno na DVĚ samostatná 2FA pole:
- * - `enable_2fa` ("Zapnout 2FA") - self-service styl, editovatelné kýmkoliv s
- *   core-administrators-update, ale AdministratorsComponent ho dynamicky disabluje,
- *   pokud je cílová role vynucená (admin/sysadmin/forces_2fa role) - viz
- *   computeFieldsForTarget() v komponentě. Backend navíc vždy vynucuje true a vrací
- *   422 při pokusu explicitně vypnout (červená notifikace).
- * - `two_fa_forced_by_admin` ("Vynutit 2FA") - VIDITELNÉ pouze pro sysadmin (filtrováno
- *   v komponentě, ne staticky zde), umožňuje vynutit 2FA konkrétnímu účtu nezávisle na
- *   jeho vlastní volbě. `show_in_create: false` - nelze nastavit při vytváření účtu
- *   (backend to explicitně odmítá, dává smysl jen jako následná úprava).
- * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu":
- * - Pole `user_password_hash` ÚPLNĚ ODSTRANĚNO z `FORM_FIELDS` - formulář na vytvoření
- *   účtu už heslo nesbírá vůbec. Uživatel si ho nastaví sám přes aktivační e-mail (viz
- *   info banner v administrators.component.html).
- * - Přidáno `is_blocked` ("Blokovat účet") - `show_in_create: false` (nový účet nikdy
- *   nevzniká rovnou zablokovaný), editovatelnost u chráněných rolí (admin/sysadmin)
- *   řeší dynamicky komponenta stejným vzorem jako `enable_2fa` (viz
- *   computeFieldsForTarget() - `isNeverBlockableRole()`).
- * - `TABLE_BUTTONS` doplněno o "Aktivace" (resend_activation) - vždy viditelné (klient
- *   i backend samostatně kontrolují, že dává smysl jen pro neaktivované účty).
- * - `TABLE_COLUMNS`/`DETAILS_COLUMNS` doplněny o `is_blocked`/`activated_at`.
+ * @refactor-note (2026-08-5) Permission-system granularization - permission keys on
+ *      toolbar/table buttons.
+ * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", points 2+3+4: FORM_FIELDS
+ * split into TWO separate 2FA fields - see prior notes below (unchanged by this update).
+ * @refactor-note (2026-08-24) BACKLOG "account-creation workflow from admin" - see
+ * prior notes below (unchanged by this update).
+ * @refactor-note (2026-09-02) BACKLOG "explicit user permissions + admin role
+ * removal":
+ * - Added `PERMISSION_OPTIONS` (populated at runtime by
+ *   `AdministratorsComponent.loadPermissionOptions()`, same pattern as
+ *   `ROLE_OPTIONS`) and a new `permission_ids` FORM_FIELDS entry - a multiselect of
+ *   every permission key in the system, letting an admin grant a user extra
+ *   permissions on top of whatever their role already provides. This field is
+ *   ALWAYS editable (unlike `enable_2fa`/`is_blocked`, it is never role-locked) -
+ *   authority over which specific permission ids can actually be granted is
+ *   enforced server-side in `UserController::applyExplicitPermissions()`, not by
+ *   hiding/disabling this field.
+ * - `DETAILS_COLUMNS` gained `user_permissions` so the read-only detail view shows
+ *   an account's explicit extra grants (separate from the role's own permission list).
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '../../../shared/constants/password-policy';
 
 export const ROLE_OPTIONS: { value: string; label: string }[] = [];
+
+/**
+ * Populated at runtime by `AdministratorsComponent.loadPermissionOptions()` via
+ * `PermissionOptionsService` (GET core/permissions) - same "populate an exported
+ * mutable array, then re-map it into FORM_FIELDS/FILTER_COLUMNS options" pattern
+ * already used for ROLE_OPTIONS.
+ */
+export const PERMISSION_OPTIONS: { value: string; label: string }[] = [];
 
 export const TABLE_BUTTONS: Core.TableButtons[] = [
   { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
@@ -52,10 +55,8 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'core-administrators-create' },
   { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
-  // NOVÉ (2026-08-25): BACKLOG "core-admin-email-domain-restriction" - VÝHRADNĚ
-  // sysadmin (žádné `permission` pole zde - viditelnost řídí komponenta přes
-  // `this.isSysadmin` v toolbarButtons getteru, stejný vzor jako filtrování
-  // `two_fa_forced_by_admin` pole ve formuláři).
+  // Sysadmin-only (visibility gated in the component via `this.isSysadmin`, same
+  // pattern as the `two_fa_forced_by_admin` field).
   { action: 'openEmailAccessPolicy', label: 'Domény e-mailů', icon: '', class: 'btn-neutral', showIf: true },
   { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
   { action: 'toggleTable', label: 'Koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
@@ -76,8 +77,9 @@ export const RESET_PASSWORD_FORM_FIELDS: Core.InputDefinition[] = [
 ];
 
 /**
- * @refactor-note (2026-08-24) `user_password_hash` pole SMAZÁNO celé - účet vzniká bez
- * hesla, viz hlavička souboru. Přidáno `is_blocked`.
+ * @refactor-note (2026-09-02) Added `permission_ids` (multiselect of
+ * PERMISSION_OPTIONS) - see file header. Always editable, shown both on create and
+ * edit (a fresh account can be given extra permissions immediately, same as its role).
  */
 export const FORM_FIELDS: Core.InputDefinition[] = [
   {
@@ -104,6 +106,16 @@ export const FORM_FIELDS: Core.InputDefinition[] = [
     show_in_create: true
   },
   { column_name: 'role_id', label: 'Role', type: 'select', options: ROLE_OPTIONS, required: true, errorMessage: 'Vyberte roli uživatele.', editable: true, show_in_edit: true, show_in_create: true },
+  {
+    column_name: 'permission_ids',
+    label: 'Dodatečná oprávnění (nad rámec role)',
+    type: 'multiselect',
+    options: PERMISSION_OPTIONS,
+    required: false,
+    editable: true,
+    show_in_edit: true,
+    show_in_create: true
+  },
   {
     column_name: 'enable_2fa',
     label: 'Zapnout 2FA',
@@ -163,6 +175,7 @@ export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
   { key: 'full_name', displayName: 'Celé jméno', type: 'text' },
   { key: 'user_email', displayName: 'Přihlašovací E-mail', type: 'text' },
   { key: 'roles.0.role_name', displayName: 'Přiřazená role', type: 'text' },
+  { key: 'user_permissions', displayName: 'Dodatečná oprávnění (nad rámec role)', type: 'text' },
   { key: 'is_blocked', displayName: 'Účet zablokován', type: 'text', chartable: true },
   { key: 'activated_at', displayName: 'Aktivováno', type: 'date', format: 'medium' },
   { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření (vlastní volba)', type: 'text', chartable: true },

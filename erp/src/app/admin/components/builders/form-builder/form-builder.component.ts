@@ -6,93 +6,56 @@
  * @created 2025
  * @description A dynamic, template-driven form generator that maps field definitions to interactive UI controls.
  *
- * @refactor-note (2026-08) Přepsáno matchování hesel u `confirm-password` typu z
- * imperativního `checkPasswordMatch()` (mutovalo sdílenou `passwordsNotMatching`
- * proměnnou přes `(ngModelChange)` handlery vedle `[(ngModel)]` na TÉŽE inputu - závislé
- * na pořadí, v jakém Angular sloučené listenery na stejný event spouští, křehké a
- * nespolehlivé) na čistou `passwordMismatch(columnName)` metodu, počítanou LIVE při každém
- * change-detection cyklu přímo z `formData`/`confirmPasswordData`, bez uloženého stavu.
- * Díky tomu nemůže dojít k desynchronizaci mezi tím, co je vidět na obrazovce a tím, co
- * `onSubmit()` skutečně vyhodnotí. `[pattern]` navíc nově skutečně aplikováno i na první
- * input `confirm-password` case (dřív tam chybělo úplně, takže `pattern`/`errorMessage`
- * z konfigurace se na hesla nikdy nepoužily). Přidán live checklist požadavků hesla
- * (`PasswordRequirementsChecklistComponent`) pod prvním password inputem.
+ * (Earlier refactor-notes for password matching, multi-file upload, duplicate-submit
+ * guard, and duplicate-toast fixes are unchanged - see version history, omitted here
+ * for brevity.)
  *
- * @refactor-note (2026-08-2) Přidán typ `'files'` (množné číslo, na rozdíl od `'file'`,
- * které zůstává jako jednosouborové pole) - napojuje sdílenou `MultiFileUploadComponent`
- * (max. 10 souborů / 20 MB / 50 MB, stejná politika jako veřejné formuláře). V edit módu
- * se pole VŽDY inicializuje jako prázdné pole (`resetFileArrayFields()`), i kdyby
- * `formDataToEdit` neslo existující `attachments` (pole objektů z API, ne `File`
- * instance) - `'files'` pole slouží jen k PŘIDÁNÍ nových příloh, správa/mazání
- * existujících je mimo scope (viz TableBuilder detail zobrazení). `onSubmit()` upraven,
- * aby detekoval jak jednotlivý `File` (typ `'file'`), tak pole `File[]` (typ `'files'`) a
- * do `FormData` je serializoval odpovídajícím způsobem (`key` vs. `key[]`).
+ * @refactor-note (2026-09-02) BACKLOG "explicit user permissions": added a new
+ * `'multiselect'` field type - a checkbox list bound to a `string[]` in `formData`,
+ * used by `administrators.config.ts`'s `permission_ids` field (and reusable by any
+ * future multi-value field). Implemented as plain checkboxes with manual
+ * `isMultiselectChecked()`/`onMultiselectToggle()` handlers rather than a native
+ * `<select multiple [(ngModel)]>` - Angular's `SelectMultipleControlValueAccessor`
+ * tracks options by internal object identity, not by the plain string values this
+ * project's `InputDefinition.options` already use everywhere else (`select`,
+ * `role_id`, etc.), so reusing that exact `{value, label}` shape as checkboxes keeps
+ * one consistent options format across the whole form builder instead of introducing
+ * a second, native-select-specific one.
  *
- * @bugfix-note (2026-08-19) KRITICKÝ BUG - EDIT SE SOUBOREM VYTVOŘIL NOVÝ ZÁZNAM MÍSTO
- * AKTUALIZACE: `FormData` instance nepodporuje čtení hodnot přes tečkovou notaci
- * (`payload.id`), jen `.get('id')`. Konzumentské komponenty napříč adminem (např.
- * `UserRequestComponent.handleFormSubmitted()`) ale rozhodují mezi update/create přes
- * `formData.id ? update() : create()` - na `FormData` instanci to VŽDY vyhodnotí
- * `undefined`, tedy `create()`, i při editaci existujícího záznamu s přiloženým
- * souborem. Bez souboru je `payload` plain objekt, kde `.id` funguje normálně - proto
- * se bug projevoval JEN v kombinaci "edit" + "alespoň jeden soubor". Oprava v
- * `onSubmit()`: `id` se navíc nastaví jako obyčejná vlastnost JS objektu přímo na
- * `FormData` instanci (nijak neovlivní multipart serializaci - Angular `HttpClient`
- * posílá `FormData` podle jejích interních `entries`, ne podle vlastností objektu).
- * Oprava je na jednom místě (zde), takže platí automaticky pro VŠECHNY stránky s
- * file/files poli, ne jen pro user-request.
+ * @refactor-note (2026-09-05) BACKLOG "role/admin UX improvement": added
+ * `isOptionDisabled()` - lets an individual option of a `'multiselect'` field be
+ * rendered disabled independently of the field's own `editable` flag, driven by an
+ * optional `input.disabledOptionValues` array.
  *
- * @refactor-note (2026-08-19v2) BACKLOG "mazání existujících příloh v editu - staged":
- * `onExistingFilesRemoved()` ukládá ID příloh označených ke smazání pod
- * `${columnName}_removed_ids` do `formData` - viz MultiFileUploadComponent. Zároveň
- * opraven latentní bug v `onSubmit()`: multipart (`FormData`) větev dřív TICHO
- * ZAHAZOVALA jakékoliv nesouborové pole typu pole (array), takže `..._removed_ids` by
- * se při současném přidání nového souboru nikdy nedostalo na server - teď se neprázdná
- * pole serializují jako `key[]`, stejně jako pole souborů.
- *
- * @bugfix-note (2026-08-24) KRITICKÝ BUG - VÍCENÁSOBNÉ ODESLÁNÍ PŘI RYCHLÉM OPAKOVANÉM
- * KLIKNUTÍ NA "POTVRDIT": `this.isSubmitting = false;` se dřív volalo ihned po
- * `formSubmitted.emit(payload)`, ve STEJNÉM synchronním běhu `onSubmit()`. Jenže emit
- * je jen vyhození události, NE čekání na dokončení skutečného HTTP requestu (ten běží
- * až v rodičovské komponentě přes `postData()/updateData().subscribe()`). Guard
- * `if (this.isSubmitting) return;` na začátku metody byl tak fakticky bezvýznamný -
- * `isSubmitting` bylo `true` a hned zase `false` dřív, než uživatel stihl kliknout
- * podruhé, takže každý další klik prošel guardem znovu a emitoval další
- * `formSubmitted` -> další HTTP POST -> duplicitní záznamy (3 kliky = 3 záznamy).
- * ŘEŠENÍ: `isSubmitting` se nastaví na `true` a UŽ SE NIKDY neresetuje zpátky odsud -
- * tlačítko zůstane `disabled` (viz `.html` binding), dokud rodičovská stránka po
- * dokončení requestu (úspěch i chyba - konzistentně napříč projektem přes
- * `finalize(() => showCreateForm = false)`) modal nezavře, čímž se tahle komponenta
- * kompletně zničí (`@if` v rodičovské šabloně). Uživatel může formulář kdykoliv zavřít
- * tlačítkem "Zrušit" (`onCancel()` na `isSubmitting` nezávisí), takže ani výpadek sítě
- * nevede do slepé uličky.
- *
- * @bugfix-note (2026-08-25) KRITICKÝ BUG - SOUČASNÉ ZOBRAZENÍ ZELENÉHO "ÚSPĚCH" I
- * ČERVENÉHO CHYBOVÉHO TOASTU: `onSubmit()` volal `this.alertDialogService.open('Information',
- * ...)` HNED po `emit()`, tedy ještě PŘED skutečným HTTP requestem (ten běží až
- * v konzumentské stránce). Pokud backend request zamítl (např. 422 - nepovolená
- * e-mailová doména, vynucená 2FA, atd.), uživatel viděl NEJDŘÍV zelený "úspěch" a
- * hned poté červenou chybu - matoucí a věcně nesprávné. ŘEŠENÍ: `FormBuilderComponent`
- * už NEUKAZUJE žádný toast o výsledku uložení vůbec - jen emituje `payload`.
- * Vyhodnocení úspěch/neúspěch (zelený/červený toast) je VÝHRADNĚ na konzumentské
- * stránce v `subscribe({next, error})`, protože jen tam je v okamžiku volání known
- * skutečný výsledek z API. Toast se tak nikdy nemůže objevit "špatně" ani zdvojeně,
- * protože existuje přesně JEDNO místo (odpověď HTTP requestu), které o něm rozhoduje.
- *
- * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - dřív přímé
- * `document.body.style.overflow = 'hidden'/'auto'` v ngOnInit/ngOnDestroy, teď
- * deleguje na sdílený `ScrollLockService` (viz scroll-lock.service.ts).
+ * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security":
+ * added TWO generic (domain-agnostic - this component still knows nothing about
+ * roles or permissions specifically) mechanisms so a consumer page can react to a
+ * live edit inside an already-open form, without FormBuilderComponent needing any
+ * page-specific knowledge:
+ * - New `@Output() fieldChanged` fires whenever a `'select'` field's value changes
+ *   (via `(ngModelChange)`), carrying `{columnName, value}`. A consumer (e.g.
+ *   `AdministratorsComponent`) can react to a specific field (e.g. `role_id`
+ *   changing) and recompute whatever page-specific state depends on it.
+ * - New `@Input() fieldOverrides` lets a consumer FORCE specific values into the
+ *   currently open form's `formData` from the outside (e.g. resetting
+ *   `permission_ids` after a role change) - implemented via `ngOnChanges()`, which
+ *   also now handles `inputDefinitions` changing AFTER the form has already
+ *   initialized (previously only read once in `ngOnInit()`), re-deriving
+ *   `visibleInputDefinitions` from the updated definitions WITHOUT resetting
+ *   `formData` - only the field metadata (options, disabled state, etc.) is
+ *   refreshed, whatever the user has already typed/checked is preserved except for
+ *   whatever `fieldOverrides` explicitly forces.
  *
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.
  * - AlertDialogService: Provides user feedback for submission outcomes.
  * - InputDefinition: Interface for rendering dynamic form inputs and validation metadata.
- * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla.
- * - MultiFileUploadComponent: Sdílený drag&drop multi-file upload, viz `'files'` case.
- * - ScrollLockService: Sdílený zámek scrollu na pozadí.
+ * - PasswordRequirementsChecklistComponent: Live visual checklist of password rules.
+ * - MultiFileUploadComponent: Shared drag&drop multi-file upload, see the `'files'` case.
+ * - ScrollLockService: Shared background scroll lock.
  */
 
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { FormsModule, NgForm, FormControl } from '@angular/forms';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
@@ -103,7 +66,7 @@ import { ScrollLockService } from '../../../../core/services/scroll-lock.service
 /**
  * @description Renders a dynamic form based on an array of field definitions.
  * @usage Used in create and edit modals across the admin panel for data entry.
- * @note Supports file uploads via FormData auto-detection, password matching validation, and persistent scroll locking.
+ * @note Supports file uploads via FormData auto-detection, password matching validation, multi-value checkbox groups, live field-change notifications, externally forced field overrides, and persistent scroll locking.
  */
 @Component({
   selector: 'app-form-builder',
@@ -112,13 +75,28 @@ import { ScrollLockService } from '../../../../core/services/scroll-lock.service
   templateUrl: './form-builder.component.html',
   styleUrl: './form-builder.component.css',
 })
-export class FormBuilderComponent implements OnInit, OnDestroy {
+export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   @Input() headerText: string = 'Create New Record';
   @Input() inputDefinitions: InputDefinition[] = [];
   @Input() formDataToEdit: any = null;
+  /**
+   * Optional externally-forced values applied to the live `formData` whenever this
+   * input changes (via `ngOnChanges()`) - e.g. a consumer resetting `permission_ids`
+   * after the user changes `role_id` mid-edit. Only the listed keys are touched;
+   * everything else in `formData` is left as the user left it.
+   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
+   */
+  @Input() fieldOverrides: Record<string, any> | null = null;
 
   @Output() formSubmitted = new EventEmitter<any>();
   @Output() formCanceled = new EventEmitter<void>();
+  /**
+   * Fires whenever a `'select'` field's value changes, carrying `{columnName,
+   * value}`. Generic and domain-agnostic - this component doesn't interpret which
+   * field changed, it just reports it so a consumer page can react.
+   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
+   */
+  @Output() fieldChanged = new EventEmitter<{ columnName: string; value: any }>();
 
   @ViewChild('genericForm') genericForm!: NgForm;
 
@@ -128,6 +106,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   visibleInputDefinitions: InputDefinition[] = [];
 
   private scrollLock = inject(ScrollLockService);
+  private initialized = false;
 
   constructor(
     private cd: ChangeDetectorRef,
@@ -145,12 +124,44 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
       this.visibleInputDefinitions = this.inputDefinitions.filter(input => input.show_in_edit !== false);
       this.normalizeSelectValues();
       this.resetFileArrayFields();
+      this.normalizeMultiselectFields();
     } else {
       this.formData = {};
       this.visibleInputDefinitions = this.inputDefinitions.filter(input => input.show_in_create !== false);
       this.visibleInputDefinitions.forEach(input => {
-        this.formData[input.column_name] = input.type === 'files' ? [] : (input.defaultValue ?? '');
+        this.formData[input.column_name] = (input.type === 'files' || input.type === 'multiselect')
+          ? []
+          : (input.defaultValue ?? '');
       });
+    }
+
+    this.initialized = true;
+  }
+
+  /**
+   * @description Reacts to `@Input()` changes that arrive AFTER the form has
+   * already initialized (a consumer recomputing field metadata or forcing a value
+   * while the modal stays open). `inputDefinitions` re-derives
+   * `visibleInputDefinitions` WITHOUT touching `formData` (structure only -
+   * options, `editable`, `disabledOptionValues`, etc. - whatever the user already
+   * entered is preserved). `fieldOverrides` applies its keys directly onto
+   * `formData`, overwriting only those keys.
+   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
+   */
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!this.initialized) return;
+
+    if (changes['inputDefinitions'] && !changes['inputDefinitions'].firstChange) {
+      this.visibleInputDefinitions = this.formDataToEdit
+        ? this.inputDefinitions.filter(input => input.show_in_edit !== false)
+        : this.inputDefinitions.filter(input => input.show_in_create !== false);
+    }
+
+    if (changes['fieldOverrides'] && this.fieldOverrides) {
+      Object.keys(this.fieldOverrides).forEach(key => {
+        this.formData[key] = this.fieldOverrides![key];
+      });
+      this.cd.markForCheck();
     }
   }
 
@@ -173,12 +184,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Vynutí prázdné pole pro každé `'files'` pole PŘI EDITACI - `formDataToEdit`
-   * u takového klíče typicky nese existující přílohy jako pole API objektů (`{id, url,
-   * original_filename, ...}`), ne `File` instance. Bez tohoto resetu by `onSubmit()`
-   * takové pole nerozpoznal jako soubory (neprojde `isFileArray()` testem) a skončilo by
-   * jako nesmyslně stringifikované do `FormData`. `'files'` pole slouží výhradně k
-   * PŘIDÁNÍ nových příloh - správa/mazání starých je mimo scope tohoto formuláře.
+   * @description Forces an empty array for every `'files'` field WHILE EDITING - see
+   * pre-existing note in version history. Unchanged by this update.
    */
   private resetFileArrayFields(): void {
     this.visibleInputDefinitions.forEach(input => {
@@ -188,21 +195,79 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * @description Coerces every `'multiselect'` field's incoming value into a string
+   * array while editing. `formDataToEdit` is expected to already carry an array of
+   * option-value strings (e.g. `AdministratorsComponent.handleEditFormOpened()` maps
+   * `user_permissions` to `permission_ids` this way), but this normalization protects
+   * the template's checkbox rendering (`isMultiselectChecked()`) against `undefined`/
+   * non-array values from any other consumer that doesn't pre-map its data the same way.
+   */
+  private normalizeMultiselectFields(): void {
+    this.visibleInputDefinitions.forEach(input => {
+      if (input.type === 'multiselect') {
+        const current = this.formData[input.column_name];
+        this.formData[input.column_name] = Array.isArray(current)
+          ? current.map((v: string | number) => String(v))
+          : [];
+      }
+    });
+  }
+
   ngOnDestroy(): void {
     this.scrollLock.unlock();
   }
 
   /**
-   * @description Zjišťuje, jestli se u daného `confirm-password` pole aktuálně neshoduje
-   * hlavní hodnota (`formData[columnName]`) s potvrzením (`confirmPasswordData[columnName]`).
-   * Počítá se live při každém CD cyklu - žádný uložený stav, žádná závislost na pořadí
-   * event handlerů. Prázdné potvrzení (uživatel ho ještě nezačal psát) se nepovažuje
-   * za neshodu - chyba se ukáže, až uživatel do potvrzení něco napíše.
+   * @description Whether the given option is currently selected for a `'multiselect'`
+   * field - used by the template to drive each checkbox's `[checked]` binding.
    */
-  passwordMismatch(columnName: string): boolean {
-    const confirmation = this.confirmPasswordData[columnName];
-    if (!confirmation) return false;
-    return this.formData[columnName] !== confirmation;
+  isMultiselectChecked(columnName: string, optionValue: string | number): boolean {
+    const current = this.formData[columnName];
+    return Array.isArray(current) && current.includes(String(optionValue));
+  }
+
+  /**
+   * @description Adds/removes a single option from a `'multiselect'` field's array in
+   * `formData`, based on the checkbox's own checked state. A new array is written
+   * (rather than mutating in place) so `OnPush` consumers watching `formData` by
+   * reference still pick up the change.
+   */
+  onMultiselectToggle(columnName: string, optionValue: string | number, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const value = String(optionValue);
+    const current: string[] = Array.isArray(this.formData[columnName]) ? [...this.formData[columnName]] : [];
+
+    const index = current.indexOf(value);
+    if (checked && index === -1) {
+      current.push(value);
+    } else if (!checked && index !== -1) {
+      current.splice(index, 1);
+    }
+
+    this.formData[columnName] = current;
+  }
+
+  /**
+   * @description Whether a specific option of a `'multiselect'` field should be
+   * rendered disabled - independent of the whole field's `editable` flag. Driven by
+   * `input.disabledOptionValues` (e.g. `AdministratorsComponent` uses this to lock
+   * permissions a user's role already grants automatically).
+   * @refactor-note (2026-09-05) BACKLOG "role/admin UX improvement".
+   */
+  isOptionDisabled(input: InputDefinition, optionValue: string | number): boolean {
+    const disabledValues = (input as any).disabledOptionValues as (string | number)[] | undefined;
+    return Array.isArray(disabledValues) && disabledValues.includes(String(optionValue));
+  }
+
+  /**
+   * @description Emits `fieldChanged` for a `'select'` field - see `@Output()`
+   * doc-comment above. Called via `(ngModelChange)` alongside the field's existing
+   * `[(ngModel)]` binding, so this fires AFTER `formData` has already been updated.
+   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
+   */
+  onFieldChange(columnName: string, value: any): void {
+    this.fieldChanged.emit({ columnName, value });
   }
 
   /**
@@ -210,6 +275,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
    * neshodujícím se potvrzením - použito v `onSubmit()` k zablokování odeslání a na
    * submit tlačítku k jeho disable.
    */
+  passwordMismatch(columnName: string): boolean {
+    const confirmation = this.confirmPasswordData[columnName];
+    if (!confirmation) return false;
+    return this.formData[columnName] !== confirmation;
+  }
+
   get hasPasswordMismatch(): boolean {
     return this.visibleInputDefinitions.some(
       input => input.type === 'confirm-password' && this.passwordMismatch(input.column_name)
@@ -226,23 +297,10 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * @description Přijímá aktuální seznam souborů z `MultiFileUploadComponent` pro pole
-   * typu `'files'`. Komponenta sama hlídá klientský limit (10 souborů / 20 MB / 50 MB
-   * celkem) jako UX pomůcku - skutečnou hranici vždy vynucuje backend.
-   */
   onFilesChange(files: File[], columnName: string): void {
     this.formData[columnName] = files;
   }
 
-  /**
-   * @description Přijímá aktuální seznam ID existujících příloh označených ke smazání
-   * (STAGED - žádné API volání zatím neproběhlo, viz MultiFileUploadComponent). Uloží
-   * je pod `${columnName}_removed_ids` do `formData`, odkud je `onSubmit()` pošle na
-   * server AŽ při reálném uložení celého formuláře. Storno formuláře tenhle stav nikam
-   * neodešle - `formData` se prostě zahodí spolu s celou komponentou.
-   * @bugfix-note (2026-08-19v2) BACKLOG "mazání existujících příloh v editu - staged".
-   */
   onExistingFilesRemoved(removedIds: number[], columnName: string): void {
     this.formData[`${columnName}_removed_ids`] = removedIds;
   }
@@ -280,14 +338,12 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Sanitizes and validates form data before emitting the submission event.
-   * @note Automatically serializes data into FormData if file inputs (single `File` or
-   * `File[]` from a `'files'` field) are detected. Single files se posílají pod svým
-   * klíčem beze změny (`key`), pole souborů pod `key[]` (Laravel/PHP konvence pro
-   * vícenásobný upload, sedí s `attachments[]` očekávaným backendem).
-   * @bugfix-note (2026-08-24) `isSubmitting` se po úspěšném emitu záměrně JIŽ
-   * NERESETUJE zpátky na `false` - viz refactor-note v hlavičce souboru (fix
-   * vícenásobného odeslání při rychlém opakovaném kliknutí).
+   * @description Sanitizes and validates form data before emitting the submission
+   * event. `'multiselect'` fields are plain string arrays in `formData` (see
+   * `onMultiselectToggle()`) and flow through both branches below unchanged: the
+   * plain-object branch spreads them as-is, and the existing generic array handling
+   * in the `FormData` (multipart) branch already serializes any non-empty array as
+   * `key[]` - no `'multiselect'`-specific branch was needed there.
    */
   onSubmit(form: NgForm, event?: Event): void {
     event?.preventDefault();
@@ -318,16 +374,11 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
             value.forEach((file: File) => payload.append(`${key}[]`, file, file.name));
           } else if (Array.isArray(value)) {
             /**
-             * @bugfix-note (2026-08-19v2) DŘÍV se JAKÉKOLIV nesouborové pole (array)
-             * v multipart větvi TICHO ZAHAZOVALO ("nemá smysl posílat" - platilo jen
-             * pro prázdné 'files' pole bez výběru, ale zasáhlo úplně všechny array
-             * hodnoty). To by mimo jiné znamenalo, že nově zavedené
-             * `attachments_removed_ids` (viz onExistingFilesRemoved()) by se při
-             * SOUČASNÉM přidání nového souboru na server nikdy nedostalo - staged
-             * smazání staré přílohy by se ztratilo, kdykoliv admin zároveň nahrával i
-             * něco nového. Oprava: prázdné pole se pořád přeskočí (nic k poslání), ale
-             * neprázdné se serializuje jako `key[]`, stejná PHP/Laravel konvence jako
-             * u pole souborů o pár řádků výš.
+             * @bugfix-note (2026-08-19v2) Empty arrays are skipped (nothing to
+             * send); non-empty arrays are serialized as `key[]`, the same
+             * PHP/Laravel convention used for the file array above - covers both
+             * legacy `..._removed_ids` fields and, since 2026-09-02, `'multiselect'`
+             * values like `permission_ids`.
              */
             if (value.length === 0) return;
             value.forEach((item: any) => payload.append(`${key}[]`, String(item)));
@@ -336,22 +387,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
           }
         });
 
-        /**
-         * @bugfix-note (2026-08-19) `FormData` instance NEPODPORUJE čtení hodnot přes
-         * tečkovou notaci (`payload.id`) - jen přes `.get('id')`. `id` je sice výše
-         * správně přidané do multipart dat (`payload.append('id', ...)`), ale
-         * konzumentské komponenty napříč adminem (např.
-         * `UserRequestComponent.handleFormSubmitted()`) rozhodují mezi update/create
-         * přes `formData.id ? update() : create()` - na `FormData` instanci to bez
-         * tohoto řádku VŽDY vyhodnotí `undefined`, tedy vždy `create()`, i při editaci
-         * existujícího záznamu. Řešení: nastavit `id` NAVÍC jako obyčejnou vlastnost JS
-         * objektu přímo na `FormData` instanci - nijak to neovlivní multipart
-         * serializaci (Angular `HttpClient` posílá `FormData` podle jejích interních
-         * `entries`, ne podle vlastností objektu), ale `formData.id` v konzumentských
-         * komponentách bude fungovat stejně spolehlivě jako u běžného JSON payloadu.
-         * Oprava na jednom místě - platí automaticky pro všechny stránky s file/files
-         * poli, ne jen pro tu, kde byl bug nahlášen.
-         */
         if (this.formData['id'] !== undefined && this.formData['id'] !== null) {
           (payload as any).id = this.formData['id'];
         }
@@ -361,26 +396,8 @@ export class FormBuilderComponent implements OnInit, OnDestroy {
 
       this.formSubmitted.emit(payload);
 
-      /**
-       * @bugfix-note (2026-08-25) KRITICKÝ BUG - ZELENÝ "ÚSPĚCH" TOAST SE ZOBRAZOVAL
-       * VŽDY, I KDYŽ BACKEND POŽADAVEK NAKONEC ZAMÍTL: dřív se tady volalo
-       * `this.alertDialogService.open('Information', ...)` HNED po `emit()`, tedy
-       * ještě PŘED tím, než vůbec proběhl skutečný HTTP request (ten běží až
-       * v konzumentské stránce přes `postData()/updateData().subscribe()`). Uživatel
-       * tak viděl zelený "úspěch", a hned vzápětí (po doběhnutí requestu) i červenou
-       * chybu z reálného 422/500 - obě najednou, což nedává smysl a matoucí to je.
-       *
-       * ŘEŠENÍ: `FormBuilderComponent` už NEUKAZUJE ŽÁDNÝ toast o výsledku uložení -
-       * jen emituje `payload` a je na KONZUMENTSKÉ STRÁNCE (přes `subscribe({next,
-       * error})`), aby zobrazila zelený toast při úspěchu (`next`) a červený při chybě
-       * (`error`) - teprve TEHDY je totiž známý skutečný výsledek z API. Toast se tak
-       * nikdy nemůže objevit "špatně" ani zdvojeně, protože existuje přesně JEDNO
-       * místo (odpověď HTTP requestu), které o něm rozhoduje.
-       */
-
-      // `isSubmitting` ZÁMĚRNĚ zůstává `true` - viz bugfix-note (2026-08-24) výše.
-      // Tlačítko "Potvrdit" tak zůstane disabled, dokud rodičovská stránka po
-      // dokončení HTTP requestu modal nezavře (tahle komponenta se tím zničí úplně).
+      // `isSubmitting` deliberately stays `true` - see version history bugfix-note
+      // (duplicate-submit guard).
     } else {
       this.alertDialogService.open('Invalid Form', 'Please check all required fields.', 'warning');
     }

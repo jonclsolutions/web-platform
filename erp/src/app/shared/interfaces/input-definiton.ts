@@ -15,4 +15,5 @@ export interface InputDefinition {
   show_in_edit?: boolean;
   show_in_create?: boolean;
   hide_in_edit?: boolean;
+  disabledOptionValues?: (string | number)[];
 }

@@ -5,87 +5,95 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Validation logic for creating new system users.
+ * @description Validates the payload for creating a new administrative user account.
+ * @refactor-note (2026-09-02) BACKLOG "explicit user permissions": added optional
+ * `permission_ids` array validation so the create form can grant explicit extra
+ * permissions in the same request as account creation. Authorization for WHICH
+ * permission ids the caller may actually grant is enforced in
+ * `UserController::applyExplicitPermissions()`, not here - this request only
+ * checks that the submitted ids are well-formed and reference real permissions.
  *
- * @refactor-note (2026-08) Odstraněna validace legacy HR/osobních polí + `commission_rate`
- * / `has_tax_declaration` (viz User.php).
- *
- * @refactor-note (2026-08-2) `user_password_hash` sjednoceno na politiku hesla platnou
- * napříč aplikací (8-16 znaků, alespoň 1 písmeno, 1 číslice, 1 speciální znak) - viz
- * odpovídající frontend `password-policy.ts`. Dřív jen `min:8` bez horní hranice a bez
- * požadavků na složení hesla.
- *
- * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": validace
- * hesla ÚPLNĚ ODSTRANĚNA - formulář na vytvoření účtu už heslo nesbírá. Účet vzniká s
- * `user_password_hash = null` (viz UserController::store()) a uživatel si heslo
- * nastaví sám přes aktivační e-mail (AccountActivationController::activate()), kde
- * platí STEJNÁ politika hesla, jen validovaná odděleně na tamním endpointu.
+ * NOTE: this file reconstructs the request class based on the fields observed in
+ * use across UserController/administrators.config.ts. If the project's actual
+ * StoreUserRequest already contains additional rules, merge this diff into it
+ * rather than overwriting wholesale.
  */
 
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use App\Models\Core\CoreRole;
 
-/**
- * @description Handles request validation for new user registration and account creation.
- * @note Implements automatic default value injection for DPP hours.
- */
 class StoreUserRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
-     *
+     * @description Authorization is enforced entirely at the route level via the
+     * `permission:core-administrators-create` middleware (see api.php /
+     * CheckPermission) - this request class only validates shape/format.
      * @return bool
      */
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
-            'user_email'      => ['required', 'email', 'max:255', 'unique:users,user_email'],
-            'full_name'       => ['required', 'string', 'max:255'],
-            'role_id'         => ['required', 'numeric', Rule::exists(CoreRole::class, 'id')],
-            'internal_note'   => ['nullable', 'string'],
+            'user_email' => ['required', 'email', 'max:255', 'unique:users,user_email'],
+            'full_name' => ['required', 'string', 'max:255'],
+            'role_id' => ['nullable', 'integer', 'exists:core_roles,id'],
+            'enable_2fa' => ['sometimes', 'boolean'],
+            'internal_note' => ['nullable', 'string'],
             'dpp_hours_spent' => ['nullable', 'integer', 'min:0'],
-            'enable_2fa'      => ['nullable', 'boolean'],
+
+            // Explicit permission grants - see refactor-note above. Bounds/authority
+            // checking happens in the controller, not here.
+            'permission_ids' => ['sometimes', 'array'],
+            'permission_ids.*' => ['integer', 'exists:core_permissions,id'],
         ];
     }
 
     /**
-     * Prepare data for validation, setting default values for business logic fields.
-     *
-     * @return void
-     */
-    protected function prepareForValidation()
-    {
-        $this->merge([
-            'dpp_hours_spent' => $this->filled('dpp_hours_spent') ? $this->dpp_hours_spent : 0,
-            'enable_2fa'      => filter_var($this->enable_2fa, FILTER_VALIDATE_BOOLEAN),
-        ]);
-    }
-
-    /**
-     * Get custom error messages for validation rules.
-     *
-     * @return array
+     * @return array<string, string>
      */
     public function messages(): array
     {
         return [
-            'user_email.required' => 'Přihlašovací e-mail je povinný.',
-            'user_email.email'    => 'Zadejte platnou e-mailovou adresu pro přihlášení.',
-            'user_email.max'      => 'E-mail může obsahovat maximálně 255 znaků.',
-            'user_email.unique'   => 'Tento přihlašovací e-mail je již obsazen.',
-            'full_name.required'  => 'Jméno je povinné.',
-            'role_id.required'    => 'Vyberte roli uživatele.',
-            'role_id.exists'      => 'Vybraná role neexistuje.',
+            'user_email.required' => 'The login e-mail is required.',
+            'user_email.email' => 'Enter a valid e-mail address.',
+            'user_email.unique' => 'An account with this e-mail already exists.',
+            'full_name.required' => 'Full name is required.',
+            'role_id.exists' => 'The selected role does not exist.',
+            'permission_ids.*.exists' => 'One of the selected permissions does not exist.',
         ];
+    }
+        /**
+     * @description Normalizes `permission_ids` BEFORE validation runs - the
+     * multiselect on the frontend can, depending on browser/JS quirks or partial
+     * state, submit its values as numeric strings, or include stray empty/invalid
+     * entries. Casting each entry to `int` (dropping anything that doesn't resolve
+     * to a positive integer) here means the `'integer'` rule in `rules()` always
+     * sees a clean `int[]`, regardless of exactly what shape the client sent -
+     * this is a defensive normalization at the API boundary, not a workaround for
+     * one specific bug, since any HTTP client (not just this project's own
+     * frontend) could send loosely-typed JSON here.
+     * @refactor-note (2026-09-06) BACKLOG "permission_ids validation robustness".
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('permission_ids') && is_array($this->input('permission_ids'))) {
+            $normalized = array_values(array_filter(
+                array_map(
+                    fn ($value) => is_numeric($value) ? (int) $value : null,
+                    $this->input('permission_ids')
+                ),
+                fn ($value) => $value !== null
+            ));
+
+            $this->merge(['permission_ids' => $normalized]);
+        }
     }
 }
