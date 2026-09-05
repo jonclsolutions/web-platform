@@ -1,17 +1,23 @@
+/**
+ * @bugfix-note (2026-09-07) BACKLOG "granularizace shop permissions": nahrazeno
+ * `shop-manage-shipping-methods`/`web-user-requests-view` novou granulární sadou
+ * `shop-shipping-methods-view/-create/-update/-delete` - viz
+ * 002_shop_permissions_granularization.sql.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const SHIPPING_BUTTONS: Core.TableButtons[] = [
   { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', icon: 'edit' },
-  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', icon: 'delete' }
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'shop-shipping-methods-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'shop-shipping-methods-delete', icon: 'delete' }
 ];
 
 export const SHIPPING_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true },
+  { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'shop-shipping-methods-create' },
   { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
-     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
-     { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-shipping-methods-create' },
+     { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
   { action: 'toggleTable', label: 'Zobrazit koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
 ];
 

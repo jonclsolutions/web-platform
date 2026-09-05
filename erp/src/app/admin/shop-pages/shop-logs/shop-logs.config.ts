@@ -1,3 +1,9 @@
+/**
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč shop stránkami":
+ * `openGraphBuilder` opraven z `web-user-requests-view` (nesouvisející permission
+ * z web sekce) na `shop-view-logs` - dedikovaná permission pro tuto stránku,
+ * stejný princip jako `view-core` u core-pages/logs.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const BUTTONS: Core.TableButtons[] = [
@@ -12,7 +18,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-filter',
     isActive: false
   },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-logs' },
   {
     action: 'exportActiveTable',
     label: 'Exportovat data',

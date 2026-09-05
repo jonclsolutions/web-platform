@@ -115,6 +115,20 @@ export class EditWebsiteComponent
   /** @returns Count of translated keys currently filtered. */
   get filledCount(): number  { return this.filteredKeys.filter(k => !k.missing && k.value?.trim()).length; }
 
+    /**
+   * @description Whether the current actor may perform any mutating action on this
+   * page (save translations, upload JSON, add/toggle/delete a language). The
+   * underlying GET routes (`languages/{module}`, `translations/{module}/{lang}`)
+   * are PUBLIC (the public website itself reads them unauthenticated), so there is
+   * no separate frontend gate needed for viewing - only for mutating.
+   * @refactor-note (2026-09-07) BACKLOG "edit-website/edit-eshop permissions": this
+   * page has no config file (buttons are hardcoded in the template), so the
+   * permission check lives directly here instead of a `Core.TableButtons`/`Button`
+   * `permission` field like other admin pages.
+   */
+  get canUpdate(): boolean {
+    return this.permissionService.hasPermission('web-edit-website-update');
+  }
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: ChangeDetectorRef,

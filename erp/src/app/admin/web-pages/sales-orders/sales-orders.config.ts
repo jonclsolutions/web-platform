@@ -34,6 +34,10 @@
 + *      na něj naváže navigací na `/admin/web/projects?order_id=<id>` -
 + *      ProjectsComponent tenhle query parametr už umí přečíst a rovnou předvyplnit
 + *      create formulář (viz projects.component.ts `checkQueryParamsForPrefill()`).
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč web stránkami":
+ * `openGraphBuilder` používal nesouvisející `web-user-requests-view` - opraveno na
+ * `web-sales-orders-view` (vlastní view permission téhle stránky).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -59,7 +63,7 @@ export const SALES_ORDER_TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-export',
     showIf: true
   },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-sales-orders-view' },
   {
     action: 'toggleTable',
     label: 'Zobrazit koš',
@@ -68,7 +72,6 @@ export const SALES_ORDER_TOOLBAR_BUTTONS: Core.Button[] = [
     permission: 'view-deleted'
   }
 ];
-
 
 export const SALES_ORDER_FORM_FIELDS: Core.InputDefinition[] = [
   {

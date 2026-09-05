@@ -1,3 +1,12 @@
+/**
+ * @bugfix-note (2026-09-07) BACKLOG "granularizace shop permissions": žádné
+ * tlačítko v tomto souboru dosud nemělo permission vůbec - kdokoliv s přístupem
+ * do e-shop sekce mohl přidávat, upravovat i mazat kategorie bez ohledu na svá
+ * oprávnění. Doplněno `shop-categories-create/-update/-delete` - viz
+ * 002_shop_permissions_granularization.sql. `expandAll`/`collapseAll` zůstávají
+ * bez permission - jde o čistě UI přepínač zobrazení stromu, nic nemutují ani
+ * nenačítají navíc.
+ */
 import { Button } from '../../../shared/interfaces/button';
 
 export const CATEGORY_TOOLBAR_BUTTONS: Button[] = [
@@ -17,7 +26,8 @@ export const CATEGORY_TOOLBAR_BUTTONS: Button[] = [
     action: 'addMain',
     label: 'Hlavní kategorie',
     icon: 'sparkles',
-    class: 'btn-create'
+    class: 'btn-create',
+    permission: 'shop-categories-create'
   }
 ];
 
@@ -29,8 +39,8 @@ export const CATEGORY_TOOLBAR_BUTTONS: Button[] = [
  * teď opraveno, `label` nese viditelný text vedle ikony.
  */
 export const CATEGORY_ROW_BUTTONS: Button[] = [
-  { action: 'addChild', label: 'Podkategorie', icon: 'plus', class: 'btn-create' },
-  { action: 'edit', label: 'Upravit', icon: 'edit', class: 'btn-export' },
-  { action: 'toggleStatus', label: 'Aktivní', icon: 'circle', class: 'btn-filter' },
-  { action: 'delete', label: 'Smazat', icon: 'delete', class: 'btn-trash' }
+  { action: 'addChild', label: 'Podkategorie', icon: 'plus', class: 'btn-create', permission: 'shop-categories-create' },
+  { action: 'edit', label: 'Upravit', icon: 'edit', class: 'btn-export', permission: 'shop-categories-update' },
+  { action: 'toggleStatus', label: 'Aktivní', icon: 'circle', class: 'btn-filter', permission: 'shop-categories-update' },
+  { action: 'delete', label: 'Smazat', icon: 'delete', class: 'btn-trash', permission: 'shop-categories-delete' }
 ];

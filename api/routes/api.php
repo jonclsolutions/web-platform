@@ -332,11 +332,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user',    [AuthController::class, 'user']);
 
-    // ── Translations / Languages — spravováno na stránce "Správa Webu" (edit-website) ──
-    Route::post('/save_translations/{module}', [TranslationController::class, 'save'])
-        ->middleware('permission:web-view-edit-website');
+        Route::post('/save_translations/{module}', [TranslationController::class, 'save'])
+            ->middleware('permission:web-edit-website-update|shop-edit-eshop-update');
 
-    Route::prefix('languages')->middleware('permission:web-view-edit-website')->group(function () {
+    Route::prefix('languages')->middleware('permission:web-edit-website-update|shop-edit-eshop-update')->group(function () {
         Route::post('/{module}',     [TranslationController::class, 'saveLanguages']);
         Route::post('/{module}/{code}/icon', [TranslationController::class, 'storeLanguageIcon']);
         Route::delete('/{module}/{code}',    [TranslationController::class, 'destroyLanguage']);
@@ -481,16 +480,18 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     |----------------------------------------------------------------------
     | SHOP
     |----------------------------------------------------------------------
-    | @note (2026-08-5) Shop sekce zatím NENÍ granularizována (view/create/update/delete).
-    | @todo (2026-08-23) BULK-DELETE / IMPORT PRO SHOP KONTROLERY ZATÍM NEIMPLEMENTOVÁNO.
-    |    Až budou ShopProductController/ShopOrderController/ShopCategoryController/
-    |    ShopCustomerController/ShopSupplierController/ShopCouponController/
-    |    ShopShippingMethodController mít doplněné bulkDestroy() (+ případně import*()),
-    |    routy se přidají SEM, stejným vzorem jako u web sekce - VŽDY před `Route::get('/{id}'`
-    |    /`Route::delete('/{id}'` ve stejné skupině. Konkrétní rizika k prověření před
-    |    přidáním (viz bulk_destroy_recipe.txt): ShopProduct (obrázky/varianty na disku),
-    |    ShopOrder (možný dopad na sklad), ShopCategory (rodič/potomek strom),
-    |    ShopCustomer (vazba na objednávky).
+    | @refactor-note (2026-09-07) BACKLOG "permission audit napříč shop
+    | stránkami / granularizace shop permissions": shop sekce byla dosud
+    | JEDINÁ chráněná mimo `view/create/update/delete` vzor - products,
+    | categories, customers, suppliers, shipping_methods a payment_methods
+    | měly jen jednu "manage" permission na celý resource, orders měly jen
+    | "view" permission použitou i pro mutace, a coupons byly chráněné
+    | zcela nesouvisející `shop-view-reports`. Sjednoceno na stejný
+    | `{resource}-view/-create/-update/-delete` vzor jako `core-administrators-*`/
+    | `web-news-*` - viz migrace 002_shop_permissions_granularization.sql
+    | (nové permissions + automatický přenos přiřazení rolí ze starých klíčů).
+    | Payment methods mají jen `-view`/`-update` (žádný create/delete route
+    | v této skupině neexistuje - viz `->only(['index', 'update'])` níže).
     */
     Route::prefix('shop')->group(function () {
 
@@ -502,67 +503,108 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // Products
-        Route::prefix('products')->middleware('permission:shop-manage-products')->group(function () {
+        Route::prefix('products')->group(function () {
             // TODO: Route::post('/bulk-delete', [ShopProductController::class, 'bulkDestroy']);
             // TODO: Route::get('/import/template', [ShopProductController::class, 'importTemplate']);
             // TODO: Route::post('/import/validate', [ShopProductController::class, 'importValidate'])->middleware('throttle:30,1');
             // TODO: Route::post('/import/commit', [ShopProductController::class, 'importCommit'])->middleware('throttle:30,1');
-            Route::patch('/{id}/category',     [ShopProductController::class, 'updateCategory']);
-            Route::get('/{id}',                [ShopProductController::class, 'show']);
-            Route::post('/{id}/restore',       [ShopProductController::class, 'restore']);
-            Route::delete('/force-delete-all', [ShopProductController::class, 'forceDeleteAllTrashed']);
+            Route::patch('/{id}/category',     [ShopProductController::class, 'updateCategory'])
+                ->middleware('permission:shop-products-update');
+            Route::get('/{id}',                [ShopProductController::class, 'show'])
+                ->middleware('permission:shop-products-view');
+            Route::post('/{id}/restore',       [ShopProductController::class, 'restore'])
+                ->middleware('permission:shop-products-delete');
+            Route::delete('/force-delete-all', [ShopProductController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:shop-products-delete');
         });
-        Route::apiResource('products', ShopProductController::class)
-            ->parameters(['products' => 'id'])
-            ->middleware('permission:shop-manage-products');
+        Route::get('products',        [ShopProductController::class, 'index'])
+            ->middleware('permission:shop-products-view');
+        Route::post('products',       [ShopProductController::class, 'store'])
+            ->middleware('permission:shop-products-create');
+        Route::put('products/{id}',   [ShopProductController::class, 'update'])
+            ->middleware('permission:shop-products-update');
+        Route::patch('products/{id}', [ShopProductController::class, 'update'])
+            ->middleware('permission:shop-products-update');
+        Route::delete('products/{id}', [ShopProductController::class, 'destroy'])
+            ->middleware('permission:shop-products-delete');
 
         // Customers
-        Route::prefix('customers')->middleware('permission:shop-manage-customers')->group(function () {
+        Route::prefix('customers')->group(function () {
             // TODO: Route::post('/bulk-delete', [ShopCustomerController::class, 'bulkDestroy']);
             // TODO: Route::get('/import/template', [ShopCustomerController::class, 'importTemplate']);
             // TODO: Route::post('/import/validate', [ShopCustomerController::class, 'importValidate'])->middleware('throttle:30,1');
             // TODO: Route::post('/import/commit', [ShopCustomerController::class, 'importCommit'])->middleware('throttle:30,1');
-            Route::get('/{id}',                [ShopCustomerController::class, 'show']);
-            Route::post('/{id}/restore',       [ShopCustomerController::class, 'restore']);
-            Route::delete('/force-delete-all', [ShopCustomerController::class, 'forceDeleteAllTrashed']);
+            Route::get('/{id}',                [ShopCustomerController::class, 'show'])
+                ->middleware('permission:shop-customers-view');
+            Route::post('/{id}/restore',       [ShopCustomerController::class, 'restore'])
+                ->middleware('permission:shop-customers-delete');
+            Route::delete('/force-delete-all', [ShopCustomerController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:shop-customers-delete');
         });
-        Route::apiResource('customers', ShopCustomerController::class)
-            ->parameters(['customers' => 'id'])
-            ->middleware('permission:shop-manage-customers');
+        Route::get('customers',        [ShopCustomerController::class, 'index'])
+            ->middleware('permission:shop-customers-view');
+        Route::post('customers',       [ShopCustomerController::class, 'store'])
+            ->middleware('permission:shop-customers-create');
+        Route::put('customers/{id}',   [ShopCustomerController::class, 'update'])
+            ->middleware('permission:shop-customers-update');
+        Route::patch('customers/{id}', [ShopCustomerController::class, 'update'])
+            ->middleware('permission:shop-customers-update');
+        Route::delete('customers/{id}', [ShopCustomerController::class, 'destroy'])
+            ->middleware('permission:shop-customers-delete');
 
         // Orders
-        Route::prefix('orders')->middleware('permission:shop-view-orders')->group(function () {
+        Route::prefix('orders')->group(function () {
             // TODO: Route::post('/bulk-delete', [ShopOrderController::class, 'bulkDestroy']);
             // (import pro orders pravděpodobně nedává smysl - obdobný důvod jako
             // web/sales_orders, prověřit až budeme u tohohle kontroleru)
-            Route::get('/{id}',                [ShopOrderController::class, 'show']);
-            Route::post('/{id}/restore',       [ShopOrderController::class, 'restore']);
-            Route::delete('/force-delete-all', [ShopOrderController::class, 'forceDeleteAllTrashed']);
+            Route::get('/{id}',                [ShopOrderController::class, 'show'])
+                ->middleware('permission:shop-orders-view');
+            Route::post('/{id}/restore',       [ShopOrderController::class, 'restore'])
+                ->middleware('permission:shop-orders-delete');
+            Route::delete('/force-delete-all', [ShopOrderController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:shop-orders-delete');
         });
-        Route::apiResource('orders', ShopOrderController::class)
-            ->parameters(['orders' => 'id'])
-            ->middleware('permission:shop-view-orders');
+        Route::get('orders',        [ShopOrderController::class, 'index'])
+            ->middleware('permission:shop-orders-view');
+        Route::post('orders',       [ShopOrderController::class, 'store'])
+            ->middleware('permission:shop-orders-create');
+        Route::put('orders/{id}',   [ShopOrderController::class, 'update'])
+            ->middleware('permission:shop-orders-update');
+        Route::patch('orders/{id}', [ShopOrderController::class, 'update'])
+            ->middleware('permission:shop-orders-update');
+        Route::delete('orders/{id}', [ShopOrderController::class, 'destroy'])
+            ->middleware('permission:shop-orders-delete');
 
         // Suppliers
         // @bugfix-note (2026-08-25) Prefixy 'import-suppliers-validate'/'import-suppliers-commit'
         // - viz hlavička souboru (import throttly napříč resources dřív sdílely jeden
         // per-uživatelský bucket).
-        Route::prefix('suppliers')->middleware('permission:shop-manage-suppliers')->group(function () {
+        Route::prefix('suppliers')->group(function () {
             Route::post('/bulk-delete', [ShopSupplierController::class, 'bulkDestroy'])
-        ->middleware('permission:shop-manage-suppliers');
-    Route::get('/import/template', [ShopSupplierController::class, 'importTemplate'])
-        ->middleware('permission:shop-manage-suppliers');
-    Route::post('/import/validate', [ShopSupplierController::class, 'importValidate'])
-        ->middleware(['throttle:30,1,import-suppliers-validate', 'permission:shop-manage-suppliers']);
-    Route::post('/import/commit', [ShopSupplierController::class, 'importCommit'])
-        ->middleware(['throttle:30,1,import-suppliers-commit', 'permission:shop-manage-suppliers']);
-            Route::get('/{id}',                [ShopSupplierController::class, 'show']);
-            Route::post('/{id}/restore',       [ShopSupplierController::class, 'restore']);
-            Route::delete('/force-delete-all', [ShopSupplierController::class, 'forceDeleteAllTrashed']);
+                ->middleware('permission:shop-suppliers-delete');
+            Route::get('/import/template', [ShopSupplierController::class, 'importTemplate'])
+                ->middleware('permission:shop-suppliers-create');
+            Route::post('/import/validate', [ShopSupplierController::class, 'importValidate'])
+                ->middleware(['throttle:30,1,import-suppliers-validate', 'permission:shop-suppliers-create']);
+            Route::post('/import/commit', [ShopSupplierController::class, 'importCommit'])
+                ->middleware(['throttle:30,1,import-suppliers-commit', 'permission:shop-suppliers-create']);
+            Route::get('/{id}',                [ShopSupplierController::class, 'show'])
+                ->middleware('permission:shop-suppliers-view');
+            Route::post('/{id}/restore',       [ShopSupplierController::class, 'restore'])
+                ->middleware('permission:shop-suppliers-delete');
+            Route::delete('/force-delete-all', [ShopSupplierController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:shop-suppliers-delete');
         });
-        Route::apiResource('suppliers', ShopSupplierController::class)
-            ->parameters(['suppliers' => 'id'])
-            ->middleware('permission:shop-manage-suppliers');
+        Route::get('suppliers',        [ShopSupplierController::class, 'index'])
+            ->middleware('permission:shop-suppliers-view');
+        Route::post('suppliers',       [ShopSupplierController::class, 'store'])
+            ->middleware('permission:shop-suppliers-create');
+        Route::put('suppliers/{id}',   [ShopSupplierController::class, 'update'])
+            ->middleware('permission:shop-suppliers-update');
+        Route::patch('suppliers/{id}', [ShopSupplierController::class, 'update'])
+            ->middleware('permission:shop-suppliers-update');
+        Route::delete('suppliers/{id}', [ShopSupplierController::class, 'destroy'])
+            ->middleware('permission:shop-suppliers-delete');
 
         // Shop Logs
         Route::prefix('logs')->group(function () {
@@ -574,52 +616,84 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
         });
 
         // Coupons
-        Route::prefix('coupons')->middleware('permission:shop-view-reports')->group(function () {
+        // @refactor-note (2026-09-07) NOVÁ dedikovaná permission sada
+        // (shop-coupons-*) - dříve chráněno nesouvisející shop-view-reports.
+        Route::prefix('coupons')->group(function () {
             // TODO: Route::post('/bulk-delete', [ShopCouponController::class, 'bulkDestroy']);
             // TODO: Route::get('/import/template', [ShopCouponController::class, 'importTemplate']);
             // TODO: Route::post('/import/validate', [ShopCouponController::class, 'importValidate'])->middleware('throttle:30,1');
             // TODO: Route::post('/import/commit', [ShopCouponController::class, 'importCommit'])->middleware('throttle:30,1');
-            Route::get('/{id}',                [ShopCouponController::class, 'show']);
-            Route::post('/{id}/restore',       [ShopCouponController::class, 'restore']);
-            Route::delete('/force-delete-all', [ShopCouponController::class, 'forceDeleteAllTrashed']);
+            Route::get('/{id}',                [ShopCouponController::class, 'show'])
+                ->middleware('permission:shop-coupons-view');
+            Route::post('/{id}/restore',       [ShopCouponController::class, 'restore'])
+                ->middleware('permission:shop-coupons-delete');
+            Route::delete('/force-delete-all', [ShopCouponController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:shop-coupons-delete');
         });
-        Route::apiResource('coupons', ShopCouponController::class)
-            ->parameters(['coupons' => 'id'])
-            ->middleware('permission:shop-view-reports');
+        Route::get('coupons',        [ShopCouponController::class, 'index'])
+            ->middleware('permission:shop-coupons-view');
+        Route::post('coupons',       [ShopCouponController::class, 'store'])
+            ->middleware('permission:shop-coupons-create');
+        Route::put('coupons/{id}',   [ShopCouponController::class, 'update'])
+            ->middleware('permission:shop-coupons-update');
+        Route::patch('coupons/{id}', [ShopCouponController::class, 'update'])
+            ->middleware('permission:shop-coupons-update');
+        Route::delete('coupons/{id}', [ShopCouponController::class, 'destroy'])
+            ->middleware('permission:shop-coupons-delete');
 
         // Categories
-        Route::prefix('categories')->middleware('permission:shop-manage-categories')->group(function () {
+        Route::prefix('categories')->group(function () {
             // TODO: Route::post('/bulk-delete', [ShopCategoryController::class, 'bulkDestroy']);
             // (pozor na rodič/potomek strukturu - viz bulk_destroy_recipe.txt)
-            Route::get('/{id}', [ShopCategoryController::class, 'show']);
+            Route::get('/{id}', [ShopCategoryController::class, 'show'])
+                ->middleware('permission:shop-categories-view');
         });
-        Route::apiResource('categories', ShopCategoryController::class)
-            ->parameters(['categories' => 'id'])
-            ->middleware('permission:shop-manage-categories');
+        Route::get('categories',        [ShopCategoryController::class, 'index'])
+            ->middleware('permission:shop-categories-view');
+        Route::post('categories',       [ShopCategoryController::class, 'store'])
+            ->middleware('permission:shop-categories-create');
+        Route::put('categories/{id}',   [ShopCategoryController::class, 'update'])
+            ->middleware('permission:shop-categories-update');
+        Route::patch('categories/{id}', [ShopCategoryController::class, 'update'])
+            ->middleware('permission:shop-categories-update');
+        Route::delete('categories/{id}', [ShopCategoryController::class, 'destroy'])
+            ->middleware('permission:shop-categories-delete');
 
         // Shipping Methods
-        Route::prefix('shipping_methods')->middleware('permission:shop-manage-shipping-methods')->group(function () {
+        Route::prefix('shipping_methods')->group(function () {
             // TODO: Route::post('/bulk-delete', [ShopShippingMethodController::class, 'bulkDestroy']);
-            Route::get('/{id}',                [ShopShippingMethodController::class, 'show']);
-            Route::post('/{id}/restore',       [ShopShippingMethodController::class, 'restore']);
-            Route::delete('/force-delete-all', [ShopShippingMethodController::class, 'forceDeleteAllTrashed']);
+            Route::get('/{id}',                [ShopShippingMethodController::class, 'show'])
+                ->middleware('permission:shop-shipping-methods-view');
+            Route::post('/{id}/restore',       [ShopShippingMethodController::class, 'restore'])
+                ->middleware('permission:shop-shipping-methods-delete');
+            Route::delete('/force-delete-all', [ShopShippingMethodController::class, 'forceDeleteAllTrashed'])
+                ->middleware('permission:shop-shipping-methods-delete');
         });
-        Route::apiResource('shipping_methods', ShopShippingMethodController::class)
-            ->parameters(['shipping_methods' => 'id'])
-            ->middleware('permission:shop-manage-shipping-methods');
+        Route::get('shipping_methods',        [ShopShippingMethodController::class, 'index'])
+            ->middleware('permission:shop-shipping-methods-view');
+        Route::post('shipping_methods',       [ShopShippingMethodController::class, 'store'])
+            ->middleware('permission:shop-shipping-methods-create');
+        Route::put('shipping_methods/{id}',   [ShopShippingMethodController::class, 'update'])
+            ->middleware('permission:shop-shipping-methods-update');
+        Route::patch('shipping_methods/{id}', [ShopShippingMethodController::class, 'update'])
+            ->middleware('permission:shop-shipping-methods-update');
+        Route::delete('shipping_methods/{id}', [ShopShippingMethodController::class, 'destroy'])
+            ->middleware('permission:shop-shipping-methods-delete');
 
         // Payment Methods (jen index/update - žádné destroy(), bulk-delete se netýká)
-        Route::prefix('payment_methods')->middleware('permission:shop-manage-payment-methods')->group(function () {
-            Route::get('/{id}', [ShopPaymentMethodController::class, 'show']);
+        Route::prefix('payment_methods')->group(function () {
+            Route::get('/{id}', [ShopPaymentMethodController::class, 'show'])
+                ->middleware('permission:shop-payment-methods-view');
         });
-        Route::apiResource('payment_methods', ShopPaymentMethodController::class)
-            ->only(['index', 'update'])
-            ->parameters(['payment_methods' => 'id'])
-            ->middleware('permission:shop-manage-payment-methods');
+        Route::get('payment_methods',        [ShopPaymentMethodController::class, 'index'])
+            ->middleware('permission:shop-payment-methods-view');
+        Route::put('payment_methods/{id}',   [ShopPaymentMethodController::class, 'update'])
+            ->middleware('permission:shop-payment-methods-update');
+        Route::patch('payment_methods/{id}', [ShopPaymentMethodController::class, 'update'])
+            ->middleware('permission:shop-payment-methods-update');
 
         // TODO (budoucí task): EditEshopController zatím neexistuje.
     });
-
     /*
     |----------------------------------------------------------------------
     | WEB

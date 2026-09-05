@@ -113,6 +113,14 @@ export class EditEshopComponent
   get totalCount(): number   { return this.filteredKeys.length; }
   /** @returns Count of translated keys currently filtered. */
   get filledCount(): number  { return this.filteredKeys.filter(k => !k.missing && k.value?.trim()).length; }
+    /**
+   * @description Same rationale as `EditWebsiteComponent.canUpdate` - see that
+   * component's doc-comment. Uses the shop-specific permission key.
+   * @refactor-note (2026-09-07) BACKLOG "edit-website/edit-eshop permissions".
+   */
+  get canUpdate(): boolean {
+    return this.permissionService.hasPermission('shop-edit-eshop-update');
+  }
 
   constructor(
     protected override dataHandler: Core.DataHandler,

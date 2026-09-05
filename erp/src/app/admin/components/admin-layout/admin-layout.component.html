@@ -330,7 +330,7 @@
         <div class="nav-group" *ngIf="showWebContentGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obsah webu</div>
           <ul>
-            <li *appHasPermission="'web-view-edit-website'">
+            <li *appHasPermission="'web-edit-website-view'">
               <a routerLink="/admin/web/edit-website" routerLinkActive="active" (click)="onLinkClick()" title="Správa Webu">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -571,7 +571,7 @@
         <div class="nav-group" *ngIf="showShopCatalogGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Katalog</div>
           <ul>
-            <li *appHasPermission="'shop-manage-products'">
+            <li *appHasPermission="'shop-products-view'">
               <a routerLink="/admin/shop/products" routerLinkActive="active" (click)="onLinkClick()" title="Produkty">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -583,7 +583,7 @@
                 <span class="nav-text">Produkty</span>
               </a>
             </li>
-            <li *appHasPermission="'shop-manage-categories'">
+            <li *appHasPermission="'shop-categories-view'">
               <a routerLink="/admin/shop/categories" routerLinkActive="active" (click)="onLinkClick()" title="Kategorie">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -593,7 +593,7 @@
                 <span class="nav-text">Kategorie</span>
               </a>
             </li>
-            <li *appHasPermission="'shop-manage-suppliers'">
+            <li *appHasPermission="'shop-suppliers-view'">
               <a routerLink="/admin/shop/suppliers" routerLinkActive="active" (click)="onLinkClick()" title="Dodavatelé">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -610,7 +610,7 @@
         <div class="nav-group" *ngIf="showShopTransactionsGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Transakce</div>
           <ul>
-            <li *appHasPermission="'shop-view-orders'">
+            <li *appHasPermission="'shop-orders-view'">
               <a routerLink="/admin/shop/orders" routerLinkActive="active" (click)="onLinkClick()" title="Objednávky">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -621,7 +621,7 @@
                 <span class="nav-text">Objednávky</span>
               </a>
             </li>
-            <li *appHasPermission="'shop-view-reports'">
+            <li *appHasPermission="'shop-coupons-view'">
               <a routerLink="/admin/shop/coupons" routerLinkActive="active" (click)="onLinkClick()" title="Slevové Kupóny">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -638,7 +638,7 @@
         <div class="nav-group" *ngIf="showShopCustomersGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Zákazníci</div>
           <ul>
-            <li *appHasPermission="'shop-manage-customers'">
+            <li *appHasPermission="'shop-customers-view'">
               <a routerLink="/admin/shop/customers" routerLinkActive="active" (click)="onLinkClick()" title="Zákazníci">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -656,7 +656,7 @@
         <div class="nav-group" *ngIf="showShopLogisticsGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Logistika</div>
           <ul>
-            <li *appHasPermission="'shop-manage-shipping-methods'">
+            <li *appHasPermission="'shop-shipping-methods-view'">
               <a routerLink="/admin/shop/shipping-methods" routerLinkActive="active" (click)="onLinkClick()" title="Způsoby dopravy">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -667,7 +667,7 @@
                 <span class="nav-text">Způsoby dopravy</span>
               </a>
             </li>
-            <li *appHasPermission="'shop-manage-payment-methods'">
+            <li *appHasPermission="'shop-payment-methods-view'">
               <a routerLink="/admin/shop/payment-methods" routerLinkActive="active" (click)="onLinkClick()" title="Způsoby platby">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -683,7 +683,7 @@
         <div class="nav-group" *ngIf="showShopContentGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">Obsah webu</div>
           <ul>
-            <li *appHasPermission="'shop-view-edit-eshop'">
+            <li *appHasPermission="'shop-edit-eshop-view'">
               <a routerLink="/admin/shop/edit-eshop" routerLinkActive="active" (click)="onLinkClick()" title="Správa Webu">
                 <span class="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

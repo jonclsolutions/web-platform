@@ -1,5 +1,3 @@
-
-
 /**
  * @file security-events.config.ts
  * @path src/app/admin/core-pages/security-events/security-events.config.ts
@@ -12,19 +10,15 @@
  * core/logs (audit) tahle stránka podporuje TRIAGE (úprava statusu/poznámky přes tlačítko
  * "Řešit") a mazání jednotlivých záznamů i hromadný purge podle retence.
  *
- * @refactor-note (2026-08-22) UX - ČITELNÉ POPISKY A DOPORUČENÍ. `event_type`/`severity`/
- * `status` jsou interní technické identifikátory (`throttle_exceeded`, `scan_probe`...) -
- * bez kontextu nic neřeknou administrátorovi, který se s tím nesetkává denně, a
- * u rafinovanějšího útoku není vždy zřejmé, co dělat dál. Řešeno dvěma vrstvami:
- * 1) `FORM_FIELDS` teď obsahuje `select` mapování pro `event_type`/`severity`/`status` -
- *    `TableBuilderComponent.getCellValue()` UŽ toto mapování umí (hledá
- *    `inputDefinitions` podle `column_name` a nahradí hodnotu za `option.label`), takže
- *    tabulka zobrazí lidsky čitelný text bez JAKÉKOLIV úpravy samotného table builderu.
- * 2) `EVENT_TYPE_INFO` + `buildEventExplanation()` - mapa "co se stalo / co to znamená /
- *    co doporučujeme" pro každý typ eventu, s dosazením konkrétních dat KONKRÉTNÍHO
- *    záznamu (IP, endpoint, e-mail, počet výskytů) do šablony textu. Zobrazuje se
- *    v triage modalu (`SecurityEventsComponent.triageExplanation`) v okamžiku, kdy
- *    administrátor rozhoduje, jaký stav záznamu nastavit.
+ * (Earlier refactor-note 2026-08-22 - EVENT_TYPE_INFO / buildEventExplanation() -
+ * unchanged, see version history.)
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč core stránkami":
+ * `openGraphBuilder` používal `permission: 'web-user-requests-view'` - nesouvisející
+ * permission z web sekce, zjevně zkopírovaná z jiné stránky. Opraveno na
+ * `core-security-view`, konzistentně s tím, že "Řešit"/"Smazat" už správně používají
+ * `core-security-update`/`core-security-delete` - kdo smí vidět bezpečnostní
+ * monitoring, smí si jeho data i vygrafovat.
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -42,7 +36,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-filter',
     isActive: false
   },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'core-security-view' },
   {
     action: 'exportActiveTable',
     label: 'Exportovat data',

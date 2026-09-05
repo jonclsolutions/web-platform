@@ -23,6 +23,16 @@
  *   `is_active` odstraněny (včetně `chartable: true` u `is_active`, protože sloupec
  *   už neexistuje - report by na něj stejně narazil na 500 z backendu).
  * - `EXTERNAL_LINK_FILTER_COLUMNS`: filtr "Aktivní" odstraněn.
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč core stránkami":
+ * `openGraphBuilder` používal `permission: 'web-user-requests-view'` - permission
+ * z úplně jiné domény (web sekce, výplaty provizí), zjevně zkopírovanou z jiné
+ * stránky při implementaci graph builderu a nikdy neopravenou. Efekt: administrátor
+ * s `core-external-links-*` oprávněními, ale bez `web-user-requests-view`, neviděl
+ * tlačítko na grafy vlastních dat, které jinak plně spravuje. Opraveno na
+ * `core-external-links-view` - kdo smí vidět data téhle stránky, smí si je i
+ * vygrafovat (stejný princip nasazen napříč core-pages/logs a
+ * core-pages/security-events stejné datum).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -35,7 +45,8 @@ export const EXTERNAL_LINK_BUTTONS: Core.TableButtons[] = [
 export const EXTERNAL_LINK_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'core-external-links-create' },
-  { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },{ action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'core-external-links-view' },
   { action: 'toggleTable', label: 'Zobrazit koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
 ];
 

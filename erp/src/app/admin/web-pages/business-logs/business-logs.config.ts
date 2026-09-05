@@ -16,6 +16,13 @@
  * `Web` teď tedy pokrývá jak WebSiteSettingController (maintenance eventy), tak
  * CoreExternalLinkController (create/update/delete/restore externích odkazů) - žádná
  * změna v seznamu `module`, jen v `event_type`.
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč web stránkami":
+ * `openGraphBuilder` používal nesouvisející `web-user-requests-view` (permission
+ * z úplně jiné stránky - výplaty provizí). Opraveno na `web-view-web-logs` - stejná
+ * permission, kterou už vyžaduje samotný vstup na tuhle stránku (viz
+ * admin-layout.component.html "Serverové Logy"), takže kdo stránku vidí, smí si její
+ * data i vygrafovat.
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -31,7 +38,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-filter',
     isActive: false
   },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-view-web-logs' },
   {
     action: 'exportActiveTable',
     label: 'Exportovat data',

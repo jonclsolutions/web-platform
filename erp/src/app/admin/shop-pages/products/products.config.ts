@@ -1,20 +1,26 @@
+/**
+ * @bugfix-note (2026-09-07) BACKLOG "granularizace shop permissions": nahrazeno
+ * `shop-manage-products`/`web-user-requests-view`/vymyšleným `shop-products-delete`
+ * novou granulární sadou `shop-products-view/-create/-update/-delete` - viz
+ * 002_shop_permissions_granularization.sql.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true },
+  { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'shop-products-create' },
   { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
-     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
-     { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
-  { action: 'toggleTrash', label: 'Zobrazit koš', icon: '', class: 'btn-trash', permission: 'shop-products-delete' }
+     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-products-create' },
+     { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
+  { action: 'toggleTrash', label: 'Zobrazit koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
 ];
 
 export const PRODUCT_BUTTONS: Core.TableButtons[] = [
   { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', icon: 'edit' },
-  { display_name: 'Varianty', header_name: 'Varianty', isActive: true, type: 'neutral_button', action: 'custom_prod_var', icon: 'settings' },
-  { display_name: 'Obrázky', header_name: 'Obrázky', isActive: true, type: 'neutral_button', action: 'custom_prod_img', icon: 'image' },
-  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', icon: 'delete' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'shop-products-update', icon: 'edit' },
+  { display_name: 'Varianty', header_name: 'Varianty', isActive: true, type: 'neutral_button', action: 'custom_prod_var', permission: 'shop-products-update', icon: 'settings' },
+  { display_name: 'Obrázky', header_name: 'Obrázky', isActive: true, type: 'neutral_button', action: 'custom_prod_img', permission: 'shop-products-update', icon: 'image' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'shop-products-delete', icon: 'delete' },
 ];
 
 export const PRODUCT_FORM_FIELDS: Core.InputDefinition[] = [

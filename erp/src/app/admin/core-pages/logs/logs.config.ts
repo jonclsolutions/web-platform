@@ -9,40 +9,18 @@
  * buttons, since log entries are never created or edited through the admin UI, only
  * written internally by LogsActivity trait calls throughout the backend.
  *
- * @bugfix-note (2026-08-15, part 1+2, superseded) Dřívější verze doplnila "Core" a
- * maintenance eventy, ale nikdy nebyla ověřena proti VŠEM core controllerům - obsahovala
- * moduly, které ve skutečnosti patří do web_logs ("News", "SalesOrder", "SupportTicket",
- * "JobApplication", "RawRequestCommission", "BusinessLog", "Translation"), a chyběl jí
- * "Legal" i drtivá většina _denied eventů.
+ * (Earlier bugfix-notes for the 2026-08-15 module/event_type recalculation and the
+ * 2026-08-22 security-audit event types are unchanged - see version history.)
  *
- * @bugfix-note (2026-08-15, part 3 - DEFINITIVNÍ) KOMPLETNÍ PŘEPOČET po plošné kontrole
- * všech pěti core controllerů, které do core_logs skutečně zapisují: AuthController
- * (module='Auth'), CoreRoleController (module='CoreRole'), UserController (module='User'),
- * DocumentSectionController + SiteConfigurationController (obě module='Legal' - právní
- * dokumenty a firemní/site konfigurace sdílí jeden modul, viz jejich vlastní refactor-notes
- * o přesunu z chybného shop_logs). CorePermissionController potvrzen jako čistě read-only -
- * do logu nezapisuje nic. "Core" odstraněno - CoreSiteSettingController, jediný zdroj této
- * hodnoty, byl mezitím smazán (web/shop maintenance migrace). "News"/"SalesOrder"/
- * "SupportTicket"/"JobApplication"/"RawRequestCommission"/"BusinessLog"/"Translation"
- * odstraněny - patří do web_logs, ne core_logs (viz business-logs.config.ts). "Role"
- * opraveno na "CoreRole". "login" opraveno na "login_success"/"login_failed" (přesné
- * event_type hodnoty, které AuthController skutečně zapisuje). "bulk_hard_delete"
- * opraveno na "force_delete_all". Doplněna kompletní sada _denied eventů
- * (create_denied, update_denied, delete_denied, restore_denied, sync_permissions_denied,
- * force_delete_all_denied, password_change_denied) - bezpečnostně nejcitlivější kategorie
- * v celém logu (zamítnuté pokusy o privilege escalation / zásah do cizího/sysadmin účtu),
- * dřív úplně nefiltrovatelná stejně jako unauthorized_maintenance_toggle_attempt.
- *
- * @refactor-note (2026-08-22) BEZPEČNOSTNÍ MONITORING - AUDIT ADMINISTRÁTORSKÝCH AKCÍ:
- * doplněny 4 nové event_type hodnoty zapisované z `CoreSecurityEventController` a
- * `CoreSecuritySettingController` (module zůstává 'Core', stejně jako CoreRole/User/
- * Legal) - `security_retention_updated` (změna GDPR retenční doby),
- * `security_event_triaged` (změna stavu bezpečnostního eventu), `security_event_deleted`
- * (ruční smazání jednoho záznamu), `security_events_purged` (hromadné vyčištění starých
- * záznamů). Samotné zápisy diagnostických eventů (`CoreSecurityEvent::record()` -
- * captcha_failed, throttle_exceeded, scan_probe apod.) se do `core_logs` NEZAPISUJÍ -
- * ty žijí výhradně v `core_security_events` (jiná stránka, jiný účel, viz
- * core-pages/security-events). Tady se loguje jen ADMINISTRÁTORSKÁ AKCE nad monitoringem.
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč core stránkami":
+ * `openGraphBuilder` používal `permission: 'web-user-requests-view'` - nesouvisející
+ * permission z web sekce, zjevně zkopírovaná z jiné stránky. Opraveno na `view-core` -
+ * neexistuje žádná dedikovaná `core-logs-*`/`core-audit-*` permission pro tuto
+ * stránku (audit log nemá vlastní CRUD sadu, jen read-only přístup gatovaný na
+ * úrovni Core sekce jako celku), takže `view-core` (oprávnění nutné k tomu, aby se
+ * uživatel na tuhle stránku vůbec dostal) je nejbližší smysluplná hranice - kdo
+ * stránku vidí, smí si její data i vygrafovat. Pokud v budoucnu vznikne dedikovaná
+ * permission pro audit log, přepnout na ni.
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -57,7 +35,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-filter',
     isActive: false
   },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'view-core' },
   {
     action: 'exportActiveTable',
     label: 'Exportovat data',

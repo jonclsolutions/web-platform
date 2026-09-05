@@ -315,7 +315,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /** @description Sekce "Obsah webu" (Web) - správa webu, správa novinek. */
   get showWebContentGroup(): boolean {
-    return this.hasAnyPermission(['web-view-edit-website', 'web-news-view']);
+    return this.hasAnyPermission(['web-edit-website-view', 'web-news-view']);
   }
 
   /** @description Sekce "Lidé" (Web) - uchazeči, helpdesk tikety. */
@@ -369,33 +369,33 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   /** @description Sekce "Katalog" (Shop) - produkty, kategorie, dodavatelé. */
   get showShopCatalogGroup(): boolean {
     return this.hasAnyPermission([
-      'shop-manage-products',
-      'shop-manage-categories',
-      'shop-manage-suppliers'
+      'shop-products-view',
+      'shop-categories-view',
+      'shop-suppliers-view'
     ]);
   }
 
   /** @description Sekce "Transakce" (Shop) - objednávky, slevové kupóny. */
   get showShopTransactionsGroup(): boolean {
-    return this.hasAnyPermission(['shop-view-orders', 'shop-view-reports']);
+    return this.hasAnyPermission(['shop-orders-view', 'shop-coupons-view']);
   }
 
   /** @description Sekce "Zákazníci" (Shop). */
   get showShopCustomersGroup(): boolean {
-    return this.hasAnyPermission(['shop-manage-customers']);
+    return this.hasAnyPermission(['shop-customers-view']);
   }
 
   /** @description Sekce "Logistika" (Shop) - způsoby dopravy, způsoby platby. */
   get showShopLogisticsGroup(): boolean {
     return this.hasAnyPermission([
-      'shop-manage-shipping-methods',
-      'shop-manage-payment-methods'
+      'shop-shipping-methods-view',
+      'shop-payment-methods-view'
     ]);
   }
 
   /** @description Sekce "Obsah webu" (Shop) - správa e-shopu (texty). */
   get showShopContentGroup(): boolean {
-    return this.hasAnyPermission(['shop-view-edit-eshop']);
+    return this.hasAnyPermission(['shop-edit-eshop-view']);
   }
 
   /** @description Sekce "Systém" (Shop) - e-shop logování. */

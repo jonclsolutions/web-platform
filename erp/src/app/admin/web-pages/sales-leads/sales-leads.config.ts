@@ -14,6 +14,10 @@
  * StoreWebSalesLeadRequest KROME user_id - viz WebSalesLeadController::IMPORTABLE_COLUMNS.
  * user_id zustava vzdy null u importovanych leadu, salesman_name se PREBIRA ZE SOUBORU
  * (ne automaticky podle importujiciho admina, jak to dela store()).
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč web stránkami":
+ * `openGraphBuilder` používal nesouvisející `web-user-requests-view` - opraveno na
+ * `web-sales-leads-view` (vlastní view permission téhle stránky).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -29,7 +33,7 @@ export const SALES_LEAD_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'web-sales-leads-create' },
   { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
-    { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+    { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-sales-leads-view' },
   { action: 'toggleTable', label: 'Zobrazit koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
 ];
 

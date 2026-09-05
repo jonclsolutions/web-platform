@@ -1,13 +1,19 @@
+/**
+ * @bugfix-note (2026-09-07) BACKLOG "granularizace shop permissions": nahrazeno
+ * `shop-manage-payment-methods`/`web-user-requests-view` novou sadou
+ * `shop-payment-methods-view/-update` (bez -create/-delete - žádná taková route
+ * pro platební metody neexistuje) - viz 002_shop_permissions_granularization.sql.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const PAYMENT_BUTTONS: Core.TableButtons[] = [
   { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', icon: 'edit' }
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'shop-payment-methods-update', icon: 'edit' }
 ];
 
 export const PAYMENT_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
   { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
 ];
 

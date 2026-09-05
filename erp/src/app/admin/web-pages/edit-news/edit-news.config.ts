@@ -27,6 +27,10 @@
  *      (systémová pole) importable NEDOSTÁVAJÍ - nejjednodušší dosavadní import ze
  *      všech resources, žádná výjimka jako u support_tickets (`state`) nebo
  *      raw_request_commissions (bez e-mailu/přílohy).
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč web stránkami":
+ * `openGraphBuilder` používal nesouvisející `web-user-requests-view` - opraveno na
+ * `web-news-view` (vlastní view permission téhle stránky).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -65,7 +69,7 @@ export const NEWS_TOOLBAR_BUTTONS: Core.Button[] = [
     showIf: true
   },
    { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
-   { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+   { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-news-view' },
   {
     action: 'toggleTable',
     label: 'Zobrazit koš',

@@ -10,6 +10,10 @@
  * project-threads.config.ts) přesunuty sem - cross-project tabulka požadavků teď
  * žije jako druhá tabulka POD tabulkou projektů v `ProjectsComponent`, ne jako
  * samostatná stránka/routa.
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč web stránkami":
+ * `openGraphBuilder` používal nesouvisející `web-user-requests-view` - opraveno na
+ * `web-projects-view` (vlastní view permission téhle stránky).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -36,7 +40,7 @@ export const PROJECT_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
   { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'web-projects-create' },
   { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-projects-view' },
   { action: 'toggleTable', label: 'Zobrazit koš', icon: '', class: 'btn-trash', permission: 'view-deleted' },
 ];
 

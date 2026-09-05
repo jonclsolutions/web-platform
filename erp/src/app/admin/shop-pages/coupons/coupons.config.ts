@@ -1,17 +1,25 @@
+/**
+ * @bugfix-note (2026-09-07) BACKLOG "granularizace shop permissions": nahrazeno
+ * nesouvisející `shop-view-reports` (a chybějící permission na Edit/Smazat/Přidat/
+ * Import) NOVOU dedikovanou sadou `shop-coupons-view/-create/-update/-delete` -
+ * viz migrace 002_shop_permissions_granularization.sql a api.php stejné datum.
+ * `openGraphBuilder` zůstává na `shop-view-reports` (grafy/reporty jsou napříč
+ * celým e-shopem sdílená permission, ne resource-specific).
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 export const COUPON_BUTTONS: Core.TableButtons[] = [
   { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', icon: 'edit' },
-  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', icon: 'delete' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'shop-coupons-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'shop-coupons-delete', icon: 'delete' },
 ];
 
 export const COUPON_TOOLBAR_BUTTONS: Core.Button[] = [
   { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true },
+  { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'shop-coupons-create' },
   { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
-     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
-     { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-coupons-create' },
+     { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
   { action: 'toggleTable', label: 'Zobrazit koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
 ];
 

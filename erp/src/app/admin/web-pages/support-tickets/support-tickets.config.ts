@@ -23,6 +23,10 @@
  *      importovatelné, i když ho `store()` vůbec nepřijímá (viz backend
  *      WebSupportTicketController::buildImportRules()) - import historických/
  *      archivních ticketů může chtít rovnou nastavit finální stav.
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč web stránkami":
+ * `openGraphBuilder` používal nesouvisející `web-user-requests-view` - opraveno na
+ * `web-support-tickets-view` (vlastní view permission téhle stránky).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -55,7 +59,7 @@ export const SUPPORT_TICKET_TOOLBAR_BUTTONS: Core.Button[] = [
     showIf: true
   },
   { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-support-tickets-view' },
   {
     action: 'toggleTable',
     label: 'Zobrazit koš',

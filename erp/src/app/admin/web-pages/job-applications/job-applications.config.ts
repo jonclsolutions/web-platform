@@ -15,6 +15,10 @@
  *        formuláře `POST /job_applications`). Backend permission
  *        `web-job-applications-create` proto existuje (pro interní API endpoint), ale ve
  *        UI zatím není co gatovat - nic tu tedy NEBYLO přidáno.
+ *
+ * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč web stránkami":
+ * `openGraphBuilder` používal nesouvisející `web-user-requests-view` - opraveno na
+ * `web-job-applications-view` (vlastní view permission téhle stránky).
  */
 import * as Core from '../../../shared/imports/core-providers';
 
@@ -40,7 +44,7 @@ export const JOB_APPLICATION_TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-export',
     showIf: true
   },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-job-applications-view' },
   {
     action: 'toggleTable',
     label: 'Zobrazit koš',

@@ -1,3 +1,9 @@
+/**
+ * @bugfix-note (2026-09-07) BACKLOG "granularizace shop permissions": nahrazeno
+ * recyklovaným `shop-view-orders`/`web-user-requests-view` novou granulární sadou
+ * `shop-orders-view/-create/-update/-delete` - viz
+ * 002_shop_permissions_granularization.sql.
+ */
 import * as Core from '../../../shared/imports/core-providers';
 
 /**
@@ -39,9 +45,10 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     label: 'Přidat záznam',
     icon: '',
     class: 'btn-create',
-    showIf: true
+    showIf: true,
+    permission: 'shop-orders-create'
   },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
+  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
   {
     action: 'exportActiveTable',
     label: 'Exportovat data',
@@ -49,7 +56,7 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
     class: 'btn-export',
     showIf: true
   },
-     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true },
+     { action: 'triggerImport', label: 'Importovat data', icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-orders-create' },
 ];
 
 /**
@@ -57,8 +64,8 @@ export const TOOLBAR_BUTTONS: Core.Button[] = [
  */
 export const ORDER_BUTTONS: Core.TableButtons[] = [
   { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', icon: 'edit' },
-  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', icon: 'delete' },
+  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'shop-orders-update', icon: 'edit' },
+  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'shop-orders-delete', icon: 'delete' },
 ];
 
 /**

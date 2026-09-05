@@ -26,17 +26,12 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Stáhnout JSON
       </button>
-      <button class="ew-btn ew-btn--ghost" (click)="openUploadModal(currentLang)" title="Nahrát JSON">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Nahrát JSON
-      </button>
-      <button
-        class="ew-btn ew-btn--primary"
-        (click)="onSubmit()"
-        [disabled]="loadingService.isLoading$ | async">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        {{ (loadingService.isLoading$ | async) ? 'Ukládám…' : 'Uložit změny' }}
-      </button>
+      @if (canUpdate) {
+        <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" title="Přidat jazyk">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Přidat jazyk
+        </button>
+      }
     </div>
   </div>
 
@@ -63,28 +58,30 @@
 
           @if (!lang.isBuiltIn) {
             <span class="ew-lang-tab-actions" (click)="$event.stopPropagation()">
-              <button
-                class="ew-tab-action-btn"
-                [title]="lang.active ? 'Deaktivovat' : 'Aktivovat'"
-                (click)="toggleLangActive(lang)">
-                @if (lang.active) {
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                } @else {
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                }
-              </button>
-              <button
-                class="ew-tab-action-btn ew-tab-action-btn--danger"
-                title="Smazat jazyk"
-                (click)="askDeleteLang(lang)">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-              </button>
-              <button
-                class="ew-tab-action-btn"
-                title="Nahrát JSON pro tento jazyk"
-                (click)="openUploadModal(lang.code)">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              </button>
+              @if (canUpdate) {
+                <button
+                  class="ew-tab-action-btn"
+                  [title]="lang.active ? 'Deaktivovat' : 'Aktivovat'"
+                  (click)="toggleLangActive(lang)">
+                  @if (lang.active) {
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  } @else {
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  }
+                </button>
+                <button
+                  class="ew-tab-action-btn ew-tab-action-btn--danger"
+                  title="Smazat jazyk"
+                  (click)="askDeleteLang(lang)">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+                <button
+                  class="ew-tab-action-btn"
+                  title="Nahrát JSON pro tento jazyk"
+                  (click)="openUploadModal(lang.code)">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </button>
+              }
             </span>
           }
         </button>
@@ -158,12 +155,13 @@
               }
             </td>
             <td class="ew-td-val">
-              <textarea
+                            <textarea
                 [(ngModel)]="item.value"
                 (ngModelChange)="updateValue(item.path, $event)"
                 (input)="adjustHeight($event)"
                 class="ew-edit-input"
                 [class.ew-edit-input--missing]="item.missing"
+                [disabled]="!canUpdate"
                 rows="1"
                 spellcheck="false">
               </textarea>
