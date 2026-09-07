@@ -16,6 +16,17 @@
  * deleteSocialLink error) - `DataHandler.handleError()` je jediné autoritativní místo
  * pro chybový toast. Reset stavových flagů (`settingsSaving`, `_saving`) ZŮSTÁVÁ.
  * `onSettingsError()` je teď jen cleanup metoda bez vlastní zprávy.
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * Komponenta DĚDÍ BaseDataComponent, takže žádná ruční injection - jen
+ * `translationSection = 'web-settings'` a zděděné `strings`/`t()`. Nahrazeny VŠECHNY
+ * uživatelsky viditelné texty (nadpisy karet, labely, placeholdery, hlášky, potvrzovací
+ * dialogy). `getLangName()` fallback `code.toUpperCase()` a chybový fallback jazyka
+ * `{ code: 'cz', name: 'Čeština', ... }` v `loadLanguages()` ZŮSTÁVAJÍ nepřeloženy -
+ * první je technický kód, druhý je název jazyka samotného (čeština se vždy jmenuje
+ * "Čeština" bez ohledu na jazyk administrace, stejná konvence jako
+ * `AdminLanguageMeta.name` v admin-localization.service.ts). Texty s proměnnou
+ * ({lang}/{name}) řešeny `.replace()` na `t()` výstupu - žádný templating engine.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -38,6 +49,7 @@ import { LangMeta, SiteSetting, SocialLink } from './'
 })
 export class WebSettingsComponent extends BaseDataComponent<any> implements OnInit {
   override apiEndpoint = 'legal/config';
+  protected override translationSection: string = 'web-settings';
 
   private readonly LANG_MODULE = 'web';
   private readonly LANG_TTL_MS = 10 * 60 * 1000;
@@ -46,6 +58,17 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   private resourceCache = inject(ResourceCacheService);
 
+  /**
+   * @refactor-note (2026-09) BUGFIX "Cannot load text" - stejná chyba jako
+   * EditRolesComponent (viz jeho refactor-note stejné datum): `this.t(key)` volání
+   * v tomto souboru všude předávají KRÁTKÝ klíč (např. 'load_error_message'), ale
+   * zděděná `BaseDataComponent.t(path)` očekává PLNOU tečkovanou cestu včetně
+   * sekce ('web-settings.load_error_message'). Přidán lokální override doplňující
+   * prefix 'web-settings.' automaticky.
+   */
+  public override t(key: string): string {
+    return this.i18n.getValue(`web-settings.${key}`);
+  }
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
 
@@ -176,7 +199,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       error: () => {
         this.settingsLoading = false;
         this.socialLoading   = false;
-        this.errorMessage    = 'Nepodařilo se načíst nastavení.';
+        this.errorMessage    = this.t('load_error_message');
         this.cd.markForCheck();
       }
     });
@@ -192,12 +215,12 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      this.alertDialogService.open('Příliš velký soubor', 'Logo může mít maximálně 2 MB.', 'warning');
+      this.alertDialogService.open(this.t('logo_too_large_title'), this.t('logo_too_large_message'), 'warning');
       (event.target as HTMLInputElement).value = '';
       return;
     }
     if (!file.type.startsWith('image/')) {
-      this.alertDialogService.open('Neplatný formát', 'Vyberte obrázek (JPG, PNG, SVG…).', 'warning');
+      this.alertDialogService.open(this.t('logo_invalid_format_title'), this.t('logo_invalid_format_message'), 'warning');
       (event.target as HTMLInputElement).value = '';
       return;
     }
@@ -278,7 +301,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.settingsSaving = false;
     this.settingsSaved  = true;
 
-    this.alertDialogService.open('Uloženo', 'Firemní údaje byly úspěšně uloženy.', 'success');
+    this.alertDialogService.open(this.t('save_success_title'), this.t('save_success_message'), 'success');
     setTimeout(() => { this.settingsSaved = false; this.cd.markForCheck(); }, 2500);
 
     this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
@@ -327,12 +350,12 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      this.alertDialogService.open('Příliš velký soubor', 'Ikonka může mít maximálně 2 MB.', 'warning');
+      this.alertDialogService.open(this.t('logo_too_large_title'), this.t('social_icon_too_large_message'), 'warning');
       (event.target as HTMLInputElement).value = '';
       return;
     }
     if (!file.type.startsWith('image/')) {
-      this.alertDialogService.open('Neplatný formát', 'Vyberte obrázek.', 'warning');
+      this.alertDialogService.open(this.t('logo_invalid_format_title'), this.t('social_icon_invalid_format_message'), 'warning');
       (event.target as HTMLInputElement).value = '';
       return;
     }
@@ -353,11 +376,11 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     if (link._saving) return;
 
     if (!link.name?.trim()) {
-      this.alertDialogService.open('Validace', 'Zadejte název sociální sítě.', 'warning');
+      this.alertDialogService.open(this.t('social_validation_title'), this.t('social_validation_name_message'), 'warning');
       return;
     }
     if (!link.url?.trim()) {
-      this.alertDialogService.open('Validace', 'Zadejte URL odkazu.', 'warning');
+      this.alertDialogService.open(this.t('social_validation_title'), this.t('social_validation_url_message'), 'warning');
       return;
     }
 
@@ -367,7 +390,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
 
     const onSuccess = () => {
-      this.alertDialogService.open('Uloženo', `Odkaz „${link.name}" byl uložen.`, 'success');
+      this.alertDialogService.open(this.t('save_success_title'), this.t('social_saved_message').replace('{name}', link.name), 'success');
       this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
       this.loadAll();
     };
@@ -411,15 +434,15 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     }
 
     const confirmed = await this.confirmDialog.open(
-      'Smazat odkaz',
-      `Opravdu chcete smazat odkaz „${link.name}"? Bude smazána i ikonka.`
+      this.t('social_delete_confirm_title'),
+      this.t('social_delete_confirm_message').replace('{name}', link.name)
     );
     if (!confirmed) return;
 
     this.dataHandler.delete(`legal/config/social/${link.id}`).subscribe({
       next: () => {
         if (link._iconPreview) URL.revokeObjectURL(link._iconPreview);
-        this.alertDialogService.open('Smazáno', `Odkaz „${link.name}" byl smazán.`, 'success');
+        this.alertDialogService.open(this.t('social_deleted_title'), this.t('social_deleted_message').replace('{name}', link.name), 'success');
         this.resourceCache.invalidate(this.SETTINGS_CACHE_KEY);
         this.loadAll();
       }

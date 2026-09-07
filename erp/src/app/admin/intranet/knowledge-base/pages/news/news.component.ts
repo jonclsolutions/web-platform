@@ -9,6 +9,17 @@
  * - BaseDataComponent: Provides the base logic for paginated API requests.
  * - LoadingService: Manages application-wide loading states to prevent redundant network calls.
  * - GenericTableService: Handles pagination logic and response processing.
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * Komponenta DĚDÍ BaseDataComponent, proto `translationSection = 'kb-news'` a
+ * override `t()` (zděděná `BaseDataComponent.t(path)` čeká plnou cestu se sekcí -
+ * stejná oprava jako u EditRolesComponent/AdministratorsComponent). `item.thema`/
+ * `item.title`/`item.message`/`item.bullet_*`/`item.author` PŘICHÁZEJÍ Z BACKENDU
+ * (`web/news` resource) a NEJSOU touto migrací dotčeny - jde o obsah spravovaný přes
+ * EditNewsComponent, jeho případná vícejazyčnost je samostatný backendový úkol (mimo
+ * scope statické admin i18n vrstvy). `DatePipe` locale opraven z natvrdo `cs-CZ`
+ * (implicitní přes globální LOCALE_ID) na `i18n.getDateLocale()` - stejná oprava jako
+ * u AdminLayoutComponent/WelcomePageComponent.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
@@ -36,7 +47,21 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
   public override loadingService = inject(LoadingService);
 
   override apiEndpoint: string = 'web/news';
-  
+  protected override translationSection: string = 'kb-news';
+
+  /**
+   * @refactor-note (2026-09) BUGFIX - viz hlavička souboru. Doplňuje prefix
+   * `kb-news.` automaticky, ať krátký klíč z volání `this.t('xxx')` funguje.
+   */
+  public override t(key: string): string {
+    return this.i18n.getValue(`kb-news.${key}`);
+  }
+
+  /** @description BCP-47 locale pro `DatePipe` v šabloně - viz refactor-note v hlavičce. */
+  get dateLocale(): string {
+    return this.i18n.getDateLocale();
+  }
+
   /** * @description Buffer storing all loaded news items for the infinite scroll list. */
   accumulatedNews: any[] = [];
 

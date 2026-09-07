@@ -4,81 +4,93 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
-    @refactor-note (2026-08): Přidána karta "Režim údržby e-shopu" (dash-row-quick sekce)
-        + potvrzovací modál s heslem, přesunuto z admin-layout headeru.
-    @bugfix-note (2026-08-16): Řádek s grafem/stavy objednávek, tabulka posledních
-        objednávek, karta nízkého skladu a jednotlivé quick-staty teď obaleny
-        `*ngIf="canView*"` podle toho, ze kterého modulu data reálně čerpají - `kpiCards`
-        pole už z TS strany obsahuje jen povolené karty (viz dashboard.component.ts,
-        `buildKpiCards()`). Viz bugfix-note (2026-08-16) v dashboard.component.ts pro
-        plné vysvětlení permission mapování.
+    @refactor-note (2026-09-07) KOMPLETNÍ PŘEPIS - viz dashboard.component.ts stejné
+        datum pro plné odůvodnění. Hlavička (`cd-header-bar`/`cd-refresh-btn`/atd.) je
+        1:1 STEJNÁ jako u Core/Web dashboardu - stejné CSS třídy, stejný vzor
+        "Aktualizováno v HH:mm:ss" + tlačítko Aktualizovat. Zbytek (KPI karty, graf,
+        stavy objednávek, tabulka, sklad, údržba) používá vlastní `kpi-`/`chart-`/
+        `status-`/`orders-`/`stock-`/`sd-` třídy, ale retokenizované do STEJNÉ černobílé
+        palety (`var(--accent)`/`var(--success)`/`var(--error)`/`var(--warning)`).
+        Všechny uživatelsky viditelné texty nahrazeny `t('shop-dashboard.xxx')` voláními.
 -->
 
-<div class="dashboard">
+<div class="shop-dashboard">
 
-  <div class="dash-header">
-    <div class="dash-header-left">
-      <h1 class="dash-title">Přehled</h1>
-      <span class="dash-subtitle">Aktuální stav e-shopu</span>
+  <div class="cd-header-bar">
+    <div>
+      <h1 class="cd-header-title">{{ t('header_title') }}</h1>
+      <p class="cd-header-sub">{{ t('header_subtitle') }}</p>
     </div>
-    <div class="dash-header-right">
-      <span class="dash-refresh-label">
-        Aktualizováno: {{ lastRefreshed | date:'HH:mm:ss' }}
-      </span>
-      <button class="dash-refresh-btn" (click)="loadAll(true)" [disabled]="loading">
-        <span [class.spin]="loading">↻</span> Obnovit
+    <div class="cd-header-actions">
+      <span class="cd-last-updated">{{ t('last_updated_label') }} {{ lastRefreshed | date:'HH:mm:ss' }}</span>
+      <button type="button" class="cd-refresh-btn" (click)="refresh()" [disabled]="isRefreshing || loading" [title]="t('refresh_button_title')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+        {{ t('refresh_button') }}
       </button>
     </div>
   </div>
 
   @if (loading && !kpiCards.length) {
-    <div class="dash-loading">
-      <div class="dash-spinner"></div>
-      <span>Načítám data…</span>
+    <div class="sd-loading">
+      <div class="sd-spinner"></div>
+      <span>{{ t('loading_text') }}</span>
     </div>
   }
 
   @if (loadingError) {
-    <div class="dash-error">
+    <div class="cd-error-banner">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
         <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
-      Nepodařilo se načíst data z API. Zkontrolujte připojení nebo se přihlaste.
+      {{ t('loading_error') }}
     </div>
   }
 
   @if (!loading || kpiCards.length) {
 
     <!-- @component: KPI grid — `kpiCards` už obsahuje jen karty, na které má uživatel
-         právo (viz buildKpiCards() v dashboard.component.ts), žádný extra guard tu není
-         potřeba. -->
-    <div class="kpi-grid">
-      @for (card of kpiCards; track card.label) {
-        <div class="kpi-card kpi-{{ card.color }}">
-          <div class="kpi-icon" [innerHTML]="getIcon(card.icon)"></div>
-          <div class="kpi-body">
-            <div class="kpi-label">{{ card.label }}</div>
-            <div class="kpi-value">{{ card.value }}</div>
-            <div class="kpi-sub">{{ card.sub }}</div>
-          </div>
-          @if (card.trend !== 'neutral') {
-            <div class="kpi-trend kpi-trend-{{ card.trend }}">
-              {{ card.trend === 'up' ? '↑' : '↓' }}
+         právo. Trend badge (šipka + %) se vykresluje jen pokud `card.trend` existuje. -->
+    <div class="cd-section">
+      <div class="kpi-grid">
+        @for (card of kpiCards; track card.key) {
+          <div class="kpi-card" [class.kpi-urgent]="card.urgent">
+            <div class="kpi-icon" [innerHTML]="getIcon(card.icon)"></div>
+            <div class="kpi-body">
+              <div class="kpi-label">{{ t(card.labelKey) }}</div>
+              <div class="kpi-value">{{ card.value }}</div>
+              @if (card.subKey) {
+                <div class="kpi-sub">
+                  {{ t(card.subKey).replace('{count}', card.subParams?.['count'] ?? '') }}
+                </div>
+              }
+              @if (card.trend) {
+                <div class="kpi-trend kpi-trend-{{ card.trend.direction }}">
+                  <span class="kpi-trend-arrow">{{ card.trend.direction === 'up' ? '↑' : card.trend.direction === 'down' ? '↓' : '→' }}</span>
+                  <span class="kpi-trend-pct">{{ card.trend.pct }}%</span>
+                  @if (card.trendLabelKey) {
+                    <span class="kpi-trend-label">{{ t(card.trendLabelKey) }}</span>
+                  }
+                </div>
+              }
             </div>
-          }
-        </div>
-      }
+          </div>
+        }
+      </div>
     </div>
 
-    <!-- @component: Revenue chart + order status breakdown — both derive purely from
-         `shop/orders`, gated by `shop-view-orders` (canViewOrders). -->
+    <!-- @component: Revenue chart + order status breakdown — chart derives from
+         eligible (paid, not canceled/returned) orders only, gated by `shop-view-orders`. -->
     @if (canViewOrders) {
-      <div class="dash-row dash-row-main">
-        <div class="dash-card dash-card-chart">
-          <div class="dash-card-header">
-            <span class="dash-card-title">Tržby — posledních 30 dní</span>
-            <span class="dash-card-meta">{{ formatCurrency(totalRevenue) }} celkem</span>
+      <div class="sd-row sd-row-main">
+        <div class="sd-card sd-card-chart">
+          <div class="sd-card-header">
+            <span class="sd-card-title">{{ t('chart_title') }}</span>
+            <span class="sd-card-meta">{{ formatCurrency(totalRevenue) }} {{ t('chart_meta_total') }}</span>
           </div>
           <div class="chart-wrap">
             <svg
@@ -100,16 +112,16 @@
               }
 
               @if (chartPoints.length) {
-                <polygon [attr.points]="areaPoints" class="chart-area"/>
-                <polyline [attr.points]="polylinePoints" class="chart-line"/>
+                <path [attr.d]="areaPath" class="chart-area"/>
+                <path [attr.d]="linePath" fill="none" class="chart-line"/>
 
                 @for (point of chartPoints; track point.label) {
                   <circle
                     [attr.cx]="point.x"
                     [attr.cy]="point.y"
-                    r="3"
-                    class="chart-dot"
-                    (mouseenter)="showTooltip(point, $event)"
+                    r="9"
+                    class="chart-dot-hit"
+                    (mouseenter)="showTooltip(point)"
                     (mouseleave)="hideTooltip()"/>
                 }
               }
@@ -129,6 +141,11 @@
                     [attr.x2]="chartTooltip.x"
                     [attr.y2]="chartPadT + chartInnerH"
                     class="chart-tooltip-line"/>
+                  <circle
+                    [attr.cx]="chartTooltip.x"
+                    [attr.cy]="chartTooltip.y"
+                    r="4"
+                    class="chart-dot-highlight"/>
                   <rect
                     [attr.x]="chartTooltip.x < chartWidth - 140 ? chartTooltip.x + 8 : chartTooltip.x - 118"
                     [attr.y]="chartTooltip.y - 28"
@@ -147,19 +164,20 @@
               }
             </svg>
           </div>
+          <p class="chart-hint">{{ t('chart_eligibility_hint') }}</p>
         </div>
 
-        <div class="dash-card dash-card-status">
-          <div class="dash-card-header">
-            <span class="dash-card-title">Stavy objednávek</span>
-            <span class="dash-card-meta">{{ totalOrders }} celkem</span>
+        <div class="sd-card sd-card-status">
+          <div class="sd-card-header">
+            <span class="sd-card-title">{{ t('status_card_title') }}</span>
+            <span class="sd-card-meta">{{ totalOrders }} {{ t('status_card_meta_total') }}</span>
           </div>
           <div class="status-list">
-            @for (item of statusBreakdown; track item.label) {
+            @for (item of statusBreakdown; track item.statusKey) {
               <div class="status-row">
                 <div class="status-row-top">
                   <span class="status-dot" [style.background]="item.color"></span>
-                  <span class="status-name">{{ item.label }}</span>
+                  <span class="status-name">{{ t(item.labelKey) }}</span>
                   <span class="status-count">{{ item.count }}</span>
                   <span class="status-pct">{{ item.pct }}%</span>
                 </div>
@@ -172,7 +190,7 @@
               </div>
             }
             @if (!statusBreakdown.length) {
-              <div class="dash-empty">Žádná data</div>
+              <div class="sd-empty">{{ t('status_empty') }}</div>
             }
           </div>
         </div>
@@ -180,25 +198,24 @@
     }
 
     <!-- @component: Recent orders table (shop-view-orders) + low stock card
-         (shop-manage-products) — independent permissions, each card guarded on its own
-         so the row still renders if only one of the two is granted. -->
-    <div class="dash-row dash-row-bottom">
+         (shop-manage-products) — independent permissions, each card guarded on its own. -->
+    <div class="sd-row sd-row-bottom">
       @if (canViewOrders) {
-        <div class="dash-card dash-card-orders">
-          <div class="dash-card-header">
-            <span class="dash-card-title">Poslední objednávky</span>
-            <span class="dash-card-meta">{{ totalOrders }} objednávek celkem</span>
+        <div class="sd-card sd-card-orders">
+          <div class="sd-card-header">
+            <span class="sd-card-title">{{ t('orders_card_title') }}</span>
+            <span class="sd-card-meta">{{ totalOrders }} {{ t('orders_card_meta') }}</span>
           </div>
           <div class="orders-table-wrap">
             <table class="orders-table">
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Zákazník</th>
-                  <th>Stav</th>
-                  <th>Platba</th>
-                  <th class="text-right">Částka</th>
-                  <th>Datum</th>
+                  <th>{{ t('orders_col_customer') }}</th>
+                  <th>{{ t('orders_col_status') }}</th>
+                  <th>{{ t('orders_col_payment') }}</th>
+                  <th class="text-right">{{ t('orders_col_amount') }}</th>
+                  <th>{{ t('orders_col_date') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -213,12 +230,12 @@
                     </td>
                     <td>
                       <span class="badge {{ statusClass(order.status) }}">
-                        {{ order.status_label }}
+                        {{ statusLabel(order.status) }}
                       </span>
                     </td>
                     <td>
                       <span class="badge {{ paymentClass(order.payment_status) }}">
-                        {{ order.payment_status_label }}
+                        {{ paymentStatusLabel(order.payment_status) }}
                       </span>
                     </td>
                     <td class="text-right amount-cell">
@@ -231,7 +248,7 @@
                 }
                 @if (!recentOrders.length && !loading) {
                   <tr>
-                    <td colspan="6" class="dash-empty">Žádné objednávky</td>
+                    <td colspan="6" class="sd-empty">{{ t('orders_empty') }}</td>
                   </tr>
                 }
               </tbody>
@@ -241,16 +258,16 @@
       }
 
       @if (canViewProducts) {
-        <div class="dash-card dash-card-stock">
-          <div class="dash-card-header">
-            <span class="dash-card-title dash-card-title-icon">
+        <div class="sd-card sd-card-stock">
+          <div class="sd-card-header">
+            <span class="sd-card-title sd-card-title-icon">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                 <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
               </svg>
-              Nízký stav skladu
+              {{ t('stock_card_title') }}
             </span>
-            <span class="dash-card-meta">{{ lowStockProducts.length }} produktů</span>
+            <span class="sd-card-meta">{{ lowStockProducts.length }} {{ t('stock_card_meta') }}</span>
           </div>
           @if (lowStockProducts.length) {
             <div class="stock-list">
@@ -259,7 +276,7 @@
                   <div class="stock-item-top">
                     <span class="stock-name">{{ p.name }}</span>
                     <span class="stock-qty" [class.stock-critical]="p.stock_quantity === 0">
-                      {{ p.stock_quantity }} ks
+                      {{ p.stock_quantity }} {{ t('stock_unit') }}
                     </span>
                   </div>
                   <div class="stock-sku">{{ p.sku }}</div>
@@ -270,95 +287,34 @@
                       [class.stock-bar-warning]="p.stock_quantity > 2 && p.stock_quantity <= p.stock_warning_level">
                     </div>
                   </div>
-                  <div class="stock-limit">Limit: {{ p.stock_warning_level }} ks</div>
+                  <div class="stock-limit">{{ t('stock_limit_label') }}: {{ p.stock_warning_level }} {{ t('stock_unit') }}</div>
                 </div>
               }
             </div>
           } @else {
-            <div class="dash-empty dash-empty-good">
+            <div class="sd-empty sd-empty-good">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 17"/>
               </svg>
-              Všechny produkty mají dostatek zásob
+              {{ t('stock_empty_good') }}
             </div>
           }
         </div>
       }
     </div>
 
-    <!-- @component: Quick-stat row — each tile gated individually by the permission of
-         the module it reads from (coupons/orders/orders/products). -->
-    <div class="dash-row dash-row-quick">
-      @if (canViewCoupons) {
-        <div class="quick-stat">
-          <span class="quick-stat-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
-              <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
-            </svg>
-          </span>
-          <div>
-            <div class="quick-stat-value">{{ activeCoupons }}</div>
-            <div class="quick-stat-label">Aktivní kupóny</div>
-          </div>
-        </div>
-      }
-      @if (canViewOrders) {
-        <div class="quick-stat">
-          <span class="quick-stat-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-              <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>
-            </svg>
-          </span>
-          <div>
-            <div class="quick-stat-value">{{ pendingOrders }}</div>
-            <div class="quick-stat-label">Čeká na vyřízení</div>
-          </div>
-        </div>
-      }
-      @if (canViewOrders) {
-        <div class="quick-stat">
-          <span class="quick-stat-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-          </span>
-          <div>
-            <div class="quick-stat-value">{{ formatCurrency(revenueThisMonth) }}</div>
-            <div class="quick-stat-label">Tržby tento měsíc</div>
-          </div>
-        </div>
-      }
-      @if (canViewProducts) {
-        <div class="quick-stat">
-          <span class="quick-stat-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4l-6 5Z"/>
-              <path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/>
-            </svg>
-          </span>
-          <div>
-            <div class="quick-stat-value">{{ lowStockProducts.length }}</div>
-            <div class="quick-stat-label">Produkty pod limitem</div>
-          </div>
-        </div>
-      }
-    </div>
-
-    <div class="dash-row" *appHasPermission="'shop-set-maintenance-mode'">
-      <div class="dash-card dash-card-maintenance">
-        <div class="dash-card-header">
-          <span class="dash-card-title">Režim údržby e-shopu</span>
+    <div class="cd-section" *appHasPermission="'shop-set-maintenance-mode'">
+      <div class="sd-card sd-card-maintenance">
+        <div class="sd-card-header">
+          <span class="sd-card-title">{{ t('section_maintenance') }}</span>
         </div>
         <div class="maintenance-toggle-row">
           <div class="maintenance-status" [class.status-active]="isShopActive" [class.status-inactive]="!isShopActive">
             <span class="status-indicator"></span>
-            {{ isShopActive ? 'E-shop je aktivní' : 'E-shop je v údržbě' }}
+            {{ isShopActive ? t('maintenance_status_active') : t('maintenance_status_inactive') }}
           </div>
           <button class="maintenance-switch-btn" (click)="openShopMaintenanceModal()">
-            {{ isShopActive ? 'Zapnout údržbu' : 'Ukončit údržbu' }}
+            {{ isShopActive ? t('maintenance_switch_to_maintenance') : t('maintenance_switch_to_active') }}
           </button>
         </div>
       </div>
@@ -371,18 +327,18 @@
   <div class="password-modal-overlay">
     <div class="password-modal-card">
       <div class="password-modal-header">
-        <h3 class="modal-header-title">Ověření administrátora</h3>
-        <button class="close-modal-btn" (click)="cancelShopMaintenanceModal()" aria-label="Zavřít">✕</button>
+        <h3 class="modal-header-title">{{ t('maintenance_modal_title') }}</h3>
+        <button class="close-modal-btn" (click)="cancelShopMaintenanceModal()" [attr.aria-label]="t('maintenance_modal_close_aria')">✕</button>
       </div>
       <div class="password-modal-body">
-        <p>Chystáte se změnit stav e-shopu na:
+        <p>{{ t('maintenance_modal_intro') }}
           <strong [class.state-active]="pendingShopTargetState" [class.state-inactive]="!pendingShopTargetState">
-            {{ pendingShopTargetState ? 'STANDARDNÍ PROVOZ' : 'REŽIM ÚDRŽBY' }}
+            {{ pendingShopTargetState ? t('maintenance_modal_state_active') : t('maintenance_modal_state_maintenance') }}
           </strong>
         </p>
-        <div class="modal-warning-box">Tato akce ovlivní veřejné zákazníky. Pro uložení zadejte své přihlašovací heslo.</div>
+        <div class="modal-warning-box">{{ t('maintenance_modal_warning') }}</div>
         <div class="password-input-group">
-          <label for="shop-confirm-pwd">Aktuální heslo</label>
+          <label for="shop-confirm-pwd">{{ t('maintenance_modal_password_label') }}</label>
           <input id="shop-confirm-pwd" type="password" placeholder="••••••••"
             (input)="shopConfirmPasswordValue = $any($event.target).value"
             (keyup.enter)="submitShopMaintenanceChange()"
@@ -390,8 +346,8 @@
         </div>
       </div>
       <div class="password-modal-footer">
-        <button class="btn-modal-secondary" (click)="cancelShopMaintenanceModal()">Storno</button>
-        <button class="btn-modal-primary" (click)="submitShopMaintenanceChange()">Potvrdit a uložit</button>
+        <button class="btn-modal-secondary" (click)="cancelShopMaintenanceModal()">{{ t('maintenance_modal_cancel') }}</button>
+        <button class="btn-modal-primary" (click)="submitShopMaintenanceChange()">{{ t('maintenance_modal_confirm') }}</button>
       </div>
     </div>
   </div>

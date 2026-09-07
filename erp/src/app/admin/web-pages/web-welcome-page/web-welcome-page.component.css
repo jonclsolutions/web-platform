@@ -1,0 +1,119 @@
+/*     
+    @file: web-welcome-page.component.css
+    @path: /src/app/admin/web-pages/web-welcome-page/web-welcome-page.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @note Stejný vizuální jazyk jako core welcome-page (Kravio styl) - generózní
+    zaoblení (18px), jemné stíny, tmavý akcent (#18181b). Nová vrstva ".wp-cards-grid"/
+    ".wp-link-card" pro mřížku rychlých odkazů, kterou core welcome-page nemá.
+*/
+
+.wp-page {
+  width: 100%;
+  max-width: 1000px;
+  padding: 0 0 28px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #18181b;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.wp-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 4px 0 14px;
+  flex-wrap: wrap;
+}
+
+.wp-welcome-title {
+  margin: 0 0 5px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #18181b;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.wp-welcome-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #71717a;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.wp-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+.wp-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.wp-link-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #ececea;
+  border-radius: 16px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.wp-link-card:hover {
+  border-color: #18181b;
+  box-shadow: 0 4px 14px rgba(24, 24, 27, 0.08);
+  transform: translateY(-1px);
+}
+
+.wp-link-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #18181b;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wp-link-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.wp-link-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #18181b;
+  line-height: 1.25;
+}
+
+.wp-link-desc {
+  font-size: 0.78rem;
+  color: #71717a;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .wp-welcome-title { font-size: 1.3rem; }
+  .wp-cards-grid { grid-template-columns: 1fr; }
+}

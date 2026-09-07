@@ -4,50 +4,54 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        UI texty nahrazeny `strings.xxx` binding - viz support-form.component.ts
+        stejné datum. `<option value="...">` hodnoty beze změny (backendové
+        konstanty), přeložen jen zobrazený text uvnitř.
 -->
     
 <div class="kb-form-container">
   @if (!isSubmitted) {
     <div class="kb-form-header">
       <span class="doc-code">SUPPORT_TICKET_SYSTEM</span>
-      <h1>Vytvořit servisní požadavek</h1>
-      <p>Vyplňte prosím podrobnosti vašeho požadavku. Naši technici se mu budou věnovat.</p>
+      <h1>{{ strings.title }}</h1>
+      <p>{{ strings.lead }}</p>
     </div>
     <form [formGroup]="supportForm" (ngSubmit)="onSubmit()" class="kb-form-body">
       <div class="kb-form-row">
         <div class="form-group flex-1">
-          <label>Kategorie <span class="req">*</span></label>
+          <label>{{ strings.category_label }} <span class="req">*</span></label>
           <select formControlName="category">
-            <option value="it">IT / Technický problém</option>
-            <option value="obchod">Obchodní oddělení</option>
-            <option value="chyba">Nahlášení chyby</option>
-            <option value="ostatni">Ostatní</option>
+            <option value="it">{{ strings.category_it }}</option>
+            <option value="obchod">{{ strings.category_business }}</option>
+            <option value="chyba">{{ strings.category_bug }}</option>
+            <option value="ostatni">{{ strings.category_other }}</option>
           </select>
         </div>
         <div class="form-group flex-1">
-          <label>Priorita <span class="req">*</span></label>
+          <label>{{ strings.priority_label }} <span class="req">*</span></label>
           <select formControlName="priority">
-            <option value="low">Nízká</option>
-            <option value="medium">Střední</option>
-            <option value="high">Vysoká</option>
+            <option value="low">{{ strings.priority_low }}</option>
+            <option value="medium">{{ strings.priority_medium }}</option>
+            <option value="high">{{ strings.priority_high }}</option>
           </select>
         </div>
       </div>
       <div class="form-group">
-        <label>Předmět požadavku <span class="req">*</span></label>
-        <input type="text" formControlName="subject" placeholder="Stručný titulek problému">
+        <label>{{ strings.subject_label }} <span class="req">*</span></label>
+        <input type="text" formControlName="subject" [placeholder]="strings.subject_placeholder">
       </div>
       <div class="form-group">
-        <label>Detailní popis <span class="req">*</span></label>
-        <textarea formControlName="description" rows="4" placeholder="Popište podrobně, co potřebujete vyřešit..."></textarea>
+        <label>{{ strings.description_label }} <span class="req">*</span></label>
+        <textarea formControlName="description" rows="4" [placeholder]="strings.description_placeholder"></textarea>
       </div>
       <div class="form-group">
-        <label>Příloha (Screenshot / Log)</label>
+        <label>{{ strings.attachment_label }}</label>
         <div class="kb-file-upload" [class.has-file]="selectedFile">
           <input type="file" (change)="onFileSelected($event)" id="file-input">
           <label for="file-input" class="file-label">
             <span class="file-icon">{{ selectedFile ? '✓' : '↑' }}</span>
-            <span class="file-info">{{ selectedFile ? selectedFile.name : 'Vybrat soubor nebo přetáhnout sem' }}</span>
+            <span class="file-info">{{ selectedFile ? selectedFile.name : strings.file_placeholder }}</span>
           </label>
         </div>
       </div>
@@ -55,9 +59,9 @@
         <button type="submit" class="kb-btn-primary" [disabled]="supportForm.invalid || (loadingService.isLoading$ | async)">
           <span>
             @if ((loadingService.isLoading$ | async)) {
-              ODESÍLÁM...
+              {{ strings.submitting_button }}
             } @else {
-              ODESLAT POŽADAVEK
+              {{ strings.submit_button }}
             }
           </span>
         </button>
@@ -66,10 +70,10 @@
   } @else {
     <div class="kb-success-state">
       <div class="success-check">✓</div>
-      <h2>Požadavek byl odeslán</h2>
-      <p>Váš ticket byl úspěšně zaevidován pod ID: <strong>#{{ lastTicketId }}</strong></p>
+      <h2>{{ strings.success_title }}</h2>
+      <p>{{ strings.success_message_prefix }} <strong>#{{ lastTicketId }}</strong></p>
       <button class="kb-btn-outline" (click)="isSubmitted = false; initForm(); selectedFile = null;">
-        Vytvořit další požadavek
+        {{ strings.create_another_button }}
       </button>
     </div>
   }

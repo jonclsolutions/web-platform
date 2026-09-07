@@ -10,6 +10,23 @@
  * - LoadingInterceptor: Manages global HTTP request state tracking.
  * - AppBootstrapService: Preloads translations + site settings before the app renders,
  *   so the first paint never shows an empty/blank state.
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace - lokalizovaná data":
+ * Přidána registrace `en-US` locale dat vedle stávající `cs-CZ` - potřebné pro
+ * `DatePipe` v adminu, aby uměl vykreslit datum/čas v jazyce podle aktuálně zvoleného
+ * admin jazyka (viz `AdminLocalizationService.getDateLocale()` a
+ * `AdminLayoutComponent.dateLocale` getter), NE podle globálního `LOCALE_ID` (ten
+ * zůstává `cs-CZ` - viz `AdminLayoutComponent`'s `providers: [{ provide: LOCALE_ID,
+ * useValue: 'cs-CZ' }]` - měnit globální LOCALE_ID by ovlivnilo celou aplikaci,
+ * včetně veřejného webu, což není žádoucí). `registerLocaleData()` je globální
+ * registrace dostupných locale dat (jednou při startu aplikace), zatímco KTERÉ z
+ * nich se použije v konkrétním `date` pipe volání se řídí čtvrtým parametrem
+ * (`{{ value | date:'format':undefined:locale }}`), ne touto registrací samotnou.
+ * Při přidání dalšího admin jazyka (např. němčiny) je potřeba: 1) sem přidat
+ * `import localeDe from '@angular/common/locales/de'` +
+ * `registerLocaleData(localeDe, 'de-DE')`, 2) doplnit mapování v
+ * `AdminLocalizationService.DATE_LOCALE_MAP`, 3) přidat JSON+PNG jako u ostatních
+ * admin jazyků (viz AdminLocalizationService hlavička).
  */
 
 import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
@@ -21,9 +38,11 @@ import { AuthTokenInterceptor } from './core/interceptors/auth-token.interceptor
 import { LoadingInterceptor } from './core/interceptors/loading.interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeCs from '@angular/common/locales/cs';
+import localeEn from '@angular/common/locales/en';
 import { AppBootstrapService } from './shared/services/app-bootstrap.service';
 
 registerLocaleData(localeCs, 'cs-CZ');
+registerLocaleData(localeEn, 'en-US');
 
 /**
  * @description Factory used by APP_INITIALIZER. Angular waits for the returned

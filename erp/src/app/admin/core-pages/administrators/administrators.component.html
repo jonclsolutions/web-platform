@@ -12,6 +12,12 @@
         so a live `role_id` change inside the open form immediately recomputes the
         assignable role list, locked permission options, and resets `permission_ids`
         - see administrators.component.ts / form-builder.component.ts.
+
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        všechny natvrdo psané české texty VLASTNÍ TÉTO KOMPONENTĚ (mimo Config.* pole,
+        která zůstávají v tomto kroku beze změny) nahrazeny `strings.*`/`t()` bindingy
+        - viz administrators.component.ts stejné datum. Info banner s <strong>bez
+        hesla</strong> rozdělen na prefix/bold/suffix, ne [innerHTML].
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -23,14 +29,14 @@
 <div>
 <div class="toolbar-actions m-b-t-5">
 @if(!showTrashTable){
-<div class="table-header">Uživatelské účty</div>
+<div class="table-header">{{ strings.table_header_accounts }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ strings.table_header_trash }}</div>
 }
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="strings.action_menu_trigger"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -95,8 +101,7 @@ triggerLabel="Akce"
 @if (showCreateForm) {
 @if (!selectedItemForEdit) {
 <div class="info-banner">
-    ℹ️ Účet se vytvoří <strong>bez hesla</strong>. Uživatel obdrží e-mail s odkazem pro
-    nastavení hesla a aktivaci účtu (platnost odkazu 48 hodin).
+    ℹ️ {{ strings.info_banner_prefix }}<strong>{{ strings.info_banner_bold }}</strong>{{ strings.info_banner_suffix }}
 </div>
   }
 <app-form-builder
@@ -134,8 +139,8 @@ triggerLabel="Akce"
 
 <div class="email-policy-header">
 <div>
-<h2 class="email-policy-title">Domény e-mailů</h2>
-<p class="email-policy-subtitle">Omezení, z jakých e-mailových adres lze zakládat nové administrátorské účty.</p>
+<h2 class="email-policy-title">{{ strings.email_policy_title }}</h2>
+<p class="email-policy-subtitle">{{ strings.email_policy_subtitle }}</p>
 </div>
 <button type="button" class="email-policy-close" (click)="closeEmailAccessPolicyModal()" [disabled]="emailAccessPolicySaving">✕</button>
 </div>
@@ -143,67 +148,67 @@ triggerLabel="Akce"
 <div class="email-policy-body">
 
 @if (emailAccessPolicyLoading) {
-<p class="email-policy-loading">Načítám…</p>
+<p class="email-policy-loading">{{ strings.email_policy_loading }}</p>
 } @else {
 
 <div class="email-policy-section">
-<label class="email-policy-label">Hlavní doména</label>
+<label class="email-policy-label">{{ strings.primary_domain_label }}</label>
 <p class="email-policy-hint">
-ⓘ Doporučujeme zde mít stejnou doménu, na které běží stránky. Ponechte prázdné pro zrušení omezení - kdokoliv pak bude moci založit účet s libovolnou e-mailovou doménou.
+ⓘ {{ strings.primary_domain_hint }}
 </p>
 <div class="email-policy-input-row">
 <input type="text" class="email-policy-input"
        [(ngModel)]="primaryEmailDomain"
-       placeholder="např. rpsw.cz"
+       [placeholder]="strings.primary_domain_placeholder"
        [disabled]="emailAccessPolicySaving">
 <button type="button" class="email-policy-btn-save" (click)="savePrimaryDomain()" [disabled]="emailAccessPolicySaving">
-{{ emailAccessPolicySaving ? 'Ukládám…' : 'Uložit' }}
+{{ emailAccessPolicySaving ? strings.btn_saving : strings.btn_save }}
 </button>
 </div>
 </div>
 
 <div class="email-policy-section">
-<label class="email-policy-label">Přidat výjimku</label>
+<label class="email-policy-label">{{ strings.add_exception_label }}</label>
 <p class="email-policy-hint">
-ⓘ Doména povolí založit účet komukoliv s tímto koncem e-mailu. E-mail povolí jen jednu konkrétní adresu bez ohledu na doménu (např. pro externího spolupracovníka).
+ⓘ {{ strings.add_exception_hint }}
 </p>
 <div class="email-policy-input-row">
 <select class="email-policy-select" [(ngModel)]="newRuleType">
-<option value="domain">Doména</option>
-<option value="email">Konkrétní e-mail</option>
+<option value="domain">{{ strings.rule_type_domain }}</option>
+<option value="email">{{ strings.rule_type_email }}</option>
 </select>
 <input type="text" class="email-policy-input"
        [(ngModel)]="newRuleValue"
        (keyup.enter)="addEmailAccessRule()"
-       [placeholder]="newRuleType === 'domain' ? 'napr. partner.com' : 'napr. externista@gmail.com'">
+       [placeholder]="newRuleType === 'domain' ? strings.domain_placeholder : strings.email_placeholder">
 <button type="button" class="email-policy-btn-add" (click)="addEmailAccessRule()">
-    Přidat
+    {{ strings.btn_add }}
 </button>
 </div>
 </div>
 
 <div class="email-policy-section">
-<label class="email-policy-label">Povolené domény</label>
+<label class="email-policy-label">{{ strings.allowed_domains_label }}</label>
 @if (domainRules.length === 0) {
-<p class="email-policy-empty">Žádné další povolené domény.</p>
+<p class="email-policy-empty">{{ strings.allowed_domains_empty }}</p>
 }
 @for (rule of domainRules; track rule.id) {
 <div class="email-policy-rule-row">
 <span class="email-policy-rule-value">{{ rule.value }}</span>
-<button type="button" class="email-policy-btn-remove" (click)="removeEmailAccessRule(rule.id)" aria-label="Smazat">✕</button>
+<button type="button" class="email-policy-btn-remove" (click)="removeEmailAccessRule(rule.id)" [attr.aria-label]="strings.remove_aria">✕</button>
 </div>
   }
 </div>
 
 <div class="email-policy-section">
-<label class="email-policy-label">Povolené konkrétní e-maily</label>
+<label class="email-policy-label">{{ strings.allowed_emails_label }}</label>
 @if (emailRules.length === 0) {
-<p class="email-policy-empty">Žádné povolené jednotlivé e-maily.</p>
+<p class="email-policy-empty">{{ strings.allowed_emails_empty }}</p>
 }
 @for (rule of emailRules; track rule.id) {
 <div class="email-policy-rule-row">
 <span class="email-policy-rule-value">{{ rule.value }}</span>
-<button type="button" class="email-policy-btn-remove" (click)="removeEmailAccessRule(rule.id)" aria-label="Smazat">✕</button>
+<button type="button" class="email-policy-btn-remove" (click)="removeEmailAccessRule(rule.id)" [attr.aria-label]="strings.remove_aria">✕</button>
 </div>
   }
 </div>
@@ -213,7 +218,7 @@ triggerLabel="Akce"
 </div>
 
 <div class="email-policy-footer">
-<button type="button" class="email-policy-btn-cancel" (click)="closeEmailAccessPolicyModal()" [disabled]="emailAccessPolicySaving">Zavřít</button>
+<button type="button" class="email-policy-btn-cancel" (click)="closeEmailAccessPolicyModal()" [disabled]="emailAccessPolicySaving">{{ strings.btn_close }}</button>
 </div>
 
 </div>
@@ -225,7 +230,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="strings.graph_date_field_label"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

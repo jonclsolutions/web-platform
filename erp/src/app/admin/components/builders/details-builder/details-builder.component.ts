@@ -10,6 +10,8 @@
  * - ItemDetailsColumns: Interface for column metadata.
  * - InputDefinition: Interface for field configuration and options.
  * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
+ * - AdminLocalizationService: Statická (bundlovaná) lokalizace admin UI - viz
+ *   refactor-note (2026-09) níže.
  *
  * @refactor-note (2026-08) Přidán typ `'files'` (množné číslo) - zobrazuje seznam VÍCE
  * příloh (z `web_attachments` relace, pole objektů `{id, original_filename, mime_type,
@@ -32,6 +34,16 @@
  * nesoucí přímý URL string, ne objekt přílohy) - u zdrojů na `private` disku ale
  * fungovat NEBUDE (žádný symlink, žádná signed URL), dokud takový sloupec
  * nepřejde na typ `'files'` s reálnou `web_attachments` vazbou.
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * tahle komponenta NEDĚDÍ `BaseDataComponent` (je to sdílený builder, ne stránka),
+ * takže `AdminLocalizationService` je injektována ručně - stejný vzor jako
+ * `PersonalInfoComponent`. VŠECHNY uživatelsky viditelné texty (nadpis, tlačítka
+ * Zobrazit/Stáhnout, "žádný soubor" hlášky) nahrazeny `strings.xxx` binding v šabloně.
+ * `getFormattedValue()`'s boolean formatting měl natvrdo anglické `'Yes'`/`'No'`
+ * uprostřed jinak české šablony (nekonzistence, patrně kopírovaný default z jiného
+ * projektu) - teď jde přes `shared.yes`/`shared.no` z JSON souboru, tedy sjednocené
+ * se zbytkem aplikace a lokalizované společně s ní.
  */
 
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
@@ -39,6 +51,7 @@ import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { ItemDetailsColumns } from '../../../../shared/interfaces/item-details-columns';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 
 /**
  * @description Provides a reusable way to display object details in a modal overlay with automatic formatting based on column metadata.
@@ -60,11 +73,21 @@ export class DetailsBuilderComponent implements OnInit, OnDestroy {
   @Output() closeDetails = new EventEmitter<void>();
 
   private scrollLock = inject(ScrollLockService);
+  public readonly i18n = inject(AdminLocalizationService);
 
   constructor(
 private datePipe: DatePipe,
 private currencyPipe: CurrencyPipe
   ) {}
+
+  /**
+   * @description Merged `shared` + `details-builder` i18n section - viz refactor-note
+   * v hlavičce souboru.
+   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   */
+  public get strings(): any {
+    return this.i18n.getMergedSection('details-builder');
+  }
 
 /**
    * @description Locks page scrolling while the detail modal is active.
@@ -175,7 +198,7 @@ case 'date':
 const date = new Date(value);
 return isNaN(date.getTime()) ? value : this.datePipe.transform(date, columnDef.format || 'dd.MM.yyyy HH:mm', 'cs-CZ');
 case 'boolean':
-return (value == true || value == 1) ? 'Yes' : 'No';
+return (value == true || value == 1) ? this.i18n.getValue('shared.yes') : this.i18n.getValue('shared.no');
 default:
 const fieldDef = this.inputDefinitions.find(i => i.column_name === columnDef.key);
 if (fieldDef?.options) {

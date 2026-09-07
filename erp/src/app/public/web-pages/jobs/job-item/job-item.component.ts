@@ -48,7 +48,7 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit {
 
   applicationForm!: FormGroup;
   job: any = null;
-  t: any = null;
+  override t: any = null;
   settings: any = null;
   isSubmitted = false;
   selectedFile: File | null = null;

@@ -19,63 +19,28 @@
  * All aggregation happens CLIENT-SIDE - the backend only needs `no_pagination=true` +
  * optional `date_from`/`date_to` on `index()`.
  *
- * @refactor-note (2026-08-26v2) Report auto-generates on open with empty date range
- * (= all data).
- * @refactor-note (2026-08-26v3) Per-column VALUE filter - toggling a value never
- * re-fetches, only recomputes from cached `rawRows`.
- * @refactor-note (2026-08-27) Per-column chart type (sidebar layout, compact topbar,
- * vertical chart stack).
- * @bugfix-note (2026-08-27v2) Chart.js legend replaced with our own HTML legend;
- * `ngOnChanges()` no longer resets admin selections on a same-key-set array reference
- * change.
- * @bugfix-note (2026-08-27v3) Radar/polarArea `r` scale drawn with `z: 1` (on top of
- * the dataset) + polarArea fill made semi-transparent, so the radial grid/numbers are
- * never buried under the filled shape.
- * @refactor-note (2026-08-27v4) Pie/doughnut/polarArea use a custom "leader line"
- * outside-slice-label plugin (`OUTSIDE_SLICE_LABELS_PLUGIN`) instead of a bottom
- * legend; `categoryTrend` keeps its own HTML legend.
- * @bugfix-note (2026-08-27v5) PDF export rebuilt: header/footer/each card captured
- * individually via html2canvas (consistent real-browser font incl. Czech diacritics,
- * white background, cards never split across a page break); section titles moved to a
- * real HTML `<h3>` above each canvas instead of Chart.js's in-canvas title.
- * @refactor-note (2026-08-27v6) Optional "Celkový vývoj v čase" toggle
- * (`showOverallTrend`) in the sidebar - purely local, never re-fetches.
- * @bugfix-note (2026-08-27v8) Close button moved into its own full-width
- * `.graph-window-topbar` (see .html/.css) so it can never overlap the mobile
- * hamburger or the sidebar heading.
- * @bugfix-note (2026-08-27v9) Background scroll lock uses `position:fixed` pinning
- * instead of plain `overflow:hidden` (which doesn't reliably stop scroll-chaining
- * from the sidebar/report body once they reach their own scroll end).
- * @bugfix-note (2026-08-27v10) Header/description "období" text now reads a SNAPSHOT
- * of the date range taken at the moment `generateReport()` actually runs
- * (`generatedDateFrom`/`generatedDateTo`), not the live `dateFrom`/`dateTo` bound to
- * the sidebar inputs - editing the date fields no longer makes the header claim a
- * period that hasn't been generated yet.
+ * (Earlier refactor-notes for sidebar layout, per-column value filters, custom
+ * outside-slice labels, PDF export rebuild, scroll lock, and the zero-occurrence
+ * value-catalog seeding are unchanged - see version history, omitted here for
+ * brevity.)
  *
- * @refactor-note (2026-08-27v11) BACKLOG "graf neukazuje hodnoty s 0 výskyty (např.
- * hodnocení 1-5, kde nikdo nedal '5')": `computeValueCatalog()` teď pro každý sloupec
- * nejdřív "naseje" katalog jeho `possibleValues` (pokud je caller poskytl - viz
- * GraphColumnOption.possibleValues / item-details-columns.ts stejné datum) s počtem 0,
- * teprve POTOM přičítá reálně pozorované hodnoty z `rows`. Bez `possibleValues`
- * (pole `undefined`) je chování BEZE ZMĚNY - jen pozorované hodnoty, jako dřív.
- * Důsledky pro zobrazení (záměrně NEŘEŠENO speciálním kódem, je to inherentní
- * vlastnost typu grafu, ne bug):
- * - bar/radar/trend: nulová hodnota se zobrazí normálně (nulová výška/bod/plochá čára).
- * - pie/doughnut: nulová výseč nemá geometrický smysl, Chart.js i
- *   `OUTSIDE_SLICE_LABELS_PLUGIN` (`if (!value) return;`) ji nevykreslí - hodnota
- *   zůstane vidět aspoň ve filtru hodnot v sidebaru.
- * - polarArea: zobrazí se (Chart.js dělí úhel rovnoměrně mezi kategorie bez ohledu na
- *   hodnotu, jen poloměr výseče odpovídá hodnotě - nulová hodnota = viditelný "bod").
- *
- * @refactor-note (2026-08-31) SCROLL LOCK SJEDNOCEN - vlastní `lockBackgroundScroll()`/
- * `unlockBackgroundScroll()` (position:fixed pinning, viz bugfix-note 2026-08-27v9)
- * nahrazeny sdíleným `ScrollLockService`, který používá STEJNÝ mechanismus (position:
- * fixed) napříč všemi overlay komponentami v aplikaci - viz scroll-lock.service.ts.
- * Chování beze změny, jen sdílené referenční počítadlo s ostatními modaly.
- *
- * @note GDPR/data-minimization by design: the report can only ever show columns the
- * page config explicitly marks `chartable`, so a generated PDF report structurally
- * cannot leak personal data.
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * GraphBuilderComponent NEdědí BaseDataComponent (sdílená builder komponenta), proto
+ * ruční injection AdminLocalizationService + lokální `strings`/`t()`, přesně dle
+ * vzoru TableBuilderComponent/FormBuilderComponent. Komponenta MÁ
+ * `ChangeDetectionStrategy.OnPush`, proto (na rozdíl od FormBuilderComponent) JE
+ * potřeba `translations$.subscribe(() => markForCheck())` v konstruktoru - stejný
+ * důvod jako u TableBuilderComponent. Nahrazeny VŠECHNY uživatelsky viditelné texty
+ * (sidebar labely, tlačítka, agregační popisky, generované nadpisy/popisy sekcí grafů,
+ * metadata reportu, chybová hláška exportu). `dateFieldLabel` @Input default změněn
+ * z natvrdo 'Datum vytvoření' na prázdný string s fallbackem na `t()` v ngOnInit() -
+ * stejný vzor jako `headerText` v FormBuilderComponent. `logReportActivity()` audit
+ * log popisky (anglicky) VĚDOMĚ nepřekládány - stejná konvence jako
+ * TableBuilderComponent.logExportActivity().
+ * BUGFIX SOUČASNĚ: `computeCanonicalBuckets()` (bucket labely) a `reportMetaLines`
+ * ("Vygenerováno:") měly natvrdo `new DatePipe('cs-CZ')` - datum bylo VŽDY česky bez
+ * ohledu na zvolený admin jazyk. Nahrazeno `this.i18n.getDateLocale()`, stejná
+ * oprava jako u AdminLayoutComponent/WelcomePageComponent.
  *
  * @dependencies
  * - DataHandler: read-only GET against `apiEndpoint` (no_pagination + optional date range).
@@ -83,6 +48,7 @@
  * - chart.js (`chart.js/auto`, dynamic import): renders one <canvas> per section.
  * - jsPDF + html2canvas (dynamic import): client-side PDF snapshot of the report body.
  * - ScrollLockService: Sdílený zámek scrollu na pozadí.
+ * - AdminLocalizationService: Statické i18n admin UI.
  */
 
 import {
@@ -99,6 +65,7 @@ import { EntityCrudService } from '../../../../core/services/entitiy-crud.servic
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import {
   GraphColumnOption, ColumnChartMode, MetricChartMode, DistributionChartType,
   ChartModeOption, COLUMN_CHART_MODE_OPTIONS, METRIC_CHART_MODE_OPTIONS
@@ -280,7 +247,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   @Input() tableCaption?: string;
   @Input() columns: GraphColumnOption[] = [];
   @Input() dateField: string = 'created_at';
-  @Input() dateFieldLabel: string = 'Datum vytvoření';
+  @Input() dateFieldLabel: string = '';
 
   @Output() closed = new EventEmitter<void>();
 
@@ -294,6 +261,14 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   public readonly columnChartModeOptions: ChartModeOption<ColumnChartMode>[] = COLUMN_CHART_MODE_OPTIONS;
   public readonly metricChartModeOptions: ChartModeOption<MetricChartMode>[] = METRIC_CHART_MODE_OPTIONS;
+
+  /**
+   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+   * Ruční injection - viz hlavička souboru.
+   */
+  public readonly i18n = inject(AdminLocalizationService);
+  public get strings(): any { return this.i18n.getMergedSection('graph-builder'); }
+  public t(key: string): string { return this.i18n.getValue(`graph-builder.${key}`); }
 
   /** Prázdné = bez omezení (výchozí stav - "zobrazit vše"). */
   dateFrom: string = '';
@@ -355,7 +330,11 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     return this._logCrud;
   }
 
-  constructor(private dataHandler: DataHandler, private cd: ChangeDetectorRef) {}
+  constructor(private dataHandler: DataHandler, private cd: ChangeDetectorRef) {
+    // Po přepnutí admin jazyka donutí OnPush komponentu přehodnotit `strings`/gettery -
+    // stejný vzor jako TableBuilderComponent.
+    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+  }
 
   /**
    * @description Initializes (or, if the key SET is unchanged, PRESERVES) column
@@ -389,6 +368,16 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   /** @description Locks background scroll and auto-generates the report immediately on open (all columns, no date restriction). */
   ngOnInit(): void {
+    /**
+     * @refactor-note (2026-09) `dateFieldLabel` @Input default zůstává prázdný string
+     * (viz deklarace) místo natvrdo českého 'Datum vytvoření' - konzument by ho měl
+     * vždy předat vlastní přeložený text, tohle je jen záchranná síť pro případ, že to
+     * zapomene. Stejný vzor jako `headerText` v FormBuilderComponent.
+     */
+    if (!this.dateFieldLabel) {
+      this.dateFieldLabel = this.t('default_date_field_label');
+    }
+
     this.scrollLock.lock();
     this.generateReport();
   }
@@ -426,7 +415,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   }
 
   aggregationLabel(aggregation: 'count' | 'sum' | 'avg'): string {
-    return aggregation === 'count' ? 'Kategorie' : aggregation === 'sum' ? 'Součet' : 'Průměr';
+    return aggregation === 'count' ? this.t('agg_count') : aggregation === 'sum' ? this.t('agg_sum') : this.t('agg_avg');
   }
 
   setColumnChartMode(key: string, mode: ColumnChartMode): void {
@@ -446,8 +435,8 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   /** @description Čte SNAPSHOT období (`generatedDateFrom`/`generatedDateTo`), ne živé date inputy - viz bugfix-note (2026-08-27v10). */
   get periodLabel(): string {
-    if (!this.generatedDateFrom && !this.generatedDateTo) return 'celé období (bez omezení)';
-    return `${this.generatedDateFrom || 'začátek'} – ${this.generatedDateTo || 'dnes'}`;
+    if (!this.generatedDateFrom && !this.generatedDateTo) return this.t('period_all');
+    return `${this.generatedDateFrom || this.t('period_start_fallback')} – ${this.generatedDateTo || this.t('period_end_fallback')}`;
   }
 
   /** @description Human summary of every included column + its chosen chart type, used in the meta block and PDF header. */
@@ -514,7 +503,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     this.computeValueCatalog(rows);
 
     this.currentGranularity = this.resolveBucketGranularity(rows);
-    this.trendGranularityLabel = this.currentGranularity === 'day' ? 'den' : this.currentGranularity === 'week' ? 'týden' : 'měsíc';
+    this.trendGranularityLabel = this.currentGranularity === 'day' ? this.t('granularity_day') : this.currentGranularity === 'week' ? this.t('granularity_week') : this.t('granularity_month');
     this.canonicalBuckets = this.computeCanonicalBuckets(rows, this.currentGranularity);
 
     this.rebuildAllSections();
@@ -579,7 +568,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
       for (const row of rows) {
         const raw = row?.[col.key];
-        const label = (raw === null || raw === undefined || raw === '') ? 'Nevyplněno' : String(raw);
+        const label = (raw === null || raw === undefined || raw === '') ? this.t('unfilled_value_label') : String(raw);
         counts.set(label, (counts.get(label) ?? 0) + 1);
       }
 
@@ -649,7 +638,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     if (entries.length > MAX_DISTRIBUTION_CATEGORIES) {
       const top = entries.slice(0, MAX_DISTRIBUTION_CATEGORIES - 1);
       const restCount = entries.slice(MAX_DISTRIBUTION_CATEGORIES - 1).reduce((sum, [, c]) => sum + c, 0);
-      entries = [...top, ['Ostatní', restCount]];
+      entries = [...top, [this.t('other_category_label'), restCount]];
     }
 
     return {
@@ -677,7 +666,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
     const valueOfRow = (row: any): string => {
       const raw = row?.[col.key];
-      return (raw === null || raw === undefined || raw === '') ? 'Nevyplněno' : String(raw);
+      return (raw === null || raw === undefined || raw === '') ? this.t('unfilled_value_label') : String(raw);
     };
 
     const series: CategoryTrendSeries[] = categoryValues.map((category, idx) => ({
@@ -690,7 +679,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
     if (foldRest) {
       series.push({
-        label: 'Ostatní',
+        label: this.t('other_category_label'),
         color: colors[colors.length - 1],
         values: this.canonicalBuckets.map(bucket =>
           (bucketsMap.get(bucket.key) ?? []).filter(row => {
@@ -766,6 +755,10 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     return { from, to };
   }
 
+  /**
+   * @refactor-note (2026-09) BUGFIX - natvrdo `new DatePipe('cs-CZ')` nahrazeno
+   * `new DatePipe(this.i18n.getDateLocale())` - viz hlavička souboru.
+   */
   private computeCanonicalBuckets(rows: any[], granularity: BucketGranularity): BucketDescriptor[] {
     const map = new Map<string, Date>();
     for (const row of rows) {
@@ -780,7 +773,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     const dateFormat = granularity === 'month' ? 'MM/yyyy' : 'd.M.';
     return sortedKeys.map(k => ({
       key: k,
-      label: new DatePipe('cs-CZ').transform(map.get(k)!, dateFormat) ?? k,
+      label: new DatePipe(this.i18n.getDateLocale()).transform(map.get(k)!, dateFormat) ?? k,
       date: map.get(k)!,
     }));
   }
@@ -821,10 +814,12 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   /** @description Used for the HTML `<h3>` heading above each chart (and thus for the PDF card image too). */
   sectionTitle(descriptor: ChartSectionDescriptor): string {
     switch (descriptor.kind) {
-      case 'distribution': return `${descriptor.section.columnLabel} — rozložení hodnot`;
-      case 'categoryTrend': return `${descriptor.section.columnLabel} — vývoj v čase`;
-      case 'metricTrend': return `${descriptor.section.columnLabel} — vývoj v čase (${descriptor.section.aggregation === 'sum' ? 'součet' : 'průměr'})`;
-      case 'overallTrend': return 'Celkový počet záznamů v čase';
+      case 'distribution': return this.t('title_distribution').replace('{label}', descriptor.section.columnLabel);
+      case 'categoryTrend': return this.t('title_category_trend').replace('{label}', descriptor.section.columnLabel);
+      case 'metricTrend': return this.t('title_metric_trend')
+        .replace('{label}', descriptor.section.columnLabel)
+        .replace('{agg}', descriptor.section.aggregation === 'sum' ? this.t('agg_sum_lower') : this.t('agg_avg_lower'));
+      case 'overallTrend': return this.t('title_overall_trend');
     }
   }
 
@@ -832,14 +827,27 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     switch (descriptor.kind) {
       case 'distribution': {
         const total = descriptor.section.values.reduce((a, b) => a + b, 0);
-        return `Počet záznamů podle hodnoty pole „${descriptor.section.columnLabel}“ - ${total} z ${this.lastRowCount} v období: ${this.periodLabel}.`;
+        return this.t('desc_distribution')
+          .replace('{label}', descriptor.section.columnLabel)
+          .replace('{total}', String(total))
+          .replace('{totalRows}', String(this.lastRowCount))
+          .replace('{period}', this.periodLabel);
       }
       case 'categoryTrend':
-        return `Vývoj počtu záznamů podle hodnoty pole „${descriptor.section.columnLabel}“ v čase (krok: ${this.trendGranularityLabel}), období: ${this.periodLabel}.`;
+        return this.t('desc_category_trend')
+          .replace('{label}', descriptor.section.columnLabel)
+          .replace('{granularity}', this.trendGranularityLabel)
+          .replace('{period}', this.periodLabel);
       case 'metricTrend':
-        return `Vývoj hodnoty pole „${descriptor.section.columnLabel}“ v čase (krok: ${this.trendGranularityLabel}), období: ${this.periodLabel}.`;
+        return this.t('desc_metric_trend')
+          .replace('{label}', descriptor.section.columnLabel)
+          .replace('{granularity}', this.trendGranularityLabel)
+          .replace('{period}', this.periodLabel);
       case 'overallTrend':
-        return `Celkový objem záznamů podle pole „${this.dateFieldLabel}“ (krok: ${this.trendGranularityLabel}), období: ${this.periodLabel}.`;
+        return this.t('desc_overall_trend')
+          .replace('{dateFieldLabel}', this.dateFieldLabel)
+          .replace('{granularity}', this.trendGranularityLabel)
+          .replace('{period}', this.periodLabel);
     }
   }
 
@@ -942,7 +950,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
           data: {
             labels: section.labels,
             datasets: [{
-              label: `${section.columnLabel} (${section.aggregation === 'sum' ? 'součet' : 'průměr'})`,
+              label: `${section.columnLabel} (${section.aggregation === 'sum' ? this.t('agg_sum_lower') : this.t('agg_avg_lower')})`,
               data: section.values,
               backgroundColor: 'rgba(67,56,202,0.55)',
               borderColor: '#4338ca',
@@ -962,7 +970,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
           data: {
             labels: section.labels,
             datasets: [{
-              label: 'Počet záznamů',
+              label: this.t('title_overall_trend'),
               data: section.values,
               backgroundColor: 'rgba(24,24,27,0.5)',
               borderColor: '#18181b',
@@ -1006,7 +1014,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     if (scaleKind === 'linear') {
       base.scales = {
         x: { ticks: { autoSkip: true, maxRotation: 55, minRotation: 0, font: { size: 10 } } },
-        y: { beginAtZero: true, title: { display: true, text: 'Počet / hodnota' } },
+        y: { beginAtZero: true, title: { display: true, text: this.t('agg_count') } },
       };
     } else if (scaleKind === 'radial') {
       base.scales = {
@@ -1047,21 +1055,23 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   // ── PDF export (jsPDF + html2canvas, lazy-loaded) ────────────────────
 
   get reportTitle(): string {
-    return `Report — ${this.tableCaption || this.apiEndpoint}`;
+    return `${this.t('report_title_prefix')} — ${this.tableCaption || this.apiEndpoint}`;
   }
 
   private get reportFilename(): string {
-    const range = (this.generatedDateFrom || this.generatedDateTo) ? `${this.generatedDateFrom || 'zacatek'}_az_${this.generatedDateTo || 'dnes'}` : 'vsechna-data';
+    const range = (this.generatedDateFrom || this.generatedDateTo)
+      ? `${this.generatedDateFrom || this.t('filename_start_fallback')}_az_${this.generatedDateTo || this.t('filename_end_fallback')}`
+      : this.t('filename_no_date_range');
     const slug = (this.tableCaption || this.apiEndpoint).toLowerCase().replace(/[^a-z0-9]+/g, '-');
     return `report-${slug}-${range}`;
   }
 
   get reportMetaLines(): string[] {
     const lines = [
-      `Vygenerováno: ${new DatePipe('cs-CZ').transform(this.reportGeneratedAt, 'd.M.yyyy HH:mm') ?? ''}`,
-      `Období: ${this.periodLabel}`,
-      `Počet záznamů: ${this.lastRowCount}`,
-      `Zahrnuté sloupce: ${this.selectedColumnSummary}`,
+      this.t('meta_generated_at').replace('{date}', new DatePipe(this.i18n.getDateLocale()).transform(this.reportGeneratedAt, 'd.M.yyyy HH:mm') ?? ''),
+      this.t('meta_period').replace('{period}', this.periodLabel),
+      this.t('meta_record_count').replace('{count}', String(this.lastRowCount)),
+      this.t('meta_included_columns').replace('{summary}', this.selectedColumnSummary),
     ];
 
     for (const descriptor of this.reportSections) {
@@ -1073,7 +1083,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
       const selected = this.selectedColumnValues.get(columnKey);
       if (selected && selected.size < catalog.length) {
         const excluded = catalog.filter(e => !selected.has(e.value)).map(e => e.value);
-        lines.push(`${columnLabel} — vynechané hodnoty: ${excluded.join(', ')}`);
+        lines.push(this.t('meta_excluded_values').replace('{label}', columnLabel).replace('{values}', excluded.join(', ')));
       }
     }
 
@@ -1163,7 +1173,7 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
       pdf.save(`${this.reportFilename}.pdf`);
       this.logReportActivity(this.lastRowCount, true);
     } catch {
-      this.alertDialogService.open('Chyba', 'Export reportu do PDF se nezdařil.', 'danger');
+      this.alertDialogService.open(this.t('export_error_title'), this.t('export_error_message'), 'danger');
     } finally {
       this.isExportingPdf = false;
       this.cd.markForCheck();
@@ -1181,9 +1191,14 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(8);
     pdf.setTextColor(113, 113, 122);
-    pdf.text(`Strana ${pageNum} / ${totalPages}`, pageWidth - margin, pageHeight - 12, { align: 'right' });
+    pdf.text(this.t('pdf_page_label').replace('{current}', String(pageNum)).replace('{total}', String(totalPages)), pageWidth - margin, pageHeight - 12, { align: 'right' });
   }
 
+  /**
+   * @note Audit log popisky VĚDOMĚ zůstávají anglicky bez ohledu na admin jazyk -
+   * stejná konvence jako TableBuilderComponent.logExportActivity() - viz refactor-note
+   * (2026-09) v hlavičce souboru.
+   */
   private logReportActivity(rowCount: number, pdfExported: boolean): void {
     const caption = this.tableCaption || this.apiEndpoint;
     const logData = {

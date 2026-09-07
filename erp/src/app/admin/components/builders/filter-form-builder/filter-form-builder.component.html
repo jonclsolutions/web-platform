@@ -4,22 +4,19 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": přidán globální
-        fulltextový input NAD sloupcovými filtry - vždy viditelný, nezávislý na
-        `filterColumns` (na rozdíl od bloku pod ním, který se generuje z konfigurace
-        dané stránky). Váže se na `filterForm[globalSearchKey]` (viz .ts,
-        `globalSearchKey = 'search'`), Enter aplikuje filtry stejně jako u ostatních
-        textových polí níže.
-    @refactor-note (2026-08-25v2) Přidán `.filter-form-header` řádek (titulek + křížek
-        vpravo nahoře) - `onClose()` emituje `closed`, rodičovská stránka na to naváže
-        stejně, jako už dnes váže "Akce" dropdown na `toggleFilters()` (obě cesty
-        zavírání fungují souběžně, žádná nenahrazuje druhou).
+    (Earlier refactor-notes for global search and the close button are unchanged -
+    see version history.)
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY uživatelsky viditelné texty nahrazeny `strings.xxx` binding -
+        viz filter-form-builder.component.ts refactor-note stejné datum.
+        `filterFormTitle` zůstává beze změny - jeho i18n je odpovědnost volající
+        stránky.
 -->
 
 <div class="filter-form-container">
   <div class="filter-form-header">
     <h3 class="filter-form-title">{{ filterFormTitle }}</h3>
-    <button type="button" class="filter-form-close-btn" (click)="onClose()" aria-label="Zavřít filtr">
+    <button type="button" class="filter-form-close-btn" (click)="onClose()" [attr.aria-label]="strings.close_aria">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <line x1="18" y1="6" x2="6" y2="18"/>
@@ -29,14 +26,14 @@
   </div>
 
   <div class="filter-global-search">
-    <label for="filterGlobalSearch" class="filter-label">Hledat ve všech sloupcích</label>
+    <label for="filterGlobalSearch" class="filter-label">{{ strings.global_search_label }}</label>
     <input
       type="search"
       id="filterGlobalSearch"
       [(ngModel)]="filterForm[globalSearchKey]"
       (keyup.enter)="applyFilters()"
       class="filter-input"
-      placeholder="Zadejte hledaný výraz...">
+      [placeholder]="strings.global_search_placeholder">
   </div>
 
   <hr>
@@ -90,9 +87,9 @@
 
   <div class="filter-grid">
     <div>
-      <label for="filterSortBy" class="filter-label">Seřadit podle</label>
+      <label for="filterSortBy" class="filter-label">{{ strings.sort_by_label }}</label>
       <select id="filterSortBy" [(ngModel)]="sortBy" class="filter-select">
-        <option value="">-- Vybrat sloupec --</option>
+        <option value="">{{ strings.sort_by_placeholder }}</option>
         @for (column of filterColumns; track column) {
           @if (column.canSort) {
             <option [value]="column.key">{{ column.header }}</option>
@@ -101,20 +98,20 @@
       </select>
     </div>
     <div>
-      <label for="filterSortDirection" class="filter-label">Směr řazení</label>
+      <label for="filterSortDirection" class="filter-label">{{ strings.sort_direction_label }}</label>
       <select id="filterSortDirection" [(ngModel)]="sortDirection" class="filter-select">
-        <option value="asc">Vzestupně (A-Z, od nejmenšího)</option>
-        <option value="desc">Sestupně (Z-A, od největšího)</option>
+        <option value="asc">{{ strings.sort_direction_asc }}</option>
+        <option value="desc">{{ strings.sort_direction_desc }}</option>
       </select>
     </div>
   </div>
 
   <div class="filter-buttons-container">
     <button (click)="clearFilters()" class="filter-button clear">
-      Vyčistit filtry
+      {{ strings.clear_button }}
     </button>
     <button (click)="applyFilters()" class="filter-button apply">
-      Použít filtry
+      {{ strings.apply_button }}
     </button>
   </div>
 </div>

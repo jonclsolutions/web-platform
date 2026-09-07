@@ -24,6 +24,22 @@
         existing `[(ngModel)]` binding, so a consumer page can react to a live
         change (see FormBuilderComponent's new `(fieldChanged)` output and
         AdministratorsComponent.handleFieldChanged()).
+
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        všechny natvrdo psané české texty (i angliský "(z role)" badge popisek, který
+        byl ve skutečnosti česky) nahrazeny `strings.*` bindingy
+        (AdminLocalizationService, sekce 'form-builder') - viz
+        form-builder.component.ts stejné datum. `input.label`/`input.placeholder`/
+        `input.errorMessage` beze změny - jsou to per-pole texty z konzumentova
+        *.config.ts, mimo scope této migrace.
+
+    @refactor-note (2026-09v2) BUGFIX "český fallback v multi-file-upload i v EN":
+        `[label]` na `<app-multi-file-upload>` bylo natvrdo `''`, což padalo na
+        MultiFileUploadComponent's vlastní český `@Input() label = 'Přílohy'` default
+        bez ohledu na aktivní jazyk. Nahrazeno `i18n.getValue('file-upload.attachments_label')`
+        - viz form-builder.component.ts stejné datum pro odpovídající opravu
+        `fileUploadTexts` getteru (getMergedSection -> getValue, ať chybějící klíč
+        vždy skončí jako 'Cannot load text', nikdy ne jako tichý český fallback).
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -31,7 +47,7 @@
 
     <div class="form-header">
       <h2 class="header-title">{{ headerText }}</h2>
-      <button class="close-button" (click)="onCancel()" aria-label="Zavřít">&times;</button>
+      <button class="close-button" (click)="onCancel()" [attr.aria-label]="strings.close_aria">&times;</button>
     </div>
 
     <div class="details-content">
@@ -57,10 +73,11 @@
                   }
                   @case ('files') {
                     <app-multi-file-upload
-                      [label]="''"
+                      [label]="i18n.getValue('file-upload.attachments_label')"
                       [maxFiles]="10"
                       [maxFileSizeMb]="20"
                       [maxTotalSizeMb]="50"
+                      [textOverrides]="fileUploadTexts"
                       [existingFiles]="formDataToEdit ? (formDataToEdit[input.column_name] || []) : []"
                       (filesChanged)="onFilesChange($event, input.column_name)"
                       (existingFileRemoved)="onExistingFilesRemoved($event, input.column_name)">
@@ -78,13 +95,13 @@
                           <label [for]="input.column_name + '_' + option.value">
                             {{ option.label }}
                             @if (isOptionDisabled(input, option.value)) {
-                              <span class="multiselect-role-badge"> (z role)</span>
+                              <span class="multiselect-role-badge"> {{ strings.multiselect_role_badge }}</span>
                             }
                           </label>
                         </div>
                       }
                       @if (!input.options || input.options.length === 0) {
-                        <div class="multiselect-empty">Žádné možnosti k výběru.</div>
+                        <div class="multiselect-empty">{{ strings.multiselect_empty }}</div>
                       }
                     </div>
                   }
@@ -108,7 +125,7 @@
                       [(ngModel)]="formData[input.column_name]"
                       (ngModelChange)="onFieldChange(input.column_name, $event)"
                       class="custom-input" [disabled]="input.editable === false">
-                      <option value="" disabled selected>-- Vyberte --</option>
+                      <option value="" disabled selected>{{ strings.select_placeholder }}</option>
                       @for (option of input.options; track option) {
                         <option [value]="option.value">{{ option.label }}</option>
                       }
@@ -122,22 +139,22 @@
                   @case ('checkbox') {
                     <div class="checkbox-wrapper">
                       <input type="checkbox" [id]="input.column_name" [required]="!!input.required" [name]="input.column_name" [(ngModel)]="formData[input.column_name]" [disabled]="input.editable === false" />
-                      <label [for]="input.column_name">Aktivní / Souhlasím</label>
+                      <label [for]="input.column_name">{{ strings.checkbox_default_label }}</label>
                     </div>
                   }
                   @case ('confirm-password') {
                     <div class="confirm-password-container">
-                      <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || 'Zadejte heslo'"
+                      <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || strings.password_placeholder_default"
                         [required]="!!input.required" [pattern]="input.pattern || ''" [maxlength]="input.max || 16" [name]="input.column_name"
                         [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                       <app-password-requirements-checklist [password]="formData[input.column_name] || ''"></app-password-requirements-checklist>
-                      <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">Potvrzení hesla @if (input.required) {
+                      <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">{{ strings.confirm_password_label }} @if (input.required) {
                         <span class="required-star">*</span>
                       }</label>
-                      <input type="password" [id]="input.column_name + '_confirm'" placeholder="Zadejte heslo znovu" [required]="!!input.required" [maxlength]="input.max || 16" [name]="input.column_name + '_confirm'" [(ngModel)]="confirmPasswordData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
+                      <input type="password" [id]="input.column_name + '_confirm'" [placeholder]="strings.confirm_password_placeholder" [required]="!!input.required" [maxlength]="input.max || 16" [name]="input.column_name + '_confirm'" [(ngModel)]="confirmPasswordData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                     </div>
                     @if (passwordMismatch(input.column_name)) {
-                      <div class="error-text">Hesla se neshodují.</div>
+                      <div class="error-text">{{ strings.password_mismatch_inline }}</div>
                     }
                   }
                   @default {
@@ -157,8 +174,8 @@
         </div>
 
         <div class="form-footer-actions">
-          <button type="button" class="btn-secondary" (click)="onCancel()">Zrušit</button>
-          <button type="submit" class="btn-primary" [disabled]="isSubmitting || genericForm.invalid || hasPasswordMismatch">Potvrdit</button>
+          <button type="button" class="btn-secondary" (click)="onCancel()">{{ strings.cancel_button }}</button>
+          <button type="submit" class="btn-primary" [disabled]="isSubmitting || genericForm.invalid || hasPasswordMismatch">{{ strings.submit_button }}</button>
         </div>
       </form>
     </div>

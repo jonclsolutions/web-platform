@@ -7,39 +7,51 @@
     @refactor-note (2026-08-16): sekce Zabezpečení doplněna o barevný status banner
         (security2faStatusMessage / security2faStatusType) - rozlišuje 3 stavy: role
         vynucuje / sysadmin vynutil / volný self-service toggle.
+    @refactor-note (2026-09b) BACKLOG "žádné hardcoded texty": VŠECHNY uživatelsky
+        viditelné texty v šabloně nahrazeny `strings.xxx` binding - žádný natvrdo
+        psaný český text nezůstal (viz personal-info.component.ts refactor-note
+        stejné datum pro odpovídající JSON klíče).
+    @refactor-note (2026-09c) BUGFIX: `aria-label="Zavřít"` na zavíracím tlačítku
+        popupu hesla byl poslední natvrdo psaný text v šabloně - nahrazen
+        `i18n.getValue('shared.close')` (existující sdílený klíč, ne nový).
+    @refactor-note (2026-09d) BACKLOG "jazykový přepínač do headeru": karta "Jazyk
+        administrace" (dropdown s vlaječkami) ODSTRANĚNA CELÁ - přesunuta do
+        `AdminLayoutComponent` headeru, vedle odkazu Wiki - viz
+        personal-info.component.ts a admin-layout.component.html stejné datum.
+        Zbytek stránky (základní údaje, zabezpečení, změna hesla) beze změny.
 -->
     
 <div class="personal-info-container">
 
   <div class="cd-card info-card">
     <div class="card-header-clean">
-      <h2 class="card-title">Osobní profil</h2>
-      <span class="admin-note">Pro změnu jména/e-mailu kontaktujte administrátora</span>
+      <h2 class="card-title">{{ strings.title }}</h2>
+      <span class="admin-note">{{ strings.title_note }}</span>
     </div>
     <div class="card-content-minimal">
 
       @if (userData) {
         <div class="info-group">
-          <h3 class="group-title">Základní údaje</h3>
+          <h3 class="group-title">{{ strings.basic_info_heading }}</h3>
           <div class="info-grid">
             <div class="info-item">
-              <label>Celé jméno</label>
-              <div class="value">{{ userData.full_name || '—' }}</div>
+              <label>{{ strings.field_full_name }}</label>
+              <div class="value">{{ userData.full_name || strings.empty_value }}</div>
             </div>
             <div class="info-item">
-              <label>Přihlašovací e-mail</label>
-              <div class="value muted cd-value-mono">{{ userData.user_email || '—' }}</div>
+              <label>{{ strings.field_email }}</label>
+              <div class="value muted cd-value-mono">{{ userData.user_email || strings.empty_value }}</div>
             </div>
             <div class="info-item">
-              <label>Role</label>
-              <div class="value">{{ userRoleName || '—' }}</div>
+              <label>{{ strings.field_role }}</label>
+              <div class="value">{{ userRoleName || strings.empty_value }}</div>
             </div>
           </div>
         </div>
       }
 
       <div class="info-group">
-        <h3 class="group-title">Zabezpečení</h3>
+        <h3 class="group-title">{{ strings.security_heading }}</h3>
 
         <div class="security-status-banner" [class]="'security-status-banner--' + security2faStatusType">
           {{ security2faStatusMessage }}
@@ -53,11 +65,11 @@
                 [checked]="effective2faChecked"
                 [disabled]="isForced2fa || isSaving2fa"
                 (change)="onToggle2fa()">
-              Dvoufaktorové ověření (2FA)
+              {{ strings.toggle_2fa_label }}
             </label>
           </div>
           <button type="button" class="action_button action_button--secondary" (click)="openPasswordPopup()">
-            Změnit heslo
+            {{ strings.change_password_button }}
           </button>
         </div>
       </div>
@@ -71,8 +83,8 @@
     <div class="password-popup-card" (click)="$event.stopPropagation()">
 
       <div class="password-popup-header">
-        <h2 class="card-title">Změna hesla</h2>
-        <button type="button" class="password-popup-close" (click)="closePasswordPopup()" aria-label="Zavřít">
+        <h2 class="card-title">{{ strings.password_popup_title }}</h2>
+        <button type="button" class="password-popup-close" (click)="closePasswordPopup()" [attr.aria-label]="i18n.getValue('shared.close')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -87,21 +99,21 @@
         }
 
         <div class="form-field-minimal">
-          <label for="old_password">Staré heslo</label>
-          <input id="old_password" type="password" formControlName="old_password" placeholder="••••••••">
+          <label for="old_password">{{ strings.password_field_old }}</label>
+          <input id="old_password" type="password" formControlName="old_password" [placeholder]="strings.password_placeholder_old">
         </div>
 
         <div class="form-field-minimal">
-          <label for="new_password">Nové heslo</label>
-          <input id="new_password" type="password" formControlName="new_password" placeholder="8-16 znaků" maxlength="16">
+          <label for="new_password">{{ strings.password_field_new }}</label>
+          <input id="new_password" type="password" formControlName="new_password" [placeholder]="strings.password_placeholder_new" maxlength="16">
           <app-password-requirements-checklist [password]="passwordForm.get('new_password')?.value || ''"></app-password-requirements-checklist>
         </div>
 
         <div class="form-field-minimal">
-          <label for="new_password_confirmation">Potvrzení hesla</label>
-          <input id="new_password_confirmation" type="password" formControlName="new_password_confirmation" placeholder="Zopakujte heslo" maxlength="16">
+          <label for="new_password_confirmation">{{ strings.password_field_confirm }}</label>
+          <input id="new_password_confirmation" type="password" formControlName="new_password_confirmation" [placeholder]="strings.password_placeholder_confirm" maxlength="16">
           @if (passwordMismatch) {
-            <div class="error-text">Hesla se neshodují.</div>
+            <div class="error-text">{{ strings.password_mismatch }}</div>
           }
         </div>
 
@@ -109,9 +121,9 @@
           type="submit"
           [disabled]="passwordForm.invalid || (loadingService.isLoading$ | async)">
           @if ((loadingService.isLoading$ | async)) {
-            <span class="cd-mini-spinner"></span> Ukládání...
+            <span class="cd-mini-spinner"></span> {{ strings.password_submit_saving }}
           } @else {
-            Aktualizovat heslo
+            {{ strings.password_submit_button }}
           }
         </button>
       </form>

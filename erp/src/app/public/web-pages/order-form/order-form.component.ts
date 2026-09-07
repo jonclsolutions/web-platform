@@ -122,6 +122,25 @@ export class OrderFormComponent extends BasePublicComponent {
     if (!this.t) return '...';
     return this.isLoading ? this.t.buttons.sending : this.t.buttons.send;
   }
+    /**
+   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+   * (public strana) - viz stejná poznámka v contact.component.ts.
+   */
+  get attachmentUploaderTexts() {
+    const s = this.t?.attachment_uploader;
+    if (!s) return {};
+    return {
+      existingSectionTitle: s.existing_section_title,
+      removeExistingTitle: s.remove_existing_title,
+      dropzoneLabel: s.dropzone_label,
+      errorMaxFilesWithExisting: s.error_max_files_with_existing,
+      errorMaxFiles: s.error_max_files,
+      errorFileTooLarge: s.error_file_too_large,
+      errorTotalSizeExceeded: s.error_total_size_exceeded,
+      totalLabel: s.total_label,
+      totalNewSuffix: s.total_new_suffix,
+    };
+  }
 
   /**
    * @description Přijímá aktuální seznam souborů z MultiFileUploadComponent. Komponenta

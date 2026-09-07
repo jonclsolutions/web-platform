@@ -1,27 +1,23 @@
 <!-- 
     @file: details-builder.component.html
-    @path: /src/app/admin/components/builders/details-builder/details-builder.component.html
+    @path: src/app/admin/components/builders/details-builder/details-builder.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    @refactor-note (2026-08-2): Přidán @case ('files') - výpis VÍCE příloh, viz
-        details-builder.component.ts.
-    @refactor-note (2026-08-31) BACKLOG "privátní úložiště citlivých příloh": @case
-        ('files') teď používá `file.view_url`/`file.download_url` PŘÍMO (hotové,
-        backendem podepsané URL z WebAttachmentResource) místo volání
-        getViewUrl(file.url)/downloadFile(file.url) - ty skládaly URL ze starého,
-        dnes neplatného route vzoru a navíc `file.url` u příloh na `private` disku
-        beztak nefunguje (žádný symlink). @case ('file') (legacy - jednoduchý URL
-        string sloupec, ne objekt přílohy) zůstává na getViewUrl()/downloadFile()
-        beze změny, viz poznámka v details-builder.component.ts.
+    (Earlier refactor-notes for 'files' type and signed URLs are unchanged - see
+    version history.)
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY uživatelsky viditelné texty nahrazeny `strings.xxx` binding -
+        viz details-builder.component.ts refactor-note stejné datum. Emoji ikony
+        (📄/📥) ZŮSTÁVAJÍ - jsou to grafické symboly, ne text k překladu.
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
 <div class="form-container wide-style" (click)="$event.stopPropagation()">
 
 <div class="form-header">
-<h2 class="header-title">Detaily záznamu</h2>
-<button class="close-button" (click)="onClose()" aria-label="Zavřít">
+<h2 class="header-title">{{ strings.title }}</h2>
+<button class="close-button" (click)="onClose()" [attr.aria-label]="strings.close">
 &times;
 </button>
 </div>
@@ -41,14 +37,14 @@
 @if (getValueByPath(itemData, column.key); as fileUrl) {
 <div>
 <div class="file-actions">
-<a [href]="getViewUrl(fileUrl)" target="_blank" class="btn-action view">📄 Zobrazit</a>
+<a [href]="getViewUrl(fileUrl)" target="_blank" class="btn-action view">📄 {{ strings.view }}</a>
 <button type="button" (click)="downloadFile(fileUrl)" class="btn-action download">
-                              📥 Stáhnout
+                              📥 {{ strings.download }}
 </button>
 </div>
 </div>
                       } @else {
-<span class="text-muted">Není přiložena</span>
+<span class="text-muted">{{ strings.no_file }}</span>
                       }
 </div>
                   }
@@ -64,19 +60,19 @@
 <span class="details-file-size">{{ formatFileSize(file.size_bytes) }}</span>
 </div>
 <div class="file-actions">
-<a [href]="file.view_url" target="_blank" class="btn-action view">📄 Zobrazit</a>
+<a [href]="file.view_url" target="_blank" class="btn-action view">{{ strings.view }}</a>
 <button type="button" (click)="downloadFile(file.download_url)" class="btn-action download">
-                                    📥 Stáhnout
+                                    {{ strings.download }}
 </button>
 </div>
 </li>
                             }
 </ul>
                         } @else {
-<span class="text-muted">Nejsou přiloženy žádné soubory</span>
+<span class="text-muted">{{ strings.no_files }}</span>
                         }
                       } @else {
-<span class="text-muted">Nejsou přiloženy žádné soubory</span>
+<span class="text-muted">{{ strings.no_files }}</span>
                       }
 </div>
                   }
@@ -104,7 +100,7 @@
 </div>
 
 <div class="form-footer">
-<button class="btn-close-flat" (click)="onClose()">Zavřít</button>
+<button class="btn-close-flat" (click)="onClose()">{{ strings.close }}</button>
 </div>
 </div>
 </div>

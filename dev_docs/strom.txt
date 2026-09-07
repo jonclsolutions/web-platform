@@ -9,6 +9,7 @@
 │   │   │   ├── Controllers
 │   │   │   │   ├── Api
 │   │   │   │   │   ├── AccountActivationController.php
+│   │   │   │   │   ├── AttachmentDownloadController.php
 │   │   │   │   │   ├── Auth
 │   │   │   │   │   │   └── PasswordResetController.php
 │   │   │   │   │   ├── AuthController.php
@@ -24,7 +25,6 @@
 │   │   │   │   │   │   ├── DocumentSectionController.php
 │   │   │   │   │   │   ├── DocumentTypeController.php
 │   │   │   │   │   │   └── SiteConfigurationController.php
-│   │   │   │   │   ├── PublicFileDownloadController.php
 │   │   │   │   │   ├── Shop
 │   │   │   │   │   │   ├── ShopCategoryController.php
 │   │   │   │   │   │   ├── ShopCouponController.php
@@ -261,6 +261,7 @@
 │   │   └── Traits
 │   │       ├── HandlesAttachments.php
 │   │       ├── HandlesFileUploads.php
+│   │       ├── HandlesImportBatches.php
 │   │       └── LogsActivity.php
 │   ├── artisan
 │   ├── bootstrap
@@ -343,19 +344,17 @@
 │   ├── storage
 │   │   ├── app
 │   │   │   ├── private
-│   │   │   │   └── imports
-│   │   │   │       ├── 00cc83ec-61cb-4074-bd5a-755b51b86a58.json
-│   │   │   │       ├── 038bf1cb-4d5a-4be1-bac6-702f39df73be.csv
-│   │   │   │       ├── 2e613900-c57a-40d9-96ab-ae57a693e06b.json
-│   │   │   │       ├── 36b4902c-ac6e-4d38-9df8-c2854fcce025.json
-│   │   │   │       ├── 392427b6-8ad7-4b98-ad29-39c35892cfa7.json
-│   │   │   │       ├── 4ba158ac-e553-4a1d-9d8b-6604541943ba.csv
-│   │   │   │       ├── 515bd16d-f2bd-48d8-b8dd-81a1dff5a0f6.json
-│   │   │   │       ├── 68cc6c16-5d39-4eca-8e03-bf190400c6c5.csv
-│   │   │   │       ├── 77c00620-db81-4363-96e3-e3aa9cb0321d.json
-│   │   │   │       └── 8c5d2f2d-b1c7-49d5-b395-90480fb3e227.json
+│   │   │   │   ├── imports
+│   │   │   │   └── web
+│   │   │   │       ├── cv_files
+│   │   │   │       │   └── SYQ98atpTd270MGGUlkgSCwYmjIaZvUbxg4r94Ar.txt
+│   │   │   │       ├── raw_request_commissions
+│   │   │   │       │   └── tOWDg2jjPiOCz4KHxql1sAiQpO9N0mwDtvZ8rJZS.txt
+│   │   │   │       ├── sales_orders
+│   │   │   │       │   └── DRV6ZVHanq3ol91kem5XycC1uQplLX4HG5hGh1ut.txt
+│   │   │   │       └── tickets
+│   │   │   │           └── bcGgDUgkFxCGs5PSmkpt9PoHVf4URoEB8e1By1jZ.txt
 │   │   │   └── public
-│   │   │       ├── cv_files
 │   │   │       ├── orders
 │   │   │       ├── payment-methods-images
 │   │   │       │   ├── apple-pay.png
@@ -373,13 +372,10 @@
 │   │   │       │   ├── 1cd68d0c-3ffc-4488-9a2a-4125b9a79961.jpg
 │   │   │       │   ├── 3d982b3e-f2e1-4a0e-875e-7c2f5aaf41ef.jpg
 │   │   │       │   └── 8f3ac2af-82a0-4bf0-8049-06cb9cfabd04.jpg
-│   │   │       ├── raw_request_commissions
-│   │   │       ├── sales_orders
 │   │   │       ├── site-logos
 │   │   │       │   └── dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png
 │   │   │       ├── social-icons
 │   │   │       │   └── EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png
-│   │   │       ├── tickets
 │   │   │       ├── translation_images
 │   │   │       │   ├── shop
 │   │   │       │   │   └── czech-republic-default.png
@@ -398,6 +394,8 @@
 │   │   │   ├── testing
 │   │   │   └── views
 │   │   │       ├── c01436b0ab8e4d76735f9b9e42064cea.php
+│   │   │       ├── dabb2898a11fa784c3f9c20860c490c1.php
+│   │   │       ├── de9feb1432383d6768e1082fe3ff9509.php
 │   │   │       ├── d0eb0c286836f0d72964121b8011c144.php
 │   │   │       ├── d7c0f7e76430f808cb28d429fc735b3b.php
 │   │   │       ├── d73787b501c491196576390876d68bd9.php
@@ -714,6 +712,8 @@
 │   │   │   │   │       └── welcome-page.interface.ts
 │   │   │   │   ├── intranet
 │   │   │   │   │   └── knowledge-base
+│   │   │   │   │       ├── data
+│   │   │   │   │       │   └── kb-pages.data.ts
 │   │   │   │   │       ├── kb-article
 │   │   │   │   │       │   ├── kb-article.component.css
 │   │   │   │   │       │   ├── kb-article.component.html
@@ -724,31 +724,11 @@
 │   │   │   │   │       ├── knowledge-base.component.spec.ts
 │   │   │   │   │       ├── knowledge-base.component.ts
 │   │   │   │   │       ├── pages
-│   │   │   │   │       │   ├── contacts
-│   │   │   │   │       │   │   ├── contacts.component.css
-│   │   │   │   │       │   │   ├── contacts.component.html
-│   │   │   │   │       │   │   ├── contacts.component.spec.ts
-│   │   │   │   │       │   │   └── contacts.component.ts
-│   │   │   │   │       │   ├── introductions
-│   │   │   │   │       │   │   ├── introductions.component.css
-│   │   │   │   │       │   │   ├── introductions.component.html
-│   │   │   │   │       │   │   ├── introductions.component.spec.ts
-│   │   │   │   │       │   │   └── introductions.component.ts
 │   │   │   │   │       │   ├── news
 │   │   │   │   │       │   │   ├── news.component.css
 │   │   │   │   │       │   │   ├── news.component.html
 │   │   │   │   │       │   │   ├── news.component.spec.ts
 │   │   │   │   │       │   │   └── news.component.ts
-│   │   │   │   │       │   ├── sales-rep
-│   │   │   │   │       │   │   ├── sales-rep.component.css
-│   │   │   │   │       │   │   ├── sales-rep.component.html
-│   │   │   │   │       │   │   ├── sales-rep.component.spec.ts
-│   │   │   │   │       │   │   └── sales-rep.component.ts
-│   │   │   │   │       │   ├── security
-│   │   │   │   │       │   │   ├── security.component.css
-│   │   │   │   │       │   │   ├── security.component.html
-│   │   │   │   │       │   │   ├── security.component.spec.ts
-│   │   │   │   │       │   │   └── security.component.ts
 │   │   │   │   │       │   └── support-form
 │   │   │   │   │       │       ├── support-form.component.css
 │   │   │   │   │       │       ├── support-form.component.html
@@ -943,6 +923,8 @@
 │   │   │   │       ├── loading.service.ts
 │   │   │   │       ├── logging.service.spec.ts
 │   │   │   │       ├── logging.service.ts
+│   │   │   │       ├── permission-options.service.spec.ts
+│   │   │   │       ├── permission-options.service.ts
 │   │   │   │       ├── resource-cache.service.spec.ts
 │   │   │   │       ├── resource-cache.service.ts
 │   │   │   │       ├── role-options.service.spec.ts
@@ -1162,6 +1144,7 @@
 │   │   │       │   ├── graph-format.ts
 │   │   │       │   ├── input-definiton.ts
 │   │   │       │   ├── item-details-columns.ts
+│   │   │       │   ├── kb-content.ts
 │   │   │       │   ├── table-buttons.ts
 │   │   │       │   └── user.ts
 │   │   │       ├── legal-document.css
@@ -1254,4 +1237,4 @@
 └── server_conf
     └── configure-server.sh
 
-270 directories, 985 files
+268 directories, 970 files

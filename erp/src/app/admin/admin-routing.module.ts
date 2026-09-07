@@ -63,7 +63,8 @@ import { ShippingMethodsComponent } from './shop-pages/shipping-methods/shipping
 import { SuppliersComponent } from './shop-pages/suppliers/suppliers.component';
 import { PaymentMethodsComponent } from './shop-pages/payment-methods/payment-methods.component';
 import { EditEshopComponent } from './shop-pages/edit-eshop/edit-eshop.component';
-
+import { ShopWelcomePageComponent } from './shop-pages/shop-welcome-page/shop-welcome-page.component';
+import { WebWelcomePageComponent } from './web-pages/web-welcome-page/web-welcome-page.component';
 /**
  * @description Defines the navigation hierarchy and access permissions for the administration interface.
  * @usage Acts as the master route table for the admin module, protected by AuthGuard to prevent unauthenticated access.
@@ -93,6 +94,7 @@ const routes: Routes = [
           { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-support-tickets-view' } },
           { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-job-applications-view' } },
           { path: 'projects', component: ProjectsComponent, data: { permission: 'web-projects-view' } },
+          { path: 'welcome-page', component: WebWelcomePageComponent, data: { permission: 'web-welcome-page-view' } },
          ]
       },
 
@@ -131,7 +133,8 @@ const routes: Routes = [
           { path: 'suppliers', component: SuppliersComponent, data: { permission: 'shop-manage-suppliers' } },
           { path: 'coupons', component: CouponsComponent, data: { permission: 'shop-view-reports' } }, 
           { path: 'logs', component: ShopLogsComponent, data: { permission: 'shop-view-logs' } },
-          { path: 'edit-eshop', component: EditEshopComponent, data: { permission: 'shop-view-edit-eshop' } }
+          { path: 'edit-eshop', component: EditEshopComponent, data: { permission: 'shop-view-edit-eshop' } },
+          { path: 'welcome-page', component: ShopWelcomePageComponent, data: { permission: 'shop-welcome-page-view' } }
         ] 
       }
     ]

@@ -293,7 +293,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 6px 6px;
   font-size: 0.8rem;
   font-weight: 600;
   font-family: var(--ff);
@@ -418,11 +418,12 @@
 
 .map-module-switcher {
   display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
 .map-module-switcher button {
-  flex: 1;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -884,13 +885,16 @@
   70%  { box-shadow: 0 0 0 5px rgba(244, 63, 94, 0); }
   100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
 }
-
+.header-lang-switcher{
+  position: relative; display: inline-block;
+}
 /* ═══════════════════════════════════════════════════════════════
    RESPONZIVITA
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .time-hide-mobile { display: none !important; }
   .header-action-label { display: none; }
+  .header-lang-switcher{display: none;}
 
   /* Na mobilu se do řádku headeru vejde jen menu-toggle + logo + hamburger.
      Zbytek (uživatel, hodiny, přepínač modulů, maintenance, wiki/bug) se

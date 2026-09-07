@@ -50,6 +50,21 @@
  *   `[fieldOverrides]` input. This keeps the on-screen state honest with what
  *   submitting would actually persist, without the admin needing to close/reopen
  *   the modal to see it.
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * Komponenta DĚDÍ BaseDataComponent, proto `translationSection = 'administrators'` a
+ * zděděné `strings`/`t()`. Přidán LOKÁLNÍ override `t(key)` doplňující prefix
+ * `administrators.` (stejná oprava jako u EditRolesComponent/WebSettingsComponent -
+ * zděděná `BaseDataComponent.t(path)` čeká PLNOU cestu se sekcí, ne krátký klíč).
+ * Nahrazeny VŠECHNY natvrdo psané texty vlastní této komponentě - `Config.*`
+ * konstanty (TABLE_BUTTONS/TOOLBAR_BUTTONS/FORM_FIELDS/...) záměrně MIMO SCOPE
+ * tohoto kroku (budou řešeny samostatně jako *.config.ts factory funkce, stejně
+ * jako user-request.config.ts). Přepisy labelů uvnitř `toolbarButtons` getteru
+ * (Filtry/Skrýt filtry/Koš/Zobrazit aktivní) JSOU administrators-specifické (žijí
+ * přímo v této třídě, ne v configu) a byly migrovány stejně jako u
+ * UserRequestComponent. Info banner s <strong>bez hesla</strong> řešen rozdělením
+ * na prefix/bold/suffix v šabloně (stejný důvod jako edit-legal missing-banner -
+ * vyhnout se [innerHTML] jen kvůli tučnému textu).
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -110,7 +125,19 @@ interface EmailAccessRule {
 })
 export class AdministratorsComponent extends BaseDataComponent<any> implements OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Uživatelské účty';
+  protected override translationSection: string = 'administrators';
+
+  /**
+   * @refactor-note (2026-09) BUGFIX - viz hlavička souboru. Zděděná
+   * `BaseDataComponent.t(path)` čeká plnou cestu se sekcí; tenhle override doplní
+   * prefix `administrators.` automaticky, takže volání `this.t('xxx')` v celém
+   * souboru fungují s krátkým klíčem.
+   */
+  public override t(key: string): string {
+    return this.i18n.getValue(`administrators.${key}`);
+  }
+
+  get tableCaption(): string { return this.t('table_header_accounts'); }
 
   override apiEndpoint: string = 'core/users';
 
@@ -136,7 +163,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   showResetPasswordForm: boolean = false;
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
-  resetPasswordTitle: string = 'Resetovat heslo';
+  get resetPasswordTitle(): string { return this._resetPasswordTitle; }
+  private _resetPasswordTitle: string = '';
   filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
 
   roleOptions: { value: string; label: string }[] = [];
@@ -198,7 +226,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
@@ -214,7 +242,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
           updatedBtn.showIf = this.isSysadmin;
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
           updatedBtn.isActive = this.showTrashTable;
           break;
       }
@@ -237,6 +265,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   override ngOnInit(): void {
     super.ngOnInit();
+    this._resetPasswordTitle = this.t('reset_password_title_default');
     this.initWithAuthCheck(this.router);
     this.loadRoleOptions();
     this.loadRolesForces2fa();
@@ -566,8 +595,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       // checkbox state that would be silently discarded anyway.
       payload.permission_ids = [];
       this.alertDialogService.open(
-        'Role změněna',
-        'Role byla změněna, proto byla veškerá dodatečná oprávnění účtu vynulována. Pokud jsou potřeba, přiřaďte je prosím znovu.',
+        this.t('role_changed_title'),
+        this.t('role_changed_message'),
         'info'
       );
     } else if (Array.isArray(payload.permission_ids)) {
@@ -610,14 +639,14 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.formFieldOverrides = null; this.cd.markForCheck(); }))
       .subscribe({
         next: () => {
-          this.alertDialogService.open('Úspěch', payload.id ? 'Účet byl upraven.' : 'Účet byl vytvořen.', 'success');
+          this.alertDialogService.open(this.t('success_title'), payload.id ? this.t('account_updated') : this.t('account_created'), 'success');
           this.refreshData();
         }
       });
   }
 
   handleResetPasswordFormOpened(item: any): void {
-    this.resetPasswordTitle = `Resetovat heslo: ${item.user_email}`;
+    this._resetPasswordTitle = this.t('reset_password_title_with_email').replace('{email}', item.user_email);
     this.selectedItemForEdit = { id: item.id, old_password: '', new_password: '' };
     this.showResetPasswordForm = true;
     this.cd.markForCheck();
@@ -632,7 +661,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.dataHandler.put(`core/users/${formData.id}/change-password`, payload)
       .pipe(Core.finalize(() => { this.showResetPasswordForm = false; this.cd.markForCheck(); }))
       .subscribe({
-        next: () => this.alertDialogService.open('Úspěch', 'Heslo bylo změněno.', 'success')
+        next: () => this.alertDialogService.open(this.t('success_title'), this.t('password_changed'), 'success')
       });
   }
 
@@ -645,12 +674,12 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    */
   handleResendActivation(item: any): void {
     if (item.activated_at) {
-      this.alertDialogService.open('Info', 'Účet je již aktivovaný.', 'info');
+      this.alertDialogService.open(this.t('info_title'), this.t('account_already_active'), 'info');
       return;
     }
 
     this.dataHandler.post(`core/users/${item.id}/resend-activation`, {}).subscribe({
-      next: () => this.alertDialogService.open('Odesláno', 'Aktivační e-mail byl odeslán znovu.', 'success')
+      next: () => this.alertDialogService.open(this.t('sent_title'), this.t('activation_email_resent'), 'success')
     });
   }
 
@@ -705,7 +734,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       next: (setting: any) => {
         this.emailAccessPolicySaving = false;
         this.primaryEmailDomain = setting?.primary_email_domain ?? this.primaryEmailDomain;
-        this.alertDialogService.open('Uloženo', 'Hlavní e-mailová doména byla uložena.', 'success');
+        this.alertDialogService.open(this.t('saved_title'), this.t('primary_domain_saved'), 'success');
         this.cd.markForCheck();
       },
       error: () => {

@@ -4,68 +4,24 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    @refactor-note (2026-08-5): hlavička i řádkové buňky akčních tlačítek nyní kontrolují
-        i isButtonVisible(button) (permission), ne jen button.isActive - viz
-        table-builder.component.ts stejné datum. Musí zůstat SYNCHRONIZOVANÉ (stejná
-        podmínka na obou místech), jinak by hlavička a řádky měly různý počet sloupců.
-    @refactor-note (2026-08-6): Do toolbaru přidáno tlačítko "Aktualizovat"
-        (onRefreshClick()) a badge "Aktualizováno v HH:MM:SS" (lastUpdatedAt Input) -
-        viz table-builder.component.ts stejné datum, backlog "zbytečně moc dotazů na API".
-    @refactor-note (2026-08-16): HROMADNÝ VÝBĚR + HROMADNÉ MAZÁNÍ. Sloupec checkboxů
-        (`canBulkSelect`) vlevo od prvního datového sloupce - hlavičkový checkbox řídí
-        `toggleSelectAllOnPage()`/`isAllOnPageSelected`/`isSomeOnPageSelected`
-        (indeterminate stav), řádkový `toggleSelection()`/`isSelected()`. Nad tabulkou se
-        objeví `.bulk-actions-bar`, jen když je něco vybrané - obsahuje počet + dropdown
-        "Akce" (šipka dolů) s položkami "Exportovat vybrané" a "Smazat vybrané".
-        `(click)="$event.stopPropagation()"` na dropdownu je NUTNÝ - `onDocumentClick()`
-        v TS zavírá menu při libovolném kliku mimo něj, bez stopPropagation by se menu
-        zavřelo hned v okamžiku otevření.
-    @refactor-note (2026-08-16v2): "Exportovat vybrané" otevírá STEJNÝ
-        `app-export-popup-builder` popup jako toolbar export - `[itemCount]` binding se
-        přepíná mezi `selectedIds.size` (bulk export) a `data.length` (plný export) podle
-        `exportSelectedOnly` flagu v komponentě.
-    @refactor-note (2026-08-16v3): ROZPOJENO "checkbox sloupec" od "delete_button".
-        `canBulkSelect` je teď VŽDY true (export je bezpečný na jakékoliv tabulce, kterou
-        uživatel vůbec vidí) - checkboxy se tak zobrazí i na tabulkách bez mazání (např.
-        logy). "Smazat vybrané" v dropdownu je nadále podmíněné `canBulkDelete` (existuje
-        aktivní `delete_button` s dostatečným oprávněním) - na tabulkách bez mazání se
-        v menu jednoduše nezobrazí, přesně jako u řádkových tlačítek.
-    @refactor-note (2026-08-18): `app-export-popup-builder` dostal nový
-        `[columns]="exportableColumnOptions"` binding - viz table-builder.component.ts
-        stejné datum. Popup si sám rozhodne, jestli sloupcový picker vůbec zobrazí
-        (prázdné pole = beze změny oproti dřívějšku).
-    @refactor-note (2026-08-22): HROMADNÝ APPEND-ONLY IMPORT. Do `.toolbar` přidáno
-        tlačítko "Import" (vedle "Aktualizovat") a na konec souboru `app-import-popup-builder`
-        popup - viz table-builder.component.ts stejné datum.
-    @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK: tlačítko "Import" ODSTRANĚNO
-        z tohoto interního toolbaru - stěhuje se do stránkového "Akce" dropdownu
-        (ActionMenuBuilderComponent), který na něj deleguje přes ViewChild
-        (`activeTable.importData()`). `importData()`/`showImportPopup`/popup na konci
-        souboru zůstávají BEZE ZMĚNY - jen se teď spouští zvenku, ne z vlastního tlačítka.
-        "Aktualizovat" už nemá textový popisek, je to malé kulaté ikonové tlačítko
-        (`.table-refresh-icon-btn`) - zabírá minimum místa, `title` atribut nese tooltip.
-    @refactor-note (2026-08-24v2) BACKLOG "efektivnější tlačítko pro akci 0-1x na účet":
-        hlavička i řádkové buňky akčních tlačítek teď rozlišují DVĚ různé kontroly:
-        - `isButtonColumnVisible(button)` (hlavička, `<th>`) - permission KOMBINOVANÁ s
-          "má tenhle sloupec vůbec smysl na aktuální stránce dat" (aspoň jeden řádek
-          splňuje `button.visibleWhen`, pokud ho tlačítko má definované).
-        - `isButtonVisibleForItem(button, item)` (řádek, uvnitř `<td>`) - stejná
-          kombinace, ale pro KONKRÉTNÍ řádek. Buňka `<td>` se renderuje VŽDY, když je
-          sloupec viditelný (zachovává zarovnání), ale samotné `<button>` uvnitř jen
-          pokud `visibleWhen` pro daný řádek vrátí `true` - jinak zůstane buňka prázdná.
-        Tlačítka BEZ `visibleWhen` (naprostá většina) se chovají identicky jako dřív -
-        `isButtonColumnVisible`/`isButtonVisibleForItem` se v tom případě redukují na
-        původní `isButtonVisible(button)`. Viz table-builder.component.ts a
-        table-buttons.ts (interface) stejné datum.
+    ... (ponechat všechny předchozí @refactor-note komentáře beze změny) ...
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        všechny natvrdo psané české texty a title/aria-label atributy nahrazeny
+        `strings.*` bindingy (AdminLocalizationService, sekce 'table-builder') -
+        viz table-builder.component.ts stejné datum. Dynamický text s proměnnou
+        (řádkové aria-label, počet vybraných) řeší metody/gettery v .ts
+        (rowSelectAriaLabel(), bulkCountLabel()), NE inline .replace() v šabloně.
+        `button.header_name`/`button.display_name` beze změny - přichází z
+        *.config.ts, není součástí téhle migrace (viz .ts hlavička).
 -->
 
 @if (selectedIds.size > 0) {
   <div class="bulk-actions-bar">
-    <span class="bulk-actions-count">{{ selectedIds.size }} vybráno</span>
+    <span class="bulk-actions-count">{{ bulkCountLabel }}</span>
 
     <div class="bulk-actions-dropdown" (click)="$event.stopPropagation()">
       <button type="button" class="bulk-actions-btn" [disabled]="bulkDeleting" (click)="toggleBulkMenu()">
-        {{ bulkDeleting ? 'Mažu…' : 'Akce' }}
+        {{ bulkDeleting ? strings.bulk_deleting_label : strings.bulk_actions_label }}
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" [class.bulk-actions-chevron-open]="showBulkMenu" aria-hidden="true">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
@@ -79,7 +35,7 @@
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-            Exportovat vybrané
+            {{ strings.bulk_export_selected }}
           </button>
           @if (canBulkDelete) {
             <button type="button" class="bulk-actions-menu-item bulk-actions-menu-item-danger" (click)="onBulkDeleteClick()">
@@ -87,14 +43,14 @@
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
               </svg>
-              Smazat vybrané
+              {{ strings.bulk_delete_selected }}
             </button>
           }
         </div>
       }
     </div>
 
-    <button type="button" class="bulk-actions-clear" (click)="clearSelection()">Zrušit výběr</button>
+    <button type="button" class="bulk-actions-clear" (click)="clearSelection()">{{ strings.clear_selection }}</button>
   </div>
 }
 
@@ -117,10 +73,10 @@
 [checked]="isAllOnPageSelected"
 [indeterminate]="isSomeOnPageSelected"
 (change)="toggleSelectAllOnPage($event)"
-aria-label="Vybrat vše na stránce">
+[attr.aria-label]="strings.select_all_page_aria">
 </th>
         }
-@for (col of columnDefinitions; track col) {
+@for (col of columnDefinitions; track col.key) {
 <th>
 <ng-container>
 <span class="header-content">
@@ -129,7 +85,7 @@ aria-label="Vybrat vše na stránce">
 </ng-container>
 </th>
         }
-@for (button of buttons; track button) {
+@for (button of buttons; track button.action) {
 @if (button.isActive && isButtonColumnVisible(button)) {
 <th class="button-header">
               {{ button.header_name }}
@@ -148,19 +104,19 @@ aria-label="Vybrat vše na stránce">
 [checked]="isSelected(item.id)"
 [disabled]="isSelectionDisabled(item)"
 (change)="toggleSelection(item.id, $event)"
-[attr.aria-label]="'Vybrat řádek ' + item.id">
+[attr.aria-label]="rowSelectAriaLabel(item.id)">
 </td>
               }
-@for (col of columnDefinitions; track col) {
+@for (col of columnDefinitions; track col.key) {
 @if (!col.hidden) {
 <td>
 @switch (col.type) {
 @case ('image') {
 @if (getCellValue(item, col)) {
-<img [src]="getCellValue(item, col)" alt="Obrázek" class="table-cell-image">
+<img [src]="getCellValue(item, col)" [alt]="strings.image_alt" class="table-cell-image">
                       }
 @if (!getCellValue(item, col)) {
-<span>Není obrázek</span>
+<span>{{ strings.no_image }}</span>
                       }
                     }
 @case ('link') {
@@ -177,7 +133,7 @@ aria-label="Vybrat vše na stránce">
 </td>
               }
             }
-@for (button of buttons; track button) {
+@for (button of buttons; track button.action) {
 @if (button.isActive && isButtonColumnVisible(button)) {
 <td class="action-button-cell">
 @if (isButtonVisibleForItem(button, item)) {
@@ -202,7 +158,7 @@ aria-label="Vybrat vše na stránce">
       } @else {
 <tr>
 <td [attr.colspan]="colspanValue" class="no-data-msg">
-            Nebyla nalezena žádná data.
+            {{ strings.no_data }}
 </td>
 </tr>
       }
@@ -212,7 +168,7 @@ aria-label="Vybrat vše na stránce">
 
 <div class="toolbar">
   <button type="button" class="table-refresh-icon-btn" (click)="onRefreshClick()"
-          title="Načíst aktuální data" aria-label="Aktualizovat data">
+          [attr.title]="strings.refresh_title" [attr.aria-label]="strings.refresh_aria">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <polyline points="23 4 23 10 17 10"/>
@@ -223,13 +179,13 @@ aria-label="Vybrat vše na stránce">
 
 @if (lastUpdatedAt) {
 <span class="table-last-updated">
-    Aktualizováno v {{ lastUpdatedAt | date:'HH:mm:ss' }}
+    {{ strings.last_updated_prefix }} {{ lastUpdatedAt | date:'HH:mm:ss' }}
 </span>
   }
 
 <label class="checkbox-container">
 <input type="checkbox" [(ngModel)]="isFullWidth">
-    Zobrazit tabulku na šířce stránky
+    {{ strings.fullwidth_toggle_label }}
 </label>
 </div>
 

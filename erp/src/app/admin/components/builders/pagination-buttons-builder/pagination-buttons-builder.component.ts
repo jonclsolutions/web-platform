@@ -25,9 +25,9 @@
  * šablon není potřeba.
  */
 
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms'; 
-
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 /**
  * @description Manages pagination state, rendering a sliding window of page buttons and page-size selection.
  * @usage Included in admin list views to enable efficient navigation through large datasets.
@@ -58,7 +58,29 @@ export class PaginationButtonsBuilderComponent {
 
   @Output() pageChange = new EventEmitter<number>();
   @Output() itemsPerPageChange = new EventEmitter<number>();
+  public readonly i18n = inject(AdminLocalizationService);
 
+  /**
+   * @description Merged `shared` + `pagination` i18n section - viz refactor-note
+   * v hlavičce souboru.
+   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   */
+  public get strings(): any {
+    return this.i18n.getMergedSection('pagination');
+  }
+
+  /**
+   * @description Sestavená věta "Zobrazuji X - Y z celkem Z záznamů." se třemi
+   * interpolovanými hodnotami - viz refactor-note v hlavičce souboru. Šablona pro
+   * `totalItems === 0` případ (žádné záznamy) používá `strings.no_records` přímo,
+   * tenhle getter se pro ten stav nevolá.
+   */
+  get rangeText(): string {
+    return this.strings.showing_range
+      .replace('{start}', String(this.rangeStart))
+      .replace('{end}', String(this.rangeEnd))
+      .replace('{total}', String(this.totalItems));
+  }
   /**
    * @description Počáteční číslo rozsahu ("Zobrazuji X - ..."). `0` u prázdné tabulky -
    * šablona v tom případě zobrazí speciální hlášku místo rozsahu (viz .html).

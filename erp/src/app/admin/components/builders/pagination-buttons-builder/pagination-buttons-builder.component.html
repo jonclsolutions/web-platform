@@ -4,25 +4,27 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    @bugfix-note (2026-08-31): Rozsah "Zobrazuji X-Y z Z záznamů" nyní čte
-        `rangeStart`/`rangeEnd` gettery (odvozené z currentPage/itemsPerPage/totalItems)
-        místo dřívějšího přímého výpočtu z `dataLength` - viz
-        pagination-buttons-builder.component.ts stejné datum. Přidána @if větev pro
-        `totalItems === 0` (dřív se i u prázdné tabulky zobrazoval nesmyslný "1-0 z 0").
+    (Earlier bugfix-note for rangeStart/rangeEnd calculation is unchanged - see
+    version history.)
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY uživatelsky viditelné texty nahrazeny `strings.xxx` binding -
+        viz pagination-buttons-builder.component.ts refactor-note stejné datum.
+        Rozsahová věta jde přes vypočtený `rangeText` getter (interpolace
+        `{start}`/`{end}`/`{total}`), ne přímo přes binding.
 -->
 
 <div class="pagination-controls-wrapper">
   <div class="pagination-info text-sm text-gray-700 p-b-10">
     @if (totalItems === 0) {
-      Nebyly nalezeny žádné záznamy.
+      {{ strings.no_records }}
     } @else {
-      Zobrazuji {{ rangeStart }} - {{ rangeEnd }} z celkem {{ totalItems }} záznamů.
+      {{ rangeText }}
     }
   </div>
 
   <div class="pagination-actions">
     <div class="items-per-page-container flex items-center space-x-2 pg-m p-b-10">
-      <label for="itemsPerPage" class="text-sm text-gray-700">Položek na stránku:</label>
+      <label for="itemsPerPage" class="text-sm text-gray-700">{{ strings.items_per_page_label }}</label>
       <select id="itemsPerPage" (change)="onItemsPerPageSelect($event)"
         class="items-per-page-select" [ngModel]="itemsPerPage">
         <option [value]="5">5</option>
@@ -33,7 +35,7 @@
       </select>
     </div>
 
-    <nav class="pagination-nav" aria-label="Pagination Navigation">
+    <nav class="pagination-nav" [attr.aria-label]="strings.nav_aria">
       <button (click)="onPageClick(currentPage - 1)"
         [disabled]="currentPage === 1"
         class="pagination-button nav-arrow">

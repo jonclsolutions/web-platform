@@ -93,6 +93,31 @@ get btnText(): string {
 if (!this.t) return '...';
 return this.isLoading() ? this.t.buttons.sending : this.t.buttons.send;
   }
+    /**
+   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+   * (public strana): MultiFileUploadComponent je sdílená mezi public webem a adminem
+   * a sama neinjektuje žádnou i18n službu - texty jí musí poslat konzument (viz
+   * multi-file-upload.component.ts refactor-note 2026-09). `t` je zde načítáno
+   * asynchronně (BasePublicComponent), takže getter musí přežít i chvíli PŘED
+   * načtením - `?.` + `Partial<MultiFileUploadTexts>` na straně přijímací komponenty
+   * zajistí, že chybějící klíče doplní její vlastní fallback (DEFAULT_MULTI_FILE_UPLOAD_TEXTS),
+   * ne že by tahle stránka musela cokoliv sama defaultovat.
+   */
+  get attachmentUploaderTexts() {
+    const s = this.t?.attachment_uploader;
+    if (!s) return {};
+    return {
+      existingSectionTitle: s.existing_section_title,
+      removeExistingTitle: s.remove_existing_title,
+      dropzoneLabel: s.dropzone_label,
+      errorMaxFilesWithExisting: s.error_max_files_with_existing,
+      errorMaxFiles: s.error_max_files,
+      errorFileTooLarge: s.error_file_too_large,
+      errorTotalSizeExceeded: s.error_total_size_exceeded,
+      totalLabel: s.total_label,
+      totalNewSuffix: s.total_new_suffix,
+    };
+  }
 
 /**
    * @description Přijímá aktuální seznam souborů z MultiFileUploadComponent. Komponenta

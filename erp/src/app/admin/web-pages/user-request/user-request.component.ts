@@ -12,59 +12,33 @@
  * - GraphBuilderComponent: Generic date-range analytics/report popup (charts + PDF export) - viz refactor-note (2026-08-26).
  * - USER_REQUEST Config: Domain-specific definitions for form fields, table columns, and button configurations.
  *
- * @refactor-note (2026-08-19) BACKLOG "editovatelný obsah potvrzovacího e-mailu":
- * přidán modal "Potvrzovací e-mail" (`openEmailTemplateEditor()`) - jazykové taby
- * (stejný vzor jako `WebSettingsComponent` - `emailTemplateLanguages`/
- * `emailTemplateCurrentLang`), 3 editovatelná pole (nadpis/úvod/závěr, každé i18n
- * objekt keyed jazykovým kódem) proti novým endpointům
- * `GET/PUT web/settings/raw-request-email-template` (`WebSiteSettingController`).
- * "Souhrn" (rekapitulace požadavku v e-mailu) záměrně NENÍ editovatelný - je to
- * generovaný obsah, viz poznámka v šabloně modalu. Gatováno stejným oprávněním jako
- * editace požadavku (`web-user-requests-update`) - žádný nový permission klíč.
- * @bugfix-note (2026-08-19v3) SKUTEČNÁ PŘÍČINA "nejde psát do inputů/nejde
- * resizovat textarea": overlay má `(mousedown)="$event.target === $event.currentTarget
- * && closeEmailTemplateEditor()"`. `mousedown` VŽDY bubbla až k overlayi bez ohledu na
- * to, kde uvnitř karty vznikl - když se klikne na textarea, výraz se vyhodnotí jako
- * `false` (target ≠ currentTarget, `&&` se zkrátí, `closeEmailTemplateEditor()` se
- * nezavolá). Angular ale na `(event)="výraz"`, který vrátí `false`, reaguje jako na
- * klasické `onclick="return false"` a zavolá `event.preventDefault()` na PŮVODNÍ
- * nativní event - to zruší výchozí prohlížečovou akci mousedown, což je jak nastavení
- * focusu (nejde psát), tak zahájení resize dragu (nejde roztáhnout textarea). Předchozí
- * `(click)="$event.stopPropagation()"` na kartě tohle neřešilo, protože zastavovalo
- * ŠPATNÝ typ eventu (`click`, ne `mousedown`) - opraveno na
- * `(mousedown)="$event.stopPropagation()"`, takže `mousedown` z karty už k overlayi
- * vůbec nedobublá a `preventDefault()` se nikdy nezavolá. GraphBuilderComponent
- * (2026-08-26) používá STEJNÝ vzor od začátku - viz onOverlayMouseDown() tam.
+ * (Earlier refactor-notes for the editable e-mail confirmation template modal, the
+ * mousedown/textarea focus bugfix, toolbar consolidation into ActionMenuBuilderComponent,
+ * the graph-builder report popup, and the duplicate error-toast bugfix are unchanged -
+ * see version history, omitted here for brevity.)
  *
- * @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK (viz action-menu-builder
- * a user-request.config.ts stejné datum): `<app-button-builder>` v šabloně nahrazeno
- * `<app-action-menu-builder>` - stejný `toolbarButtons` config, jen se teď vykresluje
- * jako jedno tlačítko "Akce" s vysouvacím seznamem místo řady pilulek vedle sebe.
- * `handleToolbarAction()` dostal novou větev `triggerImport` -> deleguje na
- * `this.activeTable.importData()` (stejný princip jako `exportActiveTable` ->
- * `this.activeTable.exportToCSV()`). Tlačítko "Aktualizovat" zmizelo z hlavního
- * toolbaru úplně - žije teď jen jako malá ikona uvnitř `TableBuilderComponent`
- * (`table-refresh-icon-btn`), tahle stránka ho nijak neřídí.
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * (Earlier note about the modal/CRUD messages/toolbar translation is unchanged.)
  *
- * @refactor-note (2026-08-26) BACKLOG "graph-builder: grafy a reporty nad tabulkami":
- * přidán modal "Grafy a reporty" (`openGraphBuilder` toolbar akce, `showGraphBuilder`
- * flag) - generický `<app-graph-builder>` popup (viz graph-builder.component.ts),
- * řízený `graphColumns` getterem, který z `USER_REQUEST_DETAILS_COLUMNS` vybírá jen
- * sloupce s `chartable: true` (viz user-request.config.ts a item-details-columns.ts
- * stejné datum). Gatováno `web-user-requests-view` (čtecí, read-only report), ne
- * `-update`/`-create` jako ostatní nová tlačítka výše - report nic nemění, jen čte
- * a agreguje existující data. `GraphBuilderComponent` je zde importován JEDNOTLIVĚ,
- * stejně jako `ActionMenuBuilderComponent` (viz poznámka u @Component níže) - dokud
- * nejsou obě součástí `SHARED_UI_BUILDERS` bundle.
- *
- * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněna
- * VŠECHNA vlastní `alertDialogService.open('Chyba', ...)` volání z `error:` callbacků
- * (handleFormSubmitted, handleViewDetails, openEmailTemplateEditor, saveEmailTemplate) -
- * `DataHandler.handleError()` je od tohoto data JEDINÉ a AUTORITATIVNÍ místo, které smí
- * chybový toast zobrazit (viz data-handler.service.ts bugfix-note stejné datum).
- * Dřívější duplicitní volání způsobovala DVĚ červené hlášky na jednu chybu. Reset
- * stavových flagů (emailTemplateLoading/emailTemplateSaving) ZŮSTÁVÁ - odstraněno je
- * výhradně volání `alertDialogService.open(...)`.
+ * @bugfix-note (2026-09v3) KRITICKÝ BUG - NG0956 NEKONEČNÝ CYKLUS + "Cannot load
+ * text" NATRVALO: `buttons`/`formFields`/`userRequestColumns`/atd. byly PŮVODNĚ
+ * GETTERY volající `Config.create*(this.i18n)` PŘI KAŽDÉM čtení (tzn. při každém
+ * change-detection průchodu). Factory funkce vrací pokaždé NOVÉ pole NOVÝCH objektů
+ * - `@for (col of columnDefinitions; track col)` v TableBuilderComponent používal
+ * track-by-identity, takže Angular pokaždé viděl "jinou kolekci" a zbořil/znovu
+ * vytvořil celou tabulku (NG0956), což vyvolalo další CD cyklus -> nekonečná smyčka.
+ * OPRAVA ČÁST 1 (jinde, mimo tento soubor): `table-builder.component.html`
+ * `@for` track výrazy přepsány na `track col.key`/`track button.action` (stabilní
+ * klíč, ne identita objektu).
+ * OPRAVA ČÁST 2 (tento soubor): gettery nahrazeny OBYČEJNÝMI POLI, PŘIŘAZENÝMI
+ * VÝHRADNĚ UVNITŘ KONSTRUKTORU (NE jako field initializer nad konstruktorem - field
+ * initializery běží při vytvoření instance a NEPŘEPOČÍTAJÍ se při dalších emitech
+ * `translations$`). Konstruktor navíc subscribuje `this.i18n.translations$` - jde o
+ * `BehaviorSubject`, takže subscribe OKAMŽITĚ dostane aktuální (byť případně ještě
+ * nenačtenou/`null`) hodnotu, a znovu se spustí při KAŽDÉM dalším emitu (úspěšné
+ * načtení JSONu po HTTP requestu, i budoucí přepnutí jazyka) - pole se tak naplní
+ * správnými texty, jakmile JSON skutečně dorazí, i když v okamžiku prvního
+ * spuštění subscribe callbacku ještě `null` byl.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -121,17 +95,28 @@ interface EmailTemplateState {
 })
 export class UserRequestComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+  protected override translationSection: string = 'user-request';
 
-  tableCaption: string = 'Webový formulář';
+  public override t(key: string): string {
+    return this.i18n.getValue(`user-request.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'web/raw_request_commissions';
 
-  buttons = Config.USER_REQUEST_BUTTONS;
-  formFields = Config.USER_REQUEST_FORM_FIELDS;
-  userRequestColumns = Config.USER_REQUEST_COLUMNS;
-  trashUserRequestColumns = Config.USER_REQUEST_TRASH_COLUMNS;
-  filterColumns = Config.USER_REQUEST_FILTER_COLUMNS;
-  detailsColumns = Config.USER_REQUEST_DETAILS_COLUMNS;
+  /**
+   * @bugfix-note (2026-09v3) Prázdné výchozí hodnoty - naplní se VÝHRADNĚ přes
+   * `translations$` subscribe v konstruktoru, viz refactor-note v hlavičce souboru.
+   * NIKDY nepřepisovat na gettery (NG0956 riziko) ani na field-initializer volání
+   * `Config.create*()` přímo tady (proběhne příliš brzy, jen jednou).
+   */
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  userRequestColumns: Core.ColumnDefinition[] = [];
+  trashUserRequestColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
@@ -154,21 +139,25 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * `App\Support\Mail\RawRequestEmailTemplate` (backend). Použity jako (1) placeholdery
    * v prázdných polích a (2) fallback v živém náhledu, když admin pro daný jazyk (ani
    * pro 'cz') nic nevyplnil - přesně stejná logika, jakou použije skutečný odeslaný mail.
+   * @note Getter je zde v pořádku (NE pole) - jednoduchý plochý objekt s primitivy,
+   * ne pole objektů čtené přes `@for`/`track`, takže NG0956 riziko se ho netýká.
    */
-  private readonly emailTemplateDefaults = {
-    subject: 'Vaše poptávka byla přijata',
-    title: 'Vaše poptávka byla přijata',
-    intro: 'děkujeme za Vaši poptávku. Byla úspěšně přijata a náš tým se jí bude v nejbližší době věnovat.',
-    outro: 'V případě dotazů nás neváhejte kontaktovat.',
-    greeting: 'Dobrý den,',
-    summaryHeader: 'Rekapitulace poptávky',
-    labelThema: 'Téma',
-    labelEmail: 'Kontaktní e-mail',
-    labelPhone: 'Telefon',
-    labelDescription: 'Popis požadavku',
-    labelAttachments: 'Přiložené soubory',
-    labelDate: 'Datum přijetí',
-  };
+  private get emailTemplateDefaults() {
+    return {
+      subject: this.t('email_tpl_default_subject'),
+      title: this.t('email_tpl_default_title'),
+      intro: this.t('email_tpl_default_intro'),
+      outro: this.t('email_tpl_default_outro'),
+      greeting: this.t('email_tpl_default_greeting'),
+      summaryHeader: this.t('email_tpl_default_summary_header'),
+      labelThema: this.t('email_tpl_default_label_thema'),
+      labelEmail: this.t('email_tpl_default_label_email'),
+      labelPhone: this.t('email_tpl_default_label_phone'),
+      labelDescription: this.t('email_tpl_default_label_description'),
+      labelAttachments: this.t('email_tpl_default_label_attachments'),
+      labelDate: this.t('email_tpl_default_label_date'),
+    };
+  }
 
   /** Ukázková (fiktivní) data rekapitulace pro živý náhled - žádný skutečný požadavek v tomto kontextu neexistuje. */
   readonly emailTemplatePreviewSample = {
@@ -186,20 +175,23 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   showGraphBuilder = false;
 
   /**
-   * @description Chartable podmnožina `USER_REQUEST_DETAILS_COLUMNS` namapovaná na
-   * minimální tvar, který `GraphBuilderComponent` potřebuje. Sloupce s osobními údaji
-   * (email, telefon, volný text) v `USER_REQUEST_DETAILS_COLUMNS` záměrně NEMAJÍ
-   * `chartable: true` - report tak z podstaty configu nikdy neobsahuje PII, viz
-   * item-details-columns.ts (2026-08-26).
+   * @description Chartable podmnožina `detailsColumns` namapovaná na minimální
+   * tvar, který `GraphBuilderComponent` potřebuje.
+   * @note Getter je v pořádku - GraphBuilderComponent si sám v `ngOnChanges()`
+   * hlídá "stejná množina klíčů = stejná kolekce" (viz `sameColumnKeySet()`), takže
+   * nová reference pole zde NEZPŮSOBÍ zbytečné překreslení, na rozdíl od
+   * TableBuilderComponent dřív.
    */
-     readonly graphColumns: GraphColumnOption[] = Config.USER_REQUEST_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  get graphColumns(): GraphColumnOption[] {
+    return this.detailsColumns
+      .filter(col => col.chartable === true)
+      .map(col => ({
+        key: col.key,
+        label: col.displayName,
+        aggregation: col.chartAggregation ?? 'count',
+        possibleValues: col.chartPossibleValues
+      }));
+  }
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -208,6 +200,26 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    /**
+     * @bugfix-note (2026-09v3) VÝHRADNÍ místo, kde se `buttons`/`formFields`/atd.
+     * plní - `translations$` je BehaviorSubject, takže tenhle subscribe:
+     * 1) proběhne OKAMŽITĚ s aktuální (možná ještě `null`) hodnotou,
+     * 2) proběhne ZNOVU při každém dalším emitu (úspěšné doražení JSONu po HTTP
+     *    requestu, budoucí přepnutí jazyka) a přepíše pole správnými texty.
+     * Díky tomu i konzumenti (TableBuilderComponent), kteří dřív viděli
+     * "Cannot load text" natrvalo, dostanou správný text hned, jak JSON dorazí.
+     */
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createUserRequestButtons(this.i18n);
+      this.formFields = Config.createUserRequestFormFields(this.i18n);
+      this.userRequestColumns = Config.createUserRequestColumns(this.i18n);
+      this.trashUserRequestColumns = Config.createUserRequestTrashColumns(this.i18n);
+      this.filterColumns = Config.createUserRequestFilterColumns(this.i18n);
+      this.detailsColumns = Config.createUserRequestDetailsColumns(this.i18n);
+      this.cd.markForCheck();
+    });
   }
 
   /**
@@ -215,7 +227,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * @returns Array of button objects with applied logic for visibility and state labeling.
    */
   get toolbarButtons(): Core.Button[] {
-    return Config.USER_REQUEST_TOOLBAR_BUTTONS.map(btn => {
+    return Config.createUserRequestToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
 
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
@@ -224,7 +236,9 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible
+            ? this.t('toolbar_hide_filters')
+            : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
@@ -235,7 +249,9 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
           }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable
+            ? this.t('toolbar_show_active')
+            : this.t('toolbar_show_trash');
           updatedBtn.isActive = this.showTrashTable;
           break;
       }
@@ -345,7 +361,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       })
     ).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.alertDialogService.open(this.t('crud_success_title'), formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'), 'success');
         this.refreshData();
       }
     });
@@ -414,6 +430,8 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       },
       error: () => {
         // Neblokující - bez seznamu jazyků zůstane aspoň výchozí 'cz' tab funkční.
+        // Název jazyka samotného ('Čeština') ZŮSTÁVÁ nepřeložen - viz refactor-note
+        // (2026-09) v hlavičce souboru.
         this.emailTemplateLanguages = [{ code: 'cz', name: 'Čeština' }];
         this.ensureLabelsForLang('cz');
         this.cd.markForCheck();
@@ -491,7 +509,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       next: () => {
         this.emailTemplateSaving = false;
         this.showEmailTemplateModal = false;
-        this.alertDialogService.open('Uloženo', 'Šablona potvrzovacího e-mailu byla uložena.', 'success');
+        this.alertDialogService.open(this.t('email_tpl_saved_title'), this.t('email_tpl_saved_message'), 'success');
         this.cd.markForCheck();
       },
       error: () => {

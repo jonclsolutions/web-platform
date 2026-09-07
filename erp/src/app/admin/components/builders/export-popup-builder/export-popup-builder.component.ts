@@ -13,6 +13,7 @@
  * - CommonModule: @if/@for control flow.
  * - DomSanitizer: Safely renders inline SVG icons via [innerHTML].
  * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
+ * - AdminLocalizationService: Statické i18n admin UI.
  *
  * @refactor-note (2026-08-18) SLOUPCOVÝ VÝBĚR PŘI EXPORTU - viz backlog task "export:
  * uživatelský výběr sloupců přes checkboxy". Přidán `@Input() columns`.
@@ -37,14 +38,24 @@
  * `scrollLockCount` + přímé `document.body.style.overflow`, teď deleguje na sdílený
  * `ScrollLockService` (stejný mechanismus jako u všech ostatních overlay komponent -
  * viz scroll-lock.service.ts).
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * Ruční injection AdminLocalizationService + `strings`/`subtitleText` getter -
+ * viz `{count}` interpolace v `subtitleText` (jediné místo v komponentě, kde i18n
+ * text nese proměnnou).
+ *
+ * @refactor-note (2026-09v2) BACKLOG "žádný český fallback": `EXPORT_FORMAT_OPTIONS`
+ * (statická konstanta) byla ODSTRANĚNA z export-format.ts. `private readonly
+ * formatOptions` pole nahrazeno getterem volajícím `createExportFormatOptions
+ * (this.i18n)` - viz export-format.ts refactor-note (2026-09v2).
  */
 
 import { Component, EventEmitter, Input, Output, OnChanges, OnInit, OnDestroy, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { ExportFormat, EXPORT_FORMAT_OPTIONS, ExportFormatOption } from '../../../../shared/interfaces/export-format';
+import { ExportFormat, createExportFormatOptions, ExportFormatOption } from '../../../../shared/interfaces/export-format';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
-
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 /**
  * @description Minimal shape needed to render one row in the column-picker checklist -
  * intentionally NOT the full `ColumnDefinition` (this component has no reason to know
@@ -129,13 +140,42 @@ export class ExportPopupBuilderComponent implements OnChanges, OnInit, OnDestroy
    */
   selectedColumnKeys = new Set<string>();
 
+  public readonly i18n = inject(AdminLocalizationService);
   /** @description Stav přepínače "Exportovat v surovém formátu" - viz refactor-note (2026-08-23). */
   rawFormat = false;
 
   private sanitizer = inject(DomSanitizer);
   private scrollLock = inject(ScrollLockService);
-  private readonly formatOptions = EXPORT_FORMAT_OPTIONS;
 
+  /**
+   * @refactor-note (2026-09v2) `private readonly formatOptions` -> getter, ať se
+   * `description` texty přepočítají po přepnutí admin jazyka; `EXPORT_FORMAT_OPTIONS`
+   * (statický deprecated fallback) byl odstraněn z export-format.ts.
+   */
+  private get formatOptions(): ExportFormatOption[] {
+    return createExportFormatOptions(this.i18n);
+  }
+
+  /**
+   * @description Merged `shared` + `export-popup` i18n section - viz refactor-note
+   * (2026-09) v hlavičce souboru.
+   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   */
+  get strings(): any {
+    return this.i18n.getMergedSection('export-popup');
+  }
+
+  /**
+   * @description Subtitle textu s interpolovaným počtem záznamů - jediné místo
+   * v komponentě, kde se do i18n textu vkládá proměnná (`{count}`), řešeno prostým
+   * `.replace()` (stejný vzor jako `PersonalInfoComponent.security2faStatusMessage`) -
+   * jeden výskyt v celé komponentě nestojí za obecný templating engine.
+   */
+  get subtitleText(): string {
+    return this.itemCount > 0
+      ? this.strings.subtitle_with_count.replace('{count}', String(this.itemCount))
+      : this.strings.subtitle_no_count;
+  }
   /**
    * @description Zdroj sloupců pro checkbox seznam - PODLE AKTUÁLNÍHO stavu `rawFormat`.
    * V raw módu se nabízí jen `importableColumns`, jinak plný `columns` seznam.

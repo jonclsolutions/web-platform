@@ -25,6 +25,11 @@
         tlačítko "Grafy a reporty" je součástí `USER_REQUEST_TOOLBAR_BUTTONS`
         (action: 'openGraphBuilder'), takže se vykresluje automaticky přes stávající
         `<app-action-menu-builder>` výše, žádná úprava toolbar markupu není potřeba.
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY natvrdo psané české texty (toolbar caption, e-mail template
+        modal, dateFieldLabel binding pro GraphBuilderComponent) nahrazeny
+        `t('user-request.xxx')`/`strings.xxx` bindingy - viz user-request.component.ts
+        stejné datum.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -36,14 +41,14 @@
 <div>
 <div class="toolbar-actions m-b-t-5">
 @if(!showTrashTable){
-<div class="table-header">Webový formulář</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -83,7 +88,7 @@ triggerLabel="Akce"
 <app-trash-table-builder
 [data]="trashData"
 [columns]="trashUserRequestColumns"
-[tableCaption]="'Smazané požadavky'"
+[tableCaption]="t('trash_table_caption')"
 [apiEndpoint]="apiEndpoint"
 [deletePermission]="'web-user-requests-delete'"
 (itemRestored)="handleItemRestored()">
@@ -129,8 +134,8 @@ triggerLabel="Akce"
 
 <div class="email-tpl-header">
 <div>
-<h2 class="email-tpl-title">Potvrzovací e-mail</h2>
-<p class="email-tpl-subtitle">Text, který zákazník uvidí po odeslání poptávky.</p>
+<h2 class="email-tpl-title">{{ t('email_tpl_title') }}</h2>
+<p class="email-tpl-subtitle">{{ t('email_tpl_subtitle') }}</p>
 </div>
 <button type="button" class="email-tpl-close" (click)="closeEmailTemplateEditor()" [disabled]="emailTemplateSaving">✕</button>
 </div>
@@ -138,7 +143,7 @@ triggerLabel="Akce"
 <div class="email-tpl-body">
 
 @if (emailTemplateLoading) {
-<p class="email-tpl-loading">Načítám…</p>
+<p class="email-tpl-loading">{{ t('email_tpl_loading') }}</p>
 } @else {
 
 @if (emailTemplateLanguages.length > 1) {
@@ -153,103 +158,103 @@ triggerLabel="Akce"
       }
 
 <div class="email-tpl-field">
-<label class="email-tpl-label">Předmět e-mailu <span class="email-tpl-label-hint">(zobrazí se v poštovní schránce, doplní se " – téma poptávky")</span></label>
+<label class="email-tpl-label">{{ t('email_tpl_subject_label') }} <span class="email-tpl-label-hint">{{ t('email_tpl_subject_hint') }}</span></label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.subject_i18n[emailTemplateCurrentLang]"
-       placeholder="Vaše poptávka byla přijata">
+       [placeholder]="t('email_tpl_placeholder_subject')">
 </div>
 
 <div class="email-tpl-field">
-<label class="email-tpl-label">Nadpis e-mailu</label>
+<label class="email-tpl-label">{{ t('email_tpl_title_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.title_i18n[emailTemplateCurrentLang]"
-       placeholder="Vaše poptávka byla přijata">
+       [placeholder]="t('email_tpl_placeholder_title')">
 </div>
 
 <div class="email-tpl-field">
-<label class="email-tpl-label">Pozdrav</label>
+<label class="email-tpl-label">{{ t('email_tpl_greeting_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.labels_i18n[emailTemplateCurrentLang].greeting"
-       placeholder="Dobrý den,">
+       [placeholder]="t('email_tpl_placeholder_greeting')">
 </div>
 
 <div class="email-tpl-field">
-<label class="email-tpl-label">Úvodní zpráva</label>
+<label class="email-tpl-label">{{ t('email_tpl_intro_label') }}</label>
 <textarea rows="3" class="email-tpl-textarea"
           [(ngModel)]="emailTemplate.intro_i18n[emailTemplateCurrentLang]"
-          placeholder="děkujeme za Vaši poptávku. Byla úspěšně přijata a náš tým se jí bude v nejbližší době věnovat."></textarea>
+          [placeholder]="t('email_tpl_placeholder_intro')"></textarea>
 </div>
 
-<div class="email-tpl-section-label">Rekapitulace (popisky tabulky)</div>
+<div class="email-tpl-section-label">{{ t('email_tpl_summary_section') }}</div>
 
 <div class="email-tpl-field">
-<label class="email-tpl-label">Nadpis sekce rekapitulace</label>
+<label class="email-tpl-label">{{ t('email_tpl_summary_header_label') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.labels_i18n[emailTemplateCurrentLang].summary_header"
-       placeholder="Rekapitulace poptávky">
+       [placeholder]="t('email_tpl_placeholder_summary_header')">
 </div>
 
 <div class="email-tpl-labels-grid">
 <div class="email-tpl-field">
-<label class="email-tpl-label">Popisek: Téma</label>
+<label class="email-tpl-label">{{ t('email_tpl_label_thema') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.labels_i18n[emailTemplateCurrentLang].label_thema"
-       placeholder="Téma">
+       [placeholder]="t('email_tpl_placeholder_thema')">
 </div>
 <div class="email-tpl-field">
-<label class="email-tpl-label">Popisek: E-mail</label>
+<label class="email-tpl-label">{{ t('email_tpl_label_email') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.labels_i18n[emailTemplateCurrentLang].label_email"
-       placeholder="Kontaktní e-mail">
+       [placeholder]="t('email_tpl_placeholder_email')">
 </div>
 <div class="email-tpl-field">
-<label class="email-tpl-label">Popisek: Telefon</label>
+<label class="email-tpl-label">{{ t('email_tpl_label_phone') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.labels_i18n[emailTemplateCurrentLang].label_phone"
-       placeholder="Telefon">
+       [placeholder]="t('email_tpl_placeholder_phone')">
 </div>
 <div class="email-tpl-field">
-<label class="email-tpl-label">Popisek: Popis požadavku</label>
+<label class="email-tpl-label">{{ t('email_tpl_label_description') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.labels_i18n[emailTemplateCurrentLang].label_description"
-       placeholder="Popis požadavku">
+       [placeholder]="t('email_tpl_placeholder_description')">
 </div>
 <div class="email-tpl-field">
-<label class="email-tpl-label">Popisek: Přílohy</label>
+<label class="email-tpl-label">{{ t('email_tpl_label_attachments') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.labels_i18n[emailTemplateCurrentLang].label_attachments"
-       placeholder="Přiložené soubory">
+       [placeholder]="t('email_tpl_placeholder_attachments')">
 </div>
 <div class="email-tpl-field">
-<label class="email-tpl-label">Popisek: Datum</label>
+<label class="email-tpl-label">{{ t('email_tpl_label_date') }}</label>
 <input type="text" class="email-tpl-input"
        [(ngModel)]="emailTemplate.labels_i18n[emailTemplateCurrentLang].label_date"
-       placeholder="Datum přijetí">
+       [placeholder]="t('email_tpl_placeholder_date')">
 </div>
 </div>
 
-<div class="email-tpl-section-label">Závěr</div>
+<div class="email-tpl-section-label">{{ t('email_tpl_outro_section') }}</div>
 
 <div class="email-tpl-field">
-<label class="email-tpl-label">Závěrečná zpráva</label>
+<label class="email-tpl-label">{{ t('email_tpl_outro_label') }}</label>
 <textarea rows="2" class="email-tpl-textarea"
           [(ngModel)]="emailTemplate.outro_i18n[emailTemplateCurrentLang]"
-          placeholder="V případě dotazů nás neváhejte kontaktovat."></textarea>
+          [placeholder]="t('email_tpl_placeholder_outro')"></textarea>
 </div>
 
 <!-- ── Živý náhled ─────────────────────────────────────────────────────── -->
-<div class="email-tpl-section-label">Živý náhled</div>
+<div class="email-tpl-section-label">{{ t('email_tpl_preview_section') }}</div>
 <p class="email-tpl-hint" style="margin-top:0;margin-bottom:10px;">
-ⓘ Rekapitulace níže je vyplněná ukázkovými daty - u skutečného e-mailu se nahradí reálným požadavkem.
+{{ t('email_tpl_preview_hint') }}
 </p>
 
 <div class="email-tpl-preview-subject-row">
-<span class="email-tpl-preview-subject-label">Předmět:</span>
+<span class="email-tpl-preview-subject-label">{{ t('email_tpl_preview_subject_label') }}</span>
 <span class="email-tpl-preview-subject-value">{{ previewSubject }} – {{ emailTemplatePreviewSample.thema }}</span>
 </div>
 
 <div class="email-tpl-preview-frame">
-<div class="email-tpl-preview-header">Vaše firma</div>
+<div class="email-tpl-preview-header">{{ t('email_tpl_preview_company') }}</div>
 <div class="email-tpl-preview-body">
 <h1 class="email-tpl-preview-title">{{ previewTitle }}</h1>
 <p class="email-tpl-preview-text">{{ previewGreeting }}</p>
@@ -270,7 +275,7 @@ triggerLabel="Akce"
 </div>
 
 <p class="email-tpl-hint">
-ⓘ Prázdné pole u daného jazyka použije český text (nebo výchozí znění, pokud není vyplněný ani ten).
+{{ t('email_tpl_lang_fallback_hint') }}
 </p>
 
     }
@@ -278,9 +283,9 @@ triggerLabel="Akce"
 </div>
 
 <div class="email-tpl-footer">
-<button type="button" class="email-tpl-btn-cancel" (click)="closeEmailTemplateEditor()" [disabled]="emailTemplateSaving">Zrušit</button>
+<button type="button" class="email-tpl-btn-cancel" (click)="closeEmailTemplateEditor()" [disabled]="emailTemplateSaving">{{ t('email_tpl_cancel') }}</button>
 <button type="button" class="email-tpl-btn-save" (click)="saveEmailTemplate()" [disabled]="emailTemplateSaving || emailTemplateLoading">
-{{ emailTemplateSaving ? 'Ukládám…' : '💾 Uložit' }}
+{{ emailTemplateSaving ? t('email_tpl_saving') : t('email_tpl_save') }}
 </button>
 </div>
 
@@ -294,7 +299,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

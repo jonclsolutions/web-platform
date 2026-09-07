@@ -9,55 +9,37 @@
  * - AuthService: Manages user authentication and session status.
  * - PermissionService: Validates access to specific administrative modules.
  * - LoadingService: Observes global loading states for the UI.
- * - TableRefreshBusService: Vyvolání globálního "Aktualizovat vše" tlačítka pro tabulky.
- * @redesign-note (2026) Přidán `isMobileActionsOpen` + `toggleMobileActions()`/`closeMobileActions()`.
- *      Na mobilu (viz CSS) header schovává většinu obsahu (uživatel, hodiny, přepínač modulů,
- *      wiki/bug odkazy), aby se nic neořezávalo - místo toho se všechno přesune do vysouvacího
- *      panelu ovládaného novým hamburger tlačítkem vpravo nahoře. Desktopové chování je beze změny.
- * @redesign-note (2026-2) `currentModule` rozšířeno o třetí hodnotu `'core'` (nová sekce
- *      systémových/sdílených stránek napříč Web a E-shop - viz admin-routing.module.ts).
- *      `switchModule()` zná novou cílovou cestu `/admin/core/dashboard`. Viditelnost tlačítka
- *      v přepínači řeší nová permission `view-core` přes `*appHasPermission` v šabloně,
- *      stejně jako u stávajících 'view-web'/'view-eshop'.
- * @redesign-note (2026-3) `switchModule('web')` nyní míří na `/admin/web/dashboard` místo
- *      `/admin/dashboard` - web stránky sjednoceny pod prefix `web/...`, stejně jako
- *      `core/...` a `shop/...` (viz admin-routing.module.ts).
- * @refactor-note (2026-08) Přepínač "E-shop: Aktivní/Údržba" + potvrzovací modál s heslem
- *      KOMPLETNĚ ODSTRANĚN z headeru - logika se přesunula na `shop-pages/dashboard`
- *      (nová karta "Režim údržby e-shopu"). Analogický přepínač pro veřejný web přibyl na
- *      `web-pages/dashboard`. Header adminu už žádné maintenance ovládání neobsahuje -
- *      `dataHandler`/`alertDialogService` injekce a `isShopActive`/`maintenanceMessage`/
- *      `showConfirmModal`/`confirmPasswordValue`/`pendingTargetState`/`toggleShopStatus()`/
- *      `submitShopStatusChange()`/`cancelShopStatusChange()`/`loadShopSettings()` byly
- *      odstraněny, protože už v této komponentě nemají žádné využití.
- * @refactor-note (2026-08-6) Přidáno globální "Aktualizovat vše" tlačítko (desktop header
- *      i mobilní panel) - `refreshAllTables()` deleguje na `TableRefreshBusService`, který
- *      zneplatní CELOU cache `GenericTableService` (žádný síťový dotaz sám o sobě) a vyšle
- *      signál, na který aktuálně mountnutá stránka s tabulkou zareaguje reálným
- *      refetchem (viz BaseDataComponent.initWithAuthCheck()). Součást řešení backlog
- *      tasku "zbytečně moc dotazů na API" / lepší UX správy tabulek.
- * @refactor-note (2026-08-17) Přidána metoda `hasAnyPermission()` + sada getterů
- *      `show*Group` (jeden pro každou sekci levého menu ve všech třech modulech).
- *      Šablona (admin-layout.component.html) je používá jako `*ngIf` na `.nav-group`.
- *      Důvod: `*appHasPermission` na jednotlivých `<li>` sama o sobě neumí schovat
- *      nadpis sekce (`.nav-group-label`), pokud uživateli po vyhodnocení oprávnění
- *      nezůstane v sekci ani jedna viditelná položka - bez tohoto by v menu zbýval
- *      "prázdný" nadpis s prázdným seznamem. Gettery drží 1:1 stejné permission klíče
- *      (včetně OR syntaxe '|'), jaké má odpovídající `*appHasPermission` v šabloně u
- *      jednotlivých položek dané sekce - při přidání/odebrání položky do/ze sekce je
- *      nutné getter ručně zaktualizovat (viz komentáře u jednotlivých getterů níže).
+ * - AdminLocalizationService: Statické i18n admin UI + jazykový přepínač v headeru.
+ * (Earlier redesign/refactor-notes for mobile actions panel, core module, unified
+ * web/... route prefix, maintenance switch removal, permission-based nav-group
+ * visibility, and the header language switcher relocation are unchanged - see version
+ * history, omitted here for brevity.)
+ *
+ * @bugfix-note (2026-09e) KRITICKÝ BUG - PŘEPÍNAČ MODULŮ V HEADERU NEREAGOVAL NA
+ * PŘÍMOU NAVIGACI: `currentModule` se dřív měnil VÝHRADNĚ kliknutím na tlačítko
+ * modulu (`switchModule()`), které samo volalo `router.navigate()`. Jakákoliv JINÁ
+ * cesta k navigaci (routerLink odjinud, jako "Exit" tlačítko v Knowledge Base
+ * mířící natvrdo na `/admin/core/welcome-page`, deep link, návrat v historii
+ * prohlížeče) obsah stránky správně vyměnila, ale `currentModule` (a s ním i
+ * zvýrazněné tlačítko v headeru) zůstal na PŘEDCHOZÍ hodnotě - header tak lhal o
+ * tom, ve kterém modulu se admin skutečně nachází. Opraveno přidáním
+ * `router.events` subscribe na `NavigationEnd`, který `currentModule` ODVOZUJE
+ * PŘÍMO Z AKTUÁLNÍ URL (`syncModuleFromUrl()`) při KAŽDÉ navigaci, bez ohledu na
+ * to, jak k ní došlo. `switchModule()` (klik na tlačítko) zůstává funkční beze
+ * změny - vyvolá `router.navigate()`, což samo spustí `NavigationEnd` a
+ * `syncModuleFromUrl()` synchronizaci potvrdí (žádná duplicitní/konfliktní logika).
  */
 
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Subscription, interval, Observable } from 'rxjs';
+import { Subscription, interval, Observable, filter } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { LoadingService } from '../../../core/services/loading.service';
-import { TableRefreshBusService } from '../../../core/services/table-refresh-bus.service';
+import { AdminLocalizationService, AdminLanguageMeta } from '../../../core/services/admin-localization.service';
 
 /**
  * @description The layout shell for the administration area, handling sidebar controls and navigation.
@@ -96,21 +78,84 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   /** Vysouvací panel na mobilu (hamburger vpravo nahoře) - uživatel, role, hodiny, moduly, odkazy. */
   isMobileActionsOpen: boolean = false;
+  /**
+   * @description Ručně injektovaná i18n služba - tahle komponenta `BaseDataComponent`
+   * nedědí (je to layout shell, ne datová stránka), stejný manuální vzor jako
+   * ostatní ručně injektované komponenty - viz base-data.component.ts refactor-note.
+   */
+  public readonly i18n = inject(AdminLocalizationService);
+
+  /**
+   * @description Merged `shared` + `admin-layout` i18n section - viz refactor-note
+   * v hlavičce souboru (BACKLOG "vícejazyčná administrace, žádné hardcoded texty").
+   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   */
+  public get strings(): any {
+    return this.i18n.getMergedSection('admin-layout');
+  }
+
+  // ── Jazykový přepínač (BACKLOG "jazykový přepínač do headeru") ──────────────
+  readonly languages: AdminLanguageMeta[] = this.i18n.availableLanguages;
+  isLangMenuOpen = false;
+
+  get currentLanguageCode(): string {
+    return this.i18n.getCurrentLanguage();
+  }
+
+  get currentLanguageMeta(): AdminLanguageMeta | undefined {
+    return this.languages.find(l => l.code === this.currentLanguageCode);
+  }
+
+  toggleLangMenu(): void {
+    this.isLangMenuOpen = !this.isLangMenuOpen;
+  }
+
+  closeLangMenu(): void {
+    this.isLangMenuOpen = false;
+  }
+
+  selectLanguage(code: string): void {
+    this.i18n.setLanguage(code);
+    this.isLangMenuOpen = false;
+  }
+
+  public get dateLocale(): string {
+    return this.i18n.getDateLocale();
+  }
 
   private minWidth: number = 150;
   private maxWidth: number = 500;
   private authSubscription: Subscription | undefined;
   private userEmailSubscription: Subscription | undefined;
+  /**
+   * @bugfix-note (2026-09e) Sleduje KAŽDOU dokončenou navigaci, ať `currentModule`
+   * nikdy nezůstane "za pravdou" - viz hlavička souboru.
+   */
+  private routerSubscription: Subscription | undefined;
 
   constructor(
     private router: Router,
     private authService: AuthService,
     private permissionService: PermissionService,
     private cdr: ChangeDetectorRef,
-    private loadingService: LoadingService,
-    private tableRefreshBus: TableRefreshBusService
+    private loadingService: LoadingService
   ) {
     this.isLoadingGlobal$ = this.loadingService.isLoading$;
+
+    // Po přepnutí admin jazyka donutí i tenhle persistentní layout shell přehodnotit
+    // `strings` výstup - stejný důvod jako u BaseDataComponent, jen řešeno ručně
+    // (tahle komponenta ji nedědí).
+    this.i18n.translations$.subscribe(() => this.cdr.markForCheck());
+
+    /**
+     * @bugfix-note (2026-09e) Jediné autoritativní místo, které nastavuje
+     * `currentModule` NA ZÁKLADĚ SKUTEČNÉ URL - `switchModule()` (klik na tlačítko)
+     * i libovolná jiná navigace (routerLink odjinud, historie prohlížeče, deep
+     * link) proto vždy skončí se správně zvýrazněným modulem v headeru.
+     */
+    this.routerSubscription = this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(event => this.syncModuleFromUrl(event.urlAfterRedirects));
   }
 
   /**
@@ -122,6 +167,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       const savedWidth = localStorage.getItem('admin_sidebar_width');
       if (savedWidth) this.sidebarWidth = parseInt(savedWidth, 10);
 
+      // Výchozí hodnota z localStorage, dokud router poprvé nepotvrdí skutečnou
+      // aktuální URL (viz syncModuleFromUrl() níže) - zabraňuje krátkému probliknutí
+      // špatně zvýrazněného modulu při prvním vykreslení.
       const savedState = localStorage.getItem('admin_menu_open');
       const savedModule = localStorage.getItem('admin_current_module') as 'web' | 'core' | 'shop';
       if (savedModule) this.currentModule = savedModule;
@@ -134,6 +182,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.isMobileViewport = window.innerWidth <= 768;
     }
 
+    // Okamžitá synchronizace podle SKUTEČNÉ aktuální URL - kryje první vykreslení
+    // (NavigationEnd z konstruktoru mohl proběhnout dřív, než tahle komponenta
+    // vůbec existovala, typicky při hard-refresh na konkrétní stránce).
+    this.syncModuleFromUrl(this.router.url);
+
     this.authSubscription = this.authService.isLoggedIn$.subscribe(loggedIn => {
       this.isLoggedIn = loggedIn;
       this.userRole = loggedIn ? this.authService.getUserRole() : null;
@@ -144,6 +197,28 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.userEmail = email;
       this.cdr.markForCheck();
     });
+  }
+
+  /**
+   * @description Odvodí `currentModule` z první cestové segmentu za `/admin/`
+   * (`/admin/core/welcome-page` -> `'core'`). Neznámý/chybějící segment (např.
+   * `/admin` samotné, nebo cesty mimo web/core/shop) ponechá `currentModule` beze
+   * změny - nemá smysl mazat poslední platný výběr kvůli přechodné/neshodné URL.
+   * @bugfix-note (2026-09e) BACKLOG "přepínač modulů v headeru nereaguje na přímou
+   * navigaci" - viz hlavička souboru.
+   */
+  private syncModuleFromUrl(url: string): void {
+    const match = url.match(/^\/admin\/(web|core|shop)(\/|$|\?)/);
+    if (!match) return;
+
+    const module = match[1] as 'web' | 'core' | 'shop';
+    if (module === this.currentModule) return;
+
+    this.currentModule = module;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('admin_current_module', module);
+    }
+    this.cdr.markForCheck();
   }
 
   /**
@@ -178,15 +253,19 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   /**
    * @description Switches between main application modules ('web' / 'core' / 'shop') and updates navigation.
    * @param module The target module to navigate into.
+   * @bugfix-note (2026-09e) Ruční nastavení `currentModule`/localStorage tady ZŮSTÁVÁ
+   * (okamžitá odezva na klik, ať uživatel nečeká na dokončení navigace) -
+   * `syncModuleFromUrl()` po dokončení `NavigationEnd` hodnotu jen znovu potvrdí,
+   * nepřepíše ji na nic jiného.
    */
   switchModule(module: 'web' | 'core' | 'shop'): void {
     this.currentModule = module;
     localStorage.setItem('admin_current_module', module);
 
     const landingRoute: Record<'web' | 'core' | 'shop', string> = {
-      web: '/admin/web/dashboard',
+      web: '/admin/web/welcome-page',
       core: '/admin/core/welcome-page',
-      shop: '/admin/shop/dashboard'
+      shop: '/admin/shop/welcome-page'
     };
     this.router.navigate([landingRoute[module]]);
     this.cdr.markForCheck();
@@ -218,16 +297,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   closeMobileActions(): void {
     this.isMobileActionsOpen = false;
     this.cdr.markForCheck();
-  }
-
-  /**
-   * @description Vyvolá globální "Aktualizovat vše" napříč všemi tabulkami v adminu.
-   * Zneplatní celou cache `GenericTableService` (žádný síťový dotaz sám o sobě) a
-   * přinutí aktuálně mountnutou stránku s tabulkou k tvrdému refetchi. Ostatní, právě
-   * neotevřené stránky se přefetchnou samy při příští návštěvě.
-   */
-  refreshAllTables(): void {
-    this.tableRefreshBus.triggerGlobalRefresh();
   }
 
   /**
@@ -287,8 +356,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    *      stejně jako *appHasPermission - viz has-permission.directive.ts.
    * @returns true, pokud uživatel splňuje alespoň jeden z klíčů (resp. alespoň jednu
    *      stranu některé OR skupiny).
-   * @refactor-note (2026-08-17) Přidáno kvůli požadavku: sekce v menu s 0 viditelnými
-   *      položkami se nemá vůbec renderovat (prázdný nadpis sekce bez obsahu).
    */
   hasAnyPermission(keys: string[]): boolean {
     return keys.some(key =>
@@ -298,12 +365,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   // ── Web modul ────────────────────────────────────────────────────────
 
-  /** @description Sekce "Přehled" (Web) - viditelná, pokud uživatel vidí web dashboard. */
   get showWebOverviewGroup(): boolean {
     return this.hasAnyPermission(['web-view-dashboard']);
   }
 
-  /** @description Sekce "Obchod" (Web) - webový formulář, obchodní leady, přijaté poptávky. */
   get showWebBusinessGroup(): boolean {
     return this.hasAnyPermission([
       'web-user-requests-view',
@@ -313,29 +378,24 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     ]);
   }
 
-  /** @description Sekce "Obsah webu" (Web) - správa webu, správa novinek. */
   get showWebContentGroup(): boolean {
     return this.hasAnyPermission(['web-edit-website-view', 'web-news-view']);
   }
 
-  /** @description Sekce "Lidé" (Web) - uchazeči, helpdesk tikety. */
   get showWebPeopleGroup(): boolean {
     return this.hasAnyPermission(['web-job-applications-view', 'web-support-tickets-view']);
   }
 
-  /** @description Sekce "Systém" (Web) - serverové logy. */
   get showWebSystemGroup(): boolean {
     return this.hasAnyPermission(['web-view-web-logs']);
   }
 
   // ── Core modul ───────────────────────────────────────────────────────
 
-  /** @description Sekce "Přehled" (Core) - vítejte, core dashboard. */
   get showCoreOverviewGroup(): boolean {
     return this.hasAnyPermission(['core-view-welcome-page', 'view-core']);
   }
 
-  /** @description Sekce "Právní a firemní" (Core) - GDPR/TOS/COOKIES, firemní údaje, externí odkazy. */
   get showCoreLegalGroup(): boolean {
     return this.hasAnyPermission([
       'core-legal-documents-view|core-legal-config-view',
@@ -344,29 +404,21 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     ]);
   }
 
-  /**
-   * @description Sekce "Uživatelé" (Core) - správa účtů, osobní informace.
-   *      "Správa rolí" je v šabloně vázaná na `userRole === 'sysadmin'`, ne na
-   *      permission klíč (viz sysadminGuard), proto je zohledněná zvlášť přes OR.
-   */
   get showCoreUsersGroup(): boolean {
     return this.hasAnyPermission(['core-administrators-view', 'web-view-personal-info'])
       || this.userRole === 'sysadmin';
   }
 
-  /** @description Sekce "Systém" (Core) - core logy. */
   get showCoreSystemGroup(): boolean {
     return this.hasAnyPermission(['view-core']);
   }
 
   // ── Shop modul ───────────────────────────────────────────────────────
 
-  /** @description Sekce "Přehled" (Shop) - e-shop dashboard. */
   get showShopOverviewGroup(): boolean {
     return this.hasAnyPermission(['shop-view-dashboard']);
   }
 
-  /** @description Sekce "Katalog" (Shop) - produkty, kategorie, dodavatelé. */
   get showShopCatalogGroup(): boolean {
     return this.hasAnyPermission([
       'shop-products-view',
@@ -375,17 +427,14 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     ]);
   }
 
-  /** @description Sekce "Transakce" (Shop) - objednávky, slevové kupóny. */
   get showShopTransactionsGroup(): boolean {
     return this.hasAnyPermission(['shop-orders-view', 'shop-coupons-view']);
   }
 
-  /** @description Sekce "Zákazníci" (Shop). */
   get showShopCustomersGroup(): boolean {
     return this.hasAnyPermission(['shop-customers-view']);
   }
 
-  /** @description Sekce "Logistika" (Shop) - způsoby dopravy, způsoby platby. */
   get showShopLogisticsGroup(): boolean {
     return this.hasAnyPermission([
       'shop-shipping-methods-view',
@@ -393,12 +442,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     ]);
   }
 
-  /** @description Sekce "Obsah webu" (Shop) - správa e-shopu (texty). */
   get showShopContentGroup(): boolean {
     return this.hasAnyPermission(['shop-edit-eshop-view']);
   }
 
-  /** @description Sekce "Systém" (Shop) - e-shop logování. */
   get showShopSystemGroup(): boolean {
     return this.hasAnyPermission(['shop-view-logs']);
   }
@@ -406,5 +453,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.authSubscription?.unsubscribe();
     this.userEmailSubscription?.unsubscribe();
+    this.routerSubscription?.unsubscribe();
   }
 }

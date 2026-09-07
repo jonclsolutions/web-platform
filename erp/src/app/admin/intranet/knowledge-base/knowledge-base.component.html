@@ -8,6 +8,10 @@
         knowledge-base.component.ts). `support-form` a `news` jsou jediné ručně psané
         položky - obě mají vlastní logiku (formulář / real-time obsah), nejsou
         v KB_PAGES statických datech.
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY uživatelsky viditelné texty nahrazeny `strings.xxx`/`t()`
+        binding - viz knowledge-base.component.ts stejné datum. `navLabel(page)`
+        rozřeší `LocalizedText` podle aktuálního admin jazyka.
 -->
 
 <div class="kb-fullscreen-wrapper" [class.menu-open]="isMenuOpen">
@@ -19,31 +23,31 @@
         <span class="bar"></span>
       </button>
       <span class="logo-square">R</span>
-      <span class="brand-text">Wiki System</span>
+      <span class="brand-text">{{ strings.brand_text }}</span>
     </div>
     <div class="kb-header-actions">
-      <a routerLink="/admin/web/dashboard" class="exit-link">Exit</a>
+      <a routerLink="/admin/core/welcome-page" class="exit-link">{{ strings.exit_label }}</a>
     </div>
   </header>
 
   <div class="kb-container">
     <aside class="kb-sidebar" [class.open]="isMenuOpen">
       <nav class="kb-nav">
-        @for (group of navGroups; track group.name) {
+        @for (group of navGroups; track group.key) {
           <div class="nav-group">
-            <span class="group-title">{{ group.name }}</span>
+            <span class="group-title">{{ group.label }}</span>
             <ul>
               @for (page of group.pages; track page.id) {
                 <li>
                   <a [routerLink]="page.id" (click)="closeMenu()" routerLinkActive="active-kb">
-                    <span class="num">{{ page.navOrder }}.</span> {{ page.navLabel }}
+                    <span class="num">{{ page.navOrder }}.</span> {{ navLabel(page) }}
                   </a>
                 </li>
               }
-              @if (group.name === 'General') {
+              @if (group.key === 'general') {
                 <li>
                   <a routerLink="news" (click)="closeMenu()" routerLinkActive="active-kb">
-                    <span class="num">02.</span> Novinky
+                    <span class="num">02.</span> {{ strings.kb_news_label }}
                   </a>
                 </li>
               }
@@ -52,9 +56,9 @@
         }
 
         <div class="nav-group">
-          <span class="group-title">Support</span>
+          <span class="group-title">{{ strings.nav_group_support }}</span>
           <ul>
-            <li><a routerLink="support-form" (click)="closeMenu()" routerLinkActive="active-kb"><span class="num">INT.</span> Support Form</a></li>
+            <li><a routerLink="support-form" (click)="closeMenu()" routerLinkActive="active-kb"><span class="num">INT.</span> {{ strings.kb_support_form_label }}</a></li>
           </ul>
         </div>
       </nav>
@@ -70,9 +74,9 @@
 
         @if (isRootPath()) {
           <div class="welcome-view">
-            <span class="doc-code">SYSTEM_READY</span>
-            <h1>Documentation</h1>
-            <p>Vyberte kapitolu z menu pro pokračování.</p>
+            <span class="doc-code">{{ strings.welcome_code }}</span>
+            <h1>{{ strings.welcome_title }}</h1>
+            <p>{{ strings.welcome_text }}</p>
           </div>
         }
 

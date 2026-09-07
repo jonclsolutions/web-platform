@@ -8,88 +8,6 @@
  * built-in CRUD actions, multi-format export (CSV/XLSX/JSON/TXT), append-only import, and
  * localized formatting.
  *
- * @refactor-note (2025) Driv dedil z BaseDataComponent kvuli deleteData() a napojeni na
- * alert/auth sluzby - data ale vzdy prichazeji pres @Input, takze paginacni/kos/cache
- * polovinu BaseDataComponent tato komponenta nikdy nepouzivala. Nyni si sklada
- * EntityCrudService primo (pro delete + log export) a alert/auth sluzby injektuje sama.
- *
- * @refactor-note (2026-08) Export prepracovan z jedineho tlacitka "Export" (okamzite
- * stazeni) na formatovy picker (ExportPopupBuilderComponent) s volbou CSV/XLSX/JSON/TXT.
- * Metoda exportToCSV() byla ZAMERNE ponechana pod stejnym jmenem - jen ted otevira popup
- * misto primeho stahovani.
- *
- * @refactor-note (2026-08-2) Export ted zahrnuje CELY radek dat z API, ne jen sloupce
- * viditelne v columnDefinitions.
- *
- * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTEMU: radkova akcni tlacitka
- * (Edit/Delete/...) ted respektuji volitelne TableButtons.permission pole.
- *
- * @refactor-note (2026-08-6) Pridan table-level refresh: @Input() lastUpdatedAt a
- * @Output() refreshRequested.
- *
- * @refactor-note (2026-08-16) HROMADNY VYBER + HROMADNE MAZANI. Pridan sloupec
- * checkboxu, bulk-actions-bar, dropdown "Akce".
- *
- * @refactor-note (2026-08-16v2) EXPORTOVAT VYBRANE.
- *
- * @refactor-note (2026-08-18) VYBER SLOUPCU K EXPORTU.
- *
- * @refactor-note (2026-08-18v8 - FINALNI) Export je VYHRADNE rizen detailsColumns.
- *
- * @refactor-note (2026-08-22) HROMADNY APPEND-ONLY IMPORT - viz backlog task "import dat
- * do tabulek". Pridano tlacitko "Import" do interniho toolbaru (vedle "Aktualizovat") a
- * app-import-popup-builder popup - stejny princip jako export: JEDNO misto
- * (TableBuilderComponent), zadna uprava desitek stránkovych *.component.ts/.html
- * souboru. [resource]="apiEndpoint" je jediny vstup, ktery popup potrebuje - stejny
- * string musi byt zaregistrovany v backendovem config/importable_resources.php
- * (ImportController); pokud neni, popup to sam ohlasi (404 z backendu), tlacitko
- * Import tak zustava v UI VZDY viditelne (stejne jako Export nema zadnou permission
- * podminku na urovni teto komponenty - autorizaci vynucuje vyhradne backend). Import
- * samotny (upload, dry-run validace, potvrzeni zapisu) resi kompletne
- * ImportPopupBuilderComponent - TableBuilderComponent jen otevira/zavira popup a
- * po dokonceni preda importCompleted nahoru, at si stranka muze natvrdo refreshnout
- * data (nove radky se jinak do this.data samy nepromitnou).
- *
- * @refactor-note (2026-08-24) KONSOLIDACE TOOLBAR TLAČÍTEK: vlastní tlačítko "Import"
- * ODSTRANĚNO z interního toolbaru (viz .html stejné datum) - stěhuje se do stránkového
- * "Akce" dropdownu (ActionMenuBuilderComponent), který na `importData()` deleguje přes
- * ViewChild, stejně jako už dřív dělal `exportToCSV()`. `importData()` samotná zůstává
- * beze změny (public, volaná zvenku). Nový `@Output() resendActivationOpened` - stejný
- * vzor jako `resetPasswordFormOpened`, používá administrators.component.ts pro tlačítko
- * "Aktivace" (viz refactor-note 2026-08-24v2 níže).
- *
- * @refactor-note (2026-08-24v2) BACKLOG "efektivnější tlačítko pro akci 0-1x na účet":
- * `TableButtons` může nově nést volitelné `visibleWhen: (item) => boolean` (per-řádková
- * podmínka, na rozdíl od `permission`, což je globální per-uživatel kontrola). Přidány:
- * - `isButtonVisibleForItem(button, item)` - kombinuje permission + visibleWhen pro
- *   KONKRÉTNÍ řádek, používá se u vykreslení samotného <button> v <td>.
- * - `hasAnyRowForButton(button)` - zda alespoň jeden řádek na aktuální stránce (`data`)
- *   tlačítko potřebuje; bez `visibleWhen` vždy `true` (beze změny oproti dřívějšku).
- * - `isButtonColumnVisible(button)` - kombinace permission + hasAnyRowForButton, řídí
- *   vykreslení CELÉHO sloupce (hlavička i colspanValue) - u tabulek, kde žádný řádek na
- *   aktuální stránce podmínku nesplňuje, sloupec zmizí úplně, místo aby zůstal prázdný.
- * `isButtonVisible(button)` (jen permission) zůstává BEZE ZMĚNY - používají ji ostatní
- * metody výše jako stavební kámen, žádné volající místo mimo tento soubor se nemuselo
- * upravovat.
- *
- * @icons-note (2026-08-31) EMOJI -> SVG: přidán `IconComponent` do `imports` - řádková
- * tlačítka teď renderují `<app-icon [name]="button.icon">` místo textového emoji (viz
- * table-builder.component.html stejné datum).
- *
- * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněn
- * duplicitní `alertDialogService.open('Error', ...)` z `onDeleteAction()` - byl to čistý
- * HTTP-only error path (přes `crud.remove()`, který interně používá DataHandler), takže
- * `DataHandler.handleError()` už toast zobrazil (viz data-handler.service.ts bugfix-note
- * stejné datum). `onBulkDeleteClick()` a `handleExportFormatSelected()` mají SMÍŠENOU
- * logiku (HTTP volání + čistě klientská logika - generování XLSX/CSV/JSON souboru) -
- * jejich `catch` bloky teď rozlišují `instanceof HttpErrorResponse`: pro HTTP chyby
- * (už toastnuté DataHandlerem) se toast NEUKAZUJE znovu, pro neHTTP chyby (selhání
- * lokálního generování souboru) toast ZŮSTÁVÁ, protože ty DataHandler nikdy neuvidí.
- * `onBulkDeleteClick()` tím ztratil svoje specifické 404/403 hlášky ("Hromadné mazání
- * pro tuto tabulku zatím není implementováno."/"Nedostatečná oprávnění...") - pokud je
- * bude potřeba obnovit, patří rozšíření přímo do `DataHandler.handleError()`, ne sem,
- * ať zůstane jediné autoritativní místo pro toast.
- *
  * @dependencies
  * - EntityCrudService: CRUD volani (delete radku/hromadne delete po jednom, POST log exportu).
  * - ConfirmDialogService: Facilitates safe delete operations (single i bulk).
@@ -100,6 +18,9 @@
  * - CurrencyPipe, DatePipe: Standard pipes for data formatting.
  * - xlsx (SheetJS): Lazy-loaded jen pri volbe XLSX exportu, viz downloadXlsx().
  * - IconComponent: Sdílená sada SVG ikon pro řádková tlačítka.
+ * - AdminLocalizationService: Statické i18n admin UI (NE obsah webu/eshopu) - viz
+ *   refactor-note (2026-09) níže.
+ *
  */
 
 import {
@@ -109,13 +30,14 @@ import {
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { firstValueFrom, Subject } from 'rxjs';
+import { firstValueFrom, Subject, takeUntil } from 'rxjs';
 
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { PermissionService } from '../../../../core/auth/services/permission.service';
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
@@ -232,6 +154,16 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   public authService = inject(AuthService);
   public permissionService = inject(PermissionService);
 
+  /**
+   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+   * TableBuilderComponent NEdědí BaseDataComponent (sdílená builder komponenta), proto
+   * ruční injection + lokální `strings`/`t()` přesně dle vzoru z ostatních builderů
+   * (ExportPopupBuilderComponent, PaginationButtonsBuilderComponent atd.).
+   */
+  public readonly i18n = inject(AdminLocalizationService);
+  public get strings(): any { return this.i18n.getMergedSection('table-builder'); }
+  public t(key: string): string { return this.i18n.getValue(`table-builder.${key}`); }
+
   private processingItemIds = new Set<any>();
   private destroy$ = new Subject<void>();
 
@@ -260,7 +192,9 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     private dataHandler: DataHandler,
     private cd: ChangeDetectorRef,
     private confirmDialogService: ConfirmDialogService,
-  ) {}
+  ) {
+    this.i18n.translations$.pipe(takeUntil(this.destroy$)).subscribe(() => this.cd.markForCheck());
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['data'] && !changes['data'].firstChange) {
@@ -354,6 +288,24 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     return this.isButtonVisible(button) && this.hasAnyRowForButton(button);
   }
 
+  /**
+   * @description Aria-label pro checkbox konkrétního řádku (obsahuje ID záznamu) -
+   * viz refactor-note (2026-09) v hlavičce souboru, důvod proč metoda a ne inline
+   * .replace() v šabloně: template binding by musel volat .replace() na `strings`
+   * gettru přímo v HTML, což je méně čitelné a hůř testovatelné než metoda zde.
+   */
+  rowSelectAriaLabel(id: any): string {
+    return this.strings.select_row_aria.replace('{id}', String(id));
+  }
+
+  /**
+   * @description Text bulk-lišty "{count} vybráno" - viz rowSelectAriaLabel() výše
+   * pro zdůvodnění gettru namísto inline interpolace v šabloně.
+   */
+  get bulkCountLabel(): string {
+    return this.strings.bulk_count_label.replace('{count}', String(this.selectedIds.size));
+  }
+
   handleAction(item: any, buttonAction: string): void {
     if (this.processingItemIds.has(item.id)) {
       console.warn(`Action for item ID ${item.id} is already in progress.`);
@@ -388,9 +340,12 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * z `error:` callbacku - `crud.remove()` je čistě HTTP volání (přes DataHandler),
    * takže toast už zobrazil `DataHandler.handleError()`. Cleanup `processingItemIds`
    * ZŮSTÁVÁ. Viz bugfix-note v hlavičce souboru.
+   * @refactor-note (2026-09) Dialogové texty i success hláška nahrazeny `t()` voláním
+   * (dříve natvrdo anglicky 'Delete Confirmation'/'Success'/'Item deleted.' uprostřed
+   * jinak českého souboru) - viz refactor-note (2026-09) v hlavičce souboru.
    */
   public onDeleteAction(item: any): void {
-    this.confirmDialogService.open('Delete Confirmation', 'Are you sure you want to delete this item?')
+    this.confirmDialogService.open(this.t('confirm_delete_title'), this.t('confirm_delete_message'))
       .then(result => {
         if (result) {
           this.crud.remove(item.id).subscribe({
@@ -398,7 +353,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
               this.removeItemFromLocal(item.id);
               this.selectedIds.delete(item.id);
               this.itemDeleted.emit(item);
-              this.alertDialogService.open('Success', 'Item deleted.', 'success');
+              this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('delete_success_message'), 'success');
             },
             error: () => {
               this.processingItemIds.delete(item.id);
@@ -424,10 +379,10 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   }
 
   get canBulkDelete(): boolean {
-  if (this.bulkDeleteDisabled) return false;
-  const deleteBtn = this.buttons?.find(b => b.type === 'delete_button' && b.isActive);
-  return !!deleteBtn && this.isButtonVisible(deleteBtn);
-}
+    if (this.bulkDeleteDisabled) return false;
+    const deleteBtn = this.buttons?.find(b => b.type === 'delete_button' && b.isActive);
+    return !!deleteBtn && this.isButtonVisible(deleteBtn);
+  }
 
   get selectableIds(): any[] {
     return (this.data || [])
@@ -507,6 +462,9 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * Specifické 404/403 hlášky ("Hromadné mazání pro tuto tabulku zatím není
    * implementováno."/"Nedostatečná oprávnění...") byly odstraněny - viz bugfix-note
    * v hlavičce souboru.
+   * @refactor-note (2026-09) Potvrzovací dialog i všechny 3 výsledné hlášky (úspěch/
+   * selhání/částečný úspěch) nahrazeny `t()` voláním s `.replace()` na proměnné
+   * ({count}/{deleted}/{requested}/{skipped}) - viz refactor-note (2026-09) v hlavičce.
    */
   async onBulkDeleteClick(): Promise<void> {
     if (!this.canBulkDelete || this.selectedIds.size === 0 || this.bulkDeleting) return;
@@ -514,8 +472,8 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
 
     const count = this.selectedIds.size;
     const confirmed = await this.confirmDialogService.open(
-      'Smazat vybrané záznamy',
-      `Opravdu chcete smazat ${count} vybraných záznamů? Tuto akci nelze vzít zpět.`
+      this.t('confirm_bulk_delete_title'),
+      this.t('confirm_bulk_delete_message').replace('{count}', String(count))
     );
     if (!confirmed) return;
 
@@ -537,13 +495,24 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
       });
 
       if (res.skipped_count === 0) {
-        this.alertDialogService.open('Úspěch', `Smazáno ${res.deleted_count} záznamů.`, 'success');
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          this.t('bulk_delete_success_message').replace('{deleted}', String(res.deleted_count)),
+          'success'
+        );
       } else if (res.deleted_count === 0) {
-        this.alertDialogService.open('Chyba', `Nepodařilo se smazat žádný z ${res.requested} vybraných záznamů.`, 'danger');
+        this.alertDialogService.open(
+          this.t('bulk_delete_fail_title'),
+          this.t('bulk_delete_fail_message').replace('{requested}', String(res.requested)),
+          'danger'
+        );
       } else {
         this.alertDialogService.open(
-          'Částečný úspěch',
-          `Smazáno ${res.deleted_count} z ${res.requested} záznamů. ${res.skipped_count} nebylo nalezeno nebo se nepodařilo smazat.`,
+          this.t('bulk_delete_partial_title'),
+          this.t('bulk_delete_partial_message')
+            .replace('{deleted}', String(res.deleted_count))
+            .replace('{requested}', String(res.requested))
+            .replace('{skipped}', String(res.skipped_count)),
           'warning'
         );
       }
@@ -642,6 +611,9 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
    * XLSX/CSV/JSON souboru, `downloadXlsx()`/`downloadCsv()`/`downloadJson()`/
    * `downloadTxt()`), DataHandler o něm neví - toast tady ZŮSTÁVÁ, jinak by uživatel
    * neviděl žádnou chybovou hlášku vůbec. Viz bugfix-note v hlavičce souboru.
+   * @refactor-note (2026-09) "No data available for export."/'Error'/"An error
+   * occurred during export." (dříve natvrdo anglicky) nahrazeny `t()` voláním - viz
+   * refactor-note (2026-09) v hlavičce souboru.
    */
   async handleExportFormatSelected(selection: ExportSelection): Promise<void> {
     if (this.isExporting) return;
@@ -655,7 +627,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
       const allData = await this.resolveExportData();
 
       if (allData.length === 0) {
-        this.alertDialogService.open('Export', 'No data available for export.', 'warning');
+        this.alertDialogService.open(this.t('export_no_data_title'), this.t('export_no_data_message'), 'warning');
         return;
       }
 
@@ -678,7 +650,7 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     } catch (error) {
       if (!(error instanceof HttpErrorResponse)) {
         console.error('Export error:', error);
-        this.alertDialogService.open('Error', 'An error occurred during export.', 'danger');
+        this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('export_error_message'), 'danger');
       }
     } finally {
       this.isExporting = false;

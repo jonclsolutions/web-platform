@@ -30,10 +30,10 @@
  * `toggleFilters()` ho spolehlivě přepne zpět na `false`).
  */
 
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FilterColumns } from '../../../../shared/interfaces/filter-columns';
-
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 /**
  * @description Klíč, pod kterým se globální fulltextový filtr posílá v emitovaném
  * filtrů objektu (`{ search: '...', sort_by: ..., sort_direction: ... }`). Sdílený
@@ -68,7 +68,16 @@ export class FilterFormBuilderComponent implements OnChanges {
   @Output() filtersCleared = new EventEmitter<void>();
   /** Emitováno kliknutím na křížek v rohu filtru - viz refactor-note (2026-08-25v2). */
   @Output() closed = new EventEmitter<void>();
+  public readonly i18n = inject(AdminLocalizationService);
 
+  /**
+   * @description Merged `shared` + `filter-form` i18n section - viz refactor-note
+   * (2026-09) v hlavičce souboru.
+   * @note Typ `any` záměrně - viz `AdminLocalizationService.getMergedSection()`.
+   */
+  public get strings(): any {
+    return this.i18n.getMergedSection('filter-form');
+  }
   public filterForm: any = {};
   public sortBy: string = '';
   public sortDirection: 'asc' | 'desc' = 'asc';

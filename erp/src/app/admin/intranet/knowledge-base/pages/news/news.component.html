@@ -4,14 +4,19 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        UI chrome texty nahrazeny `strings.xxx` binding - viz news.component.ts
+        stejné datum. `item.thema`/`item.title`/`item.message`/`item.bullet_*`/
+        `item.author` beze změny - jde o obsah z backendu (web/news), mimo scope
+        statické admin i18n vrstvy.
 -->
     
 <div class="kb-article-container">
   <header class="article-header">
-    <div class="breadcrumb">Interní manuál / Vývoj / Novinky</div>
-    <h1>Novinky a aktualizace systému</h1>
+    <div class="breadcrumb">{{ strings.breadcrumb }}</div>
+    <h1>{{ strings.title }}</h1>
     <p class="lead-text">
-      Chronologický přehled vývoje našeho systému. Sledujte změny v procesech, nové funkce i opravy chyb na jednom místě.
+      {{ strings.lead }}
     </p>
   </header>
 
@@ -23,7 +28,7 @@
         class="news-node"
         [class.highlighted]="item.thema === 'Milník'">
         <div class="node-sidebar">
-          <div class="node-date">{{ item.created_at | date:'dd. MM. yyyy' }}</div>
+          <div class="node-date">{{ item.created_at | date:'dd. MM. yyyy':undefined:dateLocale }}</div>
           <div class="node-tag"
              [ngClass]="{
                'milestone': item.thema === 'Milník',
@@ -33,7 +38,7 @@
             {{ item.thema }}
           </div>
           <div class="node-author">
-            <div class="author-label">Autor:</div>
+            <div class="author-label">{{ strings.author_label }}</div>
             <div class="author-name">{{ item.author }}</div>
           </div>
         </div>
@@ -64,10 +69,10 @@
           [disabled]="loadingService.isLoading$ | async"
           class="load-more-btn">
           @if (!(loadingService.isLoading$ | async)) {
-            <span>ZOBRAZIT STARŠÍ AKTUALIZACE ↓</span>
+            <span>{{ strings.load_more }}</span>
           }
           @if (loadingService.isLoading$ | async) {
-            <span>NAČÍTÁM DALŠÍ...</span>
+            <span>{{ strings.loading_more }}</span>
           }
         </button>
       </div>
@@ -76,7 +81,7 @@
     @if (accumulatedNews.length === 0 && !(loadingService.isLoading$ | async)) {
       <div
         style="text-align: center; color: #71717a; padding: 20px;">
-        Momentálně nejsou k dispozici žádné novinky.
+        {{ strings.empty_state }}
       </div>
     }
   </section>

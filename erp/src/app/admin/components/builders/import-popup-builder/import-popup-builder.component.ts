@@ -21,31 +21,28 @@
  *   responseType 'blob' variantu - stejný důvod, proč TableBuilderComponent pro XLSX
  *   export taky nepoužívá DataHandler, ale volá SheetJS přímo).
  * - ScrollLockService: Sdílený zámek scrollu na pozadí (viz refactor-note 2026-08-31).
+ * - AdminLocalizationService: Statické i18n admin UI.
  *
- * @refactor-note (2026-08-23) PŘECHOD Z CENTRÁLNÍHO `core/import/*` NA PER-RESOURCE
- * ENDPOINTY (`{resource}/import/template`, `/import/validate`, `/import/commit`) -
- * stejný důvod jako u hromadného mazání (viz TableBuilderComponent.onBulkDeleteClick()):
- * generický zápis přes centrální kontrolér obcházel `store()` konkrétního kontroleru,
- * a s ním i jeho vedlejší efekty (hashování hesla, notifikační e-maily, přiřazení výchozí
- * role apod.) - riziko, které by se dřív nebo později projevilo na jiném resource, i
- * když u prvního otestovaného (`web/raw_request_commissions`) bylo neškodné. Import
- * teď musí mít vlastní `importTemplate()`/`importValidate()`/`importCommit()` metody
- * přímo v konkrétním kontroleru - tahle komponenta zůstává beze změny použitelná,
- * protože jen skládá URL z `resource` Inputu, stejně jako předtím.
+ * (Earlier refactor-notes for per-resource import endpoints, XLSX removal from
+ * import, and the OnPush change-detection bugfix are unchanged - see version
+ * history, omitted here for brevity.)
  *
- * @refactor-note (2026-08-23v2) XLSX ODEBRÁNO Z IMPORTU (export XLSX přes SheetJS na
- * frontendu tímhle NENÍ dotčen, zůstává funkční beze změny) - čtení binárního .xlsx
- * na backendu vyžadovalo `phpoffice/phpspreadsheet`, který má tvrdou závislost na PHP
- * rozšíření `ext-gd`. Na některých hostinzích (sdílený hosting bez možnosti měnit PHP
- * moduly) by to zbytečně komplikovalo nasazení kvůli jedinému formátu s plnohodnotnou
- * náhradou (CSV). `formatOptions` proto XLSX z nabídky vyřazuje jen pro IMPORT popup -
- * `EXPORT_FORMAT_OPTIONS` samotné pole zůstává nedotčené (export ho pořád nabízí).
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * ImportPopupBuilderComponent NEdědí BaseDataComponent, proto ruční injection
+ * AdminLocalizationService + lokální `strings`/`t()`, přesně dle vzoru
+ * TableBuilderComponent/GraphBuilderComponent. Komponenta MÁ
+ * `ChangeDetectionStrategy.OnPush`, proto JE potřeba `translations$.subscribe(()
+ * => markForCheck())` v konstruktoru. Nahrazeny VŠECHNY uživatelsky viditelné texty
+ * (nadpisy, hlášky, chybové texty, tlačítka). `keyvalue` pipe iterace nad
+ * `err.errors` v šabloně (technické názvy sloupců + Laravel validační zprávy z
+ * backendu) VĚDOMĚ nepřekládána - je to backendový výstup, mimo scope frontendové
+ * i18n vrstvy.
  *
- * @bugfix-note (2026-08-31) BACKLOG "zablokovat scroll na pozadí u popup builderů":
- * tahle komponenta dřív scroll na pozadí VŮBEC nezamykala (na rozdíl od
- * ExportPopupBuilderComponent) - přidán `implements OnInit, OnDestroy` +
- * `ScrollLockService.lock()/unlock()`, stejný mechanismus jako u všech ostatních
- * overlay komponent v aplikaci - viz scroll-lock.service.ts.
+ * @refactor-note (2026-09v2) BACKLOG "žádný český fallback": `EXPORT_FORMAT_OPTIONS`
+ * (statická konstanta) byla ODSTRANĚNA z export-format.ts (i jako "záložní" varianta
+ * porušovala pravidlo žádného tichého českého fallbacku). `readonly formatOptions`
+ * pole nahrazeno getterem volajícím `createExportFormatOptions(this.i18n)` - viz
+ * export-format.ts refactor-note (2026-09v2).
  */
 
 import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
@@ -54,8 +51,9 @@ import { HttpClient } from '@angular/common/http';
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { environment } from '../../../../../environments/environment';
-import { ExportFormat, EXPORT_FORMAT_OPTIONS, ExportFormatOption } from '../../../../shared/interfaces/export-format';
+import { ExportFormat, createExportFormatOptions, ExportFormatOption } from '../../../../shared/interfaces/export-format';
 
 /** @description Jeden řádek chybového souhrnu z dry-run validace. */
 interface ImportRowError {
@@ -111,6 +109,13 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   private cd = inject(ChangeDetectorRef);
   private scrollLock = inject(ScrollLockService);
 
+  /**
+   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty".
+   */
+  public readonly i18n = inject(AdminLocalizationService);
+  public get strings(): any { return this.i18n.getMergedSection('import-popup'); }
+  public t(key: string): string { return this.i18n.getValue(`import-popup.${key}`); }
+
   step: ImportStep = 'format';
   selectedFormat: ExportFormat | null = null;
   selectedFile: File | null = null;
@@ -122,9 +127,23 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   validation: ImportValidateResponse | null = null;
   commitResult: ImportCommitResponse | null = null;
 
-  readonly formatOptions: ExportFormatOption[] = EXPORT_FORMAT_OPTIONS.filter(opt => opt.value !== 'xlsx');
+  /**
+   * @refactor-note (2026-09v2) `readonly formatOptions` -> getter, ať se
+   * `description` texty přepočítají po přepnutí admin jazyka; `EXPORT_FORMAT_OPTIONS`
+   * (statický deprecated fallback) byl odstraněn z export-format.ts, takže i toto
+   * musí přejít na `createExportFormatOptions(i18n)`.
+   */
+  get formatOptions(): ExportFormatOption[] {
+    return createExportFormatOptions(this.i18n).filter(opt => opt.value !== 'xlsx');
+  }
 
   private readonly baseUrl = environment.base_api_url;
+
+  constructor() {
+    // Po přepnutí admin jazyka donutí OnPush komponentu přehodnotit `strings`/gettery -
+    // stejný vzor jako TableBuilderComponent/GraphBuilderComponent.
+    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+  }
 
   ngOnInit(): void {
     this.scrollLock.lock();
@@ -178,9 +197,9 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.isDownloadingTemplate = false;
         const msg = err?.status === 404
-          ? 'Import pro tuto tabulku není nastaven.'
-          : 'Šablonu se nepodařilo stáhnout.';
-        this.alertDialogService.open('Chyba', msg, 'danger');
+          ? this.t('template_not_configured')
+          : this.t('template_download_failed');
+        this.alertDialogService.open(this.t('error_title'), msg, 'danger');
         this.cd.markForCheck();
       }
     });
@@ -260,12 +279,14 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
 
         if (!res.queued) {
           this.alertDialogService.open(
-            'Import dokončen',
-            `Přidáno ${res.imported_count} záznamů, přeskočeno ${res.skipped_count}.`,
+            this.t('import_done_title'),
+            this.t('import_done_message')
+              .replace('{imported}', String(res.imported_count))
+              .replace('{skipped}', String(res.skipped_count)),
             'success'
           );
         } else {
-          this.alertDialogService.open('Import zařazen do fronty', res.message ?? 'Import se zpracovává na pozadí.', 'success');
+          this.alertDialogService.open(this.t('import_queued_title'), res.message ?? this.t('import_queued_default_message'), 'success');
         }
 
         this.imported.emit();

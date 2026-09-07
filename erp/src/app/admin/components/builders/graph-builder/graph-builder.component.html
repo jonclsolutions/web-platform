@@ -10,13 +10,17 @@
         sebou), ale žije v NOVÉ vlastní liště `.graph-window-topbar` NAD celým
         dvoupanelovým layoutem (sidebar + hlavní obsah) - viz .css stejné datum.
         Se žádným jiným prvkem se tak nemůže překrývat na žádné šířce obrazovky.
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        všechny natvrdo psané české texty nahrazeny `strings.*` bindingy
+        (AdminLocalizationService, sekce 'graph-builder') - viz
+        graph-builder.component.ts stejné datum.
 -->
 
 <div class="graph-popup-overlay" (mousedown)="onOverlayMouseDown($event)">
   <div class="graph-popup-card" (mousedown)="$event.stopPropagation()">
 
     <div class="graph-window-topbar">
-      <button type="button" class="graph-window-close" (click)="onClose()" [disabled]="isExportingPdf" aria-label="Zavřít">
+      <button type="button" class="graph-window-close" (click)="onClose()" [disabled]="isExportingPdf" [attr.aria-label]="strings.close_aria">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
@@ -29,41 +33,41 @@
 
       <aside class="graph-sidebar" [class.open]="mobileSidebarOpen">
         <div class="graph-sidebar-header">
-          <span class="graph-sidebar-title">Nastavení reportu</span>
-          <button type="button" class="graph-sidebar-mobile-close" (click)="mobileSidebarOpen = false" aria-label="Zavřít nastavení">✕</button>
+          <span class="graph-sidebar-title">{{ strings.sidebar_title }}</span>
+          <button type="button" class="graph-sidebar-mobile-close" (click)="mobileSidebarOpen = false" [attr.aria-label]="strings.close_settings_aria">✕</button>
         </div>
 
         <div class="graph-sidebar-scroll">
 
           <div class="graph-sidebar-section">
-            <div class="graph-sidebar-section-title">Období</div>
+            <div class="graph-sidebar-section-title">{{ strings.period_section_title }}</div>
             <div class="graph-date-row">
               <label class="graph-field">
-                <span class="graph-field-label">Od</span>
+                <span class="graph-field-label">{{ strings.period_from_label }}</span>
                 <input type="date" class="graph-date-input" [(ngModel)]="dateFrom" [max]="dateTo">
               </label>
               <label class="graph-field">
-                <span class="graph-field-label">Do</span>
+                <span class="graph-field-label">{{ strings.period_to_label }}</span>
                 <input type="date" class="graph-date-input" [(ngModel)]="dateTo" [min]="dateFrom">
               </label>
             </div>
-            <span class="graph-field-hint">Prázdné pole = bez omezení</span>
+            <span class="graph-field-hint">{{ strings.period_hint }}</span>
           </div>
 
           <div class="graph-sidebar-section">
-            <div class="graph-sidebar-section-title">Doplňkové grafy</div>
+            <div class="graph-sidebar-section-title">{{ strings.extra_charts_section_title }}</div>
             <label class="graph-col-checkbox">
               <input type="checkbox" [checked]="showOverallTrend" (change)="toggleShowOverallTrend($event)">
-              <span>Celkový vývoj v čase</span>
+              <span>{{ strings.overall_trend_checkbox }}</span>
             </label>
           </div>
 
           <div class="graph-sidebar-section graph-sidebar-section-grow">
             <div class="graph-sidebar-section-title graph-sidebar-section-title-row">
-              <span>Sloupce a typ grafu</span>
+              <span>{{ strings.columns_section_title }}</span>
               @if (columns.length > 0) {
                 <button type="button" class="graph-columns-toggle-all" (click)="toggleSelectAllColumns()">
-                  {{ isAllColumnsSelected ? 'Zrušit vše' : 'Vybrat vše' }}
+                  {{ isAllColumnsSelected ? strings.toggle_deselect_all : strings.toggle_select_all }}
                 </button>
               }
             </div>
@@ -91,18 +95,18 @@
                       </select>
 
                       <button type="button" class="graph-value-filter-toggle" (click)="toggleValueFilterPanel(col.key)">
-                        {{ isValueFilterExpanded(col.key) ? '▲ Skrýt hodnoty' : '▼ Hodnoty' }}
+                        {{ isValueFilterExpanded(col.key) ? strings.hide_values_button : strings.show_values_button }}
                         @if (!isAllColumnValuesSelected(col.key)) {
-                          <span class="graph-value-filter-active-badge">filtr aktivní</span>
+                          <span class="graph-value-filter-active-badge">{{ strings.filter_active_badge }}</span>
                         }
                       </button>
 
                       @if (isValueFilterExpanded(col.key)) {
                         <div class="graph-value-filter-panel">
                           <div class="graph-value-filter-header">
-                            <span>Zahrnuté hodnoty</span>
+                            <span>{{ strings.included_values_label }}</span>
                             <button type="button" class="graph-columns-toggle-all" (click)="toggleAllColumnValues(col.key)">
-                              {{ isAllColumnValuesSelected(col.key) ? 'Zrušit vše' : 'Vybrat vše' }}
+                              {{ isAllColumnValuesSelected(col.key) ? strings.toggle_deselect_all : strings.toggle_select_all }}
                             </button>
                           </div>
                           <div class="graph-value-filter-list">
@@ -133,7 +137,7 @@
             </div>
 
             @if (selectedColumnKeys.size === 0) {
-              <p class="graph-columns-warning">Vyberte alespoň jeden sloupec pro vygenerování reportu.</p>
+              <p class="graph-columns-warning">{{ strings.columns_warning }}</p>
             }
           </div>
 
@@ -143,7 +147,7 @@
       <div class="graph-main">
 
         <div class="graph-topbar">
-          <button type="button" class="graph-mobile-settings-btn" (click)="mobileSidebarOpen = true" aria-label="Nastavení reportu">
+          <button type="button" class="graph-mobile-settings-btn" (click)="mobileSidebarOpen = true" [attr.aria-label]="strings.sidebar_title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
               <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
@@ -152,14 +156,14 @@
             </svg>
           </button>
 
-          <h2 class="graph-topbar-title">Grafy a analýzy{{ tableCaption ? ' — ' + tableCaption : '' }}</h2>
+          <h2 class="graph-topbar-title">{{ strings.report_title_prefix }}{{ tableCaption ? ' — ' + tableCaption : '' }}</h2>
 
           <div class="graph-topbar-actions">
             <button type="button" class="graph-generate-btn" [disabled]="!canGenerate" (click)="generateReport()">
-              {{ isLoading ? 'Načítám…' : 'Generovat report' }}
+              {{ isLoading ? strings.generating_button : strings.generate_button }}
             </button>
             <button type="button" class="graph-popup-export" [disabled]="!reportGenerated || isExportingPdf" (click)="exportToPdf()">
-              {{ isExportingPdf ? 'Exportuji…' : 'Exportovat do PDF' }}
+              {{ isExportingPdf ? strings.exporting_pdf_button : strings.export_pdf_button }}
             </button>
           </div>
         </div>
@@ -168,11 +172,11 @@
           @if (isLoading) {
             <div class="graph-empty-state">
               <div class="graph-spinner"></div>
-              <span>Připravuji report…</span>
+              <span>{{ strings.preparing_report }}</span>
             </div>
           } @else if (!reportGenerated) {
             <div class="graph-empty-state">
-              <span>Nastavte období a sloupce v postranním panelu a klikněte na „Generovat“.</span>
+              <span>{{ strings.empty_state_text }}</span>
             </div>
           } @else {
 

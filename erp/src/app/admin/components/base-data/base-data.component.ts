@@ -14,6 +14,29 @@
  * - TableRefreshBusService: Globální "Aktualizovat vše" event bus (admin header).
  * - LoadingService, AlertDialogService, AuthService, PermissionService: Core infrastructure
  *   services for UI state and access control (skutečně cross-cutting, proto zůstávají zde).
+ * - AdminLocalizationService: Statická (bundlovaná) lokalizace admin UI - viz refactor-note
+ *   (2026-09) níže.
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace (statická, ne editovatelná)":
+ * Přidán `AdminLocalizationService` jako společný vstupní bod i18n pro ~99 % admin
+ * komponent, které dědí tuhle třídu (komponenty, co nededí - `PersonalInfoComponent`,
+ * `EditWebsiteComponent`/`EditEshopComponent` - si službu injektují ručně, žádná změna
+ * v nich není potřeba kvůli téhle úpravě).
+ * - `translationSection` - potomek nastaví na název své sekce v JSON souboru (např.
+ *   `'user-request'`). Prázdný default `''` znamená "žádná vlastní sekce, jen shared" -
+ *   existující komponenty tak touhle změnou nic nerozbijí, dokud si vlastní sekci
+ *   nenastaví samy při postupné migraci na i18n klíče.
+ * - `strings` getter - pro šablony: `{{ strings.confirm }}` (shared klíč) nebo
+ *   `{{ strings.save_failed }}` (vlastní sekce, přebíjí shared se stejným jménem).
+ * - `t(path)` metoda - pro imperativní použití v `.ts` (texty v `alertDialogService.open()`
+ *   apod.), vždy plná cesta včetně sekce: `this.t('shared.confirm')`,
+ *   `this.t('user-request.save_failed')`.
+ * - Konstruktor navíc odebírá `i18n.translations$` a při každé změně jazyka volá
+ *   `cd.markForCheck()` - nutné pro komponenty s `ChangeDetectionStrategy.OnPush`
+ *   (většina admin stránek), aby se `strings`/`t()` výstup po přepnutí jazyka na
+ *   personal-info stránce reálně překreslil i v komponentách, které zrovna nejsou
+ *   OnPush-triggerované jinou akcí. Bezpečné volat i pro non-OnPush komponenty
+ *   (markForCheck je no-op navíc, ne chyba).
  */
 
 import { Directive, inject } from '@angular/core';
@@ -23,6 +46,7 @@ import * as Core from '../../../shared/imports/core-providers';
 import { PaginatedListStore } from './paginated-list-store';
 import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
 import { TableRefreshBusService } from '../../../core/services/table-refresh-bus.service';
+import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
 /**
  * @description Serves as a base controller for all resource management components in the admin panel.
@@ -70,6 +94,35 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   public authService = inject(Core.AuthService);
   public permissionService = inject(Core.PermissionService);
   public tableRefreshBus = inject(TableRefreshBusService);
+  public i18n = inject(AdminLocalizationService);
+
+  /**
+   * @description Název "vlastní" sekce v `assets/i18n/admin/{lang}/{lang}.json` pro
+   * tuhle komponentu (např. `'user-request'`). Prázdný default = žádná vlastní sekce,
+   * `strings` pak vrací jen `shared`. Nastavuje potomek při migraci na i18n klíče - viz
+   * refactor-note v hlavičce souboru.
+   */
+  protected readonly translationSection: string = '';
+
+  /**
+   * @description Merged `shared` + vlastní sekce (`translationSection`) - pro binding
+   * v šabloně: `{{ strings.confirm }}`. Viz refactor-note v hlavičce souboru.
+   * @note Typ `any` záměrně - viz stejná poznámka u
+   * `AdminLocalizationService.getMergedSection()`.
+   */
+  public get strings(): any {
+    return this.i18n.getMergedSection(this.translationSection);
+  }
+
+  /**
+   * @description Imperativní jednorázový lookup podle PLNÉ cesty (vč. sekce) - pro
+   * použití v `.ts` kódu, kde je potřeba hotový `string` hned (např.
+   * `this.alertDialogService.open(this.t('shared.error'), this.t('user-request.save_failed'), 'danger')`).
+   * Viz refactor-note v hlavičce souboru.
+   */
+  public t(path: string): string {
+    return this.i18n.getValue(path);
+  }
 
   private _crud?: EntityCrudService<T>;
   private _list?: PaginatedListStore<T>;
@@ -106,7 +159,13 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     protected dataHandler: Core.DataHandler,
     protected cd: Core.ChangeDetectorRef,
     protected genericTableService: Core.GenericTableService
-  ) {}
+  ) {
+    // Po přepnutí admin jazyka (personal-info dropdown) donutí i OnPush komponenty
+    // přehodnotit `strings`/`t()` výstup - viz refactor-note v hlavičce souboru.
+    this.i18n.translations$
+      .pipe(Core.takeUntil(this.destroy$))
+      .subscribe(() => this.cd.markForCheck());
+  }
 
   // ── Pass-through stav — zachovává původní veřejné API beze změny ────────────
 

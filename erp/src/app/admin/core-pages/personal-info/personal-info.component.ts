@@ -13,6 +13,28 @@
  * z `error:` callbacku v `onToggle2fa()` - `DataHandler.handleError()` je jediné
  * autoritativní místo pro chybový toast. `onSubmit()` používá inline `errorMessage`
  * (ne toast), beze změny.
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace (statická, ne
+ * editovatelná)": tahle komponenta NEDĚDÍ `BaseDataComponent`, takže
+ * `AdminLocalizationService` se injektuje ručně (stejný vzor jako
+ * `EntityCrudService` o pár řádků níže) - viz refactor-note v
+ * `base-data.component.ts` hlavičce.
+ *
+ * @refactor-note (2026-09c) BACKLOG "žádné hardcoded texty" - doplnění .ts vrstvy:
+ * `security2faStatusMessage`/`onSubmit()` success+error hlášky byly natvrdo česky,
+ * přestože odpovídající JSON klíče (`security_2fa_*`, `password_change_*`) už v
+ * projektu existovaly z dřívějška - jen se v kódu nepoužívaly. Přidána lokální `t(key)`
+ * metoda (komponenta nedědí BaseDataComponent, takže žádná zděděná verze) - prefix
+ * `personal-info.` doplňuje sama, stejný vzor jako WelcomePageComponent.
+ * `console.error(...)` v `loadCurrentUserData()` VĚDOMĚ nepřekládán (dev log).
+ *
+ * @refactor-note (2026-09d) BACKLOG "jazykový přepínač do headeru": jazykový
+ * přepínač (dropdown s vlaječkami) i VEŠKERÁ jeho funkcionalita
+ * (`languages`/`currentLanguageCode`/`currentLanguageMeta`/`isLangMenuOpen`/
+ * `toggleLangMenu()`/`closeLangMenu()`/`selectLanguage()`) PŘESUNUTY do
+ * `AdminLayoutComponent` (header, vedle odkazu Wiki) - viz jeho refactor-note
+ * stejné datum. Tahle komponenta si `AdminLocalizationService` PONECHÁVÁ (pořád
+ * potřebuje `strings`/`t()` pro texty sekce Zabezpečení a formulář změny hesla),
+ * jen ztrácí kartu "Jazyk administrace" a s ní související stav/metody.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -29,6 +51,7 @@ import { UserLogin } from '../../../shared/interfaces/user';
 import { LoadingService } from '../../../core/services/loading.service';
 import { PASSWORD_PATTERN } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
+import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
 const FORCED_2FA_ROLES = ['admin', 'sysadmin'];
 
@@ -54,6 +77,7 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   isSaving2fa = false;
 
   public readonly loadingService = inject(LoadingService);
+  public readonly i18n = inject(AdminLocalizationService);
 
   private readonly authService = inject(AuthService);
   public readonly alertDialogService = inject(AlertDialogService);
@@ -93,6 +117,28 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /**
+   * @description Merged `shared` + `personal-info` i18n section - stejný vzor jako
+   * `BaseDataComponent.strings`, jen ručně replikovaný, protože tahle komponenta
+   * `BaseDataComponent` nedědí. Viz refactor-note v hlavičce souboru.
+   * @note Typ `any` záměrně - viz stejná poznámka u
+   * `AdminLocalizationService.getMergedSection()`.
+   */
+  get strings(): any {
+    return this.i18n.getMergedSection('personal-info');
+  }
+
+  /**
+   * @refactor-note (2026-09c) BACKLOG "žádné hardcoded texty": doplněno pro
+   * imperativní volání (alert dialogy, chybové zprávy), kde template binding
+   * (`strings.xxx`) nejde použít. Stejný vzor jako u ostatních ručně injektovaných
+   * komponent (WelcomePageComponent atd.) - prefix sekce 'personal-info.' přidává
+   * metoda sama, volající kód předává jen krátký klíč.
+   */
+  t(key: string): string {
+    return this.i18n.getValue(`personal-info.${key}`);
+  }
+
   private loadCurrentUserData(): void {
     this.profileService.getProfile()
       .pipe(takeUntil(this.destroy$))
@@ -125,16 +171,22 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     return (this.userData as any)?.roles?.[0]?.role_name ?? null;
   }
 
+  /**
+   * @refactor-note (2026-09c) Nahrazeny natvrdo psané české texty odpovídajícími
+   * `t()` voláními - klíče `security_2fa_role_forced`/`security_2fa_admin_forced`/
+   * `security_2fa_enabled`/`security_2fa_disabled` v JSONu existovaly už dřív, jen se
+   * v kódu nepoužívaly. `{role}` placeholder nahrazen přes `.replace()`.
+   */
   get security2faStatusMessage(): string {
     if (this.isRoleForced2fa) {
-      return `Pro vaši roli (${this.userRoleName}) je dvoufaktorové ověření povinné a nelze ho vypnout.`;
+      return this.t('security_2fa_role_forced').replace('{role}', this.userRoleName ?? '');
     }
     if (this.isAdminForced2fa) {
-      return 'Správce systému vynutil dvoufaktorové ověření pro váš účet. Nelze ho vypnout, obraťte se prosím na administrátora.';
+      return this.t('security_2fa_admin_forced');
     }
     return this.enable2faValue
-      ? 'Dvoufaktorové ověření je aktivní. Můžete si ho kdykoliv vypnout.'
-      : 'Dvoufaktorové ověření je vypnuté. Doporučujeme ho pro vyšší bezpečnost zapnout.';
+      ? this.t('security_2fa_enabled')
+      : this.t('security_2fa_disabled');
   }
 
   get security2faStatusType(): 'forced' | 'enabled' | 'disabled' {
@@ -196,6 +248,12 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
     return !!this.passwordForm.errors?.['passwordsNotMatching'];
   }
 
+  /**
+   * @refactor-note (2026-09c) Nahrazeny natvrdo psané české texty (success title,
+   * success message, error message) odpovídajícími `t()` voláními - klíče
+   * `password_change_success_title`/`password_change_success_message`/
+   * `password_change_error` v JSONu existovaly už dřív, jen se v kódu nepoužívaly.
+   */
   onSubmit(): void {
     if (this.passwordForm.invalid) return;
 
@@ -217,12 +275,12 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
           this.passwordForm.reset();
           this.showPasswordPopup = false;
           this.profileService.invalidate();
-          this.alertDialogService.open('Změna hesla', 'Heslo bylo úspěšně změněno.', 'success');
+          this.alertDialogService.open(this.t('password_change_success_title'), this.t('password_change_success_message'), 'success');
           this.errorMessage = null;
           this.cd.markForCheck();
         },
         error: () => {
-          this.errorMessage = 'Chyba při změně hesla. Zkontrolujte prosím původní heslo.';
+          this.errorMessage = this.t('password_change_error');
           this.cd.markForCheck();
         }
       });

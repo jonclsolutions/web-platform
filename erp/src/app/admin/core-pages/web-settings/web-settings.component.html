@@ -25,13 +25,19 @@
         (⚠️/🖼️/🏢/🔄/📁/✕/ℹ️/✓/💾/🌐/📭/↑/🗑️/↻/+) nahrazena inline SVG ve
         stejném stylu jako edit-legal.component.html (width/height 12-16,
         viewBox 0 0 24 24, stroke="currentColor" stroke-width="2").
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        všechny natvrdo psané české texty nahrazeny `strings.*` bindingy
+        (AdminLocalizationService, sekce 'web-settings') - viz
+        web-settings.component.ts stejné datum. `{{ currentLang | uppercase }}` a
+        `getLangName(currentLang)` beze změny - jazykové kódy/názvy jazyků jsou
+        obsahová data (LangMeta), ne UI text.
 -->
 
 <div class="ws-container">
   <div class="ws-header">
     <div>
-      <h1 class="ws-title">Nastavení webu</h1>
-      <span class="ws-subtitle">Logo, firemní údaje a sociální sítě</span>
+      <h1 class="ws-title">{{ strings.page_title }}</h1>
+      <span class="ws-subtitle">{{ strings.page_subtitle }}</span>
     </div>
   </div>
 
@@ -54,7 +60,7 @@
           <polyline points="21 15 16 10 5 21"/>
         </svg>
       </span>
-      <span class="ws-card-title">Logo webu</span>
+      <span class="ws-card-title">{{ strings.logo_card_title }}</span>
     </div>
 
     @if (settingsLoading) {
@@ -68,7 +74,7 @@
         <div class="ws-logo-section">
           <div class="ws-logo-preview-wrap">
             @if (hasLogo) {
-              <img [src]="logoSrc" class="ws-logo-img" alt="Logo webu">
+              <img [src]="logoSrc" class="ws-logo-img" [alt]="strings.logo_alt">
             } @else {
               <div class="ws-logo-placeholder">
                 <span class="ws-logo-placeholder-icon">
@@ -80,7 +86,7 @@
                     <path d="M9 14h.01"/><path d="M15 14h.01"/>
                   </svg>
                 </span>
-                <span class="ws-logo-placeholder-text">Zatím bez loga</span>
+                <span class="ws-logo-placeholder-text">{{ strings.logo_placeholder_text }}</span>
               </div>
             }
           </div>
@@ -99,10 +105,10 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
-                  Logo nahráno na serveru
+                  {{ strings.logo_stored_text }}
                 </span>
               } @else {
-                <span class="ws-logo-none">Žádné logo — nahrajte soubor JPG, PNG nebo SVG (max 2 MB)</span>
+                <span class="ws-logo-none">{{ strings.logo_none_text }}</span>
               }
             </div>
             @if (hasAnyPermission('core-legal-config-update')) {
@@ -114,12 +120,12 @@
                       <polyline points="1 20 1 14 7 14"/>
                       <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                     </svg>
-                    Změnit logo
+                    {{ strings.logo_change_button }}
                   } @else {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                     </svg>
-                    Vybrat logo
+                    {{ strings.logo_select_button }}
                   }
                   <input type="file" accept="image/jpeg,image/png,image/svg+xml,image/webp"
                          class="ws-hidden-input" (change)="onLogoSelected($event)">
@@ -129,7 +135,7 @@
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
-                    Zrušit výběr
+                    {{ strings.logo_cancel_selection }}
                   </button>
                 }
               </div>
@@ -141,7 +147,7 @@
                   <line x1="12" y1="16" x2="12" y2="12"/>
                   <line x1="12" y1="8" x2="12.01" y2="8"/>
                 </svg>
-                Logo se uloží po kliknutí na „Uložit firemní údaje" níže.
+                {{ strings.logo_pending_hint }}
               </p>
             }
           </div>
@@ -161,7 +167,7 @@
           <path d="M9 14h.01"/><path d="M15 14h.01"/>
         </svg>
       </span>
-      <span class="ws-card-title">Firemní údaje</span>
+      <span class="ws-card-title">{{ strings.company_card_title }}</span>
     </div>
 
     @if (settingsLoading) {
@@ -183,7 +189,7 @@
                 <line x1="2" y1="12" x2="22" y2="12"/>
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
               </svg>
-              Jazyk pro slogan a copyright:
+              {{ strings.i18n_bar_label }}
             </span>
             <div class="ws-mini-lang-tabs">
               @for (lang of languages; track lang.code) {
@@ -204,88 +210,83 @@
 
         <div class="ws-form-grid">
           <div class="ws-field">
-            <label class="ws-label">Název firmy *</label>
+            <label class="ws-label">{{ strings.field_company_name }}</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.company_name"
-                   name="company_name" placeholder="Název s.r.o.">
+                   name="company_name" [placeholder]="strings.field_company_name_placeholder">
           </div>
 
           <div class="ws-field">
             <label class="ws-label">
-              Brand Tagline
+              {{ strings.field_brand_tagline }}
               <span class="ws-i18n-lang-tag">{{ currentLang | uppercase }}</span>
             </label>
             <input class="ws-input" type="text"
                    [(ngModel)]="settings.brand_tagline_i18n[currentLang]"
                    name="brand_tagline"
-                   [placeholder]="'Slogan (' + getLangName(currentLang) + ')'">
+                   [placeholder]="strings.field_brand_tagline_placeholder.replace('{lang}', getLangName(currentLang))">
           </div>
 
           <div class="ws-field">
             <label class="ws-label">
-              Copyright Text
+              {{ strings.field_copyright_text }}
               <span class="ws-i18n-lang-tag">{{ currentLang | uppercase }}</span>
             </label>
             <input class="ws-input" type="text"
                    [(ngModel)]="settings.copyright_text_i18n[currentLang]"
                    name="copyright_text"
-                   [placeholder]="'Copyright (' + getLangName(currentLang) + ')'">
+                   [placeholder]="strings.field_copyright_text_placeholder.replace('{lang}', getLangName(currentLang))">
           </div>
 
           <div class="ws-field">
-            <label class="ws-label">IČO *</label>
+            <label class="ws-label">{{ strings.field_ico }}</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.ico"
-                   name="ico" placeholder="12345678">
+                   name="ico" [placeholder]="strings.field_ico_placeholder">
           </div>
 
           <div class="ws-field">
-            <label class="ws-label">DIČ</label>
+            <label class="ws-label">{{ strings.field_dic }}</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.dic"
-                   name="dic" placeholder="CZ12345678">
+                   name="dic" [placeholder]="strings.field_dic_placeholder">
           </div>
 
-          <!-- Vložit do .ws-form-grid (karta "Firemní údaje"), hned za pole DIČ,
-     před pole "Kontaktní e-mail". Žádná jiná změna v souboru není potřeba.
-     Použita existující .ws-logo-hint třída (žlutý hint box), ne .ws-i18n-lang-tag
-     (ta je stylovaná jako malý pill štítek, na celou větu by vypadala divně). -->
-
-<div class="ws-field ws-field-full">
-  <label class="ws-label">Google Analytics 4 - Measurement ID</label>
-  <input class="ws-input" type="text" [(ngModel)]="settings.google_analytics_id"
-         name="google_analytics_id" placeholder="G-XXXXXXXXXX"
-         pattern="^G-[A-Za-z0-9]{6,10}$">
-  <p class="ws-logo-hint">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="12" y1="16" x2="12" y2="12"/>
-      <line x1="12" y1="8" x2="12.01" y2="8"/>
-    </svg>
-    Nepovinné - GA se na webu spustí až po odsouhlasení analytických cookies návštěvníkem.
-  </p>
-</div>
+          <div class="ws-field ws-field-full">
+            <label class="ws-label">{{ strings.field_ga_label }}</label>
+            <input class="ws-input" type="text" [(ngModel)]="settings.google_analytics_id"
+                   name="google_analytics_id" placeholder="G-XXXXXXXXXX"
+                   pattern="^G-[A-Za-z0-9]{6,10}$">
+            <p class="ws-logo-hint">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              {{ strings.field_ga_hint }}
+            </p>
+          </div>
 
           <div class="ws-field">
-            <label class="ws-label">Kontaktní e-mail *</label>
+            <label class="ws-label">{{ strings.field_email }}</label>
             <input class="ws-input" type="email" [(ngModel)]="settings.contact_email"
-                   name="contact_email" placeholder="info@firma.cz">
+                   name="contact_email" [placeholder]="strings.field_email_placeholder">
           </div>
 
           <div class="ws-field">
-            <label class="ws-label">Telefon</label>
+            <label class="ws-label">{{ strings.field_phone }}</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.contact_phone"
-                   name="contact_phone" placeholder="+420 123 456 789">
+                   name="contact_phone" [placeholder]="strings.field_phone_placeholder">
           </div>
 
           <div class="ws-field ws-field-full">
-            <label class="ws-label">Adresa *</label>
+            <label class="ws-label">{{ strings.field_address }}</label>
             <input class="ws-input" type="text" [(ngModel)]="settings.address"
-                   name="address" placeholder="Ulice 1, 100 00 Praha">
+                   name="address" [placeholder]="strings.field_address_placeholder">
           </div>
 
           <div class="ws-field ws-field-full">
-            <label class="ws-label">Text patičky webu</label>
+            <label class="ws-label">{{ strings.field_footer_text }}</label>
             <textarea class="ws-textarea" [(ngModel)]="settings.footer_text"
                       name="footer_text" rows="3"
-                      placeholder="© 2025 Firma s.r.o. Všechna práva vyhrazena."></textarea>
+                      [placeholder]="strings.field_footer_text_placeholder"></textarea>
           </div>
         </div>
 
@@ -295,7 +296,7 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
-              Uloženo
+              {{ strings.saved_badge }}
             </span>
           }
           @if (logoFile) {
@@ -305,7 +306,7 @@
                 <circle cx="8.5" cy="8.5" r="1.5"/>
                 <polyline points="21 15 16 10 5 21"/>
               </svg>
-              Nové logo připraveno k uložení
+              {{ strings.logo_pending_badge }}
             </span>
           }
           @if (hasAnyPermission('core-legal-config-update')) {
@@ -322,7 +323,7 @@
                   <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
                 </svg>
               }
-              Uložit firemní údaje{{ logoFile ? ' + logo' : '' }}
+              {{ strings.save_button }}{{ logoFile ? strings.save_button_with_logo_suffix : '' }}
             </button>
           }
         </div>
@@ -339,7 +340,7 @@
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
       </span>
-      <span class="ws-card-title">Sociální sítě</span>
+      <span class="ws-card-title">{{ strings.social_card_title }}</span>
       <span class="ws-card-count">{{ socialLinks.length }}</span>
     </div>
 
@@ -361,7 +362,7 @@
                 <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
               </svg>
             </span>
-            <span>Zatím žádné sociální sítě. Přidejte první tlačítkem níže.</span>
+            <span>{{ strings.social_empty_text }}</span>
           </div>
         }
         @for (link of socialLinks; track trackByIndex($index); let i = $index) {
@@ -369,7 +370,7 @@
                [class.ws-social-new]="link._isNew"
                [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
             <div class="ws-social-icon-col">
-              <label class="ws-icon-upload" title="Nahrát ikonku">
+              <label class="ws-icon-upload" [title]="strings.social_icon_upload_title">
                 @if (iconSrc(link)) {
                   <img [src]="iconSrc(link)" class="ws-icon-preview" [alt]="link.name">
                 } @else {
@@ -396,19 +397,19 @@
                      type="text"
                      [(ngModel)]="socialLinks[i].name"
                      [name]="'soc_name_' + i"
-                     placeholder="Název (Facebook, Instagram…)">
+                     [placeholder]="strings.social_name_placeholder">
               <input class="ws-input ws-social-input ws-input-url"
                      type="url"
                      [(ngModel)]="socialLinks[i].url"
                      [name]="'soc_url_' + i"
-                     placeholder="https://facebook.com/firma">
+                     [placeholder]="strings.social_url_placeholder">
             </div>
             <div class="ws-social-actions">
               @if (link._isNew ? hasAnyPermission('core-legal-config-create') : hasAnyPermission('core-legal-config-update')) {
                 <button class="ws-action-btn ws-btn-save"
                         (click)="saveSocialLink(i)"
                         [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
-                        title="Uložit">
+                        [title]="strings.social_save_title">
                   @if (link._saving) {
                     <span class="ws-mini-spin">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -427,7 +428,7 @@
                 <button class="ws-action-btn ws-btn-delete"
                         (click)="deleteSocialLink(i)"
                         [disabled]="link._saving"
-                        title="Smazat">
+                        [title]="strings.social_delete_title">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -445,7 +446,7 @@
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                 </svg>
               </span>
-              Přidat sociální síť
+              {{ strings.social_add_button }}
             </button>
           </div>
         }

@@ -46,6 +46,34 @@
  *   refreshed, whatever the user has already typed/checked is preserved except for
  *   whatever `fieldOverrides` explicitly forces.
  *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * Component nedědí BaseDataComponent, proto ruční injection AdminLocalizationService
+ * (`i18n`/`strings`/`t()`) dle sdíleného vzoru builderů. Nahrazeny VŠECHNY uživatelsky
+ * viditelné texty vč. dříve nekonzistentně anglických hlášek v onSubmit() a
+ * getValidationErrorMessage() (byly 'Error'/'Passwords do not match.'/'Invalid Form'/
+ * 'Please check all required fields.'/'This field is required.'/'Invalid format.'/
+ * 'Invalid email format.' natvrdo anglicky uprostřed jinak českého souboru).
+ * `headerText` @Input default změněn z natvrdo 'Create New Record' na prázdný string
+ * s fallbackem na `t('default_header')` v ngOnInit(). Žádná OnPush strategie zde
+ * není, proto (na rozdíl od TableBuilderComponent) není potřeba `translations$`
+ * subscribe pro markForCheck().
+ *
+ * @refactor-note (2026-09v2) BUGFIX "český fallback v multi-file-upload i v EN":
+ * `fileUploadTexts` PŮVODNĚ používal `i18n.getMergedSection('file-upload')` - pokud
+ * sekce/klíč v JSONu chyběly, `s.xxx` bylo `undefined`, což se jako EXPLICITNÍ
+ * vlastnost objektu propsalo do `MultiFileUploadComponent.textOverrides` a přepsalo
+ * tak jeho vlastní český fallback (`DEFAULT_MULTI_FILE_UPLOAD_TEXTS`) hodnotou
+ * `undefined` - výsledek byl nekonzistentní: cizí (český) text prosvítal skrz i při
+ * zapnuté angličtině. Nahrazeno `i18n.getValue()` s plnou tečkovanou cestou PRO KAŽDÝ
+ * klíč zvlášť - `getValue()` u chybějícího klíče VŽDY vrátí `'Cannot load text'`
+ * (nikdy `undefined`), takže se komponenta chová konzistentně se zbytkem
+ * AdminLocalizationService - chybějící překlad je vidět, ne skrytý za cizím jazykem.
+ * Přidán i `attachments_label` klíč (dřív byl `[label]=\"''\"` v šabloně, tedy natvrdo
+ * prázdný, což padalo na `MultiFileUploadComponent`'s vlastní český
+ * `@Input() label = 'Přílohy'` default) - řešeno předáním `i18n.getValue(...)` přímo
+ * do `[label]` bindingu v šabloně (samostatný Input, ne součást `MultiFileUploadTexts`
+ * shape, viz form-builder.component.html stejné datum).
+ *
  * @dependencies
  * - FormsModule: Angular template-driven form infrastructure.
  * - AlertDialogService: Provides user feedback for submission outcomes.
@@ -53,6 +81,7 @@
  * - PasswordRequirementsChecklistComponent: Live visual checklist of password rules.
  * - MultiFileUploadComponent: Shared drag&drop multi-file upload, see the `'files'` case.
  * - ScrollLockService: Shared background scroll lock.
+ * - AdminLocalizationService: Statické i18n admin UI.
  */
 
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, ViewChild, OnInit, OnDestroy, OnChanges, SimpleChanges, inject } from '@angular/core';
@@ -62,6 +91,7 @@ import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { PasswordRequirementsChecklistComponent } from '../../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { MultiFileUploadComponent } from '../../../../shared/components/multi-file-upload/multi-file-upload.component';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 
 /**
  * @description Renders a dynamic form based on an array of field definitions.
@@ -76,7 +106,7 @@ import { ScrollLockService } from '../../../../core/services/scroll-lock.service
   styleUrl: './form-builder.component.css',
 })
 export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
-  @Input() headerText: string = 'Create New Record';
+  @Input() headerText: string = '';
   @Input() inputDefinitions: InputDefinition[] = [];
   @Input() formDataToEdit: any = null;
   /**
@@ -108,6 +138,19 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   private scrollLock = inject(ScrollLockService);
   private initialized = false;
 
+  /**
+   * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+   * FormBuilderComponent NEdědí BaseDataComponent (sdílená builder komponenta), proto
+   * ruční injection + lokální `strings`/`t()` přesně dle vzoru z ostatních builderů
+   * (TableBuilderComponent, ExportPopupBuilderComponent atd.). Komponenta NEMÁ
+   * `ChangeDetectionStrategy.OnPush`, takže na rozdíl od TableBuilderComponent zde
+   * NENÍ potřeba `translations$.subscribe(() => markForCheck())` - výchozí change
+   * detection ji stejně překreslí po přepnutí jazyka.
+   */
+  public readonly i18n = inject(AdminLocalizationService);
+  public get strings(): any { return this.i18n.getMergedSection('form-builder'); }
+  public t(key: string): string { return this.i18n.getValue(`form-builder.${key}`); }
+
   constructor(
     private cd: ChangeDetectorRef,
     private alertDialogService: AlertDialogService
@@ -118,6 +161,17 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
    */
   ngOnInit(): void {
     this.scrollLock.lock();
+
+    /**
+     * @refactor-note (2026-09) `headerText` @Input default zůstává prázdný string
+     * (viz deklarace) místo natvrdo anglického 'Create New Record' - konzument by ho
+     * měl vždy předat vlastní (resource-specific) text, tohle je jen záchranná síť
+     * pro případ, že to zapomene. Řešeno tady, ne jako inline field initializer, aby
+     * `i18n` injection nezáviselo na pořadí deklarace polí třídy.
+     */
+    if (!this.headerText) {
+      this.headerText = this.t('default_header');
+    }
 
     if (this.formDataToEdit) {
       this.formData = { ...this.formDataToEdit };
@@ -321,9 +375,9 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
     if (!control || !control.invalid || (!control.dirty && !control.touched)) {
       return null;
     }
-    if (control.errors?.['required']) return fieldDefinition.errorMessage || 'This field is required.';
-    if (control.errors?.['pattern']) return fieldDefinition.errorMessage || 'Invalid format.';
-    if (control.errors?.['email']) return fieldDefinition.errorMessage || 'Invalid email format.';
+    if (control.errors?.['required']) return fieldDefinition.errorMessage || this.t('validation_required');
+    if (control.errors?.['pattern']) return fieldDefinition.errorMessage || this.t('validation_pattern');
+    if (control.errors?.['email']) return fieldDefinition.errorMessage || this.t('validation_email');
     return null;
   }
 
@@ -354,7 +408,7 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
     });
 
     if (this.hasPasswordMismatch) {
-      this.alertDialogService.open('Error', 'Passwords do not match.', 'danger');
+      this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('alert_password_mismatch_message'), 'danger');
       return;
     }
 
@@ -399,7 +453,29 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
       // `isSubmitting` deliberately stays `true` - see version history bugfix-note
       // (duplicate-submit guard).
     } else {
-      this.alertDialogService.open('Invalid Form', 'Please check all required fields.', 'warning');
+      this.alertDialogService.open(this.t('alert_invalid_form_title'), this.t('alert_invalid_form_message'), 'warning');
     }
+  }
+
+  /**
+   * @refactor-note (2026-09v2) BUGFIX - viz hlavička souboru. Přepsáno z
+   * `getMergedSection()` (tiché `undefined` u chybějících klíčů) na `getValue()` s
+   * plnou tečkovanou cestou PRO KAŽDÝ klíč - chybějící klíč/sekce se teď spolehlivě
+   * projeví jako `'Cannot load text'`, nikdy ne jako tichý pád na
+   * `MultiFileUploadComponent`'s vlastní český default.
+   */
+    get fileUploadTexts() {
+    return {
+      limitsHint: this.i18n.getValue('file-upload.limits_hint'),
+      existingSectionTitle: this.i18n.getValue('file-upload.existing_section_title'),
+      removeExistingTitle: this.i18n.getValue('file-upload.remove_existing_title'),
+      dropzoneLabel: this.i18n.getValue('file-upload.dropzone_label'),
+      errorMaxFilesWithExisting: this.i18n.getValue('file-upload.error_max_files_with_existing'),
+      errorMaxFiles: this.i18n.getValue('file-upload.error_max_files'),
+      errorFileTooLarge: this.i18n.getValue('file-upload.error_file_too_large'),
+      errorTotalSizeExceeded: this.i18n.getValue('file-upload.error_total_size_exceeded'),
+      totalLabel: this.i18n.getValue('file-upload.total_label'),
+      totalNewSuffix: this.i18n.getValue('file-upload.total_new_suffix'),
+    };
   }
 }

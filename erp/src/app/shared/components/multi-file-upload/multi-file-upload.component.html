@@ -9,13 +9,23 @@
       multi-file-upload.component.ts stejné datum). Seznam iteruje přes
       `visibleExistingFiles` (ne `existingFiles`), takže odebraná položka z UI hned
       zmizí, i když se reálně smaže až s uložením formuláře.
+  @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+      všechny natvrdo psané texty nahrazeny `t.*` bindingy (getter v .ts, slučuje
+      `textOverrides` s výchozími hodnotami) - viz multi-file-upload.component.ts
+      stejné datum. Komponenta SAMA neinjektuje žádnou i18n službu (ani
+      LocalizationService, ani AdminLocalizationService) - texty vždy přicházejí
+      zvenku přes `[textOverrides]`, ať zůstane použitelná na public webu i v adminu.
+  @refactor-note (2026-09v2) BUGFIX "hint pod labelem zůstával česky natvrdo": limitový
+      hint vedle `{{ label }}` byl natvrdo psaný text, unikl první vlně migrace - nyní
+      `{{ limitsHintText }}` (getter v .ts skládající `t.limitsHint` s dosazenými
+      hodnotami maxFiles/maxFileSizeMb/maxTotalSizeMb).
 -->
 <div class="mfu-container">
-<label class="mfu-label">{{ label }} <span class="mfu-hint">(max. {{ maxFiles }} souborů, {{ maxFileSizeMb }} MB/soubor, {{ maxTotalSizeMb }} MB celkem)</span></label>
+<label class="mfu-label">{{ label }} <span class="mfu-hint">{{ limitsHintText }}</span></label>
 
 @if (visibleExistingFiles.length > 0) {
 <div class="mfu-existing-section">
-<div class="mfu-existing-title">Již nahrané přílohy ({{ visibleExistingFiles.length }})</div>
+<div class="mfu-existing-title">{{ existingSectionTitleText }}</div>
 <ul class="mfu-file-list mfu-existing-list">
 @for (attachment of visibleExistingFiles; track attachment.id) {
 <li class="mfu-file-item mfu-existing-item">
@@ -28,7 +38,7 @@ rel="noopener noreferrer">{{ attachment.original_filename }}</a>
 <span class="mfu-file-name">{{ attachment.original_filename }}</span>
               }
 <span class="mfu-file-size">{{ formatSize(attachment.size_bytes) }}</span>
-<button type="button" class="mfu-remove-btn" title="Odebrat přílohu" (click)="removeExistingFile(attachment.id)">✕</button>
+<button type="button" class="mfu-remove-btn" [title]="t.removeExistingTitle" (click)="removeExistingFile(attachment.id)">✕</button>
 </li>
         }
 </ul>
@@ -42,7 +52,7 @@ rel="noopener noreferrer">{{ attachment.original_filename }}</a>
 (dragleave)="onDragLeave()">
 <input type="file" multiple (change)="onFileInputChange($event)" id="mfu-input" class="mfu-input">
 <label for="mfu-input" class="mfu-dropzone-label">
-<span>↑ Vyberte soubory nebo je přetáhněte sem</span>
+<span>{{ t.dropzoneLabel }}</span>
 </label>
 </div>
 
@@ -63,6 +73,6 @@ rel="noopener noreferrer">{{ attachment.original_filename }}</a>
   }
 
 @if (combinedCount > 0) {
-<div class="mfu-total">Celkem: {{ combinedCount }} / {{ maxFiles }} souborů{{ files.length > 0 ? ' (' + totalSizeLabel + ' nových)' : '' }}</div>
+<div class="mfu-total">{{ totalLabelText }}</div>
   }
 </div>

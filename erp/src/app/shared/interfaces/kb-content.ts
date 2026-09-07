@@ -21,40 +21,79 @@
  * @note Jediná výjimka je `support-form` - zůstává vlastní explicitní komponentou/route
  * (má skutečnou logiku - reaktivní formulář, file upload, POST na `web/support_tickets`),
  * ne statický text, takže do tohoto blokového modelu nepatří.
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * KAŽDÉ uživatelsky viditelné textové pole (`content`/`label`/`title`/`text`/`alt`/
+ * `caption`/`navLabel`/`header`) je teď `LocalizedText` (`{cz, en}`) místo plochého
+ * `string` - viz `LocalizedText`/`resolveLoc()` níže. `devNote` ZŮSTÁVÁ plochý string -
+ * je to poznámka pro vývojáře, nikdy se nevykresluje v UI, takže nemá smysl ji
+ * zdvojovat. `breadcrumb` pole bylo Z DATOVÉHO MODELU ODSTRANĚNO ÚPLNĚ - dřív to byl
+ * ručně psaný duplicitní string ("Interní manuál / Web / X"), teď se skládá dynamicky
+ * v `KbArticleComponent` z přeloženého kořene + přeloženého názvu skupiny (`navGroup`)
+ * + `navLabel`, takže se nemůže rozejít s realitou a nemusí se překládat zvlášť (viz
+ * `KbArticleComponent.breadcrumb` getter). `navGroup` je teď uzavřená množina
+ * anglických identifikátorů (`KBNavGroupKey`) - stabilní klíč pro grupování/routing,
+ * NE zobrazovaný text; zobrazovaný název skupiny se překládá přes
+ * `AdminLocalizationService`, sekce 'knowledge-base', klíče `nav_group_{group}`.
  */
+
+/** @description Textové pole dostupné ve všech podporovaných admin jazycích. */
+export interface LocalizedText {
+  cz: string;
+  en: string;
+  /** Index signatura kvůli `resolveLoc()` - umožňuje bezpečný přístup přes
+   * dynamický klíč jazyka (`loc[lang]`) bez nutnosti `as unknown as Record<...>`
+   * přetypování, které TS jinak odmítá kvůli nedostatečnému překryvu typů. */
+  [key: string]: string;
+}
+
+/**
+ * @description Vrátí text v aktuálním jazyce, s fallbackem na češtinu, pokud by pro
+ * daný jazyk (budoucí rozšíření nad cz/en) chyběl klíč.
+ */
+export function resolveLoc(loc: LocalizedText, lang: string): string {
+  return loc[lang] ?? loc.en;
+}
+
+/** @description Stabilní, NEpřekládaný identifikátor sekce levého menu. Malá
+ * písmena záměrně - odpovídá JSON klíčům `knowledge-base.nav_group_{key}`
+ * (AdminLocalizationService), viz KnowledgeBaseComponent.buildNavGroups(). */
+export type KBNavGroupKey = 'general' | 'roles' | 'web' | 'core' | 'shop';
 
 /** Prostý odstavec textu. */
 export interface KBTextBlock {
   type: 'text';
-  content: string;
+  content: LocalizedText;
 }
 
 /** Zvýrazněný úvodní odstavec (větší font, `--text-muted`) - typicky jeden na stránku, hned pod nadpisem. */
 export interface KBLeadBlock {
   type: 'lead';
-  content: string;
+  content: LocalizedText;
 }
 
 /** Barevně odlišený box pro důležité upozornění. */
 export interface KBAlertBlock {
   type: 'alert';
   variant: 'info' | 'warning' | 'success' | 'danger';
-  content: string;
+  content: LocalizedText;
 }
 
 /** Obrázek (např. screenshot konkrétního tlačítka/modalu, na který se text odkazuje). */
 export interface KBImageBlock {
   type: 'image';
-  /** Cesta pod `/assets/kb/...` - viz poznámka u KB_PAGES o umístění obrázků. */
+  /** Cesta pod `/assets/kb/...` - viz poznámka u KB_PAGES o umístění obrázků. Cesta k
+   * souboru samotná NENÍ text k překladu, zůstává plochý string. */
   path: string;
-  alt: string;
-  caption?: string;
+  alt: LocalizedText;
+  caption?: LocalizedText;
 }
 
 /** Odkaz - buď interní `routerLink` (do admin sekce, kterou popisuje), nebo externí `href`. */
 export interface KBLinkBlock {
   type: 'link';
-  label: string;
+  label: LocalizedText;
+  /** Cílová URL/route - NENÍ text k překladu, zůstává plochý string. */
   url: string;
   /** true = otevře se v novém okně (`target="_blank"`, externí URL); false/chybí = `routerLink` v rámci appky. */
   external?: boolean;
@@ -64,13 +103,13 @@ export interface KBLinkBlock {
 export interface KBListBlock {
   type: 'list';
   ordered?: boolean;
-  items: string[];
+  items: LocalizedText[];
 }
 
 /** Jedna karta v `KBGridBlock`. */
 export interface KBGridCard {
-  title: string;
-  text: string;
+  title: LocalizedText;
+  text: LocalizedText;
 }
 
 /** Mřížka 2-4 karet vedle sebe (stejný vzor jako `.grid-layout .info-card` v introductions). */
@@ -81,8 +120,8 @@ export interface KBGridBlock {
 
 /** Jeden krok v `KBFlowBlock`. */
 export interface KBFlowStep {
-  label: string;
-  text: string;
+  label: LocalizedText;
+  text: LocalizedText;
   /** Zvýrazní krok jako "aktuální/výchozí" (stejný vzor jako `.flow-item.active`). */
   active?: boolean;
 }
@@ -97,7 +136,7 @@ export interface KBFlowBlock {
 export interface KBNoteBlock {
   type: 'note';
   highlight?: boolean;
-  content: string;
+  content: LocalizedText;
 }
 
 export type KBBlock =
@@ -113,7 +152,7 @@ export type KBBlock =
 
 /** Jedna sekce stránky - volitelný nadpis (`<h2>`) + pole bloků. Sekce bez `heading` = pokračování předchozí vizuální sekce bez nového nadpisu. */
 export interface KBSection {
-  heading?: string;
+  heading?: LocalizedText;
   blocks: KBBlock[];
 }
 
@@ -125,21 +164,23 @@ export interface KBSection {
 export interface KBPage {
   /** Route slug, např. 'introductions', 'external-links'. Musí být unikátní v KB_PAGES. */
   id: string;
-  /** Nadpis skupiny v bočním menu - stránky se stejným `navGroup` se vykreslí pod sebou pod jedním nadpisem. */
-  navGroup: string;
+  /** Stabilní (NEpřekládaný) identifikátor skupiny v bočním menu - stránky se stejným
+   * `navGroup` se vykreslí pod sebou pod jedním nadpisem. Zobrazovaný (přeložený)
+   * název skupiny se dohledá přes `AdminLocalizationService`, klíč
+   * `knowledge-base.nav_group_{navGroup}` - viz refactor-note v hlavičce souboru. */
+  navGroup: KBNavGroupKey;
   /** Text odkazu v bočním menu. */
-  navLabel: string;
+  navLabel: LocalizedText;
   /** Pořadí v rámci `navGroup` (vzestupně) - i pořadí SKUPIN se odvozuje z nejnižšího `navOrder` uvnitř nich. */
   navOrder: number;
-  /** Text drobečkové navigace nahoře na stránce, např. "Interní manuál / Web / Externí odkazy". */
-  breadcrumb: string;
   /** Hlavní `<h1>` nadpis stránky. */
-  header: string;
+  header: LocalizedText;
   /**
    * @description Volitelná dokumentační poznámka VIDITELNÁ JEN V KÓDU (nevykresluje se
    * na stránce) - kam patří permission klíč/role, se kterou daná funkce souvisí. Slouží
    * výhradně programátorovi, co v budoucnu edituje tenhle datový soubor, ať ví, jaké
    * oprávnění popisovaná funkce reálně vyžaduje, aniž by musel dohledávat v *.config.ts.
+   * ZÁMĚRNĚ zůstává plochý (jednojazyčný) string - nikdy se nevykresluje v UI.
    */
   devNote?: string;
   sections: KBSection[];

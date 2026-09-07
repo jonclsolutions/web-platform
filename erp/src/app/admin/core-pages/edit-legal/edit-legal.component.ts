@@ -89,7 +89,7 @@ interface DocumentTypeItem {
 export class EditLegalComponent extends BaseDataComponent<DocumentSection> implements OnInit {
   override apiEndpoint: string = 'legal/document-sections';
   override usesPaginatedList = false;
-
+protected override translationSection: string = 'edit-legal';
   private readonly LANG_MODULE = 'web';
   private readonly META_TTL_MS = 10 * 60 * 1000;
   private readonly SECTIONS_TTL_MS = 2 * 60 * 1000;
@@ -109,6 +109,7 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
   editingIds: Set<number> = new Set();
   editBuffer: Record<number, { heading: string; content: string }> = {};
 
+  
   showAddForm = false;
   newHeading = '';
   newContent = '';
@@ -333,6 +334,44 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
       .filter(pos => this.missingSummary[pos].includes(this.activeLang))
       .sort((a, b) => a - b);
   }
+    /** @refactor-note (2026-09) viz hlavička souboru - plain-text varianta bez <strong>. */
+  get totalWarningsLabel(): string {
+    const count = this.totalWarnings;
+    const word = count === 1 ? this.strings.warning_count_singular : this.strings.warning_count_plural;
+    return `${count} ${word}`;
+  }
+
+  get emptyMessage(): string {
+    return this.strings.empty_no_sections.replace('{lang}', this.getLangName(this.activeLang));
+  }
+
+  missingTagTitle(item: DocumentSection): string {
+    return this.strings.missing_tag_title.replace('{langs}', this.getMissingForPosition(item.position).join(', '));
+  }
+
+  missingTagText(item: DocumentSection): string {
+    return this.strings.missing_tag_text.replace('{count}', String(this.getMissingForPosition(item.position).length));
+  }
+
+  get newSectionTitle(): string {
+    return this.strings.new_section_title
+      .replace('{tab}', this.tabLabel)
+      .replace('{lang}', this.getLangName(this.activeLang));
+  }
+
+  positionFillTagText(pos: number): string {
+    return this.strings.position_fill_tag.replace('{pos}', String(pos));
+  }
+
+  get addSectionToLabel(): string {
+    return this.strings.add_section_to
+      .replace('{tab}', this.tabLabel)
+      .replace('{lang}', this.getLangName(this.activeLang));
+  }
+
+  addPositionButtonLabel(pos: number): string {
+    return this.strings.add_position_button.replace('{pos}', String(pos));
+  }
 
   /**
    * @description Initializes the buffer for inline editing of a specific document section.
@@ -357,10 +396,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
    * @description Commits edited data to the API and refreshes the current view.
    * @param item The original item containing the ID.
    */
-  saveEdit(item: DocumentSection): void {
+    saveEdit(item: DocumentSection): void {
     const buf = this.editBuffer[item.id];
     if (!buf || !buf.content?.trim()) {
-      this.alertDialog.open('Chyba', 'Obsah sekce nesmí být prázdný.', 'warning');
+      this.alertDialog.open(this.t('shared.error'), this.t('edit-legal.content_empty_error'), 'warning');
       return;
     }
 
@@ -378,11 +417,11 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
         this.saving = false;
         this.invalidateCurrentSections();
         this.refreshData();
-        this.alertDialog.open('Úspěch', 'Změny byly uloženy.', 'success');
+        this.alertDialog.open(this.t('shared.success'), this.t('edit-legal.save_success'), 'success');
       },
       error: () => {
         this.saving = false;
-        this.alertDialog.open('Chyba', 'Nepodařilo se uložit změny.', 'danger');
+        this.alertDialog.open(this.t('shared.error'), this.t('edit-legal.save_error'), 'danger');
         this.cd.markForCheck();
       }
     });
@@ -451,10 +490,12 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
    * @description Prompts the user for confirmation before performing a hard delete of a content section.
    * @param item The target record for deletion.
    */
-  async confirmDelete(item: DocumentSection): Promise<void> {
+    async confirmDelete(item: DocumentSection): Promise<void> {
     const confirmed = await this.confirmDialog.open(
-      'Smazat sekci',
-      `Opravdu chcete smazat sekci „${item.heading}" (${this.activeLang.toUpperCase()})? Tato akce je nevratná.`
+      this.t('edit-legal.delete_confirm_title'),
+      this.t('edit-legal.delete_confirm_message')
+        .replace('{heading}', item.heading)
+        .replace('{lang}', this.activeLang.toUpperCase())
     );
 
     if (confirmed) {
@@ -462,10 +503,10 @@ export class EditLegalComponent extends BaseDataComponent<DocumentSection> imple
         next: () => {
           this.invalidateCurrentSections();
           this.refreshData();
-          this.alertDialog.open('Úspěch', 'Sekce byla smazána.', 'success');
+          this.alertDialog.open(this.t('shared.success'), this.t('edit-legal.delete_success'), 'success');
         },
         error: () => {
-          this.alertDialog.open('Chyba', 'Nepodařilo se smazat sekci.', 'danger');
+          this.alertDialog.open(this.t('shared.error'), this.t('edit-legal.delete_error'), 'danger');
         }
       });
     }

@@ -15,56 +15,29 @@
  *              description, and permissions cannot be changed here (enforced both in the UI
  *              and, as the source of truth, on the backend).
  *
- * @refactor-note (2026) Dědí z BaseDataComponent<CoreRole> pro standardní CRUD nad `core/roles`
- *              (loadAllData/postData/updateData/deleteData -> EntityCrudService), stejně jako
- *              ostatní admin stránky. Načtení seznamu oprávnění (`core/permissions`) a
- *              synchronizace oprávnění role (`core/roles/{id}/permissions`) jdou mimo
- *              standardní CRUD sadu jednoho endpointu, proto tam voláme `this.dataHandler`
- *              přímo (stejný vzor jako updatePassword() v EntityCrudService).
- * @refactor-note (2026-08) Přidáno hromadné zaškrtnutí/odškrtnutí celé sekce (modulu)
- *              oprávnění najednou - "select all" checkbox v hlavičce sekce
- *              (isGroupFullyChecked/isGroupPartiallyChecked/toggleGroup), ať uživatel
- *              nemusí procházet každé oprávnění zvlášť, když chce roli dát/odebrat
- *              přístup k celé sekci (např. "celý Web").
- * @refactor-note (2026-08-7) DVOUÚROVŇOVÉ GRUPOVÁNÍ + VYHLEDÁVÁNÍ V OPRÁVNĚNÍCH. Po
- *              granularizaci permission systému (viz api.php 2026-08-5/6) narostl počet
- *              jednotlivých klíčů natolik, že plochý seznam pod modulem přestal být
- *              přehledný. Přidána DRUHÁ úroveň grupování - "zdroj" (resource) - odvozená
- *              ČISTĚ parsováním `permission_key` podle konvence `{modul}-{zdroj}-{akce}`
- *              (viz `parsePermissionKey()`). Přidáno samostatné vyhledávací pole
- *              (`permissionSearch`) filtrující checklist, nezávislé na hledání v seznamu
- *              ROLÍ (`roleSearch`).
- * @refactor-note (2026-08-8) INVALIDACE `RoleOptionsService` CACHE po každé mutaci role
- *              (create/rename/delete) - viz `AdministratorsComponent`, jejíž `role_id`
- *              select by jinak až 5 minut nabízel zastaralý seznam rolí.
- * @refactor-note (2026-08-10) TTL CACHE PRO TENTO SAMOTNÝ SCREEN (backlog: "zbytečně moc
- *              dotazů na API"). Tahle komponenta nikdy nevolala `initWithAuthCheck()` ani
- *              žádnou jinou cache infrastrukturu - `initializeRolesAndPermissions()` dělala
- *              vždy přímý síťový fetch při KAŽDÉM vstupu na stránku, bez ohledu na to, jak
- *              nedávno se to samé stalo (na rozdíl od všech ostatních admin stránek). Teď
- *              jde `core/permissions` (10 min TTL - seznam oprávnění se mění jen při
- *              vývoji, ne za běhu) i `core/roles` (2 min TTL) přes `ResourceCacheService`.
- *              KAŽDÁ mutace (createRole/saveDetails/savePermissions/confirmDelete) po
- *              úspěchu invaliduje `ROLES_CACHE_KEY` (a `RoleOptionsService`, viz
- *              2026-08-8 výše) - žádná akce tak neukáže sama sobě zastaralý stav.
- *              `core/permissions` se nikdy nemutuje z téhle stránky, proto se jeho cache
- *              nikdy neinvaliduje.
- * @refactor-note (2026-08-29) BACKLOG "export mechanismus i na negenerické stránky":
- *              tahle stránka NENÍ TableBuilderComponent, takže export si generuje sama
- *              (buildExportRows()/download*() metody), ale znovupoužívá stejnou
- *              ExportPopupBuilderComponent (formátový picker CSV/XLSX/JSON/TXT) jako
- *              zbytek admin sekce. `this.roles` je vždy kompletní seznam (loadAllData(),
- *              žádná paginace), takže export vždy pokrývá VŠECHNY role. Import záměrně
- *              NENÍ implementován (role/oprávnění nemají smysl jako uživatelský vstup
- *              přes import, stejný princip jako u sales_leads public_token).
- * @dependencies
- * - BaseDataComponent: Standardní CRUD (create/update/delete/loadAll) nad apiEndpoint 'core/roles'.
- * - DataHandler: Přímé volání pro core/permissions a sync oprávnění (mimo EntityCrudService).
- * - ResourceCacheService: TTL cache pro seznam rolí i oprávnění (viz refactor-note výše).
- * - RoleOptionsService: Invalidace sdílené cache seznamu rolí po mutaci (AdministratorsComponent).
- * - ExportPopupBuilderComponent: Sdílený formátový picker pro export (viz refactor-note 2026-08-29).
- * @note Access to this page/route is restricted to the 'sysadmin' role via sysadminGuard,
- *       independent of the regular permission-key system.
+ * (Earlier refactor-notes for role hierarchy, group-select-all, two-level grouping +
+ * search, TTL caching, and export mechanism are unchanged - see version history,
+ * omitted here for brevity.)
+ *
+ * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * Komponenta DĚDÍ BaseDataComponent, proto jen `translationSection = 'edit-roles'` a
+ * zděděné `strings`/`t()`, žádná ruční injection. Nahrazeny VŠECHNY uživatelsky
+ * viditelné texty vč. `window.confirm(...)` textu (nativní dialog nejde stylovat, ale
+ * text uvnitř přeložit jde). Pluralizace "uživatel/uživatelé/uživatelů" (čeština má 3
+ * tvary, angličtina 2) řešena `usersCountLabel()` metodou - JSON má VŽDY 4 klíče
+ * (`users_zero/one/few/many`), jazyky se 2 tvary prostě nechají `few`/`many` stejné.
+ * `MODULE_LABELS`/`GENERAL_RESOURCE_LABEL` byly PŮVODNĚ statické konstanty vyhodnocené
+ * při načtení modulu - nahrazeny `moduleLabel()` metodou čtoucí `i18n.getValue()` přímo
+ * (ne factory funkce jako u *.config.ts souborů, protože tahle komponenta nemá vlastní
+ * `.config.ts` - konfigurace exportu/modulů žije přímo v komponentě).
+ * `humanizeResourceKey()` NEPŘEKLÁDÁN ZÁMĚRNĚ - algoritmicky odvozuje fallback popisek
+ * přímo z technického `permission_key` (např. "edit-website" -> "Edit Website"), použije
+ * se JEN když daný resource nemá jinde explicitní překlad; jde o technický název, ne
+ * redakčně psaný text, a jeho "překlad" by ve skutečnosti jen kapitalizoval anglická
+ * slova bez ohledu na zvolený jazyk.
+ * `ROLE_EXPORT_COLUMNS` (statická konstanta) nahrazena `getRoleExportColumns()` metodou
+ * - export labely i "Ano"/"Ne" hodnoty v `getExportValue()` i XLSX sheet název jsou teď
+ * přeložené, protože jde o viditelný obsah stahovaného souboru, ne jen UI.
  */
 
 import { Component, inject } from '@angular/core';
@@ -84,13 +57,12 @@ interface CorePermission {
   module: string;
 }
 
-// do interface CoreRole doplnit pole:
 interface CoreRole {
   id?: number;
   role_name: string;
   description: string | null;
   is_protected: boolean;
-  forces_2fa: boolean;          // ← nové
+  forces_2fa: boolean;
   users_count: number;
   permissions: string[];
   deleted_at?: string | null;
@@ -105,7 +77,6 @@ const ACTION_ORDER: Record<PermissionAction, number> = { view: 0, create: 1, upd
 
 /** Interní klíč (ne zobrazovaný) záchytné skupiny pro permissions bez rozpoznatelného vzoru. */
 const GENERAL_RESOURCE_KEY = '__general__';
-const GENERAL_RESOURCE_LABEL = 'Obecné';
 
 /** Druhá úroveň grupování - jeden "zdroj" (resource) uvnitř modulu, např. "News". */
 interface PermissionResourceGroup {
@@ -121,29 +92,16 @@ interface PermissionModuleGroup {
   resources: PermissionResourceGroup[];
 }
 
-/** Lidsky čitelné názvy modulů pro nadpisy sekcí v seznamu oprávnění. */
-const MODULE_LABELS: Record<string, string> = {
-  web: 'Web',
-  shop: 'E-shop',
-  core: 'Systém (Core)',
-};
-
 /**
- * @description Sloupce nabízené v exportním popupu - EditRolesComponent NENÍ
- * `TableBuilderComponent`, takže si generování souboru řeší sama (viz
- * `buildExportRows()`/`downloadExportFile()` níže), ale znovupoužívá stejnou
- * `ExportPopupBuilderComponent` (formátový picker) jako zbytek admin sekce, ať má
- * export napříč appkou konzistentní vzhled/UX. `permissions` je jediné pole, které
- * není přímo na `CoreRole` jako string - viz `getExportValue()`.
+ * @description Mapa technického `module` klíče na i18n cestu jeho popisku - viz
+ * `moduleLabel()`. Nová hodnota modulu na backendu vyžaduje jen přidání sem +
+ * odpovídající klíč do cz.json/en.json, žádnou další logiku.
  */
-const ROLE_EXPORT_COLUMNS: ExportColumnOption[] = [
-  { key: 'role_name', label: 'Název role' },
-  { key: 'description', label: 'Popis' },
-  { key: 'is_protected', label: 'Systémová role' },
-  { key: 'forces_2fa', label: 'Vynucené 2FA' },
-  { key: 'users_count', label: 'Počet uživatelů' },
-  { key: 'permissions', label: 'Oprávnění' },
-];
+const MODULE_LABEL_KEYS: Record<string, string> = {
+  web: 'module_web',
+  shop: 'module_shop',
+  core: 'module_core',
+};
 
 @Component({
   selector: 'app-edit-roles',
@@ -154,6 +112,7 @@ const ROLE_EXPORT_COLUMNS: ExportColumnOption[] = [
 })
 export class EditRolesComponent extends BaseDataComponent<CoreRole> implements Core.OnInit {
   apiEndpoint = 'core/roles';
+  protected override translationSection: string = 'edit-roles';
 
   private resourceCache = inject(ResourceCacheService);
   private readonly PERMISSIONS_CACHE_KEY = 'edit-roles:permissions';
@@ -164,10 +123,23 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   draftForcesTwoFa = false;
   newRoleForcesTwoFa = false;
 
+  /**
+   * @refactor-note (2026-09) BUGFIX "Cannot load text" u users count/module/resource
+   * labelů: `this.t(key)` volání v tomto souboru VŠUDE předávají KRÁTKÝ klíč
+   * (např. 'module_core', 'users_one'), ale zděděná `BaseDataComponent.t(path)`
+   * očekává PLNOU tečkovanou cestu VČETNĚ sekce (např. 'edit-roles.module_core') -
+   * bez prefixu `getValue()` hledá klíč `module_core` na NEJVYŠŠÍ úrovni JSONu, kde
+   * neexistuje, a vrací fallback 'Cannot load text'. Přidán lokální override, který
+   * prefix 'edit-roles.' doplní automaticky, takže všechna dosavadní krátká volání
+   * `this.t('xxx')` v této třídě fungují beze změny.
+   */
+  public override t(key: string): string {
+    return this.i18n.getValue(`edit-roles.${key}`);
+  }
   // ── Export (BACKLOG "export mechanismus i na negenerické stránky") ─────
   showExportPopup = false;
   isExporting = false;
-  readonly exportColumnOptions = ROLE_EXPORT_COLUMNS;
+  get exportColumnOptions(): ExportColumnOption[] { return this.getRoleExportColumns(); }
 
   constructor(
     dataHandler: Core.DataHandler,
@@ -200,6 +172,21 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   trackByRoleId(_index: number, role: CoreRole): number | undefined {
     return role?.id;
+  }
+
+  /**
+   * @description Skloňuje "N uživatel/uživatelé/uživatelů" (nebo anglický ekvivalent)
+   * podle počtu - JSON nese VŽDY 4 tvary (`users_zero/one/few/many`); jazyky bez
+   * české 3-tvarové pluralizace (např. angličtina) mají `few`/`many` prostě identické.
+   * České pravidlo: 0 -> many, 1 -> one, 2-4 -> few, 5+ -> many.
+   */
+  usersCountLabel(count: number): string {
+    let key: string;
+    if (count === 0) key = 'users_zero';
+    else if (count === 1) key = 'users_one';
+    else if (count >= 2 && count <= 4) key = 'users_few';
+    else key = 'users_many';
+    return `${count} ${this.t(key)}`;
   }
 
   // ── Detail vybrané role (pravý panel) ─────────────────────────────────
@@ -272,7 +259,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       },
       error: () => {
         this.isLoading = false;
-        this.alertDialogService.open('Chyba', 'Nepodařilo se načíst seznam oprávnění.', 'danger');
+        this.alertDialogService.open(this.t('error_title'), this.t('load_permissions_error'), 'danger');
         this.cd.markForCheck();
       }
     });
@@ -314,7 +301,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       },
       error: () => {
         this.isLoading = false;
-        this.alertDialogService.open('Chyba', 'Nepodařilo se načíst seznam rolí.', 'danger');
+        this.alertDialogService.open(this.t('error_title'), this.t('load_roles_error'), 'danger');
         this.cd.markForCheck();
       }
     });
@@ -341,11 +328,16 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
     return {
       resourceKey: `${perm.module}:${GENERAL_RESOURCE_KEY}`,
-      resourceLabel: GENERAL_RESOURCE_LABEL,
+      resourceLabel: this.t('general_resource_label'),
       action: null,
     };
   }
 
+  /**
+   * @description Algoritmicky odvozuje fallback popisek z technického permission_key
+   * (např. "edit-website" -> "Edit Website"). ZÁMĚRNĚ nepřekládáno - viz refactor-note
+   * (2026-09) v hlavičce souboru.
+   */
   private humanizeResourceKey(rawResource: string): string {
     return rawResource
       .split('-')
@@ -391,15 +383,22 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   private sortResourceGroups(resources: PermissionResourceGroup[]): PermissionResourceGroup[] {
+    const generalLabel = this.t('general_resource_label');
     return resources.sort((a, b) => {
-      if (a.resourceLabel === GENERAL_RESOURCE_LABEL) return 1;
-      if (b.resourceLabel === GENERAL_RESOURCE_LABEL) return -1;
+      if (a.resourceLabel === generalLabel) return 1;
+      if (b.resourceLabel === generalLabel) return -1;
       return a.resourceLabel.localeCompare(b.resourceLabel, 'cs');
     });
   }
 
+  /**
+   * @refactor-note (2026-09) Nahrazeno voláním `i18n.getValue()` přes `MODULE_LABEL_KEYS`
+   * mapu - PŮVODNĚ statická `MODULE_LABELS` konstanta. Neznámý modul (mimo mapu) vrátí
+   * surový klíč beze změny, stejně jako předtím.
+   */
   moduleLabel(module: string): string {
-    return MODULE_LABELS[module] ?? module;
+    const key = MODULE_LABEL_KEYS[module];
+    return key ? this.t(key) : module;
   }
 
   trackByModule(_index: number, group: PermissionModuleGroup): string {
@@ -418,7 +417,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   selectRole(role: CoreRole): void {
     if (this.isPermissionsDirty || this.isEditingDetails) {
-      const confirmed = window.confirm('Máte neuložené změny u aktuální role. Přepnutím o ně přijdete. Pokračovat?');
+      const confirmed = window.confirm(this.t('confirm_unsaved_switch'));
       if (!confirmed) return;
     }
 
@@ -512,7 +511,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     this.isPermissionsDirty = true;
   }
 
-   /**
+  /**
    * @description Uloží oprávnění role. Po úspěchu invaliduje cache seznamu rolí.
    * @bugfix-note (2026-09-05) KRITICKÝ BUG - MATOUCÍ "NEOČEKÁVANÝ FORMÁT" HLÁŠKA PŘI
    * KAŽDÉM ÚSPĚŠNÉM ULOŽENÍ: `CoreRoleController::syncPermissions()` vrací
@@ -541,13 +540,13 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
         this.applyUpdatedRole(updated);
         this.isPermissionsDirty = false;
         this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
-        this.alertDialogService.open('Uloženo', `Oprávnění role "${role.role_name}" byla aktualizována.`, 'success');
+        this.alertDialogService.open(this.t('success_title'), this.t('save_permissions_success').replace('{name}', role.role_name), 'success');
         this.cd.markForCheck();
       },
       error: (err) => {
         this.isSavingPermissions = false;
-        const message = err?.error?.message || 'Uložení oprávnění se nezdařilo.';
-        this.alertDialogService.open('Chyba', message, 'danger');
+        const message = err?.error?.message || this.t('save_permissions_error');
+        this.alertDialogService.open(this.t('error_title'), message, 'danger');
         this.cd.markForCheck();
       }
     });
@@ -585,7 +584,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
     const name = this.draftName.trim();
     if (!name) {
-      this.alertDialogService.open('Validace', 'Název role je povinný.', 'danger');
+      this.alertDialogService.open(this.t('validation_title'), this.t('role_name_required'), 'danger');
       return;
     }
 
@@ -609,13 +608,13 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
         this.isEditingDetails = false;
         this.resourceCache.invalidate(this.ROLES_CACHE_KEY);
         this.roleOptionsService.invalidate();
-        this.alertDialogService.open('Uloženo', 'Údaje role byly aktualizovány.', 'success');
+        this.alertDialogService.open(this.t('success_title'), this.t('save_details_success'), 'success');
         this.cd.markForCheck();
       },
       error: (err) => {
         this.isSavingDetails = false;
-        const message = err?.error?.message || 'Uložení údajů role se nezdařilo.';
-        this.alertDialogService.open('Chyba', message, 'danger');
+        const message = err?.error?.message || this.t('save_details_error');
+        this.alertDialogService.open(this.t('error_title'), message, 'danger');
         this.cd.markForCheck();
       }
     });
@@ -657,7 +656,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   createRole(): void {
     const name = this.newRoleName.trim();
     if (!name) {
-      this.newRoleError = 'Název role je povinný.';
+      this.newRoleError = this.t('new_role_name_required');
       return;
     }
 
@@ -677,7 +676,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
         this.isCreatingRole = false;
         this.showNewRoleForm = false;
         this.roleOptionsService.invalidate();
-        this.alertDialogService.open('Vytvořeno', `Role "${name}" byla vytvořena.`, 'success');
+        this.alertDialogService.open(this.t('created_title'), this.t('role_created_success').replace('{name}', name), 'success');
         this.loadRoles({ name }, true);
         this.cd.markForCheck();
       },
@@ -685,7 +684,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
         this.isCreatingRole = false;
         this.newRoleError = err?.error?.message
           || err?.error?.errors?.role_name?.[0]
-          || 'Vytvoření role se nezdařilo.';
+          || this.t('role_create_error');
         this.cd.markForCheck();
       }
     });
@@ -698,8 +697,8 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   }
 
   deleteBlockedReason(role: CoreRole): string {
-    if (role.is_protected) return 'Systémovou roli nelze smazat.';
-    if (role.users_count > 0) return `Nelze smazat - role je přiřazena k ${role.users_count} uživatelskému účtu(ům).`;
+    if (role.is_protected) return this.t('delete_blocked_system');
+    if (role.users_count > 0) return this.t('delete_blocked_users').replace('{count}', String(role.users_count));
     return '';
   }
 
@@ -738,12 +737,12 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
           if (this.roles.length > 0) this.selectRole(this.roles[0]);
         }
         this.pendingDeleteRole = null;
-        this.alertDialogService.open('Smazáno', `Role "${role.role_name}" byla smazána.`, 'success');
+        this.alertDialogService.open(this.t('deleted_title'), this.t('role_deleted_success').replace('{name}', role.role_name), 'success');
         this.cd.markForCheck();
       },
       error: (err) => {
         this.isDeletingRole = false;
-        this.deleteError = err?.error?.message || 'Smazání role se nezdařilo.';
+        this.deleteError = err?.error?.message || this.t('role_delete_error');
         this.cd.markForCheck();
       }
     });
@@ -751,10 +750,31 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   // ── Export do CSV/XLSX/JSON/TXT ───────────────────────────────────────
 
+  /**
+   * @description Sloupce nabízené v exportním popupu - EditRolesComponent NENÍ
+   * `TableBuilderComponent`, takže si generování souboru řeší sama (viz
+   * `buildExportRows()`/`downloadExportFile()` níže), ale znovupoužívá stejnou
+   * `ExportPopupBuilderComponent` (formátový picker) jako zbytek admin sekce.
+   * `permissions` je jediné pole, které není přímo na `CoreRole` jako string - viz
+   * `getExportValue()`.
+   * @refactor-note (2026-09) PŮVODNĚ statická `ROLE_EXPORT_COLUMNS` konstanta -
+   * nahrazeno metodou, ať labely reagují na aktuální admin jazyk.
+   */
+  private getRoleExportColumns(): ExportColumnOption[] {
+    return [
+      { key: 'role_name', label: this.t('export_col_role_name') },
+      { key: 'description', label: this.t('export_col_description') },
+      { key: 'is_protected', label: this.t('export_col_is_protected') },
+      { key: 'forces_2fa', label: this.t('export_col_forces_2fa') },
+      { key: 'users_count', label: this.t('export_col_users_count') },
+      { key: 'permissions', label: this.t('export_col_permissions') },
+    ];
+  }
+
   /** @description `this.roles` je VŽDY kompletní (viz `loadAllData()`/`loadRoles()` výše - žádná paginace) - export tak vždy pokrývá úplně všechny role, ne jen aktuálně zobrazenou stránku. */
   openExportPopup(): void {
     if (this.roles.length === 0) {
-      this.alertDialogService.open('Export', 'Není co exportovat - seznam rolí je prázdný.', 'danger');
+      this.alertDialogService.open(this.t('btn_export'), this.t('export_empty_error'), 'danger');
       return;
     }
     this.showExportPopup = true;
@@ -769,18 +789,19 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   /**
    * @description `columnKeys` je `null`, pokud caller (`ExportPopupBuilderComponent`)
-   * nedostal žádné `[columns]` - u nás se to nestane (`ROLE_EXPORT_COLUMNS` vždy
-   * neprázdné), ale ošetřeno defenzivně stejně jako `TableBuilderComponent` to dělá.
+   * nedostal žádné `[columns]` - u nás se to nestane (export sloupce vždy neprázdné),
+   * ale ošetřeno defenzivně stejně jako `TableBuilderComponent` to dělá.
    */
   handleExportFormatSelected(selection: ExportSelection): void {
-    const keys = selection.columnKeys ?? ROLE_EXPORT_COLUMNS.map(c => c.key);
+    const columns = this.getRoleExportColumns();
+    const keys = selection.columnKeys ?? columns.map(c => c.key);
     this.isExporting = true;
     this.cd.markForCheck();
 
     try {
       const rows = this.buildExportRows(keys);
-      const labels = keys.map(k => ROLE_EXPORT_COLUMNS.find(c => c.key === k)?.label ?? k);
-      const filename = `role-a-opravneni-export-${new Date().toISOString().slice(0, 10)}`;
+      const labels = keys.map(k => columns.find(c => c.key === k)?.label ?? k);
+      const filename = `${this.t('export_filename_prefix')}-${new Date().toISOString().slice(0, 10)}`;
 
       switch (selection.format) {
         case 'csv': this.downloadCsv(rows, labels, filename); break;
@@ -791,7 +812,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
       this.showExportPopup = false;
     } catch {
-      this.alertDialogService.open('Chyba', 'Export se nezdařil.', 'danger');
+      this.alertDialogService.open(this.t('error_title'), this.t('export_generic_error'), 'danger');
     } finally {
       this.isExporting = false;
       this.cd.markForCheck();
@@ -806,11 +827,15 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   /**
    * @description Formátuje jednu hodnotu pro export - `permissions` (pole klíčů) se
    * spojí středníkem (je jich typicky desítky, nedávají smysl jako samostatné
-   * sloupce), boolean pole se přeloží na Ano/Ne (čitelnější v Excelu než 1/0/true/false).
+   * sloupce), boolean pole se přeloží na Ano/Ne resp. Yes/No (čitelnější v Excelu než
+   * 1/0/true/false) - hodnota reaguje na aktuální admin jazyk, viz refactor-note
+   * (2026-09) v hlavičce souboru.
    */
   private getExportValue(role: CoreRole, key: string): string {
     if (key === 'permissions') return (role.permissions ?? []).join('; ');
-    if (key === 'is_protected' || key === 'forces_2fa') return (role as any)[key] ? 'Ano' : 'Ne';
+    if (key === 'is_protected' || key === 'forces_2fa') {
+      return (role as any)[key] ? this.t('export_bool_yes') : this.t('export_bool_no');
+    }
     const value = (role as any)[key];
     return value === null || value === undefined ? '' : String(value);
   }
@@ -842,7 +867,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   private downloadXlsx(rows: string[][], labels: string[], filename: string): void {
     const worksheet = XLSX.utils.aoa_to_sheet([labels, ...rows]);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Role');
+    XLSX.utils.book_append_sheet(workbook, worksheet, this.t('export_sheet_name'));
     XLSX.writeFile(workbook, `${filename}.xlsx`);
   }
 

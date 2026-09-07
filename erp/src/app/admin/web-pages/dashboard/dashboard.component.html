@@ -4,41 +4,39 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @description: System-wide overview - resource counters shared across Web and Shop,
-        quick navigation into Web management screens, and the web_logs audit feed.
-    @dependencies: DashboardComponent (getIcon, quickStats, visibleNavSections, recentActivity,
-        maintenance toggle state)
-    @refactor-note (2026-08): Přidána sekce "Režim údržby" + potvrzovací modál s heslem
-        (přesunuto z admin-layout headeru).
-    @refactor-note (2026-08-9): Přidáno "Aktualizovat" tlačítko + "Aktualizováno v
-        HH:mm:ss" badge do hlavičky - viz dashboard.component.ts stejné datum, backlog
-        "zbytečně moc dotazů na API".
-    @bugfix-note (2026-08-16): Rychlá navigace teď iteruje `visibleNavSections`
-        (permission-filtrovaný getter) místo `navSections` přímo - sekce "Poslední
-        aktivita" obalena `*appHasPermission="'web-view-web-logs'"`. Stats grid beze
-        změny - `quickStats` pole už z TS strany obsahuje jen povolené položky (viz
-        dashboard.component.ts, STAT_DEFS/loadStats()). Viz bugfix-note (2026-08-16) v
-        dashboard.component.ts pro plné vysvětlení.
+    @description: Website-content overview - hero metric + module comparison bars,
+        a full-width module distribution bar, quick navigation into Web management
+        screens, the web_logs activity feed with a recent-events breakdown widget, and
+        the website maintenance-mode toggle.
+    @dependencies: DashboardComponent (t(), getIcon, heroStat, secondaryStats,
+        statBarPct, distributionSegments, visibleNavSections, recentActivity,
+        activityBreakdown, breakdownBarPct, maintenance toggle state)
+    @refactor-note (2026-09-07) VIZUÁLNÍ REFAKTOR + i18n, sjednoceno s
+        CoreDashboardComponent (hero dlaždice + comparison bars nahrazují starou plochou
+        7-dlaždicovou grid). NAVÍC oproti Core verzi: `distributionSegments` (plnošířková
+        segmentovaná tyč srovnávající všech 7 modulů najednou) a "rozklad posledních
+        událostí" widget vedle seznamu aktivity - viz dashboard.component.ts stejné
+        datum. Karta údržby beze změny funkčnosti, jen `t()` bindingy.
 -->
 
 <div class="core-dashboard">
 
   <div class="cd-header-bar">
     <div>
-      <h1 class="cd-header-title">Přehled webu</h1>
-      <p class="cd-header-sub">Obsah a provoz veřejné webové prezentace</p>
+      <h1 class="cd-header-title">{{ t('header_title') }}</h1>
+      <p class="cd-header-sub">{{ t('header_subtitle') }}</p>
     </div>
     <div class="cd-header-actions">
       @if (lastUpdatedAt) {
-        <span class="cd-last-updated">Aktualizováno v {{ lastUpdatedAt | date:'HH:mm:ss' }}</span>
+        <span class="cd-last-updated">{{ t('last_updated_label') }} {{ lastUpdatedAt | date:'HH:mm:ss' }}</span>
       }
-      <button type="button" class="cd-refresh-btn" (click)="refresh()" [disabled]="isRefreshing" title="Načíst aktuální data">
+      <button type="button" class="cd-refresh-btn" (click)="refresh()" [disabled]="isRefreshing" [title]="t('refresh_button_title')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="23 4 23 10 17 10"/>
           <polyline points="1 20 1 14 7 14"/>
           <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
         </svg>
-        Aktualizovat
+        {{ t('refresh_button') }}
       </button>
     </div>
   </div>
@@ -53,41 +51,125 @@
     </div>
   }
 
-  <!-- @component: Stats grid — resource counters for every Web-owned module the user
-       may see. `quickStats` already excludes anything the user lacks permission for
-       (filtered server-side of the request in dashboard.component.ts, not just hidden
-       here) - no extra guard needed in this loop. -->
+  <!-- @component: Hero row — first allowed metric as a large tile, remaining allowed
+       metrics as a comparison bar chart. Replaces the previous flat 7-tile grid. -->
   <div class="cd-section">
-    <div class="cd-stats-grid">
+    <div class="cd-hero-grid">
+
       @if (loadingStats) {
-        @for (i of [1,2,3,4,5,6,7]; track i) {
-          <div class="cd-stat-card cd-stat-skeleton"></div>
-        }
+        <div class="cd-hero-card cd-skeleton-block"></div>
+        <div class="cd-bars-card cd-skeleton-block"></div>
       }
-      @if (!loadingStats) {
-        @for (stat of quickStats; track stat.label) {
-          <div class="cd-stat-card cd-stat-{{ stat.color }}">
-            <div class="cd-stat-icon" [innerHTML]="getIcon(stat.icon)"></div>
-            <div class="cd-stat-value">{{ stat.value }}</div>
-            <div class="cd-stat-label">{{ stat.label }}</div>
+
+      @if (!loadingStats && heroStat) {
+  <div class="cd-hero-card" [class.cd-hero-urgent]="heroStat.urgent">
+    <div class="cd-hero-top">
+      <div class="cd-hero-icon" [innerHTML]="getIcon(heroStat.icon)"></div>
+
+      <div class="cd-hero-select-wrap">
+        <button type="button" class="cd-hero-select-btn"
+                (click)="toggleHeroDropdown()"
+                [attr.aria-expanded]="heroDropdownOpen"
+                [attr.aria-label]="t('hero_select_aria')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        @if (heroDropdownOpen) {
+          <div class="cd-hero-backdrop" (click)="closeHeroDropdown()"></div>
+          <div class="cd-hero-dropdown">
+            @for (stat of quickStats; track stat.key) {
+              <button type="button" class="cd-hero-dropdown-item" [class.active]="stat.key === heroStat.key" (click)="selectHeroStat(stat.key)">
+                <span class="cd-hero-dropdown-icon" [innerHTML]="getIcon(stat.icon)"></span>
+                <span class="cd-hero-dropdown-label">{{ t(stat.labelKey) }}</span>
+                <span class="cd-hero-dropdown-value" [class.cd-hero-dropdown-value-urgent]="stat.urgent">{{ stat.value }}</span>
+              </button>
+            }
           </div>
         }
+      </div>
+    </div>
+
+    <div class="cd-hero-value">{{ heroStat.value }}</div>
+    <div class="cd-hero-label">{{ t(heroStat.labelKey) }}</div>
+    <div class="cd-hero-caption">
+      {{ heroStat.urgent ? t('hero_caption_urgent') : t('hero_caption') }}
+    </div>
+  </div>
+
+  <div class="cd-bars-card">
+    <div class="cd-bars-title">{{ t('bars_card_title') }}</div>
+    <div class="cd-bar-list">
+      @for (stat of secondaryStats; track stat.key) {
+        <div class="cd-bar-row">
+          <div class="cd-bar-icon" [class.cd-bar-icon-urgent]="stat.urgent" [innerHTML]="getIcon(stat.icon)"></div>
+          <div class="cd-bar-body">
+            <div class="cd-bar-row-top">
+              <span class="cd-bar-label">{{ t(stat.labelKey) }}</span>
+              <span class="cd-bar-value" [class.cd-bar-value-urgent]="stat.urgent">{{ stat.value }}</span>
+            </div>
+            <div class="cd-bar-track">
+              <div class="cd-bar-fill" [class.cd-bar-fill-urgent]="stat.urgent" [style.width.%]="statBarPct(stat)"></div>
+            </div>
+          </div>
+        </div>
+      }
+      @if (secondaryStats.length === 0) {
+        <p class="cd-bar-empty">{{ t('bars_card_empty') }}</p>
+      }
+    </div>
+  </div>
+}
+
+      @if (!loadingStats && !heroStat) {
+        <div class="cd-empty-permissions">{{ t('no_visible_stats') }}</div>
       }
     </div>
   </div>
 
+  <!-- @component: Full-width module distribution bar — every allowed module compared
+       side-by-side in a single monochrome segmented bar (darkest = biggest). A second,
+       complementary view to the hero+bars combination above; only rendered once at
+       least 2 modules are visible (a single segment would add no information). -->
+  @if (!loadingStats && distributionSegments.length > 1) {
+    <div class="cd-section">
+      <div class="cd-distribution-card">
+        <div class="cd-distribution-title">{{ t('distribution_card_title') }}</div>
+        <div class="cd-distribution-track">
+          @for (segment of distributionSegments; track segment.key) {
+            <div
+              class="cd-distribution-segment"
+              [style.width.%]="segment.pct"
+              [style.opacity]="segment.opacity"
+              [title]="t(segment.labelKey) + ': ' + segment.value + ' (' + segment.pct + '%)'">
+            </div>
+          }
+        </div>
+        <div class="cd-distribution-legend">
+          @for (segment of distributionSegments; track segment.key) {
+            <div class="cd-distribution-legend-item">
+              <span class="cd-distribution-dot" [style.opacity]="segment.opacity"></span>
+              <span class="cd-distribution-legend-label">{{ t(segment.labelKey) }}</span>
+              <span class="cd-distribution-legend-value">{{ segment.value }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- @component: Quick navigation — one card per Web management screen the user has
-       permission to open. Iterates `visibleNavSections` (permission-filtered getter),
-       not `navSections` directly - see bugfix-note (2026-08-16) in dashboard.component.ts. -->
+       permission to open. Iterates `visibleNavSections` (permission-filtered getter). -->
   <div class="cd-section">
-    <div class="cd-section-label">Rychlá navigace</div>
+    <div class="cd-section-label">{{ t('section_quick_nav') }}</div>
     <div class="cd-nav-grid">
       @for (section of visibleNavSections; track section.route) {
-        <a class="cd-nav-card cd-nav-{{ section.color }}" [routerLink]="section.route">
+        <a class="cd-nav-card" [routerLink]="section.route">
           <div class="cd-nav-icon" [innerHTML]="getIcon(section.icon)"></div>
           <div class="cd-nav-body">
-            <div class="cd-nav-title">{{ section.title }}</div>
-            <div class="cd-nav-desc">{{ section.description }}</div>
+            <div class="cd-nav-title">{{ t(section.titleKey) }}</div>
+            <div class="cd-nav-desc">{{ t(section.descriptionKey) }}</div>
           </div>
           <div class="cd-nav-arrow">→</div>
         </a>
@@ -95,82 +177,107 @@
     </div>
   </div>
 
-  <!-- @component: Recent web activity — content changes, CRUD on web-owned resources.
-       Requires `web-view-web-logs` (same permission that gates the `web/logs` GET
-       endpoint in api.php) - hidden entirely without it, not just emptied, so the fetch
-       in dashboard.component.ts and this section stay in sync. -->
+  <!-- @component: Recent web activity — content changes, CRUD on web-owned resources,
+       plus a breakdown-by-type widget computed from the same loaded rows. Requires
+       `web-view-web-logs`. -->
   <div class="cd-section" *appHasPermission="'web-view-web-logs'">
-    <div class="cd-section-label">Poslední aktivita</div>
-    <div class="cd-card cd-card-activity">
-      <div class="cd-card-header">
-        <span class="cd-card-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-            <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>
-          </svg>
-        </span>
-        <span class="cd-card-title">Business logy</span>
-        <a class="cd-card-link" routerLink="/admin/web/business-logs">Zobrazit vše →</a>
-      </div>
-      <div class="cd-activity-body">
-        @if (loadingActivity) {
-          <div class="cd-activity-loading">
-            <div class="cd-mini-spinner"></div>
-            <span>Načítám záznamy…</span>
-          </div>
-        }
-        @if (!loadingActivity && recentActivity.length === 0) {
-          <div class="cd-activity-empty">Zatím žádné záznamy</div>
-        }
-        @if (!loadingActivity && recentActivity.length > 0) {
-          <div class="cd-activity-list">
-            @for (log of recentActivity; track log.id) {
-              <div class="cd-activity-row">
-                <div class="cd-activity-left">
-                  <span class="cd-event-badge {{ eventTypeClass(log.event_type) }}">
-                    {{ eventTypeLabel(log.event_type) }}
-                  </span>
-                </div>
-                <div class="cd-activity-mid">
-                  <div class="cd-activity-desc">{{ log.description }}</div>
-                  <div class="cd-activity-meta">
-                    <span class="cd-activity-module">{{ log.module }}</span>
-                    <span class="cd-activity-sep">·</span>
-                    <span class="cd-activity-user">{{ log.user_plain }}</span>
-                    <span class="cd-activity-sep">·</span>
-                    <span class="cd-activity-ip">{{ log.origin }}</span>
+    <div class="cd-section-label">{{ t('section_recent_activity') }}</div>
+    <div class="cd-activity-grid">
+
+      <div class="cd-card cd-card-activity">
+        <div class="cd-card-header">
+          <span class="cd-card-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+              <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="13" y2="15"/>
+            </svg>
+          </span>
+          <span class="cd-card-title">{{ t('activity_card_title') }}</span>
+          <a class="cd-card-link" routerLink="/admin/web/business-logs">{{ t('activity_view_all') }} →</a>
+        </div>
+        <div class="cd-activity-body">
+          @if (loadingActivity) {
+            <div class="cd-activity-loading">
+              <div class="cd-mini-spinner"></div>
+              <span>{{ t('activity_loading') }}</span>
+            </div>
+          }
+          @if (!loadingActivity && recentActivity.length === 0) {
+            <div class="cd-activity-empty">{{ t('activity_empty') }}</div>
+          }
+          @if (!loadingActivity && recentActivity.length > 0) {
+            <div class="cd-activity-list">
+              @for (log of recentActivity; track log.id) {
+                <div class="cd-activity-row">
+                  <div class="cd-activity-left">
+                    <span class="cd-event-badge {{ eventTypeClass(log.event_type) }}">
+                      {{ eventTypeLabel(log.event_type) }}
+                    </span>
+                  </div>
+                  <div class="cd-activity-mid">
+                    <div class="cd-activity-desc">{{ log.description }}</div>
+                    <div class="cd-activity-meta">
+                      <span class="cd-activity-module">{{ log.module }}</span>
+                      <span class="cd-activity-sep">·</span>
+                      <span class="cd-activity-user">{{ log.user_plain }}</span>
+                      <span class="cd-activity-sep">·</span>
+                      <span class="cd-activity-ip">{{ log.origin }}</span>
+                    </div>
+                  </div>
+                  <div class="cd-activity-right">
+                    {{ formatDate(log.created_at) }}
                   </div>
                 </div>
-                <div class="cd-activity-right">
-                  {{ formatDate(log.created_at) }}
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (!loadingActivity && recentActivity.length > 0) {
+        <div class="cd-card cd-breakdown-card">
+          <div class="cd-card-header">
+            <span class="cd-card-title">{{ t('breakdown_card_title') }}</span>
+          </div>
+          <div class="cd-breakdown-body">
+            @for (entry of activityBreakdown; track entry.classKey) {
+              <div class="cd-breakdown-row">
+                <div class="cd-breakdown-row-top">
+                  <span class="cd-breakdown-dot {{ entry.classKey }}"></span>
+                  <span class="cd-breakdown-label">{{ t(entry.labelKey) }}</span>
+                  <span class="cd-breakdown-count">{{ entry.count }}</span>
+                </div>
+                <div class="cd-breakdown-track">
+                  <div class="cd-breakdown-fill {{ entry.classKey }}" [style.width.%]="breakdownBarPct(entry)"></div>
                 </div>
               </div>
             }
           </div>
-        }
-      </div>
+          <p class="cd-breakdown-hint">{{ t('breakdown_hint') }}</p>
+        </div>
+      }
     </div>
   </div>
 
   <!-- @component: Web maintenance toggle — visible only with 'web-set-maintenance-mode' -->
   <div class="cd-section" *appHasPermission="'web-set-maintenance-mode'">
-    <div class="cd-section-label">Režim údržby</div>
+    <div class="cd-section-label">{{ t('section_maintenance') }}</div>
     <div class="cd-card">
       <div class="maintenance-toggle-row">
         <div class="maintenance-status" [class.status-active]="isWebActive" [class.status-inactive]="!isWebActive">
           <span class="status-indicator"></span>
-          {{ isWebActive ? 'Web je aktivní' : 'Web je v údržbě' }}
+          {{ isWebActive ? t('maintenance_status_active') : t('maintenance_status_inactive') }}
         </div>
         <button class="maintenance-switch-btn" (click)="openWebMaintenanceModal()">
-          {{ isWebActive ? 'Zapnout údržbu' : 'Ukončit údržbu' }}
+          {{ isWebActive ? t('maintenance_switch_to_maintenance') : t('maintenance_switch_to_active') }}
         </button>
       </div>
     </div>
   </div>
 
   <div class="cd-footer">
-    <span>Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému.</span>
+    <span>{{ t('footer_help_text') }}</span>
   </div>
 </div>
 
@@ -178,18 +285,18 @@
   <div class="password-modal-overlay">
     <div class="password-modal-card">
       <div class="password-modal-header">
-        <h3 class="modal-header-title">Ověření administrátora</h3>
-        <button class="close-modal-btn" (click)="cancelWebMaintenanceModal()" aria-label="Zavřít">✕</button>
+        <h3 class="modal-header-title">{{ t('maintenance_modal_title') }}</h3>
+        <button class="close-modal-btn" (click)="cancelWebMaintenanceModal()" [attr.aria-label]="t('maintenance_modal_close_aria')">✕</button>
       </div>
       <div class="password-modal-body">
-        <p>Chystáte se změnit stav webu na:
+        <p>{{ t('maintenance_modal_intro') }}
           <strong [class.state-active]="pendingWebTargetState" [class.state-inactive]="!pendingWebTargetState">
-            {{ pendingWebTargetState ? 'STANDARDNÍ PROVOZ' : 'REŽIM ÚDRŽBY' }}
+            {{ pendingWebTargetState ? t('maintenance_modal_state_active') : t('maintenance_modal_state_maintenance') }}
           </strong>
         </p>
-        <div class="modal-warning-box">Tato akce ovlivní celý veřejný web. Pro uložení zadejte své přihlašovací heslo.</div>
+        <div class="modal-warning-box">{{ t('maintenance_modal_warning') }}</div>
         <div class="password-input-group">
-          <label for="web-confirm-pwd">Aktuální heslo</label>
+          <label for="web-confirm-pwd">{{ t('maintenance_modal_password_label') }}</label>
           <input id="web-confirm-pwd" type="password" placeholder="••••••••"
             (input)="webConfirmPasswordValue = $any($event.target).value"
             (keyup.enter)="submitWebMaintenanceChange()"
@@ -197,8 +304,8 @@
         </div>
       </div>
       <div class="password-modal-footer">
-        <button class="btn-modal-secondary" (click)="cancelWebMaintenanceModal()">Storno</button>
-        <button class="btn-modal-primary" (click)="submitWebMaintenanceChange()">Potvrdit a uložit</button>
+        <button class="btn-modal-secondary" (click)="cancelWebMaintenanceModal()">{{ t('maintenance_modal_cancel') }}</button>
+        <button class="btn-modal-primary" (click)="submitWebMaintenanceChange()">{{ t('maintenance_modal_confirm') }}</button>
       </div>
     </div>
   </div>

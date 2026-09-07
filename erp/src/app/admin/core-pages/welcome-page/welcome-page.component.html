@@ -4,6 +4,10 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        všechny natvrdo psané české texty nahrazeny `strings.*` bindingy
+        (AdminLocalizationService, sekce 'welcome-page') - viz
+        welcome-page.component.ts stejné datum.
 -->
 
 <div class="wp-page">
@@ -11,13 +15,7 @@
   <div class="wp-welcome">
     <div class="wp-welcome-left">
       <h1 class="wp-welcome-title">{{ welcomeMessage }}</h1>
-      <p class="wp-welcome-sub">Rádi vás vidíme v administračním systému RPSW.</p>
-    </div>
-    <div class="wp-welcome-right">
-      <div class="wp-role-chip">
-        <span class="wp-role-dot"></span>
-        {{ userRole ?? 'Uživatel' }}
-      </div>
+      <p class="wp-welcome-sub">{{ strings.subtitle }}</p>
     </div>
   </div>
 
@@ -27,7 +25,7 @@
 
   <div class="wp-card">
     <div class="wp-card-header">
-      <span class="wp-card-title">Váš profil</span>
+      <span class="wp-card-title">{{ strings.profile_card_title }}</span>
     </div>
     <div class="wp-card-body">
       @if (isLoadingProfile) {
@@ -38,18 +36,18 @@
           {{ (userData?.full_name ?? userEmail ?? 'U').charAt(0).toUpperCase() }}
         </div>
         <div class="wp-profile-info">
-          <div class="wp-profile-name">{{ userData?.full_name ?? '—' }}</div>
+          <div class="wp-profile-name">{{ userData?.full_name ?? strings.empty_value }}</div>
           <div class="wp-profile-row">
-            <span class="wp-label">E-mail</span>
-            <span class="wp-value wp-value-mono">{{ userEmail ?? '—' }}</span>
+            <span class="wp-label">{{ strings.label_email }}</span>
+            <span class="wp-value wp-value-mono">{{ userEmail ?? strings.empty_value }}</span>
           </div>
           <div class="wp-profile-row">
-            <span class="wp-label">Role</span>
-            <span class="wp-value">{{ userRole ?? '—' }}</span>
+            <span class="wp-label">{{ strings.label_role }}</span>
+            <span class="wp-value">{{ userRole ?? strings.empty_value }}</span>
           </div>
           @if (userData?.created_at) {
             <div class="wp-profile-row">
-              <span class="wp-label">Účet vytvořen</span>
+              <span class="wp-label">{{ strings.label_account_created }}</span>
               <span class="wp-value">{{ formatDate(userData!.created_at) }}</span>
             </div>
           }
@@ -59,7 +57,7 @@
   </div>
 
   <div class="wp-footer">
-    <span>Potřebujete pomoc s něčím konkrétním? Kontaktujte technickou podporu nebo svého správce systému.</span>
+    <span>{{ strings.footer_text }}</span>
   </div>
 
 </div>

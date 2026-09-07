@@ -4,13 +4,17 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+        texty nahrazeny `strings.xxx` binding - viz kb-footer.component.ts stejné
+        datum. "JonclSolutions" a e-mailová adresa beze změny (vlastní jména/kontakt,
+        ne UI text).
 -->
     
 <footer class="article-footer">
     <div class="footer-content">
       <div class="footer-contact">
-        <p><strong>Vytvořil:</strong> JonclSolutions</p>
-        <p class="tiny-text">Pro informace nebo nahlášení chyb kontaktujte <a href="mailto:info@jonclsolutions.com" class="footer-mail-link">info@jonclsolutions.com</a>.</p>
+        <p><strong>{{ strings.created_by_label }}</strong> JonclSolutions</p>
+        <p class="tiny-text">{{ strings.contact_text }} <a href="mailto:info@jonclsolutions.com" class="footer-mail-link">info@jonclsolutions.com</a>.</p>
       </div>
     </div>
   </footer>

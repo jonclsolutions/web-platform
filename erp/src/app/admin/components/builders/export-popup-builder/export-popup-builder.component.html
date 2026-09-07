@@ -9,6 +9,11 @@
     @refactor-note (2026-08-23): Přidán přepínač "Exportovat v surovém formátu" (jen
         pokud showRawFormatOption) a sloupcový seznam teď čte z activeColumnSource
         (přepíná se mezi columns/importableColumns podle stavu rawFormat).
+    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY uživatelsky viditelné texty nahrazeny `strings.xxx` binding -
+        viz export-popup-builder.component.ts refactor-note stejné datum. Subtitle
+        (počet záznamů) jde přes vypočtený `subtitleText` getter (interpolace
+        `{count}`), ne přímo přes `strings.xxx` binding.
 -->
 
 <div class="export-popup-overlay" (mousedown)="onOverlayClick($event)">
@@ -16,16 +21,10 @@
 
     <div class="export-popup-header">
       <div class="export-popup-header-text">
-        <h2 class="export-popup-title">Export dat</h2>
-        <p class="export-popup-subtitle">
-          @if (itemCount > 0) {
-            Vyberte formát pro export ({{ itemCount }} záznamů)
-          } @else {
-            Vyberte formát pro export dat
-          }
-        </p>
+        <h2 class="export-popup-title">{{ strings.title }}</h2>
+        <p class="export-popup-subtitle">{{ subtitleText }}</p>
       </div>
-      <button class="export-popup-close" (click)="onClose()" [disabled]="isExporting" aria-label="Zavřít">
+      <button class="export-popup-close" (click)="onClose()" [disabled]="isExporting" [attr.aria-label]="strings.close">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
@@ -36,8 +35,8 @@
       <label class="export-raw-toggle">
         <input type="checkbox" [checked]="rawFormat" [disabled]="isExporting" (change)="toggleRawFormat()">
         <span class="export-raw-toggle-text">
-          <strong>Exportovat v surovém formátu</strong>
-          <small>Technické názvy sloupců, needitované hodnoty - soubor půjde rovnou zpětně naimportovat (do stejné nebo jiné instance systému).</small>
+          <strong>{{ strings.raw_toggle_label }}</strong>
+          <small>{{ strings.raw_toggle_hint }}</small>
         </span>
       </label>
     }
@@ -45,13 +44,13 @@
     @if (activeColumnSource.length > 0) {
       <div class="export-columns-section">
         <div class="export-columns-header">
-          <span class="export-columns-title">{{ rawFormat ? 'Sloupce k exportu (import-kompatibilní)' : 'Sloupce k exportu' }}</span>
+          <span class="export-columns-title">{{ rawFormat ? strings.columns_title_raw : strings.columns_title_standard }}</span>
           <button
             type="button"
             class="export-columns-toggle-all"
             [disabled]="isExporting"
             (click)="toggleSelectAllColumns()">
-            {{ isAllColumnsSelected ? 'Zrušit vše' : 'Vybrat vše' }}
+            {{ isAllColumnsSelected ? strings.deselect_all : strings.select_all }}
           </button>
         </div>
 
@@ -69,7 +68,7 @@
         </div>
 
         @if (selectedColumnKeys.size === 0) {
-          <p class="export-columns-warning">Vyberte alespoň jeden sloupec pro export.</p>
+          <p class="export-columns-warning">{{ strings.columns_warning }}</p>
         }
       </div>
     }
@@ -94,12 +93,12 @@
     @if (isExporting) {
       <div class="export-popup-loading">
         <div class="export-popup-spinner"></div>
-        <span>Připravuji soubor…</span>
+        <span>{{ strings.preparing_file }}</span>
       </div>
     }
 
     <div class="export-popup-footer">
-      <button type="button" class="export-popup-cancel" (click)="onClose()" [disabled]="isExporting">Zrušit</button>
+      <button type="button" class="export-popup-cancel" (click)="onClose()" [disabled]="isExporting">{{ strings.cancel }}</button>
     </div>
 
   </div>
