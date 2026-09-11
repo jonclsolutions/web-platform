@@ -13,58 +13,25 @@
  *   `permission_ids` multiselect (explicit extra permissions).
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
  *
- * (Earlier refactor-notes for the 2FA/is_blocked/email-domain-policy/error-toast
- * work, and for the 'admin' role removal, are unchanged and omitted here for
- * brevity - see version history.)
+ * (Earlier refactor-notes for 2FA locking, role assignability, permission_ids
+ * pre-checking/wipe-on-role-change, and the i18n `t()` override are unchanged - see
+ * version history, omitted here for brevity. `translationSection`/`t()` override was
+ * ALREADY present before this update.)
  *
- * @refactor-note (2026-09-05) BACKLOG "role/admin UX improvement": `permission_ids`
- * multiselect now shows the FULL permission catalogue with the selected role's own
- * permissions rendered pre-checked and disabled (`disabledOptionValues`, see
- * `rolePermissionOptionIds()`/`computeFieldsForTarget()`), instead of an
- * undifferentiated flat list. `handleEditFormOpened()` seeds `permission_ids` with
- * the union of the account's own explicit grants and the role's own grants so the
- * role's share renders checked. `handleFormSubmitted()` strips role-covered ids
- * before sending (display-only, never real explicit grants).
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.TABLE_BUTTONS`/`FORM_FIELDS`/etc. konstanty nahrazeny `Config.create*()`
+ * factory funkcemi. NA ROZDÍL od ostatních stránek má tahle DVA nezávislé zdroje
+ * mutace `formFields`/`filterColumns`: i18n (text) a async `loadRoleOptions()`/
+ * `loadPermissionOptions()` (dynamická role/permission data, NIKDY nepřekládaná -
+ * jsou to reálná jména z DB, ne enum sluggy). Řešeno novou `rebuildFormFields()`
+ * metodou volanou z OBOU zdrojů (i18n `translations$.subscribe()` i
+ * `loadRoleOptions()`/`loadPermissionOptions()` callbacků) - `this.formFields` je
+ * vždy aktuální kombinace obou. Pokud je formulář zrovna otevřený, `rebuildFormFields()`
+ * navíc přepočítá `visibleFormFields` se zachovaným kontextem (aktuálně zvolená role),
+ * ať přepnutí jazyka za běhu s otevřeným formulářem nezobrazí zastaralý text.
  *
- * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security":
- * - New `isRoleAssignable()` mirrors backend `UserController::actorCanAssignRole()`
- *   client-side (UX only - the backend re-checks independently and is the actual
- *   security boundary): a non-sysadmin actor should not even be OFFERED a role in
- *   the `role_id` select whose permissions exceed their own effective permissions.
- *   `computeFieldsForTarget()` filters the `role_id` field's options accordingly,
- *   always keeping the currently-assigned role in the list so an existing
- *   assignment never renders blank.
- * - `handleFormSubmitted()` now detects an actual role CHANGE (comparing the
- *   submitted role against the role the form was opened with) and, when it
- *   differs, forces `permission_ids` to an empty array and shows an info notice -
- *   mirroring the backend's unconditional wipe-on-role-change rule in
- *   `UserController::update()`, so the admin isn't left staring at a form whose
- *   checked permissions silently didn't persist.
- * - NEW: this no longer requires closing and reopening the form to take effect.
- *   `handleFieldChanged()` reacts to a LIVE `role_id` change inside an already-open
- *   form (via `FormBuilderComponent`'s new generic `(fieldChanged)` output),
- *   recomputes `visibleFormFields` for the newly selected role (assignable role
- *   list, disabled permission options, 2FA/blockability locks) and pushes a fresh
- *   `permission_ids` value - exactly what the new role covers, zero explicit
- *   extras - into the open form via `FormBuilderComponent`'s new generic
- *   `[fieldOverrides]` input. This keeps the on-screen state honest with what
- *   submitting would actually persist, without the admin needing to close/reopen
- *   the modal to see it.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Komponenta DĚDÍ BaseDataComponent, proto `translationSection = 'administrators'` a
- * zděděné `strings`/`t()`. Přidán LOKÁLNÍ override `t(key)` doplňující prefix
- * `administrators.` (stejná oprava jako u EditRolesComponent/WebSettingsComponent -
- * zděděná `BaseDataComponent.t(path)` čeká PLNOU cestu se sekcí, ne krátký klíč).
- * Nahrazeny VŠECHNY natvrdo psané texty vlastní této komponentě - `Config.*`
- * konstanty (TABLE_BUTTONS/TOOLBAR_BUTTONS/FORM_FIELDS/...) záměrně MIMO SCOPE
- * tohoto kroku (budou řešeny samostatně jako *.config.ts factory funkce, stejně
- * jako user-request.config.ts). Přepisy labelů uvnitř `toolbarButtons` getteru
- * (Filtry/Skrýt filtry/Koš/Zobrazit aktivní) JSOU administrators-specifické (žijí
- * přímo v této třídě, ne v configu) a byly migrovány stejně jako u
- * UserRequestComponent. Info banner s <strong>bez hesla</strong> řešen rozdělením
- * na prefix/bold/suffix v šabloně (stejný důvod jako edit-legal missing-banner -
- * vyhnout se [innerHTML] jen kvůli tučnému textu).
+ * @bugfix-note (2026-09-08) `openGraphBuilder` permission oprava - viz
+ * administrators.config.ts stejné datum.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
@@ -82,27 +49,18 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
 /**
  * Roles with 2FA hardcoded ON - must match backend `User::FORCED_2FA_ROLE_NAMES`.
- * @refactor-note (2026-09-02) Narrowed to sysadmin-only - 'admin' role removed.
  */
 const HARDCODED_FORCED_ROLE_NAMES = ['sysadmin'];
 
 /**
- * Roles whose accounts can NEVER be blocked - same list as
- * HARDCODED_FORCED_ROLE_NAMES today, but kept as its own constant so it can evolve
- * independently in the future. Must match backend `UserController::NEVER_BLOCK_ROLE_NAMES`.
- * @refactor-note (2026-09-02) Narrowed to sysadmin-only - 'admin' role removed.
+ * Roles whose accounts can NEVER be blocked - must match backend
+ * `UserController::NEVER_BLOCK_ROLE_NAMES`.
  */
 const NEVER_BLOCKABLE_ROLE_NAMES = ['sysadmin'];
 
 interface RoleMeta {
   role_name: string;
   forces_2fa: boolean;
-  /**
-   * Permission keys this role grants - used to pre-check & disable them in the
-   * `permission_ids` multiselect, and to decide role assignability, see
-   * loadRolesForces2fa()/rolePermissionOptionIds()/isRoleAssignable().
-   * @refactor-note (2026-09-05) BACKLOG "role/admin UX improvement".
-   */
   permissionKeys: string[];
 }
 
@@ -116,9 +74,7 @@ interface EmailAccessRule {
 @Component({
   selector: 'app-administrators',
   standalone: true,
-  // ActionMenuBuilderComponent added explicitly until it is folded into the
-  // SHARED_UI_BUILDERS bundle.
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './administrators.component.html',
   styleUrls: ['../default-style.css', './email-access-policy-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -127,12 +83,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   protected override translationSection: string = 'administrators';
 
-  /**
-   * @refactor-note (2026-09) BUGFIX - viz hlavička souboru. Zděděná
-   * `BaseDataComponent.t(path)` čeká plnou cestu se sekcí; tenhle override doplní
-   * prefix `administrators.` automaticky, takže volání `this.t('xxx')` v celém
-   * souboru fungují s krátkým klíčem.
-   */
   public override t(key: string): string {
     return this.i18n.getValue(`administrators.${key}`);
   }
@@ -141,24 +91,18 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   override apiEndpoint: string = 'core/users';
 
-  buttons = Config.TABLE_BUTTONS;
-  /** Baseline definition (role_id/permission_ids options land here from loadRoleOptions()/loadPermissionOptions()). */
-  formFields = Config.FORM_FIELDS;
+  buttons: Core.TableButtons[] = [];
+  /** Baseline definition - role_id/permission_ids options land here from loadRoleOptions()/loadPermissionOptions() via rebuildFormFields(). */
+  formFields: InputDefinition[] = [];
   /** What is ACTUALLY rendered in the form - see computeFieldsForTarget(). */
-  visibleFormFields: InputDefinition[] = Config.FORM_FIELDS;
-  /**
-   * Forced value overrides pushed into the currently open form-builder instance,
-   * e.g. resetting `permission_ids` when the role changes live - see
-   * `handleFieldChanged()`. `null` means "nothing to force right now".
-   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
-   */
+  visibleFormFields: InputDefinition[] = [];
   formFieldOverrides: Record<string, any> | null = null;
 
-  tableColumns = Config.TABLE_COLUMNS;
-  trashTableColumns = Config.TRASH_TABLE_COLUMNS;
-  filterColumns = Config.FILTER_COLUMNS;
-  detailsColumns = Config.DETAILS_COLUMNS;
-  resetPasswordFormFields = Config.RESET_PASSWORD_FORM_FIELDS;
+  tableColumns: Core.ColumnDefinition[] = [];
+  trashTableColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
+  resetPasswordFormFields: Core.InputDefinition[] = [];
 
   showResetPasswordForm: boolean = false;
   selectedItemForEdit: any | null = null;
@@ -170,18 +114,12 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   roleOptions: { value: string; label: string }[] = [];
   /** Full permission catalogue, for the `permission_ids` multiselect. */
   permissionOptions: { value: string; label: string }[] = [];
-  /**
-   * Raw catalogue (id + permission_key) - needed to map a role's permission_key
-   * list onto option ids for the disabled/pre-checked state, see
-   * rolePermissionOptionIds().
-   * @refactor-note (2026-09-05) BACKLOG "role/admin UX improvement".
-   */
   private permissionsCatalog: CorePermissionOption[] = [];
 
   /** Map role_id -> {role_name, forces_2fa, permissionKeys}, for dynamic field disable/hide. */
   private rolesMeta = new Map<number, RoleMeta>();
 
-  // ── Email access policy modal (BACKLOG "core-admin-email-domain-restriction") ──────
+  // ── Email access policy modal ──────────────────────────────────────────
   showEmailAccessPolicyModal = false;
   emailAccessPolicyLoading = false;
   emailAccessPolicySaving = false;
@@ -190,14 +128,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   newRuleType: 'domain' | 'email' = 'domain';
   newRuleValue = '';
   showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` field initializer - přepočítáno v rebuildFormFields()/subscribe. */
+  graphColumns: GraphColumnOption[] = [];
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -209,6 +142,24 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.buttons = Config.createTableButtons(this.i18n);
+      this.resetPasswordFormFields = Config.createResetPasswordFormFields(this.i18n);
+      this.tableColumns = Config.createTableColumns(this.i18n);
+      this.trashTableColumns = Config.createTrashTableColumns(this.i18n);
+      this.detailsColumns = Config.createDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.rebuildFormFields();
+      this.cd.markForCheck();
+    });
   }
 
   /** @description UX only - the real authority check happens on the backend. */
@@ -217,7 +168,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   }
 
   get toolbarButtons(): Core.Button[] {
-    return Config.TOOLBAR_BUTTONS.map(btn => {
+    return Config.createToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
 
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
@@ -237,8 +188,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
           }
           break;
         case 'openEmailAccessPolicy':
-          // Sysadmin-only - see refactor-note (2026-08-25) in the header. The backend
-          // protects itself independently of this - hiding the button is UX only.
           updatedBtn.showIf = this.isSysadmin;
           break;
         case 'toggleTable':
@@ -272,6 +221,35 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.loadPermissionOptions();
   }
 
+  /**
+   * @description Jediné místo, kde se `formFields`/`filterColumns` skládají z DVOU
+   * nezávislých zdrojů - přeloženého textu (`Config.createFormFields(i18n)`) a
+   * dynamických role/permission dat (`this.roleOptions`/`this.permissionOptions`,
+   * NIKDY nepřekládaných). Volá se z konstruktoru (i18n subscribe) i z
+   * `loadRoleOptions()`/`loadPermissionOptions()` callbacků, ať je `formFields` vždy
+   * aktuální kombinace obou. Pokud je zrovna otevřený formulář, přepočítá i
+   * `visibleFormFields` se zachovaným kontextem (aktuálně zvolená role) - přepnutí
+   * jazyka s otevřeným formulářem tak nezobrazí zastaralý text.
+   */
+  private rebuildFormFields(): void {
+    this.formFields = Config.createFormFields(this.i18n).map(field => {
+      if (field.column_name === 'role_id') return { ...field, options: this.roleOptions };
+      if (field.column_name === 'permission_ids') return { ...field, options: this.permissionOptions };
+      return field;
+    });
+
+    this.filterColumns = Config.createFilterColumns(this.i18n).map(col =>
+      col.key === 'role_id' ? { ...col, options: this.roleOptions } : col
+    );
+
+    if (this.showCreateForm) {
+      const roleId = this.selectedItemForEdit?.role_id ?? null;
+      this.visibleFormFields = this.computeFieldsForTarget(roleId, !!this.selectedItemForEdit?.two_fa_forced_by_admin);
+    } else {
+      this.visibleFormFields = this.formFields;
+    }
+  }
+
   private loadRoleOptions(): void {
     this.roleOptionsService.getRoles().subscribe({
       next: (roles) => {
@@ -279,15 +257,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
           .filter((r): r is { id: number; role_name: string } => !!r)
           .map(r => ({ value: String(r.id), label: r.role_name }));
 
-        this.formFields = this.formFields.map(field =>
-          field.column_name === 'role_id' ? { ...field, options: this.roleOptions } : field
-        );
-        this.visibleFormFields = this.formFields;
-
-        this.filterColumns = this.filterColumns.map(col =>
-          col.key === 'role_id' ? { ...col, options: this.roleOptions.map(o => o.label) } : col
-        );
-
+        this.rebuildFormFields();
         this.cd.markForCheck();
       }
     });
@@ -295,14 +265,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   /**
    * @description Loads the full permission catalogue for the `permission_ids`
-   * multiselect - same TTL-cache-backed pattern as loadRoleOptions(), just against
-   * PermissionOptionsService/`core/permissions` instead of roles. Non-blocking on
-   * error (see PermissionOptionsService.getPermissions()) - in the worst case the
-   * multiselect is simply empty until a retry, the backend authority check in
-   * `UserController::applyExplicitPermissions()` is unaffected either way.
-   * @refactor-note (2026-09-05) Also stores the raw catalogue in
-   * `permissionsCatalog` - needed by `rolePermissionOptionIds()` to map a role's
-   * permission_key list onto option ids.
+   * multiselect. Non-blocking on error - in the worst case the multiselect is
+   * simply empty until a retry.
    */
   private loadPermissionOptions(): void {
     this.permissionOptionsService.getPermissions().subscribe({
@@ -311,26 +275,12 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         this.permissionOptions = this.permissionsCatalog
           .map(p => ({ value: String(p.id), label: `${p.permission_key}${p.description ? ' — ' + p.description : ''}` }));
 
-        this.formFields = this.formFields.map(field =>
-          field.column_name === 'permission_ids' ? { ...field, options: this.permissionOptions } : field
-        );
-        this.visibleFormFields = this.formFields;
-
+        this.rebuildFormFields();
         this.cd.markForCheck();
       }
     });
   }
 
-  /**
-   * @description Loads 2FA-relevant role metadata (role_name + forces_2fa) directly,
-   * independent of the RoleOptionsService cache (see refactor-note in the header).
-   * The same map is reused for "is this role never-blockable?", "which permissions
-   * does this role already grant?", and "can the current actor even assign this
-   * role?".
-   * @refactor-note (2026-09-05) Also stores `permissions` (permission_key array,
-   * already returned by `core/roles?no_pagination=true` via `CoreRoleResource` and
-   * previously ignored here) as `RoleMeta.permissionKeys`.
-   */
   private loadRolesForces2fa(): void {
     this.dataHandler.get<any[]>('core/roles?no_pagination=true').subscribe({
       next: (roles) => {
@@ -346,13 +296,11 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         });
       },
       error: () => {
-        // Non-blocking - worst case the frontend just won't pre-disable fields (the
-        // backend has its own independent 422 check either way).
+        // Non-blocking - worst case the frontend just won't pre-disable fields.
       }
     });
   }
 
-  /** @description Whether the given role (by id) forces 2FA - hardcoded role or forces_2fa. */
   private isRoleForced(roleId: number | string | undefined | null): boolean {
     if (roleId === undefined || roleId === null || roleId === '') return false;
     const meta = this.rolesMeta.get(Number(roleId));
@@ -360,27 +308,12 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     return HARDCODED_FORCED_ROLE_NAMES.includes(meta.role_name) || meta.forces_2fa;
   }
 
-  /**
-   * @description Whether the given role (by id) may NEVER be blocked - UX
-   * prefill/disable only, the real enforcement lives on the backend
-   * (UserController::update()).
-   */
   private isNeverBlockableRole(roleId: number | string | undefined | null): boolean {
     if (roleId === undefined || roleId === null || roleId === '') return false;
     const meta = this.rolesMeta.get(Number(roleId));
     return !!meta && NEVER_BLOCKABLE_ROLE_NAMES.includes(meta.role_name);
   }
 
-  /**
-   * @description Maps a role's permission_key list onto `permission_ids` option
-   * VALUES (stringified permission ids) - used to pre-check & disable, in the
-   * `permission_ids` multiselect, exactly the permissions the target role already
-   * grants automatically. Purely a UX aid: the backend
-   * (`UserController::applyExplicitPermissions()`) silently filters these out
-   * regardless of what the client sends, this just avoids showing them as
-   * unchecked/editable when they visually already apply.
-   * @refactor-note (2026-09-05) BACKLOG "role/admin UX improvement".
-   */
   private rolePermissionOptionIds(roleId: number | string | undefined | null): string[] {
     if (roleId === undefined || roleId === null || roleId === '') return [];
     const meta = this.rolesMeta.get(Number(roleId));
@@ -392,14 +325,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       .map(p => String(p.id));
   }
 
-  /**
-   * @description Whether the currently logged-in actor is allowed to assign the
-   * given role - client-side mirror of `UserController::actorCanAssignRole()`, used
-   * only to avoid offering roles in the `role_id` select that the backend would
-   * reject anyway (403). Purely a UX filter - the backend re-checks this
-   * independently and is the actual security boundary.
-   * @refactor-note (2026-09-06) BACKLOG "who can change roles".
-   */
   private isRoleAssignable(roleId: number | string | undefined | null): boolean {
     if (this.isSysadmin) return true;
     if (roleId === undefined || roleId === null || roleId === '') return false;
@@ -410,15 +335,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     return meta.permissionKeys.every(key => this.permissionService.hasPermission(key));
   }
 
-  /**
-   * @description Derives which fields should actually show/disable in the form for
-   * the given target role - see refactor-note in the header. `roleId` is `null` for
-   * a new (not yet selected) role while creating an account.
-   * @refactor-note (2026-09-05) Adds `disabledOptionValues` to the `permission_ids`
-   * field - see rolePermissionOptionIds()/file header.
-   * @refactor-note (2026-09-06) Adds assignable-role filtering to the `role_id`
-   * field's own options for non-sysadmin actors - see isRoleAssignable()/file header.
-   */
   private computeFieldsForTarget(
     roleId: number | string | undefined | null,
     adminForced: boolean = false
@@ -435,17 +351,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         return { ...f, editable: false };
       }
       if (f.column_name === 'permission_ids') {
-        // Pre-check & disable exactly what the role already grants automatically -
-        // see rolePermissionOptionIds(). The field itself stays editable; only the
-        // individual role-covered options are locked (form-builder renders this via
-        // `disabledOptionValues`, see form-builder.component.html/.ts).
         return { ...f, disabledOptionValues: rolePermissionIds } as InputDefinition;
       }
       if (f.column_name === 'role_id' && !this.isSysadmin) {
-        // Only offer roles the actor is themselves allowed to assign - see
-        // isRoleAssignable(). The currently-assigned role is always kept in the
-        // list even if the actor couldn't newly assign it, so an existing
-        // assignment is never rendered blank.
         const assignableOptions = this.roleOptions.filter(opt =>
           String(opt.value) === String(roleId) || this.isRoleAssignable(opt.value)
         );
@@ -477,41 +385,14 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   handleCreateFormOpened(): void {
     this.selectedItemForEdit = null;
     this.formFieldOverrides = null;
-    // No role is selected yet on create - forced=false, the override field is
-    // hidden anyway (show_in_create: false in the config), enable_2fa is editable.
-    // is_blocked has show_in_create: false, so it never appears on this form at all.
     this.visibleFormFields = this.computeFieldsForTarget(null);
     this.showCreateForm = true;
   }
 
-  /**
-   * @refactor-note (2026-09-05) `permission_ids` is now seeded with the UNION of the
-   * account's own explicit grants (`user_permissions`) and the role's own grants
-   * (`rolePermissionOptionIds()`) - the role's share is rendered pre-checked and
-   * disabled by `computeFieldsForTarget()`'s `disabledOptionValues`, so it needs to
-   * be present in the value for the checkbox to actually show checked.
-   * @bugfix-note (2026-09-06) CRITICAL BUG: `item.user_permissions` is a flat array
-   * of `permission_key` STRINGS (see `UserResource` - changed for readable display
-   * in the details view), NOT `{id, permission_key}` objects. The previous
-   * `.map((p: any) => String(p.id))` therefore always produced `"undefined"` for
-   * every entry, so existing explicit grants NEVER rendered as pre-checked in the
-   * edit form. Because `applyExplicitPermissions()` on the backend treats
-   * `permission_ids` as the actor's COMPLETE desired set within their own authority
-   * (sync, not merge - see its doc-comment), submitting the form with the old
-   * grants invisibly unchecked silently WIPED them, even though the admin only
-   * intended to ADD new ones. Fixed by resolving each `permission_key` string back
-   * to its catalogue id via `permissionsCatalog` (already loaded by
-   * `loadPermissionOptions()`), the same lookup direction already used elsewhere
-   * (e.g. `rolePermissionOptionIds()`).
-   */
   handleEditFormOpened(item: any): void {
     const itemToEdit = { ...item };
     if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
 
-    // permission_ids shown in the multiselect = the account's OWN explicit grants
-    // UNION whatever the role already grants automatically (the role's share renders
-    // pre-checked & disabled via computeFieldsForTarget()'s disabledOptionValues -
-    // see rolePermissionOptionIds()).
     const explicitKeys: string[] = Array.isArray(itemToEdit.user_permissions) ? itemToEdit.user_permissions : [];
     const explicitIds = this.permissionsCatalog
       .filter(p => explicitKeys.includes(p.permission_key))
@@ -524,9 +405,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       itemToEdit.enable_2fa = true;
     }
 
-    // A protected role must never appear blocked - even if the DB somehow still had
-    // `is_blocked: true` (it shouldn't, the backend won't allow it), the form won't
-    // show it checked, so it can't be accidentally resubmitted.
     if (this.isNeverBlockableRole(itemToEdit.role_id)) {
       itemToEdit.is_blocked = false;
     }
@@ -537,21 +415,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.showCreateForm = true;
   }
 
-  /**
-   * @description Reacts to a field changing LIVE inside the currently open form
-   * (emitted by `FormBuilderComponent`'s generic `(fieldChanged)` output). Only
-   * `role_id` changes are acted on here.
-   *
-   * When the role changes: `visibleFormFields` is recomputed for the newly selected
-   * role (assignable role list, disabled permission options, 2FA/blockability
-   * locks - the exact same computation used when the form first opens), and
-   * `permission_ids` is force-reset, via `formFieldOverrides`, to exactly what the
-   * NEW role covers (zero explicit extras) - mirroring the backend's unconditional
-   * wipe-on-role-change rule in `UserController::update()`. This keeps what's
-   * visibly checked in an already-open form honest with what submitting it would
-   * actually persist, without requiring the admin to close and reopen the modal.
-   * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security".
-   */
   handleFieldChanged(event: { columnName: string; value: any }): void {
     if (event.columnName !== 'role_id') return;
 
@@ -564,22 +427,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.cd.markForCheck();
   }
 
-  /**
-   * @description Submits user data.
-   * (Earlier bugfix-notes about 2FA/is_blocked field re-evaluation on role change,
-   * and about removing duplicate error toasts, are unchanged - see version history.)
-   * @refactor-note (2026-09-02) `permission_ids` is normalized to an array of
-   * numbers (the multiselect control may emit string values) right before send.
-   * @refactor-note (2026-09-06) BACKLOG "role change UX/security": if the role
-   * being submitted differs from the role the form was opened with, `permission_ids`
-   * is forced to an empty array and the admin is shown an info notice - mirroring
-   * the hard server-side rule in `UserController::update()`, which wipes ALL of the
-   * account's explicit permission grants whenever the role assignment actually
-   * changes, regardless of what this client sends. (In practice, thanks to
-   * `handleFieldChanged()` above, the live form already reflects this before
-   * submit - this remains as a safety net for any path that reaches submit without
-   * having gone through that live recompute.)
-   */
   handleFormSubmitted(formData: any): void {
     const payload = { ...formData };
     if (payload.role_id) payload.role_id = parseInt(payload.role_id, 10);
@@ -590,9 +437,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     const roleChanged = !!payload.id && originalRoleId !== null && payload.role_id !== originalRoleId;
 
     if (roleChanged) {
-      // Server wipes all explicit grants on role change unconditionally (see
-      // UserController::update()) - reflect that here instead of sending stale
-      // checkbox state that would be silently discarded anyway.
       payload.permission_ids = [];
       this.alertDialogService.open(
         this.t('role_changed_title'),
@@ -600,37 +444,25 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         'info'
       );
     } else if (Array.isArray(payload.permission_ids)) {
-      // Strip out anything the SUBMITTED role already grants automatically - these
-      // were only shown checked/disabled for display, they were never real explicit
-      // grants (see handleEditFormOpened()/computeFieldsForTarget()).
       const roleIds = new Set(this.rolePermissionOptionIds(payload.role_id));
       payload.permission_ids = payload.permission_ids
         .filter((id: string | number) => !roleIds.has(String(id)))
         .map((id: string | number) => Number(id));
     } else {
-      // Field wasn't touched / not present on this form - don't send it, so the
-      // backend's "key absent = leave unchanged" convention applies consistently.
       delete payload.permission_ids;
     }
 
-    // Non-editable fields must never be sent - even if formData carried a prefilled
-    // display value (see handleEditFormOpened), sending it would silently write it
-    // back on ANY unrelated edit. If the key is missing, the backend falls back to
-    // the existing value ($validated['enable_2fa'] ?? $user->enable_2fa).
     const nonEditableFields = this.visibleFormFields
       .filter(f => f.editable === false)
       .map(f => f.column_name);
     nonEditableFields.forEach(key => delete payload[key]);
 
-    // Re-evaluate "forced" against the role actually being submitted, not the role
-    // the form opened with (see version history bugfix-note).
     const forcedNow = this.isRoleForced(payload.role_id);
     if (forcedNow) {
       delete payload.enable_2fa;
       delete payload.two_fa_forced_by_admin;
     }
 
-    // Same principle for blocking - a NEVER_BLOCKABLE target role makes is_blocked meaningless.
     if (this.isNeverBlockableRole(payload.role_id)) {
       delete payload.is_blocked;
     }
@@ -665,13 +497,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       });
   }
 
-  /**
-   * @description Resends the activation e-mail for an account that has never been
-   * activated. The `item.activated_at` check on the client is just quick feedback
-   * without an unnecessary HTTP request - the backend
-   * (`UserController::resendActivation()`) performs the same check independently,
-   * so it cannot be bypassed by modifying the frontend.
-   */
   handleResendActivation(item: any): void {
     if (item.activated_at) {
       this.alertDialogService.open(this.t('info_title'), this.t('account_already_active'), 'info');
@@ -695,7 +520,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   handleItemRestored(): void { this.refreshData(); }
   handleItemDeleted(): void { this.refreshData(); }
 
-  // ── Email access policy modal (BACKLOG "core-admin-email-domain-restriction") ──────
+  // ── Email access policy modal ──────────────────────────────────────────
 
   openEmailAccessPolicyModal(): void {
     this.showEmailAccessPolicyModal = true;
@@ -769,7 +594,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     });
   }
 
-  /** @description Whitelist split into two separate lists for clearer template display. */
   get domainRules(): EmailAccessRule[] {
     return this.emailAccessRules.filter(r => r.type === 'domain');
   }

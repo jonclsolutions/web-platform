@@ -14,22 +14,6 @@
       [ngClass]="getDialogClass(toast.type)"
       [class.leaving]="toast.leaving"
       (click)="ok(toast.id)">
-      <!-- <div class="dialog-icon">
-        @switch (toast.type) {
-          @case ('success') {
-            <span>✔️</span>
-          }
-          @case ('warning') {
-            <span>⚠️</span>
-          }
-          @case ('danger') {
-            <span>❌</span>
-          }
-          @case ('info') {
-            <span>ℹ️</span>
-          }
-        }
-      </div> -->
       <div class="dialog-content">
         <h2 class="dialog-title">{{ toast.title || (toast.type | titlecase) }}</h2>
         <p class="dialog-message">{{ toast.message }}</p>

@@ -33,7 +33,7 @@ class AccountActivationMail extends Mailable
     {
         $link = rtrim(config('app.frontend_url'), '/') . '/auth/activate-account/' . $this->rawToken;
 
-        return $this->subject('Aktivace vašeho účtu')
+        return $this->subject('Activating your account')
             ->view('emails.auth.account-activation')
             ->with([
                 'fullName' => $this->user->full_name,

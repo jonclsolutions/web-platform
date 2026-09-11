@@ -8,12 +8,10 @@
     karta nastavení retence (+ ruční purge), tabulka eventů (TableBuilderComponent) a
     triage modal pro změnu stavu/poznámky jednoho záznamu.
 
-    @refactor-note (2026-08-22v2) UX PŘIPOMÍNKY Z REVIEW:
-    - Emoji nahrazena inline SVG ikonami (stejný stroj-based styl jako
-      admin-layout.component.html - width/height 16, viewBox 0 0 24 24,
-      stroke="currentColor" stroke-width="2").
-    - Hover na sloupec grafu teď zobrazuje vlastní tooltip (`.sec-chart-tooltip`)
-      s přesným rozpisem info/warning/critical/celkem místo prohlížečového [title].
+    (Earlier refactor-note 2026-08-22v2 for SVG icons/tooltip is unchanged.)
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY natvrdo psané české texty nahrazeny `t('security-events.xxx')`
+        bindingy - viz security-events.component.ts stejné datum.
 -->
 <div class="sec-container container mx-auto p-4">
 
@@ -30,7 +28,7 @@
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
       </span>
-      <span class="sec-card-title">Objem podezřelé aktivity (posledních {{ statsDays }} dní)</span>
+      <span class="sec-card-title">{{ t('chart_title_prefix') }} ({{ t('chart_title_last') }} {{ statsDays }} {{ t('chart_title_days') }})</span>
     </div>
 
     @if (statsLoading) {
@@ -40,7 +38,7 @@
     @if (!statsLoading) {
       <div class="sec-card-body">
         @if (chartMaxTotal <= 1 && chartDays.length > 0 && chartDays[0].total === 0) {
-          <div class="sec-chart-empty">Za sledované období nebyla zaznamenána žádná podezřelá aktivita.</div>
+          <div class="sec-chart-empty">{{ t('chart_empty') }}</div>
         }
         <div class="sec-chart">
           @for (dayItem of chartDays; track dayItem.day; let i = $index) {
@@ -51,16 +49,16 @@
                  (keydown.enter)="filterByChartDay(dayItem.day)"
                  role="button"
                  tabindex="0"
-                 [attr.aria-label]="'Zobrazit eventy z ' + formatChartDayLabelFull(dayItem.day)">
+                 [attr.aria-label]="t('chart_day_aria_prefix') + ' ' + formatChartDayLabelFull(dayItem.day)">
               <div class="sec-chart-tooltip"
                    [class.sec-tooltip-visible]="hoveredChartIndex === i"
                    [class.sec-tooltip-align-left]="hoveredChartIndex === i && tooltipHorizontal === 'left'"
                    [class.sec-tooltip-align-right]="hoveredChartIndex === i && tooltipHorizontal === 'right'">
                 <div class="sec-tooltip-date">{{ formatChartDayLabelFull(dayItem.day) }}</div>
-                <div class="sec-tooltip-row"><span class="sec-legend-dot sec-bar-critical"></span>Kritické: {{ dayItem.critical }}</div>
-                <div class="sec-tooltip-row"><span class="sec-legend-dot sec-bar-warning"></span>Varování: {{ dayItem.warning }}</div>
-                <div class="sec-tooltip-row"><span class="sec-legend-dot sec-bar-info"></span>Informativní: {{ dayItem.info }}</div>
-                <div class="sec-tooltip-total">Celkem: {{ dayItem.total }}</div>
+                <div class="sec-tooltip-row"><span class="sec-legend-dot sec-bar-critical"></span>{{ t('legend_critical') }}: {{ dayItem.critical }}</div>
+                <div class="sec-tooltip-row"><span class="sec-legend-dot sec-bar-warning"></span>{{ t('legend_warning') }}: {{ dayItem.warning }}</div>
+                <div class="sec-tooltip-row"><span class="sec-legend-dot sec-bar-info"></span>{{ t('legend_info') }}: {{ dayItem.info }}</div>
+                <div class="sec-tooltip-total">{{ t('legend_total') }}: {{ dayItem.total }}</div>
               </div>
               <div class="sec-chart-bar">
                 <div class="sec-bar-seg sec-bar-critical" [style.height.%]="chartSegments[i].critical"></div>
@@ -72,9 +70,9 @@
           }
         </div>
         <div class="sec-chart-legend">
-          <span class="sec-legend-item"><span class="sec-legend-dot sec-bar-critical"></span> Kritické</span>
-          <span class="sec-legend-item"><span class="sec-legend-dot sec-bar-warning"></span> Varování</span>
-          <span class="sec-legend-item"><span class="sec-legend-dot sec-bar-info"></span> Informativní</span>
+          <span class="sec-legend-item"><span class="sec-legend-dot sec-bar-critical"></span> {{ t('legend_critical') }}</span>
+          <span class="sec-legend-item"><span class="sec-legend-dot sec-bar-warning"></span> {{ t('legend_warning') }}</span>
+          <span class="sec-legend-item"><span class="sec-legend-dot sec-bar-info"></span> {{ t('legend_info') }}</span>
         </div>
       </div>
     }
@@ -88,7 +86,7 @@
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
       </span>
-      <span class="sec-card-title">Retenční doba (GDPR)</span>
+      <span class="sec-card-title">{{ t('retention_card_title') }}</span>
     </div>
 
     @if (settingsLoading) {
@@ -98,18 +96,18 @@
     @if (!settingsLoading) {
       <div class="sec-card-body sec-retention-body">
         <div class="sec-retention-field">
-          <label class="sec-label">Automaticky mazat záznamy starší než</label>
+          <label class="sec-label">{{ t('retention_field_label') }}</label>
           @if (hasAnyPermission('core-security-update')) {
             <select class="sec-select" [(ngModel)]="retentionDays" name="retention_days">
               @for (opt of retentionOptions; track opt) {
-                <option [value]="opt">{{ opt }} dní</option>
+                <option [value]="opt">{{ opt }} {{ t('retention_unit_days') }}</option>
               }
             </select>
           } @else {
-            <span class="sec-readonly-value">{{ retentionDays }} dní</span>
+            <span class="sec-readonly-value">{{ retentionDays }} {{ t('retention_unit_days') }}</span>
           }
           <p class="sec-hint">
-            Denní automatický úklid běží na pozadí. Ruční vyčištění vpravo smaže jen záznamy starší než tahle hodnota - pokud žádné takové nejsou, nic se nesmaže (a je to tak správně).
+            {{ t('retention_hint') }}
           </p>
         </div>
 
@@ -129,7 +127,7 @@
                   <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
                 </svg>
               }
-              Uložit retenci
+              {{ t('save_retention_button') }}
             </button>
           }
           @if (hasAnyPermission('core-security-delete')) {
@@ -147,7 +145,7 @@
                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                 </svg>
               }
-              Vyčistit staré záznamy nyní
+              {{ t('purge_now_button') }}
             </button>
           }
         </div>
@@ -159,11 +157,11 @@
   @if (!errorMessage) {
     <div>
       <div class="toolbar-actions m-b-t-5">
-        <div class="table-header">Bezpečnostní monitoring</div>
+        <div class="table-header">{{ t('table_header') }}</div>
         <div class="toolbar-actions-in">
           <app-action-menu-builder
             [configs]="toolbarButtons"
-            [triggerLabel]="'Akce'"
+            [triggerLabel]="t('toolbar_action_trigger')"
             (actionTriggered)="handleToolbarAction($event)">
           </app-action-menu-builder>
         </div>
@@ -225,8 +223,8 @@
   <div class="sec-modal-overlay" (mousedown)="$event.target === $event.currentTarget && closeTriageModal()">
     <div class="sec-modal" (mousedown)="$event.stopPropagation()">
       <div class="sec-modal-header">
-        <span class="sec-modal-title">Řešit záznam #{{ triageItem.id }}</span>
-        <button class="sec-modal-close" (click)="closeTriageModal()" [disabled]="triageSaving" aria-label="Zavřít">
+        <span class="sec-modal-title">{{ t('triage_modal_title') }} #{{ triageItem.id }}</span>
+        <button class="sec-modal-close" (click)="closeTriageModal()" [disabled]="triageSaving" [attr.aria-label]="i18n.getValue('shared.close')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -235,25 +233,25 @@
       <div class="sec-modal-body">
         <p class="sec-modal-summary">
           <strong>{{ triageItem.event_type }}</strong> · {{ triageItem.ip_address }} ·
-          {{ triageItem.occurrences }}× výskyt
+          {{ triageItem.occurrences }}{{ t('triage_occurrences_suffix') }}
         </p>
 
         @if (triageExplanation) {
           <div class="sec-explanation">
             <div class="sec-explanation-title">{{ triageExplanation.label }}</div>
             <div class="sec-explanation-block">
-              <span class="sec-explanation-label">Co se stalo</span>
+              <span class="sec-explanation-label">{{ t('explanation_what_happened_label') }}</span>
               <p class="sec-explanation-text">{{ triageExplanation.whatHappened }}</p>
             </div>
             <div class="sec-explanation-block sec-explanation-recommendation">
-              <span class="sec-explanation-label">Doporučený postup</span>
+              <span class="sec-explanation-label">{{ t('explanation_recommendation_label') }}</span>
               <p class="sec-explanation-text">{{ triageExplanation.recommendation }}</p>
             </div>
           </div>
         }
 
         <div class="sec-field">
-          <label class="sec-label">Stav</label>
+          <label class="sec-label">{{ t('triage_status_label') }}</label>
           <select class="sec-select" [(ngModel)]="triageStatus" name="triage_status">
             @for (opt of statusOptions; track opt.value) {
               <option [value]="opt.value">{{ opt.label }}</option>
@@ -262,13 +260,13 @@
         </div>
 
         <div class="sec-field">
-          <label class="sec-label">Poznámka</label>
+          <label class="sec-label">{{ t('triage_notes_label') }}</label>
           <textarea class="sec-textarea" rows="3" [(ngModel)]="triageNotes" name="triage_notes"
-                    placeholder="Volitelná poznámka k vyšetření (např. patří obchodnímu partnerovi, ověřeno jako útok...)"></textarea>
+                    [placeholder]="t('triage_notes_placeholder')"></textarea>
         </div>
       </div>
       <div class="sec-modal-footer">
-        <button class="sec-btn sec-btn-ghost" (click)="closeTriageModal()" [disabled]="triageSaving">Zrušit</button>
+        <button class="sec-btn sec-btn-ghost" (click)="closeTriageModal()" [disabled]="triageSaving">{{ i18n.getValue('shared.cancel') }}</button>
         <button class="sec-btn sec-btn-primary" (click)="saveTriage()" [disabled]="triageSaving">
           @if (triageSaving) {
             <span class="sec-mini-spin">
@@ -283,7 +281,7 @@
               <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
             </svg>
           }
-          Uložit
+          {{ i18n.getValue('shared.save') }}
         </button>
       </div>
     </div>
@@ -295,7 +293,7 @@
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'last_seen_at'"
-[dateFieldLabel]="'Poslední výskyt'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

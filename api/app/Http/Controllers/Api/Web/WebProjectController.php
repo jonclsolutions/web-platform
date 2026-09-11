@@ -8,21 +8,21 @@
  * @description Admin CRUD for customer projects, plus password regeneration and
  * nested checkpoint management.
  *
- * @bugfix-note (2026-08-29b) KRITICKÝ BUG - "Cannot read properties of undefined
- * (reading 'id')" v @for smyčce checkpointů. `show()`/`update()`/`restore()`/
- * `storeCheckpoint()`/`updateCheckpoint()` vracely `response()->json(new XResource(...))`
- * BEZ ručního obalení do `['data' => ...]`. Laravel takhle poslaný JsonResource
- * NEOBALÍ automaticky (ten mechanismus - `ResourceResponse::wrap()` - se spouští jen
- * když se Resource vrátí z routy PŘÍMO, ne když se předá jako argument do
- * `response()->json()`, které místo toho volá `jsonSerialize()`, jenž žádné obalení
- * nedělá). Frontend `DataHandler.post()/put()/getOne()` (data-handler.service.ts)
- * ale VŽDY dělá `map(response => response.data)` - bez obálky dostane `undefined`.
- * `store()`/`regeneratePassword()` tenhle bug NEMĚLY, protože už explicitně vrací
- * `['data' => ...]` - teď to mají VŠECHNY metody vracející jeden záznam, jednotně.
- * `index()` (kolekce) a `bulkDestroy()`/`forceDeleteAllTrashed()` beze změny -
- * `index()` má vlastní stránkovací tvar, `WebProjectResource::collection()` uvnitř
- * `WebProjectResource::collection($data->items())` se řeší jinak (frontend čte celý
- * response objekt, ne `.data` jedné položky).
+ * @bugfix-note (2026-08-29b) CRITICAL BUG - "Cannot read properties of undefined
+ * (reading 'id')" in checkpoint @for loop. `show()`/`update()`/`restore()`/
+ * `storeCheckpoint()`/`updateCheckpoint()` returned `response()->json(new XResource(...))`
+ * WITHOUT manual wrapping in `['data' => ...]`. Laravel does NOT automatically wrap
+ * a JsonResource passed to `response()->json()` (that mechanism - `ResourceResponse::wrap()`
+ * - only runs when a Resource is returned directly from a route, not when passed as an argument
+ * to `response()->json()`, which instead calls `jsonSerialize()`, performing no wrapping).
+ * Frontend `DataHandler.post()/put()/getOne()` (data-handler.service.ts)
+ * always does `map(response => response.data)` - without the wrapper, it receives `undefined`.
+ * `store()`/`regeneratePassword()` did NOT have this bug because they already explicitly
+ * returned `['data' => ...]`. Now ALL methods returning a single record do so uniformly.
+ * `index()` (collection) and `bulkDestroy()`/`forceDeleteAllTrashed()` unchanged -
+ * `index()` has its own pagination shape, `WebProjectResource::collection()` inside
+ * `WebProjectResource::collection($data->items())` is handled differently (frontend reads
+ * the whole response object, not `.data` of a single item).
  *
  * @note SECURITY (consultation note 3): regeneratePassword() invalidates ALL existing
  * customer sessions for the project and returns the new PLAINTEXT password exactly
@@ -98,7 +98,7 @@ class WebProjectController extends Controller
         try {
             $validated = $request->validated();
             $validated['access_token'] = WebProject::generateAccessToken();
-            $validated['access_password_hash'] = 'pending'; // přepsáno hned níže regeneratePassword()
+            $validated['access_password_hash'] = 'pending'; // overwritten right below by regeneratePassword()
 
             $project = new WebProject($validated);
             $project->status = $validated['status'] ?? 'new';
@@ -108,22 +108,22 @@ class WebProjectController extends Controller
 
             $plaintextPassword = $project->regeneratePassword();
 
-            $this->logAction($request, WebLog::class, 'create', 'WebProject', "Vytvořen projekt: {$project->name}", $project->id, 'WebProject');
+            $this->logAction($request, WebLog::class, 'create', 'WebProject', "Project created: {$project->name}", $project->id, 'WebProject');
 
             $response = (new WebProjectResource($project))->resolve();
             $response['generated_password'] = $plaintextPassword;
 
             return response()->json(['data' => $response], 201);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebProject', "Chyba při vytváření projektu: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření projektu selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error creating project: " . $e->getMessage());
+            return response()->json(['message' => 'Project creation failed.'], 500);
         }
     }
 
     public function show($id): JsonResponse
     {
         $project = WebProject::withTrashed()->with(['lead', 'order', 'checkpoints'])->findOrFail($id);
-        return response()->json(new WebProjectResource($project));
+        return response()->json(['data' => (new WebProjectResource($project))->resolve()]);
     }
 
     public function update(UpdateWebProjectRequest $request, $id): JsonResponse
@@ -132,13 +132,13 @@ class WebProjectController extends Controller
             $project = WebProject::findOrFail($id);
             $project->update($request->validated());
 
-            $this->logAction($request, WebLog::class, 'update', 'WebProject', "Aktualizace projektu ID: {$project->id}", $project->id, 'WebProject');
+            $this->logAction($request, WebLog::class, 'update', 'WebProject', "Updated project ID: {$project->id}", $project->id, 'WebProject');
 
             $fresh = $project->fresh()->load(['lead', 'order', 'checkpoints']);
             return response()->json(['data' => (new WebProjectResource($fresh))->resolve()]);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebProject', "Chyba při aktualizaci projektu ID {$id}: " . $e->getMessage(), (int) $id, 'WebProject');
-            return response()->json(['message' => 'Aktualizace projektu selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error updating project ID {$id}: " . $e->getMessage(), (int) $id, 'WebProject');
+            return response()->json(['message' => 'Project update failed.'], 500);
         }
     }
 
@@ -150,11 +150,11 @@ class WebProjectController extends Controller
 
             $forceDelete ? $item->forceDelete() : $item->delete();
 
-            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebProject', "Smazání projektu ID: $id", (int) $id, 'WebProject');
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebProject', "Deleted project ID: $id", (int) $id, 'WebProject');
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebProject', "Chyba při mazání projektu ID $id: " . $e->getMessage(), (int) $id, 'WebProject');
-            return response()->json(['message' => 'Smazání projektu selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error deleting project ID $id: " . $e->getMessage(), (int) $id, 'WebProject');
+            return response()->json(['message' => 'Project deletion failed.'], 500);
         }
     }
 
@@ -177,7 +177,7 @@ class WebProjectController extends Controller
             }
         });
 
-        $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk', 'WebProject', "Hromadné smazání {$deletedCount} projektů.");
+        $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk', 'WebProject', "Bulk deletion of {$deletedCount} projects.");
 
         return response()->json(['data' => ['deleted_count' => $deletedCount, 'requested' => count($ids)]]);
     }
@@ -186,7 +186,7 @@ class WebProjectController extends Controller
     {
         $item = WebProject::withTrashed()->findOrFail($id);
         $item->restore();
-        $this->logAction($request, WebLog::class, 'restore', 'WebProject', "Obnova projektu ID: $id", (int) $id, 'WebProject');
+        $this->logAction($request, WebLog::class, 'restore', 'WebProject', "Restored project ID: $id", (int) $id, 'WebProject');
         return response()->json(['data' => (new WebProjectResource($item))->resolve()]);
     }
 
@@ -194,14 +194,14 @@ class WebProjectController extends Controller
     {
         $count = WebProject::onlyTrashed()->count();
         WebProject::onlyTrashed()->forceDelete();
-        $this->logAction($request, WebLog::class, 'force_delete_all', 'WebProject', "Hromadné smazání koše projektů. Počet: $count");
+        $this->logAction($request, WebLog::class, 'force_delete_all', 'WebProject', "Emptied project trash. Count: $count");
         return response()->json(null, 204);
     }
 
     /**
-     * @description Vygeneruje NOVÉ heslo (přepíše staré, staré přestává platit
-     * okamžitě) a zneplatní VŠECHNY aktivní session daného projektu. Vrací plaintext
-     * heslo přesně jednou.
+     * @description Generates a new password (overwriting the old one, which expires
+     * immediately) and invalidates ALL active sessions for the given project. Returns the plaintext
+     * password exactly once.
      */
     public function regeneratePassword(Request $request, $id): JsonResponse
     {
@@ -215,7 +215,7 @@ class WebProjectController extends Controller
             WebLog::class,
             'regenerate_password',
             'WebProject',
-            "Vygenerováno nové heslo pro projekt ID: {$project->id} (zneplatněno {$invalidatedSessions} aktivních relací).",
+            "Generated new password for project ID: {$project->id} (invalidated {$invalidatedSessions} active sessions).",
             $project->id,
             'WebProject'
         );
@@ -223,7 +223,7 @@ class WebProjectController extends Controller
         return response()->json(['data' => ['generated_password' => $plaintext]]);
     }
 
-    // ── Checkpointy (nested pod project) ─────────────────────────────────────
+    // ── Checkpoints (nested under project) ───────────────────────────────────
 
     public function storeCheckpoint(StoreProjectCheckpointRequest $request, $projectId): JsonResponse
     {
@@ -234,7 +234,7 @@ class WebProjectController extends Controller
 
         $checkpoint = $project->checkpoints()->create($validated);
 
-        $this->logAction($request, WebLog::class, 'create', 'WebProjectCheckpoint', "Přidán checkpoint '{$checkpoint->label}' k projektu ID: {$project->id}", $project->id, 'WebProject');
+        $this->logAction($request, WebLog::class, 'create', 'WebProjectCheckpoint', "Added checkpoint '{$checkpoint->label}' to project ID: {$project->id}", $project->id, 'WebProject');
 
         return response()->json(['data' => (new WebProjectCheckpointResource($checkpoint))->resolve()], 201);
     }
@@ -243,9 +243,9 @@ class WebProjectController extends Controller
     {
         $checkpoint = WebProjectCheckpoint::findOrFail($checkpointId);
 
-        // IDOR guard - checkpoint MUSÍ patřit k projektu z URL, ne k libovolnému jinému.
+        // IDOR guard - checkpoint MUST belong to the project from the URL, not any other.
         if ((int) $checkpoint->project_id !== (int) $projectId) {
-            return response()->json(['message' => 'Checkpoint nepatří k tomuto projektu.'], 404);
+            return response()->json(['message' => 'Checkpoint does not belong to this project.'], 404);
         }
 
         $validated = $request->validated();
@@ -257,7 +257,7 @@ class WebProjectController extends Controller
             $checkpoint->update($validated);
         }
 
-        $this->logAction($request, WebLog::class, 'update', 'WebProjectCheckpoint', "Aktualizace checkpointu ID: {$checkpoint->id} (projekt ID: {$projectId})", (int) $projectId, 'WebProject');
+        $this->logAction($request, WebLog::class, 'update', 'WebProjectCheckpoint', "Updated checkpoint ID: {$checkpoint->id} (project ID: {$projectId})", (int) $projectId, 'WebProject');
 
         return response()->json(['data' => (new WebProjectCheckpointResource($checkpoint->fresh()))->resolve()]);
     }
@@ -267,12 +267,12 @@ class WebProjectController extends Controller
         $checkpoint = WebProjectCheckpoint::findOrFail($checkpointId);
 
         if ((int) $checkpoint->project_id !== (int) $projectId) {
-            return response()->json(['message' => 'Checkpoint nepatří k tomuto projektu.'], 404);
+            return response()->json(['message' => 'Checkpoint does not belong to this project.'], 404);
         }
 
         $checkpoint->delete();
 
-        $this->logAction($request, WebLog::class, 'hard_delete', 'WebProjectCheckpoint', "Smazán checkpoint ID: {$checkpointId} (projekt ID: {$projectId})", (int) $projectId, 'WebProject');
+        $this->logAction($request, WebLog::class, 'hard_delete', 'WebProjectCheckpoint', "Deleted checkpoint ID: {$checkpointId} (project ID: {$projectId})", (int) $projectId, 'WebProject');
 
         return response()->json(null, 204);
     }

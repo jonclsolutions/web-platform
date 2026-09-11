@@ -4,13 +4,19 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025 
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": všechny natvrdo psané české texty (nadpisy, tlačítka, placeholdery,
+        title/aria atributy, modal texty) nahrazeny `t('edit-website.xxx')` bindingy -
+        viz edit-website.component.ts stejné datum. `lang.name`/`item.path`/`meta.name`
+        ZŮSTÁVAJÍ beze změny - jsou to DATA (název jazyka, JSON cesta klíče), ne UI
+        text patřící do i18n systému.
 -->
 
 <div class="ew-root">
 
   <div class="ew-topbar">
     <div class="ew-topbar-left">
-      <h1 class="ew-title">Editovat veřejné texty</h1>
+      <h1 class="ew-title">{{ t('page_title') }}</h1>
       @if (getCurrentLangMeta(); as meta) {
         <div class="ew-current-lang">
           @if (meta.iconUrl) {
@@ -22,14 +28,14 @@
       }
     </div>
     <div class="ew-topbar-right">
-      <button class="ew-btn ew-btn--ghost" (click)="downloadJson()" title="Stáhnout aktuální JSON">
+      <button class="ew-btn ew-btn--ghost" (click)="downloadJson()" [title]="t('download_json_title')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Stáhnout JSON
+        {{ t('download_json_button') }}
       </button>
       @if (canUpdate) {
-        <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" title="Přidat jazyk">
+        <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" [title]="t('add_language_title')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Přidat jazyk
+          {{ t('add_language_button') }}
         </button>
       }
     </div>
@@ -44,7 +50,7 @@
           [class.ew-lang-tab--active]="currentLang === lang.code"
           [class.ew-lang-tab--inactive]="!lang.active"
           (click)="loadLang(lang.code)"
-          [title]="lang.name + (lang.active ? '' : ' (neaktivní)')">
+          [title]="lang.name + (lang.active ? '' : ' (' + t('inactive_suffix') + ')')">
           @if (lang.iconUrl) {
             <img [src]="lang.iconUrl" class="ew-lang-icon-sm" [alt]="lang.name">
           } @else {
@@ -53,7 +59,7 @@
           <span class="ew-lang-tab-code">{{ lang.code | uppercase }}</span>
           <span class="ew-lang-tab-name">{{ lang.name }}</span>
           @if (!lang.active) {
-            <span class="ew-lang-tab-inactive-dot" title="Neaktivní"></span>
+            <span class="ew-lang-tab-inactive-dot" [title]="t('inactive_label')"></span>
           }
 
           @if (!lang.isBuiltIn) {
@@ -61,7 +67,7 @@
               @if (canUpdate) {
                 <button
                   class="ew-tab-action-btn"
-                  [title]="lang.active ? 'Deaktivovat' : 'Aktivovat'"
+                  [title]="lang.active ? t('deactivate_title') : t('activate_title')"
                   (click)="toggleLangActive(lang)">
                   @if (lang.active) {
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -71,13 +77,13 @@
                 </button>
                 <button
                   class="ew-tab-action-btn ew-tab-action-btn--danger"
-                  title="Smazat jazyk"
+                  [title]="t('delete_language_title')"
                   (click)="askDeleteLang(lang)">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                 </button>
                 <button
                   class="ew-tab-action-btn"
-                  title="Nahrát JSON pro tento jazyk"
+                  [title]="t('upload_json_title')"
                   (click)="openUploadModal(lang.code)">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 </button>
@@ -87,26 +93,26 @@
         </button>
       }
 
-      <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" title="Přidat jazyk">
+      <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" [title]="t('add_language_title')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Přidat jazyk
+        {{ t('add_language_button') }}
       </button>
     </div>
 
     <div class="ew-stats">
       <span class="ew-stat">
         <span class="ew-stat-num">{{ totalCount }}</span>
-        <span class="ew-stat-label">klíčů</span>
+        <span class="ew-stat-label">{{ t('stat_keys_label') }}</span>
       </span>
       <span class="ew-stat-sep"></span>
       <span class="ew-stat">
         <span class="ew-stat-num ew-stat-num--ok">{{ filledCount }}</span>
-        <span class="ew-stat-label">vyplněno</span>
+        <span class="ew-stat-label">{{ t('stat_filled_label') }}</span>
       </span>
       <span class="ew-stat-sep"></span>
-      <span class="ew-stat ew-stat--clickable" (click)="filterMissing()" title="Zobrazit pouze chybějící">
+      <span class="ew-stat ew-stat--clickable" (click)="filterMissing()" [title]="t('show_missing_only_title')">
         <span class="ew-stat-num" [class.ew-stat-num--warn]="missingCount > 0">{{ missingCount }}</span>
-        <span class="ew-stat-label">chybí</span>
+        <span class="ew-stat-label">{{ t('stat_missing_label') }}</span>
       </span>
     </div>
   </div>
@@ -120,7 +126,7 @@
           [(ngModel)]="searchQuery"
           (ngModelChange)="applyFilter()"
           (keyup.enter)="applyFilter()"
-          placeholder="Vyhledat klíč nebo text…"
+          [placeholder]="t('search_placeholder')"
           class="ew-search-input">
         @if (searchQuery) {
           <button class="ew-search-clear" (click)="resetFilter()">
@@ -131,7 +137,7 @@
       @if (missingCount > 0) {
         <button class="ew-btn ew-btn--warn-outline" (click)="filterMissing()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          {{ missingCount }} chybějících
+          {{ missingCount }} {{ t('missing_count_suffix') }}
         </button>
       }
     </div>
@@ -141,8 +147,8 @@
     <table class="ew-table">
       <thead>
         <tr>
-          <th class="ew-th-key">Klíč (JSON cesta)</th>
-          <th class="ew-th-val">Hodnota — {{ getCurrentLangMeta()?.name ?? currentLang }}</th>
+          <th class="ew-th-key">{{ t('col_key') }}</th>
+          <th class="ew-th-val">{{ t('col_value_prefix') }} — {{ getCurrentLangMeta()?.name ?? currentLang }}</th>
         </tr>
       </thead>
       <tbody>
@@ -151,7 +157,7 @@
             <td class="ew-td-key">
               <span class="ew-key-text">{{ item.path }}</span>
               @if (item.missing) {
-                <span class="ew-missing-badge" title="Chybějící překlad">!</span>
+                <span class="ew-missing-badge" [title]="t('missing_translation_title')">!</span>
               }
             </td>
             <td class="ew-td-val">
@@ -172,7 +178,7 @@
           <tr>
             <td colspan="2" class="ew-empty">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <span>Žádné výsledky</span>
+              <span>{{ t('no_results') }}</span>
             </td>
           </tr>
         }
@@ -190,7 +196,7 @@
         <div class="ew-modal-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         </div>
-        <h3 class="ew-modal-title">Přidat jazyk</h3>
+        <h3 class="ew-modal-title">{{ t('add_language_button') }}</h3>
         <button class="ew-modal-close" (click)="closeAddForm()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -199,7 +205,7 @@
       <div class="ew-modal-body">
 
        <div class="ew-field">
-  <label class="ew-label">Ikonka jazyka <span class="ew-hint">(PNG/JPG, max 512 KB)</span></label>
+  <label class="ew-label">{{ t('icon_field_label') }} <span class="ew-hint">{{ t('icon_field_hint') }}</span></label>
   <div class="ew-icon-upload-row">
     
     <div class="ew-icon-upload-zone" 
@@ -207,7 +213,7 @@
         (click)="fileInput.click()"> 
       
       @if (newLangIconPreview) {
-        <img [src]="newLangIconPreview" class="ew-icon-preview" alt="Náhled">
+        <img [src]="newLangIconPreview" class="ew-icon-preview" [alt]="t('icon_preview_alt')">
       } @else {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
           <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
@@ -221,24 +227,24 @@
 
     @if (newLangIconPreview) {
       <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm" 
-              (click)="clearIconSelection()">Odebrat</button>
+              (click)="clearIconSelection()">{{ t('remove_button') }}</button>
     }
   </div>
 </div>
 
         <div class="ew-field-row">
           <div class="ew-field">
-            <label class="ew-label">Kód jazyka <span class="ew-req">*</span></label>
+            <label class="ew-label">{{ t('code_field_label') }} <span class="ew-req">*</span></label>
             <input
               type="text"
               [(ngModel)]="newLangCode"
               placeholder="sk"
               maxlength="5"
               class="ew-input ew-input--mono">
-            <span class="ew-hint-text">2–5 malých písmen, např. sk, de, fr</span>
+            <span class="ew-hint-text">{{ t('code_field_hint') }}</span>
           </div>
           <div class="ew-field">
-            <label class="ew-label">Název jazyka <span class="ew-req">*</span></label>
+            <label class="ew-label">{{ t('name_field_label') }} <span class="ew-req">*</span></label>
             <input
               type="text"
               [(ngModel)]="newLangName"
@@ -251,7 +257,7 @@
           <label class="ew-checkbox-label">
             <input type="checkbox" [(ngModel)]="newLangActive" class="ew-checkbox">
             <span class="ew-checkbox-box"></span>
-            <span>Jazyk aktivní (viditelný pro uživatele)</span>
+            <span>{{ t('active_checkbox_label') }}</span>
           </label>
         </div>
 
@@ -264,9 +270,9 @@
       </div>
 
       <div class="ew-modal-footer">
-        <button class="ew-btn ew-btn--ghost" (click)="closeAddForm()">Zrušit</button>
+        <button class="ew-btn ew-btn--ghost" (click)="closeAddForm()">{{ i18n.getValue('shared.cancel') }}</button>
         <button class="ew-btn ew-btn--primary" (click)="confirmAddLang()">
-          Přidat jazyk
+          {{ t('add_language_button') }}
         </button>
       </div>
 
@@ -282,7 +288,7 @@
         <div class="ew-modal-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </div>
-        <h3 class="ew-modal-title">Nahrát JSON <span class="ew-modal-lang-badge">{{ uploadLangCode | uppercase }}</span></h3>
+        <h3 class="ew-modal-title">{{ t('upload_json_button') }} <span class="ew-modal-lang-badge">{{ uploadLangCode | uppercase }}</span></h3>
         <button class="ew-modal-close" (click)="closeUploadModal()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -290,13 +296,12 @@
 
 <div class="ew-modal-body">
   <p class="ew-modal-desc">
-    Vyberte JSON soubor se stejnou strukturou klíčů jako CZ vzor.
-    Klíče, které v souboru chybí, zůstanou prázdné a budou označeny varováním.
+    {{ t('upload_modal_description') }}
   </p>
 
   <div class="ew-json-drop-zone" (click)="jsonInput.click()">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    <span>Klikněte nebo přetáhněte <code>.json</code> soubor sem</span>
+    <span>{{ t('json_drop_zone_text') }} <code>.json</code> {{ t('json_drop_zone_text_suffix') }}</span>
     
     <input type="file" #jsonInput hidden
            accept=".json,application/json"
@@ -318,7 +323,7 @@
 </div>
 
       <div class="ew-modal-footer">
-        <button class="ew-btn ew-btn--ghost" (click)="closeUploadModal()">Zavřít</button>
+        <button class="ew-btn ew-btn--ghost" (click)="closeUploadModal()">{{ i18n.getValue('shared.close') }}</button>
       </div>
 
     </div>
@@ -333,7 +338,7 @@
         <div class="ew-modal-icon ew-modal-icon--danger">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
         </div>
-        <h3 class="ew-modal-title">Smazat jazyk</h3>
+        <h3 class="ew-modal-title">{{ t('delete_language_title') }}</h3>
         <button class="ew-modal-close" (click)="cancelDelete()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -341,15 +346,15 @@
 
       <div class="ew-modal-body">
         <p class="ew-modal-desc">
-          Opravdu chcete smazat jazyk
+          {{ t('delete_confirm_prefix') }}
           <strong>{{ langToDelete.name }} ({{ langToDelete.code | uppercase }})</strong>?
-          Tato akce odstraní jazyk ze seznamu. JSON soubor na serveru zůstane zachován.
+          {{ t('delete_confirm_suffix') }}
         </p>
       </div>
 
       <div class="ew-modal-footer">
-        <button class="ew-btn ew-btn--ghost" (click)="cancelDelete()">Zrušit</button>
-        <button class="ew-btn ew-btn--danger" (click)="confirmDeleteLang()">Smazat jazyk</button>
+        <button class="ew-btn ew-btn--ghost" (click)="cancelDelete()">{{ i18n.getValue('shared.cancel') }}</button>
+        <button class="ew-btn ew-btn--danger" (click)="confirmDeleteLang()">{{ t('delete_language_title') }}</button>
       </div>
 
     </div>

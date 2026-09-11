@@ -8,6 +8,10 @@
         Permanently) nyní navíc kontrolují canManageTrash (deletePermission) - viz
         trash-table-builder.component.ts stejné datum. Musí zůstat SYNCHRONIZOVANÉ na
         obou místech, jinak by hlavička a řádky měly různý počet sloupců.
+    @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": natvrdo psané texty ('Obrázek'/'Není obrázek'/'Nebyla nalezena žádná
+        data.'/'Zobrazit tabulku na šířce stránky') nahrazeny `t('trash-table-builder.xxx')`
+        bindingy - viz trash-table-builder.component.ts stejné datum.
 -->
 
 <div class="table-responsive">
@@ -51,10 +55,10 @@
 @switch (col.type) {
 @case ('image') {
 @if (getCellValue(item, col)) {
-<img [src]="getCellValue(item, col)" alt="Obrázek" class="table-cell-image">
+<img [src]="getCellValue(item, col)" [alt]="t('image_alt')" class="table-cell-image">
                       }
 @if (!getCellValue(item, col)) {
-<span>Není obrázek</span>
+<span>{{ t('no_image') }}</span>
                       }
                     }
 @case ('link') {
@@ -89,7 +93,7 @@
       } @else {
 <tr>
 <td [attr.colspan]="colspanValue" class="no-data-msg">
-            Nebyla nalezena žádná data.
+            {{ t('no_data') }}
 </td>
 </tr>
       }
@@ -105,6 +109,6 @@
 
 <label class="checkbox-container">
 <input type="checkbox" [(ngModel)]="isFullWidth">
-    Zobrazit tabulku na šířce stránky
+    {{ t('fullwidth_toggle_label') }}
 </label>
 </div>

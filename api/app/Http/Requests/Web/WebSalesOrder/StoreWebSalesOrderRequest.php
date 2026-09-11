@@ -69,11 +69,11 @@ class StoreWebSalesOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'attachments.max'                  => 'Můžete nahrát maximálně ' . self::MAX_ATTACHMENTS . ' souborů.',
-            'attachments.*.mimes'              => 'Tento typ souboru není povolen. Nahrajte prosím běžný dokument, obrázek, video nebo archiv.',
-            'attachments.*.max'                => 'Každý soubor může mít maximálně 20 MB.',
-            'dataProcessingAgreement.accepted' => 'Pro odeslání musíte souhlasit se zpracováním údajů.',
-            'tosAgreement.accepted'            => 'Pro odeslání musíte souhlasit s obchodními podmínkami.',
+            'attachments.max'                  => 'You can upload a maximum of ' . self::MAX_ATTACHMENTS . ' files.',
+            'attachments.*.mimes'              => 'This file type is not allowed. Please upload a standard document, image, video, or archive.',
+            'attachments.*.max'                => 'Each file may not be greater than 20 MB.',
+            'dataProcessingAgreement.accepted' => 'You must agree to data processing to submit.',
+            'tosAgreement.accepted'            => 'You must agree to the terms of service to submit.',
         ];
     }
 }

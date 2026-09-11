@@ -289,3 +289,46 @@
   .import-format-grid { grid-template-columns: 1fr; }
   .import-summary-grid { grid-template-columns: 1fr; }
 }
+.import-enum-hints {
+  margin: 4px 0 2px;
+  padding: 10px 12px;
+  background: var(--surface-2, #fafafa);
+  border: 1px solid var(--border, #ececea);
+  border-radius: var(--radius, 10px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.import-enum-hints-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-dim, #a1a1aa);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.import-enum-hint-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.import-enum-hint-key {
+  font-weight: 700;
+  color: var(--text, #18181b);
+  flex-shrink: 0;
+}
+
+.import-enum-hint-values {
+  color: var(--text-muted, #71717a);
+}
+
+.import-enum-hint-values code {
+  font-family: ui-monospace, monospace;
+  background: var(--accent-dim, #f4f4f5);
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 0.76rem;
+}

@@ -9,6 +9,25 @@
  * - BaseDataComponent: Inherits standard CRUD operations for order management.
  * - ConfirmDialogService: Facilitates user confirmation for sensitive deletions.
  * - Core Providers: Handles API communication and dependency injection.
+ * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
+ *   (2026-09-09) níže.
+ *
+ * @bugfix-note (2026-09-09) BACKLOG "vícejazyčná administrace" side-effect fixes:
+ * 1) `PAYMENT_STATUS_OPTIONS` chybějící `unpaid` hodnota doplněna - viz
+ *    orders.config.ts hlavička.
+ * 2) Duplicitní lokální `orderTabButtons` pole (bez permission kontroly na koš
+ *    tabu) ODSTRANĚNO - `tabButtonsConfigs` teď staví ze `Config.createOrderTabButtons()`
+ *    S permission kontrolou (stejný vzor jako `toolbarButtons`).
+ *
+ * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi. Všechny
+ * `alertDialogService.open()`/`confirmDialog.open()` volání a natvrdo psané texty
+ * nahrazeny `t()` voláním. `console.error()` volání (dev diagnostika) přeloženy do
+ * angličtiny - stejná konvence jako `products.component.ts`. Timeline kroky
+ * v šabloně teď volají existující `getStatusLabel(step.key)` místo vlastního
+ * natvrdo psaného labelu v poli - odstraňuje duplicitní zdroj pravdy pro stavové
+ * texty. `formatCurrency()` natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`
+ * - měna zůstává EUR (obchodní rozhodnutí, nesouvisí s jazykem UI).
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
@@ -18,19 +37,11 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
-import { 
-  ORDER_BUTTONS, 
-  ORDER_COLUMNS, 
-  TRASH_ORDER_COLUMNS, 
-  FILTER_COLUMNS, 
-  TOOLBAR_BUTTONS,
-  STATUS_OPTIONS,
-  PAYMENT_STATUS_OPTIONS
-} from './orders.config';
+import * as Config from './orders.config';
 import { Order, OrderItem, Product, ProductVariant, PaymentMethod, ShippingMethod, Coupon } from './';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
-import * as Config from './orders.config';
+
 interface CouponValidationResult {
   valid: boolean;
   error?: string;
@@ -46,7 +57,7 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS,GraphBuilderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -54,23 +65,24 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 export class OrdersComponent extends BaseDataComponent<Order> implements OnInit, OnDestroy {
   override apiEndpoint: string = 'shop/orders';
   @ViewChild('activeTable') activeTable!: any;
-  tableCaption: string = 'Přijaté objednávky';
+
+  protected override translationSection: string = 'shop-orders';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-orders.${key}`);
+  }
+
+  tableCaption: string = '';
 
   currentMode: TableMode = 'all';
-
-  private orderTabButtons: Core.Button[] = [
-    { action: 'all', label: 'Všechny objednávky', icon: '📦', class: 'btn-filter', isActive: true },
-    { action: 'pending_tasks', label: 'K vyřízení', icon: '⏳', class: 'btn-filter', isActive: false },
-    { action: 'trash', label: 'Koš', icon: '🗑️', class: 'btn-filter', isActive: false }
-  ];
 
   products: Product[] = [];
   variants: ProductVariant[] = [];
   paymentMethods: PaymentMethod[] = [];
   shippingMethods: ShippingMethod[] = [];
   coupons: Coupon[] = [];
-  statusOptions = STATUS_OPTIONS;
-  paymentStatusOptions = PAYMENT_STATUS_OPTIONS;
+  statusOptions: { value: string; label: string }[] = [];
+  paymentStatusOptions: { value: string; label: string }[] = [];
 
   summaryTaxAmount = 0;
 
@@ -91,20 +103,21 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     sort_direction: 'desc'
   };
 
-  buttons = ORDER_BUTTONS;
-  orderColumns = ORDER_COLUMNS;
-  trashOrderColumns = TRASH_ORDER_COLUMNS;
-  filterColumns = FILTER_COLUMNS;
-  toolbarButtons = TOOLBAR_BUTTONS;
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.ORDER_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  buttons: Core.TableButtons[] = [];
+  orderColumns: Core.ColumnDefinition[] = [];
+  trashOrderColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  toolbarButtons: Core.Button[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
+
+  /** @bugfix-note (2026-09-09) Přestalo být samostatné - viz hlavička souboru. */
+  private orderTabButtons: Core.Button[] = [];
+
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-09) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -113,14 +126,43 @@ showGraphBuilder = false;
     private confirmDialog: ConfirmDialogService
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createOrderButtons(this.i18n);
+      this.orderColumns = Config.createOrderColumns(this.i18n);
+      this.trashOrderColumns = Config.createTrashOrderColumns(this.i18n);
+      this.filterColumns = Config.createFilterColumns(this.i18n);
+      this.toolbarButtons = Config.createToolbarButtons(this.i18n);
+      this.detailsColumns = Config.createOrderDetailsColumns(this.i18n);
+      this.orderTabButtons = Config.createOrderTabButtons(this.i18n);
+      this.statusOptions = Config.createStatusOptions(this.i18n);
+      this.paymentStatusOptions = Config.createPaymentStatusOptions(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.updateFilterOptions();
+      this.cd.markForCheck();
+    });
   }
 
-  /** @returns Map of tab configurations with active state synchronized to current table mode. */
+  /**
+   * @returns Map of tab configurations with active state synchronized to current
+   * table mode, filtered by permission - viz bugfix-note v hlavičce souboru.
+   */
   get tabButtonsConfigs(): Core.Button[] {
-    return this.orderTabButtons.map(btn => ({
-      ...btn,
-      isActive: this.currentMode === btn.action
-    }));
+    return this.orderTabButtons.map(btn => {
+      const updatedBtn = { ...btn, isActive: this.currentMode === btn.action };
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
+      }
+      return updatedBtn;
+    });
   }
 
   override ngOnInit(): void {
@@ -154,7 +196,7 @@ showGraphBuilder = false;
   setTableMode(mode: any): void {
     this.currentMode = mode;
     this.currentPage = 1;
-    
+
     this.filters = {
       sort_by: 'created_at',
       sort_direction: 'desc'
@@ -166,7 +208,7 @@ showGraphBuilder = false;
     } else {
       this.showTrashTable = false;
       delete this.filters['only_trashed'];
-      
+
       if (mode === 'pending_tasks') {
         this.filters['status'] = 'pending,confirmed,processing,shipped';
       }
@@ -196,7 +238,7 @@ showGraphBuilder = false;
           this.products = data;
           this.cd.markForCheck();
         },
-        error: (err) => console.error('Chyba při načítání produktů:', err)
+        error: (err) => console.error('Error loading products:', err)
       });
   }
 
@@ -219,7 +261,7 @@ showGraphBuilder = false;
           });
           this.cd.markForCheck();
         },
-        error: (err) => console.error('Chyba při načítání variant:', err)
+        error: (err) => console.error('Error loading variants:', err)
       });
   }
 
@@ -231,7 +273,7 @@ showGraphBuilder = false;
           this.paymentMethods = data;
           this.cd.markForCheck();
         },
-        error: (err) => console.error('Chyba při načítání způsobů platby:', err)
+        error: (err) => console.error('Error loading payment methods:', err)
       });
   }
 
@@ -243,7 +285,7 @@ showGraphBuilder = false;
           this.shippingMethods = data;
           this.cd.markForCheck();
         },
-        error: (err) => console.error('Chyba při načítání způsobů dopravy:', err)
+        error: (err) => console.error('Error loading shipping methods:', err)
       });
   }
 
@@ -255,7 +297,7 @@ showGraphBuilder = false;
           this.coupons = data;
           this.cd.markForCheck();
         },
-        error: (err) => console.error('Chyba při načítání kuponů:', err)
+        error: (err) => console.error('Error loading coupons:', err)
       });
   }
 
@@ -349,7 +391,7 @@ showGraphBuilder = false;
         this.cd.markForCheck();
       },
       error: () => {
-        this.alertDialogService.open('Chyba', 'Nepodařilo se načíst detaily objednávky.', 'danger');
+        this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('load_details_failed_message'), 'danger');
       }
     });
   }
@@ -398,17 +440,17 @@ showGraphBuilder = false;
       shipping_address: '',
       shipping_city: '',
       shipping_postal_code: '',
-      shipping_country: 'Česká republika',
+      shipping_country: this.t('default_shipping_country'),
 
       payment_method_id: 0,
       shipping_method_id: 0,
       coupon_id: null,
 
-      total_amount: 0,      
-      shipping_amount: 0,   
-      tax_amount: 0,        
-      discount_amount: 0,   
-      final_amount: 0,      
+      total_amount: 0,
+      shipping_amount: 0,
+      tax_amount: 0,
+      discount_amount: 0,
+      final_amount: 0,
 
       items: [],
       notes: ''
@@ -444,7 +486,7 @@ showGraphBuilder = false;
       Core.takeUntil(this.destroy$)
     ).subscribe({
       next: (fullOrder) => {
-        this.editingOrder = { 
+        this.editingOrder = {
           ...fullOrder,
           email: fullOrder.customer?.email || '',
           first_name: fullOrder.customer?.first_name || '',
@@ -454,11 +496,11 @@ showGraphBuilder = false;
         };
         this.showOrderForm = true;
         this.toggleBodyScroll(true);
-        this.recalculateTotals(); 
+        this.recalculateTotals();
         this.cd.markForCheck();
       },
       error: () => {
-        this.alertDialogService.open('Chyba', 'Nepodařilo se načíst objednávku.', 'danger');
+        this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('load_order_failed_message'), 'danger');
       }
     });
   }
@@ -492,8 +534,8 @@ showGraphBuilder = false;
    */
   async deleteOrderItem(index: number): Promise<void> {
     const confirmed = await this.confirmDialog.open(
-      'Smazat položku',
-      'Opravdu chcete smazat tuto položku z objednávky?'
+      this.t('delete_item_confirm_title'),
+      this.t('delete_item_confirm_message')
     );
 
     if (confirmed && this.editingOrder?.items) {
@@ -521,8 +563,8 @@ showGraphBuilder = false;
   }
 
   getTrashToolbarButtons(): any[] {
-    return this.toolbarButtons.filter(btn => 
-      btn.action !== 'handleCreateFormOpened' && 
+    return this.toolbarButtons.filter(btn =>
+      btn.action !== 'handleCreateFormOpened' &&
       btn.action !== 'exportActiveTable'
     );
   }
@@ -535,20 +577,20 @@ showGraphBuilder = false;
    */
   validateCouponRealtime(coupon: Coupon, totalAmount: number): CouponValidationResult {
     if (!coupon) return { valid: true };
-    if (!coupon.is_active) return { valid: false, error: 'Tento kupón není aktivní.' };
+    if (!coupon.is_active) return { valid: false, error: this.t('coupon_error_inactive') };
 
     const now = new Date();
-    if (coupon.valid_from && new Date(coupon.valid_from) > now) return { valid: false, error: 'Platnost kupónu ještě nezačala.' };
-    if (coupon.valid_until && new Date(coupon.valid_until) < now) return { valid: false, error: 'Platnost kupónu již vypršela.' };
+    if (coupon.valid_from && new Date(coupon.valid_from) > now) return { valid: false, error: this.t('coupon_error_not_started') };
+    if (coupon.valid_until && new Date(coupon.valid_until) < now) return { valid: false, error: this.t('coupon_error_expired') };
 
     const maxUsage = coupon.max_usage ?? 0;
-    if (maxUsage > 0 && (coupon.usage_count || 0) >= maxUsage) return { valid: false, error: 'Tento kupón již byl vyčepan.' };
+    if (maxUsage > 0 && (coupon.usage_count || 0) >= maxUsage) return { valid: false, error: this.t('coupon_error_exhausted') };
 
     const minAmount = Number(coupon.min_order_amount ?? 0);
     if (minAmount > 0 && totalAmount < minAmount) {
-      return { 
-        valid: false, 
-        error: `Minimální hodnota objednávky pro tento kupón je ${this.formatCurrency(minAmount)}.` 
+      return {
+        valid: false,
+        error: this.t('coupon_error_min_amount').replace('{amount}', this.formatCurrency(minAmount))
       };
     }
     return { valid: true };
@@ -561,7 +603,7 @@ showGraphBuilder = false;
     if (!this.editingOrder) return;
 
     const items = (this.editingOrder.items || []).filter(i => !i._delete);
-    
+
     let productsTotal = 0;
     items.forEach(item => {
       productsTotal += (Number(item.quantity || 0) * Number(item.unit_price || 0));
@@ -572,12 +614,12 @@ showGraphBuilder = false;
     if (this.editingOrder.coupon_id) {
       const idToFind = Number(this.editingOrder.coupon_id);
       const coupon = this.coupons.find(c => Number(c.id) === idToFind);
-      
+
       if (coupon) {
         this.couponValidation = this.validateCouponRealtime(coupon, productsTotal);
         if (this.couponValidation.valid) {
-          discount = (coupon.discount_type === 'percent') 
-            ? (productsTotal * Number(coupon.discount_value)) / 100 
+          discount = (coupon.discount_type === 'percent')
+            ? (productsTotal * Number(coupon.discount_value)) / 100
             : Number(coupon.discount_value);
         } else {
           discount = 0;
@@ -592,8 +634,8 @@ showGraphBuilder = false;
     this.editingOrder.shipping_amount = this.getShippingMethodPrice(this.editingOrder.shipping_method_id);
     const paymentFee = this.getPaymentMethodPrice(this.editingOrder.payment_method_id);
 
-    this.editingOrder.final_amount = (productsTotal - this.editingOrder.discount_amount) + 
-                                     this.editingOrder.shipping_amount + 
+    this.editingOrder.final_amount = (productsTotal - this.editingOrder.discount_amount) +
+                                     this.editingOrder.shipping_amount +
                                      paymentFee;
 
     this.cd.markForCheck();
@@ -606,14 +648,14 @@ showGraphBuilder = false;
     if (this.isProcessing || !this.editingOrder || !this.validateOrder()) return;
 
     this.isProcessing = true;
-    
+
     const payload: any = {
       email: this.editingOrder.email,
       first_name: this.editingOrder.first_name,
       last_name: this.editingOrder.last_name,
       phone: this.editingOrder.phone,
       company: this.editingOrder.company || null,
-      
+
       payment_method_id: Number(this.editingOrder.payment_method_id),
       shipping_method_id: Number(this.editingOrder.shipping_method_id),
       coupon_id: this.editingOrder.coupon_id || null,
@@ -641,7 +683,7 @@ showGraphBuilder = false;
       payload.delete_items = (this.editingOrder.items || [])
         .filter(i => i._delete && i.id)
         .map(i => i.id!);
-        
+
       request = this.dataHandler.post(`${this.apiEndpoint}/${this.editingOrder.id}`, {
         ...payload,
         _method: 'PUT'
@@ -660,7 +702,7 @@ showGraphBuilder = false;
       Core.takeUntil(this.destroy$)
     ).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', 'Objednávka byla uložena.', 'success');
+        this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('order_saved_message'), 'success');
         this.showOrderForm = false;
         this.editingOrder = null;
         this.toggleBodyScroll(false);
@@ -677,18 +719,18 @@ showGraphBuilder = false;
           ).subscribe({
             next: (updatedOrder) => {
               this.selectedOrderForDetail = updatedOrder;
-              this.toggleBodyScroll(true); 
+              this.toggleBodyScroll(true);
             },
             error: () => {
-              console.error('Nepodařilo se zaktualizovat data v detailu objednávky.');
+              console.error('Failed to refresh order details after save.');
             }
           });
         }
       },
       error: (err) => {
-        console.error('Chyba validace z backendu:', err.error);
-        const message = err.error?.message || 'Chyba při ukládání objednávky.';
-        this.alertDialogService.open('Chyba', message, 'danger');
+        console.error('Backend validation error:', err.error);
+        const message = err.error?.message || this.t('save_order_failed_message');
+        this.alertDialogService.open(this.i18n.getValue('shared.error'), message, 'danger');
       }
     });
   }
@@ -698,13 +740,13 @@ showGraphBuilder = false;
     const selectedVariant = this.variants.find(v => Number(v.id) === variantId);
 
     if (selectedVariant) {
-      item.product_id = selectedVariant.product_id; 
+      item.product_id = selectedVariant.product_id;
       item.product_name = selectedVariant.product_name || selectedVariant.variant_name || '';
       item.variant_name = selectedVariant.variant_name;
       item.unit_price = selectedVariant.price_with_vat;
       item.vat_rate = selectedVariant.vat_rate;
       item.total_price = item.quantity * item.unit_price;
-      this.recalculateTotals(); 
+      this.recalculateTotals();
     }
   }
 
@@ -722,8 +764,8 @@ showGraphBuilder = false;
       .reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
 
     const discountAmount = this.editingOrder.discount_amount || 0;
-    const discountFactor = totalBeforeDiscount > 0 
-      ? (totalBeforeDiscount - discountAmount) / totalBeforeDiscount 
+    const discountFactor = totalBeforeDiscount > 0
+      ? (totalBeforeDiscount - discountAmount) / totalBeforeDiscount
       : 1;
 
     let totalBaseAfterDiscount = 0;
@@ -794,8 +836,8 @@ showGraphBuilder = false;
       coupon = this.coupons.find(c => Number(c.id) === idToFind);
     }
     if (!coupon) return '';
-    return coupon.discount_type === 'percent' 
-      ? `-${coupon.discount_value}%` 
+    return coupon.discount_type === 'percent'
+      ? `-${coupon.discount_value}%`
       : `-${this.formatCurrency(coupon.discount_value)}`;
   }
 
@@ -804,8 +846,8 @@ showGraphBuilder = false;
     const idToFind = Number(couponId);
     const coupon = this.coupons.find(c => Number(c.id) === idToFind);
     if (!coupon) return '';
-    return coupon.discount_type === 'percent' 
-      ? `${coupon.discount_value}%` 
+    return coupon.discount_type === 'percent'
+      ? `${coupon.discount_value}%`
       : this.formatCurrency(coupon.discount_value);
   }
 
@@ -822,36 +864,36 @@ showGraphBuilder = false;
     if (!this.editingOrder) return false;
 
     if (this.editingOrder.coupon_id && !this.couponValidation.valid) {
-      this.alertDialogService.open('Chyba kupónu', this.couponValidation.error || 'Kupón není platný.', 'warning');
+      this.alertDialogService.open(this.t('coupon_error_title'), this.couponValidation.error || this.t('coupon_error_generic'), 'warning');
       return false;
     }
-    
+
     if (!this.editingOrder.email) {
-      this.alertDialogService.open('Validace', 'Zadejte e-mailovou adresu.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_email_required'), 'warning');
       return false;
     }
     if (!this.editingOrder.first_name || !this.editingOrder.last_name) {
-      this.alertDialogService.open('Validace', 'Vyplňte jméno a příjmení zákazníka.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_name_required'), 'warning');
       return false;
     }
     if (!this.editingOrder.phone) {
-      this.alertDialogService.open('Validace', 'Zadejte telefonní číslo.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_phone_required'), 'warning');
       return false;
     }
     if (!this.editingOrder.payment_method_id) {
-      this.alertDialogService.open('Validace', 'Vyberte způsob platby.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_payment_method_required'), 'warning');
       return false;
     }
     if (!this.editingOrder.shipping_method_id) {
-      this.alertDialogService.open('Validace', 'Vyberte způsob dopravy.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_shipping_method_required'), 'warning');
       return false;
     }
     if (!this.editingOrder.items || this.editingOrder.items.filter(i => !i._delete).length === 0) {
-      this.alertDialogService.open('Validace', 'Objednávka musí obsahovat alespoň jednu položku.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_items_required'), 'warning');
       return false;
     }
     if (!this.editingOrder.shipping_address || !this.editingOrder.shipping_city || !this.editingOrder.shipping_postal_code) {
-      this.alertDialogService.open('Validace', 'Kompletně vyplňte adresu doručení.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_address_required'), 'warning');
       return false;
     }
     return true;
@@ -873,9 +915,12 @@ showGraphBuilder = false;
    * @description Formats numbers to currency strings.
    * @param value The amount to format.
    * @returns {string} Formatted EUR currency string.
+   * @refactor-note (2026-09-09) BUGFIX - natvrdo `'cs-CZ'` nahrazeno
+   * `this.i18n.getDateLocale()`. Měna zůstává EUR (obchodní rozhodnutí,
+   * nesouvisí s jazykem UI).
    */
   formatCurrency(value: number): string {
-    return new Intl.NumberFormat('cs-CZ', {
+    return new Intl.NumberFormat(this.i18n.getDateLocale(), {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 2
@@ -893,7 +938,8 @@ showGraphBuilder = false;
   getVisibleItems(order: Order | null): OrderItem[] {
     return (order?.items || []).filter(i => !i._delete);
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }

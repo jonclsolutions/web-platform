@@ -7,31 +7,29 @@
  * @created 2025
  * @description Manages CRUD operations for user roles, including pagination for administrative tables,
  *              permission-matrix synchronization, and audit logging of all data changes.
- * @note Systémové role (viz CoreRole::PROTECTED_ROLE_NAMES - sysadmin/admin) nelze
- *       přes tento controller editovat, mazat, ani jim měnit oprávnění. Role, která má přiřazeného
- *       alespoň jednoho uživatele, nelze smazat.
- * @bugfix-note (2026) update() a show() dříve používaly implicitní route-model-binding
- *       (`CoreRole $role` typehint). Protože routy pro 'roles' mají URL parametr přejmenovaný
- *       na `id` (viz routes/api.php: ->parameters(['roles' => 'id'])), název route parametru
- *       (`id`) se neshodoval s názvem argumentu metody (`role`) - implicitní binding proto
- *       vůbec neproběhl a Laravel container místo skutečné role z DB injektoval PRÁZDNOU,
- *       nikdy neuloženou instanci CoreRole. Opraveno stejně, jako už správně dělají
- *       destroy()/syncPermissions()/restore() - $id se přebírá napřímo a model se dohledává
- *       ručně přes findOrFail().
+ * @note System roles (see CoreRole::PROTECTED_ROLE_NAMES - sysadmin/admin) cannot be
+ *       edited, deleted, or have their permissions changed via this controller. A role that has at least
+ *       one user assigned cannot be deleted.
+ * @bugfix-note (2026) update() and show() previously used implicit route-model-binding
+ *       (`CoreRole $role` typehint). Because routes for 'roles' have their URL parameter renamed
+ *       to `id` (see routes/api.php: ->parameters(['roles' => 'id'])), the route parameter name
+ *       (`id`) did not match the method argument name (`role`) - implicit binding therefore did not
+ *       occur at all and the Laravel container injected an EMPTY, never saved instance of CoreRole
+ *       instead of the actual role from the DB. Fixed identically to destroy()/syncPermissions()/restore()
+ *       which already correctly do it - $id is taken directly and the model is looked up manually via findOrFail().
  *
- * @refactor-note (2026-08-5) KRITICKÁ BEZPEČNOSTNÍ OCHRANA přidána: `isProtected()`
- * chránilo jen roli, se kterou se pracuje (sysadmin/admin jako CÍL), ale nikdo nekontroloval,
- * KDO akci provádí. store(), update(), syncPermissions(), destroy(), restore() a
- * forceDeleteAllTrashed() nyní vyžadují, aby VOLAJÍCÍ (actorIsSysadmin()) měl roli sysadmin.
+ * @refactor-note (2026-08-5) CRITICAL SECURITY PROTECTION added: `isProtected()`
+ * protected only the role being worked with (sysadmin/admin as TARGET), but no one checked
+ * WHO is performing the action. store(), update(), syncPermissions(), destroy(), restore() and
+ * forceDeleteAllTrashed() now require that the ACTOR (actorIsSysadmin()) has the sysadmin role.
  *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait (viz Traits/
- * LogsActivity.php) místo lokální duplicitní logAction(). Zároveň OPRAVEN cílový log model:
- * lokální verze zapisovala do `WebLog::class`, ačkoliv role/oprávnění jsou podle dohodnutého
- * Core/Web/Shop rozdělení čistě doménou CORE (stejně jako auth, uživatelé, legal, site
- * settings - viz DocumentSectionController/SiteConfigurationController, které do CoreLog
- * logují správně už dřív). Nový trait navíc automaticky ořezává `description` na 990 znaků
- * a `context_data` bezpečně stripuje citlivá pole - lokální verze žádnou z těchto ochran
- * neměla.
+ * @refactor-note (2026-08-6) LOGGING MIGRATION to shared `LogsActivity` trait (see Traits/
+ * LogsActivity.php) instead of local duplicate logAction(). At the same time FIXED target log model:
+ * the local version wrote to `WebLog::class`, although roles/permissions according to the agreed
+ * Core/Web/Shop division are purely a CORE domain (just like auth, users, legal, site
+ * settings - see DocumentSectionController/SiteConfigurationController, which log to CoreLog
+ * correctly already earlier). Moreover, the new trait automatically truncates `description` to 990 characters
+ * and safely strips sensitive fields from `context_data` - the local version had none of these protections.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -54,7 +52,7 @@ class CoreRoleController extends Controller
 
     /**
      * @description Role name required of the ACTOR (not the role being edited) for every
-     * mutating action on this controller - viz @refactor-note (2026-08-5). Musí sedět s
+     * mutating action on this controller - see @refactor-note (2026-08-5). Must match
      * `UserController::SYSADMIN_ROLE_NAME`.
      */
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
@@ -98,13 +96,13 @@ class CoreRoleController extends Controller
 
     /**
      * Stores a new role entity in the database.
-     * @note KRITICKÁ OCHRANA: pouze sysadmin smí vytvářet nové role.
+     * @note CRITICAL PROTECTION: only sysadmin is allowed to create new roles.
      */
     public function store(StoreCoreRoleRequest $request): JsonResponse
     {
         if (!$this->actorIsSysadmin($request)) {
-            $this->logAction($request, CoreLog::class, 'create_denied', 'CoreRole', 'Zamítnut pokus o vytvoření role - volající není sysadmin.');
-            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+            $this->logAction($request, CoreLog::class, 'create_denied', 'CoreRole', 'Denied attempt to create role - actor is not sysadmin.');
+            return response()->json(['message' => 'Roles can only be managed by sysadmin.'], 403);
         }
 
         $role = CoreRole::create($request->validated());
@@ -116,7 +114,7 @@ class CoreRoleController extends Controller
 
     /**
      * Displays a specific role entity.
-     * @param int $id Route parameter je pojmenovaný `id`, viz routes/api.php.
+     * @param int $id Route parameter is named `id`, see routes/api.php.
      */
     public function show($id): JsonResponse
     {
@@ -126,19 +124,19 @@ class CoreRoleController extends Controller
 
     /**
      * Updates an existing role entity (name/description only - permissions go through syncPermissions()).
-     * @note KRITICKÁ OCHRANA: pouze sysadmin smí role upravovat.
+     * @note CRITICAL PROTECTION: only sysadmin is allowed to edit roles.
      */
     public function update(UpdateCoreRoleRequest $request, $id): JsonResponse
     {
         if (!$this->actorIsSysadmin($request)) {
-            $this->logAction($request, CoreLog::class, 'update_denied', 'CoreRole', "Zamítnut pokus o úpravu role ID {$id} - volající není sysadmin.", (int) $id, 'CoreRole');
-            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+            $this->logAction($request, CoreLog::class, 'update_denied', 'CoreRole', "Denied attempt to update role ID {$id} - actor is not sysadmin.", (int) $id, 'CoreRole');
+            return response()->json(['message' => 'Roles can only be managed by sysadmin.'], 403);
         }
 
         $role = CoreRole::findOrFail($id);
 
         if ($role->isProtected()) {
-            return response()->json(['message' => 'Systémovou roli nelze upravovat.'], 403);
+            return response()->json(['message' => 'System role cannot be modified.'], 403);
         }
 
         $role->update($request->validated());
@@ -150,20 +148,20 @@ class CoreRoleController extends Controller
 
     /**
      * Synchronizes the set of permissions assigned to a role (matrix UI "save" action).
-     * @note KRITICKÁ OCHRANA: pouze sysadmin smí měnit oprávnění rolí - toto je NEJKRITIČTĚJŠÍ
-     * endpoint v celém controlleru (přímá cesta k privilege escalation).
+     * @note CRITICAL PROTECTION: only sysadmin is allowed to change role permissions - this is the MOST CRITICAL
+     * endpoint in the entire controller (direct path to privilege escalation).
      */
     public function syncPermissions(SyncRolePermissionsRequest $request, $id): JsonResponse
     {
         if (!$this->actorIsSysadmin($request)) {
-            $this->logAction($request, CoreLog::class, 'sync_permissions_denied', 'CoreRole', "Zamítnut pokus o změnu oprávnění role ID {$id} - volající není sysadmin.", (int) $id, 'CoreRole');
-            return response()->json(['message' => 'Oprávnění rolí smí spravovat pouze sysadmin.'], 403);
+            $this->logAction($request, CoreLog::class, 'sync_permissions_denied', 'CoreRole', "Denied attempt to change permissions of role ID {$id} - actor is not sysadmin.", (int) $id, 'CoreRole');
+            return response()->json(['message' => 'Role permissions can only be managed by sysadmin.'], 403);
         }
 
         $role = CoreRole::findOrFail($id);
 
         if ($role->isProtected()) {
-            return response()->json(['message' => 'Oprávnění systémové role nelze měnit.'], 403);
+            return response()->json(['message' => 'Permissions of a system role cannot be modified.'], 403);
         }
 
         $permissionIds = CorePermission::whereIn('permission_key', $request->validated()['permission_keys'])
@@ -176,7 +174,7 @@ class CoreRoleController extends Controller
             CoreLog::class,
             'sync_permissions',
             'CoreRole',
-            "Aktualizována oprávnění role: {$role->role_name} (" . $permissionIds->count() . " oprávnění)",
+            "Updated role permissions: {$role->role_name} (" . $permissionIds->count() . " permissions)",
             $role->id,
             'CoreRole'
         );
@@ -187,26 +185,26 @@ class CoreRoleController extends Controller
     /**
      * Deletes a role entity, supporting both soft and hard (force) deletion.
      * Blocked for protected (system) roles and for any role currently assigned to a user.
-     * @note KRITICKÁ OCHRANA: pouze sysadmin smí role mazat.
+     * @note CRITICAL PROTECTION: only sysadmin is allowed to delete roles.
      */
     public function destroy(Request $request, $id): JsonResponse
     {
         if (!$this->actorIsSysadmin($request)) {
-            $this->logAction($request, CoreLog::class, 'delete_denied', 'CoreRole', "Zamítnut pokus o smazání role ID {$id} - volající není sysadmin.", (int) $id, 'CoreRole');
-            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+            $this->logAction($request, CoreLog::class, 'delete_denied', 'CoreRole', "Denied attempt to delete role ID {$id} - actor is not sysadmin.", (int) $id, 'CoreRole');
+            return response()->json(['message' => 'Roles can only be managed by sysadmin.'], 403);
         }
 
         $role = CoreRole::withTrashed()->findOrFail($id);
 
         if ($role->isProtected()) {
-            return response()->json(['message' => 'Systémovou roli nelze smazat.'], 403);
+            return response()->json(['message' => 'System role cannot be deleted.'], 403);
         }
 
         $usersCount = $role->users()->count();
 
         if ($usersCount > 0) {
             return response()->json([
-                'message' => "Roli nelze smazat - je přiřazena k {$usersCount} uživatelskému účtu(ům). Nejprve těmto uživatelům přiřaďte jinou roli.",
+                'message' => "Role cannot be deleted - it is assigned to {$usersCount} user account(s). Please assign a different role to these users first.",
             ], 403);
         }
 
@@ -219,13 +217,13 @@ class CoreRoleController extends Controller
 
     /**
      * Restores a previously soft-deleted role entity.
-     * @note KRITICKÁ OCHRANA: pouze sysadmin smí role obnovovat.
+     * @note CRITICAL PROTECTION: only sysadmin is allowed to restore roles.
      */
     public function restore(Request $request, int $id): JsonResponse
     {
         if (!$this->actorIsSysadmin($request)) {
-            $this->logAction($request, CoreLog::class, 'restore_denied', 'CoreRole', "Zamítnut pokus o obnovu role ID {$id} - volající není sysadmin.", $id, 'CoreRole');
-            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+            $this->logAction($request, CoreLog::class, 'restore_denied', 'CoreRole', "Denied attempt to restore role ID {$id} - actor is not sysadmin.", $id, 'CoreRole');
+            return response()->json(['message' => 'Roles can only be managed by sysadmin.'], 403);
         }
 
         $role = CoreRole::withTrashed()->findOrFail($id);
@@ -238,15 +236,15 @@ class CoreRoleController extends Controller
 
     /**
      * Permanently deletes all soft-deleted roles.
-     * @note KRITICKÁ OCHRANA: pouze sysadmin.
+     * @note CRITICAL PROTECTION: sysadmin only.
      */
     public function forceDeleteAllTrashed(): JsonResponse
     {
         $request = request();
 
         if (!$this->actorIsSysadmin($request)) {
-            $this->logAction($request, CoreLog::class, 'force_delete_all_denied', 'CoreRole', 'Zamítnut pokus o vysypání koše rolí - volající není sysadmin.');
-            return response()->json(['message' => 'Role smí spravovat pouze sysadmin.'], 403);
+            $this->logAction($request, CoreLog::class, 'force_delete_all_denied', 'CoreRole', 'Denied attempt to empty the roles trash - actor is not sysadmin.');
+            return response()->json(['message' => 'Roles can only be managed by sysadmin.'], 403);
         }
 
         try {
@@ -254,18 +252,18 @@ class CoreRoleController extends Controller
             $count = $query->count();
             $query->forceDelete();
 
-            $this->logAction($request, CoreLog::class, 'force_delete_all', 'CoreRole', "Vysypání koše rolí. Smazáno: $count");
+            $this->logAction($request, CoreLog::class, 'force_delete_all', 'CoreRole', "Emptied roles trash. Deleted: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, CoreLog::class, 'error', 'CoreRole', "Chyba při vysypávání koše rolí: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+            $this->logAction($request, CoreLog::class, 'error', 'CoreRole', "Error emptying roles trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 
     /**
-     * @description Zjišťuje, jestli přihlášený uživatel z daného requestu má roli
-     * sysadmin. Sdílená pomocná metoda pro store()/update()/syncPermissions()/destroy()/
-     * restore()/forceDeleteAllTrashed() - stejný princip a stejné jméno jako v
+     * @description Determines whether the authenticated user from the given request has the
+     * sysadmin role. Shared helper method for store()/update()/syncPermissions()/destroy()/
+     * restore()/forceDeleteAllTrashed() - same principle and same name as in
      * `UserController`.
      */
     private function actorIsSysadmin(Request $request): bool

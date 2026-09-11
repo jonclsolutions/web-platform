@@ -34,7 +34,7 @@ class UpdateWebJobApplicationRequest extends FormRequest
         $safeExtensions = ['pdf', 'doc', 'docx', 'odt', 'jpg', 'jpeg', 'png', 'zip', 'rar'];
 
         return [
-            'state'         => 'sometimes|required|string|max:50',
+            'state'         => 'sometimes|required|string|max:50|in:new,interview,selected,rejected,pool',
             'internal_note' => 'nullable|string',
             'first_name'    => 'sometimes|required|string|max:100',
             'last_name'     => 'sometimes|required|string|max:100',

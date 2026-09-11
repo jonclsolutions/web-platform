@@ -91,7 +91,7 @@ class CheckPermission
                 CoreSecurityEvent::contextFromRequest($request, ['required_permission' => $permission])
             );
 
-            return response()->json(['message' => 'Nepřihlášeno.'], 401);
+            return response()->json(['message' => 'Not logged in.'], 401);
         }
 
         $isSysadmin = $user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
@@ -121,6 +121,6 @@ class CheckPermission
             CoreSecurityEvent::contextFromRequest($request, ['required_permission' => $permission])
         );
 
-        return response()->json(['message' => 'Nedostatečná oprávnění.'], 403);
+        return response()->json(['message' => 'Insufficient permissions.'], 403);
     }
 }

@@ -5,20 +5,20 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Správa retenční doby bezpečnostního monitoringu (core_security_settings) -
- * singleton nastavení, stejný vzor jako WebSiteSettingController pro web maintenance.
+ * @description Management of security monitoring retention period (core_security_settings) -
+ * singleton setting, same pattern as WebSiteSettingController for web maintenance.
  *
- * @bugfix-note (2026-08-22) `update()` musí vracet výsledek obalený v `{data: ...}` -
- * frontendový `DataHandler.put<T>()` automaticky odbaluje `response.data` (viz
- * data-handler.service.ts). `show()` naopak zůstává NEobalené, protože se volá přes
- * `DataHandler.get<T>()`, který žádné odbalování nedělá. Bez tohoto rozlišení by po
- * uložení retence přišlo z `saveRetention()` `undefined` misto aktuální hodnoty.
+ * @bugfix-note (2026-08-22) `update()` must return the result wrapped in `{data: ...}` -
+ * frontend `DataHandler.put<T>()` automatically unwraps `response.data` (see
+ * data-handler.service.ts). `show()` on the other hand remains UNWRAPPED because it is called via
+ * `DataHandler.get<T>()`, which does no unwrapping. Without this distinction, after
+ * saving the retention, `saveRetention()` would receive `undefined` instead of the current value.
  *
- * @refactor-note (2026-08-22v2) AUDITNÍ LOG: `update()` teď zapisuje do `core_logs`
- * (přes `LogsActivity` trait, stejně jako `AuthController` apod.) - kdo a kdy změnil
- * retenční dobu bezpečnostního monitoringu, včetně staré i nové hodnoty. Tohle je
- * odlišné od `core_security_events` (diagnostika podezřelé aktivity) - jde o audit
- * administrátorské akce nad samotným monitoringem.
+ * @refactor-note (2026-08-22v2) AUDIT LOG: `update()` now writes to `core_logs`
+ * (via `LogsActivity` trait, just like `AuthController` etc.) - who and when changed
+ * the security monitoring retention period, including the old and new values. This is
+ * different from `core_security_events` (suspicious activity diagnostics) - it's an audit of
+ * the administrator's action over the monitoring itself.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -51,12 +51,12 @@ class CoreSecuritySettingController extends Controller
             CoreLog::class,
             'security_retention_updated',
             'Core',
-            "Retenční doba bezpečnostního monitoringu změněna z {$previousRetention} na {$setting->retention_days} dní.",
+            "Security monitoring retention period changed from {$previousRetention} to {$setting->retention_days} days.",
             $setting->id,
             'CoreSecuritySetting'
         );
 
-        // Obal {data: ...} - viz bugfix-note výše (DataHandler.put() unwrap).
+        // Wrapper {data: ...} - see bugfix-note above (DataHandler.put() unwrap).
         return response()->json(['data' => $setting]);
     }
 }

@@ -37,7 +37,7 @@ class TwoFactorCodeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Ověřovací kód pro přihlášení - RPSW Administrace',
+            subject: 'Login verification code',
         );
     }
 

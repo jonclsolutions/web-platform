@@ -4,149 +4,136 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Static configuration (buttons, form fields, table/filter/detail columns) for
- * the Job Applications (nábor) management page.
- * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php a
- *      edit-news.config.ts stejné datum): doplněny reálné permission klíče:
- *      - JOB_APPLICATION_BUTTONS: "Stav / Poznámka" (edit) -> `web-job-applications-update`,
- *        "Smazat" -> `web-job-applications-delete`. "Detaily" zůstává bez permission.
- *      - JOB_APPLICATION_TOOLBAR_BUTTONS NEMÁ tlačítko "Přidat" (žádný
- *        `handleCreateFormOpened` v HTML - uchazeči vznikají výhradně z veřejného
- *        formuláře `POST /job_applications`). Backend permission
- *        `web-job-applications-create` proto existuje (pro interní API endpoint), ale ve
- *        UI zatím není co gatovat - nic tu tedy NEBYLO přidáno.
+ * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/
+ * detail columns) for the Job Applications (nábor) management page.
  *
- * @bugfix-note (2026-09-07) BACKLOG "permission audit napříč web stránkami":
- * `openGraphBuilder` používal nesouvisející `web-user-requests-view` - opraveno na
- * `web-job-applications-view` (vlastní view permission téhle stránky).
+ * (Earlier refactor-notes for permission granularization - no "create" button, no
+ * `handleCreateFormOpened` - and the openGraphBuilder permission fix are unchanged, see
+ * version history.)
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
+ * + "enum hodnoty jako přeložitelné anglické slugy": kompletní přepis na FACTORY
+ * FUNKCE, stejný vzor jako ostatní web-pages stránky. `state` PŘEPSÁN z plného
+ * českého textu ('Nový'/'Pohovor'/'Vybrán'/'Zamítnut'/'Zásobník') na anglické slugy
+ * ('new'/'interview'/'selected'/'rejected'/'pool') - viz SQL migrace
+ * `006_state_slugs_web_job_applications.sql` a `UpdateWebJobApplicationRequest`
+ * (doplněna `in:...` validace, kterou `state` dřív vůbec neměl), obojí SOUČASNĚ s
+ * touto změnou.
  */
 import * as Core from '../../../shared/imports/core-providers';
+import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
-export const JOB_APP_STATUS_OPTIONS = [
-  { value: 'Nový', label: 'Nový uchazeč' },
-  { value: 'Pohovor', label: 'Pozván na pohovor' },
-  { value: 'Vybrán', label: 'Vybrán / Nabídka' },
-  { value: 'Zamítnut', label: 'Zamítnut' },
-  { value: 'Zásobník', label: 'V databázi (do budoucna)' }
-];
-export const JOB_APPLICATION_TOOLBAR_BUTTONS: Core.Button[] = [
-  {
-    action: 'toggleFilters',
-    label: 'Otevřít filtry',
-    icon: '',
-    class: 'btn-filter',
-    isActive: false
-  },
-  {
-    action: 'exportActiveTable',
-    label: 'Exportovat data',
-    icon: '',
-    class: 'btn-export',
-    showIf: true
-  },
-  { action: 'openGraphBuilder', label: 'Generovat grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-job-applications-view' },
-  {
-    action: 'toggleTable',
-    label: 'Zobrazit koš',
-    icon: '',
-    class: 'btn-trash',
-    permission: 'view-deleted'
-  }
-];
-export const JOB_APPLICATION_BUTTONS: Core.TableButtons[] = [
-  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-  { display_name: 'Stav / Poznámka', header_name: 'Stav / Poznámka', isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-job-applications-update', icon: 'edit' },
-  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'web-job-applications-delete', icon: 'delete' },
-];
+const SECTION = 'job-applications';
 
-export const JOB_APPLICATION_FORM_FIELDS: Core.InputDefinition[] = [
-  {
-    column_name: 'state',
-    label: 'Stav uchazeče',
-    type: 'select',
-    options: JOB_APP_STATUS_OPTIONS,
-    required: true,
-    editable: true, 
-    show_in_edit: true, 
-    show_in_create: false
-  },
-  {
-    column_name: 'internal_note',
-    label: 'Interní poznámka (nevidí uchazeč)',
-    placeholder: 'Zadejte výsledek pohovoru, dojem, platové očekávání...',
-    type: 'textarea',
-    required: false,
-    editable: true, 
-    show_in_edit: true, 
-    show_in_create: false
-  },
-  {
-    column_name: 'first_name',
-    label: 'Jméno',
-    type: 'text',
-    editable: false, 
-    show_in_edit: true, 
-    show_in_create: false
-  },
-  {
-    column_name: 'last_name',
-    label: 'Příjmení',
-    type: 'text',
-    editable: false,
-    show_in_edit: true, 
-    show_in_create: false
-  },
-  {
-    column_name: 'position_name',
-    label: 'Reakce na pozici',
-    type: 'text',
-    editable: false,
-    show_in_edit: true, 
-    show_in_create: false
-  }
-];
+export const JOB_APPLICATION_STATE_VALUES: string[] = ['new', 'interview', 'selected', 'rejected', 'pool'];
 
-export const JOB_APPLICATION_COLUMNS: Core.ColumnDefinition[] = [
-  { key: 'id', header: 'ID', type: 'text' },
-  { key: 'full_name', header: 'Uchazeč', type: 'text' },
-  { key: 'position_name', header: 'Pozice', type: 'text' },
-  { key: 'state', header: 'Stav', type: 'text' },
-  { key: 'created_at', header: 'Doručeno', type: 'date', format: 'short' }
-];
+const STATE_LABEL_KEYS: Record<string, string> = {
+  new: 'state_new',
+  interview: 'state_interview',
+  selected: 'state_selected',
+  rejected: 'state_rejected',
+  pool: 'state_pool',
+};
 
-export const JOB_APPLICATION_TRASH_COLUMNS: Core.ColumnDefinition[] = [
-  { key: 'id', header: 'ID', type: 'text' },
-  { key: 'full_name', header: 'Uchazeč', type: 'text' },
-  { key: 'position_name', header: 'Pozice', type: 'text' },
-  { key: 'deleted_at', header: 'Smazáno', type: 'date', format: 'short' }
-];
+function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
+  return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
+}
 
-export const JOB_APPLICATION_FILTER_COLUMNS: Core.FilterColumns[] = [
-  { key: 'id', header: 'ID', type: 'text', placeholder: 'ID', canSort: true },
-  { key: 'last_name', header: 'Příjmení', type: 'text', placeholder: 'Hledat příjmení...', canSort: true },
-  { key: 'position_name', header: 'Pozice', type: 'text', placeholder: 'Název pozice...', canSort: true },
-  { 
-    key: 'state', 
-    header: 'Stav', 
-    type: 'select', 
-    options: JOB_APP_STATUS_OPTIONS.map(o => o.value), 
-    placeholder: '-- Všechny stavy --', 
-    canSort: true 
-  }
-];
+export function createJobApplicationButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
+  return [
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_details`), isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_edit`), isActive: true, type: 'neutral_button', action: 'edit', permission: 'web-job-applications-update', icon: 'edit' },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_delete`), isActive: true, type: 'delete_button', action: 'delete', permission: 'web-job-applications-delete', icon: 'delete' },
+  ];
+}
 
-export const JOB_APPLICATION_DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
-  { key: 'id', displayName: 'ID Žádosti', type: 'text' },
-  { key: 'full_name', displayName: 'Celé jméno', type: 'text' },
-  { key: 'position_name', displayName: 'Hlášená pozice', type: 'text', chartable: true },
-  { key: 'email', displayName: 'E-mail', type: 'text' },
-  { key: 'phone', displayName: 'Telefon', type: 'text' },
-  {
-    key: 'state', displayName: 'Aktuální stav', type: 'text',
-    chartable: true, chartPossibleValues: JOB_APP_STATUS_OPTIONS.map(o => o.value),
-  },
-  { key: 'message', displayName: 'Průvodní dopis / Zpráva', type: 'text' },
-  { key: 'internal_note', displayName: 'Interní poznámka HR', type: 'text' },
-  { key: 'attachments', displayName: 'Životopis', type: 'files' },
-  { key: 'created_at', displayName: 'Datum doručení', type: 'date', format: 'medium' }
-];
+export function createJobApplicationToolbarButtons(i18n: AdminLocalizationService): Core.Button[] {
+  return [
+    { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
+    { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
+    { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'web-job-applications-view' },
+    { action: 'toggleTable', label: i18n.getValue(`${SECTION}.toolbar_show_trash`), icon: '', class: 'btn-trash', permission: 'view-deleted' },
+  ];
+}
+
+export function createJobApplicationFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
+  return [
+    {
+      column_name: 'state',
+      label: i18n.getValue(`${SECTION}.field_state_label`),
+      type: 'select',
+      options: mapLabeledOptions(JOB_APPLICATION_STATE_VALUES, STATE_LABEL_KEYS, i18n),
+      required: true,
+      editable: true, show_in_edit: true, show_in_create: false,
+    },
+    {
+      column_name: 'internal_note',
+      label: i18n.getValue(`${SECTION}.field_internal_note_label`),
+      placeholder: i18n.getValue(`${SECTION}.field_internal_note_placeholder`),
+      type: 'textarea',
+      required: false,
+      editable: true, show_in_edit: true, show_in_create: false,
+    },
+    {
+      column_name: 'first_name',
+      label: i18n.getValue(`${SECTION}.field_first_name_label`),
+      type: 'text',
+      editable: false, show_in_edit: true, show_in_create: false,
+    },
+    {
+      column_name: 'last_name',
+      label: i18n.getValue(`${SECTION}.field_last_name_label`),
+      type: 'text',
+      editable: false, show_in_edit: true, show_in_create: false,
+    },
+    {
+      column_name: 'position_name',
+      label: i18n.getValue(`${SECTION}.field_position_label`),
+      type: 'text',
+      editable: false, show_in_edit: true, show_in_create: false,
+    },
+  ];
+}
+
+export function createJobApplicationColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
+  return [
+    { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
+    { key: 'full_name', header: i18n.getValue(`${SECTION}.col_applicant`), type: 'text' },
+    { key: 'position_name', header: i18n.getValue(`${SECTION}.col_position`), type: 'text' },
+    { key: 'state', header: i18n.getValue(`${SECTION}.col_state`), type: 'text' },
+    { key: 'created_at', header: i18n.getValue(`${SECTION}.col_received`), type: 'date', format: 'short' },
+  ];
+}
+
+export function createJobApplicationTrashColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
+  return [
+    { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
+    { key: 'full_name', header: i18n.getValue(`${SECTION}.col_applicant`), type: 'text' },
+    { key: 'position_name', header: i18n.getValue(`${SECTION}.col_position`), type: 'text' },
+    { key: 'deleted_at', header: i18n.getValue(`${SECTION}.col_deleted`), type: 'date', format: 'short' },
+  ];
+}
+
+export function createJobApplicationFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
+  return [
+    { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
+    { key: 'last_name', header: i18n.getValue(`${SECTION}.filter_last_name_label`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_last_name_placeholder`), canSort: true },
+    { key: 'position_name', header: i18n.getValue(`${SECTION}.col_position`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_position_placeholder`), canSort: true },
+    { key: 'state', header: i18n.getValue(`${SECTION}.col_state`), type: 'select', options: mapLabeledOptions(JOB_APPLICATION_STATE_VALUES, STATE_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_state_placeholder`), canSort: true },
+  ];
+}
+
+export function createJobApplicationDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
+  return [
+    { key: 'id', displayName: i18n.getValue(`${SECTION}.details_id`), type: 'text' },
+    { key: 'full_name', displayName: i18n.getValue(`${SECTION}.details_full_name`), type: 'text' },
+    { key: 'position_name', displayName: i18n.getValue(`${SECTION}.details_position`), type: 'text', chartable: true },
+    { key: 'email', displayName: i18n.getValue(`${SECTION}.details_email`), type: 'text' },
+    { key: 'phone', displayName: i18n.getValue(`${SECTION}.details_phone`), type: 'text' },
+    { key: 'state', displayName: i18n.getValue(`${SECTION}.details_state`), type: 'text', chartable: true, chartPossibleValues: JOB_APPLICATION_STATE_VALUES },
+    { key: 'message', displayName: i18n.getValue(`${SECTION}.details_message`), type: 'text' },
+    { key: 'internal_note', displayName: i18n.getValue(`${SECTION}.details_internal_note`), type: 'text' },
+    { key: 'attachments', displayName: i18n.getValue(`${SECTION}.details_attachments`), type: 'files' },
+    { key: 'created_at', displayName: i18n.getValue(`${SECTION}.details_created`), type: 'date', format: 'medium' },
+  ];
+}

@@ -7,10 +7,10 @@
  * @created 2026
  * @description Handles CRUD operations for promotional coupons, including soft-delete functionality, restore capabilities, and integrity-checked batch cleanup.
  *
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
- * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class). `forceDeleteAllTrashed()`
- * dosud neměl žádné auditní volání - doplněno, ať je hromadné mazání kupónů z koše
- * dohledatelné stejně jako u ostatních Shop zdrojů.
+ * @refactor-note (2026-08-6) LOGGING MIGRATION to shared `LogsActivity` trait instead of
+ * local duplicate logAction(). Domain-wise unchanged (ShopLog::class). `forceDeleteAllTrashed()`
+ * previously had no audit call - added so that bulk coupon deletion from trash
+ * is trackable just like other Shop resources.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -130,7 +130,7 @@ class ShopCouponController extends Controller
                 }
             }
 
-            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopCoupon', "Vysypání koše kupónů. Trvale smazáno: {$deletedCount} z " . $trashed->count() . " (zbytek je navázán na existující objednávky).");
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopCoupon', "Emptied coupon trash. Permanently deleted: {$deletedCount} out of " . $trashed->count() . " (the rest are linked to existing orders).");
 
             return response()->json(null, 204);
         } catch (\Exception $e) {

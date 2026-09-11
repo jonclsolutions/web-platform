@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing shop products, handling dynamic associations and variant management.
+ *
+ * @refactor-note (2026-09-09) BACKLOG "backend fully in English": validation
+ * messages and inline closure error strings translated from Czech.
  */
 
 namespace App\Http\Requests\Shop\ShopProduct;
@@ -70,7 +73,7 @@ class UpdateShopProductRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $hasCategory = $this->filled('category_id') || ($this->filled('category_ids') && count((array)$this->input('category_ids')) > 0);
                     if ($value && !$hasCategory) {
-                        $fail('Produkt nelze nastavit jako aktivní, pokud nemá přiřazenou žádnou kategorii.');
+                        $fail('Product cannot be set as active without an assigned category.');
                     }
                 }
             ],
@@ -106,7 +109,7 @@ class UpdateShopProductRequest extends FormRequest
                         ->exists();
 
                     if ($exists) {
-                        $fail('Varianta SKU "' . $value . '" již existuje.');
+                        $fail('Variant SKU "' . $value . '" already exists.');
                     }
                 },
             ],
@@ -132,13 +135,13 @@ class UpdateShopProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'category_id.exists'                    => 'Vybraná kategorie neexistuje.',
-            'category_ids.*.exists'                 => 'Jedna z vybraných kategorií neexistuje.',
-            'name.required'                         => 'Název produktu je povinný.',
-            'sku.unique'                            => 'Tento SKU kód již používá jiný produkt.',
-            'images.*.file.image'                   => 'Soubor musí být obrázek.',
-            'images.*.file.max'                     => 'Obrázek je příliš velký (max 5MB).',
-            'variants.*.sku_variant.unique'         => 'Varianta SKU už existuje.',
+            'category_id.exists'                    => 'Selected category does not exist.',
+            'category_ids.*.exists'                 => 'One of the selected categories does not exist.',
+            'name.required'                         => 'Product name is required.',
+            'sku.unique'                            => 'This SKU is already used by another product.',
+            'images.*.file.image'                   => 'File must be an image.',
+            'images.*.file.max'                     => 'Image is too large (max 5MB).',
+            'variants.*.sku_variant.unique'         => 'Variant SKU already exists.',
         ];
     }
 

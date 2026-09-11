@@ -67,12 +67,12 @@ class StoreShopCouponRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.required' => 'Kód kupónu je povinný.',
-            'code.unique' => 'Tento kód kupónu již existuje.',
-            'code.min' => 'Kód musí mít alespoň 3 znaky.',
-            'discount_type.required' => 'Typ slevy je povinný.',
-            'discount_value.required' => 'Hodnota slevy je povinná.',
-            'valid_until.after_or_equal' => 'Datum ukončení platnosti nesmí být před datem zahájení.',
+            'code.required' => 'The coupon code is required.',
+            'code.unique' => 'This coupon code already exists.',
+            'code.min' => 'The code must be at least 3 characters long.',
+            'discount_type.required' => 'The discount type is required.',
+            'discount_value.required' => 'The discount value is required.',
+            'valid_until.after_or_equal' => 'The expiration date must be a date after or equal to the start date.',
         ];
     }
 }

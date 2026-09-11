@@ -9,11 +9,24 @@
  * - BaseDataComponent: Provides base CRUD functionality.
  * - ConfirmDialogService: Facilitates user confirmation for deletion actions.
  * - ResourceCacheService: TTL cache pro lookup data (kategorie, dodavatelé), 5 min.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z HTTP `error:` callbacků (handleViewDetails, openEditProductForm,
- * openVariantsModal, openImagesModal, saveProduct) - `DataHandler.handleError()` je
- * jediné autoritativní místo pro chybový toast. `loadCategories()`/`loadSuppliers()`
- * měly jen `console.error`, beze změny.
+ * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
+ *   (2026-09-08) níže.
+ *
+ * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+ * texty" - FUNKCIONALITA ZACHOVÁNA BEZE ZMĚNY (na explicitní požadavek), pouze
+ * text nahrazen `t()` voláním:
+ * - `toolbarButtons` ZŮSTÁVÁ plain polem (NE getter, na rozdíl od ostatních
+ *   admin stránek v projektu) - přesně stejné chování jako originál (žádné
+ *   dynamické přepínání labelu podle `showFiltersPanel`/`showTrashTable`, žádná
+ *   runtime permission-based `showIf` filtrace). Přebudováno jen uvnitř i18n
+ *   subscribe bloku, ať se text jazykově přepne.
+ * - `Config.PRODUCT_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
+ * - `formatCurrency()` natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()` -
+ *   přímá součást i18n (formátování čísel dle jazyka), ne byznys logika.
+ * - `console.error()` volání (export/lookup fetch chyby) ZÁMĚRNĚ ponechána
+ *   nepřeložená - jde o dev diagnostiku, ne uživatelský text.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
@@ -24,7 +37,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
-import { PRODUCT_BUTTONS, PRODUCT_COLUMNS, TRASH_PRODUCT_COLUMNS, FILTER_COLUMNS, TOOLBAR_BUTTONS, PRODUCT_FORM_FIELDS } from './products.config';
 import { Variant, ProductImage, Category, Supplier, Product } from './';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
@@ -34,7 +46,7 @@ import * as Config from './products.config';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -42,7 +54,14 @@ import * as Config from './products.config';
 export class ProductsComponent extends BaseDataComponent<Product> implements OnInit, OnDestroy {
   override apiEndpoint: string = 'shop/products';
   @ViewChild('activeTable') activeTable!: any;
-  tableCaption: string = 'Produkty';
+
+  protected override translationSection: string = 'shop-products';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-products.${key}`);
+  }
+
+  tableCaption: string = '';
 
   private resourceCache = inject(ResourceCacheService);
   private readonly CATEGORIES_CACHE_KEY = 'shop-products:categories';
@@ -68,22 +87,21 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
 
   filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
 
-  buttons            = PRODUCT_BUTTONS;
-  productColumns     = PRODUCT_COLUMNS;
-  trashProductColumns = TRASH_PRODUCT_COLUMNS;
-  filterColumns      = FILTER_COLUMNS;
-  toolbarButtons     = TOOLBAR_BUTTONS;
-  formFields: any[]  = [];
+  buttons: Core.TableButtons[]            = [];
+  productColumns: Core.ColumnDefinition[]  = [];
+  trashProductColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[]     = [];
+  /** @refactor-note (2026-09-08) Plain pole, NE getter - viz hlavička souboru. */
+  toolbarButtons: Core.Button[]           = [];
+  formFields: any[]      = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
   selectedFormCategories: Category[] = [];
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.PRODUCT_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -92,12 +110,34 @@ showGraphBuilder = false;
     private confirmDialog: ConfirmDialogService
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.toolbarButtons = Config.createToolbarButtons(this.i18n);
+      this.buttons = Config.createProductButtons(this.i18n);
+      this.productColumns = Config.createProductColumns(this.i18n);
+      this.trashProductColumns = Config.createTrashProductColumns(this.i18n);
+      this.filterColumns = Config.createFilterColumns(this.i18n);
+      this.formFields = Config.createProductFormFields(this.i18n);
+      this.detailsColumns = Config.createProductDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      // category_id/supplier_id options jsou dynamická data (ne i18n text) -
+      // musí se po každém přebudování formFields/filterColumns znovu doplnit.
+      this.updateFormFieldsOptions();
+      this.cd.markForCheck();
+    });
   }
 
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
-    this.formFields = JSON.parse(JSON.stringify(PRODUCT_FORM_FIELDS));
     this.loadCategories();
     this.loadSuppliers();
   }
@@ -107,20 +147,20 @@ showGraphBuilder = false;
     this.toggleBodyScroll(false);
   }
 
-override loadData(): void {
-  this.list.fetchPaginatedData(this.showTrashTable, this.currentPage, this.itemsPerPage, this.filters)
-    .pipe(
-      Core.map((response) => {
-        response.data = response.data.map((product: any) => {
-          product.price_eur     = product.prices?.price_eur_with_vat ?? 0;
-          product.category_name = product.category?.name ?? '-';
-          product.supplier_name = product.supplier?.name ?? '-';
-          return product;
-        });
-        return response;
-      })
-    ).subscribe();
-}
+  override loadData(): void {
+    this.list.fetchPaginatedData(this.showTrashTable, this.currentPage, this.itemsPerPage, this.filters)
+      .pipe(
+        Core.map((response) => {
+          response.data = response.data.map((product: any) => {
+            product.price_eur     = product.prices?.price_eur_with_vat ?? 0;
+            product.category_name = product.category?.name ?? '-';
+            product.supplier_name = product.supplier?.name ?? '-';
+            return product;
+          });
+          return response;
+        })
+      ).subscribe();
+  }
 
   private toggleBodyScroll(lock: boolean): void {
     document.body.classList.toggle('modal-open', lock);
@@ -146,7 +186,7 @@ override loadData(): void {
 
   exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
-    else console.error('Nebyla nalezena aktivní tabulka pro export.');
+    else console.error('Active table not found for export.');
   }
 
   override toggleFilters(): void {
@@ -186,7 +226,7 @@ override loadData(): void {
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (data) => { this.categories = data; this.updateFormFieldsOptions(); this.cd.markForCheck(); },
-        error: (err) => console.error('Chyba při načítání kategorií:', err)
+        error: (err) => console.error('Error loading categories:', err)
       });
   }
 
@@ -199,7 +239,7 @@ override loadData(): void {
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (data) => { this.suppliers = data; this.updateFormFieldsOptions(); this.cd.markForCheck(); },
-        error: (err) => console.error('Chyba při načítání dodavatelů:', err)
+        error: (err) => console.error('Error loading suppliers:', err)
       });
   }
 
@@ -338,8 +378,8 @@ override loadData(): void {
     if (!this.editingProduct?.variants) return;
     const variant = this.editingProduct.variants[index];
     const confirmed = await this.confirmDialog.open(
-      'Smazat variantu',
-      `Opravdu chcete smazat variantu "${variant.variant_name || ''}"?`
+      this.t('confirm_delete_variant_title'),
+      this.t('confirm_delete_variant_message').replace('{name}', variant.variant_name || '')
     );
     if (confirmed) {
       if (variant.id) variant._delete = true;
@@ -377,7 +417,7 @@ override loadData(): void {
     const file: File = event.target.files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      this.alertDialogService.open('Příliš velký soubor', 'Obrázek může mít maximálně 5 MB.', 'warning');
+      this.alertDialogService.open(this.t('file_too_large_title'), this.t('file_too_large_message'), 'warning');
       event.target.value = '';
       return;
     }
@@ -397,7 +437,7 @@ override loadData(): void {
     const file: File = event.target.files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      this.alertDialogService.open('Příliš velký soubor', 'Obrázek může mít maximálně 5 MB.', 'warning');
+      this.alertDialogService.open(this.t('file_too_large_title'), this.t('file_too_large_message'), 'warning');
       event.target.value = '';
       return;
     }
@@ -486,7 +526,7 @@ override loadData(): void {
   }
 
   async deleteImage(index: number): Promise<void> {
-    const confirmed = await this.confirmDialog.open('Smazat obrázek', 'Opravdu chcete odstranit tento obrázek?');
+    const confirmed = await this.confirmDialog.open(this.t('confirm_delete_image_title'), this.t('confirm_delete_image_message'));
     if (confirmed && this.editingProduct?.images) {
       const image = this.editingProduct.images[index];
       if (image.id) image._delete = true;
@@ -516,7 +556,7 @@ override loadData(): void {
     if (!this.editingProduct) return false;
 
     if (!this.editingProduct.name?.trim()) {
-      this.alertDialogService.open('Validace', 'Zadejte název produktu.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_name_required'), 'warning');
       return false;
     }
 
@@ -527,12 +567,12 @@ override loadData(): void {
     if (this.showVariantsModal) {
       for (const v of activeVariants) {
         if (!v.variant_name) {
-          this.alertDialogService.open('Validace', 'Všechny varianty musí mít název.', 'warning');
+          this.alertDialogService.open(this.t('validation_title'), this.t('validation_variant_name_required'), 'warning');
           return false;
         }
         const priceEur = v.prices?.price_eur_with_vat ?? v.price_with_vat_eur;
         if (!priceEur || priceEur <= 0) {
-          this.alertDialogService.open('Validace', `Varianta "${v.variant_name}" musí mít cenu v EUR > 0.`, 'warning');
+          this.alertDialogService.open(this.t('validation_title'), this.t('validation_variant_price_required').replace('{name}', v.variant_name), 'warning');
           return false;
         }
       }
@@ -541,30 +581,30 @@ override loadData(): void {
 
     if (activeVariants.length === 0) {
       if (!this.editingProduct.price_eur || this.editingProduct.price_eur <= 0) {
-        this.alertDialogService.open('Validace', 'Cena v EUR musí být > 0.', 'warning');
+        this.alertDialogService.open(this.t('validation_title'), this.t('validation_price_required'), 'warning');
         return false;
       }
     } else {
       for (const v of activeVariants) {
         if (!v.variant_name) {
-          this.alertDialogService.open('Validace', 'Všechny varianty musí mít název.', 'warning');
+          this.alertDialogService.open(this.t('validation_title'), this.t('validation_variant_name_required'), 'warning');
           return false;
         }
         const priceEur = v.prices?.price_eur_with_vat ?? v.price_with_vat_eur;
         if (!priceEur || priceEur <= 0) {
-          this.alertDialogService.open('Validace', `Varianta "${v.variant_name}" musí mít cenu v EUR > 0.`, 'warning');
+          this.alertDialogService.open(this.t('validation_title'), this.t('validation_variant_price_required').replace('{name}', v.variant_name), 'warning');
           return false;
         }
       }
     }
 
     if (!this.editingProduct.sku?.trim()) {
-      this.alertDialogService.open('Validace', 'Zadejte SKU produktu.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_sku_required'), 'warning');
       return false;
     }
 
     if (this.editingProduct.category_id && this.editingProduct.category_id < 0) {
-      this.alertDialogService.open('Validace', 'Zvolená kategorie je neplatná.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_category_invalid'), 'warning');
       return false;
     }
 
@@ -579,7 +619,7 @@ override loadData(): void {
     const hasAnyCategory        = hasMainCategory || hasAdditionalCategories;
 
     if (this.editingProduct.is_active && !hasAnyCategory) {
-      this.alertDialogService.open('Validace', 'Aktivní produkt musí mít přiřazenou kategorii.', 'warning');
+      this.alertDialogService.open(this.t('validation_title'), this.t('validation_active_needs_category'), 'warning');
       return;
     }
 
@@ -662,7 +702,7 @@ override loadData(): void {
 
     this.dataHandler.post<any>(url, fd).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', 'Produkt byl úspěšně uložen.', 'success');
+        this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('product_saved_message'), 'success');
         this.closeProductForm();
         this.closeVariantsModal();
         this.closeImagesModal();
@@ -748,9 +788,10 @@ override loadData(): void {
     return supplierId ? (this.suppliers.find(s => s.id === supplierId)?.name ?? 'N/A') : '-';
   }
 
+  /** @refactor-note (2026-09-08) BUGFIX - natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`. */
   formatCurrency(value: number, currency = 'EUR'): string {
     if (value == null) return '-';
-    return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency }).format(value);
+    return new Intl.NumberFormat(this.i18n.getDateLocale(), { style: 'currency', currency }).format(value);
   }
 
   getVisibleVariants(product: any): any[] {
@@ -763,7 +804,8 @@ override loadData(): void {
       ? images.filter((img: any) => !img._delete && img.image_path && img.variant_id === variantId)
       : images.filter((img: any) => !img._delete && !img.variant_id);
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }

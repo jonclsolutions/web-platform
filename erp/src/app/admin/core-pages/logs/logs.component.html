@@ -1,14 +1,13 @@
 <!-- 
-    @file: business-logs.component.html
-    @path: /src/app/admin/web-pages/business-logs/business-logs.component.html
+    @file: logs.component.html
+    @path: /src/app/admin/core-pages/logs/logs.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2025
-    @refactor-note (2026-08-18v4): `[detailsColumns]="detailsColumns"` binding na
-        `app-table-builder` - VOLITELNÝ, jen pro hezčí popisky extra polí v exportu
-        (`context_data` -> "Payload / JSON Data" místo syrového klíče). Která extra
-        pole se vůbec nabídnou se určuje skenem dat (zero-touch), tenhle binding na to
-        nemá vliv - viz table-builder.component.ts stejné datum.
+    @created: 2026
+    (Earlier refactor-note for detailsColumns/context_data label is unchanged.)
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": natvrdo psané texty ('Systémové logy'/'Akce'/'Datum vytvoření')
+        nahrazeny `t('core-logs.xxx')` bindingy - viz logs.component.ts stejné datum.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -19,11 +18,11 @@
 @if (!errorMessage) {
 <div>
 <div class="toolbar-actions m-b-t-5">
-<div class="table-header">Systémové logy</div>
+<div class="table-header">{{ t('table_header') }}</div>
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
-[triggerLabel]="'Akce'"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -79,7 +78,7 @@
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

@@ -79,7 +79,7 @@ class CoreEmailAccessPolicyController extends Controller
         $validated = $request->validate([
             'primary_email_domain' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i'],
         ], [
-            'primary_email_domain.regex' => 'Zadejte platnou doménu (např. rpsw.cz), bez "@" nebo cesty.',
+            'primary_email_domain.regex' => 'Please enter a valid domain (e.g. rpsw.cz), without "@" or path.',
         ]);
 
         $normalized = $validated['primary_email_domain'] ?? null;
@@ -95,7 +95,7 @@ class CoreEmailAccessPolicyController extends Controller
             CoreLog::class,
             'email_access_primary_domain_updated',
             'Core',
-            "Hlavní e-mailová doména změněna z " . ($previous ?: '(bez omezení)') . " na " . ($normalized ?: '(bez omezení)') . ".",
+            "Primary email domain changed from " . ($previous ?: '(no restriction)') . " to " . ($normalized ?: '(no restriction)') . ".",
             $setting->id,
             'CoreSecuritySetting'
         );
@@ -138,7 +138,7 @@ class CoreEmailAccessPolicyController extends Controller
             ->exists();
 
         if ($exists) {
-            return response()->json(['message' => 'Tato položka už na whitelistu je.'], 422);
+            return response()->json(['message' => 'This item is already on the whitelist.'], 422);
         }
 
         $rule = CoreEmailAccessRule::create([
@@ -151,7 +151,7 @@ class CoreEmailAccessPolicyController extends Controller
             CoreLog::class,
             'email_access_rule_created',
             'Core',
-            "Přidána whitelist položka (" . $validated['type'] . "): {$rule->value}",
+            "Added whitelist item (" . $validated['type'] . "): {$rule->value}",
             $rule->id,
             'CoreEmailAccessRule'
         );
@@ -170,12 +170,12 @@ class CoreEmailAccessPolicyController extends Controller
         }
 
         $rule = CoreEmailAccessRule::findOrFail($id);
-        $description = "Smazána whitelist položka ({$rule->type}): {$rule->value}";
+        $description = "Deleted whitelist item ({$rule->type}): {$rule->value}";
         $rule->delete();
 
         $this->logAction($request, CoreLog::class, 'email_access_rule_deleted', 'Core', $description, (int) $id, 'CoreEmailAccessRule');
 
-        return response()->json(['message' => 'Položka byla smazána.']);
+        return response()->json(['message' => 'Item has been deleted.']);
     }
 
     private function actorIsSysadmin(Request $request): bool
@@ -188,6 +188,6 @@ class CoreEmailAccessPolicyController extends Controller
 
     private function forbidden(): JsonResponse
     {
-        return response()->json(['message' => 'Tato akce vyžaduje roli sysadmin.'], 403);
+        return response()->json(['message' => 'This action requires the sysadmin role.'], 403);
     }
 }

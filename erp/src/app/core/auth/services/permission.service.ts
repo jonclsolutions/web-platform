@@ -31,7 +31,7 @@ export class PermissionService {
       try {
         this.userPermissions$.next(JSON.parse(savedPermissions));
       } catch (e) {
-        console.error('Chyba při parsování userPermissions', e);
+        console.error('Parsing error in userPermissions', e);
       }
     }
   }

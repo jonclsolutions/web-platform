@@ -42,9 +42,10 @@ class UpdateWebSupportTicketRequest extends FormRequest
         ];
 
         return [
-            'category'         => ['sometimes', 'required', 'string', 'max:100'],
-            'priority'         => ['sometimes', 'required', 'string', 'max:50'],
-            'state'            => ['sometimes', 'required', 'string', 'max:50'],
+            'priority'         => ['sometimes', 'required', 'string', 'max:50', 'in:low,medium,high'],
+            // rules() - nahradit řádek 'category', a zpřísnit 'state' na stejný vzor jako priority:
+            'category'         => ['sometimes', 'required', 'string', 'max:100', 'in:it,business,bug,other'],
+            'state'            => ['sometimes', 'required', 'string', 'max:50', 'in:new,open,closed'],
             'subject'          => ['sometimes', 'required', 'string', 'max:255'],
             'description'      => ['sometimes', 'required', 'string'],
             'user_name_plain'  => ['sometimes', 'required', 'string', 'max:255'],
@@ -66,8 +67,8 @@ class UpdateWebSupportTicketRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'attachment.max'   => 'Soubor nesmí být větší než 20 MB.',
-            'attachment.mimes' => 'Tento typ souboru není povolen. Povoleny jsou pouze obrázky, PDF, textové/tabulkové soubory a ZIP archivy.',
+            'attachment.max'   => 'The file must not be larger than 20 MB.',
+            'attachment.mimes' => 'This file type is not allowed. Only images, PDFs, text/spreadsheet files, and ZIP archives are permitted.',
         ];
     }
 }

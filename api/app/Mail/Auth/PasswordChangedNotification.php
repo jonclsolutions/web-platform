@@ -36,7 +36,7 @@ class PasswordChangedNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Vaše heslo bylo změněno - RPSW Administrace',
+            subject: 'Your password has been changed',
         );
     }
 

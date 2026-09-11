@@ -5,27 +5,27 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Manages sales order (realizace) lifecycle, including integration with sales leads, multiple file attachment handling, and comprehensive audit logging.
- * @refactor-note (2026) store() resolvuje lead vyhradne pres neuhodnutelny lead_token
- *      (public_token) v transakci s lockForUpdate(), coz atomicky brani dvojimu
- *      odeslani stejneho objednavkoveho formulare.
- * @refactor-note (2026-2) Potvrzovaci e-mail prepnut na Mail::queue().
- * @refactor-note (2026-08) attachment_path odstraneno, nahrazeno web_attachments.
- * @refactor-note (2026-08-6) MIGRACE LOGOVANI na sdileny LogsActivity trait misto
- * lokalni duplicitni logAction(). Domenove beze zmeny (WebLog::class).
+ * @description Manages sales order lifecycle, including integration with sales leads, multiple file attachment handling, and comprehensive audit logging.
+ * @refactor-note (2026) store() resolves lead exclusively via unguessable lead_token
+ *      (public_token) in a transaction with lockForUpdate(), which atomically prevents double
+ *      submission of the same order form.
+ * @refactor-note (2026-2) Confirmation email switched to Mail::queue().
+ * @refactor-note (2026-08) attachment_path removed, replaced by web_attachments.
+ * @refactor-note (2026-08-6) LOGGING MIGRATION to shared LogsActivity trait instead of
+ * local duplicate logAction(). Domain-wise unchanged (WebLog::class).
  *
- * @bugfix-note (2026-08-15) KRITICKA OPRAVA (GDPR): store() ted explicitne premapuje
- * dataProcessingAgreement/tosAgreement na snake_case DB sloupce PRED volanim
+ * @bugfix-note (2026-08-15) CRITICAL FIX (GDPR): store() now explicitly remaps
+ * dataProcessingAgreement/tosAgreement to snake_case DB columns BEFORE calling
  * WebSalesOrder::create().
  *
- * @refactor-note (2026-08-23) HROMADNE MAZANI V JEDNOM REQUESTU: pridana bulkDestroy() -
- * viz TableBuilderComponent.onBulkDeleteClick() (vola POST web/sales_orders/bulk-delete).
- * ZAMERNE replikuje STEJNOU logiku jako destroy() (uklid priloh z disku pres
- * deleteAllAttachments() pri force_delete=true), ne genericky Model::destroy($ids).
- * @note Tenhle resource NENI dobry kandidat na budouci hromadny import - store() ma
- * atomickou vazbu na lead_token (lockForUpdate transakce spotrebovavajici jednorazovy
- * odkaz) a vyzaduje explicitni GDPR souhlas (data_processing_agreement/tos_agreement),
- * ktery nelze smysluplne "odsouhlasit" retroaktivne za historicka importovana data.
+ * @refactor-note (2026-08-23) BULK DELETE IN A SINGLE REQUEST: added bulkDestroy() -
+ * see TableBuilderComponent.onBulkDeleteClick() (calls POST web/sales_orders/bulk-delete).
+ * INTENTIONALLY replicates THE SAME logic as destroy() (cleanup of attachments from disk via
+ * deleteAllAttachments() when force_delete=true), not generic Model::destroy($ids).
+ * @note This resource is NOT a good candidate for future bulk import - store() has
+ * an atomic binding to lead_token (lockForUpdate transaction consuming a single-use
+ * link) and requires explicit GDPR consent (data_processing_agreement/tos_agreement),
+ * which cannot be meaningfully "consented to" retroactively for historical imported data.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -92,9 +92,8 @@ class WebSalesOrderController extends Controller
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
         if ($noPagination) {
-            $this->logAction($request, WebLog::class, 'export', 'WebSalesOrder', "Hromadný export realizací.");
-            $data = $query->get();
-            return WebSalesOrderResource::collection($data);
+            $this->logAction($request, WebLog::class, 'export', 'WebSalesOrder', "Bulk export of sales orders.");
+            return WebSalesOrderResource::collection($query->get());
         }
 
         $data = $query->paginate($perPage);
@@ -130,11 +129,11 @@ class WebSalesOrderController extends Controller
                         ->first();
 
                     if (!$lead) {
-                        abort(404, 'Odkaz je neplatný nebo již expiroval.');
+                        abort(404, 'The link is invalid or has expired.');
                     }
 
                     if ($lead->public_token_used_at) {
-                        abort(410, 'Tento formulář již byl jednou odeslán a odkaz není možné použít znovu.');
+                        abort(410, 'This form has already been submitted once and the link cannot be used again.');
                     }
 
                     $validated['lead_id'] = $lead->id;
@@ -142,7 +141,7 @@ class WebSalesOrderController extends Controller
 
                     $order = WebSalesOrder::create($validated);
 
-                    $lead->status = 'Poptávkový formulář odeslán';
+                    $lead->status = 'Inquiry form submitted';
                     $lead->public_token_used_at = now();
                     $lead->save();
 
@@ -150,29 +149,29 @@ class WebSalesOrderController extends Controller
                 });
             } else {
                 if (empty($validated['salesman_name'])) {
-                    $validated['salesman_name'] = 'Webová poptávka (bez leadu)';
+                    $validated['salesman_name'] = 'Web inquiry (without lead)';
                 }
                 $order = WebSalesOrder::create($validated);
             }
 
             $this->storeAttachments($request, $order, self::ATTACHMENT_FOLDER);
 
-            $this->logAction($request, WebLog::class, 'create', 'WebSalesOrder', "Vytvořena realizace pro: {$order->client_name}", $order->id, 'WebSalesOrder');
+            $this->logAction($request, WebLog::class, 'create', 'WebSalesOrder', "Created sales order for: {$order->client_name}", $order->id, 'WebSalesOrder');
 
             try {
                 Mail::to($order->client_email)
                     ->queue(new WebSalesOrderReceived($order));
             } catch (\Throwable $e) {
-                $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Nepodařilo se odeslat potvrzovací e-mail: " . $e->getMessage(), $order->id, 'WebSalesOrder');
+                $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Failed to send confirmation email: " . $e->getMessage(), $order->id, 'WebSalesOrder');
             }
 
             return response()->json(new WebSalesOrderResource($order->load(['lead', 'attachments'])), 201);
         } catch (HttpException $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Odmítnuto vytvoření realizace (token): " . $e->getMessage());
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Sales order creation rejected (token): " . $e->getMessage());
             return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Chyba při vytváření realizace: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření realizace selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error creating sales order: " . $e->getMessage());
+            return response()->json(['message' => 'Sales order creation failed.'], 500);
         }
     }
 
@@ -201,11 +200,11 @@ class WebSalesOrderController extends Controller
 
             $this->storeAttachments($request, $order, self::ATTACHMENT_FOLDER);
 
-            $this->logAction($request, WebLog::class, 'update', 'WebSalesOrder', "Aktualizace realizace ID: {$order->id}", $order->id, 'WebSalesOrder');
+            $this->logAction($request, WebLog::class, 'update', 'WebSalesOrder', "Updated sales order ID: {$order->id}", $order->id, 'WebSalesOrder');
             return response()->json(new WebSalesOrderResource($order->fresh()->load(['lead', 'attachments'])));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Chyba při aktualizaci realizace ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
-            return response()->json(['message' => 'Aktualizace realizace selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error updating sales order ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
+            return response()->json(['message' => 'Sales order update failed.'], 500);
         }
     }
 
@@ -225,21 +224,21 @@ class WebSalesOrderController extends Controller
                 $item->delete();
             }
 
-            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSalesOrder', "Smazání realizace ID: $id", (int) $id, 'WebSalesOrder');
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSalesOrder', "Deleted sales order ID: $id", (int) $id, 'WebSalesOrder');
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Chyba při mazání realizace ID $id: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
-            return response()->json(['message' => 'Smazání realizace selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error deleting sales order ID $id: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
+            return response()->json(['message' => 'Sales order deletion failed.'], 500);
         }
     }
 
     /**
-     * @description Hromadně smaže vybrané realizace JEDNÍM requestem - viz
-     * TableBuilderComponent.onBulkDeleteClick() (volá POST web/sales_orders/bulk-delete).
-     * Replikuje STEJNOU logiku jako destroy() (úklid příloh z disku při
-     * force_delete=true) - ne generický Model::destroy($ids), který by tenhle úklid
-     * potichu přeskočil a nechal osiřelé soubory ve storage/app/public/sales_orders.
-     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     * @description Bulk deletes selected sales orders in a single request - see
+     * TableBuilderComponent.onBulkDeleteClick() (calls POST web/sales_orders/bulk-delete).
+     * Replicates THE SAME logic as destroy() (cleanup of attachments from disk on
+     * force_delete=true) - not generic Model::destroy($ids), which would silently skip
+     * this cleanup and leave orphaned files in storage/app/public/sales_orders.
+     * @param Request $request Body contains { ids: number[], force_delete?: boolean }.
      */
     public function bulkDestroy(Request $request): JsonResponse
     {
@@ -269,8 +268,8 @@ class WebSalesOrderController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Chyba při hromadném mazání realizací: " . $e->getMessage());
-            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error during bulk deletion of sales orders: " . $e->getMessage());
+            return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
 
         $skippedCount = $requestedCount - $deletedCount;
@@ -281,7 +280,7 @@ class WebSalesOrderController extends Controller
             WebLog::class,
             $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
             'WebSalesOrder',
-            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} realizací (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            'Bulk ' . ($forceDelete ? 'permanent ' : '') . "deletion of {$deletedCount} sales orders (requested {$requestedCount}, IDs: {$idsPreview}).",
             null,
             'WebSalesOrder'
         );
@@ -301,11 +300,11 @@ class WebSalesOrderController extends Controller
         try {
             $item = WebSalesOrder::withTrashed()->findOrFail($id);
             $item->restore();
-            $this->logAction($request, WebLog::class, 'restore', 'WebSalesOrder', "Obnova realizace ID: $id", (int) $id, 'WebSalesOrder');
+            $this->logAction($request, WebLog::class, 'restore', 'WebSalesOrder', "Restored sales order ID: $id", (int) $id, 'WebSalesOrder');
             return response()->json(new WebSalesOrderResource($item->load(['lead', 'attachments'])));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Chyba při obnově realizace ID $id: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
-            return response()->json(['message' => 'Obnova realizace selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error restoring sales order ID $id: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
+            return response()->json(['message' => 'Sales order restoration failed.'], 500);
         }
     }
 
@@ -323,11 +322,11 @@ class WebSalesOrderController extends Controller
                 $order->forceDelete();
             }
 
-            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSalesOrder', "Hromadné smazání koše realizací. Počet: $count");
+            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSalesOrder', "Emptied sales order trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Chyba při vysypávání koše realizací: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error emptying sales order trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 }

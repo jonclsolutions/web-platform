@@ -32,8 +32,8 @@ class StoreCoreRoleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'role_name.unique'   => 'Tato role již existuje.',
-            'role_name.required' => 'Název role je povinný.',
+            'role_name.unique'   => 'This role already exists.',
+            'role_name.required' => 'The role name is mandatory.',
         ];
     }
 }

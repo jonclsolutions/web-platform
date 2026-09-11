@@ -4,6 +4,9 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY natvrdo psané české texty nahrazeny `t('shop-customers.xxx')`
+        bindingy - viz customers.component.ts stejné datum.
 -->
 
 <div class="customers-container container mx-auto p-4">
@@ -15,14 +18,14 @@
     <div>
       <div class="toolbar-actions m-b-t-5">
         @if(!showTrashTable){
-<div class="table-header">Zákazníci</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
         <div class="toolbar-actions-in">
           <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
         </div>
@@ -65,7 +68,7 @@ triggerLabel="Akce"
             <app-trash-table-builder
               [data]="trashData"
               [columns]="trashCustomerColumns"
-              [tableCaption]="'Koš - smazaní zákazníci'"
+              [tableCaption]="t('trash_table_caption')"
               [apiEndpoint]="apiEndpoint"
               (itemRestored)="handleItemRestored()">
             </app-trash-table-builder>
@@ -132,15 +135,15 @@ triggerLabel="Akce"
           <div class="orders-stats">
             <div class="orders-stat">
               <span class="orders-stat-value">{{ ordersTotalItems }}</span>
-              <span class="orders-stat-label">Objednávek</span>
+              <span class="orders-stat-label">{{ t('stat_orders_label') }}</span>
             </div>
             <div class="orders-stat-divider"></div>
             <div class="orders-stat">
               <span class="orders-stat-value">{{ formatCurrency(selectedCustomerForOrders.total_spent ?? 0) }}</span>
-              <span class="orders-stat-label">Celková útrata</span>
+              <span class="orders-stat-label">{{ t('stat_total_spent_label') }}</span>
             </div>
           </div>
-          <button class="orders-close-btn" (click)="closeOrdersModal()" title="Zavřít">✕</button>
+          <button class="orders-close-btn" (click)="closeOrdersModal()" [title]="i18n.getValue('shared.close')">✕</button>
         </div>
       </div>
 
@@ -148,7 +151,7 @@ triggerLabel="Akce"
         @if (customerOrdersLoading) {
           <div class="orders-loading">
             <div class="orders-spinner"></div>
-            <span>Načítání objednávek…</span>
+            <span>{{ t('loading_orders') }}</span>
           </div>
         }
 
@@ -162,7 +165,7 @@ triggerLabel="Akce"
         @if (!customerOrdersLoading && !customerOrdersError && customerOrders.length === 0) {
           <div class="orders-empty">
             <div class="orders-empty-icon">📦</div>
-            <p class="orders-empty-title">Zákazník zatím nemá žádné objednávky.</p>
+            <p class="orders-empty-title">{{ t('no_orders_yet') }}</p>
           </div>
         }
 
@@ -189,7 +192,7 @@ triggerLabel="Akce"
 
                     <div class="order-amounts">
                       @if (order.items_count != null) {
-                        <span class="order-items-count">{{ order.items_count }} pol.</span>
+                        <span class="order-items-count">{{ order.items_count }} {{ t('items_count_suffix') }}</span>
                       }
                       <span class="order-final-amount">{{ formatCurrency(order.final_amount) }}</span>
                     </div>
@@ -204,84 +207,84 @@ triggerLabel="Akce"
                   <div class="order-detail">
                     <div class="order-detail-grid">
                       <div class="order-detail-section">
-                        <h4 class="order-detail-section-title">Doručení</h4>
+                        <h4 class="order-detail-section-title">{{ t('delivery_section_title') }}</h4>
                         @if (order.shipping_address) {
                           <p class="order-detail-line">
-                            <span class="odl-label">Adresa</span>
+                            <span class="odl-label">{{ t('address_label') }}</span>
                             <span>{{ order.shipping_address }}, {{ order.shipping_city }} {{ order.shipping_postal_code }}</span>
                           </p>
                         }
                         @if (order.shipping_method?.name) {
                           <p class="order-detail-line">
-                            <span class="odl-label">Doprava</span>
+                            <span class="odl-label">{{ t('shipping_label') }}</span>
                             <span>{{ order.shipping_method.name }}</span>
                           </p>
                         }
                         @if (order.payment_method?.name) {
                           <p class="order-detail-line">
-                            <span class="odl-label">Platba</span>
+                            <span class="odl-label">{{ t('payment_label') }}</span>
                             <span>{{ order.payment_method.name }}</span>
                           </p>
                         }
                         @if (order.paid_at) {
                           <p class="order-detail-line">
-                            <span class="odl-label">Zaplaceno</span>
+                            <span class="odl-label">{{ t('paid_at_label') }}</span>
                             <span>{{ formatDate(order.paid_at) }}</span>
                           </p>
                         }
                         @if (order.shipped_at) {
                           <p class="order-detail-line">
-                            <span class="odl-label">Odesláno</span>
+                            <span class="odl-label">{{ t('shipped_at_label') }}</span>
                             <span>{{ formatDate(order.shipped_at) }}</span>
                           </p>
                         }
                         @if (order.notes) {
                           <p class="order-detail-line">
-                            <span class="odl-label">Poznámka</span>
+                            <span class="odl-label">{{ t('note_label') }}</span>
                             <span>{{ order.notes }}</span>
                           </p>
                         }
                       </div>
 
                       <div class="order-detail-section">
-                        <h4 class="order-detail-section-title">Souhrn cen</h4>
+                        <h4 class="order-detail-section-title">{{ t('price_summary_title') }}</h4>
                         <p class="order-detail-line">
-                          <span class="odl-label">Mezisoučet</span>
+                          <span class="odl-label">{{ t('subtotal_label') }}</span>
                           <span>{{ formatCurrency(order.total_amount) }}</span>
                         </p>
                         @if (order.shipping_amount > 0) {
                           <p class="order-detail-line">
-                            <span class="odl-label">Doprava</span>
+                            <span class="odl-label">{{ t('shipping_label') }}</span>
                             <span>{{ formatCurrency(order.shipping_amount) }}</span>
                           </p>
                         }
                         @if (order.discount_amount > 0) {
                           <p class="order-detail-line order-detail-line-discount">
-                            <span class="odl-label">Sleva</span>
+                            <span class="odl-label">{{ t('discount_label') }}</span>
                             <span>−{{ formatCurrency(order.discount_amount) }}</span>
                           </p>
                         }
                         @if (order.tax_amount > 0) {
                           <p class="order-detail-line">
-                            <span class="odl-label">DPH</span>
+                            <span class="odl-label">{{ t('vat_label') }}</span>
                             <span>{{ formatCurrency(order.tax_amount) }}</span>
                           </p>
                         }
                         <p class="order-detail-line order-detail-line-total">
-                          <span class="odl-label">Celkem</span>
+                          <span class="odl-label">{{ t('total_label') }}</span>
                           <span>{{ formatCurrency(order.final_amount) }}</span>
                         </p>
                       </div>
                     </div>
                     @if (order.items && order.items.length > 0) {
                       <div class="order-items-section">
-                        <h4 class="order-detail-section-title">Položky ({{ order.items.length }})</h4>
+                        <h4 class="order-detail-section-title">{{ t('items_section_title') }} ({{ order.items.length }})</h4>
                         <div class="order-items-table">
                           <div class="order-items-header">
-                            <span class="oi-name">Produkt</span>
-                            <span class="oi-qty">Ks</span>
-                            <span class="oi-price">Jedn. cena</span>
-                            <span class="oi-total">Celkem</span>
+                            <span class="oi-name">{{ t('items_head_product') }}</span>
+                            <span class="oi-qty">{{ t('items_head_qty') }}</span>
+                            <span class="oi-price">{{ t('items_head_unit_price') }}</span>
+                            <span class="oi-total">{{ t('items_head_total') }}</span>
                           </div>
                           @for (item of order.items; track item.id) {
                             <div class="order-item-row">
@@ -312,7 +315,7 @@ triggerLabel="Akce"
       @if (!customerOrdersLoading && ordersTotalPages > 1) {
         <div class="orders-modal-footer">
           <span class="orders-pagination-info">
-            {{ (ordersCurrentPage - 1) * ordersPerPage + 1 }}–{{ maxDisplayedOrdersCount }} z {{ ordersTotalItems }}
+            {{ (ordersCurrentPage - 1) * ordersPerPage + 1 }}–{{ maxDisplayedOrdersCount }} {{ t('of_label') }} {{ ordersTotalItems }}
           </span>
           <div class="orders-pagination">
             <button
@@ -352,7 +355,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

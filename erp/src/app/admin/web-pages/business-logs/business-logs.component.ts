@@ -9,6 +9,19 @@
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and state management.
  * - TableBuilderComponent: Used for rendering the data grid and supporting CSV exports.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
+ * - Config.create* factory functions: i18n-aware definitions for UI columns and toolbar
+ *   actions - see refactor-note (2026-09-08) below.
+ *
+ * @bugfix-note (2026-09-08) `toolbarButtons` getter NIKDY nekontroloval `btn.permission`
+ * (na rozdíl od VŠECH ostatních web-pages stránek) - `openGraphBuilder` tlačítko s
+ * `permission: 'web-view-web-logs'` se tak zobrazovalo i uživatelům bez tohoto práva.
+ * Doplněna stejná `permissionService.hasPermission()` kontrola jako všude jinde.
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi. `buttons.filter(b
+ * => b.action !== 'create' && b.action !== 'edit')` ODSTRANĚN - byl to no-op (`BUTTONS`
+ * nikdy `create`/`edit` tlačítko neobsahoval, jen `details`), zbytečně matoucí mrtvý
+ * kód stejně jako u `EditNewsComponent`. `graphColumns` přestalo být `readonly`.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -28,21 +41,28 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-business-logs',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, GraphBuilderComponent],
   templateUrl: './business-logs.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BusinessLogsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Webové logy';
+
+  protected override translationSection: string = 'business-logs';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`business-logs.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'web/logs';
 
-  buttons = Config.BUTTONS.filter(b => b.action !== 'create' && b.action !== 'edit');
-  tableColumns = Config.TABLE_COLUMNS;
-  filterColumns = Config.FILTER_COLUMNS;
-  detailsColumns = Config.DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  tableColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
   selectedItemForDetails: any | null = null;
 
   /**
@@ -52,15 +72,11 @@ export class BusinessLogsComponent extends BaseDataComponent<any> implements Cor
     sort_by: 'created_at',
     sort_direction: 'desc'
   };
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -68,18 +84,43 @@ showGraphBuilder = false;
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createBusinessLogButtons(this.i18n);
+      this.tableColumns = Config.createBusinessLogTableColumns(this.i18n);
+      this.filterColumns = Config.createBusinessLogFilterColumns(this.i18n);
+      this.detailsColumns = Config.createBusinessLogDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
   /**
    * @description Constructs the toolbar configuration.
-   * @returns List of buttons updated to reflect current filter visibility states.
+   * @returns List of buttons updated to reflect current filter visibility and permission state.
+   * @bugfix-note (2026-09-08) Doplněna `permission` kontrola - viz hlavička souboru.
    */
   get toolbarButtons(): Core.Button[] {
-    return Config.TOOLBAR_BUTTONS.map(btn => {
+    return Config.createBusinessLogToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
+
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
+      }
+
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible
+            ? this.t('toolbar_hide_filters')
+            : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
       }
@@ -95,7 +136,7 @@ showGraphBuilder = false;
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       exportActiveTable: () => this.exportActiveTable(),
-      openGraphBuilder: () => this.openGraphBuilder()
+      openGraphBuilder: () => this.openGraphBuilder(),
     };
     if (actions[action]) actions[action]();
   }
@@ -171,7 +212,8 @@ showGraphBuilder = false;
     this.showDetails = false;
     this.cd.markForCheck();
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }

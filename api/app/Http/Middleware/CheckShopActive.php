@@ -44,7 +44,7 @@ class CheckShopActive
         $settings = Cache::remember('site_setting_active_shop', 300, function () {
             return ShopSiteSetting::firstOrCreate(
                 ['id' => 1],
-                ['is_shop_active' => true, 'maintenance_message' => 'Omlouváme se, probíhá údržba systému.']
+                ['is_shop_active' => true, 'maintenance_message' => 'We apologize, system maintenance is in progress..']
             );
         });
 
@@ -52,7 +52,7 @@ class CheckShopActive
         if (!$settings->is_shop_active) {
             return response()->json([
                 'success' => false,
-                'message' => $settings->maintenance_message ?? 'Omlouváme se, ale příjem objednávek a provoz e-shopu je momentálně pozastaven.'
+                'message' => $settings->maintenance_message ?? 'We apologize, but order acceptance and e-shop operations are currently suspended..'
             ], 503);
         }
 

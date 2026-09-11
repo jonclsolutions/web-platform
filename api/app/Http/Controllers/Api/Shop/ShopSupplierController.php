@@ -104,11 +104,11 @@ class ShopSupplierController extends Controller
         try {
             $validated = $request->validated();
             $supplier = ShopSupplier::create($validated);
-            $this->logAction($request, ShopLog::class, 'create', 'ShopSupplier', "Vytvořen dodavatel: {$supplier->name}", $supplier->id, 'ShopSupplier');
+            $this->logAction($request, ShopLog::class, 'create', 'ShopSupplier', "Created supplier: {$supplier->name}", $supplier->id, 'ShopSupplier');
             return response()->json(new ShopSupplierResource($supplier), 201);
         } catch (\Exception $e) {
-            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Chyba při vytváření dodavatele: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření dodavatele selhalo.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error creating supplier: " . $e->getMessage());
+            return response()->json(['message' => 'Supplier creation failed.'], 500);
         }
     }
 
@@ -129,11 +129,11 @@ class ShopSupplierController extends Controller
         try {
             $supplier = ShopSupplier::withTrashed()->findOrFail($id);
             $supplier->update($request->validated());
-            $this->logAction($request, ShopLog::class, 'update', 'ShopSupplier', "Aktualizace dodavatele ID: {$supplier->id}", $supplier->id, 'ShopSupplier');
+            $this->logAction($request, ShopLog::class, 'update', 'ShopSupplier', "Updated supplier ID: {$supplier->id}", $supplier->id, 'ShopSupplier');
             return response()->json(new ShopSupplierResource($supplier));
         } catch (\Exception $e) {
-            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Chyba při aktualizaci dodavatele ID {$id}: " . $e->getMessage(), (int) $id, 'ShopSupplier');
-            return response()->json(['message' => 'Aktualizace dodavatele selhala.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error updating supplier ID {$id}: " . $e->getMessage(), (int) $id, 'ShopSupplier');
+            return response()->json(['message' => 'Supplier update failed.'], 500);
         }
     }
 
@@ -146,12 +146,12 @@ class ShopSupplierController extends Controller
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
             $item = ShopSupplier::withTrashed()->findOrFail($id);
             $forceDelete ? $item->forceDelete() : $item->delete();
-            $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopSupplier', "Smazání dodavatele ID: $id", (int) $id, 'ShopSupplier');
+            $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopSupplier', "Deleted supplier ID: $id", (int) $id, 'ShopSupplier');
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Chyba při mazání dodavatele ID $id: " . $e->getMessage(), (int) $id, 'ShopSupplier');
-            return response()->json(['message' => 'Smazání dodavatele selhalo.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error deleting supplier ID $id: " . $e->getMessage(), (int) $id, 'ShopSupplier');
+            return response()->json(['message' => 'Supplier deletion failed.'], 500);
         }
     }
 
@@ -163,11 +163,11 @@ class ShopSupplierController extends Controller
         try {
             $item = ShopSupplier::withTrashed()->findOrFail($id);
             $item->restore();
-            $this->logAction($request, ShopLog::class, 'restore', 'ShopSupplier', "Obnova dodavatele ID: $id", (int) $id, 'ShopSupplier');
+            $this->logAction($request, ShopLog::class, 'restore', 'ShopSupplier', "Restored supplier ID: $id", (int) $id, 'ShopSupplier');
             return response()->json(new ShopSupplierResource($item));
         } catch (\Exception $e) {
-            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Chyba při obnově dodavatele ID $id: " . $e->getMessage(), (int) $id, 'ShopSupplier');
-            return response()->json(['message' => 'Obnova dodavatele selhala.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error restoring supplier ID $id: " . $e->getMessage(), (int) $id, 'ShopSupplier');
+            return response()->json(['message' => 'Supplier restoration failed.'], 500);
         }
     }
 
@@ -179,11 +179,11 @@ class ShopSupplierController extends Controller
         try {
             $count = ShopSupplier::onlyTrashed()->count();
             ShopSupplier::onlyTrashed()->forceDelete();
-            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopSupplier', "Hromadné smazání koše dodavatelů. Počet: $count");
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopSupplier', "Bulk deleted supplier trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Chyba při vyprazdňování koše dodavatelů: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error emptying supplier trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 }

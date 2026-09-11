@@ -134,12 +134,12 @@ class WebJobApplicationController extends Controller
 
             $this->storeSingleAttachment($request, $application, self::CV_FOLDER, 'cv_file');
 
-            $this->logAction($request, WebLog::class, 'create', 'WebJobApplication', "Nová reakce na pozici: {$application->position_name} ({$application->first_name} {$application->last_name})", $application->id, 'WebJobApplication');
+            $this->logAction($request, WebLog::class, 'create', 'WebJobApplication', "New job application for position: {$application->position_name} ({$application->first_name} {$application->last_name})", $application->id, 'WebJobApplication');
 
             return response()->json(new WebJobApplicationResource($application->load('attachments')), 201);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Chyba při vytváření uchazeče: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření se nezdařilo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error creating job application: " . $e->getMessage());
+            return response()->json(['message' => 'Creation failed.'], 500);
         }
     }
 
@@ -172,7 +172,7 @@ class WebJobApplicationController extends Controller
                 WebLog::class,
                 'update',
                 'WebJobApplication',
-                "Aktualizace uchazeče ID: {$id}. Stav: " . ($validated['state'] ?? 'beze změny'),
+                "Updated job application ID: {$id}. State: " . ($validated['state'] ?? 'unchanged'),
                 (int) $id,
                 'WebJobApplication'
             );
@@ -184,11 +184,11 @@ class WebJobApplicationController extends Controller
                 WebLog::class,
                 'error',
                 'WebJobApplication',
-                "Chyba při aktualizaci uchazeče ID: {$id}. Chyba: " . $e->getMessage(),
+                "Error updating job application ID: {$id}. Error: " . $e->getMessage(),
                 (int) $id,
                 'WebJobApplication'
             );
-            return response()->json(['message' => 'Aktualizace se nezdařila.'], 500);
+            return response()->json(['message' => 'Update failed.'], 500);
         }
     }
 
@@ -208,12 +208,12 @@ class WebJobApplicationController extends Controller
                 $item->delete();
             }
 
-            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebJobApplication', "Smazání uchazeče ID: $id", (int) $id, 'WebJobApplication');
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebJobApplication', "Deleted job application ID: $id", (int) $id, 'WebJobApplication');
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Chyba při mazání uchazeče ID: $id. Chyba: " . $e->getMessage(), (int) $id, 'WebJobApplication');
-            return response()->json(['message' => 'Smazání se nezdařilo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error deleting job application ID: $id. Error: " . $e->getMessage(), (int) $id, 'WebJobApplication');
+            return response()->json(['message' => 'Deletion failed.'], 500);
         }
     }
 
@@ -257,8 +257,8 @@ class WebJobApplicationController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Chyba při hromadném mazání uchazečů: " . $e->getMessage());
-            return response()->json(['message' => 'Hromadné mazání se nezdařilo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error during bulk deletion of job applications: " . $e->getMessage());
+            return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
 
         $skippedCount = $requestedCount - $deletedCount;
@@ -269,7 +269,7 @@ class WebJobApplicationController extends Controller
             WebLog::class,
             $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
             'WebJobApplication',
-            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} uchazečů (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            'Bulk ' . ($forceDelete ? 'permanent ' : '') . "deletion of {$deletedCount} job applications (requested {$requestedCount}, IDs: {$idsPreview}).",
             null,
             'WebJobApplication'
         );
@@ -290,12 +290,12 @@ class WebJobApplicationController extends Controller
             $item = WebJobApplication::withTrashed()->findOrFail($id);
             $item->restore();
 
-            $this->logAction($request, WebLog::class, 'restore', 'WebJobApplication', "Obnova uchazeče ID: $id", (int) $id, 'WebJobApplication');
+            $this->logAction($request, WebLog::class, 'restore', 'WebJobApplication', "Restored job application ID: $id", (int) $id, 'WebJobApplication');
 
             return response()->json(new WebJobApplicationResource($item->load('attachments')));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Chyba při obnově uchazeče ID: $id. Chyba: " . $e->getMessage(), (int) $id, 'WebJobApplication');
-            return response()->json(['message' => 'Obnova se nezdařila.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error restoring job application ID: $id. Error: " . $e->getMessage(), (int) $id, 'WebJobApplication');
+            return response()->json(['message' => 'Restoration failed.'], 500);
         }
     }
 
@@ -313,12 +313,12 @@ class WebJobApplicationController extends Controller
                 $item->forceDelete();
             }
 
-            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebJobApplication', "Vysypání koše uchazečů. Počet: $count");
+            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebJobApplication', "Emptied job application trash. Count: $count");
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Chyba při vysypávání koše uchazečů. Chyba: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše se nezdařilo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error emptying job application trash. Error: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 }

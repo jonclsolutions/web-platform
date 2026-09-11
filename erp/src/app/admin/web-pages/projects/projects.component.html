@@ -4,15 +4,13 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @refactor-note (2026-08-29b) BACKLOG "sjednotit projects a project-threads":
-        pod tabulku projektů přidána DRUHÁ, nezávislá tabulka "Požadavky ze všech
-        projektů" (dřív ProjectThreadsComponent) - vlastní toolbar/filtr/stránkování,
-        vlastní lehký modal (pm-* třídy, sdíleno s "Správa" modalem níže).
-    @bugfix-note (2026-08-29c) BACKLOG "obrovská mezera mezi tabulkami": druhá
-        sekce už nemá vlastní duplicitní `.user-request-container.container.mx-auto.p-4`
-        obal (ten způsoboval sčítání paddingů/marginů) - obě tabulky teď žijí
-        v JEDNOM společném vnějším obalu, oddělené jen `.projects-threads-section`
-        (viz project-manage-modal.css) s pevným malým odstupem/dělicí čárou.
+    (Earlier refactor-notes for the projects/project-threads merge and the layout
+    gap fix are unchanged.)
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY natvrdo psané texty (nadpisy, tlačítka, modal texty, inline
+        ternáry pro stav vlákna/autora zprávy) nahrazeny `t('projects.xxx')` bindingy
+        nebo `threadStatusLabel()`/`threadAuthorLabel()` metodami - viz
+        projects.component.ts stejné datum.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -24,14 +22,14 @@
 <div>
 <div class="toolbar-actions m-b-t-5">
 @if(!showTrashTable){
-<div class="table-header">Projekty</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -71,7 +69,7 @@ triggerLabel="Akce"
 <app-trash-table-builder
 [data]="trashData"
 [columns]="trashProjectColumns"
-[tableCaption]="'Smazané projekty'"
+[tableCaption]="t('trash_table_caption')"
 [apiEndpoint]="apiEndpoint"
 [deletePermission]="'web-projects-delete'"
 (itemRestored)="handleItemRestored()">
@@ -93,16 +91,13 @@ triggerLabel="Akce"
 </div>
   }
 
-<!-- ═══════════ Cross-project tabulka požadavků (dřív samostatná stránka) - STEJNÝ
-     vnější obal jako tabulka projektů výše, ne nový .user-request-container -
-     zabraňuje sčítání paddingů/marginů (viz bugfix-note výše). ── -->
 <div class="projects-threads-section">
 <div class="toolbar-actions m-b-t-5">
-<div class="table-header">Požadavky ze všech projektů</div>
+<div class="table-header">{{ t('thread_table_header') }}</div>
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="threadsToolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleThreadsToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -170,41 +165,41 @@ triggerLabel="Akce"
 <div class="pm-card" (mousedown)="$event.stopPropagation()">
 
   <div class="pm-header">
-    <h2 class="pm-title">Správa projektu{{ managingProject ? ' — ' + managingProject.name : '' }}</h2>
+    <h2 class="pm-title">{{ t('manage_modal_title') }}{{ managingProject ? ' — ' + managingProject.name : '' }}</h2>
     <button type="button" class="pm-close" (click)="closeManageModal()">✕</button>
   </div>
 
   <div class="pm-body">
     @if (manageLoading) {
-      <p class="pm-loading">Načítám…</p>
+      <p class="pm-loading">{{ t('loading') }}</p>
     } @else if (managingProject) {
 
       <div class="pm-section">
-        <div class="pm-section-title">Přístup</div>
+        <div class="pm-section-title">{{ t('access_section_title') }}</div>
         <div class="pm-access-row">
           <code class="pm-url">{{ managingProject.public_url }}</code>
-          <button type="button" class="pm-btn-small" (click)="copyPublicUrl()">Kopírovat odkaz</button>
+          <button type="button" class="pm-btn-small" (click)="copyPublicUrl()">{{ t('copy_link_button') }}</button>
         </div>
 
         @if (revealedPassword) {
           <div class="pm-password-row">
-            <span class="pm-password-label">Heslo:</span>
+            <span class="pm-password-label">{{ t('password_label') }}</span>
             <code class="pm-password-value">{{ passwordVisible ? revealedPassword.password : '••••••••••••' }}</code>
-            <button type="button" class="pm-btn-small" (click)="togglePasswordVisibility()">{{ passwordVisible ? 'Skrýt' : 'Zobrazit' }}</button>
-            <button type="button" class="pm-btn-small" (click)="copyPassword()">Kopírovat heslo</button>
+            <button type="button" class="pm-btn-small" (click)="togglePasswordVisibility()">{{ passwordVisible ? t('hide_button') : t('show_button') }}</button>
+            <button type="button" class="pm-btn-small" (click)="copyPassword()">{{ t('copy_password_button') }}</button>
           </div>
-          <p class="pm-password-hint">Vygenerováno {{ revealedPassword.generatedAt | date:'d.M.yyyy HH:mm' }}. Viditelné jen v tomto prohlížeči, dokud nezavřeš kartu.</p>
+          <p class="pm-password-hint">{{ t('password_generated_hint') }} {{ revealedPassword.generatedAt | date:'d.M.yyyy HH:mm' }}. {{ t('password_visibility_hint') }}</p>
         } @else {
-          <p class="pm-password-hint">Heslo se v čitelné podobě neukládá - pokud ho zákazník ztratil, vygeneruj nové.</p>
+          <p class="pm-password-hint">{{ t('password_not_stored_hint') }}</p>
         }
 
         <button type="button" class="pm-btn-small pm-btn-warn" [disabled]="passwordRegenerating" (click)="regeneratePassword()">
-          {{ passwordRegenerating ? 'Generuji…' : 'Vygenerovat nové heslo' }}
+          {{ passwordRegenerating ? t('regenerating') : t('regenerate_password_button') }}
         </button>
       </div>
 
       <div class="pm-section">
-        <div class="pm-section-title">Checkpointy</div>
+        <div class="pm-section-title">{{ t('checkpoints_section_title') }}</div>
         <div class="pm-checkpoint-list">
           @for (cp of managingCheckpoints; track cp.id) {
             <div class="pm-checkpoint-item">
@@ -216,60 +211,60 @@ triggerLabel="Akce"
             </div>
           }
           @if (managingCheckpoints.length === 0) {
-            <p class="pm-empty">Zatím žádné checkpointy.</p>
+            <p class="pm-empty">{{ t('checkpoints_empty') }}</p>
           }
         </div>
         <div class="pm-add-checkpoint">
-          <input type="text" class="pm-input" placeholder="Nový checkpoint (např. Návrh UI)" [(ngModel)]="newCheckpointLabel" (keyup.enter)="addCheckpoint()">
-          <button type="button" class="pm-btn-small" (click)="addCheckpoint()">Přidat</button>
+          <input type="text" class="pm-input" [placeholder]="t('checkpoint_add_placeholder')" [(ngModel)]="newCheckpointLabel" (keyup.enter)="addCheckpoint()">
+          <button type="button" class="pm-btn-small" (click)="addCheckpoint()">{{ t('add_button') }}</button>
         </div>
       </div>
 
       <div class="pm-section">
-        <div class="pm-section-title">Konverzace se zákazníkem</div>
+        <div class="pm-section-title">{{ t('conversation_section_title') }}</div>
 
         @if (!selectedThread) {
           <div class="pm-thread-list">
             @for (thread of managingThreads; track thread.id) {
               <button type="button" class="pm-thread-item" (click)="openThread(thread)">
                 <span class="pm-thread-subject">{{ thread.subject }}</span>
-                <span class="pm-thread-status" [class]="'status-' + thread.status">{{ thread.status === 'closed' ? 'Uzavřeno' : 'Aktivní' }}</span>
+                <span class="pm-thread-status" [class]="'status-' + thread.status">{{ threadStatusLabel(thread.status) }}</span>
                 <span class="pm-thread-priority" [class]="'priority-' + thread.priority">{{ thread.priority }}</span>
               </button>
             }
             @if (managingThreads.length === 0) {
-              <p class="pm-empty">Zákazník zatím nezaložil žádné vlákno.</p>
+              <p class="pm-empty">{{ t('threads_empty') }}</p>
             }
           </div>
         } @else {
           <div class="pm-thread-detail">
-            <button type="button" class="pm-btn-small" (click)="closeThread()">← Zpět na seznam</button>
+            <button type="button" class="pm-btn-small" (click)="closeThread()">{{ t('back_to_list') }}</button>
             <h3 class="pm-thread-detail-subject">{{ selectedThread.subject }}</h3>
 
             <div class="pm-thread-status-row">
-              <span class="pm-thread-status-label">Stav vlákna:</span>
+              <span class="pm-thread-status-label">{{ t('thread_status_label') }}</span>
               <select class="pm-input pm-thread-status-select" [ngModel]="selectedThread.status" (ngModelChange)="changeThreadStatus($event)">
-                <option value="active">Aktivní</option>
-                <option value="closed">Uzavřeno</option>
+                <option value="active">{{ t('thread_status_active') }}</option>
+                <option value="closed">{{ t('thread_status_closed') }}</option>
               </select>
             </div>
 
             @if (threadDetailLoading) {
-              <p class="pm-loading">Načítám…</p>
+              <p class="pm-loading">{{ t('loading') }}</p>
             } @else {
               <div class="pm-message-list">
                 @for (msg of selectedThread.messages; track msg.id) {
                   <div class="pm-message" [class.pm-message-admin]="msg.author_type === 'admin'">
-                    <div class="pm-message-meta">{{ msg.author_label || (msg.author_type === 'admin' ? 'Administrátor' : 'Zákazník') }} · {{ msg.created_at }}</div>
+                    <div class="pm-message-meta">{{ msg.author_label || threadAuthorLabel(msg.author_type) }} · {{ msg.created_at }}</div>
                     <div class="pm-message-body">{{ msg.body }}</div>
                   </div>
                 }
               </div>
 
               <div class="pm-reply-box">
-                <textarea class="pm-textarea" rows="3" placeholder="Napište odpověď…" [(ngModel)]="replyBody"></textarea>
+                <textarea class="pm-textarea" rows="3" [placeholder]="t('reply_placeholder')" [(ngModel)]="replyBody"></textarea>
                 <button type="button" class="pm-btn-small" [disabled]="replySending || !replyBody.trim()" (click)="sendReply()">
-                  {{ replySending ? 'Odesílám…' : 'Odeslat odpověď' }}
+                  {{ replySending ? t('sending') : t('send_reply_button') }}
                 </button>
               </div>
             }
@@ -294,20 +289,20 @@ triggerLabel="Akce"
   </div>
   <div class="pm-body">
     @if (threadModalLoading) {
-      <p class="pm-loading">Načítám…</p>
+      <p class="pm-loading">{{ t('loading') }}</p>
     } @else {
       <div class="pm-message-list">
         @for (msg of activeThread?.messages; track msg.id) {
           <div class="pm-message" [class.pm-message-admin]="msg.author_type === 'admin'">
-            <div class="pm-message-meta">{{ msg.author_label || (msg.author_type === 'admin' ? 'Administrátor' : 'Zákazník') }} · {{ msg.created_at }}</div>
+            <div class="pm-message-meta">{{ msg.author_label || threadAuthorLabel(msg.author_type) }} · {{ msg.created_at }}</div>
             <div class="pm-message-body">{{ msg.body }}</div>
           </div>
         }
       </div>
       <div class="pm-reply-box">
-        <textarea class="pm-textarea" rows="3" placeholder="Napište odpověď…" [(ngModel)]="threadModalReplyBody"></textarea>
+        <textarea class="pm-textarea" rows="3" [placeholder]="t('reply_placeholder')" [(ngModel)]="threadModalReplyBody"></textarea>
         <button type="button" class="pm-btn-small" [disabled]="threadModalReplySending || !threadModalReplyBody.trim()" (click)="sendThreadModalReply()">
-          {{ threadModalReplySending ? 'Odesílám…' : 'Odeslat odpověď' }}
+          {{ threadModalReplySending ? t('sending') : t('send_reply_button') }}
         </button>
       </div>
     }
@@ -321,7 +316,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

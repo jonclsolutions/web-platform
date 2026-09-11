@@ -4,11 +4,11 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
-    @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
-        ('web-support-tickets-delete') - viz trash-table-builder.component.ts stejné datum.
-    @refactor-note (2026-08-23): Přidán (importCompleted)="forceFullRefresh(filters)" -
-        stejný jednořádkový vzor jako (itemDeleted)/(refreshRequested), ať se po importu
-        nové záznamy hned zobrazí bez nutnosti ručního refreshe.
+    (Earlier refactor-notes for deletePermission and importCompleted are unchanged.)
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": natvrdo psané české texty ('Helpdesk tickety'/'Koš'/'Akce'/'Koš
+        smazaných ticketů'/'Datum vytvoření') nahrazeny `t('support-tickets.xxx')`
+        bindingy - viz support-tickets.component.ts stejné datum.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -20,14 +20,14 @@
 <div>
 <div class="toolbar-actions m-b-t-5">
 @if(!showTrashTable){
-<div class="table-header">Helpdesk tickety</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -58,6 +58,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [apiEndpoint]="apiEndpoint"
 (itemDeleted)="refreshData()"
+(createFormOpened)="handleCreateFormOpened()"
 (editFormOpened)="handleEditFormOpened($event)"
 (viewDetailsOpened)="handleViewDetails($event)">
 </app-table-builder>
@@ -66,7 +67,7 @@ triggerLabel="Akce"
 <app-trash-table-builder
 [data]="trashData"
 [columns]="trashColumns"
-[tableCaption]="'Koš smazaných ticketů'"
+[tableCaption]="t('trash_table_caption')"
 [apiEndpoint]="apiEndpoint"
 [deletePermission]="'web-support-tickets-delete'"
 (itemRestored)="refreshData()">
@@ -110,7 +111,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

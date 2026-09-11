@@ -62,11 +62,11 @@ class ImportFileParser
             'csv'  => $this->parseDelimited($file, ';'),
             'txt'  => $this->parseDelimited($file, "\t"),
             'json' => $this->parseJson($file),
-            default => throw new RuntimeException("Nepodporovaný formát souboru: {$format}"),
+            default => throw new RuntimeException("Unsupported file format: {$format}"),
         };
 
         if (empty($rows)) {
-            throw new RuntimeException('Soubor neobsahuje žádná data.');
+            throw new RuntimeException('The file contains no data.');
         }
 
         $headers = array_keys($rows[0]);
@@ -75,7 +75,7 @@ class ImportFileParser
         $dataRowCount = count($rows);
         if ($dataRowCount > $maxRows) {
             throw new RuntimeException(
-                "Soubor obsahuje {$dataRowCount} řádků, maximum je {$maxRows}. Rozdělte import na více souborů."
+                "The file contains {$dataRowCount} rows, the maximum is {$maxRows}. Please split the import into multiple files."
             );
         }
 
@@ -92,14 +92,14 @@ class ImportFileParser
     {
         $allowed = self::ALLOWED_MIME_TYPES[$format] ?? null;
         if ($allowed === null) {
-            throw new RuntimeException("Nepodporovaný formát souboru: {$format}");
+            throw new RuntimeException("Unsupported file format: {$format}");
         }
 
         $actualMime = $file->getMimeType();
         if (!in_array($actualMime, $allowed, true)) {
             throw new RuntimeException(
-                "Soubor neodpovídá zvolenému formátu '{$format}' (detekovaný typ: {$actualMime}). "
-                . 'Zkontrolujte, že jste vybrali správný formát a soubor není poškozený.'
+                "The file does not match the selected format '{$format}' (detected type: {$actualMime}). "
+                . 'Please check that you selected the correct format and that the file is not corrupted.'
             );
         }
     }
@@ -119,12 +119,12 @@ class ImportFileParser
             $missing = array_diff($expected, $actual);
             $extra = array_diff($actual, $expected);
             $parts = [];
-            if (!empty($missing)) $parts[] = 'chybí: ' . implode(', ', $missing);
-            if (!empty($extra)) $parts[] = 'navíc: ' . implode(', ', $extra);
+            if (!empty($missing)) $parts[] = 'missing: ' . implode(', ', $missing);
+            if (!empty($extra)) $parts[] = 'extra: ' . implode(', ', $extra);
 
             throw new RuntimeException(
-                'Hlavičky sloupců v souboru neodpovídají očekávanému formátu (' . implode('; ', $parts) . '). '
-                . 'Použijte prosím staženou šablonu.'
+                'The column headers in the file do not match the expected format (' . implode('; ', $parts) . '). '
+                . 'Please use the downloaded template.'
             );
         }
     }
@@ -137,7 +137,7 @@ class ImportFileParser
     {
         $handle = fopen($file->getRealPath(), 'r');
         if ($handle === false) {
-            throw new RuntimeException('Soubor se nepodařilo otevřít.');
+            throw new RuntimeException('Failed to open the file.');
         }
 
         try {
@@ -171,16 +171,16 @@ class ImportFileParser
         $decoded = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RuntimeException('Soubor není platný JSON: ' . json_last_error_msg());
+            throw new RuntimeException('The file is not a valid JSON: ' . json_last_error_msg());
         }
         if (!is_array($decoded)) {
-            throw new RuntimeException('JSON soubor musí obsahovat pole záznamů ([{...}, {...}]).');
+            throw new RuntimeException('The JSON file must contain an array of records ([{...}, {...}]).');
         }
         if (empty($decoded)) {
             return [];
         }
         if (!is_array($decoded[0] ?? null)) {
-            throw new RuntimeException('JSON soubor musí obsahovat pole OBJEKTŮ, ne pole prostých hodnot.');
+            throw new RuntimeException('The JSON file must contain an array of OBJECTS, not an array of primitive values.');
         }
 
         // Prázdný string -> null (stejná normalizace jako u CSV/TXT v combineRow(),
@@ -189,7 +189,7 @@ class ImportFileParser
         // všemi třemi formáty.
         return array_map(function ($item) {
             if (!is_array($item)) {
-                throw new RuntimeException('Každý záznam v JSON poli musí být objekt.');
+                throw new RuntimeException('Each record in the JSON array must be an object.');
             }
             return array_map(function ($v) {
                 if ($v === null || $v === '') return null;

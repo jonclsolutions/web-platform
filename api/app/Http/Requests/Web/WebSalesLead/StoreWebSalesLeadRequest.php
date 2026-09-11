@@ -35,13 +35,11 @@ class StoreWebSalesLeadRequest extends FormRequest
             'subject_name'       => ['required', 'string', 'min:2', 'max:255'],
             'first_contact_date' => ['nullable', 'date'],
             'source_channel'     => ['required', 'string', 'max:255', 'in:' . implode(',', [
-                'LinkedIn - Direct Message', 'LinkedIn - Komentář/Post', 'Facebook - Skupina',
-                'Facebook - Direct Message', 'Instagram - DM', 'X (Twitter)', 'WhatsApp',
-                'Telegram', 'Webový formulář', 'Email - Studený (Cold Email)', 'Email - Newsletter',
-                'Telefon - Studený (Cold Call)', 'Telefon - Příchozí poptávka', 'Osobní setkání',
-                'Networking / Akce / Konference', 'Doporučení (Referral)', 'Bývalý klient',
-                'Poptávkový portál', 'Google Moje Firma', 'Inzerát / Placená reklama (PPC)',
-                'Partner / Affiliate', 'Jiný online kanál', 'Jiný offline kanál'
+                'linkedin_dm', 'linkedin_post', 'facebook_group', 'facebook_dm', 'instagram_dm',
+                'x_twitter', 'whatsapp', 'telegram', 'web_form', 'email_cold', 'email_newsletter',
+                'phone_cold_call', 'phone_inbound', 'in_person_meeting', 'networking_event',
+                'referral', 'former_client', 'inquiry_portal', 'google_business', 'paid_ads_ppc',
+                'partner_affiliate', 'other_online', 'other_offline',
             ])],
             'user_id'            => ['nullable', 'integer', 'exists:users,id'],
             'salesman_name'      => ['nullable', 'string', 'max:255'],
@@ -52,12 +50,11 @@ class StoreWebSalesLeadRequest extends FormRequest
             'location'           => ['nullable', 'string', 'max:100'],
             'source_url'         => ['nullable', 'url', 'max:500'],
             'description'        => ['nullable', 'string'],
-            'priority'           => ['required', 'string', 'max:255', 'in:Nízká,Podprůměrná,Neutrální,Vysoká,Kritická'],
+            'priority'           => ['required', 'string', 'max:255', 'in:low,below_average,neutral,high,critical'],
             'status'             => ['required', 'string', 'max:255', 'in:' . implode(',', [
-                'Nové', 'Probíhá komunikace', 'Příprava nabídky', 'Nabídka odeslána', 
-                'Poptávkový formulář odeslán', 'Vyjednávání', 'Pozastaveno', 'Přebírá si dev team',
-                'Uzavřeno - Získáno', 'Čeká se na fakturaci', 'Čeká se na zaplacení',
-                'Uhrazeno - Projekt spuštěn', 'Uzavřeno - Ztraceno', 'Jiné'
+                'new', 'in_communication', 'preparing_offer', 'offer_sent', 'inquiry_form_sent',
+                'negotiating', 'on_hold', 'handed_to_dev_team', 'closed_won', 'awaiting_invoicing',
+                'awaiting_payment', 'paid_project_started', 'closed_lost', 'other',
             ])],
             'last_contact_date'  => ['nullable', 'date'],
             'next_step'          => ['nullable', 'string', 'max:255'],
@@ -73,17 +70,17 @@ class StoreWebSalesLeadRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'subject_name.required'     => 'Název subjektu nebo firmy je povinný.',
-            'subject_name.min'          => 'Název subjektu musí mít alespoň 2 znaky.',
-            'source_channel.required'   => 'Vyberte zdroj oslovení.',
-            'source_channel.in'         => 'Vybraný zdroj oslovení je neplatný.',
-            'contact_email.email'       => 'Zadejte platnou e-mailovou adresu.',
-            'contact_phone.regex'       => 'Zadejte platné telefonní číslo.',
-            'source_url.url'            => 'Zadejte platnou URL adresu.',
-            'priority.required'         => 'Vyberte prioritu leadu.',
-            'priority.in'               => 'Vybraná priorita je neplatná.',
-            'status.required'           => 'Vyberte aktuální stav leadu.',
-            'status.in'                 => 'Vybraný stav je neplatný.',
+            'subject_name.required'     => 'The subject or company name is required.',
+            'subject_name.min'          => 'The subject name must be at least 2 characters.',
+            'source_channel.required'   => 'Please select a source channel.',
+            'source_channel.in'         => 'The selected source channel is invalid.',
+            'contact_email.email'       => 'Please provide a valid email address.',
+            'contact_phone.regex'       => 'Please provide a valid phone number.',
+            'source_url.url'            => 'Please provide a valid URL address.',
+            'priority.required'         => 'Please select the lead priority.',
+            'priority.in'               => 'The selected priority is invalid.',
+            'status.required'           => 'Please select the current lead status.',
+            'status.in'                 => 'The selected status is invalid.',
         ];
     }
 }

@@ -42,7 +42,7 @@ export class TurnstileService {
       script.async = true;
       script.defer = true;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Nepodařilo se načíst ověření zabezpečení.'));
+      script.onerror = () => reject(new Error('Failed to load security verification.'));
       document.head.appendChild(script);
     });
 

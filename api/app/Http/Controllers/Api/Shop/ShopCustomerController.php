@@ -177,7 +177,7 @@ class ShopCustomerController extends Controller
                 $customer->forceDelete();
             }
 
-            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopCustomer', "Vysypání koše zákazníků. Počet: $count");
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopCustomer', "Customer bin cleanup. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error("ShopCustomer force delete all error: " . $e->getMessage());

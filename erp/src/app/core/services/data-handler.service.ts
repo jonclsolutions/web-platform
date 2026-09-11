@@ -9,29 +9,6 @@
  * - HttpClient: Facilitates secure API communication.
  * - AlertDialogService: Displays the single, authoritative user-facing error dialog upon API failure.
  *
- * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY + ZTRACENÁ
- * BACKEND ZPRÁVA: `handleError()` už PŘED touto opravou zobrazoval globální toast, ale
- * zároveň chybu PŘEBALIL do prostého `Error` objektu (`throwError(() => new Error(errorMessage))`),
- * který NEMÁ `.error` vlastnost. Desítky konzumentských komponent napříč adminem mají
- * vlastní `.subscribe({ error: (err) => this.alertDialogService.open('Chyba', err.error?.message
- * || '...', 'danger') })` - to způsobilo DVA nezávislé problémy naráz:
- * 1) Každá taková komponenta zobrazila DRUHÝ, DUPLICITNÍ toast pro TU SAMOU chybu
- *    (uživatel viděl 2-3 červené hlášky na jeden neúspěšný request).
- * 2) `err.error?.message` v těch komponentách bylo VŽDY `undefined` (přebalený `Error`
- *    žádnou `.error` property nemá), takže i ten duplicitní toast padal na obecný
- *    fallback text - konkrétní backend zpráva (validace, business pravidlo) se
- *    k uživateli nikdy nedostala, ani z jednoho z těch dvou toastů.
- * ŘEŠENÍ (ZÁMĚRNĚ CENTRALIZOVANÉ, ne rozptýlené do komponent - viz diskuze v týmu):
- * `handleError()` ZŮSTÁVÁ jediné a jediné místo v CELÉ aplikaci, které smí zobrazit
- * chybový toast při selhání API volání. Přebalování chyby bylo opraveno tak, aby
- * `throwError(() => error)` posílal dál PŮVODNÍ `HttpErrorResponse` (se zachovanou
- * `.error` vlastností) - konzumentské komponenty tak můžou `err`/`err.status`/`err.error`
- * číst pro VLASTNÍ (ne-toastovou) logiku po chybě (např. `isSubmitting = false`,
- * ponechání formuláře otevřeného, node.isEditing = true), ale NESMÍ už volat
- * `alertDialogService.open(...)` samy - to by zase vedlo ke stejnému duplicitnímu
- * bugu. Viz konzumentské komponenty (např. UserRequestComponent, ExternalLinksComponent)
- * - jejich `error:` callbacky byly zbaveny vlastního `alertDialogService.open(...)`
- * volání ve stejném refactoru.
  */
 
 import { Injectable } from '@angular/core';
@@ -187,16 +164,25 @@ export class DataHandler {
   }
 
   /**
-   * @description Fetches a single resource, unwrapping it from the 'data' property.
-   * @param apiUrl The relative path to the resource.
-   * @returns {Observable<T>} The unwrapped entity.
-   */
-  getOne<T>(apiUrl: string): Observable<T> {
-    return this.http.get<{ data: T }>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
-      map(response => response.data),
-      catchError(this.handleError)
-    );
-  }
+ * @description Fetches a single resource, unwrapping it from the 'data' property
+ * WHEN PRESENT. Defensive against backend inconsistency: some controllers wrap their
+ * show() response in ['data' => ...], others return the resource directly - see
+ * getCollection() above for the same defensive pattern. Without this check, a
+ * non-wrapped response would silently resolve to `undefined` after unwrapping.
+ * @param apiUrl The relative path to the resource.
+ * @returns {Observable<T>} The unwrapped entity (or the raw response if it was never wrapped).
+ */
+getOne<T>(apiUrl: string): Observable<T> {
+  return this.http.get<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
+    map(response => {
+      if (response && typeof response === 'object' && 'data' in response) {
+        return (response as { data: T }).data;
+      }
+      return response as T;
+    }),
+    catchError(this.handleError)
+  );
+}
 
   /**
    * @description Performs a POST request and unwraps the result from the 'data' property.

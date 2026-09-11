@@ -1,14 +1,27 @@
 /**
- * @file business-logs.component.ts
- * @path src/app/admin/web-pages/business-logs/business-logs.component.ts
+ * @file logs.component.ts
+ * @path src/app/admin/core-pages/logs/logs.component.ts
  * @project RPSW Web
  * @author RPSW
- * @created 2025
- * @description Provides a management interface for viewing and filtering business-related system logs.
+ * @created 2026
+ * @description Provides a management interface for viewing and filtering system-wide
+ * (Core) audit logs.
  * @dependencies
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and state management.
  * - TableBuilderComponent: Used for rendering the data grid and supporting CSV exports.
+ * - Config.create* factory functions: i18n-aware definitions for UI columns and
+ *   toolbar actions - see refactor-note (2026-09-08) below.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
+ *
+ * @bugfix-note (2026-09-08) `toolbarButtons` getter NIKDY nekontroloval `btn.permission`
+ * - `openGraphBuilder` tlačítko s `permission: 'view-core'` se tak zobrazovalo i
+ *   uživatelům bez tohoto práva. Doplněna stejná `permissionService.hasPermission()`
+ *   kontrola jako všude jinde (stejná chyba jako u `business-logs.component.ts` web).
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi. `buttons.filter(b
+ * => b.action !== 'create' && b.action !== 'edit')` ODSTRANĚN - byl to no-op (`BUTTONS`
+ * nikdy `create`/`edit` tlačítko neobsahoval). `graphColumns` přestalo být `readonly`.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -21,28 +34,35 @@ import { GraphBuilderComponent } from '../../components/builders/graph-builder/g
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
 /**
- * @description Component for monitoring business logs.
+ * @description Component for monitoring system-wide (Core) audit logs.
  * @usage Enables administrators to audit system events, apply filters, and export logs for external analysis.
  * @note Extends BaseDataComponent to leverage standard CRUD patterns while specifically handling log-specific identification fields.
  */
 @Component({
   selector: 'app-core-system-logs',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, GraphBuilderComponent],
   templateUrl: './logs.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CoreLogsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Systémové logy';
+
+  protected override translationSection: string = 'core-logs';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`core-logs.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'core/logs';
 
-  buttons = Config.BUTTONS.filter(b => b.action !== 'create' && b.action !== 'edit');
-  tableColumns = Config.TABLE_COLUMNS;
-  filterColumns = Config.FILTER_COLUMNS;
-  detailsColumns = Config.DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  tableColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
   selectedItemForDetails: any | null = null;
 
   /**
@@ -54,14 +74,9 @@ export class CoreLogsComponent extends BaseDataComponent<any> implements Core.On
   };
 
   showGraphBuilder = false;
-    readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
-       .filter(col => col.chartable === true)
-       .map(col => ({
-         key: col.key,
-         label: col.displayName,
-        aggregation: col.chartAggregation ?? 'count',
-        possibleValues: col.chartPossibleValues
-       }));
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -70,18 +85,41 @@ export class CoreLogsComponent extends BaseDataComponent<any> implements Core.On
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createButtons(this.i18n);
+      this.tableColumns = Config.createTableColumns(this.i18n);
+      this.filterColumns = Config.createFilterColumns(this.i18n);
+      this.detailsColumns = Config.createDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
   /**
    * @description Constructs the toolbar configuration.
-   * @returns List of buttons updated to reflect current filter visibility states.
+   * @returns List of buttons updated to reflect current filter visibility and permission state.
+   * @bugfix-note (2026-09-08) Doplněna `permission` kontrola - viz hlavička souboru.
    */
   get toolbarButtons(): Core.Button[] {
-    return Config.TOOLBAR_BUTTONS.map(btn => {
+    return Config.createToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
+
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
+      }
+
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
       }
@@ -173,7 +211,8 @@ export class CoreLogsComponent extends BaseDataComponent<any> implements Core.On
     this.showDetails = false;
     this.cd.markForCheck();
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }

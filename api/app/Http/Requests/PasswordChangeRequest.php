@@ -43,8 +43,8 @@ class PasswordChangeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'new_password.confirmed' => 'Zadaná hesla se neshodují.',
-            'new_password.max'       => 'Heslo může mít maximálně 16 znaků.',
+            'new_password.confirmed' => 'The passwords do not match.',
+            'new_password.max'       => 'The password may not be greater than 16 characters.',
         ];
     }
 }

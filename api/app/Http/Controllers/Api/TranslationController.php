@@ -160,7 +160,7 @@ class TranslationController extends Controller
         $finalMeta = array_merge($otherModulesMeta, $mergedCurrent);
         $this->writeLanguagesMeta($finalMeta);
 
-        $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", 'Aktualizace seznamu jazyků a metadat', null, 'Translation', ['icon']);
+        $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", 'Language list and metadata update', null, 'Translation', ['icon']);
 
         return response()->json(['status' => 'success']);
     }
@@ -178,7 +178,7 @@ class TranslationController extends Controller
         $idx  = $this->findLangIndex($meta, $code);
 
         if ($idx === null) {
-            return response()->json(['message' => "Jazyk '{$code}' nenalezen."], 404);
+            return response()->json(['message' => "Language '{$code}' not found."], 404);
         }
 
         $this->deleteIconFile($meta[$idx]['icon_path'] ?? null);
@@ -192,7 +192,7 @@ class TranslationController extends Controller
         $meta[$idx]['icon_path'] = $iconPath;
         $this->writeLanguagesMeta($meta);
 
-        $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", "Nahrána ikonka: {$code}", null, 'Translation', ['icon']);
+        $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", "Icon uploaded: {$code}", null, 'Translation', ['icon']);
 
         return response()->json([
             'status'   => 'success',
@@ -214,11 +214,11 @@ class TranslationController extends Controller
         }
 
         if ($idx === null) {
-            return response()->json(['message' => "Jazyk '{$code}' v modulu '{$module}' nenalezen."], 404);
+            return response()->json(['message' => "Language '{$code}' in module '{$module}' not found."], 404);
         }
 
         if (!empty($allMeta[$idx]['isBuiltIn'])) {
-            return response()->json(['message' => 'Vestavěný jazyk nelze smazat.'], 403);
+            return response()->json(['message' => 'Built-in languages cannot be deleted.'], 403);
         }
 
         $this->deleteIconFile($allMeta[$idx]['icon_path'] ?? null);
@@ -232,7 +232,7 @@ class TranslationController extends Controller
         array_splice($allMeta, $idx, 1);
         $this->writeLanguagesMeta($allMeta);
 
-        $this->logAction($request, WebLog::class, 'delete', "Languages:{$module}", "Smazán jazyk: {$code}", null, 'Translation');
+        $this->logAction($request, WebLog::class, 'delete', "Languages:{$module}", "Deleted language: {$code}", null, 'Translation');
 
         return response()->json(null, 204);
     }
@@ -313,7 +313,7 @@ class TranslationController extends Controller
                 Storage::disk(self::ICON_DISK)->delete($iconPath);
             }
         } catch (\Exception $e) {
-            Log::warning("Nepodařilo se smazat ikonku: " . $e->getMessage());
+            Log::warning("Failed to delete icon: " . $e->getMessage());
         }
     }
 

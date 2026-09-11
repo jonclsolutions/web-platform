@@ -57,7 +57,7 @@
         <circle cx="12" cy="12" r="10"/>
         <polyline points="12 6 12 12 16 14"/>
       </svg>
-      {{ currentDate$ | async | date:'d. M. yyyy HH:mm:ss':undefined:dateLocale }}
+      {{ currentDate$ | async | date:strings.date_time_format:undefined:dateLocale }}
     </div>
   </div>
 
@@ -183,7 +183,7 @@
         <circle cx="12" cy="12" r="10"/>
         <polyline points="12 6 12 12 16 14"/>
       </svg>
-      {{ currentDate$ | async | date:'d. M. yyyy HH:mm:ss':undefined:dateLocale }}
+      {{ currentDate$ | async | date:strings.date_time_format:undefined:dateLocale }}
     </div>
 
     <div class="map-module-switcher">

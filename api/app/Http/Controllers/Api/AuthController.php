@@ -111,7 +111,7 @@ class AuthController extends Controller
                 $this->logAction($request, CoreLog::class, 'login_captcha_failed', 'Auth', "Neplatná/chybějící captcha pro: {$email}", null, 'User');
 
                 return response()->json([
-                    'message'          => 'Ověření captcha selhalo. Zkuste to prosím znovu.',
+                    'message'          => 'Captcha verification failed. Please try again.',
                     'captcha_required' => true,
                 ], 422);
             }
@@ -132,12 +132,12 @@ class AuthController extends Controller
                 );
                 $this->logAction($request, CoreLog::class, 'login_blocked', 'Auth', "Pokus o přihlášení na zablokovaný účet: {$email}", $targetUser->id, 'User');
 
-                return response()->json(['message' => 'Tento účet byl zablokován. Kontaktujte administrátora.'], 403);
+                return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
             }
 
             if (is_null($targetUser->user_password_hash)) {
                 return response()->json([
-                    'message' => 'Účet ještě není aktivovaný. Zkontrolujte svůj e-mail, nebo požádejte administrátora o zaslání nového aktivačního odkazu.',
+                    'message' => 'The account is not yet activated. Please check your email or ask the administrator to send a new activation link.',
                 ], 403);
             }
         }
@@ -175,7 +175,7 @@ class AuthController extends Controller
         $this->logAction($request, CoreLog::class, 'login_failed', 'Auth', "Neúspěšný pokus o přihlášení na login: {$email}", null, 'User');
 
         return response()->json([
-            'message'          => 'Neplatné přihlašovací údaje.',
+            'message'          => 'Invalid credentials.',
             'captcha_required' => $attemptsAfter >= self::CAPTCHA_THRESHOLD,
         ], 401);
     }
@@ -212,7 +212,7 @@ class AuthController extends Controller
         $this->logAction($request, CoreLog::class, 'login_2fa_challenge_sent', 'Auth', "2FA kód odeslán: {$user->user_email}", $user->id, 'User');
 
         return response()->json([
-            'message'      => 'Zadejte ověřovací kód zaslaný na váš e-mail.',
+            'message'      => 'Enter the verification code sent to your email.',
             'requires_2fa' => true,
             'login_token'  => $rawLoginToken,
             'expires_in'   => TwoFactorCode::CODE_TTL_MINUTES * 60,
@@ -244,7 +244,7 @@ class AuthController extends Controller
             );
 
             return response()->json([
-                'message' => 'Přihlašovací relace vypršela nebo je neplatná. Přihlaste se prosím znovu.',
+                'message' => 'The login session has expired or is invalid. Please log in again.',
             ], 401);
         }
 
@@ -261,17 +261,17 @@ class AuthController extends Controller
 
                 $pending->delete();
                 return response()->json([
-                    'message' => 'Překročen počet pokusů. Přihlaste se prosím znovu.',
+                    'message' => 'Too many attempts. Please log in again.',
                 ], 401);
             }
 
-            return response()->json(['message' => 'Neplatný ověřovací kód.'], 422);
+            return response()->json(['message' => 'Invalid verification code.'], 422);
         }
 
         $user = User::with('roles.permissions')->find($pending->user_id);
         if (!$user) {
             $pending->delete();
-            return response()->json(['message' => 'Účet nenalezen.'], 401);
+            return response()->json(['message' => 'Account not found.'], 401);
         }
 
         // Dodatečná pojistka: kdyby byl účet zablokován MEZI odesláním OTP kódu a jeho
@@ -279,7 +279,7 @@ class AuthController extends Controller
         // nesmí vydat.
         if ($user->is_blocked) {
             $pending->delete();
-            return response()->json(['message' => 'Tento účet byl zablokován. Kontaktujte administrátora.'], 403);
+            return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
         }
 
         $pending->used_at = now();
@@ -310,13 +310,13 @@ class AuthController extends Controller
                 CoreSecurityEvent::contextFromRequest($request)
             );
 
-            return response()->json(['message' => 'Přihlašovací relace vypršela nebo je neplatná.'], 401);
+            return response()->json(['message' => 'The login session has expired or is invalid.'], 401);
         }
 
         if ($pending->isInCooldown()) {
             $waitSeconds = TwoFactorCode::RESEND_COOLDOWN_SECONDS - $pending->last_sent_at->diffInSeconds(now());
             return response()->json([
-                'message'      => 'Nový kód lze vyžádat až po uplynutí ochranné doby.',
+                'message'      => 'A new code can be requested only after the cooldown period has passed.',
                 'retry_after'  => max(1, $waitSeconds),
             ], 429);
         }
@@ -331,14 +331,14 @@ class AuthController extends Controller
 
             $pending->delete();
             return response()->json([
-                'message' => 'Překročen počet vyžádání kódu. Přihlaste se prosím znovu.',
+                'message' => 'Too many code requests. Please log in again.',
             ], 429);
         }
 
         $user = User::find($pending->user_id);
         if (!$user) {
             $pending->delete();
-            return response()->json(['message' => 'Účet nenalezen.'], 401);
+            return response()->json(['message' => 'Account not found.'], 401);
         }
 
         $code = (string) random_int(100000, 999999);
@@ -357,7 +357,7 @@ class AuthController extends Controller
         $this->logAction($request, CoreLog::class, 'login_2fa_code_resent', 'Auth', "2FA kód znovu odeslán (user_id: {$user->id})", $user->id, 'User');
 
         return response()->json([
-            'message'    => 'Nový kód byl odeslán.',
+            'message'    => 'A new code has been sent.',
             'expires_in' => TwoFactorCode::CODE_TTL_MINUTES * 60,
         ], 200);
     }
@@ -383,7 +383,7 @@ class AuthController extends Controller
         $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "Uživatel se úspěšně přihlásil: {$user->user_email}", $user->id, 'User');
 
         return response()->json([
-            'message'          => 'Přihlášení úspěšné!',
+            'message'          => 'Login successful!',
             'user'             => new UserResource($user),
             'user_roles'       => $user->roles->pluck('role_name'),
             'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
@@ -402,7 +402,7 @@ class AuthController extends Controller
     {
         $refreshToken = $request->input('refreshToken');
         if (!$refreshToken) {
-            return response()->json(['message' => 'Refresh token chybí.'], 401);
+            return response()->json(['message' => 'Refresh token is missing.'], 401);
         }
 
         $hashedRefreshToken = hash('sha256', $refreshToken);
@@ -422,7 +422,7 @@ class AuthController extends Controller
                 CoreSecurityEvent::contextFromRequest($request)
             );
 
-            return response()->json(['message' => 'Neplatný nebo expirovaný token.'], 401);
+            return response()->json(['message' => 'Invalid or expired token.'], 401);
         }
 
         $user = $dbRefreshToken->user;
@@ -435,7 +435,7 @@ class AuthController extends Controller
                 $request->ip(),
                 CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
             );
-            return response()->json(['message' => 'Tento účet byl zablokován. Kontaktujte administrátora.'], 403);
+            return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
         }
 
         $dbRefreshToken->delete();
@@ -475,6 +475,6 @@ class AuthController extends Controller
             RefreshToken::where('token', hash('sha256', $refreshToken))->delete();
         }
 
-        return response()->json(['message' => 'Odhlášení úspěšné!'], 200);
+        return response()->json(['message' => 'Logout successful!'], 200);
     }
 }

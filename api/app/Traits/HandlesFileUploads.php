@@ -65,7 +65,7 @@ trait HandlesFileUploads
         $clean = trim($clean);
 
         if ($clean === '') {
-            $clean = 'soubor';
+            $clean = 'file';
         }
 
         // Guard against exceeding the varchar(255) column added by the SQL fix.

@@ -7,9 +7,9 @@
  * @created 2026
  * @description Manages public-web maintenance mode - toggling web availability and the
  * visitor-facing maintenance message, with mandatory password re-confirmation for the
- * write action. Také spravuje editovatelný obsah potvrzovacího e-mailu
- * WebRawRequestCommission (nadpis/úvod/závěr, per jazyk) - viz refactor-note
- * (2026-08-19) níže.
+ * write action. Also manages the editable content of the WebRawRequestCommission
+ * confirmation email (heading/intro/outro, per language) - see refactor-note
+ * (2026-08-19) below.
  *
  * @refactor-note (2026-08-15) Replaces the web branch of `CoreSiteSettingController`
  * (now deleted, along with `App\Models\Core\CoreSiteSetting` and the `core_site_settings`
@@ -21,14 +21,14 @@
  * already `WebPublicController::getStatus()` (`GET /api/web/public/status`) before this
  * refactor and remains the single public entry point; no new public route was introduced.
  *
- * @refactor-note (2026-08-19) BACKLOG "editovatelný obsah potvrzovacího e-mailu":
- * přidány `showRawRequestEmailTemplate()`/`updateRawRequestEmailTemplate()` - sdílí
- * stejný singleton `WebSiteSetting` řádek jako maintenance nastavení (je to pořád
- * Web-doménová konfigurace), ale ZÁMĚRNĚ BEZ `confirm_password` požadavku jako u
- * `update()` výše - editace textu potvrzovacího e-mailu není bezpečnostně citlivá
- * akce jako přepnutí dostupnosti celého webu. Gatováno permission middlewarem
- * `web-user-requests-update` na route úrovni (viz api.php) - stejné oprávnění, jaké
- * už řídí editaci jednotlivého požadavku na admin stránce "Požadavky na provize".
+ * @refactor-note (2026-08-19) BACKLOG "editable confirmation email content":
+ * added `showRawRequestEmailTemplate()`/`updateRawRequestEmailTemplate()` - shares
+ * the same singleton `WebSiteSetting` row as maintenance settings (it's still a
+ * Web-domain configuration), but INTENTIONALLY WITHOUT the `confirm_password` requirement
+ * like `update()` above - editing confirmation email text is not a security-sensitive
+ * action like toggling the availability of the entire web. Gated by permission middleware
+ * `web-user-requests-update` at route level (see api.php) - the same permission that
+ * already controls editing an individual request on the admin page "Commission Requests".
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -67,7 +67,7 @@ class WebSiteSettingController extends Controller
     {
         $settings = WebSiteSetting::first() ?? WebSiteSetting::create([
             'is_web_active'           => true,
-            'web_maintenance_message' => 'Omlouváme se, web je momentálně v údržbě.',
+            'web_maintenance_message' => 'We apologize, but the website is currently undergoing maintenance.',
         ]);
 
         return response()->json($settings);
@@ -140,17 +140,17 @@ class WebSiteSettingController extends Controller
     }
 
     /**
-     * @description Vrátí jen editovatelná pole šablony potvrzovacího e-mailu
-     * WebRawRequestCommission (nadpis/úvod/závěr, každé jako i18n objekt keyed
-     * jazykovým kódem). Vrací PŘÍMO objekt (ne obalený v `{data: ...}`) - konzistentní
-     * s tím, jak `DataHandler.get<T>()` na frontendu odpověď NEobaluje, na rozdíl od
+     * @description Returns only the editable fields of the WebRawRequestCommission
+     * confirmation email template (subject/title/intro/outro/labels, each as an i18n object keyed
+     * by language code). Returns DIRECTLY the object (not wrapped in `{data: ...}`) - consistent
+     * with how `DataHandler.get<T>()` on the frontend does NOT wrap the response, unlike
      * `put()`.
      */
     public function showRawRequestEmailTemplate(): JsonResponse
     {
         $settings = WebSiteSetting::first() ?? WebSiteSetting::create([
             'is_web_active'           => true,
-            'web_maintenance_message' => 'Omlouváme se, web je momentálně v údržbě.',
+            'web_maintenance_message' => 'We apologize, but the website is currently undergoing maintenance.',
         ]);
 
         return response()->json([
@@ -163,9 +163,9 @@ class WebSiteSettingController extends Controller
     }
 
     /**
-     * @description Uloží editovatelnou šablonu potvrzovacího e-mailu
-     * WebRawRequestCommission. ZÁMĚRNĚ BEZ `confirm_password` (viz refactor-note
-     * v hlavičce souboru) - jen permission middleware na route úrovni.
+     * @description Saves the editable WebRawRequestCommission confirmation email template.
+     * INTENTIONALLY WITHOUT `confirm_password` (see refactor-note in file header) -
+     * only permission middleware at route level.
      */
     public function updateRawRequestEmailTemplate(Request $request): JsonResponse
     {
@@ -186,7 +186,7 @@ class WebSiteSettingController extends Controller
             WebLog::class,
             'update',
             'Web',
-            'Upravena šablona potvrzovacího e-mailu (Požadavky na provize).',
+            'Updated confirmation email template (Commission Requests).',
             $settings->id,
             'WebSiteSetting'
         );

@@ -8,83 +8,6 @@
  * @created 2025
  * @description Defines all application API endpoints, including public access for the
  * frontend, checkout processes, and protected administrative routes.
- *
- * @refactor-note (2026-08-23c) PŘECHOD Z GENERICKÉHO IMPORT/BULK-DELETE NA PER-CONTROLLER.
- * Dřívější `core/import/*` (ImportController + config/importable_resources.php) a
- * `core/bulk_delete` (BulkDeleteController + config/bulk_deletable_resources.php) byly
- * ZAHOZENY - generický zápis/mazání by u resources se speciální byznys logikou ve
- * store()/destroy() (vlastnictví, úklid souborů, GDPR souhlas, sysadmin ochrana...)
- * tuhle logiku tiše obešel. Každý resource má teď VLASTNÍ `bulkDestroy()` a případně
- * `importTemplate()/importValidate()/importCommit()` metody přímo ve svém kontroleru,
- * které přirozeně sdílejí stejná pravidla jako `destroy()`/`store()` (viz jednotlivé
- * kontrolery a bulk_destroy_recipe.txt/bulk_import_recipe.txt).
- *
- * Stav k tomuto datu:
- * - bulkDestroy() hotovo: web/raw_request_commissions, web/job_applications, web/news,
- *   web/sales_leads, web/sales_orders, web/support_tickets, web/projects.
- * - Import hotovo: web/raw_request_commissions (BEZ potvrzovacího e-mailu - záměr).
- * - Import se VĚDOMĚ NEDĚLÁ pro web/sales_orders (atomická vazba na lead_token + GDPR
- *   souhlas, který nelze retroaktivně "odsouhlasit" za importovaná data) ani pro
- *   web/projects (obsahuje generovaná bezpečnostní pole - access_token/heslo - která
- *   nedávají smysl jako uživatelský vstup, stejný princip jako u sales_leads
- *   public_token).
- * - Shop sekce a `core/users`/`core/roles`/`core/external_links` zatím BEZ bulk
- *   delete/importu - viz zakomentované TODO bloky u shopu níže. `core/users` a
- *   `core/external_links` mají per-row byznys logiku (sysadmin ochrana, vlastnictví),
- *   která vyžaduje vlastní bezpečnostní rozbor před přidáním - ne mechanické doplnění.
- *
- * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": nové veřejné
- * (nepřihlášené) endpointy `account-activation/{token}` (GET ověří odkaz, POST nastaví
- * heslo a aktivuje účet) - viz AccountActivationController. Do chráněné `core/users`
- * skupiny přidána `POST /{id}/resend-activation` (znovu odeslat aktivační odkaz účtu,
- * který se ještě nikdy neaktivoval). Účty teď vznikají BEZ hesla
- * (`UserController::store()`) - uživatel si ho nastaví sám přes aktivační odkaz, nikdo
- * jiný (ani admin) tak nikdy nezná cizí heslo.
- *
- * @bugfix-note (2026-08-25) KRITICKÁ CHYBA - VŠECHNY NEPOJMENOVANÉ `throttle:X,Y`
- * LIMITERY SDÍLELY JEDEN SPOLEČNÝ BUCKET. Laravelův vestavěný `ThrottleRequests`
- * middleware generuje cache klíč VÝHRADNĚ z `$prefix . resolveRequestSignature($request)`,
- * kde `resolveRequestSignature()` bez přihlášeného uživatele vrací `sha1($ip)` a
- * s přihlášeným uživatelem `sha1($user->id)` - NIKDY nezahrnuje konkrétní route ani
- * čísla `maxAttempts`/`decayMinutes`, která je za dvojtečkou. Bez explicitního TŘETÍHO
- * parametru (`throttle:max,decay,PREFIX`) tak VŠECHNY `throttle:X,Y` zápisy na
- * NEPŘIHLÁŠENÝCH routách (`/forgot-password`, `/reset-password`, `/sales_orders`,
- * `/account-activation/*`, `/login/verify-2fa`, `shop/public/.../check-stock`, fallback
- * `scan_probe`) pro danou IP sdílely JEDEN counter - request na jednu routu tak mohl
- * vyčerpat limit úplně jiné, nesouvisející routy. Prokázáno reálným testem
- * (`attack_security_monitoring.sh`): sekce testující throttle na `/sales_orders` a
- * `/forgot-password` vyčerpaly sdílený counter natolik, že SAMOSTATNÉ pozdější testy na
- * `/account-activation/*`, `/reset-password` a `/login/verify-2fa` skončily rovnou 429
- * (throttle), aniž by se ty routy samotné vůbec „přetížily“ - a v produkci by tímtéž
- * mechanismem mohl útočník bušící do `/sales_orders` nechtěně (nebo cíleně jako DoS)
- * zablokovat legitimního uživatele resetujícího heslo ze stejné IP (firemní síť/VPN).
- * Analogicky uvnitř CHRÁNĚNÉ (`auth:sanctum`) skupiny sdílely stejný per-uživatelský
- * bucket VŠECHNY `throttle:30,1` importní endpointy napříč resources (suppliers, news,
- * support_tickets, raw_request_commissions, sales_leads) - admin importující `news`
- * mohl nechtěně vyčerpat budget i na import `suppliers`.
- *
- * ŘEŠENÍ: KAŽDÝ nepojmenovaný `throttle:X,Y` zápis dostal vlastní unikátní TŘETÍ
- * parametr (prefix) - viz komentáře u jednotlivých routes níže. Číselné limity
- * (`maxAttempts`/`decayMinutes`) zůstávají VŠUDE BEZE ZMĚNY, mění se VÝHRADNĚ izolace
- * bucketů - pro legitimní provoz je to buď neutrální, nebo (v případě dřívějšího
- * falešného křížení mezi nesouvisejícími endpointy) fakticky MÉNĚ restriktivní, nikdy
- * ne víc. Pojmenované limitery (`throttle:login`, `throttle:login-2fa-resend`, viz
- * `AppServiceProvider::boot()`) NEBYLY dotčeny - ty už mají vlastní explicitní klíče
- * (`login-ip:`/`login-email:`/`2fa-resend-ip:`) a byly izolované správně už předtím.
- *
- * @refactor-note (2026-08-28) BACKLOG "customer project portal" (checkpointy + vlákna
- * + veřejné přihlášení projektu): přidány DVĚ zcela nové, VZÁJEMNĚ NEZÁVISLÉ auth domény
- * vedle sebe:
- * - `web/projects` + `web/project-threads` - standardní ADMIN CRUD (stejný vzor jako
- *   `web/sales_orders` výše, permission klíče `web-projects-*`).
- * - `projects/public/{token}/*` - VEŘEJNÝ zákaznický portál, chráněný VLASTNÍM
- *   middlewarem `project.session` (viz CheckProjectSession.php) - NENÍ to
- *   `auth:sanctum`, je to úplně samostatný 24h-sliding session mechanismus vázaný na
- *   `web_projects`/`web_project_sessions`, ne na `users`/`personal_access_tokens`.
- *   `login()` je jediný nepřihlášený endpoint v téhle skupině; zbytek visí za
- *   `project.session`, který navíc na KAŽDÉM requestu ověřuje `visibility === 'public'`
- *   (ne jen při loginu), takže přepnutí projektu na 'private' okamžitě odhlásí i
- *   aktivní relaci.
  */
 
 use Illuminate\Http\Request;
@@ -131,6 +54,17 @@ use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\AttachmentDownloadController;
 use App\Models\Core\CoreSecurityEvent;
 use App\Http\Controllers\Api\Core\CoreEmailAccessPolicyController;
+
+/**
+ * @TEMP-DEBUG (2026-09-08) DOČASNÁ nechráněná route pro lokální ladění filtru
+ * core/users?role_id=... - BEZ auth/permission middleware, záměrně obchází
+ * CheckPermission. Zabalena v `app()->environment('local')`, ať se ani omylem
+ * nezpřístupní mimo localhost. SMAŽ tenhle blok, jakmile bug doladíš - nikdy
+ * nesmí zůstat v api.php trvale.
+ */
+if (app()->environment('local')) {
+    Route::get('debug/users', [\App\Http\Controllers\Api\UserController::class, 'index']);
+}
 
 /*
 |--------------------------------------------------------------------------

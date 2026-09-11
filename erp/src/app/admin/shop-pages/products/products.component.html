@@ -4,6 +4,9 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY natvrdo psané české texty nahrazeny `t('shop-products.xxx')`
+        bindingy - viz products.component.ts stejné datum. Funkcionalita beze změny.
 -->
 
 <div class="products-container">
@@ -16,14 +19,14 @@
       <div class="toolbar-section">
         <div class="toolbar-header">
           @if(!showTrashTable){
-<div class="table-header">Produkty</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
           <div class="toolbar-actions">
             <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
           </div>
@@ -35,7 +38,7 @@ triggerLabel="Akce"
             [filterColumns]="filterColumns"
             [initialFilters]="filters"
             (closed)="toggleFilters()"
-            [filterFormTitle]="'Filtry produktů'"
+            [filterFormTitle]="t('filter_form_title')"
             (filtersApplied)="applyFilters($event)"
             (filtersCleared)="clearFilters()">
           </app-filter-form-builder>
@@ -64,7 +67,7 @@ triggerLabel="Akce"
             <app-trash-table-builder
               [data]="trashData"
               [columns]="trashProductColumns"
-              [tableCaption]="'Archiv smazaných produktů'"
+              [tableCaption]="t('trash_table_caption')"
               [apiEndpoint]="apiEndpoint"
               (itemRestored)="refreshData()"
               (itemPermanentlyDeleted)="refreshData()">
@@ -91,21 +94,21 @@ triggerLabel="Akce"
   <div class="modal-overlay" (click)="closeDetailsModal()">
     <div class="modal-content modal-detail" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>📋 Detail: {{ selectedProductForDetail.name }}</h2>
+        <h2>📋 {{ t('details_modal_title_prefix') }}: {{ selectedProductForDetail.name }}</h2>
         <button class="close-btn" (click)="closeDetailsModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="detail-section">
-          <h3>Základní informace</h3>
+          <h3>{{ t('section_basic_info') }}</h3>
           <div class="info-grid">
             <div class="info-row">
-              <label>Kategorie:</label>
+              <label>{{ t('label_category') }}</label>
               <div class="detail-categories-list">
                 @for (cat of selectedProductForDetail.categories; track cat) {
                   <span class="cat-badge">
                     📁 {{ cat.name }}
                     @if (cat.id === selectedProductForDetail.category_id) {
-                      <span class="text-xs opacity-60">(Hlavní)</span>
+                      <span class="text-xs opacity-60">({{ t('primary_suffix') }})</span>
                     }
                   </span>
                 }
@@ -115,53 +118,53 @@ triggerLabel="Akce"
               </div>
             </div>
             <div class="info-row">
-              <label>Dodavatel:</label>
+              <label>{{ t('label_supplier') }}</label>
               <span>{{ getSupplierName(selectedProductForDetail.supplier_id) }}</span>
             </div>
             <div class="info-row">
-              <label>SKU:</label>
+              <label>{{ t('label_sku') }}</label>
               <span class="mono">{{ selectedProductForDetail.sku }}</span>
             </div>
             <div class="info-row">
-              <label>Popis:</label>
+              <label>{{ t('label_description') }}</label>
               <span>{{ selectedProductForDetail.short_description || '-' }}</span>
             </div>
           </div>
         </div>
 
         <div class="detail-section">
-          <h3>Ceny produktu</h3>
+          <h3>{{ t('section_prices') }}</h3>
           <div class="info-grid">
             <div class="info-row">
-              <label>Prodejní cena (EUR s DPH):</label>
+              <label>{{ t('label_selling_price') }}</label>
               <span class="price">{{ formatCurrency(selectedProductForDetail.price_eur || 0, 'EUR') }}</span>
             </div>
             <div class="info-row">
-              <label>Nákupní cena (EUR):</label>
+              <label>{{ t('label_cost_price') }}</label>
               <span class="price">{{ formatCurrency(selectedProductForDetail.cost_price_eur || 0, 'EUR') }}</span>
             </div>
           </div>
         </div>
 
         <div class="detail-section">
-          <h3>Skladové zásoby</h3>
+          <h3>{{ t('section_stock') }}</h3>
           <div class="info-grid">
             <div class="info-row">
-              <label>Počet na skladě:</label>
+              <label>{{ t('label_stock_quantity') }}</label>
               <span [class.stock-warning]="selectedProductForDetail.stock_quantity <= selectedProductForDetail.stock_warning_level">
-                {{ selectedProductForDetail.stock_quantity }} ks
+                {{ selectedProductForDetail.stock_quantity }} {{ t('unit_pieces') }}
               </span>
             </div>
             <div class="info-row">
-              <label>Limit upozornění:</label>
-              <span>{{ selectedProductForDetail.stock_warning_level }} ks</span>
+              <label>{{ t('label_stock_warning_level') }}</label>
+              <span>{{ selectedProductForDetail.stock_warning_level }} {{ t('unit_pieces') }}</span>
             </div>
           </div>
         </div>
 
         @if (getVisibleVariants(selectedProductForDetail).length > 0) {
           <div class="detail-section">
-            <h3>Varianty ({{ getVisibleVariants(selectedProductForDetail).length }})</h3>
+            <h3>{{ t('section_variants') }} ({{ getVisibleVariants(selectedProductForDetail).length }})</h3>
             <div class="variants-list">
               @for (v of getVisibleVariants(selectedProductForDetail); track v) {
                 <div class="variant-item">
@@ -177,19 +180,19 @@ triggerLabel="Akce"
                   </div>
                   <div class="variant-pricing">
                     <div class="row">
-                      <div class="label">EUR (s DPH / bez):</div>
+                      <div class="label">{{ t('label_price_with_without_vat') }}</div>
                       <div>
                         <strong>{{ formatCurrency(v.price_with_vat_eur || 0, 'EUR') }}</strong>
                         / {{ formatCurrency(v.price_without_vat_eur || 0, 'EUR') }}
                       </div>
                     </div>
                     <div class="row">
-                      <div class="label">Sazba DPH:</div>
+                      <div class="label">{{ t('label_vat_rate') }}</div>
                       <div>{{ v.vat_rate }}%</div>
                     </div>
                   </div>
                   <div class="variant-stock">
-                    <span class="label">Sklad:</span> <strong>{{ v.stock_quantity }} ks</strong>
+                    <span class="label">{{ t('label_stock_short') }}</span> <strong>{{ v.stock_quantity }} {{ t('unit_pieces') }}</strong>
                   </div>
                 </div>
               }
@@ -199,13 +202,13 @@ triggerLabel="Akce"
 
         @if (getVisibleImages(selectedProductForDetail).length > 0) {
           <div class="detail-section">
-            <h3>Obrázky produktu ({{ getVisibleImages(selectedProductForDetail).length }})</h3>
+            <h3>{{ t('section_product_images') }} ({{ getVisibleImages(selectedProductForDetail).length }})</h3>
             <div class="images-grid">
               @for (img of getVisibleImages(selectedProductForDetail); track img) {
                 <div class="image-item">
                   <img [src]="img.url || ('storage/products/' + img.image_path)" [alt]="img.alt_text" class="thumbnail">
                   @if (img.is_primary) {
-                    <span class="primary-badge">Primární</span>
+                    <span class="primary-badge">{{ t('primary_badge') }}</span>
                   }
                 </div>
               }
@@ -214,34 +217,34 @@ triggerLabel="Akce"
         }
 
         <div class="detail-section">
-          <h3>Status</h3>
+          <h3>{{ t('section_status') }}</h3>
           <div class="info-grid">
             <div class="info-row">
-              <label>Aktivní:</label>
+              <label>{{ t('label_active') }}</label>
               <span [class.badge-yes]="selectedProductForDetail.is_active" [class.badge-no]="!selectedProductForDetail.is_active">
-                {{ selectedProductForDetail.is_active ? '✓ Ano' : '✗ Ne' }}
+                {{ selectedProductForDetail.is_active ? ('✓ ' + i18n.getValue('shared.yes')) : ('✗ ' + i18n.getValue('shared.no')) }}
               </span>
             </div>
             <div class="info-row">
-              <label>Doporučený:</label>
+              <label>{{ t('label_featured') }}</label>
               <span [class.badge-yes]="selectedProductForDetail.is_featured" [class.badge-no]="!selectedProductForDetail.is_featured">
-                {{ selectedProductForDetail.is_featured ? '⭐ Ano' : '✗ Ne' }}
+                {{ selectedProductForDetail.is_featured ? ('⭐ ' + i18n.getValue('shared.yes')) : ('✗ ' + i18n.getValue('shared.no')) }}
               </span>
             </div>
             <div class="info-row">
-              <label>Vytvořeno:</label>
+              <label>{{ t('label_created') }}</label>
               <span>{{ selectedProductForDetail.created_at | date: 'short' }}</span>
             </div>
             <div class="info-row">
-              <label>Upraveno:</label>
+              <label>{{ t('label_updated') }}</label>
               <span>{{ selectedProductForDetail.updated_at | date: 'short' }}</span>
             </div>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeDetailsModal()">Zavřít</button>
-        <button class="btn btn-primary" (click)="openEditProductForm(selectedProductForDetail)">✏️ Editovat</button>
+        <button class="btn btn-secondary" (click)="closeDetailsModal()">{{ i18n.getValue('shared.close') }}</button>
+        <button class="btn btn-primary" (click)="openEditProductForm(selectedProductForDetail)">✏️ {{ t('btn_edit_label') }}</button>
       </div>
     </div>
   </div>
@@ -251,23 +254,23 @@ triggerLabel="Akce"
   <div class="modal-overlay" (click)="closeProductForm()">
     <div class="modal-content modal-form" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>{{ editingProduct.id ? '✏️ Editace' : '➕ Nový produkt' }}</h2>
+        <h2>{{ editingProduct.id ? ('✏️ ' + t('form_title_edit')) : ('➕ ' + t('form_title_new')) }}</h2>
         <button class="close-btn" (click)="closeProductForm()">✕</button>
       </div>
       <div class="modal-body">
         <form class="product-form">
 
           <fieldset>
-            <legend>Základní</legend>
+            <legend>{{ t('legend_basic') }}</legend>
 
             <div class="form-group category-manager-block">
-              <label>Přiřazené kategorie</label>
+              <label>{{ t('label_assigned_categories') }}</label>
               <div class="selected-categories-container">
                 @for (cat of selectedFormCategories; track cat) {
                   <div class="category-chip" [class.is-primary]="cat.id === editingProduct.category_id">
-                    <span class="chip-title" (click)="setMainCategory(cat.id)" title="Nastavit jako hlavní">
+                    <span class="chip-title" (click)="setMainCategory(cat.id)" [title]="t('set_as_primary_title')">
                       📁 {{ cat.name }}
-                      @if (cat.id === editingProduct.category_id) { <strong>(Hlavní)</strong> }
+                      @if (cat.id === editingProduct.category_id) { <strong>({{ t('primary_suffix') }})</strong> }
                     </span>
                     <button type="button" class="chip-remove-btn" (click)="removeCategoryFromForm(cat.id)">✕</button>
                   </div>
@@ -275,19 +278,19 @@ triggerLabel="Akce"
               </div>
               <div class="add-category-row" style="margin-top:10px;max-width:400px;">
                 <select #catSelect class="form-control" (change)="addCategoryToForm(catSelect)">
-                  <option value="0">-- Přidat do kategorie --</option>
+                  <option value="0">{{ t('select_add_category_placeholder') }}</option>
                   @for (cat of getAvailableCategoriesForForm(); track cat) {
                     <option [value]="cat.id">{{ cat.name }}</option>
                   }
                 </select>
               </div>
-              <p class="form-hint">Kliknutím na název kategorie ji nastavíte jako primární.</p>
+              <p class="form-hint">{{ t('hint_click_category_primary') }}</p>
             </div>
 
             <div class="form-group" style="max-width:400px;">
-              <label>Dodavatel</label>
+              <label>{{ t('label_supplier') }}</label>
               <select [(ngModel)]="editingProduct.supplier_id" name="supplier_id">
-                <option [value]="null">-- Bez dodavatele --</option>
+                <option [value]="null">{{ t('select_no_supplier') }}</option>
                 @for (sup of suppliers; track sup) {
                   <option [value]="sup.id">{{ sup.name }}</option>
                 }
@@ -295,73 +298,73 @@ triggerLabel="Akce"
             </div>
 
             <div class="form-group">
-              <label>Název *</label>
+              <label>{{ t('label_name_required') }}</label>
               <input type="text" [(ngModel)]="editingProduct.name" name="name" required>
             </div>
 
             <div class="form-row-2">
               <div class="form-group">
-                <label>Slug</label>
+                <label>{{ t('label_slug') }}</label>
                 <input type="text" [(ngModel)]="editingProduct.slug" name="slug"
                   [placeholder]="generateSlug(editingProduct.name)">
               </div>
               <div class="form-group">
-                <label>SKU *</label>
+                <label>{{ t('label_sku_required') }}</label>
                 <input type="text" [(ngModel)]="editingProduct.sku" name="sku" required>
               </div>
             </div>
 
             <div class="form-group">
-              <label>Krátký popis</label>
+              <label>{{ t('label_short_description') }}</label>
               <input type="text" [(ngModel)]="editingProduct.short_description" name="short_description" maxlength="500">
             </div>
 
             <div class="form-group">
-              <label>Podrobný popis</label>
+              <label>{{ t('label_full_description') }}</label>
               <textarea [(ngModel)]="editingProduct.description" name="description" rows="3"></textarea>
             </div>
           </fieldset>
 
           <fieldset>
-            <legend>Ceník (EUR)</legend>
+            <legend>{{ t('legend_pricing') }}</legend>
             <div class="form-row-2">
               <div class="form-group">
-                <label>Prodejní cena EUR (s DPH) *</label>
+                <label>{{ t('label_selling_price_required') }}</label>
                 <input type="number" [(ngModel)]="editingProduct.price_eur" name="price_eur" min="0" step="0.01">
               </div>
               <div class="form-group">
-                <label>Nákupní cena EUR</label>
+                <label>{{ t('label_cost_price') }}</label>
                 <input type="number" [(ngModel)]="editingProduct.cost_price_eur" name="cost_price_eur" min="0" step="0.01">
               </div>
             </div>
           </fieldset>
 
           <fieldset>
-            <legend>Sklad</legend>
-            <p class="note">⚠️ Počet na skladě se počítá automaticky ze součtu variant.</p>
+            <legend>{{ t('legend_stock') }}</legend>
+            <p class="note">⚠️ {{ t('note_stock_auto_calculated') }}</p>
             <div class="form-group" style="max-width:200px;">
-              <label>Limit upozornění (ks)</label>
+              <label>{{ t('label_stock_warning_level_pcs') }}</label>
               <input type="number" [(ngModel)]="editingProduct.stock_warning_level" name="stock_warning_level" min="0">
             </div>
           </fieldset>
 
           <fieldset>
-            <legend>Status</legend>
+            <legend>{{ t('section_status') }}</legend>
             <div class="checkbox-group">
               <label>
                 <input type="checkbox" [(ngModel)]="editingProduct.is_active" name="is_active">
-                Aktivní
+                {{ t('label_active') }}
               </label>
               <label>
                 <input type="checkbox" [(ngModel)]="editingProduct.is_featured" name="is_featured">
-                Doporučený
+                {{ t('label_featured') }}
               </label>
             </div>
           </fieldset>
 
           <div class="modal-footer-inline">
-            <button type="button" class="btn btn-secondary" (click)="closeProductForm()">Zrušit</button>
-            <button type="button" class="btn btn-primary" (click)="saveProduct()">💾 Uložit</button>
+            <button type="button" class="btn btn-secondary" (click)="closeProductForm()">{{ i18n.getValue('shared.cancel') }}</button>
+            <button type="button" class="btn btn-primary" (click)="saveProduct()">💾 {{ i18n.getValue('shared.save') }}</button>
           </div>
         </form>
       </div>
@@ -373,20 +376,20 @@ triggerLabel="Akce"
   <div class="modal-overlay" (click)="closeVariantsModal()">
     <div class="modal-content modal-variants" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>⚙️ Varianty: {{ editingProduct.name }}</h2>
+        <h2>⚙️ {{ t('variants_modal_title_prefix') }}: {{ editingProduct.name }}</h2>
         <button class="close-btn" (click)="closeVariantsModal()">✕</button>
       </div>
       <div class="modal-body">
         @if (getVisibleVariants(editingProduct).length === 0) {
-          <div class="empty-state">Žádné varianty — přidejte první tlačítkem níže.</div>
+          <div class="empty-state">{{ t('empty_variants') }}</div>
         }
         @for (variant of editingProduct.variants; track variant; let i = $index) {
           <div class="variant-card" [class.deleted]="variant._delete">
             <div class="variant-header">
-              <h4>Varianta {{ i + 1 }}</h4>
+              <h4>{{ t('variant_number_prefix') }} {{ i + 1 }}</h4>
               <div class="variant-header-actions">
                 @if (!variant._delete) {
-                  <button type="button" class="btn-icon small" title="Obrázky varianty"
+                  <button type="button" class="btn-icon small" [title]="t('variant_images_title')"
                     (click)="editVariantImages(i, $event)">🖼️</button>
                 }
                 <button type="button" class="btn-icon danger" (click)="deleteVariant(i)">🗑️</button>
@@ -394,55 +397,55 @@ triggerLabel="Akce"
             </div>
             <div class="variant-form">
               <div class="form-group">
-                <label>Název *</label>
-                <input type="text" [(ngModel)]="variant.variant_name" placeholder="Černá - M"
+                <label>{{ t('label_name_required') }}</label>
+                <input type="text" [(ngModel)]="variant.variant_name" [placeholder]="t('placeholder_variant_name')"
                   [disabled]="!!variant._delete">
               </div>
               <div class="form-row-2">
                 <div class="form-group">
-                  <label>Atribut 1</label>
-                  <input type="text" [(ngModel)]="variant.attribute_1_name" placeholder="Barva"
+                  <label>{{ t('label_attribute_1') }}</label>
+                  <input type="text" [(ngModel)]="variant.attribute_1_name" [placeholder]="t('placeholder_attribute_color')"
                     [disabled]="!!variant._delete">
                 </div>
                 <div class="form-group">
-                  <label>Hodnota 1</label>
-                  <input type="text" [(ngModel)]="variant.attribute_1_value" placeholder="Černá"
+                  <label>{{ t('label_value_1') }}</label>
+                  <input type="text" [(ngModel)]="variant.attribute_1_value" [placeholder]="t('placeholder_value_black')"
                     [disabled]="!!variant._delete">
                 </div>
               </div>
               <div class="form-row-2">
                 <div class="form-group">
-                  <label>Atribut 2</label>
-                  <input type="text" [(ngModel)]="variant.attribute_2_name" placeholder="Velikost"
+                  <label>{{ t('label_attribute_2') }}</label>
+                  <input type="text" [(ngModel)]="variant.attribute_2_name" [placeholder]="t('placeholder_attribute_size')"
                     [disabled]="!!variant._delete">
                 </div>
                 <div class="form-group">
-                  <label>Hodnota 2</label>
-                  <input type="text" [(ngModel)]="variant.attribute_2_value" placeholder="M"
+                  <label>{{ t('label_value_2') }}</label>
+                  <input type="text" [(ngModel)]="variant.attribute_2_value" [placeholder]="t('placeholder_value_m')"
                     [disabled]="!!variant._delete">
                 </div>
               </div>
               <div class="form-group">
-                <label>SKU varianty</label>
-                <input type="text" [(ngModel)]="variant.sku_variant" placeholder="SKU-BLK-M"
+                <label>{{ t('label_variant_sku') }}</label>
+                <input type="text" [(ngModel)]="variant.sku_variant" [placeholder]="t('placeholder_variant_sku')"
                   [disabled]="!!variant._delete">
               </div>
 
               <div class="vat-calculator">
-                <h4>💰 Cena & DPH (EUR)</h4>
+                <h4>💰 {{ t('vat_calculator_title') }}</h4>
                 <div class="form-group" style="max-width:200px;margin-bottom:12px;">
-                  <label>Sazba DPH (%)</label>
+                  <label>{{ t('label_vat_rate_pct') }}</label>
                   <input type="number" [(ngModel)]="variant.vat_rate" placeholder="21" min="0" max="100"
                     [disabled]="!!variant._delete" (change)="onVATRateChange(variant)">
                 </div>
                 <div class="form-row-2">
                   <div class="form-group">
-                    <label>Cena s DPH (EUR) *</label>
+                    <label>{{ t('label_price_with_vat_required') }}</label>
                     <input type="number" [(ngModel)]="variant.price_with_vat_eur" placeholder="0" step="0.01"
                       [disabled]="!!variant._delete" (change)="onPriceWithVATChange(variant)">
                   </div>
                   <div class="form-group">
-                    <label>Cena bez DPH <span class="hint">(auto)</span></label>
+                    <label>{{ t('label_price_without_vat') }} <span class="hint">({{ t('auto_suffix') }})</span></label>
                     <input type="number" [(ngModel)]="variant.price_without_vat_eur" placeholder="0" step="0.01"
                       [disabled]="true" class="auto-calculated">
                   </div>
@@ -450,18 +453,18 @@ triggerLabel="Akce"
               </div>
 
               <div class="form-group" style="margin-top:14px;">
-                <label>Sklad (ks)</label>
+                <label>{{ t('label_stock_pcs') }}</label>
                 <input type="number" [(ngModel)]="variant.stock_quantity" placeholder="0" min="0"
                   [disabled]="!!variant._delete">
               </div>
             </div>
           </div>
         }
-        <button type="button" class="btn btn-secondary" (click)="addVariant()">➕ Přidat variantu</button>
+        <button type="button" class="btn btn-secondary" (click)="addVariant()">➕ {{ t('btn_add_variant') }}</button>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeVariantsModal()">Zavřít</button>
-        <button class="btn btn-primary" (click)="saveProduct()">💾 Uložit</button>
+        <button class="btn btn-secondary" (click)="closeVariantsModal()">{{ i18n.getValue('shared.close') }}</button>
+        <button class="btn btn-primary" (click)="saveProduct()">💾 {{ i18n.getValue('shared.save') }}</button>
       </div>
     </div>
   </div>
@@ -471,12 +474,12 @@ triggerLabel="Akce"
   <div class="modal-overlay" (click)="editingVariantIdx = null">
     <div class="modal-content modal-images" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>🖼️ Obrázky varianty: {{ currentEditingVariant?.variant_name }}</h2>
+        <h2>🖼️ {{ t('variant_images_modal_title_prefix') }}: {{ currentEditingVariant?.variant_name }}</h2>
         <button class="close-btn" (click)="editingVariantIdx = null">✕</button>
       </div>
       <div class="modal-body">
         @if (editingVariantImages.length === 0) {
-          <div class="empty-state">Bez obrázků — klikni „➕ Přidat"</div>
+          <div class="empty-state">{{ t('empty_images') }}</div>
         }
         @for (image of editingVariantImages; track image; let i = $index) {
           <div class="image-card" [class.deleted]="image._delete">
@@ -485,10 +488,10 @@ triggerLabel="Akce"
                 <div class="image-preview-box">
                   @if (image.url || image.image_path) {
                     <img [src]="image.url || ('storage/products/' + image.image_path)"
-                      [alt]="image.alt_text || 'Náhled'" class="image-preview">
+                      [alt]="image.alt_text || t('preview_alt_fallback')" class="image-preview">
                   }
                   @if (!image.url && !image.image_path) {
-                    <div class="image-placeholder">Náhled obrázku</div>
+                    <div class="image-placeholder">{{ t('image_preview_placeholder') }}</div>
                   }
                 </div>
               </div>
@@ -499,19 +502,19 @@ triggerLabel="Akce"
                 </div>
                 <div class="image-form">
                   <div class="form-group">
-                    <label>Soubor</label>
+                    <label>{{ t('label_file') }}</label>
                     <input type="file" accept="image/*" (change)="onVariantImageFileSelected($event, i)"
                       [disabled]="image._delete" class="file-input">
-                    <p class="form-hint">JPG/PNG, max 5 MB</p>
+                    <p class="form-hint">{{ t('hint_file_type_size') }}</p>
                   </div>
                   <div class="form-row-2">
                     <div class="form-group">
-                      <label>Alt text</label>
-                      <input type="text" [(ngModel)]="image.alt_text" placeholder="Popis"
+                      <label>{{ t('label_alt_text') }}</label>
+                      <input type="text" [(ngModel)]="image.alt_text" [placeholder]="t('placeholder_description')"
                         [disabled]="!!image._delete" class="form-input">
                     </div>
                     <div class="form-group">
-                      <label>Pořadí</label>
+                      <label>{{ t('label_sort_order') }}</label>
                       <input type="number" [(ngModel)]="image.sort_order" placeholder="0" min="0"
                         [disabled]="!!image._delete" class="form-input">
                     </div>
@@ -521,11 +524,11 @@ triggerLabel="Akce"
             </div>
           </div>
         }
-        <button type="button" class="btn btn-secondary" (click)="addVariantImage()">➕ Přidat obrázek</button>
+        <button type="button" class="btn btn-secondary" (click)="addVariantImage()">➕ {{ t('btn_add_image') }}</button>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="editingVariantIdx = null">Zrušit</button>
-        <button class="btn btn-primary" (click)="saveVariantImages()">💾 Uložit obrázky</button>
+        <button class="btn btn-secondary" (click)="editingVariantIdx = null">{{ i18n.getValue('shared.cancel') }}</button>
+        <button class="btn btn-primary" (click)="saveVariantImages()">💾 {{ t('btn_save_images') }}</button>
       </div>
     </div>
   </div>
@@ -535,12 +538,12 @@ triggerLabel="Akce"
   <div class="modal-overlay" (click)="closeImagesModal()">
     <div class="modal-content modal-images" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>🖼️ Obrázky: {{ editingProduct.name }}</h2>
+        <h2>🖼️ {{ t('images_modal_title_prefix') }}: {{ editingProduct.name }}</h2>
         <button class="close-btn" (click)="closeImagesModal()">✕</button>
       </div>
       <div class="modal-body">
         @if (getVisibleImages(editingProduct).length === 0) {
-          <div class="empty-state">Bez obrázků — klikni „➕ Přidat"</div>
+          <div class="empty-state">{{ t('empty_images') }}</div>
         }
         @for (image of editingProduct.images; track image; let i = $index) {
           <div class="image-card"
@@ -552,14 +555,14 @@ triggerLabel="Akce"
                   <div class="image-preview-box">
                     @if (image.url || image.image_path) {
                       <img [src]="image.url || ('storage/products/' + image.image_path)"
-                        [alt]="image.alt_text || 'Náhled'" class="image-preview">
+                        [alt]="image.alt_text || t('preview_alt_fallback')" class="image-preview">
                     }
                     @if (!image.url && !image.image_path) {
-                      <div class="image-placeholder">Náhled obrázku</div>
+                      <div class="image-placeholder">{{ t('image_preview_placeholder') }}</div>
                     }
                   </div>
                   @if (image.is_primary) {
-                    <div class="primary-badge-inline">Primární</div>
+                    <div class="primary-badge-inline">{{ t('primary_badge') }}</div>
                   }
                 </div>
                 <div class="image-form-section">
@@ -570,19 +573,19 @@ triggerLabel="Akce"
                   </div>
                   <div class="image-form">
                     <div class="form-group">
-                      <label>Soubor</label>
+                      <label>{{ t('label_file') }}</label>
                       <input type="file" accept="image/*" (change)="onFileSelected($event, i)"
                         [disabled]="image._delete" class="file-input">
-                      <p class="form-hint">JPG/PNG, max 5 MB</p>
+                      <p class="form-hint">{{ t('hint_file_type_size') }}</p>
                     </div>
                     <div class="form-row-2">
                       <div class="form-group">
-                        <label>Alt text</label>
-                        <input type="text" [(ngModel)]="image.alt_text" placeholder="Popis"
+                        <label>{{ t('label_alt_text') }}</label>
+                        <input type="text" [(ngModel)]="image.alt_text" [placeholder]="t('placeholder_description')"
                           [disabled]="!!image._delete" class="form-input">
                       </div>
                       <div class="form-group">
-                        <label>Pořadí</label>
+                        <label>{{ t('label_sort_order') }}</label>
                         <input type="number" [(ngModel)]="image.sort_order" placeholder="0" min="0"
                           [disabled]="!!image._delete" class="form-input">
                       </div>
@@ -590,7 +593,7 @@ triggerLabel="Akce"
                     <label class="radio-label">
                       <input type="radio" [name]="'primary-' + i" [checked]="image.is_primary"
                         (change)="setPrimaryImage(i)" [disabled]="image._delete">
-                      <span>Primární obrázek (hlavní náhled)</span>
+                      <span>{{ t('label_primary_image_hint') }}</span>
                     </label>
                   </div>
                 </div>
@@ -598,11 +601,11 @@ triggerLabel="Akce"
             }
           </div>
         }
-        <button type="button" class="btn btn-secondary" (click)="addImage()">➕ Přidat obrázek produktu</button>
+        <button type="button" class="btn btn-secondary" (click)="addImage()">➕ {{ t('btn_add_product_image') }}</button>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="closeImagesModal()">Zavřít</button>
-        <button class="btn btn-primary" (click)="saveProduct()">💾 Uložit obrázky</button>
+        <button class="btn btn-secondary" (click)="closeImagesModal()">{{ i18n.getValue('shared.close') }}</button>
+        <button class="btn btn-primary" (click)="saveProduct()">💾 {{ t('btn_save_images') }}</button>
       </div>
     </div>
   </div>
@@ -613,7 +616,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

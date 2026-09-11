@@ -54,6 +54,7 @@ import { ScrollLockService } from '../../../../core/services/scroll-lock.service
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { environment } from '../../../../../environments/environment';
 import { ExportFormat, createExportFormatOptions, ExportFormatOption } from '../../../../shared/interfaces/export-format';
+import { ImportEnumHint } from '../table-builder/table-builder.component';
 
 /** @description Jeden řádek chybového souhrnu z dry-run validace. */
 interface ImportRowError {
@@ -102,7 +103,7 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
 
   @Output() imported = new EventEmitter<void>();
   @Output() closed = new EventEmitter<void>();
-
+@Input() enumHints: ImportEnumHint[] = [];
   private dataHandler = inject(DataHandler);
   private http = inject(HttpClient);
   private alertDialogService = inject(AlertDialogService);

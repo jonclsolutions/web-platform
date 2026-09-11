@@ -76,7 +76,7 @@ class ShopPaymentMethodController extends Controller
      */
     public function store(StoreShopPaymentMethodRequest $request): JsonResponse
     {
-        return response()->json(['message' => 'Vytváření nových platebních metod je zakázáno.'], 403);
+        return response()->json(['message' => 'Creating new payment methods is forbidden.'], 403);
     }
 
     /**
@@ -102,14 +102,14 @@ class ShopPaymentMethodController extends Controller
 
             $method->update($validated);
 
-            $this->logAction($request, ShopLog::class, 'update', 'ShopPaymentMethod', "Aktualizace platební metody: {$method->name}", $method->id, 'ShopPaymentMethod');
+            $this->logAction($request, ShopLog::class, 'update', 'ShopPaymentMethod', "Updated payment method: {$method->name}", $method->id, 'ShopPaymentMethod');
 
             return response()->json(new ShopPaymentMethodResource($method));
 
         } catch (\Exception $e) {
             Log::error("Payment method update error: " . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopPaymentMethod', "Aktualizace selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopPaymentMethod');
-            return response()->json(['message' => 'Aktualizace selhala.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopPaymentMethod', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopPaymentMethod');
+            return response()->json(['message' => 'Update failed.'], 500);
         }
     }
 
@@ -119,7 +119,7 @@ class ShopPaymentMethodController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
-        return response()->json(['message' => 'Systémové platební metody nelze smazat, pouze deaktivovat.'], 403);
+        return response()->json(['message' => 'System payment methods cannot be deleted, only deactivated.'], 403);
     }
 
     /**
@@ -129,7 +129,7 @@ class ShopPaymentMethodController extends Controller
     {
         $item = ShopPaymentMethod::withTrashed()->findOrFail($id);
         $item->restore();
-        $this->logAction($request, ShopLog::class, 'restore', 'ShopPaymentMethod', "Obnova platební metody ID: $id", (int) $id, 'ShopPaymentMethod');
+        $this->logAction($request, ShopLog::class, 'restore', 'ShopPaymentMethod', "Restored payment method ID: $id", (int) $id, 'ShopPaymentMethod');
         return response()->json(new ShopPaymentMethodResource($item));
     }
 }

@@ -72,7 +72,7 @@ trait ValidatesAttachmentSecurity
 
             $ext = strtolower($value->getClientOriginalExtension());
             if (in_array($ext, self::forbiddenExtensions(), true)) {
-                $fail('Tento typ souboru není z bezpečnostních důvodů povolen.');
+                $fail('This file type is not allowed for security reasons.');
             }
         };
     }
@@ -96,7 +96,7 @@ trait ValidatesAttachmentSecurity
             if (in_array($mime, self::forbiddenMimes(), true)) {
                 $validator->errors()->add(
                     "attachments.{$index}",
-                    "Soubor \"{$file->getClientOriginalName()}\" má nepovolený typ a nebyl z bezpečnostních důvodů přijat."
+                    "The file \"{$file->getClientOriginalName()}\" has an unauthorized type and was not accepted for security reasons."
                 );
             }
         }

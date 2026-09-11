@@ -27,7 +27,7 @@ class PurgeImportBatchesCommand extends Command
 {
     protected $signature = 'imports:purge-stale';
 
-    protected $description = 'Smaže nevyzvednuté (validated/failed) importní dávky a jejich dočasné soubory starší než temp_file_ttl_hours.';
+    protected $description = 'Deletes uncollected (validated/failed) import batches and their temporary files older than temp_file_ttl_hours.';
 
     public function handle(): int
     {
@@ -45,7 +45,7 @@ class PurgeImportBatchesCommand extends Command
             $batch->delete();
         }
 
-        $this->info("Smazáno {$stale->count()} nevyzvednutých importních dávek.");
+        $this->info("Deleted {$stale->count()} uncollected import batches.");
 
         return self::SUCCESS;
     }

@@ -4,6 +4,10 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": natvrdo psané texty ('Způsoby dopravy'/'Koš'/'Akce'/'Koš - smazané
+        dopravy'/'Datum vytvoření') nahrazeny `t('shop-shipping-methods.xxx')`
+        bindingy - viz shipping-methods.component.ts stejné datum.
 -->
     
 <div class="shipping-methods-container container mx-auto p-4">
@@ -17,14 +21,14 @@
     <div>
       <div class="toolbar-actions m-b-t-5">
         @if(!showTrashTable){
-<div class="table-header">Způsoby dopravy</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
         <div class="toolbar-actions-in">
           <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
         </div>
@@ -63,7 +67,7 @@ triggerLabel="Akce"
             <app-trash-table-builder
               [data]="trashData"
               [columns]="trashShippingColumns"
-              [tableCaption]="'Koš - smazané dopravy'"
+              [tableCaption]="t('trash_table_caption')"
               [apiEndpoint]="apiEndpoint"
               (itemRestored)="handleItemRestored()">
             </app-trash-table-builder>
@@ -108,7 +112,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

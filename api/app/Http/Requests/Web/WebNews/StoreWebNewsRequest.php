@@ -38,7 +38,7 @@ class StoreWebNewsRequest extends FormRequest
             'title'    => ['required', 'string', 'min:3', 'max:255'],
             'message'  => ['required', 'string', 'max:10000'],
             'author'   => ['required', 'string', 'max:255'],
-            'thema'    => ['required', 'string', 'max:255', 'in:Milník,Update,Info,Novinka,Upozornění,Error,Údržba,Akce'],
+            'thema'    => ['required', 'string', 'max:255', 'in:milestone,update,info,feature,warning,error,maintenance,event'],
             'bullet_1' => ['nullable', 'string', 'max:255'],
             'bullet_2' => ['nullable', 'string', 'max:255'],
             'bullet_3' => ['nullable', 'string', 'max:255'],
@@ -54,13 +54,13 @@ class StoreWebNewsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required'   => 'Titulka novinky je povinná.',
-            'title.min'        => 'Titulek musí mít 3 až 255 znaků.',
-            'message.required' => 'Obsah zprávy nesmí být prázdný.',
-            'message.max'      => 'Obsah zprávy může mít maximálně 10 000 znaků.',
-            'author.required'  => 'Autor musí být vyplněn.',
-            'thema.required'   => 'Téma je povinné.',
-            'thema.in'         => 'Vybrané téma je neplatné.',
+            'title.required'   => 'The news title is required.',
+            'title.min'        => 'The title must be between 3 and 255 characters.',
+            'message.required' => 'The message content cannot be empty.',
+            'message.max'      => 'The message content may not be greater than 10,000 characters.',
+            'author.required'  => 'The author must be specified.',
+            'thema.required'   => 'The theme is required.',
+            'thema.in'         => 'The selected theme is invalid.',
         ];
     }
 }

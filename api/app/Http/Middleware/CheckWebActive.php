@@ -44,14 +44,14 @@ class CheckWebActive
         $settings = Cache::remember('site_setting_active_web', 300, function () {
             return WebSiteSetting::firstOrCreate(
                 ['id' => 1],
-                ['is_web_active' => true, 'web_maintenance_message' => 'Omlouváme se, web je momentálně v údržbě.']
+                ['is_web_active' => true, 'web_maintenance_message' => 'We apologize, the website is currently undergoing maintenance.']
             );
         });
 
         if (!$settings->is_web_active) {
             return response()->json([
                 'success' => false,
-                'message' => $settings->web_maintenance_message ?? 'Omlouváme se, web je momentálně v údržbě.'
+                'message' => $settings->web_maintenance_message ?? 'We apologize, the website is currently undergoing maintenance.'
             ], 503);
         }
 

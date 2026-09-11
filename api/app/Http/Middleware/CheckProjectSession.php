@@ -53,12 +53,12 @@ class CheckProjectSession
                 CoreSecurityEvent::contextFromRequest($request, ['reason' => 'project_unavailable'])
             );
 
-            return response()->json(['message' => 'Projekt nebyl nalezen nebo není dostupný.'], 404);
+            return response()->json(['message' => 'The project was not found or is not available.'], 404);
         }
 
         $bearer = $request->bearerToken() ?: $request->input('session_token');
          if (!$bearer) {
-             return response()->json(['message' => 'Přihlášení vyžadováno.'], 401);
+             return response()->json(['message' => 'Authentication required.'], 401);
          }
 
         $session = WebProjectSession::findValidByPlaintextToken($bearer);
@@ -71,7 +71,7 @@ class CheckProjectSession
                 CoreSecurityEvent::contextFromRequest($request, ['reason' => 'session_mismatch_or_expired', 'project_id' => $project->id])
             );
 
-            return response()->json(['message' => 'Relace vypršela nebo je neplatná. Přihlaste se prosím znovu.'], 401);
+            return response()->json(['message' => 'The session has expired or is invalid. Please log in again.'], 401);
         }
 
         $session->slideExpiry();

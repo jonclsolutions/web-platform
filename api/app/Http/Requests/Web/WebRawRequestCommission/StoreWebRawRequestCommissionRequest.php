@@ -51,8 +51,8 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
             'contact_email'     => ['required', 'email', 'max:255'],
             'contact_phone'     => ['nullable', 'string', 'regex:/^(\+?[0-9]{1,3})?[\s.-]?[0-9]{3,4}[\s.-]?[0-9]{3,4}[\s.-]?[0-9]{3,4}$/'],
             'order_description' => ['required', 'string', 'max:10000'],
-            'status'            => ['sometimes', 'string', 'in:Nově zadané,Zpracovává se,Dokončeno,Zrušeno'],
-            'priority'          => ['sometimes', 'string', 'in:Nízká,Neutrální,Vysoká'],
+            'status'            => ['sometimes', 'string', 'in:new,in_progress,done,cancelled'],
+            'priority'          => ['sometimes', 'string', 'in:low,neutral,high'],
             'note'              => ['nullable', 'string'],
             'lang'              => ['sometimes', 'nullable', 'string', 'max:5'],
             'attachment'        => ['nullable', 'file', 'max:10240', $this->attachmentExtensionRule()],
@@ -78,16 +78,16 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'thema.required'                => 'Téma musí mít 3-255 znaků.',
-            'thema.min'                     => 'Téma musí mít 3-255 znaků.',
-            'thema.max'                     => 'Téma musí mít 3-255 znaků.',
-            'thema.regex'                   => 'Téma obsahuje nepovolené znaky.',
-            'contact_email.required'        => 'Zadejte platnou e-mailovou adresu.',
-            'contact_email.email'           => 'Zadejte platnou e-mailovou adresu.',
-            'contact_phone.regex'           => 'Zadejte platné telefonní číslo.',
-            'order_description.required'    => 'Popis je povinný pro zpracování.',
-            'attachment.max'                => 'Soubor je příliš velký. Maximální velikost je 10 MB.',
-            'attachment.file'               => 'Příloha musí být platný soubor.',
+            'thema.required'                => 'The subject must be between 3 and 255 characters.',
+            'thema.min'                     => 'The subject must be between 3 and 255 characters.',
+            'thema.max'                     => 'The subject must be between 3 and 255 characters.',
+            'thema.regex'                   => 'The subject contains invalid characters.',
+            'contact_email.required'        => 'Please provide a valid email address.',
+            'contact_email.email'           => 'Please provide a valid email address.',
+            'contact_phone.regex'           => 'Please provide a valid phone number.',
+            'order_description.required'    => 'The description is required for processing.',
+            'attachment.max'                => 'The file is too large. The maximum size is 10 MB.',
+            'attachment.file'               => 'The attachment must be a valid file.',
         ];
     }
 }

@@ -141,14 +141,14 @@ class ShopProductController extends Controller
             }
 
             $product->load($this->defaultRelations());
-            $this->logAction($request, ShopLog::class, 'create', 'ShopProduct', "Vytvořen produkt: {$product->name}", $product->id, 'ShopProduct');
+            $this->logAction($request, ShopLog::class, 'create', 'ShopProduct', "Created product: {$product->name}", $product->id, 'ShopProduct');
 
             return response()->json(new ShopProductResource($product), 201);
 
         } catch (\Exception $e) {
             Log::error('ShopProduct creation error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Vytvoření produktu selhalo: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření produktu selhalo: ' . $e->getMessage()], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Product creation failed: " . $e->getMessage());
+            return response()->json(['message' => 'Product creation failed: ' . $e->getMessage()], 500);
         }
     }
 
@@ -213,14 +213,14 @@ class ShopProductController extends Controller
             $this->clearProductCache($product);
 
             $product->load($this->defaultRelations());
-            $this->logAction($request, ShopLog::class, 'update', 'ShopProduct', "Aktualizace produktu: {$product->name}", $product->id, 'ShopProduct');
+            $this->logAction($request, ShopLog::class, 'update', 'ShopProduct', "Updated product: {$product->name}", $product->id, 'ShopProduct');
 
             return response()->json(new ShopProductResource($product));
 
         } catch (\Exception $e) {
             Log::error('ShopProduct update error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Aktualizace selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
-            return response()->json(['message' => 'Aktualizace selhala: ' . $e->getMessage()], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
+            return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);
         }
     }
 
@@ -243,15 +243,15 @@ class ShopProductController extends Controller
             $product->syncCategories($categoryIds, $primaryId);
             $this->clearProductCache($product);
 
-            $this->logAction($request, ShopLog::class, 'update', 'ShopProduct', "Rychlá změna kategorií produktu", $product->id, 'ShopProduct');
+            $this->logAction($request, ShopLog::class, 'update', 'ShopProduct', "Quick update of product categories", $product->id, 'ShopProduct');
 
             $product->load($this->defaultRelations());
             return response()->json(new ShopProductResource($product));
 
         } catch (\Exception $e) {
             Log::error('ShopProduct quick category update error: ' . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Rychlá změna kategorií selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
-            return response()->json(['message' => 'Aktualizace kategorie selhala.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Quick category update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
+            return response()->json(['message' => 'Category update failed.'], 500);
         }
     }
 
@@ -280,13 +280,13 @@ class ShopProductController extends Controller
                 $product->delete();
             }
 
-            $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopProduct', "Smazání produktu ID: $id", (int) $id, 'ShopProduct');
+            $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopProduct', "Deleted product ID: $id", (int) $id, 'ShopProduct');
             return response()->json(null, 204);
 
         } catch (\Exception $e) {
             Log::error('ShopProduct delete error: ' . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Smazání produktu selhalo ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
-            return response()->json(['message' => 'Smazání produktu selhalo: ' . $e->getMessage()], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Product deletion failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
+            return response()->json(['message' => 'Product deletion failed: ' . $e->getMessage()], 500);
         }
     }
 
@@ -299,12 +299,12 @@ class ShopProductController extends Controller
             $product = ShopProduct::withTrashed()->findOrFail($id);
             $product->restore();
             $product->load($this->defaultRelations());
-            $this->logAction($request, ShopLog::class, 'restore', 'ShopProduct', "Obnova produktu ID: $id", (int) $id, 'ShopProduct');
+            $this->logAction($request, ShopLog::class, 'restore', 'ShopProduct', "Restored product ID: $id", (int) $id, 'ShopProduct');
             return response()->json(new ShopProductResource($product));
         } catch (\Exception $e) {
             Log::error('ShopProduct restore error: ' . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Obnova selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
-            return response()->json(['message' => 'Obnova produktu selhala.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Restore failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
+            return response()->json(['message' => 'Product restore failed.'], 500);
         }
     }
 
@@ -331,12 +331,12 @@ class ShopProductController extends Controller
                 $product->forceDelete();
             }
 
-            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopProduct', "Vysypání koše produktů. Počet: $count");
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopProduct', "Emptied product trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error('ShopProduct force delete all error: ' . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Vyprázdnění koše selhalo: " . $e->getMessage());
-            return response()->json(['message' => 'Vyprázdnění koše selhalo: ' . $e->getMessage()], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Emptying trash failed: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed: ' . $e->getMessage()], 500);
         }
     }
 
@@ -387,7 +387,7 @@ class ShopProductController extends Controller
         $product = is_numeric($slugOrId) ? $query->find($slugOrId) : $query->where('slug', $slugOrId)->first();
 
         if (! $product) {
-            return response()->json(['message' => 'Produkt nebyl nalezen nebo není aktivní.'], 404);
+            return response()->json(['message' => 'Product not found or not active.'], 404);
         }
 
         return response()->json(new ShopProductResource($product));

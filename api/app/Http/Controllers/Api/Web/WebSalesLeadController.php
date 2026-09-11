@@ -6,24 +6,24 @@
  * @author RPSW
  * @created 2025
  * @description Controller responsible for managing sales lead lifecycle, including filtering, lifecycle state management (soft-delete), and comprehensive administrative audit logging.
- * @refactor-note (2026) Přidány generateLink() a showByToken().
- * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený LogsActivity trait.
+ * @refactor-note (2026) Added generateLink() and showByToken().
+ * @refactor-note (2026-08-6) LOGGING MIGRATION to shared LogsActivity trait.
  *
- * @refactor-note (2026-08-23a) HROMADNÉ MAZÁNÍ V JEDNOM REQUESTU: přidána bulkDestroy().
+ * @refactor-note (2026-08-23a) BULK DELETE IN A SINGLE REQUEST: added bulkDestroy().
  *
- * @refactor-note (2026-08-23b) HROMADNÝ IMPORT - dvě záměrné odchylky od store():
- * 1) `user_id` NENÍ importovatelné pole - vždy zůstává `null` u importovaných leadů.
- * 2) `salesman_name` se PŘEBÍRÁ ZE SOUBORU beze změny.
- * `public_token`/`public_token_used_at` zůstávají MIMO import.
+ * @refactor-note (2026-08-23b) BULK IMPORT - two intentional deviations from store():
+ * 1) `user_id` is NOT an importable field - always remains `null` for imported leads.
+ * 2) `salesman_name` is TAKEN FROM THE FILE unchanged.
+ * `public_token`/`public_token_used_at` remain OUTSIDE the import.
  *
- * @bugfix-note (2026-08-24) `showByToken()` teď zapisuje `sales_lead_token_invalid`
- * do core_security_events pro neplatný i už použitý token.
+ * @bugfix-note (2026-08-24) `showByToken()` now writes `sales_lead_token_invalid`
+ * to core_security_events for both invalid and already used tokens.
  *
- * @refactor-note (2026-08-31) BACKLOG "osiřelé importní soubory": import
- * validate/commit flow přepsán na sdílený `HandlesImportBatches` trait - dřív
- * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
- * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
- * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
+ * @refactor-note (2026-08-31) BACKLOG "orphaned import files": import
+ * validate/commit flow rewritten to shared `HandlesImportBatches` trait - previously
+ * `Storage::delete($batch->temp_path)` was missing in the `catch` branch of importCommit()
+ * (even after a failed import, the temporary file remained on disk forever), now this is
+ * guaranteed by `try/finally` inside `runImportCommit()`, no manual deletion here.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -52,8 +52,8 @@ class WebSalesLeadController extends Controller
     use HandlesImportBatches;
 
     /**
-     * @description Sloupce, které smí přijít z importního souboru - všechna pole ze
-     * StoreWebSalesLeadRequest KROMĚ `user_id` (viz refactor-note v hlavičce třídy).
+     * @description Columns allowed to come from the import file - all fields from
+     * StoreWebSalesLeadRequest EXCEPT `user_id` (see refactor-note in class header).
      */
     private const IMPORTABLE_COLUMNS = [
         'subject_name', 'first_contact_date', 'source_channel', 'salesman_name',
@@ -66,7 +66,7 @@ class WebSalesLeadController extends Controller
      * Retrieves a list of sales leads based on filtering and pagination criteria.
      */
     /**
-     * @refactor-note (2026-08-25) BACKLOG "hledat napříč vším": `search` rozšířen o
+     * @refactor-note (2026-08-25) BACKLOG "search across everything": `search` extended with
      * `contact_phone`, `location`, `salesman_name`.
      */
     public function index(Request $request): JsonResponse
@@ -109,7 +109,7 @@ class WebSalesLeadController extends Controller
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
         if ($noPagination) {
-            $this->logAction($request, WebLog::class, 'export', 'WebSalesLead', "Hromadný export obchodních leadů.");
+            $this->logAction($request, WebLog::class, 'export', 'WebSalesLead', "Bulk export of sales leads.");
             $data = $query->get();
             return response()->json(WebSalesLeadResource::collection($data));
         }
@@ -144,12 +144,12 @@ class WebSalesLeadController extends Controller
 
             $lead = WebSalesLead::create($validated);
 
-            $this->logAction($request, WebLog::class, 'create', 'WebSalesLead', "Vytvořen nový lead: {$lead->subject_name}", $lead->id, 'WebSalesLead');
+            $this->logAction($request, WebLog::class, 'create', 'WebSalesLead', "Created new lead: {$lead->subject_name}", $lead->id, 'WebSalesLead');
 
             return response()->json(new WebSalesLeadResource($lead), 201);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při vytváření leadu: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření leadu selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error creating lead: " . $e->getMessage());
+            return response()->json(['message' => 'Lead creation failed.'], 500);
         }
     }
 
@@ -171,12 +171,12 @@ class WebSalesLeadController extends Controller
             $lead = WebSalesLead::findOrFail($id);
             $lead->update($request->all());
 
-            $this->logAction($request, WebLog::class, 'update', 'WebSalesLead', "Aktualizace leadu ID: {$lead->id} ({$lead->subject_name})", $lead->id, 'WebSalesLead');
+            $this->logAction($request, WebLog::class, 'update', 'WebSalesLead', "Updated lead ID: {$lead->id} ({$lead->subject_name})", $lead->id, 'WebSalesLead');
 
             return response()->json(new WebSalesLeadResource($lead));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při aktualizaci leadu ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
-            return response()->json(['message' => 'Aktualizace leadu selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error updating lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
+            return response()->json(['message' => 'Lead update failed.'], 500);
         }
     }
 
@@ -191,18 +191,18 @@ class WebSalesLeadController extends Controller
 
             $forceDelete ? $item->forceDelete() : $item->delete();
 
-            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSalesLead', "Smazání leadu ID: $id", (int) $id, 'WebSalesLead');
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSalesLead', "Deleted lead ID: $id", (int) $id, 'WebSalesLead');
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při mazání leadu ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
-            return response()->json(['message' => 'Smazání leadu selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error deleting lead ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
+            return response()->json(['message' => 'Lead deletion failed.'], 500);
         }
     }
 
     /**
-     * @description Hromadně smaže vybrané leady JEDNÍM requestem.
-     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     * @description Bulk deletes selected leads in a single request.
+     * @param Request $request Body contains { ids: number[], force_delete?: boolean }.
      */
     public function bulkDestroy(Request $request): JsonResponse
     {
@@ -227,8 +227,8 @@ class WebSalesLeadController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při hromadném mazání leadů: " . $e->getMessage());
-            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error during bulk deletion of leads: " . $e->getMessage());
+            return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
 
         $skippedCount = $requestedCount - $deletedCount;
@@ -239,7 +239,7 @@ class WebSalesLeadController extends Controller
             WebLog::class,
             $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
             'WebSalesLead',
-            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} leadů (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            'Bulk ' . ($forceDelete ? 'permanent ' : '') . "deletion of {$deletedCount} leads (requested {$requestedCount}, IDs: {$idsPreview}).",
             null,
             'WebSalesLead'
         );
@@ -252,18 +252,18 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * @description Stáhne prázdnou importní šablonu (CSV/TXT/JSON) se sloupci
-     * z IMPORTABLE_COLUMNS.
+     * @description Downloads an empty import template (CSV/TXT/JSON) with columns
+     * from IMPORTABLE_COLUMNS.
      */
     public function importTemplate(Request $request)
     {
         $format = (string) $request->query('format', 'csv');
         if (!in_array($format, ['csv', 'json', 'txt'], true)) {
-            return response()->json(['message' => 'Nepodporovaný formát šablony.'], 422);
+            return response()->json(['message' => 'Unsupported template format.'], 422);
         }
 
         $columns = self::IMPORTABLE_COLUMNS;
-        $baseFilename = 'import-sablona-web-sales_leads';
+        $baseFilename = 'import-template-web-sales_leads';
 
         if ($format === 'csv' || $format === 'txt') {
             $delimiter = $format === 'txt' ? "\t" : ';';
@@ -282,9 +282,9 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * @description Dry-run validace importního souboru - NEZAPISUJE nic do DB.
-     * @refactor-note (2026-08-31) Uložení souboru + vytvoření CoreImportBatch teď jde
-     * přes `startImportBatch()` (HandlesImportBatches trait).
+     * @description Dry-run validation of the import file - DOES NOT write anything to DB.
+     * @refactor-note (2026-08-31) File storage + CoreImportBatch creation now goes
+     * through `startImportBatch()` (HandlesImportBatches trait).
      */
     public function importValidate(
         Request $request,
@@ -340,11 +340,11 @@ class WebSalesLeadController extends Controller
     }
 
     /**
-     * @description Potvrdí a provede skutečný zápis importu. NEVOLÁ store() - žádné
-     * automatické přiřazení user_id/salesman_name podle přihlášeného admina.
-     * @refactor-note (2026-08-31) Přepsáno na `findPendingImportBatch()` +
-     * `runImportCommit()` (HandlesImportBatches trait) - dočasný soubor se teď maže
-     * VŽDY (i při selhání), viz trait hlavička.
+     * @description Confirms and executes the actual import write. DOES NOT CALL store() - no
+     * automatic user_id/salesman_name assignment based on the logged-in admin.
+     * @refactor-note (2026-08-31) Rewritten to `findPendingImportBatch()` +
+     * `runImportCommit()` (HandlesImportBatches trait) - temporary file is now deleted
+     * ALWAYS (even on failure), see trait header.
      */
     public function importCommit(
         Request $request,
@@ -355,7 +355,7 @@ class WebSalesLeadController extends Controller
         $batch = $this->findPendingImportBatch($request, $validated['import_token']);
 
         if ($batch === null) {
-            return response()->json(['message' => 'Import nebyl nalezen nebo už byl zpracován.'], 404);
+            return response()->json(['message' => 'Import not found or already processed.'], 404);
         }
 
         try {
@@ -369,8 +369,8 @@ class WebSalesLeadController extends Controller
                         if ($rowValidator->validateRow($row, $rules) !== null) {
                             continue;
                         }
-                        // user_id ZÁMĚRNĚ chybí z IMPORTABLE_COLUMNS - array_intersect_key
-                        // ho tak z $row nikdy nevezme.
+                        // user_id INTENTIONALLY missing from IMPORTABLE_COLUMNS - array_intersect_key
+                        // will thus never take it from $row.
                         WebSalesLead::create(array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS)));
                         $imported++;
                     }
@@ -387,7 +387,7 @@ class WebSalesLeadController extends Controller
                 WebLog::class,
                 'import',
                 'WebSalesLead',
-                "Hromadný import: přidáno {$result['imported_count']} leadů, přeskočeno {$result['skipped_count']} (soubor '{$batch->original_filename}').",
+                "Bulk import: added {$result['imported_count']} leads, skipped {$result['skipped_count']} (file '{$batch->original_filename}').",
                 null,
                 'WebSalesLead'
             );
@@ -399,11 +399,11 @@ class WebSalesLeadController extends Controller
                 'skip_reasons'   => [],
             ]]);
         } catch (\RuntimeException $e) {
-            // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
+            // Expired temporary file - see runImportCommit(), code 410.
             return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při importu: " . $e->getMessage());
-            return response()->json(['message' => 'Import selhal.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error during import: " . $e->getMessage());
+            return response()->json(['message' => 'Import failed.'], 500);
         }
     }
 
@@ -416,12 +416,12 @@ class WebSalesLeadController extends Controller
             $item = WebSalesLead::withTrashed()->findOrFail($id);
             $item->restore();
 
-            $this->logAction($request, WebLog::class, 'restore', 'WebSalesLead', "Obnova leadu ID: $id", (int) $id, 'WebSalesLead');
+            $this->logAction($request, WebLog::class, 'restore', 'WebSalesLead', "Restored lead ID: $id", (int) $id, 'WebSalesLead');
 
             return response()->json(new WebSalesLeadResource($item));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při obnově leadu ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
-            return response()->json(['message' => 'Obnova leadu selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error restoring lead ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
+            return response()->json(['message' => 'Lead restoration failed.'], 500);
         }
     }
 
@@ -434,19 +434,19 @@ class WebSalesLeadController extends Controller
             $count = WebSalesLead::onlyTrashed()->count();
             WebSalesLead::onlyTrashed()->forceDelete();
 
-            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSalesLead', "Hromadné smazání koše leadů. Počet: $count");
+            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSalesLead', "Emptied lead trash. Count: $count");
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při vyprazdňování koše leadů: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error emptying lead trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 
     /**
-     * @description Vygeneruje (nebo vrátí existující) public_token pro daný lead a sestaví
-     *              z něj plnou veřejnou URL na objednávkový formulář.
-     * @note ADMIN endpoint - musí zůstat za AuthGuard/Sanctum middlewarem v routes/api.php.
+     * @description Generates (or returns existing) public_token for the given lead and builds
+     *              the full public URL for the order form from it.
+     * @note ADMIN endpoint - must remain behind AuthGuard/Sanctum middleware in routes/api.php.
      */
     public function generateLink(Request $request, $id): JsonResponse
     {
@@ -454,7 +454,7 @@ class WebSalesLeadController extends Controller
             $lead = WebSalesLead::findOrFail($id);
             $token = $lead->getOrCreatePublicToken();
 
-            $this->logAction($request, WebLog::class, 'generate_link', 'WebSalesLead', "Vygenerován odkaz na objednávkový formulář pro lead ID: {$lead->id}", $lead->id, 'WebSalesLead');
+            $this->logAction($request, WebLog::class, 'generate_link', 'WebSalesLead', "Generated order form link for lead ID: {$lead->id}", $lead->id, 'WebSalesLead');
 
             return response()->json([
                 'data' => [
@@ -463,17 +463,17 @@ class WebSalesLeadController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Chyba při generování odkazu pro lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
-            return response()->json(['message' => 'Vygenerování odkazu selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error generating link for lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
+            return response()->json(['message' => 'Link generation failed.'], 500);
         }
     }
 
     /**
-     * @description VEŘEJNÁ metoda (bez auth) pro načtení leadu podle public_token -
-     *              slouží OrderFormComponent na frontendu k předvyplnění objednávkového
-     *              formuláře. Vrací jen úzkou, bezpečnou podmnožinu polí.
-     * @note Musí být zaregistrována v routes/api.php MIMO auth middleware skupinu.
-     * @note Vrací 410 Gone, pokud byl odkaz už jednou použit.
+     * @description PUBLIC method (without auth) to load a lead by public_token -
+     *              used by OrderFormComponent on the frontend to prefill the order
+     *              form. Returns only a narrow, secure subset of fields.
+     * @note Must be registered in routes/api.php OUTSIDE the auth middleware group.
+     * @note Returns 410 Gone if the link has already been used once.
      */
     public function showByToken(Request $request, string $token): JsonResponse
     {
@@ -487,7 +487,7 @@ class WebSalesLeadController extends Controller
                 CoreSecurityEvent::contextFromRequest($request, ['reason' => 'not_found'])
             );
 
-            return response()->json(['message' => 'Odkaz je neplatný nebo již expiroval.'], 404);
+            return response()->json(['message' => 'The link is invalid or has expired.'], 404);
         }
 
         if ($lead->public_token_used_at) {
@@ -498,7 +498,7 @@ class WebSalesLeadController extends Controller
                 CoreSecurityEvent::contextFromRequest($request, ['reason' => 'already_used', 'lead_id' => $lead->id])
             );
 
-            return response()->json(['message' => 'Tento formulář již byl jednou odeslán a odkaz není možné použít znovu.'], 410);
+            return response()->json(['message' => 'This form has already been submitted once and the link cannot be used again.'], 410);
         }
 
         return response()->json([

@@ -7,37 +7,27 @@
  * @description Specialized table component for managing deleted records ("trash"), allowing for
  * permanent deletion or restoration.
  *
- * @refactor-note (2025) Dříve dědil z BaseDataComponent — data ale vždy přicházejí přes
- * `@Input` a paginační/koš/cache polovinu BaseDataComponent tato komponenta nikdy
- * nevyužívala (o to se stará rodičovská "smart" stránka). Nyní si skládá
- * `EntityCrudService` přímo (restore/delete/hard-delete-all).
+ * (Earlier refactor-notes for EntityCrudService composition, permission granularization,
+ * SVG icons, and duplicate error toast removal are unchanged - see version history.)
  *
- * @refactor-note (2026-08-5) GRANULARIZACE PERMISSION SYSTÉMU (viz api.php,
- * table-builder.component.ts a has-permission.directive.ts stejné datum): restore i
- * trvalé smazání spadají na backendu pod STEJNÝ granulární klíč `{resource}-delete`
- * (viz api.php - `force-delete-all`/`restore`/`destroy` sdílejí permission), takže na
- * rozdíl od TableBuilderComponent (kde má každé tlačítko svůj vlastní `permission`)
- * stačí tady jeden `@Input() deletePermission`, který platí pro OBĚ tlačítka (Restore i
- * Delete Permanently) i pro hromadné "Delete All". Podporuje stejnou OR syntaxi
- * (`klic1|klic2`) jako *appHasPermission direktiva. Bez nastaveného `deletePermission`
- * zůstává komponenta zpětně kompatibilní - vše viditelné jako dřív.
- *
- * @icons-note (2026-08-31) EMOJI -> SVG: přidán `IconComponent` do `imports`, interní
- * `buttons` pole nese `icon: 'restore'`/`icon: 'purge'` (viz table-builder.component.ts
- * stejné datum pro sdílenou ikonovou sadu).
- *
- * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněna
- * VŠECHNA vlastní `alertDialogService.open('Error', ...)` volání z `error:` callbacků
- * (handleAction restore/delete, deleteAll) - všechna tři jsou čistě HTTP volání přes
- * `crud.restore()`/`crud.remove()`/`crud.hardDeleteAllTrashed()` (interně DataHandler),
- * takže `DataHandler.handleError()` už toast zobrazil (viz data-handler.service.ts
- * bugfix-note stejné datum).
+ * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `AdminLocalizationService` injektována manuálně (komponenta nededí `BaseDataComponent`,
+ * stejný vzor jako `TableBuilderComponent`/`GraphBuilderComponent`). `buttons`
+ * (dřív statické pole s natvrdo anglickým textem) přesunuto do konstruktoru, plněné
+ * `translations$.subscribe()`. `getCellValue()` `date`/`currency`/`boolean` case
+ * sjednoceny s `TableBuilderComponent`:
+ * - `currency`: locale podle `column.currencyCode` (ne natvrdo `'cs-CZ'`/`'de-DE'`).
+ * - `date`: `this.i18n.getDateLocale()` místo natvrdo `'cs-CZ'`.
+ * - `boolean`: `shared.yes`/`shared.no` místo natvrdo anglického `'Yes'`/`'No'`.
+ * Všechny `alertDialogService.open()`/`confirmDialogService.open()` texty a natvrdo
+ * psaný `'Vysypat koš'` label nahrazeny `t()` voláním.
  *
  * @dependencies
  * - EntityCrudService: Inherits core CRUD and data lifecycle management.
  * - ConfirmDialogService: Ensures safe irreversible operations (permanent delete).
  * - PermissionService: Vyhodnocení `deletePermission` pro restore/delete/delete-all.
  * - IconComponent: Sdílená sada SVG ikon pro řádková tlačítka.
+ * - AdminLocalizationService: i18n admin UI - viz refactor-note výše.
  */
 
 import {
@@ -52,6 +42,7 @@ import { DataHandler } from '../../../../core/services/data-handler.service';
 import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { PermissionService } from '../../../../core/auth/services/permission.service';
+import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import { ColumnDefinition } from '../../../../shared/interfaces/generic-form-column-definiton';
 import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
 import { TableButtons } from '../../../../shared/interfaces/table-buttons';
@@ -95,10 +86,12 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
    */
   @Input() deletePermission?: string;
 
-  buttons: TableButtons[] = [
-    { display_name: 'Restore', header_name: 'Restore', isActive: true, type: 'confirm_button', action: 'restore', icon: 'restore' },
-    { display_name: 'Delete Permanently', header_name: 'Delete Permanently', isActive: true, type: 'delete_button', action: 'delete', icon: 'purge' },
-  ];
+  public readonly i18n = inject(AdminLocalizationService);
+  public get strings(): any { return this.i18n.getMergedSection('trash-table-builder'); }
+  public t(key: string): string { return this.i18n.getValue(`trash-table-builder.${key}`); }
+
+  /** @refactor-note (2026-09-09) Přestalo být statické pole - plněno v konstruktoru přes `translations$`. */
+  buttons: TableButtons[] = [];
 
   public isFullWidth: boolean = true;
 
@@ -125,7 +118,15 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
     private dataHandler: DataHandler,
     private cd: ChangeDetectorRef,
     private confirmDialogService: ConfirmDialogService,
-  ) {}
+  ) {
+    this.i18n.translations$.subscribe(() => {
+      this.buttons = [
+        { display_name: this.t('btn_restore'), header_name: this.t('btn_restore'), isActive: true, type: 'confirm_button', action: 'restore', icon: 'restore' },
+        { display_name: this.t('btn_delete_permanently'), header_name: this.t('btn_delete_permanently'), isActive: true, type: 'delete_button', action: 'delete', icon: 'purge' },
+      ];
+      this.cd.markForCheck();
+    });
+  }
 
   /**
    * @description Whether restore/delete/delete-all should be visible at all, based on
@@ -146,7 +147,7 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
     return [
       {
         action: 'deleteAll',
-        label: 'Vysypat koš',
+        label: this.t('btn_empty_trash'),
         icon: '',
         class: 'btn-trash small-btn',
         isActive: false,
@@ -173,6 +174,8 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Renders formatted cell content based on column definition type.
+   * @refactor-note (2026-09-09) `currency`/`date`/`boolean` case sjednoceny s
+   * `TableBuilderComponent` - viz hlavička souboru.
    */
   getCellValue(item: any, column: ColumnDefinition): any {
     const keys = column.key.split('.');
@@ -181,8 +184,8 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
     switch (column.type as any) {
       case 'currency': {
         if (value === undefined || value === null || value === '') return '';
-        const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'CZK';
-        const locale = currency === 'CZK' ? 'cs-CZ' : 'de-DE';
+        const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'EUR';
+        const locale = this.i18n.getDateLocale();
 
         try {
           return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
@@ -192,9 +195,11 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
       }
 
       case 'date':
-        return value ? (new DatePipe('cs-CZ')).transform(value, column.format || 'shortDate') : '';
+        return value ? (new DatePipe(this.i18n.getDateLocale())).transform(value, column.format || 'shortDate') : '';
       case 'boolean':
-        return value ? 'Yes' : 'No';
+        return (value == true || value === 'true' || value == 1)
+          ? this.i18n.getValue('shared.yes')
+          : this.i18n.getValue('shared.no');
       case 'image':
         return value ? `${this.uploadsBaseUrl}${value}` : '';
       case 'array':
@@ -212,20 +217,18 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Manages row-level restoration and deletion logic.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Error', ...)`
-   * z obou `error:` callbacků (restore i delete) - `DataHandler.handleError()` už toast
-   * zobrazil. Viz bugfix-note v hlavičce souboru.
+   * @refactor-note (2026-09-09) Všechny texty nahrazeny `t()` voláním.
    */
   handleAction(item: any, action: string): void {
     if (!item.id) return;
 
     switch (action) {
       case 'restore':
-        this.confirmDialogService.open('Restore Confirmation', 'Are you sure you want to restore this item?').then(result => {
+        this.confirmDialogService.open(this.t('restore_confirm_title'), this.t('restore_confirm_message')).then(result => {
           if (result) {
             this.crud.restore(item.id).subscribe({
               next: () => {
-                this.alertDialogService.open('Success', 'Item successfully restored.', 'success');
+                this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('item_restored_message'), 'success');
                 this.removeItemFromLocalData(item.id);
                 this.itemRestored.emit();
               }
@@ -235,11 +238,11 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
         break;
 
       case 'delete':
-        this.confirmDialogService.open('Permanent Delete Confirmation', 'Are you sure you want to PERMANENTLY delete this item? This action is irreversible!').then(result => {
+        this.confirmDialogService.open(this.t('permanent_delete_confirm_title'), this.t('permanent_delete_confirm_message')).then(result => {
           if (result) {
             this.crud.remove(item.id, { forceDelete: true }).subscribe({
               next: () => {
-                this.alertDialogService.open('Success', 'Item permanently deleted.', 'success');
+                this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('item_deleted_permanently_message'), 'success');
                 this.removeItemFromLocalData(item.id);
                 this.itemDeletedPermanently.emit();
               }
@@ -260,22 +263,20 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
 
   /**
    * @description Executes a permanent wipe of all trashed items after user confirmation.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Error', ...)`
-   * z `error:` callbacku - `DataHandler.handleError()` už toast zobrazil. Viz
-   * bugfix-note v hlavičce souboru.
+   * @refactor-note (2026-09-09) Všechny texty nahrazeny `t()` voláním.
    */
   deleteAll(): void {
     if (this.data.length === 0) {
-      this.alertDialogService.open('Warning', 'No items available to delete.', 'warning');
+      this.alertDialogService.open(this.t('warning_title'), this.t('no_items_to_delete_message'), 'warning');
       return;
     }
 
-    this.confirmDialogService.open('Delete All Permanently', 'Are you sure you want to PERMANENTLY delete ALL items? This action is irreversible!')
+    this.confirmDialogService.open(this.t('delete_all_confirm_title'), this.t('delete_all_confirm_message'))
       .then(result => {
         if (result) {
           this.crud.hardDeleteAllTrashed().subscribe({
             next: () => {
-              this.alertDialogService.open('Success', 'All items permanently deleted.', 'success');
+              this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('all_items_deleted_message'), 'success');
               this.data = [];
               this.itemDeletedPermanently.emit();
               this.cd.markForCheck();

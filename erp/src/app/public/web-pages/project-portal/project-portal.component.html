@@ -1,3 +1,16 @@
+<!-- 
+    @file: project-portal.component.html
+    @path: src/app/public/web-pages/project-portal/project-portal.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @redesign-note (2026-09-11) BACKLOG "kompletní UI refactor - přehlednost,
+        profesionální vzhled": pravý panel rozdělen do záložek Description /
+        Checkpoints / Threads (`activeTab`, `setActiveTab()`) - viz
+        project-portal.component.ts stejné datum. Jazykový přepínač přepsán na
+        JEDEN dropdown (vlaječka + kód), sdílený mezi login kartou i sidebarem.
+        Threads záložka má fulltextové vyhledávání (`threadSearch`/`filteredThreads`).
+-->
 <div class="pp-page">
 
   @if (state === 'loading') {
@@ -12,7 +25,7 @@
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        <p class="pp-error-text">Projekt nebyl nalezen.</p>
+        <p class="pp-error-text">{{ t('project_not_found') }}</p>
       </div>
     </div>
   }
@@ -20,23 +33,48 @@
   @if (state === 'login') {
     <div class="pp-center">
       <div class="pp-login-card">
+
+        <!-- ── Jazykový dropdown ── -->
+        <div class="pp-lang-dropdown pp-lang-dropdown-login">
+          <button type="button" class="pp-lang-btn" [attr.aria-label]="t('language_switcher_title')" (click)="toggleLangMenu()">
+            @if (currentLanguageMeta?.icon) {
+              <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-flag">
+            }
+            <span class="pp-lang-code">{{ currentLanguageMeta?.code?.toUpperCase() }}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (isLangMenuOpen) {
+            <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
+            <div class="pp-lang-menu">
+              @for (lang of portalI18n.availableLanguages; track lang.code) {
+                <button type="button" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
+                  <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag">
+                  <span>{{ lang.name }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
         <div class="pp-login-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
         </div>
-        <h1 class="pp-login-title">Přihlášení k projektu</h1>
-        <p class="pp-login-lead">Zadejte heslo, které jste obdrželi od svého dodavatele.</p>
+        <h1 class="pp-login-title">{{ t('login_title') }}</h1>
+        <p class="pp-login-lead">{{ t('login_lead') }}</p>
 
-        <input type="password" class="pp-input" placeholder="Heslo" [(ngModel)]="loginPassword"
+        <input type="password" class="pp-input" [placeholder]="t('login_password_placeholder')" [(ngModel)]="loginPassword"
                (keyup.enter)="login()" [disabled]="loginLoading">
 
         @if (loginError) {
-          <p class="pp-login-error">{{ loginError }}</p>
+          <p class="pp-login-error">{{ t(loginError) }}</p>
         }
 
         <button type="button" class="pp-btn-primary" [disabled]="loginLoading || !loginPassword.trim()" (click)="login()">
-          {{ loginLoading ? 'Přihlašuji…' : 'Přihlásit se' }}
+          {{ loginLoading ? t('login_loading') : t('login_button') }}
         </button>
       </div>
     </div>
@@ -55,7 +93,7 @@
 
         <div class="pp-sidebar-divider"></div>
         <div class="sidebar-header">
-          Kontakt na dodavatele
+          {{ t('supplier_contact_title') }}
         </div>
         <div class="pp-sidebar-info-list">
           @if (project.platform) {
@@ -102,166 +140,228 @@
 
         <div class="pp-sidebar-spacer"></div>
 
+        <!-- ── Jazykový dropdown ── -->
+        <div class="pp-lang-dropdown">
+          <button type="button" class="pp-lang-btn pp-lang-btn-full" [attr.aria-label]="t('language_switcher_title')" (click)="toggleLangMenu()">
+            @if (currentLanguageMeta?.icon) {
+              <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-flag">
+            }
+            <span class="pp-lang-code">{{ currentLanguageMeta?.name }}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="pp-lang-chevron">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (isLangMenuOpen) {
+            <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
+            <div class="pp-lang-menu pp-lang-menu-sidebar">
+              @for (lang of portalI18n.availableLanguages; track lang.code) {
+                <button type="button" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
+                  <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag">
+                  <span>{{ lang.name }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
         <div class="pp-sidebar-actions">
           <button type="button" class="pp-sidebar-action-btn" [disabled]="isRefreshing" (click)="refresh()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class.pp-spin-icon]="isRefreshing">
               <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
-            {{ isRefreshing ? 'Obnovuji…' : 'Obnovit data' }}
+            {{ isRefreshing ? t('refreshing') : t('refresh_data') }}
           </button>
           <button type="button" class="pp-sidebar-action-btn" (click)="logout()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
-            Odhlásit se
+            {{ t('logout') }}
           </button>
         </div>
 
       </aside>
 
-      <!-- ═══════════ PRAVÝ OBSAH ═══════════ -->
+      <!-- ═══════════ PRAVÝ OBSAH - záložky ═══════════ -->
       <main class="pp-main">
         <div class="pp-main-inner">
 
-          @if (project.description) {
-            <section class="pp-intro-section">
-              <p class="pp-project-desc">{{ project.description }}</p>
+          <!-- ── Záložky ── -->
+          <div class="pp-tabs" role="tablist">
+            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'description'" (click)="setActiveTab('description')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              {{ t('tab_description') }}
+            </button>
+            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'checkpoints'" (click)="setActiveTab('checkpoints')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              {{ t('tab_checkpoints') }}
+              <span class="pp-tab-count">{{ project.checkpoints.length }}</span>
+            </button>
+            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'threads'" (click)="setActiveTab('threads')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              {{ t('tab_threads') }}
+              <span class="pp-tab-count">{{ threads.length }}</span>
+            </button>
+          </div>
+
+          <!-- ══════════ DESCRIPTION ══════════ -->
+          @if (activeTab === 'description') {
+            <section class="pp-tab-panel">
+              @if (project.description) {
+                <div class="pp-description-block">
+                  <div class="pp-description-block-title">{{ t('description_label') }}</div>
+                  <p class="pp-project-desc">{{ project.description }}</p>
+                </div>
+              }
+              @if (project.technologies) {
+                <div class="pp-description-block">
+                  <div class="pp-description-block-title">{{ t('technologies_label') }}</div>
+                  <p class="pp-project-desc">{{ project.technologies }}</p>
+                </div>
+              }
+              @if (!project.description && !project.technologies) {
+                <p class="pp-empty">{{ t('description_empty') }}</p>
+              }
             </section>
           }
 
-          <section class="pp-section">
-            <div class="pp-section-header-row">
-              <h3 class="pp-section-title">
-                <span class="pp-section-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                  </svg>
-                </span>
-                Postup prací
-              </h3>
-            </div>
-
-            <div class="pp-checkpoint-list">
-              @for (cp of project.checkpoints; track cp.id) {
-                <div class="pp-checkpoint-item" [class]="'status-' + cp.status">
-                  <span class="pp-checkpoint-status-icon">
-                    @if (cp.status === 'done') {
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    } @else if (cp.status === 'active') {
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    } @else {
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
-                    }
-                  </span>
-                  <span class="pp-checkpoint-label">{{ cp.label }}</span>
-                  <span class="pp-checkpoint-badge" [class]="'status-' + cp.status">{{ checkpointStatusLabels[cp.status] }}</span>
-                </div>
-              }
-              @if (project.checkpoints.length === 0) {
-                <p class="pp-empty">Zatím nejsou definované žádné kroky.</p>
-              }
-            </div>
-          </section>
-
-          <section class="pp-section">
-            <div class="pp-section-header-row">
-              <h3 class="pp-section-title">
-                <span class="pp-section-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </span>
-                Komunikace
-              </h3>
-              @if (!newThreadMode && !selectedThread) {
-                <button type="button" class="pp-btn-small" (click)="openNewThreadForm()">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Nové vlákno
-                </button>
-              }
-            </div>
-
-            @if (newThreadMode) {
-              <div class="pp-new-thread-form">
-                <input type="text" class="pp-input" placeholder="Téma" [(ngModel)]="newThreadSubject">
-                <select class="pp-input" [(ngModel)]="newThreadPriority">
-                  <option value="low">Nízká priorita</option>
-                  <option value="medium">Střední priorita</option>
-                  <option value="high">Vysoká priorita</option>
-                  <option value="critic">Kritická priorita</option>
-                </select>
-                <textarea class="pp-textarea" rows="3" placeholder="Popište váš požadavek…" [(ngModel)]="newThreadBody"></textarea>
-                <div class="pp-form-actions">
-                  <button type="button" class="pp-btn-small" (click)="cancelNewThread()">Zrušit</button>
-                  <button type="button" class="pp-btn-primary-small" [disabled]="newThreadSending" (click)="submitNewThread()">
-                    {{ newThreadSending ? 'Odesílám…' : 'Odeslat' }}
-                  </button>
-                </div>
-              </div>
-            }
-
-            @if (!selectedThread && !newThreadMode) {
-              <div class="pp-thread-list">
-                @for (thread of threads; track thread.id) {
-                  <button type="button" class="pp-thread-item" (click)="openThread(thread)">
-                    <span class="pp-thread-item-icon">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                      </svg>
+          <!-- ══════════ CHECKPOINTS ══════════ -->
+          @if (activeTab === 'checkpoints') {
+            <section class="pp-tab-panel">
+              <div class="pp-checkpoint-list">
+                @for (cp of project.checkpoints; track cp.id) {
+                  <div class="pp-checkpoint-item" [class]="'status-' + cp.status">
+                    <span class="pp-checkpoint-status-icon">
+                      @if (cp.status === 'done') {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      } @else if (cp.status === 'active') {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      } @else {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                      }
                     </span>
-                    <span class="pp-thread-item-subject">{{ thread.subject }}</span>
-                    <span class="pp-status-chip" [class.pp-status-closed]="thread.status === 'closed'">{{ thread.status === 'closed' ? 'Uzavřeno' : 'Aktivní' }}</span>
-                    <span class="pp-priority-chip" [class]="'priority-' + thread.priority">{{ thread.priority }}</span>
+                    <span class="pp-checkpoint-label">{{ cp.label }}</span>
+                    <span class="pp-checkpoint-badge" [class]="'status-' + cp.status">{{ checkpointStatusLabels[cp.status] }}</span>
+                  </div>
+                }
+                @if (project.checkpoints.length === 0) {
+                  <p class="pp-empty">{{ t('no_checkpoints') }}</p>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- ══════════ THREADS ══════════ -->
+          @if (activeTab === 'threads') {
+            <section class="pp-tab-panel">
+
+              @if (!newThreadMode && !selectedThread) {
+                <div class="pp-threads-toolbar">
+                  <div class="pp-search-wrap">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pp-search-icon">
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" class="pp-search-input" [placeholder]="t('search_threads_placeholder')" [(ngModel)]="threadSearch">
+                  </div>
+                  <button type="button" class="pp-btn-small pp-btn-primary-small" (click)="openNewThreadForm()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    {{ t('new_thread_button') }}
                   </button>
-                }
-                @if (threads.length === 0) {
-                  <p class="pp-empty">Zatím žádná vlákna.</p>
-                }
-              </div>
-            }
+                </div>
+              }
 
-            @if (selectedThread) {
-              <div class="pp-thread-detail">
-                <button type="button" class="pp-back-btn" (click)="closeThread()">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                  Zpět na seznam
-                </button>
-                <h4 class="pp-thread-detail-subject">{{ selectedThread.subject }}</h4>
-
-                @if (threadDetailLoading) {
-                  <p class="pp-empty">Načítám…</p>
-                } @else {
-
-                  @if (selectedThread.status === 'active') {
-                    <button type="button" class="pp-btn-small pp-close-thread-btn" [disabled]="closingThread" (click)="closeThreadAsCustomer()">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      {{ closingThread ? 'Uzavírám…' : 'Označit jako vyřešené' }}
+              @if (newThreadMode) {
+                <div class="pp-new-thread-form">
+                  <input type="text" class="pp-input" [placeholder]="t('subject_placeholder')" [(ngModel)]="newThreadSubject">
+                  <select class="pp-input" [(ngModel)]="newThreadPriority">
+                    <option value="low">{{ t('priority_low') }}</option>
+                    <option value="medium">{{ t('priority_medium') }}</option>
+                    <option value="high">{{ t('priority_high') }}</option>
+                    <option value="critic">{{ t('priority_critic') }}</option>
+                  </select>
+                  <textarea class="pp-textarea" rows="3" [placeholder]="t('describe_request_placeholder')" [(ngModel)]="newThreadBody"></textarea>
+                  <div class="pp-form-actions">
+                    <button type="button" class="pp-btn-small" (click)="cancelNewThread()">{{ t('cancel') }}</button>
+                    <button type="button" class="pp-btn-primary-small" [disabled]="newThreadSending" (click)="submitNewThread()">
+                      {{ newThreadSending ? t('sending') : t('send') }}
                     </button>
-                  } @else {
-                    <p class="pp-thread-closed-hint">Toto vlákno je uzavřené.</p>
+                  </div>
+                </div>
+              }
+
+              @if (!selectedThread && !newThreadMode) {
+                <div class="pp-thread-list">
+                  @for (thread of filteredThreads; track thread.id) {
+                    <button type="button" class="pp-thread-item" (click)="openThread(thread)">
+                      <span class="pp-thread-item-icon">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                      </span>
+                      <span class="pp-thread-item-subject">{{ thread.subject }}</span>
+                      <span class="pp-status-chip" [class.pp-status-closed]="thread.status === 'closed'">{{ thread.status === 'closed' ? t('status_closed') : t('status_active') }}</span>
+                      <span class="pp-priority-chip" [class]="'priority-' + thread.priority">{{ thread.priority }}</span>
+                    </button>
                   }
+                  @if (threads.length === 0) {
+                    <p class="pp-empty">{{ t('no_threads') }}</p>
+                  }
+                  @if (threads.length > 0 && filteredThreads.length === 0) {
+                    <p class="pp-empty">{{ t('no_threads_match_search') }}</p>
+                  }
+                </div>
+              }
 
-                  <div class="pp-message-list">
-                    @for (msg of selectedThread.messages; track msg.id) {
-                      <div class="pp-message" [class.pp-message-mine]="msg.author_type === 'customer'">
-                        <div class="pp-message-meta">{{ msg.author_type === 'admin' ? (msg.author_label || 'Dodavatel') : 'Vy' }}</div>
-                        <div class="pp-message-body">{{ msg.body }}</div>
-                      </div>
+              @if (selectedThread) {
+                <div class="pp-thread-detail">
+                  <button type="button" class="pp-back-btn" (click)="closeThread()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    {{ t('back_to_list') }}
+                  </button>
+                  <h4 class="pp-thread-detail-subject">{{ selectedThread.subject }}</h4>
+
+                  @if (threadDetailLoading) {
+                    <p class="pp-empty">{{ t('loading') }}</p>
+                  } @else {
+
+                    @if (selectedThread.status === 'active') {
+                      <button type="button" class="pp-btn-small pp-close-thread-btn" [disabled]="closingThread" (click)="closeThreadAsCustomer()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        {{ closingThread ? t('closing') : t('mark_resolved') }}
+                      </button>
+                    } @else {
+                      <p class="pp-thread-closed-hint">{{ t('thread_closed_hint') }}</p>
                     }
-                  </div>
 
-                  <div class="pp-reply-box">
-                    <textarea class="pp-textarea" rows="2" placeholder="Napsat odpověď…" [(ngModel)]="replyBody"></textarea>
-                    <button type="button" class="pp-btn-primary-small pp-send-btn" [disabled]="replySending || !replyBody.trim()" (click)="sendReply()">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                      {{ replySending ? 'Odesílám…' : 'Odeslat' }}
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-          </section>
+                    <div class="pp-message-list">
+                      @for (msg of selectedThread.messages; track msg.id) {
+                        <div class="pp-message" [class.pp-message-mine]="msg.author_type === 'customer'">
+                          <div class="pp-message-meta">{{ msg.author_type === 'admin' ? (msg.author_label || t('author_supplier')) : t('author_you') }}</div>
+                          <div class="pp-message-body">{{ msg.body }}</div>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="pp-reply-box">
+                      <textarea class="pp-textarea" rows="2" [placeholder]="t('write_reply_placeholder')" [(ngModel)]="replyBody"></textarea>
+                      <button type="button" class="pp-btn-primary-small pp-send-btn" [disabled]="replySending || !replyBody.trim()" (click)="sendReply()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        {{ replySending ? t('sending') : t('send') }}
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+
+            </section>
+          }
 
         </div>
       </main>

@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2026
  * @description Validation logic for registering new shop suppliers.
+ *
+ * @refactor-note (2026-09-09) BACKLOG "backend fully in English": validation
+ * messages translated from Czech.
  */
 
 namespace App\Http\Requests\Shop\ShopSupplier;
@@ -58,11 +61,11 @@ class StoreShopSupplierRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'      => 'Název dodavatele je povinný.',
-            'name.min'           => 'Název musí mít alespoň 2 znaky.',
-            'ico.unique'         => 'Dodavatel s tímto IČO již existuje.',
-            'email.email'        => 'Zadejte platnou e-mailovou adresu.',
-            'is_active.required' => 'Musíte určit, zda je dodavatel aktivní.',
+            'name.required'      => 'Supplier name is required.',
+            'name.min'           => 'Name must be at least 2 characters.',
+            'ico.unique'         => 'A supplier with this company ID already exists.',
+            'email.email'        => 'Enter a valid e-mail address.',
+            'is_active.required' => 'You must specify whether the supplier is active.',
         ];
     }
 }

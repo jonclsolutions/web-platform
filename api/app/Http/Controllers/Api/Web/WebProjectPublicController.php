@@ -8,13 +8,28 @@
  * @description Customer-facing endpoints. `login()` is the ONLY unauthenticated
  * action - everything else sits behind `project.session` middleware.
  *
- * @refactor-note (2026-08-29) BACKLOG "informovat e-mailem o aktivitě zákazníka":
- * `threadStore()` a `messageStore()` po úspěšném vytvoření pošlou notifikaci na
- * `$project->contact_email` (POKUD je vyplněný - jinak se to tiše přeskočí, viz
- * `notifyProjectContact()`). Odesílá se VŽDY (bez debounce) - jak při založení
- * nového vlákna, tak při každé další zprávě v "ping-pongu". `Mail::queue()`
- * obalený `try/catch` - selhání odeslání e-mailu (SMTP výpadek apod.) nesmí
- * shodit odpověď zákazníkovi, který si právě úspěšně poslal zprávu.
+ * @refactor-note (2026-08-29) BACKLOG "notify by e-mail about customer activity":
+ * `threadStore()` and `messageStore()` send a notification to `$project->contact_email`
+ * after a successful creation (IF it's filled in - otherwise it's silently skipped,
+ * see `notifyProjectContact()`). Sent EVERY time (no debounce) - both when a new
+ * thread is opened and on every subsequent message in the "ping-pong". `Mail::queue()`
+ * is wrapped in try/catch - a failed e-mail send (SMTP outage etc.) must never break
+ * the response to the customer who just successfully sent a message.
+ *
+ * @refactor-note (2026-09-08) BACKLOG "backend fully in English": all response
+ * messages and log strings in this file translated from Czech.
+ *
+ * @bugfix-note (2026-09-08) BACKLOG "admin UI language independence for chat
+ * author labels": `author_label` for CUSTOMER messages is now stored as `null`
+ * instead of a hardcoded display string ("Zákazník"/"Customer") - a hardcoded
+ * value here would always win over the frontend's own translated fallback
+ * (`msg.author_label || threadAuthorLabel(msg.author_type)` in
+ * `ProjectsComponent`), permanently showing the SAME language regardless of the
+ * admin's currently selected UI language. With `null`, the frontend resolves the
+ * generic "Customer" label itself via `t()`, respecting the active language.
+ * Admin replies (see `WebProjectThreadController::reply()`) are UNAFFECTED - they
+ * store the acting admin's real e-mail, which is actual data, not a generic label,
+ * so it should never be translated.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -43,7 +58,7 @@ class WebProjectPublicController extends Controller
                 $request->ip(),
                 CoreSecurityEvent::contextFromRequest($request, ['reason' => 'project_unavailable'])
             );
-            return response()->json(['message' => 'Projekt nebyl nalezen nebo není dostupný.'], 404);
+            return response()->json(['message' => 'Project not found or unavailable.'], 404);
         }
 
         if (!$project->verifyPassword($request->validated()['password'])) {
@@ -53,7 +68,7 @@ class WebProjectPublicController extends Controller
                 $request->ip(),
                 CoreSecurityEvent::contextFromRequest($request, ['project_id' => $project->id])
             );
-            return response()->json(['message' => 'Neplatné heslo.'], 401);
+            return response()->json(['message' => 'Invalid password.'], 401);
         }
 
         $sessionToken = WebProjectSession::issueFor($project, $request->ip(), $request->userAgent());
@@ -76,7 +91,7 @@ class WebProjectPublicController extends Controller
         $session = $request->attributes->get('current_project_session');
         $session?->delete();
 
-        return response()->json(['message' => 'Odhlášení úspěšné.']);
+        return response()->json(['message' => 'Logout successful.']);
     }
 
     public function threadsIndex(Request $request): JsonResponse
@@ -94,12 +109,16 @@ class WebProjectPublicController extends Controller
 
         $thread = $project->threads()->with('messages')->find($threadId);
         if (!$thread) {
-            return response()->json(['message' => 'Vlákno nebylo nalezeno.'], 404);
+            return response()->json(['message' => 'Thread not found.'], 404);
         }
 
         return response()->json(new WebProjectThreadResource($thread));
     }
 
+    /**
+     * @bugfix-note (2026-09-08) `author_label` for the customer's first message is
+     * now `null` - see file header. Frontend resolves the generic label itself.
+     */
     public function threadStore(StoreProjectThreadRequest $request): JsonResponse
     {
         $project = $request->attributes->get('current_project');
@@ -115,7 +134,7 @@ class WebProjectPublicController extends Controller
 
         $thread->messages()->create([
             'author_type'  => 'customer',
-            'author_label' => 'Zákazník',
+            'author_label' => null,
             'body'         => $validated['body'],
         ]);
 
@@ -124,6 +143,10 @@ class WebProjectPublicController extends Controller
         return response()->json(new WebProjectThreadResource($thread->load('messages')), 201);
     }
 
+    /**
+     * @bugfix-note (2026-09-08) `author_label` for customer messages is now `null` -
+     * see file header.
+     */
     public function messageStore(StoreProjectThreadMessageRequest $request): JsonResponse
     {
         $project = $request->attributes->get('current_project');
@@ -131,12 +154,12 @@ class WebProjectPublicController extends Controller
 
         $thread = $project->threads()->find($threadId);
         if (!$thread) {
-            return response()->json(['message' => 'Vlákno nebylo nalezeno.'], 404);
+            return response()->json(['message' => 'Thread not found.'], 404);
         }
 
         $message = $thread->messages()->create([
             'author_type'  => 'customer',
-            'author_label' => 'Zákazník',
+            'author_label' => null,
             'body'         => $request->validated()['body'],
         ]);
 
@@ -153,7 +176,7 @@ class WebProjectPublicController extends Controller
 
         $thread = $project->threads()->find($threadId);
         if (!$thread) {
-            return response()->json(['message' => 'Vlákno nebylo nalezeno.'], 404);
+            return response()->json(['message' => 'Thread not found.'], 404);
         }
 
         $thread->update(['status' => 'closed']);
@@ -162,10 +185,10 @@ class WebProjectPublicController extends Controller
     }
 
     /**
-     * @description Pošle notifikaci na `$project->contact_email`, pokud je vyplněný -
-     * jinak se tiše nic neděje (žádná chyba, žádný log). Chyba samotného odeslání
-     * (SMTP výpadek apod.) se pohltí a zaloguje, nikdy nesmí shodit odpověď
-     * zákazníkovi, který si právě úspěšně odeslal zprávu/založil vlákno.
+     * @description Sends a notification to `$project->contact_email` if it's filled
+     * in - otherwise nothing happens silently (no error, no log). A failure to send
+     * (SMTP outage etc.) is swallowed and logged, and must never break the response
+     * to a customer who just successfully sent a message/opened a thread.
      */
     private function notifyProjectContact(WebProject $project, WebProjectThread $thread, bool $isNewThread): void
     {
@@ -178,7 +201,7 @@ class WebProjectPublicController extends Controller
                 new ProjectThreadActivityMail($project, $thread, $isNewThread)
             );
         } catch (\Throwable $e) {
-            Log::error('Odeslání notifikace o aktivitě ve vlákně projektu selhalo: ' . $e->getMessage(), [
+            Log::error('Sending project thread activity notification failed: ' . $e->getMessage(), [
                 'project_id' => $project->id,
                 'thread_id'  => $thread->id,
             ]);

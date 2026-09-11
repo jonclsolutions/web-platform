@@ -18,63 +18,6 @@
  * - App\Models\Core\CoreSecurityEvent: bezpečnostní monitoring, viz refactor-note
  *   (2026-08-24) níže - oddělené od `core_logs` (audit vs. diagnostika hrozeb).
  * - App\Mail\Auth\PasswordResetRequested / PasswordChangedNotification: e-mailové notifikace
- *
- * @bugfix-note (2026-08-19) OBA maily (žádost o reset, potvrzení změny) přepnuty
- * z `->send()` (synchronní) na `->queue()` - sjednoceno s
- * `WebRawRequestCommissionController`/`WebSalesOrderController`, které potvrzovací
- * maily posílají stejným způsobem. Na rozdíl od 2FA přihlašovacího kódu
- * (`AuthController::beginTwoFactorChallenge()`/`resendTwoFactor()` - ZÁMĚRNĚ ponecháno
- * synchronní) tady zpoždění z fronty nevadí: odkaz pro reset má 15minutovou platnost
- * (pár vteřin navíc je zanedbatelných) a notifikace o změně hesla je čistě
- * informativní, nic v UI na ni nečeká. Navíc realisticky nehrozí, že by si najednou
- * o reset požádaly tisíce uživatelů (na rozdíl od přihlašovacího 2FA kódu, který
- * potřebuje KAŽDÝ uživatel s vynucenou 2FA při KAŽDÉM přihlášení) - i kdyby worker
- * chvíli nefungoval, dopad je omezený na hrstku lidí, co si zrovna resetují heslo,
- * ne na schopnost přihlásit se vůbec.
- * @note Stejně jako u ostatních převedených mailů platí: po úpravě této třídy nebo
- * jejích Blade šablon je nutné restartovat queue worker (`php artisan queue:restart`),
- * jinak běžící worker dál pojede se starou verzí kódu z paměti.
- *
- * @bugfix-note (2026-08-19v2) KRITICKÁ OPRAVA - AUDIT LOG RESETU HESLA SE NIKDY
- * NEZAPISOVAL: `logAttempt()` dřív dělala přímý `DB::table('web_system_logs')->insert()`
- * do tabulky, která V DB DUMPU NIKDY NEEXISTOVALA - každý pokus o reset hesla tiše
- * selhával na `SQLSTATE[42S02]: Base table or view not found` (zachyceno v try/catch,
- * takže request neshodilo, ale žádná auditní stopa nevznikla). Namísto vytváření nové
- * tabulky přepsáno na sdílený `LogsActivity` trait (`logAction()`) zapisující do
- * `core_logs`, module `'Auth'` - STEJNÁ tabulka a stejný modul, do kterého
- * `AuthController` už zapisuje `login_success`/`login_failed`/2FA kroky/`logout`. Reset
- * hesla je věcně stejná doména (autentizace) - admin tak uvidí celou historii
- * přihlašovacích i reset pokusů pohromadě, filtrovatelnou přes `module = 'Auth'`, místo
- * dvou paralelních, oddělených tabulek.
- *
- * ROZSAH ZMĚNY ZÁMĚRNĚ MINIMÁLNÍ: mění se VÝHRADNĚ vnitřní implementace privátní
- * `logAttempt()` - všechna 4 volací místa (`$this->logAttempt($eventType, $request,
- * $userId, $context)`) zůstávají beze změny (stejný podpis, stejné argumenty), takže
- * zbytek `forgotPassword()`/`resetPassword()` logiky (rate limiting, token handling,
- * generická odpověď proti enumeraci) je NEDOTČENÝ. `LogsActivity::logAction()` sama o
- * sobě automaticky natáhne request payload (např. `email` pole) do `context_data` -
- * `context`/`$userId` parametry `logAttempt()` se teď promítají do čitelného textu
- * `description`, ne do zvláštního pole, ať nebylo nutné rozšiřovat sdílený trait (ten
- * používá i řada jiných controllerů - jakákoliv změna jeho signatury by měla mnohem
- * širší dopad, než jen tenhle soubor).
- *
- * @refactor-note (2026-08-24) BACKLOG "security_events musí pokrýt VŠECHNY typy útoku":
- * reset hesla je klasický vektor pro token brute-force/enumeraci (uhodnutý token =
- * převzetí cizího účtu) a pro mail-bombing konkrétní schránky - oba scénáře se dřív
- * zapisovaly JEN do `core_logs` (audit), ne do bezpečnostního monitoringu
- * (`core_security_events`). Přidány dva zápisy, NEZÁVISLE na stávajícím `logAttempt()`
- * volání (obě tabulky mají svůj účel, viz CoreSecurityEvent.php hlavička - `core_logs`
- * se nemění vůbec):
- * - `password_reset_email_rate_limited` (warning) ve `forgotPassword()` - vlastní
- *   per-e-mail limiter (`EMAIL_MAX_ATTEMPTS`) byl překročen. Na rozdíl od IP throttle
- *   na routě (ten už hlásí `throttle_exceeded` přes globální handler v
- *   `bootstrap/app.php`) je tohle SAMOSTATNÝ, jemnější limiter cílený na konkrétní
- *   e-mailovou schránku bez ohledu na IP - útočník rotující IP adresy by jinak zůstal
- *   pro monitoring neviditelný.
- * - `password_reset_token_invalid` (warning) v `resetPassword()` - token neexistuje,
- *   vypršel, nebo byl už použit. Token je 64znakový náhodný string (prakticky
- *   nehádatelný jednotlivě), ale opakované pokusy o různé neplatné tokeny ze stejné IP
- *   jsou přesně ten vzorec, který by admin chtěl vidět dřív, než se to jednou povede.
  */
 
 namespace App\Http\Controllers\Api\Auth;
@@ -123,7 +66,7 @@ class PasswordResetController extends Controller
         $email = mb_strtolower(trim($request->validated()['email']));
 
         $genericResponse = response()->json([
-            'message' => 'Pokud účet s tímto e-mailem existuje, byl na něj odeslán odkaz pro reset hesla.',
+            'message' => 'If an account with this email exists, a password reset link has been sent to it.',
         ]);
 
         // ── Rate limiting podle e-mailu (nezávisle na IP throttlingu na routě) ──────────
@@ -218,7 +161,7 @@ class PasswordResetController extends Controller
             );
 
             return response()->json([
-                'message' => 'Odkaz pro reset hesla je neplatný nebo již vypršel. Vyžádejte si prosím nový.',
+                'message' => 'The password reset link is invalid or has expired. Please request a new one.',
             ], 400);
         }
 
@@ -226,7 +169,7 @@ class PasswordResetController extends Controller
 
         if (!$user) {
             return response()->json([
-                'message' => 'Odkaz pro reset hesla je neplatný nebo již vypršel. Vyžádejte si prosím nový.',
+                'message' => 'The password reset link is invalid or has expired. Please request a new one.',
             ], 400);
         }
 
@@ -260,7 +203,7 @@ class PasswordResetController extends Controller
         );
 
         return response()->json([
-            'message' => 'Heslo bylo úspěšně změněno. Nyní se můžete přihlásit novým heslem.',
+            'message' => 'Password has been successfully changed. You can now log in with your new password.',
             // E-mail vracíme jen pro zobrazení potvrzení na frontendu (např. "heslo změněno pro: x@y.cz"),
             // aby uživatel měl jistotu, že se změna týkala správného účtu.
             'email' => $user->user_email,
@@ -288,16 +231,16 @@ class PasswordResetController extends Controller
     {
         $description = match ($eventType) {
             'password_reset_requested' => isset($context['email_requested'])
-                ? "Vyžádán reset hesla pro e-mail: {$context['email_requested']}"
-                : 'Vyžádán reset hesla',
+                ? "Password reset requested for email: {$context['email_requested']}"
+                : 'Password reset requested',
             'password_reset_email_rate_limited' => isset($context['email_requested'])
-                ? "Limit počtu pokusů o reset hesla překročen pro e-mail: {$context['email_requested']}"
-                : 'Limit počtu pokusů o reset hesla překročen',
+                ? "Password reset attempt limit exceeded for email: {$context['email_requested']}"
+                : 'Password reset attempt limit exceeded',
             'password_reset_failed' => ($context['reason'] ?? null) === 'expired_or_used'
-                ? 'Reset hesla selhal - odkaz byl již použit nebo vypršel'
-                : 'Reset hesla selhal - neplatný odkaz',
-            'password_reset_completed' => 'Heslo bylo úspěšně změněno',
-            default => "Pokus o reset hesla (user_id: " . ($userId ?? 'neznámý') . ')',
+                ? 'Password reset failed - the link has already been used or expired'
+                : 'Password reset failed - invalid link',
+            'password_reset_completed' => 'Password has been successfully changed',
+            default => "Password reset attempt (user_id: " . ($userId ?? 'unknown') . ')',
         };
 
         $this->logAction(

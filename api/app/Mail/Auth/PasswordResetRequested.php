@@ -39,7 +39,7 @@ class PasswordResetRequested extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Žádost o reset hesla - RPSW Administrace',
+            subject: 'Password reset request',
         );
     }
 

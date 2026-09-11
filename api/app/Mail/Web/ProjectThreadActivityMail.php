@@ -39,7 +39,7 @@ class ProjectThreadActivityMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $subjectPrefix = $this->isNewThread ? 'Nový požadavek' : 'Nová zpráva';
+        $subjectPrefix = $this->isNewThread ? 'New request' : 'New message';
 
         return new Envelope(
             subject: "{$subjectPrefix} — {$this->project->name}: {$this->thread->subject}",

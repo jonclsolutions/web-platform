@@ -40,7 +40,7 @@ class AttachmentsTotalSize implements ValidationRule
 
         if ($total > $this->maxTotalBytes) {
             $maxMb = round($this->maxTotalBytes / 1024 / 1024);
-            $fail("Celková velikost všech příloh nesmí přesáhnout {$maxMb} MB.");
+            $fail("The total size of all attachments must not exceed {$maxMb} MB.");
         }
     }
 }

@@ -46,7 +46,6 @@ import { ExportFormat } from '../../../../shared/interfaces/export-format';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../export-popup-builder/export-popup-builder.component';
 import { ImportPopupBuilderComponent } from '../import-popup-builder/import-popup-builder.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
-
 const DEFAULT_EXPORT_EXCLUDED_KEYS = [
   'user_password_hash',
   'user_password_salt',
@@ -72,6 +71,17 @@ const SENSITIVE_JSON_KEYS = new Set([
   'pin',
   'authorization',
 ]);
+/**
+ * @description Jeden řádek nápovědy povolených hodnot pro import - zobrazeno v
+ * ImportPopupBuilderComponent na kroku "upload", ať uživatel neplní CSV/XLSX sloupec
+ * naslepo a neriskuje, že mu importní validace (Store*Request `in:...` pravidlo)
+ * řádek odmítne kvůli neznámé hodnotě.
+ */
+export interface ImportEnumHint {
+  key: string;
+  label: string;
+  options: { value: string; label: string }[];
+}
 
 @Component({
   selector: 'app-table-builder',
@@ -187,6 +197,25 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
     }
     return this._logCrud;
   }
+  /**
+ * @description Odvodí nápovědu povolených hodnot pro import - jen ty sloupce, které
+ * jsou `importable: true` (viz `detailsColumns`) A ZÁROVEŇ mají definovaný `options`
+ * seznam na odpovídajícím `InputDefinition` (enum sloupce jako status/priority/thema).
+ * Prosté textové sloupce (bez `options`) se do nápovědy nedostanou - tam žádné
+ * omezení neexistuje, legenda by byla prázdná/matoucí.
+ * @refactor-note (2026-09-08) BACKLOG "import šablona neukazuje povolené hodnoty" -
+ * nová nápověda předávaná do `ImportPopupBuilderComponent` přes `[enumHints]`.
+ */
+get importEnumHints(): ImportEnumHint[] {
+  return this.detailsColumns
+    .filter(col => col.importable === true)
+    .map(col => {
+      const fieldDef = this.inputDefinitions.find(i => i.column_name === col.key);
+      if (!fieldDef?.options || fieldDef.options.length === 0) return null;
+      return { key: col.key, label: col.displayName, options: fieldDef.options };
+    })
+    .filter((hint): hint is ImportEnumHint => hint !== null);
+}
 
   constructor(
     private dataHandler: DataHandler,

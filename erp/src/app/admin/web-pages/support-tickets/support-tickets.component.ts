@@ -8,10 +8,36 @@
  * @dependencies
  * - BaseDataComponent: Inheritance for base CRUD and state management.
  * - TableBuilderComponent: Used for tabular data rendering and CSV export.
- * - SUPPORT_TICKET_* configs: Centralized definitions for UI elements and column configurations.
+ * - Config.create* factory functions: Centralized, i18n-aware definitions for UI elements
+ *   and column configurations - see refactor-note (2026-09-08) below.
  * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
  * volání z `error:` callbacků (handleViewDetails, handleFormSubmitted) -
  * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.SUPPORT_TICKET_*` konstanty (vyhodnocené jednou při načtení modulu) nahrazeny
+ * `Config.create*()` FACTORY FUNKCEMI - stejný vzor jako `UserRequestComponent`, viz
+ * jeho hlavička pro plné odůvodnění (NG0956 riziko getterů, `translations$` je
+ * `BehaviorSubject`). `buttons`/`formFields`/`columns`/`trashColumns`/`filterColumns`/
+ * `detailsColumns` PŘESUNUTY z field initializerů (běží jen jednou, při vytvoření
+ * instance) do konstruktoru, plněné VÝHRADNĚ přes `this.i18n.translations$.subscribe()`.
+ * `tableCaption` (dřív natvrdo `'Helpdesk tickety'`) teď taky přes `t()`.
+ *
+ * `graphColumns` (dřív `readonly` pole počítané JEDNOU z `Config.SUPPORT_TICKET_DETAILS_COLUMNS`
+ * na úrovni field initializeru) muselo přestat být `readonly` konstanta - `detailsColumns`
+ * teď vznikají AŽ uvnitř `translations$` subscribu (ne při deklaraci třídy, kdy by
+ * `i18n` ještě nemusel mít data načtená), takže `graphColumns` je přepočítáno na
+ * STEJNÉM místě, ihned po přiřazení `detailsColumns` - jde o plochý objekt bez vnořené
+ * struktury čtené přes `@for`/`track` (`GraphBuilderComponent` navíc sám hlídá "stejná
+ * množina klíčů = stejná kolekce" v `sameColumnKeySet()`), takže NG0956 riziko se ho
+ * netýká i přesto, že nejde o `readonly`.
+ *
+ * `eventTypeLabel`-like vzor: `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl
+ * vytvořen.'` (dřív natvrdo česky v `handleFormSubmitted()`) nahrazeny `t()` voláním.
+ * Toolbar labely (`'Skrýt filtry'`/`'Filtry'`/`'Zobrazit aktivní'`/`'Koš'`) v
+ * `toolbarButtons` getteru taky přes `t()` - getter samotný je bezpečný (nevrací
+ * pole objektů čtené přes `track`, jde o `.map()` nad JIŽ přeloženými `buttons`, viz
+ * `toolbarButtons` getter beze změny struktury).
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -23,6 +49,7 @@ import * as Config from './support-tickets.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+
 /**
  * @description Manages the lifecycle of support tickets within the web administration module.
  * @usage Provides an interface for tracking, creating, updating, and exporting support inquiries.
@@ -31,23 +58,43 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-support-tickets',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './support-tickets.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SupportTicketsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Helpdesk tickety';
+
+  protected override translationSection: string = 'support-tickets';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`support-tickets.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'web/support_tickets';
 
-  buttons = Config.SUPPORT_TICKET_BUTTONS;
-  formFields = Config.SUPPORT_TICKET_FORM_FIELDS;
-  columns = Config.SUPPORT_TICKET_COLUMNS;
-  trashColumns = Config.SUPPORT_TICKET_TRASH_COLUMNS;
-  filterColumns = Config.SUPPORT_TICKET_FILTER_COLUMNS;
-  detailsColumns = Config.SUPPORT_TICKET_DETAILS_COLUMNS;
+  /**
+   * @bugfix-note (2026-09-08) Prázdné výchozí hodnoty - naplní se VÝHRADNĚ přes
+   * `translations$` subscribe v konstruktoru, viz refactor-note v hlavičce souboru.
+   * NIKDY nepřepisovat na gettery (NG0956 riziko) ani na field-initializer volání
+   * `Config.create*()` přímo tady (proběhne příliš brzy, jen jednou).
+   */
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  columns: Core.ColumnDefinition[] = [];
+  trashColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
+
+  /**
+   * @refactor-note (2026-09-08) Přestalo být `readonly` konstanta počítaná JEDNOU
+   * z field initializeru - `detailsColumns` teď vznikají až uvnitř subscribu, viz
+   * hlavička souboru.
+   */
+  graphColumns: GraphColumnOption[] = [];
 
   selectedItemForEdit: any = null;
   selectedItemForDetails: any = null;
@@ -57,14 +104,6 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     sort_direction: 'desc'
   };
   showGraphBuilder = false;
-    readonly graphColumns: GraphColumnOption[] = Config.SUPPORT_TICKET_DETAILS_COLUMNS
-       .filter(col => col.chartable === true)
-       .map(col => ({
-         key: col.key,
-         label: col.displayName,
-        aggregation: col.chartAggregation ?? 'count',
-        possibleValues: col.chartPossibleValues
-       }));
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -73,43 +112,81 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    /**
+     * @bugfix-note (2026-09-08) VÝHRADNÍ místo, kde se `buttons`/`formFields`/atd.
+     * plní - `translations$` je BehaviorSubject, takže tenhle subscribe:
+     * 1) proběhne OKAMŽITĚ s aktuální (možná ještě `null`) hodnotou,
+     * 2) proběhne ZNOVU při každém dalším emitu (úspěšné doražení JSONu po HTTP
+     *    requestu, budoucí přepnutí jazyka) a přepíše pole správnými texty.
+     * `graphColumns` je odvozeno ZE STEJNÉHO `detailsColumns`, přepočítané na
+     * stejném místě - žádná zvláštní logika navíc, jen `.filter()/.map()` nad
+     * čerstvě přiřazeným polem.
+     */
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createSupportTicketButtons(this.i18n);
+      this.formFields = Config.createSupportTicketFormFields(this.i18n);
+      this.columns = Config.createSupportTicketColumns(this.i18n);
+      this.trashColumns = Config.createSupportTicketTrashColumns(this.i18n);
+      this.filterColumns = Config.createSupportTicketFilterColumns(this.i18n);
+      this.detailsColumns = Config.createSupportTicketDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
+  /**
+   * @description Dynamically generates toolbar button definitions based on user permissions
+   * and component state (e.g., active vs. trash table view).
+   */
   get toolbarButtons(): Core.Button[] {
-      return Config.SUPPORT_TICKET_TOOLBAR_BUTTONS.map(btn => {
-        let updatedBtn = { ...btn };
-  
-        if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
-          updatedBtn.showIf = false;
-        }
-  
-        switch (btn.action) {
-          case 'toggleFilters':
-            updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
-            updatedBtn.isActive = this.isFilterVisible;
-            break;
-          case 'handleCreateFormOpened':
-          case 'exportActiveTable':
-          case 'triggerImport':
-            if (updatedBtn.showIf !== false) {
-              updatedBtn.showIf = !this.showTrashTable;
-            }
-            break;
-          case 'toggleTable':
-            updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
-            updatedBtn.isActive = this.showTrashTable;
-            break;
-        }
-  
-        return updatedBtn;
-      });
-    }
+    return Config.createSupportTicketToolbarButtons(this.i18n).map(btn => {
+      let updatedBtn = { ...btn };
+
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
+      }
+
+      switch (btn.action) {
+        case 'toggleFilters':
+          updatedBtn.label = this.isFilterVisible
+            ? this.t('toolbar_hide_filters')
+            : this.t('toolbar_filters');
+          updatedBtn.isActive = this.isFilterVisible;
+          break;
+        case 'handleCreateFormOpened':
+        case 'exportActiveTable':
+        case 'triggerImport':
+          if (updatedBtn.showIf !== false) {
+            updatedBtn.showIf = !this.showTrashTable;
+          }
+          break;
+        case 'toggleTable':
+          updatedBtn.label = this.showTrashTable
+            ? this.t('toolbar_show_active')
+            : this.t('toolbar_show_trash');
+          updatedBtn.isActive = this.showTrashTable;
+          break;
+      }
+
+      return updatedBtn;
+    });
+  }
 
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      triggerImport: () => this.activeTable?.importData(),
       toggleTable: () => this.toggleTable(),
       openGraphBuilder: () => this.openGraphBuilder(),
     };
@@ -170,6 +247,10 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     });
   }
 
+  /**
+   * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
+   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním - viz hlavička souboru.
+   */
   handleFormSubmitted(formData: any): void {
     const isFormData = formData instanceof FormData;
     const id = isFormData ? formData.get('id') : formData.id;
@@ -194,7 +275,11 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
       })
     ).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          'success'
+        );
         this.refreshData();
       }
     });
@@ -205,7 +290,8 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
     this.selectedItemForEdit = null;
     this.cd.markForCheck();
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }

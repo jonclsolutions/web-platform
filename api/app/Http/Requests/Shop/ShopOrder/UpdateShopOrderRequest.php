@@ -51,18 +51,18 @@ class UpdateShopOrderRequest extends FormRequest
                 'nullable',
                 'exists:shop_coupons,id',
                 function ($attribute, $value, $fail) use ($orderId) {
-                    if (!$value) return;
+    if (!$value) return;
 
-                    $order = \App\Models\Shop\ShopOrder::find($orderId);
-                    if ($order && $order->coupon_id == $value) {
-                        return;
-                    }
+    $order = \App\Models\Shop\ShopOrder::find($orderId);
+    if ($order && $order->coupon_id == $value) {
+        return;
+    }
 
-                    $coupon = \App\Models\Shop\ShopCoupon::find($value);
-                    if ($coupon && method_exists($coupon, 'isValid') && !$coupon->isValid()) {
-                        $fail('Tento kupón již není platný a nelze jej k objednávce nově přiřadit.');
-                    }
-                }
+    $coupon = \App\Models\Shop\ShopCoupon::find($value);
+    if ($coupon && method_exists($coupon, 'isValid') && !$coupon->isValid()) {
+        $fail('This coupon is no longer valid and cannot be newly assigned to the order.');
+    }
+}
             ],
 
             'status'               => ['sometimes', 'required', 'in:pending,confirmed,processing,shipped,delivered,returned,canceled'],
@@ -95,10 +95,10 @@ class UpdateShopOrderRequest extends FormRequest
      * @return array
      */
     public function messages(): array
-    {
-        return [
-            'items.min'            => 'Objednávka musí obsahovat alespoň jednu položku.',
-            'items.*.quantity.min' => 'Počet kusů musí být alespoň 1.',
-        ];
-    }
+{
+    return [
+        'items.min'            => 'The order must contain at least one item.',
+        'items.*.quantity.min' => 'Quantity must be at least 1.',
+    ];
+}
 }

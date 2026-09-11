@@ -7,29 +7,30 @@
  * @created 2026
  * @description Manages news article lifecycle, including categorization, content management, and soft-delete administrative workflows.
  *
- * @refactor-note (2026-08-6) MIGRACE LOGOVANI na sdileny LogsActivity trait misto
- * lokalni duplicitni logAction(). Domenove beze zmeny (WebLog::class).
+ * @refactor-note (2026-08-6) LOGGING MIGRATION to shared `LogsActivity` trait instead
+ * of local duplicate logAction(). Domain unchanged (WebLog::class).
  *
- * @bugfix-note (2026-08-15) KRITICKA OPRAVA FILTRU: index() vubec nezpracovaval
- * filtry id a title, prestoze NEWS_FILTER_COLUMNS (frontend) je nabizi. Doplneno
- * id (presna shoda) a title (castecna shoda pres LIKE, konzistentne s author).
+ * @bugfix-note (2026-08-15) CRITICAL FILTER FIX: `index()` did not process
+ * filters `id` and `title` at all, despite `NEWS_FILTER_COLUMNS` (frontend) offering
+ * them. Added `id` (exact match) and `title` (partial match via LIKE, consistent
+ * with `author`).
  *
- * @refactor-note (2026-08-23a) HROMADNE MAZANI V JEDNOM REQUESTU: pridana bulkDestroy()
- * - viz TableBuilderComponent.onBulkDeleteClick() na frontendu (vola
- * POST web/news/bulk-delete). destroy() nema zadny vedlejsi efekt na soubory/jine
- * tabulky (zadne prilohy) - jediny rozdil oproti generickemu Model::destroy($ids) je
- * nutnost explicitne zavolat forceDelete() pro force_delete=true vetev.
+ * @refactor-note (2026-08-23a) BULK DELETION IN A SINGLE REQUEST: added `bulkDestroy()`
+ * - see TableBuilderComponent.onBulkDeleteClick() on frontend (calls
+ * POST web/news/bulk-delete). `destroy()` has no side effects on files/other
+ * tables (no attachments) - the only difference from generic `Model::destroy($ids)` is
+ * the need to explicitly call `forceDelete()` for the `force_delete=true` branch.
  *
- * @refactor-note (2026-08-23b) HROMADNY IMPORT (importTemplate/importValidate/
- * importCommit) - NEJJEDNODUSSI dosavadni pripad: store() nema zadny upload souboru,
- * zadnou automatickou logiku - je to cisty `WebNews::create($request->validated())`.
- * IMPORTABLE_COLUMNS odpovida 1:1 VSEM polim ve StoreWebNewsRequest::rules().
+ * @refactor-note (2026-08-23b) BULK IMPORT (importTemplate/importValidate/
+ * importCommit) - SIMPLEST case so far: `store()` has no file upload,
+ * no automated logic - it's a pure `WebNews::create($request->validated())`.
+ * `IMPORTABLE_COLUMNS` corresponds 1:1 to ALL fields in `StoreWebNewsRequest::rules()`.
  *
- * @refactor-note (2026-08-31) BACKLOG "osiřelé importní soubory": import
- * validate/commit flow přepsán na sdílený `HandlesImportBatches` trait - dřív
- * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
- * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
- * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
+ * @refactor-note (2026-08-31) BACKLOG "orphaned import files": import
+ * validate/commit flow rewritten to shared `HandlesImportBatches` trait - previously
+ * missing `Storage::delete($batch->temp_path)` in `catch` branch of `importCommit()`
+ * (even after failed import, temporary file remained on disk forever), now
+ * guaranteed by `try/finally` inside `runImportCommit()`, not manual deletion here.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -54,8 +55,8 @@ class WebNewsController extends Controller
     use HandlesImportBatches;
 
     /**
-     * @description Sloupce, které smí přijít z importního souboru - odpovídá 1:1
-     * StoreWebNewsRequest::rules() (žádné pole tam navíc, žádné chybějící).
+     * @description Columns permitted from the import file - corresponds 1:1 to
+     * StoreWebNewsRequest::rules() (no extra fields, no missing ones).
      */
     private const IMPORTABLE_COLUMNS = [
         'title', 'thema', 'author', 'message', 'bullet_1', 'bullet_2', 'bullet_3', 'bullet_4',
@@ -115,12 +116,12 @@ class WebNewsController extends Controller
         try {
             $news = WebNews::create($request->validated());
 
-            $this->logAction($request, WebLog::class, 'create', 'WebNews', "Vytvořena novinka: {$news->title}", $news->id, 'WebNews');
+            $this->logAction($request, WebLog::class, 'create', 'WebNews', "News item created: {$news->title}", $news->id, 'WebNews');
 
             return response()->json(new WebNewsResource($news), 201);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při vytváření novinky: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření novinky selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error creating news item: " . $e->getMessage());
+            return response()->json(['message' => 'News creation failed.'], 500);
         }
     }
 
@@ -137,12 +138,12 @@ class WebNewsController extends Controller
 
             $news->update($request->validated());
 
-            $this->logAction($request, WebLog::class, 'update', 'WebNews', "Aktualizace novinky: {$news->title}", $news->id, 'WebNews');
+            $this->logAction($request, WebLog::class, 'update', 'WebNews', "News item updated: {$news->title}", $news->id, 'WebNews');
 
             return response()->json(new WebNewsResource($news));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při aktualizaci novinky ID {$id}: " . $e->getMessage(), (int) $id, 'WebNews');
-            return response()->json(['message' => 'Aktualizace novinky selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error updating news item ID {$id}: " . $e->getMessage(), (int) $id, 'WebNews');
+            return response()->json(['message' => 'News update failed.'], 500);
         }
     }
 
@@ -155,20 +156,20 @@ class WebNewsController extends Controller
 
             $forceDelete ? $news->forceDelete() : $news->delete();
 
-            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebNews', "Smazání novinky: $title", (int) $id, 'WebNews');
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebNews', "Deleted news item: $title", (int) $id, 'WebNews');
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při mazání novinky ID $id: " . $e->getMessage(), (int) $id, 'WebNews');
-            return response()->json(['message' => 'Smazání novinky selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error deleting news item ID $id: " . $e->getMessage(), (int) $id, 'WebNews');
+            return response()->json(['message' => 'News deletion failed.'], 500);
         }
     }
 
     /**
-     * @description Hromadně smaže vybrané novinky JEDNÍM requestem - viz
-     * TableBuilderComponent.onBulkDeleteClick() na frontendu (volá
+     * @description Bulk deletes selected news items in a single request - see
+     * TableBuilderComponent.onBulkDeleteClick() on frontend (calls
      * POST web/news/bulk-delete).
-     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     * @param Request $request Body contains { ids: number[], force_delete?: boolean }.
      */
     public function bulkDestroy(Request $request): JsonResponse
     {
@@ -193,8 +194,8 @@ class WebNewsController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při hromadném mazání novinek: " . $e->getMessage());
-            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error during bulk deletion of news items: " . $e->getMessage());
+            return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
 
         $skippedCount = $requestedCount - $deletedCount;
@@ -205,7 +206,7 @@ class WebNewsController extends Controller
             WebLog::class,
             $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
             'WebNews',
-            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} novinek (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            'Bulk ' . ($forceDelete ? 'permanent ' : '') . "deletion of {$deletedCount} news items (requested {$requestedCount}, IDs: {$idsPreview}).",
             null,
             'WebNews'
         );
@@ -217,18 +218,18 @@ class WebNewsController extends Controller
     }
 
     /**
-     * @description Stáhne prázdnou importní šablonu (CSV/TXT/JSON) se sloupci
-     * z IMPORTABLE_COLUMNS.
+     * @description Downloads an empty import template (CSV/TXT/JSON) with columns
+     * from IMPORTABLE_COLUMNS.
      */
     public function importTemplate(Request $request)
     {
         $format = (string) $request->query('format', 'csv');
         if (!in_array($format, ['csv', 'json', 'txt'], true)) {
-            return response()->json(['message' => 'Nepodporovaný formát šablony.'], 422);
+            return response()->json(['message' => 'Unsupported template format.'], 422);
         }
 
         $columns = self::IMPORTABLE_COLUMNS;
-        $baseFilename = 'import-sablona-web-news';
+        $baseFilename = 'import-template-web-news';
 
         if ($format === 'csv' || $format === 'txt') {
             $delimiter = $format === 'txt' ? "\t" : ';';
@@ -247,9 +248,9 @@ class WebNewsController extends Controller
     }
 
     /**
-     * @description Dry-run validace importního souboru - NEZAPISUJE nic do DB.
-     * @refactor-note (2026-08-31) Uložení souboru + vytvoření CoreImportBatch teď jde
-     * přes `startImportBatch()` (HandlesImportBatches trait) místo ručního
+     * @description Dry-run validation of the import file - DOES NOT write anything to DB.
+     * @refactor-note (2026-08-31) File storage + creation of CoreImportBatch now goes
+     * through `startImportBatch()` (HandlesImportBatches trait) instead of manual
      * `Storage::put()`/`CoreImportBatch::create()`.
      */
     public function importValidate(
@@ -306,14 +307,14 @@ class WebNewsController extends Controller
     }
 
     /**
-     * @description Potvrdí a provede skutečný zápis importu. Znovu parsuje a validuje
-     * soubor (nikdy nedůvěřuje dry-run výsledku bez ověření).
-     * @refactor-note (2026-08-31) Přepsáno na `findPendingImportBatch()` +
-     * `runImportCommit()` (HandlesImportBatches trait) - dočasný soubor se teď maže
-     * VŽDY (i při selhání), viz trait hlavička. `catch` blok tady zůstává jen pro
-     * zpracování HTTP odpovědi (chybová zpráva/status kód), NE pro mazání souboru -
-     * to zajišťuje `finally` uvnitř `runImportCommit()` bez ohledu na to, jestli sem
-     * vůbec doběhneme.
+     * @description Confirms and executes the actual import write. Re-parses and validates
+     * the file (never trusts dry-run result without verification).
+     * @refactor-note (2026-08-31) Rewritten to `findPendingImportBatch()` +
+     * `runImportCommit()` (HandlesImportBatches trait) - temporary file is now deleted
+     * ALWAYS (even on failure), see trait header. `catch` block here remains only for
+     * handling HTTP response (error message/status code), NOT for file deletion -
+     * that is ensured by `finally` inside `runimportCommit()` regardless of whether
+     * we reach here at all.
      */
     public function importCommit(
         Request $request,
@@ -324,7 +325,7 @@ class WebNewsController extends Controller
         $batch = $this->findPendingImportBatch($request, $validated['import_token']);
 
         if ($batch === null) {
-            return response()->json(['message' => 'Import nebyl nalezen nebo už byl zpracován.'], 404);
+            return response()->json(['message' => 'Import not found or already processed.'], 404);
         }
 
         try {
@@ -354,7 +355,7 @@ class WebNewsController extends Controller
                 WebLog::class,
                 'import',
                 'WebNews',
-                "Hromadný import: přidáno {$result['imported_count']} novinek, přeskočeno {$result['skipped_count']} (soubor '{$batch->original_filename}').",
+                "Bulk import: added {$result['imported_count']} news items, skipped {$result['skipped_count']} (file '{$batch->original_filename}').",
                 null,
                 'WebNews'
             );
@@ -366,11 +367,11 @@ class WebNewsController extends Controller
                 'skip_reasons'   => [],
             ]]);
         } catch (\RuntimeException $e) {
-            // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
+            // Expired temporary file - see runImportCommit(), code 410.
             return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při importu: " . $e->getMessage());
-            return response()->json(['message' => 'Import selhal.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error during import: " . $e->getMessage());
+            return response()->json(['message' => 'Import failed.'], 500);
         }
     }
 
@@ -380,12 +381,12 @@ class WebNewsController extends Controller
             $news = WebNews::withTrashed()->findOrFail($id);
             $news->restore();
 
-            $this->logAction($request, WebLog::class, 'restore', 'WebNews', "Obnovení novinky: {$news->title}", $news->id, 'WebNews');
+            $this->logAction($request, WebLog::class, 'restore', 'WebNews', "Restored news item: {$news->title}", $news->id, 'WebNews');
 
             return response()->json(new WebNewsResource($news));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při obnově novinky ID $id: " . $e->getMessage(), (int) $id, 'WebNews');
-            return response()->json(['message' => 'Obnova novinky selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error restoring news item ID $id: " . $e->getMessage(), (int) $id, 'WebNews');
+            return response()->json(['message' => 'News restoration failed.'], 500);
         }
     }
 
@@ -395,12 +396,12 @@ class WebNewsController extends Controller
             $count = WebNews::onlyTrashed()->count();
             WebNews::onlyTrashed()->forceDelete();
 
-            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebNews', "Hromadné smazání koše novinek. Počet: $count");
+            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebNews', "Emptied news trash. Count: $count");
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Chyba při vyprazdňování koše novinek: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error emptying news trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 }

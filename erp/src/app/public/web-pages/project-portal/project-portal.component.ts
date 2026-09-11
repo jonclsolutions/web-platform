@@ -10,14 +10,22 @@
  * `session_token` param on every request (both GET query string and POST body) - see
  * CheckProjectSession middleware.
  *
- * @refactor-note (2026-08-29) BACKLOG "obnovit data" tlačítko - `refresh()` tiše
- * znovu natáhne detail projektu (checkpointy) i seznam vláken, případně i otevřené
- * vlákno, bez blikání celé stránky (na rozdíl od `loadProject()`, který resetuje
- * `state` na 'loading').
- * @refactor-note (2026-08-29) BACKLOG "zákazník může sám uzavřít vlákno" -
- * `closeThreadAsCustomer()` - jednosměrná akce (active -> closed), volá veřejný
- * endpoint `POST .../threads/{id}/close`. Znovuotevření zůstává výhradně v pravomoci
- * admina (viz WebProjectThreadController::updateStatus() v admin sekci).
+ * (Earlier refactor-notes for the refresh() silent-update pattern,
+ * closeThreadAsCustomer(), and the ProjectPortalLocalizationService integration are
+ * unchanged - see version history.)
+ *
+ * @redesign-note (2026-09-11) BACKLOG "kompletní UI refactor - přehlednost,
+ * profesionální vzhled": obsah pravého panelu rozdělen do TŘÍ ZÁLOŽEK (Description /
+ * Checkpoints / Threads) místo jedné dlouhé scrollovací stránky - `activeTab` řídí,
+ * která se vykresluje. Description záložka nově zobrazuje i `project.technologies`
+ * (dřív v interface, ale nikde v šabloně nevykreslené). Jazykový přepínač přepsán z
+ * dvou CZ/EN "chips" tlačítek (duplikovaných na dvou místech - login karta i sidebar)
+ * na JEDEN dropdown (vlaječka + kód + rozbalovací nabídka), stejný vzor jako
+ * `AdminLayoutComponent`'s header language switcher - `isLangMenuOpen`/
+ * `toggleLangMenu()`/`closeLangMenu()`/`selectLanguage()`. Přidáno fulltextové
+ * vyhledávání ve vláknech (`threadSearch`/`filteredThreads` getter) - hledá jak v
+ * `subject`, tak v textu VŠECH zpráv daného vlákna (backend `threadsIndex()` posílá
+ * vlákna already eager-loaded s `messages` relací, takže žádný nový request navíc).
  */
 
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, OnInit, OnDestroy, inject } from '@angular/core';
@@ -26,8 +34,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, finalize } from 'rxjs';
 import { PublicDataService } from '../../../shared/services/public-data.service';
+import { ProjectPortalLocalizationService } from './project-portal-localization.service';
 
 type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
+type PortalTab = 'description' | 'checkpoints' | 'threads';
 
 interface ProjectCheckpoint {
   id: number;
@@ -78,16 +88,19 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   private publicDataService = inject(PublicDataService);
   private destroy$ = new Subject<void>();
 
-  readonly checkpointStatusLabels: Record<string, string> = {
-    new: 'Nezahájeno',
-    active: 'Rozpracováno',
-    done: 'Hotovo',
-  };
+  public readonly portalI18n = inject(ProjectPortalLocalizationService);
+
+  public t(key: string): string {
+    return this.portalI18n.getValue(key);
+  }
+
+  checkpointStatusLabels: Record<string, string> = {};
 
   token: string | null = null;
   state: PortalState = 'loading';
 
   loginPassword = '';
+  /** Ukládá KLÍČ (ne resolvnutý text) - viz starší refactor-note ve verzi historii. */
   loginError: string | null = null;
   loginLoading = false;
 
@@ -95,6 +108,12 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   threads: ProjectThread[] = [];
   selectedThread: ProjectThread | null = null;
   threadDetailLoading = false;
+
+  /** @redesign-note (2026-09-11) Aktivní záložka pravého panelu - výchozí 'description'. */
+  activeTab: PortalTab = 'description';
+
+  /** @redesign-note (2026-09-11) Fulltextové vyhledávání ve vláknech - subject + text zpráv. */
+  threadSearch = '';
 
   newThreadMode = false;
   newThreadSubject = '';
@@ -108,10 +127,24 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   isRefreshing = false;
   closingThread = false;
 
+  /** @redesign-note (2026-09-11) Jazykový dropdown (vlaječka + kód) - viz hlavička souboru. */
+  isLangMenuOpen = false;
+
   private sessionToken: string | null = null;
 
   private get storageKey(): string {
     return `project_session_${this.token}`;
+  }
+
+  constructor() {
+    this.portalI18n.translations$.subscribe(() => {
+      this.checkpointStatusLabels = {
+        new: this.t('checkpoint_status_new'),
+        active: this.t('checkpoint_status_active'),
+        done: this.t('checkpoint_status_done'),
+      };
+      this.cdr.markForCheck();
+    });
   }
 
   ngOnInit(): void {
@@ -134,6 +167,32 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  // ── Jazykový dropdown ────────────────────────────────────────────────────
+
+  get currentLanguageMeta() {
+    return this.portalI18n.availableLanguages.find(l => l.code === this.portalI18n.getCurrentLanguage());
+  }
+
+  toggleLangMenu(): void {
+    this.isLangMenuOpen = !this.isLangMenuOpen;
+  }
+
+  closeLangMenu(): void {
+    this.isLangMenuOpen = false;
+  }
+
+  selectLanguage(code: string): void {
+    this.portalI18n.setLanguage(code);
+    this.isLangMenuOpen = false;
+  }
+
+  // ── Záložky ──────────────────────────────────────────────────────────────
+
+  setActiveTab(tab: PortalTab): void {
+    this.activeTab = tab;
+    this.cdr.markForCheck();
   }
 
   private clearSession(): void {
@@ -183,8 +242,8 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.loginError = err?.status === 404
-          ? 'Projekt nebyl nalezen nebo není dostupný.'
-          : 'Neplatné heslo.';
+          ? 'error_project_not_found'
+          : 'error_invalid_password';
       }
     });
   }
@@ -204,6 +263,7 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
     this.selectedThread = null;
     this.state = 'login';
     this.loginPassword = '';
+    this.activeTab = 'description';
     this.cdr.markForCheck();
   }
 
@@ -214,6 +274,21 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
         next: (threads) => { this.threads = threads; this.cdr.markForCheck(); },
         error: () => {}
       });
+  }
+
+  /**
+   * @description Fulltextové vyhledávání ve vláknech - shoda v `subject` NEBO v textu
+   * kterékoliv zprávy daného vlákna. `threads` už mají `messages` eager-loadované
+   * z `threadsIndex()`, žádný dodatečný request se nespouští.
+   */
+  get filteredThreads(): ProjectThread[] {
+    const q = this.threadSearch.trim().toLowerCase();
+    if (!q) return this.threads;
+
+    return this.threads.filter(thread => {
+      if (thread.subject?.toLowerCase().includes(q)) return true;
+      return (thread.messages || []).some(msg => msg.body?.toLowerCase().includes(q));
+    });
   }
 
   /**

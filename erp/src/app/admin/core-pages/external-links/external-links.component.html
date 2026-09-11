@@ -4,12 +4,12 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
-    @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
-        ('core-external-links-delete') - viz trash-table-builder.component.ts stejné datum.
-    @refactor-note (2026-08-6): app-table-builder dostal [lastUpdatedAt] a
-        (refreshRequested) - napojeno na PaginatedListStore.activeLastUpdatedAt přes
-        BaseDataComponent pass-through getter a forceFullRefresh() - viz backlog task
-        "zbytečně moc dotazů na API".
+    (Earlier refactor-notes for deletePermission and lastUpdatedAt/refreshRequested
+    are unchanged.)
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": natvrdo psané texty ('Externí odkazy'/'Koš'/'Akce'/'Smazané odkazy'/
+        'Datum vytvoření') nahrazeny `t('external-links.xxx')` bindingy - viz
+        external-links.component.ts stejné datum.
 -->
 <div class="suppliers-container container mx-auto p-4">
 @if (errorMessage) {
@@ -22,14 +22,14 @@
 <div>
 <div class="toolbar-actions m-b-t-5">
 @if(!showTrashTable){
-<div class="table-header">Externí odkazy</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -68,7 +68,7 @@ triggerLabel="Akce"
 <app-trash-table-builder
 [data]="trashData"
 [columns]="trashLinkColumns"
-[tableCaption]="'Smazané odkazy'"
+[tableCaption]="t('trash_table_caption')"
 [apiEndpoint]="apiEndpoint"
 [deletePermission]="'core-external-links-delete'"
 (itemRestored)="handleItemRestored()">
@@ -114,7 +114,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

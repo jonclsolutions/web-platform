@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2026
  * @description Validation logic for creating new shop products, including support for variants, localized descriptions, and multi-category assignments.
+ *
+ * @refactor-note (2026-09-09) BACKLOG "backend fully in English": validation
+ * messages and inline closure error strings translated from Czech.
  */
 
 namespace App\Http\Requests\Shop\ShopProduct;
@@ -66,7 +69,7 @@ class StoreShopProductRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $hasCategory = $this->filled('category_id') || ($this->filled('category_ids') && count((array)$this->input('category_ids')) > 0);
                     if ($value && !$hasCategory) {
-                        $fail('Produkt nelze nastavit jako aktivní, pokud nemá přiřazenou žádnou kategorii.');
+                        $fail('Product cannot be set as active without an assigned category.');
                     }
                 }
             ],
@@ -103,10 +106,10 @@ class StoreShopProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'                            => 'Název produktu je povinný.',
-            'prices.price_eur_without_vat.required'    => 'Cena v EUR bez DPH je povinná.',
-            'prices.price_eur_without_vat.gt'          => 'Cena v EUR bez DPH musí být větší než 0.',
-            'prices.price_eur_with_vat.gt'             => 'Cena v EUR s DPH musí být větší než 0.',
+            'name.required'                            => 'Product name is required.',
+            'prices.price_eur_without_vat.required'    => 'Price in EUR excluding VAT is required.',
+            'prices.price_eur_without_vat.gt'          => 'Price in EUR excluding VAT must be greater than 0.',
+            'prices.price_eur_with_vat.gt'             => 'Price in EUR including VAT must be greater than 0.',
         ];
     }
 

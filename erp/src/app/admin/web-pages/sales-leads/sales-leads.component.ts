@@ -8,11 +8,23 @@
  * @dependencies
  * - BaseDataComponent: Inheritance for base table/data handling.
  * - TableBuilderComponent: For UI rendering of lead collections.
- * - SalesLeads Config: Domain-specific definitions for forms, columns, and toolbar buttons.
+ * - Config.create* factory functions: i18n-aware definitions for forms, columns, and
+ *   toolbar buttons - see refactor-note (2026-09-08) below.
  * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
  * z HTTP `error:` callbacku v `handleGenerateFormLink()` - `DataHandler.handleError()`
  * je jediné autoritativní místo pro chybový toast. Klientský clipboard `.catch(...)`
  * toast ZŮSTÁVÁ - selhání zápisu do schránky není HTTP chyba, DataHandler o ní neví.
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.SALES_LEAD_*` konstanty nahrazeny `Config.create*()` factory funkcemi - stejný
+ * vzor jako `SalesOrdersComponent`/`SupportTicketsComponent`. Pole přesunuta z field
+ * initializerů do konstruktoru (`translations$.subscribe()`). `graphColumns` přestalo
+ * být `readonly`. Klipboard/log hlášky ('Odkaz zkopírován'/'Nepodařilo se zkopírovat
+ * odkaz.'/'Úspěch'/'Požadavek byl upraven.'/'Požadavek byl vytvořen.') nahrazeny `t()`
+ * voláním - `logAction()` popis (`description`) ZŮSTÁVÁ anglicky natvrdo, protože jde o
+ * INTERNÍ audit log (`web_logs.description`), ne UI text - stejná logika jako
+ * `CoreSecuritySettingController`'s `logAction()` na backendu (auditní záznamy nejsou
+ * user-facing, nemají procházet i18n).
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -24,6 +36,7 @@ import * as Config from './sales-leads.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+
 /**
  * @description Manages the Sales Leads module.
  * @usage Provides administrative oversight for lead generation, editing, and tracking through centralized configuration.
@@ -32,24 +45,34 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-sales-leads',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './sales-leads.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Obchodní leady';
+
+  protected override translationSection: string = 'sales-leads';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`sales-leads.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'web/sales_leads';
   private logEndpoint: string = 'web/logs';
 
-  buttons = Config.SALES_LEAD_BUTTONS;
-  formFields = Config.SALES_LEAD_FORM_FIELDS;
-  salesLeadColumns = Config.SALES_LEAD_COLUMNS;
-  trashSalesLeadColumns = Config.SALES_LEAD_TRASH_COLUMNS;
-  filterColumns = Config.SALES_LEAD_FILTER_COLUMNS;
-  detailsColumns = Config.SALES_LEAD_DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  salesLeadColumns: Core.ColumnDefinition[] = [];
+  trashSalesLeadColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
 
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
@@ -58,15 +81,8 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     sort_by: 'id',
     sort_direction: 'desc'
   };
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.SALES_LEAD_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  showGraphBuilder = false;
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -74,45 +90,69 @@ showGraphBuilder = false;
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createSalesLeadButtons(this.i18n);
+      this.formFields = Config.createSalesLeadFormFields(this.i18n);
+      this.salesLeadColumns = Config.createSalesLeadColumns(this.i18n);
+      this.trashSalesLeadColumns = Config.createSalesLeadTrashColumns(this.i18n);
+      this.filterColumns = Config.createSalesLeadFilterColumns(this.i18n);
+      this.detailsColumns = Config.createSalesLeadDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
   get toolbarButtons(): Core.Button[] {
-        return Config.SALES_LEAD_TOOLBAR_BUTTONS.map(btn => {
-          let updatedBtn = { ...btn };
-    
-          if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
-            updatedBtn.showIf = false;
-          }
-    
-          switch (btn.action) {
-            case 'toggleFilters':
-              updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
-              updatedBtn.isActive = this.isFilterVisible;
-              break;
-            case 'handleCreateFormOpened':
-            case 'exportActiveTable':
-            case 'triggerImport':
-              if (updatedBtn.showIf !== false) {
-                updatedBtn.showIf = !this.showTrashTable;
-              }
-              break;
-            case 'toggleTable':
-              updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
-              updatedBtn.isActive = this.showTrashTable;
-              break;
-          }
-    
-          return updatedBtn;
-        });
+    return Config.createSalesLeadToolbarButtons(this.i18n).map(btn => {
+      let updatedBtn = { ...btn };
+
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
       }
+
+      switch (btn.action) {
+        case 'toggleFilters':
+          updatedBtn.label = this.isFilterVisible
+            ? this.t('toolbar_hide_filters')
+            : this.t('toolbar_filters');
+          updatedBtn.isActive = this.isFilterVisible;
+          break;
+        case 'handleCreateFormOpened':
+        case 'exportActiveTable':
+        case 'triggerImport':
+          if (updatedBtn.showIf !== false) {
+            updatedBtn.showIf = !this.showTrashTable;
+          }
+          break;
+        case 'toggleTable':
+          updatedBtn.label = this.showTrashTable
+            ? this.t('toolbar_show_active')
+            : this.t('toolbar_show_trash');
+          updatedBtn.isActive = this.showTrashTable;
+          break;
+      }
+
+      return updatedBtn;
+    });
+  }
 
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      triggerImport: () => this.activeTable?.importData(),
       openGraphBuilder: () => this.openGraphBuilder(),
-      toggleTable: () => this.toggleTable()
+      toggleTable: () => this.toggleTable(),
     };
     if (actions[action]) actions[action]();
   }
@@ -122,25 +162,35 @@ showGraphBuilder = false;
     this.initWithAuthCheck(this.router);
   }
 
-/**
- * @description Vyžádá (nebo znovu použije) unikátní veřejný odkaz na objednávkový
- *              formulář pro daný lead a zkopíruje ho do schránky.
- * @param item Konkrétní obchodní lead.
- * @note Token se generuje/ověřuje na backendu - frontend URL nikdy neskládá sám.
- */
-handleGenerateFormLink(item: any): void {
-  this.dataHandler.post<{ token: string; url: string }>(`web/sales_leads/${item.id}/generate-link`, {})
-    .subscribe({
-      next: (res) => {
-        navigator.clipboard.writeText(res.url).then(() => {
-          this.alertDialogService.open('Odkaz zkopírován', `Odkaz pro lead "${item.subject_name}" je ve schránce.`, 'success');
-        }).catch(() => {
-          this.alertDialogService.open('Chyba', 'Nepodařilo se zkopírovat odkaz.', 'danger');
-        });
-      }
-    });
-}
+  /**
+   * @description Vyžádá (nebo znovu použije) unikátní veřejný odkaz na objednávkový
+   *              formulář pro daný lead a zkopíruje ho do schránky.
+   * @param item Konkrétní obchodní lead.
+   * @note Token se generuje/ověřuje na backendu - frontend URL nikdy neskládá sám.
+   * @refactor-note (2026-09-08) 'Odkaz zkopírován'/'Nepodařilo se zkopírovat odkaz.'
+   * nahrazeny `t()` voláním.
+   */
+  handleGenerateFormLink(item: any): void {
+    this.dataHandler.post<{ token: string; url: string }>(`web/sales_leads/${item.id}/generate-link`, {})
+      .subscribe({
+        next: (res) => {
+          navigator.clipboard.writeText(res.url).then(() => {
+            this.alertDialogService.open(
+              this.t('link_copied_title'),
+              this.t('link_copied_message').replace('{subject}', item.subject_name),
+              'success'
+            );
+          }).catch(() => {
+            this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('link_copy_failed_message'), 'danger');
+          });
+        }
+      });
+  }
 
+  /**
+   * @note `description` ZŮSTÁVÁ anglicky natvrdo - interní audit log
+   * (`web_logs.description`), ne UI text, viz refactor-note v hlavičce souboru.
+   */
   private logAction(item: any): void {
     const logData = {
       event_type: 'LINK_GENERATED',
@@ -150,7 +200,7 @@ handleGenerateFormLink(item: any): void {
       affected_entity_id: item.id,
       user_id_plain: this.authService.getUserId()?.toString(),
       user_plain: this.authService.getUserEmail(),
-      context_data: JSON.stringify({ component: 'SalesLeads' }) 
+      context_data: JSON.stringify({ component: 'SalesLeads' })
     };
 
     this.dataHandler.post(this.logEndpoint, logData)
@@ -202,10 +252,16 @@ handleGenerateFormLink(item: any): void {
         this.showCreateForm = false;
         this.cd.markForCheck();
       })
-    ).subscribe({next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+    ).subscribe({
+      next: () => {
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          'success'
+        );
         this.refreshData();
-      },});
+      },
+    });
   }
 
   handleViewDetails(item: any): void {
@@ -227,7 +283,8 @@ handleGenerateFormLink(item: any): void {
     this.selectedItemForDetails = null;
     this.cd.markForCheck();
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }

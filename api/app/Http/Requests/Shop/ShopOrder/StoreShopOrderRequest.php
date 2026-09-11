@@ -65,25 +65,25 @@ class StoreShopOrderRequest extends FormRequest
                 'integer',
                 'min:1',
                 function ($attribute, $value, $fail) {
-                    preg_match('/items\.(\d+)\.quantity/', $attribute, $matches);
-                    $index = $matches[1];
-                    
-                    $item = $this->input("items.{$index}");
-                    $productId = $item['product_id'];
-                    $variantId = $item['product_variant_id'] ?? null;
+    preg_match('/items\.(\d+)\.quantity/', $attribute, $matches);
+    $index = $matches[1];
 
-                    if ($variantId) {
-                        $variant = ShopProductVariant::find($variantId);
-                        if ($variant && $value > $variant->stock_quantity) {
-                            $fail("U varianty '{$variant->variant_name}' je na skladě pouze {$variant->stock_quantity} ks.");
-                        }
-                    } else {
-                        $product = ShopProduct::find($productId);
-                        if ($product && $value > $product->stock_quantity) {
-                            $fail("U produktu '{$product->name}' je na skladě pouze {$product->stock_quantity} ks.");
-                        }
-                    }
-                }
+    $item = $this->input("items.{$index}");
+    $productId = $item['product_id'];
+    $variantId = $item['product_variant_id'] ?? null;
+
+    if ($variantId) {
+        $variant = ShopProductVariant::find($variantId);
+        if ($variant && $value > $variant->stock_quantity) {
+            $fail("Only {$variant->stock_quantity} pcs of variant '{$variant->variant_name}' are in stock.");
+        }
+    } else {
+        $product = ShopProduct::find($productId);
+        if ($product && $value > $product->stock_quantity) {
+            $fail("Only {$product->stock_quantity} pcs of product '{$product->name}' are in stock.");
+        }
+    }
+}
             ],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
             'items.*.vat_rate'   => ['nullable', 'integer'],
@@ -96,15 +96,15 @@ class StoreShopOrderRequest extends FormRequest
      * @return array
      */
     public function messages(): array
-    {
-        return [
-            'email.required'            => 'Email zákazníka je povinný.',
-            'first_name.required'       => 'Jméno zákazníka je povinné.',
-            'last_name.required'        => 'Příjmení zákazníka je povinné.',
-            'phone.required'            => 'Telefonní číslo je povinné.',
-            'items.required'            => 'Objednávka mustí obsahovat alespoň jednu položku.',
-            'items.*.quantity.min'      => 'Počet kusů musí být alespoň 1.',
-            'items.*.quantity.required' => 'Množství je povinné.',
-        ];
-    }
+{
+    return [
+        'email.required'            => 'Customer e-mail is required.',
+        'first_name.required'       => 'Customer first name is required.',
+        'last_name.required'        => 'Customer last name is required.',
+        'phone.required'            => 'Phone number is required.',
+        'items.required'            => 'The order must contain at least one item.',
+        'items.*.quantity.min'      => 'Quantity must be at least 1.',
+        'items.*.quantity.required' => 'Quantity is required.',
+    ];
+}
 }

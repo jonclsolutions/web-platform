@@ -74,9 +74,9 @@ class UpdateWebSalesOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'attachments.max'      => 'Můžete najednou přidat maximálně ' . self::MAX_ATTACHMENTS . ' souborů.',
-            'attachments.*.mimes'  => 'Povolené formáty pro přílohy objednávek jsou PDF, Word, Excel, CAD formáty nebo obrázky.',
-            'attachments.*.max'    => 'Soubor přílohy nesmí přesáhnout 20 MB.',
+            'attachments.max'      => 'You can add a maximum of ' . self::MAX_ATTACHMENTS . ' files at once.',
+            'attachments.*.mimes'  => 'Allowed formats for order attachments are PDF, Word, Excel, CAD formats, or images.',
+            'attachments.*.max'    => 'The attachment file must not exceed 20 MB.',
         ];
     }
 }

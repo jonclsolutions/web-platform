@@ -10,9 +10,25 @@
  * @dependencies
  * - BaseDataComponent: Standardní CRUD/stránkování pro `core/security_events`.
  * - ConfirmDialogService: Potvrzení PŘED destruktivním purge a před 'false_positive' triage.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z HTTP `error:` callbacků (saveTriage, saveRetention, purgeOldEvents) -
- * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
+ * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
+ *   (2026-09-08) níže.
+ *
+ * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
+ *
+ * @bugfix-note (2026-09-08) `toolbarButtons` getter NIKDY nekontroloval `btn.permission`
+ * - `openGraphBuilder` tlačítko s `permission: 'core-security-view'` se tak
+ * zobrazovalo i uživatelům bez tohoto práva. Doplněna stejná
+ * `permissionService.hasPermission()` kontrola jako u ostatních stránek.
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi.
+ * `readonly statusOptions` (dřív hardcoded) přepsáno na `Config.createStatusOptions(i18n)`,
+ * přepočítávané ve stejném `translations$.subscribe()` bloku - sjednoceno s
+ * FORM_FIELDS/FILTER_COLUMNS `status` hodnotami (viz config.ts hlavička).
+ * `graphColumns` přestalo být `readonly`. `formatChartDayLabel()`/
+ * `formatChartDayLabelFull()` respektují `i18n.getDateLocale()` místo natvrdo
+ * `'cs-CZ'`. `triageExplanation` getter teď volá `Config.buildEventExplanation(item, this.i18n)`
+ * (nová signatura vyžaduje i18n parametr).
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
@@ -49,22 +65,29 @@ interface ChartDay {
 @Component({
   selector: 'app-core-security-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS,GraphBuilderComponent],
+  imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent],
   templateUrl: './security-events.component.html',
   styleUrls: ['../default-style.css', './security-events.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SecurityEventsComponent extends BaseDataComponent<any> implements OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Bezpečnostní monitoring';
+
+  protected override translationSection: string = 'security-events';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`security-events.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'core/security_events';
 
-  buttons = Config.BUTTONS;
-  tableColumns = Config.TABLE_COLUMNS;
-  filterColumns = Config.FILTER_COLUMNS;
-  detailsColumns = Config.DETAILS_COLUMNS;
-  formFields = Config.FORM_FIELDS;
+  buttons: Core.TableButtons[] = [];
+  tableColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
+  formFields: Core.InputDefinition[] = [];
   selectedItemForDetails: any | null = null;
 
   private confirmDialog = inject(ConfirmDialogService);
@@ -100,23 +123,16 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   triageNotes: string = '';
   triageSaving = false;
 
-  readonly statusOptions = [
-    { value: 'new', label: 'Nový' },
-    { value: 'reviewed', label: 'Vyřešeno' },
-    { value: 'false_positive', label: 'Falešný poplach' },
-    { value: 'confirmed_attack', label: 'Potvrzený útok' },
-  ];
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` hardcoded pole - viz hlavička souboru. */
+  statusOptions: { value: string; label: string }[] = [];
 
   readonly retentionOptions = [7, 14, 30, 60, 90, 180, 365];
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -124,13 +140,40 @@ showGraphBuilder = false;
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createButtons(this.i18n);
+      this.tableColumns = Config.createTableColumns(this.i18n);
+      this.filterColumns = Config.createFilterColumns(this.i18n);
+      this.detailsColumns = Config.createDetailsColumns(this.i18n);
+      this.formFields = Config.createFormFields(this.i18n);
+      this.statusOptions = Config.createStatusOptions(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
+  /**
+   * @bugfix-note (2026-09-08) Doplněna `permission` kontrola - viz hlavička souboru.
+   */
   get toolbarButtons(): Core.Button[] {
-    return Config.TOOLBAR_BUTTONS.map(btn => {
+    return Config.createToolbarButtons(this.i18n).map(btn => {
       const updatedBtn = { ...btn };
+
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
+      }
+
       if (btn.action === 'toggleFilters') {
-        updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+        updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
         updatedBtn.isActive = this.isFilterVisible;
       }
       return updatedBtn;
@@ -205,8 +248,12 @@ showGraphBuilder = false;
     this.cd.markForCheck();
   }
 
+  /**
+   * @refactor-note (2026-09-08) `Config.buildEventExplanation()` nyní vyžaduje `i18n`
+   * parametr navíc - viz config.ts hlavička.
+   */
   get triageExplanation(): { label: string; whatHappened: string; recommendation: string } | null {
-    return this.triageItem ? Config.buildEventExplanation(this.triageItem) : null;
+    return this.triageItem ? Config.buildEventExplanation(this.triageItem, this.i18n) : null;
   }
 
   closeTriageModal(): void {
@@ -224,8 +271,8 @@ showGraphBuilder = false;
 
     if (this.triageStatus === 'false_positive') {
       const confirmed = await this.confirmDialog.open(
-        'Označit jako falešný poplach',
-        'Opravdu chcete tento záznam označit jako falešný poplach? Přestane se počítat mezi aktivní podezřelou aktivitu.'
+        this.t('mark_false_positive_confirm_title'),
+        this.t('mark_false_positive_confirm_message')
       );
       if (!confirmed) return;
     }
@@ -240,7 +287,7 @@ showGraphBuilder = false;
       next: () => {
         this.triageSaving = false;
         this.triageItem = null;
-        this.alertDialogService.open('Uloženo', 'Stav záznamu byl aktualizován.', 'success');
+        this.alertDialogService.open(this.t('saved_title'), this.t('status_updated_message'), 'success');
         this.refreshData();
       },
       error: () => {
@@ -335,14 +382,15 @@ showGraphBuilder = false;
     this.cd.markForCheck();
   }
 
+  /** @refactor-note (2026-09-08) BUGFIX - natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`. */
   formatChartDayLabel(day: string): string {
     const d = new Date(day + 'T00:00:00');
-    return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' });
+    return d.toLocaleDateString(this.i18n.getDateLocale(), { day: 'numeric', month: 'numeric' });
   }
 
   formatChartDayLabelFull(day: string): string {
     const d = new Date(day + 'T00:00:00');
-    return d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
+    return d.toLocaleDateString(this.i18n.getDateLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   private computeSegmentHeights(day: ChartDay): { info: number; warning: number; critical: number } {
@@ -410,7 +458,7 @@ showGraphBuilder = false;
       next: (res) => {
         this.retentionDays = res?.retention_days ?? this.retentionDays;
         this.settingsSaving = false;
-        this.alertDialogService.open('Uloženo', 'Retenční doba byla aktualizována.', 'success');
+        this.alertDialogService.open(this.t('saved_title'), this.t('retention_updated_message'), 'success');
         this.cd.markForCheck();
       },
       error: () => {
@@ -428,8 +476,8 @@ showGraphBuilder = false;
     if (this.purging) return;
 
     const confirmed = await this.confirmDialog.open(
-      'Vyčistit staré záznamy',
-      `Opravdu chcete natrvalo smazat všechny bezpečnostní záznamy starší než ${this.retentionDays} dní? Tuto akci nelze vzít zpět.`
+      this.t('purge_confirm_title'),
+      this.t('purge_confirm_message').replace('{days}', String(this.retentionDays))
     );
     if (!confirmed) return;
 
@@ -440,8 +488,8 @@ showGraphBuilder = false;
       next: (res: any) => {
         this.purging = false;
         this.alertDialogService.open(
-          'Hotovo',
-          res?.message ?? 'Staré záznamy byly smazány.',
+          this.t('purge_done_title'),
+          res?.message ?? this.t('purge_done_default_message'),
           'success'
         );
         this.refreshData();
@@ -462,7 +510,8 @@ showGraphBuilder = false;
     this.refreshData();
     this.loadStats();
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }

@@ -12,7 +12,7 @@
  * ODSTRANĚN ladicí `Log::info("Checkout createOrder started", ['payload' => $request->all()])`
  * na začátku createOrder() - jde o VEŘEJNÝ (bez auth) endpoint, takže tohle volání
  * zapisovalo do laravel.log kompletní nešifrovaný payload (jméno, e-mail, adresa,
- * telefon zákazníka) při KAŽDÉM checkoutu bez jakékoli ochrany/expirace typické pro
+ * telefon zákazníka) při KAŽDÉm checkoutu bez jakékoli ochrany/expirace typické pro
  * `shop_logs` audit trail - zbytečná duplicita osobních údajů mimo řízené úložiště.
  * Skutečná obchodní událost (vytvoření objednávky) se loguje standardně přes
  * logAction() níže.
@@ -114,13 +114,13 @@ class ShopCheckoutController extends Controller
                             $customer->restore();
                         }
                     } else {
-                        throw new \Exception("Chyba při zápisu zákazníka do DB: " . $e->getMessage());
+                        throw new \Exception("Error writing customer to DB: " . $e->getMessage());
                     }
                 }
             }
 
             if (!$customer) {
-                throw new \Exception("Kritická chyba: Zákazníka s e-mailem {$email} se nepodařilo inicializovat.");
+                throw new \Exception("Critical error: Failed to initialize customer with email {$email}.");
             }
 
             $totalAmount = 0;
@@ -136,28 +136,28 @@ class ShopCheckoutController extends Controller
 
                 if (!$coupon || !$coupon->is_active) {
                     DB::rollBack();
-                    return response()->json(['message' => 'Kupón je neplatný nebo neaktivní.'], 422);
+                    return response()->json(['message' => 'The coupon is invalid or inactive.'], 422);
                 }
 
                 $now = now();
                 if ($coupon->valid_from && $now->lt($coupon->valid_from)) {
                     DB::rollBack();
-                    return response()->json(['message' => 'Kupón zatím není platný.'], 422);
+                    return response()->json(['message' => 'The coupon is not valid yet.'], 422);
                 }
                 if ($coupon->valid_until && $now->gt($coupon->valid_until)) {
                     DB::rollBack();
-                    return response()->json(['message' => 'Kupón již vypršel.'], 422);
+                    return response()->json(['message' => 'The coupon has already expired.'], 422);
                 }
 
                 if ($coupon->max_usage > 0 && $coupon->usage_count >= $coupon->max_usage) {
                     DB::rollBack();
-                    return response()->json(['message' => 'Kupón byl vyčerpán.'], 422);
+                    return response()->json(['message' => 'The coupon has been exhausted.'], 422);
                 }
 
                 if ($coupon->min_order_amount > 0 && $totalAmount < (float)$coupon->min_order_amount) {
                     DB::rollBack();
                     return response()->json([
-                        'message' => "Minimální objednávka je " . number_format($coupon->min_order_amount, 2) . " Kč."
+                        'message' => "The minimum order amount is " . number_format($coupon->min_order_amount, 2) . " CZK."
                     ], 422);
                 }
 
@@ -210,7 +210,7 @@ class ShopCheckoutController extends Controller
                     if ($variant->stock_quantity < $quantity) {
                         DB::rollBack();
                         return response()->json([
-                            'message' => "Produkt '{$product->name} ({$variant->variant_name})' byl mezitím vyprodán. Dostupné množství: {$variant->stock_quantity} ks."
+                            'message' => "The product '{$product->name} ({$variant->variant_name})' was sold out in the meantime. Available quantity: {$variant->stock_quantity} pcs."
                         ], 422);
                     }
 
@@ -228,7 +228,7 @@ class ShopCheckoutController extends Controller
                     if ($product->stock_quantity < $quantity) {
                         DB::rollBack();
                         return response()->json([
-                            'message' => "Produkt '{$product->name}' byl mezitím vyprodán. Dostupné množství: {$product->stock_quantity} ks."
+                            'message' => "The product '{$product->name}' was sold out in the meantime. Available quantity: {$product->stock_quantity} pcs."
                         ], 422);
                     }
 
@@ -269,15 +269,15 @@ class ShopCheckoutController extends Controller
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
 
-            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Vytvořena objednávka: {$order->order_number}", $order->id, 'ShopOrder');
+            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Created order: {$order->order_number}", $order->id, 'ShopOrder');
 
             return response()->json(new ShopOrderResource($order), 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Checkout createOrder error: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Chyba při vytváření objednávky: " . $e->getMessage());
-            return response()->json(['message' => 'Chyba při vytváření objednávky: ' . $e->getMessage()], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error creating order: " . $e->getMessage());
+            return response()->json(['message' => 'Error creating order: ' . $e->getMessage()], 500);
         }
     }
 
@@ -350,26 +350,26 @@ class ShopCheckoutController extends Controller
             ->first();
 
         if (!$coupon) {
-            return response()->json(['message' => 'Kupón neexistuje nebo není aktivní.'], 404);
+            return response()->json(['message' => 'The coupon does not exist or is not active.'], 404);
         }
 
         $now = now();
 
         if ($coupon->valid_from && $now->lt($coupon->valid_from)) {
-            return response()->json(['message' => 'Kupón zatím není platný.'], 422);
+            return response()->json(['message' => 'The coupon is not valid yet.'], 422);
         }
 
         if ($coupon->valid_until && $now->gt($coupon->valid_until)) {
-            return response()->json(['message' => 'Kupón vypršel.'], 422);
+            return response()->json(['message' => 'The coupon has expired.'], 422);
         }
 
         if ($coupon->max_usage > 0 && $coupon->usage_count >= $coupon->max_usage) {
-            return response()->json(['message' => 'Kupón byl vyčerpán.'], 422);
+            return response()->json(['message' => 'The coupon has been exhausted.'], 422);
         }
 
         if ($coupon->min_order_amount > 0 && $validated['order_amount'] < (float)$coupon->min_order_amount) {
             return response()->json([
-                'message' => "Minimální objednávka je " . number_format($coupon->min_order_amount, 2) . " Kč."
+                'message' => "The minimum order amount is " . number_format($coupon->min_order_amount, 2) . " CZK."
             ], 422);
         }
 
@@ -399,23 +399,23 @@ class ShopCheckoutController extends Controller
                     'paid_at' => now()
                 ]);
 
-                $this->logAction($request, ShopLog::class, 'payment', 'ShopOrder (Checkout)', "Platba simulována: {$order->order_number}", $order->id, 'ShopOrder');
+                $this->logAction($request, ShopLog::class, 'payment', 'ShopOrder (Checkout)', "Payment simulated: {$order->order_number}", $order->id, 'ShopOrder');
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Platba byla úspěšně zpracována',
+                    'message' => 'Payment was successfully processed',
                     'order' => new ShopOrderResource($order)
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Platba byla zamítnuta (simulace)'
+                    'message' => 'Payment was declined (simulation)'
                 ], 402);
             }
         } catch (\Exception $e) {
             Log::error("Payment simulation error: " . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Chyba při simulaci platby: " . $e->getMessage());
-            return response()->json(['message' => 'Chyba při simulaci platby'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error during payment simulation: " . $e->getMessage());
+            return response()->json(['message' => 'Error during payment simulation'], 500);
         }
     }
 }

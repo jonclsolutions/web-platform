@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2026
  * @description Validation logic for updating existing shop customer profiles.
+ *
+ * @refactor-note (2026-09-09) BACKLOG "backend fully in English": validation
+ * messages translated from Czech.
  */
 
 namespace App\Http\Requests\Shop\ShopCustomer;
@@ -40,15 +43,15 @@ class UpdateShopCustomerRequest extends FormRequest
 
         return [
             'user_id' => [
-                'nullable', 
-                'integer', 
-                'exists:users,id', 
+                'nullable',
+                'integer',
+                'exists:users,id',
                 Rule::unique('shop_customers', 'user_id')->ignore($customerId)
             ],
             'email' => [
-                'required', 
-                'email', 
-                'max:150', 
+                'required',
+                'email',
+                'max:150',
                 Rule::unique('shop_customers', 'email')->ignore($customerId)
             ],
             'first_name'  => ['required', 'string', 'max:100'],
@@ -72,13 +75,13 @@ class UpdateShopCustomerRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required'      => 'Email je povinný.',
-            'email.email'         => 'Zadejte platný email.',
-            'email.max'           => 'Email může mít maximálně 150 znaků.',
-            'email.unique'        => 'Tento email již používá jiný zákazník.',
-            'first_name.required' => 'Jméno je povinné.',
-            'last_name.required'  => 'Příjmení je povinné.',
-            'phone.regex'         => 'Zadejte platné telefonní číslo.',
+            'email.required'      => 'E-mail is required.',
+            'email.email'         => 'Enter a valid e-mail address.',
+            'email.max'           => 'E-mail can be at most 150 characters.',
+            'email.unique'        => 'This e-mail is already used by another customer.',
+            'first_name.required' => 'First name is required.',
+            'last_name.required'  => 'Last name is required.',
+            'phone.regex'         => 'Enter a valid phone number.',
         ];
     }
 }

@@ -84,9 +84,9 @@ class WebRawRequestCommissionController extends Controller
     private const ATTACHMENT_FOLDER = 'web/raw_request_commissions';
 
     /**
-     * @description Sloupce, které smí přijít z importního souboru - whitelist. `lang`
-     * (defaultuje na 'cz') a `attachment` (soubor, tabulkový import ho nemůže nést)
-     * jsou ZÁMĚRNĚ mimo, stejně jako u dřívější centrální verze.
+     * @description Columns allowed to come from the import file - whitelist. `lang`
+     * (defaults to 'cz') and `attachment` (file, tabular import cannot carry it)
+     * are INTENTIONALLY excluded, just like in the previous central version.
      */
     private const IMPORTABLE_COLUMNS = [
         'thema', 'contact_email', 'contact_phone', 'order_description', 'status', 'priority', 'note',
@@ -97,11 +97,11 @@ class WebRawRequestCommissionController extends Controller
      */
     /**
      * Retrieves a paginated or full collection of commission requests with search and filtering.
-     * @refactor-note (2026-08-26) Přidán volitelný date-range filtr `date_from`/`date_to`
-     * (whereDate na `created_at`, >= / <=) - slouží GraphBuilderComponent (admin
-     * analytika/reporty), viz graph-builder.component.ts. Záměrně ODDĚLENÝ od
-     * stávajícího jednodenního `created_at` filtru níže (tabulkový filtr UI) - obě
-     * varianty tak spolu nekonfliktně koexistují, žádné jiné chování metody se nemění.
+     * @refactor-note (2026-08-26) Added optional date-range filter `date_from`/`date_to`
+     * (whereDate on `created_at`, >= / <=) - used by GraphBuilderComponent (admin
+     * analytics/reports), see graph-builder.component.ts. Intentionally SEPARATED from
+     * the existing single-day `created_at` filter below (table UI filter) - both
+     * variants coexist peacefully without conflict, no other behavior of the method changes.
      */
     public function index(Request $request)
     {
@@ -128,9 +128,9 @@ class WebRawRequestCommissionController extends Controller
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
 
-        // GraphBuilderComponent date-range filter (admin analytics popup) - viz
-        // refactor-note výše. Nezávislé na jednodenním 'created_at' filtru nad tímto
-        // blokem, obě podmínky se mohou (ale nemusí) uplatnit zároveň.
+        // GraphBuilderComponent date-range filter (admin analytics popup) - see
+        // refactor-note above. Independent of the single-day 'created_at' filter above
+        // this block, both conditions can (but do not have to) apply simultaneously.
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->input('date_from'));
         }
@@ -170,19 +170,19 @@ class WebRawRequestCommissionController extends Controller
 
             $this->storeAttachments($request, $commission, self::ATTACHMENT_FOLDER);
 
-            $this->logAction($request, WebLog::class, 'create', 'WebRawRequestCommission', "Vytvořen požadavek na provizi: {$commission->thema}", $commission->id, 'WebRawRequestCommission');
+            $this->logAction($request, WebLog::class, 'create', 'WebRawRequestCommission', "Commission request created: {$commission->thema}", $commission->id, 'WebRawRequestCommission');
 
             try {
                 Mail::to($commission->contact_email)
                     ->queue(new WebRawRequestCommissionReceived($commission));
             } catch (\Throwable $e) {
-                $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Nepodařilo se odeslat potvrzovací e-mail: " . $e->getMessage(), $commission->id, 'WebRawRequestCommission');
+                $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Failed to send confirmation email: " . $e->getMessage(), $commission->id, 'WebRawRequestCommission');
             }
 
             return response()->json(new WebRawRequestCommissionResource($commission->load('attachments')), 201);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při vytváření požadavku: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření požadavku selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error creating request: " . $e->getMessage());
+            return response()->json(['message' => 'Request creation failed.'], 500);
         }
     }
 
@@ -214,12 +214,12 @@ class WebRawRequestCommissionController extends Controller
 
             $this->storeAttachments($request, $rawRequestCommission, self::ATTACHMENT_FOLDER);
 
-            $this->logAction($request, WebLog::class, 'update', 'WebRawRequestCommission', "Aktualizace požadavku ID: {$rawRequestCommission->id}", $rawRequestCommission->id, 'WebRawRequestCommission');
+            $this->logAction($request, WebLog::class, 'update', 'WebRawRequestCommission', "Updated request ID: {$rawRequestCommission->id}", $rawRequestCommission->id, 'WebRawRequestCommission');
 
             return response()->json(new WebRawRequestCommissionResource($rawRequestCommission->fresh()->load('attachments')));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při aktualizaci požadavku ID {$id}: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
-            return response()->json(['message' => 'Aktualizace požadavku selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error updating request ID {$id}: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
+            return response()->json(['message' => 'Request update failed.'], 500);
         }
     }
 
@@ -240,22 +240,22 @@ class WebRawRequestCommissionController extends Controller
                 $item->delete();
             }
 
-            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebRawRequestCommission', "Smazání požadavku na provizi ID: $id", (int) $id, 'WebRawRequestCommission');
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebRawRequestCommission', "Deleted commission request ID: $id", (int) $id, 'WebRawRequestCommission');
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při mazání požadavku ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
-            return response()->json(['message' => 'Smazání požadavku selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error deleting request ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
+            return response()->json(['message' => 'Request deletion failed.'], 500);
         }
     }
 
     /**
-     * @description Hromadně smaže vybrané požadavky JEDNÍM requestem - viz
-     * TableBuilderComponent.onBulkDeleteClick() (volá POST
-     * web/raw_request_commissions/bulk-delete). Replikuje STEJNOU logiku jako destroy()
-     * (úklid příloh z disku při force_delete=true) - ne generický Model::destroy($ids),
-     * který by tenhle úklid potichu přeskočil a nechal osiřelé soubory na disku.
-     * @param Request $request Tělo obsahuje { ids: number[], force_delete?: boolean }.
+     * @description Bulk deletes selected requests in a single request - see
+     * TableBuilderComponent.onBulkDeleteClick() (calls POST
+     * web/raw_request_commissions/bulk-delete). Replicates the SAME logic as destroy()
+     * (cleanup of attachments from disk when force_delete=true) - not generic Model::destroy($ids),
+     * which would silently skip this cleanup and leave orphaned files on disk.
+     * @param Request $request Body contains { ids: number[], force_delete?: boolean }.
      */
     public function bulkDestroy(Request $request): JsonResponse
     {
@@ -285,8 +285,8 @@ class WebRawRequestCommissionController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při hromadném mazání požadavků: " . $e->getMessage());
-            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error during bulk deletion of requests: " . $e->getMessage());
+            return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
 
         $skippedCount = $requestedCount - $deletedCount;
@@ -297,7 +297,7 @@ class WebRawRequestCommissionController extends Controller
             WebLog::class,
             $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
             'WebRawRequestCommission',
-            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} požadavků (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            'Bulk ' . ($forceDelete ? 'permanent ' : '') . "deletion of {$deletedCount} requests (requested {$requestedCount}, IDs: {$idsPreview}).",
             null,
             'WebRawRequestCommission'
         );
@@ -310,18 +310,18 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * @description Stáhne prázdnou importní šablonu (CSV/TXT/JSON) se sloupci
-     * z IMPORTABLE_COLUMNS.
+     * @description Downloads an empty import template (CSV/TXT/JSON) with columns
+     * from IMPORTABLE_COLUMNS.
      */
     public function importTemplate(Request $request)
     {
         $format = (string) $request->query('format', 'csv');
         if (!in_array($format, ['csv', 'json', 'txt'], true)) {
-            return response()->json(['message' => 'Nepodporovaný formát šablony.'], 422);
+            return response()->json(['message' => 'Unsupported template format.'], 422);
         }
 
         $columns = self::IMPORTABLE_COLUMNS;
-        $baseFilename = 'import-sablona-web-raw_request_commissions';
+        $baseFilename = 'import-template-web-raw_request_commissions';
 
         if ($format === 'csv' || $format === 'txt') {
             $delimiter = $format === 'txt' ? "\t" : ',';
@@ -341,10 +341,10 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * @description Dry-run validace importního souboru - NEZAPISUJE nic do DB. Uloží
-     * soubor dočasně a vrátí import_token pro navazující importCommit().
-     * @refactor-note (2026-08-31) Uložení souboru + vytvoření CoreImportBatch teď jde
-     * přes `startImportBatch()` (HandlesImportBatches trait) místo ručního
+     * @description Dry-run validation of the import file - DOES NOT write anything to DB. Stores
+     * the file temporarily and returns an import_token for the subsequent importCommit().
+     * @refactor-note (2026-08-31) File storage + CoreImportBatch creation now goes
+     * through `startImportBatch()` (HandlesImportBatches trait) instead of manual
      * `Storage::put()`/`CoreImportBatch::create()`.
      */
     public function importValidate(
@@ -401,12 +401,12 @@ class WebRawRequestCommissionController extends Controller
     }
 
     /**
-     * @description Potvrdí a provede skutečný zápis importu. ZNOVU parsuje a validuje
-     * soubor (nikdy nedůvěřuje dry-run výsledku bez ověření). NEVOLÁ store()/Mail::queue() -
-     * import záměrně neposílá potvrzovací e-mail a neumí přenést přílohu.
-     * @refactor-note (2026-08-31) Přepsáno na `findPendingImportBatch()` +
-     * `runImportCommit()` (HandlesImportBatches trait) - dočasný soubor se teď maže
-     * VŽDY (i při selhání), viz trait hlavička.
+     * @description Confirms and executes the actual import write. PARSES AND VALIDATES
+     * the file AGAIN (never trusts the dry-run result without verification). DOES NOT CALL store()/Mail::queue() -
+     * the import intentionally does not send a confirmation email and cannot carry an attachment.
+     * @refactor-note (2026-08-31) Rewritten to `findPendingImportBatch()` +
+     * `runImportCommit()` (HandlesImportBatches trait) - temporary file is now deleted
+     * ALWAYS (even on failure), see trait header.
      */
     public function importCommit(
         Request $request,
@@ -417,7 +417,7 @@ class WebRawRequestCommissionController extends Controller
         $batch = $this->findPendingImportBatch($request, $validated['import_token']);
 
         if ($batch === null) {
-            return response()->json(['message' => 'Import nebyl nalezen nebo už byl zpracován.'], 404);
+            return response()->json(['message' => 'Import not found or already processed.'], 404);
         }
 
         try {
@@ -431,8 +431,8 @@ class WebRawRequestCommissionController extends Controller
                         if ($rowValidator->validateRow($row, $rules) !== null) {
                             continue;
                         }
-                        // Stejný whitelist sloupců jako store(), ale ZÁMĚRNĚ BEZ přílohy a
-                        // BEZ Mail::queue() - viz refactor-note v hlavičce třídy.
+                        // Same column whitelist as store(), but INTENTIONALLY WITHOUT attachment and
+                        // WITHOUT Mail::queue() - see refactor-note in class header.
                         WebRawRequestCommission::create(
                             array_intersect_key($row, array_flip(self::IMPORTABLE_COLUMNS))
                         );
@@ -451,7 +451,7 @@ class WebRawRequestCommissionController extends Controller
                 WebLog::class,
                 'import',
                 'WebRawRequestCommission',
-                "Hromadný import: přidáno {$result['imported_count']} požadavků, přeskočeno {$result['skipped_count']} (soubor '{$batch->original_filename}').",
+                "Bulk import: added {$result['imported_count']} requests, skipped {$result['skipped_count']} (file '{$batch->original_filename}').",
                 null,
                 'WebRawRequestCommission'
             );
@@ -463,11 +463,11 @@ class WebRawRequestCommissionController extends Controller
                 'skip_reasons'   => [],
             ]]);
         } catch (\RuntimeException $e) {
-            // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
+            // Expired temporary file - see runImportCommit(), code 410.
             return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při importu: " . $e->getMessage());
-            return response()->json(['message' => 'Import selhal.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error during import: " . $e->getMessage());
+            return response()->json(['message' => 'Import failed.'], 500);
         }
     }
 
@@ -480,12 +480,12 @@ class WebRawRequestCommissionController extends Controller
             $item = WebRawRequestCommission::withTrashed()->findOrFail($id);
             $item->restore();
 
-            $this->logAction($request, WebLog::class, 'restore', 'WebRawRequestCommission', "Obnova požadavku ID: $id", (int) $id, 'WebRawRequestCommission');
+            $this->logAction($request, WebLog::class, 'restore', 'WebRawRequestCommission', "Restored request ID: $id", (int) $id, 'WebRawRequestCommission');
 
             return response()->json(new WebRawRequestCommissionResource($item->load('attachments')));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při obnově požadavku ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
-            return response()->json(['message' => 'Obnova požadavku selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error restoring request ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
+            return response()->json(['message' => 'Request restoration failed.'], 500);
         }
     }
 
@@ -503,12 +503,12 @@ class WebRawRequestCommissionController extends Controller
                 $item->forceDelete();
             }
 
-            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebRawRequestCommission', "Hromadné smazání koše provizí. Počet: $count");
+            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebRawRequestCommission', "Emptied commission trash. Count: $count");
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Chyba při vyprazdňování koše provizí: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error emptying commission trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 }

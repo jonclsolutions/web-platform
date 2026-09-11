@@ -76,11 +76,11 @@ class UpdateShopCouponRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.required' => 'Kód kupónu je povinný.',
-            'code.unique' => 'Tento kód kupónu již existuje.',
-            'discount_type.required' => 'Typ slevy je povinný.',
-            'discount_value.required' => 'Hodnota slevy je povinná.',
-            'valid_until.after_or_equal' => 'Datum ukončení platnosti nesmí být před datem zahájení.',
+            'code.required' => 'The coupon code is required.',
+            'code.unique' => 'This coupon code already exists.',
+            'discount_type.required' => 'The discount type is required.',
+            'discount_value.required' => 'The discount value is required.',
+            'valid_until.after_or_equal' => 'The expiration date must be a date after or equal to the start date.',
         ];
     }
 }

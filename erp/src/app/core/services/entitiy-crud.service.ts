@@ -53,13 +53,13 @@ export class EntityCrudService<T = any> {
   }
 
   /** GET /{endpoint}/{id} */
-  getOne(id: number | undefined): Observable<T> {
-    if (!id) return throwError(() => new Error('ID undefined.'));
-    return this.dataHandler.get<T>(`${this.endpoint}/${id}`).pipe(
-      takeUntil(this.destroy$),
-      finalize(() => this.onSettled?.())
-    );
-  }
+getOne(id: number | undefined): Observable<T> {
+  if (!id) return throwError(() => new Error('ID undefined.'));
+  return this.dataHandler.getOne<T>(`${this.endpoint}/${id}`).pipe(
+    takeUntil(this.destroy$),
+    finalize(() => this.onSettled?.())
+  );
+}
 
   /** GET /{endpoint} (celá kolekce, bez stránkování) */
   getCollection(params?: any): Observable<T[]> {

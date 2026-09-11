@@ -4,8 +4,12 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
-        ('web-job-applications-delete') - viz trash-table-builder.component.ts stejné datum.
+    (Earlier refactor-note for deletePermission is unchanged.)
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": natvrdo psané texty ('Pracovní formulář'/'Koš'/'Akce'/HR tip banner/
+        'Koš smazaných žádostí'/'Datum vytvoření') nahrazeny
+        `t('job-applications.xxx')` bindingy - viz job-applications.component.ts
+        stejné datum.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -17,14 +21,14 @@
 <div>
 <div class="toolbar-actions m-b-t-5">
 @if(!showTrashTable){
-<div class="table-header">Pracovní formulář</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -41,7 +45,7 @@ triggerLabel="Akce"
 </div>
 <div class="table-and-pagination-container">
 <div class="info-banner m-b-15">
-<strong>HR Tip:</strong> Zde spravujete příchozí reakce. Změnou <strong>Stavu</strong> informujete interní tým o postupu náboru.
+<strong>{{ t('info_banner_tip_label') }}</strong> {{ t('info_banner_text') }}
 </div>
 @if (!showTrashTable) {
 <app-table-builder #activeTable
@@ -65,13 +69,12 @@ triggerLabel="Akce"
 <app-trash-table-builder
 [data]="trashData"
 [columns]="trashColumns"
-[tableCaption]="'Koš smazaných žádostí'"
+[tableCaption]="t('trash_table_caption')"
 [apiEndpoint]="apiEndpoint"
 [deletePermission]="'web-job-applications-delete'"
 (itemRestored)="refreshData()">
 </app-trash-table-builder>
-          }
-<div class="flex justify-between items-center mt-4">
+          }<div class="flex justify-between items-center mt-4">
 <app-pagination-buttons-builder
 [currentPage]="showTrashTable ? trashCurrentPage : currentPage"
 [totalPages]="showTrashTable ? trashTotalPages : totalPages"
@@ -109,7 +112,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

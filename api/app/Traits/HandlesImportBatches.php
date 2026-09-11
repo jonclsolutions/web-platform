@@ -130,7 +130,7 @@ trait HandlesImportBatches
     protected function runImportCommit(CoreImportBatch $batch, callable $commitFn): array
     {
         if (!Storage::disk($this->importTempDisk())->exists($batch->temp_path)) {
-            throw new \RuntimeException('Dočasný soubor importu vypršel. Nahrajte prosím soubor znovu.', 410);
+            throw new \RuntimeException('The temporary import file has expired. Please upload the file again.', 410);
         }
 
         $batch->update(['status' => 'processing']);

@@ -163,7 +163,7 @@ class CoreExternalLinkController extends Controller
             'url'     => $validated['url'],
         ]);
 
-        $this->logAction($request, WebLog::class, 'create', 'Web', "Vytvořen externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
+        $this->logAction($request, WebLog::class, 'create', 'Web', "Created external link: {$link->name}", $link->id, 'CoreExternalLink');
         return response()->json(new CoreExternalLinkResource($link), 201);
     }
 
@@ -177,7 +177,7 @@ class CoreExternalLinkController extends Controller
 
         $link->update($request->validated());
 
-        $this->logAction($request, WebLog::class, 'update', 'Web', "Upraven externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
+        $this->logAction($request, WebLog::class, 'update', 'Web', "Updated external link: {$link->name}", $link->id, 'CoreExternalLink');
         return response()->json(new CoreExternalLinkResource($link));
     }
 
@@ -191,7 +191,7 @@ class CoreExternalLinkController extends Controller
         $name = $link->name;
         $link->delete();
 
-        $this->logAction($request, WebLog::class, 'soft_delete', 'Web', "Smazán externí odkaz: {$name}", (int) $id, 'CoreExternalLink');
+        $this->logAction($request, WebLog::class, 'soft_delete', 'Web', "Deleted external link: {$name}", (int) $id, 'CoreExternalLink');
         return response()->json(null, 204);
     }
 
@@ -233,8 +233,8 @@ class CoreExternalLinkController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'Web', "Chyba při hromadném mazání externích odkazů: " . $e->getMessage());
-            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'Web', "Error during bulk deletion of external links: " . $e->getMessage());
+            return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
 
         $skippedCount = $requestedCount - $deletedCount;
@@ -245,7 +245,7 @@ class CoreExternalLinkController extends Controller
             WebLog::class,
             $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
             'Web',
-            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} externích odkazů (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            'Bulk ' . ($forceDelete ? 'permanent ' : '') . "deletion of {$deletedCount} external links (requested {$requestedCount}, IDs: {$idsPreview}).",
             null,
             'CoreExternalLink'
         );
@@ -269,7 +269,7 @@ class CoreExternalLinkController extends Controller
 
         $link->restore();
 
-        $this->logAction($request, WebLog::class, 'restore', 'Web', "Obnoven externí odkaz: {$link->name}", $link->id, 'CoreExternalLink');
+        $this->logAction($request, WebLog::class, 'restore', 'Web', "Restored external link: {$link->name}", $link->id, 'CoreExternalLink');
         return response()->json(new CoreExternalLinkResource($link));
     }
 
@@ -283,7 +283,7 @@ class CoreExternalLinkController extends Controller
         $count = $ownTrashed->count();
         $ownTrashed->forceDelete();
 
-        $this->logAction($request, WebLog::class, 'force_delete_all', 'Web', "Trvale smazáno {$count} externích odkazů z koše");
+        $this->logAction($request, WebLog::class, 'force_delete_all', 'Web', "Permanently deleted {$count} external links from trash");
         return response()->json(null, 204);
     }
 }

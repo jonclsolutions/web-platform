@@ -10,23 +10,19 @@
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and entity state management.
  * - TableBuilderComponent: Used for displaying supplier data and handling CSV exports.
  * - SHARED_UI_BUILDERS: Collection of reusable UI components for the dashboard.
+ * - Config.create* factory functions: i18n-aware definitions for UI columns, form
+ *   fields, and toolbar actions - see refactor-note (2026-09-08) below.
  * @note Struktura je záměrně 1:1 stejná jako u SuppliersComponent, aby zůstala konzistentní
  * s ostatními jednoduchými CRUD stránkami v adminu.
  *
- * @bugfix-note (2026-08-31) KRITICKÝ BUG - 500 PŘI KAŽDÉM REFRESHI: `filters`/
- * `clearFilters()` posílaly natvrdo `sort_by: 'position'` - sloupec `position` byl ale
- * mezitím z `core_external_links` odstraněn (viz CoreExternalLink model a
- * CoreExternalLinkController stejné datum), takže KAŽDÝ request s tímto řazením spadl
- * na backendu na 500 (`orderBy('position', ...)` na neexistujícím sloupci). Nejviditelněji
- * se to projevovalo po vytvoření/úpravě záznamu - zelený "Úspěch" toast (POST/PUT prošel
- * v pořádku), hned následovaný červeným 500 toastem z navazujícího `refreshData()`.
- * Výchozí řazení změněno na `sort_by: 'name'` - odpovídá i backendovému výchozímu
- * řazení v `CoreExternalLinkController::index()`.
+ * (Earlier bugfix-notes for the sort_by 'position' 500 error and the duplicate toast
+ * removal are unchanged - see version history.)
  *
- * @bugfix-note (2026-08-31v2) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
- * z `error:` callbacku v `handleFormSubmitted()` - `DataHandler.handleError()` je od
- * tohoto data jediné a autoritativní místo, které smí chybový toast zobrazit (viz
- * data-handler.service.ts bugfix-note stejné datum).
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.EXTERNAL_LINK_*` konstanty nahrazeny `Config.create*()` factory funkcemi -
+ * stejný vzor jako web-pages stránky. `graphColumns` přestalo být `readonly`.
+ * `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl vytvořen.'` (dřív natvrdo česky)
+ * nahrazeny `t()` voláním.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -38,6 +34,7 @@ import * as Config from './external-links.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+
 /**
  * @description Component for managing the list of external admin links.
  * @usage Provides a comprehensive interface for administrators to list, create, edit, and archive external link records.
@@ -46,23 +43,30 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-external-links',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './external-links.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ExternalLinksComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Externí odkazy';
+
+  protected override translationSection: string = 'external-links';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`external-links.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'core/external_links';
 
-  buttons = Config.EXTERNAL_LINK_BUTTONS;
-  formFields = Config.EXTERNAL_LINK_FORM_FIELDS;
-  linkColumns = Config.EXTERNAL_LINK_COLUMNS;
-  trashLinkColumns = Config.EXTERNAL_LINK_TRASH_COLUMNS;
-  filterColumns = Config.EXTERNAL_LINK_FILTER_COLUMNS;
-  detailsColumns = Config.EXTERNAL_LINK_DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  linkColumns: Core.ColumnDefinition[] = [];
+  trashLinkColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
@@ -71,15 +75,11 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
     sort_by: 'name',
     sort_direction: 'asc'
   };
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.EXTERNAL_LINK_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -87,14 +87,33 @@ showGraphBuilder = false;
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createExternalLinkButtons(this.i18n);
+      this.formFields = Config.createExternalLinkFormFields(this.i18n);
+      this.linkColumns = Config.createExternalLinkColumns(this.i18n);
+      this.trashLinkColumns = Config.createExternalLinkTrashColumns(this.i18n);
+      this.filterColumns = Config.createExternalLinkFilterColumns(this.i18n);
+      this.detailsColumns = Config.createExternalLinkDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
   /**
    * @description Computes the toolbar configuration.
    * @returns List of buttons updated based on user permissions, current view state (active/trash), and UI filter state.
    */
-get toolbarButtons(): Core.Button[] {
-    return Config.EXTERNAL_LINK_TOOLBAR_BUTTONS.map(btn => {
+  get toolbarButtons(): Core.Button[] {
+    return Config.createExternalLinkToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
 
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
@@ -103,7 +122,7 @@ get toolbarButtons(): Core.Button[] {
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
@@ -114,7 +133,7 @@ get toolbarButtons(): Core.Button[] {
           }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
           updatedBtn.isActive = this.showTrashTable;
           break;
       }
@@ -122,7 +141,6 @@ get toolbarButtons(): Core.Button[] {
       return updatedBtn;
     });
   }
-
 
   /**
    * @description Dispatches actions triggered by the UI toolbar.
@@ -204,6 +222,8 @@ get toolbarButtons(): Core.Button[] {
   /**
    * @description Submits form data; determines whether to execute a create or update request based on the ID presence.
    * @param formData The object submitted from the form.
+   * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
+   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
    */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id
@@ -217,7 +237,11 @@ get toolbarButtons(): Core.Button[] {
       })
     ).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          'success'
+        );
         this.refreshData();
       }
     });
@@ -257,6 +281,7 @@ get toolbarButtons(): Core.Button[] {
 
   handleItemRestored(): void { this.refreshData(); }
   handleItemDeleted(): void { this.refreshData(); }
+
   openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();

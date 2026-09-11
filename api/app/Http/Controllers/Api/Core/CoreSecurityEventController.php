@@ -5,28 +5,28 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Admin čtení/triage bezpečnostního monitoringu (core_security_events).
- * Zápis (`CoreSecurityEvent::record()`) probíhá výhradně interně z backendu (captcha,
- * throttle, scanning, ...) - tento kontroler NEMÁ `store()` a žádnou veřejnou POST routu,
- * na rozdíl od CoreLogController (kde POST /core/logs slouží k self-auditu z frontendu).
+ * @description Admin reading/triage of security monitoring (core_security_events).
+ * Writing (`CoreSecurityEvent::record()`) happens exclusively internally from the backend (captcha,
+ * throttle, scanning, ...) - this controller DOES NOT have `store()` and no public POST route,
+ * unlike CoreLogController (where POST /core/logs serves for self-audit from the frontend).
  *
- * @note Bez konceptu koše/restore - tyhle záznamy jsou diagnostika, ne byznys entita,
- * kterou má smysl vracet zpět. Smazání (`destroy`/`purge`) je proto rovnou trvalé.
+ * @note Without the trash/restore concept - these records are diagnostics, not a business entity
+ * that makes sense to restore. Deletion (`destroy`/`purge`) is therefore directly permanent.
  *
- * @bugfix-note (2026-08-22) `update()` (triage) vrací výsledek obalený v `{data: ...}` -
- * frontendový `DataHandler.put<T>()` (volaný přes `EntityCrudService::update()` z
- * `BaseDataComponent.updateData()`) automaticky odbaluje `response.data`. `show()`
- * zůstává NEobalené (volá se přes `EntityCrudService::getOne()` -> `DataHandler.get<T>()`,
- * který neodbaluje nic), stejně jako `destroy()` (přes `DataHandler.delete()`, který
- * vrácené tělo vůbec netypuje/nečte).
+ * @bugfix-note (2026-08-22) `update()` (triage) returns the result wrapped in `{data: ...}` -
+ * frontend `DataHandler.put<T>()` (called via `EntityCrudService::update()` from
+ * `BaseDataComponent.updateData()`) automatically unwraps `response.data`. `show()`
+ * remains UNWRAPPED (called via `EntityCrudService::getOne()` -> `DataHandler.get<T>()`,
+ * which unwraps nothing), just like `destroy()` (via `DataHandler.delete()`, which
+ * doesn't type/read the returned body at all).
  *
- * @refactor-note (2026-08-22v2) AUDITNÍ LOG: `update()` (triage), `destroy()` a
- * `purge()` teď zapisují do `core_logs` (přes `LogsActivity` trait) - kdo a kdy změnil
- * stav eventu, smazal jednotlivý záznam, nebo spustil hromadný purge (a kolik záznamů
- * smazal). `store()`/zápis samotných eventů (`CoreSecurityEvent::record()`) se do
- * `core_logs` NEzapisuje - to by při útoku zahltilo audit log stejně, jako by
- * nebucketovaný zápis zahltil `core_security_events` (viz CoreSecurityEvent.php).
- * Loguje se jen administrátorská AKCE nad monitoringem, ne diagnostická data samotná.
+ * @refactor-note (2026-08-22v2) AUDIT LOG: `update()` (triage), `destroy()` and
+ * `purge()` now write to `core_logs` (via `LogsActivity` trait) - who and when changed
+ * the status of the event, deleted an individual record, or triggered a mass purge (and how many records
+ * it deleted). `store()`/writing of the events themselves (`CoreSecurityEvent::record()`) is NOT written to
+ * `core_logs` - during an attack that would flood the audit log just as much as
+ * unbucketed writes would flood `core_security_events` (see CoreSecurityEvent.php).
+ * Only administrative ACTIONS over monitoring are logged, not the diagnostic data itself.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -47,7 +47,7 @@ class CoreSecurityEventController extends Controller
     use LogsActivity;
 
     /**
-     * @description Paginovaný přehled bezpečnostních eventů s filtry pro triage.
+     * @description Paginated overview of security events with filters for triage.
      */
     public function index(Request $request): JsonResponse
     {
@@ -96,7 +96,7 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
     }
 
     /**
-     * @description Detail jednoho bezpečnostního eventu.
+     * @description Detail of a single security event.
      */
     public function show($id): JsonResponse
     {
@@ -106,9 +106,9 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
     }
 
     /**
-     * @description Triage akce - změna stavu (new/reviewed/false_positive/confirmed_attack)
-     * a volitelná poznámka administrátora. Neupravuje diagnostická data samotná
-     * (event_type, ip, occurrences...) - jen administrativní vrstvu nad nimi.
+     * @description Triage action - status change (new/reviewed/false_positive/confirmed_attack)
+     * and an optional administrator note. Does not modify the diagnostic data itself
+     * (event_type, ip, occurrences...) - only the administrative layer above them.
      */
     public function update(UpdateCoreSecurityEventRequest $request, $id): JsonResponse
     {
@@ -122,18 +122,18 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
             CoreLog::class,
             'security_event_triaged',
             'Core',
-            "Bezpečnostní event #{$event->id} ({$event->event_type}, IP: {$event->ip_address}) změněn ze stavu '{$previousStatus}' na '{$event->status}'.",
+            "Security event #{$event->id} ({$event->event_type}, IP: {$event->ip_address}) changed from status '{$previousStatus}' to '{$event->status}'.",
             $event->id,
             'CoreSecurityEvent'
         );
 
-        // Obal {data: ...} - viz bugfix-note v hlavičce třídy (DataHandler.put() unwrap).
+        // Wrapper {data: ...} - see bugfix-note in class header (DataHandler.put() unwrap).
         return response()->json(['data' => new CoreSecurityEventResource($event)]);
     }
 
     /**
-     * @description Trvale smaže jeden záznam (chybná detekce, nebo GDPR žádost o výmaz
-     * konkrétní IP z logů).
+     * @description Permanently deletes a single record (false detection, or GDPR request for deletion
+     * of a specific IP from logs).
      */
     public function destroy(Request $request, $id): JsonResponse
     {
@@ -148,20 +148,20 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
             CoreLog::class,
             'security_event_deleted',
             'Core',
-            "Bezpečnostní event #{$id} ({$eventType}, IP: {$ip}) byl ručně smazán.",
+            "Security event #{$id} ({$eventType}, IP: {$ip}) was manually deleted.",
             $id,
             'CoreSecurityEvent'
         );
 
-        return response()->json(['message' => 'Záznam byl smazán.']);
+        return response()->json(['message' => 'Record was deleted.']);
     }
 
     /**
-     * @description Okamžitý ruční purge všech záznamů starších než aktuálně nastavená
-     * retence (`core_security_settings.retention_days`). Stejná logika (a stejné cutoff
-     * datum - `now() - retention_days`) jako naplánovaný denní úklid
-     * (PurgeSecurityEventsCommand, viz routes/console.php) - tady spustitelná na
-     * vyžádání z UI tlačítkem "Vyčistit staré záznamy".
+     * @description Immediate manual purge of all records older than the currently set
+     * retention (`core_security_settings.retention_days`). Same logic (and same cutoff
+     * date - `now() - retention_days`) as scheduled daily cleanup
+     * (PurgeSecurityEventsCommand, see routes/console.php) - here runnable on
+     * demand from the UI via the "Clear old records" button.
      */
     public function purge(Request $request): JsonResponse
     {
@@ -175,22 +175,22 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
             CoreLog::class,
             'security_events_purged',
             'Core',
-            "Ruční vyčištění bezpečnostního monitoringu: smazáno {$deleted} záznamů starších než {$retentionDays} dní.",
+            "Manual cleanup of security monitoring: deleted {$deleted} records older than {$retentionDays} days.",
             null,
             'CoreSecurityEvent'
         );
 
         return response()->json([
-            'message' => "Smazáno {$deleted} záznamů starších než {$retentionDays} dní.",
+            'message' => "Deleted {$deleted} records older than {$retentionDays} days.",
             'deleted' => $deleted,
         ]);
     }
 
     /**
-     * @description Agregovaná data pro graf objemu requestů/eventů v adminu - počty
-     * seskupené po dnech za posledních `$days` dní (default 14), rozdělené podle severity.
-     * Sčítá `occurrences`, ne počet řádků - díky bucketingu je řádků málo, ale `occurrences`
-     * odpovídá skutečnému objemu podezřelých requestů.
+     * @description Aggregated data for request/event volume chart in admin - counts
+     * grouped by day for the last `$days` days (default 14), broken down by severity.
+     * Sums `occurrences`, not row count - thanks to bucketing there are few rows, but `occurrences`
+     * corresponds to the actual volume of suspicious requests.
      */
     public function stats(Request $request): JsonResponse
     {
@@ -198,10 +198,10 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
         $from = Carbon::now()->subDays($days)->startOfDay();
 
         $rows = CoreSecurityEvent::query()
-            // CAST na UNSIGNED - MySQL/PDO bez explicitní konverze často vrací výsledek
-            // SUM() jako string, ne integer. Frontend pak dělá `0 + "127"`, což je v JS
-            // konkatenace řetězců ("0127"), ne sčítání - viz oprava v
-            // security-events.component.ts (buildChartDays) pro obranu i na druhé straně.
+            // CAST to UNSIGNED - MySQL/PDO without explicit conversion often returns the result of
+            // SUM() as a string, not an integer. Frontend then does `0 + "127"`, which in JS is
+            // string concatenation ("0127"), not addition - see fix in
+            // security-events.component.ts (buildChartDays) for defense on the other side as well.
             ->selectRaw('DATE(last_seen_at) as day, severity, CAST(SUM(occurrences) AS UNSIGNED) as total')
             ->where('last_seen_at', '>=', $from)
             ->groupBy('day', 'severity')

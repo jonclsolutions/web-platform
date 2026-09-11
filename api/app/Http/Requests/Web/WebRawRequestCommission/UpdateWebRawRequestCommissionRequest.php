@@ -56,8 +56,8 @@ return [
 'contact_email'              => ['sometimes', 'email', 'max:255'],
 'contact_phone'              => ['nullable', 'string', 'regex:/^(\+?[0-9]{1,3})?[\s.-]?[0-9]{3,4}[\s.-]?[0-9]{3,4}[\s.-]?[0-9]{3,4}$/'],
 'order_description'          => ['sometimes', 'string', 'max:10000'],
-'status'                     => ['sometimes', 'string', 'in:Nově zadané,Zpracovává se,Dokončeno,Zrušeno'],
-'priority'                   => ['sometimes', 'string', 'in:Nízká,Neutrální,Vysoká'],
+'status'   => ['sometimes', 'string', 'in:new,in_progress,done,cancelled'],
+'priority' => ['sometimes', 'string', 'in:low,neutral,high'],
 'note'                       => ['sometimes', 'nullable', 'string'],
 'attachments'                => ['sometimes', 'nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
 'attachments.*'              => ['file', 'max:' . self::MAX_FILE_SIZE_KB, $this->attachmentExtensionRule()],
@@ -80,17 +80,17 @@ $validator->after(fn ($v) => $this->validateAttachmentMime($v));
 public function messages(): array
     {
 return [
-'thema.min'                          => 'Téma musí mít 3-255 znaků.',
-'thema.max'                          => 'Téma musí mít 3-255 znaků.',
-'thema.regex'                        => 'Téma obsahuje nepovolené znaky.',
-'contact_email.email'                => 'Zadejte platnou e-mailovou adresu.',
-'contact_phone.regex'                => 'Zadejte platné telefonní číslo.',
-'order_description.max'              => 'Popis požadavku je příliš dlouhý.',
-'attachments.max'                    => 'Můžete najednou přidat maximálně ' . self::MAX_ATTACHMENTS . ' souborů.',
-'attachments.*.max'                  => 'Každý soubor může mít maximálně 20 MB.',
-'attachments.*.file'                 => 'Příloha musí být platný soubor.',
-'attachments_removed_ids.array'      => 'Neplatný formát seznamu odebraných příloh.',
-'attachments_removed_ids.*.integer'  => 'Neplatné ID odebrané přílohy.',
+'thema.min'                          => 'The subject must be between 3 and 255 characters.',
+'thema.max'                          => 'The subject must be between 3 and 255 characters.',
+'thema.regex'                        => 'The subject contains invalid characters.',
+'contact_email.email'                => 'Please provide a valid email address.',
+'contact_phone.regex'                => 'Please provide a valid phone number.',
+'order_description.max'              => 'The request description is too long.',
+'attachments.max'                    => 'You can upload a maximum of ' . self::MAX_ATTACHMENTS . ' files at once.',
+'attachments.*.max'                  => 'Each file may not be greater than 20 MB.',
+'attachments.*.file'                 => 'The attachment must be a valid file.',
+'attachments_removed_ids.array'      => 'Invalid format for the removed attachments list.',
+'attachments_removed_ids.*.integer'  => 'Invalid ID for the removed attachment.',
         ];
     }
 }

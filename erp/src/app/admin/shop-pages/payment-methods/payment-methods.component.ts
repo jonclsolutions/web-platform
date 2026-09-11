@@ -9,6 +9,13 @@
  * - BaseDataComponent: Provides base CRUD functionality and state management for entities.
  * - TableBuilderComponent: Used for rendering and exporting the payment method data list.
  * - SHARED_UI_BUILDERS: Provides standard UI components like forms and tables.
+ * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
+ *   (2026-09-09) níže.
+ *
+ * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.PAYMENT_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
+ * `graphColumns` přestalo být `readonly`. `'Úspěch'`/`'Chyba'`/'Aktualizace selhala.'/
+ * 'Nepodařilo se načíst detail.' nahrazeny `t()` voláním.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -20,6 +27,7 @@ import * as Config from './payment-methods.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+
 /**
  * @description Component for managing shop payment method settings.
  * @usage Enables administrators to view, filter, edit, and export payment method configurations.
@@ -28,22 +36,29 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-payment-methods',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './payment-methods.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaymentMethodsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Platební metody';
+
+  protected override translationSection: string = 'shop-payment-methods';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-payment-methods.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'shop/payment_methods';
 
-  buttons = Config.PAYMENT_BUTTONS;
-  formFields = Config.PAYMENT_FORM_FIELDS;
-  columns = Config.PAYMENT_COLUMNS;
-  filterColumns = Config.PAYMENT_FILTER_COLUMNS;
-  detailsColumns = Config.PAYMENT_DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  columns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
@@ -52,15 +67,11 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
     sort_by: 'sort_order',
     sort_direction: 'asc'
   };
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.PAYMENT_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-09) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -68,14 +79,32 @@ showGraphBuilder = false;
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createPaymentButtons(this.i18n);
+      this.formFields = Config.createPaymentFormFields(this.i18n);
+      this.columns = Config.createPaymentColumns(this.i18n);
+      this.filterColumns = Config.createPaymentFilterColumns(this.i18n);
+      this.detailsColumns = Config.createPaymentDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
   /**
    * @description Computes the toolbar configuration dynamically.
    * @returns Array of buttons, filtered by user permissions and current UI state (e.g., filter visibility).
    */
-get toolbarButtons(): Core.Button[] {
-    return Config.PAYMENT_TOOLBAR_BUTTONS.map(btn => {
+  get toolbarButtons(): Core.Button[] {
+    return Config.createPaymentToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
 
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
@@ -84,7 +113,7 @@ get toolbarButtons(): Core.Button[] {
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
@@ -95,7 +124,7 @@ get toolbarButtons(): Core.Button[] {
           }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
           updatedBtn.isActive = this.showTrashTable;
           break;
       }
@@ -165,18 +194,28 @@ get toolbarButtons(): Core.Button[] {
   /**
    * @description Handles form submission by calling the API update service.
    * @param formData The data object submitted from the edit form.
+   * @refactor-note (2026-09-09) Natvrdo 'Úspěch'/'Chyba'/'Aktualizace selhala.'
+   * nahrazeny `t()` voláním.
    */
   handleFormSubmitted(formData: any): void {
     if (!formData.id) return;
-    
+
     this.updateData(formData.id, formData)
       .pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); }))
       .subscribe({
         next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
-        this.refreshData();
-      },
-        error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Aktualizace selhala.', 'danger')
+          this.alertDialogService.open(
+            this.i18n.getValue('shared.success'),
+            formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+            'success'
+          );
+          this.refreshData();
+        },
+        error: (err: any) => this.alertDialogService.open(
+          this.i18n.getValue('shared.error'),
+          err.error?.message || this.t('update_failed_message'),
+          'danger'
+        )
       });
   }
 
@@ -188,12 +227,17 @@ get toolbarButtons(): Core.Button[] {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe({
       next: (details) => { this.selectedItemForDetails = details; this.showDetails = true; this.cd.markForCheck(); },
-      error: (err: any) => this.alertDialogService.open('Chyba', err.error?.message || 'Nepodařilo se načíst detail.', 'danger')
+      error: (err: any) => this.alertDialogService.open(
+        this.i18n.getValue('shared.error'),
+        err.error?.message || this.t('load_details_failed_message'),
+        'danger'
+      )
     });
   }
 
   handleCloseDetails(): void { this.selectedItemForDetails = null; this.showDetails = false; }
   onCancelForm(): void { this.showCreateForm = false; this.selectedItemForEdit = null; this.cd.markForCheck(); }
+
   openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();

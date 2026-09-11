@@ -139,26 +139,26 @@ class ShopPublicController extends Controller
             ->first();
 
         if (!$coupon) {
-            return response()->json(['message' => 'Kupón neexistuje nebo není aktivní.'], 404);
+            return response()->json(['message' => 'Coupon does not exist or is not active.'], 404);
         }
 
         $now = now();
 
         if ($coupon->valid_from && $now->lt($coupon->valid_from)) {
-            return response()->json(['message' => 'Kupón zatím není platný.'], 422);
+            return response()->json(['message' => 'Coupon is not valid yet.'], 422);
         }
 
         if ($coupon->valid_until && $now->gt($coupon->valid_until)) {
-            return response()->json(['message' => 'Kupón vypršel.'], 422);
+            return response()->json(['message' => 'Coupon has expired.'], 422);
         }
 
         if ($coupon->max_usage > 0 && $coupon->usage_count >= $coupon->max_usage) {
-            return response()->json(['message' => 'Kupón byl vyčerpán.'], 422);
+            return response()->json(['message' => 'Coupon usage limit has been reached.'], 422);
         }
 
         if ($coupon->min_order_amount > 0 && $validated['order_amount'] < (float)$coupon->min_order_amount) {
             return response()->json([
-                'message' => "Minimální objednávka je " . number_format($coupon->min_order_amount, 2) . "EUR."
+                'message' => "Minimum order amount is " . number_format($coupon->min_order_amount, 2) . "EUR."
             ], 422);
         }
 

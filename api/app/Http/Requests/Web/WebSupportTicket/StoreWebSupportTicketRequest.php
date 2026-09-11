@@ -54,7 +54,7 @@ class StoreWebSupportTicketRequest extends FormRequest
             'user_id'          => ['nullable', 'integer', 'exists:users,id'],
             'user_name_plain'  => ['nullable', 'string', 'max:255'],
             'user_plain'       => ['nullable', 'email', 'max:255'],
-            'category'         => ['required', 'string', 'max:100'],
+            'category'         => ['required', 'string', 'max:100', 'in:it,business,bug,other'],
             'subject'          => ['required', 'string', 'max:255'],
             'description'      => ['required', 'string'],
             'priority'         => ['nullable', 'string', 'max:50', 'in:low,medium,high'],

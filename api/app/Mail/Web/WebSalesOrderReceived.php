@@ -31,7 +31,7 @@ public WebSalesOrder $order
 public function envelope(): Envelope
     {
 return new Envelope(
-subject: 'Vaše poptávka byla přijata',
+subject: 'Your inquiry has been received.',
         );
     }
 

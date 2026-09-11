@@ -8,11 +8,25 @@
  * @dependencies
  * - BaseDataComponent: Provides base CRUD functionality and pagination state management.
  * - TableBuilderComponent: Used for rendering the primary customer data grid.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
- * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
- * `loadCustomerOrders()` používá lokální `customerOrdersError` stav (ne toast),
- * beze změny.
+ * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
+ *   (2026-09-09) níže.
+ *
+ * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
+ *
+ * @bugfix-note (2026-09-09) `formatCurrency()` mělo default `currency = 'CZK'`,
+ * zatímco zbytek e-shopu (products, orders) pracuje výhradně v EUR - historie
+ * objednávek zákazníka tak zobrazovala částky v CZK místo EUR. Opraveno default
+ * na `'EUR'`.
+ *
+ * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.CUSTOMER_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
+ * `graphColumns` přestalo být `readonly`. Všechny natvrdo psané texty a
+ * `alertDialogService.open()` volání nahrazeny `t()` voláním. `formatCurrency()`/
+ * `formatDate()` natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`.
+ * Status/payment status CSS třídy (`getStatusClass()`/`getPaymentStatusClass()`)
+ * beze změny - jde o technické CSS class názvy, ne uživatelský text (skutečný
+ * label přichází z `order.status_label`/`order.payment_status_label`, které vrací
+ * backend).
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -29,23 +43,30 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [CommonModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CustomersComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Zákazníci';
+
+  protected override translationSection: string = 'shop-customers';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-customers.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'shop/customers';
 
-  buttons = Config.CUSTOMER_BUTTONS;
-  formFields = Config.CUSTOMER_FORM_FIELDS;
-  customerColumns = Config.CUSTOMER_COLUMNS;
-  trashCustomerColumns = Config.CUSTOMER_TRASH_COLUMNS;
-  filterColumns = Config.CUSTOMER_FILTER_COLUMNS;
-  detailsColumns = Config.CUSTOMER_DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  customerColumns: Core.ColumnDefinition[] = [];
+  trashCustomerColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
@@ -65,15 +86,11 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     sort_by: 'created_at',
     sort_direction: 'desc'
   };
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.CUSTOMER_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-09) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -81,10 +98,29 @@ showGraphBuilder = false;
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createCustomerButtons(this.i18n);
+      this.formFields = Config.createCustomerFormFields(this.i18n);
+      this.customerColumns = Config.createCustomerColumns(this.i18n);
+      this.trashCustomerColumns = Config.createCustomerTrashColumns(this.i18n);
+      this.filterColumns = Config.createCustomerFilterColumns(this.i18n);
+      this.detailsColumns = Config.createCustomerDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
-get toolbarButtons(): Core.Button[] {
-    return Config.CUSTOMER_TOOLBAR_BUTTONS.map(btn => {
+  get toolbarButtons(): Core.Button[] {
+    return Config.createCustomerToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
 
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
@@ -93,7 +129,7 @@ get toolbarButtons(): Core.Button[] {
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
@@ -104,7 +140,7 @@ get toolbarButtons(): Core.Button[] {
           }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
           updatedBtn.isActive = this.showTrashTable;
           break;
       }
@@ -167,6 +203,10 @@ get toolbarButtons(): Core.Button[] {
     this.showCreateForm = true;
   }
 
+  /**
+   * @refactor-note (2026-09-09) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
+   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
+   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => {
@@ -174,7 +214,11 @@ get toolbarButtons(): Core.Button[] {
       this.cd.markForCheck();
     })).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          'success'
+        );
         this.refreshData();
       }
     });
@@ -238,7 +282,7 @@ get toolbarButtons(): Core.Button[] {
           this.cd.markForCheck();
         },
         error: () => {
-          this.customerOrdersError = 'Nepodařilo se načíst objednávky zákazníka.';
+          this.customerOrdersError = this.t('load_orders_failed_message');
           this.customerOrdersLoading = false;
           this.cd.markForCheck();
         }
@@ -267,15 +311,15 @@ get toolbarButtons(): Core.Button[] {
     }
 
     pages.push(1);
-    if (current > 3) pages.push(-1); 
+    if (current > 3) pages.push(-1);
     for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
       pages.push(i);
     }
-    if (current < total - 2) pages.push(-1); 
+    if (current < total - 2) pages.push(-1);
     pages.push(total);
     return pages;
   }
-  
+
   get maxDisplayedOrdersCount(): number {
     return Math.min(this.ordersCurrentPage * this.ordersPerPage, this.ordersTotalItems);
   }
@@ -304,13 +348,19 @@ get toolbarButtons(): Core.Button[] {
     return map[status] ?? 'pay-pending';
   }
 
-  formatCurrency(value: number, currency = 'CZK'): string {
-    return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency }).format(value ?? 0);
+  /**
+   * @bugfix-note (2026-09-09) Default `currency` byl `'CZK'`, zatímco zbytek
+   * e-shopu pracuje výhradně v EUR - viz hlavička souboru.
+   * @refactor-note (2026-09-09) Natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`.
+   */
+  formatCurrency(value: number, currency = 'EUR'): string {
+    return new Intl.NumberFormat(this.i18n.getDateLocale(), { style: 'currency', currency }).format(value ?? 0);
   }
 
+  /** @refactor-note (2026-09-09) Natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`. */
   formatDate(iso: string): string {
     if (!iso) return '—';
-    return new Intl.DateTimeFormat('cs-CZ', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+    return new Intl.DateTimeFormat(this.i18n.getDateLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
   }
 
   handleCloseDetails(): void {
@@ -326,6 +376,7 @@ get toolbarButtons(): Core.Button[] {
 
   handleItemRestored(): void { this.refreshData(); }
   handleItemDeleted(): void { this.refreshData(); }
+
   openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();

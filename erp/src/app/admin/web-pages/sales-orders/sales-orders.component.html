@@ -4,11 +4,11 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025 
-    @refactor-note (2026-08-5): app-trash-table-builder dostal [deletePermission]
-        ('web-sales-orders-delete') - viz trash-table-builder.component.ts stejné datum.
-    @refactor-note (2026-08-29): přidán `(generateFormOpened)="createProject($event)"`
-        na app-table-builder - navazuje na nové řádkové tlačítko "Projekt" (viz
-        sales-orders.config.ts a sales-orders.component.ts stejné datum).
+    (Earlier refactor-notes for deletePermission and generateFormOpened are unchanged.)
+    @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": natvrdo psané texty ('Přijaté objednávky'/'Koš'/'Akce'/info-banner/
+        'Koš smazaných realizací'/'Datum vytvoření') nahrazeny `t('sales-orders.xxx')`
+        bindingy - viz sales-orders.component.ts stejné datum.
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {
@@ -20,14 +20,14 @@
 <div>
 <div class="toolbar-actions m-b-t-5">
 @if(!showTrashTable){
-<div class="table-header">Přijaté objednávky</div>
+<div class="table-header">{{ t('table_header') }}</div>
 } @else {
-<div class="table-header">Koš</div>
+<div class="table-header">{{ t('trash_header') }}</div>
 }
 <div class="toolbar-actions-in">
 <app-action-menu-builder
 [configs]="toolbarButtons"
-triggerLabel="Akce"
+[triggerLabel]="t('toolbar_action_trigger')"
 (actionTriggered)="handleToolbarAction($event)">
 </app-action-menu-builder>
 </div>
@@ -44,7 +44,7 @@ triggerLabel="Akce"
 </div>
 <div class="table-and-pagination-container">
 <div class="info-banner m-b-15">
-<strong>Tip:</strong> Realizace vznikají automaticky ze Sales Leadů. Zde je můžete spravovat a doplňovat.
+<strong>{{ t('info_banner_tip_label') }}</strong> {{ t('info_banner_text') }}
 </div>
 @if (!showTrashTable) {
 <app-table-builder #activeTable
@@ -69,7 +69,7 @@ triggerLabel="Akce"
 <app-trash-table-builder
 [data]="trashData"
 [columns]="trashColumns"
-[tableCaption]="'Koš smazaných realizací'"
+[tableCaption]="t('trash_table_caption')"
 [apiEndpoint]="apiEndpoint"
 [deletePermission]="'web-sales-orders-delete'"
 (itemRestored)="refreshData()">
@@ -113,7 +113,7 @@ triggerLabel="Akce"
 [tableCaption]="tableCaption"
 [columns]="graphColumns"
 [dateField]="'created_at'"
-[dateFieldLabel]="'Datum vytvoření'"
+[dateFieldLabel]="t('graph_date_field_label')"
 (closed)="closeGraphBuilder()">
 </app-graph-builder>
 }

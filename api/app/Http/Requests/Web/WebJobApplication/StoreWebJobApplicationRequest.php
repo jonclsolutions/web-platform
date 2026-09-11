@@ -64,9 +64,9 @@ class StoreWebJobApplicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cv_file.required' => 'Prosím nahrajte svůj životopis.',
-            'cv_file.mimes'    => 'Povolené formáty pro životopis jsou PDF, Word, obrázky nebo archivy.',
-            'cv_file.max'      => 'Soubor nesmí být větší než 20 MB.',
+            'cv_file.required' => 'Please upload your CV.',
+            'cv_file.mimes'    => 'Allowed formats for the CV are PDF, Word, images, or archives.',
+            'cv_file.max'      => 'The file must not be larger than 20 MB.',
         ];
     }
 }

@@ -117,7 +117,7 @@ class WebSupportTicketController extends Controller
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
         if ($noPagination) {
-            $this->logAction($request, WebLog::class, 'export', 'WebSupportTicket', "Hromadný export support ticketů.");
+            $this->logAction($request, WebLog::class, 'export', 'WebSupportTicket', "Bulk export of support tickets.");
             $data = $query->get();
             return response()->json(WebSupportTicketResource::collection($data));
         }
@@ -154,12 +154,12 @@ class WebSupportTicketController extends Controller
 
             $this->storeSingleAttachment($request, $ticket, self::ATTACHMENT_FOLDER, 'attachment');
 
-            $this->logAction($request, WebLog::class, 'create', 'WebSupportTicket', "Nový ticket: {$ticket->subject}", $ticket->id, 'WebSupportTicket');
+            $this->logAction($request, WebLog::class, 'create', 'WebSupportTicket', "New ticket: {$ticket->subject}", $ticket->id, 'WebSupportTicket');
 
             return response()->json(new WebSupportTicketResource($ticket->load('attachments')), 201);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při vytváření ticketu: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření ticketu selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error creating ticket: " . $e->getMessage());
+            return response()->json(['message' => 'Ticket creation failed.'], 500);
         }
     }
 
@@ -186,12 +186,12 @@ class WebSupportTicketController extends Controller
 
             $this->storeSingleAttachment($request, $ticket, self::ATTACHMENT_FOLDER, 'attachment');
 
-            $this->logAction($request, WebLog::class, 'update', 'WebSupportTicket', "Aktualizace ticketu ID: {$id}", (int) $id, 'WebSupportTicket');
+            $this->logAction($request, WebLog::class, 'update', 'WebSupportTicket', "Update ticket ID: {$id}", (int) $id, 'WebSupportTicket');
 
             return response()->json(new WebSupportTicketResource($ticket->fresh()->load('attachments')));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při aktualizaci ticketu ID {$id}: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
-            return response()->json(['message' => 'Aktualizace ticketu selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error updating ticket ID {$id}: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
+            return response()->json(['message' => 'Ticket update failed.'], 500);
         }
     }
 
@@ -211,11 +211,11 @@ class WebSupportTicketController extends Controller
                 $item->delete();
             }
 
-            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSupportTicket', "Smazání ticketu ID: $id", (int) $id, 'WebSupportTicket');
+            $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebSupportTicket', "Delete ticket ID: $id", (int) $id, 'WebSupportTicket');
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při mazání ticketu ID $id: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
-            return response()->json(['message' => 'Smazání ticketu selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error deleting ticket ID $id: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
+            return response()->json(['message' => 'Ticket deletion failed.'], 500);
         }
     }
 
@@ -255,8 +255,8 @@ class WebSupportTicketController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při hromadném mazání ticketů: " . $e->getMessage());
-            return response()->json(['message' => 'Hromadné mazání selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error during bulk deletion of tickets: " . $e->getMessage());
+            return response()->json(['message' => 'Bulk deletion failed.'], 500);
         }
 
         $skippedCount = $requestedCount - $deletedCount;
@@ -267,7 +267,7 @@ class WebSupportTicketController extends Controller
             WebLog::class,
             $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk',
             'WebSupportTicket',
-            'Hromadné ' . ($forceDelete ? 'trvalé ' : '') . "smazání {$deletedCount} ticketů (požadováno {$requestedCount}, ID: {$idsPreview}).",
+            'Bulk ' . ($forceDelete ? 'permanent ' : '') . "deletion of {$deletedCount} tickets (requested {$requestedCount}, IDs: {$idsPreview}).",
             null,
             'WebSupportTicket'
         );
@@ -288,11 +288,11 @@ class WebSupportTicketController extends Controller
     {
         $format = (string) $request->query('format', 'csv');
         if (!in_array($format, ['csv', 'json', 'txt'], true)) {
-            return response()->json(['message' => 'Nepodporovaný formát šablony.'], 422);
+            return response()->json(['message' => 'Unsupported template format.'], 422);
         }
 
         $columns = self::IMPORTABLE_COLUMNS;
-        $baseFilename = 'import-sablona-web-support_tickets';
+        $baseFilename = 'import-template-web-support_tickets';
 
         if ($format === 'csv' || $format === 'txt') {
             $delimiter = $format === 'txt' ? "\t" : ';';
@@ -399,7 +399,7 @@ class WebSupportTicketController extends Controller
         $batch = $this->findPendingImportBatch($request, $validated['import_token']);
 
         if ($batch === null) {
-            return response()->json(['message' => 'Import nebyl nalezen nebo už byl zpracován.'], 404);
+            return response()->json(['message' => 'Import not found or already processed.'], 404);
         }
 
         try {
@@ -437,7 +437,7 @@ class WebSupportTicketController extends Controller
                 WebLog::class,
                 'import',
                 'WebSupportTicket',
-                "Hromadný import: přidáno {$result['imported_count']} ticketů, přeskočeno {$result['skipped_count']} (soubor '{$batch->original_filename}').",
+                "Bulk import: added {$result['imported_count']} tickets, skipped {$result['skipped_count']} (file '{$batch->original_filename}').",
                 null,
                 'WebSupportTicket'
             );
@@ -452,8 +452,8 @@ class WebSupportTicketController extends Controller
             // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
             return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při importu: " . $e->getMessage());
-            return response()->json(['message' => 'Import selhal.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error during import: " . $e->getMessage());
+            return response()->json(['message' => 'Import failed.'], 500);
         }
     }
 
@@ -466,11 +466,11 @@ class WebSupportTicketController extends Controller
             $item = WebSupportTicket::withTrashed()->findOrFail($id);
             $item->restore();
 
-            $this->logAction($request, WebLog::class, 'restore', 'WebSupportTicket', "Obnova ticketu ID: $id", (int) $id, 'WebSupportTicket');
+            $this->logAction($request, WebLog::class, 'restore', 'WebSupportTicket', "Restore ticket ID: $id", (int) $id, 'WebSupportTicket');
             return response()->json(new WebSupportTicketResource($item->load('attachments')));
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při obnově ticketu ID $id: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
-            return response()->json(['message' => 'Obnova ticketu selhala.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error restoring ticket ID $id: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
+            return response()->json(['message' => 'Ticket restoration failed.'], 500);
         }
     }
 
@@ -488,11 +488,11 @@ class WebSupportTicketController extends Controller
                 $ticket->forceDelete();
             }
 
-            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSupportTicket', "Hromadné smazání koše ticketů. Počet: $count");
+            $this->logAction($request, WebLog::class, 'force_delete_all', 'WebSupportTicket', "Bulk delete of ticket trash. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
-            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Chyba při vyprazdňování koše ticketů: " . $e->getMessage());
-            return response()->json(['message' => 'Vysypání koše selhalo.'], 500);
+            $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error emptying ticket trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 }

@@ -10,9 +10,17 @@
  * - TableBuilderComponent: Used for rendering the news listing and supporting export features.
  * - LoadingService: Manages global UI loading states.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
+ * - Config.create* factory functions: i18n-aware definitions for UI columns, form
+ *   fields, and toolbar actions - see refactor-note (2026-09-08) below.
  * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
  * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
  * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.NEWS_*` konstanty nahrazeny `Config.create*()` factory funkcemi - stejný
+ * vzor jako ostatní web-pages stránky. `graphColumns` přestalo být `readonly`.
+ * `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl vytvořen.'` (dřív natvrdo
+ * česky) nahrazeny `t()` voláním.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -25,6 +33,7 @@ import * as Config from './edit-news.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+
 /**
  * @description Component for the management of news content on the web platform.
  * @usage Enables administrators to create, edit, filter, and archive news articles.
@@ -33,24 +42,32 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-news',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './edit-news.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditNewsComponent extends BaseDataComponent<any> implements Core.OnInit {
   public override loadingService = inject(LoadingService);
-  tableCaption: string = 'Edit sekce novinky';
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+
+  protected override translationSection: string = 'edit-news';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`edit-news.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'web/news';
 
-  buttons = Config.NEWS_BUTTONS;
-  formFields = Config.NEWS_FORM_FIELDS;
-  newsColumns = Config.NEWS_COLUMNS;
-  trashNewsColumns = Config.NEWS_TRASH_COLUMNS;
-  filterColumns = Config.NEWS_FILTER_COLUMNS;
-  detailsColumns = Config.NEWS_DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  newsColumns: Core.ColumnDefinition[] = [];
+  trashNewsColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
+
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
 
@@ -58,15 +75,11 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
     sort_by: 'id',
     sort_direction: 'desc'
   };
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.NEWS_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -74,45 +87,69 @@ showGraphBuilder = false;
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createNewsButtons(this.i18n);
+      this.formFields = Config.createNewsFormFields(this.i18n);
+      this.newsColumns = Config.createNewsColumns(this.i18n);
+      this.trashNewsColumns = Config.createNewsTrashColumns(this.i18n);
+      this.filterColumns = Config.createNewsFilterColumns(this.i18n);
+      this.detailsColumns = Config.createNewsDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
-get toolbarButtons(): Core.Button[] {
-      return Config.NEWS_TOOLBAR_BUTTONS.map(btn => {
-        let updatedBtn = { ...btn };
-  
-        if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
-          updatedBtn.showIf = false;
-        }
-  
-        switch (btn.action) {
-          case 'toggleFilters':
-            updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
-            updatedBtn.isActive = this.isFilterVisible;
-            break;
-          case 'handleCreateFormOpened':
-          case 'exportActiveTable':
-          case 'triggerImport':
-            if (updatedBtn.showIf !== false) {
-              updatedBtn.showIf = !this.showTrashTable;
-            }
-            break;
-          case 'toggleTable':
-            updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
-            updatedBtn.isActive = this.showTrashTable;
-            break;
-        }
-  
-        return updatedBtn;
-      });
-    }
+  get toolbarButtons(): Core.Button[] {
+    return Config.createNewsToolbarButtons(this.i18n).map(btn => {
+      let updatedBtn = { ...btn };
+
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
+      }
+
+      switch (btn.action) {
+        case 'toggleFilters':
+          updatedBtn.label = this.isFilterVisible
+            ? this.t('toolbar_hide_filters')
+            : this.t('toolbar_filters');
+          updatedBtn.isActive = this.isFilterVisible;
+          break;
+        case 'handleCreateFormOpened':
+        case 'exportActiveTable':
+        case 'triggerImport':
+          if (updatedBtn.showIf !== false) {
+            updatedBtn.showIf = !this.showTrashTable;
+          }
+          break;
+        case 'toggleTable':
+          updatedBtn.label = this.showTrashTable
+            ? this.t('toolbar_show_active')
+            : this.t('toolbar_show_trash');
+          updatedBtn.isActive = this.showTrashTable;
+          break;
+      }
+
+      return updatedBtn;
+    });
+  }
 
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      triggerImport: () => this.activeTable?.importData(),
       openGraphBuilder: () => this.openGraphBuilder(),
-      toggleTable: () => this.toggleTable()
+      toggleTable: () => this.toggleTable(),
     };
     if (actions[action]) actions[action]();
   }
@@ -159,6 +196,10 @@ get toolbarButtons(): Core.Button[] {
     this.showCreateForm = true;
   }
 
+  /**
+   * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
+   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
+   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id
       ? this.updateData(formData.id, formData)
@@ -170,7 +211,11 @@ get toolbarButtons(): Core.Button[] {
       })
     ).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          'success'
+        );
         this.refreshData();
       }
     });
@@ -198,7 +243,8 @@ get toolbarButtons(): Core.Button[] {
     this.selectedItemForEdit = null;
     this.cd.markForCheck();
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }

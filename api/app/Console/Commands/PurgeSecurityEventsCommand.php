@@ -43,7 +43,7 @@ class PurgeSecurityEventsCommand extends Command
      * @description Krátký popis zobrazený v `php artisan list`.
      * @var string
      */
-    protected $description = 'Smaže záznamy core_security_events starší než nastavená retenční doba (GDPR).';
+    protected $description = 'Deletes core_security_events records older than the configured retention period (GDPR).';
 
     /** @description Velikost jedné mazací dávky - viz doc blok třídy (zámky/souběžné INSERTy). */
     private const BATCH_SIZE = 1000;
@@ -58,7 +58,7 @@ class PurgeSecurityEventsCommand extends Command
         $retentionDays = CoreSecuritySetting::current()->retention_days;
         $cutoff = Carbon::now()->subDays($retentionDays);
 
-        $this->info("Mažu záznamy core_security_events starší než {$retentionDays} dní (před {$cutoff->toDateTimeString()})...");
+        $this->info("Deleting core_security_events records older than {$retentionDays} days (before {$cutoff->toDateTimeString()})...");
 
         $totalDeleted = 0;
 
@@ -73,7 +73,7 @@ class PurgeSecurityEventsCommand extends Command
             $totalDeleted += $deletedInBatch;
         } while ($deletedInBatch > 0);
 
-        $this->info("Hotovo. Smazáno celkem {$totalDeleted} záznamů.");
+        $this->info("Done. Total deleted records: {$totalDeleted}.");
 
         return self::SUCCESS;
     }

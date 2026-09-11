@@ -8,36 +8,46 @@
  * the User Request (raw commission requests) management page.
  *
  * (Earlier refactor-notes for permission granularization, editable email template
- * toolbar button, and bulk import/export importable columns are unchanged - see
- * version history, omitted here for brevity.)
+ * toolbar button, bulk import/export importable columns, and the 2026-09 i18n factory
+ * function rewrite are unchanged - see version history, omitted here for brevity.)
  *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * Tenhle config soubor byl PŮVODNĚ pole statických konstant s natvrdo českým textem,
- * vyhodnocených JEDNOU při načtení modulu (import time) - takže žádné přepnutí admin
- * jazyka za běhu by se do TableBuilderComponent/ActionMenuBuilderComponent/
- * FormBuilderComponent (které tyhle konfigurace dostávají jako @Input()) nikdy
- * nepropsalo. Přepsáno na FACTORY FUNKCE (create*), které berou `AdminLocalizationService`
- * a vrací pole přeložené podle AKTUÁLNĚ zvoleného jazyka. Volající komponenta
- * (user-request.component.ts) je volá přes GETTERY, ne přes jednorázové přiřazení v
- * konstruktoru - gettery se přepočítají při každém change detection cyklu, takže po
- * přepnutí jazyka (`AdminLocalizationService.translations$` → `markForCheck()`,
- * zděděné z BaseDataComponent) dostanou child komponenty čerstvě přeložená data
- * automaticky. Stejný vzor lze replikovat na zbylé *.config.ts soubory v adminu.
+ * @refactor-note (2026-09-07) BACKLOG "enum hodnoty jako přeložitelné anglické slugy":
+ * `USER_REQUEST_STATUS_VALUES`/`_PRIORITY_VALUES`/`_THEMA_VALUES` PŘEPSÁNY z českých
+ * stringů ("Nově zadané", "Nízká", "Webový vývoj", ...) na anglické slugy ("new",
+ * "low", "web", ...) - viz SQL migrace `003_status_slugs_web_raw_request_commissions.sql`
+ * (přepsala existující DB data + column DEFAULT) a `Store/UpdateWebRawRequestCommissionRequest`
+ * (přepsaly `in:...` validaci), obě SOUČASNĚ s touto změnou - žádný z kroků nesmí běžet
+ * odděleně. `*_LABEL_KEYS` mapy překlíčovány na nové slugy, VÝZNAM/i18n klíče (`status_new`,
+ * `priority_low`, `thema_web`, ...) se NEMĚNÍ - byly zavedeny už dřív a zůstávají stejné.
  *
- * DŮLEŽITÉ - STATUS/PRIORITY/THEMA: canonical VALUES (`USER_REQUEST_STATUS_VALUES` atd.)
- * ZŮSTÁVAJÍ nepřeložené české stringy - jsou to zároveň skutečné hodnoty ukládané do
- * DB/posílané na backend (`formData[status] = 'Nově zadané'`), takže jejich překlad by
- * rozbil ukládání i filtrování. Přeložen je jen LABEL (zobrazený text) v `{value,label}`
- * párech pro `select` form pole - `value` zůstává stabilní VŽDY, nezávisle na
- * zvoleném jazyce administrace. Přechod na anglické slugy (`new`/`in_progress`/...)
- * je plánován jako SAMOSTATNÝ backendový task (DB migrace + validace), zatím se
- * nedotýká.
+ * DŮLEŽITÉ - toto je REFERENČNÍ IMPLEMENTACE "receptu" pro celý projekt (Core/Web/Shop):
+ * 1) Canonical VALUES pole (`..._VALUES`) drží stabilní anglický slug - skutečná hodnota
+ *    ukládaná do DB/posílaná na backend. NIKDY nepřekládat samotné pole.
+ * 2) `..._LABEL_KEYS` mapuje slug -> i18n klíč (ne slug -> text přímo).
+ * 3) `mapLabeledOptions(values, labelKeys, i18n)` vrací `{value: slug, label: přeložený text}`
+ *    páry - použitelné JAK pro `InputDefinition.options` (select ve formuláři), TAK
+ *    (nově, viz níže) pro `FilterColumns.options` (select ve filtru) - obě komponenty
+ *    (`FormBuilderComponent`, `FilterFormBuilderComponent`) `{value,label}` pár už umí,
+ *    ověřeno v `filter-form-builder.component.html`
+ *    (`option?.value !== undefined ? option.value : option`).
+ * 4) `TableBuilderComponent.getCellValue()` (default case) překládá zobrazenou hodnotu v
+ *    tabulce automaticky - hledá `value` v `inputDefinitions` (které stránka stejně musí
+ *    předat table-builderu kvůli formuláři), takže žádná zvláštní úprava tabulky není
+ *    potřeba, pokud `[inputDefinitions]="formFields"` binding už existuje (zde ano).
  *
- * OTEVŘENÁ OTÁZKA: filtr-dropdown `options` je dnes plochý `string[]`, kde stejný
- * string slouží jako filtr-hodnota (poslaná do API) i jako zobrazený text. PONECHÁNO
- * ZÁMĚRNĚ V ČEŠTINĚ, dokud se nepotvrdí, že `FilterColumns.options`/
- * `FilterFormBuilderComponent` umí `{value,label}` pár stejně jako
- * `InputDefinition.options` - překlad by jinak rozbil filtrování.
+ * OTEVŘENÁ OTÁZKA Z PŘEDCHOZÍ VERZE VYŘEŠENA: `FilterColumns.options` skutečně podporuje
+ * `{value,label}` páry (potvrzeno v šabloně filter-form-builderu) - `createUserRequestFilterColumns()`
+ * proto teď používá `mapLabeledOptions()` stejně jako formulářová pole, MÍSTO dřívějšího
+ * plochého `string[]` v češtině.
+ *
+ * @TODO-FOLLOWUP `GraphBuilderComponent` (viz `chartPossibleValues: USER_REQUEST_THEMA_VALUES`
+ * v `createUserRequestDetailsColumns()`) vykresluje popisky grafu ze SUROVÉ API hodnoty
+ * (`"ai (3×)"` místo `"AI vývoj (3×)"`), protože bucketuje přímo podle `row[col.key]`, ne
+ * podle přeloženého labelu - graf teď po přechodu na slugy zobrazí anglické zkratky místo
+ * plného českého názvu. Oprava vyžaduje zásah do `GraphBuilderComponent`
+ * (`computeValueCatalog()`/`buildDistributionSection()`), aby uměl per-sloupec volitelnou
+ * `labelMap: Record<string,string>` funkci - mimo rozsah TÉTO změny, ale je potřeba to
+ * doplnit, než bude tenhle report administrátorům dávat smysl v obou jazycích.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -45,12 +55,12 @@ import { AdminLocalizationService } from '../../../core/services/admin-localizat
 const SECTION = 'user-request';
 
 /**
- * @description Canonical (nepřekládané) hodnoty stavu - VÝZNAM: skutečná hodnota
- * ukládaná do DB. NEPŘEKLÁDAT.
+ * @description Canonical (NEPŘEKLÁDANÉ) hodnoty - VÝZNAM: skutečná hodnota ukládaná
+ * do DB / posílaná na backend. Anglické slugy - viz refactor-note (2026-09-07) výše.
  */
-export const USER_REQUEST_STATUS_VALUES: string[] = ['Nově zadané', 'Zpracovává se', 'Dokončeno', 'Zrušeno'];
-export const USER_REQUEST_PRIORITY_VALUES: string[] = ['Nízká', 'Neutrální', 'Vysoká'];
-export const USER_REQUEST_THEMA_VALUES: string[] = ['Webový vývoj', 'Desktopový vývoj', 'Mobilní vývoj', 'AI vývoj', 'Jiné'];
+export const USER_REQUEST_STATUS_VALUES: string[] = ['new', 'in_progress', 'done', 'cancelled'];
+export const USER_REQUEST_PRIORITY_VALUES: string[] = ['low', 'neutral', 'high'];
+export const USER_REQUEST_THEMA_VALUES: string[] = ['web', 'desktop', 'mobile', 'ai', 'other'];
 
 /** @deprecated Zachováno pro zpětnou kompatibilitu s případnými dalšími importy - použij `..._VALUES`. */
 export const USER_REQUEST_STATUS_OPTIONS = USER_REQUEST_STATUS_VALUES;
@@ -58,28 +68,27 @@ export const USER_REQUEST_PRIORITY_OPTIONS = USER_REQUEST_PRIORITY_VALUES;
 export const USER_REQUEST_THEMA_OPTIONS = USER_REQUEST_THEMA_VALUES;
 
 const STATUS_LABEL_KEYS: Record<string, string> = {
-  'Nově zadané': 'status_new',
-  'Zpracovává se': 'status_in_progress',
-  'Dokončeno': 'status_done',
-  'Zrušeno': 'status_cancelled',
+  new: 'status_new',
+  in_progress: 'status_in_progress',
+  done: 'status_done',
+  cancelled: 'status_cancelled',
 };
 const PRIORITY_LABEL_KEYS: Record<string, string> = {
-  'Nízká': 'priority_low',
-  'Neutrální': 'priority_neutral',
-  'Vysoká': 'priority_high',
+  low: 'priority_low',
+  neutral: 'priority_neutral',
+  high: 'priority_high',
 };
 const THEMA_LABEL_KEYS: Record<string, string> = {
-  'Webový vývoj': 'thema_web',
-  'Desktopový vývoj': 'thema_desktop',
-  'Mobilní vývoj': 'thema_mobile',
-  'AI vývoj': 'thema_ai',
-  'Jiné': 'thema_other',
+  web: 'thema_web',
+  desktop: 'thema_desktop',
+  mobile: 'thema_mobile',
+  ai: 'thema_ai',
+  other: 'thema_other',
 };
 
 /**
- * @description `value` zůstává canonical český string (viz VALUES výše), `label` je
- * přeložený text pro zobrazení v `<select>`/tabulce. Sdíleno mezi form-field options
- * a odkudkoliv jinde, kde je potřeba stejný pár.
+ * @description `value` = canonical slug (viz VALUES výše), `label` = přeložený text.
+ * Sdíleno mezi form-field options a (nově) filter-column options.
  */
 function mapLabeledOptions(values: string[], labelKeys: Record<string, string>, i18n: AdminLocalizationService) {
   return values.map(v => ({ value: v, label: i18n.getValue(`${SECTION}.${labelKeys[v]}`) }));
@@ -93,12 +102,6 @@ export function createUserRequestButtons(i18n: AdminLocalizationService): Core.T
   ];
 }
 
-/**
- * @description `label` zde jsou VÝCHOZÍ hodnoty - `toggleFilters`/`toggleTable` je
- * stejně přepisuje dynamicky v `UserRequestComponent.toolbarButtons` getteru podle
- * aktuálního stavu (`isFilterVisible`/`showTrashTable`), takže tenhle label se
- * prakticky nikdy nezobrazí, ale musí být přítomný a přeložený pro konzistenci.
- */
 export function createUserRequestToolbarButtons(i18n: AdminLocalizationService): Core.Button[] {
   return [
     { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
@@ -113,16 +116,17 @@ export function createUserRequestToolbarButtons(i18n: AdminLocalizationService):
 
 export function createUserRequestFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [
-    {
-      column_name: 'thema',
-      label: i18n.getValue(`${SECTION}.field_thema_label`),
-      placeholder: i18n.getValue(`${SECTION}.field_thema_placeholder`),
-      type: 'text',
-      required: true,
-      pattern: '^[a-zA-Z0-9ěščřžýáíéóúůďťňĚŠČŘŽÝÁÍÉÚŮĎŤŇ\\s\\.\\-]{3,255}$',
-      errorMessage: i18n.getValue(`${SECTION}.field_thema_error`),
-      editable: true, show_in_edit: true, show_in_create: true,
-    }, {
+   {
+  column_name: 'thema',
+  label: i18n.getValue(`${SECTION}.field_thema_label`),
+  placeholder: i18n.getValue(`${SECTION}.field_thema_placeholder`),
+  type: 'text',
+  required: true,
+  pattern: '^[a-zA-Z0-9ěščřžýáíéóúůďťňĚŠČŘŽÝÁÍÉÚŮĎŤŇ\\s\\.\\-]{3,255}$',
+  errorMessage: i18n.getValue(`${SECTION}.field_thema_error`),
+  options: mapLabeledOptions(USER_REQUEST_THEMA_VALUES, THEMA_LABEL_KEYS, i18n), // NOVÉ
+  editable: true, show_in_edit: true, show_in_create: true,
+}, {
       column_name: 'contact_email',
       label: i18n.getValue(`${SECTION}.field_email_label`),
       placeholder: i18n.getValue(`${SECTION}.field_email_placeholder`),
@@ -207,27 +211,27 @@ export function createUserRequestTrashColumns(i18n: AdminLocalizationService): C
 }
 
 /**
- * @description `options` je ZÁMĚRNĚ ponecháno v češtině (viz OTEVŘENÁ OTÁZKA v
- * hlavičce souboru) - `FilterColumns.options` je plochý `string[]`, kde stejný
- * string je poslaný jako filtr-hodnota do API i zobrazen jako text. Přeložit label
- * bez odpovídajícího `value` páru by rozbilo filtrování dat podle stavu/priority.
- * Header/placeholder textům to nevadí (jsou to čistě UI popisky), ty PŘELOŽENY jsou.
+ * @refactor-note (2026-09-07) `thema`/`status`/`priority` teď používají `mapLabeledOptions()`
+ * (`{value,label}` páry) MÍSTO dřívějšího plochého `string[]` v češtině - vyřešená
+ * "otevřená otázka" z předchozí verze, viz hlavička souboru. `header`/`placeholder`
+ * beze změny (byly přeložené už dřív).
  */
 export function createUserRequestFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
-    { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'select', placeholder: i18n.getValue(`${SECTION}.filter_thema_placeholder`), options: USER_REQUEST_THEMA_VALUES, canSort: true },
+    { key: 'thema', header: i18n.getValue(`${SECTION}.col_thema`), type: 'select', placeholder: i18n.getValue(`${SECTION}.filter_thema_placeholder`), options: mapLabeledOptions(USER_REQUEST_THEMA_VALUES, THEMA_LABEL_KEYS, i18n), canSort: true },
     { key: 'contact_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_email_placeholder`), canSort: true },
-    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: USER_REQUEST_STATUS_VALUES, placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
-    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'select', options: USER_REQUEST_PRIORITY_VALUES, placeholder: i18n.getValue(`${SECTION}.filter_priority_placeholder`), canSort: true },
+    { key: 'status', header: i18n.getValue(`${SECTION}.col_status`), type: 'select', options: mapLabeledOptions(USER_REQUEST_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_status_placeholder`), canSort: true },
+    { key: 'priority', header: i18n.getValue(`${SECTION}.col_priority`), type: 'select', options: mapLabeledOptions(USER_REQUEST_PRIORITY_VALUES, PRIORITY_LABEL_KEYS, i18n), placeholder: i18n.getValue(`${SECTION}.filter_priority_placeholder`), canSort: true },
   ];
 }
 
 /**
  * @description `chartPossibleValues` zůstává canonical VALUES pole (ne přeložené) -
- * GraphBuilderComponent s ním pravděpodobně porovnává surové hodnoty z API při
- * bucketování, ne zobrazený text. `displayName` (nadpis sloupce v detailu i grafu)
- * PŘELOŽEN je.
+ * GraphBuilderComponent s ním porovnává surové hodnoty z API při bucketování, ne
+ * zobrazený text - viz @TODO-FOLLOWUP v hlavičce souboru pro známé omezení (graf
+ * zatím zobrazuje anglický slug, ne přeložený label). `displayName` (nadpis sloupce
+ * v detailu i grafu) PŘELOŽEN je.
  */
 export function createUserRequestDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
   return [

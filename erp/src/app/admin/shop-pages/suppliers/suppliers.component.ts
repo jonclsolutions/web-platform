@@ -8,9 +8,15 @@
  * @dependencies
  * - BaseDataComponent: Provides the base logic for API interactions, pagination, and entity state management.
  * - TableBuilderComponent: Used for displaying supplier data and handling CSV exports.
- * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
- * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
- * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
+ * - Config.create* factory functions: i18n-aware definitions - viz refactor-note
+ *   (2026-09-09) níže.
+ *
+ * (Earlier bugfix-note 2026-08-31 for duplicate error toasts is unchanged.)
+ *
+ * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.SUPPLIER_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
+ * `graphColumns` přestalo být `readonly`. `'Úspěch'`/`'Požadavek byl upraven.'`/
+ * `'Požadavek byl vytvořen.'` (dřív natvrdo česky) nahrazeny `t()` voláním.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -26,23 +32,30 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 @Component({
   selector: 'app-suppliers',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './suppliers.component.html',
   styleUrl: '../default-style.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SuppliersComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
-  tableCaption: string = 'Dodavatelé';
+
+  protected override translationSection: string = 'shop-suppliers';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-suppliers.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'shop/suppliers';
 
-  buttons = Config.SUPPLIER_BUTTONS;
-  formFields = Config.SUPPLIER_FORM_FIELDS;
-  supplierColumns = Config.SUPPLIER_COLUMNS;
-  trashSupplierColumns = Config.SUPPLIER_TRASH_COLUMNS;
-  filterColumns = Config.SUPPLIER_FILTER_COLUMNS;
-  detailsColumns = Config.SUPPLIER_DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  supplierColumns: Core.ColumnDefinition[] = [];
+  trashSupplierColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
@@ -51,15 +64,11 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
     sort_by: 'id',
     sort_direction: 'desc'
   };
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.SUPPLIER_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+  showGraphBuilder = false;
+
+  /** @refactor-note (2026-09-09) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -67,10 +76,29 @@ showGraphBuilder = false;
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createSupplierButtons(this.i18n);
+      this.formFields = Config.createSupplierFormFields(this.i18n);
+      this.supplierColumns = Config.createSupplierColumns(this.i18n);
+      this.trashSupplierColumns = Config.createSupplierTrashColumns(this.i18n);
+      this.filterColumns = Config.createSupplierFilterColumns(this.i18n);
+      this.detailsColumns = Config.createSupplierDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
   get toolbarButtons(): Core.Button[] {
-    return Config.SUPPLIER_TOOLBAR_BUTTONS.map(btn => {
+    return Config.createSupplierToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
 
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
@@ -79,7 +107,7 @@ showGraphBuilder = false;
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
@@ -89,7 +117,7 @@ showGraphBuilder = false;
           }
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
           break;
       }
 
@@ -153,6 +181,10 @@ showGraphBuilder = false;
     this.showCreateForm = true;
   }
 
+  /**
+   * @refactor-note (2026-09-09) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
+   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
+   */
   handleFormSubmitted(formData: any): void {
     const request$ = formData.id
       ? this.updateData(formData.id, formData)
@@ -165,7 +197,11 @@ showGraphBuilder = false;
       })
     ).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          'success'
+        );
         this.refreshData();
       }
     });
@@ -195,6 +231,7 @@ showGraphBuilder = false;
 
   handleItemRestored(): void { this.refreshData(); }
   handleItemDeleted(): void { this.refreshData(); }
+
   openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();

@@ -7,45 +7,6 @@
  * @description Provides generic pagination, caching, and preloading logic for data-driven tables within the admin panel.
  * @dependencies
  * - DataHandler: Used to perform the actual HTTP requests for collection data.
- *
- * @refactor-note (2026-08) KRITICKÁ OPRAVA CACHE: `lastFilterParams` bylo JEDNO sdílené
- * pole napříč VŠEMI tabulkami v celé aplikaci - jakmile se otevřela jiná tabulka s jinými
- * filtry (což je prakticky pořád, každá stránka má vlastní default `sort_by`), spustila
- * se `clearCache()` a smazala se ÚPLNĚ CELÁ cache, ne jen daný endpoint. V praxi to
- * znamenalo, že cache napříč navigací mezi stránkami prakticky nikdy nepřežila, takže
- * každý vstup na stránku dělal plný síťový dotaz - viz backlog task "zbytečně moc
- * dotazů na API". Odstraněno beze náhrady: cache klíč (`getCacheKey`) už filtry
- * zahrnuje, takže změna filtrů přirozeně vytvoří nový klíč = cache miss = reálný
- * fetch, bez potřeby cokoliv ručně mazat.
- *
- * Místo toho zaveden TTL (`CACHE_TTL_MS`) - každá cachovaná stránka má timestamp a po
- * uplynutí platnosti se považuje za cache miss (přefetchne se). Zároveň přidány
- * `invalidateEndpoint()` (zneplatní jen konkrétní zdroj - použito po mutaci dat a
- * tlačítkem "Aktualizovat" na jedné tabulce) a `invalidateAll()` (globální refresh
- * tlačítko v headeru). `preloadAdjacentPages()` nyní respektuje TTL při rozhodování,
- * jestli sousední stránku má smysl znovu stahovat.
- *
- * @bugfix-note (2026-08-17) KRITICKÝ BEZPEČNOSTNÍ BUG - CROSS-USER CACHE LEAK (primární
- * oprava, viz auth.service.ts): cache klíč nikdy neobsahoval identitu uživatele, jen
- * `endpoint-page-perPage-filters`. Protože je tahle služba `providedIn: 'root'` (jedna
- * sdílená `pageCache` mapa pro celou SPA session), po přepnutí uživatele BEZ reloadu
- * stránky (běžný SPA flow: logout -> login jiným účtem) mohl uživatel B do vypršení
- * `CACHE_TTL_MS` dostat cache hit s daty uživatele A, aniž by se poslal jakýkoliv nový
- * HTTP request - backendový `user_id` scoping (viz CoreExternalLinkController) tak byl
- * úplně obejitý, protože se vůbec nezavolal. Primární oprava je v `AuthService`
- * (`persistSession()`/`clearAuthData()` teď volají `invalidateAll()` při KAŽDÉ změně
- * identity uživatele).
- *
- * TOTO je DRUHÁ VRSTVA OCHRANY (defense in depth): `getCacheKey()` nově zahrnuje i ID
- * aktuálně přihlášeného uživatele (`sessionStorage.getItem('userId')`, stejný klíč, který
- * plní `AuthService.persistSession()`). I kdyby v budoucnu vznikla jiná cesta, jak se
- * změní přihlášený uživatel BEZ zavolání `AuthService.persistSession()`/`clearAuthData()`
- * (např. budoucí "přepnout účet"/impersonation feature, které by na `invalidateAll()`
- * zapomnělo), cache klíče dvou různých uživatelů se přirozeně nikdy nepotkají - cache je
- * teď per-user už ze své podstaty, ne jen díky tomu, že ji někdo v tu správnou chvíli
- * ručně zneplatní. Vědomě NEinjektuje `AuthService` (kruhová závislost - `AuthService`
- * injektuje `GenericTableService`), čte se přímo `sessionStorage`, stejně jako
- * `AuthService.getUserId()` dělá interně.
  */
 
 import { Injectable } from '@angular/core';
@@ -274,4 +235,4 @@ export class GenericTableService {
     params = params.append('no_pagination', 'true');
     return this.dataHandler.getCollection<T>(`${endpoint}?${params.toString()}`);
   }
-}
+} 

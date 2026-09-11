@@ -11,38 +11,25 @@
  * - BaseDataComponent: Provides foundational data management for entity collections.
  * - ResourceCacheService: TTL cache pro strom kategorií, panel produktů kategorie a
  *   seznam "všech produktů" v add-product panelu (viz refactor-note 2026-08-9).
+ * - Config.create* factory functions: i18n-aware button definitions - viz
+ *   refactor-note (2026-09-09) níže.
  *
- * @refactor-note (2026-08-9) TTL CACHE (backlog: "zbytečně moc dotazů na API").
- * Tahle stránka NEPOUŽÍVÁ standardní `this.list`/`this.data` (PaginatedListStore) -
- * strom kategorií je vlastní rekurzivní struktura postavená přes `loadAllData()`
- * (no_pagination fetch) a `buildTree()`. `usesPaginatedList = false`, ať
- * `BaseDataComponent.initWithAuthCheck()` při mountu volá přímo `refreshData()`
- * (= `loadTree()`), místo aby zbytečně tahal nepoužívaná stránkovaná
- * `shop/categories` data přes `this.list` (viz base-data.component.ts stejné datum -
- * bez tohohle přepínače by se strom při vstupu na stránku vůbec nenačetl).
- * Ze stejného důvodu je `forceFullRefresh()` PŘEPSANÝ (ne zděděný) - jinak by globální
- * "Aktualizovat vše" tlačítko v headeru a periodický background refresh volaly
- * `this.list.forceFullRefresh()` (opět nepoužitá data), ne skutečný strom.
+ * (Earlier refactor-note 2026-08-9 for TTL cache and the usesPaginatedList/
+ * forceFullRefresh override, and bugfix-note 2026-08-31 for duplicate error toasts,
+ * are unchanged - see version history.)
  *
- * `loadTree()` teď jde přes `ResourceCacheService` (2min TTL) - mount i drobné
- * navigace v menu tak nemusí pokaždé znovu stahovat celý (potenciálně velký) strom.
- * Force-bypass (parametr `force`) se použije všude, kde už PROBĚHLA mutace dat
- * (create/update/toggle/delete kategorie, přiřazení/odebrání produktu) - tam musí
- * uživatel vidět čerstvý stav okamžitě, ne až po vypršení TTL.
- * `loadCategoryProducts()` (panel produktů dané kategorie) a `openAddProductSearch()`
- * (seznam všech produktů k přidání) mají vlastní krátkou TTL cache (2 min) - typický
- * admin otevírá/zavírá panel různých kategorií opakovaně během jedné návštěvy stránky.
- *
- * @bugfix-note (2026-08-31) KRITICKÝ BUG - DVOJITÉ ZOBRAZENÍ CHYBOVÉ HLÁŠKY: Odstraněna
- * VŠECHNA vlastní `alertDialogService.open('Chyba', ...)` volání z `error:` callbacků
- * (confirmAdd, saveNode, toggleStatus, deleteCategory) - `DataHandler.handleError()` je
- * od tohoto data JEDINÉ a AUTORITATIVNÍ místo, které smí chybový toast zobrazit (viz
- * data-handler.service.ts bugfix-note stejné datum). Veškerá NON-toast logika v těchto
- * `error:` callbacích (rollback lokálního stavu - `node.isEditing = true`, vrácení
- * `node.is_active`, `loadTree()` refetch) ZŮSTÁVÁ beze změny - odstraněno je výhradně
- * volání `alertDialogService.open(...)`. `removeProductFromCategory()`,
- * `addProductToCategory()`, `loadCategoryProducts()`, `openAddProductSearch()` a
- * `loadTree()` už žádný vlastní toast neměly, beze změny.
+ * @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+ * texty": `translationSection`/`t()` doplněny. `toolbarButtons` getter a
+ * `getRowButtons()`/`getEditButtons()` metody teď volají `Config.create*(this.i18n)`
+ * přímo, MÍSTO odkazu na statické `CATEGORY_TOOLBAR_BUTTONS`/`CATEGORY_ROW_BUTTONS`
+ * konstanty - protože jde o gettery/metody volané z šablony PŘI KAŽDÉM CD cyklu (ne
+ * pole naplněná jednou v konstruktoru), žádný samostatný "rebuild" subscribe blok
+ * není potřeba - stačí `this.i18n.translations$.subscribe(() => this.cd.markForCheck())`
+ * v konstruktoru, ať OnPush komponenta vůbec vyvolá nový CD cyklus (a tedy nové
+ * volání getterů/metod) při přepnutí jazyka. Všechny `alertDialogService.open()`/
+ * `confirmDialogService.open()` volání a natvrdo psané texty ve `getEditButtons()`
+ * nahrazeny `t()` voláním. `console.error()` volání (dev diagnostika) ZÁMĚRNĚ
+ * ponechána nepřeložená.
  */
 
 import { Component, OnInit, ViewChildren, QueryList, ElementRef, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -52,7 +39,7 @@ import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { CategoryNode } from '../components/interfaces/category-node';
 import { Button } from '../../../shared/interfaces/button';
-import { CATEGORY_TOOLBAR_BUTTONS, CATEGORY_ROW_BUTTONS } from './categories.config';
+import * as Config from './categories.config';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
@@ -75,6 +62,12 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
 
   override apiEndpoint = 'shop/categories';
   override usesPaginatedList = false;
+
+  protected override translationSection: string = 'shop-categories';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-categories.${key}`);
+  }
 
   categories: CategoryNode[] = [];
 
@@ -106,6 +99,14 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    /**
+     * @refactor-note (2026-09-09) `toolbarButtons`/`getRowButtons()`/`getEditButtons()`
+     * jsou gettery/metody, ne pole naplněná v konstruktoru - žádný "rebuild" blok
+     * není potřeba. Stačí OnPush komponentu donutit přehodnotit šablonu (a tedy
+     * znovu zavolat tyhle gettery/metody) při přepnutí jazyka.
+     */
+    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
   }
 
   override ngOnInit(): void {
@@ -136,7 +137,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @returns {Button[]} List of toolbar buttons.
    */
   get toolbarButtons(): Button[] {
-    return CATEGORY_TOOLBAR_BUTTONS;
+    return Config.createCategoryToolbarButtons(this.i18n);
   }
 
   /**
@@ -148,10 +149,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    *      barevných emoji teček.
    */
   getRowButtons(node: CategoryNode): Button[] {
-    return CATEGORY_ROW_BUTTONS.map(btn => {
+    return Config.createCategoryRowButtons(this.i18n).map(btn => {
       const updatedBtn = { ...btn };
       if (btn.action === 'toggleStatus') {
-        updatedBtn.label = node.is_active ? 'Aktivní' : 'Neaktivní';
+        updatedBtn.label = node.is_active ? this.t('row_btn_active') : this.t('row_btn_inactive');
         updatedBtn.class = node.is_active ? 'btn-export' : 'btn-filter';
       }
       return updatedBtn;
@@ -162,16 +163,14 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Returns save/cancel buttons for nodes currently in editing mode.
    * @param node The category node in edit state.
    * @returns {Button[]} Array of edit action buttons.
-   * @icons-note (2026-08-31) EMOJI -> SVG: `✓`/`✕` nahrazeny IconName klíči
-   *      `check`/`x` (viz icon.component.ts/.html stejné datum).
    */
   getEditButtons(node: CategoryNode): Button[] {
     const isDuplicate = this.isDuplicateName(node);
     const isEmpty = !node.name || node.name.trim().length === 0;
 
     return [
-      { action: 'submit', label: 'Uložit', icon: 'check', class: 'btn-create', disabled: isDuplicate || isEmpty },
-      { action: 'cancel', label: 'Zrušit', icon: 'x', class: 'btn-trash' }
+      { action: 'submit', label: this.t('edit_btn_save'), icon: 'check', class: 'btn-create', disabled: isDuplicate || isEmpty },
+      { action: 'cancel', label: this.t('edit_btn_cancel'), icon: 'x', class: 'btn-trash' }
     ];
   }
 
@@ -272,7 +271,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.postData({ name: node.name, parent_id: node.parent_id, is_active: false } as CategoryNode)
       .subscribe({
         next: () => {
-          this.alertDialogService.open('Úspěch', 'Kategorie byla vytvořena.', 'success');
+          this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('category_created_message'), 'success');
           this.loadTree(undefined, false, true);
         },
         error: () => {
@@ -409,7 +408,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
     this.updateData(node.id, { name: node.name, parent_id: node.parent_id } as CategoryNode)
       .subscribe({
         next: () => {
-          this.alertDialogService.open('Aktualizováno', 'Změny byly uloženy.', 'success');
+          this.alertDialogService.open(this.t('updated_title'), this.t('changes_saved_message'), 'success');
           this.backupNames.delete(node.id);
           this.resourceCache.invalidate(this.TREE_CACHE_KEY);
           this.cd.markForCheck();
@@ -454,21 +453,23 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    */
   async deleteCategory(node: CategoryNode): Promise<void> {
     if (node.children?.length) {
-      await this.alertDialogService.open('Nelze smazat', 'Smažte nejdříve podkategorie.', 'warning');
+      await this.alertDialogService.open(this.t('cannot_delete_title'), this.t('cannot_delete_has_subcategories'), 'warning');
       return;
     }
     if (node.products_count && node.products_count > 0) {
       await this.alertDialogService.open(
-        'Nelze smazat',
-        `Kategorii "${node.name}" nelze smazat, protože obsahuje přiřazené produkty (${node.products_count}). Nejdříve produkty přesuňte nebo smažte.`,
+        this.t('cannot_delete_title'),
+        this.t('cannot_delete_has_products')
+          .replace('{name}', node.name)
+          .replace('{count}', String(node.products_count)),
         'warning'
       );
       return;
     }
 
     const confirmed = await this.confirmDialogService.open(
-      'Potvrdit smazání',
-      `Opravdu si přejete smazat kategorii "${node.name}"?`
+      this.t('confirm_delete_title'),
+      this.t('confirm_delete_message').replace('{name}', node.name)
     );
 
     if (confirmed) {
@@ -478,7 +479,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
 
       this.deleteData(node.id).subscribe({
         next: () => {
-          this.alertDialogService.open('Smazáno', 'Kategorie byla odstraněna.', 'success');
+          this.alertDialogService.open(this.t('deleted_title'), this.t('category_deleted_message'), 'success');
           this.saveExpandedStates();
           this.resourceCache.invalidate(this.TREE_CACHE_KEY);
           if (this.selectedCategory?.id === node.id) {
@@ -674,8 +675,10 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    */
   async removeProductFromCategory(product: any): Promise<void> {
     const confirmed = await this.confirmDialogService.open(
-      'Odebrat produkt',
-      `Odebrat produkt "${product.name}" z kategorie "${this.selectedCategory?.name}"?`
+      this.t('remove_product_confirm_title'),
+      this.t('remove_product_confirm_message')
+        .replace('{product}', product.name)
+        .replace('{category}', this.selectedCategory?.name ?? '')
     );
 
     if (!confirmed || !this.selectedCategory) return;
@@ -696,14 +699,14 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
 
     this.dataHandler.patch<any>(url, payload).subscribe({
       next: () => {
-        this.alertDialogService.open('Hotovo', 'Produkt byl odebrán z kategorie.', 'success');
+        this.alertDialogService.open(this.t('done_title'), this.t('product_removed_message'), 'success');
         this.loadTree(this.selectedCategory?.id, true, true);
         if (this.selectedCategory) {
           this.loadCategoryProducts(this.selectedCategory.id, true);
         }
       },
       error: (error) => {
-        console.error(`Odebrání produktu SELHALO!`, error);
+        console.error('Product removal FAILED!', error);
         this.loadingProducts = false;
         this.cd.markForCheck();
       }
@@ -731,12 +734,12 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
 
     this.dataHandler.patch<any>(url, payload).subscribe({
       next: () => {
-        this.alertDialogService.open('Hotovo', `Produkt byl přidán do kategorie.`, 'success');
+        this.alertDialogService.open(this.t('done_title'), this.t('product_added_message'), 'success');
         this.loadTree(this.selectedCategory?.id, true, true);
         this.loadCategoryProducts(this.selectedCategory!.id, true);
       },
       error: (error) => {
-        console.error(`Přidání produktu SELHALO!`, error);
+        console.error('Product addition FAILED!', error);
         this.loadingProducts = false;
         this.cd.markForCheck();
       }

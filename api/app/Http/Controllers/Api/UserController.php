@@ -8,58 +8,7 @@
  * @description Manages user account lifecycles, including creation, role assignment,
  * explicit permission grants, password security policies, and administrative audit
  * logging.
- * @refactor-note (2026-09-02) BACKLOG "explicit user permissions + admin role
- * removal":
- * - `NEVER_BLOCK_ROLE_NAMES` narrowed to `['sysadmin']` - the 'admin' role has been
- *   removed from the system entirely (see migration SQL
- *   001_explicit_user_permissions_and_admin_role_removal.sql). Any account that
- *   used to be 'admin' was migrated to the ordinary 'manager' role, which is not
- *   hardcoded anywhere and can be edited/deleted like any other role.
- * - `changePassword()`'s legacy `whereIn('role_name', ['admin', 'sysadmin'])` check
- *   is replaced with a permission-key check (`core-administrators-update`) against
- *   the actor's EFFECTIVE permissions (role ∪ explicit) - see
- *   `User::getPermissionsAttribute()`. This was the only remaining place in this
- *   controller that hardcoded the 'admin' role name.
- * - `store()`/`update()` now accept an optional `permission_ids` array and persist
- *   it to the new `user_permissions` pivot via `applyExplicitPermissions()`. A
- *   critical anti-privilege-escalation guard is applied: an actor can only
- *   grant/revoke explicit permissions that are themselves within the actor's OWN
- *   effective permission set (sysadmin is exempt, matching how `CheckPermission`
- *   middleware already treats sysadmin). Permissions already granted by the
- *   target's role are silently ignored (explicit grants only make sense for
- *   permissions the role does NOT already carry - see project decision log).
- * @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security":
- * - NEW `actorCanAssignRole()` guard, checked in both `store()` (assigning a role to
- *   a brand-new account) and `update()` (reassigning an existing account's role):
- *   an actor may only assign a role whose ENTIRE permission set is already within
- *   their own effective permissions (role ∪ explicit). Sysadmin is exempt. This is
- *   the SAME anti-privilege-escalation principle as `applyExplicitPermissions()`
- *   below, just applied to whole-role assignment instead of individual permission
- *   keys - without it, any account holding `core-administrators-update` could
- *   reassign a user (or create a new one) onto a role carrying MORE permissions
- *   than the actor themselves holds, a direct escalation path one level above the
- *   explicit-permissions guard.
- * - `update()` now detects an actual role CHANGE (captured via `$oldRoleId`,
- *   read fresh from the DB before any mutation in this request) and, whenever the
- *   role assignment changes, unconditionally wipes ALL of the target's explicit
- *   permission grants BEFORE any newly submitted `permission_ids` are applied -
- *   regardless of who requests the change or what the frontend sends. Two
- *   independent problems motivated this:
- *   1) STALE ELEVATED ACCESS: an account promoted to a broad role and later
- *      demoted could otherwise be left holding leftover explicit grants from
- *      before the promotion, silently carrying more access into the new role than
- *      that role is supposed to represent.
- *   2) ACCIDENTAL PRIVILEGE COPY-OVER IN A SINGLE SUBMIT: the admin edit form seeds
- *      `permission_ids` with the CURRENTLY selected role's own permissions
- *      (rendered checked+disabled, purely for display -
- *      see `AdministratorsComponent.handleEditFormOpened()`). If an admin changes
- *      the role field and submits in the same request, permissions checked only
- *      because the OLD role granted them could otherwise be accepted as legitimate
- *      explicit grants on the NEW, supposedly narrower role.
- *   Wiping unconditionally on role change closes both paths at once: the new role
- *   starts from zero explicit grants, and the admin must deliberately re-add
- *   anything extra afterwards ("naklikat od nuly", per project decision).
- */
+ * */
 
 namespace App\Http\Controllers\Api;
 
@@ -96,7 +45,7 @@ class UserController extends Controller
      */
     private const NEVER_BLOCK_ROLE_NAMES = ['sysadmin'];
 
-    /**
+       /**
      * @bugfix-note (2026-08-25) BACKLOG "hledat napříč vším": added a global `search`
      * parameter (OR across `full_name`/`user_email`) - the same two text columns this
      * method already filtered individually. `search` is wrapped in its own
@@ -112,6 +61,22 @@ class UserController extends Controller
      * only joined conditionally (when sorting by role_name, see the block below). If
      * searching by role is needed in the future, that is a separate extension
      * (permanent LEFT JOIN), not a trivial addition to the existing search block.
+     *
+     * @bugfix-note (2026-09-08) KRITICKÝ BUG - filtr na roli (`role_id`) byl v UI
+     * dostupný, ale tato metoda parametr `role_id` nikde nečetla, takže se v praxi
+     * NIKDY neaplikoval - výsledek vždy obsahoval VŠECHNY uživatele bez ohledu na
+     * zvolenou roli.
+     *
+     * @bugfix-note (2026-09-08v2) DRUHÝ, NEZÁVISLÝ BUG odhalený při ladění výše:
+     * `whereHas('roles', ...)` použil špatný název tabulky (`'roles.id'`), zatímco
+     * reálná tabulka za relací `User::roles()` je `core_roles` - způsobilo SQL chybu
+     * "Unknown column 'roles.id'". Opraveno na `'core_roles.id'`. Souběžně
+     * odhalen TŘETÍ, STARŠÍ bug ve frontendu (`administrators.config.ts`
+     * `rebuildFormFields()`) - filtr posílal NÁZEV role (`role_id=sysadmin`), ne
+     * číselné ID, protože `roleOptions.map(o => o.label)` stavěl plochý seznam
+     * jmen místo `{value,label}` párů. To vysvětluje, proč se do where klauzule
+     * dostal řetězec "sysadmin" místo čísla - viz administrators.config.ts
+     * bugfix-note stejné datum pro opravu na straně frontendu.
      */
     public function index(Request $request): JsonResponse
     {
@@ -128,6 +93,19 @@ class UserController extends Controller
 
         if ($request->filled('full_name')) $query->where('full_name', 'like', "%{$request->full_name}%");
         if ($request->filled('user_email')) $query->where('user_email', 'like', "%{$request->user_email}%");
+
+        // Role filter - see bugfix-note above (previously silently ignored, then had
+        // a wrong table name).
+        if ($request->filled('role_id')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('core_roles.id', $request->input('role_id'));
+            });
+        }
+
+        // Blocked/active filter - see bugfix-note above.
+        if ($request->filled('is_blocked')) {
+            $query->where('is_blocked', filter_var($request->input('is_blocked'), FILTER_VALIDATE_BOOLEAN));
+        }
 
         // Global fulltext search across full_name/user_email - see bugfix-note above.
         if ($search = $request->input('search')) {

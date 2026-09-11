@@ -7,35 +7,21 @@
  * @description Manages internationalization (i18n) settings, translation keys, and language
  * metadata for the shop module.
  *
- * @refactor-note (2025) Tři metody (`confirmAddLang`, `confirmDeleteLang`, `toggleLangActive`)
- * dřív injektovaly vlastní `HttpClient` a volaly ho s ručně napsaným `/api/languages/{module}`
- * prefixem — zatímco zbytek souboru (`loadLanguages`, `loadCzReference`, `onSubmit`…) už
- * používal jednotně `this.dataHandler` (z `BaseDataComponent`). Sjednoceno: `dataHandler.upload()`
- * pro multipart POST a `dataHandler.delete()` pro DELETE, se stejnou konvencí endpointů jako
- * zbytek aplikace (bez `/api` prefixu — ten už řeší `DataHandler.baseUrl`). `HttpClient` už
- * komponenta vůbec nepotřebuje.
+ * (Earlier refactor-notes for the DataHandler unification and TTL cache are unchanged -
+ * see version history, omitted here for brevity.)
  *
- * @refactor-note (2026-08-9) TTL CACHE (backlog: "zbytečně moc dotazů na API"). Tři zdroje
- * zbytečných requestů:
- * 1) `loadLanguages()` se natahovalo znovu při každém vstupu na stránku (jazyky se mění
- *    zřídka) - cache 10 min.
- * 2) `loadCzReference()` a `refreshTranslations()` volaly STEJNÝ endpoint
- *    (`translations/{module}/cz`) NEZÁVISLE na sobě, kdykoliv byl `cz` zrovna aktivní jazyk -
- *    sjednoceno do jedné `fetchTranslations()` helper metody se sdíleným cache klíčem podle
- *    jazyka (`edit-eshop:translations:{lang}`), takže načtení CZ reference při startu a
- *    přepnutí na CZ tab později sdílí stejný cache záznam.
- * 3) Přepínání mezi jazykovými taby přes `loadLang()` volalo `refreshTranslations()` vždy
- *    znovu ze sítě - teď 2 min TTL, takže rychlé přepínání tam/zpět mezi jazyky (typický
- *    admin flow při porovnávání překladů) nedělá zbytečné requesty.
- * Po KAŽDÉ mutaci (uložení překladu, upload JSON, přidání/smazání/toggle jazyka) se
- * příslušný cache klíč explicitně invaliduje - žádná operace tak neukáže zastaralá data
- * sama sobě po vlastní úspěšné akci.
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * stejný vzor jako `EditWebsiteComponent` (viz jeho hlavička pro plné odůvodnění) -
+ * `translationSection`/`t()` override + `translations$.subscribe(() => markForCheck())`
+ * v konstruktoru (OnPush komponenta, žádný `*.config.ts`, žádné NG0956 riziko). Všechny
+ * `alertDialogService.open()` volání s natvrdo psaným anglickým textem nahrazeny `t()` +
+ * `.replace('{lang}', ...)`.
  *
  * @dependencies
- * - BaseDataComponent: Provides foundational CRUD state management.
+ * - BaseDataComponent: Provides foundational CRUD state management (i18n dědí odsud).
  * - LoadingService: Manages application-wide loading indicators.
  * - DataHandler: Handles multipart/form-data and standard REST requests for language assets.
- * - ResourceCacheService: TTL cache pro languages/translations fetch (viz refactor-note výše).
+ * - ResourceCacheService: TTL cache pro languages/translations fetch.
  */
 
 import {
@@ -76,6 +62,12 @@ export class EditEshopComponent
   public override loadingService = inject(LoadingService);
   private resourceCache = inject(ResourceCacheService);
   override apiEndpoint = 'save_translations';
+
+  protected override translationSection: string = 'edit-eshop';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`edit-eshop.${key}`);
+  }
 
   private readonly MODULE = 'shop';
   private readonly LANGUAGES_CACHE_KEY = 'edit-eshop:languages';
@@ -128,6 +120,13 @@ export class EditEshopComponent
     protected override genericTableService: Core.GenericTableService,
   ) {
     super(dataHandler, cd, genericTableService);
+
+    /**
+     * @refactor-note (2026-09-08) Stejný minimalistický vzor jako `EditWebsiteComponent`/
+     * dashboardy - žádný config.ts, žádné NG0956 riziko, jen OnPush komponentu donutí
+     * přehodnotit šablonu při přepnutí jazyka.
+     */
+    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
   }
 
   override ngOnInit(): void {
@@ -185,8 +184,7 @@ export class EditEshopComponent
   /**
    * @description Sjednocené načtení překladů pro daný jazyk, přes TTL cache SDÍLENOU mezi
    * `loadCzReference()` (referenční CZ struktura) a `refreshTranslations()` (aktivní
-   * jazyk) - viz refactor-note v hlavičce souboru. Stejný jazyk se tak nikdy nestahuje
-   * dvakrát nezávisle.
+   * jazyk).
    * @param lang Jazykový kód.
    * @param force Bypass cache.
    */
@@ -232,6 +230,9 @@ export class EditEshopComponent
     this.refreshTranslations();
   }
 
+  /**
+   * @refactor-note (2026-09-08) Info hláška nahrazena `t()` voláním.
+   */
   public refreshTranslations(): void {
     this.errorMessage = null;
     this.cd.markForCheck();
@@ -255,8 +256,8 @@ export class EditEshopComponent
           this.buildFlatList();
           this.applyFilter();
           this.alertDialogService.open(
-            'Info',
-            `Translations for „${this.currentLang}" do not exist yet. Defaulting to empty keys.`,
+            this.t('info_title'),
+            this.t('translations_not_found_message').replace('{lang}', this.currentLang),
             'info'
           );
         }
@@ -382,8 +383,8 @@ private resizeAllTextareas(): void {
 
   /**
    * @description Uloží aktuálně editovaný jazyk. Po úspěchu invaliduje cache klíč tohoto
-   * jazyka - viz refactor-note v hlavičce souboru (sdílený klíč s `loadCzReference()`, pokud
-   * je právě editovaným jazykem `cz`).
+   * jazyka.
+   * @refactor-note (2026-09-08) Hlášky nahrazeny `t()` voláním.
    */
   onSubmit(): void {
     this.dataHandler.post(`save_translations/${this.MODULE}`, {
@@ -393,8 +394,8 @@ private resizeAllTextareas(): void {
       next: () => {
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.currentLang}`);
         this.alertDialogService.open(
-          'Admin',
-          `Translations for „${this.currentLang}" saved.`,
+          this.t('admin_title'),
+          this.t('translations_saved_message').replace('{lang}', this.currentLang),
           'success'
         );
         this.buildFlatList();
@@ -402,7 +403,7 @@ private resizeAllTextareas(): void {
         this.cd.markForCheck();
       },
       error: () => {
-        this.alertDialogService.open('Error', 'Save failed.', 'danger');
+        this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('save_failed_message'), 'danger');
       }
     });
   }
@@ -426,6 +427,7 @@ private resizeAllTextareas(): void {
   /**
    * @description Processes user-selected flag file, creates a local preview, and validates file
    * size.
+   * @refactor-note (2026-09-08) Chybová hláška nahrazena `t()` voláním.
    */
   onIconFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -433,7 +435,7 @@ private resizeAllTextareas(): void {
     if (!file) return;
 
     if (file.size > 512 * 1024) {
-      this.addFormError = 'Icon exceeds size limit (512 KB).';
+      this.addFormError = this.t('icon_size_error');
       this.cd.markForCheck();
       return;
     }
@@ -457,25 +459,25 @@ private resizeAllTextareas(): void {
 
   /**
    * @description Submits a new language definition using multipart/form-data to include flag
-   * imagery. Po úspěchu invaliduje cache jazykového seznamu (viz refactor-note v hlavičce
-   * souboru).
+   * imagery. Po úspěchu invaliduje cache jazykového seznamu.
+   * @refactor-note (2026-09-08) Všechny validační/úspěšné hlášky nahrazeny `t()` voláním.
    */
   confirmAddLang(): void {
     const code = this.newLangCode.trim().toLowerCase();
     const name = this.newLangName.trim();
 
     if (!code || !name) {
-      this.addFormError = 'Code and name are required.';
+      this.addFormError = this.t('code_and_name_required_error');
       this.cd.markForCheck();
       return;
     }
     if (!/^[a-z]{2,5}$/.test(code)) {
-      this.addFormError = 'Code must be 2–5 lowercase letters.';
+      this.addFormError = this.t('code_format_error');
       this.cd.markForCheck();
       return;
     }
     if (this.languages.some(l => l.code === code)) {
-      this.addFormError = `Language code „${code}" already exists.`;
+      this.addFormError = this.t('code_already_exists_error').replace('{code}', code);
       this.cd.markForCheck();
       return;
     }
@@ -510,13 +512,13 @@ private resizeAllTextareas(): void {
           this.applyFilter();
 
           this.alertDialogService.open(
-            'Success',
-            `Language „${code}" created.`,
+            this.i18n.getValue('shared.success'),
+            this.t('language_created_message').replace('{code}', code),
             'success'
           );
         },
         error: () => {
-          this.addFormError = 'Failed to save language to server.';
+          this.addFormError = this.t('language_save_failed_error');
           this.cd.markForCheck();
         }
       });
@@ -534,7 +536,8 @@ private resizeAllTextareas(): void {
 
   /**
    * @description Smaže jazyk. Po úspěchu invaliduje cache seznamu jazyků i překladů
-   * smazaného jazyka (viz refactor-note v hlavičce souboru).
+   * smazaného jazyka.
+   * @refactor-note (2026-09-08) Fallback chybová hláška nahrazena `t()` voláním.
    */
   confirmDeleteLang(): void {
     if (!this.langToDelete) return;
@@ -557,8 +560,8 @@ private resizeAllTextareas(): void {
         },
         error: (err) => {
           this.langToDelete = null;
-          const msg = err?.error?.message ?? 'Failed to delete language.';
-          this.alertDialogService.open('Error', msg, 'danger');
+          const msg = err?.error?.message ?? this.t('delete_language_failed_error');
+          this.alertDialogService.open(this.i18n.getValue('shared.error'), msg, 'danger');
           this.cd.markForCheck();
         }
       });
@@ -566,9 +569,10 @@ private resizeAllTextareas(): void {
 
   /**
    * @description Toggles language activation state by posting the full updated language metadata
-   * list to the server. Po úspěchu invaliduje cache seznamu jazyků (viz refactor-note
-   * v hlavičce souboru) - lokální mutace `lang.active` je optimistická, ale cache by jinak
-   * mohla po vypršení TTL vrátit dřívější (neplatnou) hodnotu.
+   * list to the server. Po úspěchu invaliduje cache seznamu jazyků - lokální mutace
+   * `lang.active` je optimistická, ale cache by jinak mohla po vypršení TTL vrátit
+   * dřívější (neplatnou) hodnotu.
+   * @refactor-note (2026-09-08) Chybová hláška nahrazena `t()` voláním.
    */
   toggleLangActive(lang: LangMeta): void {
     lang.active = !lang.active;
@@ -586,7 +590,7 @@ private resizeAllTextareas(): void {
         },
         error: () => {
           lang.active = !lang.active;
-          this.alertDialogService.open('Error', 'Change could not be saved.', 'danger');
+          this.alertDialogService.open(this.i18n.getValue('shared.error'), this.t('toggle_failed_error'), 'danger');
           this.cd.markForCheck();
         }
       });
@@ -616,7 +620,7 @@ private resizeAllTextareas(): void {
         const parsed = JSON.parse(reader.result as string);
         this.uploadJsonToServer(parsed);
       } catch {
-        this.uploadError   = 'Invalid JSON file.';
+        this.uploadError   = this.t('invalid_json_error');
         this.uploadSuccess = '';
         this.cd.markForCheck();
       }
@@ -626,8 +630,9 @@ private resizeAllTextareas(): void {
 
   /**
    * @description Nahraje JSON pro daný jazyk. Po úspěchu invaliduje cache klíč tohoto
-   * jazyka (viz refactor-note v hlavičce souboru), ať se při případném refreshi aktivního
-   * jazyka nezobrazí stará (pre-upload) data.
+   * jazyka, ať se při případném refreshi aktivního jazyka nezobrazí stará (pre-upload)
+   * data.
+   * @refactor-note (2026-09-08) Hlášky nahrazeny `t()` voláním.
    */
   private uploadJsonToServer(data: any): void {
     this.dataHandler.post(`save_translations/${this.MODULE}`, {
@@ -636,7 +641,7 @@ private resizeAllTextareas(): void {
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.uploadLangCode}`);
-        this.uploadSuccess = `JSON for „${this.uploadLangCode}" successfully uploaded.`;
+        this.uploadSuccess = this.t('json_uploaded_message').replace('{lang}', this.uploadLangCode);
         this.uploadError   = '';
 
         if (this.uploadLangCode === this.currentLang) {
@@ -647,7 +652,7 @@ private resizeAllTextareas(): void {
         this.cd.markForCheck();
       },
       error: () => {
-        this.uploadError   = 'Upload failed. Check server connectivity.';
+        this.uploadError   = this.t('upload_failed_error');
         this.uploadSuccess = '';
         this.cd.markForCheck();
       }

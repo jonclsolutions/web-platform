@@ -112,7 +112,7 @@
 .pp-sidebar-icon { flex-shrink: 0; color: var(--text-dim); display: flex; }
 .pp-sidebar-info-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sidebar-header{font-weight: bold; padding-bottom: 15px;}
-.pp-sidebar-spacer { flex: 1; }
+.pp-sidebar-spacer { padding-top: 20px; }
 
 .pp-sidebar-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 18px; border-top: 1px solid var(--border); }
 .pp-sidebar-action-btn {
@@ -222,3 +222,91 @@
   .pp-sidebar-actions { flex-direction: row; border-top: none; padding-top: 0; margin-left: auto; }
   .pp-main { padding: 24px 18px; }
 }
+/* ── Language toggle (CZ/EN chips) ────────────────────────────────────── */
+.pp-lang-toggle { display: flex; gap: 6px; padding-bottom: 14px; }
+.pp-lang-toggle-login { justify-content: center; padding-bottom: 18px; }
+.pp-lang-chip {
+  padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text-muted); font-size: 0.72rem; font-weight: 700;
+  font-family: var(--ff); letter-spacing: 0.03em; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.pp-lang-chip:hover { background: var(--surface-2); color: var(--text); }
+.pp-lang-chip-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pp-lang-chip-active:hover { background: #3f3f46; color: #fff; }
+
+@media (max-width: 760px) {
+  .pp-lang-toggle { padding-bottom: 0; order: 3; margin-left: auto; }
+}
+/* ── Language dropdown (nahrazuje dřívější CZ/EN chips) ────────────────── */
+.pp-lang-dropdown { position: relative; padding-bottom: 12px; }
+.pp-lang-dropdown-login { display: flex; justify-content: center; padding-bottom: 18px; }
+
+.pp-lang-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text-muted); font-size: 0.78rem; font-weight: 600;
+  font-family: var(--ff); cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+}
+.pp-lang-btn:hover { background: var(--surface-2); color: var(--text); }
+.pp-lang-btn-full { width: 100%; justify-content: space-between; }
+.pp-lang-chevron { margin-left: auto; }
+
+.pp-lang-flag { width: 16px; height: 16px; object-fit: cover; border-radius: 2px; flex-shrink: 0; }
+.pp-lang-code { text-transform: uppercase; letter-spacing: 0.02em; }
+
+.pp-lang-menu-backdrop { position: fixed; inset: 0; z-index: 40; }
+.pp-lang-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 41; min-width: 170px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(24,24,27,0.12); overflow: hidden;
+}
+.pp-lang-dropdown-login .pp-lang-menu { left: 50%; transform: translateX(-50%); }
+.pp-lang-menu-sidebar { left: 0; right: 0; width: 100%; }
+
+.pp-lang-menu-item {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px 14px;
+  border: none; background: none; cursor: pointer; text-align: left;
+  font-size: 0.85rem; color: var(--text); font-family: var(--ff);
+}
+.pp-lang-menu-item:hover { background: var(--surface-2); }
+.pp-lang-menu-item-active { background: var(--surface-2); font-weight: 600; }
+
+/* ── Tabs ──────────────────────────────────────────────────────────────── */
+.pp-tabs {
+  display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--border);
+}
+.pp-tab-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 16px; border: none; background: none; cursor: pointer;
+  font-size: 0.86rem; font-weight: 600; color: var(--text-muted); font-family: var(--ff);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s ease, border-color 0.15s ease;
+}
+.pp-tab-btn:hover { color: var(--text); }
+.pp-tab-btn-active { color: var(--text); border-bottom-color: var(--accent); }
+
+.pp-tab-count {
+  font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text-muted);
+}
+.pp-tab-btn-active .pp-tab-count { background: var(--accent); color: #fff; }
+
+.pp-tab-panel { animation: pp-fade-in 0.15s ease; }
+@keyframes pp-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Description tab ──────────────────────────────────────────────────── */
+.pp-description-block { margin-bottom: 24px; }
+.pp-description-block-title {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); margin-bottom: 8px;
+}
+
+/* ── Threads toolbar (search + new thread) ────────────────────────────── */
+.pp-threads-toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
+.pp-search-wrap { position: relative; flex: 1; }
+.pp-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
+.pp-search-input {
+  width: 100%; padding: 9px 12px 9px 34px; border-radius: 999px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text); font-size: 0.85rem; font-family: inherit;
+}
+.pp-search-input:focus { outline: none; border-color: var(--accent); }
+.pp-threads-toolbar .pp-btn-small { flex-shrink: 0; }

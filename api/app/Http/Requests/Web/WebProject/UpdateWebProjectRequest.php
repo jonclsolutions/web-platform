@@ -31,7 +31,7 @@ class UpdateWebProjectRequest extends FormRequest
             'order_id'       => ['nullable', 'integer', 'exists:web_sales_orders,id', Rule::unique('web_projects', 'order_id')->ignore($this->route('id'))],
             'name'           => ['sometimes', 'required', 'string', 'max:255'],
             'description'    => ['nullable', 'string'],
-            'platform'       => ['nullable', 'string', 'max:100'],
+            'platform'       => ['nullable', 'string', 'max:100', 'in:web,mobile,desktop,ai,other'],
             'project_lead'   => ['nullable', 'string', 'max:255'],
             'contact_phone'  => ['nullable', 'string', 'max:255'],
             'contact_email'  => ['nullable', 'email', 'max:255'],

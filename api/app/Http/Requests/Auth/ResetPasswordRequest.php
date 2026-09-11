@@ -40,8 +40,8 @@ class ResetPasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.confirmed' => 'Zadaná hesla se neshodují.',
-            'password.max'       => 'Heslo může mít maximálně 16 znaků.',
+            'password.confirmed' => 'The entered passwords do not match.',
+            'password.max'       => 'The password can have a maximum of 16 characters.',
         ];
     }
 }

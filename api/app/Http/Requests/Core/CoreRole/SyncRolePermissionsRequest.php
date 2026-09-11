@@ -30,7 +30,7 @@ class SyncRolePermissionsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'permission_keys.*.exists' => 'Jedno nebo více vybraných oprávnění neexistuje.',
+            'permission_keys.*.exists' => 'One or more selected permissions do not exist.',
         ];
     }
 }

@@ -30,18 +30,18 @@ class RawRequestEmailTemplate
      * nikdy nic nevyplnil - stejné znění, jaké šablona měla natvrdo PŘED zavedením
      * editovatelného obsahu, takže bez zásahu admina se e-mail chová beze změny.
      */
-    private const DEFAULT_TITLE = 'Vaše poptávka byla přijata';
-    private const DEFAULT_SUBJECT = 'Vaše poptávka byla přijata';
-    private const DEFAULT_INTRO = 'děkujeme za Vaši poptávku. Byla úspěšně přijata a náš tým se jí bude v nejbližší době věnovat.';
-    private const DEFAULT_OUTRO = 'V případě dotazů nás neváhejte kontaktovat.';
-    private const DEFAULT_GREETING = 'Dobrý den,';
-    private const DEFAULT_SUMMARY_HEADER = 'Rekapitulace poptávky';
-    private const DEFAULT_LABEL_THEMA = 'Téma';
-    private const DEFAULT_LABEL_EMAIL = 'Kontaktní e-mail';
-    private const DEFAULT_LABEL_PHONE = 'Telefon';
-    private const DEFAULT_LABEL_DESCRIPTION = 'Popis požadavku';
-    private const DEFAULT_LABEL_ATTACHMENTS = 'Přiložené soubory';
-    private const DEFAULT_LABEL_DATE = 'Datum přijetí';
+    private const DEFAULT_TITLE = 'Your request has been received';
+    private const DEFAULT_SUBJECT = 'Your request has been received';
+    private const DEFAULT_INTRO = 'thank you for your request. It has been successfully received and our team will attend to it shortly.';
+    private const DEFAULT_OUTRO = 'If you have any questions, please do not hesitate to contact us.';
+    private const DEFAULT_GREETING = 'Hello,';
+    private const DEFAULT_SUMMARY_HEADER = 'Request Summary';
+    private const DEFAULT_LABEL_THEMA = 'Topic';
+    private const DEFAULT_LABEL_EMAIL = 'Contact Email';
+    private const DEFAULT_LABEL_PHONE = 'Phone';
+    private const DEFAULT_LABEL_DESCRIPTION = 'Request Description';
+    private const DEFAULT_LABEL_ATTACHMENTS = 'Attached Files';
+    private const DEFAULT_LABEL_DATE = 'Date Received';
 
     /**
      * @description Vrátí `Content::with()` pole s texty pro daný jazyk. Priorita:

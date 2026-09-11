@@ -82,12 +82,12 @@ class ShopShippingMethodController extends Controller
     {
         try {
             $method = ShopShippingMethod::create($request->validated());
-            $this->logAction($request, ShopLog::class, 'create', 'ShopShippingMethod', "Vytvořen způsob dopravy: {$method->name}", $method->id, 'ShopShippingMethod');
+            $this->logAction($request, ShopLog::class, 'create', 'ShopShippingMethod', "Created shipping method: {$method->name}", $method->id, 'ShopShippingMethod');
             return response()->json(new ShopShippingMethodResource($method), 201);
         } catch (\Exception $e) {
             Log::error("ShopShippingMethod store error: " . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Chyba při vytváření dopravy: " . $e->getMessage());
-            return response()->json(['message' => 'Chyba při vytváření dopravy.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Error creating shipping method: " . $e->getMessage());
+            return response()->json(['message' => 'Error creating shipping method.'], 500);
         }
     }
 
@@ -115,11 +115,11 @@ class ShopShippingMethodController extends Controller
             }
 
             $method->update($data);
-            $this->logAction($request, ShopLog::class, 'update', 'ShopShippingMethod', "Aktualizace dopravy: {$method->name}", $method->id, 'ShopShippingMethod');
+            $this->logAction($request, ShopLog::class, 'update', 'ShopShippingMethod', "Updated shipping method: {$method->name}", $method->id, 'ShopShippingMethod');
             return response()->json(new ShopShippingMethodResource($method));
         } catch (\Exception $e) {
-            $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Aktualizace selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopShippingMethod');
-            return response()->json(['message' => 'Aktualizace selhala.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopShippingMethod');
+            return response()->json(['message' => 'Update failed.'], 500);
         }
     }
 
@@ -132,14 +132,14 @@ class ShopShippingMethodController extends Controller
 
         if ($item->isHardcoded()) {
             return response()->json([
-                'message' => 'Tuto systémovou metodu dopravy (Osobní odběr / Nejbližší dopravce) nelze smazat.'
+                'message' => 'System shipping methods (Personal pickup / Nearest carrier) cannot be deleted.'
             ], 403);
         }
 
         $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
         $force ? $item->forceDelete() : $item->delete();
 
-        $this->logAction($request, ShopLog::class, $force ? 'hard_delete' : 'soft_delete', 'ShopShippingMethod', "Smazání dopravy ID: $id", (int) $id, 'ShopShippingMethod');
+        $this->logAction($request, ShopLog::class, $force ? 'hard_delete' : 'soft_delete', 'ShopShippingMethod', "Deleted shipping method ID: $id", (int) $id, 'ShopShippingMethod');
         return response()->json(null, 204);
     }
 
@@ -150,7 +150,7 @@ class ShopShippingMethodController extends Controller
     {
         $item = ShopShippingMethod::withTrashed()->findOrFail($id);
         $item->restore();
-        $this->logAction($request, ShopLog::class, 'restore', 'ShopShippingMethod', "Obnova dopravy ID: $id", (int) $id, 'ShopShippingMethod');
+        $this->logAction($request, ShopLog::class, 'restore', 'ShopShippingMethod', "Restored shipping method ID: $id", (int) $id, 'ShopShippingMethod');
         return response()->json(new ShopShippingMethodResource($item));
     }
 }

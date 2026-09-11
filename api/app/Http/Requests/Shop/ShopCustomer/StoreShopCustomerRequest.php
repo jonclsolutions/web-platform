@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2026
  * @description Validation logic for creating new shop customer profiles.
+ *
+ * @refactor-note (2026-09-09) BACKLOG "backend fully in English": validation
+ * messages translated from Czech.
  */
 
 namespace App\Http\Requests\Shop\ShopCustomer;
@@ -58,16 +61,16 @@ class StoreShopCustomerRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required'      => 'Email je povinný.',
-            'email.email'         => 'Zadejte platný email.',
-            'email.max'           => 'Email může mít maximálně 150 znaků.',
-            'email.unique'        => 'Tento email už je zaregistrován.',
-            'first_name.required' => 'Jméno je povinné.',
-            'first_name.max'      => 'Jméno může mít maximálně 100 znaků.',
-            'last_name.required'  => 'Příjmení je povinné.',
-            'last_name.max'       => 'Příjmení může mít maximálně 100 znaků.',
-            'phone.regex'         => 'Zadejte platné telefonní číslo.',
-            'is_active.required'  => 'Status aktivace je povinný.',
+            'email.required'      => 'E-mail is required.',
+            'email.email'         => 'Enter a valid e-mail address.',
+            'email.max'           => 'E-mail can be at most 150 characters.',
+            'email.unique'        => 'This e-mail is already registered.',
+            'first_name.required' => 'First name is required.',
+            'first_name.max'      => 'First name can be at most 100 characters.',
+            'last_name.required'  => 'Last name is required.',
+            'last_name.max'       => 'Last name can be at most 100 characters.',
+            'phone.regex'         => 'Enter a valid phone number.',
+            'is_active.required'  => 'Activation status is required.',
         ];
     }
 }

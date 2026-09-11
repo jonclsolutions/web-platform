@@ -4,183 +4,196 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Static configuration (buttons, form fields, table/filter/detail columns) for
- * the Administrators (core user account) management page.
- * @refactor-note (2026-08-5) Permission-system granularization - permission keys on
- *      toolbar/table buttons.
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail", points 2+3+4: FORM_FIELDS
- * split into TWO separate 2FA fields - see prior notes below (unchanged by this update).
- * @refactor-note (2026-08-24) BACKLOG "account-creation workflow from admin" - see
- * prior notes below (unchanged by this update).
- * @refactor-note (2026-09-02) BACKLOG "explicit user permissions + admin role
- * removal":
- * - Added `PERMISSION_OPTIONS` (populated at runtime by
- *   `AdministratorsComponent.loadPermissionOptions()`, same pattern as
- *   `ROLE_OPTIONS`) and a new `permission_ids` FORM_FIELDS entry - a multiselect of
- *   every permission key in the system, letting an admin grant a user extra
- *   permissions on top of whatever their role already provides. This field is
- *   ALWAYS editable (unlike `enable_2fa`/`is_blocked`, it is never role-locked) -
- *   authority over which specific permission ids can actually be granted is
- *   enforced server-side in `UserController::applyExplicitPermissions()`, not by
- *   hiding/disabling this field.
- * - `DETAILS_COLUMNS` gained `user_permissions` so the read-only detail view shows
- *   an account's explicit extra grants (separate from the role's own permission list).
+ * @description Static-turned-dynamic configuration (buttons, form fields, table/filter/
+ * detail columns) for the Administrators (core user account) management page.
+ *
+ * (Earlier refactor-notes for 2FA split, account-creation workflow, and explicit
+ * permission grants are unchanged - see version history, omitted here for brevity.)
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * kompletní přepis na FACTORY FUNKCE. `ROLE_OPTIONS`/`PERMISSION_OPTIONS` (dřív
+ * exportované MUTABILNÍ pole, prakticky nevyužívané - `AdministratorsComponent` je
+ * stejně přepisovalo vlastními `this.roleOptions`/`this.permissionOptions`) ODSTRANĚNY -
+ * `createFormFields()`/`createFilterColumns()` vrací `role_id`/`permission_ids` s
+ * `options: []`, komponenta je po načtení dat sama doplní (viz `rebuildFormFields()`
+ * v `administrators.component.ts`). Role/permission NEJSOU enum hodnoty ve smyslu
+ * `mapLabeledOptions()` receptu - jsou to DYNAMICKÁ DATA z DB (názvy rolí, popisy
+ * oprávnění), ne pevná sada canonical slugů, takže se nepřekládají.
+ *
+ * @bugfix-note (2026-09-08) BACKLOG "permission audit napříč core stránkami":
+ * `openGraphBuilder` používal `permission: 'web-user-requests-view'` - permission
+ * z úplně jiné domény, stejná chyba jako dřív opravená u `sales-leads`/
+ * `job-applications`/`external-links`. Opraveno na `core-administrators-view`.
  */
 import * as Core from '../../../shared/imports/core-providers';
+import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '../../../shared/constants/password-policy';
 
-export const ROLE_OPTIONS: { value: string; label: string }[] = [];
+const SECTION = 'administrators';
+
+export function createTableButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
+  return [
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_details`), isActive: true, type: 'info_button', action: 'details', icon: 'search' },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_edit`), isActive: true, type: 'neutral_button', action: 'edit', permission: 'core-administrators-update', icon: 'edit' },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_password`), isActive: true, type: 'neutral_button', action: 'password_reset', permission: 'core-administrators-update', icon: 'key' },
+    {
+      display_name: '', header_name: i18n.getValue(`${SECTION}.btn_activate`), isActive: true, type: 'neutral_button',
+      action: 'resend_activation', permission: 'core-administrators-update', icon: 'mail',
+      visibleWhen: (item: any) => !item.activated_at,
+    },
+    { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_delete`), isActive: true, type: 'delete_button', action: 'delete', permission: 'core-administrators-delete', icon: 'delete' },
+  ];
+}
+
+export function createToolbarButtons(i18n: AdminLocalizationService): Core.Button[] {
+  return [
+    { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
+    { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'core-administrators-create' },
+    { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
+    // Sysadmin-only (visibility gated in the component via `this.isSysadmin`).
+    { action: 'openEmailAccessPolicy', label: i18n.getValue(`${SECTION}.toolbar_email_domains`), icon: '', class: 'btn-neutral', showIf: true },
+    { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'core-administrators-view' },
+    { action: 'toggleTable', label: i18n.getValue(`${SECTION}.toolbar_show_trash`), icon: '', class: 'btn-trash', permission: 'view-deleted' },
+  ];
+}
+
+export function createResetPasswordFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
+  return [
+    {
+      column_name: 'old_password',
+      label: i18n.getValue(`${SECTION}.reset_old_password_label`),
+      placeholder: i18n.getValue(`${SECTION}.reset_old_password_placeholder`),
+      type: 'password', required: true,
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+    {
+      column_name: 'new_password',
+      label: i18n.getValue(`${SECTION}.reset_new_password_label`),
+      placeholder: `8-16 ${i18n.getValue(`${SECTION}.reset_new_password_chars_suffix`)}`,
+      type: 'confirm-password',
+      required: true,
+      pattern: PASSWORD_PATTERN,
+      errorMessage: PASSWORD_ERROR_MESSAGE,
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+  ];
+}
 
 /**
- * Populated at runtime by `AdministratorsComponent.loadPermissionOptions()` via
- * `PermissionOptionsService` (GET core/permissions) - same "populate an exported
- * mutable array, then re-map it into FORM_FIELDS/FILTER_COLUMNS options" pattern
- * already used for ROLE_OPTIONS.
+ * @description `role_id`/`permission_ids` mají `options: []` - komponenta je po
+ * async načtení dat sama doplní (viz `rebuildFormFields()` v `.component.ts`), viz
+ * refactor-note v hlavičce souboru.
  */
-export const PERMISSION_OPTIONS: { value: string; label: string }[] = [];
+export function createFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
+  return [
+    {
+      column_name: 'user_email',
+      label: i18n.getValue(`${SECTION}.field_email_label`),
+      placeholder: i18n.getValue(`${SECTION}.field_email_placeholder`),
+      type: 'email', required: true,
+      pattern: '[^@]+@[^@]+\\.[^@]+',
+      errorMessage: i18n.getValue(`${SECTION}.field_email_error`),
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+    {
+      column_name: 'full_name',
+      label: i18n.getValue(`${SECTION}.field_full_name_label`),
+      placeholder: i18n.getValue(`${SECTION}.field_full_name_placeholder`),
+      type: 'text', required: true,
+      errorMessage: i18n.getValue(`${SECTION}.field_full_name_error`),
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+    {
+      column_name: 'role_id', label: i18n.getValue(`${SECTION}.field_role_label`),
+      type: 'select', options: [], required: true,
+      errorMessage: i18n.getValue(`${SECTION}.field_role_error`),
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+    {
+      column_name: 'permission_ids',
+      label: i18n.getValue(`${SECTION}.field_permissions_label`),
+      type: 'multiselect', options: [], required: false,
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+    {
+      column_name: 'enable_2fa', label: i18n.getValue(`${SECTION}.field_enable_2fa_label`),
+      type: 'checkbox', required: false,
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+    {
+      column_name: 'two_fa_forced_by_admin', label: i18n.getValue(`${SECTION}.field_force_2fa_label`),
+      type: 'checkbox', required: false,
+      editable: true, show_in_edit: true, show_in_create: false,
+    },
+    {
+      column_name: 'is_blocked', label: i18n.getValue(`${SECTION}.field_is_blocked_label`),
+      type: 'checkbox', required: false,
+      editable: true, show_in_edit: true, show_in_create: false,
+    },
+    {
+      column_name: 'internal_note', label: i18n.getValue(`${SECTION}.field_internal_note_label`),
+      type: 'textarea', required: false,
+      editable: true, show_in_edit: true, show_in_create: true,
+    },
+    { column_name: 'dpp_hours_spent', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true },
+  ];
+}
 
-export const TABLE_BUTTONS: Core.TableButtons[] = [
-  { display_name: 'Detaily', header_name: 'Detaily', isActive: true, type: 'info_button', action: 'details', icon: 'search' },
-  { display_name: 'Edit', header_name: 'Edit', isActive: true, type: 'neutral_button', action: 'edit', permission: 'core-administrators-update', icon: 'edit' },
-  { display_name: 'Heslo', header_name: 'Heslo', isActive: true, type: 'neutral_button', action: 'password_reset', permission: 'core-administrators-update', icon: 'key' },
-  {
-    display_name: 'Aktivace', header_name: 'Aktivace', isActive: true, type: 'neutral_button',
-    action: 'resend_activation', permission: 'core-administrators-update', icon: 'mail',
-    visibleWhen: (item: any) => !item.activated_at,
-  },
-  { display_name: 'Smazat', header_name: 'Smazat', isActive: true, type: 'delete_button', action: 'delete', permission: 'core-administrators-delete', icon: 'delete' },
-];
+export function createTableColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
+  return [
+    { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
+    { key: 'full_name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
+    { key: 'user_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text' },
+    { key: 'roles.0.role_name', header: i18n.getValue(`${SECTION}.col_role`), type: 'text' },
+    { key: 'is_blocked', header: i18n.getValue(`${SECTION}.col_blocked`), type: 'boolean' },
+    { key: 'last_login_at', header: i18n.getValue(`${SECTION}.col_last_login`), type: 'date', format: 'short' },
+  ];
+}
 
-export const TOOLBAR_BUTTONS: Core.Button[] = [
-  { action: 'toggleFilters', label: 'Otevřít filtry', icon: '', class: 'btn-filter', isActive: false },
-  { action: 'handleCreateFormOpened', label: 'Přidat záznam', icon: '', class: 'btn-create', showIf: true, permission: 'core-administrators-create' },
-  { action: 'exportActiveTable', label: 'Exportovat data', icon: '', class: 'btn-export', showIf: true },
-  // Sysadmin-only (visibility gated in the component via `this.isSysadmin`, same
-  // pattern as the `two_fa_forced_by_admin` field).
-  { action: 'openEmailAccessPolicy', label: 'Domény e-mailů', icon: '', class: 'btn-neutral', showIf: true },
-  { action: 'openGraphBuilder', label: 'Grafy a reporty', icon: '', class: 'btn-neutral', showIf: true, permission: 'web-user-requests-view' },
-  { action: 'toggleTable', label: 'Koš', icon: '', class: 'btn-trash', permission: 'view-deleted' }
-];
+export function createTrashTableColumns(i18n: AdminLocalizationService): Core.ColumnDefinition[] {
+  return [
+    { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
+    { key: 'full_name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text' },
+    { key: 'user_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text' },
+    { key: 'deleted_at', header: i18n.getValue(`${SECTION}.col_deleted`), type: 'date', format: 'short' },
+  ];
+}
 
-export const RESET_PASSWORD_FORM_FIELDS: Core.InputDefinition[] = [
-  { column_name: 'old_password', label: 'Vaše aktuální heslo (potvrzení)', placeholder: 'Zadejte své heslo', type: 'password', required: true, editable: true, show_in_edit: true, show_in_create: true },
-  {
-    column_name: 'new_password',
-    label: 'Nové heslo uživatele',
-    placeholder: `${8}-${16} znaků`,
-    type: 'confirm-password',
-    required: true,
-    pattern: PASSWORD_PATTERN,
-    errorMessage: PASSWORD_ERROR_MESSAGE,
-    editable: true, show_in_edit: true, show_in_create: true
-  },
-];
-
-/**
- * @refactor-note (2026-09-02) Added `permission_ids` (multiselect of
- * PERMISSION_OPTIONS) - see file header. Always editable, shown both on create and
- * edit (a fresh account can be given extra permissions immediately, same as its role).
+/** @description `role_id` má `options: []` - komponenta je po `loadRoleOptions()` doplní (viz `rebuildFormFields()`).
+ * @refactor-note (2026-09-08) BACKLOG "chybí filtr na blokované účty": doplněn
+ * `is_blocked` select filtr - viz UserController::index() bugfix-note stejné datum
+ * (backend `role_id` filtr byl navíc už dřív nefunkční, opraveno zároveň).
  */
-export const FORM_FIELDS: Core.InputDefinition[] = [
-  {
-    column_name: 'user_email',
-    label: 'Přihlašovací e-mail',
-    placeholder: 'jmeno@firma.cz',
-    type: 'email',
-    required: true,
-    pattern: '[^@]+@[^@]+\\.[^@]+',
-    errorMessage: 'Zadejte platný přihlašovací e-mail.',
-    editable: true,
-    show_in_edit: true,
-    show_in_create: true
-  },
-  {
-    column_name: 'full_name',
-    label: 'Celé jméno',
-    placeholder: 'Zadejte jméno a příjmení',
-    type: 'text',
-    required: true,
-    errorMessage: 'Jméno je povinné',
-    editable: true,
-    show_in_edit: true,
-    show_in_create: true
-  },
-  { column_name: 'role_id', label: 'Role', type: 'select', options: ROLE_OPTIONS, required: true, errorMessage: 'Vyberte roli uživatele.', editable: true, show_in_edit: true, show_in_create: true },
-  {
-    column_name: 'permission_ids',
-    label: 'Dodatečná oprávnění (nad rámec role)',
-    type: 'multiselect',
-    options: PERMISSION_OPTIONS,
-    required: false,
-    editable: true,
-    show_in_edit: true,
-    show_in_create: true
-  },
-  {
-    column_name: 'enable_2fa',
-    label: 'Zapnout 2FA',
-    type: 'checkbox',
-    required: false,
-    editable: true,
-    show_in_edit: true,
-    show_in_create: true
-  },
-  {
-    column_name: 'two_fa_forced_by_admin',
-    label: 'Vynutit 2FA (sysadmin)',
-    type: 'checkbox',
-    required: false,
-    editable: true,
-    show_in_edit: true,
-    show_in_create: false
-  },
-  {
-    column_name: 'is_blocked',
-    label: 'Blokovat účet',
-    type: 'checkbox',
-    required: false,
-    editable: true,
-    show_in_edit: true,
-    show_in_create: false
-  },
-  { column_name: 'internal_note', label: 'Poznámka', type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
-  { column_name: 'dpp_hours_spent', label: '', type: 'hidden', required: false, editable: false, show_in_edit: true, show_in_create: true }
-];
+export function createFilterColumns(i18n: AdminLocalizationService): Core.FilterColumns[] {
+  return [
+    { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_id_placeholder`), canSort: true },
+    { key: 'full_name', header: i18n.getValue(`${SECTION}.col_name`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_name_placeholder`), canSort: true },
+    { key: 'user_email', header: i18n.getValue(`${SECTION}.col_email`), type: 'text', placeholder: i18n.getValue(`${SECTION}.filter_email_placeholder`), canSort: true },
+    { key: 'role_id', header: i18n.getValue(`${SECTION}.col_role`), type: 'select', placeholder: i18n.getValue(`${SECTION}.filter_role_placeholder`), canSort: true, options: [] },
+    {
+      key: 'is_blocked', header: i18n.getValue(`${SECTION}.col_blocked`), type: 'select',
+      options: [
+        { value: '1', label: i18n.getValue('shared.yes') },
+        { value: '0', label: i18n.getValue('shared.no') },
+      ],
+      placeholder: i18n.getValue(`${SECTION}.filter_blocked_placeholder`), canSort: true,
+    },
+  ];
+}
 
-export const TABLE_COLUMNS: Core.ColumnDefinition[] = [
-  { key: 'id', header: 'ID', type: 'text' },
-  { key: 'full_name', header: 'Jméno', type: 'text' },
-  { key: 'user_email', header: 'E-mail (Login)', type: 'text' },
-  { key: 'roles.0.role_name', header: 'Role', type: 'text' },
-  { key: 'is_blocked', header: 'Blokován', type: 'boolean' },
-  { key: 'last_login_at', header: 'Poslední log', type: 'date', format: 'short' },
-];
-
-export const TRASH_TABLE_COLUMNS: Core.ColumnDefinition[] = [
-  { key: 'id', header: 'ID', type: 'text' },
-  { key: 'full_name', header: 'Jméno', type: 'text' },
-  { key: 'user_email', header: 'E-mail (Login)', type: 'text' },
-  { key: 'deleted_at', header: 'Smazáno', type: 'date', format: 'short' },
-];
-
-export const FILTER_COLUMNS: Core.FilterColumns[] = [
-  { key: 'id', header: 'ID', type: 'text', placeholder: 'ID', canSort: true },
-  { key: 'full_name', header: 'Jméno', type: 'text', placeholder: 'Hledat jméno', canSort: true },
-  { key: 'user_email', header: 'E-mail', type: 'text', placeholder: 'Hledat e-mail', canSort: true },
-  { key: 'role_id', header: 'Role', type: 'select', placeholder: '-- Vyberte roli --', canSort: true, options: ROLE_OPTIONS.map(opt => opt.label) }
-];
-
-export const DETAILS_COLUMNS: Core.ItemDetailsColumns[] = [
-  { key: 'id', displayName: 'ID uživatele', type: 'text' },
-  { key: 'full_name', displayName: 'Celé jméno', type: 'text' },
-  { key: 'user_email', displayName: 'Přihlašovací E-mail', type: 'text' },
-  { key: 'roles.0.role_name', displayName: 'Přiřazená role', type: 'text' },
-  { key: 'user_permissions', displayName: 'Dodatečná oprávnění (nad rámec role)', type: 'text' },
-  { key: 'is_blocked', displayName: 'Účet zablokován', type: 'text', chartable: true },
-  { key: 'activated_at', displayName: 'Aktivováno', type: 'date', format: 'medium' },
-  { key: 'enable_2fa', displayName: 'Dvoufaktorové ověření (vlastní volba)', type: 'text', chartable: true },
-  { key: 'two_fa_forced_by_admin', displayName: '2FA vynuceno sysadminem', type: 'text', chartable: true },
-  { key: 'internal_note', displayName: 'Interní poznámka', type: 'text' },
-  { key: 'created_at', displayName: 'Účet vytvořen', type: 'date', format: 'medium' },
-  { key: 'updated_at', displayName: 'Poslední změna údajů', type: 'date', format: 'medium' }
-];
+export function createDetailsColumns(i18n: AdminLocalizationService): Core.ItemDetailsColumns[] {
+  return [
+    { key: 'id', displayName: i18n.getValue(`${SECTION}.details_id`), type: 'text' },
+    { key: 'full_name', displayName: i18n.getValue(`${SECTION}.details_full_name`), type: 'text' },
+    { key: 'user_email', displayName: i18n.getValue(`${SECTION}.details_email`), type: 'text' },
+    { key: 'roles.0.role_name', displayName: i18n.getValue(`${SECTION}.details_role`), type: 'text' },
+    { key: 'user_permissions', displayName: i18n.getValue(`${SECTION}.details_extra_permissions`), type: 'text' },
+    { key: 'is_blocked', displayName: i18n.getValue(`${SECTION}.details_blocked`), type: 'text', chartable: true },
+    { key: 'activated_at', displayName: i18n.getValue(`${SECTION}.details_activated`), type: 'date', format: 'medium' },
+    { key: 'enable_2fa', displayName: i18n.getValue(`${SECTION}.details_2fa_own`), type: 'text', chartable: true },
+    { key: 'two_fa_forced_by_admin', displayName: i18n.getValue(`${SECTION}.details_2fa_forced`), type: 'text', chartable: true },
+    { key: 'internal_note', displayName: i18n.getValue(`${SECTION}.details_note`), type: 'text' },
+    { key: 'created_at', displayName: i18n.getValue(`${SECTION}.details_created`), type: 'date', format: 'medium' },
+    { key: 'updated_at', displayName: i18n.getValue(`${SECTION}.details_updated`), type: 'date', format: 'medium' },
+  ];
+}

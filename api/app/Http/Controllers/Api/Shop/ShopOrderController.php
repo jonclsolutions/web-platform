@@ -130,15 +130,15 @@ class ShopOrderController extends Controller
 
         if (!empty($validated['coupon_id'])) {
             $coupon = \App\Models\Shop\ShopCoupon::find($validated['coupon_id']);
-            if (!$coupon) { return response()->json(['message' => 'Vybraný kupón neexistuje.'], 422); }
-            if (!$coupon->is_active) { return response()->json(['message' => 'Tento kupón není aktivní.'], 422); }
+            if (!$coupon) { return response()->json(['message' => 'The selected coupon does not exist.'], 422); }
+            if (!$coupon->is_active) { return response()->json(['message' => 'This coupon is not active.'], 422); }
 
             $now = now();
-            if ($coupon->valid_from && $now->lt($coupon->valid_from)) { return response()->json(['message' => 'Platnost tohoto kupónu ještě nezačala.'], 422); }
-            if ($coupon->valid_until && $now->gt($coupon->valid_until)) { return response()->json(['message' => 'Platnost tohoto kupónu již vypršela.'], 422); }
-            if ($coupon->max_usage > 0 && $coupon->usage_count >= $coupon->max_usage) { return response()->json(['message' => 'Tento kupón již byl vyčepan.'], 422); }
+            if ($coupon->valid_from && $now->lt($coupon->valid_from)) { return response()->json(['message' => 'The validity of this coupon has not started yet.'], 422); }
+            if ($coupon->valid_until && $now->gt($coupon->valid_until)) { return response()->json(['message' => 'The validity of this coupon has already expired.'], 422); }
+            if ($coupon->max_usage > 0 && $coupon->usage_count >= $coupon->max_usage) { return response()->json(['message' => 'This coupon has already been exhausted.'], 422); }
             if ($coupon->min_order_amount > 0 && $totalAmount < (float)$coupon->min_order_amount) {
-                return response()->json(['message' => "Minimální hodnota objednávky pro tento kupón je " . number_format($coupon->min_order_amount, 2) . " EUR."], 422);
+                return response()->json(['message' => "The minimum order amount for this coupon is " . number_format($coupon->min_order_amount, 2) . " EUR."], 422);
             }
 
             $discountAmount = ($coupon->discount_type === 'percent')
@@ -238,15 +238,15 @@ class ShopOrderController extends Controller
             if ($order->customer) { $order->customer->recalculateTotalSpent(); }
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
-            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder', "Vytvořena objednávka: {$order->order_number}.", $order->id, 'ShopOrder');
+            $this->logAction($request, ShopLog::class, 'create', 'ShopOrder', "Created order: {$order->order_number}.", $order->id, 'ShopOrder');
 
             return response()->json(new ShopOrderResource($order), 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("ShopOrder creation error: " . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Vytvoření objednávky selhalo: " . $e->getMessage());
-            return response()->json(['message' => 'Vytvoření objednávky selhalo: ' . $e->getMessage()], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Order creation failed: " . $e->getMessage());
+            return response()->json(['message' => 'Order creation failed: ' . $e->getMessage()], 500);
         }
     }
 
@@ -291,14 +291,14 @@ class ShopOrderController extends Controller
             if ($order->customer) { $order->customer->recalculateTotalSpent(); }
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
-            $this->logAction($request, ShopLog::class, 'update', 'ShopOrder', "Aktualizace objednávky: {$order->order_number}", $order->id, 'ShopOrder');
+            $this->logAction($request, ShopLog::class, 'update', 'ShopOrder', "Updated order: {$order->order_number}", $order->id, 'ShopOrder');
 
             return response()->json(new ShopOrderResource($order));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("ShopOrder update error: " . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Aktualizace selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
-            return response()->json(['message' => 'Aktualizace selhala: ' . $e->getMessage()], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
+            return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);
         }
     }
 
@@ -323,7 +323,7 @@ class ShopOrderController extends Controller
             if ($order->customer) { $order->customer->recalculateTotalSpent(); }
         });
 
-        $this->logAction($request, ShopLog::class, 'status_change', 'ShopOrder', "Změna stavu objednávky {$order->order_number}: {$oldStatus} -> {$newStatus}", $order->id, 'ShopOrder');
+        $this->logAction($request, ShopLog::class, 'status_change', 'ShopOrder', "Order status changed {$order->order_number}: {$oldStatus} -> {$newStatus}", $order->id, 'ShopOrder');
 
         return response()->json($order);
     }
@@ -350,14 +350,14 @@ class ShopOrderController extends Controller
             DB::commit();
             if ($order->customer) { $order->customer->recalculateTotalSpent(); }
 
-            $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopOrder', "Smazání objednávky ID: $id", (int) $id, 'ShopOrder');
+            $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopOrder', "Deleted order ID: $id", (int) $id, 'ShopOrder');
 
             return response()->json(null, 204);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("ShopOrder delete error: " . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Smazání selhalo ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
-            return response()->json(['message' => 'Smazání selhalo.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Deletion failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
+            return response()->json(['message' => 'Deletion failed.'], 500);
         }
     }
 
@@ -372,13 +372,13 @@ class ShopOrderController extends Controller
             $order->items()->restore();
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
-            $this->logAction($request, ShopLog::class, 'restore', 'ShopOrder', "Obnova objednávky ID: $id", (int) $id, 'ShopOrder');
+            $this->logAction($request, ShopLog::class, 'restore', 'ShopOrder', "Restored order ID: $id", (int) $id, 'ShopOrder');
 
             return response()->json(new ShopOrderResource($order));
         } catch (\Exception $e) {
             Log::error("ShopOrder restore error: " . $e->getMessage());
-            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Obnova selhala ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
-            return response()->json(['message' => 'Obnova objednávky selhala.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Restoration failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
+            return response()->json(['message' => 'Order restoration failed.'], 500);
         }
     }
 
@@ -400,12 +400,12 @@ class ShopOrderController extends Controller
             }
 
             DB::commit();
-            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopOrder', "Vysypání koše objednávek. Počet: $count");
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopOrder', "Purged trashed orders. Count: $count");
             return response()->json(null, 204);
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Chyba při vyprazdňování koše: " . $e->getMessage());
-            return response()->json(['message' => 'Chyba při vyprazdňování koše.'], 500);
+            $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Error purging trash: " . $e->getMessage());
+            return response()->json(['message' => 'Error purging trash.'], 500);
         }
     }
 

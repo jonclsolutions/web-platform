@@ -5,29 +5,29 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Veřejné (nepřihlášené) endpointy pro aktivaci účtu založeného adminem -
- * ověření platnosti odkazu (`show`) a nastavení prvního hesla (`activate`). Účet, který
- * je zablokovaný (`is_blocked`), NELZE aktivovat, ani kdyby měl platný token.
- * @note Po úspěšné aktivaci uživatel NENÍ automaticky přihlášen - frontend přesměruje
- * na login (rozhodnuto v backlogu: "presmerovat na prihlaseni").
+ * @description Public (unauthenticated) endpoints for activating an account created by an admin -
+ * verification of link validity (`show`) and setting the initial password (`activate`). An account that
+ * is blocked (`is_blocked`) CANNOT be activated, even with a valid token.
+ * @note Upon successful activation, the user is NOT automatically logged in - the frontend redirects
+ * to login (decided in backlog: "redirect to login").
  * @dependencies
- * - AccountActivationToken: model tokenu, hashovaný v DB, viz jeho hlavička.
- * - LogsActivity: sdílený audit trait, stejné volání jako zbytek admin kontrolerů.
- * - CoreSecurityEvent: bezpečnostní monitoring, viz refactor-note níže.
+ * - AccountActivationToken: token model, hashed in DB, see its header.
+ * - LogsActivity: shared audit trait, same call as the rest of admin controllers.
+ * - CoreSecurityEvent: security monitoring, see refactor-note below.
  *
- * @bugfix-note (2026-08-24) BACKLOG "security_events musí pokrýt VŠECHNY typy útoku":
- * neplatný/expirovaný aktivační token a pokus aktivovat zablokovaný účet se dřív
- * nezapisovaly VŮBEC - ani do `core_logs`, ani do `core_security_events`. Token je
- * 64znakový náhodný string, takže hádání jednoho konkrétního tokenu je prakticky
- * nemožné, ALE endpoint dává útočníkovi možnost NASTAVIT HESLO cizímu účtu, pokud by
- * token uhodl nebo unikl (log leak, sdílený odkaz omylem) - proto i tady platí defense
- * in depth. Přidány dva zápisy:
- * - `account_activation_token_invalid` (warning) v `findValidToken()` - token
- *   neexistuje nebo vypršel. Sdíleno oběma veřejnými metodami (`show()`/`activate()`).
- * - `account_activation_blocked_account` (warning) v `activate()` - token je platný,
- *   ale účet byl mezitím zablokován. Signalizuje, že někdo drží odkaz na účet, který
- *   admin mezitím vědomě zablokoval (např. zaměstnanec odešel dřív, než si stihl
- *   nastavit heslo).
+ * @bugfix-note (2026-08-24) BACKLOG "security_events must cover ALL attack types":
+ * invalid/expired activation token and attempt to activate a blocked account previously
+ * were not logged at all - neither to `core_logs` nor to `core_security_events`. The token is
+ * a 64-character random string, so guessing one specific token is practically
+ * impossible, BUT the endpoint gives an attacker the ability to SET A PASSWORD on a foreign account if the
+ * token is guessed or leaked (log leak, accidental shared link) - hence defense
+ * in depth applies here as well. Two writes added:
+ * - `account_activation_token_invalid` (warning) in `findValidToken()` - token
+ *   does not exist or has expired. Shared by both public methods (`show()`/`activate()`).
+ * - `account_activation_blocked_account` (warning) in `activate()` - token is valid,
+ *   but the account was blocked in the meantime. Signals that someone holds a link to an account that
+ *   the admin intentionally blocked in the meantime (e.g., employee left before setting
+ *   a password).
  */
 
 namespace App\Http\Controllers\Api;
@@ -47,9 +47,9 @@ class AccountActivationController extends Controller
     use LogsActivity;
 
     /**
-     * @description Ověří platnost aktivačního odkazu BEZ jeho spotřebování - frontend
-     * podle výsledku zobrazí buď formulář na heslo, nebo chybovou hlášku. Token se tu
-     * nijak neinvaliduje, jen se čte.
+     * @description Verifies the validity of the activation link WITHOUT consuming it - the frontend
+     * displays either the password form or an error message based on the result. The token is
+     * not invalidated here, only read.
      */
     public function show(Request $request, string $token): JsonResponse
     {
@@ -60,7 +60,7 @@ class AccountActivationController extends Controller
 
         $user = User::find($record->user_id);
         if (!$user || $user->is_blocked) {
-            return response()->json(['message' => 'Účet je zablokovaný nebo neexistuje.'], 403);
+            return response()->json(['message' => 'The account is blocked or does not exist.'], 403);
         }
 
         return response()->json([
@@ -70,10 +70,10 @@ class AccountActivationController extends Controller
     }
 
     /**
-     * @description Nastaví heslo, aktivuje účet (`activated_at`) a spotřebuje token
-     * (smaže VŠECHNY aktivační tokeny uživatele, ne jen ten použitý - jistota proti
-     * souběžnému vydání druhého tokenu, ke kterému by teoreticky nemělo dojít, viz
-     * `AccountActivationToken::issueFor()`, ale je to levná dodatečná pojistka).
+     * @description Sets the password, activates the account (`activated_at`), and consumes the token
+     * (deletes ALL activation tokens of the user, not just the used one - safety against
+     * concurrent issuance of a second token, which theoretically should not happen, see
+     * `AccountActivationToken::issueFor()`, but it is a cheap additional safeguard).
      */
     public function activate(Request $request, string $token): JsonResponse
     {
@@ -85,7 +85,7 @@ class AccountActivationController extends Controller
         $user = User::find($record->user_id);
         if (!$user) {
             $record->delete();
-            return response()->json(['message' => 'Účet nenalezen.'], 404);
+            return response()->json(['message' => 'Account not found.'], 404);
         }
 
         if ($user->is_blocked) {
@@ -96,15 +96,15 @@ class AccountActivationController extends Controller
                 CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
             );
 
-            return response()->json(['message' => 'Účet byl zablokován. Kontaktujte administrátora.'], 403);
+            return response()->json(['message' => 'The account has been blocked. Please contact the administrator.'], 403);
         }
 
         $validated = $request->validate([
             'password'              => ['required', 'string', 'max:16', Password::min(8)->letters()->numbers()->symbols()],
             'password_confirmation' => ['required', 'same:password'],
         ], [
-            'password.required'          => 'Heslo je povinné.',
-            'password_confirmation.same' => 'Hesla se neshodují.',
+            'password.required'          => 'Password is required.',
+            'password_confirmation.same' => 'Passwords do not match.',
         ]);
 
         $user->update([
@@ -114,16 +114,16 @@ class AccountActivationController extends Controller
 
         AccountActivationToken::where('user_id', $user->id)->delete();
 
-        $this->logAction($request, CoreLog::class, 'account_activated', 'User', "Účet aktivován: {$user->user_email}", $user->id, 'User');
+        $this->logAction($request, CoreLog::class, 'account_activated', 'User', "Account activated: {$user->user_email}", $user->id, 'User');
 
-        return response()->json(['message' => 'Heslo bylo nastaveno. Nyní se můžete přihlásit.']);
+        return response()->json(['message' => 'Password has been set. You can now log in.']);
     }
 
     /**
-     * @description Sdílené ověření tokenu pro show()/activate() - musí existovat a
-     * nesmí být expirovaný. Vrací buď platný model, nebo hotovou chybovou JsonResponse
-     * (union return typ - volající kontroluje `instanceof JsonResponse`). Neplatný/
-     * expirovaný token zapisuje bezpečnostní event - viz bugfix-note v hlavičce třídy.
+     * @description Shared token verification for show()/activate() - must exist and
+     * must not be expired. Returns either a valid model or a ready error JsonResponse
+     * (union return type - caller checks `instanceof JsonResponse`). Invalid/
+     * expired token logs a security event - see bugfix-note in file header.
      */
     private function findValidToken(Request $request, string $token): AccountActivationToken|JsonResponse
     {
@@ -139,7 +139,7 @@ class AccountActivationController extends Controller
                 ])
             );
 
-            return response()->json(['message' => 'Odkaz je neplatný nebo vypršel.'], 410);
+            return response()->json(['message' => 'The link is invalid or has expired.'], 410);
         }
 
         return $record;

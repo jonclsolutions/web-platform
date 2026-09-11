@@ -4,11 +4,14 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-09-09) BACKLOG "vícejazyčná administrace, žádné hardcoded
+        texty": VŠECHNY natvrdo psané české texty nahrazeny `t('shop-categories.xxx')`
+        bindingy - viz categories.component.ts stejné datum.
 -->
 
 <div class="container mx-auto p-4 max-w-5xl">
   <div class="toolbar-actions">
-    <div class="table-header">Správa kategorií</div>
+    <div class="table-header">{{ t('page_title') }}</div>
     <div class="toolbar-actions-in">
       <app-button-builder
         [configs]="toolbarButtons"
@@ -24,7 +27,7 @@
         @if (categories.length > 0) {
           <ng-container *ngTemplateOutlet="treeRef; context:{ $implicit: categories }"></ng-container>
         } @else {
-          <div class="p-10 text-center text-gray-400">Žádné kategorie k zobrazení.</div>
+          <div class="p-10 text-center text-gray-400">{{ t('no_categories') }}</div>
         }
       </div>
     </div>
@@ -41,10 +44,10 @@
             </span>
             <div>
               <div class="product-panel-name">{{ selectedCategory.name }}</div>
-              <div class="product-panel-sub">Produkty v kategorii</div>
+              <div class="product-panel-sub">{{ t('products_in_category') }}</div>
             </div>
           </div>
-          <button class="panel-close-btn" (click)="closeProductPanel()" title="Zavřít">✕</button>
+          <button class="panel-close-btn" (click)="closeProductPanel()" [title]="i18n.getValue('shared.close')">✕</button>
         </div>
 
         <div class="panel-search-row">
@@ -57,21 +60,21 @@
             <input
               class="panel-search-input"
               [(ngModel)]="productSearch"
-              placeholder="Hledat produkt…"
+              [placeholder]="t('search_product_placeholder')"
               type="text">
           </div>
           <button class="btn-add-product" (click)="openAddProductSearch()">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
-            Přidat produkt
+            {{ t('btn_add_product') }}
           </button>
         </div>
 
         @if (showAddProduct) {
           <div class="add-product-section">
             <div class="add-product-header">
-              <span class="add-product-title">Přidat produkt do kategorie</span>
+              <span class="add-product-title">{{ t('add_product_to_category_title') }}</span>
               <button class="add-product-close" (click)="showAddProduct = false">✕</button>
             </div>
             <div class="panel-search-wrap mb-2">
@@ -83,7 +86,7 @@
               <input
                 class="panel-search-input"
                 [(ngModel)]="addProductSearch"
-                placeholder="Hledat produkt ke přidání…"
+                [placeholder]="t('search_product_to_add_placeholder')"
                 type="text"
                 autofocus>
             </div>
@@ -91,9 +94,9 @@
               @if (filteredAllProducts.length === 0) {
                 <div class="empty-add-list">
                   @if (allProducts.length === 0) {
-                    <span class="loading-dots">Načítání…</span>
+                    <span class="loading-dots">{{ t('loading') }}</span>
                   } @else {
-                    Žádné další produkty k přidání.
+                    {{ t('no_more_products_to_add') }}
                   }
                 </div>
               }
@@ -113,7 +116,7 @@
                       </span>
                     }
                   </div>
-                  <button class="btn-item-add" (click)="addProductToCategory(product)">Přidat</button>
+                  <button class="btn-item-add" (click)="addProductToCategory(product)">{{ t('btn_add') }}</button>
                 </div>
               }
             </div>
@@ -123,14 +126,14 @@
         <div class="product-list">
           @if (loadingProducts) {
             <div class="product-list-loading">
-              <span class="loading-dots">Načítání produktů…</span>
+              <span class="loading-dots">{{ t('loading_products') }}</span>
             </div>
           } @else if (filteredCategoryProducts.length === 0) {
             <div class="product-list-empty">
               @if (productSearch) {
-                Žádné produkty neodpovídají hledání.
+                {{ t('no_products_match_search') }}
               } @else {
-                Kategorie neobsahuje žádné produkty.
+                {{ t('category_has_no_products') }}
               }
             </div>
           } @else {
@@ -150,17 +153,17 @@
                 <div class="product-item-info">
                   <span class="product-item-name">{{ product.name }}</span>
                   @if (product.sku) {
-                    <span class="product-item-sku">SKU: {{ product.sku }}</span>
+                    <span class="product-item-sku">{{ t('sku_prefix') }}: {{ product.sku }}</span>
                   }
                   <span class="product-item-status" [class.active]="product.is_active">
                     <span class="status-dot-mini" [class.active]="product.is_active"></span>
-                    {{ product.is_active ? 'Aktivní' : 'Neaktivní' }}
+                    {{ product.is_active ? t('status_active') : t('status_inactive') }}
                   </span>
                 </div>
                 <button
                   class="btn-remove-product"
                   (click)="removeProductFromCategory(product)"
-                  title="Odebrat z kategorie">
+                  [title]="t('remove_from_category_title')">
                   ✕
                 </button>
               </div>
@@ -169,9 +172,9 @@
         </div>
 
         <div class="panel-footer">
-          Celkem: <strong>{{ filteredCategoryProducts.length }}</strong>
-          @if (productSearch) { z {{ categoryProducts.length }} }
-          produktů
+          {{ t('total_label') }} <strong>{{ filteredCategoryProducts.length }}</strong>
+          @if (productSearch) { {{ t('of_label') }} {{ categoryProducts.length }} }
+          {{ t('products_label') }}
         </div>
       </div>
     }
@@ -221,9 +224,9 @@
                     [class.error]="isDuplicateName(node) || (node.name.length === 0)"
                     #editInput>
                   @if (isDuplicateName(node)) {
-                    <span class="error-msg">Název již existuje</span>
+                    <span class="error-msg">{{ t('error_name_exists') }}</span>
                   } @else if (!node.name || node.name.trim().length === 0) {
-                    <span class="error-msg">Název nesmí být prázdný</span>
+                    <span class="error-msg">{{ t('error_name_empty') }}</span>
                   }
                 </div>
                 <app-button-builder
@@ -234,7 +237,7 @@
             } @else {
               <span (dblclick)="startEdit(node)" class="node-name" [class.inactive]="!node.is_active">
                 {{ node.name }}
-                @if (!node.is_active) { <span class="status-badge">(neaktivní)</span> }
+                @if (!node.is_active) { <span class="status-badge">({{ t('status_inactive_paren') }})</span> }
               </span>
               @if (node.children?.length) {
                 <span class="count-badge">{{ node.directChildrenCount }} / {{ node.totalRecursiveCount }}</span>
@@ -244,7 +247,7 @@
                   class="btn-products-count"
                   (click)="openProductPanel(node, $event)"
                   [class.active]="selectedCategory?.id === node.id"
-                  title="Zobrazit produkty v kategorii">
+                  [title]="t('show_products_title')">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                     <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>

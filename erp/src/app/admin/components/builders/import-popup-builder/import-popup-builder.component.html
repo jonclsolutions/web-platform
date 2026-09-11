@@ -44,7 +44,7 @@
     }
 
     <!-- ── Krok 2: šablona + upload ───────────────────────────────────── -->
-    @if (step === 'upload') {
+        @if (step === 'upload') {
       <div class="import-body">
         <button type="button" class="import-template-btn" (click)="downloadTemplate()" [disabled]="isDownloadingTemplate">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -57,6 +57,22 @@
         <p class="import-hint">
           {{ strings.upload_hint }}
         </p>
+
+        @if (enumHints.length > 0) {
+          <div class="import-enum-hints">
+            <div class="import-enum-hints-title">{{ strings.enum_hints_title }}</div>
+            @for (hint of enumHints; track hint.key) {
+              <div class="import-enum-hint-row">
+                <span class="import-enum-hint-key">{{ hint.key }}</span>
+                <span class="import-enum-hint-values">
+                  @for (opt of hint.options; track opt.value; let last = $last) {
+                    <code>{{ opt.value }}</code>@if (!last) {, }
+                  }
+                </span>
+              </div>
+            }
+          </div>
+        }
 
         <label class="import-file-drop">
           <input type="file" (change)="onFileSelected($event)" class="import-file-input">

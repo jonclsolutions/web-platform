@@ -16,6 +16,20 @@
  * changeThreadStatus, sendReply, sendThreadModalReply) - `DataHandler.handleError()`
  * je jediné autoritativní místo pro chybový toast. `loadOrderOptions()` už žádný toast
  * neměl, beze změny.
+ *
+ * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * `Config.*` konstanty nahrazeny `Config.create*()` factory funkcemi, stejný vzor jako
+ * ostatní web-pages stránky. `checkpointStatusLabels` (dřív `readonly` field
+ * initializer) přepsán na `Config.createCheckpointStatusLabels(i18n)`, přepočítávaný
+ * ve stejném `translations$.subscribe()` bloku. `graphColumns` přestalo být `readonly`.
+ * `threadStatusLabel()`/`threadAuthorLabel()` NOVÉ pomocné metody nahrazují inline
+ * ternární operátory v šabloně (`thread.status === 'closed' ? 'Uzavřeno' : 'Aktivní'`,
+ * `msg.author_type === 'admin' ? 'Administrátor' : 'Zákazník'`) - šablona teď volá
+ * `t()`-backed metodu místo natvrdo psaného českého textu přímo v HTML. VŠECHNY
+ * `alertDialogService.open()`/`confirmDialogService.open()` texty přepsány na `t()`.
+ * `loadOrderOptions()` teď používá `Config.createNoOrderOptionLabel(i18n)` pro placeholder
+ * option - SDÍLENÝ s `createProjectFormFields()`, aby oba texty ("Bez realizace...")
+ * vždy odpovídaly stejnému i18n klíči.
  */
 
 import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -67,7 +81,7 @@ interface RevealedPassword {
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [SHARED_UI_BUILDERS, FormsModule,GraphBuilderComponent],
+  imports: [SHARED_UI_BUILDERS, FormsModule, GraphBuilderComponent],
   templateUrl: './projects.component.html',
   styleUrls: ['../default-style.css', './project-manage-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -75,17 +89,24 @@ interface RevealedPassword {
 export class ProjectsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   @ViewChild('threadsTable') threadsTable!: TableBuilderComponent;
-  tableCaption: string = 'Projekty';
-  threadsTableCaption: string = 'Zákaznická vlákna';
+
+  protected override translationSection: string = 'projects';
+
+  public override t(key: string): string {
+    return this.i18n.getValue(`projects.${key}`);
+  }
+
+  tableCaption: string = '';
+  threadsTableCaption: string = '';
 
   override apiEndpoint: string = 'web/projects';
 
-  buttons = Config.PROJECT_BUTTONS;
-  formFields: Core.InputDefinition[] = Config.PROJECT_FORM_FIELDS.map(f => ({ ...f }));
-  projectColumns = Config.PROJECT_COLUMNS;
-  trashProjectColumns = Config.PROJECT_TRASH_COLUMNS;
-  filterColumns = Config.PROJECT_FILTER_COLUMNS;
-  detailsColumns = Config.PROJECT_DETAILS_COLUMNS;
+  buttons: Core.TableButtons[] = [];
+  formFields: Core.InputDefinition[] = [];
+  projectColumns: Core.ColumnDefinition[] = [];
+  trashProjectColumns: Core.ColumnDefinition[] = [];
+  filterColumns: Core.FilterColumns[] = [];
+  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   selectedItemForEdit: any | null = null;
   selectedItemForDetails: any | null = null;
@@ -113,7 +134,8 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   revealedPassword: RevealedPassword | null = null;
   passwordVisible = false;
 
-  readonly checkpointStatusLabels = Config.CHECKPOINT_STATUS_LABELS;
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` field initializer - viz hlavička souboru. */
+  checkpointStatusLabels: Record<string, string> = {};
 
   private readonly PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
 
@@ -121,10 +143,10 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   // ── Cross-project tabulka požadavků ─────────────────────────────────────
   readonly threadsApiEndpoint = 'web/project-threads';
-  threadColumns = Config.PROJECT_THREAD_COLUMNS;
-  threadButtons = Config.PROJECT_THREAD_BUTTONS;
-  threadFilterColumns = Config.PROJECT_THREAD_FILTER_COLUMNS;
-  threadDetailsColumns = Config.PROJECT_THREAD_DETAILS_COLUMNS;
+  threadColumns: Core.ColumnDefinition[] = [];
+  threadButtons: Core.TableButtons[] = [];
+  threadFilterColumns: Core.FilterColumns[] = [];
+  threadDetailsColumns: Core.ItemDetailsColumns[] = [];
   threadFormFields: Core.InputDefinition[] = [];
 
   threadsData: any[] = [];
@@ -166,15 +188,10 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     }
     return this._projectThreadsCrud;
   }
-showGraphBuilder = false;
-  readonly graphColumns: GraphColumnOption[] = Config.PROJECT_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
+
+  /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
+  graphColumns: GraphColumnOption[] = [];
+
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -184,17 +201,42 @@ showGraphBuilder = false;
     private confirmDialogService: ConfirmDialogService
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.threadsTableCaption = this.t('thread_table_header');
+      this.buttons = Config.createProjectButtons(this.i18n);
+      this.formFields = Config.createProjectFormFields(this.i18n);
+      this.projectColumns = Config.createProjectColumns(this.i18n);
+      this.trashProjectColumns = Config.createProjectTrashColumns(this.i18n);
+      this.filterColumns = Config.createProjectFilterColumns(this.i18n);
+      this.detailsColumns = Config.createProjectDetailsColumns(this.i18n);
+      this.checkpointStatusLabels = Config.createCheckpointStatusLabels(this.i18n);
+      this.threadColumns = Config.createProjectThreadColumns(this.i18n);
+      this.threadButtons = Config.createProjectThreadButtons(this.i18n);
+      this.threadFilterColumns = Config.createProjectThreadFilterColumns(this.i18n);
+      this.threadDetailsColumns = Config.createProjectThreadDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
   get toolbarButtons(): Core.Button[] {
-    return Config.PROJECT_TOOLBAR_BUTTONS.map(btn => {
+    return Config.createProjectToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
         updatedBtn.showIf = false;
       }
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
         case 'handleCreateFormOpened':
@@ -202,7 +244,7 @@ showGraphBuilder = false;
           if (updatedBtn.showIf !== false) updatedBtn.showIf = !this.showTrashTable;
           break;
         case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
+          updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
           updatedBtn.isActive = this.showTrashTable;
           break;
       }
@@ -211,10 +253,10 @@ showGraphBuilder = false;
   }
 
   get threadsToolbarButtons(): Core.Button[] {
-    return Config.PROJECT_THREAD_TOOLBAR_BUTTONS.map(btn => {
+    return Config.createProjectThreadToolbarButtons(this.i18n).map(btn => {
       const updated = { ...btn };
       if (btn.action === 'toggleThreadsFilters') {
-        updated.label = this.isThreadsFilterVisible ? 'Skrýt filtry' : 'Filtry';
+        updated.label = this.isThreadsFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
         updated.isActive = this.isThreadsFilterVisible;
       }
       return updated;
@@ -288,6 +330,10 @@ showGraphBuilder = false;
     if (this.activeTable) this.activeTable.exportToCSV();
   }
 
+  /**
+   * @refactor-note (2026-09-08) `— Bez realizace...` placeholder teď přes
+   * `Config.createNoOrderOptionLabel(i18n)` - SDÍLENÝ text s `createProjectFormFields()`.
+   */
   private loadOrderOptions(onLoaded: () => void): void {
     this.dataHandler.getCollection<any>('web/sales_orders', { no_pagination: 'true', sort_by: 'id', sort_direction: 'desc' })
       .subscribe({
@@ -295,7 +341,7 @@ showGraphBuilder = false;
           const orderField = this.formFields.find(f => f.column_name === 'order_id');
           if (orderField) {
             orderField.options = [
-              { value: '', label: '— Bez realizace (samostatný projekt) —' },
+              { value: '', label: Config.createNoOrderOptionLabel(this.i18n) },
               ...orders.map((o: any) => ({ value: String(o.id), label: `#${o.id} — ${o.client_name}` })),
             ];
           }
@@ -331,11 +377,11 @@ showGraphBuilder = false;
       next: (result: any) => {
         if (!formData.id && result?.generated_password) {
           this.storeRevealedPassword(result.id, result.generated_password, result.public_url);
-          this.alertDialogService.open('Úspěch', 'Projekt byl úspěšně vytvořen. Přístupové heslo a odkaz najdeš v panelu Správa.', 'success');
+          this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('project_created_message'), 'success');
           this.refreshData();
           this.openManageModal(result);
         } else {
-          this.alertDialogService.open('Úspěch', 'Projekt byl upraven.', 'success');
+          this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('project_updated_message'), 'success');
           this.refreshData();
         }
       }
@@ -438,21 +484,21 @@ showGraphBuilder = false;
   copyPassword(): void {
     if (!this.revealedPassword) return;
     navigator.clipboard?.writeText(this.revealedPassword.password);
-    this.alertDialogService.open('Zkopírováno', 'Heslo bylo zkopírováno do schránky.', 'success');
+    this.alertDialogService.open(this.t('copied_title'), this.t('password_copied_message'), 'success');
   }
 
   copyPublicUrl(): void {
     const url = this.revealedPassword?.url ?? this.managingProject?.public_url;
     if (!url) return;
     navigator.clipboard?.writeText(url);
-    this.alertDialogService.open('Zkopírováno', 'Veřejný odkaz byl zkopírován do schránky.', 'success');
+    this.alertDialogService.open(this.t('copied_title'), this.t('url_copied_message'), 'success');
   }
 
   async regeneratePassword(): Promise<void> {
     if (!this.managingProject || this.passwordRegenerating) return;
     const confirmed = await this.confirmDialogService.open(
-      'Vygenerovat nové heslo',
-      'Staré heslo přestane platit a všechny aktuálně přihlášené relace zákazníka budou odhlášeny. Pokračovat?'
+      this.t('regenerate_password_confirm_title'),
+      this.t('regenerate_password_confirm_message')
     );
     if (!confirmed) return;
 
@@ -465,7 +511,7 @@ showGraphBuilder = false;
           this.passwordRegenerating = false;
           this.storeRevealedPassword(this.managingProject.id, res.generated_password, this.managingProject.public_url);
           this.passwordVisible = true;
-          this.alertDialogService.open('Nové heslo vygenerováno', 'Nové heslo je zobrazené v panelu Přístup.', 'success');
+          this.alertDialogService.open(this.t('password_regenerated_title'), this.t('password_regenerated_message'), 'success');
           this.cd.markForCheck();
         },
         error: () => {
@@ -505,7 +551,10 @@ showGraphBuilder = false;
 
   async deleteCheckpoint(checkpoint: ProjectCheckpoint): Promise<void> {
     if (!this.managingProject) return;
-    const confirmed = await this.confirmDialogService.open('Smazat checkpoint', `Opravdu smazat "${checkpoint.label}"?`);
+    const confirmed = await this.confirmDialogService.open(
+      this.t('delete_checkpoint_confirm_title'),
+      this.t('delete_checkpoint_confirm_message').replace('{label}', checkpoint.label)
+    );
     if (!confirmed) return;
 
     this.checkpointsCrud.remove(checkpoint.id).subscribe({
@@ -569,6 +618,22 @@ showGraphBuilder = false;
       this.replySending = false;
       this.cd.markForCheck();
     }
+  }
+
+  /**
+   * @refactor-note (2026-09-08) NOVÉ - nahrazuje inline ternár v šabloně
+   * (`thread.status === 'closed' ? 'Uzavřeno' : 'Aktivní'`). Přeložený text pro
+   * DVĚ hodnoty thread `status`, ne generický `mapLabeledOptions()` lookup, protože se
+   * volá přímo se syrovým `status` stringem mimo `options` pole (šablona nemá
+   * `FilterColumns`/`InputDefinition` po ruce v tomhle konkrétním místě).
+   */
+  threadStatusLabel(status: string): string {
+    return status === 'closed' ? this.t('thread_status_closed') : this.t('thread_status_active');
+  }
+
+  /** @refactor-note (2026-09-08) NOVÉ - nahrazuje inline ternár `msg.author_type === 'admin' ? 'Administrátor' : 'Zákazník'`. */
+  threadAuthorLabel(authorType: 'customer' | 'admin'): string {
+    return authorType === 'admin' ? this.t('thread_author_admin') : this.t('thread_author_customer');
   }
 
   // ── Cross-project tabulka požadavků ─────────────────────────────────────
@@ -669,7 +734,8 @@ showGraphBuilder = false;
     body.width = '';
     window.scrollTo(0, this.savedScrollY);
   }
-    openGraphBuilder(): void {
+
+  openGraphBuilder(): void {
     this.showGraphBuilder = true;
     this.cd.markForCheck();
   }
@@ -678,4 +744,6 @@ showGraphBuilder = false;
     this.showGraphBuilder = false;
     this.cd.markForCheck();
   }
+
+  showGraphBuilder = false;
 }
