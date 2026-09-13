@@ -253,3 +253,29 @@
   padding-top: 24px;
   border-top: 1px solid #ececea;
 }
+.pm-message-attachments { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.pm-attachment-link {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px;
+  border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text); text-decoration: none; font-size: 0.78rem; width: fit-content;
+}
+.pm-attachment-link:hover { background: var(--surface); }
+.pm-attachment-size { color: var(--text-dim); font-size: 0.7rem; }
+
+.pm-file-attach-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.pm-file-attach-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+  border-radius: 999px; border: 1px solid var(--border-mid); background: var(--surface);
+  color: var(--text-muted); font-size: 0.74rem; font-weight: 600; cursor: pointer;
+}
+.pm-file-attach-btn:hover { background: var(--surface-2); }
+.pm-file-attach-count { font-size: 0.7rem; color: var(--text-dim); }
+
+.pm-file-chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.pm-file-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 9px;
+  border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--text-muted); max-width: 200px;
+}
+.pm-file-chip button { border: none; background: none; color: var(--text-dim); cursor: pointer; font-size: 0.68rem; }
+.pm-file-chip button:hover { color: var(--danger); }

@@ -1459,6 +1459,15 @@
     "graph_date_field_label": "Datum vytvoření"
   },
   "projects": {
+  "load_older_messages": "Načíst starší zprávy",
+  "attachment_error_too_many": "Můžete přiložit maximálně {max} souborů.",
+  "attachment_error_type": "Soubor \"{name}\" má nepodporovaný formát.",
+  "attachment_error_size": "Soubor \"{name}\" je příliš velký (max 15 MB).",
+  "attach_files_button": "Přiložit soubory",
+  "field_estimated_from_label": "Odhad dokončení od",
+  "field_estimated_to_label": "Odhad dokončení do",
+  "details_estimated_from": "Odhad dokončení od",
+  "details_estimated_to": "Odhad dokončení do",
     "table_header": "Projekty",
     "trash_header": "Koš",
     "trash_table_caption": "Smazané projekty",

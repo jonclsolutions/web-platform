@@ -98,7 +98,7 @@
   display: flex; flex-direction: column; padding: 28px 22px;
 }
 
-.pp-sidebar-top { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+.pp-sidebar-top { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; margin-top: 18px; }
 .pp-avatar {
   width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: #fff;
   display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 700; flex-shrink: 0;
@@ -222,21 +222,7 @@
   .pp-sidebar-actions { flex-direction: row; border-top: none; padding-top: 0; margin-left: auto; }
   .pp-main { padding: 24px 18px; }
 }
-/* ── Language toggle (CZ/EN chips) ────────────────────────────────────── */
-.pp-lang-toggle { display: flex; gap: 6px; padding-bottom: 14px; }
-.pp-lang-toggle-login { justify-content: center; padding-bottom: 18px; }
-.pp-lang-chip {
-  padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border-mid);
-  background: var(--surface); color: var(--text-muted); font-size: 0.72rem; font-weight: 700;
-  font-family: var(--ff); letter-spacing: 0.03em; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-.pp-lang-chip:hover { background: var(--surface-2); color: var(--text); }
-.pp-lang-chip-active { background: var(--accent); border-color: var(--accent); color: #fff; }
-.pp-lang-chip-active:hover { background: #3f3f46; color: #fff; }
 
-@media (max-width: 760px) {
-  .pp-lang-toggle { padding-bottom: 0; order: 3; margin-left: auto; }
-}
 /* ── Language dropdown (nahrazuje dřívější CZ/EN chips) ────────────────── */
 .pp-lang-dropdown { position: relative; padding-bottom: 12px; }
 .pp-lang-dropdown-login { display: flex; justify-content: center; padding-bottom: 18px; }
@@ -310,3 +296,169 @@
 }
 .pp-search-input:focus { outline: none; border-color: var(--accent); }
 .pp-threads-toolbar .pp-btn-small { flex-shrink: 0; }
+
+/* -------------------- */
+/* ── Language dropdown - minimalistický, jen vlaječka ───────────────────── */
+.pp-lang-flag-dropdown { position: relative; padding-bottom: 12px; display: flex; }
+.pp-lang-flag-dropdown-login { justify-content: center; padding-bottom: 18px; }
+
+.pp-lang-flag-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border-mid);
+  background: var(--surface); padding: 0; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; overflow: hidden; transition: border-color 0.15s ease;
+}
+.pp-lang-flag-btn:hover { border-color: var(--accent); }
+.pp-lang-flag-img { width: 100%; height: 100%; object-fit: cover; }
+
+.pp-lang-menu-backdrop { position: fixed; inset: 0; z-index: 40; }
+.pp-lang-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 41; min-width: 150px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(24,24,27,0.12); overflow: hidden;
+}
+.pp-lang-menu-centered { left: 50%; transform: translateX(-50%); }
+
+.pp-lang-menu-item {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 13px;
+  border: none; background: none; cursor: pointer; text-align: left;
+  font-size: 0.83rem; color: var(--text); font-family: var(--ff);
+}
+.pp-lang-menu-item .pp-lang-flag-img { width: 17px; height: 17px; border-radius: 3px; flex-shrink: 0; }
+.pp-lang-menu-item:hover { background: var(--surface-2); }
+.pp-lang-menu-item-active { background: var(--surface-2); font-weight: 600; }
+
+/* ── Tabs ──────────────────────────────────────────────────────────────── */
+.pp-tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.pp-tab-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 16px; border: none; background: none; cursor: pointer;
+  font-size: 0.86rem; font-weight: 600; color: var(--text-muted); font-family: var(--ff);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s ease, border-color 0.15s ease;
+}
+.pp-tab-btn:hover { color: var(--text); }
+.pp-tab-btn-active { color: var(--text); border-bottom-color: var(--accent); }
+
+.pp-tab-count {
+  font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text-muted);
+}
+.pp-tab-btn-active .pp-tab-count { background: var(--accent); color: #fff; }
+
+.pp-tab-unread-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 0.68rem; font-weight: 700;
+}
+
+.pp-tab-panel { animation: pp-fade-in 0.15s ease; }
+@keyframes pp-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Description tab ──────────────────────────────────────────────────── */
+.pp-description-block { margin-bottom: 24px; }
+.pp-description-block-title {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); margin-bottom: 8px;
+}
+
+.pp-estimate-banner {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; margin-bottom: 26px;
+  border-radius: 14px; background: var(--info-dim); color: var(--info);
+}
+.pp-estimate-banner svg { flex-shrink: 0; margin-top: 2px; }
+.pp-estimate-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.85; margin-bottom: 2px; }
+.pp-estimate-value { font-size: 0.95rem; font-weight: 700; }
+
+/* ── Progress bar (Checkpoints tab) ───────────────────────────────────── */
+.pp-progress-block { margin-bottom: 22px; }
+.pp-progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.pp-progress-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+.pp-progress-fraction { font-size: 0.78rem; font-weight: 700; color: var(--text); }
+.pp-progress-track { height: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.pp-progress-fill { height: 100%; border-radius: 999px; background: var(--success); transition: width 0.3s ease; }
+
+/* ── Threads toolbar (search + new thread) ────────────────────────────── */
+.pp-threads-toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
+.pp-search-wrap { position: relative; flex: 1; }
+.pp-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
+.pp-search-input {
+  width: 100%; padding: 9px 12px 9px 34px; border-radius: 999px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text); font-size: 0.85rem; font-family: inherit;
+}
+.pp-search-input:focus { outline: none; border-color: var(--accent); }
+.pp-threads-toolbar .pp-btn-small { flex-shrink: 0; }
+
+.pp-thread-unread-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
+}
+
+/* ── Contacts & Billing tab ───────────────────────────────────────────── */
+.pp-contacts-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; max-width: 480px;
+}
+.pp-contacts-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+.pp-contacts-row:last-child { border-bottom: none; }
+.pp-contacts-row-main { border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 4px; }
+.pp-contacts-company-name { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.pp-contacts-label { font-size: 0.82rem; color: var(--text-muted); flex-shrink: 0; }
+.pp-contacts-value { font-size: 0.88rem; color: var(--text); font-weight: 600; text-align: right; }
+/* ── File attach (before sending) ─────────────────────────────────────── */
+.pp-file-attach-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pp-file-attach-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-mid);
+  background: var(--surface); color: var(--text-muted); font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+}
+.pp-file-attach-btn:hover { background: var(--surface-2); color: var(--text); }
+.pp-file-attach-count { font-size: 0.72rem; color: var(--text-dim); font-weight: 600; }
+
+.pp-file-chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.pp-file-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px 5px 10px;
+  border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 0.76rem; color: var(--text-muted); max-width: 220px;
+}
+.pp-file-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-file-chip-remove {
+  border: none; background: none; color: var(--text-dim); cursor: pointer;
+  font-size: 0.7rem; padding: 0; line-height: 1; flex-shrink: 0;
+}
+.pp-file-chip-remove:hover { color: var(--danger); }
+
+/* ── Existing attachments on a message ────────────────────────────────── */
+.pp-message-attachments { display: flex; flex-direction: column; gap: 5px; margin-top: 9px; }
+.pp-attachment-link {
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px;
+  border-radius: 10px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); text-decoration: none; font-size: 0.8rem; width: fit-content; max-width: 100%;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.pp-attachment-link:hover { border-color: var(--border-mid); background: var(--surface-2); }
+.pp-attachment-link svg { flex-shrink: 0; color: var(--text-dim); }
+.pp-attachment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.pp-attachment-size { color: var(--text-dim); font-size: 0.72rem; flex-shrink: 0; }
+.pp-load-older-btn {
+  display: block; margin: 0 auto 12px; padding: 6px 16px; border-radius: 999px;
+  border: 1px solid var(--border-mid); background: var(--surface); color: var(--text-muted);
+  font-size: 0.76rem; font-weight: 600; cursor: pointer; font-family: var(--ff);
+}
+.pp-load-older-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.pp-load-older-btn:disabled { opacity: 0.6; cursor: default; }
+
+.pp-file-error { color: var(--danger); font-size: 0.76rem; margin: -4px 0 8px; }
+.pp-thread-status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.pp-thread-status-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+.pp-thread-status-select {
+  width: auto; margin-bottom: 0; padding: 6px 10px; font-size: 0.82rem;
+}
+/* ── Help tab ──────────────────────────────────────────────────────────── */
+.pp-help-intro { color: var(--text-muted); line-height: 1.65; margin: 0 0 26px; font-size: 0.95rem; }
+.pp-help-sub { margin-left: 4px; padding-left: 14px; border-left: 2px solid var(--border); }
+.pp-help-support-box {
+  margin-top: 30px; padding: 16px 18px; border-radius: 14px;
+  background: var(--info-dim); color: var(--info);
+}
+.pp-help-support-box .pp-description-block-title { color: var(--info); opacity: 1; }
+.pp-help-support-box .pp-project-desc { color: var(--info); opacity: 0.9; }

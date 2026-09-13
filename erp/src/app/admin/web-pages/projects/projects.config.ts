@@ -111,6 +111,14 @@ export function createProjectFormFields(i18n: AdminLocalizationService): Core.In
     { column_name: 'contact_phone', label: i18n.getValue(`${SECTION}.field_phone_label`), type: 'tel', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'contact_email', label: i18n.getValue(`${SECTION}.field_email_label`), type: 'email', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'technologies', label: i18n.getValue(`${SECTION}.field_technologies_label`), type: 'textarea', required: false, editable: true, show_in_edit: true, show_in_create: true },
+    /**
+     * @refactor-note (2026-09-11) BACKLOG "project portal - odhad termínu dokončení":
+     * dvě samostatná date pole (rozptyl, ne jeden pevný termín - viz WebProject model
+     * pro odůvodnění). Oba `required: false` - projekt beze zadaného odhadu je platný
+     * stav, portál pak sekci s termínem prostě nezobrazí.
+     */
+    { column_name: 'estimated_completion_from', label: i18n.getValue(`${SECTION}.field_estimated_from_label`), type: 'date', required: false, editable: true, show_in_edit: true, show_in_create: true },
+    { column_name: 'estimated_completion_to', label: i18n.getValue(`${SECTION}.field_estimated_to_label`), type: 'date', required: false, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'visibility', label: i18n.getValue(`${SECTION}.field_visibility_label`), type: 'select', options: mapLabeledOptions(PROJECT_VISIBILITY_VALUES, VISIBILITY_LABEL_KEYS, i18n), required: true, editable: true, show_in_edit: true, show_in_create: true },
     { column_name: 'status', label: i18n.getValue(`${SECTION}.field_status_label`), type: 'select', options: mapLabeledOptions(PROJECT_STATUS_VALUES, STATUS_LABEL_KEYS, i18n), required: false, editable: true, show_in_edit: true, show_in_create: true },
   ];
@@ -156,6 +164,8 @@ export function createProjectDetailsColumns(i18n: AdminLocalizationService): Cor
     { key: 'contact_phone', displayName: i18n.getValue(`${SECTION}.details_phone`), type: 'text' },
     { key: 'contact_email', displayName: i18n.getValue(`${SECTION}.details_email`), type: 'text' },
     { key: 'technologies', displayName: i18n.getValue(`${SECTION}.details_technologies`), type: 'text' },
+    { key: 'estimated_completion_from', displayName: i18n.getValue(`${SECTION}.details_estimated_from`), type: 'date', format: 'medium' },
+    { key: 'estimated_completion_to', displayName: i18n.getValue(`${SECTION}.details_estimated_to`), type: 'date', format: 'medium' },
     { key: 'visibility', displayName: i18n.getValue(`${SECTION}.details_visibility`), type: 'text', chartable: true, chartPossibleValues: PROJECT_VISIBILITY_VALUES },
     { key: 'status', displayName: i18n.getValue(`${SECTION}.details_status`), type: 'text', chartable: true, chartPossibleValues: PROJECT_STATUS_VALUES },
     { key: 'created_at', displayName: i18n.getValue(`${SECTION}.details_created`), type: 'date', format: 'medium' },

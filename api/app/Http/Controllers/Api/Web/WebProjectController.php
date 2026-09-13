@@ -8,27 +8,22 @@
  * @description Admin CRUD for customer projects, plus password regeneration and
  * nested checkpoint management.
  *
- * @bugfix-note (2026-08-29b) CRITICAL BUG - "Cannot read properties of undefined
- * (reading 'id')" in checkpoint @for loop. `show()`/`update()`/`restore()`/
- * `storeCheckpoint()`/`updateCheckpoint()` returned `response()->json(new XResource(...))`
- * WITHOUT manual wrapping in `['data' => ...]`. Laravel does NOT automatically wrap
- * a JsonResource passed to `response()->json()` (that mechanism - `ResourceResponse::wrap()`
- * - only runs when a Resource is returned directly from a route, not when passed as an argument
- * to `response()->json()`, which instead calls `jsonSerialize()`, performing no wrapping).
- * Frontend `DataHandler.post()/put()/getOne()` (data-handler.service.ts)
- * always does `map(response => response.data)` - without the wrapper, it receives `undefined`.
- * `store()`/`regeneratePassword()` did NOT have this bug because they already explicitly
- * returned `['data' => ...]`. Now ALL methods returning a single record do so uniformly.
- * `index()` (collection) and `bulkDestroy()`/`forceDeleteAllTrashed()` unchanged -
- * `index()` has its own pagination shape, `WebProjectResource::collection()` inside
- * `WebProjectResource::collection($data->items())` is handled differently (frontend reads
- * the whole response object, not `.data` of a single item).
+ * (Earlier bugfix-note 2026-08-29b for the ['data' => ...] wrapping consistency is
+ * unchanged - see version history.)
  *
  * @note SECURITY (consultation note 3): regeneratePassword() invalidates ALL existing
  * customer sessions for the project and returns the new PLAINTEXT password exactly
  * once - it is never recoverable again after this response.
  * @note SECURITY (consultation note 2): checkpoint mutations verify
  * `$checkpoint->project_id === $project->id` explicitly (IDOR guard).
+ *
+ * @bugfix-note (2026-09-11v7) BACKLOG "smazaný projekt zanechává osiřelá vlákna":
+ * `destroy()`/`bulkDestroy()`/`forceDeleteAllTrashed()` nikdy neuklízely navázaná
+ * `checkpoints`/`sessions`/`threads` (+ jejich `messages` + přílohy zpráv) při
+ * TRVALÉM smazání (`forceDelete()`) - zůstávaly osiřelé v DB a přílohy fyzicky na
+ * disku. Nová `cascadeDeleteProjectRelations()` metoda uklízí vše v jednom místě,
+ * volaná ze všech tří force-delete cest. SOFT delete (`->delete()`) ZÁMĚRNĚ beze
+ * změny - projekt lze obnovit, takže vlákna/checkpointy musí zůstat netknuté.
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -38,6 +33,7 @@ use App\Http\Requests\Web\WebProject\{StoreWebProjectRequest, UpdateWebProjectRe
 use App\Http\Resources\Web\{WebProjectResource, WebProjectCheckpointResource};
 use App\Models\Web\{WebProject, WebProjectCheckpoint, WebProjectSession};
 use App\Models\Web\WebLog;
+use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -46,6 +42,7 @@ use Illuminate\Support\Facades\DB;
 class WebProjectController extends Controller
 {
     use LogsActivity;
+    use HandlesAttachments;
 
     public function index(Request $request): JsonResponse
     {
@@ -142,13 +139,23 @@ class WebProjectController extends Controller
         }
     }
 
+    /**
+     * @bugfix-note (2026-09-11v7) `forceDelete` větev teď volá
+     * `cascadeDeleteProjectRelations()` PŘED samotným smazáním projektu - viz
+     * hlavička souboru.
+     */
     public function destroy(Request $request, $id): JsonResponse
     {
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
             $item = WebProject::withTrashed()->findOrFail($id);
 
-            $forceDelete ? $item->forceDelete() : $item->delete();
+            if ($forceDelete) {
+                $this->cascadeDeleteProjectRelations($item);
+                $item->forceDelete();
+            } else {
+                $item->delete();
+            }
 
             $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'WebProject', "Deleted project ID: $id", (int) $id, 'WebProject');
             return response()->json(null, 204);
@@ -158,6 +165,10 @@ class WebProjectController extends Controller
         }
     }
 
+    /**
+     * @bugfix-note (2026-09-11v7) Stejná cascade cleanup logika jako `destroy()` -
+     * viz hlavička souboru.
+     */
     public function bulkDestroy(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -172,7 +183,12 @@ class WebProjectController extends Controller
 
         DB::transaction(function () use ($ids, $forceDelete, &$deletedCount) {
             foreach (WebProject::withTrashed()->whereIn('id', $ids)->get() as $item) {
-                $forceDelete ? $item->forceDelete() : $item->delete();
+                if ($forceDelete) {
+                    $this->cascadeDeleteProjectRelations($item);
+                    $item->forceDelete();
+                } else {
+                    $item->delete();
+                }
                 $deletedCount++;
             }
         });
@@ -190,10 +206,21 @@ class WebProjectController extends Controller
         return response()->json(['data' => (new WebProjectResource($item))->resolve()]);
     }
 
+    /**
+     * @bugfix-note (2026-09-11v7) Stejná cascade cleanup logika jako `destroy()` -
+     * viz hlavička souboru. Trash je vždy 100% force-delete, takže cleanup se
+     * volá bezpodmínečně pro každou položku.
+     */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
-        $count = WebProject::onlyTrashed()->count();
-        WebProject::onlyTrashed()->forceDelete();
+        $trashed = WebProject::onlyTrashed()->get();
+        $count = $trashed->count();
+
+        foreach ($trashed as $item) {
+            $this->cascadeDeleteProjectRelations($item);
+            $item->forceDelete();
+        }
+
         $this->logAction($request, WebLog::class, 'force_delete_all', 'WebProject', "Emptied project trash. Count: $count");
         return response()->json(null, 204);
     }
@@ -275,5 +302,32 @@ class WebProjectController extends Controller
         $this->logAction($request, WebLog::class, 'hard_delete', 'WebProjectCheckpoint', "Deleted checkpoint ID: {$checkpointId} (project ID: {$projectId})", (int) $projectId, 'WebProject');
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * @description Cleans up EVERYTHING that a permanently-deleted project leaves
+     * behind: active customer sessions, checkpoints, and threads - each thread's
+     * messages, and each message's file attachments (both the DB record AND the
+     * physical file on disk, via `HandlesAttachments::deleteAllAttachments()`).
+     * Called EXCLUSIVELY from the `forceDelete()` code path (see
+     * `destroy()`/`bulkDestroy()`/`forceDeleteAllTrashed()`) - a plain soft
+     * `->delete()` must NEVER call this, since the project can still be restored
+     * and its conversation history/checkpoints must remain intact in that case.
+     * @param WebProject $project The project about to be force-deleted.
+     */
+    private function cascadeDeleteProjectRelations(WebProject $project): void
+    {
+        WebProjectSession::where('project_id', $project->id)->delete();
+
+        $project->checkpoints()->delete();
+
+        $threads = $project->threads()->with('messages.attachments')->get();
+        foreach ($threads as $thread) {
+            foreach ($thread->messages as $message) {
+                $this->deleteAllAttachments($message);
+                $message->delete();
+            }
+            $thread->delete();
+        }
     }
 }

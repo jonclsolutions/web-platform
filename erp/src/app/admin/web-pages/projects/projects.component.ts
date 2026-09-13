@@ -30,9 +30,31 @@
  * `loadOrderOptions()` teď používá `Config.createNoOrderOptionLabel(i18n)` pro placeholder
  * option - SDÍLENÝ s `createProjectFormFields()`, aby oba texty ("Bez realizace...")
  * vždy odpovídaly stejnému i18n klíči.
+ *
+ * @refactor-note (2026-09-11v3) BACKLOG "vlákna přijímají přílohy": `ProjectAttachment`
+ * interface + `attachments` pole na `ProjectThreadMessage`. `replyFiles`/
+ * `threadModalReplyFiles` - vybrané soubory PŘED odesláním (max 5). `sendReply()`/
+ * `sendThreadModalReply()` staví `FormData` MÍSTO plain `{ body }`, jakmile je vybraný
+ * alespoň jeden soubor (`DataHandler.post()` funguje beze změny - `FormData` detekce
+ * je uvnitř `getHeaders()`). `formatFileSize()` pro zobrazení existujících příloh.
+ *
+ * @refactor-note (2026-09-11v4) BACKLOG "otevření vlákna ukazuje nejstarší zprávu /
+ * vlákno s 1000 zprávami nemá načítat všechny najednou": `openThread()`/
+ * `openThreadModal()` po úspěšném načtení scrollují `.pm-message-list` na SPODEK
+ * (nejnovější zprávy) přes `pmMessageListEl`/`threadModalMessageListEl` ViewChild +
+ * `scrollMessagesToBottom()`. `has_more_older_messages` flag z backendu řídí
+ * viditelnost tlačítka "Načíst starší zprávy" (`loadOlderMessages()`/
+ * `loadOlderThreadModalMessages()`) - nová dávka se PŘEDŘADÍ před stávající lokální
+ * seznam, scroll pozice se zachová (rozdíl `scrollHeight` PŘED/PO).
+ *
+ * @refactor-note (2026-09-11v4) BACKLOG "real-time validace příloh na frontendu":
+ * `validateAndAddFiles()` - kontroluje příponu, velikost a počet HNED při výběru
+ * souboru, ne až po odeslání na server. Odmítnuté soubory se do `replyFiles`/
+ * `threadModalReplyFiles` vůbec nedostanou, chybová hláška se zobrazí okamžitě pod
+ * file inputem (`replyFileError`/`threadModalReplyFileError`).
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -46,6 +68,7 @@ import * as Config from './projects.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
+
 interface ProjectCheckpoint {
   id: number;
   label: string;
@@ -53,11 +76,21 @@ interface ProjectCheckpoint {
   sort_order: number;
 }
 
+interface ProjectAttachment {
+  id: number;
+  original_filename: string;
+  mime_type: string | null;
+  size_bytes: number;
+  download_url: string;
+  view_url: string;
+}
+
 interface ProjectThreadMessage {
   id: number;
   author_type: 'customer' | 'admin';
   author_label: string | null;
   body: string;
+  attachments?: ProjectAttachment[];
   created_at: string;
 }
 
@@ -69,6 +102,7 @@ interface ProjectThread {
   priority: string;
   status: string;
   last_message_at: string | null;
+  has_more_older_messages?: boolean;
   messages?: ProjectThreadMessage[];
 }
 
@@ -89,6 +123,8 @@ interface RevealedPassword {
 export class ProjectsComponent extends BaseDataComponent<any> implements Core.OnInit {
   @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   @ViewChild('threadsTable') threadsTable!: TableBuilderComponent;
+  @ViewChild('pmMessageListEl') pmMessageListEl?: ElementRef<HTMLDivElement>;
+  @ViewChild('threadModalMessageListEl') threadModalMessageListEl?: ElementRef<HTMLDivElement>;
 
   protected override translationSection: string = 'projects';
 
@@ -126,8 +162,12 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   selectedThread: ProjectThread | null = null;
   threadDetailLoading = false;
+  olderMessagesLoading = false;
   replyBody = '';
   replySending = false;
+  /** @refactor-note (2026-09-11v3) Vybrané soubory pro odpověď ve "Správa" modalu. */
+  replyFiles: File[] = [];
+  replyFileError: string | null = null;
 
   passwordRegenerating = false;
 
@@ -138,6 +178,12 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   checkpointStatusLabels: Record<string, string> = {};
 
   private readonly PASSWORD_STORAGE_PREFIX = 'rpsw_project_pw_';
+  private readonly MAX_THREAD_ATTACHMENTS = 5;
+  private readonly ALLOWED_ATTACHMENT_EXTENSIONS = [
+    'pdf', 'doc', 'docx', 'odt', 'rtf', 'txt', 'xls', 'xlsx', 'ods', 'csv',
+    'ppt', 'pptx', 'odp', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'zip', 'rar', '7z',
+  ];
+  private readonly MAX_ATTACHMENT_SIZE_BYTES = 15 * 1024 * 1024;
 
   private savedScrollY = 0;
 
@@ -150,7 +196,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   threadFormFields: Core.InputDefinition[] = [];
 
   threadsData: any[] = [];
-  threadsFilters: Core.FilterParams = { sort_by: 'last_message_at', sort_direction: 'desc' };
+  threadsFilters: Core.FilterParams = { sort_by: 'last_message_at', sort_direction: 'desc', status: 'active' };
   threadsCurrentPage = 1;
   threadsItemsPerPage = 15;
   threadsTotalPages = 1;
@@ -160,8 +206,12 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   showThreadModal = false;
   activeThread: any | null = null;
   threadModalLoading = false;
+  threadModalOlderMessagesLoading = false;
   threadModalReplyBody = '';
   threadModalReplySending = false;
+  /** @refactor-note (2026-09-11v3) Vybrané soubory pro odpověď v cross-project thread modalu. */
+  threadModalReplyFiles: File[] = [];
+  threadModalReplyFileError: string | null = null;
 
   private _checkpointsCrud?: EntityCrudService<ProjectCheckpoint>;
   private get checkpointsCrud(): EntityCrudService<ProjectCheckpoint> {
@@ -421,6 +471,8 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.manageLoading = true;
     this.selectedThread = null;
     this.replyBody = '';
+    this.replyFiles = [];
+    this.replyFileError = null;
     this.passwordVisible = false;
     this.lockBackgroundScroll();
     this.cd.markForCheck();
@@ -565,10 +617,16 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
+  /**
+   * @refactor-note (2026-09-11v4) Po úspěšném načtení scrolluje `.pm-message-list`
+   * na spodek (nejnovější zprávy) - viz `scrollMessagesToBottom()`.
+   */
   openThread(thread: ProjectThread): void {
     this.selectedThread = thread;
     this.threadDetailLoading = true;
     this.replyBody = '';
+    this.replyFiles = [];
+    this.replyFileError = null;
     this.cd.markForCheck();
 
     this.projectThreadsCrud.getOne(thread.id).subscribe({
@@ -576,6 +634,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
         this.selectedThread = full;
         this.threadDetailLoading = false;
         this.cd.markForCheck();
+        this.scrollMessagesToBottom(this.pmMessageListEl);
       },
       error: () => { this.threadDetailLoading = false; this.cd.markForCheck(); }
     });
@@ -584,21 +643,33 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   closeThread(): void {
     this.selectedThread = null;
     this.replyBody = '';
+    this.replyFiles = [];
+    this.replyFileError = null;
   }
 
-  changeThreadStatus(status: string): void {
-    if (!this.selectedThread) return;
-    this.dataHandler.put<ProjectThread>(`web/project-threads/${this.selectedThread.id}/status`, { status })
-      .subscribe({
-        next: (updated) => {
-          this.selectedThread!.status = updated.status;
-          const inList = this.managingThreads.find(t => t.id === this.selectedThread!.id);
-          if (inList) inList.status = updated.status;
-          this.cd.markForCheck();
-        }
-      });
-  }
+changeThreadStatus(status: string): void {
+  if (!this.selectedThread) return;
+  this.dataHandler.put<ProjectThread>(`web/project-threads/${this.selectedThread.id}/status`, { status })
+    .subscribe({
+      next: (updated) => {
+        this.selectedThread!.status = updated.status;
 
+        const inManaging = this.managingThreads.find(t => t.id === this.selectedThread!.id);
+        if (inManaging) inManaging.status = updated.status;
+
+        // ← přidáno: okamžitá lokální aktualizace spodní cross-project tabulky
+        const inThreadsData = this.threadsData.find(t => t.id === this.selectedThread!.id);
+        if (inThreadsData) inThreadsData.status = updated.status;
+
+        this.cd.markForCheck();
+      }
+    });
+}
+
+  /**
+   * @refactor-note (2026-09-11v3) `FormData` MÍSTO plain `{ body }`, jakmile je vybraný
+   * alespoň jeden soubor - `DataHandler.post()` funguje beze změny.
+   */
   async sendReply(): Promise<void> {
     const body = this.replyBody.trim();
     if (!body || !this.selectedThread || this.replySending) return;
@@ -606,9 +677,15 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.replySending = true;
     this.cd.markForCheck();
 
+    const payload: FormData | { body: string } = this.replyFiles.length > 0
+      ? this.buildReplyFormData(body, this.replyFiles)
+      : { body };
+
     try {
-      await firstValueFrom(this.dataHandler.post(`web/project-threads/${this.selectedThread.id}/reply`, { body }));
+      await firstValueFrom(this.dataHandler.post(`web/project-threads/${this.selectedThread.id}/reply`, payload));
+      this.patchThreadsDataLastMessageAt(this.selectedThread.id);   
       this.replyBody = '';
+      this.replyFiles = [];
       this.openThread(this.selectedThread);
       if (this.managingProject) this.loadManagingThreads(this.managingProject.id);
       this.loadThreadsTable();
@@ -636,9 +713,146 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     return authorType === 'admin' ? this.t('thread_author_admin') : this.t('thread_author_customer');
   }
 
+  // ── Přílohy - výběr souborů + REAL-TIME VALIDACE před odesláním ─────────
+
+  formatFileSize(bytes: number): string {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  /**
+   * @refactor-note (2026-09-11v4) Validuje typ/velikost/počet HNED při výběru -
+   * stejná pravidla jako backend `Store*Request` (`mimes:...`, `max:15360`).
+   */
+  private validateAndAddFiles(existing: File[], incoming: FileList, onError: (msg: string) => void): File[] {
+    let result = [...existing];
+    let errorSet = false;
+
+    for (const file of Array.from(incoming)) {
+      if (result.length >= this.MAX_THREAD_ATTACHMENTS) {
+        if (!errorSet) { onError(this.t('attachment_error_too_many').replace('{max}', String(this.MAX_THREAD_ATTACHMENTS))); errorSet = true; }
+        break;
+      }
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+      if (!this.ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext)) {
+        if (!errorSet) { onError(this.t('attachment_error_type').replace('{name}', file.name)); errorSet = true; }
+        continue;
+      }
+      if (file.size > this.MAX_ATTACHMENT_SIZE_BYTES) {
+        if (!errorSet) { onError(this.t('attachment_error_size').replace('{name}', file.name)); errorSet = true; }
+        continue;
+      }
+      result.push(file);
+    }
+
+    return result;
+  }
+
+  onReplyFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    this.replyFileError = null;
+    this.replyFiles = this.validateAndAddFiles(this.replyFiles, input.files, (msg) => { this.replyFileError = msg; });
+    input.value = '';
+    this.cd.markForCheck();
+  }
+
+  removeReplyFile(index: number): void {
+    this.replyFiles.splice(index, 1);
+    this.replyFileError = null;
+    this.cd.markForCheck();
+  }
+
+  onThreadModalReplyFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    this.threadModalReplyFileError = null;
+    this.threadModalReplyFiles = this.validateAndAddFiles(this.threadModalReplyFiles, input.files, (msg) => { this.threadModalReplyFileError = msg; });
+    input.value = '';
+    this.cd.markForCheck();
+  }
+
+  removeThreadModalReplyFile(index: number): void {
+    this.threadModalReplyFiles.splice(index, 1);
+    this.threadModalReplyFileError = null;
+    this.cd.markForCheck();
+  }
+
+  private buildReplyFormData(body: string, files: File[]): FormData {
+    const fd = new FormData();
+    fd.append('body', body);
+    files.forEach(file => fd.append('attachments[]', file, file.name));
+    return fd;
+  }
+
+  // ── Scroll + stránkování zpráv ("Načíst starší") ────────────────────────
+
+  private scrollMessagesToBottom(el?: ElementRef<HTMLDivElement>): void {
+    setTimeout(() => {
+      if (el?.nativeElement) el.nativeElement.scrollTop = el.nativeElement.scrollHeight;
+    });
+  }
+
+  /** @refactor-note (2026-09-11v4) "Načíst starší zprávy" - "Správa" modal vlákno. */
+  loadOlderMessages(): void {
+    if (!this.selectedThread || this.olderMessagesLoading || !this.selectedThread.has_more_older_messages) return;
+    const oldestId = this.selectedThread.messages?.[0]?.id;
+    if (!oldestId) return;
+
+    const container = this.pmMessageListEl?.nativeElement;
+    const prevScrollHeight = container?.scrollHeight ?? 0;
+
+    this.olderMessagesLoading = true;
+    this.cd.markForCheck();
+
+    this.dataHandler.get<{ data: ProjectThreadMessage[]; has_more_older_messages: boolean }>(
+      `web/project-threads/${this.selectedThread.id}/messages?before_message_id=${oldestId}`
+    ).subscribe({
+      next: (res) => {
+        this.selectedThread!.messages = [...res.data, ...(this.selectedThread!.messages || [])];
+        this.selectedThread!.has_more_older_messages = res.has_more_older_messages;
+        this.olderMessagesLoading = false;
+        this.cd.markForCheck();
+        setTimeout(() => {
+          if (container) container.scrollTop = container.scrollHeight - prevScrollHeight;
+        });
+      },
+      error: () => { this.olderMessagesLoading = false; this.cd.markForCheck(); }
+    });
+  }
+
+  /** @refactor-note (2026-09-11v4) "Načíst starší zprávy" - cross-project thread modal. */
+  loadOlderThreadModalMessages(): void {
+    if (!this.activeThread || this.threadModalOlderMessagesLoading || !this.activeThread.has_more_older_messages) return;
+    const oldestId = this.activeThread.messages?.[0]?.id;
+    if (!oldestId) return;
+
+    const container = this.threadModalMessageListEl?.nativeElement;
+    const prevScrollHeight = container?.scrollHeight ?? 0;
+
+    this.threadModalOlderMessagesLoading = true;
+    this.cd.markForCheck();
+
+    this.dataHandler.get<{ data: ProjectThreadMessage[]; has_more_older_messages: boolean }>(
+      `web/project-threads/${this.activeThread.id}/messages?before_message_id=${oldestId}`
+    ).subscribe({
+      next: (res) => {
+        this.activeThread.messages = [...res.data, ...(this.activeThread.messages || [])];
+        this.activeThread.has_more_older_messages = res.has_more_older_messages;
+        this.threadModalOlderMessagesLoading = false;
+        this.cd.markForCheck();
+        setTimeout(() => {
+          if (container) container.scrollTop = container.scrollHeight - prevScrollHeight;
+        });
+      },
+      error: () => { this.threadModalOlderMessagesLoading = false; this.cd.markForCheck(); }
+    });
+  }
+
   // ── Cross-project tabulka požadavků ─────────────────────────────────────
 
-  private loadThreadsTable(): void {
+  public loadThreadsTable(): void {
     this.genericTableService.getPaginatedData<any>(this.threadsApiEndpoint, this.threadsCurrentPage, this.threadsItemsPerPage, this.threadsFilters)
       .subscribe({
         next: (res) => {
@@ -657,10 +871,10 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   }
 
   clearThreadsFilters(): void {
-    this.threadsFilters = { sort_by: 'last_message_at', sort_direction: 'desc' };
-    this.threadsCurrentPage = 1;
-    this.loadThreadsTable();
-  }
+  this.threadsFilters = { sort_by: 'last_message_at', sort_direction: 'desc', status: 'active' };
+  this.threadsCurrentPage = 1;
+  this.loadThreadsTable();
+}
 
   handleThreadsPageChange(page: number): void {
     this.threadsCurrentPage = page;
@@ -673,16 +887,27 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.loadThreadsTable();
   }
 
+  /**
+   * @refactor-note (2026-09-11v4) Po úspěšném načtení scrolluje `.pm-message-list`
+   * na spodek (nejnovější zprávy).
+   */
   openThreadModal(item: any): void {
     this.showThreadModal = true;
     this.threadModalLoading = true;
     this.threadModalReplyBody = '';
+    this.threadModalReplyFiles = [];
+    this.threadModalReplyFileError = null;
     this.activeThread = item;
     this.lockBackgroundScroll();
     this.cd.markForCheck();
 
     this.dataHandler.get<any>(`web/project-threads/${item.id}`).subscribe({
-      next: (full) => { this.activeThread = full; this.threadModalLoading = false; this.cd.markForCheck(); },
+      next: (full) => {
+        this.activeThread = full;
+        this.threadModalLoading = false;
+        this.cd.markForCheck();
+        this.scrollMessagesToBottom(this.threadModalMessageListEl);
+      },
       error: () => { this.threadModalLoading = false; this.cd.markForCheck(); }
     });
   }
@@ -693,6 +918,10 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.unlockBackgroundScroll();
   }
 
+  /**
+   * @refactor-note (2026-09-11v3) `FormData` MÍSTO plain `{ body }`, jakmile je vybraný
+   * alespoň jeden soubor - viz `sendReply()` výše pro stejné odůvodnění.
+   */
   async sendThreadModalReply(): Promise<void> {
     const body = this.threadModalReplyBody.trim();
     if (!body || !this.activeThread || this.threadModalReplySending) return;
@@ -700,9 +929,15 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.threadModalReplySending = true;
     this.cd.markForCheck();
 
+    const payload: FormData | { body: string } = this.threadModalReplyFiles.length > 0
+      ? this.buildReplyFormData(body, this.threadModalReplyFiles)
+      : { body };
+
     try {
-      await firstValueFrom(this.dataHandler.post(`web/project-threads/${this.activeThread.id}/reply`, { body }));
+      await firstValueFrom(this.dataHandler.post(`web/project-threads/${this.activeThread.id}/reply`, payload));
+      this.patchThreadsDataLastMessageAt(this.activeThread.id);
       this.threadModalReplyBody = '';
+      this.threadModalReplyFiles = [];
       this.openThreadModal(this.activeThread);
       this.loadThreadsTable();
     } catch {
@@ -713,6 +948,27 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     }
   }
 
+  /** @bugfix-note (2026-09-11v5) Formát shodný s backend `format('Y-m-d H:i:s')`. */
+private nowFormattedForDisplay(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/**
+ * @bugfix-note (2026-09-11v5) BACKLOG "čas poslední zprávy se v cross-project
+ * tabulce po odeslání nezaktualizoval": okamžitá lokální aktualizace záznamu v
+ * `threadsData`, NEZÁVISLE na `loadThreadsTable()` (ten pořád běží jako plný
+ * refetch v pozadí a časem zajistí i správné přeřazení podle sort_by). Řeší
+ * problém i kdyby síťový round-trip trval déle, než uživatel čeká.
+ */
+private patchThreadsDataLastMessageAt(threadId: number): void {
+  const row = this.threadsData.find(t => t.id === threadId);
+  if (row) {
+    row.last_message_at = this.nowFormattedForDisplay();
+    this.cd.markForCheck();
+  }
+}
   // ── Scroll lock (sdíleno mezi oběma modaly - jen jeden je vždy otevřený) ──
 
   private lockBackgroundScroll(): void {

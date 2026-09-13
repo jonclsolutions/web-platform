@@ -14,6 +14,12 @@
  * customer-changeable; regenerated exclusively by an admin.
  * @property string $visibility 'public' | 'private' - checked on EVERY public
  * request by `WebProjectPublicController`, not just at login.
+ *
+ * @refactor-note (2026-09-11) BACKLOG "project portal - odhad termínu dokončení":
+ * `estimated_completion_from`/`estimated_completion_to` - ZÁMĚRNĚ rozptyl, ne jedno
+ * pevné datum. Vývoj může kolabovat na neočekávané chybě/blockeru, jeden natvrdo
+ * slíbený termín by byl zavádějící. Obě pole nullable - projekt beze zadaného odhadu
+ * prostě zákazníkovi žádný termín nezobrazí (frontend to řeší podmínkou).
  */
 
 namespace App\Models\Web;
@@ -40,6 +46,8 @@ class WebProject extends Model
         'contact_phone',
         'contact_email',
         'technologies',
+        'estimated_completion_from',
+        'estimated_completion_to',
         'visibility',
         'status',
     ];
@@ -49,10 +57,12 @@ class WebProject extends Model
     ];
 
     protected $casts = [
-        'password_generated_at' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
+        'password_generated_at'     => 'datetime',
+        'estimated_completion_from' => 'date',
+        'estimated_completion_to'   => 'date',
+        'created_at'                => 'datetime',
+        'updated_at'                => 'datetime',
+        'deleted_at'                => 'datetime',
     ];
 
     public const STATUSES = ['new', 'development', 'finished'];

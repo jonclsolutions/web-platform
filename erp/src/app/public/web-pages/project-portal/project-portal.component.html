@@ -4,12 +4,27 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @redesign-note (2026-09-11) BACKLOG "kompletní UI refactor - přehlednost,
-        profesionální vzhled": pravý panel rozdělen do záložek Description /
-        Checkpoints / Threads (`activeTab`, `setActiveTab()`) - viz
-        project-portal.component.ts stejné datum. Jazykový přepínač přepsán na
-        JEDEN dropdown (vlaječka + kód), sdílený mezi login kartou i sidebarem.
-        Threads záložka má fulltextové vyhledávání (`threadSearch`/`filteredThreads`).
+    @redesign-note (2026-09-11v2) BACKLOG "progress bar / nepřečtené zprávy / odhad
+        termínu / kontakty & fakturace / minimalistický jazykový přepínač": pravý panel
+        rozdělen do záložek Description / Checkpoints / Threads / Contacts, progress bar
+        nad Checkpoints, unread badge na Threads tabu i jednotlivých položkách seznamu,
+        odhad termínu v Description, jazykový dropdown zjednodušen na samotnou vlaječku.
+    @refactor-note (2026-09-11v3) BACKLOG "vlákna přijímají přílohy": file input +
+        seznam vybraných souborů u zakládání nového vlákna i u odpovědi v otevřeném
+        vlákně, zobrazení existujících příloh (odkaz + ikona + název + velikost) u
+        každé zprávy - viz project-portal.component.ts stejné datum.
+    @refactor-note (2026-09-11v4) BACKLOG "otevření vlákna ukazuje nejstarší zprávu /
+        stránkování zpráv": `#ppMessageListEl` template ref, tlačítko "Načíst starší
+        zprávy" nad seznamem (jen když `has_more_older_messages`).
+    @refactor-note (2026-09-12) BACKLOG "zákazník může sám uzavřít I znovu otevřít
+        vlákno": tlačítko "Označit jako vyřešené" NAHRAZENO stavovým `<select>`
+        (aktivní/uzavřené) - `updateThreadStatus()` místo `closeThreadAsCustomer()`,
+        obousměrné (dřív jen active -> closed). Reply box zůstává vždy dostupný bez
+        ohledu na stav.
+    @refactor-note (2026-09-12v2) BACKLOG "nápověda pro zákazníka na portálu": nová
+        záložka "Nápověda" na konci lišty - čistě statický obsah, text celý z
+        `help_*` i18n klíčů. Formát: krátký úvod + série sekcí (nadpis + odstavec),
+        stejný vizuální jazyk jako `.pp-description-block` na záložce Popis.
 -->
 <div class="pp-page">
 
@@ -34,23 +49,19 @@
     <div class="pp-center">
       <div class="pp-login-card">
 
-        <!-- ── Jazykový dropdown ── -->
-        <div class="pp-lang-dropdown pp-lang-dropdown-login">
-          <button type="button" class="pp-lang-btn" [attr.aria-label]="t('language_switcher_title')" (click)="toggleLangMenu()">
+        <!-- ── Jazykový přepínač - jen vlaječka ── -->
+        <div class="pp-lang-flag-dropdown pp-lang-flag-dropdown-login">
+          <button type="button" class="pp-lang-flag-btn" [attr.aria-label]="t('language_switcher_title')" (click)="toggleLangMenu()">
             @if (currentLanguageMeta?.icon) {
-              <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-flag">
+              <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-flag-img">
             }
-            <span class="pp-lang-code">{{ currentLanguageMeta?.code?.toUpperCase() }}</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
           </button>
           @if (isLangMenuOpen) {
             <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
-            <div class="pp-lang-menu">
+            <div class="pp-lang-menu pp-lang-menu-centered">
               @for (lang of portalI18n.availableLanguages; track lang.code) {
                 <button type="button" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
-                  <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag">
+                  <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
                   <span>{{ lang.name }}</span>
                 </button>
               }
@@ -87,7 +98,6 @@
       <aside class="pp-sidebar">
 
         <div class="pp-sidebar-top">
-          <div class="pp-avatar">{{ project.name.charAt(0).toUpperCase() }}</div>
           <h2 class="pp-sidebar-project-name">{{ project.name }}</h2>
         </div>
 
@@ -96,16 +106,6 @@
           {{ t('supplier_contact_title') }}
         </div>
         <div class="pp-sidebar-info-list">
-          @if (project.platform) {
-            <div class="pp-sidebar-info-row">
-              <span class="pp-sidebar-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
-                </svg>
-              </span>
-              <span>{{ project.platform }}</span>
-            </div>
-          }
           @if (project.project_lead) {
             <div class="pp-sidebar-info-row">
               <span class="pp-sidebar-icon">
@@ -140,23 +140,19 @@
 
         <div class="pp-sidebar-spacer"></div>
 
-        <!-- ── Jazykový dropdown ── -->
-        <div class="pp-lang-dropdown">
-          <button type="button" class="pp-lang-btn pp-lang-btn-full" [attr.aria-label]="t('language_switcher_title')" (click)="toggleLangMenu()">
+        <!-- ── Jazykový přepínač - jen vlaječka ── -->
+        <div class="pp-lang-flag-dropdown">
+          <button type="button" class="pp-lang-flag-btn" [attr.aria-label]="t('language_switcher_title')" (click)="toggleLangMenu()">
             @if (currentLanguageMeta?.icon) {
-              <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-flag">
+              <img [src]="currentLanguageMeta!.icon" [alt]="currentLanguageMeta!.code" class="pp-lang-flag-img">
             }
-            <span class="pp-lang-code">{{ currentLanguageMeta?.name }}</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="pp-lang-chevron">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
           </button>
           @if (isLangMenuOpen) {
             <div class="pp-lang-menu-backdrop" (click)="closeLangMenu()"></div>
-            <div class="pp-lang-menu pp-lang-menu-sidebar">
+            <div class="pp-lang-menu">
               @for (lang of portalI18n.availableLanguages; track lang.code) {
                 <button type="button" class="pp-lang-menu-item" [class.pp-lang-menu-item-active]="lang.code === portalI18n.getCurrentLanguage()" (click)="selectLanguage(lang.code)">
-                  <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag">
+                  <img [src]="lang.icon" [alt]="lang.code" class="pp-lang-flag-img">
                   <span>{{ lang.name }}</span>
                 </button>
               }
@@ -207,13 +203,44 @@
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
               {{ t('tab_threads') }}
-              <span class="pp-tab-count">{{ threads.length }}</span>
+              @if (totalUnreadCount > 0) {
+                <span class="pp-tab-unread-badge">{{ totalUnreadCount }}</span>
+              } @else {
+                <span class="pp-tab-count">{{ threads.length }}</span>
+              }
+            </button>
+            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'contacts'" (click)="setActiveTab('contacts')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+              {{ t('tab_contacts') }}
+            </button>
+            <button type="button" class="pp-tab-btn" role="tab" [class.pp-tab-btn-active]="activeTab === 'help'" (click)="setActiveTab('help')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              {{ t('tab_help') }}
             </button>
           </div>
 
           <!-- ══════════ DESCRIPTION ══════════ -->
           @if (activeTab === 'description') {
             <section class="pp-tab-panel">
+
+              @if (estimatedCompletionLabel) {
+                <div class="pp-estimate-banner">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <div>
+                    <div class="pp-estimate-label">{{ t('estimated_completion_label') }}</div>
+                    <div class="pp-estimate-value">{{ estimatedCompletionLabel }}</div>
+                  </div>
+                </div>
+              }
+
               @if (project.description) {
                 <div class="pp-description-block">
                   <div class="pp-description-block-title">{{ t('description_label') }}</div>
@@ -235,6 +262,17 @@
           <!-- ══════════ CHECKPOINTS ══════════ -->
           @if (activeTab === 'checkpoints') {
             <section class="pp-tab-panel">
+
+              <div class="pp-progress-block">
+                <div class="pp-progress-header">
+                  <span class="pp-progress-label">{{ t('progress_label') }}</span>
+                  <span class="pp-progress-fraction">{{ checkpointProgress.done }} / {{ checkpointProgress.total }}</span>
+                </div>
+                <div class="pp-progress-track">
+                  <div class="pp-progress-fill" [style.width.%]="checkpointProgress.percent"></div>
+                </div>
+              </div>
+
               <div class="pp-checkpoint-list">
                 @for (cp of project.checkpoints; track cp.id) {
                   <div class="pp-checkpoint-item" [class]="'status-' + cp.status">
@@ -287,6 +325,37 @@
                     <option value="critic">{{ t('priority_critic') }}</option>
                   </select>
                   <textarea class="pp-textarea" rows="3" [placeholder]="t('describe_request_placeholder')" [(ngModel)]="newThreadBody"></textarea>
+
+                  <div class="pp-file-attach-row">
+                    <label class="pp-file-attach-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                      </svg>
+                      {{ t('attach_files_button') }}
+                      <input type="file" multiple hidden (change)="onNewThreadFilesSelected($event)">
+                    </label>
+                    @if (newThreadFiles.length > 0) {
+                      <span class="pp-file-attach-count">{{ newThreadFiles.length }}/5</span>
+                    }
+                  </div>
+                  @if (newThreadFileError) {
+                    <p class="pp-file-error">{{ newThreadFileError }}</p>
+                  }
+
+                  @if (newThreadFiles.length > 0) {
+                    <div class="pp-file-chip-list">
+                      @for (file of newThreadFiles; track file.name; let i = $index) {
+                        <span class="pp-file-chip">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                          </svg>
+                          <span class="pp-file-chip-name">{{ file.name }}</span>
+                          <button type="button" class="pp-file-chip-remove" (click)="removeNewThreadFile(i)">✕</button>
+                        </span>
+                      }
+                    </div>
+                  }
+
                   <div class="pp-form-actions">
                     <button type="button" class="pp-btn-small" (click)="cancelNewThread()">{{ t('cancel') }}</button>
                     <button type="button" class="pp-btn-primary-small" [disabled]="newThreadSending" (click)="submitNewThread()">
@@ -306,6 +375,9 @@
                         </svg>
                       </span>
                       <span class="pp-thread-item-subject">{{ thread.subject }}</span>
+                      @if (thread.unread_count) {
+                        <span class="pp-thread-unread-badge">{{ thread.unread_count }}</span>
+                      }
                       <span class="pp-status-chip" [class.pp-status-closed]="thread.status === 'closed'">{{ thread.status === 'closed' ? t('status_closed') : t('status_active') }}</span>
                       <span class="pp-priority-chip" [class]="'priority-' + thread.priority">{{ thread.priority }}</span>
                     </button>
@@ -331,26 +403,74 @@
                     <p class="pp-empty">{{ t('loading') }}</p>
                   } @else {
 
-                    @if (selectedThread.status === 'active') {
-                      <button type="button" class="pp-btn-small pp-close-thread-btn" [disabled]="closingThread" (click)="closeThreadAsCustomer()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        {{ closingThread ? t('closing') : t('mark_resolved') }}
-                      </button>
-                    } @else {
-                      <p class="pp-thread-closed-hint">{{ t('thread_closed_hint') }}</p>
-                    }
+                    <div class="pp-thread-status-row">
+                      <span class="pp-thread-status-label">{{ t('thread_status_label') }}</span>
+                      <select class="pp-input pp-thread-status-select" [ngModel]="selectedThread.status" (ngModelChange)="updateThreadStatus($event)" [disabled]="threadStatusChanging">
+                        <option value="active">{{ t('status_active') }}</option>
+                        <option value="closed">{{ t('status_closed') }}</option>
+                      </select>
+                    </div>
 
-                    <div class="pp-message-list">
+                    <div class="pp-message-list" #ppMessageListEl>
+                      @if (selectedThread.has_more_older_messages) {
+                        <button type="button" class="pp-load-older-btn" [disabled]="olderMessagesLoading" (click)="loadOlderMessages()">
+                          {{ olderMessagesLoading ? t('loading') : t('load_older_messages') }}
+                        </button>
+                      }
                       @for (msg of selectedThread.messages; track msg.id) {
                         <div class="pp-message" [class.pp-message-mine]="msg.author_type === 'customer'">
                           <div class="pp-message-meta">{{ msg.author_type === 'admin' ? (msg.author_label || t('author_supplier')) : t('author_you') }}</div>
                           <div class="pp-message-body">{{ msg.body }}</div>
+                          @if (msg.attachments && msg.attachments.length > 0) {
+                            <div class="pp-message-attachments">
+                              @for (att of msg.attachments; track att.id) {
+                                <a [href]="att.download_url" class="pp-attachment-link" target="_blank" rel="noopener">
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                                  </svg>
+                                  <span class="pp-attachment-name">{{ att.original_filename }}</span>
+                                  <span class="pp-attachment-size">{{ formatFileSize(att.size_bytes) }}</span>
+                                </a>
+                              }
+                            </div>
+                          }
                         </div>
                       }
                     </div>
 
                     <div class="pp-reply-box">
                       <textarea class="pp-textarea" rows="2" [placeholder]="t('write_reply_placeholder')" [(ngModel)]="replyBody"></textarea>
+
+                      <div class="pp-file-attach-row">
+                        <label class="pp-file-attach-btn">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                          </svg>
+                          {{ t('attach_files_button') }}
+                          <input type="file" multiple hidden (change)="onReplyFilesSelected($event)">
+                        </label>
+                        @if (replyFiles.length > 0) {
+                          <span class="pp-file-attach-count">{{ replyFiles.length }}/5</span>
+                        }
+                      </div>
+                      @if (replyFileError) {
+                        <p class="pp-file-error">{{ replyFileError }}</p>
+                      }
+
+                      @if (replyFiles.length > 0) {
+                        <div class="pp-file-chip-list">
+                          @for (file of replyFiles; track file.name; let i = $index) {
+                            <span class="pp-file-chip">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                              </svg>
+                              <span class="pp-file-chip-name">{{ file.name }}</span>
+                              <button type="button" class="pp-file-chip-remove" (click)="removeReplyFile(i)">✕</button>
+                            </span>
+                          }
+                        </div>
+                      }
+
                       <button type="button" class="pp-btn-primary-small pp-send-btn" [disabled]="replySending || !replyBody.trim()" (click)="sendReply()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                         {{ replySending ? t('sending') : t('send') }}
@@ -359,6 +479,129 @@
                   }
                 </div>
               }
+
+            </section>
+          }
+
+          <!-- ══════════ CONTACTS & BILLING ══════════ -->
+          @if (activeTab === 'contacts') {
+            <section class="pp-tab-panel">
+              @if (companySettingsLoading) {
+                <p class="pp-empty">{{ t('loading') }}</p>
+              } @else if (companySettings) {
+                <div class="pp-contacts-card">
+                  @if (companySettings.company_name) {
+                    <div class="pp-contacts-row pp-contacts-row-main">
+                      <span class="pp-contacts-company-name">{{ companySettings.company_name }}</span>
+                    </div>
+                  }
+                  @if (companySettings.address) {
+                    <div class="pp-contacts-row">
+                      <span class="pp-contacts-label">{{ t('contacts_address') }}</span>
+                      <span class="pp-contacts-value">{{ companySettings.address }}</span>
+                    </div>
+                  }
+                  @if (companySettings.ico) {
+                    <div class="pp-contacts-row">
+                      <span class="pp-contacts-label">{{ t('contacts_ico') }}</span>
+                      <span class="pp-contacts-value">{{ companySettings.ico }}</span>
+                    </div>
+                  }
+                  @if (companySettings.dic) {
+                    <div class="pp-contacts-row">
+                      <span class="pp-contacts-label">{{ t('contacts_dic') }}</span>
+                      <span class="pp-contacts-value">{{ companySettings.dic }}</span>
+                    </div>
+                  }
+                  @if (companySettings.contact_email) {
+                    <div class="pp-contacts-row">
+                      <span class="pp-contacts-label">{{ t('contacts_email') }}</span>
+                      <span class="pp-contacts-value">{{ companySettings.contact_email }}</span>
+                    </div>
+                  }
+                  @if (companySettings.contact_phone) {
+                    <div class="pp-contacts-row">
+                      <span class="pp-contacts-label">{{ t('contacts_phone') }}</span>
+                      <span class="pp-contacts-value">{{ companySettings.contact_phone }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="pp-empty">{{ t('contacts_empty') }}</p>
+              }
+            </section>
+          }
+
+          <!-- ══════════ HELP ══════════ -->
+          @if (activeTab === 'help') {
+            <section class="pp-tab-panel">
+
+              <p class="pp-help-intro">{{ t('help_intro_text') }}</p>
+
+              <div class="pp-description-block">
+                <div class="pp-description-block-title">{{ t('help_description_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_description_text') }}</p>
+              </div>
+
+              <div class="pp-description-block">
+                <div class="pp-description-block-title">{{ t('help_checkpoints_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_checkpoints_text') }}</p>
+              </div>
+
+              <div class="pp-description-block">
+                <div class="pp-description-block-title">{{ t('help_threads_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_threads_text') }}</p>
+              </div>
+
+              <div class="pp-description-block pp-help-sub">
+                <div class="pp-description-block-title">{{ t('help_threads_new_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_threads_new_text') }}</p>
+              </div>
+
+              <div class="pp-description-block pp-help-sub">
+                <div class="pp-description-block-title">{{ t('help_threads_reply_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_threads_reply_text') }}</p>
+              </div>
+
+              <div class="pp-description-block pp-help-sub">
+                <div class="pp-description-block-title">{{ t('help_threads_status_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_threads_status_text') }}</p>
+              </div>
+
+              <div class="pp-description-block pp-help-sub">
+                <div class="pp-description-block-title">{{ t('help_attachments_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_attachments_text') }}</p>
+              </div>
+
+              <div class="pp-description-block pp-help-sub">
+                <div class="pp-description-block-title">{{ t('help_unread_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_unread_text') }}</p>
+              </div>
+
+              <div class="pp-description-block pp-help-sub">
+                <div class="pp-description-block-title">{{ t('help_search_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_search_text') }}</p>
+              </div>
+
+              <div class="pp-description-block">
+                <div class="pp-description-block-title">{{ t('help_contacts_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_contacts_text') }}</p>
+              </div>
+
+              <div class="pp-description-block">
+                <div class="pp-description-block-title">{{ t('help_actions_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_actions_text') }}</p>
+              </div>
+
+              <div class="pp-description-block pp-help-sub">
+                <div class="pp-description-block-title">{{ t('help_language_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_language_text') }}</p>
+              </div>
+
+              <div class="pp-help-support-box">
+                <div class="pp-description-block-title">{{ t('help_support_title') }}</div>
+                <p class="pp-project-desc">{{ t('help_support_text') }}</p>
+              </div>
 
             </section>
           }

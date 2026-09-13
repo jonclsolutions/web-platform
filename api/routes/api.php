@@ -161,11 +161,13 @@ Route::prefix('projects/public/{token}')
 
         Route::get('threads',            [WebProjectPublicController::class, 'threadsIndex']);
         Route::get('threads/{threadId}', [WebProjectPublicController::class, 'threadShow']);
+        Route::get('threads/{threadId}/messages', [WebProjectPublicController::class, 'olderMessages']);
         Route::post('threads', [WebProjectPublicController::class, 'threadStore'])
             ->middleware('throttle:20,1,project-thread-create');
         Route::post('threads/{threadId}/messages', [WebProjectPublicController::class, 'messageStore'])
             ->middleware('throttle:30,1,project-message-create');
-        Route::post('threads/{threadId}/close', [WebProjectPublicController::class, 'threadClose']);
+        Route::post('threads/{threadId}/status', [WebProjectPublicController::class, 'updateStatus']);
+        Route::get('threads/{threadId}/new-messages', [WebProjectPublicController::class, 'newMessages']);
     });
 
 /*
@@ -889,6 +891,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:web-projects-update');
             Route::put('/{threadId}/status', [WebProjectThreadController::class, 'updateStatus'])
                 ->middleware('permission:web-projects-update');
+            Route::get('/{threadId}/messages', [WebProjectThreadController::class, 'olderMessages'])
+                ->middleware('permission:web-projects-view');
         });
     });
 

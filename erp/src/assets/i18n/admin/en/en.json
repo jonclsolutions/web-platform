@@ -1458,6 +1458,15 @@
     "graph_date_field_label": "Date created"
   },
   "projects": {
+  "load_older_messages": "Load older messages",
+  "attachment_error_too_many": "You can attach at most {max} files.",
+  "attachment_error_type": "File \"{name}\" has an unsupported format.",
+  "attachment_error_size": "File \"{name}\" is too large (max 15 MB).",
+  "attach_files_button": "Attach files",
+  "field_estimated_from_label": "Est. completion from",
+  "field_estimated_to_label": "Est. completion to",
+  "details_estimated_from": "Est. completion from",
+  "details_estimated_to": "Est. completion to",
     "table_header": "Projects",
     "trash_header": "Trash",
     "trash_table_caption": "Deleted projects",
