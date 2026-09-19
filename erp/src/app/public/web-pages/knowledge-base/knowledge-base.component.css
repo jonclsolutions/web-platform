@@ -74,6 +74,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding-bottom: 95px;
 }
 
 .kb-sidebar-link {
@@ -128,7 +129,6 @@
 .kb-toc-item:hover {
     color: #e0e0f0;
     border-color: #a67dff;
-    background: rgba(166, 125, 255, 0.07);
 }
 
 /* ── Jednotlivé sekce ─────────────────────────────── */
@@ -144,7 +144,6 @@
 
 .kb-section--alt {
     /* jemné odlišení sudých sekcí bez použití zářivých efektů */
-    background: rgba(166, 125, 255, 0.025);
     margin: 0 -24px;
     padding: 50px 24px;
 }
@@ -192,16 +191,8 @@
     margin: 0 0 28px;
 }
 
-.kb-points-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-}
 
 .kb-point {
-    background: #111128;
-    border: 1px solid rgba(166, 125, 255, 0.12);
-    border-radius: 12px;
     padding: 18px 20px;
 }
 

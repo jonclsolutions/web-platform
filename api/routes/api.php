@@ -930,6 +930,8 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
                 ->middleware('permission:core-legal-config-update');
             Route::delete('/social/{id}', [SiteConfigurationController::class, 'destroySocial'])
                 ->middleware('permission:core-legal-config-delete');
+            Route::post('/social/{id}',  [SiteConfigurationController::class, 'updateSocial'])
+                ->middleware('permission:core-legal-config-update');
         });
     });
 });

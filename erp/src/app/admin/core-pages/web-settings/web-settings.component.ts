@@ -402,25 +402,29 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     };
 
     if (link._isNew || link._iconFile) {
-      const fd = new FormData();
-      fd.append('name',     link.name.trim());
-      fd.append('url',      link.url.trim());
-      fd.append('position', String(link.position));
-      if (link._iconFile) fd.append('icon_file', link._iconFile, link._iconFile.name);
-      const endpoint = link._isNew
-        ? 'legal/config/social'
-        : `legal/config/social/${link.id}`;
+  const fd = new FormData();
+  fd.append('name',     link.name.trim());
+  fd.append('url',      link.url.trim());
+  fd.append('position', String(link.position));
+  if (link._iconFile) fd.append('icon_file', link._iconFile, link._iconFile.name);
 
-      this.dataHandler.upload<SocialLink>(endpoint, fd)
-        .subscribe({ next: onSuccess, error: onError });
-    } else {
-      this.dataHandler.put<SocialLink>(`legal/config/social/${link.id}`, {
-        name:      link.name.trim(),
-        url:       link.url.trim(),
-        position:  link.position,
-        icon_path: link.icon_path,
-      } as any).subscribe({ next: onSuccess, error: onError });
-    }
+  const endpoint = link._isNew
+    ? 'legal/config/social'
+    : `legal/config/social/${link.id}`;
+
+  const request$ = link._isNew
+    ? this.dataHandler.upload<SocialLink>(endpoint, fd)
+    : this.dataHandler.uploadPut<SocialLink>(endpoint, fd);
+
+  request$.subscribe({ next: onSuccess, error: onError });
+} else {
+  this.dataHandler.put<SocialLink>(`legal/config/social/${link.id}`, {
+    name:      link.name.trim(),
+    url:       link.url.trim(),
+    position:  link.position,
+    icon_path: link.icon_path,
+  } as any).subscribe({ next: onSuccess, error: onError });
+}
   }
 
   async deleteSocialLink(index: number): Promise<void> {

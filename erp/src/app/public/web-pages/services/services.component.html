@@ -1,142 +1,117 @@
-<!-- 
+<!--
     @file: services.component.html
     @path: /src/app/public/web-pages/services/services.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2025 
+    @created: 2025
+    @refactor-note (2026-09) BACKLOG "zjednodušení stránky služeb": odstraněny
+        tech záložky (web/desktop/mobile/ai), pravý sidebar se stat kartami,
+        AI kategorie. Stránka je nyní jednotná sekce "Vývoj softwaru" (web,
+        desktop, mobil). Tabulka přepracována bez cen - pouze srovnání rozsahu.
+        Sekce "Poraďte se s námi" a CTA beze změny.
 -->
-
 @if (t) {
 <div class="svc-page">
 
   <section class="svc-hero">
-    <div class="svc-hero-eyebrow">{{ t.small_header }}</div>
     <h1 class="svc-hero-title">{{ t.header_1_text }}</h1>
     <p class="svc-hero-sub">{{ t.hero_sub }}</p>
-    <div class="tech-tabs" role="tablist">
-      @for (tech of technologies; track tech.id) {
-        <button
-          class="tech-tab"
-          [class]="tech.id"
-          [class.tech-tab--active]="currentTech === tech.id"
-          role="tab"
-          [attr.aria-selected]="currentTech === tech.id"
-          (click)="selectTech(tech.id)">
-          {{ tech?.name }}
-        </button>
-      }
-    </div>
   </section>
 
   <section class="svc-content-section">
-    <div class="svc-content-inner">
+    <div class="svc-content-inner svc-content-inner--full">
 
       <div class="svc-main-col">
         <div class="svc-panel-header">
-          <h2 class="svc-panel-title">{{ currentInfoHeader }}</h2>
+          <h2 class="svc-panel-title">{{ t.info_header }}</h2>
         </div>
-        <div class="svc-body-text" [innerHTML]="currentMainText"></div>
-        <div class="faq-label">{{ t.info_header_3 }}</div>
-        <div class="faq-list" role="list">
-          @for (item of (currentServices | keyvalue); track item.key; let i = $index) {
-            <div
-              class="faq-item"
-              [class.faq-item--open]="item?.value?.isActive"
-              [style.animation-delay]="i * 0.07 + 's'"
-              role="listitem">
-              <button
-                class="faq-trigger"
-                [attr.aria-expanded]="item?.value?.isActive"
-                (click)="toggleFaq(item?.value)">
-                <span class="faq-trigger-text">{{ item?.value?.question }}</span>
-                <span class="faq-chevron" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8"
-                          stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </span>
-              </button>
-              <!-- UX: rozbalené tělo je také klikatelné a sbalí položku - uživatel
-                   nemusí mířit přesně zpět na hlavičku, stačí kliknout kamkoli
-                   do textu odpovědi. -->
-              <div class="faq-body" (click)="toggleFaq(item?.value)">
-                <p class="faq-answer-text">{{ item?.value?.answer }}</p>
-              </div>
-            </div>
+        <div class="svc-body-text" [innerHTML]="t.service_main_text"></div>
+        <div class="svc-img-placeholder">
+  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2"/>
+    <circle cx="8.5" cy="10.5" r="1.8"/>
+    <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
+  </svg>
+  <span class="svc-img-placeholder-label">{{ t?.img_placeholder }}</span>
+</div>
+<div class="features-grid">
+  @for (card of featureCards; track card.key) {
+    <div class="feature-card">
+      <h3 class="feature-card-title">{{ card.title }}</h3>
+      <p class="feature-card-text">{{ card.text }}</p>
+      @if (card.tags && card.tags.length > 0) {
+        <div class="feature-card-tags">
+          @for (tag of card.tags; track tag) {
+            <span class="feature-tag">{{ tag }}</span>
           }
         </div>
+      }
+    </div>
+  }
+</div>
       </div>
 
-      <aside class="svc-sidebar">
-        <!-- Statistiky s ikonou + gradientním číslem -->
-        <div class="sidebar-stats-grid">
-          <div class="sidebar-stat-card">
-            <span class="sidebar-stat-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-            </span>
-            <span class="sidebar-stat-num">{{ t.sidebar_label_1 }}</span>
-            <span class="sidebar-stat-label">{{ t.sidebar_stat_1 }}</span>
-          </div>
-          <div class="sidebar-stat-card">
-            <span class="sidebar-stat-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-            </span>
-            <span class="sidebar-stat-num">{{ t.sidebar_label_2 }}</span>
-            <span class="sidebar-stat-label">{{ t.sidebar_stat_2 }}</span>
-          </div>
-          <div class="sidebar-stat-card">
-            <span class="sidebar-stat-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </span>
-            <span class="sidebar-stat-num">{{ t.sidebar_label_3 }}</span>
-            <span class="sidebar-stat-label">{{ t.sidebar_stat_3 }}</span>
-          </div>
-          <div class="sidebar-stat-card">
-            <span class="sidebar-stat-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 8.5 22 9.3 17 14 18.5 21 12 17.5 5.5 21 7 14 2 9.3 9 8.5 12 2"/></svg>
-            </span>
-            <span class="sidebar-stat-num">{{ t.sidebar_label_4 }}</span>
-            <span class="sidebar-stat-label">{{ t.sidebar_stat_4 }}</span>
-          </div>
-        </div>
-      </aside>
     </div>
   </section>
 
   <section class="svc-workflow-section">
     <div class="svc-section-header">
-      <div class="section-eyebrow">{{ t.workflow_header }}</div>
       <h2 class="section-title">{{ t.colab?.colab_procces_header }}</h2>
     </div>
 
+
     <!-- DESKTOP VERZE -->
-    <div class="wf-desktop" aria-hidden="false">
+    <div class="wf-desktop">
       <div class="wf-desktop-connector">
         @for (step of workflowSteps; track step; let i = $index; let last = $last) {
           <div class="wfd-col">
             <div class="wfd-num">
-              {{ workflowNumbers[i] }}<span class="wfd-num-total">/04</span>
-            </div>
+  {{ workflowNumbers[i] }}<span class="wfd-num-total">/{{ workflowNumbers.length }}</span>
+</div>
             <div class="wfd-dot-wrap">
               <div class="wfd-line wfd-line--left"  [class.wfd-line--hidden]="i === 0"></div>
               <div class="wfd-dot">
                 @switch (i) {
                   @case (0) {
-                    <!-- Analýza / objevení -->
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                   }
                   @case (1) {
-                    <!-- Návrh -->
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                   }
                   @case (2) {
-                    <!-- Vývoj -->
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                   }
-                  @default {
-                    <!-- Nasazení -->
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-                  }
+                  @case (3) {
+  <!-- Smlouva -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
+  </svg>
+}
+@case (4) {
+  <!-- Projektový portál -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <path d="M3 9h18"/>
+    <path d="M9 21V9"/>
+  </svg>
+}
+@case (5) {
+  <!-- Dokumentace -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </svg>
+}
+                 @default {
+  <!-- Předání -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+}
                 }
               </div>
               <div class="wfd-line wfd-line--right" [class.wfd-line--hidden]="last"></div>
@@ -151,13 +126,13 @@
     </div>
 
     <!-- MOBILNÍ VERZE -->
-    <div class="wf-mobile" aria-hidden="false">
+    <div class="wf-mobile">
       @for (step of workflowSteps; track step; let i = $index; let last = $last) {
         <div class="wfm-step">
           <div class="wfm-rail">
-            <div class="wfm-num">
-              {{ workflowNumbers[i] }}<span class="wfd-num-total">/04</span>
-            </div>
+            <div class="wfd-num">
+  {{ workflowNumbers[i] }}<span class="wfd-num-total">/{{ workflowNumbers.length }}</span>
+</div>
             <div class="wfm-dot">
               @switch (i) {
                 @case (0) {
@@ -169,9 +144,37 @@
                 @case (2) {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                 }
+                @case (3) {
+  <!-- Smlouva -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
+  </svg>
+}
+@case (4) {
+  <!-- Projektový portál -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <path d="M3 9h18"/>
+    <path d="M9 21V9"/>
+  </svg>
+}
+@case (5) {
+  <!-- Dokumentace -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </svg>
+}
                 @default {
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-                }
+  <!-- Předání -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+}
               }
             </div>
             @if (!last) {
@@ -187,119 +190,118 @@
     </div>
   </section>
 
-<section class="svc-prices-section">
-  <div class="svc-section-header">
-    <div class="section-eyebrow">{{ currentPricing?.eyebrow }}</div>
-    <h2 class="section-title">{{ currentPricing?.header }}</h2>
-    <p class="section-subtitle">{{ currentPricing?.subheader }}</p>
-  </div>
+  <section class="svc-prices-section">
+    <div class="svc-section-header">
+      <h2 class="section-title">{{ t.pricing?.header }}</h2>
+      <p class="section-subtitle">{{ t.pricing?.subheader }}</p>
+    </div>
 
-  <div class="pricing-matrix-wrap">
-    <table class="pricing-matrix">
-      <thead>
-        <tr>
-          <th class="pm-feature-col"></th>
-          @for (pkg of pricingPackages; track pkg.id) {
-            <th class="pm-pkg-col" [class.pm-pkg-col--highlight]="pkg.highlight">
-              <div class="pm-pkg-name">{{ pkg.name }}</div>
-              <div class="pm-pkg-price">{{ pkg.priceLabel }}</div>
-              @if (pkg.description) {
-                <div class="pm-pkg-desc">{{ pkg.description }}</div>
-              }
-            </th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of pricingFeatures; track row.key) {
+    <div class="pricing-matrix-wrap">
+      <table class="pricing-matrix">
+        <thead>
           <tr>
-            <td class="pm-feature-col">
-              <div class="pm-feature-label-row">
-                <span class="pm-feature-label">{{ row.label }}</span>
-                @if (row.tooltip) {
-                  <span class="pm-info-wrap">
-                    <button
-                      type="button"
-                      class="pm-info-btn"
-                      (click)="toggleTooltip(row.key)"
-                      (mouseenter)="activeTooltipKey = row.key"
-                      (mouseleave)="activeTooltipKey = null"
-                      [attr.aria-label]="row.tooltip">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-                      </svg>
-                    </button>
-                    @if (activeTooltipKey === row.key) {
-                      <span class="pm-tooltip">{{ row.tooltip }}</span>
-                    }
-                  </span>
-                }
-              </div>
-            </td>
+            <th class="pm-feature-col"></th>
             @for (pkg of pricingPackages; track pkg.id) {
-              <td class="pm-value-col" [class.pm-value-col--highlight]="pkg.highlight">
-                @switch (featureCellType(row.values[pkg.id])) {
-                  @case ('yes') {
-                    <svg class="pm-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  }
-                  @case ('no') {
-                    <span class="pm-dash">—</span>
-                  }
-                  @case ('text') {
-                    <span class="pm-value-text">{{ row.values[pkg.id] }}</span>
-                  }
+              <th class="pm-pkg-col" [class.pm-pkg-col--highlight]="pkg.highlight">
+                <div class="pm-pkg-name">{{ pkg.name }}</div>
+                @if (pkg.description) {
+                  <div class="pm-pkg-desc">{{ pkg.description }}</div>
                 }
-              </td>
+              </th>
             }
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section class="svc-consultation-section">
-  <div class="svc-section-header">
-    <div class="section-eyebrow">{{ t.consultation?.eyebrow }}</div>
-    <h2 class="section-title">{{ t.consultation?.header }}</h2>
-  </div>
-
-  <div class="consultation-row">
-
-    <div class="consultation-card">
-      <div class="consultation-icon">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-      </div>
-      <h3 class="consultation-card-title">{{ t.consultation?.free_header }}</h3>
-      <p class="consultation-card-text">{{ t.consultation?.free_text }}</p>
-      <a routerLink="/contact" [queryParams]="{ type: 'consultation' }" class="cta-btn">
-        {{ t.consultation?.free_button }}
-        <span class="cta-arrow" aria-hidden="true">→</span>
-      </a>
+        </thead>
+        <tbody>
+          @for (row of pricingFeatures; track row.key) {
+            <tr>
+              <td class="pm-feature-col">
+                <div class="pm-feature-label-row">
+                  <span class="pm-feature-label">{{ row.label }}</span>
+                  @if (row.tooltip) {
+                    <span class="pm-info-wrap">
+                      <button
+                        type="button"
+                        class="pm-info-btn"
+                        (click)="toggleTooltip(row.key)"
+                        (mouseenter)="activeTooltipKey = row.key"
+                        (mouseleave)="activeTooltipKey = null"
+                        [attr.aria-label]="row.tooltip">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                        </svg>
+                      </button>
+                      @if (activeTooltipKey === row.key) {
+                        <span class="pm-tooltip">{{ row.tooltip }}</span>
+                      }
+                    </span>
+                  }
+                </div>
+              </td>
+              @for (pkg of pricingPackages; track pkg.id) {
+                <td class="pm-value-col" [class.pm-value-col--highlight]="pkg.highlight">
+                  @switch (featureCellType(row.values[pkg.id])) {
+                    @case ('yes') {
+                      <svg class="pm-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    }
+                    @case ('no') {
+                      <span class="pm-dash">—</span>
+                    }
+                    @case ('text') {
+                      <span class="pm-value-text">{{ row.values[pkg.id] }}</span>
+                    }
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
 
-    <div class="consultation-card">
-      <div class="consultation-icon">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"/>
-          <path d="M21 21l-4.3-4.3"/>
-        </svg>
-      </div>
-      <h3 class="consultation-card-title">{{ t.consultation?.audit_header }}</h3>
-      <p class="consultation-card-price">{{ t.consultation?.audit_price }}</p>
-      <p class="consultation-card-text">{{ t.consultation?.audit_text }}</p>
-      <a routerLink="/contact" [queryParams]="{ type: 'audit' }" class="cta-btn cta-btn--accent">
-        {{ t.consultation?.audit_button }}
-        <span class="cta-arrow" aria-hidden="true">→</span>
-      </a>
+    @if (t.pricing?.note) {
+      <p class="pm-disclaimer">{{ t.pricing.note }}</p>
+    }
+  </section>
+<img [src]="smoke" class="smoke-bg" alt="" aria-hidden="true">
+
+  <section class="svc-consultation-section">
+    <div class="svc-section-header">
+      <h2 class="section-title">{{ t.consultation?.header }}</h2>
     </div>
 
-  </div>
-</section>
+    <div class="consultation-row">
+      <div class="consultation-card">
+        <div class="consultation-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <h3 class="consultation-card-title">{{ t.consultation?.free_header }}</h3>
+        <p class="consultation-card-text">{{ t.consultation?.free_text }}</p>
+        <a routerLink="/contact" [queryParams]="{ type: 'consultation' }" class="cta-btn">
+          {{ t.consultation?.free_button }}
+          <span class="cta-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+
+      <div class="consultation-card">
+        <div class="consultation-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.3-4.3"/>
+          </svg>
+        </div>
+        <h3 class="consultation-card-title">{{ t.consultation?.audit_header }}</h3>
+        <p class="consultation-card-text">{{ t.consultation?.audit_text }}</p>
+        <a routerLink="/contact" [queryParams]="{ type: 'audit' }" class="cta-btn cta-btn--accent">
+          {{ t.consultation?.audit_button }}
+          <span class="cta-arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
 
   <div class="svc-divider" aria-hidden="true"></div>
 

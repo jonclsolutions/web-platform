@@ -144,7 +144,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-top: 4px;
+  padding-top: 20px;
   border-top: 1px solid var(--border);
 }
 
@@ -255,45 +255,6 @@
   color: var(--text-muted);
   line-height: 1.6;
   white-space: pre-line;
-}
-
-/* ── CTA blok v právním sloupci ──────────────────────────────── */
-.footer-cta-block {
-  margin-top: 8px;
-  padding: 18px 20px;
-  background: var(--accent-dim);
-  border: 1px solid var(--border-mid);
-  border-radius: var(--radius-lg);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.footer-cta-text {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-.footer-cta-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  background: var(--accent-dark);
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  color: #fff;
-  font-size: 0.84rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background var(--ease), transform 0.15s ease;
-  align-self: flex-start;
-}
-
-.footer-cta-btn:hover {
-  background: #7d35ae;
-  transform: translateY(-2px);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -410,5 +371,4 @@
 @media (hover: none) {
   .footer-nav-link:hover { transform: none; }
   .footer-social-link:hover { transform: none; }
-  .footer-cta-btn:hover { transform: none; }
 }

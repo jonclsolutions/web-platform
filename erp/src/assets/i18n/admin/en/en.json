@@ -2086,7 +2086,7 @@
     "legend_info": "Info",
     "legend_total": "Total",
 
-    "retention_card_title": "Retention period (GDPR)",
+    "retention_card_title": "Retention period",
     "retention_field_label": "Automatically delete records older than",
     "retention_unit_days": "days",
     "retention_hint": "Daily automatic cleanup runs in the background. The manual cleanup on the right only deletes records older than this value - if there are none, nothing gets deleted (which is correct).",

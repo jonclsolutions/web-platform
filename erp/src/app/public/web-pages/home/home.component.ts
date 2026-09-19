@@ -49,6 +49,9 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     aiapp: 'assets/images/backgrounds/service-ai.jpg',
   };
 
+  graphs_1: string = "assets/images/home/graphs_1.png";
+  stats_1: string = "assets/images/home/stats_1.png";
+
   server: string = "assets/images/svg/server.svg";
   web_desk: string = "assets/images/svg/web-desk.svg";
   desktop_desk: string = "assets/images/svg/desktop-desk.svg";
@@ -71,6 +74,8 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
   python: string = 'assets/images/services-img/py.png';
   cpp: string = 'assets/images/services-img/cpp.png';
   kotlin: string = 'assets/images/services-img/kotlin.png';
+
+  smoke: string = 'assets/images/backgrounds/smoke-cropped.svg';
 
   hoverState: { [key: string]: boolean } = {
     webapp: false,
@@ -153,29 +158,32 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     super.ngOnDestroy();
   }
 
-  private initParticleField(canvas: HTMLCanvasElement): void {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    this.particleCtx = ctx;
+private initParticleField(canvas: HTMLCanvasElement): void {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  this.particleCtx = ctx;
 
-    this.resizeParticleCanvas(canvas);
-    this.seedParticles(canvas);
+  this.resizeParticleCanvas(canvas);
+  this.seedParticles(canvas);
 
-    this.particleResizeObserver = new ResizeObserver(() => this.resizeParticleCanvas(canvas));
-    this.particleResizeObserver.observe(canvas.parentElement ?? canvas);
+  this.particleResizeObserver = new ResizeObserver(() => this.resizeParticleCanvas(canvas));
+  this.particleResizeObserver.observe(canvas.parentElement ?? canvas);
 
-    // Důležité: Interakce se poslouchá na rodiči, protože canvas má pointer-events: none
-    this.particleInteractionEl = canvas.parentElement ?? canvas;
+  this.particleInteractionEl = canvas.parentElement ?? canvas;
 
-    this.ngZone.runOutsideAngular(() => {
+  this.ngZone.runOutsideAngular(() => {
+    // Interakce s myší/touch jen na širších obrazovkách (>905px).
+    // Na mobilech kurzor neexistuje a touch listenery by blokoval nativní scroll.
+    if (window.innerWidth > 905) {
       this.particleInteractionEl!.addEventListener('mousemove', this.handlePointerMove);
       this.particleInteractionEl!.addEventListener('mouseleave', this.handlePointerLeave);
       this.particleInteractionEl!.addEventListener('touchmove', this.handleTouchMove, { passive: true });
       this.particleInteractionEl!.addEventListener('touchend', this.handlePointerLeave);
+    }
 
-      this.renderParticleFrame(canvas);
-    });
-  }
+    this.renderParticleFrame(canvas);
+  });
+}
 
   private handlePointerMove = (event: MouseEvent): void => {
     const canvas = this.heroParticleCanvasEl;
@@ -335,22 +343,25 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     this.particleAnimationFrameId = requestAnimationFrame(() => this.renderParticleFrame(canvas));
   };
 
-  private stopParticleField(): void {
-    if (this.particleAnimationFrameId !== null) {
-      cancelAnimationFrame(this.particleAnimationFrameId);
-      this.particleAnimationFrameId = null;
-    }
-    this.particleResizeObserver?.disconnect();
-    this.particleResizeObserver = undefined;
-
-    this.particleInteractionEl?.removeEventListener('mousemove', this.handlePointerMove);
-    this.particleInteractionEl?.removeEventListener('mouseleave', this.handlePointerLeave);
-    this.particleInteractionEl?.removeEventListener('touchmove', this.handleTouchMove);
-    this.particleInteractionEl?.removeEventListener('touchend', this.handlePointerLeave);
-    this.particleInteractionEl = undefined;
-    this.mouse = null;
-    this.hasInitialized = false;
+private stopParticleField(): void {
+  if (this.particleAnimationFrameId !== null) {
+    cancelAnimationFrame(this.particleAnimationFrameId);
+    this.particleAnimationFrameId = null;
   }
+  this.particleResizeObserver?.disconnect();
+  this.particleResizeObserver = undefined;
+
+  if (this.particleInteractionEl) {
+    this.particleInteractionEl.removeEventListener('mousemove', this.handlePointerMove);
+    this.particleInteractionEl.removeEventListener('mouseleave', this.handlePointerLeave);
+    this.particleInteractionEl.removeEventListener('touchmove', this.handleTouchMove);
+    this.particleInteractionEl.removeEventListener('touchend', this.handlePointerLeave);
+  }
+
+  this.particleInteractionEl = undefined;
+  this.mouse = null;
+  this.hasInitialized = false;
+}
 
   // Ostatní metody beze změny
   getTechIcon(name: string): string {

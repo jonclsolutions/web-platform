@@ -62,7 +62,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 120px 24px 60px;
+  padding: 120px 24px 0px;
   animation: fadeUp 0.7s ease-out both;
 }
 
@@ -92,47 +92,6 @@
   max-width: 520px;
 }
 
-/* Stat strip */
-.about-hero-stats {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  background: var(--surface);
-  border: 1px solid var(--border-mid);
-  border-radius: var(--radius-lg);
-  padding: 24px 40px;
-}
-
-.about-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.about-stat-num {
-  font-family: var(--ff-display);
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--accent);
-  line-height: 1;
-}
-
-.about-stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-}
-
-.about-stat-sep {
-  width: 1px;
-  height: 44px;
-  background: var(--border-mid);
-  flex-shrink: 0;
-}
-
 /* ═══════════════════════════════════════════════════════════════
    HLAVNÍ LAYOUT — sidebar + main
    ═══════════════════════════════════════════════════════════════ */
@@ -142,7 +101,6 @@
   max-width: var(--max-w);
   margin: 0 auto;
   padding: 0 24px 80px;
-  display: grid;
   grid-template-columns: 280px 1fr;
   gap: 32px;
   align-items: start;
@@ -236,34 +194,6 @@
   object-fit: contain;
 }
 
-/* Tip karta */
-.sidebar-tip-card {
-  background: var(--accent-dim);
-  border: 1px solid var(--border-mid);
-  border-radius: var(--radius-lg);
-  padding: 20px 22px;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.sidebar-tip-icon {
-  font-size: 1.2rem;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.sidebar-tip-text {
-  font-size: 0.84rem;
-  line-height: 1.6;
-  color: var(--text-muted);
-}
-
-.sidebar-tip-text strong {
-  color: var(--accent);
-  font-weight: 600;
-}
-
 /* ── Hlavní textový sloupec ──────────────────────────────────── */
 .about-main {
   padding: 40px;
@@ -271,6 +201,8 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  max-width: var(--max-w);
+  margin: 0 auto;
 }
 
 .about-main-eyebrow {
@@ -510,7 +442,6 @@
   }
 
   .sidebar-card { flex: 1; min-width: 220px; }
-  .sidebar-tip-card { flex: 1; min-width: 180px; }
 }
 
 @media (max-width: 860px) {
@@ -521,12 +452,6 @@
   .cta-row { flex-direction: column; }
   .cta-divider { width: 120px; height: 1px; }
   .cta-block { padding: 32px 28px; }
-
-  .about-hero-stats {
-    flex-wrap: wrap;
-    gap: 20px;
-    padding: 20px 28px;
-  }
 
   .milestones-track {
     grid-template-columns: 1fr;
@@ -540,17 +465,6 @@
   .about-layout { padding: 0 16px 60px; }
   .about-cta-section { padding-left: 16px; padding-right: 16px; }
   .milestones-section { padding: 10px 16px 60px; }
-
-  .about-hero-stats {
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .about-stat-sep {
-    width: 60px;
-    height: 1px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

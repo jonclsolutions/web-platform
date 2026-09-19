@@ -9,7 +9,6 @@
 @if (t && settings) {
 <div class="faq-page">
   <section class="faq-hero">
-    <div class="faq-hero-eyebrow">{{ t?.hero_eyebrow }}</div>
     <h1 class="faq-hero-title">{{ t?.header_1 }}</h1>
     <p class="faq-hero-sub">{{ t?.hero_sub }}</p>
     <div class="faq-tags" role="tablist">
@@ -27,7 +26,6 @@
   <div class="faq-layout">
     <aside class="faq-sidebar">
       <div class="sidebar-card">
-        <div class="sidebar-card-eyebrow">{{ t?.sidebar_eyebrow }}</div>
         <h3 class="sidebar-card-title">{{ t?.sidebar_title }}</h3>
         <p class="sidebar-card-text">{{ t?.sidebar_text }}</p>
           <div class="sidebar-contact-list">
@@ -60,24 +58,17 @@
               </div>
             }
           </div>
-          <div class="sidebar-social-list">
-            @for (link of socialLinks; track link.id) {
-              <a [href]="link.url" target="_blank" rel="noopener" class="sidebar-social-item" [attr.aria-label]="link.name">
-                <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" class="sidebar-social-icon">
-              </a>
-            }
-          </div>
         <a routerLink="/contact" class="sidebar-cta-btn">{{ t?.sidebar_cta }} <span aria-hidden="true">→</span></a>
       </div>
-      <div class="sidebar-stats-card">
+      <!-- <div class="sidebar-stats-card">
         <div class="sidebar-stat"><span class="sidebar-stat-num">{{ filteredItems.length }}+</span><span class="sidebar-stat-label">{{ t?.stat_answers_label }}</span></div>
         <div class="sidebar-stat-divider"></div>
         <div class="sidebar-stat"><span class="sidebar-stat-num">{{ t?.stat_response_value }}</span><span class="sidebar-stat-label">{{ t?.stat_response_label }}</span></div>
-      </div>
-      <div class="sidebar-tip-card">
+      </div> -->
+      <!-- <div class="sidebar-tip-card">
         <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
         <p class="sidebar-tip-text" [innerHTML]="t?.tip_text"></p>
-      </div>
+      </div> -->
     </aside>
 
     <main class="faq-main">
@@ -103,17 +94,16 @@
       }
       
       <div class="faq-mobile-extras">
-        <div class="sidebar-stats-card">
+        <!-- <div class="sidebar-stats-card">
           <div class="sidebar-stat"><span class="sidebar-stat-num">{{ filteredItems.length }}+</span><span class="sidebar-stat-label">{{ t?.stat_answers_label }}</span></div>
           <div class="sidebar-stat-divider"></div>
           <div class="sidebar-stat"><span class="sidebar-stat-num">{{ t?.stat_response_value }}</span><span class="sidebar-stat-label">{{ t?.stat_response_label }}</span></div>
-        </div>
-        <div class="sidebar-tip-card">
+        </div> -->
+        <!-- <div class="sidebar-tip-card">
           <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
           <p class="sidebar-tip-text" [innerHTML]="t?.tip_text"></p>
-        </div>
+        </div> -->
         <div class="sidebar-card">
-          <div class="sidebar-card-eyebrow">{{ t?.sidebar_eyebrow }}</div>
             <div class="sidebar-contact-list">
               <a [href]="emailHref" class="sidebar-contact-item">
                 <span class="sidebar-contact-icon" aria-hidden="true">
@@ -144,40 +134,10 @@
                 </div>
               }
             </div>
-            <div class="sidebar-social-list">
-              @for (link of socialLinks; track link.id) {
-                <a [href]="link.url" target="_blank" rel="noopener" class="sidebar-social-item" [attr.aria-label]="link.name">
-                  <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" class="sidebar-social-icon">
-                </a>
-              }
-            </div>
           <a routerLink="/contact" class="sidebar-cta-btn">{{ t?.sidebar_cta }} <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </main>
   </div>
-
-  <div class="ref-divider" aria-hidden="true"></div>
-
-  <section class="faq-cta-section">
-    <div class="cta-row">
-      <div class="cta-block">
-        <p class="cta-text">{{ t?.write_us_prompt }}</p>
-          <div class="cta-social-links">
-            @for (link of socialLinks; track link.id) {
-              <a [href]="link.url" target="_blank" rel="noopener" class="cta-social-btn" [class.cta-social-btn--accent]="link.name === 'E-mail'">
-                <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" width="20" height="20">
-                {{ link.name }}
-              </a>
-            }
-          </div>
-      </div>
-      <div class="cta-divider" aria-hidden="true"></div>
-      <div class="cta-block">
-        <p class="cta-text">{{ t?.cta_projects_prompt }}</p>
-        <a routerLink="/references" class="cta-btn">{{ t?.cta_projects_btn }} <span class="cta-arrow" aria-hidden="true">→</span></a>
-      </div>
-    </div>
-  </section>
 </div>
 }

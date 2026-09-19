@@ -20,18 +20,8 @@
 <span class="side-label" aria-hidden="true">{{ t.side_label }}</span>
 <div class="panel-left-content">
 <div class="brand-block">
-<p class="brand-eyebrow">{{ t.brand_eyebrow }}</p>
 <h1 class="brand-headline" [innerHTML]="t.brand_headline"></h1>
 <p class="brand-sub">{{ t.brand_sub }}</p>
-</div>
-
-<div class="stats-row">
-@for (stat of stats; track stat.value) {
-<div class="stat-item">
-<span class="stat-value">{{ stat.value }}</span>
-<span class="stat-label">{{ stat.label }}</span>
-</div>
-        }
 </div>
 
 @if (settings) {
@@ -83,7 +73,7 @@
 
 <div class="form-wrapper">
 <div class="form-header">
-<p class="form-eyebrow">{{ t.form_eyebrow }}</p>
+<!-- <p class="form-eyebrow">{{ t.form_eyebrow }}</p> -->
 <h2 class="form-title">{{ t.form_title }}</h2>
 </div>
 

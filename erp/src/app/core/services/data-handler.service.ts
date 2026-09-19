@@ -265,4 +265,9 @@ getOne<T>(apiUrl: string): Observable<T> {
       catchError(this.handleError)
     );
   }
+uploadPut<T>(apiUrl: string, formData: FormData): Observable<T> {
+  return this.http.post<T>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
+    catchError(this.handleError)
+  );
+}
 }

@@ -36,7 +36,6 @@
   <canvas #heroParticleCanvas class="hero-particles" aria-hidden="true"></canvas>
 
   <div class="hero-content">
-    <div class="hero-eyebrow">{{ t?.hero?.eyebrow || 'Software development · Prague' }}</div>
     <h1 class="hero-heading" [innerHTML]="t?.hero?.heading || 'We\'re an IT company<br>building digital products'"></h1>
     <p class="hero-lead">{{ t?.hero?.lead || 'We design, develop, and deploy web, desktop, and mobile applications - from the first idea to production.' }}</p>
 
@@ -61,11 +60,6 @@
         <span class="hero-stat-num">{{ t?.hero?.stat_2_num || '10+' }}</span>
         <span class="hero-stat-label">{{ t?.hero?.stat_2_label || 'completed projects' }}</span>
       </div>
-      <span class="hero-stat-divider" aria-hidden="true"></span>
-      <div class="hero-stat">
-        <span class="hero-stat-num">{{ t?.hero?.stat_3_num || '100%' }}</span>
-        <span class="hero-stat-label">{{ t?.hero?.stat_3_label || 'custom code' }}</span>
-      </div>
     </div>
   </div>
 </section>
@@ -74,55 +68,83 @@
 <section class="about-section">
   <div class="about-glow" aria-hidden="true"></div>
 
-  <div class="about-eyebrow">{{ t?.about?.eyebrow }}</div>
+  <!-- <div class="about-eyebrow">{{ t?.about?.eyebrow }}</div>
   <h2 class="about-heading" [innerHTML]="t?.about?.heading"></h2>
-  <p class="about-lead">{{ t?.about?.lead }}</p>
+  <p class="about-lead">{{ t?.about?.lead }}</p> -->
+<!-- 
+<div class="about-services-list">
 
-  <div class="about-services-grid">
-    <a routerLink="/services" [queryParams]="{ tech: 'web-dev' }" class="about-service-card" style="--tint:#7c9eff">
-      <div class="about-service-icon">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-        </svg>
-      </div>
-      <div class="about-service-name">{{ t?.web_header }}</div>
-      <div class="about-service-desc">{{ t?.web_desc }}</div>
-      <span class="about-service-arrow">→</span>
-    </a>
-
-    <a routerLink="/services" [queryParams]="{ tech: 'desktop-dev' }" class="about-service-card" style="--tint:#5fd8c4">
-      <div class="about-service-icon">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 2v4M16 2v4M2 10h20"/>
-        </svg>
-      </div>
-      <div class="about-service-name">{{ t?.desktop_header }}</div>
-      <div class="about-service-desc">{{ t?.desktop_desc }}</div>
-      <span class="about-service-arrow">→</span>
-    </a>
-
-    <a routerLink="/services" [queryParams]="{ tech: 'mobile-dev' }" class="about-service-card" style="--tint:#ff86c2">
-      <div class="about-service-icon">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
-        </svg>
-      </div>
-      <div class="about-service-name">{{ t?.mobile_header }}</div>
-      <div class="about-service-desc">{{ t?.mobile_desc }}</div>
-      <span class="about-service-arrow">→</span>
-    </a>
-
-    <a routerLink="/services" [queryParams]="{ tech: 'ai-dev' }" class="about-service-card" style="--tint:#ffb86b">
-      <div class="about-service-icon">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/>
-        </svg>
-      </div>
-      <div class="about-service-name">{{ t?.ai_header }}</div>
-      <div class="about-service-desc">{{ t?.ai_desc }}</div>
-      <span class="about-service-arrow">→</span>
-    </a>
+  <div class="about-service-row" style="--tint:#7c9eff">
+    <div class="about-service-row-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+      </svg>
+    </div>
+    <div class="about-service-row-body">
+      <div class="about-service-row-name">{{ t?.web_header }}</div>
+      <div class="about-service-row-desc">{{ t?.web_desc }}</div>
+    </div>
+    <div class="about-service-row-tags">
+      <span class="about-service-tag">Web</span>
+      <span class="about-service-tag">E-shop</span>
+      <span class="about-service-tag">Portál</span>
+    </div>
   </div>
+
+  <div class="about-service-row" style="--tint:#5fd8c4">
+    <div class="about-service-row-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+    </div>
+    <div class="about-service-row-body">
+      <div class="about-service-row-name">{{ t?.crm_header }}</div>
+      <div class="about-service-row-desc">{{ t?.crm_desc }}</div>
+    </div>
+    <div class="about-service-row-tags">
+      <span class="about-service-tag">CRM</span>
+      <span class="about-service-tag">ERP</span>
+      <span class="about-service-tag">Sklad</span>
+    </div>
+  </div>
+
+  <div class="about-service-row" style="--tint:#ff86c2">
+    <div class="about-service-row-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        <line x1="12" y1="3" x2="12" y2="21"/>
+      </svg>
+    </div>
+    <div class="about-service-row-body">
+      <div class="about-service-row-name">{{ t?.update_header }}</div>
+      <div class="about-service-row-desc">{{ t?.update_desc }}</div>
+    </div>
+    <div class="about-service-row-tags">
+      <span class="about-service-tag">Rozšíření</span>
+      <span class="about-service-tag">Integrace</span>
+      <span class="about-service-tag">Migrace</span>
+    </div>
+  </div>
+
+  <div class="about-service-row" style="--tint:#ffb86b">
+    <div class="about-service-row-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </div>
+    <div class="about-service-row-body">
+      <div class="about-service-row-name">{{ t?.custom_header }}</div>
+      <div class="about-service-row-desc">{{ t?.custom_desc }}</div>
+    </div>
+    <div class="about-service-row-tags">
+      <span class="about-service-tag">Konzultace</span>
+      <span class="about-service-tag">Analýza</span>
+      <span class="about-service-tag">Na míru</span>
+    </div>
+  </div>
+
+</div> -->
 
 <div class="about-story-row">
   <div class="about-story-text">
@@ -132,24 +154,26 @@
 
   <div class="about-story-media">
     <div class="about-story-photo-placeholder" aria-hidden="true">
-      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <!-- <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="4" width="20" height="16" rx="2"/>
         <circle cx="8.5" cy="10.5" r="1.8"/>
         <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
-      </svg>
-      <span class="about-story-photo-label">{{ t?.about?.story_photo_placeholder }}</span>
+      </svg> -->
+      <!-- <span class="about-story-photo-label">{{ t?.about?.story_photo_placeholder }}</span> -->
+      <img [src]="graphs_1">
     </div>
   </div>
 </div>
   <div class="about-story-row">
       <div class="about-story-media">
     <div class="about-story-photo-placeholder" aria-hidden="true">
-      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <!-- <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="4" width="20" height="16" rx="2"/>
         <circle cx="8.5" cy="10.5" r="1.8"/>
         <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
       </svg>
-      <span class="about-story-photo-label">{{ t?.about?.story_photo_placeholder }}</span>
+      <span class="about-story-photo-label">{{ t?.about?.story_photo_placeholder }}</span> -->
+      <img [src]="stats_1">
     </div>
   </div>
   <div class="about-story-text">
@@ -172,7 +196,7 @@
      žádná závislost na obrázku), silné stíny/prstence kolem ikon.
      Zůstalo: 3 karty, ikona, nadpis, 3 body, malý tag badge.
      ═══════════════════════════════════════════════════ -->
-<section class="select-us-section_temp_new">
+<!-- <section class="select-us-section_temp_new">
   <div class="select-us-header-wrp_temp_new">
     <div class="select-us-eyebrow_temp_new">{{ t?.why_us_header }}</div>
     <h2 class="select-us-title_temp_new">{{ t?.select_us_header }}</h2>
@@ -258,11 +282,10 @@
           </li>
         </ul>
       </div>
-      <span class="benefit-item-tag_temp_new">{{ t?.why_us_quality_header_2 }}</span>
     </div>
 
   </div>
-</section>
+</section> -->
 
 <!-- ═══════════════════════════════════════════════════
      CO NAŠE SYSTÉMY OBSAHUJÍ - bodově, srozumitelně i pro laika.
@@ -272,88 +295,115 @@
      ═══════════════════════════════════════════════════ -->
 <section class="sys-features-section_temp_new">
   <div class="select-us-header-wrp_temp_new">
-    <div class="select-us-eyebrow_temp_new">{{ t?.sys_features?.eyebrow }}</div>
     <h2 class="select-us-title_temp_new">{{ t?.sys_features?.header }}</h2>
     <p class="select-us-lead_temp_new">{{ t?.sys_features?.lead }}</p>
   </div>
 
-  <div class="sys-features-list_temp_new">
+<div class="sys-features-list_temp_new">
 
-    <div class="sys-feature-item_temp_new">
-      <div class="sys-feature-icon_temp_new">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </div>
-      <div class="sys-feature-body_temp_new">
-        <span class="sys-feature-label_temp_new">{{ t?.sys_features?.seo?.label }}</span>
-        <span class="sys-info-wrap_temp_new" tabindex="0">
-          <svg class="sys-info-icon_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <span class="sys-tooltip_temp_new">{{ t?.sys_features?.seo?.tooltip }}</span>
-        </span>
-      </div>
+  <div class="sys-feature-item_temp_new">
+    <!-- <div class="sys-feature-icon_temp_new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </div> -->
+    <div class="sys-feature-body_temp_new">
+      <span class="sys-feature-label_temp_new">{{ t?.sys_features?.seo?.label }}</span>
+      <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.seo?.desc }}</span>
     </div>
-
-    <div class="sys-feature-item_temp_new">
-      <div class="sys-feature-icon_temp_new">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-      </div>
-      <div class="sys-feature-body_temp_new">
-        <span class="sys-feature-label_temp_new">{{ t?.sys_features?.auth?.label }}</span>
-        <span class="sys-info-wrap_temp_new" tabindex="0">
-          <svg class="sys-info-icon_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <span class="sys-tooltip_temp_new">{{ t?.sys_features?.auth?.tooltip }}</span>
-        </span>
-      </div>
-    </div>
-
-    <div class="sys-feature-item_temp_new">
-      <div class="sys-feature-icon_temp_new">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16"/><path d="M9 4v16"/>
-        </svg>
-      </div>
-      <div class="sys-feature-body_temp_new">
-        <span class="sys-feature-label_temp_new">{{ t?.sys_features?.middleware?.label }}</span>
-        <span class="sys-info-wrap_temp_new" tabindex="0">
-          <svg class="sys-info-icon_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <span class="sys-tooltip_temp_new">{{ t?.sys_features?.middleware?.tooltip }}</span>
-        </span>
-      </div>
-    </div>
-
-    <div class="sys-feature-item_temp_new">
-      <div class="sys-feature-icon_temp_new">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-      </div>
-      <div class="sys-feature-body_temp_new">
-        <span class="sys-feature-label_temp_new">{{ t?.sys_features?.attack_protection?.label }}</span>
-        <span class="sys-info-wrap_temp_new" tabindex="0">
-          <svg class="sys-info-icon_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <span class="sys-tooltip_temp_new">{{ t?.sys_features?.attack_protection?.tooltip }}</span>
-        </span>
-      </div>
-       
-    </div>
-
   </div>
 
-  <!-- ── Placeholder demo videa administrace - žádný nadpis, video doplníte později.
-       Zatím jen vizuální placeholder (přehrávač bez zdroje) se stejným vzhledem
-       jako zbytek sekce. Až bude video hotové, stačí přidat <source> a odstranit
-       .sys-demo-video-placeholder overlay (nebo ho ponechat jako poster stav). ── -->
+  <div class="sys-feature-item_temp_new">
+    <!-- <div class="sys-feature-icon_temp_new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div> -->
+    <div class="sys-feature-body_temp_new">
+      <span class="sys-feature-label_temp_new">{{ t?.sys_features?.auth?.label }}</span>
+      <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.auth?.desc }}</span>
+    </div>
+  </div>
+
+  <div class="sys-feature-item_temp_new">
+    <!-- <div class="sys-feature-icon_temp_new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16"/><path d="M9 4v16"/>
+      </svg>
+    </div> -->
+    <div class="sys-feature-body_temp_new">
+      <span class="sys-feature-label_temp_new">{{ t?.sys_features?.middleware?.label }}</span>
+      <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.middleware?.desc }}</span>
+    </div>
+  </div>
+
+  <div class="sys-feature-item_temp_new">
+    <!-- <div class="sys-feature-icon_temp_new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </div> -->
+    <div class="sys-feature-body_temp_new">
+      <span class="sys-feature-label_temp_new">{{ t?.sys_features?.attack_protection?.label }}</span>
+      <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.attack_protection?.desc }}</span>
+    </div>
+  </div>
+
+  <div class="sys-feature-item_temp_new">
+    <!-- <div class="sys-feature-icon_temp_new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+    </div> -->
+    <div class="sys-feature-body_temp_new">
+      <span class="sys-feature-label_temp_new">{{ t?.sys_features?.documentation?.label }}</span>
+      <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.documentation?.desc }}</span>
+    </div>
+  </div>
+
+  <div class="sys-feature-item_temp_new">
+    <!-- <div class="sys-feature-icon_temp_new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+    </div> -->
+    <div class="sys-feature-body_temp_new">
+      <span class="sys-feature-label_temp_new">{{ t?.sys_features?.integrations?.label }}</span>
+      <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.integrations?.desc }}</span>
+    </div>
+  </div>
+
+  <div class="sys-feature-item_temp_new">
+    <!-- <div class="sys-feature-icon_temp_new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8M12 17v4"/>
+      </svg>
+    </div> -->
+    <div class="sys-feature-body_temp_new">
+      <span class="sys-feature-label_temp_new">{{ t?.sys_features?.responsive?.label }}</span>
+      <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.responsive?.desc }}</span>
+    </div>
+  </div>
+
+  <div class="sys-feature-item_temp_new">
+    <!-- <div class="sys-feature-icon_temp_new">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </div> -->
+    <div class="sys-feature-body_temp_new">
+      <span class="sys-feature-label_temp_new">{{ t?.sys_features?.support?.label }}</span>
+      <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.support?.desc }}</span>
+    </div>
+  </div>
+
+</div>
+
   <div class="sys-demo-video_temp_new">
     <video
       class="sys-demo-video-el_temp_new"
@@ -362,7 +412,6 @@
       playsinline
       preload="none"
       aria-label="{{ t?.sys_features?.demo_video_label }}">
-      <!-- <source src="..." type="video/mp4"> - doplnit později -->
     </video>
     <div class="sys-demo-video-placeholder_temp_new">
       <div class="sys-demo-play-btn_temp_new">
@@ -373,13 +422,8 @@
       <span class="sys-demo-video-label_temp_new">{{ t?.sys_features?.demo_video_placeholder }}</span>
     </div>
   </div>
+<img [src]="smoke" class="smoke-bg" alt="" aria-hidden="true">
 
-  <div class="sys-trust-banner_temp_new">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-    </svg>
-    <span>{{ t?.sys_features?.trust_statement }}</span>
-  </div>
 </section>
 <div class="home-cta-btn-wrp">
 
@@ -400,8 +444,7 @@
       <!-- FAQ Section -->
       <section class="home-faq-section">
         <div class="home-faq-header">
-          <div class="home-faq-eyebrow">{{ t?.faq?.eyebrow || 'Frequently asked questions' }}</div>
-          <h2 class="home-faq-heading">{{ t?.faq?.heading || 'Before you reach out, the answer might already be here' }}</h2>
+          <h2 class="home-faq-heading">{{ t?.faq?.heading  }}</h2>
         </div>
 
         <div class="home-faq-list" role="list">
@@ -442,7 +485,7 @@
             <input type="checkbox" id="home-faq-3" class="home-faq-checkbox">
             <label for="home-faq-3" class="home-faq-trigger">
               <span class="home-faq-num" aria-hidden="true">03</span>
-              <span class="home-faq-trigger-text">{{ t?.faq?.q3 || 'Do you provide support after the project is finished?' }}</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q3}}</span>
               <span class="home-faq-chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -486,7 +529,6 @@
           <section class="home-cta-section">
               <div class="home-cta-row">
                   <div class="home-cta-block">
-                      <p class="home-cta-eyebrow">{{ t?.cta.references?.eyebrow }}</p>
                       <p class="home-cta-text">{{ t?.cta.references?.text }}</p>
                       <a routerLink="/references" class="home-cta-btn">
                           {{ t?.cta.references?.btn }}
@@ -497,7 +539,6 @@
                   <div class="home-cta-divider" aria-hidden="true"></div>
 
                   <div class="home-cta-block">
-                      <p class="home-cta-eyebrow">{{ t?.cta.contact?.eyebrow }}</p>
                       <p class="home-cta-text">{{ t?.cta.contact?.text }}</p>
                       <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
                           {{ t?.cta.contact?.btn }}

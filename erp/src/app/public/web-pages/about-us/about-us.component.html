@@ -10,74 +10,25 @@
 <div class="about-page">
 
   <section class="about-hero">
-    <div class="about-hero-eyebrow">{{ t?.hero_eyebrow }}</div>
     <h1 class="about-hero-title">{{ t?.header }}</h1>
-    <p class="about-hero-sub">{{ t?.hero_sub || 'The IT division of the RegioPartner group — built on our parent company\'s fifteen years of experience, growing it in software since 2022.' }}</p>
-
-    <div class="about-hero-stats">
-      <div class="about-stat">
-        <span class="about-stat-num">{{ t?.stats?.projects }}</span>
-        <span class="about-stat-label">{{ t?.stats?.projects_label }}</span>
-      </div>
-      <div class="about-stat-sep" aria-hidden="true"></div>
-      <div class="about-stat">
-        <span class="about-stat-num">{{ t?.stats?.experience }}</span>
-        <span class="about-stat-label">{{ t?.stats?.experience_label }}</span>
-      </div>
-      <div class="about-stat-sep" aria-hidden="true"></div>
-      <div class="about-stat">
-        <span class="about-stat-num">{{ t?.stats?.response }}</span>
-        <span class="about-stat-label">{{ t?.stats?.response_label }}</span>
-      </div>
-    </div>
+    <p class="about-hero-sub">{{ t?.hero_sub }}</p>
   </section>
 
-  <div class="about-layout">
-
-    <aside class="about-sidebar">
-      <div class="sidebar-card">
-        <div class="sidebar-eyebrow">{{ t?.sidebar?.eyebrow }}</div>
-        <h3 class="sidebar-title">{{ t?.sidebar?.title }}</h3>
-        <p class="sidebar-text">{{ t?.sidebar?.text }}</p>
-        <a routerLink="/contact" class="sidebar-cta-btn">
-          {{ t?.sidebar?.btn }} <span aria-hidden="true">→</span>
-        </a>
-      </div>
-
-      <div class="sidebar-card sidebar-card--social">
-        <div class="sidebar-eyebrow">{{ t?.sidebar?.social_eyebrow }}</div>
-        <div class="social-list">
-          @for (link of socialLinks; track link.id) {
-            <a [href]="link.url" target="_blank" rel="noopener" [attr.aria-label]="link.name" class="social-item">
-              <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" class="social-icon">
-            </a>
-          }
-        </div>
-      </div>
-
-      <div class="sidebar-tip-card">
-        <div class="sidebar-tip-icon" aria-hidden="true">💡</div>
-        <p class="sidebar-tip-text" [innerHTML]="t?.sidebar?.tip_text"></p>
-      </div>
-    </aside>
 
     <main class="about-main">
-      <div class="about-main-eyebrow">{{ t?.main_eyebrow }}</div>
 
       <div class="about-content">
-        <p class="about-paragraph">{{ t?.paragraph_1 || 'RPSW is the IT division of RegioPartner, s.r.o. — a company that has provided consulting and strategic analysis to the Czech public sector for fifteen years. We didn\'t start out as an isolated startup, but as a natural extension of a company with a long-standing foundation and experience handling large, complex engagements.' }}</p>
-        <p class="about-paragraph">{{ t?.paragraph_2 || 'The division was founded in 2022 with a clear goal: to bring software expertise and modern technology into the environment our parent company has long operated in, while also offering custom development to clients beyond that space.' }}</p>
-        <p class="about-paragraph">{{ t?.paragraph_3 || 'We spent our first period focused mainly on building internal infrastructure, processes, and technical foundations — before taking on outside work, we wanted to be sure every project would rest on a stable, tested base rather than improvisation.' }}</p>
-        <p class="about-paragraph">{{ t?.paragraph_4 || 'Today, that means we deliver websites, mobile and desktop applications, and AI solutions with the confidence of a company that understands long-term partnerships — combined with the agility of a smaller team unafraid to get into the details.' }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_1 }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_2 }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_3 }}</p>
+        <p class="about-paragraph">{{ t?.paragraph_4 }}</p>
       </div>
     </main>
-  </div>
 
   <!-- Milestones / Milníky — timeline od založení divize po současnost -->
   <section class="milestones-section">
     <div class="milestones-header">
-      <div class="milestones-eyebrow">{{ t?.milestones?.eyebrow || 'Our journey' }}</div>
-      <h2 class="milestones-heading">{{ t?.milestones?.heading || 'From founding the division to today' }}</h2>
+      <h2 class="milestones-heading">{{ t?.milestones?.heading}}</h2>
     </div>
 
     <div class="milestones-track">
@@ -87,9 +38,9 @@
           <div class="milestone-dot" aria-hidden="true"></div>
           <div class="milestone-line" aria-hidden="true"></div>
         </div>
-        <div class="milestone-year">{{ t?.milestones?.m1?.year || '2022' }}</div>
-        <h4 class="milestone-title">{{ t?.milestones?.m1?.title || 'Founding the IT division' }}</h4>
-        <p class="milestone-text">{{ t?.milestones?.m1?.text || 'RPSW is founded as the software division of the RegioPartner, s.r.o. group, building on our parent company\'s fifteen-year history.' }}</p>
+        <div class="milestone-year">{{ t?.milestones?.m1?.year}}</div>
+        <h4 class="milestone-title">{{ t?.milestones?.m1?.title }}</h4>
+        <p class="milestone-text">{{ t?.milestones?.m1?.text }}</p>
       </div>
 
       <div class="milestone-item">
@@ -98,9 +49,9 @@
           <div class="milestone-dot" aria-hidden="true"></div>
           <div class="milestone-line" aria-hidden="true"></div>
         </div>
-        <div class="milestone-year">{{ t?.milestones?.m2?.year || '2022–2023' }}</div>
-        <h4 class="milestone-title">{{ t?.milestones?.m2?.title || 'Building infrastructure' }}</h4>
-        <p class="milestone-text">{{ t?.milestones?.m2?.text || 'We build internal processes, technical foundations, and our team — the base every project we deliver today stands on.' }}</p>
+        <div class="milestone-year">{{ t?.milestones?.m2?.year }}</div>
+        <h4 class="milestone-title">{{ t?.milestones?.m2?.title  }}</h4>
+        <p class="milestone-text">{{ t?.milestones?.m2?.text }}</p>
       </div>
 
       <div class="milestone-item">
@@ -109,9 +60,9 @@
           <div class="milestone-dot" aria-hidden="true"></div>
           <div class="milestone-line" aria-hidden="true"></div>
         </div>
-        <div class="milestone-year">{{ t?.milestones?.m3?.year || '2024' }}</div>
-        <h4 class="milestone-title">{{ t?.milestones?.m3?.title || 'First external projects' }}</h4>
-        <p class="milestone-text">{{ t?.milestones?.m3?.text || 'We open up to clients beyond our parent company and deliver our first custom websites, applications, and AI solutions.' }}</p>
+        <div class="milestone-year">{{ t?.milestones?.m3?.year  }}</div>
+        <h4 class="milestone-title">{{ t?.milestones?.m3?.title  }}</h4>
+        <p class="milestone-text">{{ t?.milestones?.m3?.text  }}</p>
       </div>
 
       <div class="milestone-item">
@@ -120,9 +71,9 @@
           <div class="milestone-dot" aria-hidden="true"></div>
           <div class="milestone-line milestone-line--hidden" aria-hidden="true"></div>
         </div>
-        <div class="milestone-year">{{ t?.milestones?.m4?.year || 'Today' }}</div>
-        <h4 class="milestone-title">{{ t?.milestones?.m4?.title || 'Stable team, growing portfolio' }}</h4>
-        <p class="milestone-text">{{ t?.milestones?.m4?.text || 'We combine the foundation of an established company with the agility of a smaller team, continuing to grow our portfolio of completed projects.' }}</p>
+        <div class="milestone-year">{{ t?.milestones?.m4?.year  }}</div>
+        <h4 class="milestone-title">{{ t?.milestones?.m4?.title  }}</h4>
+        <p class="milestone-text">{{ t?.milestones?.m4?.text  }}</p>
       </div>
     </div>
   </section>

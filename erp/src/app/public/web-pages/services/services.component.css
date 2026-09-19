@@ -84,45 +84,6 @@
   margin-bottom: 48px;
 }
 
-/* ── Tech tabs ───────────────────────────────────────────────── */
-.tech-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border-mid);
-  border-radius: 999px;
-  padding: 6px;
-}
-
-.tech-tab {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  padding: 10px 22px;
-  border-radius: 999px;
-  font-size: 0.92rem;
-  font-weight: 600;
-  font-family: var(--ff-body);
-  cursor: pointer;
-  transition: background var(--ease), color var(--ease);
-  white-space: nowrap;
-}
-
-.tech-tab:hover { color: var(--text); }
-
-.tech-tab--active {
-  background: var(--accent-dark);
-  color: #fff;
-  border: 1px solid var(--accent);
-}
-
-.web-dev     { animation: fadeDown 0.6s 0.1s ease-out both; }
-.desktop-dev { animation: fadeDown 0.6s 0.2s ease-out both; }
-.mobile-dev  { animation: fadeDown 0.6s 0.3s ease-out both; }
-.ai-dev      { animation: fadeDown 0.6s 0.4s ease-out both; }
-
 /* ── Content sekce ───────────────────────────────────────────── */
 .svc-content-section {
   position: relative;
@@ -133,10 +94,11 @@
 .svc-content-inner {
   max-width: var(--max-w);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 32px;
-  align-items: start;
+}
+
+/* Modifier pro full-width layout po odstranění sidebaru */
+.svc-content-inner--full {
+  max-width: 860px;
 }
 
 .svc-main-col {
@@ -244,113 +206,6 @@
   line-height: 1.7;
   color: var(--text-muted);
 }
-
-/* ── Sidebar ─────────────────────────────────────────────────── */
-.svc-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  animation: fadeUp 0.6s 0.25s ease-out both;
-  position: sticky;
-  top: 24px;
-}
-
-.sidebar-card {
-  padding: 28px 24px;
-}
-
-.sidebar-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 6px;
-}
-
-.sidebar-sublabel {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  margin-bottom: 20px;
-}
-
-/* ── Tech chipy (nahrazují původní tech-grid čtverečky) ───────── */
-.tech-chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.tech-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px 7px 8px;
-  border-radius: 999px;
-  background: var(--accent-dim);
-  border: 1px solid var(--border-mid);
-  transition: border-color var(--ease), background var(--ease), transform 0.15s ease;
-}
-
-.tech-chip-icon {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 4px rgba(166, 125, 255, 0.4));
-}
-
-.tech-chip-name {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-/* ── Stat karty (ikona + gradientní číslo) ───────────────────── */
-.sidebar-stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.sidebar-stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 20px 12px;
-  text-align: center;
-}
-
-.sidebar-stat-icon {
-  display: flex;
-  color: var(--accent);
-  opacity: 0.85;
-  margin-bottom: 2px;
-}
-
-.sidebar-stat-num {
-  font-family: var(--ff-display);
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1;
-  background: linear-gradient(135deg, #fff, var(--accent));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.sidebar-stat-label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-top: 6px;
-}
-
 /* ── Sdílená hlavička sekcí ──────────────────────────────────── */
 .svc-section-header {
   text-align: center;
@@ -407,6 +262,7 @@
   align-items: center;
   text-align: center;
   padding: 0 16px;
+  padding-bottom: 30px;
 }
 
 /* Číslo nad tečkou */
@@ -612,10 +468,6 @@
   font-size: 0.8rem;
   line-height: 1.6;
   opacity: 0.85;
-}
-
-.svc-consultation-section {
-  padding: 32px 0;
 }
 
 .svc-consultation-section .section-eyebrow {
@@ -999,52 +851,17 @@ tbody tr:last-child .pm-value-col {
    RESPONZIVITA
    ══════════════════════════════════════════════════════════════ */
 
-/* 1100px – sidebar pod hlavní sloupec */
-@media (max-width: 1100px) {
-  .svc-content-inner { grid-template-columns: 1fr; }
 
-  .svc-sidebar {
-    position: static;
-    flex-direction: row;
-    align-items: stretch;
-    flex-wrap: wrap;
-  }
 
-  .sidebar-card { flex: 1; min-width: 240px; }
-
-  .sidebar-stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-    flex: 1;
-    min-width: 280px;
-  }
-}
-
-/* 860px – přepnutí workflow na mobilní verzi */
 @media (max-width: 860px) {
-  /* Workflow přepínač */
   .wf-desktop { display: none; }
   .wf-mobile  { display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; }
-
-  .tech-tabs {
-    border-radius: var(--radius);
-    padding: 8px;
-    gap: 6px;
-  }
-
-  .tech-tab {
-    border-radius: var(--radius);
-    padding: 9px 16px;
-    font-size: 0.85rem;
-  }
 
   .svc-main-col { padding: 28px 20px; }
 
   .cta-row { flex-direction: column; }
   .cta-divider { width: 120px; height: 1px; }
   .cta-block { padding: 32px 28px; }
-
-  .svc-sidebar { flex-direction: column; }
-  .sidebar-stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* 600px – malé mobily */
@@ -1052,15 +869,12 @@ tbody tr:last-child .pm-value-col {
   .svc-hero { padding: 90px 16px 48px; }
   .svc-hero-title { font-size: 2rem; }
 
-  .tech-tabs { gap: 6px; }
-  .tech-tab { padding: 8px 14px; font-size: 0.8rem; }
 
   .svc-content-section { padding: 0 16px 60px; }
 
   .svc-workflow-section,
   .svc-cta-section { padding-left: 16px; padding-right: 16px; }
 
-  .sidebar-stats-grid { grid-template-columns: repeat(2, 1fr); }
 
   /* Rail o trochu užší na malých obrazovkách */
   .wfm-rail { width: 40px; }
@@ -1069,4 +883,138 @@ tbody tr:last-child .pm-value-col {
 /* Hover jen na zařízeních s myší */
 @media (hover: hover) {
   .faq-trigger:hover { background: #161631; }
+}
+/* ── Feature cards grid (nahrazuje FAQ accordion) ────────────── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.feature-card {
+  padding: 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color var(--ease), background var(--ease);
+}
+
+.feature-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+
+.feature-card-title {
+  font-family: var(--ff-display);
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.feature-card-text {
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.feature-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.feature-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border-mid);
+  color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .features-grid { grid-template-columns: 1fr; }
+}
+/* 7-krokový workflow — přepíše původní repeat(4, 1fr) */
+.wf-desktop-connector {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Na středních obrazovkách se 7 sloupců nevejde — přepni dřív na mobile verzi */
+@media (max-width: 1100px) {
+  .wf-desktop { display: none; }
+  .wf-mobile  { display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; }
+}
+.smoke-bg {
+  position: relative;
+  display: block;
+  width: 1920px;
+  max-width: none;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0.5;
+  margin-top: -500px;
+  margin-bottom: 250px;
+  z-index: 0;
+}
+
+@media (min-width: 1920px) {
+  .smoke-bg {
+    width: 102%;
+  }
+}
+/* ── Image placeholder mezi textem a feature kartami ─────────── */
+.svc-img-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, #16162f 0%, #111128 100%);
+  border: 1px dashed var(--border-mid);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+  margin: 32px 0;
+  transition: border-color var(--ease);
+}
+
+.svc-img-placeholder:hover {
+  border-color: var(--accent);
+}
+
+.svc-img-placeholder svg {
+  color: var(--accent);
+  opacity: 0.5;
+}
+
+.svc-img-placeholder-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.5;
+}
+
+@media (max-width: 600px) {
+  .svc-img-placeholder {
+    aspect-ratio: 4 / 3;
+  }
 }
