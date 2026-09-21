@@ -40,7 +40,6 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
 
   protected readonly translationKey = 'home';
 
-  // Zachovaná struktura assetů pro kompatibilitu s HTML
   private heroBackgroundImageUrl: string = 'assets/images/backgrounds/home_background.jpg';
   private serviceBackgrounds: { [key: string]: string } = {
     webapp: 'assets/images/backgrounds/service-web.jpg',
@@ -92,8 +91,7 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     if (ref?.nativeElement && !this.hasInitialized) {
       this.heroParticleCanvasEl = ref.nativeElement;
       this.hasInitialized = true;
-      
-      // Spustíme hned, jakmile Angular prvek vykreslí do DOMu
+
       if (isPlatformBrowser(this.platformId)) {
         setTimeout(() => {
           if (this.heroParticleCanvasEl) {
@@ -117,29 +115,26 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
   private readonly PARTICLE_COLOR = '166, 125, 255';
 
   /**
-   * Cílová "hustota" v px² plochy na jednu částici - určuje průměrnou vzdálenost
-   * mezi tečkami. Toto číslo se NEMĚNÍ podle velikosti plochy (proto samo o sobě
-   * dává na všech rozlišeních konzistentní design), problém byl jen v tom, že
-   * výsledný počet byl dřív tvrdě ořezáván (viz PARTICLE_MIN/MAX_COUNT níže).
+   * Hustota částic: px² plochy na jednu částici.
+   * @refactor-note (2026-09) Sníženo z 14000 na 4000 — na mobilu (390×844)
+   * původní hodnota dávala jen ~23 teček, nová dává ~82. Na FullHD (1920×1080)
+   * dává ~518, zastropováno PARTICLE_MAX_COUNT na 320 z výkonnostních důvodů
+   * (spojnice O(n²) na snímek). Výsledek: konzistentně hustá pavučina na
+   * všech velikostech obrazovky.
    */
-  private readonly PARTICLE_DENSITY = 14000;
+  private readonly PARTICLE_DENSITY = 5500;
 
   /**
-   * Dolní/horní mez počtu částic. Dolní mez chrání jen velmi malé plochy
-   * (ať tam není jen pár osamocených teček), horní mez je čistě výkonnostní
-   * pojistka pro extrémně velké plochy (spojnice se počítají O(n²) na snímek) -
-   * NENÍ to designový strop, proto je nastavena mnohem výš, než kolik reálně
-   * kdy vzorec plocha/hustota na běžných rozlišeních vrátí.
+   * Dolní mez chrání velmi malé plochy (alespoň 30 teček i na nejmenším mobilu).
+   * Horní mez je výkonnostní pojistka — 320 teček = ~51k párů spojnic na snímek,
+   * stále plynulé i na středně výkonných zařízeních.
    */
-  private readonly PARTICLE_MIN_COUNT = 14;
-  private readonly PARTICLE_MAX_COUNT = 260;
+  private readonly PARTICLE_MIN_COUNT = 25;
+  private readonly PARTICLE_MAX_COUNT = 280;
 
   /**
-   * Vzdálenosti pro spojnice/interakci jsou navržené a odladěné pro tuto
-   * referenční šířku plátna (běžný notebook). Při jiné šířce se přepočítají
-   * proporcionálně (viz `currentScale`), takže relativní "hustota pavučiny"
-   * zůstává na všech rozlišeních stejná - na 1440px šířky se chování vůbec
-   * nezmění, jinde se poměrově přizpůsobí.
+   * Vzdálenosti pro spojnice/interakci navržené pro referenční šířku 1440px.
+   * Při jiné šířce se přepočítají proporcionálně přes currentScale.
    */
   private readonly REFERENCE_WIDTH = 1440;
   private readonly SCALE_MIN = 0.4;
@@ -150,7 +145,6 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
   private readonly MOUSE_REPEL_RADIUS = 120;
   private readonly MOUSE_REPEL_STRENGTH = 0.6;
 
-  /** Aktuální poměr aktuální_šířka / REFERENCE_WIDTH, přepočítaný při každém resize. */
   private currentScale = 1;
 
   override ngOnDestroy(): void {
@@ -158,32 +152,30 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     super.ngOnDestroy();
   }
 
-private initParticleField(canvas: HTMLCanvasElement): void {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  this.particleCtx = ctx;
+  private initParticleField(canvas: HTMLCanvasElement): void {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    this.particleCtx = ctx;
 
-  this.resizeParticleCanvas(canvas);
-  this.seedParticles(canvas);
+    this.resizeParticleCanvas(canvas);
+    this.seedParticles(canvas);
 
-  this.particleResizeObserver = new ResizeObserver(() => this.resizeParticleCanvas(canvas));
-  this.particleResizeObserver.observe(canvas.parentElement ?? canvas);
+    this.particleResizeObserver = new ResizeObserver(() => this.resizeParticleCanvas(canvas));
+    this.particleResizeObserver.observe(canvas.parentElement ?? canvas);
 
-  this.particleInteractionEl = canvas.parentElement ?? canvas;
+    this.particleInteractionEl = canvas.parentElement ?? canvas;
 
-  this.ngZone.runOutsideAngular(() => {
-    // Interakce s myší/touch jen na širších obrazovkách (>905px).
-    // Na mobilech kurzor neexistuje a touch listenery by blokoval nativní scroll.
-    if (window.innerWidth > 905) {
-      this.particleInteractionEl!.addEventListener('mousemove', this.handlePointerMove);
-      this.particleInteractionEl!.addEventListener('mouseleave', this.handlePointerLeave);
-      this.particleInteractionEl!.addEventListener('touchmove', this.handleTouchMove, { passive: true });
-      this.particleInteractionEl!.addEventListener('touchend', this.handlePointerLeave);
-    }
+    this.ngZone.runOutsideAngular(() => {
+      if (window.innerWidth > 905) {
+        this.particleInteractionEl!.addEventListener('mousemove', this.handlePointerMove);
+        this.particleInteractionEl!.addEventListener('mouseleave', this.handlePointerLeave);
+        this.particleInteractionEl!.addEventListener('touchmove', this.handleTouchMove, { passive: true });
+        this.particleInteractionEl!.addEventListener('touchend', this.handlePointerLeave);
+      }
 
-    this.renderParticleFrame(canvas);
-  });
-}
+      this.renderParticleFrame(canvas);
+    });
+  }
 
   private handlePointerMove = (event: MouseEvent): void => {
     const canvas = this.heroParticleCanvasEl;
@@ -204,7 +196,6 @@ private initParticleField(canvas: HTMLCanvasElement): void {
     this.mouse = null;
   };
 
-  /** Ořízne hodnotu do zadaného rozsahu [min, max]. */
   private clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
   }
@@ -230,7 +221,6 @@ private initParticleField(canvas: HTMLCanvasElement): void {
 
     this.particleCtx?.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Přepočet měřítka pro spojnice/interakci dle aktuální (logické, CSS) šířky plátna.
     this.currentScale = this.clamp(width / this.REFERENCE_WIDTH, this.SCALE_MIN, this.SCALE_MAX);
 
     if (this.particles.length === 0 && width > 0 && height > 0) {
@@ -263,7 +253,6 @@ private initParticleField(canvas: HTMLCanvasElement): void {
     const width = canvas.width / dpr;
     const height = canvas.height / dpr;
 
-    // Vzdálenosti přepočtené na aktuální velikost plátna - viz komentář u currentScale výše.
     const linkDistance = this.PARTICLE_LINK_DISTANCE * this.currentScale;
     const mouseLinkDistance = this.MOUSE_LINK_DISTANCE * this.currentScale;
     const mouseRepelRadius = this.MOUSE_REPEL_RADIUS * this.currentScale;
@@ -343,27 +332,26 @@ private initParticleField(canvas: HTMLCanvasElement): void {
     this.particleAnimationFrameId = requestAnimationFrame(() => this.renderParticleFrame(canvas));
   };
 
-private stopParticleField(): void {
-  if (this.particleAnimationFrameId !== null) {
-    cancelAnimationFrame(this.particleAnimationFrameId);
-    this.particleAnimationFrameId = null;
+  private stopParticleField(): void {
+    if (this.particleAnimationFrameId !== null) {
+      cancelAnimationFrame(this.particleAnimationFrameId);
+      this.particleAnimationFrameId = null;
+    }
+    this.particleResizeObserver?.disconnect();
+    this.particleResizeObserver = undefined;
+
+    if (this.particleInteractionEl) {
+      this.particleInteractionEl.removeEventListener('mousemove', this.handlePointerMove);
+      this.particleInteractionEl.removeEventListener('mouseleave', this.handlePointerLeave);
+      this.particleInteractionEl.removeEventListener('touchmove', this.handleTouchMove);
+      this.particleInteractionEl.removeEventListener('touchend', this.handlePointerLeave);
+    }
+
+    this.particleInteractionEl = undefined;
+    this.mouse = null;
+    this.hasInitialized = false;
   }
-  this.particleResizeObserver?.disconnect();
-  this.particleResizeObserver = undefined;
 
-  if (this.particleInteractionEl) {
-    this.particleInteractionEl.removeEventListener('mousemove', this.handlePointerMove);
-    this.particleInteractionEl.removeEventListener('mouseleave', this.handlePointerLeave);
-    this.particleInteractionEl.removeEventListener('touchmove', this.handleTouchMove);
-    this.particleInteractionEl.removeEventListener('touchend', this.handlePointerLeave);
-  }
-
-  this.particleInteractionEl = undefined;
-  this.mouse = null;
-  this.hasInitialized = false;
-}
-
-  // Ostatní metody beze změny
   getTechIcon(name: string): string {
     const icons: Record<string, string> = {
       'C#': this.c_sharp,

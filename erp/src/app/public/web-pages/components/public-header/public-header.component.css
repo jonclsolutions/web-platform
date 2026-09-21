@@ -7,30 +7,30 @@
 */
 
 header {
-    background-color: rgba(13, 13, 27, 0.5);
-    outline: 1px solid rgba(166, 125, 255, 0.22);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: #e8e8f0;
-    padding: 6px 0;
-    box-sizing: border-box;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    width: 540px;
-    max-width: 540px;
-    min-width: 540px;
-    height: 52px;
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    animation: fadeInDown 0.8s ease-out forwards;
-    transition: all 0.4s ease-in-out;
-    border-radius: 999px;
-    z-index: 99999;
+  background-color: rgba(13, 13, 27, 0.5);
+  outline: 1px solid rgba(166, 125, 255, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #e8e8f0;
+  padding: 6px 0;
+  box-sizing: border-box;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  width: 540px;
+  max-width: 540px;
+  min-width: 540px;
+  height: 52px;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  animation: fadeInDown 0.8s ease-out forwards;
+  transition: all 0.4s ease-in-out;
+  border-radius: 999px;
+  z-index: 99999;
 }
 
 @keyframes fadeInDown {
@@ -123,12 +123,6 @@ nav ul li a {
   transition: fill 0.3s ease;
 }
 
-.mobile-nav .main-links a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 nav ul li a:hover {
   color: #a67dff;
   transform: translateY(-2px);
@@ -209,9 +203,6 @@ header.scrolled .active-indicator {
   animation: logoFadeIn 0.25s ease-out;
 }
 
-/* Zobrazí se, dokud siteSettings ještě nedorazily (typicky jen na velmi
-   pomalém připojení — s preloadem přes AppBootstrapService by se tahle
-   větev prakticky neměla ukázat). Kulatý shimmer, kopíruje tvar loga. */
 .logo-placeholder {
   width: 80%;
   height: 80%;
@@ -277,7 +268,7 @@ header.scrolled .active-indicator {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   LANGUAGE DROPDOWN
+   LANGUAGE DROPDOWN — desktop
    ═══════════════════════════════════════════════════════════════ */
 .lang-dropdown {
   position: relative;
@@ -358,7 +349,7 @@ header.scrolled .active-indicator {
 
 @keyframes langMenuIn {
   from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .lang-option {
@@ -401,18 +392,25 @@ header.scrolled .active-indicator {
   flex-shrink: 0;
 }
 
+.lang-trigger-flag--placeholder {
+  width: 16px;
+  height: 16px;
+  background: #e4e4e7;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
 /* ── Mobilní header ────────────────────────────────────────── */
 .mobile-header {
   width: 100%;
   height: auto;
-  display: flex;
+  display: none;
   justify-content: space-between;
   align-items: center;
   position: fixed;
   top: 0;
   left: 0;
   z-index: 1000;
-  display: none;
 }
 
 .m-logo {
@@ -435,8 +433,6 @@ header.scrolled .active-indicator {
   animation: logoFadeIn 0.25s ease-out;
 }
 
-/* Mobilní logo má zaoblený jen jeden roh (border-bottom-right-radius),
-   takže placeholder kopíruje tenhle tvar, ne kruh. */
 .logo-placeholder--mobile {
   border-radius: 0 0 12px 0;
 }
@@ -470,97 +466,270 @@ header.scrolled .active-indicator {
 .hamburger-line:nth-child(2).open { opacity: 0; }
 .hamburger-line:nth-child(3).open { transform: translateY(-7.5px) rotate(-45deg); }
 
-/* ── Mobilní menu overlay ──────────────────────────────────── */
-.mobile-menu-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  z-index: 999;
-  background-color: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
-  transform: translateX(-100%);
-  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  display: flex;
-  align-items: center;
-}
-
-.mobile-contact-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: #8585a0;
-}
-
-.mobile-menu-wrapper.open { transform: translateX(0); }
-
-.mobile-nav { width: 100%; }
-
-.mobile-nav ul { list-style: none; padding: 0; margin: 0; }
-
-.mobile-nav li { margin-bottom: 16px; }
-
-.mobile-nav a {
-  text-decoration: none;
-  font-size: 1.25rem;
-  font-weight: 700;
-  display: block;
-  padding: 8px;
-  transition: color 0.3s ease;
-  text-align: center;
-  color: #8585a0;
-  font-family: "Inter", sans-serif;
-}
-
 html.no-scroll { overflow: hidden !important; }
 
-.mobile-menu-bottom {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  max-width: 500px;
+/* ══════════════════════════════════════════════════════════════
+   BACKDROP
+   ══════════════════════════════════════════════════════════════ */
+.m-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 998;
+  transition: background 0.3s ease;
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SLIDE-IN DRAWER
+   ══════════════════════════════════════════════════════════════ */
+.m-drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(340px, 92vw);
+  background: #0a0a18;
+  border-left: 1px solid rgba(166, 125, 255, 0.22);
+  z-index: 999;
+  flex-direction: column;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  overscroll-behavior: contain;
+}
+
+.m-drawer--open {
+  transform: translateX(0);
+}
+
+/* ── Hlavička — logo + zavřít ─────────────────────────────────── */
+.m-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(166, 125, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.m-drawer-logo img {
+  height: 34px;
+  width: auto;
+  display: block;
+}
+
+.m-drawer-close {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(166, 125, 255, 0.07);
+  border: 1px solid rgba(166, 125, 255, 0.18);
+  border-radius: 8px;
+  color: #888899;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.m-drawer-close:hover {
+  background: rgba(166, 125, 255, 0.14);
+  border-color: rgba(166, 125, 255, 0.35);
+  color: #e0e0f0;
+}
+
+/* ── Navigace ─────────────────────────────────────────────────── */
+.m-drawer-nav {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  flex: 1;
 }
 
-.mobile-lang-wrp {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.mobile-lang-label {
+.m-drawer-link {
   display: flex;
   align-items: center;
-  gap: 7px;
-  color: #8585a0;
-  font-size: 0.9rem;
+  justify-content: space-between;
+  padding: 16px 20px;
+  font-size: 0.97rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 6px 14px;
-  border: 2px solid transparent;
-  border-radius: 999px;
+  color: #c8c8e0;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(166, 125, 255, 0.07);
+  transition: color 0.18s ease, background 0.18s ease, padding-left 0.18s ease;
+}
+
+.m-drawer-link:first-child {
+  border-top: 1px solid rgba(166, 125, 255, 0.07);
+}
+
+.m-drawer-link:hover {
+  color: #a67dff;
+  background: rgba(166, 125, 255, 0.04);
+  padding-left: 26px;
+}
+
+.m-drawer-link svg {
+  color: rgba(166, 125, 255, 0.25);
+  flex-shrink: 0;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.m-drawer-link:hover svg {
+  color: #a67dff;
+  transform: translateX(3px);
+}
+
+/* ── Kontakt — pill tlačítka ──────────────────────────────────── */
+.m-drawer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(166, 125, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.m-drawer-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 0px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #888899;
+  text-decoration: none;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.m-drawer-contact-item:hover {
+  border-color: rgba(166, 125, 255, 0.35);
+  color: #a67dff;
+  background: rgba(166, 125, 255, 0.07);
+}
+
+.m-drawer-contact-item svg {
+  color: #a67dff;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+/* ── Spodní část — lang dropdown ──────────────────────────────── */
+.m-drawer-bottom {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px 20px;
+  border-top: 1px solid rgba(166, 125, 255, 0.1);
+  flex-shrink: 0;
+}
+
+/* ── Lang dropdown v draweru — identický styl jako desktop ─────── */
+.m-drawer-lang-dropdown {
+  position: relative;
+}
+
+.m-drawer-lang-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
   background-color: rgba(13, 13, 27, 0.5);
+  outline: 1px solid rgba(166, 125, 255, 0.22);
+  border: none;
+  border-radius: 999px;
+  color: #8585a0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: outline-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
-.mobile-lang-label.active {
+.m-drawer-lang-trigger:hover,
+.m-drawer-lang-dropdown--open .m-drawer-lang-trigger {
+  outline-color: #a67dff;
+  background-color: rgba(107, 46, 145, 0.7);
   color: #fff;
-  border-color: #a67dff;
-  background-color: rgba(107, 46, 145, 0.35);
 }
 
-.mobile-lang-flag {
+.m-drawer-lang-flag {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(166, 125, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.m-drawer-lang-code {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.m-drawer-lang-chevron {
+  color: currentColor;
+  opacity: 0.7;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+}
+
+.m-drawer-lang-dropdown--open .m-drawer-lang-chevron {
+  transform: rotate(180deg);
+}
+
+/* Menu se otevírá nahoru — drawer je ve spodní části */
+.m-drawer-lang-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 140px;
+  background-color: rgba(13, 13, 27, 0.98);
+  border: 1px solid rgba(166, 125, 255, 0.25);
+  border-radius: 12px;
+  padding: 5px;
+  list-style: none;
+  margin: 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(107, 46, 145, 0.15);
+  animation: langMenuUp 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+@keyframes langMenuUp {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.m-drawer-lang-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #8585a0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.m-drawer-lang-option:hover {
+  background-color: rgba(166, 125, 255, 0.12);
+  color: #e8e8f0;
+}
+
+.m-drawer-lang-option--active {
+  color: #e8e8f0;
+  background-color: rgba(166, 125, 255, 0.2);
+}
+
+.m-drawer-lang-option-flag {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -569,28 +738,11 @@ html.no-scroll { overflow: hidden !important; }
   flex-shrink: 0;
 }
 
-.mobile-contact-wrp {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
+.m-drawer-lang-check {
+  color: #a67dff;
+  margin-left: auto;
+  flex-shrink: 0;
 }
-
-.mobile-contact-link {
-  color: #8585a0;
-  text-decoration: none;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: color 0.3s ease;
-  font-family: "Inter", sans-serif;
-}
-
-.mobile-contact-link img { height: 16px; width: 16px; }
-
-.main-links { padding-top: 65px; }
 
 /* ── Responzivita ──────────────────────────────────────────── */
 @media (max-width: 1375px) {
@@ -598,40 +750,22 @@ html.no-scroll { overflow: hidden !important; }
 }
 
 @media (max-width: 905px) {
-  .desktop-header { display: none !important; }
-  .mobile-header { display: flex !important; }
   header, .logo-wrp, .lang-wrp { display: none; }
-
-  .mobile-nav ul.main-links {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 16px;
+  .mobile-header { display: flex; }
+  .m-backdrop { display: block; }
+  .m-drawer { display: flex; }
+  .m-backdrop--visible {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    pointer-events: all;
   }
-
-  .mobile-nav li { margin-bottom: 0; }
-
-  .mobile-contact-wrp { flex-direction: row; justify-content: center; gap: 20px; }
 }
 
-@media (max-width: 480px) {
-  .mobile-nav ul.main-links {
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .mobile-nav li { margin-bottom: 4px; }
-
-  .mobile-contact-wrp { flex-direction: column; justify-content: center; gap: 8px; }
-
-  .mobile-lang-wrp { gap: 6px; }
+@media (prefers-reduced-motion: reduce) {
+  .m-drawer { transition: none; }
+  .hamburger-line { transition: none; }
 }
-.lang-trigger-flag--placeholder {
-  width: 16px; /* stejný rozměr jako .lang-trigger-flag - dej mi prosím CSS, ať doladím přesně */
-  height: 16px;
-  background: #e4e4e7;
-  border-radius: 2px;
-  flex-shrink: 0;
+
+a{
+  color: #C8C8E0;
 }

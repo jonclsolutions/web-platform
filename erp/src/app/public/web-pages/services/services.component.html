@@ -34,20 +34,102 @@
   </svg>
   <span class="svc-img-placeholder-label">{{ t?.img_placeholder }}</span>
 </div>
-<div class="features-grid">
-  @for (card of featureCards; track card.key) {
-    <div class="feature-card">
-      <h3 class="feature-card-title">{{ card.title }}</h3>
-      <p class="feature-card-text">{{ card.text }}</p>
-      @if (card.tags && card.tags.length > 0) {
-        <div class="feature-card-tags">
-          @for (tag of card.tags; track tag) {
-            <span class="feature-tag">{{ tag }}</span>
-          }
-        </div>
-      }
+<h2 class="svc-panel-title">{{ t.info_header_2 }}</h2>
+<div class="features-bento">
+
+  <!-- Řádek 1: karty vlevo + obrázek vpravo -->
+  <div class="features-row">
+    <div class="features-col-cards">
+      <div class="feature-card">
+        <h3 class="feature-card-title">{{ featureCards[0]?.title }}</h3>
+        <p class="feature-card-text">{{ featureCards[0]?.text }}</p>
+      </div>
+      <div class="feature-card">
+        <h3 class="feature-card-title">{{ featureCards[1]?.title }}</h3>
+        <p class="feature-card-text">{{ featureCards[1]?.text }}</p>
+      </div>
     </div>
-  }
+    <div class="features-col-img">
+      <div class="feature-img-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <circle cx="8.5" cy="10.5" r="1.8"/>
+          <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Řádek 2: karty první v DOM, CSS je vizuálně přehodí (obrázek vlevo) -->
+  <div class="features-row features-row--reverse">
+    <div class="features-col-cards">
+      <div class="feature-card">
+        <h3 class="feature-card-title">{{ featureCards[2]?.title }}</h3>
+        <p class="feature-card-text">{{ featureCards[2]?.text }}</p>
+       
+      </div>
+      <div class="feature-card">
+        <h3 class="feature-card-title">{{ featureCards[3]?.title }}</h3>
+        <p class="feature-card-text">{{ featureCards[3]?.text }}</p>
+      </div>
+    </div>
+    <div class="features-col-img">
+      <div class="feature-img-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <circle cx="8.5" cy="10.5" r="1.8"/>
+          <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Řádek 3: karty vlevo + obrázek vpravo -->
+  <div class="features-row">
+    <div class="features-col-cards">
+      <div class="feature-card">
+        <h3 class="feature-card-title">{{ featureCards[4]?.title }}</h3>
+        <p class="feature-card-text">{{ featureCards[4]?.text }}</p>
+      </div>
+      <div class="feature-card">
+        <h3 class="feature-card-title">{{ featureCards[5]?.title }}</h3>
+        <p class="feature-card-text">{{ featureCards[5]?.text }}</p>
+      </div>
+    </div>
+    <div class="features-col-img">
+      <div class="feature-img-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <circle cx="8.5" cy="10.5" r="1.8"/>
+          <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Řádek 4: karty první v DOM, CSS je vizuálně přehodí (obrázek vlevo) -->
+  <div class="features-row features-row--reverse">
+    <div class="features-col-cards">
+      <div class="feature-card">
+        <h3 class="feature-card-title">{{ featureCards[6]?.title }}</h3>
+        <p class="feature-card-text">{{ featureCards[6]?.text }}</p>
+      </div>
+      <div class="feature-card">
+        <h3 class="feature-card-title">{{ featureCards[7]?.title }}</h3>
+        <p class="feature-card-text">{{ featureCards[7]?.text }}</p>
+      </div>
+    </div>
+    <div class="features-col-img">
+      <div class="feature-img-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <circle cx="8.5" cy="10.5" r="1.8"/>
+          <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
 </div>
       </div>
 
@@ -100,16 +182,21 @@
   </svg>
 }
 @case (5) {
-  <!-- Dokumentace -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
   </svg>
 }
-                 @default {
-  <!-- Předání -->
+@case (6) {
+  <!-- Předání a školení -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+}
+@default {
+  <!-- Podpora a údržba -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
   </svg>
 }
                 }
@@ -163,16 +250,21 @@
   </svg>
 }
 @case (5) {
-  <!-- Dokumentace -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
   </svg>
 }
-                @default {
-  <!-- Předání -->
+@case (6) {
+  <!-- Předání a školení -->
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+}
+@default {
+  <!-- Podpora a údržba -->
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
   </svg>
 }
               }

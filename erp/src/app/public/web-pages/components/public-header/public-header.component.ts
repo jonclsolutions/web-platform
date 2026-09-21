@@ -44,7 +44,7 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   @Output() menuToggled = new EventEmitter<boolean>();
   @ViewChildren('homeLink, servicesLink, shopLink, academyLink')
   navLinks!: QueryList<ElementRef<HTMLAnchorElement>>;
-
+isDrawerLangOpen: boolean = false;
   t: any = null;
   indicatorStyle: any = {};
   scrolled: boolean = false;
@@ -318,4 +318,14 @@ export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
   selectLanguage(code: string): void {
     this.localizationService.setLanguage(code);
   }
+
+  toggleDrawerLangDropdown(): void {
+  this.isDrawerLangOpen = !this.isDrawerLangOpen;
+  this.cdr.markForCheck();
+}
+
+closeDrawerLangDropdown(): void {
+  this.isDrawerLangOpen = false;
+  this.cdr.markForCheck();
+}
 }

@@ -140,7 +140,7 @@ protected override onTranslationsLoaded(): void {
     this.cdr.markForCheck();
   }
 
-  readonly workflowNumbers = ['01', '02', '03', '04', '05', '06', '07'];
+  readonly workflowNumbers = ['01', '02', '03', '04', '05', '06', '07', '08'];
 
 get workflowSteps() {
   return [
@@ -151,6 +151,7 @@ get workflowSteps() {
     this.t?.colab?.item_5,
     this.t?.colab?.item_6,
     this.t?.colab?.item_7,
+    this.t?.colab?.item_8,
   ];
 }
 }

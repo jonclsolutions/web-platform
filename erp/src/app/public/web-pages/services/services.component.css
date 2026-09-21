@@ -27,7 +27,6 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Stránka + čtvercové pozadí ─────────────────────────────── */
 .svc-page {
   background: var(--bg);
   color: var(--text);
@@ -47,7 +46,6 @@
   z-index: 0;
 }
 
-/* ── Hero ────────────────────────────────────────────────────── */
 .svc-hero {
   position: relative;
   z-index: 1;
@@ -84,7 +82,6 @@
   margin-bottom: 48px;
 }
 
-/* ── Content sekce ───────────────────────────────────────────── */
 .svc-content-section {
   position: relative;
   z-index: 1;
@@ -96,7 +93,6 @@
   margin: 0 auto;
 }
 
-/* Modifier pro full-width layout po odstranění sidebaru */
 .svc-content-inner--full {
   max-width: 860px;
 }
@@ -121,8 +117,6 @@
   line-height: 1.8;
   color: #b0b0c8;
   margin-bottom: 36px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 32px;
 }
 
 .svc-body-text p {
@@ -132,7 +126,6 @@
   color: #b0b0c8;
 }
 
-/* ── FAQ ─────────────────────────────────────────────────────── */
 .faq-label {
   font-size: 0.72rem;
   font-weight: 700;
@@ -169,7 +162,6 @@
   cursor: pointer;
   text-align: left;
   color: var(--text);
-
 }
 
 .faq-trigger-text {
@@ -196,8 +188,6 @@
   background-color: #111128;
 }
 
-/* Klikatelné, jen když je položka rozbalená (jinak je obsah stejně
-   skrytý za max-height: 0 a kliknout na něj není kam). */
 .faq-item--open .faq-body { max-height: 400px; cursor: pointer; }
 
 .faq-answer-text {
@@ -206,7 +196,7 @@
   line-height: 1.7;
   color: var(--text-muted);
 }
-/* ── Sdílená hlavička sekcí ──────────────────────────────────── */
+
 .svc-section-header {
   text-align: center;
   margin-bottom: 60px;
@@ -228,9 +218,6 @@
   color: #fff;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   WORKFLOW SEKCE — kontejner
-   ══════════════════════════════════════════════════════════════ */
 .svc-workflow-section {
   position: relative;
   z-index: 1;
@@ -241,10 +228,6 @@
   animation: fadeUp 0.7s 0.2s ease-out both;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   WORKFLOW — DESKTOP VERZE
-   Horizontální 4-sloupový grid s linkou táhnoucí se středem
-   ══════════════════════════════════════════════════════════════ */
 .wf-desktop { display: block; }
 .wf-mobile  { display: none; }
 
@@ -255,7 +238,6 @@
   grid-template-columns: repeat(4, 1fr);
 }
 
-/* Jeden sloupec */
 .wfd-col {
   display: flex;
   flex-direction: column;
@@ -265,7 +247,6 @@
   padding-bottom: 30px;
 }
 
-/* Číslo nad tečkou */
 .wfd-num {
   font-family: var(--ff-display);
   font-size: 0.68rem;
@@ -282,7 +263,6 @@
   margin-left: 1px;
 }
 
-/* Řádek: linka-vlevo | tečka | linka-vpravo */
 .wfd-dot-wrap {
   display: flex;
   align-items: center;
@@ -296,10 +276,8 @@
   background: var(--border-mid);
 }
 
-/* Skrytá linka na krajích */
 .wfd-line--hidden { background: transparent; }
 
-/* Tečka nese ikonu kroku (lupa / tužka / </> / raketa) */
 .wfd-dot {
   flex-shrink: 0;
   width: 30px;
@@ -333,19 +311,12 @@
   color: var(--text-muted);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   WORKFLOW — MOBILNÍ VERZE
-   Vertikální krok-karta: číslo + tečka + linka dolů vlevo,
-   text vpravo. Linka pokračuje spojitě přes všechny kroky.
-   ══════════════════════════════════════════════════════════════ */
 .wfm-step {
   display: flex;
   gap: 0;
   align-items: stretch;
-  /* Každý krok je flex řádek; rail (vlevo) + content (vpravo) */
 }
 
-/* Levý rail: 48px wide, pevná šírka */
 .wfm-rail {
   display: flex;
   flex-direction: column;
@@ -360,14 +331,13 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--accent);
-  height: 24px;          /* Pevná výška — zarovná čísla u všech kroků */
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-/* Tečka nese ikonu kroku i na mobilu */
 .wfm-dot {
   width: 26px;
   height: 26px;
@@ -384,23 +354,20 @@
   z-index: 1;
 }
 
-/* Linka pod tečkou — roste aby vyplnila zbytek rail pod tečkou */
 .wfm-line {
   width: 1px;
   background: var(--border-mid);
-  flex: 1;               /* Zabere veškerý zbývající prostor v rail */
+  flex: 1;
   min-height: 20px;
   margin-top: 4px;
 }
 
-/* Pravý content */
 .wfm-content {
   padding: 20px 0 32px 20px;
   flex: 1;
   min-width: 0;
 }
 
-/* Poslední krok — menší spodní padding (žádná linka pod ním) */
 .wfm-content--last { padding-bottom: 8px; }
 
 .wfm-title {
@@ -410,7 +377,7 @@
   color: #fff;
   margin-bottom: 8px;
   line-height: 1.3;
-  margin-top: 4px;        /* Vizuální zarovnání s tečkou */
+  margin-top: 4px;
 }
 
 .wfm-text {
@@ -418,11 +385,6 @@
   line-height: 1.65;
   color: var(--text-muted);
 }
-
-/* ── Ceník: srovnávací matice balíček × funkce ──────────────────
-   Nahrazuje starou .prices-grid/.price-card sadu pravidel - ta lze
-   smazat, tahle sekce je už nepoužívá.
-   ──────────────────────────────────────────────────────────────── */
 
 .section-subtitle {
   max-width: 640px;
@@ -440,9 +402,6 @@
   animation: fadeUp 0.7s 0.2s ease-out both;
 }
 
-/* Scroll wrapper - klíčové pro responzivitu s velkým počtem balíčků.
-   První sloupec (názvy funkcí) zůstává přilepený vlevo (position: sticky),
-   ať uživatel při horizontálním scrollu na mobilu pořád vidí, co porovnává. */
 .pricing-matrix-wrap {
   max-width: var(--max-w);
   margin: 40px auto 0;
@@ -470,9 +429,7 @@
   opacity: 0.85;
 }
 
-.svc-consultation-section .section-eyebrow {
-  font-size: 0.72rem;
-}
+.svc-consultation-section .section-eyebrow { font-size: 0.72rem; }
 
 .svc-consultation-section .section-title {
   font-family: var(--ff-display);
@@ -501,9 +458,7 @@
   transition: outline-color 0.3s ease;
 }
 
-.consultation-card:hover {
-  outline-color: rgba(166, 125, 255, 0.4);
-}
+.consultation-card:hover { outline-color: rgba(166, 125, 255, 0.4); }
 
 .consultation-icon {
   width: 30px;
@@ -517,10 +472,7 @@
   margin-bottom: 2px;
 }
 
-.consultation-icon svg {
-  width: 15px;
-  height: 15px;
-}
+.consultation-icon svg { width: 15px; height: 15px; }
 
 .consultation-card-title {
   font-size: 0.95rem;
@@ -549,13 +501,6 @@
   padding: 8px 14px;
 }
 
-@media (max-width: 700px) {
-  .consultation-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ── Sloupec s názvy funkcí (sticky vlevo) ─────────────────────── */
 .pm-feature-col {
   position: sticky;
   left: 0;
@@ -575,9 +520,7 @@ thead .pm-feature-col {
   z-index: 3;
 }
 
-tbody tr:last-child .pm-feature-col {
-  border-bottom: none;
-}
+tbody tr:last-child .pm-feature-col { border-bottom: none; }
 
 .pm-feature-label-row {
   display: flex;
@@ -592,7 +535,6 @@ tbody tr:last-child .pm-feature-col {
   line-height: 1.4;
 }
 
-/* ── Info tooltip u nejasných funkcí ────────────────────────────── */
 .pm-info-wrap {
   position: relative;
   display: inline-flex;
@@ -651,7 +593,6 @@ tbody tr:last-child .pm-feature-col {
   border-top-color: var(--accent-dark, #18181b);
 }
 
-/* ── Hlavička balíčků ────────────────────────────────────────────── */
 .pm-pkg-col {
   padding: 20px 18px;
   min-width: 160px;
@@ -684,9 +625,7 @@ tbody tr:last-child .pm-feature-col {
   line-height: 1.2;
 }
 
-.pm-pkg-col--highlight .pm-pkg-price {
-  color: #fff;
-}
+.pm-pkg-col--highlight .pm-pkg-price { color: #fff; }
 
 .pm-pkg-desc {
   margin-top: 6px;
@@ -696,11 +635,8 @@ tbody tr:last-child .pm-feature-col {
   line-height: 1.4;
 }
 
-.pm-pkg-col--highlight .pm-pkg-desc {
-  color: rgba(255, 255, 255, 0.75);
-}
+.pm-pkg-col--highlight .pm-pkg-desc { color: rgba(255, 255, 255, 0.75); }
 
-/* ── Hodnoty v matici ────────────────────────────────────────────── */
 .pm-value-col {
   text-align: center;
   padding: 12px 16px;
@@ -709,22 +645,12 @@ tbody tr:last-child .pm-feature-col {
   min-width: 140px;
 }
 
-tbody tr:last-child .pm-value-col {
-  border-bottom: none;
-}
+tbody tr:last-child .pm-value-col { border-bottom: none; }
 
-.pm-value-col--highlight {
-  background: rgba(124, 58, 237, 0.04);
-}
+.pm-value-col--highlight { background: rgba(124, 58, 237, 0.04); }
 
-.pm-check {
-  color: var(--success, #059669);
-}
-
-.pm-dash {
-  color: var(--text-dim, #d4d4d8);
-  font-size: 1rem;
-}
+.pm-check { color: var(--success, #059669); }
+.pm-dash  { color: var(--text-dim, #d4d4d8); font-size: 1rem; }
 
 .pm-value-text {
   font-size: 0.82rem;
@@ -732,24 +658,6 @@ tbody tr:last-child .pm-value-col {
   color: var(--text);
 }
 
-/* ── Responzivita ─────────────────────────────────────────────────
-   Tabulka se drží stejného, přehledného tvaru i na malých obrazovkách -
-   jen se horizontálně scrolluje, se stále viditelným sloupcem funkcí
-   vlevo (sticky), ať uživatel neztratí kontext, co zrovna porovnává.
-   ────────────────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .pricing-matrix { min-width: 640px; }
-  .pm-pkg-col, .pm-value-col { min-width: 130px; padding: 14px 12px; }
-  .pm-feature-col { min-width: 180px; max-width: 200px; padding: 12px 14px; }
-}
-
-@media (max-width: 600px) {
-  .pricing-matrix-wrap { margin-top: 28px; border-radius: var(--radius, 10px); }
-  .pm-pkg-price { font-size: 1.1rem; }
-  .pm-feature-label { font-size: 0.8rem; }
-  .pm-tooltip { width: 180px; font-size: 0.72rem; }
-}
-/* ── CTA ─────────────────────────────────────────────────────── */
 .svc-cta-section {
   position: relative;
   z-index: 1;
@@ -821,7 +729,6 @@ tbody tr:last-child .pm-value-col {
 .cta-arrow { font-size: 1.1rem; transition: transform var(--ease); }
 .cta-btn:hover .cta-arrow { transform: translateX(4px); }
 
-/* ── Oddělovač ───────────────────────────────────────────────── */
 .svc-divider {
   max-width: 700px;
   margin: 0 auto 60px;
@@ -836,7 +743,6 @@ tbody tr:last-child .pm-value-col {
   opacity: 0.5;
 }
 
-/* ── Animace ─────────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -848,71 +754,47 @@ tbody tr:last-child .pm-value-col {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   RESPONZIVITA
+   BENTO FEATURES LAYOUT
    ══════════════════════════════════════════════════════════════ */
-
-
-
-@media (max-width: 860px) {
-  .wf-desktop { display: none; }
-  .wf-mobile  { display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; }
-
-  .svc-main-col { padding: 28px 20px; }
-
-  .cta-row { flex-direction: column; }
-  .cta-divider { width: 120px; height: 1px; }
-  .cta-block { padding: 32px 28px; }
-}
-
-/* 600px – malé mobily */
-@media (max-width: 600px) {
-  .svc-hero { padding: 90px 16px 48px; }
-  .svc-hero-title { font-size: 2rem; }
-
-
-  .svc-content-section { padding: 0 16px 60px; }
-
-  .svc-workflow-section,
-  .svc-cta-section { padding-left: 16px; padding-right: 16px; }
-
-
-  /* Rail o trochu užší na malých obrazovkách */
-  .wfm-rail { width: 40px; }
-}
-
-/* Hover jen na zařízeních s myší */
-@media (hover: hover) {
-  .faq-trigger:hover { background: #161631; }
-}
-/* ── Feature cards grid (nahrazuje FAQ accordion) ────────────── */
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+.features-bento {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   margin-top: 32px;
 }
 
-.feature-card {
-  padding: 24px 22px;
+/* Jeden řádek: 2 karty + 1 obrázek (nebo naopak) */
+.features-row {
+  display: grid;
+  grid-template-columns: 1fr 0.65fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* Reversed řádek — obrázek vlevo, karty vpravo */
+.features-row--reverse {
+  grid-template-columns: 0.65fr 1fr;
+}
+
+.features-row--reverse .features-col-img { order: -1; }
+
+/* Sloupec se dvěma kartami */
+.features-col-cards {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+}
+
+/* Feature karta */
+.feature-card {
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
   transition: border-color var(--ease), background var(--ease);
 }
 
-.feature-card-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--accent-dim);
-  border: 1px solid var(--border-mid);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-  flex-shrink: 0;
-  margin-bottom: 4px;
-}
 
 .feature-card-title {
   font-family: var(--ff-display);
@@ -923,8 +805,8 @@ tbody tr:last-child .pm-value-col {
 }
 
 .feature-card-text {
-  font-size: 0.85rem;
-  line-height: 1.65;
+  font-size: 0.84rem;
+  line-height: 1.6;
   color: var(--text-muted);
   flex: 1;
 }
@@ -932,55 +814,52 @@ tbody tr:last-child .pm-value-col {
 .feature-card-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 5px;
+  margin-top: 4px;
 }
 
 .feature-tag {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: var(--accent-dim);
   border: 1px solid var(--border-mid);
   color: var(--accent);
 }
 
-@media (max-width: 600px) {
-  .features-grid { grid-template-columns: 1fr; }
-}
-/* 7-krokový workflow — přepíše původní repeat(4, 1fr) */
-.wf-desktop-connector {
-  grid-template-columns: repeat(4, 1fr);
+/* Sloupec s obrázkem */
+.features-col-img {
+  display: flex;
+  align-items: stretch;
 }
 
-/* Na středních obrazovkách se 7 sloupců nevejde — přepni dřív na mobile verzi */
-@media (max-width: 1100px) {
-  .wf-desktop { display: none; }
-  .wf-mobile  { display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; }
-}
-.smoke-bg {
-  position: relative;
-  display: block;
-  width: 1920px;
-  max-width: none;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
-  opacity: 0.5;
-  margin-top: -500px;
-  margin-bottom: 250px;
-  z-index: 0;
+/* Image placeholder */
+.feature-img-placeholder {
+  width: 100%;
+  min-height: 220px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, #16162f 0%, #111128 100%);
+  border: 1px dashed var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: border-color var(--ease);
 }
 
-@media (min-width: 1920px) {
-  .smoke-bg {
-    width: 102%;
-  }
+.feature-img-placeholder:hover {
+  border-color: var(--accent);
 }
-/* ── Image placeholder mezi textem a feature kartami ─────────── */
+
+.feature-img-placeholder svg {
+  color: var(--accent);
+  opacity: 0.4;
+}
+
+/* ── Image placeholder mezi textem a bento gridem ─────────── */
 .svc-img-placeholder {
   width: 100%;
   aspect-ratio: 16 / 7;
@@ -997,9 +876,7 @@ tbody tr:last-child .pm-value-col {
   transition: border-color var(--ease);
 }
 
-.svc-img-placeholder:hover {
-  border-color: var(--accent);
-}
+.svc-img-placeholder:hover { border-color: var(--accent); }
 
 .svc-img-placeholder svg {
   color: var(--accent);
@@ -1013,8 +890,200 @@ tbody tr:last-child .pm-value-col {
   opacity: 0.5;
 }
 
+/* ── Smoke ──────────────────────────────────────────────────── */
+.smoke-bg {
+  position: relative;
+  display: block;
+  width: 1920px;
+  max-width: none;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0.5;
+  margin-top: -500px;
+  margin-bottom: 250px;
+  z-index: 0;
+}
+
+@media (min-width: 1920px) {
+  .smoke-bg { width: 102%; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONZIVITA
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .pricing-matrix { min-width: 640px; }
+  .pm-pkg-col, .pm-value-col { min-width: 130px; padding: 14px 12px; }
+  .pm-feature-col { min-width: 180px; max-width: 200px; padding: 12px 14px; }
+}
+
+@media (max-width: 860px) {
+  .wf-desktop { display: none; }
+  .wf-mobile  { display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; }
+  .svc-main-col { padding: 28px 20px; }
+  .cta-row { flex-direction: column; }
+  .cta-divider { width: 120px; height: 1px; }
+  .cta-block { padding: 32px 28px; }
+
+  /* Bento na tablet — stack do jednoho sloupce */
+  .features-row,
+  .features-row--reverse {
+    grid-template-columns: 1fr;
+  }
+
+  .features-row--reverse .features-col-img { order: 0; }
+
+  .feature-img-placeholder { min-height: 180px; }
+}
+
+@media (max-width: 700px) {
+  .consultation-row { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 600px) {
-  .svc-img-placeholder {
-    aspect-ratio: 4 / 3;
+  .svc-hero { padding: 90px 16px 48px; }
+  .svc-hero-title { font-size: 2rem; }
+  .svc-content-section { padding: 0 16px 60px; }
+  .svc-workflow-section,
+  .svc-cta-section { padding-left: 16px; padding-right: 16px; }
+  .wfm-rail { width: 40px; }
+  .pricing-matrix-wrap { margin-top: 28px; border-radius: var(--radius, 10px); }
+  .pm-pkg-price { font-size: 1.1rem; }
+  .pm-feature-label { font-size: 0.8rem; }
+  .pm-tooltip { width: 180px; font-size: 0.72rem; }
+  .svc-img-placeholder { aspect-ratio: 4 / 3; }
+}
+
+@media (max-width: 1100px) {
+  .wf-desktop { display: none; }
+  .wf-mobile  { display: flex; flex-direction: column; max-width: 520px; margin: 0 auto; }
+}
+
+@media (hover: hover) {
+  .faq-trigger:hover { background: #161631; }
+}
+/* Desktop — reverse řádky: obrázek vizuálně vlevo, karty vpravo */
+.features-row--reverse {
+  grid-template-columns: 0.65fr 1fr;
+}
+
+.features-row--reverse .features-col-img {
+  order: -1;
+}
+
+.features-row--reverse .features-col-cards {
+  order: 1;
+}
+
+/* Mobil — vždy: karta karta obrázek */
+@media (max-width: 860px) {
+  .features-bento {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .features-row,
+  .features-row--reverse {
+    display: contents;
+  }
+
+  .features-col-cards {
+    display: contents;
+  }
+
+  .features-col-img {
+    display: block;
+  }
+
+  /* Reset order — DOM pořadí rozhoduje */
+  .features-row--reverse .features-col-img { order: 0; }
+  .features-row--reverse .features-col-cards { order: 0; }
+
+  .feature-img-placeholder {
+    min-height: 225px;
+  }
+}
+.feature-img-placeholder {
+  width: 100%;
+  min-height: 220px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, #16162f 0%, #111128 100%);
+  border: 1px solid rgba(166, 125, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: border-color var(--ease), transform 0.4s ease, box-shadow 0.4s ease;
+  overflow: hidden;
+}
+
+/* Obrázek vpravo (karty jsou první v DOM) — náklon doleva ke kartám */
+.features-row .features-col-img .feature-img-placeholder {
+  transform: rotateY(-10deg) rotateX(4deg) rotate(-1.5deg);
+  box-shadow:
+    16px 20px 38px -16px rgba(0, 0, 0, 0.55),
+    -6px 0 24px -12px rgba(166, 125, 255, 0.25);
+}
+
+.features-row .features-col-img:hover .feature-img-placeholder {
+  transform: rotateY(-5deg) rotateX(2deg) rotate(-0.5deg) translateY(-4px);
+  box-shadow:
+    12px 24px 44px -16px rgba(0, 0, 0, 0.6),
+    -6px 0 28px -10px rgba(166, 125, 255, 0.32);
+  border-color: rgba(166, 125, 255, 0.35);
+}
+
+/* Obrázek vlevo (reverse — CSS order:-1 posune obrázek doleva) — náklon doprava ke kartám */
+.features-row--reverse .features-col-img .feature-img-placeholder {
+  transform: rotateY(10deg) rotateX(4deg) rotate(1.5deg);
+  box-shadow:
+    -16px 20px 38px -16px rgba(0, 0, 0, 0.55),
+    6px 0 24px -12px rgba(166, 125, 255, 0.25);
+}
+
+.features-row--reverse .features-col-img:hover .feature-img-placeholder {
+  transform: rotateY(5deg) rotateX(2deg) rotate(0.5deg) translateY(-4px);
+  box-shadow:
+    -12px 24px 44px -16px rgba(0, 0, 0, 0.6),
+    6px 0 28px -10px rgba(166, 125, 255, 0.32);
+  border-color: rgba(166, 125, 255, 0.35);
+}
+
+.features-col-img {
+  display: flex;
+  align-items: stretch;
+  perspective: 1200px;
+}
+
+.feature-img-placeholder svg {
+  color: var(--accent);
+  opacity: 0.4;
+}
+
+/* Na mobilu — náklon sjednotíme na jeden směr */
+@media (max-width: 860px) {
+  .features-row .features-col-img .feature-img-placeholder,
+  .features-row--reverse .features-col-img .feature-img-placeholder {
+    transform: rotateY(-6deg) rotateX(3deg) rotate(-1deg);
+    box-shadow:
+      12px 18px 32px -14px rgba(0, 0, 0, 0.5),
+      -4px 0 20px -10px rgba(166, 125, 255, 0.2);
+    min-height: 180px;
+  }
+
+  .features-row .features-col-img:hover .feature-img-placeholder,
+  .features-row--reverse .features-col-img:hover .feature-img-placeholder {
+    transform: rotateY(-3deg) rotateX(1.5deg) rotate(-0.5deg) translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-img-placeholder,
+  .features-row .features-col-img .feature-img-placeholder,
+  .features-row--reverse .features-col-img .feature-img-placeholder {
+    transform: none;
+    transition: border-color var(--ease);
   }
 }

@@ -3,9 +3,12 @@
     @path: /src/app/public/web-pages/components/public-header/public-header.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2025 
+    @created: 2025
+    @refactor-note (2026-09) Mobilní menu — slide-in drawer. Jazyk jako dropdown
+        identický se desktop headerem (vlajka + kód + chevron + rozbalovací menu),
+        login odstraněn, kontakt jako pill tlačítka dole.
 -->
-    
+
 <header [class.scrolled]="scrolled">
   <nav>
     <ul>
@@ -38,15 +41,15 @@
   <a routerLink="/faq" class="nav-link">{{ t?.navigation?.faq }}</a>
 
   <div class="lang-dropdown" [class.lang-dropdown--open]="isLangOpen">
-<button class="lang-trigger" (click)="toggleLangDropdown()" [attr.aria-expanded]="isLangOpen" aria-haspopup="listbox">
-  @if (getActiveLang(); as activeLang) {
-    <img [src]="activeLang.flag" [alt]="activeLang.code" class="lang-trigger-flag">
-  }
-  <span class="lang-trigger-code">{{ (getActiveLang()?.code ?? 'cz') | uppercase }}</span>
-  <svg class="lang-trigger-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
-    <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-</button>
+    <button class="lang-trigger" (click)="toggleLangDropdown()" [attr.aria-expanded]="isLangOpen" aria-haspopup="listbox">
+      @if (getActiveLang(); as activeLang) {
+        <img [src]="activeLang.flag" [alt]="activeLang.code" class="lang-trigger-flag">
+      }
+      <span class="lang-trigger-code">{{ (getActiveLang()?.code ?? 'cz') | uppercase }}</span>
+      <svg class="lang-trigger-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
 
     @if (isLangOpen) {
       <ul class="lang-menu" role="listbox">
@@ -71,6 +74,7 @@
   </div>
 </div>
 
+<!-- ── Mobilní hlavička ────────────────────────────────────────── -->
 <div class="mobile-header">
   <a routerLink="/home" class="m-logo">
     @if (siteSettings?.logo_path) {
@@ -79,6 +83,7 @@
       <div class="logo-placeholder logo-placeholder--mobile" aria-hidden="true"></div>
     }
   </a>
+
   <div class="hamburger" (click)="toggleMenu()">
     <div class="hamburger-line" [class.open]="isMenuOpen"></div>
     <div class="hamburger-line" [class.open]="isMenuOpen"></div>
@@ -86,54 +91,99 @@
   </div>
 </div>
 
-<div class="mobile-menu-wrapper" [class.open]="isMenuOpen">
-  <nav class="mobile-nav">
-    <div class="main-links">
-      <a routerLink="/home"       (click)="closeMenu()">{{ t?.navigation?.home }}</a><hr>
-      <a routerLink="/services"   (click)="closeMenu()">{{ t?.navigation?.services }}</a><hr>
-      <a routerLink="/contact"    (click)="closeMenu()">{{ t?.navigation?.contact }}</a><hr>
-      <a routerLink="/shop" target="_blank" (click)="closeMenu()">{{ t?.navigation?.shop }}</a><hr>
-      <a routerLink="/references" (click)="closeMenu()">{{ t?.navigation?.references }}</a><hr>
-      <a routerLink="/faq"        (click)="closeMenu()">{{ t?.navigation?.faq }}</a>
-    </div>
+<!-- ── Backdrop overlay ───────────────────────────────────────── -->
+<div
+  class="m-backdrop"
+  [class.m-backdrop--visible]="isMenuOpen"
+  (click)="closeMenu()"
+  aria-hidden="true">
+</div>
 
-    <div class="mobile-menu-bottom">
-      <div class="mobile-lang-wrp">
+<!-- ── Slide-in drawer ────────────────────────────────────────── -->
+<div class="m-drawer" [class.m-drawer--open]="isMenuOpen" role="dialog" aria-modal="true">
+  <!-- Navigace -->
+  <nav class="m-drawer-nav">
+    <a routerLink="/home"           class="m-drawer-link" (click)="closeMenu()">
+      <span>{{ t?.navigation?.home }}</span>
+    </a>
+    <a routerLink="/services"       class="m-drawer-link" (click)="closeMenu()">
+      <span>{{ t?.navigation?.services }}</span>
+    </a>
+    <a routerLink="/references"     class="m-drawer-link" (click)="closeMenu()">
+      <span>{{ t?.navigation?.references }}</span>
+    </a>
+    <a routerLink="/contact"        class="m-drawer-link" (click)="closeMenu()">
+      <span>{{ t?.navigation?.contact }}</span>
+    </a>
+    <a routerLink="/faq"            class="m-drawer-link" (click)="closeMenu()">
+      <span>{{ t?.navigation?.faq }}</span>
+    </a>
+    <a routerLink="/knowledge-base" class="m-drawer-link" (click)="closeMenu()">
+      <span>{{ t?.['knowledge-base']?.['knowledge-base_footer'] }}</span>
+    </a>
+    <a routerLink="/shop" target="_blank" class="m-drawer-link m-drawer-link--external" (click)="closeMenu()">
+      <span>{{ t?.navigation?.shop }}</span>
+    </a>
+  </nav>
+
+<!-- Spodní část — lang dropdown -->
+<div class="m-drawer-bottom">
+  <div class="m-drawer-lang-dropdown" [class.m-drawer-lang-dropdown--open]="isDrawerLangOpen">
+    <button class="m-drawer-lang-trigger" (click)="toggleDrawerLangDropdown()" [attr.aria-expanded]="isDrawerLangOpen">
+      @if (getActiveLang(); as activeLang) {
+        <img [src]="activeLang.flag" [alt]="activeLang.code" class="m-drawer-lang-flag">
+      }
+      <span class="m-drawer-lang-code">{{ (getActiveLang()?.code ?? 'cz') | uppercase }}</span>
+      <svg class="m-drawer-lang-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    @if (isDrawerLangOpen) {
+      <ul class="m-drawer-lang-menu" role="listbox">
         @for (lang of availableLanguages; track lang.code) {
-          <span
-            class="mobile-lang-label"
-            [class.active]="(currentLanguage$ | async) === lang.code"
-            (click)="selectLanguage(lang.code)">
-            <img [src]="lang.flag" [alt]="lang.code" class="mobile-lang-flag">
-            {{ lang.code | uppercase }}
-          </span>
+          <li
+            class="m-drawer-lang-option"
+            [class.m-drawer-lang-option--active]="(currentLanguage$ | async) === lang.code"
+            role="option"
+            [attr.aria-selected]="(currentLanguage$ | async) === lang.code"
+            (click)="selectLanguage(lang.code); closeDrawerLangDropdown()">
+            <img [src]="lang.flag" [alt]="lang.code" class="m-drawer-lang-option-flag">
+            <span>{{ lang.label }}</span>
+            @if ((currentLanguage$ | async) === lang.code) {
+              <svg class="m-drawer-lang-check" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
+          </li>
         }
-      </div>
-
-      @if (siteSettings) {
-        <div class="mobile-contact-wrp">
-
-          <div class="mobile-contact-link">
-            <span class="mobile-contact-icon" aria-hidden="true">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22 6 12 13 2 6"/>
-              </svg>
-            </span>
-            <span>{{ siteSettings.contact_email }}</span>
-          </div>
-
-          <div class="mobile-contact-link">
-            <span class="mobile-contact-icon" aria-hidden="true">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-              </svg>
-            </span>
-            <span>{{ siteSettings.contact_phone }}</span>
-          </div>
-
-        </div>
+      </ul>
+    }
+  </div>
+</div>
+  <!-- Kontakt — pill tlačítka -->
+  @if (siteSettings) {
+    <div class="m-drawer-contact">
+      @if (siteSettings.contact_phone) {
+        <a [href]="'tel:' + siteSettings.contact_phone.replace(/\s/g, '')" class="m-drawer-contact-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          {{ siteSettings.contact_phone }}
+        </a>
+      }
+      @if (siteSettings.contact_email) {
+        <a [href]="'mailto:' + siteSettings.contact_email" class="m-drawer-contact-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22 6 12 13 2 6"/>
+          </svg>
+          {{ siteSettings.contact_email }}
+        </a>
       }
     </div>
-  </nav>
+  }
+
+
+
 </div>
