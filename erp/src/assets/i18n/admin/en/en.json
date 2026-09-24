@@ -469,6 +469,22 @@
   "export_sheet_name": "Roles"
 },
 "graph-builder": {
+  "column_mode_bar": "Bar",
+"column_mode_bar_desc": "Compares the number of records per value.",
+"column_mode_pie": "Pie",
+"column_mode_pie_desc": "Share of each value in the total. Values with 0 occurrences cannot be shown (a zero slice has no geometric meaning).",
+"column_mode_doughnut": "Doughnut",
+"column_mode_doughnut_desc": "Like pie, with an empty center. Values with 0 occurrences cannot be shown.",
+"column_mode_radar": "Radar",
+"column_mode_radar_desc": "Values placed around the spokes - can also show values with 0 occurrences.",
+"column_mode_polarArea": "Polar area",
+"column_mode_polarArea_desc": "Circular segments of equal angle, sized by count - can also show values with 0 occurrences.",
+"column_mode_trend": "Trend over time",
+"column_mode_trend_desc": "One colored line per value over time - can also show values with 0 occurrences.",
+"metric_mode_line": "Line",
+"metric_mode_line_desc": "Metric value over time as a line.",
+"metric_mode_bar": "Bar",
+"metric_mode_bar_desc": "Metric value over time as bars.",
   "close_aria": "Close",
   "sidebar_title": "Report settings",
   "close_settings_aria": "Close settings",
@@ -578,6 +594,7 @@
   "desc_txt": "Plain text, tab-separated columns"
 },
 "user-request": {
+  "email_tpl_preview_description": "We are looking for a redesign of our company website, including an e-shop and warehouse integration.",
   "table_header": "Web form",
   "trash_header": "Trash",
   "toolbar_action_trigger": "Actions",
@@ -606,10 +623,9 @@
   "priority_neutral": "Neutral",
   "priority_high": "High",
 
-  "thema_web": "Web development",
-  "thema_desktop": "Desktop development",
-  "thema_mobile": "Mobile development",
-  "thema_ai": "AI development",
+"thema_new_project": "New project / inquiry",
+"thema_support": "Existing project support",
+"thema_careers": "Collaboration / careers",
   "thema_other": "Other",
 
   "field_thema_label": "Topic / Subject",
@@ -681,7 +697,7 @@
   "email_tpl_preview_company": "Your company",
   "email_tpl_lang_fallback_hint": "ⓘ An empty field for a given language will use the Czech text (or the default wording, if that is empty too).",
   "email_tpl_cancel": "Cancel",
-  "email_tpl_save": "💾 Save",
+  "email_tpl_save": "Save",
   "email_tpl_saving": "Saving…",
 
   "email_tpl_default_subject": "Your inquiry has been received",

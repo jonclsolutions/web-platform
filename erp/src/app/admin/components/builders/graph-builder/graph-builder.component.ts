@@ -42,6 +42,12 @@
  * ohledu na zvolený admin jazyk. Nahrazeno `this.i18n.getDateLocale()`, stejná
  * oprava jako u AdminLayoutComponent/WelcomePageComponent.
  *
+ * @refactor-note (2026-09-25) BUGFIX "české názvy typů grafů v EN": sidebar chart-type
+ * selects were bound to static COLUMN/METRIC_CHART_MODE_OPTIONS with hardcoded Czech
+ * labels. Now built by `createColumnChartModeOptions()`/`createMetricChartModeOptions()`
+ * (graph-format.ts) inside the existing `translations$` subscribe - rebuilt on JSON load
+ * and on every language switch. No other behavior changed.
+ *
  * @dependencies
  * - DataHandler: read-only GET against `apiEndpoint` (no_pagination + optional date range).
  * - EntityCrudService: single POST to `web/logs` for audit trail.
@@ -68,7 +74,7 @@ import { ScrollLockService } from '../../../../core/services/scroll-lock.service
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
 import {
   GraphColumnOption, ColumnChartMode, MetricChartMode, DistributionChartType,
-  ChartModeOption, COLUMN_CHART_MODE_OPTIONS, METRIC_CHART_MODE_OPTIONS
+  ChartModeOption, createColumnChartModeOptions, createMetricChartModeOptions
 } from '../../../../shared/interfaces/graph-format';
 
 type BucketGranularity = 'day' | 'week' | 'month';
@@ -259,8 +265,13 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
   /** Off-screen plain-text report title - captured as an image for the PDF footer's left side (avoids jsPDF's built-in-font diacritics bug). */
   @ViewChild('pdfFooterTitle') private pdfFooterTitleRef?: ElementRef<HTMLElement>;
 
-  public readonly columnChartModeOptions: ChartModeOption<ColumnChartMode>[] = COLUMN_CHART_MODE_OPTIONS;
-  public readonly metricChartModeOptions: ChartModeOption<MetricChartMode>[] = METRIC_CHART_MODE_OPTIONS;
+  /**
+   * @description Translated chart-type options for the sidebar selects - filled ONLY in
+   * the `translations$` subscribe (constructor). Plain fields, not getters (stable
+   * references between CD cycles). See graph-format.ts refactor-note (2026-09-25).
+   */
+  public columnChartModeOptions: ChartModeOption<ColumnChartMode>[] = [];
+  public metricChartModeOptions: ChartModeOption<MetricChartMode>[] = [];
 
   /**
    * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
@@ -332,8 +343,13 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   constructor(private dataHandler: DataHandler, private cd: ChangeDetectorRef) {
     // Po přepnutí admin jazyka donutí OnPush komponentu přehodnotit `strings`/gettery -
-    // stejný vzor jako TableBuilderComponent.
-    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+    // stejný vzor jako TableBuilderComponent. Zároveň přestaví přeložené volby typů
+    // grafů (viz graph-format.ts refactor-note 2026-09-25).
+    this.i18n.translations$.subscribe(() => {
+      this.columnChartModeOptions = createColumnChartModeOptions(this.i18n);
+      this.metricChartModeOptions = createMetricChartModeOptions(this.i18n);
+      this.cd.markForCheck();
+    });
   }
 
   /**

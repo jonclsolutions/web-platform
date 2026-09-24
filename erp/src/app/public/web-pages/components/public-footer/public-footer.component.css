@@ -1,4 +1,4 @@
-/*     
+/*
     @file: public-footer.component.css
     @path: /src/app/public/web-pages/components/public-footer/public-footer.component.css
     @project: RPSW Web
@@ -70,6 +70,49 @@
   max-width: var(--max-w);
   margin: 0 auto;
   padding: 0 32px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOGO — velký wordmark nad sloupci (styl „watermark“)
+   ═══════════════════════════════════════════════════════════════ */
+
+/*
+  @module: footer-logo
+  @description: Full-width brand wordmark above the footer columns. The image always fills the
+                shared .footer-inner width (max 1200px minus side padding) and scales down
+                proportionally on smaller screens, so no breakpoint-specific sizing is needed.
+  @usage: .footer-logo > .footer-inner > img.footer-logo-img
+  @note: --footer-logo-opacity tunes how prominent the logo is without editing the SVG file.
+         1 = original SVG colour; lower values give a subtler, HTEC-like watermark effect.
+         The logo sits above .footer-grid-bg and .footer::before via .footer-inner (z-index: 1).
+*/
+.footer-logo {
+  --footer-logo-opacity: 1;
+  padding-top: 72px;
+}
+
+.footer-logo-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: var(--footer-logo-opacity);
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/*
+  @module: footer-logo-responsive
+  @description: Reduces the vertical gap above the logo on tablets and phones so it matches the
+                reduced .footer-top padding in the responsive section below.
+  @usage: .footer-logo
+*/
+@media (max-width: 768px) {
+  .footer-logo { padding-top: 48px; }
+}
+
+@media (max-width: 540px) {
+  .footer-logo { padding-top: 36px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════

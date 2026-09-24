@@ -20,6 +20,8 @@ export class PublicFooterComponent extends BasePublicComponent {
   protected readonly translationKey = 'footer';
   protected override readonly loadSiteSettings = true;
 
+  logo_big: string = "assets/images/logos/logo_big.svg";
+
   currentYear: number = new Date().getFullYear();
   footerNavLinks: FooterNavLink[] = [];
   footerLegalLinks: FooterNavLink[] = [];

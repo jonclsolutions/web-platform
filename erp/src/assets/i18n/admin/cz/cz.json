@@ -470,6 +470,22 @@
   "export_sheet_name": "Role"
 },
 "graph-builder": {
+  "column_mode_bar": "Sloupcový",
+"column_mode_bar_desc": "Porovnání počtu záznamů podle hodnoty.",
+"column_mode_pie": "Koláčový",
+"column_mode_pie_desc": "Podíl jednotlivých hodnot na celku. Hodnoty s 0 výskyty nelze zobrazit (nulová výseč nemá geometrický smysl).",
+"column_mode_doughnut": "Prstencový",
+"column_mode_doughnut_desc": "Jako koláčový, s prázdným středem. Hodnoty s 0 výskyty nelze zobrazit.",
+"column_mode_radar": "Radar",
+"column_mode_radar_desc": "Hodnoty rozmístěné po obvodu paprsků - umí zobrazit i hodnoty s 0 výskyty.",
+"column_mode_polarArea": "Polární",
+"column_mode_polarArea_desc": "Kruhové výseče se stejným úhlem, velikost podle počtu - umí zobrazit i hodnoty s 0 výskyty.",
+"column_mode_trend": "Vývoj v čase",
+"column_mode_trend_desc": "Jedna barevná čára pro každou hodnotu, v čase - umí zobrazit i hodnoty s 0 výskyty.",
+"metric_mode_line": "Spojnicový",
+"metric_mode_line_desc": "Hodnota metriky v čase jako křivka.",
+"metric_mode_bar": "Sloupcový",
+"metric_mode_bar_desc": "Hodnota metriky v čase jako sloupce.",
   "close_aria": "Zavřít",
   "sidebar_title": "Nastavení reportu",
   "close_settings_aria": "Zavřít nastavení",
@@ -579,6 +595,7 @@
   "desc_txt": "Prostý text, tabulátory mezi sloupci"
 },
 "user-request": {
+  "email_tpl_preview_description": "Poptávám redesign firemního webu včetně e-shopu a napojení na sklad.",
   "table_header": "Webový formulář",
   "trash_header": "Koš",
   "toolbar_action_trigger": "Akce",
@@ -607,10 +624,9 @@
   "priority_neutral": "Neutrální",
   "priority_high": "Vysoká",
 
-  "thema_web": "Webový vývoj",
-  "thema_desktop": "Desktopový vývoj",
-  "thema_mobile": "Mobilní vývoj",
-  "thema_ai": "AI vývoj",
+  "thema_new_project": "Nový projekt / poptávka",
+"thema_support": "Podpora stávajícího projektu",
+"thema_careers": "Spolupráce / kariéra",
   "thema_other": "Jiné",
 
   "field_thema_label": "Téma / Předmět",
@@ -682,7 +698,7 @@
   "email_tpl_preview_company": "Vaše firma",
   "email_tpl_lang_fallback_hint": "ⓘ Prázdné pole u daného jazyka použije český text (nebo výchozí znění, pokud není vyplněný ani ten).",
   "email_tpl_cancel": "Zrušit",
-  "email_tpl_save": "💾 Uložit",
+  "email_tpl_save": "Uložit",
   "email_tpl_saving": "Ukládám…",
 
   "email_tpl_default_subject": "Vaše poptávka byla přijata",

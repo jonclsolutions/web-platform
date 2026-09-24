@@ -81,7 +81,7 @@ this.stats = [
   }
   private initForm(): void {
 this.contactForm = this.fb.group({
-subject: ['web', Validators.required],
+subject: ['', Validators.required],
 email: ['', [Validators.required, Validators.email]],
 phone: ['', [Validators.pattern('^\\+?[0-9 ]*$'), Validators.maxLength(20)]],
 message: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10000)]],

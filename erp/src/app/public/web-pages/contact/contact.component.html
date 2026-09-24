@@ -82,15 +82,19 @@
 <div class="field-group">
 <label class="field-label" for="subject">{{ t.labels?.subject }}</label>
 <div class="select-wrap">
-<select id="subject" formControlName="subject" class="field-input">
-<option value="web">{{ t.options?.web }}</option>
-<option value="desktop">{{ t.options?.desktop }}</option>
-<option value="mobile">{{ t.options?.mobile }}</option>
-<option value="artificial intelligence">{{ t.options?.ai }}</option>
+<select id="subject" formControlName="subject" class="field-input"
+        [class.is-error]="fieldInvalid('subject')">
+<option value="" disabled>{{ t.options?.placeholder }}</option>
+<option value="new_project">{{ t.options?.new_project }}</option>
+<option value="support">{{ t.options?.support }}</option>
+<option value="careers">{{ t.options?.careers }}</option>
 <option value="other">{{ t.options?.other }}</option>
 </select>
 <span class="select-arrow" aria-hidden="true">↓</span>
 </div>
+@if (fieldInvalid('subject')) {
+<span class="field-error">{{ t.errors?.subject_required }}</span>
+}
 </div>
 
 <div class="field-row">

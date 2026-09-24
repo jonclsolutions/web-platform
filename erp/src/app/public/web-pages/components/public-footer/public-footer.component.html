@@ -1,15 +1,41 @@
-<!-- 
+<!--
     @file: public-footer.component.html
     @path: /src/app/public/web-pages/components/public-footer/public-footer.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2025 
+    @created: 2025
 -->
-    
+
 @if (t && settings) {
 <footer class="footer">
 
   <div class="footer-grid-bg" aria-hidden="true"></div>
+
+  <!--
+    @component: footer-logo
+    @description: Full-width brand wordmark shown above the footer columns (large, low-contrast
+                  "watermark" style). Purely decorative – the company name is already present as
+                  text in .footer-brand-name, so the image is hidden from assistive technology.
+    @usage: <img [src]="logo_big"> – `logo_big` is a string property of PublicFooterComponent
+            holding the URL of the SVG logo (e.g. 'assets/images/logo_big.svg').
+    @note: width/height attributes match the SVG intrinsic ratio (796 × 200) so the browser
+           reserves space before the file loads (no layout shift / CLS). Loaded lazily because
+           the footer is always below the fold.
+  -->
+  <div class="footer-logo">
+    <div class="footer-inner">
+      <img
+        [src]="logo_big"
+        class="footer-logo-img"
+        alt=""
+        aria-hidden="true"
+        width="796"
+        height="200"
+        loading="lazy"
+        decoding="async"
+        draggable="false">
+    </div>
+  </div>
 
   <div class="footer-top">
     <div class="footer-inner">

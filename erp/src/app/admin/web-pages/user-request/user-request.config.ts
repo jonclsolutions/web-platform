@@ -60,7 +60,7 @@ const SECTION = 'user-request';
  */
 export const USER_REQUEST_STATUS_VALUES: string[] = ['new', 'in_progress', 'done', 'cancelled'];
 export const USER_REQUEST_PRIORITY_VALUES: string[] = ['low', 'neutral', 'high'];
-export const USER_REQUEST_THEMA_VALUES: string[] = ['web', 'desktop', 'mobile', 'ai', 'other'];
+export const USER_REQUEST_THEMA_VALUES: string[] = ['new_project', 'support', 'careers', 'other'];
 
 /** @deprecated Zachováno pro zpětnou kompatibilitu s případnými dalšími importy - použij `..._VALUES`. */
 export const USER_REQUEST_STATUS_OPTIONS = USER_REQUEST_STATUS_VALUES;
@@ -79,10 +79,9 @@ const PRIORITY_LABEL_KEYS: Record<string, string> = {
   high: 'priority_high',
 };
 const THEMA_LABEL_KEYS: Record<string, string> = {
-  web: 'thema_web',
-  desktop: 'thema_desktop',
-  mobile: 'thema_mobile',
-  ai: 'thema_ai',
+  new_project: 'thema_new_project',
+  support: 'thema_support',
+  careers: 'thema_careers',
   other: 'thema_other',
 };
 
@@ -116,17 +115,15 @@ export function createUserRequestToolbarButtons(i18n: AdminLocalizationService):
 
 export function createUserRequestFormFields(i18n: AdminLocalizationService): Core.InputDefinition[] {
   return [
-   {
-  column_name: 'thema',
-  label: i18n.getValue(`${SECTION}.field_thema_label`),
-  placeholder: i18n.getValue(`${SECTION}.field_thema_placeholder`),
-  type: 'text',
-  required: true,
-  pattern: '^[a-zA-Z0-9ěščřžýáíéóúůďťňĚŠČŘŽÝÁÍÉÚŮĎŤŇ\\s\\.\\-]{3,255}$',
-  errorMessage: i18n.getValue(`${SECTION}.field_thema_error`),
-  options: mapLabeledOptions(USER_REQUEST_THEMA_VALUES, THEMA_LABEL_KEYS, i18n), // NOVÉ
-  editable: true, show_in_edit: true, show_in_create: true,
-}, {
+     {
+      column_name: 'thema',
+      label: i18n.getValue(`${SECTION}.field_thema_label`),
+      type: 'select',
+      options: mapLabeledOptions(USER_REQUEST_THEMA_VALUES, THEMA_LABEL_KEYS, i18n),
+      required: true,
+      errorMessage: i18n.getValue(`${SECTION}.field_thema_error`),
+      editable: true, show_in_edit: true, show_in_create: true,
+    }, {
       column_name: 'contact_email',
       label: i18n.getValue(`${SECTION}.field_email_label`),
       placeholder: i18n.getValue(`${SECTION}.field_email_placeholder`),

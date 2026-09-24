@@ -10,6 +10,7 @@
  * - PermissionService: Validates access to specific administrative modules.
  * - LoadingService: Observes global loading states for the UI.
  * - AdminLocalizationService: Statické i18n admin UI + jazykový přepínač v headeru.
+ * - ScrollLockService: Shared background scroll lock (mobile overlay panels).
  * (Earlier redesign/refactor-notes for mobile actions panel, core module, unified
  * web/... route prefix, maintenance switch removal, permission-based nav-group
  * visibility, and the header language switcher relocation are unchanged - see version
@@ -28,6 +29,19 @@
  * to, jak k ní došlo. `switchModule()` (klik na tlačítko) zůstává funkční beze
  * změny - vyvolá `router.navigate()`, což samo spustí `NavigationEnd` a
  * `syncModuleFromUrl()` synchronizaci potvrdí (žádná duplicitní/konfliktní logika).
+ *
+ * @refactor-note (2026-09-25) BACKLOG "zablokovaný scroll pozadí při otevřeném bočním
+ * panelu": on mobile (<= 768px) the sidebar (`isMenuOpen`) and the mobile actions
+ * panel (`isMobileActionsOpen`) are modal overlays, so the page behind them must not
+ * scroll (scroll chaining, iOS rubber-band, lost scroll position). Implemented via the
+ * shared `ScrollLockService` (same service as FormBuilderComponent) through ONE
+ * central method `updateScrollLock()`, called after every state change of either
+ * panel and on mobile/desktop breakpoint crossing. A local `scrollLocked` flag
+ * guarantees lock()/unlock() are always called in pairs (never twice in a row), so
+ * the layout never leaks or double-releases a lock held by another component (e.g. an
+ * open form modal). On desktop the sidebar sits next to the content (not an overlay),
+ * so no lock is applied there. The lock is released in `ngOnDestroy()`.
+ * No other behavior of this component changed.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
@@ -40,6 +54,7 @@ import { PermissionService } from '../../../core/auth/services/permission.servic
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { LoadingService } from '../../../core/services/loading.service';
 import { AdminLocalizationService, AdminLanguageMeta } from '../../../core/services/admin-localization.service';
+import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 
 /**
  * @description The layout shell for the administration area, handling sidebar controls and navigation.
@@ -84,6 +99,18 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    * ostatní ručně injektované komponenty - viz base-data.component.ts refactor-note.
    */
   public readonly i18n = inject(AdminLocalizationService);
+
+  /**
+   * @description Shared background scroll lock - see refactor-note (2026-09-25) in the
+   * file header.
+   */
+  private scrollLock = inject(ScrollLockService);
+
+  /**
+   * @description Whether THIS component currently holds a lock in ScrollLockService.
+   * Guarantees lock()/unlock() are always called in pairs - see `updateScrollLock()`.
+   */
+  private scrollLocked: boolean = false;
 
   /**
    * @description Merged `shared` + `admin-layout` i18n section - viz refactor-note
@@ -247,6 +274,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.isMenuOpen = savedState !== null ? savedState === 'true' : true;
     }
 
+    this.updateScrollLock();
     this.cdr.markForCheck();
   }
 
@@ -276,6 +304,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     if (window.innerWidth > 768) {
       localStorage.setItem('admin_menu_open', this.isMenuOpen.toString());
     }
+    this.updateScrollLock();
     this.cdr.markForCheck();
   }
 
@@ -283,6 +312,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     if (window.innerWidth <= 768) {
       this.isMenuOpen = false;
     }
+    this.updateScrollLock();
   }
 
   /**
@@ -291,12 +321,34 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    */
   toggleMobileActions(): void {
     this.isMobileActionsOpen = !this.isMobileActionsOpen;
+    this.updateScrollLock();
     this.cdr.markForCheck();
   }
 
   closeMobileActions(): void {
     this.isMobileActionsOpen = false;
+    this.updateScrollLock();
     this.cdr.markForCheck();
+  }
+
+  /**
+   * @description Single place that decides whether the page behind the layout may
+   * scroll. Locks only on mobile (<= 768px) while the sidebar or the mobile actions
+   * panel is open (both are modal overlays there); on desktop the sidebar is part of
+   * the layout, so the page scrolls normally. The `scrollLocked` flag makes every
+   * call idempotent - lock()/unlock() on ScrollLockService are always paired.
+   * @refactor-note (2026-09-25) See file header.
+   */
+  private updateScrollLock(): void {
+    const shouldLock = this.isMobileViewport && (this.isMenuOpen || this.isMobileActionsOpen);
+
+    if (shouldLock && !this.scrollLocked) {
+      this.scrollLock.lock();
+      this.scrollLocked = true;
+    } else if (!shouldLock && this.scrollLocked) {
+      this.scrollLock.unlock();
+      this.scrollLocked = false;
+    }
   }
 
   /**
@@ -454,5 +506,12 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.authSubscription?.unsubscribe();
     this.userEmailSubscription?.unsubscribe();
     this.routerSubscription?.unsubscribe();
+
+    // Release the background scroll lock if this component still holds it
+    // (e.g. logout / leaving /admin while a mobile panel is open).
+    if (this.scrollLocked) {
+      this.scrollLock.unlock();
+      this.scrollLocked = false;
+    }
   }
 }

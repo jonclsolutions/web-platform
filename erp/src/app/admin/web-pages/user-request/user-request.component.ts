@@ -159,15 +159,29 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     };
   }
 
-  /** Ukázková (fiktivní) data rekapitulace pro živý náhled - žádný skutečný požadavek v tomto kontextu neexistuje. */
-  readonly emailTemplatePreviewSample = {
-    thema: 'Webová prezentace na míru',
-    email: 'zakaznik@example.com',
-    phone: '+420 733 188 328',
-    description: 'Poptávám redesign firemního webu včetně e-shopu a napojení na sklad.',
-    attachments: ['zadani.pdf', 'logo.png'],
-    date: '21.08.2026 15:32',
-  };
+  /**
+   * @description Fictional recap data for the live e-mail preview in the template
+   * editor modal - never sent or stored anywhere, it only fills the summary block so
+   * the admin sees the whole e-mail. Translatable values come from the admin i18n
+   * (`thema` reuses the real `thema_new_project` label), the rest is language-neutral.
+   * @refactor-note (2026-09-25) BACKLOG "žádné hardcoded texty": previously a hardcoded
+   * Czech object; now a getter. `attachments` is a stable readonly array (same
+   * reference on every read), so `@for`/`track` in the template is not affected (NG0956).
+   */
+  private readonly previewSampleAttachments: readonly string[] = ['brief.pdf', 'logo.png'];
+
+  get emailTemplatePreviewSample() {
+    return {
+      thema: this.t('thema_new_project'),
+      email: 'customer@example.com',
+      phone: '+420 123 456 789',
+      description: this.t('email_tpl_preview_description'),
+      attachments: this.previewSampleAttachments,
+      date: new Date(2026, 7, 21, 15, 32).toLocaleString(this.i18n.getDateLocale(), {
+        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+      }),
+    };
+  }
 
   // ── Grafy a reporty (modal) ─────────────────────────────────────────────
 
