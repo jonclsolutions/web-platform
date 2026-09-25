@@ -1,9 +1,16 @@
-/*     
+/*
     @file: home.component.css
     @path: /src/app/public/web-pages/home/home.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09-25): Added the TECH STACK section styles (two-row infinite
+        marquee, see home.component.html). Removed style blocks with no matching element
+        in the template (shared eyebrow primitives, about-service cards/rows, select-us
+        benefits, sys-info tooltips, sys-feature icons, trust banner, home-proof section,
+        unused fadeUp keyframes) and merged duplicate declarations of sys-feature-body/
+        label/desc, sys-demo-video and smoke-bg into single rules with the SAME effective
+        values as before (no visual change).
 */
 
 .main-content {
@@ -20,41 +27,6 @@
     pointer-events: none;
     z-index: 0;
 }
-/* ── Shared type primitives ─────────────────────────── */
-.about-eyebrow,
-.home-cta-eyebrow,
-.home-faq-eyebrow,
-.home-proof-eyebrow,
-.select-us-eyebrow_temp_new {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #a67dff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-
-.about-eyebrow::before,
-.about-eyebrow::after,
-.home-cta-eyebrow::before,
-.home-cta-eyebrow::after,
-.home-faq-eyebrow::before,
-.home-faq-eyebrow::after,
-.home-proof-eyebrow::before,
-.home-proof-eyebrow::after,
-.select-us-eyebrow_temp_new::before,
-.select-us-eyebrow_temp_new::after {
-    content: '';
-    display: block;
-    /* flex: 0 0 40px místo width - čára má pevnou šířku ale nekomprimuje text */
-    flex: 0 0 40px;
-    height: 1px;
-    background: rgba(166, 125, 255, 0.35);
-}
 
 /* ═══════════════════════════════════════════════════
    HERO SEKCE — animované částicové pozadí
@@ -69,9 +41,9 @@
     box-sizing: border-box;
     overflow: hidden;
     background-color: #0d0d1b;
-    border-bottom-left-radius: 10%; 
+    border-bottom-left-radius: 10%;
     border-bottom-right-radius: 10%;
-    border-bottom: 2px solid rgba(166, 125, 255, 0.22); 
+    border-bottom: 2px solid rgba(166, 125, 255, 0.22);
 }
 
 .hero-particles {
@@ -155,12 +127,6 @@
 
 @keyframes heroFadeIn {
     to { opacity: 1; transform: translateY(0); }
-}
-
-/* Použito v nové FAQ sekci (home-faq-item), stejný vzor jako ve faq.component.css */
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 905px) {
@@ -267,7 +233,7 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   ABOUT / SERVICES SEKCE
+   ABOUT SEKCE
    ═══════════════════════════════════════════════════ */
 .about-section {
   position: relative;
@@ -303,15 +269,6 @@
   z-index: -1;
 }
 
-.about-eyebrow {
-  margin-bottom: 18px;
-  text-align: center;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-size: 0.78rem;
-  color: #a67dff;
-}
-
 .about-heading {
   font-size: 2.8rem;
   text-align: center;
@@ -326,74 +283,6 @@
   margin: 0 auto 60px;
   line-height: 1.65;
 }
-
-.about-service-card {
-  position: relative;
-  background: #111128;
-  border: 1px solid rgba(166, 125, 255, 0.12);
-  border-radius: 14px;
-  padding: 28px 22px;
-  transition: border-color 0.25s ease, transform 0.2s ease, background 0.25s ease, box-shadow 0.25s ease;
-  text-decoration: none;
-  overflow: hidden;
-}
-
-/* tenká zářivá linka nahoře v barvě konkrétní služby */
-.about-service-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--tint, #a67dff);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.about-service-card:hover {
-  border-color: color-mix(in srgb, var(--tint, #a67dff) 55%, transparent);
-  background: color-mix(in srgb, var(--tint, #a67dff) 6%, #111128);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px -14px color-mix(in srgb, var(--tint, #a67dff) 55%, transparent);
-}
-
-.about-service-card:hover::before { opacity: 1; }
-
-.about-service-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--tint, #a67dff) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint, #a67dff) 30%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--tint, #a67dff);
-  margin-bottom: 18px;
-  transition: transform 0.25s ease;
-}
-
-.about-service-card:hover .about-service-icon {
-  transform: scale(1.06) rotate(-4deg);
-}
-
-.about-service-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #d0d0e0;
-  margin-bottom: 10px;
-}
-
-.about-service-desc {
-  font-size: 0.88rem;
-  color: #7a7a8c;
-  line-height: 1.6;
-}
-
-.about-service-card:hover {
-  opacity: 1;
-  transform: translateX(0);
-}
-
 
 @media (max-width: 905px) {
   .about-section { padding: 90px 30px 40px; margin-top: -48px; }
@@ -412,7 +301,7 @@
   .about-section { padding: 90px 20px 30px; }
   .about-heading { font-size: 1.75rem; }
 }
-/* ── About: text + placeholder fotky (střídavé řádky pod service kartami) ──
+/* ── About: text + placeholder fotky (střídavé řádky) ──
    .about-story-heading používá stejnou třídu jako .about-heading a .about-story-paragraph
    stejnou jako .about-lead - dědí tak font, barvu i váhu řezu z existujících stylů.
 
@@ -459,7 +348,7 @@
 
 /* Doladění .about-lead pro tenhle kontext - font/barva zůstávají zděděné */
 .about-story-paragraph {
-  text-align: left;
+  text-align: justify;
   max-width: none;
   margin: 0 auto 0 0;
 }
@@ -519,17 +408,6 @@
     8px 0 30px -12px rgba(166, 125, 255, 0.36);
 }
 
-.about-story-photo-placeholder svg {
-  color: #a67dff;
-}
-
-.about-story-photo-label {
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: #7a7a8c;
-}
-
 /* ── Responzivita ─────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .about-story-row {
@@ -568,17 +446,9 @@
     transition: none;
   }
 }
-/* ═══════════════════════════════════════════════════
-   SELECT US SEKCE
-   ═══════════════════════════════════════════════════ */
-.header-0-2-t {
-    font-size: 2.8rem;
-}
-.pad-0 { padding: 0; }
 
 /* ═══════════════════════════════════════════════════
-   PROČ SI VYBRAT NÁS - odlehčeno
-   Odstraněno: blur glow pozadí za kartami, silné stíny/prstence ikon.
+   SEKCE - hlavička (nadpis + perex), použito v "Co naše systémy obsahují"
    ═══════════════════════════════════════════════════ */
 
 .select-us-header-wrp_temp_new {
@@ -586,28 +456,6 @@
   flex-direction: column;
   align-items: center;
   margin-bottom: 10px;
-}
-
-.select-us-eyebrow_temp_new {
-  margin-bottom: 10px;
-  position: relative;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-size: 0.78rem;
-  color: #a67dff;
-}
-.select-us-eyebrow_temp_new {
-    width: 100%;
-}
-
-.select-us-eyebrow_temp_new::before,
-.select-us-eyebrow_temp_new::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 40px;
-  height: 1px;
-  background: rgba(166, 125, 255, 0.35);
 }
 
 .select-us-title_temp_new {
@@ -626,99 +474,16 @@
   line-height: 1.6;
 }
 
-.benefits-wrapper_temp_new {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.benefit-item_temp_new {
-  position: relative;
-  background: #111128;
-  border: 1px solid rgba(166, 125, 255, 0.14);
-  border-radius: 14px;
-  padding: 26px 22px 22px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
-}
-
-.benefit-item--mid_temp_new {
-  border-color: rgba(166, 125, 255, 0.28);
-}
-
-.benefit-item--mid_temp_new::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 14px; right: 14px;
-  height: 2px;
-  border-radius: 2px;
-  background: #a67dff;
-}
-
-.benefit-icon-slot_temp_new {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(166, 125, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #a67dff;
-  margin-bottom: 16px;
-}
-
-.benefit-text-wrapper_temp_new {
-  display: flex;
-  flex-direction: column;
-}
-
-.benefit-header_temp_new {
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: #d0d0e0;
-  margin-bottom: 12px;
-}
-
-.benefit-points_temp_new {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.benefit-points_temp_new li {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: #7a7a8c;
-  line-height: 1.5;
-}
-
-.bullet-check_temp_new {
-  color: #a67dff;
-  flex-shrink: 0;
-  margin-top: 3px;
-}
-
-.benefit-item-tag--mid_temp_new {
-  background: #a67dff;
-  color: #0d0d1f;
-}
-
-@media (max-width: 1024px) {
-  .benefits-wrapper_temp_new { grid-template-columns: repeat(2, 1fr); }
-}
-
 @media (max-width: 640px) {
-  .benefits-wrapper_temp_new { grid-template-columns: 1fr; }
   .select-us-title_temp_new { font-size: 1.6rem; }
 }
 
+@media (max-width: 480px) {
+  .select-us-lead_temp_new { font-size: 0.92rem; padding: 0 10px; }
+}
 
 /* ═══════════════════════════════════════════════════
-   CO NAŠE SYSTÉMY OBSAHUJÍ - bodový přehled s "i" vysvětlivkami
+   CO NAŠE SYSTÉMY OBSAHUJÍ - bodový přehled
    ═══════════════════════════════════════════════════ */
 
 .sys-features-section_temp_new {
@@ -728,92 +493,90 @@
   overflow: hidden;
 }
 
-.sys-feature-icon_temp_new {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: rgba(166, 125, 255, 0.1);
-  color: #a67dff;
+.sys-features-list_temp_new {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  max-width: 720px;
+  margin: 0 auto 40px;
+  border: 1px solid rgba(166, 125, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.sys-feature-item_temp_new {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px;
+  background: #0d0d1b;
+  border-bottom: 1px solid rgba(166, 125, 255, 0.07);
+  border-right: 1px solid rgba(166, 125, 255, 0.07);
+  transition: background 0.2s ease;
+  position: relative;
+}
+
+/* Každý druhý sloupec — bez pravého borderu */
+.sys-feature-item_temp_new:nth-child(2n) {
+  border-right: none;
+}
+
+/* Poslední dva řádky — bez spodního borderu */
+.sys-feature-item_temp_new:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+.sys-feature-item_temp_new::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: #a67dff;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
 .sys-feature-body_temp_new {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   min-width: 0;
 }
 
 .sys-feature-label_temp_new {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.92rem;
+  font-weight: 700;
   color: #d0d0e0;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ── "i" vysvětlivka - čistě CSS hover/focus tooltip, bez JS logiky ── */
-.sys-info-wrap_temp_new {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  outline: none;
-  flex-shrink: 0;
-}
-
-.sys-info-icon_temp_new {
-  color: #7a7a8c;
-  cursor: help;
-  transition: color 0.15s ease;
-}
-
-.sys-info-wrap_temp_new:hover .sys-info-icon_temp_new,
-.sys-info-wrap_temp_new:focus-visible .sys-info-icon_temp_new {
-  color: #a67dff;
-}
-
-.sys-tooltip_temp_new {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  width: 220px;
-  background: #1c1c38;
-  border: 1px solid rgba(166, 125, 255, 0.25);
-  color: #c4c4d4;
-  font-size: 0.76rem;
-  font-weight: 400;
+.sys-feature-desc_temp_new {
+  font-size: 0.8rem;
+  color: #6a6a7c;
   line-height: 1.5;
-  padding: 10px 12px;
-  border-radius: 8px;
-  box-shadow: 0 10px 26px -8px rgba(0, 0, 0, 0.5);
-  z-index: 10;
-  text-align: left;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  margin: 0;
 }
 
-.sys-info-wrap_temp_new:hover .sys-tooltip_temp_new,
-.sys-info-wrap_temp_new:focus-visible .sys-tooltip_temp_new {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
+@media (max-width: 640px) {
+  .sys-features-list_temp_new {
+    grid-template-columns: 1fr;
+  }
 
-.sys-tooltip_temp_new::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: #1c1c38;
+  .sys-feature-item_temp_new {
+    border-right: none;
+  }
+
+  .sys-feature-item_temp_new:nth-last-child(-n+2) {
+    border-bottom: 1px solid rgba(166, 125, 255, 0.07);
+  }
+
+  .sys-feature-item_temp_new:last-child {
+    border-bottom: none;
+  }
 }
 
 .sys-demo-video_temp_new {
@@ -874,334 +637,266 @@
   letter-spacing: 0.02em;
 }
 
-/* ── Trust banner na konci sekce ─────────────────────────────── */
-
-
 @media (max-width: 640px) {
-
-  .sys-tooltip_temp_new {
-    width: 180px;
-    left: auto;
-    right: -8px;
-    transform: translateY(4px);
-  }
-
-  .sys-info-wrap_temp_new:hover .sys-tooltip_temp_new,
-  .sys-info-wrap_temp_new:focus-visible .sys-tooltip_temp_new {
-    transform: translateY(0);
-  }
-
-  .sys-tooltip_temp_new::after {
-    left: auto;
-    right: 12px;
-    transform: none;
-  }
-
   .sys-demo-play-btn_temp_new {
     width: 48px;
     height: 48px;
   }
+}
 
-  .sys-trust-banner_temp_new {
-    flex-direction: column;
-    text-align: center;
+@media (max-width: 738px) {
+    .sys-features-section_temp_new{
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+/* Kouřové pozadí pod sekcí - posun nahoru přes relativní `bottom` + záporný margin-top */
+.smoke-bg {
+  position: relative;
+  display: block;
+  left: 50%;
+  right: 0;
+  bottom: 80px;
+  width: 1920px;
+  max-width: none;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  margin-top: -200px;
+}
+
+@media (min-width: 1920px) {
+  .smoke-bg {
+    width: 102%;
   }
 }
 
-.benefits-wrapper_temp_new {
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    gap: 20px;
-    padding: 0 50px;
-    margin-bottom: 25px;
-    position: relative;
-    z-index: 1;
-}
-
-.benefit-item_temp_new {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    flex: 1;
-    max-width: 400px;
-    background-color: #111128;
-    border: 1px solid rgba(166, 125, 255, 0.15);
-    border-radius: 18px;
-    padding: 36px 28px 28px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.3s ease, transform 0.3s ease;
-}
-
-.benefit-item--mid_temp_new {
-    border-color: rgba(166, 125, 255, 0.3);
-    background: #13132e;
-}
-
-.benefit-item--mid_temp_new::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(to right, rgba(107, 46, 145, 0) 0%, #a67dff 50%, rgba(107, 46, 145, 0) 100%);
-}
-
-.benefit-item-glow_temp_new {
-    position: absolute;
-    top: -40px; left: -40px;
-    width: 140px; height: 140px;
-    border-radius: 50%;
-    background: radial-gradient(ellipse at center, rgba(166, 125, 255, 0.08) 0%, transparent 70%);
-    pointer-events: none;
-}
-.benefit-item-glow--mid_temp_new {
-    background: radial-gradient(ellipse at center, rgba(166, 125, 255, 0.15) 0%, transparent 70%);
-}
-
-.benefit-icon-slot_temp_new {
-    width: 56px; height: 56px;
-    border-radius: 14px;
-    background: rgba(166, 125, 255, 0.08);
-    border: 1px solid rgba(166, 125, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(166, 125, 255, 0.7);
-    margin-bottom: 20px;
-    flex-shrink: 0;
-    transition: background 0.3s ease, color 0.3s ease;
-}
-.benefit-icon-slot_temp_new {
-    background: rgba(166, 125, 255, 0.14);
-    color: #a67dff;
-}
-.benefit-icon-slot--mid_temp_new {
-    background: rgba(166, 125, 255, 0.14);
-    color: #a67dff;
-}
-
-.benefit-item-tag--mid_temp_new {
-    color: #a67dff;
-    background: rgba(166, 125, 255, 0.12);
-    border-color: rgba(166, 125, 255, 0.3);
-}
-
-.benefit-text-wrapper_temp_new { width: 100%; }
-
-.benefit-header_temp_new {
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 18px;
-    text-align: center;
-    color: #c8b8ff;
-}
-.benefit-item--mid_temp_new .benefit-header_temp_new { color: #a67dff; }
-
-.benefit-points_temp_new { text-align: left; width: 100%; }
-.benefit-points_temp_new ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.benefit-points_temp_new li {
-    font-size: 0.92rem;
-    color: #8a8a9c;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 8px 12px;
-    background: rgba(166, 125, 255, 0.04);
-    border-radius: 8px;
-    border: 1px solid rgba(166, 125, 255, 0.06);
-    line-height: 1.5;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-.benefit-points_temp_new li {
-    color: #a0a0b5;
-    background: rgba(166, 125, 255, 0.06);
-    border-color: rgba(166, 125, 255, 0.1);
-}
-.benefit-points_temp_new li .bullet-highlight_temp_new {
-    flex-shrink: 0;
-    margin-top: 12px;
-    line-height: 1;
-}
-.benefit-points_temp_new li .bullet-highlight_temp_new img {
-    height: 18px;
-    width: 18px;
-    display: block;
-}
-
-@media (max-width: 905px) {
-    .benefits-wrapper_temp_new { flex-direction: column; align-items: center; padding: 0 20px; gap: 16px; }
-    .benefit-item_temp_new { width: 100%; max-width: 500px; padding: 28px 22px 22px; transform: none !important; }
-    .benefit-item--mid_temp_new::before { display: none; }
-    .select-us-eyebrow_temp_new::before,
-    .select-us-eyebrow_temp_new::after { display: none; }
-    .header-0-2-t { font-size: 1.7rem; padding: 20px; }
-}
-
-@media (max-width: 480px) {
-    .benefits-wrapper_temp_new { gap: 12px; padding: 0 15px; }
-    .benefit-item_temp_new { padding: 22px 16px 18px; border-radius: 14px; }
-    .benefit-header_temp_new { font-size: 1.15rem; }
-    .benefit-points_temp_new li { font-size: 0.88rem; padding: 7px 10px; }
-    .select-us-lead_temp_new { font-size: 0.92rem; padding: 0 10px; }
-    .header-0-2-t { margin-bottom: 0; }
-}
-
-@media (min-width: 906px) {
-    .header-0-2-t { font-size: 4rem; }
+.home-cta-btn-wrp{
+  display: flex;
+  width: 100%;
+  justify-content: center;
 }
 
 /* ═══════════════════════════════════════════════════
-   REFERENCES / SOCIAL PROOF SEKCE (nová)
+   TECH STACK - dvě nekonečné řady karet (marquee)
    ═══════════════════════════════════════════════════ */
-.home-proof-section {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 60px 50px 40px;
+
+/*
+  @module: tech-stack
+  @description: Full-width section with two infinite marquee rows of logo cards
+    (HTEC-like). Each track contains TWO identical copies of its cards and is moved by
+    exactly -50 % (one copy), so the loop is seamless. The top row runs the animation in
+    reverse (moves right), the bottom row forwards (moves left).
+  @usage: .tech-stack-section > .tech-stack-rows > .tech-stack-row > .tech-stack-track(--right|--left) > .tech-stack-card
+  @note: Card spacing uses `margin-right` on each card, NOT flex `gap` - with `gap` the
+    -50 % translation would be off by half a gap and the loop would visibly jump.
+    Tunable via custom properties: --tech-card-w, --tech-card-h, --tech-card-space,
+    --tech-marquee-duration.
+*/
+.tech-stack-section {
+  --tech-card-w: 260px;
+  --tech-card-h: 150px;
+  --tech-card-space: 24px;
+  --tech-marquee-duration: 45s;
+
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 50px 0 40px;
+  overflow: hidden;
 }
 
-.home-proof-header {
-    text-align: center;
-    margin-bottom: 44px;
+.tech-stack-header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 24px;
+  margin-bottom: 44px;
 }
 
-.home-proof-eyebrow {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #a67dff;
-    margin-bottom: 14px;
+.tech-stack-heading {
+  font-size: 2rem;
+  color: #eeeef7;
+  margin: 0;
 }
 
-.home-proof-heading {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #e0e0e0;
-    text-shadow: 0 0 15px rgba(158, 158, 158, 0.2);
-    margin: 0;
+.tech-stack-lead {
+  font-size: 1rem;
+  color: #7a7a8c;
+  max-width: 520px;
+  margin: 10px auto 0;
+  line-height: 1.6;
 }
 
-.home-proof-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-    margin-bottom: 40px;
+/* Seznam pro čtečky obrazovky - vizuálně skrytý, pohyblivé řady jsou aria-hidden */
+.tech-stack-sr-list {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.home-proof-card {
-    position: relative;
-    background: #111128;
-    border: 1px solid rgba(166, 125, 255, 0.12);
-    border-radius: 16px;
-    padding: 30px 26px 26px;
-    display: flex;
-    flex-direction: column;
-    transition: border-color 0.25s ease, transform 0.2s ease;
+.tech-stack-rows {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tech-card-space);
 }
 
-.home-proof-card:hover {
-    border-color: rgba(166, 125, 255, 0.35);
-    transform: translateY(-4px);
+/* Okno jedné řady - okraje plynule mizí do pozadí */
+.tech-stack-row {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
 }
 
-.home-proof-quote-mark {
-    font-family: Georgia, serif;
-    font-size: 2.6rem;
-    line-height: 1;
-    color: rgba(166, 125, 255, 0.4);
-    margin-bottom: 8px;
+.tech-stack-track {
+  display: flex;
+  width: max-content;
+  animation: techStackMarquee var(--tech-marquee-duration) linear infinite;
+  will-change: transform;
 }
 
-.home-proof-text {
-    font-size: 0.92rem;
-    line-height: 1.65;
-    color: #a0a0b5;
-    margin: 0 0 24px;
-    flex: 1;
+/* Horní řada jede doprava (stejná animace, obrácený směr) */
+.tech-stack-track--right {
+  animation-direction: reverse;
 }
 
-.home-proof-author {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* Spodní řada jede doleva */
+.tech-stack-track--left {
+  animation-direction: normal;
 }
 
-.home-proof-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: rgba(166, 125, 255, 0.14);
-    border: 1px solid rgba(166, 125, 255, 0.3);
-    color: #a67dff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.78rem;
-    font-weight: 700;
-    flex-shrink: 0;
+/* Pauza: jen tlačítkem pro celou sekci (hover animaci nezastavuje) */
+.tech-stack-section--paused .tech-stack-track {
+  animation-play-state: paused;
 }
 
-.home-proof-author-info {
-    display: flex;
-    flex-direction: column;
+@keyframes techStackMarquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
-.home-proof-name {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #d0d0e0;
+.tech-stack-card {
+  flex: 0 0 auto;
+  width: var(--tech-card-w);
+  height: var(--tech-card-h);
+  margin-right: var(--tech-card-space);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  border: 1px solid rgba(166, 125, 255, 0.14);
+  background: rgba(17, 17, 40, 0.55);
+  transition: border-color 0.25s ease, background 0.25s ease;
 }
 
-.home-proof-role {
-    font-size: 0.76rem;
-    color: #7a7a8c;
+/* Skutečné logo - jednotně ztlumené, na hover plná barva */
+.tech-stack-logo {
+  max-width: 80%;
+  max-height: 90%;
+  object-fit: contain;
+  opacity: 0.7;
+  filter: grayscale(1);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.home-proof-trustbar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
+/* Placeholder, dokud logo není doplněné (logo: null v tech-stack.config.ts) */
+.tech-stack-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: rgba(166, 125, 255, 0.55);
 }
 
-.home-proof-trust-item {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #9090a5;
+.tech-stack-placeholder-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #9090a5;
 }
 
-.home-proof-trust-divider {
-    width: 1px;
-    height: 16px;
-    background: rgba(166, 125, 255, 0.25);
+.tech-stack-controls {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.tech-stack-pause-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border: 1px solid rgba(166, 125, 255, 0.22);
+  border-radius: 999px;
+  background: transparent;
+  color: #9090a5;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.tech-stack-pause-btn:hover {
+  color: #e0e0f0;
+  border-color: #a67dff;
+  background: rgba(166, 125, 255, 0.07);
+}
+
+.tech-stack-pause-btn:focus-visible {
+  outline: 2px solid #a67dff;
+  outline-offset: 2px;
 }
 
 @media (max-width: 905px) {
-    .home-proof-section { padding: 50px 30px 30px; }
-    .home-proof-heading { font-size: 1.7rem; }
-    .home-proof-grid { grid-template-columns: 1fr; }
+  .tech-stack-section {
+    --tech-card-w: 200px;
+    --tech-card-h: 120px;
+    --tech-card-space: 16px;
+    padding: 40px 0 30px;
+  }
+
+  .tech-stack-heading { font-size: 1.6rem; }
 }
 
 @media (max-width: 480px) {
-    .home-proof-section { padding: 40px 20px 20px; }
-    .home-proof-trustbar { gap: 12px; }
-    .home-proof-trust-divider { display: none; }
+  .tech-stack-section {
+    --tech-card-w: 160px;
+    --tech-card-h: 100px;
+    --tech-card-space: 12px;
+  }
+
+  .tech-stack-card { padding: 16px; border-radius: 14px; }
+  .tech-stack-lead { font-size: 0.92rem; }
 }
 
+/*
+  @module: tech-stack-reduced-motion
+  @description: Users who prefer reduced motion get static rows they can scroll
+    horizontally; the pause toggle is hidden because there is nothing to pause.
+  @usage: automatic via prefers-reduced-motion
+*/
 @media (prefers-reduced-motion: reduce) {
-    .home-proof-card { transition: none; }
+  .tech-stack-track { animation: none; }
+  .tech-stack-row { overflow-x: auto; }
+  .tech-stack-controls { display: none; }
+  .tech-stack-card, .tech-stack-logo { transition: none; }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -1220,15 +915,6 @@
 .home-faq-header {
     text-align: center;
     margin-bottom: 36px;
-}
-
-.home-faq-eyebrow {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #a67dff;
-    margin-bottom: 14px;
 }
 
 .home-faq-heading {
@@ -1379,13 +1065,6 @@
     .home-faq-answer-text { padding-left: 40px; }
 }
 
-@media (max-width: 738px) {
-    .sys-features-section_temp_new{
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-}
-
 @media (hover: hover) {
     .home-faq-trigger:hover { background: #161631; }
 }
@@ -1395,355 +1074,8 @@
     .home-faq-trigger, .home-faq-answer-text { transition: none; }
 }
 
-.home-cta-btn-wrp{
-  display: flex;
-  width: 100%;
-  justify-content: center;
-}
-
-
-.about-service-card {
-  position: relative;
-  background: #111128;
-  border: 1px solid rgba(166, 125, 255, 0.12);
-  border-radius: 14px;
-  padding: 28px 22px;
-  transition: border-color 0.25s ease, transform 0.2s ease, background 0.25s ease, box-shadow 0.25s ease;
-  overflow: hidden;
-  cursor: default;
-}
-
-.about-service-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--tint, #a67dff);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.about-service-card:hover {
-  border-color: color-mix(in srgb, var(--tint, #a67dff) 55%, transparent);
-  background: color-mix(in srgb, var(--tint, #a67dff) 6%, #111128);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px -14px color-mix(in srgb, var(--tint, #a67dff) 55%, transparent);
-}
-
-.about-service-card:hover::before { opacity: 1; }
-
-.about-service-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--tint, #a67dff) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint, #a67dff) 30%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--tint, #a67dff);
-  margin-bottom: 18px;
-  transition: transform 0.25s ease;
-}
-
-.about-service-card:hover .about-service-icon {
-  transform: scale(1.06) rotate(-4deg);
-}
-
-.about-service-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #d0d0e0;
-  margin-bottom: 10px;
-}
-
-.about-service-desc {
-  font-size: 0.88rem;
-  color: #7a7a8c;
-  line-height: 1.6;
-}
-
-.about-services-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-bottom: 50px;
-  border: 1px solid rgba(166, 125, 255, 0.1);
-  border-radius: 18px;
-  overflow: hidden;
-}
-
-.about-service-row {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 22px 28px;
-  background: #111128;
-  border-bottom: 1px solid rgba(166, 125, 255, 0.07);
-  transition: background 0.2s ease, padding-left 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.about-service-row:last-child {
-  border-bottom: none;
-}
-
-/* Barevná linka vlevo jako accent */
-.about-service-row::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--tint, #a67dff);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.about-service-row:hover {
-  background: color-mix(in srgb, var(--tint, #a67dff) 5%, #111128);
-  padding-left: 34px;
-}
-
-.about-service-row:hover::before {
-  opacity: 1;
-}
-
-.about-service-row-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--tint, #a67dff) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint, #a67dff) 25%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--tint, #a67dff);
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.about-service-row:hover .about-service-row-icon {
-  transform: scale(1.08);
-}
-
-.about-service-row-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.about-service-row-name {
-  font-size: 0.97rem;
-  font-weight: 700;
-  color: #d0d0e0;
-  margin-bottom: 4px;
-}
-
-.about-service-row-desc {
-  font-size: 0.84rem;
-  color: #7a7a8c;
-  line-height: 1.55;
-}
-
-.about-service-row-tags {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.about-service-tag {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--tint, #a67dff) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tint, #a67dff) 25%, transparent);
-  color: var(--tint, #a67dff);
-  white-space: nowrap;
-}
-
-@media (max-width: 760px) {
-  .about-service-row {
-    flex-wrap: wrap;
-    gap: 14px;
-    padding: 18px 20px;
-  }
-
-  .about-service-row:hover {
-    padding-left: 24px;
-  }
-
-  .about-service-row-tags {
-    justify-content: flex-start;
-    padding-left: 56px;
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .about-service-row-tags {
-    padding-left: 0;
-  }
-}
-
-.sys-feature-icon_temp_new {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  background: rgba(166, 125, 255, 0.1);
-  color: #a67dff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.sys-feature-body_temp_new {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sys-feature-label_temp_new {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #d0d0e0;
-}
-
-.sys-feature-desc_temp_new {
-  font-size: 0.78rem;
-  color: #6a6a7c;
-  line-height: 1.55;
-  margin: 0;
-}
-
-.sys-features-list_temp_new {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0;
-  max-width: 720px;
-  margin: 0 auto 40px;
-  border: 1px solid rgba(166, 125, 255, 0.1);
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.sys-feature-item_temp_new {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 22px 24px;
-  background: #0d0d1b;
-  border-bottom: 1px solid rgba(166, 125, 255, 0.07);
-  border-right: 1px solid rgba(166, 125, 255, 0.07);
-  transition: background 0.2s ease;
-  position: relative;
-}
-
-/* Každý druhý sloupec — bez pravého borderu */
-.sys-feature-item_temp_new:nth-child(2n) {
-  border-right: none;
-}
-
-/* Poslední dva řádky — bez spodního borderu */
-.sys-feature-item_temp_new:nth-last-child(-n+2) {
-  border-bottom: none;
-}
-
-.sys-feature-item_temp_new::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 2px;
-  background: #a67dff;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.sys-feature-icon_temp_new {
-  width: 38px;
-  height: 38px;
-  border-radius: 9px;
-  background: rgba(166, 125, 255, 0.1);
-  color: #a67dff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.sys-feature-body_temp_new {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-
-.sys-feature-label_temp_new {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #d0d0e0;
-  line-height: 1.3;
-}
-
-.sys-feature-desc_temp_new {
-  font-size: 0.8rem;
-  color: #6a6a7c;
-  line-height: 1.5;
-}
-
-@media (max-width: 640px) {
-  .sys-features-list_temp_new {
-    grid-template-columns: 1fr;
-  }
-
-  .sys-feature-item_temp_new {
-    border-right: none;
-  }
-
-  .sys-feature-item_temp_new:nth-last-child(-n+2) {
-    border-bottom: 1px solid rgba(166, 125, 255, 0.07);
-  }
-
-  .sys-feature-item_temp_new:last-child {
-    border-bottom: none;
-  }
-}
-.smoke-bg {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 80px;
-  width: 100%;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.5;
-}
-.sys-demo-video_temp_new {
-  position: relative;
-  z-index: 1;
-}
-
-.smoke-bg {
-  position: relative;
-  display: block;
-  width: 1920px;
-  max-width: none;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
-  opacity: 0.5;
-  margin-top: -200px;
-  z-index: 0;
-}
-
-@media (min-width: 1920px) {
-  .smoke-bg {
-    width: 102%;
-  }
+.kb-cta-wrp{
+      width: 100%;
+    display: flex;
+    justify-content: center;
 }

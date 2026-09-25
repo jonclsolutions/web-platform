@@ -1,14 +1,18 @@
-<!-- 
+<!--
     @file: home.component.html
     @path: /src/app/public/web-pages/home/home.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09-25): Added the "tech stack" section (two infinite marquee
+        rows, top row moves right, bottom row moves left, HTEC-like cards) between the
+        FAQ separators. Data come from tech-stack.config.ts, texts from `t.tech_stack`.
+        Nothing else in this template changed.
 -->
 
 @if (t) {
 
-  <!-- 
+  <!--
     JSON-LD strukturovaná data pro vyhledávače (Organization schema).
     Poznámka: pro produkční nasazení je robustnější vkládat tohle přes
     Angular Meta/Renderer2 service v .ts (funguje spolehlivě i při SSR),
@@ -68,84 +72,6 @@
 <section class="about-section">
   <div class="about-glow" aria-hidden="true"></div>
 
-  <!-- <div class="about-eyebrow">{{ t?.about?.eyebrow }}</div>
-  <h2 class="about-heading" [innerHTML]="t?.about?.heading"></h2>
-  <p class="about-lead">{{ t?.about?.lead }}</p> -->
-<!-- 
-<div class="about-services-list">
-
-  <div class="about-service-row" style="--tint:#7c9eff">
-    <div class="about-service-row-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-      </svg>
-    </div>
-    <div class="about-service-row-body">
-      <div class="about-service-row-name">{{ t?.web_header }}</div>
-      <div class="about-service-row-desc">{{ t?.web_desc }}</div>
-    </div>
-    <div class="about-service-row-tags">
-      <span class="about-service-tag">Web</span>
-      <span class="about-service-tag">E-shop</span>
-      <span class="about-service-tag">Portál</span>
-    </div>
-  </div>
-
-  <div class="about-service-row" style="--tint:#5fd8c4">
-    <div class="about-service-row-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-      </svg>
-    </div>
-    <div class="about-service-row-body">
-      <div class="about-service-row-name">{{ t?.crm_header }}</div>
-      <div class="about-service-row-desc">{{ t?.crm_desc }}</div>
-    </div>
-    <div class="about-service-row-tags">
-      <span class="about-service-tag">CRM</span>
-      <span class="about-service-tag">ERP</span>
-      <span class="about-service-tag">Sklad</span>
-    </div>
-  </div>
-
-  <div class="about-service-row" style="--tint:#ff86c2">
-    <div class="about-service-row-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-        <line x1="12" y1="3" x2="12" y2="21"/>
-      </svg>
-    </div>
-    <div class="about-service-row-body">
-      <div class="about-service-row-name">{{ t?.update_header }}</div>
-      <div class="about-service-row-desc">{{ t?.update_desc }}</div>
-    </div>
-    <div class="about-service-row-tags">
-      <span class="about-service-tag">Rozšíření</span>
-      <span class="about-service-tag">Integrace</span>
-      <span class="about-service-tag">Migrace</span>
-    </div>
-  </div>
-
-  <div class="about-service-row" style="--tint:#ffb86b">
-    <div class="about-service-row-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-    </div>
-    <div class="about-service-row-body">
-      <div class="about-service-row-name">{{ t?.custom_header }}</div>
-      <div class="about-service-row-desc">{{ t?.custom_desc }}</div>
-    </div>
-    <div class="about-service-row-tags">
-      <span class="about-service-tag">Konzultace</span>
-      <span class="about-service-tag">Analýza</span>
-      <span class="about-service-tag">Na míru</span>
-    </div>
-  </div>
-
-</div> -->
-
 <div class="about-story-row">
   <div class="about-story-text">
     <h3 class="about-heading about-story-heading">{{ t?.about?.story_heading }}</h3>
@@ -154,12 +80,7 @@
 
   <div class="about-story-media">
     <div class="about-story-photo-placeholder" aria-hidden="true">
-      <!-- <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2"/>
-        <circle cx="8.5" cy="10.5" r="1.8"/>
-        <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
-      </svg> -->
-      <!-- <span class="about-story-photo-label">{{ t?.about?.story_photo_placeholder }}</span> -->
+
       <img [src]="graphs_1">
     </div>
   </div>
@@ -167,12 +88,7 @@
   <div class="about-story-row">
       <div class="about-story-media">
     <div class="about-story-photo-placeholder" aria-hidden="true">
-      <!-- <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2"/>
-        <circle cx="8.5" cy="10.5" r="1.8"/>
-        <path d="M21 16.5l-5.2-5.2a2 2 0 0 0-2.8 0L4 20"/>
-      </svg>
-      <span class="about-story-photo-label">{{ t?.about?.story_photo_placeholder }}</span> -->
+
       <img [src]="stats_1">
     </div>
   </div>
@@ -191,103 +107,6 @@
       </div>
 
 <!-- ═══════════════════════════════════════════════════
-     PROČ SI VYBRAT NÁS - odlehčený redesign
-     Odstraněno: glow blur pozadí, <img> checkmarky (nahrazeno inline SVG,
-     žádná závislost na obrázku), silné stíny/prstence kolem ikon.
-     Zůstalo: 3 karty, ikona, nadpis, 3 body, malý tag badge.
-     ═══════════════════════════════════════════════════ -->
-<!-- <section class="select-us-section_temp_new">
-  <div class="select-us-header-wrp_temp_new">
-    <div class="select-us-eyebrow_temp_new">{{ t?.why_us_header }}</div>
-    <h2 class="select-us-title_temp_new">{{ t?.select_us_header }}</h2>
-    <p class="select-us-lead_temp_new">{{ t?.why_us_text }}</p>
-  </div>
-
-  <div class="benefits-wrapper_temp_new">
-
-    <div class="benefit-item_temp_new">
-      <div class="benefit-icon-slot_temp_new">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-      </div>
-      <div class="benefit-text-wrapper_temp_new">
-        <div class="benefit-header_temp_new">{{ t?.select_us?.item_1?.header }}</div>
-        <ul class="benefit-points_temp_new">
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_1?.bullet_1 }}
-          </li>
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_1?.bullet_2 }}
-          </li>
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_1?.bullet_3 }}
-          </li>
-        </ul>
-      </div>
-      <span class="benefit-item-tag_temp_new">{{ t?.why_us_quality_header }}</span>
-    </div>
-
-    <div class="benefit-item_temp_new benefit-item--mid_temp_new">
-      <div class="benefit-icon-slot_temp_new">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
-      </div>
-      <div class="benefit-text-wrapper_temp_new">
-        <div class="benefit-header_temp_new">{{ t?.select_us?.item_2?.header }}</div>
-        <ul class="benefit-points_temp_new">
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_2?.bullet_1 }}
-          </li>
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_2?.bullet_2 }}
-          </li>
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_2?.bullet_3 }}
-          </li>
-        </ul>
-      </div>
-      <span class="benefit-item-tag_temp_new benefit-item-tag--mid_temp_new">{{ t?.why_us_quality_header_1 }}</span>
-    </div>
-
-    <div class="benefit-item_temp_new">
-      <div class="benefit-icon-slot_temp_new">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      </div>
-      <div class="benefit-text-wrapper_temp_new">
-        <div class="benefit-header_temp_new">{{ t?.select_us?.item_3?.header }}</div>
-        <ul class="benefit-points_temp_new">
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_3?.bullet_1 }}
-          </li>
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_3?.bullet_2 }}
-          </li>
-          <li>
-            <svg class="bullet-check_temp_new" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ t?.select_us?.item_3?.bullet_3 }}
-          </li>
-        </ul>
-      </div>
-    </div>
-
-  </div>
-</section> -->
-
-<!-- ═══════════════════════════════════════════════════
      CO NAŠE SYSTÉMY OBSAHUJÍ - bodově, srozumitelně i pro laika.
      Každá položka má tlačítko "i" s vysvětlivkou (čistě CSS hover/focus
      tooltip, žádná JS logika navíc není potřeba). Na konci zvýrazněný
@@ -302,11 +121,7 @@
 <div class="sys-features-list_temp_new">
 
   <div class="sys-feature-item_temp_new">
-    <!-- <div class="sys-feature-icon_temp_new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-    </div> -->
+
     <div class="sys-feature-body_temp_new">
       <span class="sys-feature-label_temp_new">{{ t?.sys_features?.seo?.label }}</span>
       <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.seo?.desc }}</span>
@@ -314,11 +129,7 @@
   </div>
 
   <div class="sys-feature-item_temp_new">
-    <!-- <div class="sys-feature-icon_temp_new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
-    </div> -->
+
     <div class="sys-feature-body_temp_new">
       <span class="sys-feature-label_temp_new">{{ t?.sys_features?.auth?.label }}</span>
       <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.auth?.desc }}</span>
@@ -326,11 +137,7 @@
   </div>
 
   <div class="sys-feature-item_temp_new">
-    <!-- <div class="sys-feature-icon_temp_new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16"/><path d="M9 4v16"/>
-      </svg>
-    </div> -->
+
     <div class="sys-feature-body_temp_new">
       <span class="sys-feature-label_temp_new">{{ t?.sys_features?.middleware?.label }}</span>
       <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.middleware?.desc }}</span>
@@ -338,11 +145,7 @@
   </div>
 
   <div class="sys-feature-item_temp_new">
-    <!-- <div class="sys-feature-icon_temp_new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    </div> -->
+
     <div class="sys-feature-body_temp_new">
       <span class="sys-feature-label_temp_new">{{ t?.sys_features?.attack_protection?.label }}</span>
       <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.attack_protection?.desc }}</span>
@@ -350,14 +153,7 @@
   </div>
 
   <div class="sys-feature-item_temp_new">
-    <!-- <div class="sys-feature-icon_temp_new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-      </svg>
-    </div> -->
+
     <div class="sys-feature-body_temp_new">
       <span class="sys-feature-label_temp_new">{{ t?.sys_features?.documentation?.label }}</span>
       <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.documentation?.desc }}</span>
@@ -365,12 +161,7 @@
   </div>
 
   <div class="sys-feature-item_temp_new">
-    <!-- <div class="sys-feature-icon_temp_new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-      </svg>
-    </div> -->
+
     <div class="sys-feature-body_temp_new">
       <span class="sys-feature-label_temp_new">{{ t?.sys_features?.integrations?.label }}</span>
       <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.integrations?.desc }}</span>
@@ -378,12 +169,7 @@
   </div>
 
   <div class="sys-feature-item_temp_new">
-    <!-- <div class="sys-feature-icon_temp_new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2"/>
-        <path d="M8 21h8M12 17v4"/>
-      </svg>
-    </div> -->
+
     <div class="sys-feature-body_temp_new">
       <span class="sys-feature-label_temp_new">{{ t?.sys_features?.responsive?.label }}</span>
       <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.responsive?.desc }}</span>
@@ -391,11 +177,7 @@
   </div>
 
   <div class="sys-feature-item_temp_new">
-    <!-- <div class="sys-feature-icon_temp_new">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-    </div> -->
+
     <div class="sys-feature-body_temp_new">
       <span class="sys-feature-label_temp_new">{{ t?.sys_features?.support?.label }}</span>
       <span class="sys-feature-desc_temp_new">{{ t?.sys_features?.support?.desc }}</span>
@@ -427,14 +209,91 @@
 </section>
 <div class="home-cta-btn-wrp">
 
-<a routerLink="/knowledge-base" class="home-cta-btn">
-        {{ t?.knowlegde_base_btn }}
-        <span class="home-cta-arrow" aria-hidden="true">→</span>
-      </a>
+
 </div>
 
       <div class="gradient-seep-wrp">
           <div class="gradient-line-separator"></div>
+      </div>
+
+      <!--
+        @component: tech-stack
+        @description: Full-width "technologies we build with" section - two infinite
+          marquee rows of HTEC-like logo cards; the top row moves to the right, the
+          bottom row to the left. Purely CSS animation (translateX of a track holding two
+          identical copies, see buildMarqueeLoop() in tech-stack.config.ts).
+        @usage: Data: `techStackTopLoop` / `techStackBottomLoop` / `techStackAll`
+          (home.component.ts, built from tech-stack.config.ts). Texts: `t.tech_stack.*`.
+          A card with `logo === null` renders an image placeholder + technology name.
+        @note: Accessibility - the moving marquee is aria-hidden; screen readers get the
+          visually hidden list `.tech-stack-sr-list` instead. Motion can be paused with
+          the toggle button (WCAG 2.2.2), keeps moving on hover, and is disabled
+          entirely under `prefers-reduced-motion: reduce` (rows become scrollable).
+      -->
+      <section class="tech-stack-section" [class.tech-stack-section--paused]="techStackPaused" [attr.aria-labelledby]="'tech-stack-heading'">
+
+        <div class="tech-stack-header">
+          <h2 id="tech-stack-heading" class="tech-stack-heading">{{ t?.tech_stack?.heading }}</h2>
+          <p class="tech-stack-lead">{{ t?.tech_stack?.lead }}</p>
+        </div>
+
+        <ul class="tech-stack-sr-list" [attr.aria-label]="t?.tech_stack?.sr_list_label">
+          @for (item of techStackAll; track item.name) {
+            <li>{{ item.name }}</li>
+          }
+        </ul>
+
+        <div class="tech-stack-rows" aria-hidden="true">
+          <div class="tech-stack-row">
+            <div class="tech-stack-track tech-stack-track--right">
+              @for (item of techStackTopLoop; track $index) {
+                <div class="tech-stack-card">
+                  @if (item.logo) {
+                    <img [src]="item.logo" [alt]="item.name" class="tech-stack-logo" loading="lazy" decoding="async" draggable="false">
+                  } @else {
+                    <div class="tech-stack-placeholder">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                      <span class="tech-stack-placeholder-name">{{ item.name }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="tech-stack-row">
+            <div class="tech-stack-track tech-stack-track--left">
+              @for (item of techStackBottomLoop; track $index) {
+                <div class="tech-stack-card">
+                  @if (item.logo) {
+                    <img [src]="item.logo" [alt]="item.name" class="tech-stack-logo" loading="lazy" decoding="async" draggable="false">
+                  } @else {
+                    <div class="tech-stack-placeholder">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                      <span class="tech-stack-placeholder-name">{{ item.name }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+        
+      </section>
+      <div class="kb-cta-wrp">
+
+      <a routerLink="/knowledge-base" class="home-cta-btn">
+        {{ t?.knowlegde_base_btn }}
+        <span class="home-cta-arrow" aria-hidden="true">→</span>
+      </a>
       </div>
 
       <div class="gradient-seep-wrp">

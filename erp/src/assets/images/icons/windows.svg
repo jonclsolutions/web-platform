@@ -1,0 +1,7 @@
+<svg role="img" fill="#9090a5" viewBox="0 0 40 36" xmlns="http://www.w3.org/2000/svg">
+  <title>Windows</title>
+  <g transform="translate(8 0) scale(0.27273)">
+    <path d="m0 12.402 35.687-4.86.016 34.423-35.67.203zm35.67 33.529.028 34.453L.028 75.48.026 45.7zm4.326-39.025L87.314 0v41.527l-47.318.376zm47.329 39.349-.011 41.34-47.318-6.678-.066-34.739z"/>
+  </g>
+  <text x="20" y="34.5" text-anchor="middle" font-family="'Source Sans Pro', 'Segoe UI', system-ui, sans-serif" font-size="7" font-weight="600">Windows</text>
+</svg>

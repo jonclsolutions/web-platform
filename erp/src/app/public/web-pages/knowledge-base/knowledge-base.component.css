@@ -12,13 +12,22 @@
         pilulky) zůstává, ale JEN pro mobil (<=960px) - na desktopu ho nahrazuje
         `.kb-sidebar`.
 */
-
 .kb-main-content {
     font-family: "Source Sans Pro", sans-serif;
     position: relative;
     max-width: 1180px;
     margin: 0 auto;
     padding: 0 24px;
+}
+
+.kb-main-content:before{
+        content: '';
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(166, 125, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(166, 125, 255, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* ── Hero ─────────────────────────────────────────── */

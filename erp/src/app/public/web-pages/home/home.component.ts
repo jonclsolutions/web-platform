@@ -11,7 +11,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BasePublicComponent } from '../../base-public.component';
-
+import { TECH_STACK_ROW_TOP, TECH_STACK_ROW_BOTTOM, TechStackItem, buildMarqueeLoop } from './tech-stack.config';
 /**
  * @description Single point in the hero section's animated particle field.
  */
@@ -101,7 +101,20 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
       }
     }
   }
+  /**
+   * @description Tech-stack marquee data (see tech-stack.config.ts). Static, built once -
+   * plain readonly fields, stable references for `@for`.
+   */
+  readonly techStackAll: TechStackItem[] = [...TECH_STACK_ROW_TOP, ...TECH_STACK_ROW_BOTTOM];
+  readonly techStackTopLoop: TechStackItem[] = buildMarqueeLoop(TECH_STACK_ROW_TOP);
+  readonly techStackBottomLoop: TechStackItem[] = buildMarqueeLoop(TECH_STACK_ROW_BOTTOM);
 
+  /** Whether the tech-stack marquee is paused by the user (WCAG 2.2.2). */
+  techStackPaused = false;
+
+  toggleTechStackPaused(): void {
+    this.techStackPaused = !this.techStackPaused;
+  }
   private readonly ngZone = inject(NgZone);
   private readonly platformId = inject(PLATFORM_ID);
 
