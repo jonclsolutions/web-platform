@@ -60,6 +60,12 @@ export class ServicesComponent extends BasePublicComponent {
 featureCards: Array<{key: string; iconPath: string; title: string; text: string; tags?: string[]}> = [];
 smoke: string = 'assets/images/backgrounds/smoke-cropped.svg';
 
+services_main: string = "assets/images/services/services-main.svg";
+services_1: string = "assets/images/services/services-card1.svg";
+services_2: string = "assets/images/services/services-card2.svg";
+services_3: string = "assets/images/services/services-card3.svg";
+services_4: string = "assets/images/services/services-card4.svg";
+
 protected override onTranslationsLoaded(): void {
   this.featureCards = [
     {

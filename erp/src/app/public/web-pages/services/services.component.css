@@ -25,7 +25,8 @@
   --max-w:       1200px;
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; position: relative;
+    z-index: 99;}
 
 .svc-page {
   background: var(--bg);
@@ -500,11 +501,10 @@
   font-size: 0.85rem;
   padding: 8px 14px;
 }
-
 .pm-feature-col {
   position: sticky;
   left: 0;
-  z-index: 2;
+  z-index: 101;                 /* above global z-index 99 of scrolling cells */
   background: var(--surface);
   text-align: left;
   padding: 14px 18px;
@@ -513,11 +513,12 @@
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border-mid);
   vertical-align: middle;
+  box-shadow: 8px 0 12px -8px rgba(0, 0, 0, .6);  /* depth edge while scrolling */
 }
 
 thead .pm-feature-col {
   background: var(--surface-2);
-  z-index: 3;
+  z-index: 102;                 /* corner cell above sticky column and header cells */
 }
 
 tbody tr:last-child .pm-feature-col { border-bottom: none; }
@@ -905,8 +906,49 @@ tbody tr:last-child .pm-value-col { border-bottom: none; }
   z-index: 0;
 }
 
+/**
+ * Devices illustration wrapper – positioning context for the smoke.
+ * z-index 0 (overrides global z-index 99) so the smoke bleeding outside
+ * the wrapper stays BEHIND surrounding text, not over it.
+ */
+.svc-devices {
+  position: relative;
+  z-index: 0;
+}
+
+.svc-devices-img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Decorative smoke – always centered on the devices image */
+.smoke-bg_hero {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1920px;
+  max-width: none;
+  transform: translate(-50%, -50%);
+  opacity: .5;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+/* Prevent horizontal scroll caused by the oversized decorative smoke */
+:host {
+  display: block;
+  overflow-x: clip;
+}
+/* Mobile – smaller smoke so the waves keep their shape */
+@media (max-width: 600px) {
+  .smoke-bg_hero { width: 260vw; }
+}
+
 @media (min-width: 1920px) {
-  .smoke-bg { width: 102%; }
+  .smoke-bg, .smoke-bg_hero { width: 102%; }
 }
 
 /* ══════════════════════════════════════════════════════════════

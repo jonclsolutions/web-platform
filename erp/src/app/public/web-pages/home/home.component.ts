@@ -40,6 +40,8 @@ export class HomeComponent extends BasePublicComponent {
     aiapp: 'assets/images/backgrounds/service-ai.jpg',
   };
 
+  hero_img: string = "assets/images/home/hero-space-bg.svg";
+
   graphs_1: string = "assets/images/home/graphs_1.png";
   stats_1: string = "assets/images/home/stats_1.png";
 

@@ -58,7 +58,7 @@
       -->
         <section class="hero-section">
   <img
-    src="assets/images/home/hero-space-bg.svg"
+    [src]="hero_img"
     class="hero-bg"
     alt=""
     aria-hidden="true"
@@ -68,27 +68,27 @@
     draggable="false">
 
   <div class="hero-content">
-    <h1 class="hero-heading" [innerHTML]="t?.hero?.heading || 'We\'re an IT company<br>building digital products'"></h1>
-    <p class="hero-lead">{{ t?.hero?.lead || 'We design, develop, and deploy web, desktop, and mobile applications - from the first idea to production.' }}</p>
+    <h1 class="hero-heading" [innerHTML]="t?.hero?.heading"></h1>
+    <p class="hero-lead">{{ t?.hero?.lead }}</p>
 
     <div class="hero-cta-row">
       <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
-        {{ t?.hero?.cta_primary || 'Free consultation' }}
+        {{ t?.hero?.cta_primary}}
       </a>
       <a routerLink="/services" class="home-cta-btn">
-        {{ t?.hero?.cta_secondary || 'Our services' }}
+        {{ t?.hero?.cta_secondary  }}
       </a>
     </div>
 
     <div class="hero-stats">
       <div class="hero-stat">
-        <span class="hero-stat-num">{{ t?.hero?.stat_1_num || '4 years' }}</span>
-        <span class="hero-stat-label">{{ t?.hero?.stat_1_label || 'in business' }}</span>
+        <span class="hero-stat-num">{{ t?.hero?.stat_1_num}}</span>
+        <span class="hero-stat-label">{{ t?.hero?.stat_1_label }}</span>
       </div>
       <span class="hero-stat-divider" aria-hidden="true"></span>
       <div class="hero-stat">
-        <span class="hero-stat-num">{{ t?.hero?.stat_2_num || '10+' }}</span>
-        <span class="hero-stat-label">{{ t?.hero?.stat_2_label || 'completed projects' }}</span>
+        <span class="hero-stat-num">{{ t?.hero?.stat_2_num }}</span>
+        <span class="hero-stat-label">{{ t?.hero?.stat_2_label  }}</span>
       </div>
     </div>
   </div>
@@ -350,7 +350,7 @@
             <input type="checkbox" id="home-faq-1" class="home-faq-checkbox">
             <label for="home-faq-1" class="home-faq-trigger">
               <span class="home-faq-num" aria-hidden="true">01</span>
-              <span class="home-faq-trigger-text">{{ t?.faq?.q1 || 'How long does a typical project take?' }}</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q1  }}</span>
               <span class="home-faq-chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -358,7 +358,7 @@
               </span>
             </label>
             <div class="home-faq-body">
-              <p class="home-faq-answer-text">{{ t?.faq?.a1 || 'It depends on the scope - simpler websites can be done in a few weeks, while more complex applications usually take 2-4 months. You will get an exact estimate after a free consultation.' }}</p>
+              <p class="home-faq-answer-text">{{ t?.faq?.a1}}</p>
             </div>
           </div>
 
@@ -366,7 +366,7 @@
             <input type="checkbox" id="home-faq-2" class="home-faq-checkbox">
             <label for="home-faq-2" class="home-faq-trigger">
               <span class="home-faq-num" aria-hidden="true">02</span>
-              <span class="home-faq-trigger-text">{{ t?.faq?.q2 || 'How much does a web or mobile app cost?' }}</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q2 }}</span>
               <span class="home-faq-chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -374,7 +374,7 @@
               </span>
             </label>
             <div class="home-faq-body">
-              <p class="home-faq-answer-text">{{ t?.faq?.a2 || 'Price depends on scope and the technologies used. You will find indicative pricing on the Services page, and we will prepare a tailored quote after a free consultation.' }}</p>
+              <p class="home-faq-answer-text">{{ t?.faq?.a2  }}</p>
             </div>
           </div>
 
@@ -390,7 +390,7 @@
               </span>
             </label>
             <div class="home-faq-body">
-              <p class="home-faq-answer-text">{{ t?.faq?.a3 || 'Yes, after launch we offer service support and further development as agreed - from small tweaks to long-term collaboration.' }}</p>
+              <p class="home-faq-answer-text">{{ t?.faq?.a3 }}</p>
             </div>
           </div>
 
@@ -398,7 +398,7 @@
             <input type="checkbox" id="home-faq-4" class="home-faq-checkbox">
             <label for="home-faq-4" class="home-faq-trigger">
               <span class="home-faq-num" aria-hidden="true">04</span>
-              <span class="home-faq-trigger-text">{{ t?.faq?.q4 || 'Can you work with our existing system?' }}</span>
+              <span class="home-faq-trigger-text">{{ t?.faq?.q4  }}</span>
               <span class="home-faq-chevron" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -406,14 +406,14 @@
               </span>
             </label>
             <div class="home-faq-body">
-              <p class="home-faq-answer-text">{{ t?.faq?.a4 || 'Yes, we regularly build on existing solutions, connect systems via APIs, and modernize them gradually without stopping operations.' }}</p>
+              <p class="home-faq-answer-text">{{ t?.faq?.a4  }}</p>
             </div>
           </div>
 
         </div>
 
         <a routerLink="/faq" class="home-faq-more">
-          {{ t?.faq?.more_link || 'View all questions' }}
+          {{ t?.faq?.more_link  }}
         </a>
       </section>
 

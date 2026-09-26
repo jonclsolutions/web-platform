@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700" fill="none"><title>Services - web, desktop and mobile</title><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#141430"/><stop offset="1" stop-color="#0c0c1a"/>
+  </linearGradient>
+  <radialGradient id="glow" cx="50%" cy="55%" r="55%">
+    <stop offset="0" stop-color="#6b2e91" stop-opacity="0.55"/>
+    <stop offset="0.6" stop-color="#6b2e91" stop-opacity="0.12"/>
+    <stop offset="1" stop-color="#6b2e91" stop-opacity="0"/>
+  </radialGradient>
+  <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+    <path d="M24 0H0V24" fill="none" stroke="#a67dff" stroke-opacity="0.06"/>
+  </pattern>
+  <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+    <circle cx="2" cy="2" r="1" fill="#a67dff" fill-opacity="0.16"/>
+  </pattern>
+  <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#1c1c38" stop-opacity="0.97"/>
+    <stop offset="1" stop-color="#131330" stop-opacity="0.97"/>
+  </linearGradient>
+  <linearGradient id="frame" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#23233f"/><stop offset="1" stop-color="#111126"/>
+  </linearGradient>
+  <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#1a1a33"/><stop offset="0.5" stop-color="#2c2c4d"/><stop offset="1" stop-color="#1a1a33"/>
+  </linearGradient>
+  <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#a67dff" stop-opacity="0.45"/><stop offset="1" stop-color="#a67dff" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="flow" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#a67dff" stop-opacity="0.15"/>
+    <stop offset="0.5" stop-color="#a67dff" stop-opacity="0.9"/>
+    <stop offset="1" stop-color="#a67dff" stop-opacity="0.15"/>
+  </linearGradient>
+  <filter id="shLg" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="22" stdDeviation="20" flood-color="#000" flood-opacity="0.55"/></filter>
+  <filter id="shSm" x="-30%" y="-30%" width="160%" height="190%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000" flood-opacity="0.5"/></filter>
+  <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  <filter id="soft2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter>
+</defs>
+<ellipse cx="800" cy="640" rx="620" ry="34" fill="#a67dff" opacity="0.18" filter="url(#soft)"/><g filter="url(#shLg)"><rect x="470" y="60" width="700" height="440" rx="18" fill="url(#frame)" stroke="#a67dff" stroke-opacity="0.3" stroke-width="1.5"/></g><clipPath id="gsMon"><rect x="484" y="74" width="672" height="394" rx="6"/></clipPath><rect x="484" y="74" width="672" height="394" rx="6" fill="#00ff00"/><rect x="470" y="468" width="700" height="32" rx="0" fill="#16162d"/><path d="M470 468h700v14a18 18 0 0 1-18 18H488a18 18 0 0 1-18-18z" fill="#16162d"/><circle cx="820.0" cy="484" r="3.5" fill="#a67dff" opacity="0.7"/><path d="M770.0 500 L750.0 584 H890.0 L870.0 500 Z" fill="url(#metal)"/><rect x="670.0" y="582" width="300" height="12" rx="6" fill="url(#metal)"/><g filter="url(#shLg)"><rect x="1030" y="300" width="470" height="290" rx="14" fill="url(#frame)" stroke="#a67dff" stroke-opacity="0.35" stroke-width="1.5"/></g><clipPath id="gsLap"><rect x="1042" y="312" width="446" height="268" rx="5"/></clipPath><rect x="1042" y="312" width="446" height="268" rx="5" fill="#00ff00"/><circle cx="1265.0" cy="306" r="2" fill="#0a0a18"/><path d="M990 592 H1540 L1520 612 H1010 Z" fill="url(#metal)"/><rect x="1220.0" y="592" width="90" height="6" rx="3" fill="#0e0e1f"/><g filter="url(#shLg)"><rect x="250" y="250" width="190" height="380" rx="32" fill="url(#frame)" stroke="#a67dff" stroke-opacity="0.4" stroke-width="1.5"/></g><rect x="440" y="330" width="3" height="46" rx="1.5" fill="#2a2a4a"/><rect x="247" y="320" width="3" height="30" rx="1.5" fill="#2a2a4a"/><rect x="247" y="358" width="3" height="30" rx="1.5" fill="#2a2a4a"/><clipPath id="gsPh"><rect x="261" y="261" width="168" height="358" rx="23"/></clipPath><rect x="261" y="261" width="168" height="358" rx="23" fill="#00ff00"/><circle cx="345.0" cy="276" r="5" fill="#0a0a18"/><circle cx="345.0" cy="276" r="2" fill="#1f1f3a"/></svg>
