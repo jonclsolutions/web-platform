@@ -8,6 +8,10 @@
         rows, top row moves right, bottom row moves left, HTEC-like cards) between the
         FAQ separators. Data come from tech-stack.config.ts, texts from `t.tech_stack`.
         Nothing else in this template changed.
+    @refactor-note (2026-09-26): Hero - added the JONCL SOLUTIONS wordmark above the
+        headline (assets/images/logos/logo_big.svg) and the product mockup on the right
+        side (assets/images/home/hero-mockup-en.svg, `.hero-visual`). Nothing else in this
+        template changed.
 -->
 
 @if (t) {
@@ -36,6 +40,17 @@
   <div class="main-content">
 
       <!-- Hero Section -->
+      <!--
+        @component: hero
+        @description: Full-viewport hero - brand wordmark, headline, lead, CTAs and stats on
+          the left; product mockup (browser with admin + phone + floating cards) on the right,
+          over the animated particle canvas.
+        @usage: Wordmark: assets/images/logos/logo_big.svg. Mockup: assets/images/home/hero-mockup-en.svg
+          (screenshots are placed inside the SVG itself).
+        @note: The mockup is the LCP candidate - loaded eagerly with fetchpriority="high",
+          intrinsic width/height set to avoid layout shift. It is decorative (aria-hidden),
+          the same information is conveyed by the text on the left.
+      -->
         <section class="hero-section">
   <canvas #heroParticleCanvas class="hero-particles" aria-hidden="true"></canvas>
 
@@ -65,6 +80,18 @@
         <span class="hero-stat-label">{{ t?.hero?.stat_2_label || 'completed projects' }}</span>
       </div>
     </div>
+  </div>
+
+  <div class="hero-visual" aria-hidden="true">
+    <img
+      src="assets/images/home/hero-mockup-en.svg"
+      class="hero-visual-img"
+      alt=""
+      width="820"
+      height="620"
+      fetchpriority="high"
+      decoding="async"
+      draggable="false">
   </div>
 </section>
 
@@ -286,7 +313,7 @@
             </div>
           </div>
         </div>
-        
+
       </section>
       <div class="kb-cta-wrp">
 

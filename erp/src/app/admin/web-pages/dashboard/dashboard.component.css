@@ -837,8 +837,9 @@
 
 @media (max-width: 640px) {
   .cd-hero-dropdown {
-    right: auto;
-    left: 0;
-    min-width: 200px;
+    right: 0;
+    left: auto;
+    min-width: 0;
+    width: min(260px, calc(100vw - 48px));
   }
 }

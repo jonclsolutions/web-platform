@@ -11,6 +11,10 @@
         unused fadeUp keyframes) and merged duplicate declarations of sys-feature-body/
         label/desc, sys-demo-video and smoke-bg into single rules with the SAME effective
         values as before (no visual change).
+    @refactor-note (2026-09-26): Hero - two-column layout (text left, product mockup
+        right): `.hero-section` got `justify-content`/`gap`, `.hero-content` a flex-basis,
+        new `.hero-brand-logo`, `.hero-visual`, `.hero-visual-img` (3D tilt + slow float)
+        and a 1100px breakpoint that stacks the mockup under the text. Nothing else changed.
 */
 
 .main-content {
@@ -37,7 +41,9 @@
     min-height: 100vh;
     display: flex;
     align-items: center;
-    padding: 140px 60px 80px;
+    justify-content: space-between;
+    gap: 48px;
+    padding: 140px max(60px, calc((100vw - 1440px) / 2)) 80px;   
     box-sizing: border-box;
     overflow: hidden;
     background-color: #0d0d1b;
@@ -67,11 +73,29 @@
 .hero-content {
     position: relative;
     z-index: 2;
-    max-width: 640px;
+    flex: 0 1 580px;      
+    max-width: 580px;     
     width: 100%;
     opacity: 0;
     transform: translateY(-16px);
     animation: heroFadeIn 0.8s ease-out 0.2s forwards;
+}
+
+/*
+  @module: hero-brand-logo
+  @description: JONCL SOLUTIONS wordmark above the hero headline.
+  @usage: img.hero-brand-logo (assets/images/logos/logo_big.svg)
+  @note: Width is fixed in CSS; the width/height attributes in HTML only reserve the
+    aspect ratio (no layout shift while the SVG loads).
+*/
+.hero-brand-logo {
+    display: block;
+    width: 280px;
+    max-width: 70%;
+    height: auto;
+    margin-bottom: 32px;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .hero-heading {
@@ -125,22 +149,116 @@
     background: rgba(166, 125, 255, 0.25);
 }
 
+/*
+  @module: hero-visual
+  @description: Right-hand product mockup (browser + phone + floating cards) with a
+    subtle 3D tilt towards the text and a slow "float" animation. Fades in slightly
+    after the text column.
+  @usage: .hero-visual > img.hero-visual-img
+  @note: The tilt lives inside the float keyframes (not as a static transform) because a
+    running animation would otherwise override it. Disabled under prefers-reduced-motion.
+*/
+.hero-visual {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    perspective: 1400px;
+    opacity: 0;
+    transform: translateY(-16px);
+    animation: heroFadeIn 0.8s ease-out 0.45s forwards;
+}
+
+.hero-visual-img {
+    display: block;
+    width: 100%;
+    max-width: 860px;
+    height: auto;
+    transform: rotateY(-10deg) rotateX(4deg);
+    animation: heroFloat 8s ease-in-out infinite;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
 @keyframes heroFadeIn {
     to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroFloat {
+    0%, 100% { transform: rotateY(-10deg) rotateX(4deg) translateY(0); }
+    50%      { transform: rotateY(-10deg) rotateX(4deg) translateY(-12px); }
+}
+
+/* Užší desktop / tablet na šířku - mockup pod text */
+@media (max-width: 1100px) {
+    .hero-section {
+        flex-direction: column;
+        justify-content: center;
+        gap: 16px; /* SVG má nahoře vlastní volný okraj (záře), mezera je tak opticky menší */
+    }
+
+    .hero-visual {
+        flex: none;
+        width: 100%;
+        max-width: 640px;
+    }
+
+    /* Text nad mockupem je vycentrovaný stejně jako na mobilu */
+    .hero-content { flex: none; }
+    .hero-brand-logo { margin: 0 auto 26px; }
+    .hero-heading { text-align: center; }
+    .hero-lead { margin: 0 auto 36px; }
+    .hero-cta-row, .hero-stats { justify-content: center; }
+
+    .hero-visual-img {
+        animation-name: heroFloatFlat;
+    }
+}
+
+@keyframes heroFloatFlat {
+    0%, 100% { transform: rotateX(4deg) translateY(0); }
+    50%      { transform: rotateX(4deg) translateY(-10px); }
 }
 
 @media (max-width: 905px) {
     .hero-section { padding: 110px 30px 60px; justify-content: center; }
     .hero-content { text-align: center; margin: 0 auto; }
+    .hero-brand-logo { margin: 0 auto 26px; }
     .hero-lead { margin: 0 auto 36px; font-size: 1rem; }
     .hero-cta-row, .hero-stats { justify-content: center; }
     .hero-heading { font-size: 2.3rem; text-align: center; }
 }
 
 @media (max-width: 480px) {
+    .hero-brand-logo { width: 210px; }
     .hero-heading { font-size: 1.9rem; }
-    .hero-cta-row { flex-direction: column; align-items: stretch; }
     .hero-stats { gap: 14px; }
+
+    /* CTA vedle sebe (primární + sekundární), menší vnitřní odsazení,
+       aby se vešly i na ~375px displeje */
+    .hero-cta-row {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+    .hero-cta-row > * {
+        flex: 0 1 auto;
+        padding-left: 18px;
+        padding-right: 18px;
+        font-size: 0.92rem;
+        white-space: nowrap;
+    }
+}
+
+/* Velmi úzké telefony (iPhone SE 1. gen, malé Androidy) - zpět pod sebe */
+@media (max-width: 360px) {
+    .hero-cta-row { flex-direction: column; align-items: stretch; }
+    .hero-cta-row > * { justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-visual-img { animation: none; }
 }
 
 /* ═══════════════════════════════════════════════════

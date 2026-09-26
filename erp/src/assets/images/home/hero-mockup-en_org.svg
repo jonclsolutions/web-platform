@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 620" fill="none" font-family="'Source Sans Pro','Segoe UI',system-ui,sans-serif">
+  <title>Hero mockup – admin (browser) + mobile app + floating cards</title>
+
+  <defs>
+    <!-- Soft purple glow behind the devices -->
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6b2e91" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#6b2e91" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#6b2e91" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Device frame gradients -->
+    <linearGradient id="frame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c1c38"/>
+      <stop offset="100%" stop-color="#111128"/>
+    </linearGradient>
+    <linearGradient id="phoneFrame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a2a4a"/>
+      <stop offset="100%" stop-color="#15152c"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c1c38" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#131330" stop-opacity="0.96"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a67dff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#a67dff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Shadows -->
+    <filter id="shadowLg" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+    <filter id="shadowSm" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+
+    <!-- Screen clip areas (green screen = place for screenshot) -->
+    <clipPath id="browserScreen"><rect x="70" y="118" width="580" height="352" rx="0"/></clipPath>
+    <clipPath id="phoneScreen"><rect x="562" y="238" width="172" height="336" rx="22"/></clipPath>
+  </defs>
+
+  <!-- ── Glow ───────────────────────────────────────────── -->
+  <ellipse cx="410" cy="330" rx="400" ry="280" fill="url(#glow)"/>
+
+  <!-- ── BROWSER WINDOW (admin) ─────────────────────────── -->
+  <g filter="url(#shadowLg)">
+    <rect x="60" y="70" width="600" height="410" rx="16" fill="url(#frame)" stroke="#a67dff" stroke-opacity="0.28"/>
+  </g>
+  <!-- Top bar -->
+  <path d="M60 86a16 16 0 0 1 16-16h568a16 16 0 0 1 16 16v26H60z" fill="#16162f"/>
+  <line x1="60" y1="112" x2="660" y2="112" stroke="#a67dff" stroke-opacity="0.14"/>
+  <!-- Window dots (neutral, not OS-specific) -->
+  <circle cx="84" cy="91" r="5" fill="#3a3a5c"/>
+  <circle cx="102" cy="91" r="5" fill="#3a3a5c"/>
+  <circle cx="120" cy="91" r="5" fill="#3a3a5c"/>
+  <!-- Address bar -->
+  <rect x="220" y="80" width="280" height="22" rx="11" fill="#0d0d1b" stroke="#a67dff" stroke-opacity="0.16"/>
+  <path d="M236 88.5h6v6h-6z" fill="none" stroke="#6a6a7c" stroke-width="1.2"/>
+  <path d="M237.5 88.5v-2a1.5 1.5 0 0 1 3 0v2" stroke="#6a6a7c" stroke-width="1.2"/>
+  <text x="250" y="95.5" font-size="11" fill="#7a7a8c">admin.jonclsolutions.cz</text>
+  <!-- Screen: GREEN SCREEN for admin screenshot (580 × 352, ratio ≈ 1.65) -->
+<g clip-path="url(#browserScreen)">
+  <image href="assets/images/home/dashboard_sc_desktop.png"
+         x="70" y="118" width="580" height="352"
+         preserveAspectRatio="xMidYMin slice"/>
+</g>
+  <rect x="70" y="118" width="580" height="352" fill="none" stroke="#000" stroke-opacity="0.35"/>
+
+  <!-- ── PHONE (mobile / e-shop) ───────────────────────── -->
+  <g filter="url(#shadowLg)">
+    <rect x="550" y="226" width="196" height="360" rx="32" fill="url(#phoneFrame)" stroke="#a67dff" stroke-opacity="0.35" stroke-width="1.5"/>
+  </g>
+  <!-- Side buttons -->
+  <rect x="746" y="300" width="3" height="42" rx="1.5" fill="#2a2a4a"/>
+  <rect x="547" y="290" width="3" height="28" rx="1.5" fill="#2a2a4a"/>
+  <rect x="547" y="326" width="3" height="28" rx="1.5" fill="#2a2a4a"/>
+  <!-- Screen: GREEN SCREEN for mobile screenshot (172 × 336, ratio ≈ 9:17.6) -->
+ <g clip-path="url(#phoneScreen)">
+  <image href="assets/images/home/dashboard_sc_mobil.png"
+         x="562" y="238" width="172" height="336"
+         preserveAspectRatio="xMidYMin slice"/>
+</g>
+  <!-- Punch-hole camera -->
+  <circle cx="648" cy="252" r="5" fill="#0a0a18"/>
+  <circle cx="648" cy="252" r="2" fill="#1f1f3a"/>
+
+  <!-- ── FLOATING CARD 1: new order (top-left) ─────────── -->
+  <g filter="url(#shadowSm)">
+    <rect x="18" y="148" width="214" height="62" rx="14" fill="url(#card)" stroke="#a67dff" stroke-opacity="0.35"/>
+  </g>
+  <rect x="32" y="162" width="34" height="34" rx="10" fill="#a67dff" fill-opacity="0.14" stroke="#a67dff" stroke-opacity="0.35"/>
+  <!-- bag icon -->
+  <path d="M42 174h14l-1.2 13.5a2 2 0 0 1-2 1.8h-7.6a2 2 0 0 1-2-1.8z" stroke="#a67dff" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M45.5 174v-2a3.5 3.5 0 0 1 7 0v2" stroke="#a67dff" stroke-width="1.6" stroke-linecap="round"/>
+  <text x="78" y="176" font-size="12.5" font-weight="700" fill="#e0e0f0">New order</text>
+  <text x="78" y="193" font-size="11" fill="#888899">#1042 · €98.50</text>
+  <circle cx="220" cy="162" r="4" fill="#4ade80"/>
+
+  <!-- ── FLOATING CARD 2: revenue sparkline (bottom-left) ── -->
+  <g filter="url(#shadowSm)">
+    <rect x="96" y="430" width="206" height="104" rx="14" fill="url(#card)" stroke="#a67dff" stroke-opacity="0.35"/>
+  </g>
+  <text x="112" y="454" font-size="11" fill="#888899">Monthly revenue</text>
+  <text x="112" y="478" font-size="20" font-weight="700" fill="#e0e0f0">€7,340</text>
+  <rect x="228" y="442" width="60" height="20" rx="10" fill="#4ade80" fill-opacity="0.14"/>
+  <text x="258" y="456" text-anchor="middle" font-size="11" font-weight="700" fill="#4ade80">↑ 24 %</text>
+  <path d="M112 518 L134 510 L152 514 L172 500 L192 505 L212 492 L232 496 L252 482 L270 486 L286 474 L286 522 L112 522 Z" fill="url(#spark)"/>
+  <path d="M112 518 L134 510 L152 514 L172 500 L192 505 L212 492 L232 496 L252 482 L270 486 L286 474" stroke="#a67dff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="286" cy="474" r="3.5" fill="#a67dff" stroke="#131330" stroke-width="2"/>
+
+  <!-- ── FLOATING CARD 3: backup done (top-right) ──────── -->
+  <g filter="url(#shadowSm)">
+    <rect x="600" y="118" width="196" height="56" rx="14" fill="url(#card)" stroke="#a67dff" stroke-opacity="0.35"/>
+  </g>
+  <circle cx="630" cy="146" r="14" fill="#4ade80" fill-opacity="0.14" stroke="#4ade80" stroke-opacity="0.45"/>
+  <path d="M623.5 146.5l4.5 4.5 8-9" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="654" y="142" font-size="12.5" font-weight="700" fill="#e0e0f0">Backup completed</text>
+  <text x="654" y="159" font-size="11" fill="#888899">today 3:00 AM · 1.2 GB</text>
+</svg>
