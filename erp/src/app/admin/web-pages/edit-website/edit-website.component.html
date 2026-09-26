@@ -10,10 +10,15 @@
         viz edit-website.component.ts stejné datum. `lang.name`/`item.path`/`meta.name`
         ZŮSTÁVAJÍ beze změny - jsou to DATA (název jazyka, JSON cesta klíče), ne UI
         text patřící do i18n systému.
+    @refactor-note (2026-09-26) Doplněno chybějící tlačítko "Uložit změny" (metoda
+        `onSubmit()` existovala, ale šablona ji nevolala - změny se neukládaly). Aktivní
+        jen při neuložených změnách (`isDirty`), s indikátorem `.ew-dirty-dot`. Topbar
+        sjednocen s edit-eshop (Stáhnout JSON / Nahrát JSON / Uložit změny); duplicitní
+        "Přidat jazyk" v topbaru odstraněno, tlačítko v řadě záložek je nově za
+        `canUpdate` (dřív ho viděl i uživatel bez oprávnění).
 -->
 
 <div class="ew-root">
-
   <div class="ew-topbar">
     <div class="ew-topbar-left">
       <h1 class="ew-title">{{ t('page_title') }}</h1>
@@ -33,16 +38,25 @@
         {{ t('download_json_button') }}
       </button>
       @if (canUpdate) {
-        <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" [title]="t('add_language_title')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          {{ t('add_language_button') }}
+        <button class="ew-btn ew-btn--ghost" (click)="openUploadModal(currentLang)" [title]="t('upload_json_title_topbar')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          {{ t('upload_json_button') }}
+        </button>
+        <button
+          class="ew-btn ew-btn--primary"
+          (click)="onSubmit()"
+          [disabled]="!isDirty || (loadingService.isLoading$ | async)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          {{ (loadingService.isLoading$ | async) ? t('saving_label') : t('save_changes_button') }}
+          @if (isDirty) {
+            <span class="ew-dirty-dot" [title]="t('unsaved_changes_title')"></span>
+          }
         </button>
       }
     </div>
   </div>
 
   <div class="ew-lang-panel">
-
     <div class="ew-lang-tabs">
       @for (lang of languages; track trackByCode($index, lang)) {
         <button
@@ -93,10 +107,12 @@
         </button>
       }
 
-      <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" [title]="t('add_language_title')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        {{ t('add_language_button') }}
-      </button>
+      @if (canUpdate) {
+        <button class="ew-lang-tab ew-lang-tab--add" (click)="openAddForm()" [title]="t('add_language_title')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {{ t('add_language_button') }}
+        </button>
+      }
     </div>
 
     <div class="ew-stats">
@@ -161,7 +177,7 @@
               }
             </td>
             <td class="ew-td-val">
-                            <textarea
+              <textarea
                 [(ngModel)]="item.value"
                 (ngModelChange)="updateValue(item.path, $event)"
                 (input)="adjustHeight($event)"
@@ -204,33 +220,33 @@
 
       <div class="ew-modal-body">
 
-       <div class="ew-field">
-  <label class="ew-label">{{ t('icon_field_label') }} <span class="ew-hint">{{ t('icon_field_hint') }}</span></label>
-  <div class="ew-icon-upload-row">
-    
-    <div class="ew-icon-upload-zone" 
-        [class.ew-icon-upload-zone--has]="newLangIconPreview"
-        (click)="fileInput.click()"> 
-      
-      @if (newLangIconPreview) {
-        <img [src]="newLangIconPreview" class="ew-icon-preview" [alt]="t('icon_preview_alt')">
-      } @else {
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
-          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-        </svg>
-      }
-      
-      <input type="file" #fileInput hidden
-            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-            (change)="onIconFileSelected($event)">
-    </div>
+        <div class="ew-field">
+          <label class="ew-label">{{ t('icon_field_label') }} <span class="ew-hint">{{ t('icon_field_hint') }}</span></label>
+          <div class="ew-icon-upload-row">
 
-    @if (newLangIconPreview) {
-      <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm" 
-              (click)="clearIconSelection()">{{ t('remove_button') }}</button>
-    }
-  </div>
-</div>
+            <div class="ew-icon-upload-zone"
+                [class.ew-icon-upload-zone--has]="newLangIconPreview"
+                (click)="fileInput.click()">
+
+              @if (newLangIconPreview) {
+                <img [src]="newLangIconPreview" class="ew-icon-preview" [alt]="t('icon_preview_alt')">
+              } @else {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                </svg>
+              }
+
+              <input type="file" #fileInput hidden
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    (change)="onIconFileSelected($event)">
+            </div>
+
+            @if (newLangIconPreview) {
+              <button type="button" class="ew-btn ew-btn--ghost ew-btn--sm"
+                      (click)="clearIconSelection()">{{ t('remove_button') }}</button>
+            }
+          </div>
+        </div>
 
         <div class="ew-field-row">
           <div class="ew-field">
@@ -294,33 +310,33 @@
         </button>
       </div>
 
-<div class="ew-modal-body">
-  <p class="ew-modal-desc">
-    {{ t('upload_modal_description') }}
-  </p>
+      <div class="ew-modal-body">
+        <p class="ew-modal-desc">
+          {{ t('upload_modal_description') }}
+        </p>
 
-  <div class="ew-json-drop-zone" (click)="jsonInput.click()">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    <span>{{ t('json_drop_zone_text') }} <code>.json</code> {{ t('json_drop_zone_text_suffix') }}</span>
-    
-    <input type="file" #jsonInput hidden
-           accept=".json,application/json"
-           (change)="onJsonFileSelected($event)">
-  </div>
+        <div class="ew-json-drop-zone" (click)="jsonInput.click()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.45"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>{{ t('json_drop_zone_text') }} <code>.json</code> {{ t('json_drop_zone_text_suffix') }}</span>
 
-  @if (uploadError) {
-    <div class="ew-form-error">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      {{ uploadError }}
-    </div>
-  }
-  @if (uploadSuccess) {
-    <div class="ew-form-success">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      {{ uploadSuccess }}
-    </div>
-  }
-</div>
+          <input type="file" #jsonInput hidden
+                 accept=".json,application/json"
+                 (change)="onJsonFileSelected($event)">
+        </div>
+
+        @if (uploadError) {
+          <div class="ew-form-error">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {{ uploadError }}
+          </div>
+        }
+        @if (uploadSuccess) {
+          <div class="ew-form-success">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ uploadSuccess }}
+          </div>
+        }
+      </div>
 
       <div class="ew-modal-footer">
         <button class="ew-btn ew-btn--ghost" (click)="closeUploadModal()">{{ i18n.getValue('shared.close') }}</button>

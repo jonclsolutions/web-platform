@@ -86,9 +86,6 @@
 
           <button type="submit" class="submit-btn" [disabled]="isSubmitting">
             {{ isSubmitting ? t?.buttons?.submitting : t?.buttons?.submit }}
-            @if (!isSubmitting) {
-              <span class="submit-arrow" aria-hidden="true">→</span>
-            }
           </button>
 
         </form>
@@ -207,7 +204,6 @@
           </button>
           <button type="button" class="modal-submit-btn" [disabled]="resetSubmitting" (click)="onResetPassword()">
             {{ t?.forgot?.submit }}
-            <span aria-hidden="true">→</span>
           </button>
         </div>
 

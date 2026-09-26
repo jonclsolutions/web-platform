@@ -139,7 +139,6 @@
             <div class="cd-nav-title">{{ t(section.titleKey) }}</div>
             <div class="cd-nav-desc">{{ t(section.descriptionKey) }}</div>
           </div>
-          <div class="cd-nav-arrow">→</div>
         </a>
       }
     </div>
@@ -162,7 +161,7 @@
             </svg>
           </span>
           <span class="cd-card-title">{{ t('activity_card_title') }}</span>
-          <a class="cd-card-link" routerLink="/admin/core/logs">{{ t('activity_view_all') }} →</a>
+          <a class="cd-card-link" routerLink="/admin/core/logs">{{ t('activity_view_all') }}</a>
         </div>
         <div class="cd-activity-body">
           @if (loadingActivity) {

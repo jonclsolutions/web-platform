@@ -1,32 +1,24 @@
+/**
+ * @file home.component.ts
+ * @path src/app/public/web-pages/home/home.component.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2025
+ * @description Public home page - hero, about, system features, tech stack, FAQ and CTA.
+ * @refactor-note (2026-09-26): The animated hero particle field (canvas, ResizeObserver,
+ *   mouse interaction, requestAnimationFrame loop) was removed - the hero now uses a static
+ *   space background image (assets/images/home/hero-space-bg.svg). Unused imports
+ *   (ElementRef, ViewChild, OnDestroy, NgZone, PLATFORM_ID, inject, isPlatformBrowser) and
+ *   the HeroParticle / HeroMousePoint interfaces were removed with it. Nothing else changed.
+ * @dependencies BasePublicComponent, RouterLink, tech-stack.config
+ */
 import {
   Component,
-  ChangeDetectionStrategy,
-  ElementRef,
-  ViewChild,
-  OnDestroy,
-  NgZone,
-  PLATFORM_ID,
-  inject
+  ChangeDetectionStrategy
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BasePublicComponent } from '../../base-public.component';
 import { TECH_STACK_ROW_TOP, TECH_STACK_ROW_BOTTOM, TechStackItem, buildMarqueeLoop } from './tech-stack.config';
-/**
- * @description Single point in the hero section's animated particle field.
- */
-interface HeroParticle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-}
-
-interface HeroMousePoint {
-  x: number;
-  y: number;
-}
 
 @Component({
   selector: 'app-home',
@@ -36,7 +28,7 @@ interface HeroMousePoint {
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HomeComponent extends BasePublicComponent implements OnDestroy {
+export class HomeComponent extends BasePublicComponent {
 
   protected readonly translationKey = 'home';
 
@@ -83,24 +75,6 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
     graphicdesign: false,
   };
 
-  // ── Hero particle background ─────────────────────────────────────────
-  private heroParticleCanvasEl?: HTMLCanvasElement;
-  private hasInitialized = false;
-
-  @ViewChild('heroParticleCanvas') set heroParticleCanvasRef(ref: ElementRef<HTMLCanvasElement> | undefined) {
-    if (ref?.nativeElement && !this.hasInitialized) {
-      this.heroParticleCanvasEl = ref.nativeElement;
-      this.hasInitialized = true;
-
-      if (isPlatformBrowser(this.platformId)) {
-        setTimeout(() => {
-          if (this.heroParticleCanvasEl) {
-            this.initParticleField(this.heroParticleCanvasEl);
-          }
-        }, 50);
-      }
-    }
-  }
   /**
    * @description Tech-stack marquee data (see tech-stack.config.ts). Static, built once -
    * plain readonly fields, stable references for `@for`.
@@ -114,255 +88,6 @@ export class HomeComponent extends BasePublicComponent implements OnDestroy {
 
   toggleTechStackPaused(): void {
     this.techStackPaused = !this.techStackPaused;
-  }
-  private readonly ngZone = inject(NgZone);
-  private readonly platformId = inject(PLATFORM_ID);
-
-  private particleCtx: CanvasRenderingContext2D | null = null;
-  private particles: HeroParticle[] = [];
-  private particleAnimationFrameId: number | null = null;
-  private particleResizeObserver?: ResizeObserver;
-  private particleInteractionEl?: HTMLElement;
-  private mouse: HeroMousePoint | null = null;
-
-  private readonly PARTICLE_COLOR = '166, 125, 255';
-
-  /**
-   * Hustota částic: px² plochy na jednu částici.
-   * @refactor-note (2026-09) Sníženo z 14000 na 4000 — na mobilu (390×844)
-   * původní hodnota dávala jen ~23 teček, nová dává ~82. Na FullHD (1920×1080)
-   * dává ~518, zastropováno PARTICLE_MAX_COUNT na 320 z výkonnostních důvodů
-   * (spojnice O(n²) na snímek). Výsledek: konzistentně hustá pavučina na
-   * všech velikostech obrazovky.
-   */
-  private readonly PARTICLE_DENSITY = 5500;
-
-  /**
-   * Dolní mez chrání velmi malé plochy (alespoň 30 teček i na nejmenším mobilu).
-   * Horní mez je výkonnostní pojistka — 320 teček = ~51k párů spojnic na snímek,
-   * stále plynulé i na středně výkonných zařízeních.
-   */
-  private readonly PARTICLE_MIN_COUNT = 25;
-  private readonly PARTICLE_MAX_COUNT = 280;
-
-  /**
-   * Vzdálenosti pro spojnice/interakci navržené pro referenční šířku 1440px.
-   * Při jiné šířce se přepočítají proporcionálně přes currentScale.
-   */
-  private readonly REFERENCE_WIDTH = 1440;
-  private readonly SCALE_MIN = 0.4;
-  private readonly SCALE_MAX = 2.6;
-
-  private readonly PARTICLE_LINK_DISTANCE = 170;
-  private readonly MOUSE_LINK_DISTANCE = 220;
-  private readonly MOUSE_REPEL_RADIUS = 120;
-  private readonly MOUSE_REPEL_STRENGTH = 0.6;
-
-  private currentScale = 1;
-
-  override ngOnDestroy(): void {
-    this.stopParticleField();
-    super.ngOnDestroy();
-  }
-
-  private initParticleField(canvas: HTMLCanvasElement): void {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    this.particleCtx = ctx;
-
-    this.resizeParticleCanvas(canvas);
-    this.seedParticles(canvas);
-
-    this.particleResizeObserver = new ResizeObserver(() => this.resizeParticleCanvas(canvas));
-    this.particleResizeObserver.observe(canvas.parentElement ?? canvas);
-
-    this.particleInteractionEl = canvas.parentElement ?? canvas;
-
-    this.ngZone.runOutsideAngular(() => {
-      if (window.innerWidth > 905) {
-        this.particleInteractionEl!.addEventListener('mousemove', this.handlePointerMove);
-        this.particleInteractionEl!.addEventListener('mouseleave', this.handlePointerLeave);
-        this.particleInteractionEl!.addEventListener('touchmove', this.handleTouchMove, { passive: true });
-        this.particleInteractionEl!.addEventListener('touchend', this.handlePointerLeave);
-      }
-
-      this.renderParticleFrame(canvas);
-    });
-  }
-
-  private handlePointerMove = (event: MouseEvent): void => {
-    const canvas = this.heroParticleCanvasEl;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    this.mouse = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-  };
-
-  private handleTouchMove = (event: TouchEvent): void => {
-    const canvas = this.heroParticleCanvasEl;
-    const touch = event.touches[0];
-    if (!canvas || !touch) return;
-    const rect = canvas.getBoundingClientRect();
-    this.mouse = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-  };
-
-  private handlePointerLeave = (): void => {
-    this.mouse = null;
-  };
-
-  private clamp(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-  }
-
-  private resizeParticleCanvas(canvas: HTMLCanvasElement): void {
-    const parent = canvas.parentElement;
-    let width = parent?.clientWidth ?? canvas.clientWidth;
-    let height = parent?.clientHeight ?? canvas.clientHeight;
-
-    if (width === 0 || height === 0) {
-      const rect = canvas.getBoundingClientRect();
-      const parentRect = parent?.getBoundingClientRect();
-      width = rect.width || parentRect?.width || window.innerWidth;
-      height = rect.height || parentRect?.height || 500;
-    }
-
-    const dpr = window.devicePixelRatio || 1;
-
-    canvas.width = Math.max(1, Math.floor(width * dpr));
-    canvas.height = Math.max(1, Math.floor(height * dpr));
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    this.particleCtx?.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    this.currentScale = this.clamp(width / this.REFERENCE_WIDTH, this.SCALE_MIN, this.SCALE_MAX);
-
-    if (this.particles.length === 0 && width > 0 && height > 0) {
-      this.seedParticles(canvas);
-    }
-  }
-
-  private seedParticles(canvas: HTMLCanvasElement): void {
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.width / dpr;
-    const height = canvas.height / dpr;
-
-    const targetCount = Math.round((width * height) / this.PARTICLE_DENSITY);
-    const count = Math.min(this.PARTICLE_MAX_COUNT, Math.max(this.PARTICLE_MIN_COUNT, targetCount));
-
-    this.particles = Array.from({ length: count }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      radius: Math.random() * 1.6 + 0.8
-    }));
-  }
-
-  private renderParticleFrame = (canvas: HTMLCanvasElement): void => {
-    const ctx = this.particleCtx;
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.width / dpr;
-    const height = canvas.height / dpr;
-
-    const linkDistance = this.PARTICLE_LINK_DISTANCE * this.currentScale;
-    const mouseLinkDistance = this.MOUSE_LINK_DISTANCE * this.currentScale;
-    const mouseRepelRadius = this.MOUSE_REPEL_RADIUS * this.currentScale;
-
-    ctx.clearRect(0, 0, width, height);
-
-    for (const particle of this.particles) {
-      particle.x += particle.vx;
-      particle.y += particle.vy;
-
-      if (this.mouse) {
-        const dx = particle.x - this.mouse.x;
-        const dy = particle.y - this.mouse.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < mouseRepelRadius && distance > 0.01) {
-          const force = (1 - distance / mouseRepelRadius) * this.MOUSE_REPEL_STRENGTH;
-          particle.x += (dx / distance) * force;
-          particle.y += (dy / distance) * force;
-        }
-      }
-
-      if (particle.x <= 0 || particle.x >= width) particle.vx *= -1;
-      if (particle.y <= 0 || particle.y >= height) particle.vy *= -1;
-      particle.x = Math.min(Math.max(particle.x, 0), width);
-      particle.y = Math.min(Math.max(particle.y, 0), height);
-
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${this.PARTICLE_COLOR}, 0.85)`;
-      ctx.fill();
-    }
-
-    for (let i = 0; i < this.particles.length; i++) {
-      for (let j = i + 1; j < this.particles.length; j++) {
-        const a = this.particles[i];
-        const b = this.particles[j];
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < linkDistance) {
-          const opacity = (1 - distance / linkDistance) * 0.4;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(${this.PARTICLE_COLOR}, ${opacity})`;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      }
-    }
-
-    if (this.mouse) {
-      for (const particle of this.particles) {
-        const dx = particle.x - this.mouse.x;
-        const dy = particle.y - this.mouse.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < mouseLinkDistance) {
-          const opacity = (1 - distance / mouseLinkDistance) * 0.55;
-          ctx.beginPath();
-          ctx.moveTo(particle.x, particle.y);
-          ctx.lineTo(this.mouse.x, this.mouse.y);
-          ctx.strokeStyle = `rgba(${this.PARTICLE_COLOR}, ${opacity})`;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      }
-
-      ctx.beginPath();
-      ctx.arc(this.mouse.x, this.mouse.y, 2.4, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${this.PARTICLE_COLOR}, 0.9)`;
-      ctx.fill();
-    }
-
-    this.particleAnimationFrameId = requestAnimationFrame(() => this.renderParticleFrame(canvas));
-  };
-
-  private stopParticleField(): void {
-    if (this.particleAnimationFrameId !== null) {
-      cancelAnimationFrame(this.particleAnimationFrameId);
-      this.particleAnimationFrameId = null;
-    }
-    this.particleResizeObserver?.disconnect();
-    this.particleResizeObserver = undefined;
-
-    if (this.particleInteractionEl) {
-      this.particleInteractionEl.removeEventListener('mousemove', this.handlePointerMove);
-      this.particleInteractionEl.removeEventListener('mouseleave', this.handlePointerLeave);
-      this.particleInteractionEl.removeEventListener('touchmove', this.handleTouchMove);
-      this.particleInteractionEl.removeEventListener('touchend', this.handlePointerLeave);
-    }
-
-    this.particleInteractionEl = undefined;
-    this.mouse = null;
-    this.hasInitialized = false;
   }
 
   getTechIcon(name: string): string {

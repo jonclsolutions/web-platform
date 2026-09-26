@@ -17,6 +17,10 @@
  * `alertDialogService.open()` volání s natvrdo psaným anglickým textem nahrazeny `t()` +
  * `.replace('{lang}', ...)`.
  *
+ * @refactor-note (2026-09-26) Přidán příznak `isDirty` (neuložené změny) - nastavuje se
+ * v `updateValue()`, nuluje po úspěšném uložení, po (re)loadu překladů, po přidání
+ * a po smazání aktuálního jazyka. Řídí stav tlačítka "Uložit změny" v šabloně.
+ *
  * @dependencies
  * - BaseDataComponent: Provides foundational CRUD state management (i18n dědí odsud).
  * - LoadingService: Manages application-wide loading indicators.
@@ -84,6 +88,9 @@ export class EditEshopComponent
   filteredKeys: FlatKey[] = [];
   searchQuery: string = '';
 
+  /** Neuložené změny v aktuálně editovaném jazyce (řídí stav tlačítka "Uložit změny"). */
+  isDirty: boolean = false;
+
   showAddForm: boolean = false;
   newLangCode: string = '';
   newLangName: string = '';
@@ -105,7 +112,8 @@ export class EditEshopComponent
   get totalCount(): number   { return this.filteredKeys.length; }
   /** @returns Count of translated keys currently filtered. */
   get filledCount(): number  { return this.filteredKeys.filter(k => !k.missing && k.value?.trim()).length; }
-    /**
+
+  /**
    * @description Same rationale as `EditWebsiteComponent.canUpdate` - see that
    * component's doc-comment. Uses the shop-specific permission key.
    * @refactor-note (2026-09-07) BACKLOG "edit-website/edit-eshop permissions".
@@ -232,8 +240,10 @@ export class EditEshopComponent
 
   /**
    * @refactor-note (2026-09-08) Info hláška nahrazena `t()` voláním.
+   * @refactor-note (2026-09-26) Nuluje `isDirty` - načítají se čerstvá data jazyka.
    */
   public refreshTranslations(): void {
+    this.isDirty = false;
     this.errorMessage = null;
     this.cd.markForCheck();
 
@@ -268,15 +278,15 @@ export class EditEshopComponent
    * @description Compares current language structure against the CZ master reference to identify
    * missing content.
    */
-private buildFlatList(): void {
+  private buildFlatList(): void {
     this.flattenedKeys = [];
     const czFlat  = this.flattenToMap(this.czTranslations);
     const curFlat = this.flattenToMap(this.translations);
 
     for (const [path] of czFlat.entries()) {
       const rawVal = curFlat.get(path) ?? '';
-      const curVal = typeof rawVal === 'string' ? rawVal : String(rawVal); // <-- Bezpečná ochrana
-      
+      const curVal = typeof rawVal === 'string' ? rawVal : String(rawVal);
+
       this.flattenedKeys.push({
         path,
         value: curVal,
@@ -336,7 +346,14 @@ private buildFlatList(): void {
     setTimeout(() => this.resizeAllTextareas(), 10);
   }
 
-updateValue(path: string, newValue: string): void {
+  /**
+   * @description Zapíše novou hodnotu klíče do `translations` (vnořená struktura) i do
+   * plochého seznamu a označí stránku jako neuloženou.
+   * @param path Tečková cesta klíče (např. `checkout.title`).
+   * @param newValue Nová hodnota překladu.
+   * @refactor-note (2026-09-26) Nastavuje `isDirty = true`.
+   */
+  updateValue(path: string, newValue: string): void {
     const keys = path.split('.');
     let temp = this.translations;
     for (let i = 0; i < keys.length - 1; i++) {
@@ -350,6 +367,9 @@ updateValue(path: string, newValue: string): void {
       item.value   = newValue;
       item.missing = (typeof newValue === 'string' ? newValue : String(newValue)).trim() === '';
     }
+
+    this.isDirty = true;
+    this.cd.markForCheck();
   }
 
   adjustHeight(event: any): void {
@@ -359,39 +379,44 @@ updateValue(path: string, newValue: string): void {
   }
 
   /**
- * @description Batch-resizuje všechny textarea prvky bez layout thrashingu. Původní
- * verze prokládala čtení (scrollHeight) a zápis (style.height) v jedné smyčce pro
- * KAŽDÝ element zvlášť - to nutí prohlížeč přepočítat layout znovu při každé iteraci
- * (classic "layout thrashing"), což je skutečná příčina ~1s zamrznutí při vstupu na
- * stránku s velkým počtem překladových klíčů. Řešení: tři oddělené průchody (reset ->
- * hromadné čtení -> hromadný zápis) vynutí reflow jen jednou pro celou dávku místo
- * jednou na element. NENÍ to problém s cachí ani s ukládáním - tahle metoda běží čistě
- * na klientovi po tom, co data už dorazila (ze sítě nebo z cache), stejně zamrzne
- * v obou případech.
- */
-private resizeAllTextareas(): void {
-  const elements = Array.from(document.querySelectorAll<HTMLTextAreaElement>('.ew-edit-input'));
-  if (elements.length === 0) return;
+   * @description Batch-resizuje všechny textarea prvky bez layout thrashingu. Původní
+   * verze prokládala čtení (scrollHeight) a zápis (style.height) v jedné smyčce pro
+   * KAŽDÝ element zvlášť - to nutí prohlížeč přepočítat layout znovu při každé iteraci
+   * (classic "layout thrashing"), což je skutečná příčina ~1s zamrznutí při vstupu na
+   * stránku s velkým počtem překladových klíčů. Řešení: tři oddělené průchody (reset ->
+   * hromadné čtení -> hromadný zápis) vynutí reflow jen jednou pro celou dávku místo
+   * jednou na element. NENÍ to problém s cachí ani s ukládáním - tahle metoda běží čistě
+   * na klientovi po tom, co data už dorazila (ze sítě nebo z cache), stejně zamrzne
+   * v obou případech.
+   */
+  private resizeAllTextareas(): void {
+    const elements = Array.from(document.querySelectorAll<HTMLTextAreaElement>('.ew-edit-input'));
+    if (elements.length === 0) return;
 
-  // Průchod 1: reset (write)
-  elements.forEach(el => { el.style.height = 'auto'; });
-  // Průchod 2: čtení (jeden vynucený reflow pro celou dávku)
-  const heights = elements.map(el => el.scrollHeight);
-  // Průchod 3: zápis (write)
-  elements.forEach((el, i) => { el.style.height = `${heights[i]}px`; });
-}
+    // Průchod 1: reset (write)
+    elements.forEach(el => { el.style.height = 'auto'; });
+    // Průchod 2: čtení (jeden vynucený reflow pro celou dávku)
+    const heights = elements.map(el => el.scrollHeight);
+    // Průchod 3: zápis (write)
+    elements.forEach((el, i) => { el.style.height = `${heights[i]}px`; });
+  }
 
   /**
    * @description Uloží aktuálně editovaný jazyk. Po úspěchu invaliduje cache klíč tohoto
    * jazyka.
    * @refactor-note (2026-09-08) Hlášky nahrazeny `t()` voláním.
+   * @refactor-note (2026-09-26) Po úspěchu nuluje `isDirty`; bez oprávnění nic neodešle
+   * (tlačítko je sice skryté, ale metoda je veřejná).
    */
   onSubmit(): void {
+    if (!this.canUpdate) return;
+
     this.dataHandler.post(`save_translations/${this.MODULE}`, {
       lang: this.currentLang,
       data: this.translations
     }).pipe(Core.takeUntil(this.destroy$)).subscribe({
       next: () => {
+        this.isDirty = false;
         this.resourceCache.invalidate(`${this.TRANSLATIONS_CACHE_PREFIX}${this.currentLang}`);
         this.alertDialogService.open(
           this.t('admin_title'),
@@ -461,6 +486,7 @@ private resizeAllTextareas(): void {
    * @description Submits a new language definition using multipart/form-data to include flag
    * imagery. Po úspěchu invaliduje cache jazykového seznamu.
    * @refactor-note (2026-09-08) Všechny validační/úspěšné hlášky nahrazeny `t()` voláním.
+   * @refactor-note (2026-09-26) Po přepnutí na nový (prázdný) jazyk nuluje `isDirty`.
    */
   confirmAddLang(): void {
     const code = this.newLangCode.trim().toLowerCase();
@@ -508,6 +534,7 @@ private resizeAllTextareas(): void {
 
           this.currentLang = code;
           this.translations = this.buildEmptyFromCz(this.czTranslations);
+          this.isDirty = false;
           this.buildFlatList();
           this.applyFilter();
 
@@ -538,6 +565,7 @@ private resizeAllTextareas(): void {
    * @description Smaže jazyk. Po úspěchu invaliduje cache seznamu jazyků i překladů
    * smazaného jazyka.
    * @refactor-note (2026-09-08) Fallback chybová hláška nahrazena `t()` voláním.
+   * @refactor-note (2026-09-26) Při smazání aktuálně editovaného jazyka nuluje `isDirty`.
    */
   confirmDeleteLang(): void {
     if (!this.langToDelete) return;
@@ -553,6 +581,7 @@ private resizeAllTextareas(): void {
           if (this.currentLang === code) {
             this.currentLang  = 'cz';
             this.translations = {};
+            this.isDirty      = false;
           }
 
           this.loadLanguages(true);

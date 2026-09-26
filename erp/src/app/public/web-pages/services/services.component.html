@@ -374,7 +374,6 @@
         <p class="consultation-card-text">{{ t.consultation?.free_text }}</p>
         <a routerLink="/contact" [queryParams]="{ type: 'consultation' }" class="cta-btn">
           {{ t.consultation?.free_button }}
-          <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
 
@@ -389,7 +388,6 @@
         <p class="consultation-card-text">{{ t.consultation?.audit_text }}</p>
         <a routerLink="/contact" [queryParams]="{ type: 'audit' }" class="cta-btn cta-btn--accent">
           {{ t.consultation?.audit_button }}
-          <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
     </div>
@@ -403,7 +401,6 @@
         <p class="cta-text">{{ t.show_projects_header }}</p>
         <a routerLink="/references" class="cta-btn">
           {{ t.projects_button_text }}
-          <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
       <div class="cta-divider" aria-hidden="true"></div>
@@ -411,7 +408,6 @@
         <p class="cta-text">{{ t.show_contact_header }}</p>
         <a routerLink="/contact" class="cta-btn cta-btn--accent">
           {{ t.contact_button_text }}
-          <span class="cta-arrow" aria-hidden="true">→</span>
         </a>
       </div>
     </div>

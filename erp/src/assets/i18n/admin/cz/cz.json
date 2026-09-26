@@ -1618,6 +1618,10 @@
     "graph_date_field_label": "Datum vytvoření"
   },
   "edit-website": {
+"upload_json_title_topbar": "Nahrát JSON pro aktuální jazyk",
+"save_changes_button": "Uložit změny",
+"saving_label": "Ukládám…",
+"unsaved_changes_title": "Neuložené změny",
     "page_title": "Editovat veřejné texty",
     "download_json_title": "Stáhnout aktuální JSON",
     "download_json_button": "Stáhnout JSON",

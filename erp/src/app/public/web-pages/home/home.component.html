@@ -12,6 +12,10 @@
         headline (assets/images/logos/logo_big.svg) and the product mockup on the right
         side (assets/images/home/hero-mockup-en.svg, `.hero-visual`). Nothing else in this
         template changed.
+    @refactor-note (2026-09-26): Hero background - the animated particle <canvas> was
+        replaced by a static space scene (planet horizon + eclipse beam,
+        assets/images/home/hero-space-bg.svg, `.hero-bg`). Nothing else in this template
+        changed.
 -->
 
 @if (t) {
@@ -44,15 +48,24 @@
         @component: hero
         @description: Full-viewport hero - brand wordmark, headline, lead, CTAs and stats on
           the left; product mockup (browser with admin + phone + floating cards) on the right,
-          over the animated particle canvas.
-        @usage: Wordmark: assets/images/logos/logo_big.svg. Mockup: assets/images/home/hero-mockup-en.svg
-          (screenshots are placed inside the SVG itself).
+          over a static space background (planet horizon with an eclipse light beam).
+        @usage: Background: assets/images/home/hero-space-bg.svg (`.hero-bg`).
+          Mockup: assets/images/home/hero-mockup-en.svg (screenshots are placed inside the SVG itself).
         @note: The mockup is the LCP candidate - loaded eagerly with fetchpriority="high",
-          intrinsic width/height set to avoid layout shift. It is decorative (aria-hidden),
-          the same information is conveyed by the text on the left.
+          intrinsic width/height set to avoid layout shift. Both the background and the mockup
+          are decorative (aria-hidden, empty alt), the same information is conveyed by the text
+          on the left.
       -->
         <section class="hero-section">
-  <canvas #heroParticleCanvas class="hero-particles" aria-hidden="true"></canvas>
+  <img
+    src="assets/images/home/hero-space-bg.svg"
+    class="hero-bg"
+    alt=""
+    aria-hidden="true"
+    width="1920"
+    height="1080"
+    decoding="async"
+    draggable="false">
 
   <div class="hero-content">
     <h1 class="hero-heading" [innerHTML]="t?.hero?.heading || 'We\'re an IT company<br>building digital products'"></h1>
@@ -61,11 +74,9 @@
     <div class="hero-cta-row">
       <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
         {{ t?.hero?.cta_primary || 'Free consultation' }}
-        <span class="home-cta-arrow" aria-hidden="true">→</span>
       </a>
       <a routerLink="/services" class="home-cta-btn">
         {{ t?.hero?.cta_secondary || 'Our services' }}
-        <span class="home-cta-arrow" aria-hidden="true">→</span>
       </a>
     </div>
 
@@ -319,7 +330,7 @@
 
       <a routerLink="/knowledge-base" class="home-cta-btn">
         {{ t?.knowlegde_base_btn }}
-        <span class="home-cta-arrow" aria-hidden="true">→</span>
+       
       </a>
       </div>
 
@@ -403,7 +414,6 @@
 
         <a routerLink="/faq" class="home-faq-more">
           {{ t?.faq?.more_link || 'View all questions' }}
-          <span class="home-cta-arrow" aria-hidden="true">→</span>
         </a>
       </section>
 
@@ -418,7 +428,6 @@
                       <p class="home-cta-text">{{ t?.cta.references?.text }}</p>
                       <a routerLink="/references" class="home-cta-btn">
                           {{ t?.cta.references?.btn }}
-                          <span class="home-cta-arrow" aria-hidden="true">→</span>
                       </a>
                   </div>
 
@@ -428,7 +437,6 @@
                       <p class="home-cta-text">{{ t?.cta.contact?.text }}</p>
                       <a routerLink="/contact" class="home-cta-btn home-cta-btn--accent">
                           {{ t?.cta.contact?.btn }}
-                          <span class="home-cta-arrow" aria-hidden="true">→</span>
                       </a>
                   </div>
               </div>

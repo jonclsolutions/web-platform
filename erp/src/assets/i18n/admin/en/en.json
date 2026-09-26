@@ -1617,6 +1617,10 @@
     "graph_date_field_label": "Date created"
   },
   "edit-website": {
+"upload_json_title_topbar": "Upload JSON for the current language",
+"save_changes_button": "Save changes",
+"saving_label": "Saving…",
+"unsaved_changes_title": "Unsaved changes",
     "page_title": "Edit public texts",
     "download_json_title": "Download current JSON",
     "download_json_button": "Download JSON",
