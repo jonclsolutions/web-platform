@@ -1,9 +1,14 @@
-/*     
+/*
     @file: order-form.component.css
     @path: /src/app/public/web-pages/order-form/order-form.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
+        (--gutter, --section-y, --hero-top). The form card (client-only page reached
+        via a one-time link) keeps its smaller in-card heading and 680px form width;
+        its top edge now starts at --hero-top like page titles elsewhere.
+        Only padding / margin changed.
 */
 
 :host {
@@ -28,18 +33,23 @@
   --radius:       12px;
   --radius-lg:    18px;
   --ease:         0.25s ease;
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:       24px;   /* side padding of every container */
+  --section-y:    96px;   /* page bottom spacing */
+  --hero-top:     180px;  /* navbar height + air above page content */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Wrapper / pozadí ────────────────────────────────────────── */
+/* ── Wrapper / background ────────────────────────────────────── */
 .form-wrp {
   display: flex;
   justify-content: center;
   align-items: flex-start;
   width: 100%;
   min-height: 100vh;
-  padding: 100px 24px 80px;
+  padding: var(--hero-top) var(--gutter) var(--section-y);
   background: var(--bg);
   font-family: var(--ff-body);
   color: var(--text);
@@ -47,7 +57,7 @@
   overflow: hidden;
 }
 
-/* Čtvercové pozadí — identické s FAQ */
+/* Grid background – identical to FAQ */
 .form-wrp::before {
   content: '';
   position: fixed;
@@ -60,7 +70,7 @@
   z-index: 0;
 }
 
-/* ── Formulářová karta ───────────────────────────────────────── */
+/* ── Form card ───────────────────────────────────────────────── */
 .contact-form {
   position: relative;
   z-index: 1;
@@ -71,7 +81,7 @@
   border-radius: var(--radius-lg);
   padding: 48px 44px;
   animation: fadeUp 0.7s ease-out both;
-  margin-top: 40px;
+  margin-top: 0;
 }
 
 .contact-form h2 {
@@ -84,7 +94,7 @@
   margin-bottom: 36px;
 }
 
-/* ── Skupiny polí ────────────────────────────────────────────── */
+/* ── Field groups ────────────────────────────────────────────── */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -132,7 +142,7 @@
   min-height: 110px;
 }
 
-/* ── Flex řádek (telefon + e-mail) ──────────────────────────── */
+/* ── Flex row (phone + e-mail) ──────────────────────────────── */
 .mobile-flex-stack {
   display: flex;
   gap: 16px;
@@ -140,7 +150,7 @@
 
 .flex-1 { flex: 1; }
 
-/* ── Chybové stavy ───────────────────────────────────────────── */
+/* ── Error states ────────────────────────────────────────────── */
 .error-input {
   border-color: var(--error) !important;
   box-shadow: 0 0 0 3px rgba(255, 85, 102, 0.1) !important;
@@ -256,7 +266,7 @@
   font-weight: 600;
 }
 
-/* ── Checkboxy / GDPR ────────────────────────────────────────── */
+/* ── Checkboxes / GDPR ───────────────────────────────────────── */
 .checkbox-container {
   margin-top: 24px;
   display: flex;
@@ -300,7 +310,7 @@
 
 .mt-15 { margin-top: 6px; }
 
-/* ── Submit tlačítko ─────────────────────────────────────────── */
+/* ── Submit button ───────────────────────────────────────────── */
 .submit-btn {
   width: 100%;
   height: 52px;
@@ -323,7 +333,7 @@
 
 .submit-btn span {
   display: inline-block;
-  transform: none; /* zrušení původního skewX */
+  transform: none; /* cancels the original skewX */
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -364,16 +374,24 @@
   margin-inline: auto;
 }
 
-/* ── Animace ─────────────────────────────────────────────────── */
+/* ── Animations ──────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Responzivita ────────────────────────────────────────────── */
+/* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .form-wrp { padding: 80px 16px 60px; }
   .contact-form { padding: 32px 20px; }
   .mobile-flex-stack { flex-direction: column; gap: 0; }
   .contact-form h2 { font-size: 1.7rem; margin-bottom: 28px; }
+}
+
+@media (max-width: 600px) {
+  /* Mobile spacing tokens – wrapper follows automatically */
+  :host {
+    --gutter:     16px;
+    --section-y:  64px;
+    --hero-top:   120px;
+  }
 }

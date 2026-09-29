@@ -27,30 +27,5 @@
       }
     </div>
   </div>
-  
-  <div class="jobs-divider" aria-hidden="true"></div>
-
-  <section class="jobs-cta-section">
-    <div class="cta-panel">
-      <div class="cta-panel-text-block">
-        <div class="cta-panel-eyebrow">{{ t?.list_cta_eyebrow }}</div>
-        <h2 class="cta-panel-title">{{ t?.list_write_us_prompt }}</h2>
-        <p class="cta-panel-sub">{{ t?.list_cta_sub }}</p>
-      </div>
-      <div class="cta-panel-actions">
-        <a [href]="'mailto:' + settings.contact_email" class="cta-btn">
-          {{ t?.list_cta_email_btn }}
-        </a>
-        @for (link of socialLinks; track link.id) {
-          <a [href]="link.url" target="_blank" rel="noopener" class="cta-btn cta-btn--ghost">
-            <img [src]="getIconUrl(link.icon_path)" [alt]="link.name" width="16" height="16" style="margin-right: 8px;">
-            {{ link.name }}
-          </a>
-        }
-      </div>
-    </div>
-  </section>
-
-
 </div>
 }

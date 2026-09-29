@@ -1,9 +1,13 @@
-/*     
+/*
     @file: about-us.component.css
     @path: /src/app/public/web-pages/about-us/about-us.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
+        (--gutter, --section-y, --hero-top, --hero-bottom, --head-gap), content
+        width 1200px (+ gutters), hero top 180/120px, sections 96/64px.
+        Only padding / margin / gap / max-width changed.
 */
 
 :host {
@@ -27,11 +31,18 @@
   --radius-lg:    18px;
   --ease:         0.25s ease;
   --max-w:        1200px;
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:       24px;   /* side padding of every container */
+  --section-y:    96px;   /* vertical space between sections */
+  --hero-top:     180px;  /* navbar height + air above page title */
+  --hero-bottom:  48px;   /* hero -> first content */
+  --head-gap:     48px;   /* section heading -> section content */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Stránka ─────────────────────────────────────────────────── */
+/* ── Page ────────────────────────────────────────────────────── */
 .about-page {
   background: var(--bg);
   color: var(--text);
@@ -39,7 +50,7 @@
   overflow-x: hidden;
 }
 
-/* Čtvercové pozadí — identické se Services / FAQ / References */
+/* Grid background – identical to Services / FAQ / References */
 .about-page::before {
   content: '';
   position: fixed;
@@ -62,7 +73,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 120px 24px 0px;
+  padding: var(--hero-top) var(--gutter) var(--hero-bottom);
   animation: fadeUp 0.7s ease-out both;
 }
 
@@ -88,19 +99,19 @@
 .about-hero-sub {
   font-size: 1rem;
   color: var(--text-muted);
-  margin-bottom: 48px;
+  margin-bottom: 0;
   max-width: 520px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   HLAVNÍ LAYOUT — sidebar + main
+   MAIN LAYOUT – sidebar + main
    ═══════════════════════════════════════════════════════════════ */
 .about-layout {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 0 var(--gutter) var(--section-y);
   grid-template-columns: 280px 1fr;
   gap: 32px;
   align-items: start;
@@ -168,13 +179,13 @@
   transform: translateY(-2px);
 }
 
-/* Sociální sítě karta */
+/* Social networks card */
 .sidebar-card--social {
   gap: 12px;
 }
 
-/* Sjednoceno se zbytkem aplikace (viz Contact / FAQ): jen ikona,
-   bez popisku, bez hover efektu, výraznější velikost. */
+/* Unified with the rest of the app (see Contact / FAQ): icon only,
+   no label, no hover effect, larger size. */
 .social-list {
   display: flex;
   gap: 10px;
@@ -194,14 +205,16 @@
   object-fit: contain;
 }
 
-/* ── Hlavní textový sloupec ──────────────────────────────────── */
+/* ── Main text column ────────────────────────────────────────── */
 .about-main {
-  padding: 40px;
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--gutter);
   animation: fadeUp 0.6s 0.15s ease-out both;
   display: flex;
   flex-direction: column;
   gap: 32px;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
 }
 
@@ -213,12 +226,12 @@
   color: var(--accent);
 }
 
-/* Odstavce */
+/* Paragraphs */
 .about-content {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding-bottom: 32px;
+  padding-bottom: var(--hero-bottom);
   border-bottom: 1px solid var(--border);
 }
 
@@ -230,20 +243,20 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MILESTONES / MILNÍKY — časová osa (nová sekce)
+   MILESTONES – timeline
    ═══════════════════════════════════════════════════════════════ */
 .milestones-section {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 20px 24px 80px;
+  padding: var(--section-y) var(--gutter);
   animation: fadeUp 0.6s ease-out both;
 }
 
 .milestones-header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: var(--head-gap);
 }
 
 .milestones-eyebrow {
@@ -274,9 +287,9 @@
   gap: 8px;
 }
 
-/* Řádek: linka-vlevo | tečka | linka-vpravo — stejný spolehlivý vzor
-   jako u workflow sekce na /services. Zaručuje, že se čára vždy
-   přesně zarovná s tečkou, bez ohledu na šířku sloupců. */
+/* Row: line-left | dot | line-right – same pattern as the workflow
+   section on /services. Keeps the line aligned with the dot
+   regardless of column width. */
 .milestone-connector {
   display: flex;
   align-items: center;
@@ -331,12 +344,15 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CTA SEKCE
+   CTA SECTION
    ═══════════════════════════════════════════════════════════════ */
 .about-cta-section {
   position: relative;
   z-index: 1;
-  padding: 0 24px 80px;
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
+  margin: 0 auto;
+  /* cta-block has its own vertical padding -> half section spacing here */
+  padding: 0 var(--gutter) calc(var(--section-y) / 2);
   animation: fadeUp 0.6s ease-out both;
 }
 
@@ -403,10 +419,10 @@
 .cta-arrow { font-size: 1.1rem; transition: transform var(--ease); }
 .cta-btn:hover .cta-arrow { transform: translateX(4px); }
 
-/* Oddělovač */
+/* Divider – cta-block top padding completes the section spacing */
 .about-divider {
   max-width: 700px;
-  margin: 0 auto 60px;
+  margin: 0 auto calc(var(--section-y) / 2);
   height: 1px;
   background: linear-gradient(
     to right,
@@ -419,7 +435,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ANIMACE
+   ANIMATIONS
    ═══════════════════════════════════════════════════════════════ */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
@@ -427,7 +443,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RESPONZIVITA
+   RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 1100px) {
   .about-layout {
@@ -445,8 +461,6 @@
 }
 
 @media (max-width: 860px) {
-  .about-main { padding: 28px 20px; }
-
   .about-sidebar { flex-direction: column; }
 
   .cta-row { flex-direction: column; }
@@ -460,11 +474,16 @@
 }
 
 @media (max-width: 600px) {
-  .about-hero { padding: 90px 16px 48px; }
+  /* Mobile spacing tokens – all containers follow automatically */
+  :host {
+    --gutter:      16px;
+    --section-y:   64px;
+    --hero-top:    120px;
+    --hero-bottom: 40px;
+    --head-gap:    32px;
+  }
+
   .about-hero-title { font-size: 2rem; }
-  .about-layout { padding: 0 16px 60px; }
-  .about-cta-section { padding-left: 16px; padding-right: 16px; }
-  .milestones-section { padding: 10px 16px 60px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

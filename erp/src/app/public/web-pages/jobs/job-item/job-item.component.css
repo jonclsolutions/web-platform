@@ -1,9 +1,15 @@
-/*     
+/*
     @file: job-item.component.css
     @path: /src/app/public/web-pages/jobs/job-item/job-item.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
+        (--gutter, --section-y, --hero-top, --hero-bottom, --head-gap), content
+        width 1200px (+ gutters). Back link sits above the title so that the title
+        itself starts at --hero-top like on other pages. Description and form
+        column sit flush with the content column (no inner offsets, they have no
+        background). Only padding / margin / gap / max-width changed.
 */
 
 :host {
@@ -24,12 +30,20 @@
   --radius:      10px;
   --radius-lg:   18px;
   --ease:        0.22s ease;
-  --max-w:       960px;
+  --max-w:       1200px;
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:       24px;   /* side padding of every container */
+  --section-y:    96px;   /* page bottom spacing */
+  --hero-top:     180px;  /* navbar height + air above page title */
+  --hero-bottom:  48px;   /* hero -> first content */
+  --head-gap:     48px;   /* block -> following block */
+  --back-gap:     44px;   /* back link height (~20px) + space to the title (24px) */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Stránka + čtvercové pozadí ─────────────────────────────── */
+/* ── Page + grid background ─────────────────────────────────── */
 .job-page {
   background: var(--bg);
   color: var(--text);
@@ -50,13 +64,15 @@
   z-index: 0;
 }
 
-/* ── Zpět link ───────────────────────────────────────────────── */
+/* ── Back link ───────────────────────────────────────────────
+   Placed ABOVE --hero-top so the page title below starts exactly
+   at --hero-top, the same height as titles on other pages. */
 .job-back-bar {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 100px 24px 0;
+  padding: calc(var(--hero-top) - var(--back-gap)) var(--gutter) 0;
 }
 
 .back-link {
@@ -71,13 +87,13 @@
 
 .back-link:hover { color: var(--accent); }
 
-/* ── Hero / hlavička pozice ──────────────────────────────────── */
+/* ── Hero / position header ──────────────────────────────────── */
 .job-hero {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 32px 24px 40px;
+  padding: 24px var(--gutter) var(--hero-bottom);
   animation: fadeUp 0.7s ease-out both;
 }
 
@@ -107,22 +123,23 @@
   padding: 5px 14px;
 }
 
-/* ── Dvoupanelový layout ─────────────────────────────────────── */
+/* ── Two-panel layout ────────────────────────────────────────── */
 .job-layout {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 0 var(--gutter) var(--section-y);
   display: grid;
   grid-template-columns: 1fr 340px;
-  gap: 32px;
+  gap: 64px;
   align-items: start;
 }
 
-/* ── Levý — popis pozice ─────────────────────────────────────── */
+/* ── Left – position description ─────────────────────────────── */
 .job-description {
-  padding: 40px;
+  padding: 0;
+  min-width: 0;
   animation: fadeUp 0.6s 0.1s ease-out both;
 }
 
@@ -135,7 +152,7 @@
   margin-bottom: 20px;
 }
 
-/* innerHTML obsah */
+/* innerHTML content */
 .job-desc-body {
   font-size: 0.96rem;
   line-height: 1.8;
@@ -154,7 +171,7 @@
   font-weight: 700;
 }
 
-/* Kontakt pod popisem */
+/* Contact under the description */
 .job-contact-strip {
   display: flex;
   align-items: center;
@@ -184,7 +201,7 @@
 
 .job-contact-sep { color: var(--border-mid); }
 
-/* ── Pravý — formulář přihlášky ─────────────────────────────── */
+/* ── Right – application form ───────────────────────────────── */
 .job-form-aside {
   display: flex;
   flex-direction: column;
@@ -194,8 +211,9 @@
   top: 24px;
 }
 
+/* No background -> no inner padding, form sits on the column edge */
 .form-card {
-  padding: 32px 28px;
+  padding: 0;
 }
 
 .form-card-title {
@@ -207,7 +225,7 @@
   margin-bottom: 24px;
 }
 
-/* Formulářová pole */
+/* Form fields */
 .field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -251,7 +269,7 @@
   margin-top: 2px;
 }
 
-/* File zóna */
+/* File zone */
 .file-zone {
   display: flex;
   align-items: center;
@@ -337,7 +355,7 @@
 .gdpr-link { color: var(--accent); text-decoration: none; }
 .gdpr-link:hover { text-decoration: underline; }
 
-/* Odeslat tlačítko */
+/* Submit button */
 .submit-btn {
   display: flex;
   align-items: center;
@@ -380,7 +398,7 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Stav úspěchu ────────────────────────────────────────────── */
+/* ── Success state ───────────────────────────────────────────── */
 .success-panel {
   display: flex;
   flex-direction: column;
@@ -433,26 +451,31 @@
 
 .back-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
 
-/* ── Animace ─────────────────────────────────────────────────── */
+/* ── Animations ──────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Responzivita ────────────────────────────────────────────── */
+/* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .job-layout {
     grid-template-columns: 1fr;
+    gap: var(--head-gap);
   }
 
   .job-form-aside { position: static; }
 }
 
 @media (max-width: 600px) {
-  .job-back-bar { padding-top: 80px; padding-left: 16px; padding-right: 16px; }
-  .job-hero { padding: 24px 16px 32px; }
-  .job-layout { padding: 0 16px 60px; }
-  .job-description { padding: 24px 18px; }
-  .form-card { padding: 24px 18px; }
+  /* Mobile spacing tokens – all containers follow automatically */
+  :host {
+    --gutter:      16px;
+    --section-y:   64px;
+    --hero-top:    120px;
+    --hero-bottom: 40px;
+    --head-gap:    32px;
+  }
+
   .field-row { grid-template-columns: 1fr; }
 }

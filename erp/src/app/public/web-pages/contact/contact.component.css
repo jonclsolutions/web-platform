@@ -1,9 +1,15 @@
-/* 
+/*
     @file: contact.component.css
     @path: /src/app/public/web-pages/contact/contact.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
+        (--gutter, --section-y, --hero-top, --hero-bottom), content aligned to the
+        shared 1200px column. Split layout keeps the full-bleed left panel
+        background; grid gained outer "side" columns so the panel text starts at
+        the content column's left edge and the form ends at its right edge.
+        Only padding / margin / max-width / grid tracks changed.
 */
 
 :host {
@@ -23,12 +29,28 @@
   --ff-body:         'Segoe UI', system-ui, sans-serif;
   --radius:          10px;
   --transition:      0.22s ease;
+  --max-w:           1200px;
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:       24px;   /* side padding of every container */
+  --section-y:    96px;   /* vertical space between sections / page bottom */
+  --hero-top:     180px;  /* navbar height + air above page title */
+  --hero-bottom:  48px;   /* hero -> first content */
+
+  /* ── Contact split layout ── */
+  --panel-w:      420px;  /* left panel content width */
+  --panel-pad:    48px;   /* space between panel text and the divider / form */
 }
 
-/* ── Stránkový grid ─────────────────────────── */
+/* ── Page grid ───────────────────────────────────────────────────
+   Columns: [side][left panel][form][side]
+   --side = empty space outside the 1200px content column (min. gutter).
+   Left panel spans side + panel, so its background reaches the viewport
+   edge while its text starts at the content column's left edge. */
 .contact-page {
+  --side: max(var(--gutter), (100% - var(--max-w)) / 2);
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: var(--side) var(--panel-w) minmax(0, 1fr) var(--side);
   min-height: 100vh;
   background: var(--clr-bg);
   font-family: var(--ff-body);
@@ -48,9 +70,10 @@
 }
 
 /* ══════════════════════════════════════════════
-   LEVÝ PANEL
+   LEFT PANEL
    ══════════════════════════════════════════════ */
 .panel-left {
+  grid-column: 1 / 3;
   position: relative;
   background: var(--clr-surface);
   border-right: 1px solid var(--clr-border);
@@ -59,7 +82,7 @@
   overflow: hidden;
 }
 
-/* Velký vertikální nápis — typografický podpis */
+/* Large vertical label – typographic signature */
 .side-label {
   position: absolute;
   right: -28px;
@@ -75,13 +98,17 @@
   z-index: 0;
 }
 
+/* Right-aligned inside the panel -> left edge = content column edge */
 .panel-left-content {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 48px;
-  padding: 120px 48px;
+  width: var(--panel-w);
+  max-width: 100%;
+  margin-left: auto;
+  padding: var(--hero-top) var(--panel-pad) var(--section-y) 0;
   height: 100%;
 }
 
@@ -112,7 +139,7 @@
   max-width: 320px;
 }
 
-/* Statistiky */
+/* Stats */
 .stats-row {
   display: flex;
   gap: 32px;
@@ -183,7 +210,7 @@
 
 .info-link:hover { color: var(--clr-accent); text-decoration: underline; }
 
-/* Sociální sítě */
+/* Social networks */
 .social-row {
   display: flex;
   gap: 16px;
@@ -206,13 +233,14 @@
 }
 
 /* ══════════════════════════════════════════════
-   PRAVÝ PANEL
+   RIGHT PANEL
    ══════════════════════════════════════════════ */
 .panel-right {
+  grid-column: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 120px 48px;
+  padding: var(--hero-top) 0 var(--section-y) var(--panel-pad);
   overflow-y: auto;
 }
 
@@ -221,7 +249,7 @@
   max-width: 600px;
 }
 
-/* Hlavička formuláře */
+/* Form header */
 .form-eyebrow {
   font-size: 0.75rem;
   font-weight: 600;
@@ -245,7 +273,7 @@
   gap: 22px;
 }
 
-/* Pole */
+/* Fields */
 .field-group {
   display: flex;
   flex-direction: column;
@@ -312,7 +340,7 @@
   color: var(--clr-error);
 }
 
-/* Select s vlastní šipkou */
+/* Select with custom arrow */
 .select-wrap {
   position: relative;
 }
@@ -336,7 +364,7 @@
   font-size: 0.85rem;
 }
 
-/* Zóna pro soubor */
+/* File zone */
 .file-zone {
   display: flex;
   align-items: center;
@@ -456,7 +484,7 @@
 
 .gdpr-link:hover { text-decoration: underline; }
 
-/* Odeslat tlačítko */
+/* Submit button */
 .submit-btn {
   display: flex;
   align-items: center;
@@ -509,7 +537,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ══════════════════════════════════════════════
-   STAV ÚSPĚCHU
+   SUCCESS STATE
    ══════════════════════════════════════════════ */
 .success-panel {
   display: flex;
@@ -569,29 +597,30 @@
 }
 
 /* ══════════════════════════════════════════════
-   RESPONZIVITA
+   RESPONSIVE
    ══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
-  .contact-page {
-    grid-template-columns: 360px 1fr;
+  :host {
+    --panel-w:   360px;
+    --panel-pad: 36px;
   }
 
-  .panel-left-content {
-    padding: 120px 36px;
-    gap: 36px;
-  }
+  .panel-left-content { gap: 36px; }
 
   .brand-headline { font-size: 2.4rem; }
   .side-label { font-size: 5rem; }
 }
 
 @media (max-width: 768px) {
+  /* Stacked: left panel becomes a full-width top bar, form below */
   .contact-page {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
   }
 
-  /* Levý panel — horizontal bar na mobilu */
+  .panel-left,
+  .panel-right { grid-column: 1 / -1; }
+
   .panel-left {
     border-right: none;
     border-bottom: 1px solid var(--clr-border);
@@ -600,7 +629,9 @@
   .side-label { display: none; }
 
   .panel-left-content {
-    padding: 75px 28px 36px;
+    width: 100%;
+    margin-left: 0;
+    padding: var(--hero-top) var(--gutter) var(--hero-bottom);
     gap: 28px;
   }
 
@@ -612,14 +643,22 @@
 
   .social-row { margin-top: 0; padding-top: 0; border-top: none; }
 
-  .panel-right { padding: 40px 24px 60px; }
+  .panel-right { padding: var(--hero-bottom) var(--gutter) var(--section-y); }
 
   .field-row { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 600px) {
+  /* Mobile spacing tokens – all containers follow automatically */
+  :host {
+    --gutter:      16px;
+    --section-y:   64px;
+    --hero-top:    120px;
+    --hero-bottom: 40px;
+  }
+}
+
 @media (max-width: 480px) {
-  .panel-left-content { padding: 75px 20px 28px; }
-  .panel-right { padding: 32px 16px 48px; }
   .brand-headline { font-size: 1.7rem; }
   .form-title { font-size: 1.5rem; }
 }

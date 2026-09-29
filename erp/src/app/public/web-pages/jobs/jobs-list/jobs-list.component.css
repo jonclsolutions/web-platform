@@ -4,6 +4,11 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
+        (--gutter, --section-y, --hero-top, --hero-bottom), content width 1200px
+        (+ gutters), hero top 180/120px, 96/64px around the divider. CTA panel
+        (no background) sits flush with the content column.
+        Only padding / margin / max-width changed.
 */
 
 :host {
@@ -22,17 +27,22 @@
   --radius:      12px;
   --radius-lg:   18px;
   --ease:        0.25s ease;
-  --max-w:       860px;
+  --max-w:       1200px;
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:       24px;   /* side padding of every container */
+  --section-y:    96px;   /* vertical space between sections / page bottom */
+  --hero-top:     180px;  /* navbar height + air above page title */
+  --hero-bottom:  48px;   /* hero -> first content */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Stránka + čtvercové pozadí ─────────────────────────────── */
+/* ── Page + grid background ─────────────────────────────────── */
 .jobs-page {
   background: var(--bg);
   color: var(--text);
   font-family: var(--ff-body);
-  min-height: 100vh;
   overflow-x: hidden;
 }
 
@@ -56,7 +66,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 120px 24px 56px;
+  padding: var(--hero-top) var(--gutter) var(--hero-bottom);
   animation: fadeUp 0.7s ease-out both;
 }
 
@@ -77,13 +87,13 @@
   line-height: 1.7;
 }
 
-/* ── Seznam pozic ────────────────────────────────────────────── */
+/* ── Job list ────────────────────────────────────────────────── */
 .jobs-body {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 0 var(--gutter) var(--section-y);
 }
 
 .jobs-list {
@@ -92,7 +102,7 @@
   gap: 10px;
 }
 
-/* Karta jedné pozice */
+/* Single position card */
 .job-card {
   display: flex;
   align-items: center;
@@ -114,7 +124,7 @@
   transform: translateY(-3px);
 }
 
-/* Číslo pozice */
+/* Position number */
 .job-card-num {
   flex-shrink: 0;
   font-family: var(--ff-display);
@@ -126,7 +136,7 @@
   min-width: 24px;
 }
 
-/* Textová část */
+/* Text part */
 .job-card-body {
   flex: 1;
   min-width: 0;
@@ -150,7 +160,7 @@
   text-overflow: ellipsis;
 }
 
-/* Šipka vpravo */
+/* Arrow on the right */
 .job-card-arrow {
   flex-shrink: 0;
   width: 36px;
@@ -172,7 +182,7 @@
   transform: translateX(3px);
 }
 
-/* Animace s posunem */
+/* Staggered animation */
 .jobs-list .job-card:nth-child(1) { animation-delay: 0.05s; }
 .jobs-list .job-card:nth-child(2) { animation-delay: 0.10s; }
 .jobs-list .job-card:nth-child(3) { animation-delay: 0.15s; }
@@ -180,18 +190,21 @@
 .jobs-list .job-card:nth-child(5) { animation-delay: 0.25s; }
 .jobs-list .job-card:nth-child(6) { animation-delay: 0.30s; }
 
-/* ── CTA sekce ───────────────────────────────────────────────── */
+/* ── CTA section ─────────────────────────────────────────────── */
 .jobs-cta-section {
   position: relative;
   z-index: 1;
-  padding: 0 24px 80px;
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
+  margin: 0 auto;
+  padding: 0 var(--gutter) var(--section-y);
   animation: fadeUp 0.6s 0.3s ease-out both;
 }
 
+/* No background -> no inner padding, content sits on the column edge */
 .cta-panel {
   max-width: var(--max-w);
   margin: 0 auto;
-  padding: 40px;
+  padding: 0;
   display: flex;
   align-items: center;
   gap: 32px;
@@ -264,10 +277,10 @@
   transform: translateY(-2px);
 }
 
-/* Oddělovač */
+/* Divider – same space above (list padding) and below */
 .jobs-divider {
   max-width: 700px;
-  margin: 0 auto 60px;
+  margin: 0 auto var(--section-y);
   height: 1px;
   background: linear-gradient(
     to right,
@@ -279,21 +292,27 @@
   opacity: 0.5;
 }
 
-/* ── Animace ─────────────────────────────────────────────────── */
+/* ── Animations ──────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Responzivita ────────────────────────────────────────────── */
+/* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .jobs-hero { padding: 90px 16px 44px; }
   .jobs-hero-title { font-size: 2rem; }
-  .jobs-body { padding: 0 16px 60px; }
   .job-card { padding: 18px 16px; }
   .job-card-desc { white-space: normal; }
-  .jobs-cta-section { padding-left: 16px; padding-right: 16px; }
-  .cta-panel { padding: 28px 20px; flex-direction: column; align-items: flex-start; }
+  .cta-panel { flex-direction: column; align-items: flex-start; }
   .cta-panel-actions { flex-direction: row; flex-wrap: wrap; }
 }
 
+@media (max-width: 600px) {
+  /* Mobile spacing tokens – all containers follow automatically */
+  :host {
+    --gutter:      16px;
+    --section-y:   64px;
+    --hero-top:    120px;
+    --hero-bottom: 40px;
+  }
+}

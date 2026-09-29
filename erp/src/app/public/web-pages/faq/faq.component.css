@@ -1,32 +1,45 @@
-/*     
+/*
     @file: faq.component.css
     @path: /src/app/public/web-pages/faq/faq.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
+        (--gutter, --section-y, --hero-top, --hero-bottom, --head-gap), content
+        width 1200px (+ gutters), hero top 180/120px, sections 96/64px.
+        Sidebar and FAQ column now sit flush with the content column edges
+        (removed inner 40px / 24px offsets). Only padding / margin / gap /
+        max-width changed.
 */
 
 :host {
   --bg:           #0d0d1b;
-  --surface:     #111128;
-  --surface-2:   #18183a;
-  --border:      rgba(166, 125, 255, 0.1);
-  --border-mid:  rgba(166, 125, 255, 0.22);
-  --accent:      #a67dff;
-  --accent-dark: #6b2e91;
+  --surface:      #111128;
+  --surface-2:    #18183a;
+  --border:       rgba(166, 125, 255, 0.1);
+  --border-mid:   rgba(166, 125, 255, 0.22);
+  --accent:       #a67dff;
+  --accent-dark:  #6b2e91;
   --accent-dim:   rgba(166, 125, 255, 0.07);
   --accent-grid:  rgba(166, 125, 255, 0.03);
   --accent-hover: #7d35ae;
   --white:        #ffffff;
-  --text:        #e0e0f0;
-  --text-muted:  #888899;
-  --text-dim:    #555566;
-  --ff-display:  'Source Sans Pro', 'Segoe UI', sans-serif;
-  --ff-body:     'Segoe UI', system-ui, sans-serif;
-  --radius:      12px;
-  --radius-lg:   18px;
-  --ease:        0.25s ease;
-  --max-w:       1200px;
+  --text:         #e0e0f0;
+  --text-muted:   #888899;
+  --text-dim:     #555566;
+  --ff-display:   'Source Sans Pro', 'Segoe UI', sans-serif;
+  --ff-body:      'Segoe UI', system-ui, sans-serif;
+  --radius:       12px;
+  --radius-lg:    18px;
+  --ease:         0.25s ease;
+  --max-w:        1200px;
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:       24px;   /* side padding of every container */
+  --section-y:    96px;   /* vertical space between sections / page bottom */
+  --hero-top:     180px;  /* navbar height + air above page title */
+  --hero-bottom:  48px;   /* hero -> first content */
+  --head-gap:     48px;   /* heading / block -> following content */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,7 +51,7 @@
   overflow-x: hidden;
 }
 
-/* Čtvercové pozadí — identické se Services */
+/* Grid background – identical to Services */
 .faq-page::before {
   content: '';
   position: fixed;
@@ -61,7 +74,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 120px 24px 0px;
+  padding: var(--hero-top) var(--gutter) var(--hero-bottom);
   animation: fadeUp 0.7s ease-out both;
 }
 
@@ -91,7 +104,7 @@
   max-width: 520px;
 }
 
-/* Tagy */
+/* Category tags */
 .faq-tags {
   display: flex;
   flex-wrap: wrap;
@@ -119,7 +132,7 @@
   background: var(--accent-dim);
 }
 
-/* Aktivní kategorie */
+/* Active category */
 .faq-tag--active {
   color: var(--white, #fff);
   background: var(--accent-dark);
@@ -131,23 +144,23 @@
   background: var(--accent-dark);
 }
 
-/* Mobilní extra bloky — skryté na desktopu, viditelné na mobilu uvnitř .faq-main */
+/* Mobile extra blocks – hidden on desktop, shown on mobile inside .faq-main */
 .faq-mobile-extras {
   display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DVOUPANELOVÝ LAYOUT
+   TWO-PANEL LAYOUT
    ═══════════════════════════════════════════════════════════════ */
 .faq-layout {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 0 var(--gutter) var(--section-y);
   display: grid;
   grid-template-columns: 280px 1fr;
-  gap: 32px;
+  gap: 64px;
   align-items: start;
 }
 
@@ -161,8 +174,9 @@
   animation: fadeUp 0.6s 0.2s ease-out both;
 }
 
+/* No background -> no inner padding, text sits on the content column edge */
 .sidebar-card {
-  padding: 28px 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -207,8 +221,8 @@
   transition: color var(--ease);
 }
 
-/* Adresa se nechová jako odkaz (není kam prokliknout), takže dostává
-   vlastní modifikátor: zarovnání nahoru (víceřádkový text), bez hover barvy. */
+/* Address is not a link (nothing to click), so it gets its own modifier:
+   top alignment (multi-line text), no hover colour. */
 .sidebar-contact-item--static {
   align-items: flex-start;
   cursor: default;
@@ -237,9 +251,9 @@
   margin-top: 1px;
 }
 
-/* ── Sociální sítě ─────────────────────────────────────────────
-   Samostatné od .sidebar-contact-item záměrně: bez popisku (jen ikona),
-   bez hover efektu a s větší ikonou, podle zadání. */
+/* ── Social networks ───────────────────────────────────────────
+   Intentionally separate from .sidebar-contact-item: icon only,
+   no hover effect, larger icon. */
 .sidebar-social-list {
   display: flex;
   gap: 10px;
@@ -281,9 +295,10 @@
   transform: translateY(-2px);
 }
 
-/* ── FAQ hlavní sloupec ──────────────────────────────────────── */
+/* ── FAQ main column ─────────────────────────────────────────── */
 .faq-main {
-  padding: 40px;
+  padding: 0;
+  min-width: 0;
   animation: fadeUp 0.6s 0.15s ease-out both;
 }
 
@@ -302,7 +317,7 @@
   gap: 8px;
 }
 
-/* Prázdný stav — kategorie bez žádných otázek */
+/* Empty state – category without questions */
 .faq-empty-state {
   border: 1px dashed var(--border-mid);
   border-radius: var(--radius-lg);
@@ -337,7 +352,7 @@
   gap: 14px;
   width: 100%;
   padding: 16px 18px;
-  background-color: #111128;  
+  background-color: #111128;
   border: none;
   cursor: pointer;
   text-align: left;
@@ -347,7 +362,7 @@
 
 .faq-trigger:hover { background: rgba(255, 255, 255, 0.025); }
 
-/* Číslo otázky */
+/* Question number */
 .faq-num {
   flex-shrink: 0;
   font-family: var(--ff-display);
@@ -394,12 +409,14 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CTA SEKCE — sdílená s Services
+   CTA SECTION – shared with Services
    ═══════════════════════════════════════════════════════════════ */
 .faq-cta-section {
   position: relative;
   z-index: 1;
-  padding: 0 24px 80px;
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
+  margin: 0 auto;
+  padding: 0 var(--gutter) calc(var(--section-y) / 2);
   animation: fadeUp 0.6s ease-out both;
 }
 
@@ -499,12 +516,11 @@
 .cta-arrow { font-size: 1.1rem; transition: transform var(--ease); }
 .cta-btn:hover .cta-arrow { transform: translateX(4px); }
 
-/* Oddělovač (poznámka: tato třída zůstává nepoužitá v šabloně — .ref-divider
-   níže je varianta, která se v HTML skutečně používá; ponecháno pro
-   zpětnou kompatibilitu, kdyby na ni odkazoval jiný soubor). */
+/* Divider (unused in the template – .ref-divider below is the variant
+   actually used; kept for backwards compatibility). */
 .faq-divider {
   max-width: 700px;
-  margin: 0 auto 60px;
+  margin: 0 auto calc(var(--section-y) / 2);
   height: 1px;
   background: linear-gradient(
     to right,
@@ -517,7 +533,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ANIMACE
+   ANIMATIONS
    ═══════════════════════════════════════════════════════════════ */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
@@ -525,18 +541,20 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RESPONZIVITA
+   RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
 
-/* Pod 1100px: sidebar schovat, extra bloky zobrazit za accordionem */
+/* Below 1100px: hide sidebar, show extra blocks after the accordion */
 @media (max-width: 1100px) {
   .faq-layout {
     grid-template-columns: 1fr;
     grid-template-areas: "main";
   }
-.sidebar-cta-btn{
-  width: 200px;
-}
+
+  .sidebar-cta-btn {
+    width: 200px;
+  }
+
   .faq-sidebar { display: none; }
 
   .faq-main { grid-area: main; }
@@ -545,23 +563,27 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-top: 28px;
+    margin-top: var(--head-gap);
   }
 }
 
 @media (max-width: 860px) {
-  .faq-main { padding: 28px 20px; }
-
   .cta-row { flex-direction: column; }
   .cta-divider { width: 120px; height: 1px; }
   .cta-block { padding: 32px 28px; }
 }
 
 @media (max-width: 600px) {
-  .faq-hero { padding: 90px 16px 48px; }
+  /* Mobile spacing tokens – all containers follow automatically */
+  :host {
+    --gutter:      16px;
+    --section-y:   64px;
+    --hero-top:    120px;
+    --hero-bottom: 40px;
+    --head-gap:    32px;
+  }
+
   .faq-hero-title { font-size: 2rem; }
-  .faq-layout { padding: 0 16px 60px; }
-  .faq-cta-section { padding-left: 16px; padding-right: 16px; }
   .faq-answer-text { padding-left: 18px; }
 }
 
@@ -569,15 +591,15 @@
   .faq-trigger:hover { background: rgba(255, 255, 255, 0.02); }
 }
 
-/* Hover jen na zařízeních s myší */
+/* Hover only on devices with a mouse */
 @media (hover: hover) {
   .faq-trigger:hover { background: #161631; }
 }
 
-/* Oddělovač */
+/* Divider */
 .ref-divider {
   max-width: 700px;
-  margin: 0 auto 60px;
+  margin: 0 auto calc(var(--section-y) / 2);
   height: 1px;
   background: linear-gradient(
     to right,

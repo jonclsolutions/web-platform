@@ -8,6 +8,10 @@
         (.ref-cat-dot*). Added informative project detail (features list,
         fact sheet, tech stack, result). Accordion uses grid-template-rows
         0fr -> 1fr instead of fixed max-height.
+    @refactor-note (2026-09-30) Unified spacing across public pages: spacing tokens
+        (--gutter, --section-y, --hero-top, --hero-bottom), content width 1200px
+        (+ gutters), hero top 180/120px, page bottom 96/64px.
+        Only padding / margin / max-width changed.
 */
 
 :host {
@@ -32,6 +36,12 @@
   --radius-lg:   18px;
   --ease:        0.25s ease;
   --max-w:       1200px;
+
+  /* ── Unified spacing (same values on every public page) ── */
+  --gutter:       24px;   /* side padding of every container */
+  --section-y:    96px;   /* vertical space between sections / page bottom */
+  --hero-top:     180px;  /* navbar height + air above page title */
+  --hero-bottom:  48px;   /* hero -> first content */
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -66,7 +76,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 120px 24px 0px;
+  padding: var(--hero-top) var(--gutter) var(--hero-bottom);
   animation: fadeUp 0.7s ease-out both;
 }
 
@@ -92,7 +102,7 @@
 .ref-hero-sub {
   font-size: 1rem;
   color: var(--text-muted);
-  margin-bottom: 48px;
+  margin-bottom: 0;
   max-width: 520px;
 }
 
@@ -109,9 +119,9 @@
 .ref-layout {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 0 var(--gutter) var(--section-y);
   grid-template-columns: 280px 1fr;
   gap: 32px;
   align-items: start;
@@ -413,7 +423,10 @@
 .ref-cta-section {
   position: relative;
   z-index: 1;
-  padding: 0 24px 80px;
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
+  margin: 0 auto;
+  /* cta-block has its own vertical padding -> half section spacing here */
+  padding: 0 var(--gutter) calc(var(--section-y) / 2);
   animation: fadeUp 0.6s ease-out both;
 }
 
@@ -488,10 +501,10 @@
 .cta-arrow { font-size: 1.1rem; transition: transform var(--ease); }
 .cta-btn:hover .cta-arrow { transform: translateX(4px); }
 
-/* Divider */
+/* Divider – cta-block top padding completes the section spacing */
 .ref-divider {
   max-width: 700px;
-  margin: 0 auto 60px;
+  margin: 0 auto calc(var(--section-y) / 2);
   height: 1px;
   background: linear-gradient(
     to right,
@@ -553,10 +566,15 @@
 }
 
 @media (max-width: 600px) {
-  .ref-hero { padding: 90px 16px 48px; }
+  /* Mobile spacing tokens – all containers follow automatically */
+  :host {
+    --gutter:      16px;
+    --section-y:   64px;
+    --hero-top:    120px;
+    --hero-bottom: 40px;
+  }
+
   .ref-hero-title { font-size: 2rem; }
-  .ref-layout { padding: 0 16px 60px; }
-  .ref-cta-section { padding-left: 16px; padding-right: 16px; }
 
   .ref-stat-sep {
     width: 60px;

@@ -15,7 +15,23 @@
         right): `.hero-section` got `justify-content`/`gap`, `.hero-content` a flex-basis,
         new `.hero-brand-logo`, `.hero-visual`, `.hero-visual-img` (3D tilt + slow float)
         and a 1100px breakpoint that stacks the mockup under the text. Nothing else changed.
+    @refactor-note (2026-09-30): Unified spacing across public pages - spacing tokens
+        (--gutter, --section-y, --hero-top, --head-gap, --title-gap), hero content aligned
+        to the shared 1200px column, sections separated by gradient lines get half of
+        --section-y on each side (96px / 64px between content blocks in total).
+        Only padding / margin / gap / max-width changed.
 */
+
+:host {
+    --max-w:      1200px;
+
+    /* ── Unified spacing (same values on every public page) ── */
+    --gutter:     24px;   /* side padding of every container */
+    --section-y:  96px;   /* space between sections (split around separators) */
+    --hero-top:   180px;  /* navbar height + air above hero content */
+    --head-gap:   48px;   /* section heading block -> section content */
+    --title-gap:  16px;   /* heading -> lead */
+}
 
 .main-content {
     font-family: "Source Sans Pro", sans-serif;
@@ -33,8 +49,10 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   HERO SEKCE — animované částicové pozadí
+   HERO SECTION
    ═══════════════════════════════════════════════════ */
+/* Full-bleed background; content aligned to the shared 1200px column
+   (side padding = space outside the column, min. --gutter). */
 .hero-section {
     position: relative;
     z-index: 1;
@@ -42,8 +60,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 220px;
-    padding: 140px max(60px, calc((100vw - 1530px) / 2)) 80px;   
+    gap: 64px;
+    padding: var(--hero-top) max(var(--gutter), (100% - var(--max-w)) / 2) var(--section-y);
     box-sizing: border-box;
     overflow: hidden;
     background-color: #0d0d1b;
@@ -58,15 +76,15 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-        object-position: 50% 100%;
+    object-position: 50% 100%;
     z-index: 0;
     pointer-events: none;
     user-select: none;
     -webkit-user-drag: none;
 
-        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 200px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 200px);
     mask-image: linear-gradient(to bottom, transparent 0, #000 200px);
-        filter: saturate(1.15) contrast(1.08) brightness(0.95);
+    filter: saturate(1.15) contrast(1.08) brightness(0.95);
 }
 
 .hero-section::before {
@@ -81,8 +99,8 @@
 .hero-content {
     position: relative;
     z-index: 2;
-    flex: 0 1 580px;      
-    max-width: 580px;     
+    flex: 0 1 580px;
+    max-width: 580px;
     width: 100%;
     opacity: 0;
     transform: translateY(-16px);
@@ -199,12 +217,12 @@
     50%      { transform: rotateY(-10deg) rotateX(4deg) translateY(-12px); }
 }
 
-/* Užší desktop / tablet na šířku - mockup pod text */
+/* Narrower desktop / landscape tablet - mockup under the text */
 @media (max-width: 1100px) {
     .hero-section {
         flex-direction: column;
         justify-content: center;
-        gap: 16px; /* SVG má nahoře vlastní volný okraj (záře), mezera je tak opticky menší */
+        gap: 16px; /* SVG has its own empty top margin (glow), so the gap looks smaller */
     }
 
     .hero-visual {
@@ -213,7 +231,7 @@
         max-width: 640px;
     }
 
-    /* Text nad mockupem je vycentrovaný stejně jako na mobilu */
+    /* Text above the mockup is centered, same as on mobile */
     .hero-content { flex: none; }
     .hero-brand-logo { margin: 0 auto 26px; }
     .hero-heading { text-align: center; }
@@ -231,7 +249,7 @@
 }
 
 @media (max-width: 905px) {
-    .hero-section { padding: 110px 30px 60px; justify-content: center; }
+    .hero-section { justify-content: center; }
     .hero-content { text-align: center; margin: 0 auto; }
     .hero-brand-logo { margin: 0 auto 26px; }
     .hero-lead { margin: 0 auto 36px; font-size: 1rem; }
@@ -246,8 +264,8 @@
     .hero-heading { font-size: 1.9rem; }
     .hero-stats { gap: 14px; }
 
-    /* CTA vedle sebe (primární + sekundární), menší vnitřní odsazení,
-       aby se vešly i na ~375px displeje */
+    /* CTAs side by side (primary + secondary), smaller inner padding
+       so they fit ~375px screens */
     .hero-cta-row {
         flex-direction: row;
         flex-wrap: nowrap;
@@ -262,7 +280,7 @@
     }
 }
 
-/* Velmi úzké telefony (iPhone SE 1. gen, malé Androidy) - zpět pod sebe */
+/* Very narrow phones (iPhone SE 1st gen, small Androids) - back to a column */
 @media (max-width: 360px) {
     .hero-cta-row { flex-direction: column; align-items: stretch; }
     .hero-cta-row > * { justify-content: center; }
@@ -272,12 +290,14 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   CTA PRUH
+   CTA STRIP
    ═══════════════════════════════════════════════════ */
 .home-cta-section {
     position: relative;
     z-index: 1;
-    padding: 0 24px 90px;
+    max-width: calc(var(--max-w) + var(--gutter) * 2);
+    margin: 0 auto;
+    padding: calc(var(--section-y) / 2) var(--gutter) var(--section-y);
 }
 
 .home-cta-row {
@@ -356,23 +376,19 @@
     .home-cta-block { padding: 32px 28px; }
 }
 
-@media (max-width: 600px) {
-    .home-cta-section { padding: 0 16px 60px; }
-}
-
 /* ═══════════════════════════════════════════════════
-   ABOUT SEKCE
+   ABOUT SECTION
    ═══════════════════════════════════════════════════ */
 .about-section {
   position: relative;
   z-index: 1;
-  max-width: 1200px;
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 15px 50px 60px;
+  padding: calc(var(--section-y) / 2) var(--gutter);
   overflow: hidden;
 }
 
-/* jemný dot-grid + záře jako signature prvek */
+/* subtle dot-grid + glow as a signature element */
 .about-section::before {
   content: "";
   position: absolute;
@@ -413,42 +429,49 @@
 }
 
 @media (max-width: 905px) {
-  .about-section { padding: 90px 30px 40px; margin-top: -48px; }
+  /* Section is pulled 48px under the rounded hero -> +48px padding keeps the visual gap */
+  .about-section {
+    padding-top: calc(var(--section-y) / 2 + 48px);
+    margin-top: -48px;
+  }
   .hero-section {
     z-index: 2;
-    border-bottom-left-radius: 40px ;
-    border-bottom-right-radius:40px;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
   }
   .about-heading { font-size: 2.1rem; }
-  .about-story-media{
+  .about-story-media {
     width: 70vw;
   }
 }
 
 @media (max-width: 600px) {
-  .about-section { padding: 90px 20px 30px; }
   .about-heading { font-size: 1.75rem; }
 }
-/* ── About: text + placeholder fotky (střídavé řádky) ──
-   .about-story-heading používá stejnou třídu jako .about-heading a .about-story-paragraph
-   stejnou jako .about-lead - dědí tak font, barvu i váhu řezu z existujících stylů.
+/* ── About: text + photo placeholder (alternating rows) ──
+   .about-story-heading uses the same class as .about-heading and .about-story-paragraph
+   the same as .about-lead - inherits font, colour and weight from the existing styles.
 
-   DŮLEŽITÉ: záměrně FLEXBOX, ne CSS grid. Grid sloupce se řídí POZICÍ (1. sloupec/
-   2. sloupec), takže by "úzký" vždy dostal ten div, co je zrovna na dané straně -
-   přesně proto to dřív vypadalo špatně (oba divy vycházely úzké/široké podle strany,
-   ne podle typu obsahu). Flexbox s `flex-basis` na konkrétních třídách (.about-story-text
-   vs. .about-story-media) drží šířku vázanou na TYP obsahu bez ohledu na to, jestli je
-   v HTML první nebo druhý - takže .about-story-media je vždy užší, ať je vlevo, nebo vpravo,
-   a sekce se tak můžou v HTML normálně střídat (text-media, media-text, text-media, ...). */
+   IMPORTANT: intentionally FLEXBOX, not CSS grid. Grid columns follow POSITION
+   (1st column / 2nd column), so the "narrow" one would always be whichever div is on
+   that side. Flexbox with `flex-basis` on the specific classes (.about-story-text vs.
+   .about-story-media) keeps the width tied to the CONTENT TYPE regardless of HTML
+   order - .about-story-media is always narrower, left or right, and rows can
+   alternate freely (text-media, media-text, ...). */
 
 .about-story-row {
   display: flex;
   align-items: center;
   gap: 48px;
   width: 100%;
-  margin-top: 72px;
+  margin-top: 0;
   position: relative;
   z-index: 1;
+}
+
+/* Space only BETWEEN rows (first row starts right at the section padding) */
+.about-story-row + .about-story-row {
+  margin-top: 72px;
 }
 
 .about-story-text {
@@ -467,24 +490,24 @@
   perspective: 1300px;
 }
 
-/* Doladění .about-heading pro tenhle kontext - font/barva/váha zůstávají zděděné */
+/* .about-heading tweak for this context - font/colour/weight inherited */
 .about-story-heading {
   text-align: left;
   font-size: 1.7rem;
   margin: 0;
 }
 
-/* Doladění .about-lead pro tenhle kontext - font/barva zůstávají zděděné */
+/* .about-lead tweak for this context - font/colour inherited */
 .about-story-paragraph {
   text-align: justify;
   max-width: none;
   margin: 0 auto 0 0;
 }
 
-/* ── Fotka: užší, portrétní, s 3D náklonem do prostoru ─────────────
-   Náklon je zrcadlený podle toho, na které straně fotka zrovna je -
-   zjišťuje se strukturálně (jestli je .about-story-media první dítě
-   v řádku, tzn. fotka je vlevo), ne přes modifikátorovou třídu. */
+/* ── Photo: narrower, portrait, with a 3D tilt ─────────────
+   Tilt is mirrored depending on the side the photo is on -
+   detected structurally (is .about-story-media the first child
+   of the row, i.e. photo on the left), not via a modifier class. */
 .about-story-photo-placeholder {
   width: 100%;
   max-width: 260px;
@@ -502,11 +525,11 @@
   overflow: hidden;
 }
 
-.about-story-photo-placeholder img{
+.about-story-photo-placeholder img {
   width: 100%;
   height: 100%;
 }
-/* Fotka vpravo (text je první dítě řádku) - náklon "hledí" doleva, ke textu */
+/* Photo on the right (text is the first child) - tilt "looks" left, towards the text */
 .about-story-row > .about-story-text:first-child ~ .about-story-media .about-story-photo-placeholder {
   transform: rotateY(-12deg) rotateX(5deg) rotate(-2deg);
   box-shadow:
@@ -514,7 +537,7 @@
     -8px 0 26px -14px rgba(166, 125, 255, 0.28);
 }
 
-/* Fotka vlevo (media je první dítě řádku) - náklon zrcadlově "hledí" doprava, ke textu */
+/* Photo on the left (media is the first child) - tilt mirrored, "looks" right */
 .about-story-row > .about-story-media:first-child .about-story-photo-placeholder {
   transform: rotateY(12deg) rotateX(5deg) rotate(2deg);
   box-shadow:
@@ -536,16 +559,18 @@
     8px 0 30px -12px rgba(166, 125, 255, 0.36);
 }
 
-/* ── Responzivita ─────────────────────────────────────────────── */
+/* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .about-story-row {
     flex-direction: column;
     gap: 32px;
+  }
+
+  .about-story-row + .about-story-row {
     margin-top: 56px;
   }
 
-  /* `order` funguje nezávisle na pořadí v HTML - takže ať je v DOM
-     první text, nebo fotka, na mobilu je výsledek vždy text -> fotka. */
+  /* `order` works regardless of HTML order - text -> photo on mobile. */
   .about-story-text {
     order: 1;
     flex-basis: auto;
@@ -556,7 +581,7 @@
     flex-basis: auto;
   }
 
-  /* Na mobilu už "vlevo/vpravo" nedává smysl, náklon sjednotíme na jeden směr */
+  /* Left/right makes no sense on mobile, unify the tilt to one direction */
   .about-story-photo-placeholder,
   .about-story-row > .about-story-text:first-child ~ .about-story-media .about-story-photo-placeholder,
   .about-story-row > .about-story-media:first-child .about-story-photo-placeholder {
@@ -576,14 +601,14 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   SEKCE - hlavička (nadpis + perex), použito v "Co naše systémy obsahují"
+   SECTION HEADER (heading + lead), used in "What our systems include"
    ═══════════════════════════════════════════════════ */
 
 .select-us-header-wrp_temp_new {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .select-us-title_temp_new {
@@ -597,7 +622,7 @@
   font-size: 1rem;
   color: #7a7a8c;
   text-align: center;
-  margin: 8px auto 40px;
+  margin: var(--title-gap) auto var(--head-gap);
   max-width: 480px;
   line-height: 1.6;
 }
@@ -611,13 +636,13 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   CO NAŠE SYSTÉMY OBSAHUJÍ - bodový přehled
+   WHAT OUR SYSTEMS INCLUDE - feature overview
    ═══════════════════════════════════════════════════ */
 
 .sys-features-section_temp_new {
   position: relative;
   z-index: 1;
-  padding: 10px 50px 20px;
+  padding: calc(var(--section-y) / 2) var(--gutter) 0;
   overflow: hidden;
 }
 
@@ -625,7 +650,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0;
-  max-width: 1200px;
+  max-width: var(--max-w);
   margin: 0 auto 40px;
   border: 1px solid rgba(166, 125, 255, 0.1);
   border-radius: 16px;
@@ -644,12 +669,12 @@
   position: relative;
 }
 
-/* Každý druhý sloupec — bez pravého borderu */
+/* Every second column - no right border */
 .sys-feature-item_temp_new:nth-child(2n) {
   border-right: none;
 }
 
-/* Poslední dva řádky — bez spodního borderu */
+/* Last two rows - no bottom border */
 .sys-feature-item_temp_new:nth-last-child(-n+2) {
   border-bottom: none;
 }
@@ -772,14 +797,7 @@
   }
 }
 
-@media (max-width: 738px) {
-    .sys-features-section_temp_new{
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-}
-
-/* Kouřové pozadí pod sekcí - posun nahoru přes relativní `bottom` + záporný margin-top */
+/* Smoke background under the section - moved up via relative `bottom` + negative margin-top */
 .smoke-bg {
   position: relative;
   display: block;
@@ -801,14 +819,14 @@
   }
 }
 
-.home-cta-btn-wrp{
+.home-cta-btn-wrp {
   display: flex;
   width: 100%;
   justify-content: center;
 }
 
 /* ═══════════════════════════════════════════════════
-   TECH STACK - dvě nekonečné řady karet (marquee)
+   TECH STACK - two infinite rows of cards (marquee)
    ═══════════════════════════════════════════════════ */
 
 /*
@@ -832,7 +850,8 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  padding: 50px 0 40px;
+  /* bottom: space before the Knowledge base button (button wrapper closes the section) */
+  padding: calc(var(--section-y) / 2) 0 var(--head-gap);
   overflow: hidden;
 }
 
@@ -840,8 +859,8 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 0 24px;
-  margin-bottom: 44px;
+  padding: 0 var(--gutter);
+  margin-bottom: var(--head-gap);
 }
 
 .tech-stack-heading {
@@ -854,11 +873,11 @@
   font-size: 1rem;
   color: #7a7a8c;
   max-width: 520px;
-  margin: 10px auto 0;
+  margin: var(--title-gap) auto 0;
   line-height: 1.6;
 }
 
-/* Seznam pro čtečky obrazovky - vizuálně skrytý, pohyblivé řady jsou aria-hidden */
+/* List for screen readers - visually hidden, moving rows are aria-hidden */
 .tech-stack-sr-list {
   position: absolute;
   width: 1px;
@@ -879,7 +898,7 @@
   gap: var(--tech-card-space);
 }
 
-/* Okno jedné řady - okraje plynule mizí do pozadí */
+/* Row window - edges fade into the background */
 .tech-stack-row {
   overflow: hidden;
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
@@ -893,17 +912,17 @@
   will-change: transform;
 }
 
-/* Horní řada jede doprava (stejná animace, obrácený směr) */
+/* Top row moves right (same animation, reversed) */
 .tech-stack-track--right {
   animation-direction: reverse;
 }
 
-/* Spodní řada jede doleva */
+/* Bottom row moves left */
 .tech-stack-track--left {
   animation-direction: normal;
 }
 
-/* Pauza: jen tlačítkem pro celou sekci (hover animaci nezastavuje) */
+/* Pause: only via the button for the whole section (hover does not stop it) */
 .tech-stack-section--paused .tech-stack-track {
   animation-play-state: paused;
 }
@@ -929,7 +948,7 @@
   transition: border-color 0.25s ease, background 0.25s ease;
 }
 
-/* Skutečné logo - jednotně ztlumené, na hover plná barva */
+/* Real logo - uniformly muted */
 .tech-stack-logo {
   max-width: 80%;
   max-height: 90%;
@@ -941,7 +960,7 @@
   -webkit-user-drag: none;
 }
 
-/* Placeholder, dokud logo není doplněné (logo: null v tech-stack.config.ts) */
+/* Placeholder until the logo is added (logo: null in tech-stack.config.ts) */
 .tech-stack-placeholder {
   display: flex;
   flex-direction: column;
@@ -997,7 +1016,6 @@
     --tech-card-w: 200px;
     --tech-card-h: 120px;
     --tech-card-space: 16px;
-    padding: 40px 0 30px;
   }
 
   .tech-stack-heading { font-size: 1.6rem; }
@@ -1028,21 +1046,22 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   FAQ SEKCE (nová) — čisté CSS, bez JS ("checkbox hack")
-   Skrytý <input type="checkbox"> + <label> jako trigger + sourozenecké
-   selektory řídí plynulou max-height animaci a rotaci šipky.
+   FAQ SECTION – pure CSS, no JS ("checkbox hack")
+   Hidden <input type="checkbox"> + <label> as trigger + sibling
+   selectors drive the height animation and chevron rotation.
    ═══════════════════════════════════════════════════ */
+/* FAQ list keeps its 720px reading width inside the section */
 .home-faq-section {
     position: relative;
     z-index: 1;
-    max-width: 720px;
+    max-width: calc(720px + var(--gutter) * 2);
     margin: 0 auto;
-    padding: 40px 0px 60px;
+    padding: calc(var(--section-y) / 2) var(--gutter);
 }
 
 .home-faq-header {
     text-align: center;
-    margin-bottom: 36px;
+    margin-bottom: var(--head-gap);
 }
 
 .home-faq-heading {
@@ -1069,8 +1088,8 @@
     transition: border-color 0.3s ease, background 0.3s ease;
 }
 
-/* Checkbox samotný je vizuálně skrytý, ale zůstává fokusovatelný
-   a ovládatelný klávesnicí (Tab + mezerník) díky vazbě label[for]. */
+/* The checkbox is visually hidden but stays focusable and keyboard
+   operable (Tab + Space) thanks to label[for]. */
 .home-faq-checkbox {
     position: absolute;
     opacity: 0;
@@ -1141,9 +1160,9 @@
     transition: transform 0.3s ease;
 }
 
-/* Grid s 0fr/1fr řádkem = jediný spolehlivý způsob, jak animovat
-   "auto" výšku obsahu čistě v CSS, bez pevně dané max-height hodnoty
-   a bez JS. Vnitřní div s overflow:hidden dělá samotné odkrytí obsahu. */
+/* Grid with a 0fr/1fr row = reliable pure-CSS animation of "auto"
+   height, no fixed max-height and no JS. Inner element with
+   overflow:hidden does the actual reveal. */
 .home-faq-body {
     display: grid;
     grid-template-rows: 0fr;
@@ -1182,12 +1201,10 @@
 }
 
 @media (max-width: 905px) {
-    .home-faq-section { padding: 30px 30px 50px; }
     .home-faq-heading { font-size: 1.5rem; }
 }
 
 @media (max-width: 480px) {
-    .home-faq-section { padding: 24px 20px 40px; }
     .home-faq-trigger { padding: 14px 14px; }
     .home-faq-trigger-text { font-size: 0.9rem; }
     .home-faq-answer-text { padding-left: 40px; }
@@ -1202,8 +1219,24 @@
     .home-faq-trigger, .home-faq-answer-text { transition: none; }
 }
 
-.kb-cta-wrp{
-      width: 100%;
+/* Knowledge base button - closes the tech stack section before the separator */
+.kb-cta-wrp {
+    width: 100%;
     display: flex;
     justify-content: center;
+    padding: 0 var(--gutter) calc(var(--section-y) / 2);
+    box-sizing: border-box;
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE SPACING TOKENS
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+    :host {
+        --gutter:     16px;
+        --section-y:  64px;
+        --hero-top:   120px;
+        --head-gap:   32px;
+        --title-gap:  12px;
+    }
 }

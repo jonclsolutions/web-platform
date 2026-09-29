@@ -4,24 +4,43 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
-    @description: Klidný, "dokumentační" vizuál - žádné hravé tvary ani animace
-    navíc, jen konzistentní tmavé karty a typografie sdílená se zbytkem webu.
-    @redesign-note (2026-08-28) BACKLOG "levý postranní seznam sekcí, vpravo obsah
-        s nadpisem": `.kb-main-content` rozšířen na 1180px, přidán `.kb-layout`
-        (grid: sticky `.kb-sidebar` + `.kb-content`). Dosavadní `.kb-toc` (vodorovné
-        pilulky) zůstává, ale JEN pro mobil (<=960px) - na desktopu ho nahrazuje
-        `.kb-sidebar`.
+    @description: Calm, "documentation" look - no playful shapes or extra animations,
+    just consistent dark cards and typography shared with the rest of the site.
+    @redesign-note (2026-08-28) BACKLOG "left section list, content with heading on
+        the right": `.kb-main-content` widened to 1180px, added `.kb-layout`
+        (grid: sticky `.kb-sidebar` + `.kb-content`). The existing `.kb-toc`
+        (horizontal pills) stays, but ONLY for mobile (<=960px) - on desktop it is
+        replaced by `.kb-sidebar`.
+    @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
+        (--gutter, --section-y, --hero-top, --hero-bottom, --head-gap, --title-gap),
+        content width 1200px (+ gutters), content column fills the space next to
+        the sidebar, points and alt sections sit flush with section headings (they
+        have no background). Only padding / margin / gap / max-width / grid tracks
+        changed.
 */
+
+:host {
+    --max-w:        1200px;
+
+    /* ── Unified spacing (same values on every public page) ── */
+    --gutter:       24px;   /* side padding of every container */
+    --section-y:    96px;   /* space before the closing CTA / page bottom */
+    --hero-top:     180px;  /* navbar height + air above page title */
+    --hero-bottom:  48px;   /* hero -> first content */
+    --head-gap:     48px;   /* spacing between documentation sections */
+    --title-gap:    16px;   /* heading -> lead */
+}
+
 .kb-main-content {
     font-family: "Source Sans Pro", sans-serif;
     position: relative;
-    max-width: 1180px;
+    max-width: calc(var(--max-w) + var(--gutter) * 2);
     margin: 0 auto;
-    padding: 0 24px;
+    padding: 0 var(--gutter);
 }
 
-.kb-main-content:before{
-        content: '';
+.kb-main-content:before {
+    content: '';
     position: fixed;
     inset: 0;
     background-image: linear-gradient(rgba(166, 125, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(166, 125, 255, 0.03) 1px, transparent 1px);
@@ -32,7 +51,7 @@
 
 /* ── Hero ─────────────────────────────────────────── */
 .kb-hero {
-    padding: 120px 0 40px;
+    padding: var(--hero-top) 0 var(--hero-bottom);
     text-align: center;
 }
 
@@ -46,11 +65,13 @@
 }
 
 .kb-hero-heading {
-    font-size: 2.4rem;
+    font-family: 'Source Sans Pro', 'Segoe UI', sans-serif;
+    font-size: clamp(2.4rem, 5vw, 4rem);
     font-weight: 700;
-    color: #e0e0e0;
-    line-height: 1.25;
-    margin: 0 0 18px;
+    color: #ffffff;
+    line-height: 1.15;
+    max-width: 720px;
+    margin: 0 auto var(--title-gap);
 }
 
 .kb-hero-lead {
@@ -61,16 +82,16 @@
     margin: 0 auto;
 }
 
-/* ── Dvousloupcový layout: postranní seznam + obsah ── */
+/* ── Two-column layout: side list + content ──
+   Content column fills the rest of the 1200px column. */
 .kb-layout {
     display: grid;
-    grid-template-columns: 232px minmax(0, 760px);
+    grid-template-columns: 232px minmax(0, 1fr);
     gap: 56px;
-    justify-content: center;
     align-items: start;
 }
 
-/* ── Postranní seznam sekcí (desktop, "scrollspy") ── */
+/* ── Side section list (desktop, "scrollspy") ── */
 .kb-sidebar {
     position: sticky;
     top: 96px;
@@ -113,15 +134,15 @@
     min-width: 0;
 }
 
-/* ── Obsah / rychlá navigace (JEN mobil, viz media query níže) ── */
+/* ── Table of contents / quick navigation (mobile ONLY, see media query) ── */
 .kb-toc {
     display: none;
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
-    padding: 24px 0 40px;
+    padding: 0 0 var(--head-gap);
     border-bottom: 1px solid rgba(166, 125, 255, 0.14);
-    margin-bottom: 40px;
+    margin-bottom: 0;
 }
 
 .kb-toc-item {
@@ -140,28 +161,34 @@
     border-color: #a67dff;
 }
 
-/* ── Jednotlivé sekce ─────────────────────────────── */
+/* ── Individual sections ───────────────────────────── */
 .kb-section {
-    padding: 50px 0;
+    padding: var(--head-gap) 0;
     border-bottom: 1px solid rgba(166, 125, 255, 0.08);
     scroll-margin-top: 90px;
+}
+
+/* First section starts right under the hero (desktop) */
+.kb-content > .kb-section:first-of-type {
+    padding-top: 0;
 }
 
 .kb-section:last-of-type {
     border-bottom: none;
 }
 
+/* Alternate sections have no background -> same box as regular sections
+   (the old -24px bleed only shifted nothing visible) */
 .kb-section--alt {
-    /* jemné odlišení sudých sekcí bez použití zářivých efektů */
-    margin: 0 -24px;
-    padding: 50px 24px;
+    margin: 0;
+    padding: var(--head-gap) 0;
 }
 
 .kb-section-head {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 16px;
+    margin-bottom: var(--title-gap);
 }
 
 .kb-section-icon {
@@ -200,9 +227,9 @@
     margin: 0 0 28px;
 }
 
-
+/* Points have no background -> no side padding, text aligned with the heading */
 .kb-point {
-    padding: 18px 20px;
+    padding: 18px 0;
 }
 
 .kb-point-title {
@@ -219,13 +246,17 @@
     margin: 0;
 }
 
-/* ── Slovníček pojmů (accordion, čisté CSS - checkbox hack) ── */
+/* ── Glossary (accordion, pure CSS - checkbox hack) ── */
 .kb-glossary-section {
-    padding: 50px 0 30px;
+    padding: var(--head-gap) 0 0;
 }
 
 .kb-glossary-header {
     margin-bottom: 28px;
+}
+
+.kb-glossary-header .kb-section-header {
+    margin-bottom: var(--title-gap);
 }
 
 .kb-glossary-list {
@@ -316,9 +347,9 @@
     padding-bottom: 16px;
 }
 
-/* ── CTA na konci stránky ─────────────────────────── */
+/* ── Closing CTA ──────────────────────────────────── */
 .kb-cta-section {
-    padding: 50px 0 90px;
+    padding: var(--section-y) 0;
     display: flex;
     justify-content: center;
 }
@@ -372,26 +403,38 @@
     transform: translateX(4px);
 }
 
-/* ── Responzivita ─────────────────────────────────── */
+/* ── Responsive ───────────────────────────────────── */
 
-/* Pod 960px se sidebar nevejde smysluplně vedle 760px obsahu - přepneme na
-   jednosloupcový layout a vrátíme se k vodorovným "pilulkám" nahoře. */
+/* Below 960px the sidebar does not fit meaningfully - single column with the
+   horizontal "pills" on top. */
 @media (max-width: 960px) {
     .kb-layout { grid-template-columns: 1fr; gap: 0; }
     .kb-sidebar { display: none; }
     .kb-toc { display: flex; }
+
+    /* Pills are now first -> first section needs its top spacing back */
+    .kb-content > .kb-section:first-of-type { padding-top: var(--head-gap); }
 }
 
 @media (max-width: 760px) {
-    .kb-hero { padding: 100px 0 30px; }
-    .kb-hero-heading { font-size: 1.9rem; }
     .kb-points-grid { grid-template-columns: 1fr; }
-    .kb-section--alt { margin: 0 -16px; padding: 40px 16px; }
+}
+
+@media (max-width: 600px) {
+    /* Mobile spacing tokens – all containers follow automatically */
+    :host {
+        --gutter:      16px;
+        --section-y:   64px;
+        --hero-top:    120px;
+        --hero-bottom: 40px;
+        --head-gap:    32px;
+        --title-gap:   12px;
+    }
+        /* Same mobile title size as other public pages */
+    .kb-hero-heading { font-size: 2rem; }
 }
 
 @media (max-width: 480px) {
-    .kb-main-content { padding: 0 16px; }
-    .kb-hero-heading { font-size: 1.6rem; }
     .kb-section-header { font-size: 1.2rem; }
     .kb-toc { gap: 8px; }
     .kb-toc-item { font-size: 0.76rem; padding: 6px 11px; }
