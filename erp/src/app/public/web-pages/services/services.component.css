@@ -54,7 +54,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 120px 24px 20px;
+  padding: 120px 24px 0px;
   animation: fadeUp 0.7s ease-out both;
 }
 
@@ -95,15 +95,20 @@
 }
 
 .svc-content-inner--full {
-  max-width: 860px;
+  max-width: 1200px;
 }
 
 .svc-main-col {
-  padding: 40px;
+  padding-left: 50px;
+  padding-right: 50px;
   animation: fadeUp 0.6s 0.15s ease-out both;
 }
 
 .svc-panel-header { margin-bottom: 24px; }
+
+.paddint-top-18-px{
+  padding-top: 18px;
+}
 
 .svc-panel-title {
   font-family: var(--ff-display);

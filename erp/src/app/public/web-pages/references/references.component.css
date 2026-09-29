@@ -1,9 +1,13 @@
-/*     
+/*
     @file: references.component.css
     @path: /src/app/public/web-pages/references/references.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09) Removed tag pills (.ref-tag*) and category dots
+        (.ref-cat-dot*). Added informative project detail (features list,
+        fact sheet, tech stack, result). Accordion uses grid-template-rows
+        0fr -> 1fr instead of fixed max-height.
 */
 
 :host {
@@ -39,7 +43,7 @@
   overflow-x: hidden;
 }
 
-/* Čtvercové pozadí — identické se Services */
+/* Grid background – identical to Services */
 .ref-page::before {
   content: '';
   position: fixed;
@@ -100,7 +104,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   HLAVNÍ LAYOUT
+   MAIN LAYOUT
    ═══════════════════════════════════════════════════════════════ */
 .ref-layout {
   position: relative;
@@ -113,7 +117,7 @@
   align-items: start;
 }
 
-/* Legenda */
+/* Legend */
 .legend-list {
   display: flex;
   flex-direction: column;
@@ -144,7 +148,7 @@
   color: var(--text-muted);
 }
 
-/* ── Hlavní tabulka ──────────────────────────────────────────── */
+/* ── Main table ──────────────────────────────────────────────── */
 .ref-main {
   display: flex;
   flex-direction: column;
@@ -152,7 +156,7 @@
   animation: fadeUp 0.6s 0.15s ease-out both;
 }
 
-/* Záhlaví tabulky */
+/* Table header */
 .ref-table-header {
   display: grid;
   grid-template-columns: 1fr 180px 180px;
@@ -177,7 +181,7 @@
   text-align: left;
 }
 
-/* Položky */
+/* Items */
 .ref-list {
   display: flex;
   flex-direction: column;
@@ -198,6 +202,13 @@
   background: var(--accent-dim);
 }
 
+/* h2 wrapper of the trigger – purely semantic, no visual impact */
+.ref-item-heading {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
 .ref-trigger {
   display: grid;
   grid-template-columns: 32px 1fr 180px 180px 24px;
@@ -210,12 +221,19 @@
   cursor: pointer;
   text-align: left;
   color: var(--text);
+  font-family: inherit;
   transition: background var(--ease);
 }
 
 .ref-trigger:hover { background: rgba(255, 255, 255, 0.025); }
 
-/* Index číslo */
+.ref-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+
+/* Index number */
 .ref-index {
   font-family: var(--ff-display);
   font-size: 0.7rem;
@@ -228,23 +246,8 @@
 .ref-trigger-title {
   display: flex;
   align-items: center;
-  gap: 9px;
   min-width: 0;
 }
-
-/* Barevná tečka kategorie — konečně dává legendě v sidebaru smysl:
-   stejné barvy (--cat-web/desktop/mobile/ai) se používají tady i tam. */
-.ref-cat-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.ref-cat-dot--web     { background: var(--cat-web); }
-.ref-cat-dot--desktop { background: var(--cat-desktop); }
-.ref-cat-dot--mobile  { background: var(--cat-mobile); }
-.ref-cat-dot--ai      { background: var(--cat-ai); }
 
 .ref-trigger-title-text {
   font-size: 0.97rem;
@@ -274,69 +277,138 @@
 
 .ref-item--open .ref-chevron { transform: rotate(180deg); }
 
-/* Tělo accordionu */
+/* ── Accordion body (grid-rows animation, no fixed max-height) ─ */
 .ref-body {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.38s ease;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.38s ease;
 }
 
-.ref-item--open .ref-body { max-height: 600px; }
+.ref-item--open .ref-body { grid-template-rows: 1fr; }
+
+.ref-body-clip {
+  min-height: 0;
+  overflow: hidden;
+}
 
 .ref-body-inner {
-  padding: 16px 18px 20px 62px;
+  padding: 20px 18px 24px 62px;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 22px;
 }
 
 .ref-description {
   font-size: 0.91rem;
   line-height: 1.75;
   color: var(--text-muted);
+  max-width: 760px;
 }
 
-/* Meta tagy pod popisem — oblast, velikost, doba trvání, klient, tech */
-.ref-meta-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.ref-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.77rem;
-  font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid var(--border-mid);
-  border-radius: 999px;
-  padding: 4px 12px;
-}
-
-.ref-tag-icon {
-  font-size: 0.8rem;
-  opacity: 0.8;
-}
-
-/* Barva ikony u tagu kategorie odpovídá tečce v řádku */
-.ref-tag--web .ref-tag-icon     { color: var(--cat-web); }
-.ref-tag--desktop .ref-tag-icon { color: var(--cat-desktop); }
-.ref-tag--mobile .ref-tag-icon  { color: var(--cat-mobile); }
-.ref-tag--ai .ref-tag-icon      { color: var(--cat-ai); }
-
-/* Technologické tagy — neutrální, ne accent barva, ať nesoupeří s kategorií */
-.ref-tag--tech {
+/* Section title (Key features, About, Tech stack) */
+.ref-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--text-muted);
-  background: var(--surface-2);
-  border-color: var(--border);
+  margin-bottom: 12px;
+}
+
+/* Key features – two-column list with neutral dash marker */
+.ref-features {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 24px;
+}
+
+.ref-features li {
+  position: relative;
+  padding-left: 16px;
+  font-size: 0.87rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.ref-features li::before {
+  content: '–';
+  position: absolute;
+  left: 0;
+  color: var(--text-muted);
+}
+
+/* Fact sheet + tech stack side by side */
+.ref-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.ref-panel {
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* Definition list – label / value rows */
+.ref-dl {
+  display: flex;
+  flex-direction: column;
+}
+
+.ref-dl-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.ref-dl-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.ref-dl-row:last-child { padding-bottom: 0; }
+
+.ref-dl dt {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.ref-dl dd {
+  font-size: 0.86rem;
+  color: var(--text);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Result – quiet callout with a thin left rule */
+.ref-result {
+  padding-left: 14px;
+  border-left: 2px solid var(--border-mid);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text);
+  max-width: 760px;
+}
+
+.ref-result-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CTA SEKCE
+   CTA SECTION
    ═══════════════════════════════════════════════════════════════ */
 .ref-cta-section {
   position: relative;
@@ -416,7 +488,7 @@
 .cta-arrow { font-size: 1.1rem; transition: transform var(--ease); }
 .cta-btn:hover .cta-arrow { transform: translateX(4px); }
 
-/* Oddělovač */
+/* Divider */
 .ref-divider {
   max-width: 700px;
   margin: 0 auto 60px;
@@ -432,25 +504,29 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ANIMACE
+   ANIMATIONS
    ═══════════════════════════════════════════════════════════════ */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .ref-body,
+  .ref-chevron { transition: none; }
+}
+
 /* ═══════════════════════════════════════════════════════════════
-   RESPONZIVITA
+   RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 1100px) {
   .ref-layout {
     grid-template-columns: 1fr;
   }
 
-  .sidebar-archive-card{
+  .sidebar-archive-card {
     display: none;
   }
-  
 
   .sidebar-card { flex: 1; min-width: 220px; }
   .sidebar-archive-card { min-width: 200px; }
@@ -468,6 +544,9 @@
 
   .ref-body-inner { padding-left: 18px; }
 
+  .ref-features,
+  .ref-details { grid-template-columns: 1fr; }
+
   .cta-row { flex-direction: column; }
   .cta-divider { width: 120px; height: 1px; }
   .cta-block { padding: 32px 28px; }
@@ -482,6 +561,17 @@
   .ref-stat-sep {
     width: 60px;
     height: 1px;
+  }
+
+  .ref-body-inner { padding: 18px 16px 20px; }
+  .ref-panel { padding: 14px; }
+}
+
+@media (max-width: 400px) {
+  /* Label above value on very narrow screens */
+  .ref-dl-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 }
 

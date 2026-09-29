@@ -366,7 +366,7 @@
 .about-section {
   position: relative;
   z-index: 1;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 15px 50px 60px;
   overflow: hidden;
@@ -617,7 +617,7 @@
 .sys-features-section_temp_new {
   position: relative;
   z-index: 1;
-  padding: 10px 0 20px;
+  padding: 10px 50px 20px;
   overflow: hidden;
 }
 
@@ -625,7 +625,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0;
-  max-width: 720px;
+  max-width: 1200px;
   margin: 0 auto 40px;
   border: 1px solid rgba(166, 125, 255, 0.1);
   border-radius: 16px;

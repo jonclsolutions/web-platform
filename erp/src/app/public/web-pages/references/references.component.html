@@ -1,100 +1,158 @@
-<!-- 
+<!--
     @file: references.component.html
     @path: /src/app/public/web-pages/references/references.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @description Public references page – accordion list of delivered projects.
+        Collapsed row: index, name, year, client. Expanded detail: description,
+        key features, fact sheet (category, scope, role, year, client),
+        technology stack and result.
+    @refactor-note (2026-09) Removed purple tag pills and category dots,
+        replaced with a structured, informative detail (features, fact sheet,
+        tech stack, result). Accordion rewritten to grid-rows animation (no
+        fixed max-height), accessible accordion pattern (h2 > button,
+        aria-controls, region, inert when collapsed).
 -->
-
 @if (t) {
 <div class="ref-page">
 
   <section class="ref-hero">
     <h1 class="ref-hero-title">{{ t.header_1 }}</h1>
     <p class="ref-hero-sub">{{ t.hero_sub }}</p>
-
   </section>
 
   <div class="ref-layout">
 
     <main class="ref-main">
 
-      <div class="ref-table-header">
+      <!-- Column header (desktop only) -->
+      <div class="ref-table-header" aria-hidden="true">
         <span class="ref-col-title">{{ t.table_header_title }}</span>
         <span class="ref-col-duration">{{ t.table_header_duration }}</span>
         <span class="ref-col-client">{{ t.table_header_client }}</span>
       </div>
 
       <div class="ref-list" role="list">
-        @for (project of projects; track project; let i = $index) {
+        @for (project of projects; track project.id; let i = $index) {
           <div
             class="ref-item"
             [class.ref-item--open]="project.isActive"
             [style.animation-delay]="i * 0.06 + 's'"
             role="listitem">
 
-            <button
-              class="ref-trigger"
-              [attr.aria-expanded]="project.isActive"
-              (click)="toggleProject(project)">
-              <span class="ref-index" aria-hidden="true">
-                {{ (i + 1).toString().padStart(2, '0') }}
-              </span>
-              <span class="ref-col-title ref-trigger-title">
-                @if (project.category) {
-                  <span class="ref-cat-dot" [ngClass]="'ref-cat-dot--' + project.category" aria-hidden="true"></span>
-                }
-                <span class="ref-trigger-title-text">{{ project.name }}</span>
-              </span>
-              <span class="ref-col-duration ref-meta">
-                {{ project.duration }}
-              </span>
-              <span class="ref-col-client ref-meta">
-                {{ project.client }}
-              </span>
-              <span class="ref-chevron" aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-            </button>
+            <!-- Accordion trigger (WAI-ARIA accordion pattern: heading > button) -->
+            <h2 class="ref-item-heading">
+              <button
+                type="button"
+                class="ref-trigger"
+                [id]="'ref-trigger-' + project.id"
+                [attr.aria-expanded]="project.isActive"
+                [attr.aria-controls]="'ref-body-' + project.id"
+                (click)="toggleProject(project)">
+                <span class="ref-index" aria-hidden="true">
+                  {{ (i + 1).toString().padStart(2, '0') }}
+                </span>
+                <span class="ref-col-title ref-trigger-title">
+                  <span class="ref-trigger-title-text">{{ project.name }}</span>
+                </span>
+                <span class="ref-col-duration ref-meta">{{ project.duration }}</span>
+                <span class="ref-col-client ref-meta">{{ project.client }}</span>
+                <span class="ref-chevron" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </button>
+            </h2>
 
-            <div class="ref-body">
-              <div class="ref-body-inner">
-                <p class="ref-description" [innerHTML]="project.description"></p>
+            <!-- Accordion panel – inert while collapsed (hidden from AT and keyboard) -->
+            <div
+              class="ref-body"
+              role="region"
+              [id]="'ref-body-' + project.id"
+              [attr.aria-labelledby]="'ref-trigger-' + project.id"
+              [attr.inert]="project.isActive ? null : ''">
+              <div class="ref-body-clip">
+                <div class="ref-body-inner">
 
-                <!-- Strukturované info o projektu — vidět i na mobilu, kde je
-                     .ref-meta (doba/klient) v samotném řádku schovaná. -->
-                <div class="ref-meta-tags">
-                  @if (project.category) {
-                    <span class="ref-tag" [ngClass]="'ref-tag--' + project.category">
-                      <span class="ref-tag-icon" aria-hidden="true">●</span>
-                      {{ getCategoryLabel(project.category) }}
-                    </span>
+                  <p class="ref-description" [innerHTML]="project.description"></p>
+
+                  <!-- Key features -->
+                  @if (project.features?.length) {
+                    <div class="ref-section">
+                      <h3 class="ref-section-title">{{ t.label_features ?? 'Klíčové funkce' }}</h3>
+                      <ul class="ref-features">
+                        @for (feature of project.features; track feature) {
+                          <li>{{ feature }}</li>
+                        }
+                      </ul>
+                    </div>
                   }
-                  @if (project.size) {
-                    <span class="ref-tag">
-                      <span class="ref-tag-icon" aria-hidden="true">◧</span>
-                      {{ project.size }}
-                    </span>
-                  }
-                  @if (project.duration) {
-                    <span class="ref-tag">
-                      <span class="ref-tag-icon" aria-hidden="true">⏱</span>
-                      {{ project.duration }}
-                    </span>
-                  }
-                  @if (project.client) {
-                    <span class="ref-tag">
-                      <span class="ref-tag-icon" aria-hidden="true">◎</span>
-                      {{ project.client }}
-                    </span>
-                  }
-                  @if (project.tech?.length) {
-                    @for (item of project.tech; track item) {
-                      <span class="ref-tag ref-tag--tech">{{ item }}</span>
+
+                  <div class="ref-details">
+
+                    <!-- Fact sheet -->
+                    <div class="ref-panel">
+                      <h3 class="ref-section-title">{{ t.label_facts ?? 'O projektu' }}</h3>
+                      <dl class="ref-dl">
+                        @if (project.category) {
+                          <div class="ref-dl-row">
+                            <dt>{{ t.label_category ?? 'Oblast' }}</dt>
+                            <dd>{{ getCategoryLabel(project.category) }}</dd>
+                          </div>
+                        }
+                        @if (project.size) {
+                          <div class="ref-dl-row">
+                            <dt>{{ t.label_scope ?? 'Rozsah' }}</dt>
+                            <dd>{{ project.size }}</dd>
+                          </div>
+                        }
+                        @if (project.role) {
+                          <div class="ref-dl-row">
+                            <dt>{{ t.label_role ?? 'Naše role' }}</dt>
+                            <dd>{{ project.role }}</dd>
+                          </div>
+                        }
+                        @if (project.duration) {
+                          <div class="ref-dl-row">
+                            <dt>{{ t.label_duration ?? 'Realizace' }}</dt>
+                            <dd>{{ project.duration }}</dd>
+                          </div>
+                        }
+                        @if (project.client) {
+                          <div class="ref-dl-row">
+                            <dt>{{ t.label_client ?? 'Klient' }}</dt>
+                            <dd>{{ project.client }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    </div>
+
+                    <!-- Technology stack -->
+                    @if (project.stack?.length) {
+                      <div class="ref-panel">
+                        <h3 class="ref-section-title">{{ t.label_stack ?? 'Technologický stack' }}</h3>
+                        <dl class="ref-dl">
+                          @for (layer of project.stack; track layer.label) {
+                            <div class="ref-dl-row">
+                              <dt>{{ layer.label }}</dt>
+                              <dd>{{ layer.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      </div>
                     }
+                  </div>
+
+                  <!-- Result -->
+                  @if (project.result) {
+                    <p class="ref-result">
+                      <span class="ref-result-label">{{ t.label_result ?? 'Výsledek' }}</span>
+                      {{ project.result }}
+                    </p>
                   }
+
                 </div>
               </div>
             </div>
