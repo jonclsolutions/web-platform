@@ -16,18 +16,12 @@
  * deleteSocialLink error) - `DataHandler.handleError()` je jediné autoritativní místo
  * pro chybový toast. Reset stavových flagů (`settingsSaving`, `_saving`) ZŮSTÁVÁ.
  * `onSettingsError()` je teď jen cleanup metoda bez vlastní zprávy.
- *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Komponenta DĚDÍ BaseDataComponent, takže žádná ruční injection - jen
- * `translationSection = 'web-settings'` a zděděné `strings`/`t()`. Nahrazeny VŠECHNY
- * uživatelsky viditelné texty (nadpisy karet, labely, placeholdery, hlášky, potvrzovací
- * dialogy). `getLangName()` fallback `code.toUpperCase()` a chybový fallback jazyka
- * `{ code: 'cz', name: 'Čeština', ... }` v `loadLanguages()` ZŮSTÁVAJÍ nepřeloženy -
- * první je technický kód, druhý je název jazyka samotného (čeština se vždy jmenuje
- * "Čeština" bez ohledu na jazyk administrace, stejná konvence jako
- * `AdminLanguageMeta.name` v admin-localization.service.ts). Texty s proměnnou
- * ({lang}/{name}) řešeny `.replace()` na `t()` výstupu - žádný templating engine.
+ *  * @howto Add a page to "Názvy stránek":
+ *   1) app.routes.ts – route gets `title: 'area.page_key'` (e.g. 'web.blog').
+ *   2) DB – INSERT row into `legal_page_titles` (area + page_key = route key).
+ *   3) Optional – translation key `pt_page_{area}_{page_key}` for the admin label.
  */
+
 
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -38,6 +32,11 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { environment } from '../../../../environments/environment';
 import { LangMeta, SiteSetting, SocialLink } from './'
+import { forkJoin, of, Observable } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import {
+  PageTitleArea, PageTitleLang, PageTitleRow, PageTitlesResponse, PageTitlesUpdatePayload
+} from './page-titles.model';
 
 @Component({
   selector: 'app-web-settings',
@@ -71,6 +70,28 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
   languages: LangMeta[] = [];
   currentLang: string = 'cz';
+
+  /** Active page tab: company details (default) or browser tab titles per page. */
+  activeTab: 'company' | 'page_titles' = 'company';
+
+  // ── Page titles tab state (see section "PAGE TITLES") ─────────────
+  /** Google shows roughly this many characters, longer titles get cut. */
+  readonly PT_RECOMMENDED_LENGTH = 60;
+  /** Hard limit, same as backend validation (PageTitleController::MAX_LENGTH). */
+  readonly PT_MAX_LENGTH = 120;
+  ptRows: PageTitleRow[] = [];
+  ptAreas: PageTitleArea[] = [];
+  ptActiveArea: PageTitleArea = 'web';
+  ptLanguages: Record<PageTitleArea, PageTitleLang[]> = { web: [], shop: [], admin: [] };
+  ptCurrentLang: Record<PageTitleArea, string> = { web: 'cz', shop: 'cz', admin: 'cz' };
+  ptLoaded    = false;
+  ptLoading   = false;
+  ptSaving    = false;
+  ptLoadError = false;
+  /** Row shown in the browser-tab preview (last focused input). */
+  ptPreviewRowId: number | null = null;
+  /** Original JSON of every row's title_i18n – base for dirty detection. */
+  private ptSnapshot = new Map<number, string>();
 
   settings: SiteSetting = {
     company_name: '', ico: '', dic: '',
@@ -128,6 +149,17 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
         this.loadAll();
       }
     });
+  }
+
+  /**
+   * @description Switches the page tab. Page titles load lazily on first open;
+   * unsaved page title edits are kept (state lives in this component).
+   */
+  switchTab(tab: 'company' | 'page_titles'): void {
+    if (this.activeTab === tab) return;
+    this.activeTab = tab;
+    if (tab === 'page_titles' && !this.ptLoaded && !this.ptLoading) this.ptLoad();
+    this.cd.markForCheck();
   }
 
   switchLang(code: string): void {
@@ -468,4 +500,200 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   }
 
   trackByIndex(index: number): number { return index; }
+
+  // ═══════════════════════════════════════════════════════════════
+  // PAGE TITLES – browser <title> per public page (tab "page_titles")
+  // ═══════════════════════════════════════════════════════════════
+
+  /** @description Loads web + shop languages and all page titles in parallel. */
+  private ptLoad(): void {
+    this.ptLoading   = true;
+    this.ptLoadError = false;
+    this.cd.markForCheck();
+
+    forkJoin({
+      web:  this.ptLoadLanguages('web'),
+      shop: this.ptLoadLanguages('shop'),
+      data: this.dataHandler.get<PageTitlesResponse>('legal/config/page-titles'),
+    }).subscribe({
+      next: ({ web, shop, data }) => {
+        const fallback: PageTitleLang[] = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }];
+        this.ptLanguages = {
+          web:   web.length  ? web  : fallback,
+          shop:  shop.length ? shop : (web.length ? web : fallback),
+          admin: web.length  ? web  : fallback,
+        };
+        for (const area of ['web', 'shop', 'admin'] as PageTitleArea[]) {
+          const langs = this.ptLanguages[area];
+          if (!langs.find(l => l.code === this.ptCurrentLang[area])) {
+            this.ptCurrentLang[area] = langs[0].code;
+          }
+        }
+        this.ptSetRows((data as any)?.page_titles ?? []);
+        this.ptLoaded  = true;
+        this.ptLoading = false;
+        this.cd.markForCheck();
+      },
+      error: () => {
+        this.ptLoading   = false;
+        this.ptLoadError = true;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * @description Active languages of one public module, cached with the same key/TTL
+   * as loadLanguages(). Failure = empty list (caller falls back to web languages).
+   */
+  private ptLoadLanguages(module: 'web' | 'shop'): Observable<PageTitleLang[]> {
+    return this.resourceCache.get(
+      `web-settings:languages:${module}`,
+      () => this.dataHandler.get<{ languages: PageTitleLang[] }>(`languages/${module}`),
+      this.LANG_TTL_MS
+    ).pipe(
+      map((res: any) => ((res?.languages ?? []) as PageTitleLang[]).filter(l => l.active !== false)),
+      catchError(() => of([] as PageTitleLang[]))
+    );
+  }
+
+  /** @description Stores rows, fills missing languages with '' and snapshots them. */
+  private ptSetRows(rows: PageTitleRow[]): void {
+    this.ptRows = rows.map(r => {
+      const titles: Record<string, string> = { ...(r.title_i18n ?? {}) };
+      for (const lang of this.ptLanguages[r.area] ?? []) {
+        if (typeof titles[lang.code] !== 'string') titles[lang.code] = '';
+      }
+      return { ...r, title_i18n: titles };
+    });
+
+    this.ptSnapshot.clear();
+    for (const r of this.ptRows) this.ptSnapshot.set(r.id, JSON.stringify(r.title_i18n));
+
+    this.ptAreas = (['web', 'shop', 'admin'] as PageTitleArea[]).filter(a => this.ptRows.some(r => r.area === a));
+    if (!this.ptAreas.includes(this.ptActiveArea) && this.ptAreas.length) this.ptActiveArea = this.ptAreas[0];
+    this.ptPreviewRowId = null;
+  }
+
+  /** Tab label of an area (Web / E-shop / Administrace). */
+  ptAreaLabel(area: PageTitleArea): string {
+    const key = area === 'web' ? 'pt_area_web' : area === 'shop' ? 'pt_area_shop' : 'pt_area_admin';
+    return this.strings?.[key] || area;
+  }
+
+  get ptCanUpdate(): boolean {
+    return this.hasAnyPermission('core-legal-config-update');
+  }
+
+  get ptVisibleRows(): PageTitleRow[] {
+    return this.ptRows.filter(r => r.area === this.ptActiveArea);
+  }
+
+  get ptActiveLanguages(): PageTitleLang[] {
+    return this.ptLanguages[this.ptActiveArea] ?? [];
+  }
+
+  get ptLang(): string {
+    return this.ptCurrentLang[this.ptActiveArea];
+  }
+
+  get ptDirtyCount(): number {
+    return this.ptRows.filter(r => this.ptIsRowDirty(r)).length;
+  }
+
+  get ptIsDirty(): boolean {
+    return this.ptDirtyCount > 0;
+  }
+
+  /** "Unsaved changes: 3" badge text. */
+  get ptUnsavedLabel(): string {
+    return (this.strings?.pt_unsaved_count ?? '').replace('{count}', String(this.ptDirtyCount));
+  }
+
+  /** Tab preview text: last focused row, otherwise the first visible one. */
+  get ptPreviewText(): string {
+    const rows = this.ptVisibleRows;
+    const row  = rows.find(r => r.id === this.ptPreviewRowId) ?? rows[0];
+    const text = row?.title_i18n[this.ptLang]?.trim();
+    return text || this.strings?.pt_preview_empty || '';
+  }
+
+  /** Human page name from translations ('pt_page_web_about_us'), fallback = URL. */
+  ptLabelFor(row: PageTitleRow): string {
+    const value = this.strings?.[`pt_page_${row.area}_${row.page_key.replace(/-/g, '_')}`];
+    return typeof value === 'string' && value ? value : row.route_path;
+  }
+
+  ptPlaceholderFor(): string {
+    const name = this.ptActiveLanguages.find(l => l.code === this.ptLang)?.name ?? this.ptLang.toUpperCase();
+    return (this.strings?.pt_input_placeholder ?? '').replace('{lang}', name);
+  }
+
+  ptLengthOf(row: PageTitleRow): number {
+    return (row.title_i18n[this.ptLang] ?? '').length;
+  }
+
+  ptIsRowDirty(row: PageTitleRow): boolean {
+    return JSON.stringify(row.title_i18n) !== this.ptSnapshot.get(row.id);
+  }
+
+  ptAreaDirty(area: PageTitleArea): boolean {
+    return this.ptRows.some(r => r.area === area && this.ptIsRowDirty(r));
+  }
+
+  ptSwitchArea(area: PageTitleArea): void {
+    if (this.ptActiveArea === area) return;
+    this.ptActiveArea = area;
+    this.ptPreviewRowId = null;
+    this.cd.markForCheck();
+  }
+
+  ptSwitchLang(code: string): void {
+    this.ptCurrentLang = { ...this.ptCurrentLang, [this.ptActiveArea]: code };
+    this.cd.markForCheck();
+  }
+
+  ptOnFocus(row: PageTitleRow): void {
+    this.ptPreviewRowId = row.id;
+    this.cd.markForCheck();
+  }
+
+  ptOnInput(row: PageTitleRow): void {
+    this.ptPreviewRowId = row.id;
+    this.cd.markForCheck();
+  }
+
+  /** @description Reverts all unsaved page title edits to the last loaded state. */
+  ptDiscard(): void {
+    this.ptRows = this.ptRows.map(r => ({ ...r, title_i18n: JSON.parse(this.ptSnapshot.get(r.id) ?? '{}') }));
+    this.cd.markForCheck();
+  }
+
+  /** @description Sends only changed rows; the API returns the fresh full list. */
+  ptSave(): void {
+    if (!this.ptCanUpdate || this.ptSaving || !this.ptIsDirty) return;
+
+    const payload: PageTitlesUpdatePayload = {
+      titles: this.ptRows
+        .filter(r => this.ptIsRowDirty(r))
+        .map(r => ({ id: r.id, title_i18n: r.title_i18n })),
+    };
+
+    this.ptSaving = true;
+    this.cd.markForCheck();
+
+    this.dataHandler.put<PageTitlesResponse>('legal/config/page-titles', payload as any).subscribe({
+      next: (res: any) => {
+        this.ptSetRows(res?.page_titles ?? this.ptRows);
+        this.ptSaving = false;
+        this.alertDialogService.open(this.t('save_success_title'), this.t('pt_saved_message'), 'success');
+        this.cd.markForCheck();
+      },
+      error: () => {
+        // Toast already shown by DataHandler.handleError().
+        this.ptSaving = false;
+        this.cd.markForCheck();
+      }
+    });
+  }
 }

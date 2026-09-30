@@ -31,6 +31,11 @@
         web-settings.component.ts stejné datum. `{{ currentLang | uppercase }}` a
         `getLangName(currentLang)` beze změny - jazykové kódy/názvy jazyků jsou
         obsahová data (LangMeta), ne UI text.
+    @refactor-note (2026-09-30) Page tab titles: the page got two tabs –
+        "Company details" (everything that was here before, unchanged, only wrapped
+        in `@if (activeTab === 'company')`) and "Page titles" (inline block, members
+        prefixed `pt` in .ts – no child component). Unsaved page titles survive a tab
+        switch (state lives in this component). Nothing else in this template changed.
 -->
 
 <div class="ws-container">
@@ -41,416 +46,624 @@
     </div>
   </div>
 
-  @if (errorMessage) {
-    <div class="ws-error">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  <!-- Page tabs: Company details / Page titles -->
+  <div class="ws-tabs" role="tablist" [attr.aria-label]="strings.tabs_label">
+    <button
+      type="button"
+      role="tab"
+      class="ws-tab"
+      [class.active]="activeTab === 'company'"
+      [attr.aria-selected]="activeTab === 'company'"
+      (click)="switchTab('company')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 22V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v18"/>
+        <path d="M2 22h20"/>
+        <path d="M9 6h.01"/><path d="M15 6h.01"/>
+        <path d="M9 10h.01"/><path d="M15 10h.01"/>
       </svg>
-      {{ errorMessage }}
-    </div>
-  }
+      {{ strings.tab_company }}
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="ws-tab"
+      [class.active]="activeTab === 'page_titles'"
+      [attr.aria-selected]="activeTab === 'page_titles'"
+      (click)="switchTab('page_titles')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <path d="M2 9h20"/>
+      </svg>
+      {{ strings.tab_page_titles }}
+      @if (ptIsDirty) {
+        <span class="ws-tab-dot" aria-hidden="true"></span>
+      }
+    </button>
+  </div>
 
-  <div class="ws-card">
-    <div class="ws-card-header">
-      <span class="ws-card-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21 15 16 10 5 21"/>
+  @if (activeTab === 'company') {
+
+    @if (errorMessage) {
+      <div class="ws-error">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
-      </span>
-      <span class="ws-card-title">{{ strings.logo_card_title }}</span>
-    </div>
-
-    @if (settingsLoading) {
-      <div class="ws-skeleton-body">
-        <div class="ws-skeleton-logo"></div>
+        {{ errorMessage }}
       </div>
     }
 
-    @if (!settingsLoading) {
-      <div class="ws-card-body">
-        <div class="ws-logo-section">
-          <div class="ws-logo-preview-wrap">
-            @if (hasLogo) {
-              <img [src]="logoSrc" class="ws-logo-img" [alt]="strings.logo_alt">
-            } @else {
-              <div class="ws-logo-placeholder">
-                <span class="ws-logo-placeholder-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 22V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v18"/>
-                    <path d="M2 22h20"/>
-                    <path d="M9 6h.01"/><path d="M15 6h.01"/>
-                    <path d="M9 10h.01"/><path d="M15 10h.01"/>
-                    <path d="M9 14h.01"/><path d="M15 14h.01"/>
-                  </svg>
-                </span>
-                <span class="ws-logo-placeholder-text">{{ strings.logo_placeholder_text }}</span>
-              </div>
-            }
-          </div>
-          <div class="ws-logo-controls">
-            <div class="ws-logo-info">
-              @if (logoFile) {
-                <span class="ws-logo-filename">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  {{ logoFile.name }}
-                </span>
-                <span class="ws-logo-filesize">{{ (logoFile.size / 1024).toFixed(0) }} KB</span>
-              } @else if (settings.logo_path) {
-                <span class="ws-logo-stored">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  {{ strings.logo_stored_text }}
-                </span>
+    <div class="ws-card">
+      <div class="ws-card-header">
+        <span class="ws-card-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </span>
+        <span class="ws-card-title">{{ strings.logo_card_title }}</span>
+      </div>
+
+      @if (settingsLoading) {
+        <div class="ws-skeleton-body">
+          <div class="ws-skeleton-logo"></div>
+        </div>
+      }
+
+      @if (!settingsLoading) {
+        <div class="ws-card-body">
+          <div class="ws-logo-section">
+            <div class="ws-logo-preview-wrap">
+              @if (hasLogo) {
+                <img [src]="logoSrc" class="ws-logo-img" [alt]="strings.logo_alt">
               } @else {
-                <span class="ws-logo-none">{{ strings.logo_none_text }}</span>
+                <div class="ws-logo-placeholder">
+                  <span class="ws-logo-placeholder-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M6 22V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v18"/>
+                      <path d="M2 22h20"/>
+                      <path d="M9 6h.01"/><path d="M15 6h.01"/>
+                      <path d="M9 10h.01"/><path d="M15 10h.01"/>
+                      <path d="M9 14h.01"/><path d="M15 14h.01"/>
+                    </svg>
+                  </span>
+                  <span class="ws-logo-placeholder-text">{{ strings.logo_placeholder_text }}</span>
+                </div>
               }
             </div>
-            @if (hasAnyPermission('core-legal-config-update')) {
-              <div class="ws-logo-buttons">
-                <label class="ws-btn ws-btn-secondary ws-btn-file">
-                  @if (logoFile) {
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="23 4 23 10 17 10"/>
-                      <polyline points="1 20 1 14 7 14"/>
-                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                    </svg>
-                    {{ strings.logo_change_button }}
-                  } @else {
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="ws-logo-controls">
+              <div class="ws-logo-info">
+                @if (logoFile) {
+                  <span class="ws-logo-filename">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                     </svg>
-                    {{ strings.logo_select_button }}
-                  }
-                  <input type="file" accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                         class="ws-hidden-input" (change)="onLogoSelected($event)">
-                </label>
-                @if (logoFile) {
-                  <button class="ws-btn ws-btn-ghost" (click)="cancelLogoSelection()">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    {{ logoFile.name }}
+                  </span>
+                  <span class="ws-logo-filesize">{{ (logoFile.size / 1024).toFixed(0) }} KB</span>
+                } @else if (settings.logo_path) {
+                  <span class="ws-logo-stored">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
                     </svg>
-                    {{ strings.logo_cancel_selection }}
+                    {{ strings.logo_stored_text }}
+                  </span>
+                } @else {
+                  <span class="ws-logo-none">{{ strings.logo_none_text }}</span>
+                }
+              </div>
+              @if (hasAnyPermission('core-legal-config-update')) {
+                <div class="ws-logo-buttons">
+                  <label class="ws-btn ws-btn-secondary ws-btn-file">
+                    @if (logoFile) {
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <polyline points="1 20 1 14 7 14"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                      </svg>
+                      {{ strings.logo_change_button }}
+                    } @else {
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      {{ strings.logo_select_button }}
+                    }
+                    <input type="file" accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                           class="ws-hidden-input" (change)="onLogoSelected($event)">
+                  </label>
+                  @if (logoFile) {
+                    <button class="ws-btn ws-btn-ghost" (click)="cancelLogoSelection()">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                      {{ strings.logo_cancel_selection }}
+                    </button>
+                  }
+                </div>
+              }
+              @if (logoFile) {
+                <p class="ws-logo-hint">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                  </svg>
+                  {{ strings.logo_pending_hint }}
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="ws-card">
+      <div class="ws-card-header">
+        <span class="ws-card-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 22V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v18"/>
+            <path d="M2 22h20"/>
+            <path d="M9 6h.01"/><path d="M15 6h.01"/>
+            <path d="M9 10h.01"/><path d="M15 10h.01"/>
+            <path d="M9 14h.01"/><path d="M15 14h.01"/>
+          </svg>
+        </span>
+        <span class="ws-card-title">{{ strings.company_card_title }}</span>
+      </div>
+
+      @if (settingsLoading) {
+        <div class="ws-skeleton-body">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="ws-skeleton-row"></div>
+          }
+        </div>
+      }
+
+      @if (!settingsLoading) {
+        <div class="ws-card-body">
+
+          @if (languages.length > 1) {
+            <div class="ws-i18n-bar">
+              <span class="ws-i18n-bar-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                {{ strings.i18n_bar_label }}
+              </span>
+              <div class="ws-mini-lang-tabs">
+                @for (lang of languages; track lang.code) {
+                  <button
+                    type="button"
+                    class="ws-mini-lang-tab"
+                    [class.active]="currentLang === lang.code"
+                    (click)="switchLang(lang.code)">
+                    @if (lang.iconUrl) {
+                      <img [src]="lang.iconUrl" class="ws-mini-lang-icon" [alt]="lang.code">
+                    }
+                    {{ lang.code | uppercase }}
                   </button>
                 }
               </div>
-            }
-            @if (logoFile) {
+            </div>
+          }
+
+          <div class="ws-form-grid">
+            <div class="ws-field">
+              <label class="ws-label">{{ strings.field_company_name }}</label>
+              <input class="ws-input" type="text" [(ngModel)]="settings.company_name"
+                     name="company_name" [placeholder]="strings.field_company_name_placeholder">
+            </div>
+
+            <div class="ws-field">
+              <label class="ws-label">
+                {{ strings.field_brand_tagline }}
+                <span class="ws-i18n-lang-tag">{{ currentLang | uppercase }}</span>
+              </label>
+              <input class="ws-input" type="text"
+                     [(ngModel)]="settings.brand_tagline_i18n[currentLang]"
+                     name="brand_tagline"
+                     [placeholder]="strings.field_brand_tagline_placeholder.replace('{lang}', getLangName(currentLang))">
+            </div>
+
+            <div class="ws-field">
+              <label class="ws-label">
+                {{ strings.field_copyright_text }}
+                <span class="ws-i18n-lang-tag">{{ currentLang | uppercase }}</span>
+              </label>
+              <input class="ws-input" type="text"
+                     [(ngModel)]="settings.copyright_text_i18n[currentLang]"
+                     name="copyright_text"
+                     [placeholder]="strings.field_copyright_text_placeholder.replace('{lang}', getLangName(currentLang))">
+            </div>
+
+            <div class="ws-field">
+              <label class="ws-label">{{ strings.field_ico }}</label>
+              <input class="ws-input" type="text" [(ngModel)]="settings.ico"
+                     name="ico" [placeholder]="strings.field_ico_placeholder">
+            </div>
+
+            <div class="ws-field">
+              <label class="ws-label">{{ strings.field_dic }}</label>
+              <input class="ws-input" type="text" [(ngModel)]="settings.dic"
+                     name="dic" [placeholder]="strings.field_dic_placeholder">
+            </div>
+
+            <div class="ws-field ws-field-full">
+              <label class="ws-label">{{ strings.field_ga_label }}</label>
+              <input class="ws-input" type="text" [(ngModel)]="settings.google_analytics_id"
+                     name="google_analytics_id" placeholder="G-XXXXXXXXXX"
+                     pattern="^G-[A-Za-z0-9]{6,10}$">
               <p class="ws-logo-hint">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <line x1="12" y1="16" x2="12" y2="12"/>
                   <line x1="12" y1="8" x2="12.01" y2="8"/>
                 </svg>
-                {{ strings.logo_pending_hint }}
+                {{ strings.field_ga_hint }}
               </p>
+            </div>
+
+            <div class="ws-field">
+              <label class="ws-label">{{ strings.field_email }}</label>
+              <input class="ws-input" type="email" [(ngModel)]="settings.contact_email"
+                     name="contact_email" [placeholder]="strings.field_email_placeholder">
+            </div>
+
+            <div class="ws-field">
+              <label class="ws-label">{{ strings.field_phone }}</label>
+              <input class="ws-input" type="text" [(ngModel)]="settings.contact_phone"
+                     name="contact_phone" [placeholder]="strings.field_phone_placeholder">
+            </div>
+
+            <div class="ws-field ws-field-full">
+              <label class="ws-label">{{ strings.field_address }}</label>
+              <input class="ws-input" type="text" [(ngModel)]="settings.address"
+                     name="address" [placeholder]="strings.field_address_placeholder">
+            </div>
+
+            <div class="ws-field ws-field-full">
+              <label class="ws-label">{{ strings.field_footer_text }}</label>
+              <textarea class="ws-textarea" [(ngModel)]="settings.footer_text"
+                        name="footer_text" rows="3"
+                        [placeholder]="strings.field_footer_text_placeholder"></textarea>
+            </div>
+          </div>
+
+          <div class="ws-form-footer">
+            @if (settingsSaved) {
+              <span class="ws-saved-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {{ strings.saved_badge }}
+              </span>
+            }
+            @if (logoFile) {
+              <span class="ws-logo-pending-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                {{ strings.logo_pending_badge }}
+              </span>
+            }
+            @if (hasAnyPermission('core-legal-config-update')) {
+              <button class="ws-btn ws-btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
+                @if (settingsSaving) {
+                  <span class="ws-mini-spin">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                  </span>
+                } @else {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                }
+                {{ strings.save_button }}{{ logoFile ? strings.save_button_with_logo_suffix : '' }}
+              </button>
             }
           </div>
         </div>
-      </div>
-    }
-  </div>
-
-  <div class="ws-card">
-    <div class="ws-card-header">
-      <span class="ws-card-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 22V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v18"/>
-          <path d="M2 22h20"/>
-          <path d="M9 6h.01"/><path d="M15 6h.01"/>
-          <path d="M9 10h.01"/><path d="M15 10h.01"/>
-          <path d="M9 14h.01"/><path d="M15 14h.01"/>
-        </svg>
-      </span>
-      <span class="ws-card-title">{{ strings.company_card_title }}</span>
+      }
     </div>
 
-    @if (settingsLoading) {
-      <div class="ws-skeleton-body">
-        @for (i of [1,2,3,4,5,6,7,8]; track i) {
-          <div class="ws-skeleton-row"></div>
-        }
+    <div class="ws-card">
+      <div class="ws-card-header">
+        <span class="ws-card-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </span>
+        <span class="ws-card-title">{{ strings.social_card_title }}</span>
+        <span class="ws-card-count">{{ socialLinks.length }}</span>
       </div>
-    }
 
-    @if (!settingsLoading) {
-      <div class="ws-card-body">
-
-        @if (languages.length > 1) {
-          <div class="ws-i18n-bar">
-            <span class="ws-i18n-bar-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-              </svg>
-              {{ strings.i18n_bar_label }}
-            </span>
-            <div class="ws-mini-lang-tabs">
-              @for (lang of languages; track lang.code) {
-                <button
-                  type="button"
-                  class="ws-mini-lang-tab"
-                  [class.active]="currentLang === lang.code"
-                  (click)="switchLang(lang.code)">
-                  @if (lang.iconUrl) {
-                    <img [src]="lang.iconUrl" class="ws-mini-lang-icon" [alt]="lang.code">
-                  }
-                  {{ lang.code | uppercase }}
-                </button>
-              }
-            </div>
-          </div>
-        }
-
-        <div class="ws-form-grid">
-          <div class="ws-field">
-            <label class="ws-label">{{ strings.field_company_name }}</label>
-            <input class="ws-input" type="text" [(ngModel)]="settings.company_name"
-                   name="company_name" [placeholder]="strings.field_company_name_placeholder">
-          </div>
-
-          <div class="ws-field">
-            <label class="ws-label">
-              {{ strings.field_brand_tagline }}
-              <span class="ws-i18n-lang-tag">{{ currentLang | uppercase }}</span>
-            </label>
-            <input class="ws-input" type="text"
-                   [(ngModel)]="settings.brand_tagline_i18n[currentLang]"
-                   name="brand_tagline"
-                   [placeholder]="strings.field_brand_tagline_placeholder.replace('{lang}', getLangName(currentLang))">
-          </div>
-
-          <div class="ws-field">
-            <label class="ws-label">
-              {{ strings.field_copyright_text }}
-              <span class="ws-i18n-lang-tag">{{ currentLang | uppercase }}</span>
-            </label>
-            <input class="ws-input" type="text"
-                   [(ngModel)]="settings.copyright_text_i18n[currentLang]"
-                   name="copyright_text"
-                   [placeholder]="strings.field_copyright_text_placeholder.replace('{lang}', getLangName(currentLang))">
-          </div>
-
-          <div class="ws-field">
-            <label class="ws-label">{{ strings.field_ico }}</label>
-            <input class="ws-input" type="text" [(ngModel)]="settings.ico"
-                   name="ico" [placeholder]="strings.field_ico_placeholder">
-          </div>
-
-          <div class="ws-field">
-            <label class="ws-label">{{ strings.field_dic }}</label>
-            <input class="ws-input" type="text" [(ngModel)]="settings.dic"
-                   name="dic" [placeholder]="strings.field_dic_placeholder">
-          </div>
-
-          <div class="ws-field ws-field-full">
-            <label class="ws-label">{{ strings.field_ga_label }}</label>
-            <input class="ws-input" type="text" [(ngModel)]="settings.google_analytics_id"
-                   name="google_analytics_id" placeholder="G-XXXXXXXXXX"
-                   pattern="^G-[A-Za-z0-9]{6,10}$">
-            <p class="ws-logo-hint">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="16" x2="12" y2="12"/>
-                <line x1="12" y1="8" x2="12.01" y2="8"/>
-              </svg>
-              {{ strings.field_ga_hint }}
-            </p>
-          </div>
-
-          <div class="ws-field">
-            <label class="ws-label">{{ strings.field_email }}</label>
-            <input class="ws-input" type="email" [(ngModel)]="settings.contact_email"
-                   name="contact_email" [placeholder]="strings.field_email_placeholder">
-          </div>
-
-          <div class="ws-field">
-            <label class="ws-label">{{ strings.field_phone }}</label>
-            <input class="ws-input" type="text" [(ngModel)]="settings.contact_phone"
-                   name="contact_phone" [placeholder]="strings.field_phone_placeholder">
-          </div>
-
-          <div class="ws-field ws-field-full">
-            <label class="ws-label">{{ strings.field_address }}</label>
-            <input class="ws-input" type="text" [(ngModel)]="settings.address"
-                   name="address" [placeholder]="strings.field_address_placeholder">
-          </div>
-
-          <div class="ws-field ws-field-full">
-            <label class="ws-label">{{ strings.field_footer_text }}</label>
-            <textarea class="ws-textarea" [(ngModel)]="settings.footer_text"
-                      name="footer_text" rows="3"
-                      [placeholder]="strings.field_footer_text_placeholder"></textarea>
-          </div>
-        </div>
-
-        <div class="ws-form-footer">
-          @if (settingsSaved) {
-            <span class="ws-saved-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              {{ strings.saved_badge }}
-            </span>
-          }
-          @if (logoFile) {
-            <span class="ws-logo-pending-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-              {{ strings.logo_pending_badge }}
-            </span>
-          }
-          @if (hasAnyPermission('core-legal-config-update')) {
-            <button class="ws-btn ws-btn-primary" (click)="saveSettings()" [disabled]="settingsSaving">
-              @if (settingsSaving) {
-                <span class="ws-mini-spin">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                  </svg>
-                </span>
-              } @else {
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                  <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-                </svg>
-              }
-              {{ strings.save_button }}{{ logoFile ? strings.save_button_with_logo_suffix : '' }}
-            </button>
+      @if (socialLoading) {
+        <div class="ws-skeleton-body">
+          @for (i of [1,2,3]; track i) {
+            <div class="ws-skeleton-social"></div>
           }
         </div>
-      </div>
-    }
-  </div>
+      }
 
-  <div class="ws-card">
-    <div class="ws-card-header">
-      <span class="ws-card-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="2" y1="12" x2="22" y2="12"/>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
-      </span>
-      <span class="ws-card-title">{{ strings.social_card_title }}</span>
-      <span class="ws-card-count">{{ socialLinks.length }}</span>
-    </div>
-
-    @if (socialLoading) {
-      <div class="ws-skeleton-body">
-        @for (i of [1,2,3]; track i) {
-          <div class="ws-skeleton-social"></div>
-        }
-      </div>
-    }
-
-    @if (!socialLoading) {
-      <div class="ws-social-list">
-        @if (socialLinks.length === 0) {
-          <div class="ws-social-empty">
-            <span>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
-                <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
-              </svg>
-            </span>
-            <span>{{ strings.social_empty_text }}</span>
-          </div>
-        }
-        @for (link of socialLinks; track trackByIndex($index); let i = $index) {
-          <div class="ws-social-row"
-               [class.ws-social-new]="link._isNew"
-               [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
-            <div class="ws-social-icon-col">
-              <label class="ws-icon-upload" [title]="strings.social_icon_upload_title">
-                @if (iconSrc(link)) {
-                  <img [src]="iconSrc(link)" class="ws-icon-preview" [alt]="link.name">
-                } @else {
-                  <span class="ws-icon-placeholder">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                      <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                  </span>
-                }
-                <input type="file" accept="image/*" class="ws-icon-input"
-                       (change)="onIconSelected($event, i)">
-                <span class="ws-icon-overlay">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="19" x2="12" y2="5"/>
-                    <polyline points="5 12 12 5 19 12"/>
-                  </svg>
-                </span>
-              </label>
-            </div>
-            <div class="ws-social-fields">
-              <input class="ws-input ws-social-input"
-                     type="text"
-                     [(ngModel)]="socialLinks[i].name"
-                     [name]="'soc_name_' + i"
-                     [placeholder]="strings.social_name_placeholder">
-              <input class="ws-input ws-social-input ws-input-url"
-                     type="url"
-                     [(ngModel)]="socialLinks[i].url"
-                     [name]="'soc_url_' + i"
-                     [placeholder]="strings.social_url_placeholder">
-            </div>
-            <div class="ws-social-actions">
-              @if (link._isNew ? hasAnyPermission('core-legal-config-create') : hasAnyPermission('core-legal-config-update')) {
-                <button class="ws-action-btn ws-btn-save"
-                        (click)="saveSocialLink(i)"
-                        [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
-                        [title]="strings.social_save_title">
-                  @if (link._saving) {
-                    <span class="ws-mini-spin">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                      </svg>
-                    </span>
-                  } @else {
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                      <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-                    </svg>
-                  }
-                </button>
-              }
-              @if (link._isNew || hasAnyPermission('core-legal-config-delete')) {
-                <button class="ws-action-btn ws-btn-delete"
-                        (click)="deleteSocialLink(i)"
-                        [disabled]="link._saving"
-                        [title]="strings.social_delete_title">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                  </svg>
-                </button>
-              }
-            </div>
-          </div>
-        }
-        @if (hasAnyPermission('core-legal-config-create')) {
-          <div class="ws-social-add-row">
-            <button class="ws-add-btn" (click)="addSocialLink()">
-              <span class="ws-add-plus">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      @if (!socialLoading) {
+        <div class="ws-social-list">
+          @if (socialLinks.length === 0) {
+            <div class="ws-social-empty">
+              <span>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+                  <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
                 </svg>
               </span>
-              {{ strings.social_add_button }}
-            </button>
-          </div>
+              <span>{{ strings.social_empty_text }}</span>
+            </div>
+          }
+          @for (link of socialLinks; track trackByIndex($index); let i = $index) {
+            <div class="ws-social-row"
+                 [class.ws-social-new]="link._isNew"
+                 [id]="i === socialLinks.length - 1 ? 'social-add-anchor' : ''">
+              <div class="ws-social-icon-col">
+                <label class="ws-icon-upload" [title]="strings.social_icon_upload_title">
+                  @if (iconSrc(link)) {
+                    <img [src]="iconSrc(link)" class="ws-icon-preview" [alt]="link.name">
+                  } @else {
+                    <span class="ws-icon-placeholder">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                    </span>
+                  }
+                  <input type="file" accept="image/*" class="ws-icon-input"
+                         (change)="onIconSelected($event, i)">
+                  <span class="ws-icon-overlay">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="19" x2="12" y2="5"/>
+                      <polyline points="5 12 12 5 19 12"/>
+                    </svg>
+                  </span>
+                </label>
+              </div>
+              <div class="ws-social-fields">
+                <input class="ws-input ws-social-input"
+                       type="text"
+                       [(ngModel)]="socialLinks[i].name"
+                       [name]="'soc_name_' + i"
+                       [placeholder]="strings.social_name_placeholder">
+                <input class="ws-input ws-social-input ws-input-url"
+                       type="url"
+                       [(ngModel)]="socialLinks[i].url"
+                       [name]="'soc_url_' + i"
+                       [placeholder]="strings.social_url_placeholder">
+              </div>
+              <div class="ws-social-actions">
+                @if (link._isNew ? hasAnyPermission('core-legal-config-create') : hasAnyPermission('core-legal-config-update')) {
+                  <button class="ws-action-btn ws-btn-save"
+                          (click)="saveSocialLink(i)"
+                          [disabled]="link._saving || !socialLinks[i].name || !socialLinks[i].url"
+                          [title]="strings.social_save_title">
+                    @if (link._saving) {
+                      <span class="ws-mini-spin">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                        </svg>
+                      </span>
+                    } @else {
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                      </svg>
+                    }
+                  </button>
+                }
+                @if (link._isNew || hasAnyPermission('core-legal-config-delete')) {
+                  <button class="ws-action-btn ws-btn-delete"
+                          (click)="deleteSocialLink(i)"
+                          [disabled]="link._saving"
+                          [title]="strings.social_delete_title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          @if (hasAnyPermission('core-legal-config-create')) {
+            <div class="ws-social-add-row">
+              <button class="ws-add-btn" (click)="addSocialLink()">
+                <span class="ws-add-plus">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </span>
+                {{ strings.social_add_button }}
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Page titles tab (browser <title> per public page) – logic: pt* members in .ts -->
+    <div class="pt-card">
+
+      <div class="pt-card-header">
+        <span class="pt-card-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="M2 9h20"/>
+            <path d="M6 6.5h.01"/><path d="M9 6.5h.01"/>
+          </svg>
+        </span>
+        <span class="pt-card-title">{{ strings.pt_card_title }}</span>
+        @if (!ptLoading && ptIsDirty) {
+          <span class="pt-dirty-badge">{{ ptUnsavedLabel }}</span>
         }
       </div>
-    }
-  </div>
+
+      @if (ptLoading) {
+        <div class="pt-skeleton-body">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="pt-skeleton-row"></div>
+          }
+        </div>
+      } @else if (ptLoadError) {
+        <div class="pt-card-body">
+          <div class="pt-error">{{ strings.pt_load_error }}</div>
+        </div>
+      } @else {
+        <div class="pt-card-body">
+
+          <p class="pt-intro">{{ strings.pt_intro }}</p>
+
+          <!-- Area switch: Web / E-shop -->
+          @if (ptAreas.length > 1) {
+            <div class="pt-area-tabs" role="tablist" [attr.aria-label]="strings.pt_area_label">
+              @for (area of ptAreas; track area) {
+                <button
+                  type="button"
+                  role="tab"
+                  class="pt-area-tab"
+                  [class.active]="ptActiveArea === area"
+                  [attr.aria-selected]="ptActiveArea === area"
+                  (click)="ptSwitchArea(area)">
+                  {{ ptAreaLabel(area) }}
+                  @if (ptAreaDirty(area)) {
+                    <span class="pt-area-dot" aria-hidden="true"></span>
+                  }
+                </button>
+              }
+            </div>
+          }
+
+          <!-- Language switch -->
+          @if (ptActiveLanguages.length > 1) {
+            <div class="pt-i18n-bar">
+              <span class="pt-i18n-bar-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                {{ strings.i18n_bar_label }}
+              </span>
+              <div class="pt-lang-tabs">
+                @for (l of ptActiveLanguages; track l.code) {
+                  <button
+                    type="button"
+                    class="pt-lang-tab"
+                    [class.active]="ptLang === l.code"
+                    (click)="ptSwitchLang(l.code)">
+                    @if (l.iconUrl) {
+                      <img [src]="l.iconUrl" class="pt-lang-icon" [alt]="l.code">
+                    }
+                    {{ l.code | uppercase }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Live browser-tab preview -->
+          <div class="pt-preview" aria-hidden="true">
+            <span class="pt-preview-label">{{ strings.pt_preview_label }}</span>
+            <div class="pt-preview-bar">
+              <div class="pt-preview-tab">
+                @if (logoSrc) {
+                  <img [src]="logoSrc" class="pt-preview-favicon" alt="">
+                } @else {
+                  <span class="pt-preview-favicon pt-preview-favicon--empty"></span>
+                }
+                <span class="pt-preview-text">{{ ptPreviewText }}</span>
+                <span class="pt-preview-close">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- One row per page -->
+          <div class="pt-list">
+            @for (row of ptVisibleRows; track row.id) {
+              <div class="pt-row" [class.pt-row--dirty]="ptIsRowDirty(row)">
+                <label class="pt-row-head" [for]="'pt-input-' + row.id">
+                  <span class="pt-row-name">{{ ptLabelFor(row) }}</span>
+                  <span class="pt-row-path">{{ row.route_path }}</span>
+                </label>
+                <div class="pt-row-field">
+                  <input
+                    class="pt-input"
+                    type="text"
+                    [id]="'pt-input-' + row.id"
+                    [name]="'pt_' + row.id + '_' + ptLang"
+                    [(ngModel)]="row.title_i18n[ptLang]"
+                    [maxlength]="PT_MAX_LENGTH"
+                    [readonly]="!ptCanUpdate"
+                    [placeholder]="ptPlaceholderFor()"
+                    (focus)="ptOnFocus(row)"
+                    (ngModelChange)="ptOnInput(row)">
+                  <span
+                    class="pt-counter"
+                    [class.pt-counter--warn]="ptLengthOf(row) > PT_RECOMMENDED_LENGTH"
+                    [title]="ptLengthOf(row) > PT_RECOMMENDED_LENGTH ? strings.pt_too_long_hint : ''">
+                    {{ ptLengthOf(row) }} / {{ PT_RECOMMENDED_LENGTH }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <p class="pt-hint">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            {{ strings.pt_empty_hint }}
+          </p>
+
+          @if (ptCanUpdate) {
+            <div class="pt-footer">
+              @if (ptIsDirty) {
+                <button type="button" class="pt-btn pt-btn-ghost" (click)="ptDiscard()" [disabled]="ptSaving">
+                  {{ strings.pt_discard_button }}
+                </button>
+              }
+              <button type="button" class="pt-btn pt-btn-primary" (click)="ptSave()" [disabled]="!ptIsDirty || ptSaving">
+                @if (ptSaving) {
+                  <span class="pt-spin" aria-hidden="true">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                    </svg>
+                  </span>
+                  {{ strings.pt_saving_label }}
+                } @else {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  {{ strings.pt_save_button }}
+                }
+              </button>
+            </div>
+          }
+
+        </div>
+      }
+    </div>
+  }
 </div>

@@ -10,6 +10,8 @@
  * - LoadingInterceptor: Manages global HTTP request state tracking.
  * - AppBootstrapService: Preloads translations + site settings before the app renders,
  *   so the first paint never shows an empty/blank state.
+ * - PageTitleStrategy: Resolves route `title` keys ("web.home") to the client-editable
+ *   browser tab titles from `legal_page_titles`.
  *
  * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace - lokalizovaná data":
  * Přidána registrace `en-US` locale dat vedle stávající `cs-CZ` - potřebné pro
@@ -27,10 +29,15 @@
  * `registerLocaleData(localeDe, 'de-DE')`, 2) doplnit mapování v
  * `AdminLocalizationService.DATE_LOCALE_MAP`, 3) přidat JSON+PNG jako u ostatních
  * admin jazyků (viz AdminLocalizationService hlavička).
+ *
+ * @refactor-note (2026-09-30) Registered `PageTitleStrategy` as the router
+ * `TitleStrategy`. Without it Angular's default strategy writes the route `title`
+ * literally into the browser tab ("web.home" instead of the client's text).
+ * Nothing else in this file changed.
  */
 
 import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { provideRouter, withInMemoryScrolling, TitleStrategy } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { routes } from './app.routes';
@@ -40,6 +47,7 @@ import { registerLocaleData } from '@angular/common';
 import localeCs from '@angular/common/locales/cs';
 import localeEn from '@angular/common/locales/en';
 import { AppBootstrapService } from './shared/services/app-bootstrap.service';
+import { PageTitleStrategy } from './shared/services/page-title.strategy.service';
 
 registerLocaleData(localeCs, 'cs-CZ');
 registerLocaleData(localeEn, 'en-US');
@@ -75,6 +83,15 @@ export const appConfig: ApplicationConfig = {
         scrollPositionRestoration: 'enabled'
       })
     ),
+
+    /**
+     * @description Browser tab titles from the admin ("Názvy stránek").
+     * @note Route `title` values are keys ("web.home", "admin.panel"), resolved by
+     *   PageTitleStrategy in the current language. Must be registered, otherwise
+     *   the default strategy shows the raw key.
+     */
+    { provide: TitleStrategy, useClass: PageTitleStrategy },
+
     provideHttpClient(withInterceptorsFromDi()),
 
     /**

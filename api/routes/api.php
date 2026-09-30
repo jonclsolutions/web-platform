@@ -54,6 +54,7 @@ use App\Http\Controllers\Api\Web\WebPublicController;
 use App\Http\Controllers\Api\AttachmentDownloadController;
 use App\Models\Core\CoreSecurityEvent;
 use App\Http\Controllers\Api\Core\CoreEmailAccessPolicyController;
+use App\Http\Controllers\Api\Legal\PageTitleController;
 
 /**
  * @TEMP-DEBUG (2026-09-08) DOČASNÁ nechráněná route pro lokální ladění filtru
@@ -119,8 +120,9 @@ Route::prefix('shop/checkout')->middleware('shop.active')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('public/legal')->group(function () {
-    Route::get('/config', [SiteConfigurationController::class, 'publicShow']);
-    Route::get('/{slug}', [DocumentSectionController::class, 'publicShow']);
+    Route::get('/config',      [SiteConfigurationController::class, 'publicShow']);
+    Route::get('/page-titles', [PageTitleController::class, 'publicIndex']);
+    Route::get('/{slug}',      [DocumentSectionController::class, 'publicShow']);
 });
 
 /*
@@ -901,39 +903,45 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     | LEGAL — spravováno na core/edit-legal stránce (GDPR/TOS/Cookies)
     |----------------------------------------------------------------------
     */
-    Route::prefix('legal')->group(function () {
-
-        Route::get('document-types', [DocumentTypeController::class, 'index'])
+Route::prefix('legal')->group(function () {
+ 
+    Route::get('document-types', [DocumentTypeController::class, 'index'])
+        ->middleware('permission:core-legal-documents-view');
+ 
+    Route::prefix('document-sections')->group(function () {
+        Route::get('/',       [DocumentSectionController::class, 'index'])
             ->middleware('permission:core-legal-documents-view');
-
-        Route::prefix('document-sections')->group(function () {
-            Route::get('/',       [DocumentSectionController::class, 'index'])
-                ->middleware('permission:core-legal-documents-view');
-            Route::post('/',      [DocumentSectionController::class, 'store'])
-                ->middleware('permission:core-legal-documents-create');
-            Route::get('/{id}',   [DocumentSectionController::class, 'show'])
-                ->middleware('permission:core-legal-documents-view');
-            Route::put('/{id}',   [DocumentSectionController::class, 'update'])
-                ->middleware('permission:core-legal-documents-update');
-            Route::delete('/{id}', [DocumentSectionController::class, 'destroy'])
-                ->middleware('permission:core-legal-documents-delete');
-        });
-
-        Route::prefix('config')->group(function () {
-            Route::get('/',              [SiteConfigurationController::class, 'index'])
-                ->middleware('permission:core-legal-config-view');
-            Route::put('/settings',      [SiteConfigurationController::class, 'updateSettings'])
-                ->middleware('permission:core-legal-config-update');
-            Route::post('/social',       [SiteConfigurationController::class, 'storeSocial'])
-                ->middleware('permission:core-legal-config-create');
-            Route::put('/social/{id}',   [SiteConfigurationController::class, 'updateSocial'])
-                ->middleware('permission:core-legal-config-update');
-            Route::delete('/social/{id}', [SiteConfigurationController::class, 'destroySocial'])
-                ->middleware('permission:core-legal-config-delete');
-            Route::post('/social/{id}',  [SiteConfigurationController::class, 'updateSocial'])
-                ->middleware('permission:core-legal-config-update');
-        });
+        Route::post('/',      [DocumentSectionController::class, 'store'])
+            ->middleware('permission:core-legal-documents-create');
+        Route::get('/{id}',   [DocumentSectionController::class, 'show'])
+            ->middleware('permission:core-legal-documents-view');
+        Route::put('/{id}',   [DocumentSectionController::class, 'update'])
+            ->middleware('permission:core-legal-documents-update');
+        Route::delete('/{id}', [DocumentSectionController::class, 'destroy'])
+            ->middleware('permission:core-legal-documents-delete');
     });
+ 
+    Route::prefix('config')->group(function () {
+        Route::get('/',              [SiteConfigurationController::class, 'index'])
+            ->middleware('permission:core-legal-config-view');
+        Route::put('/settings',      [SiteConfigurationController::class, 'updateSettings'])
+            ->middleware('permission:core-legal-config-update');
+ 
+        Route::get('/page-titles',   [PageTitleController::class, 'index'])
+            ->middleware('permission:core-legal-config-view');
+        Route::put('/page-titles',   [PageTitleController::class, 'update'])
+            ->middleware('permission:core-legal-config-update');
+ 
+        Route::post('/social',       [SiteConfigurationController::class, 'storeSocial'])
+            ->middleware('permission:core-legal-config-create');
+        Route::put('/social/{id}',   [SiteConfigurationController::class, 'updateSocial'])
+            ->middleware('permission:core-legal-config-update');
+        Route::delete('/social/{id}', [SiteConfigurationController::class, 'destroySocial'])
+            ->middleware('permission:core-legal-config-delete');
+        Route::post('/social/{id}',  [SiteConfigurationController::class, 'updateSocial'])
+            ->middleware('permission:core-legal-config-update');
+    });
+});
 });
 
 /*
