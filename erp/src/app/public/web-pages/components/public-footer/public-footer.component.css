@@ -4,6 +4,11 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @refactor-note (2026-09-30) Five-column layout (brand | offer | company | support |
+        contact), legal column removed (links live in the bottom bar together with
+        Login). Side padding uses the same --gutter tokens as public pages so the
+        footer content lines up with the 1200px page column. Duplicate
+        .footer-contact-icon rules merged (same effective values).
 */
 
 :host {
@@ -23,6 +28,9 @@
   --radius-lg:   16px;
   --ease:        0.22s ease;
   --max-w:       1200px;
+
+  /* ── Unified spacing (same values as public pages) ── */
+  --gutter:      24px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,7 +45,7 @@
   overflow: hidden;
 }
 
-/* Čtvercové pozadí — identické s ostatními stránkami */
+/* Grid background – identical to other pages */
 .footer-grid-bg {
   position: absolute;
   inset: 0;
@@ -49,7 +57,7 @@
   z-index: 0;
 }
 
-/* Jemný gradient vignette přes pozadí */
+/* Subtle gradient vignette over the background */
 .footer::before {
   content: '';
   position: absolute;
@@ -63,28 +71,27 @@
   z-index: 0;
 }
 
-/* Sdílený inner wrapper */
+/* Shared inner wrapper – same column as page content (1200px + gutters) */
 .footer-inner {
   position: relative;
   z-index: 1;
-  max-width: var(--max-w);
+  max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 var(--gutter);
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   LOGO — velký wordmark nad sloupci (styl „watermark“)
+   LOGO – large wordmark above the columns ("watermark" style)
    ═══════════════════════════════════════════════════════════════ */
 
 /*
   @module: footer-logo
   @description: Full-width brand wordmark above the footer columns. The image always fills the
-                shared .footer-inner width (max 1200px minus side padding) and scales down
-                proportionally on smaller screens, so no breakpoint-specific sizing is needed.
+                shared .footer-inner width (max 1200px) and scales down proportionally on
+                smaller screens, so no breakpoint-specific sizing is needed.
   @usage: .footer-logo > .footer-inner > img.footer-logo-img
   @note: --footer-logo-opacity tunes how prominent the logo is without editing the SVG file.
-         1 = original SVG colour; lower values give a subtler, HTEC-like watermark effect.
-         The logo sits above .footer-grid-bg and .footer::before via .footer-inner (z-index: 1).
+         1 = original SVG colour; lower values give a subtler watermark effect.
 */
 .footer-logo {
   --footer-logo-opacity: 1;
@@ -101,45 +108,21 @@
   pointer-events: none;
 }
 
-/*
-  @module: footer-logo-responsive
-  @description: Reduces the vertical gap above the logo on tablets and phones so it matches the
-                reduced .footer-top padding in the responsive section below.
-  @usage: .footer-logo
-*/
-@media (max-width: 768px) {
-  .footer-logo { padding-top: 48px; }
-}
-
-@media (max-width: 540px) {
-  .footer-logo { padding-top: 36px; }
-}
-
 /* ═══════════════════════════════════════════════════════════════
-   HORNÍ ČÁST — čtyři sloupce
+   TOP PART – brand + 3 link groups + contact
    ═══════════════════════════════════════════════════════════════ */
 .footer-top {
   padding: 72px 0 56px;
 }
-/* Přidat do public-footer.component.css, pokud ikony po výměně za SVG
-   nesedí přesně na výšku textu vedle nich (původní pravidlo bylo nejspíš
-   jen font-size pro textový znak, což na <svg> potomka nemá vliv). */
-
-.footer-contact-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
 
 .footer-top .footer-inner {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1fr;
-  gap: 48px;
+  grid-template-columns: 1.4fr repeat(3, 1fr) 1.3fr;
+  gap: 40px;
   align-items: start;
 }
 
-/* ── Brand sloupec ───────────────────────────────────────────── */
+/* ── Brand column ───────────────────────────────────────────── */
 .footer-col--brand {
   display: flex;
   flex-direction: column;
@@ -162,7 +145,7 @@
   color: var(--text-muted);
 }
 
-/* Sociální sítě */
+/* Social networks */
 .footer-social {
   display: flex;
   gap: 10px;
@@ -182,7 +165,7 @@
   transition: filter var(--ease), opacity var(--ease);
 }
 
-/* Firemní meta */
+/* Company identification */
 .footer-company-meta {
   display: flex;
   flex-direction: column;
@@ -207,11 +190,12 @@
   font-weight: 500;
 }
 
-/* ── Sloupce obecně ──────────────────────────────────────────── */
+/* ── Columns in general ─────────────────────────────────────── */
 .footer-col {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .footer-col-heading {
@@ -225,7 +209,7 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* ── Navigační seznam ────────────────────────────────────────── */
+/* ── Navigation list ────────────────────────────────────────── */
 .footer-nav-list {
   list-style: none;
   display: flex;
@@ -258,7 +242,7 @@
   opacity: 1;
 }
 
-/* ── Kontaktní seznam ────────────────────────────────────────── */
+/* ── Contact list ───────────────────────────────────────────── */
 .footer-contact-list {
   list-style: none;
   display: flex;
@@ -273,11 +257,12 @@
 }
 
 .footer-contact-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: 18px;
-  text-align: center;
   color: var(--accent);
-  font-size: 0.85rem;
   margin-top: 4px;
   opacity: 0.8;
 }
@@ -287,6 +272,7 @@
   color: var(--text-muted);
   text-decoration: none;
   line-height: 1.5;
+  overflow-wrap: anywhere;
   transition: color var(--ease);
 }
 
@@ -301,7 +287,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DOLNÍ ČÁST — copyright
+   BOTTOM PART – copyright, legal links, login
    ═══════════════════════════════════════════════════════════════ */
 .footer-bottom {
   border-top: 1px solid var(--border);
@@ -325,6 +311,7 @@
 
 .footer-bottom-links {
   display: flex;
+  align-items: center;
   gap: 20px;
   flex-wrap: wrap;
 }
@@ -342,12 +329,21 @@
   opacity: 1;
 }
 
+/* Thin vertical divider between legal links and Login */
+.footer-bottom-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--border-mid);
+}
+
 /* ═══════════════════════════════════════════════════════════════
-   RESPONZIVITA
+   RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) {
+
+/* Tablet landscape: brand on its own row, 4 columns below */
+@media (max-width: 1100px) {
   .footer-top .footer-inner {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 36px;
   }
 
@@ -363,14 +359,17 @@
   .footer-company-meta { flex-direction: row; gap: 20px; border-top: none; padding-top: 0; }
 }
 
+/* Tablet portrait: 2 × 2 */
 @media (max-width: 768px) {
+  .footer-logo { padding-top: 48px; }
+
   .footer-top {
     padding: 56px 0 40px;
   }
 
   .footer-top .footer-inner {
     grid-template-columns: 1fr 1fr;
-    gap: 28px;
+    gap: 32px 24px;
   }
 
   .footer-col--brand {
@@ -382,17 +381,18 @@
     flex-direction: column;
     gap: 6px;
   }
-
-  .footer-inner {
-    padding: 0 20px;
-  }
 }
 
+@media (max-width: 600px) {
+  /* Same mobile gutter as public pages */
+  :host { --gutter: 16px; }
+}
+
+/* Phone: link groups stay 2 per row, contact full width */
 @media (max-width: 540px) {
-  .footer-top .footer-inner {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
+  .footer-logo { padding-top: 36px; }
+
+  .footer-col--contact { grid-column: 1 / -1; }
 
   .footer-bottom-inner {
     flex-direction: column;
@@ -404,13 +404,16 @@
   .footer-bottom-links {
     justify-content: center;
   }
+}
 
-  .footer-inner {
-    padding: 0 16px;
+/* Very narrow phones: single column */
+@media (max-width: 380px) {
+  .footer-top .footer-inner {
+    grid-template-columns: 1fr;
   }
 }
 
-/* Hover jen na zařízeních s myší */
+/* Hover movement only on devices with a mouse */
 @media (hover: none) {
   .footer-nav-link:hover { transform: none; }
   .footer-social-link:hover { transform: none; }
