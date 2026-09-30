@@ -53,7 +53,7 @@ import { PASSWORD_PATTERN } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
-const FORCED_2FA_ROLES = ['admin', 'sysadmin'];
+const FORCED_2FA_ROLES = ['sysadmin'];
 
 @Component({
   selector: 'app-personal-info',

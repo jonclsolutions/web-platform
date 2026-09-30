@@ -57,7 +57,7 @@ class CoreRole extends Model
      *
      * @var array<int, string>
      */
-    public const PROTECTED_ROLE_NAMES = ['sysadmin', 'admin'];
+    public const PROTECTED_ROLE_NAMES = ['sysadmin'];
 
     /**
      * @description Určuje, zda je role systémová (chráněná před editací/smazáním).
