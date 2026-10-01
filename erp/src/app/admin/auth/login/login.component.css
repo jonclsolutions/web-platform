@@ -1,305 +1,317 @@
-/*     
+/*
     @file: login.component.css
     @path: /src/app/admin/auth/login/login.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @description: Admin login (credentials -> OTP step) + "forgot password" modal.
+        Visual language aligned 1:1 with the admin dashboard (dashboard.component.css):
+        same design tokens (--accent/--text/--border/--success/--error/...), white
+        surfaces on a light neutral page, 20px card radius, pill-shaped buttons and the
+        same neutral focus ring. Auth pages render OUTSIDE the admin layout, so the tokens
+        are declared on :host with values identical to admin-layout.
+    @dependencies: none (self-contained; token values mirror admin-layout /
+        dashboard.component.css - keep in sync)
+    @refactor-note (2026-10-01) Replaced the dark purple theme with the admin palette.
+        Removed unused selectors (.login-brand, .login-card-header, .login-eyebrow,
+        .login-title, .login-subtitle, .submit-arrow) - not referenced by the template.
+        Added selectors the template uses but were missing: .otp-subtitle, .otp-input,
+        .captcha-container, disabled states and :focus-visible outlines.
+*/
+
+/*
+    @module: Design tokens
+    @description: Admin palette, radii, font stack and motion timing scoped to the component.
+    @usage: :host
+    @note: Values must stay identical to the admin-layout tokens.
 */
 :host {
-  --bg:           #0d0d1b;
-  --surface:      #111128;
-  --surface-2:    #18183a;
-  --border:       rgba(166, 125, 255, 0.1);
-  --border-mid:   rgba(166, 125, 255, 0.22);
-  --accent:       #a67dff;
-  --accent-dark:  #6b2e91;
-  --accent-hover: #7d35ae;
-  --accent-dim:   rgba(166, 125, 255, 0.07);
-  --accent-grid:  rgba(166, 125, 255, 0.03);
-  --text:         #e0e0f0;
-  --text-muted:   #888899;
-  --white:        #ffffff;
-  --error:        #f08080;
-  --error-dim:    rgba(240, 128, 128, 0.1);
-  --error-border: rgba(240, 128, 128, 0.3);
-  --success:      #5dcaa5;
-  --success-dim:  rgba(93, 202, 165, 0.1);
-  --success-border: rgba(93, 202, 165, 0.3);
-  --ff-display:   'Source Sans Pro', 'Segoe UI', sans-serif;
-  --ff-body:      'Segoe UI', system-ui, sans-serif;
-  --radius:       10px;
-  --radius-lg:    18px;
-  --ease:         0.22s ease;
+  --bg:            #f4f4f5;
+  --surface:       #ffffff;
+  --surface-2:     #fafafa;
+  --border:        #ececea;
+  --border-mid:    #e0e0dd;
+  --accent:        #18181b;
+  --accent-dark:   #000000;
+  --accent-dim:    #f4f4f5;
+  --accent-dim-2:  #e4e4e7;
+  --text:          #18181b;
+  --text-muted:    #71717a;
+  --text-dim:      #a1a1aa;
+  --success:       #059669;
+  --success-dim:   #ecfdf5;
+  --error:         #e11d48;
+  --error-dim:     #fff1f2;
+  --warning:       #d97706;
+  --warning-dim:   #fffbeb;
+  --ff:            -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --radius:        10px;
+  --radius-lg:     20px;
+  --ease:          0.18s ease;
+  --focus-ring:    0 0 0 3px rgba(24, 24, 27, 0.08);
+
+  display: block;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Stránka — plná výška, tmavé pozadí + čtverce ───────────── */
+/*
+    @module: Page
+    @description: Full-height light neutral page that centres the login card.
+    @usage: .login-page, .login-center
+*/
 .login-page {
-  min-height: 100vh;
+  min-height: 104vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 16px;
   background: var(--bg);
-  font-family: var(--ff-body);
+  font-family: var(--ff);
   color: var(--text);
-  position: relative;
-  overflow: hidden;
 }
 
-/* Čtvercové pozadí */
-.login-page::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(var(--accent-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--accent-grid) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Radial vignette */
-.login-page::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 80% 80% at 50% 50%,
-    rgba(107, 46, 145, 0.06) 0%,
-    transparent 65%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── Centrovací wrapper ──────────────────────────────────────── */
 .login-center {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  gap: 22px;
   width: 100%;
-  max-width: 440px;
-  animation: fadeUp 0.6s ease-out both;
+  max-width: 420px;
+  animation: fadeUp 0.35s ease-out both;
 }
 
-/* ── Brand odkaz nahoře ──────────────────────────────────────── */
-.login-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--ff-display);
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-decoration: none;
-  letter-spacing: 0.02em;
-  transition: color var(--ease);
-}
-
-.login-brand:hover { color: var(--accent); }
-
-/* ── Přihlašovací karta ──────────────────────────────────────── */
+/*
+    @module: Card
+    @description: White surface card - same border, radius and shadow as dashboard cards.
+    @usage: .login-card
+*/
 .login-card {
   width: 100%;
   background: var(--surface);
-  border: 1px solid var(--border-mid);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 12px 32px rgba(24, 24, 27, 0.06);
 }
 
-.login-card-header {
-  padding: 32px 32px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.login-eyebrow {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 10px;
-}
-
-.login-title {
-  font-family: var(--ff-display);
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--white);
-  line-height: 1.2;
-  margin-bottom: 6px;
-}
-
-.login-subtitle {
-  font-size: 0.87rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-
-/* ── Formulář ────────────────────────────────────────────────── */
+/*
+    @module: Form fields
+    @description: Form layout, labels and text inputs with the admin focus ring.
+    @usage: .login-form, .field-group, .field-label-row, .field-label, .field-input
+*/
 .login-form {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 28px 32px;
+  padding: 28px 28px 24px;
 }
 
-/* Pole */
 .field-group {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
 .field-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .field-label {
   font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 .field-input {
   width: 100%;
-  padding: 13px 15px;
-  background: var(--surface-2);
+  padding: 10px 13px;
+  background: var(--surface);
   border: 1px solid var(--border-mid);
   border-radius: var(--radius);
   color: var(--text);
-  font-size: 0.95rem;
-  font-family: var(--ff-body);
-  transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--ease), box-shadow var(--ease);
   appearance: none;
   -webkit-appearance: none;
 }
 
+.field-input::placeholder { color: var(--text-dim); }
+
 .field-input:focus {
-  outline: none;
   border-color: var(--accent);
-  background: var(--surface);
-  box-shadow: 0 0 0 3px rgba(166, 125, 255, 0.12);
+  box-shadow: var(--focus-ring);
 }
 
-.field-input::placeholder { color: rgba(136, 136, 153, 0.5); }
+/*
+    @module: OTP step + captcha
+    @description: Helper text, monospaced 6-digit code input and captcha placeholder.
+    @usage: .otp-subtitle, .otp-input, .captcha-container
+    @note: .captcha-container reserves height so the layout doesn't jump on widget load.
+*/
+.otp-subtitle {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
 
-/* Zapomenuté heslo — inline odkaz */
+.otp-input {
+  text-align: center;
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.45em;
+  padding-left: calc(13px + 0.45em); /* optically re-centre the tracked digits */
+}
+
+.captcha-container {
+  display: flex;
+  justify-content: center;
+  min-height: 65px;
+}
+
+/*
+    @module: Text buttons
+    @description: Link-style buttons - "Forgot password?", "Resend code", "Back".
+    @usage: .forgot-trigger
+*/
 .forgot-trigger {
+  align-self: center;
   background: none;
   border: none;
-  padding: 0;
+  padding: 2px 0;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--accent);
+  font-family: inherit;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: opacity var(--ease);
-  text-decoration: none;
-  font-family: var(--ff-body);
+  transition: color var(--ease);
 }
 
-.forgot-trigger:hover { opacity: 0.75; }
+.field-label-row .forgot-trigger { align-self: auto; }
 
-/* Password wrapper */
+.forgot-trigger:hover:not(:disabled) { color: var(--text); }
+
+.forgot-trigger:disabled {
+  color: var(--text-dim);
+  cursor: default;
+}
+
+/*
+    @module: Password visibility
+    @description: Password input wrapper with the show/hide eye toggle.
+    @usage: .password-wrapper, .toggle-password
+*/
 .password-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.password-wrapper .field-input {
-  padding-right: 46px;
-}
+.password-wrapper .field-input { padding-right: 44px; }
 
 .toggle-password {
   position: absolute;
-  right: 12px;
-  background: transparent;
-  border: none;
-  padding: 0;
+  right: 6px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--text-dim);
   cursor: pointer;
-  color: rgba(166, 125, 255, 0.6);
-  transition: color var(--ease), transform 0.15s ease;
-  z-index: 2;
+  transition: background var(--ease), color var(--ease);
 }
 
-.toggle-password svg {
-  width: 18px;
-  height: 18px;
-}
+.toggle-password svg { width: 17px; height: 17px; }
 
 .toggle-password:hover {
-  color: var(--accent);
-  transform: scale(1.1);
+  background: var(--accent-dim);
+  color: var(--text);
 }
 
-/* Chybová hláška */
-.error-message {
+/*
+    @module: Status messages
+    @description: Error / success banners using only the semantic admin tokens.
+    @usage: .error-message, .success-message
+*/
+.error-message,
+.success-message {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  color: var(--error);
-  background: var(--error-dim);
-  border: 1px solid var(--error-border);
   padding: 11px 14px;
   border-radius: var(--radius);
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   line-height: 1.45;
 }
 
-/* Submit tlačítko */
+.error-message svg,
+.success-message svg { flex-shrink: 0; margin-top: 1px; }
+
+.error-message {
+  color: var(--error);
+  background: var(--error-dim);
+  border: 1px solid var(--error);
+}
+
+.success-message {
+  color: var(--success);
+  background: var(--success-dim);
+  border: 1px solid var(--success);
+}
+
+/*
+    @module: Primary button
+    @description: Full-width pill button - same look as .btn-modal-primary in the dashboard.
+    @usage: .submit-btn
+*/
 .submit-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 15px 24px;
-  margin-top: 4px;
+  padding: 12px 20px;
+  margin-top: 2px;
   background: var(--accent);
   border: none;
-  border-radius: var(--radius);
-  color: var(--bg);
-  font-size: 0.97rem;
-  font-weight: 700;
-  font-family: var(--ff-display);
-  letter-spacing: 0.04em;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: background var(--ease), transform 0.15s ease, box-shadow var(--ease);
+  transition: background var(--ease), box-shadow var(--ease);
 }
 
-.submit-btn:hover {
-  background: #b98fff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(166, 125, 255, 0.35);
+.submit-btn:hover:not(:disabled) {
+  background: var(--accent-dark);
+  box-shadow: 0 6px 16px rgba(24, 24, 27, 0.18);
 }
 
-.submit-btn:active { transform: translateY(0); }
-
-.submit-arrow {
-  font-size: 1.1rem;
-  transition: transform var(--ease);
+.submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-.submit-btn:hover .submit-arrow { transform: translateX(4px); }
-
-/* Footer karty */
+/*
+    @module: Card footer
+    @description: Muted footer strip with the "Back to home" link.
+    @usage: .login-card-footer, .back-link
+*/
 .login-card-footer {
-  padding: 20px 32px 28px;
+  padding: 16px 28px 20px;
   border-top: 1px solid var(--border);
+  background: var(--surface-2);
   display: flex;
   justify-content: center;
 }
@@ -307,35 +319,32 @@
 .back-link {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 0.85rem;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--text-muted);
   text-decoration: none;
   transition: color var(--ease);
 }
 
-.back-link:hover { color: var(--accent); }
+.back-link:hover { color: var(--text); }
 
-/* ═══════════════════════════════════════════════════════════════
-   MODAL — zapomenuté heslo
-   ═══════════════════════════════════════════════════════════════ */
+/*
+    @module: Forgot password modal
+    @description: Overlay + dialog card, styled like the dashboard password-confirmation modal.
+    @usage: .modal-overlay, .modal-card, .modal-close, .modal-header, .modal-icon,
+        .modal-title, .modal-actions, .modal-cancel-btn, .modal-submit-btn
+*/
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px;
-  background: rgba(5, 5, 18, 0.75);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  animation: fadeOverlay 0.2s ease both;
-}
-
-@keyframes fadeOverlay {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  padding: 16px;
+  background: rgba(24, 24, 27, 0.45);
+  animation: fadeOverlay 0.18s ease both;
 }
 
 .modal-card {
@@ -343,153 +352,157 @@
   width: 100%;
   max-width: 420px;
   background: var(--surface);
-  border: 1px solid var(--border-mid);
   border-radius: var(--radius-lg);
-  padding: 32px;
+  padding: 26px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  animation: fadeUp 0.25s ease both;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  gap: 18px;
+  font-family: var(--ff);
+  color: var(--text);
+  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.25);
+  animation: fadeUp 0.22s ease both;
 }
 
 .modal-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  top: 14px;
+  right: 14px;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: 8px;
   color: var(--text-muted);
-  transition: color var(--ease), border-color var(--ease), background var(--ease);
+  cursor: pointer;
+  transition: background var(--ease), color var(--ease);
 }
 
 .modal-close:hover {
-  color: var(--text);
-  border-color: var(--border-mid);
   background: var(--accent-dim);
+  color: var(--text);
 }
 
 .modal-header {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  padding-right: 32px; /* keep text clear of the close button */
 }
 
 .modal-icon {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
   background: var(--accent-dim);
-  border: 1px solid var(--border-mid);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
   margin-bottom: 4px;
 }
 
 .modal-title {
-  font-family: var(--ff-display);
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--white);
-  line-height: 1.2;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--text);
 }
 
-.modal-subtitle {
-  font-size: 0.87rem;
-  color: var(--text-muted);
-  line-height: 1.6;
-}
-
-/* Úspěšná hláška */
-.success-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--success);
-  background: var(--success-dim);
-  border: 1px solid var(--success-border);
-  padding: 11px 14px;
-  border-radius: var(--radius);
-  font-size: 0.86rem;
-  line-height: 1.45;
-}
-
-/* Akční tlačítka */
 .modal-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 4px;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.modal-cancel-btn,
+.modal-submit-btn {
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--ease);
 }
 
 .modal-cancel-btn {
-  flex: 1;
-  padding: 12px 16px;
-  background: transparent;
+  background: var(--surface);
   border: 1px solid var(--border-mid);
-  border-radius: var(--radius);
   color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 600;
-  font-family: var(--ff-body);
-  cursor: pointer;
-  transition: color var(--ease), border-color var(--ease), background var(--ease);
 }
 
-.modal-cancel-btn:hover {
-  color: var(--text);
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
+.modal-cancel-btn:hover { background: var(--surface-2); color: var(--text); }
 
 .modal-submit-btn {
-  flex: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: var(--accent-dark);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  color: var(--white);
-  font-size: 0.9rem;
-  font-weight: 700;
-  font-family: var(--ff-display);
-  cursor: pointer;
-  transition: background var(--ease), transform 0.15s ease;
+  background: var(--accent);
+  border: none;
+  color: #ffffff;
 }
 
-.modal-submit-btn:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
+.modal-submit-btn:hover:not(:disabled) { background: var(--accent-dark); }
+
+.modal-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ANIMACE
-   ═══════════════════════════════════════════════════════════════ */
+/*
+    @module: Keyboard focus
+    @description: Visible focus outline for keyboard users (WCAG 2.2 - 2.4.7).
+    @usage: :focus-visible on interactive elements
+*/
+.forgot-trigger:focus-visible,
+.toggle-password:focus-visible,
+.submit-btn:focus-visible,
+.back-link:focus-visible,
+.modal-close:focus-visible,
+.modal-cancel-btn:focus-visible,
+.modal-submit-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/*
+    @module: Animations
+    @description: Entrance animations; disabled for users who prefer reduced motion.
+    @usage: @keyframes fadeUp, fadeOverlay
+*/
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   RESPONZIVITA
-   ═══════════════════════════════════════════════════════════════ */
+@keyframes fadeOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-center, .modal-overlay, .modal-card { animation: none; }
+}
+
+/*
+    @module: Responsive
+    @description: Tighter paddings and bottom-sheet modal on phones.
+    @usage: @media (max-width: 480px)
+    @note: Bottom-sheet pattern matches the dashboard password modal.
+*/
 @media (max-width: 480px) {
-  .login-card-header { padding: 24px 20px 20px; }
-  .login-form        { padding: 20px 20px; }
-  .login-card-footer { padding: 16px 20px 24px; }
-  .modal-card        { padding: 24px 20px; }
-  .modal-actions     { flex-direction: column; }
+  .login-form        { padding: 22px 20px 20px; }
+  .login-card-footer { padding: 14px 20px 18px; }
+
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-card {
+    max-width: 100%;
+    padding: 24px 20px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+  .modal-actions { flex-direction: column-reverse; }
   .modal-cancel-btn,
-  .modal-submit-btn  { flex: unset; width: 100%; }
+  .modal-submit-btn { width: 100%; }
 }

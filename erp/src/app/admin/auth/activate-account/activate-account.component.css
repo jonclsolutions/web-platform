@@ -1,124 +1,150 @@
-/**
- * @file activate-account.component.css
- * @path src/app/admin/auth/activate-account/activate-account.component.css
- * @project RPSW Web
- * @author RPSW
- * @created 2026
- * @note: Vizuálně 1:1 s reset-password.component.css - stejná paleta proměnných a
- * třídy, ať uživatel pozná stejný vzor UI na obou "odkaz z e-mailu" stránkách.
- * @refactor-note (2026-08-24) Přidána `.header-icon--loading` (rotující ikona pro stav
- * "Ověřuji odkaz…") - jediná třída navíc oproti reset-password.component.css, který
- * loading stav nemá (token se tam ověřuje až při submitu, ne hned při vstupu na stránku).
- */
+/*
+    @file: activate-account.component.css
+    @path: src/app/admin/auth/activate-account/activate-account.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: "Set password & activate account" page opened from the activation
+        e-mail. Visually 1:1 with reset-password.component.css (same tokens and classes)
+        so users recognise the same UI on both "link from e-mail" pages, and aligned with
+        the admin dashboard design tokens. Auth pages render OUTSIDE the admin layout, so
+        the tokens are declared on :host with values identical to admin-layout.
+    @dependencies: none (self-contained; token values mirror admin-layout /
+        dashboard.component.css - keep in sync). Child component
+        <app-password-requirements-checklist> styles itself.
+    @note: The only addition over reset-password.component.css is `.header-icon--loading`
+        (rotating icon for the "Verifying link..." state) - the token is checked on page
+        entry here, whereas the reset page validates it only on submit. Keep both in sync.
+    @refactor-note (2026-10-01) Replaced the blue palette with the admin palette.
+*/
 
+/*
+    @module: Design tokens
+    @description: Admin palette, radii, font stack and motion timing scoped to the component.
+    @usage: :host
+    @note: Values must stay identical to the admin-layout tokens.
+*/
 :host {
-  --accent:        #1e88e5;
-  --accent-dark:   #1565c0;
-  --accent-dim:    #e3f2fd;
-  --accent-dim-2:  #bbdefb;
-  --text:          #1a1d23;
-  --text-muted:    #6b7280;
-  --text-dim:      #9ca3af;
-  --border:        #e4e6ea;
-  --border-mid:    #d0d3da;
-  --error:         #d32f2f;
-  --error-dim:     #ffebee;
-  --success:       #2e7d32;
-  --success-dim:   #e8f5e9;
-  --radius:        8px;
-  --radius-lg:     14px;
-  --ff:            'Segoe UI', system-ui, sans-serif;
+  --bg:            #f4f4f5;
+  --surface:       #ffffff;
+  --surface-2:     #fafafa;
+  --border:        #ececea;
+  --border-mid:    #e0e0dd;
+  --accent:        #18181b;
+  --accent-dark:   #000000;
+  --accent-dim:    #f4f4f5;
+  --accent-dim-2:  #e4e4e7;
+  --text:          #18181b;
+  --text-muted:    #71717a;
+  --text-dim:      #a1a1aa;
+  --success:       #059669;
+  --success-dim:   #ecfdf5;
+  --error:         #e11d48;
+  --error-dim:     #fff1f2;
+  --ff:            -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --radius:        10px;
+  --radius-lg:     20px;
+  --ease:          0.18s ease;
+  --focus-ring:    0 0 0 3px rgba(24, 24, 27, 0.08);
 
   display: block;
   font-family: var(--ff);
+  color: var(--text);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/*
+    @module: Page + card
+    @description: Light neutral page with the centred white card (same as dashboard cards).
+    @usage: .reset-password-wrapper, .reset-password-card
+*/
 .reset-password-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 24px;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(30, 136, 229, 0.10), transparent 45%),
-    radial-gradient(circle at 85% 80%, rgba(30, 136, 229, 0.08), transparent 45%),
-    #f0f2f5;
+  padding: 40px 16px;
+  background: var(--bg);
 }
 
 .reset-password-card {
   width: 100%;
   max-width: 420px;
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 32px;
-  box-shadow: 0 12px 40px rgba(20, 30, 60, 0.10), 0 2px 8px rgba(20, 30, 60, 0.05);
-  animation: cardIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  padding: 28px;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03), 0 12px 32px rgba(24, 24, 27, 0.06);
+  animation: cardIn 0.35s ease-out both;
 }
 
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* ── Header ─────────────────────────────────────────────── */
+/*
+    @module: Header
+    @description: Status icon tile (lock / check / warning) with title and subtitle.
+    @usage: .card-header, .header-icon, .header-icon--success, .header-text, .header-subtitle
+*/
 .card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 
 .header-icon {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
   background: var(--accent-dim);
-  border: 1px solid var(--accent-dim-2);
   color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  transition: background var(--ease), color var(--ease);
 }
 
 .header-icon--success {
   background: var(--success-dim);
-  border-color: #a5d6a7;
   color: var(--success);
   animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-@keyframes popIn {
-  from { transform: scale(0.6); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
-
-/* Rotující ikona pro loading stav ("Ověřuji odkaz…") - stejný vizuální jazyk jako
-   .btn-spinner, jen aplikovaný na SVG zámku místo samostatného kroužku. */
+/*
+    @module: Header loading state
+    @description: Rotating lock icon while the activation token is being verified.
+    @usage: .header-icon--loading
+    @note: Same motion as .btn-spinner, applied to the SVG instead of a separate ring.
+*/
 .header-icon--loading svg {
   animation: spin 1s linear infinite;
   transform-origin: center;
 }
 
+.header-text { min-width: 0; }
+
 .header-text h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: var(--text);
+  line-height: 1.25;
   letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .header-subtitle {
   margin: 4px 0 0;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   color: var(--text-muted);
+  overflow-wrap: anywhere; /* long e-mail addresses */
 }
 
-/* ── Formulář ───────────────────────────────────────────── */
+/*
+    @module: Form fields
+    @description: Labels, icon-prefixed inputs, visibility toggle and inline field error.
+    @usage: form, .field-group, label, .input-wrapper, .input-icon, .visibility-toggle,
+        .field-error-text
+*/
 form {
   display: flex;
   flex-direction: column;
@@ -128,11 +154,11 @@ form {
 .field-group {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
 label {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -148,38 +174,34 @@ label {
   left: 12px;
   color: var(--text-dim);
   pointer-events: none;
-  transition: color 0.2s ease;
+  transition: color var(--ease);
 }
 
 .input-wrapper input {
   width: 100%;
-  padding: 11px 42px 11px 38px;
+  padding: 10px 42px 10px 38px;
   border: 1px solid var(--border-mid);
   border-radius: var(--radius);
-  font-size: 0.95rem;
-  font-family: var(--ff);
+  background: var(--surface);
   color: var(--text);
-  background: #fff;
+  font-size: 0.9rem;
+  font-family: inherit;
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color var(--ease), box-shadow var(--ease);
 }
 
-.input-wrapper input::placeholder {
-  color: var(--text-dim);
-}
+.input-wrapper input::placeholder { color: var(--text-dim); }
 
 .input-wrapper input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.14);
+  box-shadow: var(--focus-ring);
 }
 
-.input-wrapper:focus-within .input-icon {
-  color: var(--accent);
-}
+.input-wrapper:focus-within .input-icon { color: var(--accent); }
 
 .visibility-toggle {
   position: absolute;
-  right: 8px;
+  right: 6px;
   width: 30px;
   height: 30px;
   display: flex;
@@ -187,25 +209,35 @@ label {
   justify-content: center;
   background: none;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-dim);
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition: background var(--ease), color var(--ease);
 }
 
 .visibility-toggle:hover {
   background: var(--accent-dim);
-  color: var(--accent);
+  color: var(--text);
 }
 
-/* ── Stavové boxy ───────────────────────────────────────── */
+.field-error-text {
+  margin-top: 2px;
+  font-size: 0.76rem;
+  color: var(--error);
+}
+
+/*
+    @module: State boxes
+    @description: Error / success panels using only the semantic admin tokens.
+    @usage: .state-box, .state-box--error, .state-box--success, .redirect-note
+*/
 .state-box {
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  padding: 11px 13px;
+  padding: 11px 14px;
   border-radius: var(--radius);
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   line-height: 1.5;
 }
 
@@ -213,91 +245,119 @@ label {
 
 .state-box--error {
   background: var(--error-dim);
-  border: 1px solid #ef9a9a;
-  color: #a02020;
+  border: 1px solid var(--error);
+  color: var(--error);
 }
 
 .state-box--error a {
-  color: var(--accent-dark);
+  color: var(--text);
   font-weight: 600;
   text-decoration: underline;
 }
 
 .state-box--success {
-  background: var(--success-dim);
-  border: 1px solid #a5d6a7;
-  color: #1b5e20;
   flex-direction: column;
-  align-items: flex-start;
   gap: 4px;
+  background: var(--success-dim);
+  border: 1px solid var(--success);
+  color: var(--success);
 }
 
-.state-box--success p { margin: 0; font-size: 0.9rem; }
-.state-box--success strong { font-weight: 700; }
+.state-box--success p { margin: 0; font-size: 0.86rem; }
+.state-box--success strong { font-weight: 700; overflow-wrap: anywhere; }
 
 .redirect-note {
-  font-size: 0.8rem !important;
-  color: #2e7d32;
+  font-size: 0.78rem !important;
   opacity: 0.85;
 }
 
-/* ── Tlačítko ────────────────────────────────────────────── */
+/*
+    @module: Primary button
+    @description: Full-width pill button (also used as a router link) with inline spinner.
+    @usage: .submit-btn, .submit-btn--link, .btn-spinner
+*/
 .submit-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 4px;
-  padding: 12px;
+  width: 100%;
+  margin-top: 2px;
+  padding: 12px 20px;
   border: none;
-  border-radius: var(--radius);
+  border-radius: 999px;
   background: var(--accent);
-  color: #fff;
-  font-size: 0.95rem;
+  color: #ffffff;
+  font-size: 0.88rem;
   font-weight: 600;
-  font-family: var(--ff);
-  cursor: pointer;
+  font-family: inherit;
   text-decoration: none;
-  transition: background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
-  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.25);
+  cursor: pointer;
+  transition: background var(--ease), box-shadow var(--ease);
 }
 
 .submit-btn:hover:not(:disabled) {
   background: var(--accent-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(30, 136, 229, 0.32);
+  box-shadow: 0 6px 16px rgba(24, 24, 27, 0.18);
 }
 
 .submit-btn:disabled {
-  opacity: 0.65;
+  opacity: 0.55;
   cursor: not-allowed;
-  transform: none;
 }
 
-.submit-btn--link {
-  margin-top: 16px;
-}
+.submit-btn--link { margin-top: 16px; }
 
 .btn-spinner {
-  width: 15px;
-  height: 15px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/*
+    @module: Keyboard focus
+    @description: Visible focus outline for keyboard users (WCAG 2.2 - 2.4.7).
+    @usage: :focus-visible on interactive elements
+*/
+.visibility-toggle:focus-visible,
+.submit-btn:focus-visible,
+.state-box a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-/* ── Responzivita ───────────────────────────────────────── */
-@media (max-width: 480px) {
-  .reset-password-card { padding: 24px 20px; }
-  .header-text h1 { font-size: 1.1rem; }
+/*
+    @module: Animations
+    @description: Card entrance, success pop and spinner; disabled for reduced motion.
+    @usage: @keyframes cardIn, popIn, spin
+*/
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.field-error-text {
-  font-size: 0.78rem;
-  color: var(--error);
-  margin-top: 2px;
+
+@keyframes popIn {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reset-password-card,
+  .header-icon--success,
+  .header-icon--loading svg { animation: none; }
+}
+
+/*
+    @module: Responsive
+    @description: Tighter card padding and smaller title on phones.
+    @usage: @media (max-width: 480px)
+*/
+@media (max-width: 480px) {
+  .reset-password-card { padding: 22px 20px; }
+  .header-text h1 { font-size: 1.1rem; }
 }

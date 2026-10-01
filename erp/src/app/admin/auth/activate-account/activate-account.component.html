@@ -4,19 +4,30 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @refactor-note (2026-08-24) Sjednoceno s reset-password.component.html: žádné
-        emoji, jen SVG ikonky ze stejné sady (zámek/oko/přeškrtnuté oko/fajfka/výstražný
-        trojúhelník), sdílený <app-password-requirements-checklist> checklist a live
-        `passwordsMismatch` chybová hláška - stejný vizuální i interakční vzor jako
-        stránka pro reset hesla.
+    @description: "Set password & activate account" page opened from the activation e-mail.
+        States: loading (token check on entry) -> invalid | form -> success (auto-redirect
+        to login with a countdown). Same visual and interaction pattern as
+        reset-password.component.html. All user-facing copy is in English.
+    @dependencies: activate-account.component.ts, activate-account.component.css,
+        <app-password-requirements-checklist>, RouterLink, FormsModule (ngModel)
+    @refactor-note (2026-08-24) Unified with reset-password.component.html: no emoji, only
+        SVG icons from the same set, shared password checklist and live `passwordsMismatch`.
+    @refactor-note (2026-10-01) Czech copy translated to English; aligned with admin tokens.
 -->
 <div class="reset-password-wrapper">
   <div class="reset-password-card">
 
+    <!--
+        @component: Card header
+        @description: Status icon (lock / spinning lock / warning / check) + state title.
+            Subtitle shows the account e-mail in the form state.
+        @usage: Driven by `state` ('loading' | 'invalid' | 'form' | 'success').
+    -->
     <div class="card-header">
       <div class="header-icon"
            [class.header-icon--success]="state === 'success'"
-           [class.header-icon--loading]="state === 'loading'">
+           [class.header-icon--loading]="state === 'loading'"
+           aria-hidden="true">
         @if (state === 'success') {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 6 9 17l-5-5"/>
@@ -34,12 +45,12 @@
         }
       </div>
       <div class="header-text">
-        <h1>
+        <h1 aria-live="polite">
           @switch (state) {
-            @case ('loading') { Ověřuji odkaz… }
-            @case ('invalid') { Odkaz nelze použít }
-            @case ('success') { Účet aktivován }
-            @default { Nastavení hesla }
+            @case ('loading') { Verifying link… }
+            @case ('invalid') { This link can't be used }
+            @case ('success') { Account activated }
+            @default { Set your password }
           }
         </h1>
         @if (state === 'form') {
@@ -48,23 +59,35 @@
       </div>
     </div>
 
+    <!--
+        @component: Invalid link notice
+        @description: Expired / used / unknown activation token.
+        @usage: `state === 'invalid'`; `errorMessage` comes from the component (API message).
+    -->
     @if (state === 'invalid') {
-      <div class="state-box state-box--error">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="state-box state-box--error" role="alert">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
-        <span>{{ errorMessage }} Vraťte se prosím na <a routerLink="/auth/login">přihlašovací stránku</a> a požádejte administrátora o nový odkaz.</span>
+        <span>{{ errorMessage }} Please go back to the <a routerLink="/auth/login">sign-in page</a> and ask your administrator for a new link.</span>
       </div>
     }
 
+    <!--
+        @component: Set password form
+        @description: Password + confirmation with visibility toggles, live requirements
+            checklist and mismatch validation.
+        @usage: (ngSubmit)="onSubmit()"; submit disabled while submitting or on mismatch.
+        @note: autocomplete="new-password" lets password managers generate/save the value.
+    -->
     @if (state === 'form') {
       <form (ngSubmit)="onSubmit()" novalidate>
 
         <div class="field-group">
-          <label for="password">Nové heslo</label>
+          <label for="password">New password</label>
           <div class="input-wrapper">
-            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
@@ -77,22 +100,22 @@
               [attr.minlength]="minLength"
               [attr.maxlength]="maxLength"
               autocomplete="new-password"
-              [placeholder]="minLength + '-' + maxLength + ' znaků'"
+              [placeholder]="minLength + '-' + maxLength + ' characters'"
             />
             <button
               type="button"
               class="visibility-toggle"
               (click)="togglePasswordVisibility()"
-              [attr.aria-label]="showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
               tabindex="-1"
             >
               @if (!showPassword) {
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
               } @else {
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.7 18.7 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
                   <line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
@@ -104,9 +127,9 @@
         </div>
 
         <div class="field-group">
-          <label for="passwordConfirmation">Potvrzení nového hesla</label>
+          <label for="passwordConfirmation">Confirm new password</label>
           <div class="input-wrapper">
-            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
             </svg>
             <input
@@ -118,22 +141,22 @@
               [attr.minlength]="minLength"
               [attr.maxlength]="maxLength"
               autocomplete="new-password"
-              placeholder="Zopakujte heslo"
+              placeholder="Repeat the password"
             />
             <button
               type="button"
               class="visibility-toggle"
               (click)="toggleConfirmationVisibility()"
-              [attr.aria-label]="showPasswordConfirmation ? 'Skrýt heslo' : 'Zobrazit heslo'"
+              [attr.aria-label]="showPasswordConfirmation ? 'Hide password' : 'Show password'"
               tabindex="-1"
             >
               @if (!showPasswordConfirmation) {
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
               } @else {
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.7 18.7 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
                   <line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
@@ -141,13 +164,13 @@
             </button>
           </div>
           @if (passwordsMismatch) {
-            <div class="field-error-text">Zadaná hesla se neshodují.</div>
+            <div class="field-error-text" role="alert">The passwords don't match.</div>
           }
         </div>
 
         @if (fieldError) {
-          <div class="state-box state-box--error">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <div class="state-box state-box--error" role="alert">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
             <span>{{ fieldError }}</span>
@@ -155,18 +178,23 @@
         }
 
         <button type="submit" class="submit-btn" [disabled]="submitting || passwordsMismatch">
-          @if (submitting) { <span class="btn-spinner"></span> }
-          {{ submitting ? 'Ukládám…' : 'Nastavit heslo a aktivovat účet' }}
+          @if (submitting) { <span class="btn-spinner" aria-hidden="true"></span> }
+          {{ submitting ? 'Saving…' : 'Set password and activate account' }}
         </button>
       </form>
     }
 
+    <!--
+        @component: Success state
+        @description: Confirmation with a redirect countdown and a link to sign in now.
+        @usage: `state === 'success'`; `redirectCountdown` is decremented by the component.
+    -->
     @if (state === 'success') {
-      <div class="state-box state-box--success">
-        <p>Heslo bylo úspěšně nastaveno.</p>
-        <p class="redirect-note">Za {{ redirectCountdown }} s vás přesměrujeme na přihlášení…</p>
+      <div class="state-box state-box--success" role="status">
+        <p>Your password has been set successfully.</p>
+        <p class="redirect-note">Redirecting you to sign in in {{ redirectCountdown }} s…</p>
       </div>
-      <a routerLink="/auth/login" class="submit-btn submit-btn--link">Přejít na přihlášení nyní</a>
+      <a routerLink="/auth/login" class="submit-btn submit-btn--link">Go to sign in now</a>
     }
 
   </div>
