@@ -178,7 +178,8 @@
               @for (log of recentActivity; track log.id) {
                 <div class="cd-activity-row">
                   <div class="cd-activity-left">
-                    <span class="cd-event-badge {{ eventTypeClass(log.event_type) }}">
+                    <span class="cd-event-badge {{ eventTypeClass(log.event_type) }}"
+                          [title]="eventTypeLabel(log.event_type)">
                       {{ eventTypeLabel(log.event_type) }}
                     </span>
                   </div>

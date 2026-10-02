@@ -435,6 +435,9 @@
 
 .cd-event-badge {
   display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.68rem;
@@ -455,7 +458,7 @@
 .ev-error   { background: var(--warning-dim, #fffbeb); color: var(--warning, #d97706); }
 .ev-default { background: var(--accent-dim, #f4f4f5); color: var(--text-muted, #71717a); }
 
-.cd-activity-left { display: flex; align-items: center; }
+.cd-activity-left { display: flex; align-items: center; min-width: 0; }
 .cd-activity-mid { min-width: 0; }
 
 .cd-activity-desc {
