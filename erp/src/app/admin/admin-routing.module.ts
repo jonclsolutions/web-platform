@@ -17,6 +17,13 @@
  * (mají skutečnou logiku, ne statický text) - musí být v `children` PŘED `:pageId`,
  * jinak by je Angular router zachytil jako hodnotu parametru dřív, než by došel
  * k jejich explicitní route (router matchuje shora dolů).
+ *
+ * @bugfix-note (2026-10-05) PERMISSIONS OF CHILD PAGES WERE NEVER CHECKED: AuthGuard was
+ * registered only as `canActivate` of the layout route. That hook receives the layout's own
+ * route (no `data.permission`) and does not run again while the layout stays active, so every
+ * page could be opened by typing its URL (the API still answered 403, so no data leaked).
+ * Both top-level routes now also register `canActivateChild: [AuthGuard]`, which checks the
+ * `data.permission` of each child page on every navigation.
  */
 
 import { NgModule } from '@angular/core';
@@ -67,23 +74,30 @@ import { ShopWelcomePageComponent } from './shop-pages/shop-welcome-page/shop-we
 import { WebWelcomePageComponent } from './web-pages/web-welcome-page/web-welcome-page.component';
 /**
  * @description Defines the navigation hierarchy and access permissions for the administration interface.
- * @usage Acts as the master route table for the admin module, protected by AuthGuard to prevent unauthenticated access.
+ * @usage Acts as the master route table for the admin module. Adding a page only needs a new
+ *        route with `data: { permission: '<key>' }` (several keys separated by `|` mean "any of them").
  * @note Routes are grouped into Web, Core, and E-Shop segments, each under its own path prefix
  *       ('web/', 'core/', 'shop/') for a consistent, predictable URL structure.
+ *       AuthGuard is registered twice on purpose: `canActivate` verifies the session when the
+ *       layout is entered, `canActivateChild` checks `data.permission` of every page below it.
+ *       A user without the permission is redirected to the first page they can open; the order
+ *       of the routes below is therefore also the order of preference for that fallback.
  */
 const routes: Routes = [
   {
     path: '',
     component: AdminLayoutComponent,
     canActivate: [AuthGuard],
+    canActivateChild: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'core/dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'core/welcome-page', pathMatch: 'full' },
 
       // 🌍 WEB STRÁNKY (Core website management interfaces)
       {
         path: 'web',
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+          { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
           { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
           { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-user-requests-view' } },
           { path: 'business-logs', component: BusinessLogsComponent, data: { permission: 'web-view-web-logs' } },
@@ -119,8 +133,8 @@ const routes: Routes = [
       },
 
       // 🛒 E-SHOP STRÁNKY (E-commerce administrative interfaces)
-      { 
-        path: 'shop', 
+      {
+        path: 'shop',
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: ShopDashboardComponent, data: { permission: 'shop-view-dashboard' } },
@@ -131,17 +145,18 @@ const routes: Routes = [
           { path: 'shipping-methods', component: ShippingMethodsComponent, data: { permission: 'shop-manage-shipping-methods' } },
           { path: 'payment-methods', component: PaymentMethodsComponent, data: { permission: 'shop-manage-payment-methods' } },
           { path: 'suppliers', component: SuppliersComponent, data: { permission: 'shop-manage-suppliers' } },
-          { path: 'coupons', component: CouponsComponent, data: { permission: 'shop-view-reports' } }, 
+          { path: 'coupons', component: CouponsComponent, data: { permission: 'shop-view-reports' } },
           { path: 'logs', component: ShopLogsComponent, data: { permission: 'shop-view-logs' } },
           { path: 'edit-eshop', component: EditEshopComponent, data: { permission: 'shop-view-edit-eshop' } },
           { path: 'welcome-page', component: ShopWelcomePageComponent, data: { permission: 'shop-welcome-page-view' } }
-        ] 
+        ]
       }
     ]
   },
   {
     path: 'intranet',
     canActivate: [AuthGuard],
+    canActivateChild: [AuthGuard],
     children: [
       {
         path: 'knowledge-base',

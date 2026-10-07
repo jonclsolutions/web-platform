@@ -5,19 +5,6 @@
     @author: RPSW
     @created: 2025 
     (Earlier refactor-notes are unchanged - see version history.)
-
-    @refactor-note (2026-09-06) BACKLOG "who can change roles + role change UX/security":
-        both `<app-form-builder>` instances (create/edit) gained `[fieldOverrides]`
-        and `(fieldChanged)` bindings, wiring `AdministratorsComponent.handleFieldChanged()`
-        so a live `role_id` change inside the open form immediately recomputes the
-        assignable role list, locked permission options, and resets `permission_ids`
-        - see administrators.component.ts / form-builder.component.ts.
-
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        všechny natvrdo psané české texty VLASTNÍ TÉTO KOMPONENTĚ (mimo Config.* pole,
-        která zůstávají v tomto kroku beze změny) nahrazeny `strings.*`/`t()` bindingy
-        - viz administrators.component.ts stejné datum. Info banner s <strong>bez
-        hesla</strong> rozdělen na prefix/bold/suffix, ne [innerHTML].
 -->
 <div class="user-request-container container mx-auto p-4">
 @if (errorMessage) {

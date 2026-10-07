@@ -9,21 +9,6 @@
  *
  * (Earlier refactor-notes for 2FA split, account-creation workflow, and explicit
  * permission grants are unchanged - see version history, omitted here for brevity.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * kompletní přepis na FACTORY FUNKCE. `ROLE_OPTIONS`/`PERMISSION_OPTIONS` (dřív
- * exportované MUTABILNÍ pole, prakticky nevyužívané - `AdministratorsComponent` je
- * stejně přepisovalo vlastními `this.roleOptions`/`this.permissionOptions`) ODSTRANĚNY -
- * `createFormFields()`/`createFilterColumns()` vrací `role_id`/`permission_ids` s
- * `options: []`, komponenta je po načtení dat sama doplní (viz `rebuildFormFields()`
- * v `administrators.component.ts`). Role/permission NEJSOU enum hodnoty ve smyslu
- * `mapLabeledOptions()` receptu - jsou to DYNAMICKÁ DATA z DB (názvy rolí, popisy
- * oprávnění), ne pevná sada canonical slugů, takže se nepřekládají.
- *
- * @bugfix-note (2026-09-08) BACKLOG "permission audit napříč core stránkami":
- * `openGraphBuilder` používal `permission: 'web-user-requests-view'` - permission
- * z úplně jiné domény, stejná chyba jako dřív opravená u `sales-leads`/
- * `job-applications`/`external-links`. Opraveno na `core-administrators-view`.
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';

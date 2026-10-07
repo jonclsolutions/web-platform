@@ -12,29 +12,10 @@
  * - PermissionOptionsService: TTL-cached source of `core/permissions` for the
  *   `permission_ids` multiselect (explicit extra permissions).
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
- *
- * (Earlier refactor-notes for 2FA locking, role assignability, permission_ids
- * pre-checking/wipe-on-role-change, and the i18n `t()` override are unchanged - see
- * version history, omitted here for brevity. `translationSection`/`t()` override was
- * ALREADY present before this update.)
- *
- * @refactor-note (2026-09-08) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
- * `Config.TABLE_BUTTONS`/`FORM_FIELDS`/etc. konstanty nahrazeny `Config.create*()`
- * factory funkcemi. NA ROZDÍL od ostatních stránek má tahle DVA nezávislé zdroje
- * mutace `formFields`/`filterColumns`: i18n (text) a async `loadRoleOptions()`/
- * `loadPermissionOptions()` (dynamická role/permission data, NIKDY nepřekládaná -
- * jsou to reálná jména z DB, ne enum sluggy). Řešeno novou `rebuildFormFields()`
- * metodou volanou z OBOU zdrojů (i18n `translations$.subscribe()` i
- * `loadRoleOptions()`/`loadPermissionOptions()` callbacků) - `this.formFields` je
- * vždy aktuální kombinace obou. Pokud je formulář zrovna otevřený, `rebuildFormFields()`
- * navíc přepočítá `visibleFormFields` se zachovaným kontextem (aktuálně zvolená role),
- * ať přepnutí jazyka za běhu s otevřeným formulářem nezobrazí zastaralý text.
- *
- * @bugfix-note (2026-09-08) `openGraphBuilder` permission oprava - viz
- * administrators.config.ts stejné datum.
+ * - ScrollLockService: Blocks page scrolling behind the e-mail access policy modal.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy, OnInit } from '@angular/core';
+import { Component, ViewChild, ChangeDetectionStrategy, OnInit,inject } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
@@ -46,6 +27,13 @@ import { InputDefinition } from '../../../shared/interfaces/input-definiton';
 import * as Config from './administrators.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { ScrollLockService } from '../../../core/services/scroll-lock.service';
+
+/**
+ * Name of the role with unrestricted access. Only a sysadmin may assign it; the API refuses it
+ * from anyone else as well.
+ */
+const SYSADMIN_ROLE_NAME = 'sysadmin';
 
 /**
  * Roles with 2FA hardcoded ON - must match backend `User::FORCED_2FA_ROLE_NAMES`.
@@ -86,6 +74,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   public override t(key: string): string {
     return this.i18n.getValue(`administrators.${key}`);
   }
+  private scrollLock = inject(ScrollLockService);
 
   get tableCaption(): string { return this.t('table_header_accounts'); }
 
@@ -124,6 +113,11 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   emailAccessPolicyLoading = false;
   emailAccessPolicySaving = false;
   primaryEmailDomain: string | null = null;
+  /**
+   * Primary domain as SAVED on the server. `primaryEmailDomain` is bound to the modal input and
+   * may hold a typed-but-unsaved value, so the e-mail check of the create form reads this one.
+   */
+  private savedPrimaryEmailDomain: string | null = null;
   emailAccessRules: EmailAccessRule[] = [];
   newRuleType: 'domain' | 'email' = 'domain';
   newRuleValue = '';
@@ -144,7 +138,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     super(dataHandler, cd, genericTableService);
 
     this.i18n.translations$.subscribe(() => {
-      this.buttons = Config.createTableButtons(this.i18n);
+      this.buttons = Config.createTableButtons(this.i18n).map(button => this.restrictRowButton(button));
       this.resetPasswordFormFields = Config.createResetPasswordFormFields(this.i18n);
       this.tableColumns = Config.createTableColumns(this.i18n);
       this.trashTableColumns = Config.createTrashTableColumns(this.i18n);
@@ -164,7 +158,29 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   /** @description UX only - the real authority check happens on the backend. */
   get isSysadmin(): boolean {
-    return this.authService.getUserRole() === 'sysadmin';
+    return this.authService.getUserRole() === SYSADMIN_ROLE_NAME;
+  }
+
+  /**
+   * @description Tells whether a table row / edited record is the signed-in user's own account.
+   * @param account Row or record with an `id`; null for a new account.
+   * @returns False for a new account.
+   */
+  private isOwnAccount(account: { id?: number | string } | null | undefined): boolean {
+    return account?.id !== undefined && account?.id !== null
+      && String(account.id) === String(this.authService.getUserId());
+  }
+
+  /**
+   * @description Limits row buttons that only a sysadmin may use on SOMEONE ELSE'S account.
+   * Currently the password change: everyone else sees it on their own row only.
+   * @param button Row button from the config.
+   * @returns The same button, with a per-row visibility rule where needed.
+   * @note UX only - `UserController::changePassword()` refuses the request as well.
+   */
+  private restrictRowButton(button: Core.TableButtons): Core.TableButtons {
+    if (button.action !== 'password_reset') return button;
+    return { ...button, visibleWhen: (item: any) => this.isSysadmin || this.isOwnAccount(item) };
   }
 
   get toolbarButtons(): Core.Button[] {
@@ -200,6 +216,14 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     });
   }
 
+    /**
+   * @description Releases the scroll lock when the page is left while the modal is still open.
+   */
+  override ngOnDestroy(): void {
+    if (this.showEmailAccessPolicyModal) this.scrollLock.unlock();
+    super.ngOnDestroy();
+  }
+
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
@@ -219,6 +243,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.loadRoleOptions();
     this.loadRolesForces2fa();
     this.loadPermissionOptions();
+    // Needed up front for the live e-mail check in the create form. The endpoint is sysadmin-only,
+    // so nobody else may even request it (it would only produce a 403 dialog).
+    if (this.isSysadmin) this.loadEmailAccessPolicy();
   }
 
   /**
@@ -244,7 +271,12 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
     if (this.showCreateForm) {
       const roleId = this.selectedItemForEdit?.role_id ?? null;
-      this.visibleFormFields = this.computeFieldsForTarget(roleId, !!this.selectedItemForEdit?.two_fa_forced_by_admin);
+      this.visibleFormFields = this.computeFieldsForTarget(
+        roleId,
+        !!this.selectedItemForEdit?.two_fa_forced_by_admin,
+        !this.selectedItemForEdit,
+        this.isEmailLocked(this.selectedItemForEdit)
+      );
     } else {
       this.visibleFormFields = this.formFields;
     }
@@ -325,25 +357,78 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       .map(p => String(p.id));
   }
 
+  /**
+   * @description Lists the permissions the signed-in user must not grant to anyone as an extra
+   * permission, i.e. those they do not hold themselves (no privilege escalation through the
+   * `permission_ids` multiselect). They are not offered in the form at all.
+   * @returns Option values (stringified permission IDs); empty for a sysadmin.
+   * @note UX only - `UserController::applyExplicitPermissions()` decides what is really saved
+   * and leaves grants outside the caller's authority untouched.
+   */
+  private ungrantablePermissionOptionIds(): string[] {
+    if (this.isSysadmin) return [];
+    return this.permissionsCatalog
+      .filter(p => !this.permissionService.hasPermission(p.permission_key))
+      .map(p => String(p.id));
+  }
+
+  /**
+   * @description Tells whether the login e-mail must be read-only in the form: a non-sysadmin
+   * may change the e-mail of their own account only (whoever controls the e-mail controls the
+   * account - password reset and 2FA codes are sent there).
+   * @param account Record being edited; null for a new account.
+   * @returns False for a sysadmin, for a new account and for the user's own account.
+   * @note UX only - `UserController::update()` refuses the change as well.
+   */
+  private isEmailLocked(account: { id?: number | string } | null | undefined): boolean {
+    return !!account && !this.isSysadmin && !this.isOwnAccount(account);
+  }
+
   private isRoleAssignable(roleId: number | string | undefined | null): boolean {
     if (this.isSysadmin) return true;
     if (roleId === undefined || roleId === null || roleId === '') return false;
 
     const meta = this.rolesMeta.get(Number(roleId));
     if (!meta) return false;
+    // Never offered to a non-sysadmin, not even to a user who holds every single permission.
+    if (meta.role_name === SYSADMIN_ROLE_NAME) return false;
 
     return meta.permissionKeys.every(key => this.permissionService.hasPermission(key));
   }
 
+  /**
+   * @description Derives the form definition for the account being created / edited.
+   * @param roleId Role currently selected in the form.
+   * @param adminForced True when a sysadmin forced 2FA on this particular account.
+   * @param isNewAccount True for the create form. Only then is the login e-mail checked against
+   *   the e-mail access policy (the backend does the same on create only).
+   * @param emailLocked True when the login e-mail must be read-only, see `isEmailLocked()`.
+   * @returns Form fields with the role-driven restrictions and the e-mail check applied. For a
+   *   non-sysadmin the block switch and the "force 2FA" field are removed, and only the
+   *   permissions they hold themselves (plus the ones the role grants) are offered.
+   */
   private computeFieldsForTarget(
     roleId: number | string | undefined | null,
-    adminForced: boolean = false
+    adminForced: boolean = false,
+    isNewAccount: boolean = false,
+    emailLocked: boolean = false
   ): InputDefinition[] {
     const forced = this.isRoleForced(roleId) || adminForced;
     const neverBlockable = this.isNeverBlockableRole(roleId);
     const rolePermissionIds = this.rolePermissionOptionIds(roleId);
+    // Not offered at all: permissions the signed-in user does not hold. The ones the role grants
+    // stay listed (locked, marked "from role") even then, because they describe the account.
+    const roleGranted = new Set(rolePermissionIds);
+    const hiddenPermissionIds = new Set(this.ungrantablePermissionOptionIds().filter(id => !roleGranted.has(id)));
+    const emailPattern = isNewAccount ? this.allowedEmailPattern() : null;
 
     let fields = this.formFields.map(f => {
+      if (f.column_name === 'user_email' && emailLocked) {
+        return { ...f, editable: false };
+      }
+      if (f.column_name === 'user_email' && emailPattern) {
+        return { ...f, pattern: emailPattern, errorMessage: this.t('field_email_domain_error') };
+      }
       if (f.column_name === 'enable_2fa' && forced) {
         return { ...f, editable: false };
       }
@@ -351,7 +436,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         return { ...f, editable: false };
       }
       if (f.column_name === 'permission_ids') {
-        return { ...f, disabledOptionValues: rolePermissionIds } as InputDefinition;
+        const offeredOptions = (f.options ?? []).filter(opt => !hiddenPermissionIds.has(String(opt.value)));
+        return { ...f, options: offeredOptions, disabledOptionValues: rolePermissionIds } as InputDefinition;
       }
       if (f.column_name === 'role_id' && !this.isSysadmin) {
         const assignableOptions = this.roleOptions.filter(opt =>
@@ -367,7 +453,44 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       fields = fields.filter(f => f.column_name !== 'two_fa_forced_by_admin');
     }
 
+    // Blocking and unblocking is sysadmin-only (the API refuses it from anyone else). A hidden
+    // field is also never sent, see handleFormSubmitted().
+    if (!this.isSysadmin) {
+      fields = fields.filter(f => f.column_name !== 'is_blocked');
+    }
+
     return fields;
+  }
+
+  /**
+   * @description Builds the validation pattern of the login e-mail of a NEW account from the
+   * e-mail access policy, mirroring `UserController::assertEmailDomainAllowed()`: the address is
+   * accepted when its domain is the primary domain or an allowed domain, or when the whole
+   * address is listed as an exception.
+   * @returns Pattern source for the form field; null when there is nothing to check (policy not
+   *   loaded, which is always the case for a non-sysadmin, or no primary domain = no restriction).
+   * @note UX only. The backend stays the authority and checks the address again on save.
+   */
+  private allowedEmailPattern(): string | null {
+    const primaryDomain = this.savedPrimaryEmailDomain?.trim();
+    if (!primaryDomain) return null;
+
+    // The backend compares lower-cased values, so every letter is matched in both cases (a string
+    // pattern cannot carry the `i` flag). `-` is deliberately left unescaped: outside a character
+    // class that escape is invalid in the unicode mode browsers use for the `pattern` attribute.
+    const toSource = (value: string): string => value
+      .replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&')
+      .replace(/[a-z]/gi, letter => `[${letter.toLowerCase()}${letter.toUpperCase()}]`);
+    const valuesOf = (type: EmailAccessRule['type']): string[] =>
+      this.emailAccessRules.filter(rule => rule.type === type).map(rule => rule.value);
+
+    const domains = [primaryDomain, ...valuesOf('domain')]
+      .map(domain => domain.trim().replace(/^@/, ''))
+      .filter(Boolean)
+      .map(toSource);
+    const addresses = valuesOf('email').map(address => address.trim()).filter(Boolean).map(toSource);
+
+    return `(?:${[`[^@\\s]+@(?:${domains.join('|')})`, ...addresses].join('|')})`;
   }
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
@@ -385,7 +508,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   handleCreateFormOpened(): void {
     this.selectedItemForEdit = null;
     this.formFieldOverrides = null;
-    this.visibleFormFields = this.computeFieldsForTarget(null);
+    this.visibleFormFields = this.computeFieldsForTarget(null, false, true);
     this.showCreateForm = true;
   }
 
@@ -394,9 +517,13 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
 
     const explicitKeys: string[] = Array.isArray(itemToEdit.user_permissions) ? itemToEdit.user_permissions : [];
+    // Extra permissions the signed-in user does not hold are not offered in the form, so they
+    // are not pre-selected either. The API keeps them on the account untouched.
+    const notOffered = new Set(this.ungrantablePermissionOptionIds());
     const explicitIds = this.permissionsCatalog
       .filter(p => explicitKeys.includes(p.permission_key))
-      .map(p => String(p.id));
+      .map(p => String(p.id))
+      .filter(id => !notOffered.has(id));
     const roleIds = this.rolePermissionOptionIds(itemToEdit.role_id);
     itemToEdit.permission_ids = Array.from(new Set([...explicitIds, ...roleIds]));
 
@@ -410,7 +537,12 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     }
 
     this.formFieldOverrides = null;
-    this.visibleFormFields = this.computeFieldsForTarget(itemToEdit.role_id, !!itemToEdit.two_fa_forced_by_admin);
+    this.visibleFormFields = this.computeFieldsForTarget(
+      itemToEdit.role_id,
+      !!itemToEdit.two_fa_forced_by_admin,
+      false,
+      this.isEmailLocked(itemToEdit)
+    );
     this.selectedItemForEdit = itemToEdit;
     this.showCreateForm = true;
   }
@@ -422,14 +554,26 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       ? Number(event.value)
       : null;
 
-    this.visibleFormFields = this.computeFieldsForTarget(newRoleId, !!this.selectedItemForEdit?.two_fa_forced_by_admin);
+    this.visibleFormFields = this.computeFieldsForTarget(
+      newRoleId,
+      !!this.selectedItemForEdit?.two_fa_forced_by_admin,
+      !this.selectedItemForEdit,
+      this.isEmailLocked(this.selectedItemForEdit)
+    );
     this.formFieldOverrides = { permission_ids: this.rolePermissionOptionIds(newRoleId) };
     this.cd.markForCheck();
   }
 
-  handleFormSubmitted(formData: any): void {
+    handleFormSubmitted(formData: any): void {
     const payload = { ...formData };
     if (payload.role_id) payload.role_id = parseInt(payload.role_id, 10);
+
+    // FormBuilderComponent initializes an untouched checkbox to '' (see its ngOnInit), which the
+    // API rejects ("must be true or false"). Every checkbox field is sent as a real boolean.
+    const CHECKED_VALUES: unknown[] = [true, 1, '1', 'true', 'on'];
+    this.visibleFormFields
+      .filter(field => field.type === 'checkbox' && field.column_name in payload)
+      .forEach(field => { payload[field.column_name] = CHECKED_VALUES.includes(payload[field.column_name]); });
 
     const originalRoleId = this.selectedItemForEdit?.role_id !== undefined && this.selectedItemForEdit?.role_id !== null
       ? Number(this.selectedItemForEdit.role_id)
@@ -456,6 +600,13 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       .filter(f => f.editable === false)
       .map(f => f.column_name);
     nonEditableFields.forEach(key => delete payload[key]);
+
+    // A field hidden from the current user (e.g. "force 2FA" for a non-sysadmin) is never sent.
+    // The form still carries its value from the edited record and the API refuses the key itself.
+    const visibleFieldNames = new Set(this.visibleFormFields.map(f => f.column_name));
+    this.formFields
+      .filter(f => !visibleFieldNames.has(f.column_name))
+      .forEach(f => delete payload[f.column_name]);
 
     const forcedNow = this.isRoleForced(payload.role_id);
     if (forcedNow) {
@@ -523,15 +674,29 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   // ── Email access policy modal ──────────────────────────────────────────
 
   openEmailAccessPolicyModal(): void {
+    // Guard: every lock() must be paired with exactly one unlock().
+    if (this.showEmailAccessPolicyModal) return;
+
+    this.scrollLock.lock();
     this.showEmailAccessPolicyModal = true;
-    this.emailAccessPolicyLoading = true;
     this.newRuleType = 'domain';
     this.newRuleValue = '';
+    this.loadEmailAccessPolicy();
+  }
+
+  /**
+   * @description Loads the e-mail access policy: the single source of both the policy modal and
+   * the live e-mail check in the create form.
+   * @note Call it for a sysadmin only; the endpoint refuses everyone else.
+   */
+  private loadEmailAccessPolicy(): void {
+    this.emailAccessPolicyLoading = true;
     this.cd.markForCheck();
 
     this.dataHandler.get<{ primary_email_domain: string | null; rules: EmailAccessRule[] }>('core/email-access-policy').subscribe({
       next: (res) => {
         this.primaryEmailDomain = res.primary_email_domain;
+        this.savedPrimaryEmailDomain = res.primary_email_domain;
         this.emailAccessRules = res.rules || [];
         this.emailAccessPolicyLoading = false;
         this.cd.markForCheck();
@@ -546,6 +711,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   closeEmailAccessPolicyModal(): void {
     if (this.emailAccessPolicySaving) return;
     this.showEmailAccessPolicyModal = false;
+    this.scrollLock.unlock();
   }
 
   savePrimaryDomain(): void {
@@ -559,6 +725,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       next: (setting: any) => {
         this.emailAccessPolicySaving = false;
         this.primaryEmailDomain = setting?.primary_email_domain ?? this.primaryEmailDomain;
+        this.savedPrimaryEmailDomain = this.primaryEmailDomain?.trim() || null;
         this.alertDialogService.open(this.t('saved_title'), this.t('primary_domain_saved'), 'success');
         this.cd.markForCheck();
       },

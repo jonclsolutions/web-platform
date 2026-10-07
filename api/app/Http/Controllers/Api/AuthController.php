@@ -7,44 +7,6 @@
  * @created 2025
  * @description Manages user authentication, token-based session lifecycle (Access/Refresh
  * tokens), CAPTCHA-gated brute-force protection, and mandatory/optional 2FA verification.
- *
- * @refactor-note (2026-08-16) BACKLOG: "captcha na login + 2FA na mail". Login už
- * nemusí vždy rovnou vydat token - pokud User::requiresTwoFactor() vrátí true, `login()`
- * vytvoří pending-login session (TwoFactorCode), pošle OTP e-mailem a vrátí `login_token`
- * misto access/refresh tokenu. Skutečné tokeny se vydávají až ve `verifyTwoFactor()`.
- * CAPTCHA (Cloudflare Turnstile) se vyžaduje až od 3. neúspěšného pokusu PRO DANÝ E-MAIL
- * (ne IP) - viz CaptchaVerificationService a RateLimiter klíč 'login-fail:'.
- * IP+email throttle na route úrovni řeší AppServiceProvider::boot() (limiter 'login').
- *
- * @refactor-note (2026-08-22) KROK 2 BEZPEČNOSTNÍHO MONITORINGU: doplněny reálné zápisy
- * do `core_security_events` (přes `CoreSecurityEvent::record()`) na všech místech, kde
- * dřív existoval jen `core_logs` audit záznam:
- * - `login_failed` při každém špatném heslu (bucketované, viz model - nezahltí DB).
- * - `login_brute_force_suspected` (severity `critical`) v okamžiku, kdy počet
- *   neúspěšných pokusů pro daný e-mail PRVNÍ e-mail teprve co dosáhne prahu pro captchu
- *   (`CAPTCHA_THRESHOLD`) - signalizuje admin monitoringu reálný pokus o uhodnutí hesla,
- *   ne jen jeden překlep.
- * - `login_2fa_invalid` při špatně zadaném OTP kódu.
- * - `login_2fa_exhausted` (severity `critical`) při vyčerpání pokusů na OTP kód.
- * `core_logs` (audit) zůstává beze změny - obě tabulky mají jiný účel (audit vs.
- * bezpečnostní diagnostika), viz CoreSecurityEvent.php hlavička.
- *
- * @refactor-note (2026-08-24) BACKLOG "workflow zakládání účtů z adminu": `login()`
- * dostal NOVOU kontrolu, zařazenou HNED PO captcha bloku a PŘED `Auth::attempt()`:
- * - `is_blocked = true` -> 403 s jasnou hláškou, zapsáno do core_security_events
- *   (`login_blocked_account`, warning) i core_logs. Nejde o account-enumeration riziko
- *   navíc oproti běžnému "neplatné údaje" - jde o UZAVŘENÉ interní prostředí (jen
- *   zaměstnanci), kde transparentní hláška > falešná bezpečnost přes nejasnou odpověď.
- * - `user_password_hash IS NULL` (účet ještě neaktivovaný přes AccountActivationMail
- *   odkaz) -> 403 s odlišnou hláškou. BEZ TOHOHLE by `Auth::attempt()` zavolalo
- *   `Hash::check($password, null)` uvnitř Laravel guardu, což by u některých PHP/Hash
- *   driver kombinací skončilo výjimkou (`null` není platný `string` argument), místo
- *   aby to vrátilo hezkou JSON chybu - proto se kontroluje explicitně a DŘÍVE, ne se
- *   spoléhá na to, že `Auth::attempt()` prostě vrátí `false`.
- * Obě kontroly čtou uživatele jedním dodatečným dotazem `User::where('user_email', ...)`
- * PŘED `Auth::attempt()` - mírně dražší než dřív (jeden extra SELECT na neúspěšný i
- * úspěšný pokus), ale nutné pro to, aby šlo rozlišit "zablokovaný"/"neaktivovaný" od
- * "špatné heslo" ještě předtím, než se heslo vůbec ověřuje.
  */
 
 namespace App\Http\Controllers\Api;
@@ -116,6 +78,7 @@ class AuthController extends Controller
                 ], 422);
             }
         }
+        
 
         // ── Blokace / neaktivovaný účet - MUSÍ se ověřit PŘED Auth::attempt() ──────────
         // (viz refactor-note v hlavičce souboru - Auth::attempt by s NULL heslem mohlo
@@ -178,6 +141,26 @@ class AuthController extends Controller
             'message'          => 'Invalid credentials.',
             'captcha_required' => $attemptsAfter >= self::CAPTCHA_THRESHOLD,
         ], 401);
+    }
+
+        /**
+     * @description Returns the profile, roles and effective permissions of the signed-in user
+     * (the owner of the access token). Same shape as the login response, without tokens.
+     * @param Request $request Authenticated request (auth:sanctum).
+     * @return JsonResponse
+     * @note Exposes only the caller's own account, so no permission check is needed.
+     */
+    public function user(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $user->load('roles.permissions');
+
+        return response()->json([
+            'user'             => new UserResource($user),
+            'user_roles'       => $user->roles->pluck('role_name'),
+            'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
+        ], 200);
     }
 
     /**

@@ -8,14 +8,54 @@
  * @dependencies
  * - HttpClient: Facilitates secure API communication.
  * - AlertDialogService: Displays the single, authoritative user-facing error dialog upon API failure.
+ * - AdminLocalizationService: Statická (bundlovaná) lokalizace admin UI - zdroj všech
+ *   uživatelsky viditelných textů chybového dialogu, viz refactor-note (2026-10) níže.
  *
+ * @refactor-note (2026-10) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * Všechny uživatelsky viditelné texty v `handleError` (titulek dialogu + všechny
+ * varianty chybové zprávy) nahrazeny i18n klíči ze sekce `data-handler`
+ * v `assets/i18n/admin/{lang}/{lang}.json`. Služba nededí BaseDataComponent, proto
+ * ruční injection `AdminLocalizationService` dle vzoru `WelcomePageComponent`
+ * (privátní `t(key)` s automatickým prefixem sekce).
+ * - Signatura konstruktoru zůstává beze změny (žádný dopad na existující testy/mocky);
+ *   služba se získává LÍNĚ přes `Injector` - viz bugfix-note (2026-10) níže.
+ * - Dynamické části zpráv (HTTP status, text z backendu, validační chyby) se do
+ *   přeloženého textu dosazují přes pojmenované placeholdery `{status}`, `{message}`,
+ *   `{errors}`, `{statusText}` - stejná konvence jako `{name}` ve
+ *   `welcome-page.welcome_message`. Viz `t()` níže.
+ * - Texty se čtou až V OKAMŽIKU chyby (ne při vytvoření služby), takže dialog je vždy
+ *   v aktuálně zvoleném admin jazyce i po jeho přepnutí za běhu.
+ * - ZÁMĚRNĚ NEPŘELOŽENO: `console.error` výpisy (diagnostika pro vývojáře, ne UI)
+ *   a texty, které přijdou hotové z backendu (`error.error.message`, validační chyby
+ *   v `error.error.errors`) - jejich jazyk určuje Laravel API, ne tahle služba.
+ * - Žádná změna logiky větvení, HTTP volání ani veřejného API - jen texty.
+ *
+ * @bugfix-note (2026-10) NG0200 "Circular dependency detected for InjectionToken
+ * HTTP_INTERCEPTORS" + admin jazyk se nenačetl (všude `'Cannot load text'`):
+ * První verze refactoru výše injektovala `AdminLocalizationService` EAGER (pole třídy
+ * `inject(AdminLocalizationService)`). `DataHandler` ale vzniká UVNITŘ sestavování
+ * řetězce HTTP interceptorů (první request aplikace -> HTTP_INTERCEPTORS ->
+ * AuthTokenInterceptor -> AuthService -> GenericTableService -> DataHandler)
+ * a `AdminLocalizationService` ve svém konstruktoru hned posílá `http.get()` pro JSON
+ * jazyka - tedy request, který potřebuje tentýž, ještě nedostavěný řetězec
+ * interceptorů. Angular to vyhodnotí jako kruhovou závislost, `catchError`
+ * v `loadLanguage()` chybu spolkne a publikuje prázdný překlad.
+ * OPRAVA: `AdminLocalizationService` se z `Injector` vytahuje až při PRVNÍM použití
+ * (getter `i18n`), tj. až v `handleError` po dokončeném HTTP requestu, kdy je řetězec
+ * interceptorů dávno sestavený. `AdminLocalizationService` beze změny.
+ * @note Důsledek: pokud by první chyba přes `DataHandler` nastala dřív, než si
+ * `AdminLocalizationService` vyžádá jakákoli admin komponenta (v administraci to dělá
+ * `AdminLayoutComponent`/`BaseDataComponent`), služba teprve vznikne a JSON se teprve
+ * začne stahovat - tento jeden dialog pak ukáže `'Cannot load text'`.
+ * NIKDY nevracet eager injection do pole třídy ani do konstruktoru.
  */
 
-import { Injectable } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AlertDialogService } from './alert-dialog.service';
+import { AdminLocalizationService } from './admin-localization.service';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -32,10 +72,56 @@ import { environment } from '../../../environments/environment';
 export class DataHandler {
   private baseUrl = environment.base_api_url;
 
+  /**
+   * @description Injector pro LÍNÉ získání `AdminLocalizationService` - viz getter
+   * `i18n` níže a bugfix-note (2026-10) v hlavičce souboru. `Injector` sám žádný HTTP
+   * request nespouští, jeho eager injection je proto bezpečná.
+   */
+  private readonly injector = inject(Injector);
+
+  /** Cache instance pro getter `i18n` - `undefined` do prvního použití. */
+  private _i18n?: AdminLocalizationService;
+
+  /**
+   * @description Líně (až při prvním čtení) vytáhne `AdminLocalizationService`
+   * z `Injector`. ZÁMĚRNĚ ne `inject(AdminLocalizationService)` jako pole třídy:
+   * `DataHandler` vzniká uvnitř sestavování řetězce HTTP interceptorů a konstruktor
+   * `AdminLocalizationService` hned posílá HTTP request -> NG0200. Viz bugfix-note
+   * (2026-10) v hlavičce souboru.
+   * @refactor-note (2026-10) BACKLOG "vícejazyčná administrace, žádné hardcoded texty" -
+   * viz hlavička souboru.
+   */
+  private get i18n(): AdminLocalizationService {
+    if (!this._i18n) {
+      this._i18n = this.injector.get(AdminLocalizationService);
+    }
+    return this._i18n;
+  }
+
   constructor(
     private http: HttpClient,
     private alertDialogService: AlertDialogService
   ) { }
+
+  /**
+   * @description Vrátí přeložený text ze sekce `data-handler` a dosadí do něj
+   * pojmenované placeholdery (`{status}`, `{message}`, ...). Viz refactor-note (2026-10)
+   * v hlavičce souboru.
+   * @param key Klíč UVNITŘ sekce `data-handler` (bez prefixu sekce), např. `'network_error'`.
+   * @param params Hodnoty pro placeholdery - klíč objektu = název placeholderu bez závorek.
+   * @returns {string} Hotový text v aktuálně zvoleném admin jazyce.
+   * @note Dosazení běží v JEDNOM průchodu přes callback, ne řetězením `.replace()`:
+   * hodnoty pocházejí z backendu (chybová zpráva, validační texty) a mohou samy
+   * obsahovat `{...}` nebo `$&`/`$1` - ty se tak nikdy nevyhodnotí jako další
+   * placeholder ani jako speciální náhradový vzor. Placeholder bez odpovídající
+   * hodnoty v `params` zůstane v textu beze změny (snadno viditelná chyba v JSONu).
+   */
+  private t(key: string, params: Record<string, string | number> = {}): string {
+    const template = this.i18n.getValue(`data-handler.${key}`);
+    return template.replace(/\{(\w+)\}/g, (placeholder: string, name: string) =>
+      Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : placeholder
+    );
+  }
 
   /**
    * @description Constructs appropriate headers for the request based on payload type.
@@ -63,46 +149,54 @@ export class DataHandler {
    * cleanup logic without ever showing a second toast themselves.
    * @param error The raw HttpErrorResponse object.
    * @returns {Observable<never>} An observable that throws the original error.
+   * @refactor-note (2026-10) Všechny uživatelsky viditelné texty (titulek dialogu
+   * i zprávy) nahrazeny i18n klíči sekce `data-handler` - viz hlavička souboru.
+   * Větvení podle `error.status` beze změny; `console.error` výpisy zůstávají
+   * záměrně nepřeložené (diagnostika, ne UI).
    */
   private handleError = (error: HttpErrorResponse): Observable<never> => {
-    let errorMessage = 'An unknown error occurred!';
+    let errorMessage = this.t('unknown_error');
     if (error.error instanceof ErrorEvent) {
-      errorMessage = `Client-side error: ${error.error.message}`;
+      errorMessage = this.t('client_side_error', { message: error.error.message });
     } else {
       console.error(
         `Backend returned code ${error.status}, ` +
         `response body: ${JSON.stringify(error.error)}`);
 
       if (error.status === 0) {
-        errorMessage = 'Unable to connect to the server. Please check your network connection or if the API is running.';
+        errorMessage = this.t('network_error');
       } else if (error.status === 403) {
         if (error.error && error.error.error_code === 'CANNOT_DELETE_OWN_ACCOUNT') {
-          errorMessage = 'Cannot delete the user you are currently logged in as.';
+          errorMessage = this.t('cannot_delete_own_account');
         } else if (error.error && error.error.message) {
             errorMessage = error.error.message;
         } else {
-          errorMessage = 'An error occurred while deleting the item.';
+          errorMessage = this.t('forbidden_fallback');
         }
       } else if (error.status === 422 && error.error && error.error.errors) {
         const validationErrors = Object.values(error.error.errors).flat().join('; ');
-        errorMessage = `Validation error (${error.status}): ${validationErrors}`;
+        errorMessage = this.t('validation_error', { status: error.status, errors: validationErrors });
       } else if (error.status >= 400 && error.status < 500) {
         if (error.error && error.error.message) {
-          errorMessage = `Client error (${error.status}): ${error.error.message}`;
+          errorMessage = this.t('client_error_with_message', { status: error.status, message: error.error.message });
         } else if (error.error && error.error.errors) {
           const validationErrors = Object.values(error.error.errors).flat().join('; ');
-          errorMessage = `Validation error (${error.status}): ${validationErrors}`;
+          errorMessage = this.t('validation_error', { status: error.status, errors: validationErrors });
         } else {
-          errorMessage = `Client error: ${error.status} ${error.statusText || ''}`;
+          // `.trim()` - prázdný `statusText` (běžné u HTTP/2) by jinak nechal mezeru na konci.
+          errorMessage = this.t('client_error', { status: error.status, statusText: error.statusText || '' }).trim();
         }
      } else if (error.status >= 500) {
         const text = error.statusText ? error.statusText.trim() : '';
-        errorMessage = `Server error (${error.status}): ${text !== '' ? text : 'Internal Server Error'}`;
+        errorMessage = this.t('server_error', {
+          status: error.status,
+          statusText: text !== '' ? text : this.t('server_error_default_text')
+        });
       }
     }
     console.error(`API Error: ${errorMessage}`);
 
-    this.alertDialogService.open('API Error', errorMessage, 'danger');
+    this.alertDialogService.open(this.t('dialog_title'), errorMessage, 'danger');
 
     // @bugfix-note (2026-08-31): rethrow the ORIGINAL error (not a repackaged plain
     // Error) - see bugfix-note in file header. Consuming components can inspect

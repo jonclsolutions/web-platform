@@ -37,6 +37,22 @@
  *   personal-info stránce reálně překreslil i v komponentách, které zrovna nejsou
  *   OnPush-triggerované jinou akcí. Bezpečné volat i pro non-OnPush komponenty
  *   (markForCheck je no-op navíc, ne chyba).
+ *
+ * @refactor-note (2026-10) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
+ * Poslední natvrdo psané (anglické) texty PŘÍMO v této třídě nahrazeny i18n klíči
+ * z vlastní sekce `base-data` - čteno přes `this.t('base-data.<klic>')`, tedy plnou
+ * cestou včetně sekce (stejné pravidlo jako u `t()` výše). Záměrně NE přes `strings`
+ * a NE přes `translationSection` potomka: jde o texty báze samotné, které mají být
+ * stejné ve všech ~99 % zděděných komponent a potomek je nemá přebíjet.
+ * Dotčené texty (jen texty, žádná změna logiky ani veřejného API):
+ * - `loadData()`, `loadAllData()`, `hardDeleteAllTrashedDataFromApi()` -
+ *   `base-data.api_endpoint_undefined` (dříve dvě drobně odlišné varianty téhož textu,
+ *   sjednoceno na jeden klíč).
+ * - `updatePassword()` - `base-data.password_change_error` (fallback, když chyba
+ *   nenese vlastní `message`).
+ * - `hardDeleteAllTrashedDataFromApi()` - `base-data.mass_delete_error` (stejný fallback).
+ * Odpovídající JSON sekce `base-data` musí existovat v KAŽDÉM
+ * `assets/i18n/admin/{lang}/{lang}.json` (cz, en).
  */
 
 import { Directive, inject } from '@angular/core';
@@ -298,9 +314,13 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     this.isFilterVisible = !this.isFilterVisible;
   }
 
+  /**
+   * @refactor-note (2026-10) Natvrdo psaný text nahrazen i18n klíčem
+   * `base-data.api_endpoint_undefined` - viz hlavička souboru.
+   */
   loadData(): void {
     if (!this.apiEndpoint) {
-      this.errorMessage = 'Error: API endpoint undefined.';
+      this.errorMessage = this.t('base-data.api_endpoint_undefined');
       return;
     }
     this.crud.getCollection().subscribe(responseData => { this.data = responseData; });
@@ -332,33 +352,47 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     return this.crud.upload<U>(formData, targetUrl);
   }
 
+  /**
+   * @refactor-note (2026-10) Fallback text (použije se jen když chyba nenese vlastní
+   * `message`) nahrazen i18n klíčem `base-data.password_change_error` - viz hlavička
+   * souboru.
+   */
   public updatePassword(id: number, data: any): Core.Observable<any> {
     this.errorMessage = null;
     return this.crud.updatePassword(id, data).pipe(
       Core.catchError((err: Core.HttpErrorResponse) => {
-        this.errorMessage = err.message || 'Error changing password.';
+        this.errorMessage = err.message || this.t('base-data.password_change_error');
         this.cd.markForCheck();
         return Core.throwError(() => err);
       })
     );
   }
 
+  /**
+   * @refactor-note (2026-10) Natvrdo psaný text nahrazen i18n klíčem
+   * `base-data.api_endpoint_undefined` - viz hlavička souboru.
+   */
   loadAllData(filters?: Core.FilterParams): Core.Observable<T[]> {
     if (!this.apiEndpoint) {
-      return Core.throwError(() => new Error('API endpoint undefined.'));
+      return Core.throwError(() => new Error(this.t('base-data.api_endpoint_undefined')));
     }
     return this.crud.loadAll(filters);
   }
 
+  /**
+   * @refactor-note (2026-10) Oba natvrdo psané texty nahrazeny i18n klíči
+   * `base-data.api_endpoint_undefined` a `base-data.mass_delete_error` (fallback,
+   * když chyba nenese vlastní `message`) - viz hlavička souboru.
+   */
   public hardDeleteAllTrashedDataFromApi(): Core.Observable<void> {
     if (!this.apiEndpoint) {
-      return Core.throwError(() => new Error('API endpoint undefined.'));
+      return Core.throwError(() => new Error(this.t('base-data.api_endpoint_undefined')));
     }
     this.errorMessage = null;
 
     return this.crud.hardDeleteAllTrashed().pipe(
       Core.catchError((err: Core.HttpErrorResponse) => {
-        this.errorMessage = err.message || 'Mass delete error.';
+        this.errorMessage = err.message || this.t('base-data.mass_delete_error');
         this.cd.markForCheck();
         return Core.throwError(() => err);
       })

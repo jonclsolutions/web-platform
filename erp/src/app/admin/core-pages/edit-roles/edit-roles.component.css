@@ -1,26 +1,24 @@
 /**
  * @file edit-roles.component.css
- * @path src/app/admin/web-pages/edit-roles/edit-roles.component.css
+ * @path src/app/admin/core-pages/edit-roles/edit-roles.component.css
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @redesign: 2026 - stejný vizuální jazyk jako zbytek admin systému (Kravio styl):
- *            zaoblené karty (18px), jemné stíny, tmavý akcent (#18181b) místo
- *            modré, plně zaoblená ("pill") tlačítka. Protože komponenta už
- *            používala CSS proměnné (--accent, --radius, ...), stačilo z velké
- *            části přepnout jen hodnoty proměnných - struktura/třídy a logika
- *            beze změny.
- * @refactor-note (2026-08) Doplněny styly pro "select all" checkbox v hlavičce
- *            každé sekce oprávnění (.permission-group-header-checkbox) - viz
- *            edit-roles.component.ts (toggleGroup).
- * @refactor-note (2026-08-7) Doplněny styly pro DRUHOU úroveň grupování
- *            (.permission-resource, .permission-resource-header) - vizuálně mírně
- *            odsazená/menší varianta modulového nadpisu, ať je jasná hierarchie
- *            modul -> zdroj -> jednotlivá oprávnění. Doplněno i druhé vyhledávací
- *            pole (.permission-search, .permission-search-empty) - stylově kopíruje
- *            existující .roles-search (levý panel), jen umístěné v pravém detailu.
+ * @description Styles of the role and permission management screen: page header, new-role form,
+ * master-detail layout (role list + role detail), three-level permission checklist, the
+ * permission save bar and the delete confirmation modal. Uses the visual language of the rest of
+ * the admin: rounded cards, soft shadows, dark accent, fully rounded ("pill") buttons.
+ * @dependencies
+ * - None. All design tokens are declared locally on :host (no shared variables file).
  */
 
+/**
+ * @module Design tokens and host
+ * @description Colour, radius and font tokens of the component, plus the host box.
+ * @usage :host
+ * @note --savebar-sticky-top is the distance the permission save bar keeps from the top of the
+ * scroll area while it is stuck. Increase it if a fixed admin header ever overlaps the bar.
+ */
 :host {
   --accent:        #18181b;
   --accent-dark:   #000000;
@@ -43,6 +41,8 @@
   --radius-md:     18px;
   --ff:            -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 
+  --savebar-sticky-top: 8px;
+
   display: block;
   font-family: var(--ff);
   padding: 0 0 60px;
@@ -50,7 +50,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-/* ── Header ─────────────────────────────────────────────── */
+/**
+ * @module Page header
+ * @description Title, subtitle and the page-level action buttons.
+ * @usage .roles-page-header, .roles-page-subtitle
+ */
 .roles-page-header {
   display: flex;
   align-items: flex-start;
@@ -75,7 +79,12 @@
   line-height: 1.55;
 }
 
-/* ── Tlačítka - vždy plně zaoblená (pill), bez ohledu na --radius ─── */
+/**
+ * @module Buttons
+ * @description Primary, secondary and danger buttons plus the compact size modifier.
+ * @usage .btn-primary, .btn-secondary, .btn-danger, .btn-small
+ * @note Always fully rounded (pill), independent of --radius.
+ */
 .btn-primary, .btn-secondary, .btn-danger {
   display: inline-flex;
   align-items: center;
@@ -114,7 +123,12 @@
   font-size: 0.78rem;
 }
 
-/* ── Nová role - formulář ──────────────────────────────────── */
+/**
+ * @module New role form
+ * @description Card with the inline form for creating a role, and the shared text input look.
+ * @usage .new-role-card, .new-role-fields, .field-group, .field-group--wide, .new-role-actions, .error-text
+ * @note The input rule also styles the search boxes and the detail name / description inputs.
+ */
 .new-role-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -146,7 +160,11 @@
 
 .error-text { color: var(--error); font-size: 0.8rem; margin: 8px 0 0; }
 
-/* ── Loading ────────────────────────────────────────────── */
+/**
+ * @module Loading state
+ * @description Centered spinner with a label, shown while roles and permissions load.
+ * @usage .loading-box, .loader-spinner
+ */
 .loading-box {
   display: flex;
   align-items: center;
@@ -165,18 +183,26 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Master-detail layout ──────────────────────────────────
-   Klíčová vlastnost pro škálovatelnost: šířka stránky je fixní
-   bez ohledu na počet rolí - roste jen výška levého seznamu
-   (a ten scrolluje samostatně), ne šířka celé stránky.
-   ─────────────────────────────────────────────────────────── */
+/**
+ * @module Master-detail layout
+ * @description Two-column grid: fixed-width role list, flexible role detail.
+ * @usage .roles-layout
+ * @note Key to scalability: the page width is fixed regardless of the number of roles. Only the
+ * height of the left list grows (and it scrolls on its own), never the width of the page.
+ */
 .roles-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 20px;
   align-items: start;
 }
-/* ── Levý panel: seznam rolí ────────────────────────────── */
+
+/**
+ * @module Role list (left panel)
+ * @description Card with the role search box and the scrollable list of roles.
+ * @usage .roles-list-panel, .roles-search, .roles-list, .role-list-item (+ --active, --protected),
+ *        .role-list-item-main, .role-list-name, .role-list-desc, .roles-list-empty
+ */
 .roles-list-panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -258,6 +284,12 @@
   color: var(--text-dim);
   font-size: 0.82rem;
 }
+
+/**
+ * @module Role markers
+ * @description Lock icon of system roles and the user count badge.
+ * @usage .lock-icon, .users-badge, .users-badge--zero
+ */
 .lock-icon { color: var(--warning); flex-shrink: 0; }
 
 .users-badge {
@@ -271,7 +303,15 @@
   flex-shrink: 0;
 }
 .users-badge--zero { background: var(--border); color: var(--text-dim); }
-/* ── Pravý panel: detail role ───────────────────────────── */
+
+/**
+ * @module Role detail (right panel)
+ * @description Card with the selected role: header, description, notices and the checklist.
+ * @usage .role-detail-panel, .empty-state, .detail-header, .detail-header-main, .detail-name,
+ *        .detail-name-input, .detail-header-actions, .detail-desc, .detail-desc-input, .protected-notice
+ * @note The panel must not get `overflow: hidden / auto`: that would turn it into the scroll
+ * container of the sticky permission save bar and the bar would stop following the page scroll.
+ */
 .role-detail-panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -353,9 +393,66 @@
   color: #92400e;
 }
 
-/* ── Vyhledávání v checklistu oprávnění (pravý panel) ───────────────
-   Stylově kopíruje .roles-search, jen bez ohraničeného panelu okolo -
-   žije přímo v .role-detail-panel, proto má vlastní jemný rámeček. ── */
+/**
+ * @module Permission save bar
+ * @description Bar above the permission checklist with the discard / save buttons. Always
+ * visible for an editable role. Idle state: neutral background, empty note, disabled buttons.
+ * Dirty state (--dirty): highlighted background, visible "unsaved changes" note with a dot.
+ * @usage .permissions-savebar, .permissions-savebar--dirty, .unsaved-note, .unsaved-dot
+ * @note Sticky to the top so the actions stay reachable while the long checklist is scrolled.
+ * Both backgrounds are opaque on purpose, otherwise the checklist would show through the stuck
+ * bar. min-height keeps the bar the same size in both states, so toggling the first checkbox
+ * does not shift the checklist. The note is the flexible element: it pushes the buttons to the
+ * right even while it is empty.
+ */
+.permissions-savebar {
+  position: sticky;
+  top: var(--savebar-sticky-top);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  margin-top: 18px;
+  padding: 10px 12px 10px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-md);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.permissions-savebar--dirty {
+  background: var(--accent-dim);
+  border-color: var(--accent-dim-2);
+  box-shadow: 0 6px 16px rgba(24, 24, 27, 0.08);
+}
+
+.unsaved-note {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.unsaved-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warning);
+  flex-shrink: 0;
+}
+
+/**
+ * @module Permission search
+ * @description Search box of the checklist. Mirrors .roles-search but lives directly inside the
+ * detail panel, so it carries its own subtle frame.
+ * @usage .permission-search, .permission-search-empty
+ * @note Sits closer to the save bar when the bar is rendered right above it.
+ */
 .permission-search {
   display: flex;
   align-items: center;
@@ -367,6 +464,8 @@
   background: var(--surface-2);
   color: var(--text-dim);
 }
+.permissions-savebar + .permission-search { margin-top: 10px; }
+
 .permission-search input {
   border: none;
   background: transparent;
@@ -383,7 +482,12 @@
   font-size: 0.85rem;
 }
 
-/* ── Checklist oprávnění - úroveň 1: MODUL ──────────────────────── */
+/**
+ * @module Permission checklist, level 1: module
+ * @description Checklist container and the pill-shaped module header with its "select all" checkbox.
+ * @usage .permissions-checklist, .permission-group, .permission-group-header (+ --protected),
+ *        .permission-group-header-checkbox
+ */
 .permissions-checklist {
   margin-top: 14px;
   border-top: 1px solid var(--border);
@@ -423,11 +527,15 @@
 }
 .permission-group-header-checkbox:disabled { cursor: not-allowed; opacity: 0.7; }
 
-/* ── Checklist oprávnění - úroveň 2: ZDROJ (resource) ────────────────
-   Vizuálně odsazená a menší varianta modulového nadpisu, ať je na
-   první pohled jasná hierarchie modul -> zdroj -> jednotlivá práva.
-   Levý akcentní proužek místo pilulkového pozadí (modul má pill,
-   zdroj má subtilnější "podnadpis" vzhled, aby spolu nesoutěžily). ── */
+/**
+ * @module Permission checklist, level 2: resource
+ * @description Indented, smaller variant of the module header, so the hierarchy
+ * module -> resource -> single permission is obvious at a glance.
+ * @usage .permission-resource, .permission-resource-header (+ --protected),
+ *        .permission-resource-header-checkbox
+ * @note A left accent line instead of a pill background: the module has the pill, the resource a
+ * subtler "sub-heading" look, so the two levels do not compete.
+ */
 .permission-resource {
   margin-left: 14px;
   padding-left: 12px;
@@ -463,7 +571,11 @@
 }
 .permission-resource-header-checkbox:disabled { cursor: not-allowed; opacity: 0.7; }
 
-/* ── Checklist oprávnění - úroveň 3: jednotlivá práva ────────────── */
+/**
+ * @module Permission checklist, level 3: single permission
+ * @description One selectable row with the permission key (monospace) and its description.
+ * @usage .permission-row (+ --protected), .permission-row-text, .perm-key, .perm-desc
+ */
 .permission-row {
   display: flex;
   align-items: flex-start;
@@ -501,28 +613,12 @@
   margin-top: 1px;
 }
 
-/* ── Footer se stavem neuložených změn ──────────────────── */
-.detail-footer {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 18px;
-  padding: 12px 16px;
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-dim-2);
-  border-radius: var(--radius-md);
-}
-
-.unsaved-note {
-  font-size: 0.82rem;
-  color: var(--text);
-  font-weight: 600;
-  flex: 1;
-}
-
-/* ── Potvrzovací modál smazání ──────────────────────────── */
+/**
+ * @module Delete confirmation modal
+ * @description Full-screen overlay with the confirmation card and its warning box.
+ * @usage .delete-modal-overlay, .delete-modal-card, .delete-modal-header, .delete-modal-icon,
+ *        .delete-modal-body, .warning-box, .delete-modal-footer
+ */
 .delete-modal-overlay {
   position: fixed;
   inset: 0;
@@ -594,25 +690,14 @@
   background: var(--surface-2);
 }
 
-/* ── Responzivita ───────────────────────────────────────── */
-@media (max-width: 900px) {
-  .roles-layout { grid-template-columns: 1fr; }
-  .roles-list-panel { max-height: 320px; }
-}
-
-@media (max-width: 600px) {
-  :host { padding: 0 0 40px; }
-  .roles-page-header { flex-direction: column; }
-  .role-detail-panel { padding: 18px 16px 20px; }
-  .permission-resource { margin-left: 8px; padding-left: 9px; }
-}
-
-/* ── 2FA vynucení role (BACKLOG "captcha + 2FA na mail", bod 3) ─────────
-   Stylově navazuje na existující .protected-notice (stejný "badge" vzhled),
-   jen v success/tmavé variantě místo warning - 2FA vynucení je záměrné
-   bezpečnostní opatření, ne varování. .checkbox-inline-label sdílí vzhled
-   s běžnými .field-group labely, jen v jednom řádku vedle checkboxu. ── */
-
+/**
+ * @module Forced 2FA
+ * @description Inline checkbox label ("require 2FA for this role"), the informational badge
+ * shown when a role forces 2FA, and the small 2FA icon in the role list.
+ * @usage .checkbox-inline-label, .forces-2fa-badge, .twofa-icon
+ * @note The badge reuses the shape of .protected-notice but in the accent colours: forcing 2FA
+ * is a deliberate security measure, not a warning.
+ */
 .checkbox-inline-label {
   display: inline-flex;
   align-items: center;
@@ -648,4 +733,26 @@
 .twofa-icon {
   color: var(--accent);
   flex-shrink: 0;
+}
+
+/**
+ * @module Responsive rules
+ * @description Single-column layout on tablets, tighter spacing on phones.
+ * @usage @media (max-width: 900px), @media (max-width: 600px)
+ * @note On phones the save bar wraps: the note takes its own line above the buttons, and an
+ * empty note collapses so the idle bar does not show a blank line.
+ */
+@media (max-width: 900px) {
+  .roles-layout { grid-template-columns: 1fr; }
+  .roles-list-panel { max-height: 320px; }
+}
+
+@media (max-width: 600px) {
+  :host { padding: 0 0 40px; }
+  .roles-page-header { flex-direction: column; }
+  .role-detail-panel { padding: 18px 16px 20px; }
+  .permission-resource { margin-left: 8px; padding-left: 9px; }
+
+  .permissions-savebar { flex-wrap: wrap; justify-content: flex-end; padding: 10px 12px; }
+  .permissions-savebar--dirty .unsaved-note { flex-basis: 100%; }
 }

@@ -8,6 +8,14 @@
  * @description Manages user account lifecycles, including creation, role assignment,
  * explicit permission grants, password security policies, and administrative audit
  * logging.
+ * @refactor-note (2026-10-07) SECURITY - "what may a non-sysadmin do to ANOTHER account":
+ * project decision that the following are sysadmin-only, enforced here and not only in
+ * the admin UI: blocking AND unblocking an account, changing another account's login
+ * e-mail, changing another account's password. Each of them let a single compromised
+ * account holding `core-administrators-update` lock out, or take over, any non-sysadmin
+ * account (including accounts with MORE permissions than its own). `update()` also no
+ * longer accepts a password at all (`user_password_hash` removed) - it bypassed the
+ * current-password confirmation and the notification of `changePassword()`.
  * */
 
 namespace App\Http\Controllers\Api;
@@ -257,8 +265,12 @@ class UserController extends Controller
      * `actorCanAssignRole()`. `enable_2fa` cannot be explicitly turned off on
      * forced accounts/roles (422). `two_fa_forced_by_admin` may only be changed by a
      * sysadmin and only on accounts that do NOT already have 2FA forced some other
-     * way (otherwise the override would be pointless - 422). `is_blocked` can NEVER
-     * be set on a sysadmin account nor on the caller's own account (422). Any actual
+     * way (otherwise the override would be pointless - 422). `is_blocked` may only be
+     * CHANGED (blocked or unblocked) by a sysadmin (403) and can NEVER be set on a
+     * sysadmin account nor on the caller's own account (422). The login e-mail of
+     * ANOTHER account may only be changed by a sysadmin (403); everyone may still
+     * change their own. A password can NOT be set through this method at all - see
+     * `changePassword()`. Any actual
      * ROLE CHANGE unconditionally wipes all of the target's explicit permission
      * grants BEFORE `permission_ids` (if present) is applied - see header
      * refactor-note (2026-09-06). Transitioning to `is_blocked = true` revokes all
@@ -289,6 +301,31 @@ class UserController extends Controller
                 : "Denied attempt to promote account to sysadmin: {$user->user_email}";
             $this->logAction($request, CoreLog::class, 'update_denied', 'User', $reason, (int) $id, 'User');
             return response()->json(['message' => 'Only another sysadmin may edit, or promote an account to, the sysadmin role.'], 403);
+        }
+
+        // ── Sysadmin-only changes on ANOTHER account - see header refactor-note
+        // (2026-10-07). Both checks compare against the stored value, so a client that
+        // sends the whole record back unchanged is not refused.
+        $actorIsSysadmin = $this->actorIsSysadmin($request);
+        $isSelfEdit = (int) $request->user()->id === (int) $user->id;
+
+        // Login e-mail: whoever controls it controls the account (password reset and
+        // 2FA codes are delivered there), so only a sysadmin may change someone else's.
+        if (array_key_exists('user_email', $validated)
+            && $validated['user_email'] !== $user->user_email
+            && !$isSelfEdit
+            && !$actorIsSysadmin) {
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to change another account's login e-mail (not sysadmin): {$user->user_email}", (int) $id, 'User');
+            return response()->json(['message' => "Only sysadmin may change another account's login e-mail."], 403);
+        }
+
+        // Block / unblock: both directions. Unblocking matters as much as blocking -
+        // otherwise a compromised account could simply unblock one that was just locked.
+        if (array_key_exists('is_blocked', $validated)
+            && (bool) $validated['is_blocked'] !== (bool) $user->is_blocked
+            && !$actorIsSysadmin) {
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to block or unblock an account (not sysadmin): {$user->user_email}", (int) $id, 'User');
+            return response()->json(['message' => 'Only sysadmin may block or unblock an account.'], 403);
         }
 
         // ── Role-change detection - captured BEFORE any mutation, using the ACTUAL
@@ -387,11 +424,10 @@ class UserController extends Controller
         $requestedPermissionIds = array_key_exists('permission_ids', $validated) ? $validated['permission_ids'] : null;
         unset($validated['permission_ids']);
 
-        if (!empty($validated['user_password_hash'])) {
-            $validated['user_password_hash'] = Hash::make($validated['user_password_hash']);
-        } else {
-            unset($validated['user_password_hash']);
-        }
+        // A password is NEVER written by update() - see header refactor-note
+        // (2026-10-07). The rule was removed from UpdateUserRequest; this unset is a
+        // second line of defence in case the key ever reappears in the validated data.
+        unset($validated['user_password_hash']);
 
         DB::beginTransaction();
         try {
@@ -456,9 +492,15 @@ class UserController extends Controller
 
     /**
      * Handles password changes with administrative validation requirements.
-     * @note CRITICAL PROTECTION: another sysadmin's account password may only be
-     * changed by a fellow sysadmin. A success notification (PasswordChangedNotification)
-     * is ALWAYS sent afterwards, rate-limited.
+     * @note CRITICAL PROTECTION: everyone may change their OWN password; the password of
+     * ANOTHER account may only be changed by a sysadmin (403 otherwise) - see header
+     * refactor-note (2026-10-07). In both cases the caller confirms with their own
+     * current password. A success notification (PasswordChangedNotification) is ALWAYS
+     * sent afterwards, rate-limited.
+     * @refactor-note (2026-10-07) The `core-administrators-update` permission no longer
+     * allows changing someone else's password (it supersedes the 2026-09-02 note below):
+     * it was a way to take over any non-sysadmin account, including one with more
+     * permissions than the caller.
      * @refactor-note (2026-09-02) Replaced the legacy hardcoded
      * `whereIn('role_name', ['admin', 'sysadmin'])` "is this caller an admin" check
      * with a permission-key check against the caller's EFFECTIVE permission set
@@ -479,19 +521,13 @@ class UserController extends Controller
 
             $isOwner = $user->id === $auth->id;
 
-            $targetIsSysadmin = $user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
-            if ($targetIsSysadmin && !$isOwner) {
+            // Someone else's password: sysadmin only (covers sysadmin targets as well).
+            if (!$isOwner) {
                 $actorIsSysadmin = $auth->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists();
                 if (!$actorIsSysadmin) {
-                    $this->logAction($request, CoreLog::class, 'password_change_denied', 'User', "Denied attempt to change a sysadmin account's password: {$user->user_email}", (int) $id, 'User');
-                    return response()->json(['message' => "Only another sysadmin may change a sysadmin account's password."], 403);
+                    $this->logAction($request, CoreLog::class, 'password_change_denied', 'User', "Denied attempt to change another account's password (not sysadmin): {$user->user_email}", (int) $id, 'User');
+                    return response()->json(['message' => "Only sysadmin may change another account's password."], 403);
                 }
-            }
-
-            $canManageAdministrators = in_array('core-administrators-update', $auth->permissions ?? [], true);
-
-            if (!$isOwner && !$canManageAdministrators) {
-                return response()->json(['message' => 'Insufficient permissions.'], 403);
             }
 
             if (!isset($validated['old_password']) || !Hash::check($validated['old_password'], $auth->user_password_hash)) {
@@ -505,7 +541,7 @@ class UserController extends Controller
                 CoreLog::class,
                 'PasswordChanged',
                 'User',
-                "Password changed for: {$user->user_email} " . ($canManageAdministrators && !$isOwner ? "(performed by admin: {$auth->user_email})" : ""),
+                "Password changed for: {$user->user_email} " . (!$isOwner ? "(performed by sysadmin: {$auth->user_email})" : ""),
                 $user->id,
                 'User'
             );

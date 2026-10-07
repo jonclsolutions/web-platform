@@ -18,23 +18,6 @@
  * `AdminLocalizationService` se injektuje ručně (stejný vzor jako
  * `EntityCrudService` o pár řádků níže) - viz refactor-note v
  * `base-data.component.ts` hlavičce.
- *
- * @refactor-note (2026-09c) BACKLOG "žádné hardcoded texty" - doplnění .ts vrstvy:
- * `security2faStatusMessage`/`onSubmit()` success+error hlášky byly natvrdo česky,
- * přestože odpovídající JSON klíče (`security_2fa_*`, `password_change_*`) už v
- * projektu existovaly z dřívějška - jen se v kódu nepoužívaly. Přidána lokální `t(key)`
- * metoda (komponenta nedědí BaseDataComponent, takže žádná zděděná verze) - prefix
- * `personal-info.` doplňuje sama, stejný vzor jako WelcomePageComponent.
- * `console.error(...)` v `loadCurrentUserData()` VĚDOMĚ nepřekládán (dev log).
- *
- * @refactor-note (2026-09d) BACKLOG "jazykový přepínač do headeru": jazykový
- * přepínač (dropdown s vlaječkami) i VEŠKERÁ jeho funkcionalita
- * (`languages`/`currentLanguageCode`/`currentLanguageMeta`/`isLangMenuOpen`/
- * `toggleLangMenu()`/`closeLangMenu()`/`selectLanguage()`) PŘESUNUTY do
- * `AdminLayoutComponent` (header, vedle odkazu Wiki) - viz jeho refactor-note
- * stejné datum. Tahle komponenta si `AdminLocalizationService` PONECHÁVÁ (pořád
- * potřebuje `strings`/`t()` pro texty sekce Zabezpečení a formulář změny hesla),
- * jen ztrácí kartu "Jazyk administrace" a s ní související stav/metody.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';

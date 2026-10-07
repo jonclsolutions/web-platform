@@ -1,34 +1,23 @@
 <!--
     @file: edit-roles.component.html
-    @path: src/app/admin/web-pages/edit-roles/edit-roles.component.html
+    @path: src/app/admin/core-pages/edit-roles/edit-roles.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @refactor-note (2026-08-7): checklist oprávnění dvouúrovňové grupování + vyhledávání.
-    @refactor-note (2026-08-16): BACKLOG "captcha + 2FA na mail", bod 3: doplněn checkbox
-        "Vyžadovat 2FA pro tuto roli" - ve formuláři nové role i v editaci detailu
-        existující role (draftForcesTwoFa / newRoleForcesTwoFa v komponentě). Zobrazen
-        i jako informační odznak (forces-2fa-badge), když role vynucení má a zrovna
-        NENÍ v edit módu.
-    @refactor-note (2026-08-29) BACKLOG "export mechanismus i na negenerické stránky":
-        přidáno tlačítko "Export" vedle "Nová role" a `<app-export-popup-builder>`
-        popup na konci šablony - stejná sdílená komponenta, jakou používá
-        TableBuilderComponent všude jinde v adminu.
-    @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty":
-        všechny natvrdo psané české texty nahrazeny `strings.*` bindingy
-        (AdminLocalizationService, sekce 'edit-roles') - viz
-        edit-roles.component.ts stejné datum. Pluralizace počtu uživatelů nahrazena
-        `usersCountLabel(count)` metodou (řeší 3 české tvary interně).
+    @description: Role and permission management screen. Master-detail layout: searchable
+        role list on the left, detail of the selected role (name, description, forced 2FA and
+        the permission checklist grouped by module and resource) on the right.
+    @dependencies:
+        - EditRolesComponent: state and handlers of this template.
+        - ExportPopupBuilderComponent (app-export-popup-builder): format / column picker of the export.
+        - CommonModule, FormsModule: structural directives and ngModel.
+        - AdminLocalizationService: every visible text comes from `strings.*` (section 'edit-roles').
 -->
 
 <div class="roles-page">
-
   <div class="roles-page-header">
     <div>
       <h1>{{ strings.page_title }}</h1>
-      <p class="roles-page-subtitle">
-        {{ strings.page_subtitle_prefix }}<strong>{{ strings.page_subtitle_sysadmin }}</strong>{{ strings.page_subtitle_middle }}<strong>{{ strings.page_subtitle_admin }}</strong>{{ strings.page_subtitle_suffix }}
-      </p>
     </div>
     <button class="btn-primary" (click)="openNewRoleForm()" *ngIf="!showNewRoleForm">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -44,7 +33,12 @@
     </button>
   </div>
 
-  <!-- ── Formulář nové role ─────────────────────────────────────────── -->
+  <!--
+      @component: New role form
+      @description: Inline form for creating a role (name, description, forced 2FA).
+      @usage: Bound to newRoleName / newRoleDescription / newRoleForcesTwoFa; submitted by createRole().
+      @note: A validation or API error is shown inline through newRoleError.
+  -->
   <div class="new-role-card" *ngIf="showNewRoleForm">
     <div class="new-role-fields">
       <div class="field-group">
@@ -71,16 +65,29 @@
     </div>
   </div>
 
-  <!-- ── Loading stav ───────────────────────────────────────────────── -->
+  <!--
+      @component: Loading state
+      @description: Spinner shown until the permission catalogue and the role list are loaded.
+      @usage: Controlled by isLoading.
+  -->
   <div class="loading-box" *ngIf="isLoading">
     <div class="loader-spinner"></div>
     <span>{{ strings.loading_text }}</span>
   </div>
 
-  <!-- ── Master-detail layout ───────────────────────────────────────── -->
+  <!--
+      @component: Master-detail layout
+      @description: Two-column grid with the role list and the detail of the selected role.
+      @usage: Rendered once loading has finished.
+  -->
   <div class="roles-layout" *ngIf="!isLoading">
 
-    <!-- Levý panel: seznam rolí -->
+    <!--
+        @component: Role list (left panel)
+        @description: Scrollable list of roles with a search box, a lock icon for system roles,
+            a 2FA icon for roles that force two-factor authentication and the user count badge.
+        @usage: Iterates filteredRoles; a click calls selectRole(role).
+    -->
     <aside class="roles-list-panel">
       <div class="roles-search">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -120,9 +127,21 @@
       </ul>
     </aside>
 
-    <!-- Pravý panel: detail vybrané role -->
+    <!--
+        @component: Role detail (right panel)
+        @description: Details of the selected role and its permission checklist.
+        @usage: Rendered while selectedRole is set; otherwise the #noSelection template is shown.
+        @note: System roles (is_protected) are read-only: no edit / delete buttons, no save bar,
+            disabled checkboxes. The backend enforces the same rule.
+    -->
     <section class="role-detail-panel" *ngIf="selectedRole; else noSelection">
 
+      <!--
+          @component: Detail header
+          @description: Role name (text or input while editing), user count badge and the actions
+              for the role's details (edit / delete, or cancel / save while editing).
+          @usage: Edit mode is controlled by isEditingDetails; saved by saveDetails().
+      -->
       <div class="detail-header">
         <div class="detail-header-main">
           <ng-container *ngIf="isEditingDetails; else nameDisplay">
@@ -143,6 +162,9 @@
               {{ usersCountLabel(selectedRole.users_count) }}
             </span>
           </div>
+          <div class="detail-header-badges">
+          <span class="users-badge users-badge--zero">ID {{ selectedRole.id }}</span>
+        </div>
         </div>
 
         <div class="detail-header-actions">
@@ -193,7 +215,48 @@
         {{ strings.protected_notice }}
       </div>
 
-      <!-- ── Vyhledávání v checklistu oprávnění (nezávislé na hledání rolí vlevo) ── -->
+      <!--
+          @component: Permission save bar
+          @description: Discard / save actions of the permission checklist, placed ABOVE the
+              checklist so they are visible without scrolling. The bar is always rendered for an
+              editable role: both buttons are disabled until a permission changes, then they are
+              enabled and the "unsaved changes" note appears.
+          @usage: State from isPermissionsDirty / isSavingPermissions; actions
+              discardPermissionChanges() and savePermissions().
+          @note: Sticks to the top of the viewport while the long checklist is scrolled. The note
+              container stays in the DOM (only its content is conditional) so screen readers
+              announce the change through aria-live. Not rendered for system roles, whose
+              permissions can never be changed.
+      -->
+      <div
+        class="permissions-savebar"
+        *ngIf="!selectedRole.is_protected"
+        [class.permissions-savebar--dirty]="isPermissionsDirty">
+        <span class="unsaved-note" role="status" aria-live="polite">
+          <ng-container *ngIf="isPermissionsDirty">
+            <span class="unsaved-dot" aria-hidden="true"></span>
+            {{ strings.unsaved_permissions_note }}
+          </ng-container>
+        </span>
+        <button
+          class="btn-secondary btn-small"
+          (click)="discardPermissionChanges()"
+          [disabled]="!isPermissionsDirty || isSavingPermissions">
+          {{ strings.btn_discard }}
+        </button>
+        <button
+          class="btn-primary btn-small"
+          (click)="savePermissions()"
+          [disabled]="!isPermissionsDirty || isSavingPermissions">
+          {{ isSavingPermissions ? strings.btn_saving : strings.btn_save_permissions }}
+        </button>
+      </div>
+
+      <!--
+          @component: Permission search
+          @description: Filters the checklist by permission key, description or resource label.
+          @usage: Bound to permissionSearch; independent of the role search in the left panel.
+      -->
       <div class="permission-search">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -201,6 +264,15 @@
         <input type="text" [(ngModel)]="permissionSearch" [placeholder]="strings.permission_search_placeholder" />
       </div>
 
+      <!--
+          @component: Permission checklist
+          @description: Three levels: module -> resource -> single permission. Module and resource
+              headers carry a "select all" checkbox with an indeterminate state.
+          @usage: Iterates visiblePermissionGroups; toggles call toggleModuleGroup(),
+              toggleResourceGroup() and togglePermission().
+          @note: stopPropagation on the header checkboxes keeps the click from being handled a
+              second time by the surrounding label.
+      -->
       <div class="permissions-checklist">
         <ng-container *ngIf="visiblePermissionGroups.length > 0; else noPermMatch">
 
@@ -220,7 +292,8 @@
 
             <div class="permission-resource" *ngFor="let resource of group.resources; trackBy: trackByResourceKey">
               <label class="permission-resource-header" [class.permission-resource-header--protected]="selectedRole.is_protected">
-                <input   type="checkbox"
+                <input
+                  type="checkbox"
                   class="permission-resource-header-checkbox"
                   [checked]="isResourceFullyChecked(resource)"
                   [indeterminate]="isResourcePartiallyChecked(resource)"
@@ -255,14 +328,6 @@
           <div class="permission-search-empty">{{ strings.permission_search_empty.replace('{term}', permissionSearch) }}</div>
         </ng-template>
       </div>
-
-      <div class="detail-footer" *ngIf="!selectedRole.is_protected && isPermissionsDirty">
-        <span class="unsaved-note">{{ strings.unsaved_permissions_note }}</span>
-        <button class="btn-secondary btn-small" (click)="discardPermissionChanges()" [disabled]="isSavingPermissions">{{ strings.btn_discard }}</button>
-        <button class="btn-primary btn-small" (click)="savePermissions()" [disabled]="isSavingPermissions">
-          {{ isSavingPermissions ? strings.btn_saving : strings.btn_save_permissions }}
-        </button>
-      </div>
     </section>
 
     <ng-template #noSelection>
@@ -274,6 +339,13 @@
 
 </div>
 
+<!--
+    @component: app-export-popup-builder
+    @description: Shared export popup (format and column picker), the same component
+        TableBuilderComponent uses elsewhere in the admin.
+    @usage: Inputs itemCount, isExporting, columns; outputs formatSelected -> handleExportFormatSelected($event),
+        closed -> closeExportPopup().
+-->
 @if (showExportPopup) {
   <app-export-popup-builder
     [itemCount]="roles.length"
@@ -284,7 +356,12 @@
   </app-export-popup-builder>
 }
 
-<!-- ── Potvrzovací modál smazání ────────────────────────────────────── -->
+<!--
+    @component: Delete confirmation modal
+    @description: Asks for confirmation before a role is permanently deleted.
+    @usage: Shown while pendingDeleteRole is set; confirmDelete() / cancelDelete().
+    @note: An API error is shown inline through deleteError.
+-->
 @if (pendingDeleteRole) {
   <div class="delete-modal-overlay">
     <div class="delete-modal-card">

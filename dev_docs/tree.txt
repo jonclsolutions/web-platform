@@ -24,6 +24,7 @@
 │   │   │   │   │   ├── Legal
 │   │   │   │   │   │   ├── DocumentSectionController.php
 │   │   │   │   │   │   ├── DocumentTypeController.php
+│   │   │   │   │   │   ├── PageTitleController.php
 │   │   │   │   │   │   └── SiteConfigurationController.php
 │   │   │   │   │   ├── Shop
 │   │   │   │   │   │   ├── ShopCategoryController.php
@@ -206,6 +207,7 @@
 │   │   │   ├── Legal
 │   │   │   │   ├── DocumentSection.php
 │   │   │   │   ├── DocumentType.php
+│   │   │   │   ├── PageTitle.php
 │   │   │   │   ├── SiteSetting.php
 │   │   │   │   └── SocialLink.php
 │   │   │   ├── PasswordResetToken.php
@@ -339,15 +341,20 @@
 │   │   ├── api.php
 │   │   ├── console.php
 │   │   └── web.php
+│   ├── sages(28);
 │   ├── scripts
 │   │   └── setup-queue-cron.sh
 │   ├── storage
 │   │   ├── app
 │   │   │   ├── private
+│   │   │   │   ├── art
+│   │   │   │   │   ├── logo_big.svg
+│   │   │   │   │   └── logo_small.png
 │   │   │   │   ├── imports
 │   │   │   │   └── web
 │   │   │   │       ├── cv_files
 │   │   │   │       │   └── SYQ98atpTd270MGGUlkgSCwYmjIaZvUbxg4r94Ar.txt
+│   │   │   │       ├── project_threads
 │   │   │   │       ├── raw_request_commissions
 │   │   │   │       │   └── tOWDg2jjPiOCz4KHxql1sAiQpO9N0mwDtvZ8rJZS.txt
 │   │   │   │       ├── sales_orders
@@ -373,9 +380,10 @@
 │   │   │       │   ├── 3d982b3e-f2e1-4a0e-875e-7c2f5aaf41ef.jpg
 │   │   │       │   └── 8f3ac2af-82a0-4bf0-8049-06cb9cfabd04.jpg
 │   │   │       ├── site-logos
-│   │   │       │   └── dJxyZbRjvhFROyCtxEyx5JdTY2AwVZBrl2vuAt0X.png
+│   │   │       │   └── aSECckNwRzMgCxVzSSAQgAl00JF86eVeFlHJN9kt.png
 │   │   │       ├── social-icons
-│   │   │       │   └── EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png
+│   │   │       │   ├── EqJdhL4hXthHqtVw4tlDlQgz6JDoJ3rQjDTVPesV.png
+│   │   │       │   └── nVy8QyyM7g5Dggded8oXurDeHfJFS9EkWvmEKCiG.png
 │   │   │       ├── translation_images
 │   │   │       │   ├── shop
 │   │   │       │   │   └── czech-republic-default.png
@@ -393,14 +401,14 @@
 │   │   │   ├── sessions
 │   │   │   ├── testing
 │   │   │   └── views
-│   │   │       ├── c01436b0ab8e4d76735f9b9e42064cea.php
+│   │   │       ├── c95f21bb542b6be33f0059cf19be2862.php
 │   │   │       ├── dabb2898a11fa784c3f9c20860c490c1.php
-│   │   │       ├── de9feb1432383d6768e1082fe3ff9509.php
 │   │   │       ├── d0eb0c286836f0d72964121b8011c144.php
 │   │   │       ├── d7c0f7e76430f808cb28d429fc735b3b.php
 │   │   │       ├── d73787b501c491196576390876d68bd9.php
 │   │   │       ├── 0027900651bad22e3942926df53ef454.php
-│   │   │       └── 65728ec46b6bc1fdf7350b699411ce69.php
+│   │   │       ├── 65728ec46b6bc1fdf7350b699411ce69.php
+│   │   │       └── 886aed980e9aba02ef6444c89ff15277.php
 │   │   └── logs
 │   │       ├── laravel.log
 │   │       └── queue-cron.log
@@ -605,6 +613,7 @@
 │   │   │   │   │   │   │   ├── details-builder.component.html
 │   │   │   │   │   │   │   ├── details-builder.component.spec.ts
 │   │   │   │   │   │   │   └── details-builder.component.ts
+│   │   │   │   │   │   ├── enum-and-i18n-in-builder-components.md
 │   │   │   │   │   │   ├── export-popup-builder
 │   │   │   │   │   │   │   ├── export-popup-builder.component.css
 │   │   │   │   │   │   │   ├── export-popup-builder.component.html
@@ -698,6 +707,7 @@
 │   │   │   │   │   │   └── security-events.config.ts
 │   │   │   │   │   ├── web-settings
 │   │   │   │   │   │   ├── index.ts
+│   │   │   │   │   │   ├── page-titles.model.ts
 │   │   │   │   │   │   ├── web-settings.component.css
 │   │   │   │   │   │   ├── web-settings.component.html
 │   │   │   │   │   │   ├── web-settings.component.spec.ts
@@ -811,6 +821,11 @@
 │   │   │   │   │   │   ├── shop-logs.component.spec.ts
 │   │   │   │   │   │   ├── shop-logs.component.ts
 │   │   │   │   │   │   └── shop-logs.config.ts
+│   │   │   │   │   ├── shop-welcome-page
+│   │   │   │   │   │   ├── shop-welcome-page.component.css
+│   │   │   │   │   │   ├── shop-welcome-page.component.html
+│   │   │   │   │   │   ├── shop-welcome-page.component.spec.ts
+│   │   │   │   │   │   └── shop-welcome-page.component.ts
 │   │   │   │   │   └── suppliers
 │   │   │   │   │       ├── suppliers.component.css
 │   │   │   │   │       ├── suppliers.component.html
@@ -875,13 +890,18 @@
 │   │   │   │       │   ├── support-tickets.component.spec.ts
 │   │   │   │       │   ├── support-tickets.component.ts
 │   │   │   │       │   └── support-tickets.config.ts
-│   │   │   │       └── user-request
-│   │   │   │           ├── email-template-modal.css
-│   │   │   │           ├── user-request.component.css
-│   │   │   │           ├── user-request.component.html
-│   │   │   │           ├── user-request.component.spec.ts
-│   │   │   │           ├── user-request.component.ts
-│   │   │   │           └── user-request.config.ts
+│   │   │   │       ├── user-request
+│   │   │   │       │   ├── email-template-modal.css
+│   │   │   │       │   ├── user-request.component.css
+│   │   │   │       │   ├── user-request.component.html
+│   │   │   │       │   ├── user-request.component.spec.ts
+│   │   │   │       │   ├── user-request.component.ts
+│   │   │   │       │   └── user-request.config.ts
+│   │   │   │       └── web-welcome-page
+│   │   │   │           ├── web-welcome-page.component.css
+│   │   │   │           ├── web-welcome-page.component.html
+│   │   │   │           ├── web-welcome-page.component.spec.ts
+│   │   │   │           └── web-welcome-page.component.ts
 │   │   │   ├── app.component.css
 │   │   │   ├── app.component.html
 │   │   │   ├── app.component.spec.ts
@@ -907,6 +927,8 @@
 │   │   │   │   │   ├── loading.interceptor.spec.ts
 │   │   │   │   │   └── loading.interceptor.ts
 │   │   │   │   └── services
+│   │   │   │       ├── admin-localization.service.spec.ts
+│   │   │   │       ├── admin-localization.service.ts
 │   │   │   │       ├── alert-dialog.service.spec.ts
 │   │   │   │       ├── alert-dialog.service.ts
 │   │   │   │       ├── confirm-dialog.service.spec.ts
@@ -1046,7 +1068,8 @@
 │   │   │   │       │   ├── home.component.css
 │   │   │   │       │   ├── home.component.html
 │   │   │   │       │   ├── home.component.spec.ts
-│   │   │   │       │   └── home.component.ts
+│   │   │   │       │   ├── home.component.ts
+│   │   │   │       │   └── tech-stack.config.ts
 │   │   │   │       ├── jobs
 │   │   │   │       │   ├── job-item
 │   │   │   │       │   │   ├── job-item.component.css
@@ -1084,7 +1107,9 @@
 │   │   │   │       │   ├── project-portal.component.css
 │   │   │   │       │   ├── project-portal.component.html
 │   │   │   │       │   ├── project-portal.component.spec.ts
-│   │   │   │       │   └── project-portal.component.ts
+│   │   │   │       │   ├── project-portal.component.ts
+│   │   │   │       │   ├── project-portal-localization.service.spec.ts
+│   │   │   │       │   └── project-portal-localization.service.ts
 │   │   │   │       ├── references
 │   │   │   │       │   ├── references.component.css
 │   │   │   │       │   ├── references.component.html
@@ -1148,77 +1173,118 @@
 │   │   │       │   ├── table-buttons.ts
 │   │   │       │   └── user.ts
 │   │   │       ├── legal-document.css
-│   │   │       └── services
-│   │   │           ├── analytics.service.spec.ts
-│   │   │           ├── analytics.service.ts
-│   │   │           ├── app-bootstrap.service.spec.ts
-│   │   │           ├── app-bootstrap.service.ts
-│   │   │           ├── cookie-consent.service.spec.ts
-│   │   │           ├── cookie-consent.service.ts
-│   │   │           ├── legal-docs.service.spec.ts
-│   │   │           ├── legal-docs.service.ts
-│   │   │           ├── localization.service.spec.ts
-│   │   │           ├── localization.service.ts
-│   │   │           ├── public-data.service.spec.ts
-│   │   │           └── public-data.service.ts
+│   │   │       ├── services
+│   │   │       │   ├── analytics.service.spec.ts
+│   │   │       │   ├── analytics.service.ts
+│   │   │       │   ├── app-bootstrap.service.spec.ts
+│   │   │       │   ├── app-bootstrap.service.ts
+│   │   │       │   ├── cookie-consent.service.spec.ts
+│   │   │       │   ├── cookie-consent.service.ts
+│   │   │       │   ├── legal-docs.service.spec.ts
+│   │   │       │   ├── legal-docs.service.ts
+│   │   │       │   ├── localization.service.spec.ts
+│   │   │       │   ├── localization.service.ts
+│   │   │       │   ├── page-title.strategy.service.spec.ts
+│   │   │       │   ├── page-title.strategy.service.ts
+│   │   │       │   ├── public-data.service.spec.ts
+│   │   │       │   └── public-data.service.ts
+│   │   │       └── utils
+│   │   │           └── password-validation.ts
 │   │   ├── assets
 │   │   │   ├── fonts
 │   │   │   │   ├── DhuwurLoroRegular-KGno.ttf
 │   │   │   │   ├── DhuwurRegular-nZ4Y.ttf
 │   │   │   │   ├── HighSansSerif7-xZeR.ttf
 │   │   │   │   └── ValderoRegular-Vd06.ttf
-│   │   │   └── images
-│   │   │       ├── backgrounds
-│   │   │       │   ├── service-ai.jpg
-│   │   │       │   ├── service-desktop.jpg
-│   │   │       │   ├── service-mobile.jpg
-│   │   │       │   └── service-web.jpg
-│   │   │       ├── icons
-│   │   │       │   ├── call.png
-│   │   │       │   ├── email.png
-│   │   │       │   ├── check.png
-│   │   │       │   ├── mail.png
-│   │   │       │   ├── search.png
-│   │   │       │   └── send.png
-│   │   │       ├── placeholder-product.png
-│   │   │       ├── services-img
-│   │   │       │   ├── angular.png
-│   │   │       │   ├── c.png
-│   │   │       │   ├── cpp.png
-│   │   │       │   ├── csharp.png
-│   │   │       │   ├── go.png
-│   │   │       │   ├── java.png
-│   │   │       │   ├── js.png
-│   │   │       │   ├── kotlin.png
-│   │   │       │   ├── mssql.png
-│   │   │       │   ├── mysql.png
-│   │   │       │   ├── net.png
-│   │   │       │   ├── php.png
-│   │   │       │   ├── postgresql.png
-│   │   │       │   ├── py.png
-│   │   │       │   ├── react.png
-│   │   │       │   ├── rust.png
-│   │   │       │   ├── sqlite.png
-│   │   │       │   ├── swift.png
-│   │   │       │   └── ts.png
-│   │   │       └── svg
-│   │   │           ├── ai-desk.svg
-│   │   │           ├── ai-mob.svg
-│   │   │           ├── ai.svg
-│   │   │           ├── desktop-desk.svg
-│   │   │           ├── desktop-mob.svg
-│   │   │           ├── desktop.svg
-│   │   │           ├── mobile-desk.svg
-│   │   │           ├── mobile-mob.svg
-│   │   │           ├── mobil.svg
-│   │   │           ├── not-found.svg
-│   │   │           ├── server-mobile.svg
-│   │   │           ├── server-resp-1.svg
-│   │   │           ├── server-resp-2.svg
-│   │   │           ├── server.svg
-│   │   │           ├── web-desk.svg
-│   │   │           ├── web-mob.svg
-│   │   │           └── web.svg
+│   │   │   ├── images
+│   │   │   │   ├── backgrounds
+│   │   │   │   │   ├── service-ai.jpg
+│   │   │   │   │   ├── service-desktop.jpg
+│   │   │   │   │   ├── service-mobile.jpg
+│   │   │   │   │   ├── service-web.jpg
+│   │   │   │   │   ├── smoke-cropped.svg
+│   │   │   │   │   └── smoke.svg
+│   │   │   │   ├── home
+│   │   │   │   │   ├── dashboard_sc_desktop_old.png
+│   │   │   │   │   ├── dashboard_sc_desktop.png
+│   │   │   │   │   ├── dashboard_sc_mobil_old.png
+│   │   │   │   │   ├── dashboard_sc_mobil.png
+│   │   │   │   │   ├── embed_screens.py
+│   │   │   │   │   ├── graphs_1.png
+│   │   │   │   │   ├── hero-mockup-en-embedded_new.svg
+│   │   │   │   │   ├── hero-mockup-en_org.svg
+│   │   │   │   │   ├── hero-mockup-en.svg
+│   │   │   │   │   ├── hero-space-bg.svg
+│   │   │   │   │   ├── hero-space-bg_1.svg
+│   │   │   │   │   ├── hero-space-bg_2.svg
+│   │   │   │   │   ├── hero-space-bg_3.svg
+│   │   │   │   │   └── stats_1.png
+│   │   │   │   ├── icons
+│   │   │   │   │   ├── android.svg
+│   │   │   │   │   ├── angular.svg
+│   │   │   │   │   ├── csharp.svg
+│   │   │   │   │   ├── docker.svg
+│   │   │   │   │   ├── flutter.svg
+│   │   │   │   │   ├── ios.svg
+│   │   │   │   │   ├── laravel.svg
+│   │   │   │   │   ├── linux.svg
+│   │   │   │   │   ├── nginx.svg
+│   │   │   │   │   ├── postgresql.svg
+│   │   │   │   │   ├── redis.svg
+│   │   │   │   │   ├── sqlite.svg
+│   │   │   │   │   └── windows.svg
+│   │   │   │   ├── logos
+│   │   │   │   │   └── logo_big.svg
+│   │   │   │   ├── placeholder-product.png
+│   │   │   │   ├── services
+│   │   │   │   │   ├── embed_services.py
+│   │   │   │   │   ├── localhost_4200_admin_core_edit-roles.png
+│   │   │   │   │   ├── localhost_4200_admin_core_edit-website.png
+│   │   │   │   │   ├── localhost_4200_admin_web_welcome-page_desktop.png
+│   │   │   │   │   ├── localhost_4200_admin_web_welcome-page_mobile.png
+│   │   │   │   │   ├── localhost_4200_admin_web_welcome-page_tablet.png
+│   │   │   │   │   ├── services-card1_green.svg
+│   │   │   │   │   ├── services-card1.svg
+│   │   │   │   │   ├── services-card2.svg
+│   │   │   │   │   ├── services-card3.svg
+│   │   │   │   │   ├── services-card4_green.svg
+│   │   │   │   │   ├── services-card4.svg
+│   │   │   │   │   ├── services-main_green.svg
+│   │   │   │   │   └── services-main.svg
+│   │   │   │   └── services-img
+│   │   │   │       ├── angular.png
+│   │   │   │       ├── c.png
+│   │   │   │       ├── cpp.png
+│   │   │   │       ├── csharp.png
+│   │   │   │       ├── go.png
+│   │   │   │       ├── java.png
+│   │   │   │       ├── js.png
+│   │   │   │       ├── kotlin.png
+│   │   │   │       ├── mssql.png
+│   │   │   │       ├── mysql.png
+│   │   │   │       ├── net.png
+│   │   │   │       ├── php.png
+│   │   │   │       ├── postgresql.png
+│   │   │   │       ├── py.png
+│   │   │   │       ├── react.png
+│   │   │   │       ├── rust.png
+│   │   │   │       ├── sqlite.png
+│   │   │   │       ├── swift.png
+│   │   │   │       └── ts.png
+│   │   │   └── i18n
+│   │   │       ├── admin
+│   │   │       │   ├── AdminI18N_doc.md
+│   │   │       │   ├── cz
+│   │   │       │   │   ├── cz.json
+│   │   │       │   │   └── cz.png
+│   │   │       │   └── en
+│   │   │       │       ├── en.json
+│   │   │       │       └── en.png
+│   │   │       └── project-portal
+│   │   │           ├── cz
+│   │   │           │   └── cz.json
+│   │   │           └── en
+│   │   │               └── en.json
 │   │   ├── environments
 │   │   │   ├── environment.prod.ts
 │   │   │   └── environment.ts
@@ -1237,4 +1303,4 @@
 └── server_conf
     └── configure-server.sh
 
-268 directories, 970 files
+282 directories, 1022 files

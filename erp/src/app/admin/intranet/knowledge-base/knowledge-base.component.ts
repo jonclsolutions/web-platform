@@ -14,15 +14,18 @@
  * - AdminLocalizationService: Statické i18n admin UI + jazyk pro rozřešení
  *   `LocalizedText` polí v KB_PAGES (navLabel).
  *
- * @refactor-note (2026-09) BACKLOG "vícejazyčná administrace, žádné hardcoded texty"
- * Komponenta NEdědí BaseDataComponent, proto ruční injection AdminLocalizationService.
- * `navGroups` byl PŮVODNĚ getter volaný Angularem při KAŽDÉM change-detection
- * průchodu (protože šablona ho čte v `@for`) - to by při každém volání stavělo NOVÉ
- * pole NOVÝCH objektů, což je přesně past popsaná u TableBuilderComponent (NG0956 /
- * nekonečná smyčka), i když zde `@for` trackuje podle stabilního `group.key`, takže
- * by k destrukci DOM nedošlo - přesto zbytečná práce na každý CD cyklus. Převedeno na
- * CACHOVANÉ pole `navGroups`, přepočítávané jen v konstruktoru a při reálné změně
- * jazyka (`i18n.currentLanguage$` subscribe) - stejný vzor jako user-request.component.ts.
+ * @bugfix-note (2026-10) Menu group headings showed "Cannot load text":
+ * `navGroups` is a CACHED array (group labels are resolved once, inside
+ * `buildNavGroups()`), but it was rebuilt only on `i18n.currentLanguage$`. That stream
+ * says which language is SELECTED, not that its JSON is LOADED:
+ * - on a page reload / direct URL entry the component is constructed while the JSON
+ *   request is still pending, so every `t()` call returned the service fallback text,
+ *   and nothing rebuilt the cache once the JSON arrived;
+ * - on a language switch `currentLanguage$` emits BEFORE the new JSON is fetched, so
+ *   the headings were rebuilt from the previous language's data.
+ * Fix: rebuild on `i18n.translations$` instead - it emits the current state on
+ * subscribe and again every time a language file finishes loading (or fails), which is
+ * exactly when the cached labels become stale. `AdminLocalizationService` is unchanged.
  */
 
 import { Component, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
@@ -42,6 +45,16 @@ interface NavGroup {
   pages: KBPage[];
 }
 
+/**
+ * @description Layout shell of the internal Knowledge Base: renders the side menu
+ * generated from `KB_PAGES` and hosts the routed article / support-form / news pages.
+ * @usage Routed at `/admin/intranet/knowledge-base` (admin-routing.module.ts); child
+ * routes render inside its `<router-outlet>`.
+ * @note Group headings come from the admin i18n JSON (section `knowledge-base`, keys
+ * `nav_group_{navGroup}`); page labels come from `KB_PAGES` (`LocalizedText`). Every
+ * `navGroup` value used in `KB_PAGES` therefore needs a matching key in EVERY language
+ * file, otherwise that heading shows the service fallback text.
+ */
 @Component({
   selector: 'app-knowledge-base',
   standalone: true,
@@ -57,17 +70,26 @@ export class KnowledgeBaseComponent implements OnDestroy {
   public t(key: string): string { return this.i18n.getValue(`knowledge-base.${key}`); }
 
   /**
-   * @refactor-note (2026-09) Cachované pole místo getteru - viz hlavička souboru.
-   * Naplněno v konstruktoru a znovu vždy při přepnutí admin jazyka.
+   * @description Cached menu model (groups + their sorted pages) bound by the template.
+   * Rebuilt in the constructor subscription every time the translation data changes -
+   * see bugfix-note (2026-10) in the file header.
    */
   navGroups: NavGroup[] = [];
 
+  /** Subscription to `i18n.translations$` that keeps `navGroups` in sync - released in ngOnDestroy. */
   private langSubscription: Subscription;
 
+  /**
+   * @description Wires the menu cache to the translation data.
+   * @param router Used by `isRootPath()` to detect the Knowledge Base landing URL.
+   * @param cd Marks the view dirty after the cached menu model is replaced.
+   * @note `translations$` is a BehaviorSubject stream, so the callback runs
+   * synchronously on subscribe (initial build - no separate call needed) and again
+   * whenever a language file finishes loading. Subscribing to `currentLanguage$` here
+   * would rebuild too early - see bugfix-note (2026-10) in the file header.
+   */
   constructor(private router: Router, private cd: ChangeDetectorRef) {
-    this.navGroups = this.buildNavGroups();
-
-    this.langSubscription = this.i18n.currentLanguage$.subscribe(() => {
+    this.langSubscription = this.i18n.translations$.subscribe(() => {
       this.navGroups = this.buildNavGroups();
       this.cd.markForCheck();
     });

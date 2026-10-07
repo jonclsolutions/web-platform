@@ -13,6 +13,11 @@
  * `UserController::applyExplicitPermissions()` - this request only validates that
  * submitted ids are well-formed and reference real permissions.
  *
+ * @refactor-note (2026-10-07) SECURITY: the `user_password_hash` rule was removed. A
+ * password can no longer be set through `UserController::update()` - it bypassed the
+ * current-password confirmation and the notification e-mail of `changePassword()`. An
+ * unknown key is dropped by `validated()`, so sending it has no effect.
+ *
  * NOTE: this file reconstructs the request class based on the fields observed in
  * use across UserController/administrators.config.ts. If the project's actual
  * UpdateUserRequest already contains additional rules, merge this diff into it
@@ -53,7 +58,6 @@ class UpdateUserRequest extends FormRequest
             'is_blocked' => ['sometimes', 'boolean'],
             'internal_note' => ['nullable', 'string'],
             'dpp_hours_spent' => ['nullable', 'integer', 'min:0'],
-            'user_password_hash' => ['sometimes', 'nullable', 'string', 'min:8'],
 
             // Explicit permission grants - see refactor-note above. Authority
             // checking happens in the controller, not here.

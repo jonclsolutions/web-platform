@@ -1,37 +1,68 @@
-/*     
+/*
     @file: kb-article.component.css
     @path: /src/app/admin/intranet/knowledge-base/kb-article/kb-article.component.css
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @refactor-note (2026) KNOWLEDGE BASE REFACTOR: tato komponenta je od teď GENERICKÝ
-    renderer pro všechny statické stránky manuálu (viz kb-article.component.ts) -
-    styly pro jednotlivé typy bloků (.lead-text/.alert-box/.grid-layout/.process-flow/
-    .note-box/...) dřív žily jen v introductions.component.css (jediná stránka, co je
-    používala) - teď musí žít TADY, protože je sdílí libovolná stránka z KB_PAGES.
-    Černobílá admin paleta - stejné proměnné jako knowledge-base.component.css.
+    @description: Styles for the generic Knowledge Base article renderer (every static
+        manual page from KB_PAGES). Document-style layout in the spirit of a wiki page:
+        one readable text column, content stacked top to bottom, no card grids. Only the
+        alert and note panels keep a boxed look. Black-and-white admin palette.
+    @dependencies: kb-article.component.html, kb-article.component.ts; palette shared
+        with knowledge-base.component.css.
+    @refactor-note (2026) KNOWLEDGE BASE REFACTOR: this component is the GENERIC renderer
+        for all static manual pages, so the block styles (.lead-text/.alert-box/
+        .grid-layout/.process-flow/.note-box/...) live HERE and are shared by any page.
+    @refactor-note (2026-10) DOCUMENT LAYOUT: card/grid presentation removed. Class names
+        and markup are unchanged - only the visual treatment changed:
+        - .grid-layout/.info-card: stacked "title + paragraph" entries, no boxes, no columns.
+        - .process-flow/.flow-item: steps stacked vertically along a thin guide line.
+        - .alert-box/.note-box: kept as boxed panels (intentional, they must stand out).
+        - Layout resets (display/border/background/shadow) are declared explicitly so the
+          result does not depend on any shared or global card styles.
 */
 
-.kb-article-container { 
-  animation: fadeIn 0.4s ease-out; 
+/*
+    @module: Article container
+    @description: Single readable text column with a fade-in on page change.
+    @usage: .kb-article-container
+    @note: max-width keeps line length comfortable on wide screens; remove it to let
+        the article span the full content area.
+*/
+.kb-article-container {
+  max-width: 860px;
+  animation: fadeIn 0.4s ease-out;
 }
 
+/*
+    @module: Breadcrumb
+    @description: Small muted path shown above the page title.
+    @usage: .breadcrumb
+*/
 .breadcrumb {
   font-size: 0.75rem;
   color: #a1a1aa;
   margin-bottom: 8px;
 }
 
-h1 { 
-  color: #18181b; 
-  font-size: 2rem; 
-  margin-bottom: 10px; 
+/*
+    @module: Headings
+    @description: Page title (h1), section heading (h2) and entry title (h3).
+    @usage: h1, h2, h3 inside the article
+    @note: h3 is the title of a former "card" (.info-card) - now a plain sub-heading.
+*/
+h1 {
+  color: #18181b;
+  font-size: 2rem;
+  line-height: 1.25;
+  margin: 0 0 10px;
   font-weight: 700;
 }
 
 h2 {
   color: #18181b;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  line-height: 1.35;
   font-weight: 600;
   margin: 0 0 14px;
 }
@@ -39,36 +70,59 @@ h2 {
 h3 {
   color: #18181b;
   font-size: 1rem;
+  line-height: 1.5;
   font-weight: 600;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
-.section-divider { 
-  border: 0; 
-  border-top: 1px solid #ececea; 
-  margin: 20px 0 30px; 
+/*
+    @module: Section divider
+    @description: Thin rule between the page header and the article body.
+    @usage: .section-divider
+*/
+.section-divider {
+  border: 0;
+  border-top: 1px solid #ececea;
+  margin: 20px 0 30px;
 }
 
+/*
+    @module: Section
+    @description: One manual section (optional heading + its blocks) with body copy.
+    @usage: .kb-section, .kb-section p
+*/
 .kb-section {
-  margin-bottom: 36px;
+  margin-bottom: 40px;
 }
 
-.kb-section p { 
-  line-height: 1.7; 
-  color: #3f3f46; 
+.kb-section p {
+  line-height: 1.7;
+  color: #3f3f46;
   font-size: 0.95rem;
   margin: 0 0 14px;
 }
 
-.lead-text {
+/*
+    @module: Lead paragraph
+    @description: Slightly larger intro paragraph at the top of a page.
+    @usage: .lead-text
+    @note: The second selector outranks `.kb-section p`, which would otherwise reset
+        the lead paragraph to the regular body size.
+*/
+.lead-text,
+.kb-section .lead-text {
   font-size: 1.1rem;
   color: #71717a;
   line-height: 1.7;
   margin-bottom: 8px;
 }
 
-/* ── Alert box ─────────────────────────────────────────────────────────── */
-
+/*
+    @module: Alert panel
+    @description: Boxed callout for information the reader must not miss. Kept as a
+        panel on purpose - the only boxed element besides the note panel.
+    @usage: .alert-box + one of .alert-info / .alert-warning / .alert-success / .alert-danger
+*/
 .alert-box {
   padding: 14px 16px;
   border-radius: 10px;
@@ -85,8 +139,12 @@ h3 {
 .alert-success { border-color: #a7f3d0; background: #ecfdf5; color: #065f46; }
 .alert-danger  { border-color: #fecdd3; background: #fff1f2; color: #9f1239; }
 
-/* ── Note box ───────────────────────────────────────────────────────────── */
-
+/*
+    @module: Note panel
+    @description: Quieter boxed side note (tips); the highlighted variant is used for
+        closing remarks.
+    @usage: .note-box, .note-box.highlight-note
+*/
 .note-box {
   padding: 14px 16px;
   border-radius: 10px;
@@ -105,70 +163,95 @@ h3 {
   font-weight: 500;
 }
 
-/* ── Grid (info cards) ─────────────────────────────────────────────────── */
-
+/*
+    @module: Entry list (former card grid)
+    @description: Group of "title + paragraph" entries stacked one under another as
+        ordinary document text - no columns, no boxes.
+    @usage: .grid-layout > .info-card (h3 + .small-text)
+    @note: display/border/background/shadow are reset explicitly so shared or global
+        card styles cannot bring the grid or the boxes back.
+*/
 .grid-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  display: block;
   margin: 16px 0;
 }
 
 .info-card {
-  border: 1px solid #ececea;
-  border-radius: 12px;
-  padding: 16px;
-  background: #ffffff;
+  display: block;
+  padding: 0;
+  margin: 0 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.info-card:last-child {
+  margin-bottom: 0;
 }
 
 .info-card .small-text {
-  font-size: 0.82rem;
-  color: #71717a;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  color: #3f3f46;
+  line-height: 1.7;
   margin: 0;
 }
 
-/* ── Process flow ──────────────────────────────────────────────────────── */
-
+/*
+    @module: Step list (former process flow)
+    @description: Ordered steps stacked vertically along a thin guide line on the left,
+        each with a bold label and a paragraph. The highlighted step gets a dark line.
+    @usage: .process-flow > .flow-item (.step + p), .flow-item.active
+    @note: Layout resets are explicit for the same reason as in the entry list above.
+*/
 .process-flow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  display: block;
   margin: 16px 0;
 }
 
 .flow-item {
-  flex: 1 1 200px;
-  border: 1px solid #ececea;
-  border-radius: 12px;
-  padding: 14px 16px;
-  background: #fafafa;
+  display: block;
+  padding: 2px 0 14px 16px;
+  margin: 0;
+  border: 0;
+  border-left: 2px solid #ececea;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.flow-item:last-child {
+  padding-bottom: 2px;
 }
 
 .flow-item.active {
-  border-color: #18181b;
-  background: #ffffff;
+  border-left-color: #18181b;
+  background: transparent;
 }
 
 .flow-item .step {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.5;
   color: #18181b;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .flow-item p {
-  font-size: 0.82rem;
-  color: #71717a;
+  font-size: 0.95rem;
+  color: #3f3f46;
   margin: 0;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-/* ── List ───────────────────────────────────────────────────────────────── */
-
+/*
+    @module: Bullet list
+    @description: Regular document list inside a section.
+    @usage: .kb-list
+*/
 .kb-list {
   margin: 0 0 14px;
   padding-left: 22px;
@@ -177,8 +260,11 @@ h3 {
   line-height: 1.8;
 }
 
-/* ── Link ───────────────────────────────────────────────────────────────── */
-
+/*
+    @module: Inline link
+    @description: Underlined link inside article text.
+    @usage: .kb-link
+*/
 .kb-link {
   color: #18181b;
   font-weight: 600;
@@ -188,8 +274,11 @@ h3 {
 
 .kb-link:hover { color: #000000; }
 
-/* ── Image ──────────────────────────────────────────────────────────────── */
-
+/*
+    @module: Figure
+    @description: Screenshot or illustration with an optional caption.
+    @usage: .kb-figure (img + figcaption)
+*/
 .kb-figure {
   margin: 16px 0;
 }
@@ -207,7 +296,12 @@ h3 {
   margin-top: 6px;
 }
 
-@keyframes fadeIn { 
-  from { opacity: 0; transform: translateY(10px); } 
-  to { opacity: 1; transform: translateY(0); } 
+/*
+    @module: Fade-in animation
+    @description: Short entrance animation used by the article container.
+    @usage: animation: fadeIn ...
+*/
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

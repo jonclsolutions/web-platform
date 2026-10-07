@@ -8,7 +8,9 @@
     "no": "No",
     "loading": "Loading…",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "access_denied_title": "Access denied",
+"access_denied_message": "You do not have sufficient permissions to view this page."
   },
     "personal-info": {
     "language_section_title": "Admin language",
@@ -417,11 +419,6 @@
 },
 "edit-roles": {
   "page_title": "Role & permission management",
-  "page_subtitle_prefix": "System roles (",
-  "page_subtitle_sysadmin": "sysadmin",
-  "page_subtitle_middle": ", ",
-  "page_subtitle_admin": "admin",
-  "page_subtitle_suffix": ") cannot be edited or deleted. Select a role on the left and edit its permissions on the right.",
 
   "btn_new_role": "New role",
   "btn_export": "Export",
@@ -1898,6 +1895,7 @@
     "graph_date_field_label": "Date created"
   },
   "administrators": {
+    "field_email_domain_error": "The e-mail is not from an allowed domain or on the list of allowed addresses.",
     "table_header_accounts": "Administrators",
     "table_header_trash": "Trash",
     "action_menu_trigger": "Actions",
@@ -1985,7 +1983,7 @@
     "email_policy_subtitle": "Restrictions on which domains/e-mails may create accounts",
     "email_policy_loading": "Loading…",
     "primary_domain_label": "Primary company domain",
-    "primary_domain_hint": "Accounts with an e-mail from this domain pass automatically.",
+    "primary_domain_hint": "Accounts with an e-mail from this domain pass automatically. (If this input is empty all domains are allowed.",
     "primary_domain_placeholder": "company.com",
     "btn_saving": "Saving…",
     "btn_save": "Save",
@@ -2963,5 +2961,23 @@
     "delete_all_confirm_title": "Delete All Permanently",
     "delete_all_confirm_message": "Are you sure you want to PERMANENTLY delete ALL items? This action is irreversible!",
     "all_items_deleted_message": "All items permanently deleted."
-  }
+  },
+  "base-data": {
+  "api_endpoint_undefined": "API endpoint is not defined.",
+  "password_change_error": "Error changing password.",
+  "mass_delete_error": "Mass delete error."
+},
+"data-handler": {
+  "dialog_title": "API Error",
+  "unknown_error": "An unknown error occurred!",
+  "client_side_error": "Client-side error: {message}",
+  "network_error": "Unable to connect to the server. Please check your network connection or if the API is running.",
+  "cannot_delete_own_account": "Cannot delete the user you are currently logged in as.",
+  "forbidden_fallback": "An error occurred while deleting the item.",
+  "validation_error": "Validation error ({status}): {errors}",
+  "client_error_with_message": "Client error ({status}): {message}",
+  "client_error": "Client error: {status} {statusText}",
+  "server_error": "Server error ({status}): {statusText}",
+  "server_error_default_text": "Internal Server Error"
+}
 }

@@ -11,30 +11,6 @@
  * - GenericTableService: Zneplatnění tabulkové cache při změně přihlášeného uživatele
  *   (viz bugfix-note 2026-08-17 níže) - žádná cyklická závislost, GenericTableService
  *   sám na AuthService nijak nezávisí.
- * @refactor-note (2026-08-16) BACKLOG "captcha + 2FA na mail": login() už nemusí vždy
- * vydat tokeny rovnou - pokud backend vrátí requires_2fa, tokeny NEJSOU uloženy do
- * sessionStorage, dokud neproběhne verifyTwoFactor(). Persistence session logiky
- * refaktorována do sdílené persistSession(), aby ji sdílel login() i verifyTwoFactor().
- * Captcha token se posílá jako volitelný `captcha_token` - backend ho vyžaduje jen od
- * 3. neúspěšného pokusu (viz handleLoginError - `captchaRequired` flag na chybě).
- * @bugfix-note (2026-08-17) KRITICKÝ BEZPEČNOSTNÍ BUG - CROSS-USER CACHE LEAK:
- * `GenericTableService.pageCache` je JEDNA sdílená mapa pro celou SPA session
- * (`providedIn: 'root'`), jejíž cache klíč (`endpoint-page-perPage-filters`) NIKDY
- * neobsahoval identitu uživatele. Scénář: uživatel A otevře tabulku (např. koš
- * externích odkazů), cache se naplní JEHO daty. Uživatel A se odhlásí a uživatel B se
- * přihlásí BEZ reloadu stránky (běžný SPA flow) - `AuthService.clearAuthData()` sice
- * mazal `sessionStorage` a permissions, ale tabulkovou cache nechával netknutou. Když
- * uživatel B otevřel stejnou tabulku do `CACHE_TTL_MS` (3 min) od posledního fetch
- * uživatele A, `GenericTableService` vrátil starou `shareReplay` odpověď BEZ jakéhokoliv
- * nového HTTP requestu - tedy bez ohledu na to, že backend (`CoreExternalLinkController`
- * atd.) má vlastnictví správně scopované na `user_id`. Uživatel B tak v prohlížeči
- * reálně VIDĚL data uživatele A (a naopak). Oprava: `persistSession()` (dokončení
- * loginu/2FA) i `clearAuthData()` (logout, expirovaný refresh token) teď volají
- * `genericTableService.invalidateAll()` - stejný mechanismus jako globální "Aktualizovat
- * vše" tlačítko v headeru (viz TableRefreshBusService), jen automaticky při KAŽDÉ změně
- * identity přihlášeného uživatele, ne jen na ruční klik. Samo o sobě nevyvolá žádný
- * síťový dotaz - jen zajistí, že první další čtení bude vždy reálný fetch pod SPRÁVNÝM
- * uživatelem, ne zbytek po předchozím.
  */
 
 import { Injectable } from '@angular/core';

@@ -24,6 +24,6 @@ ng serve
 tree -I "vendor|node_modules|.angular|*/vendor|*/node_modules|*/.angular"
 
 //VYGENERUJE PROJECT TREE A VYPISE HO DO STROM.TXT
-tree -I "vendor|node_modules|.angular|*/vendor|*/node_modules|*/.angular" > dev_docs/strom.txt
+tree -I "vendor|node_modules|.angular|*/vendor|*/node_modules|*/.angular" > dev_docs/tree.txt
 
 smtpd_tls_security_level = may //TOTO ZMENIT ZPET NA PRODUKCI

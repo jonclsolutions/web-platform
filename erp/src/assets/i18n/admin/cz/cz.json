@@ -8,7 +8,9 @@
     "no": "Ne",
     "loading": "Načítání…",
     "error": "Chyba",
-    "success": "Úspěch"
+    "success": "Úspěch",
+    "access_denied_title": "Přístup odepřen",
+"access_denied_message": "Pro zobrazení této stránky nemáte dostatečná oprávnění."
   },
   "personal-info": {
     "language_section_title": "Jazyk administrace",
@@ -418,11 +420,6 @@
 },
 "edit-roles": {
   "page_title": "Správa rolí a oprávnění",
-  "page_subtitle_prefix": "Systémové role (",
-  "page_subtitle_sysadmin": "sysadmin",
-  "page_subtitle_middle": ", ",
-  "page_subtitle_admin": "admin",
-  "page_subtitle_suffix": ") jsou needitovatelné a nesmazatelné. Vyberte roli vlevo a upravte její oprávnění vpravo.",
 
   "btn_new_role": "Nová role",
   "btn_export": "Export",
@@ -1899,6 +1896,7 @@
     "graph_date_field_label": "Datum vytvoření"
   },
   "administrators": {
+    "field_email_domain_error": "E-mail není z povolené domény ani mezi povolenými adresami.",
     "table_header_accounts": "Administrátoři",
     "table_header_trash": "Koš",
     "action_menu_trigger": "Akce",
@@ -1986,7 +1984,7 @@
     "email_policy_subtitle": "Omezení, ze kterých domén/e-mailů lze zakládat účty",
     "email_policy_loading": "Načítám…",
     "primary_domain_label": "Hlavní firemní doména",
-    "primary_domain_hint": "Účty s e-mailem z této domény projdou automaticky.",
+    "primary_domain_hint": "Účty s e-mailem z této domény projdou automaticky. (Pokud toto pole zůstane nevyplněno všechny domény budou povoleny.",
     "primary_domain_placeholder": "firma.cz",
     "btn_saving": "Ukládám…",
     "btn_save": "Uložit",
@@ -2964,5 +2962,23 @@
     "delete_all_confirm_title": "Trvale smazat vše",
     "delete_all_confirm_message": "Opravdu chcete TRVALE smazat VŠECHNY položky? Tuto akci nelze vzít zpět!",
     "all_items_deleted_message": "Všechny položky byly trvale smazány."
-  }
+  },
+  "base-data": {
+  "api_endpoint_undefined": "API endpoint není definován.",
+  "password_change_error": "Chyba při změně hesla.",
+  "mass_delete_error": "Chyba při hromadném mazání."
+},
+"data-handler": {
+  "dialog_title": "Chyba API",
+  "unknown_error": "Došlo k neznámé chybě!",
+  "client_side_error": "Chyba na straně klienta: {message}",
+  "network_error": "Nelze se připojit k serveru. Zkontrolujte připojení k síti nebo zda API běží.",
+  "cannot_delete_own_account": "Nelze smazat uživatele, pod kterým jste právě přihlášeni.",
+  "forbidden_fallback": "Při mazání položky došlo k chybě.",
+  "validation_error": "Chyba validace ({status}): {errors}",
+  "client_error_with_message": "Chyba klienta ({status}): {message}",
+  "client_error": "Chyba klienta: {status} {statusText}",
+  "server_error": "Chyba serveru ({status}): {statusText}",
+  "server_error_default_text": "Interní chyba serveru"
+}
 }
