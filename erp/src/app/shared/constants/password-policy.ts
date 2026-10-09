@@ -14,11 +14,18 @@
  * chybám s escapováním uvnitř znakové třídy. `PASSWORD_PATTERN` (regex string pro HTML
  * `pattern` atribut / Angular PatternValidator) se z něj odvozuje automaticky přes
  * `escapeForRegexClass()`, takže existuje jen jedno místo, kde se sada znaků definuje.
+ *
+ * @refactor-note (2026-10-09) i18n: every requirement carries `labelKey` (admin i18n
+ * section `password-policy`), translated by PasswordRequirementsChecklistComponent. The
+ * `{min}` / `{max}` placeholders are filled from the length constants, so the numbers stay
+ * defined only here. The hardcoded Czech `label` and `PASSWORD_ERROR_MESSAGE` were removed
+ * (no callers left); use `labelKey` and `getPasswordErrorMessage()`.
  */
 
 export interface PasswordRequirement {
   id: string;
-  label: string;
+  /** Full admin i18n path of the requirement text, e.g. `password-policy.letter`. */
+  labelKey: string;
   test: (password: string) => boolean;
 }
 
@@ -45,8 +52,26 @@ function escapeForRegexClass(chars: string): string {
 export const PASSWORD_PATTERN =
   `^(?=.*[0-9])(?=.*[A-Za-z])(?=.*[${escapeForRegexClass(PASSWORD_SPECIAL_CHARS)}]).{${PASSWORD_MIN_LENGTH},${PASSWORD_MAX_LENGTH}}$`;
 
-export const PASSWORD_ERROR_MESSAGE =
-  `Heslo musí mít ${PASSWORD_MIN_LENGTH}-${PASSWORD_MAX_LENGTH} znaků a obsahovat alespoň jedno písmeno, jednu číslici a jeden speciální znak.`;
+/**
+ * @description Fills the `{min}` / `{max}` placeholders of a translated password text with
+ * the length limits. One pass, so a value can never be re-read as another placeholder.
+ * @param text Translated text that may contain `{min}` / `{max}`.
+ * @returns The text with the limits filled in.
+ */
+export function fillPasswordLimits(text: string): string {
+  const values: Record<string, number> = { min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH };
+  return text.replace(/\{(min|max)\}/g, (_match: string, name: string) => String(values[name]));
+}
+
+/**
+ * @description Password error message in the current admin language.
+ * @param translate Lookup by full i18n path, e.g. `path => i18n.getValue(path)`.
+ * @returns The error message in the current admin language.
+ * @usage `errorMessage: getPasswordErrorMessage(path => i18n.getValue(path))`
+ */
+export function getPasswordErrorMessage(translate: (path: string) => string): string {
+  return fillPasswordLimits(translate('password-policy.error_message'));
+}
 
 /**
  * @description Jednotlivé požadavky pro live checklist (viz
@@ -56,22 +81,32 @@ export const PASSWORD_ERROR_MESSAGE =
 export const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
   {
     id: 'length',
-    label: `${PASSWORD_MIN_LENGTH}-${PASSWORD_MAX_LENGTH} znaků`,
+    labelKey: 'password-policy.length',
     test: (p) => p.length >= PASSWORD_MIN_LENGTH && p.length <= PASSWORD_MAX_LENGTH,
   },
   {
     id: 'letter',
-    label: 'Alespoň jedno písmeno',
+    labelKey: 'password-policy.letter',
     test: (p) => /[A-Za-z]/.test(p),
   },
   {
     id: 'digit',
-    label: 'Alespoň jedna číslice',
+    labelKey: 'password-policy.digit',
     test: (p) => /[0-9]/.test(p),
   },
   {
     id: 'special',
-    label: 'Alespoň jeden speciální znak',
+    labelKey: 'password-policy.special',
     test: (p) => PASSWORD_SPECIAL_CHARS.split('').some(ch => p.includes(ch)),
   },
 ];
+
+/**
+ * @description Whether a password meets every requirement above - for enabling a submit
+ * button with exactly the rules the checklist shows.
+ * @param password The password to check.
+ * @returns True when all requirements pass.
+ */
+export function meetsPasswordRequirements(password: string): boolean {
+  return PASSWORD_REQUIREMENTS.every(requirement => requirement.test(password || ''));
+}

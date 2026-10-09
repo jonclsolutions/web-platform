@@ -1895,6 +1895,9 @@
     "graph_date_field_label": "Date created"
   },
   "administrators": {
+    "field_role_own_account_hint": "You cannot change your own role. Ask another administrator.",
+    "field_enable_2fa_forced_by_role_hint": "Two-factor authentication is required by the account's role and cannot be changed.",
+    "field_enable_2fa_forced_by_admin_hint": "Two-factor authentication is enforced for this account by a sysadmin and cannot be changed.",
     "field_email_domain_error": "The e-mail is not from an allowed domain or on the list of allowed addresses.",
     "table_header_accounts": "Administrators",
     "table_header_trash": "Trash",
@@ -2979,5 +2982,12 @@
   "client_error": "Client error: {status} {statusText}",
   "server_error": "Server error ({status}): {statusText}",
   "server_error_default_text": "Internal Server Error"
+},
+"password-policy": {
+  "length": "{min}-{max} characters",
+  "letter": "At least one letter",
+  "digit": "At least one digit",
+  "special": "At least one special character",
+  "error_message": "The password must be {min}-{max} characters long and contain at least one letter, one digit and one special character."
 }
 }

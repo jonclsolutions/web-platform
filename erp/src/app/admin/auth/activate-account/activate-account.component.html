@@ -177,7 +177,7 @@
           </div>
         }
 
-        <button type="submit" class="submit-btn" [disabled]="submitting || passwordsMismatch">
+                <button type="submit" class="submit-btn" [disabled]="submitting || !canSubmit">
           @if (submitting) { <span class="btn-spinner" aria-hidden="true"></span> }
           {{ submitting ? 'Saving…' : 'Set password and activate account' }}
         </button>

@@ -11,7 +11,8 @@
  * @note Po úspěšné aktivaci uživatel NENÍ automaticky přihlášen - přesměruje se na
  * `/auth/login` (rozhodnuto v backlogu: "presmerovat na prihlaseni").
  * @dependencies
- * - DataHandler: HTTP volání na veřejné `account-activation/{token}` endpointy.
+ * - HttpClient: HTTP volání na veřejné `account-activation/{token}` endpointy.
+ * - environment: Base URL of the API.
  * - PasswordRequirementsChecklistComponent: Live vizuální checklist pravidel hesla -
  *   stejná komponenta jako ResetPasswordComponent/admin vytvoření uživatele.
  * @refactor-note (2026-08-24) SJEDNOCENO s ResetPasswordComponent: vlastní regex
@@ -26,14 +27,26 @@
  * vykreslené ve starém stavu. Řešení: `ChangeDetectorRef.markForCheck()` po KAŽDÉ
  * asynchronní změně stavu - stejný vzor, jaký důsledně používá zbytek projektu
  * (TableBuilderComponent, AdministratorsComponent, UserRequestComponent, ...).
+ * @bugfix-note (2026-10-09) An expired / invalid link also opened a "Cannot load text"
+ * error popup on top of the page. It came from DataHandler's global error dialog, whose
+ * texts belong to the admin translations that are not loaded on this public page. This
+ * page reports every error inline, so both public calls now use HttpClient directly
+ * (no global dialog); DataHandler itself is unchanged. Fallback messages are in English
+ * like the rest of the page.
+ * @refactor-note (2026-10-09) UX: the submit button stays disabled until the password meets
+ * every rule of the password policy (`meetsPasswordRequirements()`, the same rules the checklist shows) and both fields
+ * match. `fieldError` no longer repeats the password rules - it is only used for a lost
+ * connection or an unexpected failure; an invalid / expired link switches to the
+ * 'invalid' state.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { DataHandler } from '../../../core/services/data-handler.service';
-import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from '../../../shared/constants/password-policy';
+import { environment } from '../../../../environments/environment';
+import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, meetsPasswordRequirements } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 
 /** Řídí, který blok šablony se vykresluje - ověřování odkazu, formulář, chyba, hotovo. */
@@ -56,8 +69,11 @@ interface ActivationCheckResponse {
 export class ActivateAccountComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private dataHandler = inject(DataHandler);
+  private http = inject(HttpClient);
   private cd = inject(ChangeDetectorRef);
+
+  /** JSON-only headers; the endpoints are public, so no Authorization header is needed. */
+  private readonly headers = new HttpHeaders({ 'Accept': 'application/json' });
 
   state: ViewState = 'loading';
   errorMessage = '';
@@ -83,11 +99,11 @@ export class ActivateAccountComponent implements OnInit {
 
     if (!this.token) {
       this.state = 'invalid';
-      this.errorMessage = 'Chybí aktivační token.';
+      this.errorMessage = 'The activation token is missing.';
       return;
     }
 
-    this.dataHandler.get<ActivationCheckResponse>(`account-activation/${this.token}`).subscribe({
+    this.http.get<ActivationCheckResponse>(this.activationUrl(), { headers: this.headers }).subscribe({
       next: (res) => {
         this.email = res.email;
         this.state = 'form';
@@ -95,7 +111,7 @@ export class ActivateAccountComponent implements OnInit {
       },
       error: (err) => {
         this.state = 'invalid';
-        this.errorMessage = err?.error?.message || 'Odkaz je neplatný nebo vypršel.';
+        this.errorMessage = err?.error?.message || 'The link is invalid or has expired.';
         this.cd.markForCheck();
       }
     });
@@ -118,20 +134,31 @@ export class ActivateAccountComponent implements OnInit {
     return !!this.passwordConfirmation && this.password !== this.passwordConfirmation;
   }
 
+  /**
+   * @description Whether the form may be submitted: every password rule is met and the
+   * confirmation is filled in and matches. Drives the submit button's `[disabled]`.
+   * @returns True when the form is ready to submit.
+   */
+  get canSubmit(): boolean {
+    return meetsPasswordRequirements(this.password)
+      && !!this.passwordConfirmation
+      && this.password === this.passwordConfirmation;
+  }
+
   onSubmit(): void {
     this.fieldError = '';
 
-    if (this.passwordsMismatch) {
-      this.fieldError = 'Zadaná hesla se neshodují.';
+    // The button is disabled in this case; this also covers a submit by the Enter key.
+    if (!this.canSubmit || this.submitting) {
       return;
     }
 
     this.submitting = true;
 
-    this.dataHandler.post(`account-activation/${this.token}`, {
+    this.http.post(this.activationUrl(), {
       password: this.password,
       password_confirmation: this.passwordConfirmation
-    }).subscribe({
+    }, { headers: this.headers }).subscribe({
       next: () => {
         this.submitting = false;
         this.state = 'success';
@@ -140,10 +167,42 @@ export class ActivateAccountComponent implements OnInit {
       },
       error: (err) => {
         this.submitting = false;
-        this.fieldError = err?.error?.message || 'Nastavení hesla se nezdařilo.';
+        // The link expired or was used while the form was open: same view as on entry.
+        if ([403, 404, 410].includes(err?.status)) {
+          this.state = 'invalid';
+          this.errorMessage = err?.error?.message || 'The link is invalid or has expired.';
+        } else {
+          this.fieldError = this.describeSubmitError(err);
+        }
         this.cd.markForCheck();
       }
     });
+  }
+
+  /**
+   * @description Absolute URL of the public activation endpoint for the current token.
+   * @returns `{api}/account-activation/{token}`; the token is URL-encoded.
+   */
+  private activationUrl(): string {
+    return `${environment.base_api_url}/account-activation/${encodeURIComponent(this.token)}`;
+  }
+
+  /**
+   * @description Message shown under the form when setting the password fails for a reason
+   * other than an invalid link. Never lists the password rules - the checklist above already
+   * shows them, and the button is disabled until they are met.
+   * @param err The HttpErrorResponse of the failed request.
+   * @returns Human-readable message.
+   */
+  private describeSubmitError(err: any): string {
+    if (err?.status === 0) {
+      return 'Unable to connect to the server. Please check your connection and try again.';
+    }
+    if (err?.status === 422) {
+      // Only reachable if the server's rules differ from the checklist (e.g. a stale app version).
+      return 'The password could not be accepted. Please choose a different one.';
+    }
+    return 'Setting the password failed. Please try again later.';
   }
 
   /**

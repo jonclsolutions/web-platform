@@ -16,6 +16,13 @@
  * account (including accounts with MORE permissions than its own). `update()` also no
  * longer accepts a password at all (`user_password_hash` removed) - it bypassed the
  * current-password confirmation and the notification of `changePassword()`.
+ * @refactor-note (2026-10-09) SECURITY: the e-mail access policy now also applies when a
+ * login e-mail CHANGES in `update()` (anyone, sysadmin included); the rules moved to
+ * `CoreEmailAccessRule::isEmailAllowed()`, shared with the login check in AuthController.
+ * @refactor-note (2026-10-09b) A self-edit that asks for a DIFFERENT role is now refused
+ * (422 "You cannot change your own role.") instead of being silently ignored - the admin UI
+ * showed "saved" although nothing changed. The role was never actually applied on a
+ * self-edit; this only makes the API say so.
  * */
 
 namespace App\Http\Controllers\Api;
@@ -29,7 +36,6 @@ use App\Models\Core\CorePermission;
 use App\Models\Core\CoreRole;
 use App\Models\Core\CoreLog;
 use App\Models\Core\CoreSecurityEvent;
-use App\Models\Core\CoreSecuritySetting;
 use App\Traits\LogsActivity;
 use App\Http\Requests\User\{StoreUserRequest, UpdateUserRequest};
 use App\Http\Requests\PasswordChangeRequest;
@@ -278,9 +284,12 @@ class UserController extends Controller
      * which enforces that an actor can only grant/revoke permissions they
      * themselves effectively hold - a hard anti-privilege-escalation guard, not a
      * UX nicety, and cannot be bypassed by the frontend.
-     * @note The domain whitelist check does NOT apply here - it is exclusive to
-     * account creation (`store()`), see backlog "existing accounts are not
-     * retroactively revoked".
+     * @note Nobody may change their OWN role, sysadmin included (422) - see header
+     * refactor-note (2026-10-09b).
+     * @note The e-mail access policy (`assertEmailDomainAllowed()`) is checked only
+     * when the login e-mail actually CHANGES (422), for every caller including a
+     * sysadmin. An account whose stored e-mail is no longer allowed can still be
+     * edited as long as the e-mail stays the same.
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
@@ -328,6 +337,17 @@ class UserController extends Controller
             return response()->json(['message' => 'Only sysadmin may block or unblock an account.'], 403);
         }
 
+        // E-mail access policy: a NEW login e-mail must be allowed, whoever sets it
+        // (sysadmin and self-edit included). Compared case-insensitively, so sending the
+        // stored value back unchanged never triggers it - see the @note above.
+        if (array_key_exists('user_email', $validated)
+            && strcasecmp(trim((string) $validated['user_email']), (string) $user->user_email) !== 0) {
+            $domainCheck = $this->assertEmailDomainAllowed($request, $validated['user_email'], 'update', (int) $id);
+            if ($domainCheck instanceof JsonResponse) {
+                return $domainCheck;
+            }
+        }
+
         // ── Role-change detection - captured BEFORE any mutation, using the ACTUAL
         // current role (not $effectiveRoleId below, which already folds in the
         // requested change and would make this comparison always false).
@@ -348,6 +368,16 @@ class UserController extends Controller
         $roleChanged = $roleWillActuallyApply
             && isset($validated['role_id'])
             && (int) $validated['role_id'] !== (int) $oldRoleId;
+
+        // Own role: refused explicitly instead of being silently ignored, so the caller is
+        // never told "saved" for a change that did not happen. Sending the current role back
+        // unchanged (the admin form sends the whole record) is still fine.
+        if (!$roleWillActuallyApply
+            && isset($validated['role_id'])
+            && (int) $validated['role_id'] !== (int) $oldRoleId) {
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to change own role: {$user->user_email}", (int) $id, 'User');
+            return response()->json(['message' => 'You cannot change your own role.'], 422);
+        }
 
         if ($roleChanged && !$this->actorCanAssignRole($request, (int) $validated['role_id'])) {
             $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to assign a role granting more than the actor's own permissions: {$user->user_email}", (int) $id, 'User');
@@ -804,21 +834,21 @@ class UserController extends Controller
     }
 
     /**
-     * @description Verifies that a new account's e-mail matches the allowed domain
-     * policy - see refactor-note (2026-08-25) in the header and backlog
-     * "core-admin-email-domain-restriction". An empty/unset `primary_email_domain`
-     * means "no restriction" (unchanged from before). Allowed if the e-mail matches
-     * ANY of these conditions:
-     * 1) the domain matches the company's primary domain,
-     * 2) the domain is on the whitelist (`CoreEmailAccessRule` of type `domain`),
-     * 3) the whole e-mail is on the whitelist as a specific exception (type `email`).
+     * @description Verifies that an e-mail (new account, or a changed login e-mail)
+     * matches the e-mail access policy - the rules themselves live in
+     * `CoreEmailAccessRule::isEmailAllowed()`, shared with the login check in
+     * AuthController. Denials are recorded as a security event and in the audit log.
+     * @param Request $request The current request (actor, IP, audit log).
+     * @param string $email The e-mail to check.
+     * @param string $action 'create' (store) or 'update' (login e-mail change).
+     * @param int|null $targetId Id of the edited account ('update' only).
      * @return JsonResponse|null `null` = allowed, otherwise a ready-made 422 response to return.
+     * @refactor-note (2026-10-09) Also used by `update()` when the login e-mail changes;
+     * policy logic moved to the model so login can use the same rules.
      */
-    private function assertEmailDomainAllowed(Request $request, string $email): ?JsonResponse
+    private function assertEmailDomainAllowed(Request $request, string $email, string $action = 'create', ?int $targetId = null): ?JsonResponse
     {
-        $primaryDomain = CoreSecuritySetting::current()->primary_email_domain;
-
-        if (empty($primaryDomain)) {
+        if (CoreEmailAccessRule::isEmailAllowed($email)) {
             return null;
         }
 
@@ -826,28 +856,8 @@ class UserController extends Controller
         $atPosition = strrpos($emailLower, '@');
         $domain = $atPosition !== false ? substr($emailLower, $atPosition + 1) : '';
 
-        if ($domain === strtolower(trim($primaryDomain))) {
-            return null;
-        }
-
-        $domainWhitelisted = CoreEmailAccessRule::where('type', 'domain')
-            ->where('value', $domain)
-            ->exists();
-
-        if ($domainWhitelisted) {
-            return null;
-        }
-
-        $emailWhitelisted = CoreEmailAccessRule::where('type', 'email')
-            ->where('value', $emailLower)
-            ->exists();
-
-        if ($emailWhitelisted) {
-            return null;
-        }
-
         CoreSecurityEvent::record(
-            'user_create_domain_not_whitelisted',
+            "user_{$action}_domain_not_whitelisted",
             'warning',
             $request->ip(),
             CoreSecurityEvent::contextFromRequest($request, [
@@ -856,16 +866,18 @@ class UserController extends Controller
             ])
         );
 
-        $this->logAction(
-            $request,
-            CoreLog::class,
-            'create_denied',
-            'User',
-            "Denied attempt to create an account with a non-whitelisted e-mail domain: {$emailLower}"
-        );
+        if ($action === 'create') {
+            $this->logAction($request, CoreLog::class, 'create_denied', 'User', "Denied attempt to create an account with a non-whitelisted e-mail domain: {$emailLower}");
+        } else {
+            $this->logAction($request, CoreLog::class, 'update_denied', 'User', "Denied attempt to change a login e-mail to a non-whitelisted domain: {$emailLower}", $targetId, 'User');
+        }
+
+        // The domain is the caller's own input and the caller is an administrator, so
+        // naming it here does not reveal the policy to an outsider.
+        $purpose = $action === 'create' ? 'for creating new accounts' : 'as a login e-mail';
 
         return response()->json([
-            'message' => "The e-mail domain \"{$domain}\" is not allowed for creating new accounts. Contact sysadmin to add an exception.",
+            'message' => "The e-mail domain \"{$domain}\" is not allowed {$purpose}. Contact sysadmin to add an exception.",
         ], 422);
     }
 

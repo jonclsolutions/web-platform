@@ -51,10 +51,12 @@ class AccountActivationToken extends Model
 
         $raw = Str::random(64);
 
-        self::create([
+         self::create([
             'user_id'    => $user->id,
             'token_hash' => hash('sha256', $raw),
             'expires_at' => now()->addHours(self::EXPIRES_HOURS),
+            // TESTING ONLY - 1 minute validity. Restore the line above before commit.
+            // 'expires_at' => now()->addMinutes(1),
         ]);
 
         return $raw;

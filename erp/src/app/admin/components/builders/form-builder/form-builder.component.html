@@ -163,6 +163,9 @@
                       [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                   }
                 }
+                @if (input.hint) {
+                  <div class="field-hint">{{ input.hint }}</div>
+                }
                 @if (getControl(input.column_name)?.invalid && (getControl(input.column_name)?.dirty || getControl(input.column_name)?.touched)) {
                   <div class="error-text">
                     {{ getValidationErrorMessage(getControl(input.column_name), input) }}

@@ -60,7 +60,11 @@
   border-bottom: 1px solid #f4f4f5;
   min-height: 60px;
 }
-
+.field-hint {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+}
 .header-title {
   margin: 0;
   font-size: 1.1rem;

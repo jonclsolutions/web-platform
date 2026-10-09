@@ -275,7 +275,8 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         roleId,
         !!this.selectedItemForEdit?.two_fa_forced_by_admin,
         !this.selectedItemForEdit,
-        this.isEmailLocked(this.selectedItemForEdit)
+        this.isEmailLocked(this.selectedItemForEdit),
+        this.isOwnAccount(this.selectedItemForEdit)
       );
     } else {
       this.visibleFormFields = this.formFields;
@@ -403,17 +404,22 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
    * @param isNewAccount True for the create form. Only then is the login e-mail checked against
    *   the e-mail access policy (the backend does the same on create only).
    * @param emailLocked True when the login e-mail must be read-only, see `isEmailLocked()`.
+   * @param roleLocked True when the role must be read-only - the signed-in user's own account,
+   *   whose role nobody may change by themselves (sysadmin included).
    * @returns Form fields with the role-driven restrictions and the e-mail check applied. For a
    *   non-sysadmin the block switch and the "force 2FA" field are removed, and only the
-   *   permissions they hold themselves (plus the ones the role grants) are offered.
+   *   permissions they hold themselves (plus the ones the role grants) are offered. When 2FA is
+   *   enforced, or the role is locked, the field is locked with a note saying why.
    */
   private computeFieldsForTarget(
     roleId: number | string | undefined | null,
     adminForced: boolean = false,
     isNewAccount: boolean = false,
-    emailLocked: boolean = false
+    emailLocked: boolean = false,
+    roleLocked: boolean = false
   ): InputDefinition[] {
-    const forced = this.isRoleForced(roleId) || adminForced;
+    const forcedByRole = this.isRoleForced(roleId);
+    const forced = forcedByRole || adminForced;
     const neverBlockable = this.isNeverBlockableRole(roleId);
     const rolePermissionIds = this.rolePermissionOptionIds(roleId);
     // Not offered at all: permissions the signed-in user does not hold. The ones the role grants
@@ -430,7 +436,9 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
         return { ...f, pattern: emailPattern, errorMessage: this.t('field_email_domain_error') };
       }
       if (f.column_name === 'enable_2fa' && forced) {
-        return { ...f, editable: false };
+        // The role wins when both apply: changing the role is the only way to lift it.
+        const hintKey = forcedByRole ? 'field_enable_2fa_forced_by_role_hint' : 'field_enable_2fa_forced_by_admin_hint';
+        return { ...f, editable: false, hint: this.t(hintKey) };
       }
       if (f.column_name === 'is_blocked' && neverBlockable) {
         return { ...f, editable: false };
@@ -438,6 +446,10 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       if (f.column_name === 'permission_ids') {
         const offeredOptions = (f.options ?? []).filter(opt => !hiddenPermissionIds.has(String(opt.value)));
         return { ...f, options: offeredOptions, disabledOptionValues: rolePermissionIds } as InputDefinition;
+      }
+      if (f.column_name === 'role_id' && roleLocked) {
+        // Own account: the current role stays visible but cannot be changed (the API ignores it).
+        return { ...f, editable: false, hint: this.t('field_role_own_account_hint') };
       }
       if (f.column_name === 'role_id' && !this.isSysadmin) {
         const assignableOptions = this.roleOptions.filter(opt =>
@@ -448,7 +460,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       return f;
     });
 
-    const showOverrideField = this.isSysadmin && !this.isRoleForced(roleId);
+    const showOverrideField = this.isSysadmin && !forcedByRole;
     if (!showOverrideField) {
       fields = fields.filter(f => f.column_name !== 'two_fa_forced_by_admin');
     }
@@ -541,26 +553,42 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       itemToEdit.role_id,
       !!itemToEdit.two_fa_forced_by_admin,
       false,
-      this.isEmailLocked(itemToEdit)
+      this.isEmailLocked(itemToEdit),
+      this.isOwnAccount(itemToEdit)
     );
     this.selectedItemForEdit = itemToEdit;
     this.showCreateForm = true;
   }
 
+    /**
+   * @description Reacts to a role change in the open form: recomputes the fields, pre-selects
+   * the permissions of the new role and, when 2FA is enforced, shows its checkbox checked.
+   * @param event Field change reported by FormBuilderComponent.
+   * @note When the new role does not enforce 2FA, the checkbox keeps its current value and
+   *   becomes editable again.
+   */
   handleFieldChanged(event: { columnName: string; value: any }): void {
     if (event.columnName !== 'role_id') return;
 
     const newRoleId = event.value !== '' && event.value !== null && event.value !== undefined
       ? Number(event.value)
       : null;
+    const adminForced = !!this.selectedItemForEdit?.two_fa_forced_by_admin;
 
     this.visibleFormFields = this.computeFieldsForTarget(
       newRoleId,
-      !!this.selectedItemForEdit?.two_fa_forced_by_admin,
+      adminForced,
       !this.selectedItemForEdit,
-      this.isEmailLocked(this.selectedItemForEdit)
+      this.isEmailLocked(this.selectedItemForEdit),
+      this.isOwnAccount(this.selectedItemForEdit)
     );
-    this.formFieldOverrides = { permission_ids: this.rolePermissionOptionIds(newRoleId) };
+
+    const overrides: Record<string, any> = { permission_ids: this.rolePermissionOptionIds(newRoleId) };
+    // Enforced 2FA is shown as checked; the API turns it on anyway (the locked field is not sent).
+    if (this.isRoleForced(newRoleId) || adminForced) {
+      overrides['enable_2fa'] = true;
+    }
+    this.formFieldOverrides = overrides;
     this.cd.markForCheck();
   }
 
@@ -596,6 +624,10 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       delete payload.permission_ids;
     }
 
+    // The role the account has after saving. Read BEFORE locked fields are removed: on the own
+    // account `role_id` is locked and therefore not sent, but the checks below still need it.
+    const targetRoleId = payload.role_id;
+
     const nonEditableFields = this.visibleFormFields
       .filter(f => f.editable === false)
       .map(f => f.column_name);
@@ -608,13 +640,13 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       .filter(f => !visibleFieldNames.has(f.column_name))
       .forEach(f => delete payload[f.column_name]);
 
-    const forcedNow = this.isRoleForced(payload.role_id);
+    const forcedNow = this.isRoleForced(targetRoleId);
     if (forcedNow) {
       delete payload.enable_2fa;
       delete payload.two_fa_forced_by_admin;
     }
 
-    if (this.isNeverBlockableRole(payload.role_id)) {
+    if (this.isNeverBlockableRole(targetRoleId)) {
       delete payload.is_blocked;
     }
 

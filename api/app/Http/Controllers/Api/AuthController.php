@@ -7,6 +7,10 @@
  * @created 2025
  * @description Manages user authentication, token-based session lifecycle (Access/Refresh
  * tokens), CAPTCHA-gated brute-force protection, and mandatory/optional 2FA verification.
+ * @refactor-note (2026-10-09) SECURITY: login and token refresh refuse an account whose
+ * e-mail is no longer allowed by the e-mail access policy (sysadmin exempt). Checked only
+ * after the password matched, with a generic message that reveals nothing about the
+ * allowed domains - see `emailPolicyAllowsLogin()`.
  */
 
 namespace App\Http\Controllers\Api;
@@ -15,6 +19,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\VerifyTwoFactorRequest;
 use App\Http\Requests\Auth\ResendTwoFactorRequest;
 use App\Mail\Auth\TwoFactorCodeMail;
+use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CoreSecurityEvent;
 use App\Services\Security\CaptchaVerificationService;
 use Illuminate\Http\Request;
@@ -38,6 +43,15 @@ class AuthController extends Controller
     /** Okno pro počítání neúspěšných pokusů per e-mail (sekundy). */
     private const FAILED_ATTEMPTS_DECAY_SECONDS = 900; // 15 min
 
+    /** Role exempt from the e-mail access policy at login - it must never lock itself out. */
+    private const SYSADMIN_ROLE_NAME = 'sysadmin';
+
+    /**
+     * Same message for every account the e-mail access policy refuses. It names neither
+     * the domain nor the policy, so it tells nothing about which domains are allowed.
+     */
+    private const LOGIN_NOT_ALLOWED_MESSAGE = 'Login is not allowed for this account. Please contact the administrator.';
+
     public function __construct(
         private readonly CaptchaVerificationService $captcha
     ) {}
@@ -48,6 +62,10 @@ class AuthController extends Controller
      * refactor-note v hlavičce souboru). Pokud uživatel vyžaduje 2FA, NEVYDÁ tokeny,
      * ale založí pending-login session a pošle OTP e-mailem. Jinak přihlásí rovnou
      * (stávající chování).
+     * @refactor-note (2026-10-09) SECURITY: an account whose e-mail is no longer allowed
+     * by the e-mail access policy cannot log in (403, sysadmin exempt). Checked only
+     * AFTER the password matched and with a generic message, so the endpoint cannot be
+     * used to probe which domains are allowed - see `emailPolicyAllowsLogin()`.
      */
     public function login(Request $request): JsonResponse
     {
@@ -78,7 +96,7 @@ class AuthController extends Controller
                 ], 422);
             }
         }
-        
+
 
         // ── Blokace / neaktivovaný účet - MUSÍ se ověřit PŘED Auth::attempt() ──────────
         // (viz refactor-note v hlavičce souboru - Auth::attempt by s NULL heslem mohlo
@@ -113,6 +131,21 @@ class AuthController extends Controller
             RateLimiter::clear($failedAttemptsKey);
 
             $user->load('roles.permissions');
+
+            // E-mail access policy - checked only now, AFTER the password matched: before
+            // it, the answer would let anyone probe which domains are allowed. No tokens
+            // and no 2FA code are issued; the message is generic (see the constant).
+            if (!$this->emailPolicyAllowsLogin($user)) {
+                CoreSecurityEvent::record(
+                    'login_email_not_allowed',
+                    'warning',
+                    $request->ip(),
+                    CoreSecurityEvent::contextFromRequest($request, ['email' => $email])
+                );
+                $this->logAction($request, CoreLog::class, 'login_denied', 'Auth', "Login refused, e-mail not allowed by the e-mail access policy: {$email}", $user->id, 'User');
+
+                return response()->json(['message' => self::LOGIN_NOT_ALLOWED_MESSAGE], 403);
+            }
 
             if ($user->requiresTwoFactor()) {
                 return $this->beginTwoFactorChallenge($request, $user);
@@ -380,6 +413,10 @@ class AuthController extends Controller
      * @note Dodatečná kontrola `is_blocked` - pokud byl účet zablokován MEZI vydáním
      * refresh tokenu a jeho použitím (`update()` mezitím smazal Sanctum access tokeny,
      * ale samotný refresh token flow jde jinou cestou), nesmí se vydat nový access token.
+     * @refactor-note (2026-10-09) SECURITY: the e-mail access policy is checked here as
+     * well (same rule and message as `login()`), otherwise a session opened before the
+     * policy changed would stay alive for up to 7 days through refreshes. All of the
+     * account's tokens are revoked when it fails.
      */
     public function refresh(Request $request): JsonResponse
     {
@@ -421,6 +458,19 @@ class AuthController extends Controller
             return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
         }
 
+        // E-mail access policy - see @refactor-note above.
+        if (!$this->emailPolicyAllowsLogin($user)) {
+            $dbRefreshToken->delete();
+            $user->tokens()->delete();
+            CoreSecurityEvent::record(
+                'refresh_email_not_allowed',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
+            );
+            return response()->json(['message' => self::LOGIN_NOT_ALLOWED_MESSAGE], 403);
+        }
+
         $dbRefreshToken->delete();
         $user->tokens()->delete();
 
@@ -437,6 +487,22 @@ class AuthController extends Controller
             'token'        => $newAccessToken,
             'refreshToken' => $newRefreshToken,
         ], 200);
+    }
+
+    /**
+     * @description Whether the account may log in under the e-mail access policy
+     * (`CoreEmailAccessRule::isEmailAllowed()`). Sysadmin accounts are exempt: a policy
+     * change must never lock out the only role that can fix the policy.
+     * @param User $user The account that has just proved its credentials (or refresh token).
+     * @return bool True when the login may continue.
+     */
+    private function emailPolicyAllowsLogin(User $user): bool
+    {
+        if ($user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists()) {
+            return true;
+        }
+
+        return CoreEmailAccessRule::isEmailAllowed((string) $user->user_email);
     }
 
     /**

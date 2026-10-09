@@ -46,4 +46,41 @@ class CoreEmailAccessRule extends Model
             $rule->value = $value;
         });
     }
+        /**
+     * @description Whether an e-mail may hold an account under the current e-mail
+     * access policy. An empty `primary_email_domain` means "no restriction". Otherwise
+     * allowed when ANY of these matches:
+     * 1) the domain equals the company's primary domain,
+     * 2) the domain is whitelisted (rule of type `domain`),
+     * 3) the whole e-mail is whitelisted as an exception (rule of type `email`).
+     * Single source of the policy for account creation, login e-mail change
+     * (UserController) and login / token refresh (AuthController).
+     * @param string $email The e-mail to check (case and surrounding spaces ignored).
+     * @return bool True when the e-mail is allowed.
+     * @refactor-note (2026-10-09) Moved here from UserController::assertEmailDomainAllowed()
+     * so the login check uses exactly the same rules.
+     */
+    public static function isEmailAllowed(string $email): bool
+    {
+        $primaryDomain = strtolower(trim((string) CoreSecuritySetting::current()->primary_email_domain));
+
+        if ($primaryDomain === '') {
+            return true;
+        }
+
+        $emailLower = strtolower(trim($email));
+        $atPosition = strrpos($emailLower, '@');
+        $domain = $atPosition !== false ? substr($emailLower, $atPosition + 1) : '';
+
+        if ($domain !== '' && $domain === $primaryDomain) {
+            return true;
+        }
+
+        return static::query()
+            ->where(function ($query) use ($domain, $emailLower) {
+                $query->where(fn ($q) => $q->where('type', 'domain')->where('value', $domain))
+                      ->orWhere(fn ($q) => $q->where('type', 'email')->where('value', $emailLower));
+            })
+            ->exists();
+    }
 }

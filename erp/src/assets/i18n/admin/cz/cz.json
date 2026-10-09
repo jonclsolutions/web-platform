@@ -1896,6 +1896,9 @@
     "graph_date_field_label": "Datum vytvoření"
   },
   "administrators": {
+    "field_role_own_account_hint": "Vlastní roli nelze změnit. Požádejte jiného administrátora.",
+    "field_enable_2fa_forced_by_role_hint": "Dvoufázové ověření vyžaduje role účtu, nelze ho změnit.",
+    "field_enable_2fa_forced_by_admin_hint": "Dvoufázové ověření pro tento účet vynutil sysadmin, nelze ho změnit.",
     "field_email_domain_error": "E-mail není z povolené domény ani mezi povolenými adresami.",
     "table_header_accounts": "Administrátoři",
     "table_header_trash": "Koš",
@@ -2980,5 +2983,12 @@
   "client_error": "Chyba klienta: {status} {statusText}",
   "server_error": "Chyba serveru ({status}): {statusText}",
   "server_error_default_text": "Interní chyba serveru"
+},
+"password-policy": {
+  "length": "{min}-{max} znaků",
+  "letter": "Alespoň jedno písmeno",
+  "digit": "Alespoň jedna číslice",
+  "special": "Alespoň jeden speciální znak",
+  "error_message": "Heslo musí mít {min}-{max} znaků a obsahovat alespoň jedno písmeno, jednu číslici a jeden speciální znak."
 }
 }

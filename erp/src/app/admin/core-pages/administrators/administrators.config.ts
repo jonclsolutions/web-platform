@@ -12,7 +12,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
-import { PASSWORD_PATTERN, PASSWORD_ERROR_MESSAGE } from '../../../shared/constants/password-policy';
+import { PASSWORD_PATTERN, getPasswordErrorMessage } from '../../../shared/constants/password-policy';
 
 const SECTION = 'administrators';
 
@@ -58,7 +58,7 @@ export function createResetPasswordFormFields(i18n: AdminLocalizationService): C
       type: 'confirm-password',
       required: true,
       pattern: PASSWORD_PATTERN,
-      errorMessage: PASSWORD_ERROR_MESSAGE,
+      errorMessage: getPasswordErrorMessage(path => i18n.getValue(path)),
       editable: true, show_in_edit: true, show_in_create: true,
     },
   ];
