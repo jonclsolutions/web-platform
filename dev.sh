@@ -325,7 +325,8 @@ cmd_status() {
     printf '%-10s %s\n' "database" "$state"
     echo
     echo "  API      http://$API_HOST:$API_PORT"
-    echo "  ERP      http://127.0.0.1:$ERP_PORT"
+    # ng serve runs with SSL (erp/angular.json → serve.options.ssl, laragon cert)
+    echo "  ERP      https://127.0.0.1:$ERP_PORT"
     echo "  Mailpit  http://127.0.0.1:$MAILPIT_UI_PORT"
 }
 

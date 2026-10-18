@@ -30,19 +30,6 @@
  *   v `error.error.errors`) - jejich jazyk určuje Laravel API, ne tahle služba.
  * - Žádná změna logiky větvení, HTTP volání ani veřejného API - jen texty.
  *
- * @bugfix-note (2026-10) NG0200 "Circular dependency detected for InjectionToken
- * HTTP_INTERCEPTORS" + admin jazyk se nenačetl (všude `'Cannot load text'`):
- * První verze refactoru výše injektovala `AdminLocalizationService` EAGER (pole třídy
- * `inject(AdminLocalizationService)`). `DataHandler` ale vzniká UVNITŘ sestavování
- * řetězce HTTP interceptorů (první request aplikace -> HTTP_INTERCEPTORS ->
- * AuthTokenInterceptor -> AuthService -> GenericTableService -> DataHandler)
- * a `AdminLocalizationService` ve svém konstruktoru hned posílá `http.get()` pro JSON
- * jazyka - tedy request, který potřebuje tentýž, ještě nedostavěný řetězec
- * interceptorů. Angular to vyhodnotí jako kruhovou závislost, `catchError`
- * v `loadLanguage()` chybu spolkne a publikuje prázdný překlad.
- * OPRAVA: `AdminLocalizationService` se z `Injector` vytahuje až při PRVNÍM použití
- * (getter `i18n`), tj. až v `handleError` po dokončeném HTTP requestu, kdy je řetězec
- * interceptorů dávno sestavený. `AdminLocalizationService` beze změny.
  * @note Důsledek: pokud by první chyba přes `DataHandler` nastala dřív, než si
  * `AdminLocalizationService` vyžádá jakákoli admin komponenta (v administraci to dělá
  * `AdminLayoutComponent`/`BaseDataComponent`), služba teprve vznikne a JSON se teprve
@@ -60,7 +47,7 @@ import { environment } from '../../../environments/environment';
 
 /**
  * @description Handles REST API interactions, including header management, serialization, and global error processing.
- * @usage Used exclusively within the 'admin' module for managing authenticated data resources.
+ * @usage Used exclusively within the 'admin' module for managing authenticated data Sresources.
  * @note SINGLE SOURCE OF TRUTH for error toasts - see bugfix-note above. Consuming
  * components must NOT show their own error toast; they may still branch on
  * `err.status`/`err.error` in their `error:` callback for non-toast cleanup logic

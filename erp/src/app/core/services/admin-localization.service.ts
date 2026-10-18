@@ -37,15 +37,9 @@ import { catchError } from 'rxjs/operators';
 const STORAGE_KEY = 'rpsw_admin_language';
 const DEFAULT_LANGUAGE = 'cz';
 const FALLBACK_TEXT = 'Cannot load text';
-
-/** One entry in the language switcher (personal-info dropdown, etc). */
 export interface AdminLanguageMeta {
   code: string;
-  /** Human-readable name, itself hardcoded per-language (e.g. 'English' inside the
-   * en.json's own metadata isn't needed - the switcher shows every language's name
-   * in ITS OWN language, so a Czech admin sees 'English', not 'Angličtina'). */
   name: string;
-  /** Path to the flag icon, served from the app's own bundled assets. */
   icon: string;
 }
 
@@ -60,8 +54,6 @@ export const ADMIN_AVAILABLE_LANGUAGES: AdminLanguageMeta[] = [
   { code: 'cz', name: 'Čeština', icon: 'assets/i18n/admin/cz/cz.png' },
   { code: 'en', name: 'English', icon: 'assets/i18n/admin/en/en.png' },
 ];
-
-
 
 /**
  * @description Loads and serves the currently selected admin-UI language. Selection is

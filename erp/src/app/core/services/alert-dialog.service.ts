@@ -9,16 +9,6 @@
  * - AlertDialogComponent: The UI component to be dynamically rendered.
  * - ApplicationRef: Required to manually attach/detach component views to the application tree.
  * - EnvironmentInjector: Required for dependency injection within dynamically created components.
- *
- * @refactor-note (2026-08) Dřív `open()` na začátku VŽDY zavolalo `closeDialog()` a
- * vytvořilo úplně novou komponentu - takže druhé rychle po sobě jdoucí upozornění fyzicky
- * zničilo/nahradilo první, ještě než ho uživatel stihl přečíst. Teď se kontejnerová
- * komponenta (AlertDialogComponent) vytvoří JEDNOU (lazy, při prvním open()) a zůstává
- * po celou dobu běhu appky - každé další volání open() jen přidá novou položku do její
- * interní fronty (`addToast()`), takže se toasty stackují pod sebe a mizí nezávisle,
- * místo aby se navzájem přepisovaly. `pendingResolvers` mapuje ID toastu na jeho Promise
- * resolve funkci - `toastClosed` output komponenty (emituje ID zavřeného toastu) rozhodne,
- * který konkrétní Promise se má rozřešit.
  */
 
 import { Injectable, ComponentRef, ApplicationRef, EnvironmentInjector, createComponent, EmbeddedViewRef } from '@angular/core';
