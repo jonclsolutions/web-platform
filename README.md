@@ -158,8 +158,8 @@ MAIL_PORT=1025
 Everything is started and stopped with one command from the repository root:
 
 ```bash
-./dev.sh                       # start everything, follow logs; Ctrl+C stops everything
-./dev.sh up -d                 # start in the background
+./dev.sh                       # start everything, follow logs; Ctrl+C or closing the terminal/editor stops everything
+./dev.sh up -d                 # start in the background – keeps running after the terminal is closed
 ./dev.sh stop                  # stop everything started by dev.sh
 ./dev.sh status                # what is running + URLs
 ./dev.sh logs                  # follow logs (.dev/logs/*.log)
@@ -176,6 +176,12 @@ Everything is started and stopped with one command from the repository root:
 (`queue:listen`, only when `QUEUE_CONNECTION` is not `sync`) and `ng serve`. Services that
 are already running (e.g. Mailpit started by hand) are detected and left untouched.
 XAMPP and Mailpit are stopped on exit only if `dev.sh` started them.
+
+**Closing the terminal or VSCodium** while `./dev.sh` runs in the foreground stops everything,
+the same as Ctrl+C (the shutdown is logged to `.dev/logs/dev.log`). The one exception is XAMPP:
+stopping it needs sudo, and with no terminal there is nowhere to type the password – if sudo has
+no cached credentials, XAMPP is left running and the next `./dev.sh stop` stops it.
+With `./dev.sh up -d` the environment deliberately keeps running after the terminal is closed.
 
 Overrides via environment variables, e.g. `API_PORT=8001 ./dev.sh` or
 `STOP_XAMPP_ON_EXIT=0 ./dev.sh`. Full list: header of `dev.sh`.

@@ -9,26 +9,28 @@
 # command instead of starting each service by hand in separate terminals:
 #   1. XAMPP (MySQL/MariaDB, optionally Apache) – sudo /opt/lampp/lampp
 #   2. Mailpit (catches outgoing e-mails)        – SMTP :1025, UI :8025
-#   3. API – `php artisan serve`                 – web-platform/api
+#   3. API – `php artisan serve`                 – api/
 #   4. Queue worker – `php artisan queue:listen` (only if QUEUE_CONNECTION != sync)
 #   5. Scheduler – `php artisan schedule:work`   (optional, --with-scheduler)
-#   6. ERP – `ng serve`                          – web-platform/erp
+#   6. ERP – `ng serve`                          – erp/
+#
+# @note One application runs at a time; every app created from web-platform
+# uses the same ports. Services already running (e.g. Mailpit started by hand)
+# are detected and left untouched; XAMPP and Mailpit are stopped on exit only
+# if this script started them.
 #
 # @note WHY NOT CRON: during development the queue and scheduler should run
-# only while you are working. This script starts them as processes tied to the
-# current session; Ctrl+C (or `./dev.sh stop`) ends everything. Nothing is
-# written to crontab or systemd, so nothing keeps running in the background
-# afterwards (see the orphaned `rpsw-queue-worker` cron incident, 2026-10-19).
+# only while you are working. Nothing is written to crontab or systemd, so
+# nothing keeps running in the background afterwards (see the orphaned
+# `rpsw-queue-worker` cron incident, 2026-10-19).
 #
-# @note queue:listen vs. queue:work: locally `queue:listen` is used because it
-# reboots the application for every job, so code changes apply without
-# restarting the worker. In PRODUCTION use `queue:work` under Supervisor/systemd
-# and the scheduler via system cron `* * * * * php artisan schedule:run`
-# (see routes/console.php).
+# @note queue:listen vs. queue:work: locally `queue:listen` reboots the
+# application for every job, so code changes apply without a worker restart.
+# In PRODUCTION use `queue:work` and the scheduler via cron
+# (deploy/server/configure-server.sh, routes/console.php).
 #
 # @note The scheduler (routes/console.php) currently contains only nightly
-# clean-up jobs (03:15 security:purge-events, 03:30 purge import batches), so it
-# is OFF by default in development. Run once by hand: `php artisan schedule:test`.
+# clean-up jobs, so it is OFF by default. Run once by hand: `php artisan schedule:test`.
 #
 # @security
 #   - All services bind to 127.0.0.1 only (not reachable from the LAN).
@@ -37,9 +39,11 @@
 #   - The .dev/ directory (logs, PID files) must be git-ignored.
 #
 # @usage
-#   ./dev.sh                       start everything and follow logs; Ctrl+C stops all
+#   ./dev.sh                       start everything and follow logs; Ctrl+C or closing
+#                                  the terminal / editor stops everything
 #   ./dev.sh up --with-scheduler   same, plus the scheduler (schedule:work)
-#   ./dev.sh up -d                 start everything in the background (detached)
+#   ./dev.sh up -d                 start in the background – keeps running after the
+#                                  terminal is closed, stop with ./dev.sh stop
 #   ./dev.sh stop                  stop everything this script started
 #   ./dev.sh status                show running services and URLs
 #   ./dev.sh logs                  follow the logs of running services
@@ -70,7 +74,11 @@ ERP_PORT="${ERP_PORT:-4200}"
 DB_PORT="${DB_PORT:-3306}"
 MAILPIT_SMTP_PORT="${MAILPIT_SMTP_PORT:-1025}"
 MAILPIT_UI_PORT="${MAILPIT_UI_PORT:-8025}"
-MAILPIT_BIN="${MAILPIT_BIN:-mailpit}"
+# init-workspace.sh installs Mailpit to ~/.local/bin, which is not always in PATH.
+if [[ -z "${MAILPIT_BIN:-}" ]]; then
+    if command -v mailpit >/dev/null; then MAILPIT_BIN=mailpit
+    else MAILPIT_BIN="$HOME/.local/bin/mailpit"; fi
+fi
 
 # XAMPP: "start" = MySQL + Apache (+ phpMyAdmin). If Apache is not needed,
 # use XAMPP_START_CMD=startmysql XAMPP_STOP_CMD=stopmysql.
@@ -81,6 +89,8 @@ STOP_XAMPP_ON_EXIT="${STOP_XAMPP_ON_EXIT:-1}"
 
 WITH_SCHEDULER=0
 DETACH=0
+HANGUP=0    # 1 = the terminal was closed (SIGHUP) – no tty for output or sudo prompts
+TAIL_PID="" # log viewer of the foreground mode
 
 # Stop order = reverse start order.
 MANAGED_PROCS=(erp scheduler queue api mailpit)
@@ -96,8 +106,7 @@ warn() { printf '%s[!!!]%s %s\n' "$c_yellow" "$c_reset" "$*" >&2; }
 die()  { printf '%s[err]%s %s\n' "$c_red" "$c_reset" "$*" >&2; exit 1; }
 
 # -----------------------------------------------------------------------------
-# @description Checks whether something listens on 127.0.0.1:<port>, without
-# external tools (uses bash's /dev/tcp).
+# @description Checks whether something listens on 127.0.0.1:<port> (bash /dev/tcp).
 # @param $1 port
 # @return 0 = port in use, 1 = free
 # -----------------------------------------------------------------------------
@@ -176,7 +185,6 @@ stop_proc() {
 # -----------------------------------------------------------------------------
 # @description Reads QUEUE_CONNECTION from api/.env (this single value only; no
 # secrets are read or printed). Laravel's default value is "database".
-# @return prints the connection name
 # -----------------------------------------------------------------------------
 queue_connection() {
     local v
@@ -191,24 +199,25 @@ queue_connection() {
 preflight() {
     [[ -d "$API_DIR" ]] || die "Directory $API_DIR is missing"
     [[ -d "$ERP_DIR" ]] || die "Directory $ERP_DIR is missing"
-    [[ -f "$API_DIR/.env" ]] || die "$API_DIR/.env is missing (copy .env.example and configure it)"
+    [[ -f "$API_DIR/.env" ]] || die "$API_DIR/.env is missing – run ./init-workspace.sh"
     command -v php >/dev/null || die "php is not in PATH"
     command -v npx >/dev/null || die "npx (Node.js) is not in PATH"
     command -v setsid >/dev/null || die "setsid is not available (package util-linux)"
-    [[ -d "$ERP_DIR/node_modules" ]] || die "$ERP_DIR/node_modules is missing – run 'npm ci' in erp/"
+    [[ -d "$ERP_DIR/node_modules" ]] || die "$ERP_DIR/node_modules is missing – run ./init-workspace.sh"
     [[ -x "$XAMPP_CTL" ]] || warn "XAMPP not found at $XAMPP_CTL – database will not be started (set XAMPP_CTL)"
-    command -v "$MAILPIT_BIN" >/dev/null || warn "mailpit not found ($MAILPIT_BIN) – e-mails will not be caught"
+    [[ -x "$MAILPIT_BIN" ]] || command -v "$MAILPIT_BIN" >/dev/null \
+        || warn "mailpit not found ($MAILPIT_BIN) – e-mails will not be caught"
 
-    # Make sure logs/PID files never end up in git. Git itself decides
-    # (`check-ignore`), so any valid pattern works (.dev, .dev/, /.dev/, a
-    # global gitignore…). Skipped outside a git repository.
+    # Make sure logs/PID files never end up in git (git itself decides; skipped outside git).
     if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
         && ! git -C "$ROOT_DIR" check-ignore -q .dev/; then
         warn "'.dev/' is not git-ignored – add it: echo '.dev/' >> .gitignore"
     fi
 
-    port_in_use "$API_PORT" && ! is_running api && die "Port $API_PORT is used by another process (API)"
-    port_in_use "$ERP_PORT" && ! is_running erp && die "Port $ERP_PORT is used by another process (ERP)"
+    port_in_use "$API_PORT" && ! is_running api \
+        && die "Port $API_PORT is in use – is another app's ./dev.sh still running? Stop it first."
+    port_in_use "$ERP_PORT" && ! is_running erp \
+        && die "Port $ERP_PORT is in use – is another app's ./dev.sh still running? Stop it first."
     return 0
 }
 
@@ -236,13 +245,24 @@ start_xampp() {
 
 stop_xampp() {
     [[ -f "$DEV_DIR/xampp.started" ]] || return 0
-    if [[ "$STOP_XAMPP_ON_EXIT" == "1" ]]; then
+    [[ "$STOP_XAMPP_ON_EXIT" == "1" ]] || { rm -f "$DEV_DIR/xampp.started"; return 0; }
+
+    # After the terminal was closed there is no tty to type a sudo password into:
+    # only cached sudo credentials can be used (-n). Otherwise XAMPP is left
+    # running and the marker kept, so a later `./dev.sh stop` still stops it.
+    local sudo_args=()
+    if [[ "$HANGUP" == "1" ]]; then
+        sudo_args=(-n)
+    else
         info "stopping XAMPP ($XAMPP_STOP_CMD) – may ask for your sudo password"
-        # shellcheck disable=SC2024  # see start_xampp – the log stays user-owned
-        sudo "$XAMPP_CTL" "$XAMPP_STOP_CMD" >>"$LOG_DIR/xampp.log" 2>&1 || warn "XAMPP could not be stopped"
-        ok "stopped XAMPP"
     fi
-    rm -f "$DEV_DIR/xampp.started"
+    # shellcheck disable=SC2024  # see start_xampp – the log stays user-owned
+    if sudo "${sudo_args[@]}" "$XAMPP_CTL" "$XAMPP_STOP_CMD" >>"$LOG_DIR/xampp.log" 2>&1; then
+        ok "stopped XAMPP"
+        rm -f "$DEV_DIR/xampp.started"
+    else
+        warn "XAMPP left running (sudo password needed) – stop it with ./dev.sh stop"
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -250,7 +270,7 @@ stop_xampp() {
 # (e.g. Mailpit started by hand or as a service) – that one is left untouched.
 # -----------------------------------------------------------------------------
 start_mailpit() {
-    command -v "$MAILPIT_BIN" >/dev/null || return 0
+    [[ -x "$MAILPIT_BIN" ]] || command -v "$MAILPIT_BIN" >/dev/null || return 0
     if port_in_use "$MAILPIT_SMTP_PORT" && ! is_running mailpit; then
         ok "Mailpit (or another SMTP server) already running on :$MAILPIT_SMTP_PORT – skipping"
         return 0
@@ -298,19 +318,47 @@ cmd_up() {
         return 0
     fi
 
-    # Foreground: follow the logs; Ctrl+C => clean up everything we started.
+    # Foreground: follow the logs; Ctrl+C, kill or closing the terminal/editor
+    # => clean up everything we started.
     trap 'echo; info "shutting down…"; cmd_stop; exit 0' INT TERM
-    info "following logs – Ctrl+C stops the whole environment"
-    tail -n 0 -F "$LOG_DIR"/*.log || true
+    trap on_hangup HUP
+    info "following logs – Ctrl+C (or closing this terminal) stops the whole environment"
+    # The log viewer runs in the background and the script waits for it with
+    # `wait`: unlike a foreground command, `wait` is interrupted immediately by
+    # a trapped signal, so the clean-up runs even if the viewer itself is not
+    # signalled (e.g. the terminal window or the editor is closed).
+    tail -n 0 -F "$LOG_DIR"/*.log &
+    TAIL_PID=$!
+    wait "$TAIL_PID" || true
     cmd_stop
 }
 
+# -----------------------------------------------------------------------------
+# @description Closing the terminal window or the editor (VSCodium) sends SIGHUP.
+# The services run in their own sessions (setsid) and would not receive it, so
+# without this handler they would keep running orphaned in the background.
+# The terminal is gone: output goes to .dev/logs/dev.log instead.
+# -----------------------------------------------------------------------------
+on_hangup() {
+    HANGUP=1
+    exec >>"$LOG_DIR/dev.log" 2>&1 </dev/null
+    info "$(date '+%F %T') terminal closed (SIGHUP) – shutting down"
+    cmd_stop
+    exit 0
+}
+
 cmd_stop() {
+    trap '' HUP          # do not interrupt the clean-up itself
     trap - INT TERM
+    if [[ -n "$TAIL_PID" ]]; then kill "$TAIL_PID" 2>/dev/null || true; TAIL_PID=""; fi
     local p
     for p in "${MANAGED_PROCS[@]}"; do stop_proc "$p"; done
     stop_xampp
-    ok "environment stopped – nothing is running in the background"
+    if [[ -f "$DEV_DIR/xampp.started" ]]; then
+        ok "environment stopped – only XAMPP is still running (./dev.sh stop to stop it)"
+    else
+        ok "environment stopped – nothing is running in the background"
+    fi
 }
 
 cmd_status() {
@@ -325,7 +373,7 @@ cmd_status() {
     printf '%-10s %s\n' "database" "$state"
     echo
     echo "  API      http://$API_HOST:$API_PORT"
-    # ng serve runs with SSL (erp/angular.json → serve.options.ssl, laragon cert)
+    # ng serve runs with SSL (erp/angular.json → serve.options.ssl)
     echo "  ERP      https://127.0.0.1:$ERP_PORT"
     echo "  Mailpit  http://127.0.0.1:$MAILPIT_UI_PORT"
 }
