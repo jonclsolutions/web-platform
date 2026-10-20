@@ -34,6 +34,7 @@ web-platform/
 │   ├── build.sh         production build → build/www.zip
 │   └── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
 ├── docs/                project documentation, manual regression tests, DOCS templates
+├── init-workspace.sh    prepares a freshly cloned app for local development (repeatable)
 ├── dev.sh               starts / stops the whole local environment
 ├── .dev/                (git-ignored) logs and PID files of dev.sh
 └── build/               (git-ignored) output of deploy/build.sh, wiped on every build
@@ -41,35 +42,105 @@ web-platform/
 
 ---
 
-## Prerequisites
-
-- PHP and Composer (version as required by `api/composer.json`)
-- Node.js + npm (version supported by Angular 21)
-- XAMPP in `/opt/lampp` (MySQL/MariaDB)
-- [Mailpit](https://mailpit.axllent.org/) in `PATH`
-- `rsync` and `zip` (production build only)
-
----
-
 ## First-time setup
 
+**Prerequisite (once per machine):** XAMPP installed in `/opt/lampp` –
+[download](https://www.apachefriends.org/download.html), then
+`chmod +x xampp-linux-*-installer.run && sudo ./xampp-linux-*-installer.run`.
+`init-workspace.sh` checks this first and stops without changing anything if XAMPP is missing.
+
+Then a freshly cloned application is prepared by one script:
+
 ```bash
-git clone <repository-url> web-platform
+git clone git@github.com:jonclsolutions/web-platform.git
 cd web-platform
+./init-workspace.sh
+```
 
-# API
-cd api
-composer install
-cp .env.example .env          # then fill in DB credentials etc. – never commit .env
-php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link
-cd ..
+The script is universal – the same unchanged file works for web-platform and every app cloned
+from it (the app name is the directory name). It is safe to run again any time; steps that are
+already done are skipped and nothing existing is overwritten.
 
-# Frontend
-cd erp
-npm ci
-cd ..
+| Step | What happens |
+|---|---|
+| System packages | installs missing PHP extensions, Composer, Node.js and tools via `dnf` |
+| Mailpit | downloads the latest release to `~/.local/bin`, **only if its SHA-256 matches** the digest GitHub publishes |
+| Laravel | creates `api/.env` from `.env.example` with local defaults (only if missing), `composer install`, `APP_KEY` (only if empty), `public/storage` symlink (stale ones are fixed), writable `storage/` |
+| Angular | `npm ci`, local SSL certificate for `ng serve` (trusted if `mkcert` is installed) |
+| Repository | required `.gitignore` rules, executable scripts, warns if a new app still pushes to web-platform |
+| Shell aliases | `<app>` (cd), `<app>-dev`, `<app>-build` in `~/.zshrc` / `~/.bashrc` – one block per app |
+
+It never touches the user crontab, and everything it writes belongs to the checkout itself
+(`api/.env`, `vendor/`, `node_modules/`, `erp/ssl/`, `.dev/`) or to the app's own alias block –
+any number of cloned apps can be set up on one machine without affecting each other.
+Options: `--skip-system` (no `dnf`), `--no-aliases`, `--help`.
+
+The script ends with one of:
+
+- **`WORKSPACE SETUP COMPLETE`** – do the two manual steps below, then start with `./dev.sh`.
+- **`WORKSPACE SETUP INCOMPLETE`** – fix the listed warnings and run the script again.
+
+### Manual step 1 – review `api/.env`
+
+A new `api/.env` is created from `.env.example` with local defaults; an existing one is never
+changed. Either way, check it before the first start:
+
+| Keys | What to check |
+|---|---|
+| `APP_NAME`, `APP_URL`, `FRONTEND_URL` | name and local URLs of this app (`http://127.0.0.1:8000`, `https://localhost:4200`) |
+| `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | the database created in step 2 (XAMPP default: `root`, no password) |
+| `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | sender of e-mails – locally all mail is caught by Mailpit |
+| `TURNSTILE_SECRET_KEY` | captcha – Cloudflare's public **test** key is preset for local use |
+| other keys of the app | API keys, payment gateway, … – see `.env.example` |
+
+`api/.env` is git-ignored – never commit it.
+
+### Manual step 2 – database in phpMyAdmin
+
+The script does **not** create the database; its summary prints the name to use
+(`DB_DATABASE` in `api/.env` – for a new app the directory name, `app-two` → `app_two`):
+
+1. start XAMPP: `sudo /opt/lampp/lampp start`
+2. open https://localhost/phpmyadmin/
+3. create the database with the printed name, collation `utf8mb4_unicode_ci`
+4. tab **Import** → `database/db.sql`
+
+> **Database schema:** `database/db.sql` is the authoritative schema; `api/database/migrations`
+> covers only part of it. Do not run `php artisan migrate:fresh` – review pending migrations with
+> `php artisan migrate:status` first.
+
+### Creating a new application from web-platform
+
+web-platform is the base for other applications. A new app starts as a clone and keeps
+web-platform as `upstream`, so fixes in the base can be pulled in later:
+
+```bash
+cd ~/Git
+git clone git@github.com:jonclsolutions/web-platform.git app-two
+cd app-two
+git remote rename origin upstream                       # web-platform = base for this app
+git remote add origin git@github.com:jonclsolutions/app-two.git
+./init-workspace.sh
+# → WORKSPACE SETUP COMPLETE, then import the database in phpMyAdmin (see above)
+./dev.sh
+```
+
+Later, to take over changes from the base: `git fetch upstream && git merge upstream/main`.
+
+Only **one application runs at a time** – all apps use the same ports (API 8000, ERP 4200).
+Stop one (`./dev.sh stop`) before starting another; `dev.sh` refuses to start while the ports are taken.
+
+### Manual setup (other systems)
+
+Prerequisites: PHP + extensions required by `api/composer.lock` (check with
+`composer check-platform-reqs --lock`), Composer, Node.js 20.19+/22.12+/24+, MySQL/MariaDB,
+[Mailpit](https://mailpit.axllent.org/), `rsync`, `zip`, `openssl`.
+
+```bash
+cd api && composer install && cp .env.example .env && php artisan key:generate && php artisan storage:link && cd ..
+mysql -u root -e "CREATE DATABASE rp_website CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+mysql -u root rp_website < database/db.sql
+cd erp && npm ci && cd ..
 ```
 
 Mail settings for local development in `api/.env`:
@@ -116,7 +187,9 @@ Overrides via environment variables, e.g. `API_PORT=8001 ./dev.sh` or
 | Queue | `queue:listen` started by `dev.sh` | `queue:work` under Supervisor / systemd |
 | Scheduler | off by default, `--with-scheduler` or `php artisan schedule:test` | system cron: `* * * * * php artisan schedule:run` |
 
-**No cron jobs locally.** Nothing should run in the background when you are not working.
+`dev.sh` runs the queue worker (and optionally the scheduler) only while you work. Neither
+`dev.sh` nor `init-workspace.sh` ever adds or removes cron jobs – existing entries in your crontab
+keep working as they are.
 The scheduler currently contains only nightly GDPR clean-up jobs (see `api/routes/console.php`).
 
 ---
@@ -233,8 +306,8 @@ All code must be documented using the DOCS templates in `docs/`:
 
 | Problem | Solution |
 |---|---|
-| Terminal keeps printing *"You have new mail"* | A cron job is failing and cron mails its output. Check `crontab -l` and `tail -50 /var/mail/$USER`; local development needs no cron. |
+| Terminal keeps printing *"You have new mail"* | A cron job is failing and cron mails its output. Check `crontab -l` and `tail -50 /var/mail/$USER` – usually a job whose directory no longer exists; fix or remove that entry, or add `MAILTO=""` to the crontab. |
 | `Port 8000/4200 is used by another process` | Something else runs on the port: `ss -ltnp \| grep 8000`, stop it or use `API_PORT=8001 ./dev.sh`. |
 | E-mails do not arrive in Mailpit | `MAIL_HOST=127.0.0.1`, `MAIL_PORT=1025` in `api/.env`; check `.dev/logs/queue.log`. |
 | Queued jobs are not processed | `QUEUE_CONNECTION` must not be `sync` for queued jobs; check `./dev.sh status` and `php artisan queue:failed`. |
-| Build fails with *"Angular output not found"* | The output path follows the project name in `erp/angular.json` (`rp_website`); override with `ANGULAR_PROJECT=<name> deploy/build.sh`. |
+| Build fails with *"Angular output not found"* | The output path is read from `outputPath` in `erp/angular.json`; override with `ANGULAR_OUTPUT=dist/<name> deploy/build.sh`. |
