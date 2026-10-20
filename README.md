@@ -158,10 +158,20 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
    - tag the release: `git tag -a vYYYY.MM -m "Release YYYY-MM" && git push --tags`
 2. **Build** – `deploy/build.sh`, check that it ends with `COMPLETE`
 3. **Back up production** – database dump, `laravel/.env`, `laravel/storage/app/`
-4. **Upload** `build/www.zip` and verify it: `sha256sum -c www.zip.sha256`
+4. **Upload** `build/www.zip` – see [Uploading the package](#uploading-the-package):
+   - use **SFTP or FTPS** (FTP over TLS), never plain FTP – it sends the hosting password unencrypted
+   - upload it **outside the webroot**, or delete it right after extracting – the archive contains
+     the complete source code and would be downloadable at `https://<domain>/www.zip`
+   - verify it was not corrupted: `sha256sum -c www.zip.sha256` must print `www.zip: OK`
 5. **Extract over the existing deployment.** Do **not** delete `laravel/.env` or
    `laravel/storage/` on the server – the package intentionally contains neither, so the
    production secrets and user uploads stay in place.
+   - **First install only:** `cp .env.example .env`, fill in the production values and run
+     `php artisan key:generate`.
+   - **Never regenerate `APP_KEY` on a running production** – it logs out all users and makes
+     encrypted data unreadable.
+   - Production `.env` must contain `APP_ENV=production` and `APP_DEBUG=false`; with debug on,
+     error pages expose credentials and server paths.
 6. **On the server** (in `laravel/`):
    ```bash
    php artisan down
@@ -174,6 +184,28 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
 7. **Smoke test**
    - public web, e-shop, admin login, sending an e-mail
    - `curl -I https://<domain>/laravel/.env` must return **403 or 404**, never 200
+
+### Uploading the package
+
+**`www.zip`** is a plain, unencrypted ZIP archive – no key or password is needed to upload
+or extract it. FTP cannot extract archives; extract it in the hosting file manager or over
+SSH (`unzip www.zip`), or upload the extracted `build/www/` directory instead.
+
+**`www.zip.sha256`** is a checksum (fingerprint) of the archive – not a key, nothing is
+encrypted. Changing a single byte of the archive produces a completely different value, so it
+answers two questions:
+
+- *Did the upload succeed?* An interrupted transfer leaves a truncated archive that may extract
+  only partially and break production. Verify on the server before extracting:
+  ```bash
+  sha256sum -c www.zip.sha256     # with the .sha256 file uploaded next to the archive
+  sha256sum www.zip               # or compare the value with build/www.zip.sha256 by hand
+  ```
+- *Is this the right build?* The checksum identifies one specific build, so you can tell which
+  of several `www.zip` files is current and what exactly is deployed.
+
+Without SSH access the check cannot run on the server – then at least compare the file size on
+the server with the local one. The checksum file does not need to be deployed.
 
 ---
 
