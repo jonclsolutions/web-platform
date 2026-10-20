@@ -38,6 +38,10 @@ import { AdminLocalizationService } from '../../../../core/services/admin-locali
   styleUrl: './form-builder.component.css',
 })
 export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
+  /**
+   * Optional explicit modal title. When empty (every CRUD page), the title is
+   * derived from the mode – see the `displayHeader` getter.
+   */
   @Input() headerText: string = '';
   @Input() inputDefinitions: InputDefinition[] = [];
   @Input() formDataToEdit: any = null;
@@ -94,17 +98,6 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
   ngOnInit(): void {
     this.scrollLock.lock();
 
-    /**
-     * @refactor-note (2026-09) `headerText` @Input default zůstává prázdný string
-     * (viz deklarace) místo natvrdo anglického 'Create New Record' - konzument by ho
-     * měl vždy předat vlastní (resource-specific) text, tohle je jen záchranná síť
-     * pro případ, že to zapomene. Řešeno tady, ne jako inline field initializer, aby
-     * `i18n` injection nezáviselo na pořadí deklarace polí třídy.
-     */
-    if (!this.headerText) {
-      this.headerText = this.t('default_header');
-    }
-
     if (this.formDataToEdit) {
       this.formData = { ...this.formDataToEdit };
       this.visibleInputDefinitions = this.inputDefinitions.filter(input => input.show_in_edit !== false);
@@ -122,6 +115,29 @@ export class FormBuilderComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     this.initialized = true;
+  }
+
+  /**
+   * @description Modal title. An explicit `headerText` always wins (e.g. the
+   * reset-password dialog). Otherwise the mode decides, using the same signal as
+   * the rest of the component (`formDataToEdit` set = edit): "Create new record"
+   * or "Edit record: <id>" ("Edit record" when the record has no `id`).
+   * @return the translated title for the active admin language
+   * @refactor-note (2026-10-21) Create and edit modals showed the same
+   * "Create new record" title. Replaces the former one-time assignment in
+   * `ngOnInit()` – a getter also follows a language switch while the modal is open.
+   */
+  get displayHeader(): string {
+    if (this.headerText) {
+      return this.headerText;
+    }
+    if (!this.formDataToEdit) {
+      return this.t('create_header');
+    }
+    const id = this.formDataToEdit['id'];
+    return id !== undefined && id !== null && id !== ''
+      ? this.t('edit_header_with_id').replace('{id}', String(id))
+      : this.t('edit_header');
   }
 
   /**

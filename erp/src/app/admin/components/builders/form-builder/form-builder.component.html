@@ -40,13 +40,17 @@
         - viz form-builder.component.ts stejné datum pro odpovídající opravu
         `fileUploadTexts` getteru (getMergedSection -> getValue, ať chybějící klíč
         vždy skončí jako 'Cannot load text', nikdy ne jako tichý český fallback).
+
+    @refactor-note (2026-10-21): The title binds `displayHeader` instead of
+        `headerText` – "Create new record" vs. "Edit record: <id>" depending on the
+        mode; an explicit `[headerText]` still wins. See form-builder.component.ts.
 -->
 
 <div class="popup-overlay" (mousedown)="onOverlayClick($event)">
   <div class="form-container wide-style" (click)="$event.stopPropagation()">
 
     <div class="form-header">
-      <h2 class="header-title">{{ headerText }}</h2>
+      <h2 class="header-title">{{ displayHeader }}</h2>
       <button class="close-button" (click)="onCancel()" [attr.aria-label]="strings.close_aria">&times;</button>
     </div>
 

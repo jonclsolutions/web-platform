@@ -258,7 +258,9 @@
   "delete_error": "Failed to delete section."
 },
 "form-builder": {
-  "default_header": "Create new record",
+  "create_header": "Create new record",
+  "edit_header": "Edit record",
+  "edit_header_with_id": "Edit record: {id}",
   "close_aria": "Close",
   "select_placeholder": "-- Select --",
   "multiselect_empty": "No options to choose from.",

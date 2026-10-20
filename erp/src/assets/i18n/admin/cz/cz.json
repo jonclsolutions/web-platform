@@ -259,7 +259,9 @@
   "delete_error": "Nepodařilo se smazat sekci."
 },
 "form-builder": {
-  "default_header": "Vytvořit nový záznam",
+  "create_header": "Vytvořit nový záznam",
+  "edit_header": "Upravit záznam",
+  "edit_header_with_id": "Upravit záznam: {id}",
   "close_aria": "Zavřít",
   "select_placeholder": "-- Vyberte --",
   "multiselect_empty": "Žádné možnosti k výběru.",
