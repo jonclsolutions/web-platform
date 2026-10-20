@@ -84,7 +84,9 @@ warn() { printf '\e[33m   ! %s\e[0m\n' "$*" >&2; }
 die()  { printf '\e[31mERROR: %s\e[0m\n' "$*" >&2; exit 1; }
 
 # Any unexpected failure reports the line, instead of a silently half-built package.
-trap 'die "build failed at line $LINENO (command: $BASH_COMMAND)"' ERR
+# The ERR trap is inherited by subshells (set -E); report only from the main
+# shell so one failure is not printed twice.
+trap '[[ $BASH_SUBSHELL -eq 0 ]] && die "build failed at line $LINENO (command: $BASH_COMMAND)"; exit 1' ERR
 
 # -----------------------------------------------------------------------------
 # Arguments
@@ -115,6 +117,17 @@ preflight() {
     [[ -f "$API_DIR/composer.json" ]] || die "Laravel not found in $API_DIR"
     [[ -f "$ERP_DIR/angular.json" ]]  || die "Angular not found in $ERP_DIR"
     [[ -d "$SERVER_CONF_DIR" ]]       || die "server config not found in $SERVER_CONF_DIR"
+
+    # Fail before the (slow) Angular build if the PHP used by Composer cannot
+    # satisfy composer.lock (PHP version or missing extensions). Composer prints
+    # exactly which requirement fails.
+    # The lock file pins the exact tested dependency versions – never build without it.
+    [[ -f "$API_DIR/composer.lock" ]] || die "api/composer.lock is missing – run 'composer install' in api/ and commit the lock file"
+    info "PHP used by Composer: $(php -r 'echo PHP_VERSION;') ($(command -v php))"
+    if ! (cd "$API_DIR" && composer check-platform-reqs --lock --no-dev --no-interaction >/dev/null 2>&1); then
+        (cd "$API_DIR" && composer check-platform-reqs --lock --no-dev --no-interaction) | grep -vE '\bsuccess\b' >&2 || true
+        die "local PHP does not satisfy api/composer.lock (see 'failed'/'missing' lines above)"
+    fi
 
     if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         if [[ -n "$(git -C "$ROOT_DIR" status --porcelain -- api erp deploy)" ]]; then
@@ -200,7 +213,7 @@ build_laravel() {
 
     info "installing production dependencies (composer --no-dev)"
     (cd "$LARAVEL_TARGET" && composer install --no-dev --optimize-autoloader \
-        --classmap-authoritative --no-interaction --no-progress --quiet)
+        --classmap-authoritative --no-interaction --no-progress)
     info "Laravel copied to build/www/laravel"
 }
 
