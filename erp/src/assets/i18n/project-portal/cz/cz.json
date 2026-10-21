@@ -14,13 +14,11 @@
   "refresh_data": "Obnovit data",
   "logout": "Odhlásit se",
 
-  "progress_title": "Postup prací",
   "no_checkpoints": "Zatím nejsou definované žádné kroky.",
   "checkpoint_status_new": "Nezahájeno",
   "checkpoint_status_active": "Rozpracováno",
   "checkpoint_status_done": "Hotovo",
 
-  "communication_title": "Komunikace",
   "new_thread_button": "Nové vlákno",
   "subject_placeholder": "Téma",
   "priority_low": "Nízká priorita",
@@ -38,9 +36,6 @@
 
   "back_to_list": "Zpět na seznam",
   "loading": "Načítám…",
-  "closing": "Uzavírám…",
-  "mark_resolved": "Označit jako vyřešené",
-  "thread_closed_hint": "Toto vlákno je uzavřené.",
   "author_supplier": "Dodavatel",
   "author_you": "Vy",
   "write_reply_placeholder": "Napsat odpověď…",

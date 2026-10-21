@@ -1,0 +1,20 @@
+[
+    {
+        "code": "cz",
+        "module": "shop",
+        "name": "Čeština",
+        "active": true,
+        "isBuiltIn": true,
+        "iconUrl": "http:\/\/127.0.0.1:8000\/storage\/translation_images\/shop\/czech-republic-default.png",
+        "icon_path": "translation_images\/shop\/czech-republic-default.png"
+    },
+    {
+        "code": "cz",
+        "module": "web",
+        "name": "Čeština",
+        "active": true,
+        "isBuiltIn": true,
+        "iconUrl": "http:\/\/127.0.0.1:8000\/storage\/translation_images\/web\/czech-republic-default.png",
+        "icon_path": "translation_images\/web\/czech-republic-default.png"
+    }
+]

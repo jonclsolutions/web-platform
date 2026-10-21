@@ -13,9 +13,6 @@
 "access_denied_message": "You do not have sufficient permissions to view this page."
   },
     "personal-info": {
-    "language_section_title": "Admin language",
-    "language_label": "Choose interface language",
-    "language_hint": "This choice is saved only in this browser.",
 
     "title": "Personal profile",
     "title_note": "Contact an administrator to change your name/e-mail",
@@ -60,17 +57,10 @@
     "module_web": "Web",
     "module_shop": "E-Shop",
 
-    "refresh_all_title": "Refresh all tables",
-    "refresh_all_label": "Refresh",
-    "refresh_all_mobile_label": "Refresh all",
 
     "wiki_title": "Help",
-    "wiki_label": "Wiki",
     "wiki_mobile_label": "Help",
 
-    "bug_title": "Report a bug",
-    "bug_label": "Bug",
-    "bug_mobile_label": "Report a bug",
 
     "mobile_menu_title": "Menu",
     "mobile_menu_aria": "Open menu",
@@ -196,22 +186,7 @@
   "export_no_data_message": "No data available for export.",
   "export_error_message": "An error occurred during export.",
 
-  "bulk_selected_count": "Selected: {count}",
-  "bulk_delete_button": "Delete selected ({count})",
-  "bulk_delete_disabled_hint": "Bulk delete is disabled for this table.",
-  "restore_confirm_title": "Confirm restore",
-  "restore_confirm_message": "Are you sure you want to restore the record \"{name}\"?",
-  "restore_success_title": "Restored",
-  "restore_success_message": "The record was successfully restored.",
-  "hard_delete_confirm_title": "Permanently delete",
-  "hard_delete_confirm_message": "This action is IRREVERSIBLE. Are you sure you want to permanently delete the record \"{name}\" from the database?",
-  "empty_trash_button": "Empty trash",
-  "empty_trash_confirm_title": "Empty trash",
-  "empty_trash_confirm_message": "Are you sure you want to permanently delete all records in the trash? This action cannot be undone.",
-  "empty_trash_success_title": "Trash emptied",
-  "empty_trash_success_message": "The trash was successfully emptied.",
-  "export_button": "Export",
-  "column_actions": "Actions"
+  "export_button": "Export"
 },
 "edit-legal": {
   "page_title": "Legal documents",
@@ -248,10 +223,6 @@
   "content_empty_error": "Section content must not be empty.",
   "save_success": "Changes have been saved.",
   "save_error": "Failed to save changes.",
-  "validation_title": "Validation",
-  "validation_message": "Both heading and content must be filled in.",
-  "add_success": "Section was successfully added.",
-  "add_error": "Failed to add section.",
   "delete_confirm_title": "Delete section",
   "delete_confirm_message": "Are you sure you want to delete section \"{heading}\" ({lang})? This action is irreversible.",
   "delete_success": "Section was deleted.",
@@ -294,7 +265,6 @@
 },
 "welcome-page": {
   "subtitle": "Glad to see you in the RPSW administration system.",
-  "default_role": "User",
   "profile_card_title": "Your profile",
   "label_email": "E-mail",
   "label_role": "Role",
@@ -303,9 +273,7 @@
   "profile_load_error": "Failed to load your profile.",
   "welcome_message": "Welcome to the administration, {name}",
   "welcome_default_name": "user",
-  "footer_text": "Need help with something specific? Contact technical support or your system administrator.",
-  "report_bug_title": "Report a bug",
-  "report_bug_description": "Ran into a problem or have an idea for improvement? Let us know."
+  "footer_text": "Need help with something specific? Contact technical support or your system administrator."
 },
 "web-settings": {
     "pt_page_web_project_portal": "Client project portal",
@@ -672,7 +640,6 @@
   "thema_other": "Other",
 
   "field_thema_label": "Topic / Subject",
-  "field_thema_placeholder": "Enter the request topic",
   "field_thema_error": "Topic must be 3-255 characters long.",
   "field_email_label": "Contact e-mail",
   "field_email_placeholder": "example@email.com",
@@ -772,7 +739,6 @@
   "crud_success_title": "Success",
   "crud_updated_message": "The request was updated.",
   "crud_created_message": "The request was created.",
-  "email_tpl_load_error": "Failed to load the template.",
   "email_tpl_saved_title": "Saved",
   "email_tpl_saved_message": "The confirmation e-mail template was saved."
 },
@@ -832,7 +798,6 @@
 },
 "web-welcome-page": {
   "header": "Web",
-  "lead": "This admin section is for managing the RPSW public website - page text content, the forms and inquiries the website receives, and the related business processes that follow.",
   "section_title": "What's in this section",
   "card_edit_website_title": "Website Editing",
   "card_edit_website_desc": "Edit the text content of the public website pages.",
@@ -855,7 +820,6 @@
 },
 "shop-welcome-page": {
   "header": "E-shop",
-  "lead": "This admin section is for the complete management of the RPSW e-shop - the product catalog, orders, customers, shipping, payments, and suppliers.",
   "section_title": "What's in this section",
   "card_products_title": "Products",
   "card_products_desc": "Product catalog, variants, and product images.",

@@ -14,13 +14,11 @@
   "refresh_data": "Refresh data",
   "logout": "Log out",
 
-  "progress_title": "Progress",
   "no_checkpoints": "No steps defined yet.",
   "checkpoint_status_new": "Not started",
   "checkpoint_status_active": "In progress",
   "checkpoint_status_done": "Done",
 
-  "communication_title": "Communication",
   "new_thread_button": "New thread",
   "subject_placeholder": "Subject",
   "priority_low": "Low priority",
@@ -38,9 +36,6 @@
 
   "back_to_list": "Back to list",
   "loading": "Loading…",
-  "closing": "Closing…",
-  "mark_resolved": "Mark as resolved",
-  "thread_closed_hint": "This thread is closed.",
   "author_supplier": "Supplier",
   "author_you": "You",
   "write_reply_placeholder": "Write a reply…",
