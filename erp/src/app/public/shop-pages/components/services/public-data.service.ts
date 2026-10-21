@@ -9,11 +9,13 @@
  * - HttpClient: Facilitates HTTP communication with the backend.
  * - RxJS: Handles asynchronous data streams and error handling.
  * - environment: Provides base API URL configuration.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `checkStockAvailability`.
  */
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Observable, throwError, map } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 
@@ -83,25 +85,6 @@ export class ShopPublicService {
   getProductDetail(slugOrId: string | number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/products/${slugOrId}`)
       .pipe(catchError(this.handleError));
-  }
-
-  /**
-   * @description Verifies real-time stock availability for a specific product/variant.
-   * @param productId Unique product identifier.
-   * @param variantId Optional variant identifier.
-   * @param requestedQuantity Quantity to validate.
-   * @returns Observable boolean representing stock status.
-   */
-  checkStockAvailability(productId: string | number, variantId: number | null, requestedQuantity: number): Observable<boolean> {
-    return this.http.get<{ available: boolean }>(`${this.apiUrl}/products/${productId}/check-stock`, {
-      params: {
-        variant_id: variantId ? variantId.toString() : '',
-        quantity: requestedQuantity.toString()
-      }
-    }).pipe(
-      map(res => res.available), 
-      catchError(this.handleError)
-    );
   }
 
   /**

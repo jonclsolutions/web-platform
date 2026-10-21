@@ -288,9 +288,8 @@ describe('BaseDataComponent', () => {
       expect(listSpy.trashTotalPages).toBe(2);
     });
 
-    it('should expose currentActiveFilters and currentTrashFilters from the list store', () => {
+    it('should expose currentActiveFilters from the list store', () => {
       expect((component as any).currentActiveFilters).toEqual(listSpy.currentActiveFilters);
-      expect((component as any).currentTrashFilters).toEqual(listSpy.currentTrashFilters);
     });
   });
 
@@ -405,17 +404,6 @@ describe('BaseDataComponent', () => {
       });
     });
 
-    it('restoreDataFromApi() should delegate to crud.restore(id)', (done) => {
-      const restored: TestEntity = { id: 13, deleted_at: null };
-      crudSpy.restore.and.returnValue(of(restored));
-
-      component.restoreDataFromApi(13).subscribe(result => {
-        expect(crudSpy.restore).toHaveBeenCalledWith(13);
-        expect(result).toEqual(restored);
-        done();
-      });
-    });
-
     it('uploadData() should delegate to crud.upload(formData, targetUrl)', (done) => {
       const formData = new FormData();
       const response = { url: 'https://example.com/file.png' };
@@ -447,99 +435,6 @@ describe('BaseDataComponent', () => {
         error: (err) => {
           expect(err.message).toBe('API endpoint undefined.');
           expect(crudSpy.loadAll).not.toHaveBeenCalled();
-          done();
-        }
-      });
-    });
-  });
-
-  /**
-   * @description `updatePassword()` adds error-handling on top of the plain
-   * delegation: on success it simply forwards the emission; on failure it
-   * records a user-facing `errorMessage`, triggers change detection, and
-   * re-throws so callers can still react to the failure.
-   */
-  describe('updatePassword()', () => {
-    it('should clear errorMessage and return the crud result on success', (done) => {
-      const response = { success: true };
-      crudSpy.updatePassword.and.returnValue(of(response));
-      component.errorMessage = 'stale error';
-
-      component.updatePassword(1, { password: 'new-pass' }).subscribe(result => {
-        expect(component.errorMessage).toBeNull();
-        expect(crudSpy.updatePassword).toHaveBeenCalledWith(1, { password: 'new-pass' });
-        expect(result).toEqual(response);
-        done();
-      });
-    });
-
-    it('should set errorMessage, mark for check, and rethrow on failure', (done) => {
-      const httpError = new HttpErrorResponse({ error: 'boom', status: 500 });
-      crudSpy.updatePassword.and.returnValue(throwError(() => httpError));
-      const markForCheckSpy = spyOn(component.getCdForTest(), 'markForCheck');
-
-      component.updatePassword(1, { password: 'new-pass' }).subscribe({
-        error: (err) => {
-          expect(component.errorMessage).toBe(httpError.message);
-          expect(markForCheckSpy).toHaveBeenCalled();
-          expect(err).toBe(httpError);
-          done();
-        }
-      });
-    });
-
-    it('should fall back to a generic message when the error has no message', (done) => {
-      const httpError = { message: '' } as HttpErrorResponse;
-      crudSpy.updatePassword.and.returnValue(throwError(() => httpError));
-
-      component.updatePassword(1, {}).subscribe({
-        error: () => {
-          expect(component.errorMessage).toBe('Error changing password.');
-          done();
-        }
-      });
-    });
-  });
-
-  /**
-   * @description `hardDeleteAllTrashedDataFromApi()` mirrors `updatePassword()`'s
-   * error-handling pattern but additionally guards against a missing
-   * `apiEndpoint` before ever touching `crud`.
-   */
-  describe('hardDeleteAllTrashedDataFromApi()', () => {
-    it('should error immediately when apiEndpoint is missing, without calling crud', (done) => {
-      component.apiEndpoint = '' as any;
-
-      component.hardDeleteAllTrashedDataFromApi().subscribe({
-        error: (err) => {
-          expect(err.message).toBe('API endpoint undefined.');
-          expect(crudSpy.hardDeleteAllTrashed).not.toHaveBeenCalled();
-          done();
-        }
-      });
-    });
-
-    it('should clear errorMessage and delegate to crud.hardDeleteAllTrashed() on success', (done) => {
-      crudSpy.hardDeleteAllTrashed.and.returnValue(of(undefined));
-      component.errorMessage = 'stale error';
-
-      component.hardDeleteAllTrashedDataFromApi().subscribe(() => {
-        expect(component.errorMessage).toBeNull();
-        expect(crudSpy.hardDeleteAllTrashed).toHaveBeenCalledTimes(1);
-        done();
-      });
-    });
-
-    it('should set errorMessage and mark for check on failure', (done) => {
-      const httpError = new HttpErrorResponse({ error: 'boom', status: 500 });
-      crudSpy.hardDeleteAllTrashed.and.returnValue(throwError(() => httpError));
-      const markForCheckSpy = spyOn(component.getCdForTest(), 'markForCheck');
-
-      component.hardDeleteAllTrashedDataFromApi().subscribe({
-        error: (err) => {
-          expect(component.errorMessage).toBe(httpError.message);
-          expect(markForCheckSpy).toHaveBeenCalled();
-          expect(err).toBe(httpError);
           done();
         }
       });

@@ -18,14 +18,13 @@
  * zobrazený `<option>` text (stejný vzor value/label jako u user-request status/priority).
  */
 
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BaseDataComponent } from '../../../../components/base-data/base-data.component';
 import { DataHandler } from '../../../../../core/services/data-handler.service';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { GenericTableService } from '../../../../../core/services/generic-table.service'; 
-import { LoadingService } from '../../../../../core/services/loading.service';
+import { GenericTableService } from '../../../../../core/services/generic-table.service';
 
 /**
  * @description Handles the creation of support tickets, including multi-part data handling for file uploads.
@@ -40,8 +39,6 @@ import { LoadingService } from '../../../../../core/services/loading.service';
   styleUrl: './support-form.component.css',
 })
 export class SupportFormComponent extends BaseDataComponent<any> implements OnInit {
-  /** * @description Global service to track and display loading states during API interactions. */
-  public override loadingService = inject(LoadingService);
   
   override apiEndpoint: string = 'web/support_tickets';
   protected override translationSection: string = 'kb-support-form';

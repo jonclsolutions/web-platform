@@ -7,7 +7,6 @@ import { BaseDataComponent } from '../../../../admin/components/base-data/base-d
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { GenericTableService } from '../../../../core/services/generic-table.service';
 import { LocalizationService } from '../../../../shared/services/localization.service';
-import { LoadingService } from '../../../../core/services/loading.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
 
 /**
@@ -42,7 +41,6 @@ const MAX_FILE_SIZE_BYTES = 20480 * 1024;
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JobItemComponent extends BaseDataComponent<any> implements OnInit {
-  public override loadingService = inject(LoadingService);
   // Endpoint pro PublicDataService
   override apiEndpoint: string = 'job_applications';
 

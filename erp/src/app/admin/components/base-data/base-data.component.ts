@@ -53,15 +53,18 @@
  * - `hardDeleteAllTrashedDataFromApi()` - `base-data.mass_delete_error` (stejný fallback).
  * Odpovídající JSON sekce `base-data` musí existovat v KAŽDÉM
  * `assets/i18n/admin/{lang}/{lang}.json` (cz, en).
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `currentTrashFilters`, `trashLastUpdatedAt$`, `restoreDataFromApi`, `updatePassword`, `hardDeleteAllTrashedDataFromApi`.
  */
 
-import { Directive, inject } from '@angular/core';
+import { Directive, ViewChild, inject } from '@angular/core';
 import { timer } from 'rxjs';
 import { filter as rxFilter } from 'rxjs/operators';
 import * as Core from '../../../shared/imports/core-providers';
 import { PaginatedListStore } from './paginated-list-store';
 import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
 import { TableRefreshBusService } from '../../../core/services/table-refresh-bus.service';
+import type { TableBuilderComponent } from '../builders/table-builder/table-builder.component';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
 /**
@@ -219,12 +222,9 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   set trashTotalPages(value: number) { this.list.trashTotalPages = value; }
 
   protected get currentActiveFilters(): Core.FilterParams { return this.list.currentActiveFilters; }
-  protected get currentTrashFilters(): Core.FilterParams { return this.list.currentTrashFilters; }
 
   /** Stream pro UI badge "Aktualizováno v HH:MM:SS" - aktivní tabulka. */
   get activeLastUpdatedAt$(): Core.Observable<Date | null> { return this.list.activeLastUpdatedAt.asObservable(); }
-  /** Stream pro UI badge "Aktualizováno v HH:MM:SS" - koš tabulka. */
-  get trashLastUpdatedAt$(): Core.Observable<Date | null> { return this.list.trashLastUpdatedAt.asObservable(); }
 
   public refreshData(): void {}
 
@@ -314,6 +314,226 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     this.isFilterVisible = !this.isFilterVisible;
   }
 
+  // ── Shared table-page state and handlers ───────────────────────────────────
+  // @refactor-note (2026-10-21) Moved here from the table pages, where each one had an
+  // identical copy. A page with different behaviour keeps its own `override`.
+
+  /**
+   * @description Whether the graph builder overlay of a table page is open.
+   */
+  showGraphBuilder = false;
+
+  /**
+   * @description Record loaded into the create/edit form; `null` = create a new record.
+   */
+  selectedItemForEdit: any | null = null;
+
+  /**
+   * @description Record shown in the details panel; `null` while the panel is closed.
+   */
+  selectedItemForDetails: any | null = null;
+
+  /**
+   * @description Active filter and sort parameters of a table page.
+   * @note Pages with a different default sort override this field.
+   */
+  filters: Core.FilterParams = {
+    sort_by: 'id',
+    sort_direction: 'desc'
+  };
+
+  /**
+   * @description The page's main table (`#activeTable` in the template), used by `exportActiveTable()`.
+   * @note Angular inherits view queries from a `@Directive()` base class and resolves them against the
+   *   template of the concrete page; pages without a `#activeTable` simply keep `undefined`.
+   */
+  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
+
+  /**
+   * @description Opens the graph builder overlay (toolbar "graph" action).
+   */
+  openGraphBuilder(): void {
+    this.showGraphBuilder = true;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Closes the graph builder overlay.
+   */
+  closeGraphBuilder(): void {
+    this.showGraphBuilder = false;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Pagination handler of the table: loads the requested page with the page's current filters.
+   * @param page 1-based page number
+   */
+  handlePageChange(page: number): void {
+    this.onHandlePageChange(page, this.filters);
+  }
+
+  /**
+   * @description Page-size handler of the table: reloads with the new page size and the current filters.
+   * @param value number of rows per page
+   */
+  handleItemsPerPageChange(value: number): void {
+    this.onHandleItemsPerPageChange(value, this.filters);
+  }
+
+  /**
+   * @description Merges the submitted filter form into the current filters and reloads from page 1.
+   * @param newFilters values from the filter form builder
+   * @note `refreshData()` is the page's own override, so the reload uses the page's endpoint and filters.
+   */
+  applyFilters(newFilters: Core.FilterParams): void {
+    this.filters = { ...this.filters, ...newFilters };
+    this.currentPage = 1;
+    this.refreshData();
+  }
+
+  /**
+   * @description Resets the filters to the default sort (id, newest first) and reloads from page 1.
+   * @note Pages with a different default sort override this method.
+   */
+  clearFilters(): void {
+    this.filters = { sort_by: 'id', sort_direction: 'desc' };
+    this.currentPage = 1;
+    this.refreshData();
+  }
+
+  /**
+   * @description Opens the form for a new record.
+   */
+  handleCreateFormOpened(): void {
+    this.selectedItemForEdit = null;
+    this.showCreateForm = true;
+  }
+
+  /**
+   * @description Opens the form with a shallow copy of the row, so editing does not change the table row before saving.
+   * @param item table row to edit
+   */
+  handleEditFormOpened(item: any): void {
+    this.selectedItemForEdit = { ...item };
+    this.showCreateForm = true;
+  }
+
+  /**
+   * @description Closes the create/edit form without saving.
+   */
+  onCancelForm(): void {
+    this.showCreateForm = false;
+    this.selectedItemForEdit = null;
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Saves the form: PUT when the record has an id, POST otherwise; closes the form either way and reloads on success.
+   * @param formData values emitted by the form builder
+   * @note Errors are reported by the data handler; pages with extra steps (files, mapping, prefill) override this method.
+   */
+  handleFormSubmitted(formData: any): void {
+    const request$ = formData.id
+      ? this.updateData(formData.id, formData)
+      : this.postData(formData);
+
+    request$.pipe(
+      Core.finalize(() => {
+        this.showCreateForm = false;
+        this.cd.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          'success'
+        );
+        this.refreshData();
+      }
+    });
+  }
+
+  /**
+   * @description Loads the full record from the API and opens the details panel.
+   * @param item table row; rows without id are ignored
+   */
+  handleViewDetails(item: any): void {
+    if (!item.id) return;
+    this.getItemDetails(item.id).subscribe({
+      next: (details) => {
+        this.selectedItemForDetails = details;
+        this.showDetails = true;
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * @description Closes the details panel.
+   */
+  handleCloseDetails(): void {
+    this.selectedItemForDetails = null;
+    this.showDetails = false;
+  }
+
+  /**
+   * @description Reloads the table after a row was moved to the trash.
+   */
+  handleItemDeleted(): void { this.refreshData(); }
+
+  /**
+   * @description Reloads the table after a row was restored from the trash.
+   */
+  handleItemRestored(): void { this.refreshData(); }
+
+  /**
+   * @description Exports the main table to CSV (toolbar "export" action); does nothing before the table is rendered.
+   */
+  exportActiveTable(): void {
+    if (this.activeTable) this.activeTable.exportToCSV();
+  }
+
+  // ── Shared table configuration defaults ────────────────────────────────────
+  // @refactor-note (2026-10-21) Empty defaults and the toolbar dispatcher that most table
+  // pages declared identically. Pages that fill them from a *.config.ts keep an `override`.
+
+  /**
+   * @description Row action buttons of the main table. Empty by default; set by the page.
+   */
+  buttons: Core.TableButtons[] = [];
+
+  /**
+   * @description Columns offered in the filter panel. Empty by default; set by the page.
+   */
+  filterColumns: Core.FilterColumns[] = [];
+
+  /**
+   * @description Columns shown in the details popup. Empty by default; set by the page.
+   */
+  detailsColumns: Core.ItemDetailsColumns[] = [];
+
+  /**
+   * @description Field definitions of the create/edit form. Empty by default; set by the page.
+   */
+  formFields: Core.InputDefinition[] = [];
+
+  /**
+   * @description Dispatches a toolbar button action name to the matching handler; unknown names are ignored.
+   * @param action Action name emitted by the toolbar.
+   */
+  handleToolbarAction(action: string): void {
+    const actions: { [key: string]: () => void } = {
+      toggleFilters: () => this.toggleFilters(),
+      handleCreateFormOpened: () => this.handleCreateFormOpened(),
+      exportActiveTable: () => this.exportActiveTable(),
+      openGraphBuilder: () => this.openGraphBuilder(),
+      toggleTable: () => this.toggleTable()
+    };
+    if (actions[action]) actions[action]();
+  }
+
   /**
    * @refactor-note (2026-10) Natvrdo psaný text nahrazen i18n klíčem
    * `base-data.api_endpoint_undefined` - viz hlavička souboru.
@@ -344,28 +564,8 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
     return this.crud.remove(id, { forceDelete, params });
   }
 
-  restoreDataFromApi(id: number): Core.Observable<T> {
-    return this.crud.restore(id);
-  }
-
   uploadData<U>(formData: FormData, targetUrl?: string): Core.Observable<U> {
     return this.crud.upload<U>(formData, targetUrl);
-  }
-
-  /**
-   * @refactor-note (2026-10) Fallback text (použije se jen když chyba nenese vlastní
-   * `message`) nahrazen i18n klíčem `base-data.password_change_error` - viz hlavička
-   * souboru.
-   */
-  public updatePassword(id: number, data: any): Core.Observable<any> {
-    this.errorMessage = null;
-    return this.crud.updatePassword(id, data).pipe(
-      Core.catchError((err: Core.HttpErrorResponse) => {
-        this.errorMessage = err.message || this.t('base-data.password_change_error');
-        this.cd.markForCheck();
-        return Core.throwError(() => err);
-      })
-    );
   }
 
   /**
@@ -377,25 +577,5 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
       return Core.throwError(() => new Error(this.t('base-data.api_endpoint_undefined')));
     }
     return this.crud.loadAll(filters);
-  }
-
-  /**
-   * @refactor-note (2026-10) Oba natvrdo psané texty nahrazeny i18n klíči
-   * `base-data.api_endpoint_undefined` a `base-data.mass_delete_error` (fallback,
-   * když chyba nenese vlastní `message`) - viz hlavička souboru.
-   */
-  public hardDeleteAllTrashedDataFromApi(): Core.Observable<void> {
-    if (!this.apiEndpoint) {
-      return Core.throwError(() => new Error(this.t('base-data.api_endpoint_undefined')));
-    }
-    this.errorMessage = null;
-
-    return this.crud.hardDeleteAllTrashed().pipe(
-      Core.catchError((err: Core.HttpErrorResponse) => {
-        this.errorMessage = err.message || this.t('base-data.mass_delete_error');
-        this.cd.markForCheck();
-        return Core.throwError(() => err);
-      })
-    );
   }
 }

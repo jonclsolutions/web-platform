@@ -9,6 +9,8 @@
  * - Angular Core: For signals, computed properties, and effects to handle reactive state.
  * - HttpClient: For communicating with the checkout API endpoints.
  * - environment: Provides API configuration URLs.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `timeRemaining`, `isExpired`, `createOrder`, expiredNotificationPending (write-only flag).
  */
 
 import { Injectable, signal, computed, effect } from '@angular/core';
@@ -68,7 +70,6 @@ export class CartService {
   private timerSignal = signal<number>(0);
   private isExpiredSignal = signal<boolean>(false);
   
-  private expiredNotificationPending = false;
 
   cartItems = computed(() => this.cartSignal().items);
   cartCount = computed(() => this.cartItems().length);
@@ -92,8 +93,6 @@ export class CartService {
   });
 
   totalPrice = computed(() => this.subtotal());
-  timeRemaining = computed(() => this.timerSignal());
-  isExpired = computed(() => this.isExpiredSignal());
 
   private timerInterval: any;
 
@@ -121,7 +120,6 @@ export class CartService {
         if (now > cart.expiresAt) {
           this.cartSignal.set(cart);
           this.isExpiredSignal.set(true);
-          this.expiredNotificationPending = false; 
         } else {
           this.cartSignal.set(cart);
         }
@@ -277,7 +275,6 @@ export class CartService {
       this.timerSignal.set(remaining);
 
       if (remaining <= 0 && cart.items.length > 0) {
-        this.expiredNotificationPending = true;
         this.isExpiredSignal.set(true);
       }
     }, 1000);
@@ -302,33 +299,6 @@ export class CartService {
 
   private generateItemId(productId: number, variantId: number | null): string {
     return `${productId}_${variantId || 'novariant'}`;
-  }
-
-  /**
-   * @description Submits the current cart state and user data to the checkout API.
-   * @returns Observable containing server response of order submission.
-   */
-  createOrder(
-    email: string, firstName: string, lastName: string, phone: string,
-    company: string | null, address: string, city: string, postalCode: string,
-    country: string, paymentMethodId: number, shippingMethodId: number,
-    couponCode: string | null = null, notes: string | null = null
-  ): Observable<any> {
-    const cart = this.cartSignal();
-    const orderData = {
-      email, first_name: firstName, last_name: lastName, phone, company, address, city,
-      postal_code: postalCode, country, payment_method_id: paymentMethodId,
-      shipping_method_id: shippingMethodId, coupon_code: couponCode, notes,
-      currency: 'EUR',
-      items: cart.items.map(item => ({
-        product_id: item.product_id,
-        product_variant_id: item.product_variant_id,
-        quantity: item.quantity,
-        unit_price: item.prices ? item.prices['price_eur_with_vat'] : item.unit_price,
-        vat_rate: item.prices ? item.prices['vat_rate'] : item.vat_rate
-      }))
-    };
-    return this.http.post(`${environment.base_api_url}/shop/checkout/create-order`, orderData);
   }
 
   simulatePayment(orderId: number): Observable<any> {

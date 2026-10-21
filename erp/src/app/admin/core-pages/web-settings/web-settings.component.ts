@@ -20,8 +20,9 @@
  *   1) app.routes.ts – route gets `title: 'area.page_key'` (e.g. 'web.blog').
  *   2) DB – INSERT row into `legal_page_titles` (area + page_key = route key).
  *   3) Optional – translation key `pt_page_{area}_{page_key}` for the admin label.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `logoRemoving`, `markDirty`.
  */
-
 
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -109,7 +110,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
 
   logoFile: File | null       = null;
   logoPreview: string | null  = null; 
-  logoRemoving                = false;
 
   socialLinks: SocialLink[] = [];
   socialLoading = true;
@@ -483,14 +483,6 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
         this.loadAll();
       }
     });
-  }
-
-  markDirty(index: number): void {
-    if (!this.socialLinks[index]?._dirty) {
-      const updated = [...this.socialLinks];
-      updated[index] = { ...updated[index], _dirty: true };
-      this.socialLinks = updated;
-    }
   }
 
   iconSrc(link: SocialLink): string | null {

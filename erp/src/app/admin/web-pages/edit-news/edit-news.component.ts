@@ -23,12 +23,10 @@
  * česky) nahrazeny `t()` voláním.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
-import { LoadingService } from '../../../core/services/loading.service';
 import * as Config from './edit-news.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
@@ -48,8 +46,6 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditNewsComponent extends BaseDataComponent<any> implements Core.OnInit {
-  public override loadingService = inject(LoadingService);
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   protected override translationSection: string = 'edit-news';
 
@@ -61,21 +57,8 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
 
   override apiEndpoint: string = 'web/news';
 
-  buttons: Core.TableButtons[] = [];
-  formFields: Core.InputDefinition[] = [];
   newsColumns: Core.ColumnDefinition[] = [];
   trashNewsColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
-
-  selectedItemForEdit: any | null = null;
-  selectedItemForDetails: any | null = null;
-
-  filters: Core.FilterParams = {
-    sort_by: 'id',
-    sort_direction: 'desc'
-  };
-  showGraphBuilder = false;
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
@@ -142,7 +125,7 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
@@ -163,94 +146,15 @@ export class EditNewsComponent extends BaseDataComponent<any> implements Core.On
     this.forceFullRefresh(this.filters);
   }
 
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
+  override clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.refreshData();
   }
 
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
-  }
-
-  exportActiveTable(): void {
-    if (this.activeTable) this.activeTable.exportToCSV();
-  }
-
-  handleCreateFormOpened(): void {
-    this.selectedItemForEdit = null;
-    this.showCreateForm = true;
-  }
-
-  handleEditFormOpened(item: any): void {
-    this.selectedItemForEdit = { ...item };
-    this.showCreateForm = true;
-  }
-
-  /**
-   * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
-   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
-   */
-  handleFormSubmitted(formData: any): void {
-    const request$ = formData.id
-      ? this.updateData(formData.id, formData)
-      : this.postData(formData);
-    request$.pipe(
-      Core.finalize(() => {
-        this.showCreateForm = false;
-        this.cd.markForCheck();
-      })
-    ).subscribe({
-      next: () => {
-        this.alertDialogService.open(
-          this.i18n.getValue('shared.success'),
-          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
-          'success'
-        );
-        this.refreshData();
-      }
-    });
-  }
-
-  handleViewDetails(item: any): void {
-    if (!item.id) return;
-    this.getItemDetails(item.id).subscribe({
-      next: (details) => {
-        this.selectedItemForDetails = details;
-        this.showDetails = true;
-        this.cd.markForCheck();
-      }
-    });
-  }
-
-  handleCloseDetails(): void {
+  override handleCloseDetails(): void {
     this.selectedItemForDetails = null;
     this.showDetails = false;
     this.cd.markForCheck();
   }
 
-  onCancelForm(): void {
-    this.showCreateForm = false;
-    this.selectedItemForEdit = null;
-    this.cd.markForCheck();
-  }
-
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

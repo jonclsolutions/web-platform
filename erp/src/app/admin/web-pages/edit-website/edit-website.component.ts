@@ -42,7 +42,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
-import { LoadingService } from '../../../core/services/loading.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { LangMeta, FlatKey } from './';
 const LS_KEY = 'rpsw_languages';
@@ -67,7 +66,6 @@ export class EditWebsiteComponent
   extends BaseDataComponent<any>
   implements OnInit, OnDestroy {
 
-  public override loadingService = inject(LoadingService);
   private resourceCache = inject(ResourceCacheService);
   override apiEndpoint = 'save_translations';
 

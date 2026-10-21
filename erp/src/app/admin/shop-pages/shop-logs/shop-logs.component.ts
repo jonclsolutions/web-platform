@@ -11,10 +11,9 @@
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './shop-logs.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
@@ -33,25 +32,15 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShopLogsComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   tableCaption: string = 'E-Shop logy';
 
   override apiEndpoint: string = 'shop/logs';
 
-  buttons = Config.BUTTONS.filter(b => b.action !== 'create' && b.action !== 'edit');
+  override buttons = Config.BUTTONS.filter(b => b.action !== 'create' && b.action !== 'edit');
   tableColumns = Config.TABLE_COLUMNS;
-  filterColumns = Config.FILTER_COLUMNS;
-  detailsColumns = Config.DETAILS_COLUMNS;
-  selectedItemForDetails: any | null = null;
+  override filterColumns = Config.FILTER_COLUMNS;
+  override detailsColumns = Config.DETAILS_COLUMNS;
 
-  /**
-   * @description Default filter settings ensuring the latest logs appear first.
-   */
-  filters: Core.FilterParams = {
-    sort_by: 'id',
-    sort_direction: 'desc'
-  };
-showGraphBuilder = false;
   readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
      .filter(col => col.chartable === true)
      .map(col => ({
@@ -107,7 +96,7 @@ get toolbarButtons(): Core.Button[] {
    * @description Executes toolbar actions triggered by user interaction.
    * @param action The key of the action to be performed.
    */
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       exportActiveTable: () => this.exportActiveTable(),
@@ -126,44 +115,10 @@ get toolbarButtons(): Core.Button[] {
   }
 
   /**
-   * @description Updates filter parameters and resets to the first page.
-   * @param newFilters The set of filter values to merge.
-   */
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  /**
-   * @description Resets active filters to default log sorting criteria.
-   */
-  clearFilters(): void {
-    this.filters = { sort_by: 'id', sort_direction: 'desc' };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
-  }
-
-  /**
-   * @description Triggers the export functionality of the internal TableBuilder.
-   */
-  exportActiveTable(): void {
-    if (this.activeTable) this.activeTable.exportToCSV();
-  }
-
-  /**
    * @description Fetches deep information for a single log entry.
    * @param item The log record selected for inspection.
    */
-  handleViewDetails(item: any): void {
+  override handleViewDetails(item: any): void {
     const logId = item.id;
     if (!logId) return;
 
@@ -182,18 +137,10 @@ get toolbarButtons(): Core.Button[] {
   /**
    * @description Closes the detail view and clears the current selection.
    */
-  handleCloseDetails(): void {
+  override handleCloseDetails(): void {
     this.selectedItemForDetails = null;
     this.showDetails = false;
     this.cd.markForCheck();
   }
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
 
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

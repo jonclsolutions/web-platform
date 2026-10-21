@@ -12,6 +12,8 @@
  * @note RoleOptionsService is left untouched as its own small dedicated class - this
  * service is for new call sites going forward. Retrofitting RoleOptionsService onto this
  * would be a pure no-behaviour-change refactor and can be done separately if desired.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `invalidatePrefix`, `invalidateAll`.
  */
 
 import { Injectable } from '@angular/core';
@@ -49,16 +51,5 @@ export class ResourceCacheService {
   /** Zneplatní jeden konkrétní klíč (např. po uložení formuláře). */
   invalidate(key: string): void {
     this.cache.delete(key);
-  }
-
-  /** Zneplatní všechny klíče začínající daným prefixem (např. celou stránku najednou). */
-  invalidatePrefix(prefix: string): void {
-    Array.from(this.cache.keys())
-      .filter(k => k.startsWith(prefix))
-      .forEach(k => this.cache.delete(k));
-  }
-
-  invalidateAll(): void {
-    this.cache.clear();
   }
 }

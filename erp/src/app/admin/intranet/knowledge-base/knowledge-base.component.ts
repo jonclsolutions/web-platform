@@ -26,11 +26,12 @@
  * Fix: rebuild on `i18n.translations$` instead - it emits the current state on
  * subscribe and again every time a language file finishes loading (or fails), which is
  * exactly when the cached labels become stale. `AdminLocalizationService` is unchanged.
+ * @refactor-note (2026-10-21) Removed unused imports.
  */
 
 import { Component, ChangeDetectorRef, OnDestroy, inject } from '@angular/core';
-import { Router, RouterModule, NavigationEnd } from '@angular/router';
-import { Subscription, filter } from 'rxjs';
+import { Router, RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { KbFooterComponent } from './substitutions/kb-footer/kb-footer.component';
 import { KB_PAGES } from './data/kb-pages.data';
 import { KBPage, resolveLoc } from '../../../shared/interfaces/kb-content';

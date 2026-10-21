@@ -58,6 +58,8 @@
  *   stat/nav/activity/maintenance požadavky se vůbec pošlou.
  * - ResourceCacheService: TTL cache pro stats/activity/maintenance fetch.
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `currentDateTime`.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -69,7 +71,6 @@ import { forkJoin, catchError, of } from 'rxjs';
 import * as Core from '../../../shared/imports/core-providers';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
-import { LoadingService } from '../../../core/services/loading.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { PermissionService } from '../../../core/auth/services/permission.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
@@ -161,7 +162,6 @@ interface ActivityBreakdownEntry {
 })
 export class DashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit {
 
-  public override loadingService = inject(LoadingService);
   private sanitizer = inject(DomSanitizer);
   private resourceCache = inject(ResourceCacheService);
   override permissionService = inject(PermissionService);
@@ -552,16 +552,6 @@ get distributionSegments(): DistributionSegment[] {
         count,
       }))
       .sort((a, b) => b.count - a.count);
-  }
-
-  /**
-   * @refactor-note (2026-09-07) BUGFIX - natvrdo `toLocaleDateString('cs-CZ', ...)`
-   * nahrazeno `this.i18n.getDateLocale()`.
-   */
-  get currentDateTime(): string {
-    return new Date().toLocaleDateString(this.i18n.getDateLocale(), {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
   }
 
   formatDate(iso: string): string {

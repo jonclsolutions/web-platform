@@ -7,6 +7,8 @@
  * @description Provides generic pagination, caching, and preloading logic for data-driven tables within the admin panel.
  * @dependencies
  * - DataHandler: Used to perform the actual HTTP requests for collection data.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `getAllData`.
  */
 
 import { Injectable } from '@angular/core';
@@ -215,24 +217,5 @@ export class GenericTableService {
    */
   private getCurrentUserIdForCacheKey(): string {
     return sessionStorage.getItem(this.USER_ID_STORAGE_KEY) ?? this.ANONYMOUS_CACHE_SEGMENT;
-  }
-
-  /**
-   * @description Fetches all available records bypassing standard pagination.
-   * @note Beze změny - `no_pagination=true` zůstává mimo cache mechanismus (používá se
-   * jen pro export, kde je "vždy čerstvá data" žádoucí, ne cachovaná stránka).
-   */
-  getAllData<T>(endpoint: string, filters: FilterParams = {}): Observable<T[]> {
-    let params = new HttpParams();
-
-    for (const key in filters) {
-      const value = filters[key];
-      if (value !== undefined && value !== null && value !== '') {
-        params = params.append(key, value.toString());
-      }
-    }
-
-    params = params.append('no_pagination', 'true');
-    return this.dataHandler.getCollection<T>(`${endpoint}?${params.toString()}`);
   }
 } 

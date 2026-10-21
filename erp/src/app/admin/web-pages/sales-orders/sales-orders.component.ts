@@ -28,10 +28,9 @@
  * česky) nahrazeny `t()` voláním.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './sales-orders.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
@@ -52,7 +51,6 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SalesOrdersComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   protected override translationSection: string = 'sales-orders';
 
@@ -64,24 +62,11 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
 
   override apiEndpoint: string = 'web/sales_orders';
 
-  buttons: Core.TableButtons[] = [];
-  formFields: Core.InputDefinition[] = [];
   columns: Core.ColumnDefinition[] = [];
   trashColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
-
-  selectedItemForEdit: any = null;
-  selectedItemForDetails: any = null;
-
-  filters: Core.FilterParams = {
-    sort_by: 'id',
-    sort_direction: 'desc'
-  };
-  showGraphBuilder = false;
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -143,7 +128,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     });
   }
 
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       exportActiveTable: () => this.exportActiveTable(),
@@ -162,46 +147,6 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     this.forceFullRefresh(this.filters);
   }
 
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
-    this.filters = { sort_by: 'id', sort_direction: 'desc' };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
-  }
-
-  exportActiveTable(): void {
-    if (this.activeTable) this.activeTable.exportToCSV();
-  }
-
-  handleEditFormOpened(item: any): void {
-    this.selectedItemForEdit = { ...item };
-    this.showCreateForm = true;
-  }
-
-  handleViewDetails(item: any): void {
-    if (!item.id) return;
-    this.getItemDetails(item.id).subscribe({
-      next: (res) => {
-        this.selectedItemForDetails = res;
-        this.showDetails = true;
-        this.cd.markForCheck();
-      }
-    });
-  }
-
   createProject(item: any): void {
     if (!item?.id) return;
     if (item.project_id) {
@@ -218,7 +163,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
    * vznikají automaticky ze Sales Leadů, viz info-banner v šabloně), takže "byl vytvořen"
    * větev je fakticky nedosažitelná, ale ponechána pro konzistenci s ostatními stránkami.
    */
-  handleFormSubmitted(formData: any): void {
+  override handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
       Core.finalize(() => {
         this.showCreateForm = false;
@@ -236,19 +181,4 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
     });
   }
 
-  onCancelForm(): void {
-    this.showCreateForm = false;
-    this.selectedItemForEdit = null;
-    this.cd.markForCheck();
-  }
-
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

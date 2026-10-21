@@ -22,12 +22,11 @@
  * u AdminLayoutComponent/WelcomePageComponent.
  */
 
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GenericTableService, PaginatedResponse } from '../../../../../core/services/generic-table.service';
 import { BaseDataComponent } from '../../../../components/base-data/base-data.component';
 import { DataHandler } from '../../../../../core/services/data-handler.service';
-import { LoadingService } from '../../../../../core/services/loading.service';
 
 /**
  * @description Manages the display and incremental loading of news content.
@@ -43,8 +42,6 @@ import { LoadingService } from '../../../../../core/services/loading.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NewsComponent extends BaseDataComponent<any> implements OnInit {
-  /** * @description Injection of global loading state service to prevent concurrent requests. */
-  public override loadingService = inject(LoadingService);
 
   override apiEndpoint: string = 'web/news';
   protected override translationSection: string = 'kb-news';

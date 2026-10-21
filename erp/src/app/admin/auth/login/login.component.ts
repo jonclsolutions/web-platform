@@ -8,9 +8,10 @@
  * @refactor-note (2026-09) Lokalizace přes BasePublicComponent — stejný pattern jako
  *     contact.component, services.component. translationKey = 'login', přístup přes
  *     this.t?.key v šabloně i v .ts.
+ * @refactor-note (2026-10-21) Removed unused imports.
  */
 
-import { Component, ChangeDetectorRef, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, LoginError, TwoFactorError } from '../../../core/auth/auth.service';

@@ -25,6 +25,7 @@
  * (nadpis/úvod/závěr), viz `App\Support\Mail\RawRequestEmailTemplate`. Jazyk se
  * zachytává JEDNOU při inicializaci komponenty (`onInit()`), ne až při submitu -
  * `currentLanguage$` je observable, potřebujeme lokální snapshot hodnoty k FormData.
+ * @refactor-note (2026-10-21) Removed unused getter `fc` (no reference in TS or template).
  */
 import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -168,8 +169,6 @@ alert(msg);
         },
       });
   }
-
-get fc() { return this.contactForm.controls; }
 
 fieldInvalid(name: string): boolean {
 const ctrl = this.contactForm.get(name);

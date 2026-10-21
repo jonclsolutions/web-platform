@@ -45,11 +45,13 @@
  * 15minutový background refresh (oba volaly zděděné `forceFullRefresh()`, které jde
  * přes `this.list`) - proto `forceFullRefresh()` teď PŘEPSÁNO, ať místo toho zavolá
  * `invalidateCurrentSections()` + `refreshData()` (skutečný zdroj dat téhle komponenty).
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): unused constructor dependency `fb: FormBuilder`.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import * as Core from '../../../shared/imports/core-providers';
@@ -121,7 +123,6 @@ protected override translationSection: string = 'edit-legal';
     protected override dataHandler: Core.DataHandler,
     protected override cd: ChangeDetectorRef,
     protected override genericTableService: Core.GenericTableService,
-    private fb: FormBuilder,
     private router: Core.Router,
     private confirmDialog: ConfirmDialogService,
     private alertDialog: AlertDialogService

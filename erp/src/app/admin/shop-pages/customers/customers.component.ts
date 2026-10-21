@@ -29,11 +29,10 @@
  * backend).
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './customers.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
@@ -49,7 +48,6 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CustomersComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   protected override translationSection: string = 'shop-customers';
 
@@ -61,15 +59,8 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
 
   override apiEndpoint: string = 'shop/customers';
 
-  buttons: Core.TableButtons[] = [];
-  formFields: Core.InputDefinition[] = [];
   customerColumns: Core.ColumnDefinition[] = [];
   trashCustomerColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
-
-  selectedItemForEdit: any | null = null;
-  selectedItemForDetails: any | null = null;
 
   showOrdersModal = false;
   selectedCustomerForOrders: any | null = null;
@@ -82,11 +73,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   ordersPerPage = 10;
   ordersExpandedId: number | null = null;
 
-  filters: Core.FilterParams = {
+  override filters: Core.FilterParams = {
     sort_by: 'created_at',
     sort_direction: 'desc'
   };
-  showGraphBuilder = false;
 
   /** @refactor-note (2026-09-09) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
@@ -149,7 +139,7 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     });
   }
 
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
@@ -169,70 +159,10 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.forceFullRefresh(this.filters);
   }
 
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
+  override clearFilters(): void {
     this.filters = { sort_by: 'created_at', sort_direction: 'desc' };
     this.currentPage = 1;
     this.refreshData();
-  }
-
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
-  }
-
-  exportActiveTable(): void {
-    if (this.activeTable) this.activeTable.exportToCSV();
-  }
-
-  handleCreateFormOpened(): void {
-    this.selectedItemForEdit = null;
-    this.showCreateForm = true;
-  }
-
-  handleEditFormOpened(item: any): void {
-    this.selectedItemForEdit = { ...item };
-    this.showCreateForm = true;
-  }
-
-  /**
-   * @refactor-note (2026-09-09) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
-   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
-   */
-  handleFormSubmitted(formData: any): void {
-    const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
-    request$.pipe(Core.finalize(() => {
-      this.showCreateForm = false;
-      this.cd.markForCheck();
-    })).subscribe({
-      next: () => {
-        this.alertDialogService.open(
-          this.i18n.getValue('shared.success'),
-          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
-          'success'
-        );
-        this.refreshData();
-      }
-    });
-  }
-
-  handleViewDetails(item: any): void {
-    if (!item.id) return;
-    this.getItemDetails(item.id).subscribe({
-      next: (details) => {
-        this.selectedItemForDetails = details;
-        this.showDetails = true;
-        this.cd.markForCheck();
-      }
-    });
   }
 
   // =============================================
@@ -363,27 +293,4 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     return new Intl.DateTimeFormat(this.i18n.getDateLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
   }
 
-  handleCloseDetails(): void {
-    this.selectedItemForDetails = null;
-    this.showDetails = false;
-  }
-
-  onCancelForm(): void {
-    this.showCreateForm = false;
-    this.selectedItemForEdit = null;
-    this.cd.markForCheck();
-  }
-
-  handleItemRestored(): void { this.refreshData(); }
-  handleItemDeleted(): void { this.refreshData(); }
-
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

@@ -11,6 +11,8 @@
  * - GenericTableService: Zneplatnění tabulkové cache při změně přihlášeného uživatele
  *   (viz bugfix-note 2026-08-17 níže) - žádná cyklická závislost, GenericTableService
  *   sám na AuthService nijak nezávisí.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `setUserEmail`.
  */
 
 import { Injectable } from '@angular/core';
@@ -170,10 +172,6 @@ export class AuthService {
 
   public getUserId(): string | null { return sessionStorage.getItem('userId'); }
   public getUserEmail(): string | null { return sessionStorage.getItem('userEmail'); }
-  public setUserEmail(email: string): void {
-    sessionStorage.setItem('userEmail', email);
-    this._userEmailSubject.next(email);
-  }
   public getUserRole(): string | null { return sessionStorage.getItem('userRole'); }
   public getAccessToken(): string | null { return sessionStorage.getItem('accessToken'); }
   public getRefreshToken(): string | null { return sessionStorage.getItem('refreshToken'); }

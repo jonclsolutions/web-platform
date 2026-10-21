@@ -24,10 +24,9 @@
  * nikdy `create`/`edit` tlačítko neobsahoval). `graphColumns` přestalo být `readonly`.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './logs.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
@@ -47,7 +46,6 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CoreLogsComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   protected override translationSection: string = 'core-logs';
 
@@ -59,21 +57,15 @@ export class CoreLogsComponent extends BaseDataComponent<any> implements Core.On
 
   override apiEndpoint: string = 'core/logs';
 
-  buttons: Core.TableButtons[] = [];
   tableColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
-  selectedItemForDetails: any | null = null;
 
   /**
    * @description Initial sorting state for log entries, prioritizing the most recent events.
    */
-  filters: Core.FilterParams = {
+  override filters: Core.FilterParams = {
     sort_by: 'created_at',
     sort_direction: 'desc'
   };
-
-  showGraphBuilder = false;
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
@@ -131,7 +123,7 @@ export class CoreLogsComponent extends BaseDataComponent<any> implements Core.On
    * @description Executes toolbar actions based on user selection.
    * @param action The unique identifier of the action to execute.
    */
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       openGraphBuilder: () => this.openGraphBuilder(),
@@ -150,45 +142,11 @@ export class CoreLogsComponent extends BaseDataComponent<any> implements Core.On
   }
 
   /**
-   * @description Updates applied filters and resets the view to the initial page.
-   * @param newFilters The collection of filter parameters.
-   */
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  /**
-   * @description Resets filter settings to default sorting criteria.
-   */
-  clearFilters(): void {
-    this.filters = { sort_by: 'id', sort_direction: 'desc' };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
-  }
-
-  /**
-   * @description Triggers the TableBuilder CSV export.
-   */
-  exportActiveTable(): void {
-    if (this.activeTable) this.activeTable.exportToCSV();
-  }
-
-  /**
    * @description Retrieves detailed log information using the item's primary key.
    * @param item The log entry selected for inspection.
    * @note Handles fallback from 'business_log_id' to standard 'id' field for compatibility.
    */
-  handleViewDetails(item: any): void {
+  override handleViewDetails(item: any): void {
     const logId = item.business_log_id || item.id;
     if (!logId) return;
     this.getItemDetails(logId).subscribe({
@@ -206,19 +164,10 @@ export class CoreLogsComponent extends BaseDataComponent<any> implements Core.On
   /**
    * @description Closes the details view and clears current state.
    */
-  handleCloseDetails(): void {
+  override handleCloseDetails(): void {
     this.selectedItemForDetails = null;
     this.showDetails = false;
     this.cd.markForCheck();
   }
 
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

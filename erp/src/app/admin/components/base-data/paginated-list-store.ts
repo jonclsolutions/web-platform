@@ -33,6 +33,8 @@
  *
  * Přidáno volání `genericTableService.preloadAdjacentPages()` při změně stránky - dřív
  * existující, ale nikde nevolaná metoda.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `removeLocal`.
  */
 
 import { ChangeDetectorRef } from '@angular/core';
@@ -189,15 +191,5 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
   toggleTable(): void {
     this.showTrashTable = !this.showTrashTable;
     this.loadInitial(this.showTrashTable ? this.currentTrashFilters : this.currentActiveFilters);
-  }
-
-  /** Odebere položku z lokálních polí (aktivní i koš), bez API volání. */
-  removeLocal(id: number | undefined): void {
-    if (!id) return;
-    const activeIdx = this.data.findIndex(d => d.id === id);
-    if (activeIdx > -1) this.data.splice(activeIdx, 1);
-    const trashIdx = this.trashData.findIndex(d => d.id === id);
-    if (trashIdx > -1) this.trashData.splice(trashIdx, 1);
-    this.cd.markForCheck();
   }
 }

@@ -23,6 +23,8 @@
  *   `initTranslations()`, takže `languages$` má hodnotu už PŘED prvním renderem appky.
  *   `fetchLanguages()` sám o sobě zůstává beze změny v použití (stále ho volá `setModule()`
  *   při přepnutí modulu) - jen navíc plní `languagesSource`, aby zůstal jediný zdroj pravdy.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `languages$`, `initLanguages`, `getLanguageMeta`.
  */
 
 import { Injectable } from '@angular/core';
@@ -72,7 +74,6 @@ export class LocalizationService {
    *   jako PublicHeaderComponent na něj mohou jen navázat subscribe bez čekání/bliknutí.
    */
   private languagesSource = new BehaviorSubject<LangMeta[]>([]);
-  public languages$ = this.languagesSource.asObservable();
 
   constructor(private http: HttpClient) {
     const stored = localStorage.getItem('selectedLanguage') || 'cz';
@@ -88,21 +89,6 @@ export class LocalizationService {
       }
       return data;
     });
-  }
-
-  /**
-   * @description Entry point pro APP_INITIALIZER (viz AppBootstrapService.init()) -
-   *   natáhne jazyky aktuálního modulu ('web' v okamžiku bootstrapu) a naplní jimi
-   *   `languagesSource` PŘED prvním renderem. `fetchLanguages()` má vlastní catchError
-   *   fallback na cache, takže tenhle try/catch je jen dodatečná pojistka, aby zcela
-   *   neočekávaná chyba nikdy neblokovala start appky.
-   */
-  public async initLanguages(): Promise<void> {
-    try {
-      await firstValueFrom(this.fetchLanguages());
-    } catch {
-      // fetchLanguages() se sama postará o fallback; tohle je jen pojistka.
-    }
   }
 
   public setModule(module: string): void {
@@ -148,14 +134,6 @@ export class LocalizationService {
       }),
       catchError(() => of({ languages: this.languagesCache }))
     );
-  }
-
-  /**
-   * @description Synchronní lookup metadat jazyka z aktuální cache - použito
-   *   AppBootstrapService k předehřátí obrázku vlaječky aktivního jazyka.
-   */
-  public getLanguageMeta(code: string): LangMeta | undefined {
-    return this.languagesCache.find(l => l.code === code);
   }
 
   private loadTranslations$(lang: string): Observable<any> {

@@ -28,9 +28,11 @@
  * natvrdo psaného labelu v poli - odstraňuje duplicitní zdroj pravdy pro stavové
  * texty. `formatCurrency()` natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()`
  * - měna zůstává EUR (obchodní rozhodnutí, nesouvisí s jazykem UI).
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `summaryTaxAmount`, `editingItemIdx`, `getTrashToolbarButtons`, `getShippingMethodName`, `getProductName`, `getPaymentStatusLabel`.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
@@ -64,7 +66,6 @@ type TableMode = 'all' | 'pending_tasks' | 'trash';
 })
 export class OrdersComponent extends BaseDataComponent<Order> implements OnInit, OnDestroy {
   override apiEndpoint: string = 'shop/orders';
-  @ViewChild('activeTable') activeTable!: any;
 
   protected override translationSection: string = 'shop-orders';
 
@@ -84,36 +85,28 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   statusOptions: { value: string; label: string }[] = [];
   paymentStatusOptions: { value: string; label: string }[] = [];
 
-  summaryTaxAmount = 0;
-
   showOrderForm = false;
   showDetailsModal = false;
   showFiltersPanel = false;
 
   selectedOrderForDetail: Order | null = null;
   editingOrder: Order | null = null;
-  editingItemIdx: number | null = null;
 
   couponValidation: CouponValidationResult = { valid: true };
 
   private isProcessing = false;
 
-  filters: Core.FilterParams = {
+  override filters: Core.FilterParams = {
     sort_by: 'created_at',
     sort_direction: 'desc'
   };
 
-  buttons: Core.TableButtons[] = [];
   orderColumns: Core.ColumnDefinition[] = [];
   trashOrderColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
   toolbarButtons: Core.Button[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   /** @bugfix-note (2026-09-09) Přestalo být samostatné - viz hlavička souboru. */
   private orderTabButtons: Core.Button[] = [];
-
-  showGraphBuilder = false;
 
   /** @refactor-note (2026-09-09) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
   graphColumns: GraphColumnOption[] = [];
@@ -319,7 +312,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
    * @description Maps toolbar button actions to their corresponding method calls.
    * @param action The identifier of the triggered toolbar action.
    */
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     if (this.isProcessing) return;
 
     const actions: { [key: string]: () => void } = {
@@ -333,12 +326,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     if (actions[action]) actions[action]();
   }
 
-  exportActiveTable(): void {
-    if (this.activeTable) {
-      this.activeTable.exportToCSV();
-    }
-  }
-
   override toggleFilters(): void {
     this.showFiltersPanel = !this.showFiltersPanel;
     this.cd.markForCheck();
@@ -348,29 +335,15 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.forceFullRefresh(this.filters);
   }
 
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
+  override clearFilters(): void {
     this.setTableMode(this.currentMode);
-  }
-
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
   }
 
   /**
    * @description Fetches full order details for the display modal.
    * @param item The summary order object from the table.
    */
-  handleViewDetails(item: Order): void {
+  override handleViewDetails(item: Order): void {
     if (this.isProcessing || !item.id) return;
 
     this.isProcessing = true;
@@ -423,7 +396,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   /**
    * @description Initializes an empty object for new order creation.
    */
-  handleCreateFormOpened(): void {
+  override handleCreateFormOpened(): void {
     if (this.isProcessing) return;
 
     this.couponValidation = { valid: true };
@@ -461,7 +434,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.markForCheck();
   }
 
-  handleEditFormOpened(order: Order, event?: Event): void {
+  override handleEditFormOpened(order: Order, event?: Event): void {
     if (event) event.stopPropagation();
     if (this.isProcessing) return;
     this.openEditOrderForm(order);
@@ -560,13 +533,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     item.total_price = item.quantity * item.unit_price;
     this.recalculateTotals();
     this.cd.markForCheck();
-  }
-
-  getTrashToolbarButtons(): any[] {
-    return this.toolbarButtons.filter(btn =>
-      btn.action !== 'handleCreateFormOpened' &&
-      btn.action !== 'exportActiveTable'
-    );
   }
 
   /**
@@ -815,13 +781,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     return method ? Number(method.price) : 0;
   }
 
-  getShippingMethodName(methodId: any): string {
-    if (!methodId || methodId == 0) return '-';
-    const idToFind = Number(methodId);
-    const method = this.shippingMethods.find(s => Number(s.id) === idToFind);
-    return method ? method.name : 'N/A';
-  }
-
   getShippingMethodPrice(methodId: any): number {
     if (!methodId || methodId == 0) return 0;
     const idToFind = Number(methodId);
@@ -906,11 +865,6 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     this.cd.markForCheck();
   }
 
-  getProductName(productId: number): string {
-    if (!productId) return '-';
-    return this.products.find(p => Number(p.id) === Number(productId))?.name || 'N/A';
-  }
-
   /**
    * @description Formats numbers to currency strings.
    * @param value The amount to format.
@@ -931,21 +885,8 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     return this.statusOptions.find(o => o.value === status)?.label || status;
   }
 
-  getPaymentStatusLabel(status: string): string {
-    return this.paymentStatusOptions.find(o => o.value === status)?.label || status;
-  }
-
   getVisibleItems(order: Order | null): OrderItem[] {
     return (order?.items || []).filter(i => !i._delete);
   }
 
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

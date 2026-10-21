@@ -68,7 +68,6 @@ import * as Config from './projects.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 
-
 interface ProjectCheckpoint {
   id: number;
   label: string;
@@ -121,7 +120,6 @@ interface RevealedPassword {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectsComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   @ViewChild('threadsTable') threadsTable!: TableBuilderComponent;
   @ViewChild('pmMessageListEl') pmMessageListEl?: ElementRef<HTMLDivElement>;
   @ViewChild('threadModalMessageListEl') threadModalMessageListEl?: ElementRef<HTMLDivElement>;
@@ -137,17 +135,8 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
 
   override apiEndpoint: string = 'web/projects';
 
-  buttons: Core.TableButtons[] = [];
-  formFields: Core.InputDefinition[] = [];
   projectColumns: Core.ColumnDefinition[] = [];
   trashProjectColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
-
-  selectedItemForEdit: any | null = null;
-  selectedItemForDetails: any | null = null;
-
-  filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
 
   private prefillOrderId: string | null = null;
 
@@ -313,7 +302,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
@@ -361,25 +350,6 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.forceFullRefresh(this.filters);
   }
 
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
-    this.filters = { sort_by: 'id', sort_direction: 'desc' };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  handlePageChange(page: number): void { this.onHandlePageChange(page, this.filters); }
-  handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
-
-  exportActiveTable(): void {
-    if (this.activeTable) this.activeTable.exportToCSV();
-  }
-
   /**
    * @refactor-note (2026-09-08) `— Bez realizace...` placeholder teď přes
    * `Config.createNoOrderOptionLabel(i18n)` - SDÍLENÝ text s `createProjectFormFields()`.
@@ -401,7 +371,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       });
   }
 
-  handleCreateFormOpened(): void {
+  override handleCreateFormOpened(): void {
     this.loadOrderOptions(() => {
       this.selectedItemForEdit = this.prefillOrderId ? { order_id: this.prefillOrderId } : null;
       this.showCreateForm = true;
@@ -409,12 +379,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
-  handleEditFormOpened(item: any): void {
-    this.selectedItemForEdit = { ...item };
-    this.showCreateForm = true;
-  }
-
-  handleFormSubmitted(formData: any): void {
+  override handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
 
     request$.pipe(
@@ -438,31 +403,12 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     });
   }
 
-  handleViewDetails(item: any): void {
-    if (!item.id) return;
-    this.getItemDetails(item.id).subscribe({
-      next: (details) => {
-        this.selectedItemForDetails = details;
-        this.showDetails = true;
-        this.cd.markForCheck();
-      }
-    });
-  }
-
-  handleCloseDetails(): void {
-    this.selectedItemForDetails = null;
-    this.showDetails = false;
-  }
-
-  onCancelForm(): void {
+  override onCancelForm(): void {
     this.showCreateForm = false;
     this.selectedItemForEdit = null;
     this.prefillOrderId = null;
     this.cd.markForCheck();
   }
-
-  handleItemRestored(): void { this.refreshData(); }
-  handleItemDeleted(): void { this.refreshData(); }
 
   // ── "Správa" modal ────────────────────────────────────────────────────
 
@@ -991,15 +937,4 @@ private patchThreadsDataLastMessageAt(threadId: number): void {
     window.scrollTo(0, this.savedScrollY);
   }
 
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
-
-  showGraphBuilder = false;
 }

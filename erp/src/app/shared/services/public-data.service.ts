@@ -10,6 +10,8 @@
  *   calling getSiteSettings() themselves, to avoid redundant requests and loading flicker.
  * @refactor-note (2026-08) Přidána `getWebStatus()` - mirror `getShopStatus()`, používá
  *   `webMaintenanceGuard` k rozhodnutí, jestli přesměrovat na /web-maintenance.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `getCachedSettingsSnapshot`.
  */
 
 import { Injectable } from '@angular/core';
@@ -33,10 +35,6 @@ export class PublicDataService {
 
   setCachedSettings(settings: any): void {
     this.siteSettings$.next(settings);
-  }
-
-  getCachedSettingsSnapshot(): any {
-    return this.siteSettings$.value;
   }
 
   // ── Generic HTTP helpers ─────────────────────────────────────────

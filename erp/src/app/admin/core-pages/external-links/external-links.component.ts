@@ -25,10 +25,9 @@
  * nahrazeny `t()` voláním.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './external-links.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
@@ -49,7 +48,6 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ExternalLinksComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   protected override translationSection: string = 'external-links';
 
@@ -61,21 +59,13 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
 
   override apiEndpoint: string = 'core/external_links';
 
-  buttons: Core.TableButtons[] = [];
-  formFields: Core.InputDefinition[] = [];
   linkColumns: Core.ColumnDefinition[] = [];
   trashLinkColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
 
-  selectedItemForEdit: any | null = null;
-  selectedItemForDetails: any | null = null;
-
-  filters: Core.FilterParams = {
+  override filters: Core.FilterParams = {
     sort_by: 'name',
     sort_direction: 'asc'
   };
-  showGraphBuilder = false;
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
@@ -142,21 +132,6 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
     });
   }
 
-  /**
-   * @description Dispatches actions triggered by the UI toolbar.
-   * @param action Identifier of the clicked toolbar action.
-   */
-  handleToolbarAction(action: string): void {
-    const actions: { [key: string]: () => void } = {
-      toggleFilters: () => this.toggleFilters(),
-      handleCreateFormOpened: () => this.handleCreateFormOpened(),
-      exportActiveTable: () => this.exportActiveTable(),
-      openGraphBuilder: () => this.openGraphBuilder(),
-      toggleTable: () => this.toggleTable()
-    };
-    if (actions[action]) actions[action]();
-  }
-
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
@@ -167,128 +142,12 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
   }
 
   /**
-   * @description Applies updated filters to the data source and refreshes the current view from the first page.
-   * @param newFilters The collection of filter parameters.
-   */
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  /**
    * @description Resets filter configuration to initial sorting criteria.
    */
-  clearFilters(): void {
+  override clearFilters(): void {
     this.filters = { sort_by: 'name', sort_direction: 'asc' };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
-  }
-
-  /**
-   * @description Initiates the CSV file export process for the currently active table.
-   */
-  exportActiveTable(): void {
-    if (this.activeTable) {
-      this.activeTable.exportToCSV();
-    }
-  }
-
-  /**
-   * @description Resets the editing state and opens the form to create a new external link.
-   */
-  handleCreateFormOpened(): void {
-    this.selectedItemForEdit = null;
-    this.showCreateForm = true;
-  }
-
-  /**
-   * @description Loads existing record data into the editor and opens the form.
-   * @param item The external link record to be edited.
-   */
-  handleEditFormOpened(item: any): void {
-    this.selectedItemForEdit = { ...item };
-    this.showCreateForm = true;
-  }
-
-  /**
-   * @description Submits form data; determines whether to execute a create or update request based on the ID presence.
-   * @param formData The object submitted from the form.
-   * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
-   * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
-   */
-  handleFormSubmitted(formData: any): void {
-    const request$ = formData.id
-      ? this.updateData(formData.id, formData)
-      : this.postData(formData);
-
-    request$.pipe(
-      Core.finalize(() => {
-        this.showCreateForm = false;
-        this.cd.markForCheck();
-      })
-    ).subscribe({
-      next: () => {
-        this.alertDialogService.open(
-          this.i18n.getValue('shared.success'),
-          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
-          'success'
-        );
-        this.refreshData();
-      }
-    });
-  }
-
-  /**
-   * @description Fetches detailed information for a specific external link for display in a view modal.
-   * @param item The selected external link record.
-   */
-  handleViewDetails(item: any): void {
-    if (!item.id) return;
-    this.getItemDetails(item.id).subscribe({
-      next: (details) => {
-        this.selectedItemForDetails = details;
-        this.showDetails = true;
-        this.cd.markForCheck();
-      }
-    });
-  }
-
-  /**
-   * @description Closes the detailed information view and clears the current selection.
-   */
-  handleCloseDetails(): void {
-    this.selectedItemForDetails = null;
-    this.showDetails = false;
-  }
-
-  /**
-   * @description Cancels form editing, resets state, and triggers a change detection cycle.
-   */
-  onCancelForm(): void {
-    this.showCreateForm = false;
-    this.selectedItemForEdit = null;
-    this.cd.markForCheck();
-  }
-
-  handleItemRestored(): void { this.refreshData(); }
-  handleItemDeleted(): void { this.refreshData(); }
-
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

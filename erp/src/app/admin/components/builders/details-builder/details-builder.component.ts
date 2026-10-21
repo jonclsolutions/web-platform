@@ -44,6 +44,8 @@
  * uprostřed jinak české šablony (nekonzistence, patrně kopírovaný default z jiného
  * projektu) - teď jde přes `shared.yes`/`shared.no` z JSON souboru, tedy sjednocené
  * se zbytkem aplikace a lokalizované společně s ní.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `getFileName`.
  */
 
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject } from '@angular/core';
@@ -139,15 +141,6 @@ if (val === null || val === undefined) return false;
 if (typeof val === 'object' && !(val instanceof Date)) return true;
 if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) return true;
 return false;
-  }
-
-/**
-   * @description Extracts a filename from a given storage URL.
-   */
-getFileName(url: string): string {
-if (!url) return 'file';
-const parts = url.split('/');
-return parts[parts.length - 1].split('?')[0] || 'file';
   }
 
 /**

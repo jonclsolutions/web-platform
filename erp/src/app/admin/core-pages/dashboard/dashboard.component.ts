@@ -70,7 +70,6 @@ import { forkJoin, catchError, of } from 'rxjs';
 import * as Core from '../../../shared/imports/core-providers';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
-import { LoadingService } from '../../../core/services/loading.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 
@@ -167,7 +166,6 @@ interface ActivityBreakdownEntry {
 })
 export class CoreDashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit {
 
-  public override loadingService = inject(LoadingService);
   private sanitizer = inject(DomSanitizer);
   private resourceCache = inject(ResourceCacheService);
 

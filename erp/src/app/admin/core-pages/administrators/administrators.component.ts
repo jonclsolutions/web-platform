@@ -15,11 +15,10 @@
  * - ScrollLockService: Blocks page scrolling behind the e-mail access policy modal.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy, OnInit,inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
 import { PermissionOptionsService, CorePermissionOption } from '../../../core/services/permission-options.service';
@@ -68,7 +67,6 @@ interface EmailAccessRule {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdministratorsComponent extends BaseDataComponent<any> implements OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   protected override translationSection: string = 'administrators';
 
   public override t(key: string): string {
@@ -80,25 +78,19 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   override apiEndpoint: string = 'core/users';
 
-  buttons: Core.TableButtons[] = [];
   /** Baseline definition - role_id/permission_ids options land here from loadRoleOptions()/loadPermissionOptions() via rebuildFormFields(). */
-  formFields: InputDefinition[] = [];
+  override formFields: InputDefinition[] = [];
   /** What is ACTUALLY rendered in the form - see computeFieldsForTarget(). */
   visibleFormFields: InputDefinition[] = [];
   formFieldOverrides: Record<string, any> | null = null;
 
   tableColumns: Core.ColumnDefinition[] = [];
   trashTableColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
   resetPasswordFormFields: Core.InputDefinition[] = [];
 
   showResetPasswordForm: boolean = false;
-  selectedItemForEdit: any | null = null;
-  selectedItemForDetails: any | null = null;
   get resetPasswordTitle(): string { return this._resetPasswordTitle; }
   private _resetPasswordTitle: string = '';
-  filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
 
   roleOptions: { value: string; label: string }[] = [];
   /** Full permission catalogue, for the `permission_ids` multiselect. */
@@ -121,7 +113,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   emailAccessRules: EmailAccessRule[] = [];
   newRuleType: 'domain' | 'email' = 'domain';
   newRuleValue = '';
-  showGraphBuilder = false;
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` field initializer - přepočítáno v rebuildFormFields()/subscribe. */
   graphColumns: GraphColumnOption[] = [];
@@ -224,7 +215,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     super.ngOnDestroy();
   }
 
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
@@ -507,24 +498,18 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
-  handlePageChange(page: number): void { this.onHandlePageChange(page, this.filters); }
+  override applyFilters(newFilters: any): void { this.filters = { ...newFilters }; this.refreshData(); }
 
-  handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
+  override clearFilters(): void { this.filters = { sort_by: 'id', sort_direction: 'desc' }; this.refreshData(); }
 
-  applyFilters(newFilters: any): void { this.filters = { ...newFilters }; this.refreshData(); }
-
-  clearFilters(): void { this.filters = { sort_by: 'id', sort_direction: 'desc' }; this.refreshData(); }
-
-  exportActiveTable(): void { if (this.activeTable) this.activeTable.exportToCSV(); }
-
-  handleCreateFormOpened(): void {
+  override handleCreateFormOpened(): void {
     this.selectedItemForEdit = null;
     this.formFieldOverrides = null;
     this.visibleFormFields = this.computeFieldsForTarget(null, false, true);
     this.showCreateForm = true;
   }
 
-  handleEditFormOpened(item: any): void {
+  override handleEditFormOpened(item: any): void {
     const itemToEdit = { ...item };
     if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
 
@@ -592,7 +577,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.cd.markForCheck();
   }
 
-    handleFormSubmitted(formData: any): void {
+    override handleFormSubmitted(formData: any): void {
     const payload = { ...formData };
     if (payload.role_id) payload.role_id = parseInt(payload.role_id, 10);
 
@@ -691,7 +676,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     });
   }
 
-  handleViewDetails(item: any): void {
+  override handleViewDetails(item: any): void {
     if (!item.id) return;
     this.getItemDetails(item.id).subscribe(details => {
       this.selectedItemForDetails = details;
@@ -699,9 +684,6 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       this.cd.markForCheck();
     });
   }
-
-  handleItemRestored(): void { this.refreshData(); }
-  handleItemDeleted(): void { this.refreshData(); }
 
   // ── Email access policy modal ──────────────────────────────────────────
 
@@ -801,13 +783,4 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     return this.emailAccessRules.filter(r => r.type === 'email');
   }
 
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

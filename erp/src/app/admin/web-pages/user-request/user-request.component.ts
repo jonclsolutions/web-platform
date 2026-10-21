@@ -41,11 +41,10 @@
  * spuštění subscribe callbacku ještě `null` byl.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
@@ -94,7 +93,6 @@ interface EmailTemplateState {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserRequestComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   protected override translationSection: string = 'user-request';
 
   public override t(key: string): string {
@@ -105,26 +103,8 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
 
   override apiEndpoint: string = 'web/raw_request_commissions';
 
-  /**
-   * @bugfix-note (2026-09v3) Prázdné výchozí hodnoty - naplní se VÝHRADNĚ přes
-   * `translations$` subscribe v konstruktoru, viz refactor-note v hlavičce souboru.
-   * NIKDY nepřepisovat na gettery (NG0956 riziko) ani na field-initializer volání
-   * `Config.create*()` přímo tady (proběhne příliš brzy, jen jednou).
-   */
-  buttons: Core.TableButtons[] = [];
-  formFields: Core.InputDefinition[] = [];
   userRequestColumns: Core.ColumnDefinition[] = [];
   trashUserRequestColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
-
-  selectedItemForEdit: any | null = null;
-  selectedItemForDetails: any | null = null;
-
-  filters: Core.FilterParams = {
-    sort_by: 'id',
-    sort_direction: 'desc'
-  };
 
   // ── Šablona potvrzovacího e-mailu (modal) ──────────────────────────────
   showEmailTemplateModal = false;
@@ -182,11 +162,6 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       }),
     };
   }
-
-  // ── Grafy a reporty (modal) ─────────────────────────────────────────────
-
-  /** Řídí viditelnost `<app-graph-builder>` popupu - viz refactor-note (2026-08-26) v hlavičce souboru. */
-  showGraphBuilder = false;
 
   /**
    * @description Chartable podmnožina `detailsColumns` namapovaná na minimální
@@ -278,7 +253,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * @description Maps incoming action strings from the toolbar to their corresponding component methods.
    * @param action The unique action key from the button configuration.
    */
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
@@ -301,56 +276,6 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
   }
 
   /**
-   * @description Merges new filter criteria with existing ones and resets the table view to the first page.
-   * @param newFilters The filter object containing sorting and filtering criteria.
-   */
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  /**
-   * @description Resets the filter state to default parameters and triggers a data refresh.
-   */
-  clearFilters(): void {
-    this.filters = { sort_by: 'id', sort_direction: 'desc' };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
-  }
-
-  /**
-   * @description Initiates the CSV file generation for the currently displayed table.
-   */
-  exportActiveTable(): void {
-    if (this.activeTable) {
-      this.activeTable.exportToCSV();
-    }
-  }
-
-  handleCreateFormOpened(): void {
-    this.selectedItemForEdit = null;
-    this.showCreateForm = true;
-  }
-
-  /**
-   * @description Prepares an existing item for modification by copying it into the editing buffer.
-   * @param item The record data to be edited.
-   */
-  handleEditFormOpened(item: any): void {
-    this.selectedItemForEdit = { ...item };
-    this.showCreateForm = true;
-  }
-
-  /**
    * @description Processes form submission, routing to either create or update API endpoints based on entity ID presence.
    * @param formData The data object derived from the form interaction.
    */
@@ -363,7 +288,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
    * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
    * z `error:` callbacku - viz bugfix-note v hlavičce souboru.
    */
-  handleFormSubmitted(formData: any): void {
+  override handleFormSubmitted(formData: any): void {
     const request$ = formData.id
       ? this.updateData(formData.id, formData)
       : this.postData(formData);
@@ -380,37 +305,6 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
       }
     });
   }
-
-  /**
-   * @description Retrieves detailed information for a specific request record.
-   * @param item The request item to be inspected.
-   * @bugfix-note (2026-08-31) Odstraněn duplicitní `alertDialogService.open('Chyba', ...)`
-   * z `error:` callbacku - viz bugfix-note v hlavičce souboru.
-   */
-  handleViewDetails(item: any): void {
-    if (!item.id) return;
-    this.getItemDetails(item.id).subscribe({
-      next: (details) => {
-        this.selectedItemForDetails = details;
-        this.showDetails = true;
-        this.cd.markForCheck();
-      }
-    });
-  }
-
-  handleCloseDetails(): void {
-    this.selectedItemForDetails = null;
-    this.showDetails = false;
-  }
-
-  onCancelForm(): void {
-    this.showCreateForm = false;
-    this.selectedItemForEdit = null;
-    this.cd.markForCheck();
-  }
-
-  handleItemRestored(): void { this.refreshData(); }
-  handleItemDeleted(): void { this.refreshData(); }
 
   // ── Šablona potvrzovacího e-mailu (modal) ──────────────────────────────
 
@@ -582,20 +476,4 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     return this.currentEmailLabels.label_date || this.emailTemplateDefaults.labelDate;
   }
 
-  // ── Grafy a reporty (modal) ─────────────────────────────────────────────
-
-  /**
-   * @description Otevře popup s grafy/reporty (`GraphBuilderComponent`) - narozdíl
-   * od šablony e-mailu výše nemá co dopředu natahovat (popup si data i granularitu
-   * bucketů řeší sám, viz graph-builder.component.ts), stačí jen zobrazit.
-   */
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

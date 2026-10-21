@@ -38,8 +38,6 @@ import { AuthService } from './auth.service';
 import { PermissionService } from './services/permission.service';
 import { environment } from '../../../environments/environment';
 
-
-
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
@@ -495,16 +493,6 @@ describe('AuthService', () => {
     it('getUserEmail by mělo přečíst "userEmail" ze sessionStorage', () => {
       sessionStorage.setItem('userEmail', 'x@y.cz');
       expect(service.getUserEmail()).toBe('x@y.cz');
-    });
-
-   it('setUserEmail by mělo zapsat do sessionStorage a aktualizovat userEmail$', () => {
-      let email: string | null = null; // Změna: přidáno = null
-      service.userEmail$.subscribe(v => (email = v));
-
-      service.setUserEmail('nove@rpsw.cz');
-
-      expect(sessionStorage.getItem('userEmail')).toBe('nove@rpsw.cz');
-      expect(email!).toBe('nove@rpsw.cz'); // Přidán vykřičník (!)
     });
 
     it('getUserRole by mělo přečíst "userRole" ze sessionStorage', () => {

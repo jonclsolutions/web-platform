@@ -12,13 +12,13 @@
  *     (ne per-tech), `t.service_main_text` a `t.info_header` jako scalar klíče.
  *     Tabulka cen zachována ale bez cenového řádku - `pm-pkg-price` odstraněn
  *     ze šablony, data v JSON ho neobsahují.
+ * @refactor-note (2026-10-21) Removed unused imports.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BasePublicComponent } from '../../base-public.component';
-import { Item } from './';
 
 export interface PricingPackage {
   id: string;

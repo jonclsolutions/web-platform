@@ -37,6 +37,8 @@
  * pole, protože i18n hodnoty musí být čerstvé při každém přístupu, ne zafixované
  * jednou v okamžiku definice třídy - viz stejný důvod jako gettery v
  * user-request.config.ts.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `helpSection`, `currentDateTime`.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -47,7 +49,6 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { UserLogin } from '../../../shared/interfaces/user';
-import { NavSection } from './welcome-page.interface';
 
 @Component({
   selector: 'app-welcome-page',
@@ -74,21 +75,6 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
 
   isLoadingProfile = true;
   errorMessage: string | null = null;
-
-  /**
-   * @description Rychlý odkaz na nahlášení chyby - stejný tvar (NavSection) jako karty
-   * na Dashboardu. Getter, ne `readonly` pole - viz refactor-note (2026-09) v hlavičce
-   * souboru (i18n hodnoty musí být čerstvé, ne zafixované při definici třídy).
-   */
-  get helpSection(): NavSection {
-    return {
-      title: this.t('report_bug_title'),
-      icon: '🐞',
-      route: '/admin/intranet/knowledge-base/support-form',
-      description: this.t('report_bug_description'),
-      color: 'rose',
-    };
-  }
 
   private emailSub?: Subscription;
 
@@ -139,18 +125,6 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
   get welcomeMessage(): string {
     const name = this.userData?.full_name ?? this.userEmail ?? this.t('welcome_default_name');
     return this.t('welcome_message').replace('{name}', name);
-  }
-
-  /**
-   * @refactor-note (2026-09) BUGFIX - natvrdo `'cs-CZ'` nahrazeno
-   * `this.i18n.getDateLocale()` - viz hlavička souboru. Vyžaduje odpovídající
-   * `registerLocaleData()` v app.config.ts pro každý podporovaný jazyk (už hotovo
-   * pro cz/en, viz app.config.ts refactor-note 2026-09).
-   */
-  get currentDateTime(): string {
-    return new Date().toLocaleDateString(this.i18n.getDateLocale(), {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
   }
 
   /**

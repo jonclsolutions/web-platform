@@ -7,6 +7,8 @@
  * @description Global service to manage and track the application's loading state.
  * @dependencies
  * - NgZone: Ensures state changes trigger change detection outside of standard Angular event loops when necessary.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `isLoadingSnapshot`.
  */
 
 import { Injectable, NgZone } from '@angular/core';
@@ -25,14 +27,6 @@ export class LoadingService {
    * @description Observable stream of the current loading status.
    */
   public isLoading$ = this._isLoading$.asObservable();
-
-  /**
-   * @description Returns the current loading state without subscribing.
-   * @note Useful for quick checks in guards or specific UI logic.
-   */
-  get isLoadingSnapshot(): boolean {
-    return this._isLoading$.value;
-  }
 
   constructor(private ngZone: NgZone) {}
 

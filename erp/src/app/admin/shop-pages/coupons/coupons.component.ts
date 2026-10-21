@@ -13,10 +13,9 @@
  * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './coupons.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
@@ -32,26 +31,17 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CouponsComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
   tableCaption: string = 'Slevové kupóny';
 
   override apiEndpoint: string = 'shop/coupons';
 
-  buttons = Config.COUPON_BUTTONS;
-  formFields = Config.COUPON_FORM_FIELDS;
+  override buttons = Config.COUPON_BUTTONS;
+  override formFields = Config.COUPON_FORM_FIELDS;
   couponColumns = Config.COUPON_COLUMNS;
   trashCouponColumns = Config.COUPON_TRASH_COLUMNS;
-  filterColumns = Config.COUPON_FILTER_COLUMNS;
-  detailsColumns = Config.COUPON_DETAILS_COLUMNS;
+  override filterColumns = Config.COUPON_FILTER_COLUMNS;
+  override detailsColumns = Config.COUPON_DETAILS_COLUMNS;
 
-  selectedItemForEdit: any | null = null;
-  selectedItemForDetails: any | null = null;
-
-  filters: Core.FilterParams = {
-    sort_by: 'id',
-    sort_direction: 'desc'
-  };
-showGraphBuilder = false;
   readonly graphColumns: GraphColumnOption[] = Config.COUPON_DETAILS_COLUMNS
      .filter(col => col.chartable === true)
      .map(col => ({
@@ -99,17 +89,6 @@ showGraphBuilder = false;
      });
    }
 
-  handleToolbarAction(action: string): void {
-    const actions: { [key: string]: () => void } = {
-      toggleFilters: () => this.toggleFilters(),
-      handleCreateFormOpened: () => this.handleCreateFormOpened(),
-      exportActiveTable: () => this.exportActiveTable(),
-      openGraphBuilder: () => this.openGraphBuilder(),
-      toggleTable: () => this.toggleTable()
-    };
-    if (actions[action]) actions[action]();
-  }
-
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
@@ -117,36 +96,7 @@ showGraphBuilder = false;
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
-    this.filters = { sort_by: 'id', sort_direction: 'desc' };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  handlePageChange(page: number): void { this.onHandlePageChange(page, this.filters); }
-  handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
-
-  exportActiveTable(): void {
-    if (this.activeTable) this.activeTable.exportToCSV();
-  }
-
-  handleCreateFormOpened(): void {
-    this.selectedItemForEdit = null;
-    this.showCreateForm = true;
-  }
-
-  handleEditFormOpened(item: any): void {
-    this.selectedItemForEdit = { ...item };
-    this.showCreateForm = true;
-  }
-
-  handleFormSubmitted(formData: any): void {
+  override handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); })).subscribe({
       next: () => {
@@ -156,24 +106,4 @@ showGraphBuilder = false;
     });
   }
 
-  handleViewDetails(item: any): void {
-    if (!item.id) return;
-    this.getItemDetails(item.id).subscribe({
-      next: (details) => { this.selectedItemForDetails = details; this.showDetails = true; this.cd.markForCheck(); }
-    });
-  }
-
-  handleCloseDetails(): void { this.selectedItemForDetails = null; this.showDetails = false; }
-  onCancelForm(): void { this.showCreateForm = false; this.selectedItemForEdit = null; this.cd.markForCheck(); }
-  handleItemRestored(): void { this.refreshData(); }
-  handleItemDeleted(): void { this.refreshData(); }
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

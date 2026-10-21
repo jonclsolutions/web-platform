@@ -13,6 +13,8 @@
  * @note siteSettings is read from PublicDataService.siteSettingsValue$ (populated once by
  *   AppBootstrapService during APP_INITIALIZER) instead of being fetched here. By the time
  *   this component renders, the value — and the logo image bytes — are already available.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `en_flag_link`, `tel_icon`, `mail_icon`.
  */
 
 import {
@@ -51,11 +53,6 @@ isDrawerLangOpen: boolean = false;
   private resizeObserver: ResizeObserver | undefined;
 
   siteSettings: any = null;
-
-  // Asset paths
-  en_flag_link: string = 'assets/images/icons/united-kingdom.png';
-  tel_icon: string = 'assets/images/icons/call.png';
-  mail_icon: string = 'assets/images/icons/mail.png';
 
   showIndicator: boolean = false;
   isAnimatingTransition: boolean = false;

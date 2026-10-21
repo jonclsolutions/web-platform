@@ -4,6 +4,8 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `alertDialogService`.
  */
 
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
@@ -11,7 +13,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, RouterLink } from '@angular/router';
 import { BasePublicComponent } from '../../base-public.component';
 import { CartService, CartItem } from '../components/services/cart.service';
-import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 
 @Component({
@@ -28,7 +29,6 @@ export class CartComponent extends BasePublicComponent {
   
   private router = inject(Router);
   private confirmDialogService = inject(ConfirmDialogService);
-  private alertDialogService = inject(AlertDialogService);
   public cartService = inject(CartService);
 
   /**

@@ -31,12 +31,11 @@
  * (nová signatura vyžaduje i18n parametr).
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import * as Config from './security-events.config';
@@ -71,7 +70,6 @@ interface ChartDay {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SecurityEventsComponent extends BaseDataComponent<any> implements OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   protected override translationSection: string = 'security-events';
 
@@ -83,16 +81,11 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
 
   override apiEndpoint: string = 'core/security_events';
 
-  buttons: Core.TableButtons[] = [];
   tableColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
-  formFields: Core.InputDefinition[] = [];
-  selectedItemForDetails: any | null = null;
 
   private confirmDialog = inject(ConfirmDialogService);
 
-  filters: Core.FilterParams = {
+  override filters: Core.FilterParams = {
     sort_by: 'last_seen_at',
     sort_direction: 'desc'
   };
@@ -127,8 +120,6 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   statusOptions: { value: string; label: string }[] = [];
 
   readonly retentionOptions = [7, 14, 30, 60, 90, 180, 365];
-
-  showGraphBuilder = false;
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
   graphColumns: GraphColumnOption[] = [];
@@ -180,7 +171,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     });
   }
 
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       openGraphBuilder: () => this.openGraphBuilder(),
@@ -200,31 +191,13 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.forceFullRefresh(this.filters);
   }
 
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
+  override clearFilters(): void {
     this.filters = { sort_by: 'last_seen_at', sort_direction: 'desc' };
     this.currentPage = 1;
     this.refreshData();
   }
 
-  handlePageChange(page: number): void {
-    this.onHandlePageChange(page, this.filters);
-  }
-
-  handleItemsPerPageChange(value: number): void {
-    this.onHandleItemsPerPageChange(value, this.filters);
-  }
-
-  exportActiveTable(): void {
-    if (this.activeTable) this.activeTable.exportToCSV();
-  }
-
-  handleViewDetails(item: any): void {
+  override handleViewDetails(item: any): void {
     this.getItemDetails(item.id).subscribe({
       next: (details) => {
         this.selectedItemForDetails = details;
@@ -235,7 +208,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     });
   }
 
-  handleCloseDetails(): void {
+  override handleCloseDetails(): void {
     this.selectedItemForDetails = null;
     this.showDetails = false;
     this.cd.markForCheck();
@@ -502,22 +475,13 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     });
   }
 
-  handleEditFormOpened(item: any): void {
+  override handleEditFormOpened(item: any): void {
     this.handleEditTriage(item);
   }
 
-  handleItemDeleted(): void {
+  override handleItemDeleted(): void {
     this.refreshData();
     this.loadStats();
   }
 
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

@@ -25,12 +25,13 @@
  * INTERNÍ audit log (`web_logs.description`), ne UI text - stejná logika jako
  * `CoreSecuritySettingController`'s `logAction()` na backendu (auditní záznamy nejsou
  * user-facing, nemají procházet i18n).
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `logAction`, `logEndpoint`.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
-import { TableBuilderComponent } from '../../components/builders/table-builder/table-builder.component';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import * as Config from './sales-leads.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
@@ -51,7 +52,6 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.OnInit {
-  @ViewChild('activeTable') activeTable!: TableBuilderComponent;
 
   protected override translationSection: string = 'sales-leads';
 
@@ -62,26 +62,12 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
   tableCaption: string = '';
 
   override apiEndpoint: string = 'web/sales_leads';
-  private logEndpoint: string = 'web/logs';
 
-  buttons: Core.TableButtons[] = [];
-  formFields: Core.InputDefinition[] = [];
   salesLeadColumns: Core.ColumnDefinition[] = [];
   trashSalesLeadColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[] = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` - viz hlavička souboru. */
   graphColumns: GraphColumnOption[] = [];
-
-  selectedItemForEdit: any | null = null;
-  selectedItemForDetails: any | null = null;
-
-  filters: Core.FilterParams = {
-    sort_by: 'id',
-    sort_direction: 'desc'
-  };
-  showGraphBuilder = false;
 
   constructor(
     protected override dataHandler: Core.DataHandler,
@@ -145,7 +131,7 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     });
   }
 
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
@@ -187,65 +173,20 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
       });
   }
 
-  /**
-   * @note `description` ZŮSTÁVÁ anglicky natvrdo - interní audit log
-   * (`web_logs.description`), ne UI text, viz refactor-note v hlavičce souboru.
-   */
-  private logAction(item: any): void {
-    const logData = {
-      event_type: 'LINK_GENERATED',
-      module: 'SalesLead',
-      description: `Generován odkaz pro lead ID: ${item.id} (Email: ${item.contact_email || 'N/A'})`,
-      affected_entity_type: 'sales_lead',
-      affected_entity_id: item.id,
-      user_id_plain: this.authService.getUserId()?.toString(),
-      user_plain: this.authService.getUserEmail(),
-      context_data: JSON.stringify({ component: 'SalesLeads' })
-    };
-
-    this.dataHandler.post(this.logEndpoint, logData)
-      .pipe(Core.takeUntil(this.destroy$))
-      .subscribe();
-  }
-
   override refreshData(): void {
     this.forceFullRefresh(this.filters);
   }
 
-  applyFilters(f: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...f };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
+  override clearFilters(): void {
     this.filters = { ...this.defaultFilters };
     this.refreshData();
   }
 
-  handlePageChange(p: number): void {
-    this.onHandlePageChange(p, this.filters);
-  }
-
-  handleItemsPerPageChange(v: number): void {
-    this.onHandleItemsPerPageChange(v, this.filters);
-  }
-
-  exportActiveTable(): void {
+  override exportActiveTable(): void {
     this.activeTable?.exportToCSV();
   }
 
-  handleCreateFormOpened(): void {
-    this.selectedItemForEdit = null;
-    this.showCreateForm = true;
-  }
-
-  handleEditFormOpened(item: any): void {
-    this.selectedItemForEdit = { ...item };
-    this.showCreateForm = true;
-  }
-
-  handleFormSubmitted(formData: any): void {
+  override handleFormSubmitted(formData: any): void {
     const req = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     req.pipe(
       Core.finalize(() => {
@@ -264,7 +205,7 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     });
   }
 
-  handleViewDetails(item: any): void {
+  override handleViewDetails(item: any): void {
     this.getItemDetails(item.id).subscribe(d => {
       this.selectedItemForDetails = d;
       this.showDetails = true;
@@ -272,25 +213,10 @@ export class SalesLeadsComponent extends BaseDataComponent<any> implements Core.
     });
   }
 
-  onCancelForm(): void {
-    this.showCreateForm = false;
-    this.selectedItemForEdit = null;
-    this.cd.markForCheck();
-  }
-
-  handleCloseDetails(): void {
+  override handleCloseDetails(): void {
     this.showDetails = false;
     this.selectedItemForDetails = null;
     this.cd.markForCheck();
   }
 
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }

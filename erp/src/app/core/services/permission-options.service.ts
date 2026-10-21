@@ -13,6 +13,8 @@
  * - DataHandler: Shared HTTP wrapper used across the admin app for API calls.
  * - shareReplay: Keeps a single in-flight/most-recent request shared across all
  *   subscribers instead of firing a new HTTP request per subscription.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `invalidate`.
  */
 
 import { Injectable } from '@angular/core';
@@ -59,14 +61,5 @@ export class PermissionOptionsService {
     }
 
     return this.cache$!;
-  }
-
-  /**
-   * @description Forces the next getPermissions() call to hit the network again -
-   * useful after a sysadmin creates/renames a permission elsewhere in the admin.
-   */
-  invalidate(): void {
-    this.cache$ = null;
-    this.cachedAt = 0;
   }
 }

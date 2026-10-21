@@ -194,7 +194,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Dispatches actions triggered from the main module toolbar.
    * @param action The requested toolbar action identifier.
    */
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     if (action === 'expandAll') this.expandAll(true);
     if (action === 'collapseAll') this.expandAll(false);
     if (action === 'addMain') this.initAddCategory(null);

@@ -4,6 +4,8 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `onItemsPerPageChange`, `getProductUrl`.
  */
 
 import { Component, OnInit, signal, inject } from '@angular/core';
@@ -118,15 +120,5 @@ export class CatalogComponent extends BasePublicComponent implements OnInit {
   onPageChange(page: number): void {
     this.filters.page = page;
     this.loadProducts();
-  }
-
-  onItemsPerPageChange(amount: number): void {
-    this.filters.per_page = amount;
-    this.filters.page = 1;
-    this.loadProducts();
-  }
-
-  getProductUrl(slug: string): string {
-    return `${this.config.ENDPOINTS.PRODUCT_DETAIL_BASE}/${slug}`;
   }
 }

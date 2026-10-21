@@ -27,9 +27,11 @@
  *   přímá součást i18n (formátování čísel dle jazyka), ne byznys logika.
  * - `console.error()` volání (export/lookup fetch chyby) ZÁMĚRNĚ ponechána
  *   nepřeložená - jde o dev diagnostiku, ne uživatelský text.
+ * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
+ *   string literals): `getTrashToolbarButtons`.
  */
 
-import { Component, ViewChild, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
@@ -53,7 +55,6 @@ import * as Config from './products.config';
 })
 export class ProductsComponent extends BaseDataComponent<Product> implements OnInit, OnDestroy {
   override apiEndpoint: string = 'shop/products';
-  @ViewChild('activeTable') activeTable!: any;
 
   protected override translationSection: string = 'shop-products';
 
@@ -85,19 +86,12 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
 
   private isProcessing = false;
 
-  filters: Core.FilterParams = { sort_by: 'id', sort_direction: 'desc' };
-
-  buttons: Core.TableButtons[]            = [];
   productColumns: Core.ColumnDefinition[]  = [];
   trashProductColumns: Core.ColumnDefinition[] = [];
-  filterColumns: Core.FilterColumns[]     = [];
   /** @refactor-note (2026-09-08) Plain pole, NE getter - viz hlavička souboru. */
   toolbarButtons: Core.Button[]           = [];
-  formFields: any[]      = [];
-  detailsColumns: Core.ItemDetailsColumns[] = [];
+  override formFields: any[]      = [];
   selectedFormCategories: Category[] = [];
-
-  showGraphBuilder = false;
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` - přepočítáno v i18n subscribe. */
   graphColumns: GraphColumnOption[] = [];
@@ -166,7 +160,7 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     document.body.classList.toggle('modal-open', lock);
   }
 
-  handleToolbarAction(action: string): void {
+  override handleToolbarAction(action: string): void {
     if (this.isProcessing) return;
     const actions: Record<string, () => void> = {
       toggleFilters:          () => this.toggleFilters(),
@@ -178,13 +172,7 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     actions[action]?.();
   }
 
-  getTrashToolbarButtons(): any[] {
-    return this.toolbarButtons.filter(
-      btn => btn.action !== 'handleCreateFormOpened' && btn.action !== 'exportActiveTable'
-    );
-  }
-
-  exportActiveTable(): void {
+  override exportActiveTable(): void {
     if (this.activeTable) this.activeTable.exportToCSV();
     else console.error('Active table not found for export.');
   }
@@ -203,19 +191,10 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
-  applyFilters(newFilters: Core.FilterParams): void {
-    this.filters = { ...this.filters, ...newFilters };
-    this.currentPage = 1;
-    this.refreshData();
-  }
-
-  clearFilters(): void {
+  override clearFilters(): void {
     this.filters = { sort_by: 'id', sort_direction: 'desc' };
     this.refreshData();
   }
-
-  handlePageChange(page: number): void        { this.onHandlePageChange(page, this.filters); }
-  handleItemsPerPageChange(value: number): void { this.onHandleItemsPerPageChange(value, this.filters); }
 
   private loadCategories(): void {
     this.resourceCache.get(
@@ -258,7 +237,7 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     });
   }
 
-  handleViewDetails(item: any): void {
+  override handleViewDetails(item: any): void {
     if (this.isProcessing || !item.id) return;
     this.isProcessing = true;
     this.loadingService.show();
@@ -741,7 +720,7 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     if (this.editingProduct) { this.editingProduct.category_id = categoryId; this.cd.markForCheck(); }
   }
 
-  handleCreateFormOpened(): void {
+  override handleCreateFormOpened(): void {
     this.selectedFormCategories = [];
     this.editingProduct = {
       name: '', slug: '', sku: '', short_description: '', description: '',
@@ -756,7 +735,7 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.cd.markForCheck();
   }
 
-  handleEditFormOpened(item: Product): void {
+  override handleEditFormOpened(item: Product): void {
     this.editingProduct = JSON.parse(JSON.stringify(item));
     if (this.editingProduct) {
       this.editingProduct.variants    = this.editingProduct.variants ?? [];
@@ -805,13 +784,4 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
       : images.filter((img: any) => !img._delete && !img.variant_id);
   }
 
-  openGraphBuilder(): void {
-    this.showGraphBuilder = true;
-    this.cd.markForCheck();
-  }
-
-  closeGraphBuilder(): void {
-    this.showGraphBuilder = false;
-    this.cd.markForCheck();
-  }
 }
