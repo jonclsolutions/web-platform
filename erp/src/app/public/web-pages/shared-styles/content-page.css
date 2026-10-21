@@ -1,0 +1,34 @@
+/*
+    @file: content-page.css
+    @path: /src/app/public/web-pages/shared-styles/content-page.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Common frame of the public content pages (about, FAQ, references, services, jobs): page wrapper and hero section spacing.
+    @dependencies: public/web-pages/shared-styles/theme.css (tokens)
+*/
+
+/*
+    @module: Content page frame
+    @description: Page wrapper and hero block shared by the content pages. Page-specific parts (hero title, subtitle, background) stay in each page.
+    @usage: <section class="about-page content-page"> … <header class="about-hero content-page-hero">
+    @note: Each page keeps its own class next to the shared one (about-page, faq-hero, …) for its specific rules. Hero titles differ between pages and stay in the pages.
+*/
+
+.content-page {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-body);
+  overflow-x: hidden;
+}
+
+.content-page-hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--hero-top) var(--gutter) var(--hero-bottom);
+  animation: fadeUp 0.7s ease-out both;
+}

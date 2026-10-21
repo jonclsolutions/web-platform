@@ -1,0 +1,35 @@
+/*
+    @file: page.css
+    @path: /src/app/admin/web-pages/shared-styles/page.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+    @description: List-page rules used only by the web admin pages (info banner, small text helper and the
+        filter side panel breakpoint). Everything the core, shop and web pages have in common lives in
+        admin/shared-styles/page.css, which is included right before this file.
+    @dependencies: admin/shared-styles/page.css (included first); colour primitives from app/shared/styles/tokens.css (global)
+*/
+
+.info-banner {
+  font-size: small;
+}
+
+@media (min-width: 1024px) {
+  .main-content-layout {
+    flex-direction: row;
+    gap: 0;
+  }
+  .filter-side-panel {
+    width: 0;
+    height: 0;
+    max-height: none;
+    margin-right: 0;
+    padding: 0;
+    border: none;
+  }
+  .filter-side-panel.active {
+    width: 250px;
+    height: auto;
+    margin-left: 5px;
+  }
+}

@@ -12,35 +12,17 @@
 */
 
 :host {
-  --bg:           #0d0d1b;
-  --surface:      #111128;
-  --surface-2:    #18183a;
-  --border:       rgba(166, 125, 255, 0.1);
-  --border-mid:   rgba(166, 125, 255, 0.22);
-  --accent:       #a67dff;
-  --accent-dark:  #6b2e91;
-  --accent-dim:   rgba(166, 125, 255, 0.07);
   --accent-grid:  rgba(166, 125, 255, 0.03);
   --accent-hover: #7d35ae;
-  --white:        #ffffff;
-  --text:         #e0e0f0;
-  --text-muted:   #888899;
+  --white:        var(--color-white);
   --text-dim:     #555566;
   --error:        #ff5566;
   --success:      #44cc88;
-  --ff-display:   'Source Sans Pro', 'Segoe UI', sans-serif;
-  --ff-body:      'Segoe UI', system-ui, sans-serif;
-  --radius:       12px;
-  --radius-lg:    18px;
-  --ease:         0.25s ease;
 
   /* ── Unified spacing (same values on every public page) ── */
-  --gutter:       24px;   /* side padding of every container */
   --section-y:    96px;   /* page bottom spacing */
   --hero-top:     180px;  /* navbar height + air above page content */
 }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Wrapper / background ────────────────────────────────────── */
 .form-wrp {
@@ -208,62 +190,6 @@
   border-color: var(--accent);
   background: var(--accent-dim);
   box-shadow: 0 0 0 3px rgba(166, 125, 255, 0.08);
-}
-
-.file-drop-area.has-file {
-  border-style: solid;
-  border-color: var(--success);
-  background: rgba(68, 204, 136, 0.05);
-}
-
-.file-input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.file-msg {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  pointer-events: none;
-}
-
-.upload-icon {
-  font-size: 1.2rem;
-  color: var(--accent);
-  border: 1px solid var(--border-mid);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: background var(--ease), color var(--ease), border-color var(--ease);
-}
-
-.file-drop-area:hover .upload-icon {
-  background: var(--accent);
-  color: var(--bg);
-  border-color: var(--accent);
-}
-
-.file-drop-area.has-file .upload-icon {
-  color: var(--success);
-  border-color: var(--success);
-}
-
-.file-text {
-  font-size: 0.88rem;
-  color: var(--text-muted);
-}
-
-.file-drop-area.has-file .file-text {
-  color: var(--text);
-  font-weight: 600;
 }
 
 /* ── Checkboxes / GDPR ───────────────────────────────────────── */

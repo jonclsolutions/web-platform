@@ -117,7 +117,7 @@ interface RevealedPassword {
   standalone: true,
   imports: [SHARED_UI_BUILDERS, FormsModule, GraphBuilderComponent],
   templateUrl: './projects.component.html',
-  styleUrls: ['../default-style.css', './project-manage-modal.css'],
+  styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css', './project-manage-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectsComponent extends BaseDataComponent<any> implements Core.OnInit {

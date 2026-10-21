@@ -1,0 +1,33 @@
+/*
+    @file: welcome-page.css
+    @path: /src/app/admin/shared-styles/welcome-page.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Greeting block at the top of the core, shop and web welcome pages.
+    @dependencies: none
+*/
+
+/*
+    @module: Welcome page heading
+    @description: Greeting block at the top of the core, shop and web welcome pages.
+    @usage: .wp-welcome, .wp-welcome-title
+*/
+
+.wp-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 4px 0 14px;
+  flex-wrap: wrap;
+}
+
+.wp-welcome-title {
+  margin: 0 0 5px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-zinc-900);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}

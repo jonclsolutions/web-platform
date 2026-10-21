@@ -64,7 +64,7 @@ import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 @Component({
   selector: 'app-admin-layout',
   templateUrl: './admin-layout.component.html',
-  styleUrls: ['./admin-layout.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', './admin-layout.component.css'],
   standalone: true,
   imports: [CommonModule, RouterModule, DatePipe, HasPermissionDirective],
   providers: [

@@ -55,20 +55,11 @@
     text-align: center;
 }
 
-.kb-hero-eyebrow {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #a67dff;
-    margin-bottom: 16px;
-}
-
 .kb-hero-heading {
     font-family: 'Source Sans Pro', 'Segoe UI', sans-serif;
     font-size: clamp(2.4rem, 5vw, 4rem);
     font-weight: 700;
-    color: #ffffff;
+    color: var(--color-white);
     line-height: 1.15;
     max-width: 720px;
     margin: 0 auto var(--title-gap);
@@ -189,27 +180,6 @@
     align-items: center;
     gap: 16px;
     margin-bottom: var(--title-gap);
-}
-
-.kb-section-icon {
-    width: 46px;
-    height: 46px;
-    flex-shrink: 0;
-    border-radius: 12px;
-    background: rgba(166, 125, 255, 0.1);
-    border: 1px solid rgba(166, 125, 255, 0.22);
-    color: #a67dff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.kb-section-eyebrow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #a67dff;
-    margin-bottom: 4px;
 }
 
 .kb-section-header {
@@ -359,15 +329,6 @@
     max-width: 460px;
 }
 
-.kb-cta-eyebrow {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: #a67dff;
-    margin: 0 0 10px;
-}
-
 .kb-cta-text {
     font-size: 0.98rem;
     color: #a0a0b5;
@@ -383,7 +344,7 @@
     background: #6b2e91;
     border: 1px solid #a67dff;
     border-radius: 999px;
-    color: #fff;
+    color: var(--color-white);
     font-size: 0.92rem;
     font-weight: 600;
     text-decoration: none;
@@ -393,14 +354,6 @@
 .kb-cta-btn:hover {
     background: #7d35ae;
     transform: translateY(-2px);
-}
-
-.kb-cta-arrow {
-    transition: transform 0.25s ease;
-}
-
-.kb-cta-btn:hover .kb-cta-arrow {
-    transform: translateX(4px);
 }
 
 /* ── Responsive ───────────────────────────────────── */

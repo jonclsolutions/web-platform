@@ -24,7 +24,7 @@ type LoginStep = 'credentials' | 'otp';
   standalone: true,
   imports: [FormsModule, RouterModule, CommonModule],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../../../shared/styles/base.css', './login.component.css']
 })
 export class LoginComponent extends BasePublicComponent implements OnDestroy {
 

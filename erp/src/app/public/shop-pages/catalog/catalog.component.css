@@ -6,13 +6,7 @@
     @created: 2026 
 */
 :host {
-  --bg-main: #ffffff;
-  --bg-dark: #000000;
-  --text-main: #000000;
-  --text-dim: #707070;
-  --border: #e5e5e5;
-  --border-dark: #000000;
-  --transition: all 0.2s ease-in-out;
+  --bg-main: var(--color-white);
 }
 
 .catalog-container {

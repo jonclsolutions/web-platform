@@ -33,7 +33,7 @@
 }
 
 .email-tpl-card {
-  background: #ffffff;
+  background: var(--color-white);
   border-radius: 16px;
   width: 100%;
   max-width: 620px;
@@ -50,32 +50,32 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid #ececea;
+  border-bottom: 1px solid var(--color-sand-200);
 }
 
 .email-tpl-title {
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
 }
 
 .email-tpl-subtitle {
   margin: 4px 0 0;
   font-size: 12.5px;
-  color: #71717a;
+  color: var(--color-zinc-500);
 }
 
 .email-tpl-close {
   border: none;
   background: transparent;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   cursor: pointer;
   font-size: 20px;
   line-height: 1;
   padding: 4px;
 }
-.email-tpl-close:hover:not(:disabled) { color: #18181b; }
+.email-tpl-close:hover:not(:disabled) { color: var(--color-zinc-900); }
 .email-tpl-close:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .email-tpl-body {
@@ -85,7 +85,7 @@
 }
 
 .email-tpl-loading {
-  color: #71717a;
+  color: var(--color-zinc-500);
   font-size: 13px;
 }
 
@@ -103,12 +103,12 @@
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  background: #f4f4f5;
-  color: #52525b;
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-600);
 }
 .email-tpl-lang-tab.active {
-  background: #18181b;
-  color: #ffffff;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
 }
 
 .email-tpl-field {
@@ -119,7 +119,7 @@
   display: block;
   font-size: 12.5px;
   font-weight: 600;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   margin-bottom: 6px;
 }
 
@@ -128,50 +128,27 @@
   width: 100%;
   box-sizing: border-box;
   padding: 10px 12px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--color-zinc-200);
   border-radius: 8px;
   font-size: 13.5px;
-  color: #18181b;
+  color: var(--color-zinc-900);
   font-family: inherit;
   /* Explicitní pojistka proti jakémukoliv globálnímu pravidlu, které by mohlo
      nechtěně vypnout interaktivitu - viz bugfix-note v hlavičce souboru. */
   pointer-events: auto !important;
   position: relative;
   z-index: 1;
-  background: #ffffff;
+  background: var(--color-white);
 }
 
 .email-tpl-textarea {
   resize: vertical;
 }
 
-.email-tpl-summary-box {
-  margin-bottom: 16px;
-  padding: 12px 14px;
-  background: #fafafa;
-  border: 1px solid #ececea;
-  border-radius: 8px;
-}
-
-.email-tpl-summary-label {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #a1a1aa;
-}
-
-.email-tpl-summary-text {
-  margin: 6px 0 0;
-  font-size: 12.5px;
-  color: #71717a;
-  line-height: 1.5;
-}
-
 .email-tpl-hint {
   margin: 12px 0 0;
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
 }
 
 .email-tpl-footer {
@@ -179,15 +156,15 @@
   justify-content: flex-end;
   gap: 10px;
   padding: 16px 24px;
-  border-top: 1px solid #ececea;
+  border-top: 1px solid var(--color-sand-200);
 }
 
 .email-tpl-btn-cancel {
   padding: 9px 18px;
   border-radius: 999px;
-  border: 1px solid #ececea;
-  background: #ffffff;
-  color: #52525b;
+  border: 1px solid var(--color-sand-200);
+  background: var(--color-white);
+  color: var(--color-zinc-600);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -198,8 +175,8 @@
   padding: 9px 18px;
   border-radius: 999px;
   border: none;
-  background: #18181b;
-  color: #ffffff;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -213,10 +190,10 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   margin: 24px 0 12px;
   padding-top: 16px;
-  border-top: 1px dashed #ececea;
+  border-top: 1px dashed var(--color-sand-200);
 }
 
 .email-tpl-labels-grid {
@@ -230,7 +207,7 @@
 
 .email-tpl-label-hint {
   font-weight: 400;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   text-transform: none;
   letter-spacing: normal;
   font-size: 11px;
@@ -240,42 +217,42 @@
   display: flex;
   gap: 6px;
   padding: 8px 12px;
-  background: #fafafa;
-  border: 1px solid #ececea;
+  background: var(--color-zinc-50);
+  border: 1px solid var(--color-sand-200);
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   font-size: 12px;
 }
 .email-tpl-preview-subject-label {
   font-weight: 700;
-  color: #71717a;
+  color: var(--color-zinc-500);
   flex-shrink: 0;
 }
 .email-tpl-preview-subject-value {
-  color: #18181b;
+  color: var(--color-zinc-900);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .email-tpl-preview-frame {
-  border: 1px solid #ececea;
+  border: 1px solid var(--color-sand-200);
   border-radius: 0 0 12px 12px;
   overflow: hidden;
-  background: #f4f4f5;
+  background: var(--color-zinc-100);
   margin-bottom: 16px;
 }
 
 .email-tpl-preview-header {
-  background: #18181b;
-  color: #ffffff;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
   font-size: 12.5px;
   font-weight: 700;
   padding: 12px 18px;
 }
 
 .email-tpl-preview-body {
-  background: #ffffff;
+  background: var(--color-white);
   padding: 18px;
 }
 
@@ -283,20 +260,20 @@
   margin: 0 0 12px;
   font-size: 15px;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
 }
 
 .email-tpl-preview-text {
   margin: 0 0 10px;
   font-size: 12.5px;
   line-height: 1.6;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   white-space: pre-line;
 }
 
 .email-tpl-preview-outro {
   margin-top: 14px;
-  color: #71717a;
+  color: var(--color-zinc-500);
 }
 
 .email-tpl-preview-summary-label {
@@ -305,30 +282,30 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #71717a;
+  color: var(--color-zinc-500);
 }
 
 .email-tpl-preview-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #ececea;
+  border: 1px solid var(--color-sand-200);
   border-radius: 8px;
   overflow: hidden;
   font-size: 12px;
 }
 .email-tpl-preview-table td {
   padding: 8px 12px;
-  border-bottom: 1px solid #ececea;
+  border-bottom: 1px solid var(--color-sand-200);
 }
 .email-tpl-preview-table tr:last-child td {
   border-bottom: none;
 }
 .email-tpl-preview-td-label {
-  background: #fafafa;
+  background: var(--color-zinc-50);
   font-weight: 600;
-  color: #52525b;
+  color: var(--color-zinc-600);
   width: 38%;
 }
 .email-tpl-preview-td-value {
-  color: #18181b;
+  color: var(--color-zinc-900);
 }

@@ -1,0 +1,50 @@
+/*
+    @file: quantity.css
+    @path: /src/app/public/shop-pages/shared-styles/quantity.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Quantity +/- buttons, number field without spinners and buy / view-cart buttons shared by the cart and the product detail.
+    @dependencies: none
+*/
+
+/*
+    @module: Quantity selector and buy buttons
+    @description: Quantity +/- buttons, number field without spinners and buy / view-cart buttons shared by the cart and the product detail.
+    @usage: .btn-buy, .btn-view-cart:hover, .qty-btn:disabled, .qty-btn:hover:not(:disabled), .qty-display::-webkit-outer-spin-button, .qty-display::-webkit-inner-spin-button
+*/
+
+.qty-btn:hover:not(:disabled) {
+  background: var(--bg-dark);
+  color: var(--bg-main);
+}
+
+.qty-btn:disabled {
+  color: var(--border);
+  cursor: not-allowed;
+}
+
+.qty-display::-webkit-outer-spin-button,
+.qty-display::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-buy {
+  width: 100%;
+  background: var(--bg-dark);
+  border: 1px solid var(--bg-dark);
+  color: var(--bg-main);
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: 0;
+  text-transform: uppercase;
+  transition: var(--transition);
+}
+
+.btn-view-cart:hover { 
+  color: var(--text-main); 
+}

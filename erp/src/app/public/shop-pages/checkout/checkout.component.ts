@@ -30,7 +30,7 @@ import { AlertDialogService } from '../../../core/services/alert-dialog.service'
   standalone: true,
   imports: [FormsModule, RouterLink],
   templateUrl: './checkout.component.html',
-  styleUrls: ['./checkout.component.css']
+  styleUrls: ['../shared-styles/theme.css', './checkout.component.css']
 })
 export class CheckoutComponent implements OnInit {
   currentStep = signal(1); // 1 = Form entry, 5 = Success

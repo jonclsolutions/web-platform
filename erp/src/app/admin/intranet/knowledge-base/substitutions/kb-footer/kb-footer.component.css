@@ -10,8 +10,8 @@
 .article-footer {
   margin-top: 60px;
   padding: 30px 0;
-  border-top: 1px solid #ececea;
-  color: #71717a;
+  border-top: 1px solid var(--color-sand-200);
+  color: var(--color-zinc-500);
 }
 
 .footer-content {
@@ -30,7 +30,7 @@
 }
 
 .footer-contact strong {
-  color: #18181b;
+  color: var(--color-zinc-900);
 }
 
 .tiny-text {
@@ -39,12 +39,12 @@
 }
 
 .footer-mail-link {
-  color: #18181b;
+  color: var(--color-zinc-900);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .footer-mail-link:hover {
-  color: #000000;
+  color: var(--color-black);
 }

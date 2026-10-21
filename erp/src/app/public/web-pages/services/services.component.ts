@@ -48,7 +48,7 @@ export interface PricingMatrix {
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './services.component.html',
-  styleUrls: ['./services.component.css'],
+  styleUrls: ['../shared-styles/theme.css', '../shared-styles/animations.css', '../shared-styles/cta.css', '../shared-styles/faq-list.css', '../shared-styles/content-page.css', './services.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ServicesComponent extends BasePublicComponent {

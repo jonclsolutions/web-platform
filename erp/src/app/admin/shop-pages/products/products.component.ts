@@ -48,7 +48,7 @@ import * as Config from './products.config';
   standalone: true,
   imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './products.component.html',
-  styleUrl: './products.component.css',
+  styleUrls: ['../shared-styles/list-page.css', './products.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductsComponent extends BaseDataComponent<Product> implements OnInit, OnDestroy {

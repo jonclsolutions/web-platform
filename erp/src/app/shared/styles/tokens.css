@@ -1,0 +1,67 @@
+/*
+    @file: tokens.css
+    @path: /src/app/shared/styles/tokens.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Global colour primitives shared by the admin and the public part. Raw palette values
+        only – no meaning attached. Imported once by src/styles.css, so every component can use them.
+    @dependencies: none
+*/
+
+/*
+    @module: Colour primitives
+    @description: One name per raw colour value used in both parts of the app. Names follow the
+        palette scale (50 = lightest … 900 = darkest), so a value is never defined twice.
+    @usage: var(--color-zinc-900), var(--color-rose-600), … – directly, or better through a theme
+        token (e.g. admin theme.css: --text: var(--color-zinc-900)).
+    @note: Every name starts with --color- so it can never collide with a component's own token
+        (several components define e.g. their own --white). Do not put themed names (--accent,
+        --text, …) here: the admin, the public web and the e-shop use the same names with different
+        values – those live in each look's theme.css.
+*/
+:root {
+  /* neutrals */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+  /* warm neutrals (admin page background and hairlines) */
+  --color-sand-50: #f7f6f3;
+  --color-sand-200: #ececea;
+  --color-sand-300: #e0e0dd;
+
+  /* status: error / danger */
+  --color-rose-50: #fff1f2;
+  --color-rose-200: #fecdd3;
+  --color-rose-600: #e11d48;
+  --color-rose-700: #be123c;
+  --color-rose-800: #9f1239;
+  /* status: warning */
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  /* status: success */
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  /* status: info */
+  --color-indigo-50: #eef2ff;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+}

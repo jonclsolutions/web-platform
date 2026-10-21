@@ -105,7 +105,7 @@ interface CompanySettings {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './project-portal.component.html',
-  styleUrl: './project-portal.component.css',
+  styleUrls: ['../../../admin/shared-styles/theme.css', './project-portal.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectPortalComponent implements OnInit, OnDestroy {

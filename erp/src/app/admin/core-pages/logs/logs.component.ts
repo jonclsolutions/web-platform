@@ -43,7 +43,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   standalone: true,
   imports: [SHARED_UI_BUILDERS, GraphBuilderComponent],
   templateUrl: './logs.component.html',
-  styleUrl: '../default-style.css',
+  styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CoreLogsComponent extends BaseDataComponent<any> implements Core.OnInit {

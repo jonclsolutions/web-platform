@@ -146,7 +146,7 @@ interface RecentOrder {
   standalone: true,
   imports: [CommonModule, HasPermissionDirective],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css',
+  styleUrls: ['../../shared-styles/dashboard.css', '../../shared-styles/dashboard-maintenance.css', './dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
 

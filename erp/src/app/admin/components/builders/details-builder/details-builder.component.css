@@ -23,8 +23,8 @@
 }
 
 .form-container {
-  background: #ffffff;
-  border: 1px solid #ececea;
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
   border-radius: 18px;
   box-shadow: 0 20px 50px rgba(24, 24, 27, 0.18);
   width: 100%;
@@ -51,8 +51,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px;
-  border-bottom: 1px solid #f4f4f5;
-  background: #fafafa;
+  border-bottom: 1px solid var(--color-zinc-100);
+  background: var(--color-zinc-50);
   flex-shrink: 0;
 }
 
@@ -60,7 +60,7 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
   letter-spacing: -0.01em;
 }
 
@@ -70,7 +70,7 @@
   border-radius: 999px;
   border: none;
   background: transparent;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   font-size: 1.3rem;
   line-height: 1;
   display: flex;
@@ -82,8 +82,8 @@
 }
 
 .close-button:hover {
-  background: #ececea;
-  color: #18181b;
+  background: var(--color-sand-200);
+  color: var(--color-zinc-900);
 }
 
 /* ── Obsah ──────────────────────────────────────────────── */
@@ -103,7 +103,7 @@
   grid-template-columns: 180px 1fr;
   gap: 16px;
   padding: 11px 0;
-  border-bottom: 1px solid #f4f4f5;
+  border-bottom: 1px solid var(--color-zinc-100);
   align-items: start;
 }
 
@@ -114,32 +114,32 @@
 .label-cell {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #71717a;
+  color: var(--color-zinc-500);
   padding-top: 1px;
 }
 
 .value-cell {
   font-size: 0.87rem;
-  color: #18181b;
+  color: var(--color-zinc-900);
   font-weight: 500;
   word-break: break-word;
   line-height: 1.5;
 }
 
 .text-muted {
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   font-weight: 400;
   font-style: italic;
 }
 
 .json-block {
-  background: #fafafa;
-  border: 1px solid #ececea;
+  background: var(--color-zinc-50);
+  border: 1px solid var(--color-sand-200);
   border-radius: 10px;
   padding: 12px 14px;
   font-size: 0.78rem;
   font-family: 'Consolas', 'Courier New', monospace;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   white-space: pre-wrap;
   word-break: break-all;
   max-height: 220px;
@@ -170,24 +170,24 @@
 }
 
 .btn-action.view {
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--color-indigo-50);
+  color: var(--color-indigo-700);
   border-color: #c7d2fe;
 }
 .btn-action.view:hover { background: #e0e7ff; }
 
 .btn-action.download {
-  background: #ecfdf5;
-  color: #047857;
-  border-color: #a7f3d0;
+  background: var(--color-emerald-50);
+  color: var(--color-emerald-700);
+  border-color: var(--color-emerald-200);
 }
-.btn-action.download:hover { background: #d1fae5; }
+.btn-action.download:hover { background: var(--color-emerald-100); }
 
 /* ── Footer ─────────────────────────────────────────────── */
 .form-footer {
   padding: 14px 22px;
-  border-top: 1px solid #f4f4f5;
-  background: #fafafa;
+  border-top: 1px solid var(--color-zinc-100);
+  background: var(--color-zinc-50);
   display: flex;
   justify-content: flex-end;
   flex-shrink: 0;
@@ -196,9 +196,9 @@
 .btn-close-flat {
   padding: 9px 20px;
   border-radius: 999px;
-  border: 1px solid #e4e4e7;
-  background: #ffffff;
-  color: #3f3f46;
+  border: 1px solid var(--color-zinc-200);
+  background: var(--color-white);
+  color: var(--color-zinc-700);
   font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
@@ -207,8 +207,8 @@
 }
 
 .btn-close-flat:hover {
-  background: #f4f4f5;
-  border-color: #d4d4d8;
+  background: var(--color-zinc-100);
+  border-color: var(--color-zinc-300);
 }
 
 /* ── Responzivita ───────────────────────────────────────── */
@@ -225,7 +225,7 @@
   }
 
   .label-cell {
-    color: #a1a1aa;
+    color: var(--color-zinc-400);
   }
 }
 .details-files-list {
@@ -243,8 +243,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px 12px;
-  background: #fafafa;
-  border: 1px solid #ececea;
+  background: var(--color-zinc-50);
+  border: 1px solid var(--color-sand-200);
   border-radius: 10px;
   flex-wrap: wrap;
 }
@@ -258,14 +258,14 @@
 
 .details-file-name {
   font-weight: 600;
-  color: #18181b;
+  color: var(--color-zinc-900);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .details-file-size {
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   font-size: 0.78rem;
   white-space: nowrap;
 }

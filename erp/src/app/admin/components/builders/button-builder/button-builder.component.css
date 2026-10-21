@@ -43,29 +43,29 @@
 
 /* Specifické barvy a okraje - odlišené podle akce */
 .btn-filter {
-  background-color: #f4f4f5;
-  color: #3f3f46;
-  border-color: #e4e4e7;
+  background-color: var(--color-zinc-100);
+  color: var(--color-zinc-700);
+  border-color: var(--color-zinc-200);
 }
-.btn-filter:hover { background-color: #e4e4e7; }
+.btn-filter:hover { background-color: var(--color-zinc-200); }
 
 .btn-trash {
-  background-color: #fff1f2;
-  color: #be123c;
-  border-color: #fecdd3;
+  background-color: var(--color-rose-50);
+  color: var(--color-rose-700);
+  border-color: var(--color-rose-200);
 }
 .btn-trash:hover { background-color: #ffe4e6; }
 
 .btn-create {
-  background-color: #ecfdf5;
-  color: #047857;
-  border-color: #a7f3d0;
+  background-color: var(--color-emerald-50);
+  color: var(--color-emerald-700);
+  border-color: var(--color-emerald-200);
 }
-.btn-create:hover { background-color: #d1fae5; }
+.btn-create:hover { background-color: var(--color-emerald-100); }
 
 .btn-export {
-  background-color: #eef2ff;
-  color: #4338ca;
+  background-color: var(--color-indigo-50);
+  color: var(--color-indigo-700);
   border-color: #c7d2fe;
 }
 .btn-export:hover { background-color: #e0e7ff; }
@@ -77,27 +77,27 @@
 }
 
 .btn-filter.active {
-  background-color: #3f3f46;
-  color: #ffffff;
-  border-color: #3f3f46;
+  background-color: var(--color-zinc-700);
+  color: var(--color-white);
+  border-color: var(--color-zinc-700);
 }
 
 .btn-trash.active {
-  background-color: #be123c;
-  color: #ffffff;
-  border-color: #be123c;
+  background-color: var(--color-rose-700);
+  color: var(--color-white);
+  border-color: var(--color-rose-700);
 }
 
 .btn-create.active {
-  background-color: #047857;
-  color: #ffffff;
-  border-color: #047857;
+  background-color: var(--color-emerald-700);
+  color: var(--color-white);
+  border-color: var(--color-emerald-700);
 }
 
 .btn-export.active {
-  background-color: #4338ca;
-  color: #ffffff;
-  border-color: #4338ca;
+  background-color: var(--color-indigo-700);
+  color: var(--color-white);
+  border-color: var(--color-indigo-700);
 }
 
 /* Responzivita */

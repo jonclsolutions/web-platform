@@ -13,7 +13,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #18181b; /* solid black-ish, matches admin palette (#18181b) instead of pure #000 */
+  color: var(--color-zinc-900); /* solid black-ish, matches admin palette (#18181b) instead of pure #000 */
   line-height: 0;
 }
 

@@ -1,0 +1,30 @@
+/*
+    @file: theme.css
+    @path: /src/app/admin/shared-styles/theme.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Admin look (light, zinc palette): colour, font and status tokens shared by the admin section and the project portal.
+    @dependencies: none
+*/
+
+/*
+    @module: admin theme tokens
+    @description: Admin look (light, zinc palette): colour, font and status tokens shared by the admin section and the project portal.
+    @usage: :host (included first in styleUrls)
+    @note: Only tokens that every member defines live here. A member with a different value keeps its own declaration (marked "local value") after this file, so the result is unchanged.
+*/
+
+:host {
+  --surface: var(--color-white);
+  --surface-2: var(--color-zinc-50);
+  --border: var(--color-sand-200);
+  --border-mid: var(--color-sand-300);
+  --accent: var(--color-zinc-900);
+  --text: var(--color-zinc-900);
+  --text-muted: var(--color-zinc-500);
+  --text-dim: var(--color-zinc-400);
+  --success: var(--color-emerald-600);
+  --success-dim: var(--color-emerald-50);
+  --ff: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}

@@ -67,7 +67,7 @@ interface ChartDay {
   standalone: true,
   imports: [CommonModule, FormsModule, SHARED_UI_BUILDERS, GraphBuilderComponent],
   templateUrl: './security-events.component.html',
-  styleUrls: ['../default-style.css', './security-events.component.css'],
+  styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css', './security-events.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SecurityEventsComponent extends BaseDataComponent<any> implements OnInit {

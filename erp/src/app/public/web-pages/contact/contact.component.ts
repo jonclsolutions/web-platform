@@ -39,7 +39,7 @@ selector: 'app-contact',
 standalone: true,
 imports: [CommonModule, RouterModule, ReactiveFormsModule, MultiFileUploadComponent],
 templateUrl: './contact.component.html',
-styleUrls: ['./contact.component.css'],
+styleUrls: ['../shared-styles/form-fields.css', './contact.component.css'],
 changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContactComponent extends BasePublicComponent {

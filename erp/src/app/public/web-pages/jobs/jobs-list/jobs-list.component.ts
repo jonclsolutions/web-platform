@@ -9,7 +9,7 @@ import { JobItem } from './';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './jobs-list.component.html',
-  styleUrls: ['./jobs-list.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', '../../../../shared/styles/base.css', '../../shared-styles/animations.css', '../../shared-styles/content-page.css', './jobs-list.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JobsListComponent extends BasePublicComponent {

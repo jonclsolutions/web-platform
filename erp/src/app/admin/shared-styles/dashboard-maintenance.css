@@ -1,0 +1,154 @@
+/*
+    @file: dashboard-maintenance.css
+    @path: /src/app/admin/shared-styles/dashboard-maintenance.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Maintenance-mode toggle row and status indicator on the shop and web dashboards.
+    @dependencies: none
+*/
+
+/*
+    @module: Dashboard maintenance switch
+    @description: Maintenance-mode toggle row and status indicator on the shop and web dashboards.
+    @usage: .btn-modal-primary, .btn-modal-primary:hover, .btn-modal-secondary, .btn-modal-secondary, .btn-modal-primary, .btn-modal-secondary:hover, .close-modal-btn, .close-modal-btn:hover, .form-control-password, .form-control-password:focus, .maintenance-status, .maintenance-switch-btn, .maintenance-switch-
+*/
+
+.maintenance-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.maintenance-status { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; }
+
+.status-indicator { width: 9px; height: 9px; border-radius: 50%; }
+
+.status-active .status-indicator { background: var(--success, var(--color-emerald-600)); }
+
+.status-active { color: var(--success, var(--color-emerald-600)); }
+
+.status-inactive .status-indicator { background: var(--warning, var(--color-amber-600)); }
+
+.status-inactive { color: var(--warning, var(--color-amber-600)); }
+
+.maintenance-switch-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-mid, var(--color-zinc-200));
+  background: var(--surface, var(--color-white));
+  color: var(--text, var(--color-zinc-900));
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--ease, 0.15s ease);
+  font-family: inherit;
+}
+
+.maintenance-switch-btn:hover { background: var(--surface-2, var(--color-zinc-100)); }
+
+.password-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.password-modal-card {
+  background: var(--surface, var(--color-white));
+  border-radius: var(--radius-lg, 18px);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.25);
+  overflow: hidden;
+  font-family: var(--ff, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
+}
+
+.password-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border, var(--color-zinc-100));
+}
+
+.modal-header-title { margin: 0; font-size: 1rem; color: var(--text, var(--color-zinc-900)); }
+
+.close-modal-btn {
+  border: none; background: none; cursor: pointer; font-size: 16px; opacity: 0.5; color: inherit;
+  transition: opacity var(--ease, 0.15s ease);
+}
+
+.close-modal-btn:hover { opacity: 1; }
+
+.password-modal-body { padding: 18px 20px; font-size: 0.88rem; color: var(--text-muted, var(--color-zinc-600)); line-height: 1.55; }
+
+.password-modal-body strong.state-active { color: var(--success, var(--color-emerald-600)); }
+
+.password-modal-body strong.state-inactive { color: var(--warning, var(--color-amber-600)); }
+
+.modal-warning-box {
+  margin-top: 10px;
+  padding: 10px 13px;
+  background: var(--warning-dim, var(--color-amber-50));
+  border: 1px solid var(--warning, var(--color-amber-600));
+  border-left: 3px solid var(--warning, var(--color-amber-600));
+  border-radius: var(--radius, 10px);
+  font-size: 0.8rem;
+  color: var(--warning, var(--color-amber-800));
+}
+
+.password-input-group { margin-top: 14px; display: flex; flex-direction: column; gap: 5px; }
+
+.password-input-group label { font-size: 0.78rem; font-weight: 600; color: var(--text, var(--color-zinc-900)); }
+
+.form-control-password {
+  padding: 9px 12px;
+  border: 1px solid var(--border-mid, var(--color-zinc-200));
+  border-radius: var(--radius, 10px);
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.form-control-password:focus { border-color: var(--accent, var(--color-zinc-900)); box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08); }
+
+.password-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border, var(--color-zinc-100));
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--surface-2, var(--color-zinc-50));
+}
+
+.btn-modal-secondary, .btn-modal-primary {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: background var(--ease, 0.15s ease);
+}
+
+.btn-modal-secondary { background: var(--surface, var(--color-white)); border: 1px solid var(--border-mid, var(--color-zinc-200)); color: var(--text-muted, var(--color-zinc-600)); }
+
+.btn-modal-secondary:hover { background: var(--surface-2, var(--color-zinc-100)); }
+
+.btn-modal-primary { background: var(--accent, var(--color-zinc-900)); color: var(--color-white); }
+
+.btn-modal-primary:hover { background: var(--accent-dark, var(--color-black)); }
+
+@media (max-width: 480px) {
+  .password-modal-overlay { align-items: flex-end; padding: 0; }
+  .password-modal-card { max-width: 100%; border-radius: var(--radius-lg, 18px) var(--radius-lg, 18px) 0 0; }
+}

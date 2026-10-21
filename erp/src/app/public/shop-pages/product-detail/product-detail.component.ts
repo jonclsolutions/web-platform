@@ -19,7 +19,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [RouterModule, CommonModule],
   templateUrl: './product-detail.component.html',
-  styleUrl: './product-detail.component.css',
+  styleUrls: ['../shared-styles/theme.css', '../shared-styles/quantity.css', './product-detail.component.css'],
 })
 export class ProductDetailComponent extends BasePublicComponent implements OnInit {
   

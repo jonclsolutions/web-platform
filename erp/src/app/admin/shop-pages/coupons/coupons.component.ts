@@ -28,7 +28,7 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   standalone: true,
   imports: [SHARED_UI_BUILDERS, ActionMenuBuilderComponent,GraphBuilderComponent],
   templateUrl: './coupons.component.html',
-  styleUrl: '../default-style.css',
+  styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CouponsComponent extends BaseDataComponent<any> implements Core.OnInit {

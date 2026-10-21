@@ -39,7 +39,7 @@ interface FooterLinkDef {
   selector: 'app-public-footer',
   standalone: true,
   templateUrl: './public-footer.component.html',
-  styleUrls: ['./public-footer.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', '../../../../shared/styles/base.css', './public-footer.component.css'],
   imports: [RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

@@ -75,13 +75,13 @@
 }
 
 .confirm_button:hover {
-  background-color: #000;
+  background-color: var(--color-black);
   transform: translateY(-1px);
 }
 
 .neutral_button {
   padding: 8px 20px;
-  background-color: #fff;
+  background-color: var(--color-white);
   color: #444;
   border: 1px solid #ddd;
   border-radius: 6px;

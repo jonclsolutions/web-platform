@@ -1,0 +1,37 @@
+/*
+    @file: cta.css
+    @path: /src/app/public/web-pages/shared-styles/cta.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Row of call-to-action buttons with divider and arrow animation at the bottom of the about, FAQ, references and services pages.
+    @dependencies: public/web-pages/shared-styles/theme.css (tokens)
+*/
+
+/*
+    @module: Call-to-action row
+    @description: Row of call-to-action buttons with divider and arrow animation at the bottom of the about, FAQ, references and services pages.
+    @usage: .cta-arrow, .cta-btn:hover, .cta-btn:hover .cta-arrow, .cta-divider, .cta-row
+*/
+
+.cta-row {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.cta-divider {
+  width: 1px;
+  height: 120px;
+  background: var(--border-mid);
+  flex-shrink: 0;
+}
+
+.cta-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+

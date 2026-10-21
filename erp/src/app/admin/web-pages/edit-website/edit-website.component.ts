@@ -60,7 +60,7 @@ const LS_KEY = 'rpsw_languages';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './edit-website.component.html',
-  styleUrls: ['./edit-website.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', './edit-website.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditWebsiteComponent

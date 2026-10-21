@@ -38,7 +38,7 @@ const MAX_FILE_SIZE_BYTES = 20480 * 1024;
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './job-item.component.html',
-  styleUrl: './job-item.component.css',
+  styleUrls: ['../../shared-styles/theme.css', '../../shared-styles/form-fields.css', '../../../../shared/styles/base.css', '../../shared-styles/animations.css', './job-item.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JobItemComponent extends BaseDataComponent<any> implements OnInit {

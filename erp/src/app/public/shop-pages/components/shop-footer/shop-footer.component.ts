@@ -37,7 +37,7 @@ interface SocialLink { name: string; url: string; icon_path: string; }
   selector: 'app-shop-footer',
   standalone: true,
   templateUrl: './shop-footer.component.html',
-  styleUrls: ['./shop-footer.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', './shop-footer.component.css'],
   imports: [RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

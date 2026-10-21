@@ -6,18 +6,13 @@
     @created: 2026 
 */
 :host {
-  --bg-main: #ffffff;        
-  --bg-dark: #000000;        
-  --text-main: #000000;      
-  --text-dim: #707070;       
-  --border: #e5e5e5;         
-  --border-dark: #000000;    
+  --bg-main: var(--color-white);        
   
-  --success: #10b981;  
-  --warning: #f59e0b;        
+  --success: var(--color-emerald-500);  
+  --warning: var(--color-amber-500);        
   --error: #b91c1c;         
   
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* local value – public shop theme.css: all 0.2s ease-in-out */
 
   display: block;
   max-width: 1300px;
@@ -91,7 +86,7 @@
   height: 70px;
   border-radius: 0;
   overflow: hidden;
-  background: #fafafa;
+  background: var(--color-zinc-50);
   border: 1px solid var(--border);
 }
 
@@ -159,16 +154,6 @@
   justify-content: center;
 }
 
-.qty-btn:hover:not(:disabled) {
-  background: var(--bg-dark);
-  color: var(--bg-main);
-}
-
-.qty-btn:disabled {
-  color: var(--border);
-  cursor: not-allowed;
-}
-
 .qty-btn.disabled-max {
   color: var(--text-dim) !important;
   font-size: 0.75rem;
@@ -191,12 +176,6 @@
   -webkit-appearance: none;
   appearance: none;
   -moz-appearance: textfield;
-}
-
-.qty-display::-webkit-outer-spin-button,
-.qty-display::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 .item-total {
@@ -296,21 +275,6 @@
   gap: 12px;
 }
 
-.btn-buy {
-  width: 100%;
-  background: var(--bg-dark);
-  border: 1px solid var(--bg-dark);
-  color: var(--bg-main);
-  padding: 1rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  border-radius: 0;
-  text-transform: uppercase;
-  transition: var(--transition);
-}
-
 .btn-buy:hover {
   background: var(--bg-main);
   color: var(--text-main);
@@ -326,10 +290,6 @@
   font-weight: 500;
   padding: 0.5rem 0;
   transition: var(--transition);
-}
-
-.btn-view-cart:hover { 
-  color: var(--text-main); 
 }
 
 @media (max-width: 950px) {

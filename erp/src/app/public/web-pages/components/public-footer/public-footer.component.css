@@ -12,28 +12,14 @@
 */
 
 :host {
-  --bg:          #0a0a18;
-  --surface:     #111128;
-  --surface-2:   #18183a;
-  --border:      rgba(166, 125, 255, 0.1);
-  --border-mid:  rgba(166, 125, 255, 0.22);
-  --accent:      #a67dff;
-  --accent-dark: #6b2e91;
-  --accent-dim:  rgba(166, 125, 255, 0.07);
-  --text:        #e0e0f0;
-  --text-muted:  #888899;
-  --ff-display:  'Source Sans Pro', 'Segoe UI', sans-serif;
-  --ff-body:     'Segoe UI', system-ui, sans-serif;
-  --radius:      10px;
-  --radius-lg:   16px;
-  --ease:        0.22s ease;
+  --bg: #0a0a18; /* local value – public web theme.css: #0d0d1b */
+  --radius: 10px; /* local value – public web theme.css: 12px */
+  --radius-lg: 16px; /* local value – public web theme.css: 18px */
+  --ease: 0.22s ease; /* local value – public web theme.css: 0.25s ease */
   --max-w:       1200px;
 
   /* ── Unified spacing (same values as public pages) ── */
-  --gutter:      24px;
 }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Wrapper ─────────────────────────────────────────────────── */
 .footer {
@@ -134,7 +120,7 @@
   font-family: var(--ff-display);
   font-size: 1.4rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-white);
   letter-spacing: -0.01em;
   margin-bottom: 10px;
 }

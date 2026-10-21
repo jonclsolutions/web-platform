@@ -1,0 +1,30 @@
+/*
+    @file: form-fields.css
+    @path: /src/app/public/web-pages/shared-styles/form-fields.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Error state of inputs, file drop zone, GDPR checkbox and link shared by the contact form and the job application form.
+    @dependencies: none
+*/
+
+/*
+    @module: Public form fields
+    @description: Error state of inputs, file drop zone, GDPR checkbox and link shared by the contact form and the job application form.
+    @usage: .file-zone--has .file-zone-icon, .gdpr-link:hover, .submit-btn:active:not(:disabled), .submit-btn:hover:not(:disabled), .submit-btn:hover:not(:disabled) .btn-arrow
+*/
+
+.file-zone--has .file-zone-icon {
+  color: var(--clr-success);
+}
+
+.gdpr-link:hover { text-decoration: underline; }
+
+.submit-btn:hover:not(:disabled) {
+  background: #b98fff;
+  transform: translateY(-2px);
+}
+
+.submit-btn:active:not(:disabled) { transform: translateY(0); }
+
+@keyframes spin { to { transform: rotate(360deg); } }

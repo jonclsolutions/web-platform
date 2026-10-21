@@ -27,7 +27,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [RouterModule, CommonModule],
   templateUrl: './shop-header.component.html',
-  styleUrls: ['./shop-header.component.css']
+  styleUrls: ['../../shared-styles/theme.css', './shop-header.component.css']
 })
 export class ShopHeaderComponent implements OnInit {
   isScrolled = false;

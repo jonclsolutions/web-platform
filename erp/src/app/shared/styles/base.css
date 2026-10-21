@@ -1,0 +1,17 @@
+/*
+    @file: base.css
+    @path: /src/app/shared/styles/base.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Border-box sizing and zero margin/padding for every element inside the component, used by admin and public components alike.
+    @dependencies: none
+*/
+
+/*
+    @module: Box model reset
+    @description: Border-box sizing and zero margin/padding for every element inside the component, used by admin and public components alike.
+    @usage: *, *::before, *::after
+*/
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

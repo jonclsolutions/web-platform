@@ -15,7 +15,7 @@ import { BasePublicComponent } from '../../base-public.component';
   standalone: true,
   imports: [RouterModule],
   templateUrl: './about-us.component.html',
-  styleUrl: './about-us.component.css',
+  styleUrls: ['../shared-styles/theme.css', '../shared-styles/animations.css', '../shared-styles/cta.css', '../../../shared/styles/base.css', '../shared-styles/content-page.css', './about-us.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AboutUsComponent extends BasePublicComponent {

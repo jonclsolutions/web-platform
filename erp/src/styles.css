@@ -4,7 +4,16 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @description: Global styles: html/body, scrollbar, headings font. Only truly global rules belong
+        here – component styles live in the components and their shared-styles/ folders.
+        HOW THE CSS IS ORGANISED (structure, tokens, where to put a new rule):
+        see src/app/shared/styles/README.md
+    @dependencies: app/shared/styles/tokens.css (global colour primitives)
  */
+
+/* Global colour primitives (admin + public) – see app/shared/styles/README.md */
+@import './app/shared/styles/tokens.css';
+
 
 *, *::before, *::after {
     box-sizing: inherit;

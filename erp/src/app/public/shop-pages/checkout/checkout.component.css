@@ -7,19 +7,14 @@
 */
 :host {
   /* Černobílý minimalistický design systém implementovaný na pokladnu */
-  --bg-main: #ffffff;        
-  --bg-dark: #000000;        
-  --text-main: #000000;      
-  --text-dim: #707070;       
-  --border: #e5e5e5;         
-  --border-dark: #000000;    
+  --bg-main: var(--color-white);        
   
   /* Intuitivní stavové barvy */
-  --success: #10b981;        
-  --warning: #f59e0b;        
+  --success: var(--color-emerald-500);        
+  --warning: var(--color-amber-500);        
   --error: #df2020; /* Změněno na čistou minimalistickou červenou pro chybové stavy */
   
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* local value – public shop theme.css: all 0.2s ease-in-out */
 
   display: block;
   max-width: 1300px;
@@ -646,7 +641,7 @@ h1 {
 }
 
 .success-box h2 {
-  color: #10b981; /* Zůstává originální success zelená */
+  color: var(--color-emerald-500); /* Zůstává originální success zelená */
   font-size: 1.8rem;
   font-weight: 700;
   margin-bottom: 1rem;

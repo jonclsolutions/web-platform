@@ -301,7 +301,7 @@ header.scrolled .active-indicator {
 .lang-dropdown--open .lang-trigger {
   outline-color: #a67dff;
   background-color: rgba(107, 46, 145, 0.7);
-  color: #fff;
+  color: var(--color-white);
 }
 
 .lang-trigger-flag {
@@ -389,14 +389,6 @@ header.scrolled .active-indicator {
 
 .lang-option-check {
   color: #a67dff;
-  flex-shrink: 0;
-}
-
-.lang-trigger-flag--placeholder {
-  width: 16px;
-  height: 16px;
-  background: #e4e4e7;
-  border-radius: 2px;
   flex-shrink: 0;
 }
 
@@ -503,42 +495,6 @@ html.no-scroll { overflow: hidden !important; }
 
 .m-drawer--open {
   transform: translateX(0);
-}
-
-/* ── Hlavička — logo + zavřít ─────────────────────────────────── */
-.m-drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(166, 125, 255, 0.1);
-  flex-shrink: 0;
-}
-
-.m-drawer-logo img {
-  height: 34px;
-  width: auto;
-  display: block;
-}
-
-.m-drawer-close {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(166, 125, 255, 0.07);
-  border: 1px solid rgba(166, 125, 255, 0.18);
-  border-radius: 8px;
-  color: #888899;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
-.m-drawer-close:hover {
-  background: rgba(166, 125, 255, 0.14);
-  border-color: rgba(166, 125, 255, 0.35);
-  color: #e0e0f0;
 }
 
 /* ── Navigace ─────────────────────────────────────────────────── */
@@ -653,7 +609,7 @@ html.no-scroll { overflow: hidden !important; }
 .m-drawer-lang-dropdown--open .m-drawer-lang-trigger {
   outline-color: #a67dff;
   background-color: rgba(107, 46, 145, 0.7);
-  color: #fff;
+  color: var(--color-white);
 }
 
 .m-drawer-lang-flag {

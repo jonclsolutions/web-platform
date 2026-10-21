@@ -47,7 +47,7 @@ interface LeadPrefill {
   standalone: true,
   imports: [ReactiveFormsModule, RouterModule, MultiFileUploadComponent],
   templateUrl: './order-form.component.html',
-  styleUrl: './order-form.component.css',
+  styleUrls: ['../shared-styles/theme.css', '../../../shared/styles/base.css', './order-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrderFormComponent extends BasePublicComponent {

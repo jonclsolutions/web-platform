@@ -26,12 +26,3 @@ main {
   flex-grow: 1;
 }
 
-
-main.admin-main {
-  padding: 0;
-  margin: 0;
-  flex: 1;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}

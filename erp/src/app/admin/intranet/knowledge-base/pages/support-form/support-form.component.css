@@ -19,16 +19,16 @@
 
 .kb-form-header h1 {
   font-size: 1.8rem;
-  color: #18181b;
+  color: var(--color-zinc-900);
   margin: 10px 0;
 }
 
 .kb-form-header p {
-  color: #71717a;
+  color: var(--color-zinc-500);
   font-size: 0.9rem;
 }
 
-.doc-code { font-family: monospace; color: #18181b; font-size: 0.7rem; }
+.doc-code { font-family: monospace; color: var(--color-zinc-900); font-size: 0.7rem; }
 
 .kb-form-row {
   display: flex;
@@ -47,21 +47,21 @@
 .form-group label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #52525b;
+  color: var(--color-zinc-600);
   text-transform: uppercase;
   margin-bottom: 8px;
   letter-spacing: 0.5px;
 }
 
-.req { color: #e11d48; margin-left: 2px; }
+.req { color: var(--color-rose-600); margin-left: 2px; }
 
 input[type="text"], 
 select, 
 textarea {
-  background: #ffffff;
-  border: 1px solid #ececea;
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
   border-radius: 4px;
-  color: #18181b;
+  color: var(--color-zinc-900);
   padding: 10px 12px;
   font-size: 0.9rem;
   transition: all 0.2s ease;
@@ -69,18 +69,18 @@ textarea {
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #18181b;
-  background: #fafafa;
+  border-color: var(--color-zinc-900);
+  background: var(--color-zinc-50);
 }
 .kb-file-upload {
   position: relative;
-  border: 1px dashed #ececea;
+  border: 1px dashed var(--color-sand-200);
   border-radius: 4px;
-  background: #fafafa;
+  background: var(--color-zinc-50);
   transition: all 0.2s ease;
 }
 
-.kb-file-upload:hover { border-color: #a1a1aa; }
+.kb-file-upload:hover { border-color: var(--color-zinc-400); }
 
 .file-label {
   display: flex;
@@ -93,8 +93,8 @@ input:focus, select:focus, textarea:focus {
 .file-icon {
   width: 24px;
   height: 24px;
-  background: #f4f4f5;
-  color: #18181b;
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-900);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -104,7 +104,7 @@ input:focus, select:focus, textarea:focus {
 
 .file-info {
   font-size: 0.85rem;
-  color: #71717a;
+  color: var(--color-zinc-500);
 }
 
 .kb-file-upload input[type="file"] {
@@ -112,13 +112,13 @@ input:focus, select:focus, textarea:focus {
 }
 
 .kb-file-upload.has-file {
-  border-color: #18181b;
-  background: #fafafa;
+  border-color: var(--color-zinc-900);
+  background: var(--color-zinc-50);
 }
 
 .kb-btn-primary {
-  background: #18181b;
-  color: #fff;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
   border: none;
   padding: 12px 24px;
   border-radius: 4px;
@@ -129,12 +129,12 @@ input:focus, select:focus, textarea:focus {
 }
 
 .kb-btn-primary:hover:not(:disabled) { opacity: 0.85; }
-.kb-btn-primary:disabled { background: #e4e4e7; color: #a1a1aa; cursor: not-allowed; }
+.kb-btn-primary:disabled { background: var(--color-zinc-200); color: var(--color-zinc-400); cursor: not-allowed; }
 
 .kb-btn-outline {
   background: transparent;
-  border: 1px solid #ececea;
-  color: #52525b;
+  border: 1px solid var(--color-sand-200);
+  color: var(--color-zinc-600);
   padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
@@ -146,7 +146,7 @@ input:focus, select:focus, textarea:focus {
 
 .success-check {
   font-size: 3rem;
-  color: #18181b;
+  color: var(--color-zinc-900);
   margin-bottom: 20px;
 }
 

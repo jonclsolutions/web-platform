@@ -34,7 +34,6 @@ import { CookieConsentComponent } from '../cookie-consent/cookie-consent.compone
     CookieConsentComponent,
   ],
   templateUrl: './web-layout.component.html',
-  styleUrls: ['./web-layout.component.css']
 })
 export class WebLayoutComponent implements OnInit {
 

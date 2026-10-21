@@ -36,7 +36,7 @@ const CATALOG_CONFIG = {
     PaginationButtonsBuilderComponent
   ],
   templateUrl: './catalog.component.html',
-  styleUrl: './catalog.component.css',
+  styleUrls: ['../shared-styles/theme.css', './catalog.component.css'],
 })
 export class CatalogComponent extends BasePublicComponent implements OnInit {
 

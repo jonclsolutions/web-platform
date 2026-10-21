@@ -28,7 +28,7 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   font-size: 1.3rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
   letter-spacing: -0.01em;
   display: flex;
   align-items: center;
@@ -55,7 +55,7 @@
 .tree-wrapper {
   border-radius: 18px !important;
   box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03) !important;
-  border-color: #ececea !important;
+  border-color: var(--color-sand-200) !important;
 }
 
 .tree-list { list-style: none; padding: 0; margin: 0; }
@@ -67,14 +67,14 @@
 .tree-node {
   position: relative;
   margin: 2px 0;
-  border-bottom: 1px solid #f4f4f5;
+  border-bottom: 1px solid var(--color-zinc-100);
 }
 .tree-node:last-child { border-bottom: none; }
 
 .node-children {
   margin-left: 6px;
   padding-left: 8px;
-  border-left: 1px solid #f4f4f5;
+  border-left: 1px solid var(--color-zinc-100);
 }
 
 .category-row {
@@ -91,38 +91,38 @@
   box-sizing: border-box;
 }
 
-.category-row:hover { background: #fafafa; border-color: #f4f4f5; }
+.category-row:hover { background: var(--color-zinc-50); border-color: var(--color-zinc-100); }
 .category-row.is-editing {
-  background: #ffffff;
-  border-color: #18181b;
+  background: var(--color-white);
+  border-color: var(--color-zinc-900);
   box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 .category-row.is-selected {
-  background: #f4f4f5;
-  border-color: #e4e4e7;
+  background: var(--color-zinc-100);
+  border-color: var(--color-zinc-200);
 }
 
 .expand-trigger {
   width: 20px; height: 20px; min-width: 20px;
   font-size: 14px; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: #d4d4d8; background: none; border: none;
+  cursor: pointer; color: var(--color-zinc-300); background: none; border: none;
   padding: 0; margin: 0;
 }
 
 .node-name {
-  flex-grow: 1; font-size: 13px; font-weight: 500; color: #3f3f46;
+  flex-grow: 1; font-size: 13px; font-weight: 500; color: var(--color-zinc-700);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   min-width: 0;
 }
 
 .node-name.inactive {
-  color: #e11d48 !important;
+  color: var(--color-rose-600) !important;
   font-weight: 700;
 }
 
 .count-badge {
-  font-size: 9px; font-weight: 700; color: #a1a1aa; background: #f4f4f5;
-  padding: 2px 7px; border-radius: 999px; border: 1px solid #ececea;
+  font-size: 9px; font-weight: 700; color: var(--color-zinc-400); background: var(--color-zinc-100);
+  padding: 2px 7px; border-radius: 999px; border: 1px solid var(--color-sand-200);
   flex-shrink: 0;
 }
 
@@ -132,9 +132,9 @@
   gap: 3px;
   font-size: 10px;
   font-weight: 700;
-  color: #71717a;
-  background: #f4f4f5;
-  border: 1px solid #e4e4e7;
+  color: var(--color-zinc-500);
+  background: var(--color-zinc-100);
+  border: 1px solid var(--color-zinc-200);
   border-radius: 999px;
   padding: 3px 9px;
   margin-left: 6px;
@@ -145,15 +145,15 @@
 }
 
 .btn-products-count:hover {
-  background: #ececea;
-  border-color: #d4d4d8;
-  color: #18181b;
+  background: var(--color-sand-200);
+  border-color: var(--color-zinc-300);
+  color: var(--color-zinc-900);
 }
 
 .btn-products-count.active {
-  background: #18181b;
-  border-color: #18181b;
-  color: #ffffff;
+  background: var(--color-zinc-900);
+  border-color: var(--color-zinc-900);
+  color: var(--color-white);
 }
 .actions {
   display: flex;
@@ -176,8 +176,8 @@
 }
 
 .product-panel {
-  background: #ffffff;
-  border: 1px solid #ececea;
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
   border-radius: 18px;
   box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
   overflow: hidden;
@@ -193,8 +193,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 13px 16px;
-  background: #fafafa;
-  border-bottom: 1px solid #f4f4f5;
+  background: var(--color-zinc-50);
+  border-bottom: 1px solid var(--color-zinc-100);
   gap: 8px;
 }
 
@@ -209,14 +209,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #52525b;
+  color: var(--color-zinc-600);
   flex-shrink: 0;
 }
 
 .product-panel-name {
   font-size: 13px;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -224,7 +224,7 @@
 
 .product-panel-sub {
   font-size: 10px;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   margin-top: 1px;
 }
 
@@ -232,7 +232,7 @@
   background: none;
   border: none;
   font-size: 14px;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   cursor: pointer;
   padding: 5px 7px;
   border-radius: 999px;
@@ -242,8 +242,8 @@
 }
 
 .panel-close-btn:hover {
-  background: #fff1f2;
-  color: #e11d48;
+  background: var(--color-rose-50);
+  color: var(--color-rose-600);
 }
 
 .panel-search-row {
@@ -251,7 +251,7 @@
   gap: 8px;
   align-items: center;
   padding: 11px 14px;
-  border-bottom: 1px solid #f4f4f5;
+  border-bottom: 1px solid var(--color-zinc-100);
 }
 
 .panel-search-wrap {
@@ -259,8 +259,8 @@
   align-items: center;
   gap: 6px;
   flex: 1;
-  background: #fafafa;
-  border: 1px solid #e4e4e7;
+  background: var(--color-zinc-50);
+  border: 1px solid var(--color-zinc-200);
   border-radius: 999px;
   padding: 0 11px;
 }
@@ -272,7 +272,7 @@
 .panel-search-icon {
   display: flex;
   align-items: center;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   flex-shrink: 0;
 }
 
@@ -280,14 +280,14 @@
   border: none;
   background: transparent;
   font-size: 12px;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   width: 100%;
   padding: 7px 0;
   outline: none;
 }
 
 .panel-search-input::placeholder {
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
 }
 .btn-add-product {
   display: inline-flex;
@@ -295,9 +295,9 @@
   gap: 4px;
   font-size: 11px;
   font-weight: 700;
-  color: #047857;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  color: var(--color-emerald-700);
+  background: var(--color-emerald-50);
+  border: 1px solid var(--color-emerald-200);
   border-radius: 999px;
   padding: 6px 12px;
   cursor: pointer;
@@ -307,14 +307,14 @@
 }
 
 .btn-add-product:hover {
-  background: #d1fae5;
+  background: var(--color-emerald-100);
   border-color: #6ee7b7;
 }
 
 .add-product-section {
   padding: 11px 14px;
-  background: #fafafa;
-  border-bottom: 1px solid #f4f4f5;
+  background: var(--color-zinc-50);
+  border-bottom: 1px solid var(--color-zinc-100);
 }
 
 .add-product-header {
@@ -327,14 +327,14 @@
 .add-product-title {
   font-size: 11px;
   font-weight: 700;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
 }
 
 .add-product-close {
   background: none;
   border: none;
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 999px;
@@ -342,16 +342,16 @@
 }
 
 .add-product-close:hover {
-  background: #fff1f2;
-  color: #e11d48;
+  background: var(--color-rose-50);
+  color: var(--color-rose-600);
 }
 
 .add-product-list {
   max-height: 180px;
   overflow-y: auto;
-  border: 1px solid #ececea;
+  border: 1px solid var(--color-sand-200);
   border-radius: 12px;
-  background: #fff;
+  background: var(--color-white);
 }
 
 .add-product-item {
@@ -359,27 +359,27 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 11px;
-  border-bottom: 1px solid #f4f4f5;
+  border-bottom: 1px solid var(--color-zinc-100);
   gap: 8px;
   transition: background 0.1s;
 }
 
 .add-product-item:last-child { border-bottom: none; }
-.add-product-item:hover { background: #fafafa; }
+.add-product-item:hover { background: var(--color-zinc-50); }
 
 .empty-add-list {
   padding: 16px;
   text-align: center;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   font-size: 12px;
 }
 
 .btn-item-add {
   font-size: 11px;
   font-weight: 700;
-  color: #047857;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  color: var(--color-emerald-700);
+  background: var(--color-emerald-50);
+  border: 1px solid var(--color-emerald-200);
   border-radius: 999px;
   padding: 4px 11px;
   cursor: pointer;
@@ -388,7 +388,7 @@
 }
 
 .btn-item-add:hover {
-  background: #d1fae5;
+  background: var(--color-emerald-100);
 }
 .product-list {
   flex: 1;
@@ -400,7 +400,7 @@
 .product-list-empty {
   padding: 32px 16px;
   text-align: center;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   font-size: 12px;
 }
 
@@ -419,24 +419,24 @@
   align-items: center;
   gap: 10px;
   padding: 9px 14px;
-  border-bottom: 1px solid #f4f4f5;
+  border-bottom: 1px solid var(--color-zinc-100);
   transition: background 0.1s;
 }
 
 .product-item:last-child { border-bottom: none; }
-.product-item:hover { background: #fafafa; }
+.product-item:hover { background: var(--color-zinc-50); }
 
 .product-item-thumb {
   width: 36px;
   height: 36px;
   border-radius: 10px;
   overflow: hidden;
-  background: #f4f4f5;
+  background: var(--color-zinc-100);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid #ececea;
+  border: 1px solid var(--color-sand-200);
 }
 
 .thumb-img {
@@ -449,7 +449,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   opacity: 0.6;
 }
 
@@ -464,7 +464,7 @@
 .product-item-name {
   font-size: 12px;
   font-weight: 600;
-  color: #18181b;
+  color: var(--color-zinc-900);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -472,7 +472,7 @@
 
 .product-item-sku {
   font-size: 10px;
-  color: #71717a;
+  color: var(--color-zinc-500);
   font-family: monospace;
 }
 
@@ -481,7 +481,7 @@
   align-items: center;
   gap: 3px;
   font-size: 10px;
-  color: #71717a;
+  color: var(--color-zinc-500);
 }
 
 .product-item-status {
@@ -489,30 +489,30 @@
   align-items: center;
   gap: 5px;
   font-size: 10px;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
 }
 
 .product-item-status.active {
-  color: #059669;
+  color: var(--color-emerald-600);
 }
 
 .status-dot-mini {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #d4d4d8;
+  background: var(--color-zinc-300);
   flex-shrink: 0;
 }
 
 .status-dot-mini.active {
-  background: #10b981;
+  background: var(--color-emerald-500);
 }
 
 .btn-remove-product {
   background: none;
   border: none;
   font-size: 13px;
-  color: #d4d4d8;
+  color: var(--color-zinc-300);
   cursor: pointer;
   padding: 5px 7px;
   border-radius: 999px;
@@ -522,16 +522,16 @@
 }
 
 .btn-remove-product:hover {
-  background: #fff1f2;
-  color: #e11d48;
+  background: var(--color-rose-50);
+  color: var(--color-rose-600);
 }
 
 .panel-footer {
   padding: 9px 16px;
   font-size: 11px;
-  color: #71717a;
-  background: #fafafa;
-  border-top: 1px solid #f4f4f5;
+  color: var(--color-zinc-500);
+  background: var(--color-zinc-50);
+  border-top: 1px solid var(--color-zinc-100);
   text-align: right;
 }
 
@@ -589,7 +589,7 @@
   width: 100%;
   height: 28px;
   font-size: 12px;
-  border: 1px solid #18181b;
+  border: 1px solid var(--color-zinc-900);
   border-radius: 8px;
   padding: 0 8px;
   outline: none;
@@ -597,7 +597,7 @@
 }
 
 .edit-input.error {
-  border-color: #e11d48;
+  border-color: var(--color-rose-600);
   box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
 }
 
@@ -606,13 +606,13 @@
   top: -16px;
   left: 30px;
   font-size: 9px;
-  color: #e11d48;
+  color: var(--color-rose-600);
   font-weight: bold;
 }
 
 /* Sjednoceno se stejnou paletou jako v buttons-builder.component.css, ať se
    komponenty nerozcházejí, ať už vyhraje kterýkoli z ::ng-deep/lokálních stylů. */
-::ng-deep .btn-filter { background: #f4f4f5; color: #3f3f46; border-color: #e4e4e7; }
-::ng-deep .btn-trash  { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
-::ng-deep .btn-create { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-::ng-deep .btn-export { background: #eef2ff; color: #4338ca; border-color: #c7d2fe; }
+::ng-deep .btn-filter { background: var(--color-zinc-100); color: var(--color-zinc-700); border-color: var(--color-zinc-200); }
+::ng-deep .btn-trash  { background: var(--color-rose-50); color: var(--color-rose-700); border-color: var(--color-rose-200); }
+::ng-deep .btn-create { background: var(--color-emerald-50); color: var(--color-emerald-700); border-color: var(--color-emerald-200); }
+::ng-deep .btn-export { background: var(--color-indigo-50); color: var(--color-indigo-700); border-color: #c7d2fe; }

@@ -11,10 +11,10 @@
 */
 
 .filter-form-container {
-  background-color: #ffffff;
+  background-color: var(--color-white);
   box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
   border-radius: 18px;
-  border: 1px solid #ececea;
+  border: 1px solid var(--color-sand-200);
   padding: 16px 18px;
   margin-bottom: 1rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -24,7 +24,7 @@
   margin-top: 0;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
   margin-bottom: 12px;
   letter-spacing: -0.01em;
 }
@@ -39,7 +39,7 @@
   display: block;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #71717a;
+  color: var(--color-zinc-500);
   margin-bottom: 5px;
 }
 
@@ -49,24 +49,24 @@
   display: block;
   width: 100%;
   border-radius: 10px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--color-zinc-200);
   box-shadow: none;
   padding: 8px 12px;
   font-size: 0.82rem;
-  color: #18181b;
+  color: var(--color-zinc-900);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   font-family: inherit;
-  background: #ffffff;
+  background: var(--color-white);
 }
 
 .filter-input::placeholder {
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
 }
 
 .filter-input:focus,
 .filter-select:focus {
-  border-color: #18181b;
+  border-color: var(--color-zinc-900);
   box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08);
 }
 
@@ -79,13 +79,13 @@
 .filter-checkbox {
   width: 16px;
   height: 16px;
-  accent-color: #18181b;
+  accent-color: var(--color-zinc-900);
   cursor: pointer;
 }
 
 hr {
   border: none;
-  border-top: 1px solid #f4f4f5;
+  border-top: 1px solid var(--color-zinc-100);
   margin: 16px 0;
 }
 
@@ -119,32 +119,25 @@ hr {
 }
 
 .filter-button.clear {
-  border: 1px solid #e4e4e7;
-  background-color: #ffffff;
-  color: #3f3f46;
+  border: 1px solid var(--color-zinc-200);
+  background-color: var(--color-white);
+  color: var(--color-zinc-700);
 }
 
 .filter-button.clear:hover {
-  background-color: #f4f4f5;
+  background-color: var(--color-zinc-100);
 }
 
 .filter-button.apply {
   border: 1px solid transparent;
-  background-color: #18181b;
-  color: #ffffff;
+  background-color: var(--color-zinc-900);
+  color: var(--color-white);
 }
 
 .filter-button.apply:hover {
-  background-color: #000000;
+  background-color: var(--color-black);
 }
 
-.filter-global-search {
-  margin-bottom: 14px;
-}
-
-.filter-global-search .filter-input {
-  width: 100%;
-}
 /*
   DOPLNIT do existujícího filter-form-builder.component.css - žádná stávající třída
   se neruší ani nemění, jen nové třídy pro header řádek s křížkem a globální search.
@@ -171,14 +164,14 @@ hr {
   border: none;
   background: transparent;
   border-radius: 999px;
-  color: #71717a;
+  color: var(--color-zinc-500);
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .filter-form-close-btn:hover {
-  background: #f4f4f5;
-  color: #18181b;
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-900);
 }
 
 .filter-global-search {

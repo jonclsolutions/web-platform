@@ -1,0 +1,24 @@
+/*
+    @file: animations.css
+    @path: /src/app/public/web-pages/shared-styles/animations.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Entrance animations used by the content pages of the public web.
+    @dependencies: none
+*/
+
+/*
+    @module: Entrance animation (fadeUp)
+    @description: Entrance animations used by the content pages of the public web.
+    @usage: see rules
+    @note: Angular scopes @keyframes names per component; including this file keeps them scoped exactly as before.
+*/
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

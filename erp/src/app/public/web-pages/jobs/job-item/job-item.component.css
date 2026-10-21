@@ -13,35 +13,19 @@
 */
 
 :host {
-  --bg:          #0d0d1b;
-  --surface:     #111128;
-  --surface-2:   #18183a;
-  --border:      rgba(166, 125, 255, 0.1);
-  --border-mid:  rgba(166, 125, 255, 0.22);
-  --accent:      #a67dff;
-  --accent-dark: #6b2e91;
-  --accent-dim:  rgba(166, 125, 255, 0.07);
-  --text:        #e0e0f0;
-  --text-muted:  #888899;
   --clr-error:   #f08080;
   --clr-success: #5dcaa5;
-  --ff-display:  'Source Sans Pro', 'Segoe UI', sans-serif;
-  --ff-body:     'Segoe UI', system-ui, sans-serif;
-  --radius:      10px;
-  --radius-lg:   18px;
-  --ease:        0.22s ease;
+  --radius: 10px; /* local value – public web theme.css: 12px */
+  --ease: 0.22s ease; /* local value – public web theme.css: 0.25s ease */
   --max-w:       1200px;
 
   /* ── Unified spacing (same values on every public page) ── */
-  --gutter:       24px;   /* side padding of every container */
   --section-y:    96px;   /* page bottom spacing */
   --hero-top:     180px;  /* navbar height + air above page title */
   --hero-bottom:  48px;   /* hero -> first content */
   --head-gap:     48px;   /* block -> following block */
   --back-gap:     44px;   /* back link height (~20px) + space to the title (24px) */
 }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Page + grid background ─────────────────────────────────── */
 .job-page {
@@ -101,7 +85,7 @@
   font-family: var(--ff-display);
   font-size: clamp(2rem, 4vw, 3.2rem);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-white);
   line-height: 1.2;
   margin-bottom: 16px;
 }
@@ -160,13 +144,13 @@
 }
 
 ::ng-deep .job-desc-body p { margin-bottom: 16px; }
-::ng-deep .job-desc-body strong { color: #fff; font-weight: 600; }
+::ng-deep .job-desc-body strong { color: var(--color-white); font-weight: 600; }
 ::ng-deep .job-desc-body ul { padding-left: 20px; margin-bottom: 16px; }
 ::ng-deep .job-desc-body li { margin-bottom: 6px; }
 ::ng-deep .job-desc-body h3,
 ::ng-deep .job-desc-body h4 {
   font-family: var(--ff-display);
-  color: #fff;
+  color: var(--color-white);
   margin: 24px 0 10px;
   font-weight: 700;
 }
@@ -220,7 +204,7 @@
   font-family: var(--ff-display);
   font-size: 1.3rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-white);
   line-height: 1.3;
   margin-bottom: 24px;
 }
@@ -304,7 +288,6 @@
 }
 
 .file-zone-icon { color: var(--accent); flex-shrink: 0; font-size: 1rem; }
-.file-zone--has .file-zone-icon { color: var(--clr-success); }
 
 .file-zone-text { font-size: 0.83rem; color: var(--text-muted); flex: 1; }
 .file-zone-name { color: var(--text); font-weight: 500; }
@@ -346,14 +329,13 @@
 .checkbox-input:checked + .checkbox-box::after {
   content: '✓';
   font-size: 0.65rem;
-  color: #fff;
+  color: var(--color-white);
   line-height: 1;
 }
 
 .checkbox-label.is-error .checkbox-box { border-color: var(--clr-error); }
 
 .gdpr-link { color: var(--accent); text-decoration: none; }
-.gdpr-link:hover { text-decoration: underline; }
 
 /* Submit button */
 .submit-btn {
@@ -374,8 +356,6 @@
   transition: background var(--ease), transform 0.15s ease;
 }
 
-.submit-btn:hover:not(:disabled) { background: #b98fff; transform: translateY(-2px); }
-.submit-btn:active:not(:disabled) { transform: translateY(0); }
 .submit-btn:disabled {
   background: var(--surface-2);
   color: var(--text-muted);
@@ -384,7 +364,6 @@
 }
 
 .btn-arrow { font-size: 1.1rem; transition: transform var(--ease); }
-.submit-btn:hover:not(:disabled) .btn-arrow { transform: translateX(4px); }
 
 .spinner {
   width: 15px;
@@ -395,8 +374,6 @@
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
 }
-
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Success state ───────────────────────────────────────────── */
 .success-panel {
@@ -425,7 +402,7 @@
   font-family: var(--ff-display);
   font-size: 1.4rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-white);
 }
 
 .success-text {
@@ -450,12 +427,6 @@
 }
 
 .back-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
-
-/* ── Animations ──────────────────────────────────────────────── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 860px) {

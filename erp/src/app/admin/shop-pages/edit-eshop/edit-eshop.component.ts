@@ -56,7 +56,7 @@ const LS_KEY = 'rpsw_languages';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './edit-eshop.component.html',
-  styleUrls: ['./edit-eshop.component.css'],
+  styleUrls: ['../../shared-styles/theme.css', '../../../shared/styles/base.css', '../../shared-styles/settings-page.css', './edit-eshop.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditEshopComponent

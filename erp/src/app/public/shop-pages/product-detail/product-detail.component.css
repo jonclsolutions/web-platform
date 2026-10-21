@@ -8,19 +8,14 @@
     
 :host {
   /* Černobílý minimalistický design systém */
-  --bg-main: #ffffff;        
-  --bg-dark: #000000;        
-  --text-main: #000000;      
-  --text-dim: #707070;       
-  --border: #e5e5e5;         
-  --border-dark: #000000;    
+  --bg-main: var(--color-white);        
   
   /* Intuitivní barvy pro pozitivní emoce a přehlednost */
-  --success: #10b981;        /* Svěží moderní zelená */
-  --warning: #f59e0b;        /* Jasná oranžová pro nízký sklad */
+  --success: var(--color-emerald-500);        /* Svěží moderní zelená */
+  --warning: var(--color-amber-500);        /* Jasná oranžová pro nízký sklad */
   --error: #9ca3af;          /* Neutrální šedá pro nedostupné produkty */
   
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* local value – public shop theme.css: all 0.2s ease-in-out */
 }
 
 .product-detail-container {
@@ -334,21 +329,6 @@
   justify-content: center;
 }
 
-.qty-btn:hover:not(:disabled) {
-  background: var(--bg-dark);
-  color: var(--bg-main);
-}
-
-.qty-btn:disabled {
-  color: var(--border);
-  cursor: not-allowed;
-}
-
-.qty-btn.disabled-max {
-  color: var(--text-dim);
-  font-size: 0.8rem;
-}
-
 .max-stock-info {
   font-size: 0.75rem;
   color: var(--text-dim);
@@ -374,33 +354,12 @@
   -moz-appearance: textfield; 
 }
 
-.qty-display::-webkit-outer-spin-button,
-.qty-display::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
 /* --- TLAČÍTKA --- */
 .action-buttons {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 1rem;
-}
-
-.btn-buy {
-  width: 100%;
-  background: var(--bg-dark);
-  border: 1px solid var(--bg-dark);
-  color: var(--bg-main);
-  padding: 1rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  border-radius: 0;
-  text-transform: uppercase;
-  transition: var(--transition);
 }
 
 .btn-buy:hover:not(:disabled) {
@@ -425,10 +384,6 @@
   font-size: 0.8rem;
   font-weight: 500;
   transition: var(--transition);
-}
-
-.btn-view-cart:hover {
-  color: var(--text-main);
 }
 
 /* Popisy */

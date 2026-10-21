@@ -7,13 +7,13 @@
 */
 
 .shop-content {
-  background-color: #ffffff;
-  color: #000000;
+  background-color: var(--color-white);
+  color: var(--color-black);
   min-height: calc(100vh - 200px); /* Zajištění, že obsah pokryje výšku obrazovky mezi headerem a footerem */
   display: block;
 }
 
 /* Pojistka pro celou stránku, aby pozadí nikde neprosvítalo */
 body {
-  background-color: #ffffff !important;
+  background-color: var(--color-white) !important;
 }

@@ -20,7 +20,7 @@ import { takeUntil } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './privacy-policy.component.html',
-  styleUrl: './../../../shared/legal-document.css',
+  styleUrl: '../shared-styles/legal-document.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PrivacyPolicyComponent extends BasePublicComponent {

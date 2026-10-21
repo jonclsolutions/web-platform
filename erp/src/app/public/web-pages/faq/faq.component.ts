@@ -12,7 +12,7 @@ import { FaqItem, FaqCategory } from './';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './faq.component.html',
-  styleUrls: ['./faq.component.css'],
+  styleUrls: ['../shared-styles/theme.css', '../shared-styles/animations.css', '../shared-styles/cta.css', '../../../shared/styles/base.css', '../shared-styles/faq-list.css', '../shared-styles/content-page.css', './faq.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FaqComponent extends BasePublicComponent {

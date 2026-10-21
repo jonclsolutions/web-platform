@@ -41,7 +41,7 @@
 */
 .breadcrumb {
   font-size: 0.75rem;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   margin-bottom: 8px;
 }
 
@@ -52,7 +52,7 @@
     @note: h3 is the title of a former "card" (.info-card) - now a plain sub-heading.
 */
 h1 {
-  color: #18181b;
+  color: var(--color-zinc-900);
   font-size: 2rem;
   line-height: 1.25;
   margin: 0 0 10px;
@@ -60,7 +60,7 @@ h1 {
 }
 
 h2 {
-  color: #18181b;
+  color: var(--color-zinc-900);
   font-size: 1.35rem;
   line-height: 1.35;
   font-weight: 600;
@@ -68,7 +68,7 @@ h2 {
 }
 
 h3 {
-  color: #18181b;
+  color: var(--color-zinc-900);
   font-size: 1rem;
   line-height: 1.5;
   font-weight: 600;
@@ -82,7 +82,7 @@ h3 {
 */
 .section-divider {
   border: 0;
-  border-top: 1px solid #ececea;
+  border-top: 1px solid var(--color-sand-200);
   margin: 20px 0 30px;
 }
 
@@ -97,7 +97,7 @@ h3 {
 
 .kb-section p {
   line-height: 1.7;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   font-size: 0.95rem;
   margin: 0 0 14px;
 }
@@ -112,7 +112,7 @@ h3 {
 .lead-text,
 .kb-section .lead-text {
   font-size: 1.1rem;
-  color: #71717a;
+  color: var(--color-zinc-500);
   line-height: 1.7;
   margin-bottom: 8px;
 }
@@ -128,16 +128,11 @@ h3 {
   border-radius: 10px;
   font-size: 0.9rem;
   line-height: 1.6;
-  border: 1px solid #ececea;
-  background: #fafafa;
-  color: #3f3f46;
+  border: 1px solid var(--color-sand-200);
+  background: var(--color-zinc-50);
+  color: var(--color-zinc-700);
   margin: 14px 0;
 }
-
-.alert-info    { border-color: #e0e0dd; background: #f4f4f5; color: #18181b; }
-.alert-warning { border-color: #fde68a; background: #fffbeb; color: #92400e; }
-.alert-success { border-color: #a7f3d0; background: #ecfdf5; color: #065f46; }
-.alert-danger  { border-color: #fecdd3; background: #fff1f2; color: #9f1239; }
 
 /*
     @module: Note panel
@@ -150,16 +145,16 @@ h3 {
   border-radius: 10px;
   font-size: 0.85rem;
   line-height: 1.6;
-  color: #71717a;
-  border: 1px dashed #e0e0dd;
-  background: #fafafa;
+  color: var(--color-zinc-500);
+  border: 1px dashed var(--color-sand-300);
+  background: var(--color-zinc-50);
   margin: 14px 0;
 }
 
 .note-box.highlight-note {
-  border: 1px solid #18181b;
-  background: #f4f4f5;
-  color: #18181b;
+  border: 1px solid var(--color-zinc-900);
+  background: var(--color-zinc-100);
+  color: var(--color-zinc-900);
   font-weight: 500;
 }
 
@@ -192,7 +187,7 @@ h3 {
 
 .info-card .small-text {
   font-size: 0.95rem;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   line-height: 1.7;
   margin: 0;
 }
@@ -214,7 +209,7 @@ h3 {
   padding: 2px 0 14px 16px;
   margin: 0;
   border: 0;
-  border-left: 2px solid #ececea;
+  border-left: 2px solid var(--color-sand-200);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -225,7 +220,7 @@ h3 {
 }
 
 .flow-item.active {
-  border-left-color: #18181b;
+  border-left-color: var(--color-zinc-900);
   background: transparent;
 }
 
@@ -236,13 +231,13 @@ h3 {
   text-transform: none;
   letter-spacing: 0;
   line-height: 1.5;
-  color: #18181b;
+  color: var(--color-zinc-900);
   margin-bottom: 2px;
 }
 
 .flow-item p {
   font-size: 0.95rem;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   margin: 0;
   line-height: 1.7;
 }
@@ -255,7 +250,7 @@ h3 {
 .kb-list {
   margin: 0 0 14px;
   padding-left: 22px;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   font-size: 0.95rem;
   line-height: 1.8;
 }
@@ -266,13 +261,13 @@ h3 {
     @usage: .kb-link
 */
 .kb-link {
-  color: #18181b;
+  color: var(--color-zinc-900);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.kb-link:hover { color: #000000; }
+.kb-link:hover { color: var(--color-black); }
 
 /*
     @module: Figure
@@ -286,13 +281,13 @@ h3 {
 .kb-figure img {
   max-width: 100%;
   border-radius: 10px;
-  border: 1px solid #ececea;
+  border: 1px solid var(--color-sand-200);
   display: block;
 }
 
 .kb-figure figcaption {
   font-size: 0.78rem;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   margin-top: 6px;
 }
 

@@ -43,7 +43,7 @@ interface QuickLinkCard {
   standalone: true,
   imports: [CommonModule, RouterModule, HasPermissionDirective],
   templateUrl: './web-welcome-page.component.html',
-  styleUrl: './web-welcome-page.component.css',
+  styleUrls: ['../../shared-styles/welcome-page.css', '../../shared-styles/welcome-links.css'],
 })
 export class WebWelcomePageComponent {
   public readonly i18n = inject(AdminLocalizationService);

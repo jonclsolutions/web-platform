@@ -63,7 +63,7 @@ interface ActivationCheckResponse {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, PasswordRequirementsChecklistComponent],
   templateUrl: './activate-account.component.html',
-  styleUrl: './activate-account.component.css',
+  styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../shared-styles/auth-card.css', './activate-account.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActivateAccountComponent implements OnInit {

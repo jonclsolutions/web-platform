@@ -52,7 +52,7 @@ const GENERIC_ERROR = 'The link is invalid or has expired. Please request a new 
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, PasswordRequirementsChecklistComponent],
   templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.css']
+  styleUrls: ['../../shared-styles/theme.css', '../shared-styles/auth.css', '../shared-styles/auth-card.css', './reset-password.component.css']
 })
 export class ResetPasswordComponent implements OnInit, OnDestroy {
   token = '';

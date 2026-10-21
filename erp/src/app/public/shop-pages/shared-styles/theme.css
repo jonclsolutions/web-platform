@@ -1,0 +1,25 @@
+/*
+    @file: theme.css
+    @path: /src/app/public/shop-pages/shared-styles/theme.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Public e-shop look (light, black accents): colour and motion tokens of the e-shop pages.
+    @dependencies: none
+*/
+
+/*
+    @module: public shop theme tokens
+    @description: Public e-shop look (light, black accents): colour and motion tokens of the e-shop pages.
+    @usage: :host (included first in styleUrls)
+    @note: Only tokens that every member defines live here. A member with a different value keeps its own declaration (marked "local value") after this file, so the result is unchanged.
+*/
+
+:host {
+  --bg-dark: var(--color-black);
+  --text-main: var(--color-black);
+  --text-dim: #707070;
+  --border: #e5e5e5;
+  --border-dark: var(--color-black);
+  --transition: all 0.2s ease-in-out;
+}

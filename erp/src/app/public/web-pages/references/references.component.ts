@@ -16,7 +16,7 @@ import { BasePublicComponent } from '../../base-public.component';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './references.component.html',
-  styleUrl: './references.component.css',
+  styleUrls: ['../shared-styles/theme.css', '../shared-styles/animations.css', '../shared-styles/cta.css', '../../../shared/styles/base.css', '../shared-styles/content-page.css', './references.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReferencesComponent extends BasePublicComponent {

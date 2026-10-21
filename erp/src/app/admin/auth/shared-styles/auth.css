@@ -1,0 +1,31 @@
+/*
+    @file: auth.css
+    @path: /src/app/admin/auth/shared-styles/auth.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Field groups and submit-button states shared by login, account activation and password reset.
+    @dependencies: none
+*/
+
+/*
+    @module: Auth form controls
+    @description: Field groups and submit-button states shared by login, account activation and password reset.
+    @usage: .field-group, .submit-btn:disabled, .submit-btn:hover:not(:disabled)
+*/
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: var(--accent-dark);
+  box-shadow: 0 6px 16px rgba(24, 24, 27, 0.18);
+}
+
+.submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

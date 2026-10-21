@@ -60,7 +60,7 @@ interface NavGroup {
   standalone: true,
   imports: [RouterModule, KbFooterComponent],
   templateUrl: './knowledge-base.component.html',
-  styleUrl: './knowledge-base.component.css'
+  styleUrls: ['../../shared-styles/theme.css', './knowledge-base.component.css']
 })
 export class KnowledgeBaseComponent implements OnDestroy {
   isMenuOpen = false;

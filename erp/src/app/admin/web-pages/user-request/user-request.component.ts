@@ -90,7 +90,7 @@ interface EmailTemplateState {
   standalone: true,
   imports: [SHARED_UI_BUILDERS, FormsModule, ActionMenuBuilderComponent, GraphBuilderComponent],
   templateUrl: './user-request.component.html',
-  styleUrls: ['../default-style.css', './email-template-modal.css'],
+  styleUrls: ['../../shared-styles/page.css', '../shared-styles/page.css', './email-template-modal.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserRequestComponent extends BaseDataComponent<any> implements Core.OnInit {

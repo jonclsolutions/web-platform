@@ -19,7 +19,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
   standalone: true,
   imports: [FormsModule, RouterModule, RouterLink],
   templateUrl: './cart.component.html',
-  styleUrls: ['./cart.component.css'],
+  styleUrls: ['../shared-styles/theme.css', '../shared-styles/quantity.css', './cart.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CartComponent extends BasePublicComponent {

@@ -21,7 +21,7 @@ import { takeUntil } from 'rxjs/operators';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './shop-maintenance.component.html',
-  styleUrl: './shop-maintenance.component.css',
+  styleUrls: ['../../shared-styles/maintenance.css', './shop-maintenance.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShopMaintenanceComponent extends BasePublicComponent {

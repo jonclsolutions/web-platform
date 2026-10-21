@@ -20,26 +20,16 @@
  * scroll area while it is stuck. Increase it if a fixed admin header ever overlaps the bar.
  */
 :host {
-  --accent:        #18181b;
-  --accent-dark:   #000000;
-  --accent-dim:    #f4f4f5;
-  --accent-dim-2:  #e4e4e7;
-  --text:          #18181b;
-  --text-muted:    #71717a;
-  --text-dim:      #a1a1aa;
-  --border:        #ececea;
-  --border-mid:    #e4e4e7;
-  --error:         #e11d48;
-  --error-dim:     #fff1f2;
-  --success:       #059669;
-  --success-dim:   #ecfdf5;
-  --warning:       #d97706;
-  --warning-dim:   #fffbeb;
-  --surface:       #ffffff;
-  --surface-2:     #fafafa;
+  --accent-dark:   var(--color-black);
+  --accent-dim:    var(--color-zinc-100);
+  --accent-dim-2:  var(--color-zinc-200);
+  --border-mid: var(--color-zinc-200); /* local value – admin theme.css: #e0e0dd */
+  --error:         var(--color-rose-600);
+  --error-dim:     var(--color-rose-50);
+  --warning:       var(--color-amber-600);
+  --warning-dim:   var(--color-amber-50);
   --radius:        10px;
   --radius-md:     18px;
-  --ff:            -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 
   --savebar-sticky-top: 8px;
 
@@ -71,14 +61,6 @@
   letter-spacing: -0.01em;
 }
 
-.roles-page-subtitle {
-  margin: 0;
-  max-width: 640px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  line-height: 1.55;
-}
-
 /**
  * @module Buttons
  * @description Primary, secondary and danger buttons plus the compact size modifier.
@@ -100,7 +82,7 @@
   white-space: nowrap;
 }
 
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); color: var(--color-white); }
 .btn-primary:hover:not(:disabled) { background: var(--accent-dark); transform: translateY(-1px); }
 
 .btn-secondary {
@@ -110,8 +92,8 @@
 }
 .btn-secondary:hover:not(:disabled) { background: var(--border); }
 
-.btn-danger { background: var(--error); color: #fff; }
-.btn-danger:hover:not(:disabled) { background: #9f1239; }
+.btn-danger { background: var(--error); color: var(--color-white); }
+.btn-danger:hover:not(:disabled) { background: var(--color-rose-800); }
 
 .btn-primary:disabled, .btn-secondary:disabled, .btn-danger:disabled {
   opacity: 0.55;
@@ -251,7 +233,7 @@
   border-left: 3px solid var(--accent);
   padding-left: 11px;
 }
-.role-list-item--protected { background: #fafafa; }
+.role-list-item--protected { background: var(--color-zinc-50); }
 .role-list-item--protected.role-list-item--active { background: var(--accent-dim); }
 
 .role-list-item-main {
@@ -386,11 +368,11 @@
   margin-top: 14px;
   padding: 10px 13px;
   background: var(--warning-dim);
-  border: 1px solid #fde68a;
+  border: 1px solid var(--color-amber-200);
   border-left: 3px solid var(--warning);
   border-radius: var(--radius);
   font-size: 0.82rem;
-  color: #92400e;
+  color: var(--color-amber-800);
 }
 
 /**
@@ -654,8 +636,8 @@
 .delete-modal-icon {
   width: 30px; height: 30px;
   border-radius: var(--radius);
-  background: #fff;
-  border: 1px solid #fecdd3;
+  background: var(--color-white);
+  border: 1px solid var(--color-rose-200);
   color: var(--error);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -674,11 +656,11 @@
   margin-top: 12px;
   padding: 10px 13px;
   background: var(--warning-dim);
-  border: 1px solid #fde68a;
+  border: 1px solid var(--color-amber-200);
   border-left: 3px solid var(--warning);
   border-radius: var(--radius);
   font-size: 0.83rem;
-  color: #92400e;
+  color: var(--color-amber-800);
 }
 
 .delete-modal-footer {

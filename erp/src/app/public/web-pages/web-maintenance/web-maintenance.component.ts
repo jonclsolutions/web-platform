@@ -20,7 +20,7 @@ import { BasePublicComponent } from '../../base-public.component';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './web-maintenance.component.html',
-  styleUrl: './web-maintenance.component.css',
+  styleUrls: ['../../shared-styles/maintenance.css', './web-maintenance.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WebMaintenanceComponent extends BasePublicComponent {

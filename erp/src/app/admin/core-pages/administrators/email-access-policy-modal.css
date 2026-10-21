@@ -25,7 +25,7 @@
   max-width: 520px;
   max-height: 88vh;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--color-white);
   border-radius: 18px;
   box-shadow: 0 20px 60px rgba(24, 24, 27, 0.25);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -43,13 +43,13 @@
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
 }
 
 .email-policy-subtitle {
   margin: 4px 0 0;
   font-size: 0.82rem;
-  color: #71717a;
+  color: var(--color-zinc-500);
   max-width: 380px;
 }
 
@@ -60,12 +60,12 @@
   border: none;
   background: transparent;
   border-radius: 999px;
-  color: #71717a;
+  color: var(--color-zinc-500);
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
-.email-policy-close:hover:not(:disabled) { background: #f4f4f5; color: #18181b; }
+.email-policy-close:hover:not(:disabled) { background: var(--color-zinc-100); color: var(--color-zinc-900); }
 .email-policy-close:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .email-policy-body {
@@ -73,7 +73,7 @@
 }
 
 .email-policy-loading {
-  color: #71717a;
+  color: var(--color-zinc-500);
   font-size: 0.9rem;
   padding: 20px 0;
   text-align: center;
@@ -87,14 +87,14 @@
   display: block;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
   margin-bottom: 4px;
 }
 
 .email-policy-hint {
   margin: 0 0 10px;
   font-size: 0.78rem;
-  color: #71717a;
+  color: var(--color-zinc-500);
   line-height: 1.5;
 }
 
@@ -107,25 +107,25 @@
   flex: 1;
   min-width: 0;
   padding: 9px 12px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--color-zinc-200);
   border-radius: 8px;
   font-size: 0.88rem;
   font-family: inherit;
-  color: #18181b;
+  color: var(--color-zinc-900);
   outline: none;
   transition: border-color 0.15s ease;
 }
-.email-policy-input:focus { border-color: #18181b; }
-.email-policy-input:disabled { background: #f4f4f5; cursor: not-allowed; }
+.email-policy-input:focus { border-color: var(--color-zinc-900); }
+.email-policy-input:disabled { background: var(--color-zinc-100); cursor: not-allowed; }
 
 .email-policy-select {
   padding: 9px 10px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--color-zinc-200);
   border-radius: 8px;
   font-size: 0.85rem;
   font-family: inherit;
-  color: #18181b;
-  background: #ffffff;
+  color: var(--color-zinc-900);
+  background: var(--color-white);
   cursor: pointer;
 }
 
@@ -135,8 +135,8 @@
   padding: 9px 16px;
   border: none;
   border-radius: 8px;
-  background: #18181b;
-  color: #ffffff;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
   font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
@@ -145,13 +145,13 @@
   transition: background-color 0.15s ease;
 }
 .email-policy-btn-save:hover:not(:disabled),
-.email-policy-btn-add:hover { background: #3f3f46; }
+.email-policy-btn-add:hover { background: var(--color-zinc-700); }
 .email-policy-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .email-policy-empty {
   margin: 0;
   font-size: 0.82rem;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   font-style: italic;
 }
 
@@ -162,14 +162,14 @@
   gap: 8px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: #fafafa;
-  border: 1px solid #ececea;
+  background: var(--color-zinc-50);
+  border: 1px solid var(--color-sand-200);
   margin-bottom: 6px;
   font-size: 0.85rem;
 }
 
 .email-policy-rule-value {
-  color: #18181b;
+  color: var(--color-zinc-900);
   word-break: break-all;
 }
 
@@ -180,12 +180,12 @@
   border: none;
   background: transparent;
   border-radius: 999px;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   cursor: pointer;
   font-size: 0.85rem;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
-.email-policy-btn-remove:hover { background: #fff1f2; color: #be123c; }
+.email-policy-btn-remove:hover { background: var(--color-rose-50); color: var(--color-rose-700); }
 
 .email-policy-footer {
   display: flex;
@@ -195,15 +195,15 @@
 
 .email-policy-btn-cancel {
   padding: 9px 18px;
-  border: 1px solid #e4e4e7;
+  border: 1px solid var(--color-zinc-200);
   border-radius: 8px;
-  background: #ffffff;
-  color: #3f3f46;
+  background: var(--color-white);
+  color: var(--color-zinc-700);
   font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
-.email-policy-btn-cancel:hover:not(:disabled) { background: #f4f4f5; }
+.email-policy-btn-cancel:hover:not(:disabled) { background: var(--color-zinc-100); }
 .email-policy-btn-cancel:disabled { opacity: 0.6; cursor: not-allowed; }

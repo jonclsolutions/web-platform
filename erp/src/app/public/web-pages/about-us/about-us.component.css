@@ -11,43 +11,17 @@
 */
 
 :host {
-  --bg:           #0d0d1b;
-  --surface:      #111128;
-  --surface-2:    #18183a;
-  --border:       rgba(166, 125, 255, 0.1);
-  --border-mid:   rgba(166, 125, 255, 0.22);
-  --accent:       #a67dff;
-  --accent-dark:  #6b2e91;
   --accent-hover: #7d35ae;
-  --accent-dim:   rgba(166, 125, 255, 0.07);
   --accent-grid:  rgba(166, 125, 255, 0.03);
-  --text:         #e0e0f0;
-  --text-muted:   #888899;
   --text-body:    #b0b0c8;
-  --white:        #ffffff;
-  --ff-display:   'Source Sans Pro', 'Segoe UI', sans-serif;
-  --ff-body:      'Segoe UI', system-ui, sans-serif;
-  --radius:       12px;
-  --radius-lg:    18px;
-  --ease:         0.25s ease;
+  --white:        var(--color-white);
   --max-w:        1200px;
 
   /* ── Unified spacing (same values on every public page) ── */
-  --gutter:       24px;   /* side padding of every container */
   --section-y:    96px;   /* vertical space between sections */
   --hero-top:     180px;  /* navbar height + air above page title */
   --hero-bottom:  48px;   /* hero -> first content */
   --head-gap:     48px;   /* section heading -> section content */
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-/* ── Page ────────────────────────────────────────────────────── */
-.about-page {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--ff-body);
-  overflow-x: hidden;
 }
 
 /* Grid background – identical to Services / FAQ / References */
@@ -61,29 +35,6 @@
   background-size: 60px 60px;
   pointer-events: none;
   z-index: 0;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   HERO
-   ═══════════════════════════════════════════════════════════════ */
-.about-hero {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: var(--hero-top) var(--gutter) var(--hero-bottom);
-  animation: fadeUp 0.7s ease-out both;
-}
-
-.about-hero-eyebrow {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 16px;
 }
 
 .about-hero-title {
@@ -103,108 +54,6 @@
   max-width: 520px;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MAIN LAYOUT – sidebar + main
-   ═══════════════════════════════════════════════════════════════ */
-.about-layout {
-  position: relative;
-  z-index: 1;
-  max-width: calc(var(--max-w) + var(--gutter) * 2);
-  margin: 0 auto;
-  padding: 0 var(--gutter) var(--section-y);
-  grid-template-columns: 280px 1fr;
-  gap: 32px;
-  align-items: start;
-}
-
-/* ── Sidebar ─────────────────────────────────────────────────── */
-.about-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: sticky;
-  top: 24px;
-  animation: fadeUp 0.6s 0.2s ease-out both;
-}
-
-.sidebar-card {
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sidebar-eyebrow {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.sidebar-title {
-  font-family: var(--ff-display);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--white);
-  line-height: 1.3;
-}
-
-.sidebar-text {
-  font-size: 0.85rem;
-  line-height: 1.65;
-  color: var(--text-muted);
-}
-
-.sidebar-cta-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 6px;
-  padding: 11px 20px;
-  background: var(--accent-dark);
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  color: var(--white);
-  font-size: 0.87rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background var(--ease), transform 0.15s ease;
-}
-
-.sidebar-cta-btn:hover {
-  background: var(--accent-hover);
-  transform: translateY(-2px);
-}
-
-/* Social networks card */
-.sidebar-card--social {
-  gap: 12px;
-}
-
-/* Unified with the rest of the app (see Contact / FAQ): icon only,
-   no label, no hover effect, larger size. */
-.social-list {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-
-.social-item {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.social-icon {
-  width: 26px;
-  height: 26px;
-  object-fit: contain;
-}
-
 /* ── Main text column ────────────────────────────────────────── */
 .about-main {
   position: relative;
@@ -216,14 +65,6 @@
   gap: 32px;
   max-width: calc(var(--max-w) + var(--gutter) * 2);
   margin: 0 auto;
-}
-
-.about-main-eyebrow {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--accent);
 }
 
 /* Paragraphs */
@@ -257,15 +98,6 @@
 .milestones-header {
   text-align: center;
   margin-bottom: var(--head-gap);
-}
-
-.milestones-eyebrow {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 14px;
 }
 
 .milestones-heading {
@@ -356,14 +188,6 @@
   animation: fadeUp 0.6s ease-out both;
 }
 
-.cta-row {
-  max-width: 860px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-
 .cta-block {
   flex: 1;
   display: flex;
@@ -372,13 +196,6 @@
   text-align: center;
   gap: 20px;
   padding: 48px 40px;
-}
-
-.cta-divider {
-  width: 1px;
-  height: 120px;
-  background: var(--border-mid);
-  flex-shrink: 0;
 }
 
 .cta-text {
@@ -402,12 +219,6 @@
   transition: background var(--ease), border-color var(--ease), transform 0.15s ease;
 }
 
-.cta-btn:hover {
-  background: var(--accent-dim);
-  border-color: var(--accent);
-  transform: translateY(-2px);
-}
-
 .cta-btn--accent {
   background: var(--accent-dark);
   border-color: var(--accent);
@@ -415,9 +226,6 @@
 }
 
 .cta-btn--accent:hover { background: var(--accent-hover); }
-
-.cta-arrow { font-size: 1.1rem; transition: transform var(--ease); }
-.cta-btn:hover .cta-arrow { transform: translateX(4px); }
 
 /* Divider – cta-block top padding completes the section spacing */
 .about-divider {
@@ -432,14 +240,6 @@
     transparent
   );
   opacity: 0.5;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ANIMATIONS
-   ═══════════════════════════════════════════════════════════════ */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ═══════════════════════════════════════════════════════════════

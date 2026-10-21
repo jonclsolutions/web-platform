@@ -1,14 +1,16 @@
 /*
     @file: legal-document.css
-    @path: src/app/shared/styles/legal-document.css
-    @project RPSW Web
-    @author RPSW
-    @created 2026
-    @description Shared look for all legal document pages (GDPR, TOS, Cookies, ...).
+    @path: /src/app/public/web-pages/shared-styles/legal-document.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Shared look for all legal document pages (GDPR, TOS, Cookies, ...).
         Previously tos.component.css and privacy-policy.component.css had identical
-        copy-pasted content – now it lives here once and each component imports it
-        (`@import '../../../shared/styles/legal-document.css';`), so a change here
-        applies everywhere.
+        copy-pasted content – now it lives here once and the three legal page
+        components use it as their stylesheet (styleUrl), so a change here applies
+        to all of them. Moved from app/shared/ in the 2026-10 CSS cleanup: only the
+        public web uses it.
+    @dependencies: none (defines its own spacing tokens on :host)
     @refactor-note (2026-09) Unified spacing across public pages: spacing tokens
         (--gutter, --section-y, --hero-top), page title starts at the same height
         as on other pages (180px / 120px mobile). Text column intentionally stays
@@ -52,7 +54,7 @@ h1 {
   font-family: 'Source Sans Pro', 'Segoe UI', sans-serif;
   font-size: clamp(2.4rem, 5vw, 4rem);
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-white);
   line-height: 1.15;
   text-align: center;
   max-width: 720px;
@@ -61,7 +63,7 @@ h1 {
 
 /* Section heading – white like .svc-panel-title / .milestones-heading */
 h2 {
-  color: #ffffff;
+  color: var(--color-white);
   margin-top: 40px;
   margin-bottom: 12px;
   font-size: 1.25rem;
@@ -74,7 +76,7 @@ h2 {
 
 /* Sub-heading – white like .milestone-title / .feature-card-title */
 h3 {
-  color: #ffffff;
+  color: var(--color-white);
   margin-top: 22px;
   margin-bottom: 8px;
   font-size: 1rem;

@@ -54,7 +54,7 @@ import { NavSection } from './welcome-page.interface';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './welcome-page.component.html',
-  styleUrl: './welcome-page.component.css',
+  styleUrls: ['../../shared-styles/welcome-page.css', './welcome-page.component.css'],
 })
 export class WelcomePageComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);

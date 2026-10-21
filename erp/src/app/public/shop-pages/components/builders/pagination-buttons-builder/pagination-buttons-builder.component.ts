@@ -21,7 +21,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
   standalone: true,
   imports: [],
   templateUrl: './pagination-buttons-builder.component.html',
-  styleUrl: './pagination-buttons-builder.component.css',
+  styleUrls: ['../../../shared-styles/theme.css', './pagination-buttons-builder.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PaginationButtonsBuilderComponent {

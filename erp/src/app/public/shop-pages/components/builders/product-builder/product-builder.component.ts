@@ -24,7 +24,7 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './product-builder.component.html',
-  styleUrl: './product-builder.component.css',
+  styleUrls: ['../../../shared-styles/theme.css', './product-builder.component.css'],
 })
 export class ProductBuilderComponent {
   /** The product data object containing metadata, prices, and image arrays */

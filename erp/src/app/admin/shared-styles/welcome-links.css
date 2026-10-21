@@ -1,12 +1,17 @@
-/*     
-    @file: shop-welcome-page.component.css
-    @path: /src/app/admin/shop-pages/shop-welcome-page/shop-welcome-page.component.css
+/*
+    @file: welcome-links.css
+    @path: /src/app/admin/shared-styles/welcome-links.css
     @project: RPSW Web
     @author: RPSW
     @created: 2026
-    @note Identická struktura jako web-welcome-page.component.css - záměrně
-    duplikováno (ne sdíleno přes společný CSS soubor), ať zůstane každá modulová
-    landing page nezávisle stylovatelná bez rizika vzájemného ovlivnění.
+    @description: Page frame, section titles and the grid of link cards on the shop and web welcome pages.
+    @dependencies: none
+*/
+
+/*
+    @module: Welcome page link cards
+    @description: Page frame, section titles and the grid of link cards on the shop and web welcome pages.
+    @usage: .wp-cards-grid, .wp-link-body, .wp-link-card, .wp-link-card:hover, .wp-link-desc, .wp-link-icon, .wp-link-title, .wp-page, .wp-section-title, .wp-welcome-sub
 */
 
 .wp-page {
@@ -14,42 +19,16 @@
   max-width: 1000px;
   padding: 0 0 28px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  color: #18181b;
+  color: var(--color-zinc-900);
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.wp-welcome {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 4px 0 14px;
-  flex-wrap: wrap;
-}
-
-.wp-welcome-title {
-  margin: 0 0 5px;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #18181b;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-.wp-welcome-sub {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #71717a;
-  max-width: 640px;
-  line-height: 1.5;
-}
-
 .wp-section-title {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-top: 4px;
@@ -65,8 +44,8 @@
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  background: #ffffff;
-  border: 1px solid #ececea;
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
   border-radius: 16px;
   padding: 16px;
   text-decoration: none;
@@ -76,7 +55,7 @@
 }
 
 .wp-link-card:hover {
-  border-color: #18181b;
+  border-color: var(--color-zinc-900);
   box-shadow: 0 4px 14px rgba(24, 24, 27, 0.08);
   transform: translateY(-1px);
 }
@@ -86,8 +65,8 @@
   width: 38px;
   height: 38px;
   border-radius: 12px;
-  background: #18181b;
-  color: #ffffff;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,13 +82,13 @@
 .wp-link-title {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
   line-height: 1.25;
 }
 
 .wp-link-desc {
   font-size: 0.78rem;
-  color: #71717a;
+  color: var(--color-zinc-500);
   line-height: 1.4;
 }
 

@@ -162,7 +162,7 @@ interface ActivityBreakdownEntry {
   standalone: true,
   imports: [RouterModule, CommonModule, HasPermissionDirective],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css',
+  styleUrls: ['../../shared-styles/dashboard.css', '../../shared-styles/dashboard-cards.css', './dashboard.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CoreDashboardComponent extends BaseDataComponent<UserLogin> implements Core.OnInit {

@@ -1,0 +1,82 @@
+/*
+    @file: dashboard.css
+    @path: /src/app/admin/shared-styles/dashboard.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Header bar shared by the core, shop and web dashboards: title, subtitle, last-updated label, refresh button and error banner.
+    @dependencies: none
+*/
+
+/*
+    @module: Dashboard header
+    @description: Header bar shared by the core, shop and web dashboards: title, subtitle, last-updated label, refresh button and error banner.
+    @usage: .cd-header-title, .cd-refresh-btn:disabled, .cd-refresh-btn:hover
+*/
+
+.cd-header-title {
+  margin: 0 0 5px;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--text, var(--color-zinc-900));
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.cd-refresh-btn:hover { background: var(--surface-2, var(--color-zinc-50)); color: var(--text, var(--color-zinc-900)); }
+
+.cd-refresh-btn:disabled { opacity: 0.6; cursor: default; }
+
+/*
+    @module: Dashboard header
+    @description: Header bar shared by the core, shop and web dashboards: title, subtitle, last-updated label, refresh button and error banner.
+    @usage: .cd-error-banner, .cd-header-actions, .cd-header-bar, .cd-header-sub, .cd-last-updated, .cd-refresh-btn, .cd-section
+*/
+
+.cd-header-bar {
+  padding: 4px 0 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cd-header-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, var(--color-zinc-500));
+}
+
+.cd-header-actions { display: flex; align-items: center; gap: 10px; }
+
+.cd-last-updated { font-size: 0.78rem; color: var(--text-dim, var(--color-zinc-400)); }
+
+.cd-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-mid, var(--color-sand-300));
+  background: var(--surface, var(--color-white));
+  color: var(--text-muted, var(--color-zinc-500));
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--ease, 0.18s ease), color var(--ease, 0.18s ease);
+}
+
+.cd-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--error-dim, var(--color-rose-50));
+  border: 1px solid var(--error, var(--color-rose-600));
+  color: var(--error, var(--color-rose-600));
+  padding: 12px 16px;
+  border-radius: var(--radius, 10px);
+  font-size: 0.85rem;
+}
+
+.cd-section { display: flex; flex-direction: column; gap: 12px; }

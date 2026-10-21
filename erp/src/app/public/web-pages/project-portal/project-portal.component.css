@@ -12,24 +12,13 @@
 */
 
 :host {
-  --bg:          #f7f6f3;
-  --surface:     #ffffff;
-  --surface-2:   #fafafa;
-  --border:      #ececea;
-  --border-mid:  #e0e0dd;
-  --accent:      #18181b;
-  --text:        #18181b;
-  --text-muted:  #71717a;
-  --text-dim:    #a1a1aa;
-  --success:     #059669;
-  --success-dim: #ecfdf5;
-  --warning:     #b45309;
-  --warning-dim: #fef3c7;
-  --danger:      #be123c;
-  --danger-dim:  #fff1f2;
-  --info:        #4338ca;
-  --info-dim:    #eef2ff;
-  --ff:          -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --bg:          var(--color-sand-50);
+  --warning:     var(--color-amber-700);
+  --warning-dim: var(--color-amber-100);
+  --danger:      var(--color-rose-700);
+  --danger-dim:  var(--color-rose-50);
+  --info:        var(--color-indigo-700);
+  --info-dim:    var(--color-indigo-50);
 }
 
 .pp-page { min-height: 100vh; background: var(--bg); color: var(--text); font-family: var(--ff); }
@@ -65,17 +54,17 @@
 
 .pp-btn-primary {
   width: 100%; padding: 11px; border-radius: 999px; border: none; background: var(--accent);
-  color: #fff; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease;
+  color: var(--color-white); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease;
 }
-.pp-btn-primary:hover:not(:disabled) { background: #3f3f46; }
+.pp-btn-primary:hover:not(:disabled) { background: var(--color-zinc-700); }
 .pp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .pp-btn-primary-small {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px; border-radius: 999px; border: none; background: var(--accent);
-  color: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease;
+  color: var(--color-white); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease;
 }
-.pp-btn-primary-small:hover:not(:disabled) { background: #3f3f46; }
+.pp-btn-primary-small:hover:not(:disabled) { background: var(--color-zinc-700); }
 .pp-btn-primary-small:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .pp-btn-small {
@@ -99,10 +88,6 @@
 }
 
 .pp-sidebar-top { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; margin-top: 18px; }
-.pp-avatar {
-  width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: #fff;
-  display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 700; flex-shrink: 0;
-}
 .pp-sidebar-project-name { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text); line-height: 1.3; }
 
 .pp-sidebar-divider { height: 1px; background: var(--border); margin: 6px 0 18px; }
@@ -130,16 +115,7 @@
 .pp-main { flex: 1; min-width: 0; overflow-y: auto; padding: 40px; }
 .pp-main-inner { max-width: 720px; margin: 0 auto; }
 
-.pp-intro-section { margin-bottom: 30px; }
 .pp-project-desc { color: var(--text-muted); line-height: 1.65; margin: 0; font-size: 0.95rem; }
-
-.pp-section { margin-bottom: 36px; }
-.pp-section-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; }
-.pp-section-title {
-  display: flex; align-items: center; gap: 9px;
-  font-size: 1rem; font-weight: 700; margin: 0; color: var(--text);
-}
-.pp-section-icon { color: var(--text-dim); display: flex; flex-shrink: 0; }
 
 .pp-empty { color: var(--text-dim); font-size: 0.85rem; }
 
@@ -150,15 +126,10 @@
   background: var(--surface); border: 1px solid var(--border); font-size: 0.88rem;
 }
 .pp-checkpoint-status-icon { flex-shrink: 0; display: flex; color: var(--text-dim); }
-.pp-checkpoint-item.status-active .pp-checkpoint-status-icon { color: var(--warning); }
-.pp-checkpoint-item.status-done .pp-checkpoint-status-icon { color: var(--success); }
 
 .pp-checkpoint-label { flex: 1; color: var(--text); }
 
 .pp-checkpoint-badge { font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; flex-shrink: 0; }
-.pp-checkpoint-badge.status-new { background: var(--surface-2); color: var(--text-muted); }
-.pp-checkpoint-badge.status-active { background: var(--warning-dim); color: var(--warning); }
-.pp-checkpoint-badge.status-done { background: var(--success-dim); color: var(--success); }
 
 /* ── Nové vlákno formulář ──────────────────────────────────────────────── */
 .pp-new-thread-form { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
@@ -180,10 +151,6 @@
 .pp-status-chip.pp-status-closed { background: var(--surface-2); color: var(--text-dim); }
 
 .pp-priority-chip { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
-.pp-priority-chip.priority-low { background: var(--surface-2); color: var(--text-muted); }
-.pp-priority-chip.priority-medium { background: var(--info-dim); color: var(--info); }
-.pp-priority-chip.priority-high { background: var(--warning-dim); color: var(--warning); }
-.pp-priority-chip.priority-critic { background: var(--danger-dim); color: var(--danger); }
 
 /* ── Detail vlákna ─────────────────────────────────────────────────────── */
 .pp-thread-detail { display: flex; flex-direction: column; }
@@ -195,10 +162,6 @@
 .pp-back-btn:hover { color: var(--text); }
 
 .pp-thread-detail-subject { font-size: 1.05rem; font-weight: 700; margin: 0 0 12px; color: var(--text); }
-
-.pp-close-thread-btn { color: var(--success); border-color: #a7f3d0; background: var(--success-dim); margin-bottom: 14px; }
-.pp-close-thread-btn:hover:not(:disabled) { background: #d1fae5; }
-.pp-thread-closed-hint { font-size: 0.82rem; color: var(--text-dim); margin: 0 0 14px; }
 
 .pp-message-list { display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; margin-bottom: 14px; }
 .pp-message { padding: 11px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
@@ -223,79 +186,7 @@
   .pp-main { padding: 24px 18px; }
 }
 
-/* ── Language dropdown (nahrazuje dřívější CZ/EN chips) ────────────────── */
-.pp-lang-dropdown { position: relative; padding-bottom: 12px; }
-.pp-lang-dropdown-login { display: flex; justify-content: center; padding-bottom: 18px; }
-
-.pp-lang-btn {
-  display: flex; align-items: center; gap: 7px;
-  padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border-mid);
-  background: var(--surface); color: var(--text-muted); font-size: 0.78rem; font-weight: 600;
-  font-family: var(--ff); cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
-}
-.pp-lang-btn:hover { background: var(--surface-2); color: var(--text); }
-.pp-lang-btn-full { width: 100%; justify-content: space-between; }
-.pp-lang-chevron { margin-left: auto; }
-
-.pp-lang-flag { width: 16px; height: 16px; object-fit: cover; border-radius: 2px; flex-shrink: 0; }
-.pp-lang-code { text-transform: uppercase; letter-spacing: 0.02em; }
-
-.pp-lang-menu-backdrop { position: fixed; inset: 0; z-index: 40; }
-.pp-lang-menu {
-  position: absolute; top: calc(100% + 6px); left: 0; z-index: 41; min-width: 170px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(24,24,27,0.12); overflow: hidden;
-}
-.pp-lang-dropdown-login .pp-lang-menu { left: 50%; transform: translateX(-50%); }
-.pp-lang-menu-sidebar { left: 0; right: 0; width: 100%; }
-
-.pp-lang-menu-item {
-  display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px 14px;
-  border: none; background: none; cursor: pointer; text-align: left;
-  font-size: 0.85rem; color: var(--text); font-family: var(--ff);
-}
-.pp-lang-menu-item:hover { background: var(--surface-2); }
-.pp-lang-menu-item-active { background: var(--surface-2); font-weight: 600; }
-
-/* ── Tabs ──────────────────────────────────────────────────────────────── */
-.pp-tabs {
-  display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--border);
-}
-.pp-tab-btn {
-  display: flex; align-items: center; gap: 7px;
-  padding: 10px 16px; border: none; background: none; cursor: pointer;
-  font-size: 0.86rem; font-weight: 600; color: var(--text-muted); font-family: var(--ff);
-  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s ease, border-color 0.15s ease;
-}
-.pp-tab-btn:hover { color: var(--text); }
-.pp-tab-btn-active { color: var(--text); border-bottom-color: var(--accent); }
-
-.pp-tab-count {
-  font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px;
-  background: var(--surface-2); color: var(--text-muted);
-}
-.pp-tab-btn-active .pp-tab-count { background: var(--accent); color: #fff; }
-
-.pp-tab-panel { animation: pp-fade-in 0.15s ease; }
 @keyframes pp-fade-in { from { opacity: 0; } to { opacity: 1; } }
-
-/* ── Description tab ──────────────────────────────────────────────────── */
-.pp-description-block { margin-bottom: 24px; }
-.pp-description-block-title {
-  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--text-dim); margin-bottom: 8px;
-}
-
-/* ── Threads toolbar (search + new thread) ────────────────────────────── */
-.pp-threads-toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; }
-.pp-search-wrap { position: relative; flex: 1; }
-.pp-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
-.pp-search-input {
-  width: 100%; padding: 9px 12px 9px 34px; border-radius: 999px; border: 1px solid var(--border-mid);
-  background: var(--surface); color: var(--text); font-size: 0.85rem; font-family: inherit;
-}
-.pp-search-input:focus { outline: none; border-color: var(--accent); }
-.pp-threads-toolbar .pp-btn-small { flex-shrink: 0; }
 
 /* -------------------- */
 /* ── Language dropdown - minimalistický, jen vlaječka ───────────────────── */
@@ -342,12 +233,12 @@
   font-size: 0.68rem; font-weight: 700; padding: 1px 7px; border-radius: 999px;
   background: var(--surface-2); color: var(--text-muted);
 }
-.pp-tab-btn-active .pp-tab-count { background: var(--accent); color: #fff; }
+.pp-tab-btn-active .pp-tab-count { background: var(--accent); color: var(--color-white); }
 
 .pp-tab-unread-badge {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
-  background: var(--danger); color: #fff; font-size: 0.68rem; font-weight: 700;
+  background: var(--danger); color: var(--color-white); font-size: 0.68rem; font-weight: 700;
 }
 
 .pp-tab-panel { animation: pp-fade-in 0.15s ease; }
@@ -390,7 +281,7 @@
 .pp-thread-unread-badge {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
-  background: var(--danger); color: #fff; font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
+  background: var(--danger); color: var(--color-white); font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
 }
 
 /* ── Contacts & Billing tab ───────────────────────────────────────────── */

@@ -1,0 +1,49 @@
+/*
+    @file: page.css
+    @path: /src/app/admin/core-pages/shared-styles/page.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2025
+    @description: List-page rules used only by the core admin pages (info banner, small text helper and the
+        filter side panel breakpoint). Everything the core, shop and web pages have in common lives in
+        admin/shared-styles/page.css, which is included right before this file.
+    @dependencies: admin/shared-styles/page.css (included first); colour primitives from app/shared/styles/tokens.css (global)
+*/
+
+/*
+  DOPLNIT do sdíleného admin CSS (default-style.css nebo obdoba) - použito
+  v administrators.component.html pro info banner při vytváření účtu.
+*/
+.info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  color: #1a1d23;
+}
+
+.info-banner {
+  font-size: small;
+}
+
+@media (min-width: 1024px) {
+  .main-content-layout {
+    flex-direction: row;
+    gap: 0;
+  }
+  .filter-side-panel {
+    width: 0;
+    max-height: none;
+    margin-right: 0;
+    padding: 0;
+    border: none;
+  }
+  .filter-side-panel.active {
+    width: 250px;
+    margin-left: 5px;
+  }
+}

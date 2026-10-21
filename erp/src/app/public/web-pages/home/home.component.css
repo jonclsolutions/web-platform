@@ -82,8 +82,8 @@
     user-select: none;
     -webkit-user-drag: none;
 
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 200px);
-    mask-image: linear-gradient(to bottom, transparent 0, #000 200px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, var(--color-black) 200px);
+    mask-image: linear-gradient(to bottom, transparent 0, var(--color-black) 200px);
     filter: saturate(1.15) contrast(1.08) brightness(0.95);
 }
 
@@ -105,23 +105,6 @@
     opacity: 0;
     transform: translateY(-16px);
     animation: heroFadeIn 0.8s ease-out 0.2s forwards;
-}
-
-/*
-  @module: hero-brand-logo
-  @description: JONCL SOLUTIONS wordmark above the hero headline.
-  @usage: img.hero-brand-logo (assets/images/logos/logo_big.svg)
-  @note: Width is fixed in CSS; the width/height attributes in HTML only reserve the
-    aspect ratio (no layout shift while the SVG loads).
-*/
-.hero-brand-logo {
-    display: block;
-    width: 280px;
-    max-width: 70%;
-    height: auto;
-    margin-bottom: 32px;
-    user-select: none;
-    -webkit-user-drag: none;
 }
 
 .hero-heading {
@@ -354,20 +337,11 @@
 .home-cta-btn--accent {
     background: #6b2e91;
     border-color: #a67dff;
-    color: #fff;
+    color: var(--color-white);
 }
 
 .home-cta-btn--accent:hover {
     background: #7d35ae;
-}
-
-.home-cta-arrow {
-    font-size: 1.1rem;
-    transition: transform 0.25s ease;
-}
-
-.home-cta-btn:hover .home-cta-arrow {
-    transform: translateX(4px);
 }
 
 @media (max-width: 860px) {
@@ -901,8 +875,8 @@
 /* Row window - edges fade into the background */
 .tech-stack-row {
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, var(--color-black) 8%, var(--color-black) 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, var(--color-black) 8%, var(--color-black) 92%, transparent 100%);
 }
 
 .tech-stack-track {
@@ -974,41 +948,6 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #9090a5;
-}
-
-.tech-stack-controls {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  margin-top: 28px;
-}
-
-.tech-stack-pause-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 16px;
-  border: 1px solid rgba(166, 125, 255, 0.22);
-  border-radius: 999px;
-  background: transparent;
-  color: #9090a5;
-  font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.tech-stack-pause-btn:hover {
-  color: #e0e0f0;
-  border-color: #a67dff;
-  background: rgba(166, 125, 255, 0.07);
-}
-
-.tech-stack-pause-btn:focus-visible {
-  outline: 2px solid #a67dff;
-  outline-offset: 2px;
 }
 
 @media (max-width: 905px) {

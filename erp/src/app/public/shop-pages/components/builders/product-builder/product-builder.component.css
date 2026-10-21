@@ -9,18 +9,13 @@
   display: block;
   height: 100%;
   /* Černobílý moderní design systém */
-  --bg-main: #ffffff;
-  --bg-dark: #000000;
-  --text-main: #000000;
-  --text-dim: #707070;
-  --border: #e5e5e5;
-  --border-dark: #000000;
+  --bg-main: var(--color-white);
   
   /* Decentní indikátory stavu skladu */
   --success: #2e7d32;
   --warning: #ed6c02;
   --danger: #d32f2f;
-  --transition: 0.2s ease-in-out;
+  --transition: 0.2s ease-in-out; /* local value – public shop theme.css: all 0.2s ease-in-out */
 }
 
 .product-card {
@@ -82,26 +77,6 @@
   padding: 4px 8px;
   border-radius: 0;          /* Ostré hrany */
   letter-spacing: 0.5px;
-}
-
-.no-image-placeholder {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.no-image-placeholder span {
-  color: var(--text-dim);
-  font-size: 0.7rem;
-  font-weight: 700;
-  border: 1px solid var(--border);
-  padding: 6px 12px;
-  transform: none;           /* Odstraněno zkosení */
-  border-radius: 0;
-  opacity: 0.6;
 }
 
 /* --- INFO CARD CONTENT --- */

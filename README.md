@@ -300,6 +300,16 @@ the server with the local one. The checksum file does not need to be deployed.
 
 ---
 
+## Styles (CSS)
+
+The CSS is organised in layers: component CSS, `shared-styles/` per module, admin / public shared
+styles, and `erp/src/app/shared/styles/` for both. Colours come from global primitives
+(`--color-*`) and one `theme.css` per look (admin, public web, e-shop).
+Read **[erp/src/app/shared/styles/README.md](erp/src/app/shared/styles/README.md)** before adding or
+moving styles – it describes the structure, the tokens and where a new rule goes.
+
+---
+
 ## Documentation standards
 
 All code must be documented using the DOCS templates in `docs/`:

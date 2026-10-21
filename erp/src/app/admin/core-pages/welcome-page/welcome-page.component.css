@@ -14,83 +14,24 @@
   max-width: 900px;
   padding: 0 0 28px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  color: #18181b;
+  color: var(--color-zinc-900);
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.wp-welcome {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 4px 0 14px;
-  flex-wrap: wrap;
-}
-
-.wp-welcome-date {
-  font-size: 0.76rem;
-  color: #a1a1aa;
-  text-transform: capitalize;
-  margin-bottom: 6px;
-  letter-spacing: 0.02em;
-}
-
-.wp-welcome-title {
-  margin: 0 0 5px;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #18181b;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-.wp-welcome-sub {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #71717a;
-}
-
-.wp-welcome-right {
-  display: flex;
-  align-items: flex-start;
-  padding-top: 6px;
-}
-
-.wp-role-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: #18181b;
-  color: #ffffff;
-  border: 1px solid #18181b;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.wp-role-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ffffff;
-  flex-shrink: 0;
-}
-
 .wp-error-banner {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
-  color: #9f1239;
+  background: var(--color-rose-50);
+  border: 1px solid var(--color-rose-200);
+  color: var(--color-rose-800);
   padding: 12px 16px;
   border-radius: 12px;
   font-size: 0.85rem;
 }
 
 .wp-card {
-  background: #ffffff;
-  border: 1px solid #ececea;
+  background: var(--color-white);
+  border: 1px solid var(--color-sand-200);
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(24, 24, 27, 0.03);
@@ -101,17 +42,13 @@
   align-items: center;
   gap: 8px;
   padding: 14px 18px;
-  border-bottom: 1px solid #f4f4f5;
-}
-
-.wp-card-icon {
-  font-size: 0.95rem;
+  border-bottom: 1px solid var(--color-zinc-100);
 }
 
 .wp-card-title {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
   letter-spacing: -0.01em;
 }
 
@@ -126,8 +63,8 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #18181b;
-  color: #ffffff;
+  background: var(--color-zinc-900);
+  color: var(--color-white);
   font-size: 1.4rem;
   font-weight: 700;
   display: flex;
@@ -147,7 +84,7 @@
 .wp-profile-name {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #18181b;
+  color: var(--color-zinc-900);
   line-height: 1.2;
 }
 
@@ -156,7 +93,7 @@
   justify-content: space-between;
   align-items: baseline;
   padding-bottom: 6px;
-  border-bottom: 1px dashed #f4f4f5;
+  border-bottom: 1px dashed var(--color-zinc-100);
   gap: 8px;
 }
 
@@ -167,14 +104,14 @@
 
 .wp-label {
   font-size: 0.76rem;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
   font-weight: 500;
   flex-shrink: 0;
 }
 
 .wp-value {
   font-size: 0.85rem;
-  color: #3f3f46;
+  color: var(--color-zinc-700);
   font-weight: 500;
   text-align: right;
   word-break: break-all;
@@ -183,14 +120,14 @@
 .wp-value-mono {
   font-family: 'Courier New', monospace;
   font-size: 0.8rem;
-  color: #18181b;
+  color: var(--color-zinc-900);
   font-weight: 600;
 }
 
 .wp-profile-skeleton {
   width: 100%;
   min-height: 60px;
-  background: linear-gradient(90deg, #f4f4f5 25%, #e4e4e7 50%, #f4f4f5 75%);
+  background: linear-gradient(90deg, var(--color-zinc-100) 25%, var(--color-zinc-200) 50%, var(--color-zinc-100) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   border-radius: 12px;
@@ -203,9 +140,9 @@
 
 .wp-footer {
   padding-top: 14px;
-  border-top: 1px solid #ececea;
+  border-top: 1px solid var(--color-sand-200);
   font-size: 0.8rem;
-  color: #a1a1aa;
+  color: var(--color-zinc-400);
 }
 
 @media (max-width: 640px) {

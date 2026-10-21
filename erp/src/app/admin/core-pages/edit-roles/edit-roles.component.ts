@@ -108,7 +108,7 @@ const MODULE_LABEL_KEYS: Record<string, string> = {
   standalone: true,
   imports: [CommonModule, FormsModule, ExportPopupBuilderComponent],
   templateUrl: './edit-roles.component.html',
-  styleUrl: './edit-roles.component.css',
+  styleUrls: ['../../shared-styles/theme.css', './edit-roles.component.css'],
 })
 export class EditRolesComponent extends BaseDataComponent<CoreRole> implements Core.OnInit {
   apiEndpoint = 'core/roles';
