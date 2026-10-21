@@ -1,27 +1,30 @@
-<!-- 
+<!--
     @file: checkout.component.html
     @path: /src/app/public/shop-pages/checkout/checkout.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2026 
+    @created: 2026
+    @refactor-note (2026-10-21): Natvrdo psané texty nahrazeny `t?.*` (sekce `checkout`). Věta se souhlasem
+        s podmínkami je rozdělená na `terms.prefix/tos_link/middle/privacy_link/suffix`, aby odkazy
+        zůstaly odkazy bez `innerHTML`.
 -->
-    
+
 <div class="checkout-container">
-  <h1>{{ currentStep() === 5 ? '' : 'Zabezpečená pokladna' }}</h1>
+  <h1>{{ currentStep() === 5 ? '' : t?.title }}</h1>
 
   @if (currentStep() === 5) {
     <div class="checkout-step success">
       <div class="success-box">
-        <h2>✓ Děkujeme za vaši objednávku!</h2>
-        <p>Vaše objednávka byla úspěšně přijata a momentálně ji zpracováváme.</p>
+        <h2>{{ t?.success?.heading }}</h2>
+        <p>{{ t?.success?.text }}</p>
         <div class="order-number">
-          <strong>Číslo objednávky:</strong> <span>{{ orderNumber() }}</span>
+          <strong>{{ t?.success?.order_number_label }}</strong> <span>{{ orderNumber() }}</span>
         </div>
         <p class="confirmation-message">
-          Potvrzení objednávky jsme odeslali na e-mail <strong>{{ formData.email }}</strong>.
+          {{ t?.success?.confirmation_prefix }} <strong>{{ formData.email }}</strong>{{ t?.success?.confirmation_suffix }}
         </p>
         <button (click)="finishCheckout()" class="btn-primary">
-          <span>Pokračovat v nákupu</span>
+          <span>{{ t?.success?.continue_button }}</span>
         </button>
       </div>
     </div>
@@ -32,15 +35,15 @@
       <div class="checkout-form-column">
         <form (ngSubmit)="$event.preventDefault()">
           <div class="checkout-section">
-            <h3>Kontaktní údaje</h3>
+            <h3>{{ t?.sections?.contact }}</h3>
             <div class="form-grid compact">
               <div class="form-group">
-                <label>E-mailová adresa *</label>
-                <input 
-                  type="email" 
-                  [(ngModel)]="formData.email" 
-                  name="email" 
-                  placeholder="vas@email.cz" 
+                <label>{{ t?.labels?.email }}</label>
+                <input
+                  type="email"
+                  [(ngModel)]="formData.email"
+                  name="email"
+                  [placeholder]="t?.placeholders?.email"
                   (blur)="validateField('email')"
                   (input)="errors['email'] ? validateField('email') : null"
                   [class.is-invalid]="errors['email']"
@@ -50,12 +53,12 @@
                 }
               </div>
               <div class="form-group">
-                <label>Telefonní číslo *</label>
-                <input 
-                  type="tel" 
-                  [(ngModel)]="formData.phone" 
-                  name="phone" 
-                  placeholder="+420 777 111 222" 
+                <label>{{ t?.labels?.phone }}</label>
+                <input
+                  type="tel"
+                  [(ngModel)]="formData.phone"
+                  name="phone"
+                  [placeholder]="t?.placeholders?.phone"
                   (blur)="validateField('phone')"
                   (input)="errors['phone'] ? validateField('phone') : null"
                   [class.is-invalid]="errors['phone']"
@@ -66,17 +69,17 @@
               </div>
             </div>
           </div>
-          
+
           <div class="checkout-section">
-            <h3>Doručovací adresa</h3>
+            <h3>{{ t?.sections?.address }}</h3>
             <div class="form-grid">
               <div class="form-group">
-                <label>Jméno *</label>
-                <input 
-                  type="text" 
-                  [(ngModel)]="formData.firstName" 
-                  name="firstName" 
-                  placeholder="Jan" 
+                <label>{{ t?.labels?.first_name }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="formData.firstName"
+                  name="firstName"
+                  [placeholder]="t?.placeholders?.first_name"
                   (blur)="validateField('firstName')"
                   (input)="errors['firstName'] ? validateField('firstName') : null"
                   [class.is-invalid]="errors['firstName']"
@@ -86,12 +89,12 @@
                 }
               </div>
               <div class="form-group">
-                <label>Příjmení *</label>
-                <input 
-                  type="text" 
-                  [(ngModel)]="formData.lastName" 
-                  name="lastName" 
-                  placeholder="Novák" 
+                <label>{{ t?.labels?.last_name }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="formData.lastName"
+                  name="lastName"
+                  [placeholder]="t?.placeholders?.last_name"
                   (blur)="validateField('lastName')"
                   (input)="errors['lastName'] ? validateField('lastName') : null"
                   [class.is-invalid]="errors['lastName']"
@@ -101,12 +104,12 @@
                 }
               </div>
               <div class="form-group full">
-                <label>Ulice a číslo popisné *</label>
-                <input 
-                  type="text" 
-                  [(ngModel)]="formData.address" 
-                  name="address" 
-                  placeholder="Kybernetická 123" 
+                <label>{{ t?.labels?.address }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="formData.address"
+                  name="address"
+                  [placeholder]="t?.placeholders?.address"
                   (blur)="validateField('address')"
                   (input)="errors['address'] ? validateField('address') : null"
                   [class.is-invalid]="errors['address']"
@@ -116,12 +119,12 @@
                 }
               </div>
               <div class="form-group">
-                <label>Město *</label>
-                <input 
-                  type="text" 
-                  [(ngModel)]="formData.city" 
-                  name="city" 
-                  placeholder="Praha" 
+                <label>{{ t?.labels?.city }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="formData.city"
+                  name="city"
+                  [placeholder]="t?.placeholders?.city"
                   (blur)="validateField('city')"
                   (input)="errors['city'] ? validateField('city') : null"
                   [class.is-invalid]="errors['city']"
@@ -131,12 +134,12 @@
                 }
               </div>
               <div class="form-group">
-                <label>PSČ *</label>
-                <input 
-                  type="text" 
-                  [(ngModel)]="formData.postalCode" 
-                  name="postalCode" 
-                  placeholder="110 00" 
+                <label>{{ t?.labels?.postal_code }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="formData.postalCode"
+                  name="postalCode"
+                  [placeholder]="t?.placeholders?.postal_code"
                   (blur)="validateField('postalCode')"
                   (input)="errors['postalCode'] ? validateField('postalCode') : null"
                   [class.is-invalid]="errors['postalCode']"
@@ -147,9 +150,9 @@
               </div>
             </div>
           </div>
-          
+
           <div class="checkout-section">
-            <h3>Způsob dopravy</h3>
+            <h3>{{ t?.sections?.shipping }}</h3>
             <div class="shipping-methods-list" [class.is-invalid-container]="errors['shippingMethodId']">
               @for (method of shippingMethods(); track method) {
                 <div
@@ -171,9 +174,9 @@
               <span class="error-message text-space">{{ errors['shippingMethodId'] }}</span>
             }
           </div>
-          
+
           <div class="checkout-section">
-            <h3>Způsob platby</h3>
+            <h3>{{ t?.sections?.payment }}</h3>
             <div class="payment-methods-list-vertical" [class.is-invalid-container]="errors['paymentMethodId']">
               @for (method of paymentMethods(); track method) {
                 <label
@@ -203,10 +206,10 @@
           </div>
         </form>
       </div>
-      
+
       <div class="checkout-summary-column">
         <div class="static-summary">
-          <h3>Rekapitulace objednávky</h3>
+          <h3>{{ t?.summary?.title }}</h3>
           <div class="cart-items-preview">
             @for (item of cartService.cartItems(); track item) {
               <div class="preview-item">
@@ -226,8 +229,8 @@
           </div>
           <div class="coupon-box">
             <div class="coupon-input-group">
-              <input type="text" [(ngModel)]="couponCode" placeholder="Slevový kód" [disabled]="!!appliedCoupon()">
-              <button type="button" (click)="applyCoupon()" [disabled]="!!appliedCoupon()">Použít</button>
+              <input type="text" [(ngModel)]="couponCode" [placeholder]="t?.placeholders?.coupon" [disabled]="!!appliedCoupon()">
+              <button type="button" (click)="applyCoupon()" [disabled]="!!appliedCoupon()">{{ t?.summary?.coupon_apply }}</button>
             </div>
             @if (couponStatus()) {
               <p class="coupon-msg">{{ couponStatus() }}</p>
@@ -235,54 +238,54 @@
           </div>
           <div class="summary-calculations">
             <div class="calc-row">
-              <span>Mezisoučet</span>
+              <span>{{ t?.summary?.subtotal }}</span>
               <span>{{ formatPrice(orderSummary().productsTotal) }}</span>
             </div>
             @if (orderSummary().discountAmount > 0) {
               <div class="calc-row discount">
-                <span>Sleva ({{ appliedCoupon()?.code }})</span>
+                <span>{{ t?.summary?.discount?.replace('{code}', appliedCoupon()?.code ?? '') }}</span>
                 <span>-{{ formatPrice(orderSummary().discountAmount) }}</span>
               </div>
             }
             <div class="calc-row">
-              <span>Doprava</span>
-              <span>{{ formData.shippingMethodId ? formatPrice(orderSummary().shippingAmount) : 'Bude vypočtena' }}</span>
+              <span>{{ t?.summary?.shipping }}</span>
+              <span>{{ formData.shippingMethodId ? formatPrice(orderSummary().shippingAmount) : t?.summary?.shipping_pending }}</span>
             </div>
             @if (orderSummary().vatGroups.length > 0) {
               <div class="tax-breakdown">
                 @for (vat of orderSummary().vatGroups; track vat) {
                   <div class="calc-row tax-detail">
-                    <span>Cena bez DPH ({{ vat.rate }}%)</span>
+                    <span>{{ t?.summary?.vat_base?.replace('{rate}', '' + vat.rate) }}</span>
                     <span>{{ formatPrice(vat.baseAmount) }}</span>
                   </div>
                 }
               </div>
             }
             <div class="calc-row total-final">
-              <span>Celkem k úhradě</span>
+              <span>{{ t?.summary?.total }}</span>
               <strong>{{ formatPrice(orderSummary().finalAmount) }}</strong>
             </div>
           </div>
-          
+
           <div class="checkout-terms-agreement">
             <label class="terms-checkbox-label">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="formData.agreeToTerms" 
-                name="agreeToTerms" 
+              <input
+                type="checkbox"
+                [(ngModel)]="formData.agreeToTerms"
+                name="agreeToTerms"
                 class="terms-checkbox"
                 (change)="validateField('agreeToTerms')"
                 [class.is-invalid]="errors['agreeToTerms']"
                 >
               <span class="terms-text" [class.text-error]="errors['agreeToTerms']">
-                Souhlasím s <a routerLink="/tos" target="_blank">obchodními podmínkami</a> a beru na vědomí <a routerLink="/privacy-policy" target="_blank">zásady ochrany osobních údajů</a>. *
+                {{ t?.terms?.prefix }} <a routerLink="/tos" target="_blank">{{ t?.terms?.tos_link }}</a> {{ t?.terms?.middle }} <a routerLink="/privacy-policy" target="_blank">{{ t?.terms?.privacy_link }}</a>{{ t?.terms?.suffix }}
               </span>
             </label>
             @if (errors['agreeToTerms']) {
               <span class="error-message text-space">{{ errors['agreeToTerms'] }}</span>
             }
           </div>
-          
+
           <button
             type="button"
             class="btn-pay-instant"
@@ -290,13 +293,13 @@
             [disabled]="isProcessing() || (!isFormValid() && formSubmitted)"
             >
             @if (!isProcessing()) {
-              <span>Dokončit objednávku — {{ formatPrice(orderSummary().finalAmount) }}</span>
+              <span>{{ t?.pay_button?.replace('{amount}', formatPrice(orderSummary().finalAmount)) }}</span>
             }
             @if (isProcessing()) {
-              <span>Zpracovávám objednávku...</span>
+              <span>{{ t?.processing }}</span>
             }
           </button>
-          <p class="security-note">🔒 Zabezpečená 256-bit SSL pokladna</p>
+          <p class="security-note">{{ t?.security_note }}</p>
         </div>
       </div>
     </div>

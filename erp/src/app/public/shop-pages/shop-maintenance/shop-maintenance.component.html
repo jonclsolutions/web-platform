@@ -6,6 +6,7 @@
     @created: 2026 
     @refactor-note (2026-08): Přidány sociální ikony + kontaktní řádek (email/telefon),
         čteno ze stejné settings/socialLinks cache jako footer (viz .ts hlavička).
+    @refactor-note (2026-10-21): Natvrdo psané texty nahrazeny `t?.*` (sekce `shop_maintenance`).
 -->
 <div class="maintenance-container">
   <div class="maintenance-grid-bg" aria-hidden="true"></div>
@@ -18,9 +19,9 @@
       </svg>
     </div>
 
-    <h1>Vylepšujeme systém</h1>
-    <p>Na e-shopu právě pracujeme, aby byl váš zážitek z nákupu ještě lepší.</p>
-    <p class="sub-text">Zkuste to prosím za chvíli znovu.</p>
+    <h1>{{ t?.heading }}</h1>
+    <p>{{ t?.text }}</p>
+    <p class="sub-text">{{ t?.sub_text }}</p>
 
     @if (socialLinks && socialLinks.length > 0) {
       <div class="maintenance-social">
@@ -33,7 +34,7 @@
     }
 
     <div class="actions">
-      <a routerLink="/home" class="btn-home">Zpět na hlavní web</a>
+      <a routerLink="/home" class="btn-home">{{ t?.back_home }}</a>
     </div>
   </div>
 

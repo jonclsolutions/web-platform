@@ -4,6 +4,7 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-10-21): Natvrdo psané texty nahrazeny `t?.*` (sekce `catalog`).
 -->
 
 <div class="catalog-container">
@@ -14,18 +15,18 @@
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
         </svg>
-        <span>Filtr</span>
+        <span>{{ t?.filter_button }}</span>
       </button>
 
       @if (showFilters()) {
         <div class="filter-bar-inline">
           <div class="filter-group">
             <div class="filter-item">
-              <input type="text" placeholder="Hledat..." [(ngModel)]="filters.search" (keyup.enter)="applyFilters()">
+              <input type="text" [placeholder]="t?.search_placeholder" [(ngModel)]="filters.search" (keyup.enter)="applyFilters()">
             </div>
             <div class="filter-item">
               <select [(ngModel)]="filters.category_id" (change)="applyFilters()">
-                <option value="">Kategorie</option>
+                <option value="">{{ t?.category_placeholder }}</option>
                 @for (cat of categories(); track cat) {
                   <option [value]="cat.id">{{ cat.name }}</option>
                 }
@@ -33,9 +34,9 @@
             </div>
             <div class="filter-item">
               <select [(ngModel)]="filters.sort_by" (change)="applyFilters()">
-                <option value="name">Název</option>
-                <option value="price">Cena</option>
-                <option value="created_at">Nejnovější</option>
+                <option value="name">{{ t?.sort_name }}</option>
+                <option value="price">{{ t?.sort_price }}</option>
+                <option value="created_at">{{ t?.sort_newest }}</option>
               </select>
             </div>
             <div class="filter-item sort-dir">
@@ -60,7 +61,7 @@
 
   @if (products().length === 0 && !isLoading()) {
     <div class="empty-state">
-      <p>{{ config.TEXTS.EMPTY_STATE }}</p>
+      <p>{{ t?.empty_state }}</p>
     </div>
   }
 

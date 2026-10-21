@@ -4,6 +4,9 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
+ * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
+ *   `product_detail`. Odstraněny anglické fallbacky v `alert()`; `errors.max_stock` je teď jedna
+ *   věta s `{count}` místo skládání tří kusů textu.
  */
 
 import { Component, OnInit, signal, computed, effect, inject } from '@angular/core';
@@ -24,6 +27,7 @@ import { CommonModule } from '@angular/common';
 export class ProductDetailComponent extends BasePublicComponent implements OnInit {
   
   protected readonly translationKey = 'product_detail';
+  protected override readonly translationModule = 'shop';
 
   private route = inject(ActivatedRoute);
   private shopService = inject(ShopPublicService);
@@ -156,7 +160,7 @@ export class ProductDetailComponent extends BasePublicComponent implements OnIni
 
   addToCart(): void {
     if (!this.isAvailable()) {
-      alert(this.t?.errors?.unavailable || 'Product is currently unavailable.');
+      alert(this.t?.errors?.unavailable);
       return;
     }
     const product = this.product();
@@ -164,7 +168,7 @@ export class ProductDetailComponent extends BasePublicComponent implements OnIni
     const quantity = this.selectedQuantity();
     
     if (quantity > this.currentStock()) {
-      alert(`${this.t?.errors?.max_stock || 'Cannot order more than'} ${this.currentStock()} ${this.t?.units || 'units'}.`);
+      alert(this.t?.errors?.max_stock?.replace('{count}', String(this.currentStock())));
       return;
     }
     

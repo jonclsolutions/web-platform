@@ -11,6 +11,7 @@
  *   export class MyComponent extends BasePublicComponent {
  *     protected readonly translationKey = 'my_section';
  *     protected override readonly loadSiteSettings = true; // optional
+ *     protected override readonly translationModule = 'shop'; // e-shop pages only
  *   }
  *
  * @hooks
@@ -33,6 +34,12 @@
  *   `social_links` for every component reading from cache (footer, about-us,
  *   contact, faq, etc.). That has been fixed in AppBootstrapService itself;
  *   this file now matches that corrected shape.
+ *
+ * @refactor-note (2026-10-21) Added `translationModule` ('web' default, 'shop' for the
+ *   e-shop pages). `ngOnInit()` switches LocalizationService to it before subscribing, so
+ *   a page always reads its own module's JSON regardless of where the user came from
+ *   (web -> shop, shop -> web, shop -> admin login). Missing keys behave the same for both
+ *   modules: `t?.key` renders empty, no hardcoded fallback texts.
  */
 
 import { Directive, inject, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
@@ -69,6 +76,9 @@ export abstract class BasePublicComponent implements OnInit, OnDestroy {
    */
   protected readonly loadSiteSettings: boolean = false;
 
+  /** Translation module this component reads (`translations/{module}/{lang}`). */
+  protected readonly translationModule: 'web' | 'shop' = 'web';
+
   // ── RxJS cleanup ─────────────────────────────────────────────
   protected destroy$ = new Subject<void>();
 
@@ -77,6 +87,9 @@ export abstract class BasePublicComponent implements OnInit, OnDestroy {
   // ─────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
+    // 0. Make sure the right translation module is active (no-op if it already is)
+    this.localizationService.setModule(this.translationModule);
+
     // 1. Translation stream
     this.localizationService.currentTranslations$
       .pipe(takeUntil(this.destroy$))

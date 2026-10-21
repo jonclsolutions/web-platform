@@ -1,9 +1,11 @@
 <!-- 
-    @file: app.component.html
+    @file: shop-footer.component.html
     @path: /src/app/public/shop-pages/components/shop-footer/shop-footer.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-10-21): Všechny texty ze sekce `footer` shop překladů, bez natvrdo
+        psaných fallbacků (`|| 'Odkazy'`, `|| 'Informace'`, "Bezpečné platby").
 -->
     
 @if (t) {
@@ -26,7 +28,7 @@
       </div>
 
       <div class="footer-section quick-links">
-        <h3><span>{{ t?.quick_links_header || 'Odkazy' }}</span></h3>
+        <h3><span>{{ t?.quick_links_header }}</span></h3>
         <ul>
           @for (link of footerNavLinks; track link) {
             <li>
@@ -45,7 +47,7 @@
       </div>
 
       <div class="footer-section legal-info">
-        <h3><span>{{ t?.legal_info_header || 'Informace' }}</span></h3>
+        <h3><span>{{ t?.legal_info_header }}</span></h3>
         <ul>
           @for (link of footerLegalLinks; track link) {
             <li><a [routerLink]="link.route" class="footer-link">{{ link.text }}</a></li>
@@ -54,7 +56,7 @@
       </div>
 
       <div class="footer-section payment-info">
-        <h3><span>Bezpečné platby</span></h3>
+        <h3><span>{{ t?.secure_payments_header }}</span></h3>
         <div class="payment-methods">
           @for (method of paymentMethods; track method) {
             <div class="payment-box" [attr.title]="method.name">

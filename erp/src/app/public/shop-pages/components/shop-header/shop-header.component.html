@@ -1,16 +1,18 @@
 <!-- 
-    @file: app.component.html
+    @file: shop-header.component.html
     @path: /src/app/public/shop-pages/components/shop-header/shop-header.component.html
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-10-21): Texty ze sekce `header` (shop překlady), volby jazyka
+        z `availableLanguages` (jazyky modulu shop) místo natvrdo psaných CZ/EN.
 -->
     
 <header class="shop-header" [class.scrolled]="isScrolled">
   <div class="shop-container">
     <a routerLink="/shop" class="logo-wrp">
       @if (siteSettings?.logo_path) {
-        <img [src]="'/storage/' + siteSettings.logo_path" alt="Logo společnosti">
+        <img [src]="'/storage/' + siteSettings.logo_path" [alt]="t?.logo_alt">
       }
     </a>
 
@@ -28,12 +30,13 @@
 
       <div class="selectors">
         <div class="custom-dropdown" (click)="toggleLang()">
-          <span class="selected-val">{{ selectedLang }}</span>
+          <span class="selected-val">{{ (currentLanguage$ | async) | uppercase }}</span>
           <svg class="chevron" [class.open]="showLang" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           @if (showLang) {
             <div class="dropdown-menu">
-              <div class="dropdown-item" (click)="selectLang('CZ')">CZ</div>
-              <div class="dropdown-item" (click)="selectLang('EN')">EN</div>
+              @for (lang of availableLanguages; track lang.code) {
+                <div class="dropdown-item" (click)="selectLang(lang.code)">{{ lang.code | uppercase }}</div>
+              }
             </div>
           }
         </div>
@@ -52,7 +55,7 @@
 
       <div class="divider"></div>
 
-      <button class="cart-trigger" (click)="openCart()">
+      <button class="cart-trigger" (click)="openCart()" [attr.aria-label]="t?.cart_aria">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
         @if (cartService.totalQuantity() > 0) {
           <span class="cart-dot">{{ cartService.totalQuantity() }}</span>

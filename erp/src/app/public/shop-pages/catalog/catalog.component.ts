@@ -6,6 +6,9 @@
  * @created 2026
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `onItemsPerPageChange`, `getProductUrl`.
+ * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
+ *   `catalog` v `translations/shop/{lang}.json`. Odstraněno `CATALOG_CONFIG.TEXTS` (výchozí texty
+ *   v kódu; HEADER/TOTAL_FOUND/ITEMS_UNIT se navíc nikde nepoužívaly).
  */
 
 import { Component, OnInit, signal, inject } from '@angular/core';
@@ -18,14 +21,7 @@ import { PaginationButtonsBuilderComponent } from '../components/builders/pagina
 import { takeUntil } from 'rxjs/operators';
 
 const CATALOG_CONFIG = {
-  ENDPOINTS: { PRODUCT_DETAIL_BASE: '/shop/products' },
-  // TEXTY zde zůstávají jako výchozí, pokud je nechceš mít v JSON překladech
-  TEXTS: {
-    HEADER: 'Katalog produktů',
-    TOTAL_FOUND: 'Celkem nalezeno',
-    ITEMS_UNIT: 'položek',
-    EMPTY_STATE: 'Nebyly nalezeny žádné produkty odpovídající výběru.'
-  }
+  ENDPOINTS: { PRODUCT_DETAIL_BASE: '/shop/products' }
 };
 
 @Component({
@@ -43,6 +39,7 @@ const CATALOG_CONFIG = {
 export class CatalogComponent extends BasePublicComponent implements OnInit {
 
   protected readonly translationKey = 'catalog';
+  protected override readonly translationModule = 'shop';
   readonly config = CATALOG_CONFIG; // Zpět v komponentě
   
   private shopService = inject(ShopPublicService);

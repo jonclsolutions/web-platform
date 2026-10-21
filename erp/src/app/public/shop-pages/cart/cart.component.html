@@ -4,10 +4,11 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-10-21): Natvrdo psané texty nahrazeny `t?.*` (sekce `cart`).
 -->
 
 <div class="product-detail-container">
-  <div class="cart-title">Nákupní košík</div>
+  <div class="cart-title">{{ t?.title }}</div>
 
   @if (cartService.cartCount() === 0) {
     <div class="empty-cart">
@@ -18,8 +19,8 @@
           <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
         </svg>
       </div>
-      <p>Váš alokační prostor je prázdný.</p>
-      <a routerLink="/shop" class="btn-buy" style="display: inline-block; text-decoration: none; text-align: center; width: auto; padding: 1rem 2rem;">Prohlížet terminál</a>
+      <p>{{ t?.empty_text }}</p>
+      <a routerLink="/shop" class="btn-buy" style="display: inline-block; text-decoration: none; text-align: center; width: auto; padding: 1rem 2rem;">{{ t?.empty_button }}</a>
     </div>
   }
 
@@ -39,7 +40,7 @@
               @if (item.variant_name) {
                 <span class="variant-tag">{{ item.variant_name }}</span>
               }
-              <p class="item-price">{{ formatPrice(item.unit_price) }} / ks</p>
+              <p class="item-price">{{ formatPrice(item.unit_price) }} {{ t?.per_unit }}</p>
             </div>
             <div class="quantity-selector" (click)="$event.stopPropagation()">
               <div class="quantity-controls">
@@ -71,7 +72,7 @@
             <div class="item-total">
               <span>{{ formatPrice(item.total_price) }}</span>
             </div>
-            <button (click)="removeItem(item.id); $event.stopPropagation()" class="btn-remove" title="Odstranit">
+            <button (click)="removeItem(item.id); $event.stopPropagation()" class="btn-remove" [title]="t?.remove_button_title">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
               </svg>
@@ -80,24 +81,24 @@
         }
       </div>
       <div class="cart-summary-card">
-        <h2 class="summary-title">Rekapitulace transakce</h2>
+        <h2 class="summary-title">{{ t?.summary_title }}</h2>
         <div class="summary-row">
-          <span>Mezisoučet core:</span>
+          <span>{{ t?.subtotal_label }}</span>
           <strong>{{ formatPrice(cartService.subtotal()) }}</strong>
         </div>
         <div class="summary-row">
-          <span>Cena bez DPH:</span>
+          <span>{{ t?.without_vat_label }}</span>
           <span class="tax-value">{{ formatPrice(totalPriceWithoutTax()) }}</span>
         </div>
         <div class="price-main-wrapper">
           <div class="price-main">{{ formatPrice(cartService.totalPrice()) }}</div>
-          <div class="price-subtext">Celková cena košíku</div>
+          <div class="price-subtext">{{ t?.total_label }}</div>
         </div>
         <div class="cart-actions">
           <button (click)="proceedToCheckout()" class="btn-buy">
-            Zahájit checkout ⇾
+            {{ t?.checkout_button }}
           </button>
-          <a routerLink="/shop" class="btn-view-cart">← Návrat do hlavní nabídky</a>
+          <a routerLink="/shop" class="btn-view-cart">{{ t?.back_button }}</a>
         </div>
       </div>
     </div>

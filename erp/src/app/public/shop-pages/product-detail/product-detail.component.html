@@ -4,6 +4,7 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-10-21): Natvrdo psané texty nahrazeny `t?.*` (sekce `product_detail`).
 -->
     
 @if (!isLoading() && product()) {
@@ -13,12 +14,12 @@
         <div class="main-image-wrapper">
           <img [src]="activeImage()" [alt]="product()?.name">
           @if (product()?.is_featured) {
-            <div class="badge-float">TOP PRODUKT</div>
+            <div class="badge-float">{{ t?.featured_badge }}</div>
           }
         </div>
         @if (variantImages().length > 0) {
           <div class="gallery-section">
-            <span class="gallery-label">Provedení: {{ selectedVariant()?.variant_name }}</span>
+            <span class="gallery-label">{{ t?.variant_gallery_label }} {{ selectedVariant()?.variant_name }}</span>
             <div class="image-thumbnails">
               @for (vImg of variantImages(); track vImg) {
                 <div
@@ -33,7 +34,7 @@
         }
         @if (generalImages().length > 0) {
           <div class="gallery-section">
-            <span class="gallery-label">Produktové náhledy</span>
+            <span class="gallery-label">{{ t?.gallery_label }}</span>
             <div class="image-thumbnails">
               @for (img of generalImages(); track img) {
                 <div
@@ -51,18 +52,18 @@
       <div class="product-purchase-zone">
         <div class="sticky-content">
           <nav class="breadcrumb-trail">
-            <span [routerLink]="['/shop']">E-shop</span> / <span>{{ product()?.category?.name }}</span>
+            <span [routerLink]="['/shop']">{{ t?.breadcrumb_shop }}</span> / <span>{{ product()?.category?.name }}</span>
           </nav>
           <h1 class="product-name">{{ product()?.name }}</h1>
           <div class="product-meta">
             <span class="product-stock" [class.in-stock]="isAvailable()" [class.low-stock]="currentStock() > 0 && currentStock() < 5">
-              {{ currentStock() >= 5 ? '● Skladem > 5 ks' : currentStock() > 0 ? '● Skladem pouze ' + currentStock() + ' ks' : '○ Momentálně nedostupné' }}
+              {{ currentStock() >= 5 ? t?.stock_many : currentStock() > 0 ? t?.stock_few?.replace('{count}', '' + currentStock()) : t?.stock_unavailable }}
             </span>
           </div>
           
           @if (product()?.variants?.length > 0) {
             <div class="variant-select-wrapper">
-              <label for="variantSelect" class="section-label">Konfigurace:</label>
+              <label for="variantSelect" class="section-label">{{ t?.variant_label }}</label>
               <select
                 id="variantSelect"
                 class="variant-dropdown"
@@ -98,7 +99,7 @@
             <div class="price-section">
               <div class="price-main">{{ getFormattedPrice(currentPrice()) }}</div>
               <div class="price-no-vat">
-                Bez DPH: {{ getFormattedPrice(priceWithoutVat()) }}
+                {{ t?.price_without_vat }} {{ getFormattedPrice(priceWithoutVat()) }}
               </div>
             </div>
             
@@ -107,23 +108,23 @@
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M22 10L12 15L2 10M22 6L12 11L2 6M12 19V11" />
                 </svg>
-                <span>{{ isAvailable() ? 'K odeslání' : 'Vyprodáno' }}</span>
+                <span>{{ isAvailable() ? t?.status_ready : t?.status_sold_out }}</span>
               </div>
               @if (isAvailable()) {
-                <p class="status-subtext">Expedujeme do 24h z centrálního skladu.</p>
+                <p class="status-subtext">{{ t?.shipping_note }}</p>
               }
             </div>
 
             @if (isAvailable()) {
               <div class="quantity-selector">
-                <label>Počet kusů:</label>
+                <label>{{ t?.quantity_label }}</label>
                 <div class="quantity-controls">
                   <button (click)="decreaseQuantity()" [disabled]="selectedQuantity() <= 1" class="qty-btn">−</button>
                   <input type="number" [value]="selectedQuantity()" readonly class="qty-display">
                   <button (click)="increaseQuantity()" [disabled]="selectedQuantity() >= currentStock()" class="qty-btn">+</button>
                 </div>
                 @if (selectedQuantity() >= currentStock()) {
-                  <small class="max-stock-info">Max. dostupné množství</small>
+                  <small class="max-stock-info">{{ t?.max_quantity }}</small>
                 }
               </div>
             }
@@ -134,17 +135,17 @@
                 [disabled]="!isAvailable()"
                 (click)="addToCart()"
                 >
-                {{ !isInCart() ? (addedToCart() ? '✓ Přidáno v košíku!' : '🛒 PŘIDAT DO KOŠÍKU') : (addedToCart() ? '✓ Množství upraveno!' : 'AKTUALIZOVAT MNOŽSTVÍ') }}
+                {{ !isInCart() ? (addedToCart() ? t?.added_to_cart : t?.add_to_cart) : (addedToCart() ? t?.quantity_updated : t?.update_quantity) }}
               </button>
             </div>
             <a routerLink="/shop/cart" class="btn-view-cart">
-              Jít na košík ({{ cartService.cartCount() }})
+              {{ t?.go_to_cart?.replace('{count}', '' + cartService.cartCount()) }}
             </a>
           </div>
 
           @if (product()?.short_description) {
             <div class="quick-description">
-              <h3>Popis</h3>
+              <h3>{{ t?.description_heading }}</h3>
               <p>{{ product()?.short_description }}</p>
             </div>
           }
@@ -154,7 +155,7 @@
     
     <div class="product-tabs">
       <div class="tab-header">
-        <button class="active">Kompletní specifikace</button>
+        <button class="active">{{ t?.specification_tab }}</button>
       </div>
       <div class="tab-content">
         <div class="description-rich-text" [innerHTML]="product()?.description"></div>
@@ -162,5 +163,5 @@
     </div>
   </div>
 } @else {
-  <div class="loading-state">Načítám detail produktu...</div>
+  <div class="loading-state">{{ t?.loading }}</div>
 }

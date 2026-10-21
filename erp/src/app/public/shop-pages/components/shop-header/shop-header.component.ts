@@ -9,12 +9,21 @@
  * - CartService: Provides reactive access to cart item counts and status.
  * - PublicDataService: Fetches global site branding and configuration.
  * - Angular Router: Enables navigation to cart or shop pages.
+ * - LocalizationService: Translations and languages of the `shop` module.
+ *
+ * @refactor-note (2026-10-21) Lokalizace 1:1 jako PublicHeaderComponent: v konstruktoru
+ *   `setModule('shop')`, texty ze sekce `header` v `translations/shop/{lang}.json`, přepínač
+ *   jazyků plní `fetchLanguages()` (jazyky modulu shop) a volá `setLanguage()`. Natvrdo psané
+ *   volby CZ/EN a `selectedLang` odstraněny - aktivní jazyk je `currentLanguage$`.
  */
 
-import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CartService } from '../services/cart.service';
 import { PublicDataService } from '../../../../shared/services/public-data.service';
+import { LocalizationService, LangMeta } from '../../../../shared/services/localization.service';
 import { CommonModule } from '@angular/common';
 
 /**
@@ -29,27 +38,50 @@ import { CommonModule } from '@angular/common';
   templateUrl: './shop-header.component.html',
   styleUrls: ['../../shared-styles/theme.css', './shop-header.component.css']
 })
-export class ShopHeaderComponent implements OnInit {
+export class ShopHeaderComponent implements OnInit, OnDestroy {
   isScrolled = false;
   showLang = false;
   showCurrency = false;
-  
-  selectedLang = 'CZ';
+
   selectedCurrency = 'EUR'; // Default system currency
-  
+
   siteSettings: any = null;
+
+  /** Texts of the `header` section of the shop translations. */
+  t: any = null;
+  /** Active languages of the shop module. */
+  availableLanguages: LangMeta[] = [];
+  currentLanguage$: Observable<string>;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
     public cartService: CartService,
     private publicDataService: PublicDataService,
+    private localizationService: LocalizationService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    this.localizationService.setModule('shop');
+    this.currentLanguage$ = this.localizationService.currentLanguage$;
+  }
 
   /**
-   * @description Initializes site branding and settings from the Public API.
+   * @description Initializes shop languages, header texts and site branding.
    */
   ngOnInit(): void {
+    this.localizationService.fetchLanguages().subscribe(res => {
+      this.availableLanguages = res.languages;
+      this.cdr.markForCheck();
+    });
+
+    this.localizationService.currentTranslations$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(translations => {
+        this.t = translations?.header ?? null;
+        this.cdr.markForCheck();
+      });
+
     this.publicDataService.get<{settings: any}>('public/legal/config')
       .subscribe({
         next: (data) => {
@@ -83,7 +115,11 @@ export class ShopHeaderComponent implements OnInit {
   toggleLang() { this.showLang = !this.showLang; this.showCurrency = false; }
   toggleCurrency() { this.showCurrency = !this.showCurrency; this.showLang = false; }
 
-  selectLang(val: string) { this.selectedLang = val; }
+  /**
+   * @description Switches the shop language (reloads the shop translations).
+   * @param code Language code from `availableLanguages`.
+   */
+  selectLang(code: string) { this.localizationService.setLanguage(code); }
 
   /**
    * @description Updates selected currency. 
@@ -97,4 +133,9 @@ export class ShopHeaderComponent implements OnInit {
    * @description Navigates to the shopping cart interface.
    */
   openCart() { this.router.navigate(['/shop/cart']); }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 }

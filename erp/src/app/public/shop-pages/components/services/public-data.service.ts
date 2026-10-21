@@ -11,6 +11,10 @@
  * - environment: Provides base API URL configuration.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `checkStockAvailability`.
+ * @refactor-note (2026-10-21) Chybové hlášky `handleError()` přesunuty do sekce `api_errors` shop
+ *   překladů (`LocalizationService.getText()`, chybějící klíč se chová jako všude jinde - vrátí
+ *   se klíč). `handleError` je teď arrow funkce, protože se předává do `catchError()` bez
+ *   `bind` a nově používá `this`.
  */
 
 import { Injectable } from '@angular/core';
@@ -18,6 +22,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
+import { LocalizationService } from '../../../../shared/services/localization.service';
 
 /**
  * @description Service for handling all public e-shop API interactions.
@@ -31,7 +36,7 @@ export class ShopPublicService {
   /** Base endpoint for public e-shop routes (Laravel: shop/public) */
   private readonly apiUrl = `${environment.base_api_url}/shop/public`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private localizationService: LocalizationService) { }
 
   /**
    * @description Fetches a paginated/filtered list of products.
@@ -112,18 +117,19 @@ export class ShopPublicService {
    * @param error Standard HttpErrorResponse object.
    * @note Translates specific status codes (404, 422, 500) into actionable error messages.
    */
-  private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'Při komunikaci s e-shopem nastala chyba.';
+  private handleError = (error: HttpErrorResponse) => {
+    const text = (key: string) => this.localizationService.getText(`api_errors.${key}`);
+    let errorMessage = text('generic');
     if (error.error instanceof ErrorEvent) {
-      errorMessage = `Chyba sítě: ${error.error.message}`;
+      errorMessage = text('network').replace('{message}', error.error.message);
     } else {
       console.error(`Status: ${error.status}, Body:`, error.error);
       switch (error.status) {
-        case 404: errorMessage = 'Požadovaná data nebyla nalezena.'; break;
-        case 422: errorMessage = error.error?.message || 'Požadované množství není dostupné.'; break;
-        case 500: errorMessage = 'Chyba na straně serveru.'; break;
+        case 404: errorMessage = text('not_found'); break;
+        case 422: errorMessage = error.error?.message || text('quantity_unavailable'); break;
+        case 500: errorMessage = text('server'); break;
       }
     }
     return throwError(() => new Error(errorMessage));
-  }
+  };
 }

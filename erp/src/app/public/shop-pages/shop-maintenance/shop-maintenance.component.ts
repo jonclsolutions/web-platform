@@ -9,6 +9,8 @@
  * PublicFooterComponent (žádné nové HTTP volání, jen čtení z BasePublicComponent). Nová
  * šablona zobrazuje sociální ikony a kontaktní údaje (e-mail, telefon), ať návštěvník má
  * i během údržby jak se spojit s firmou.
+ * @refactor-note (2026-10-21) Lokalizace 1:1 jako web: `translationModule = 'shop'`, texty ze sekce
+ *   `shop_maintenance` v `translations/shop/{lang}.json`.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -26,6 +28,7 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class ShopMaintenanceComponent extends BasePublicComponent {
   protected readonly translationKey = 'shop_maintenance';
+  protected override readonly translationModule = 'shop';
   protected override readonly loadSiteSettings = true;
   private router = inject(Router);
 

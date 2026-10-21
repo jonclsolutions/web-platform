@@ -4,6 +4,8 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2026 
+    @refactor-note (2026-10-21): Natvrdo psané texty nahrazeny `t?.*` (sekce `product_card`); počet kusů
+        přes `{count}` v překladu.
 -->
 
 <div class="product-card">
@@ -12,7 +14,7 @@
 
     @if (product?.is_featured) {
       <div class="badge-overlay">
-        <span class="badge featured">Tip</span>
+        <span class="badge featured">{{ t?.featured_badge }}</span>
       </div>
     }
 
@@ -31,13 +33,13 @@
           'out-of-stock': product?.stock_quantity <= 0
         }">
           @if (product?.stock_quantity >= 5) {
-            ● Skladem > 5 ks
+            {{ t?.stock_many }}
           }
           @if (product?.stock_quantity > 0 && product?.stock_quantity < 5) {
-            ● Skladem pouze {{ product?.stock_quantity }} ks
+            {{ t?.stock_few?.replace('{count}', '' + product?.stock_quantity) }}
           }
           @if (product?.stock_quantity <= 0) {
-            ● Skladem 0 ks
+            {{ t?.stock_none }}
           }
         </span>
       </div>
@@ -50,7 +52,7 @@
 
       <button class="btn-detail"
         [routerLink]="['/eshop/produkt', product?.slug]">
-        <span>Detail</span>
+        <span>{{ t?.detail_button }}</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3">
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>

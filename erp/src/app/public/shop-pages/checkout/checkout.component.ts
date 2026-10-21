@@ -9,6 +9,9 @@
  * - CartService: Provides reactive access to cart items and clearing operations.
  * - ShopPublicService: Handles shipping/payment methods, coupon validation, and order submission.
  * - AlertDialogService: Provides user feedback for submission or validation errors.
+ * @refactor-note (2026-10-21) Dědí `BasePublicComponent` (`translationModule = 'shop'`, sekce
+ *   `checkout`). Validační hlášky (`errors.*`), kupóny a alerty (`alerts.*`) jdou z překladů;
+ *   odstraněny natvrdo psané české fallbacky. Hláška ze serveru (`e.error.message`) má dál přednost.
  */
 
 import { Component, OnInit, signal, computed } from '@angular/core';
@@ -19,6 +22,7 @@ import { ShopPublicService } from '../components/services/public-data.service';
 import { ShippingMethod } from '../components/interfaces/shipping-method.interface';
 import { PaymentMethod } from '../components/interfaces/payment-method.interface';
 import { AlertDialogService } from '../../../core/services/alert-dialog.service';
+import { BasePublicComponent } from '../../base-public.component';
 
 /**
  * @description Component for handling the e-shop checkout flow.
@@ -32,7 +36,10 @@ import { AlertDialogService } from '../../../core/services/alert-dialog.service'
   templateUrl: './checkout.component.html',
   styleUrls: ['../shared-styles/theme.css', './checkout.component.css']
 })
-export class CheckoutComponent implements OnInit {
+export class CheckoutComponent extends BasePublicComponent implements OnInit {
+  protected readonly translationKey = 'checkout';
+  protected override readonly translationModule = 'shop';
+
   currentStep = signal(1); // 1 = Form entry, 5 = Success
   isProcessing = signal(false);
   orderNumber = signal<string | null>(null);
@@ -144,9 +151,12 @@ export class CheckoutComponent implements OnInit {
     private shopPublicService: ShopPublicService,
     private router: Router,
     private alertDialogService: AlertDialogService
-  ) {}
+  ) {
+    super();
+  }
 
-  ngOnInit(): void {
+  override ngOnInit(): void {
+    super.ngOnInit();
     if (this.cartService.cartCount() === 0) {
       this.router.navigate(['/cart']);
       return;
@@ -215,9 +225,9 @@ export class CheckoutComponent implements OnInit {
     switch (field) {
       case 'email':
         if (!this.formData.email) {
-          this.errors['email'] = 'E-mailová adresa je povinná.';
+          this.errors['email'] = this.t?.errors?.email_required;
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formData.email)) {
-          this.errors['email'] = 'Zadejte platný formát e-mailové adresy.';
+          this.errors['email'] = this.t?.errors?.email_invalid;
         } else {
           this.errors['email'] = '';
         }
@@ -225,7 +235,7 @@ export class CheckoutComponent implements OnInit {
 
       case 'phone':
         if (!this.formData.phone) {
-          this.errors['phone'] = 'Telefonní číslo je povinné.';
+          this.errors['phone'] = this.t?.errors?.phone_required;
         } else {
           this.errors['phone'] = '';
         }
@@ -233,9 +243,9 @@ export class CheckoutComponent implements OnInit {
 
       case 'firstName':
         if (!this.formData.firstName) {
-          this.errors['firstName'] = 'Jméno je povinné.';
+          this.errors['firstName'] = this.t?.errors?.first_name_required;
         } else if (/\d/.test(this.formData.firstName)) {
-          this.errors['firstName'] = 'Jméno nesmí obsahovat číslice.';
+          this.errors['firstName'] = this.t?.errors?.first_name_digits;
         } else {
           this.errors['firstName'] = '';
         }
@@ -243,9 +253,9 @@ export class CheckoutComponent implements OnInit {
 
       case 'lastName':
         if (!this.formData.lastName) {
-          this.errors['lastName'] = 'Příjmení je povinné.';
+          this.errors['lastName'] = this.t?.errors?.last_name_required;
         } else if (/\d/.test(this.formData.lastName)) {
-          this.errors['lastName'] = 'Příjmení nesmí obsahovat číslice.';
+          this.errors['lastName'] = this.t?.errors?.last_name_digits;
         } else {
           this.errors['lastName'] = '';
         }
@@ -253,9 +263,9 @@ export class CheckoutComponent implements OnInit {
 
       case 'address':
         if (!this.formData.address) {
-          this.errors['address'] = 'Ulice a číslo popisné jsou povinné.';
+          this.errors['address'] = this.t?.errors?.address_required;
         } else if (this.formData.address.length > 255) {
-          this.errors['address'] = 'Adresa může mít maximálně 255 znaků.';
+          this.errors['address'] = this.t?.errors?.address_too_long;
         } else {
           this.errors['address'] = '';
         }
@@ -263,9 +273,9 @@ export class CheckoutComponent implements OnInit {
 
       case 'city':
         if (!this.formData.city) {
-          this.errors['city'] = 'Město je povinné.';
+          this.errors['city'] = this.t?.errors?.city_required;
         } else if (this.formData.city.length > 100) {
-          this.errors['city'] = 'Název města může mít maximálně 100 znaků.';
+          this.errors['city'] = this.t?.errors?.city_too_long;
         } else {
           this.errors['city'] = '';
         }
@@ -273,26 +283,26 @@ export class CheckoutComponent implements OnInit {
 
       case 'postalCode':
         if (!this.formData.postalCode) {
-          this.errors['postalCode'] = 'PSČ je povinné.';
+          this.errors['postalCode'] = this.t?.errors?.postal_code_required;
         } else if (this.formData.postalCode.length > 10) {
-          this.errors['postalCode'] = 'PSČ může mít maximálně 10 znaků.';
+          this.errors['postalCode'] = this.t?.errors?.postal_code_too_long;
         } else if (!/^\d{3}\s?\d{2}$/.test(this.formData.postalCode.trim())) {
-          this.errors['postalCode'] = 'Zadejte platné PSČ (např. 110 00 nebo 11000).';
+          this.errors['postalCode'] = this.t?.errors?.postal_code_invalid;
         } else {
           this.errors['postalCode'] = '';
         }
         break;
 
       case 'shippingMethodId':
-        this.errors['shippingMethodId'] = !this.formData.shippingMethodId ? 'Vyberte způsob dopravy.' : '';
+        this.errors['shippingMethodId'] = !this.formData.shippingMethodId ? this.t?.errors?.shipping_required : '';
         break;
 
       case 'paymentMethodId':
-        this.errors['paymentMethodId'] = !this.formData.paymentMethodId ? 'Vyberte způsob platby.' : '';
+        this.errors['paymentMethodId'] = !this.formData.paymentMethodId ? this.t?.errors?.payment_required : '';
         break;
 
       case 'agreeToTerms':
-        this.errors['agreeToTerms'] = !this.formData.agreeToTerms ? 'Pro dokončení musíte souhlasit s obchodními podmínkami.' : '';
+        this.errors['agreeToTerms'] = !this.formData.agreeToTerms ? this.t?.errors?.terms_required : '';
         break;
     }
   }
@@ -327,10 +337,10 @@ export class CheckoutComponent implements OnInit {
     this.shopPublicService.validateCoupon(this.couponCode, this.orderSummary().productsTotal).subscribe({
       next: (response) => {
         this.appliedCoupon.set(response.coupon);
-        this.couponStatus.set(`✓ Kód aktivován: ${response.coupon.code}`);
+        this.couponStatus.set(this.t?.coupon_applied?.replace('{code}', response.coupon.code));
       },
       error: (e) => {
-        this.couponStatus.set('❌ ' + (e.error?.message || 'Neplatný kód'));
+        this.couponStatus.set(this.t?.coupon_error?.replace('{message}', e.error?.message || this.t?.coupon_invalid || ''));
         this.appliedCoupon.set(null);
       }
     });
@@ -344,7 +354,7 @@ export class CheckoutComponent implements OnInit {
     this.formSubmitted = true;
     
     if (!this.validateAllFields()) {
-      this.alertDialogService.open('Formulář je nekompletní', 'Zkontrolujte prosím červeně označená pole.', 'warning');
+      this.alertDialogService.open(this.t?.alerts?.form_incomplete_title, this.t?.alerts?.form_incomplete_message, 'warning');
       return;
     }
     
@@ -401,7 +411,7 @@ export class CheckoutComponent implements OnInit {
             const backendErrors = e.error.errors;
             Object.keys(backendErrors).forEach(key => {
               if (key.startsWith('items.')) {
-                this.alertDialogService.open('Skladová zásoba', backendErrors[key][0], 'danger');
+                this.alertDialogService.open(this.t?.alerts?.stock_title, backendErrors[key][0], 'danger');
               } else {
                 const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
                 if (this.errors.hasOwnProperty(camelKey)) {
@@ -410,8 +420,8 @@ export class CheckoutComponent implements OnInit {
               }
             });
           } else {
-            const errorMsg = e.error?.message || 'Objednávku se nepodařilo vytvořit. Zkuste to prosím znovu.';
-            this.alertDialogService.open('Chyba', errorMsg, 'danger');
+            const errorMsg = e.error?.message || this.t?.alerts?.order_failed_message;
+            this.alertDialogService.open(this.t?.alerts?.error_title, errorMsg, 'danger');
           }
           this.isProcessing.set(false);
         }

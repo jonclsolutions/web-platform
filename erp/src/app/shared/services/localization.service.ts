@@ -25,6 +25,13 @@
  *   při přepnutí modulu) - jen navíc plní `languagesSource`, aby zůstal jediný zdroj pravdy.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `languages$`, `initLanguages`, `getLanguageMeta`.
+ * @refactor-note (2026-10-21) Veřejný e-shop používá tuto službu 1:1 jako web, jen s modulem
+ *   `'shop'` (`translations/shop/{lang}`, `languages/shop`). `setModule()` po přepnutí modulu
+ *   nově rovnou načte překlady aktuálního jazyka nového modulu. Dřív jen vyčistil cache,
+ *   takže po přechodu web -> shop zůstaly zobrazené překlady webu. Do doby, než nové
+ *   překlady dorazí, emituje `currentTranslations$` hodnotu `null`, aby stránka nového modulu
+ *   nikdy nezobrazila stejně pojmenovanou sekci (`footer`, `navigation`) z druhého modulu.
+ *   Odpověď, která dorazí až po dalším přepnutí modulu, se zahodí.
  */
 
 import { Injectable } from '@angular/core';
@@ -91,10 +98,17 @@ export class LocalizationService {
     });
   }
 
+  /**
+   * @description Switches the translation module (`'web'`, `'shop'`) and loads the current
+   *   language of the new module. No-op when the module is already active.
+   * @param module Backend translation module.
+   */
   public setModule(module: string): void {
     if (this.currentModule !== module) {
       this.currentModule = module;
       this.translationsCache.clear();
+      this.currentTranslationsSource.next(null);
+      this.loadTranslations(this.currentLanguageSource.getValue());
       this.fetchLanguages().subscribe();
     }
   }
@@ -141,10 +155,11 @@ export class LocalizationService {
       return of(this.translationsCache.get(lang));
     }
 
-    const url = `${this.API_URL}/translations/${this.currentModule}/${lang}`;
+    const module = this.currentModule;
+    const url = `${this.API_URL}/translations/${module}/${lang}`;
 
     return this.http.get(url).pipe(
-      tap(data => this.translationsCache.set(lang, data)),
+      tap(data => { if (module === this.currentModule) this.translationsCache.set(lang, data); }),
       catchError(() => {
         if (lang !== 'cz') {
           return this.loadTranslations$('cz');
@@ -155,8 +170,10 @@ export class LocalizationService {
   }
 
   public loadTranslations(lang: string): void {
+    const module = this.currentModule;
     this.loadTranslations$(lang).subscribe(data => {
-      if (data) {
+      // a response for a module that is no longer active is dropped (see refactor-note)
+      if (data && module === this.currentModule) {
         this.currentTranslationsSource.next(data);
       }
     });

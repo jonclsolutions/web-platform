@@ -6,6 +6,8 @@
  * @created 2026
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `alertDialogService`.
+ * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
+ *   `cart`. Odstraněny české fallbacky v potvrzovacím dialogu.
  */
 
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
@@ -26,6 +28,7 @@ import { ConfirmDialogService } from '../../../core/services/confirm-dialog.serv
 export class CartComponent extends BasePublicComponent {
 
   protected readonly translationKey = 'cart';
+  protected override readonly translationModule = 'shop';
   
   private router = inject(Router);
   private confirmDialogService = inject(ConfirmDialogService);
@@ -86,8 +89,8 @@ export class CartComponent extends BasePublicComponent {
    */
   removeItem(itemId: string): void {
     this.confirmDialogService.open(
-      this.t?.confirm_remove_title || 'Odstranit z košíku', 
-      this.t?.confirm_remove_text || 'Opravdu chcete odstranit tuto položku z košíku?'
+      this.t?.confirm_remove_title,
+      this.t?.confirm_remove_text
     )
     .then(confirmed => {
       if (confirmed) {

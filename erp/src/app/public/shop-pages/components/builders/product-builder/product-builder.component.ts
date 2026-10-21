@@ -8,11 +8,14 @@
  * @dependencies
  * - CommonModule: Standard Angular utilities for structural directives.
  * - RouterModule: Enables navigation to specific product detail pages via templates.
+ * @refactor-note (2026-10-21) Dědí `BasePublicComponent` kvůli lokalizaci (sekce `product_card`, modul
+ *   `shop`) - stejný mechanismus jako stránky, žádné vlastní předávání textů přes @Input.
  */
 
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { BasePublicComponent } from '../../../../base-public.component';
 
 /**
  * @description Component for building and displaying a product card.
@@ -26,7 +29,10 @@ import { RouterModule } from '@angular/router';
   templateUrl: './product-builder.component.html',
   styleUrls: ['../../../shared-styles/theme.css', './product-builder.component.css'],
 })
-export class ProductBuilderComponent {
+export class ProductBuilderComponent extends BasePublicComponent {
+  protected readonly translationKey = 'product_card';
+  protected override readonly translationModule = 'shop';
+
   /** The product data object containing metadata, prices, and image arrays */
   @Input() product: any;
 

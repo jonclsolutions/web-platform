@@ -10,6 +10,10 @@
  * - PublicDataService: Fetches global configuration, social media links, and payment method assets.
  * - RouterModule: Facilitates navigation to internal support/legal pages.
  * - RxJS: Manages subscription lifecycles to prevent memory leaks.
+ * @refactor-note (2026-10-21) Lokalizace 1:1 jako PublicFooterComponent, ale z modulu
+ *   `shop`: v konstruktoru `setModule('shop')`, texty ze sekce `footer`, odkazy přes
+ *   `getText('navigation.*' / 'legal.*')` z `translations/shop/{lang}.json`. Dřív četl
+ *   sekci `footer` z překladů webu (modul `shop` se nenačítal vůbec).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
@@ -59,6 +63,7 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
     private publicDataService: PublicDataService,
     private cdr: ChangeDetectorRef
   ) {
+    this.localizationService.setModule('shop');
     this.currentYear = new Date().getFullYear();
   }
 
@@ -152,7 +157,7 @@ export class ShopFooterComponent implements OnInit, OnDestroy {
     ];
     this.footerLegalLinks = legalLinkKeys.map(link => ({ 
       route: link.route, 
-      text: this.localizationService.getText(link.key) || '', 
+      text: this.localizationService.getText(link.key), 
       external: false 
     }));
   }
