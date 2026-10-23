@@ -9,12 +9,16 @@
  * - DataHandler: Used to perform the actual HTTP requests for collection data.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `getAllData`.
+ * @bugfix-note (2026-10-23) A FAILED page request stayed in the cache: `shareReplay(1)` replays
+ *   the error, so for 3 minutes every reload / retry of that page answered the same error without
+ *   asking the API again (also a failed preload poisoned the page the user opens next). The
+ *   entry is now removed when its request fails.
  */
 
 import { Injectable } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { shareReplay } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, shareReplay } from 'rxjs/operators';
 import { DataHandler } from './data-handler.service';
 
 export interface FilterParams {
@@ -107,7 +111,16 @@ export class GenericTableService {
 
     const dataObservable = this.dataHandler
       .getPaginatedCollection<PaginatedResponse<T>>(`${endpoint}?${params.toString()}`)
-      .pipe(shareReplay(1));
+      .pipe(
+        // A failed request must not be served from the cache (see bugfix-note 2026-10-23).
+        catchError(err => {
+          if (this.pageCache.get(cacheKey)?.observable === dataObservable) {
+            this.pageCache.delete(cacheKey);
+          }
+          return throwError(() => err);
+        }),
+        shareReplay(1)
+      );
 
     this.pageCache.set(cacheKey, { observable: dataObservable, timestamp: Date.now() });
     return dataObservable;

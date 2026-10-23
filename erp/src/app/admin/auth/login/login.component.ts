@@ -9,12 +9,14 @@
  *     contact.component, services.component. translationKey = 'login', přístup přes
  *     this.t?.key v šabloně i v .ts.
  * @refactor-note (2026-10-21) Removed unused imports.
+ * @bugfix-note (2026-10-23) Auth error fallbacks come from `login.errors.<messageKey>` instead of
+ *     the Czech texts hardcoded in AuthService (see authErrorText()).
  */
 
 import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AuthService, LoginError, TwoFactorError } from '../../../core/auth/auth.service';
+import { AuthError, AuthService, LoginError, TwoFactorError } from '../../../core/auth/auth.service';
 import { TurnstileService } from '../../../core/services/turnstile.service';
 import { BasePublicComponent } from '../../../public/base-public.component';
 import { CommonModule } from '@angular/common';
@@ -106,7 +108,7 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
       },
       error: (error: LoginError) => {
         this.isSubmitting = false;
-        this.errorMessage = error.message;
+        this.errorMessage = this.authErrorText(error);
         this.password = '';
 
         if (error.captchaRequired) {
@@ -165,7 +167,7 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
       error: (error: TwoFactorError) => {
         this.isSubmitting = false;
         this.otpCode = '';
-        this.errorMessage = error.message;
+        this.errorMessage = this.authErrorText(error);
         this.cdr.detectChanges();
       }
     });
@@ -182,7 +184,7 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
         this.cdr.detectChanges();
       },
       error: (error: TwoFactorError) => {
-        this.errorMessage = error.message;
+        this.errorMessage = this.authErrorText(error);
         if (error.retryAfter) {
           this.resendAvailableAt = Date.now() + error.retryAfter * 1000;
         }
@@ -270,9 +272,19 @@ export class LoginComponent extends BasePublicComponent implements OnDestroy {
       },
       error: (error) => {
         this.resetSubmitting = false;
-        this.resetErrorMessage = error?.message;
+        this.resetErrorMessage = this.authErrorText(error);
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * @description Text of an auth error: the backend message, else the page translation of its
+   *   `messageKey` (login.errors.*) - see bugfix-note (2026-10-23) in auth.service.ts.
+   * @param error Error from AuthService.
+   * @returns Text for the error line ('' when neither exists).
+   */
+  private authErrorText(error: AuthError): string {
+    return error?.message || (error?.messageKey ? this.t?.errors?.[error.messageKey] : '') || '';
   }
 }

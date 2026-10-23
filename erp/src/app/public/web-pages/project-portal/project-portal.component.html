@@ -25,6 +25,8 @@
         záložka "Nápověda" na konci lišty - čistě statický obsah, text celý z
         `help_*` i18n klíčů. Formát: krátký úvod + série sekcí (nadpis + odstavec),
         stejný vizuální jazyk jako `.pp-description-block` na záložce Popis.
+    @bugfix-note (2026-10-23): failed reply / new thread shows `replySendError` /
+        `newThreadSendError` (was silent) - see project-portal.component.ts same date.
 -->
 <div class="pp-page">
 
@@ -341,6 +343,9 @@
                   @if (newThreadFileError) {
                     <p class="pp-file-error">{{ newThreadFileError }}</p>
                   }
+                  @if (newThreadSendError) {
+                    <p class="pp-file-error pp-send-error">{{ newThreadSendError }}</p>
+                  }
 
                   @if (newThreadFiles.length > 0) {
                     <div class="pp-file-chip-list">
@@ -455,6 +460,9 @@
                       </div>
                       @if (replyFileError) {
                         <p class="pp-file-error">{{ replyFileError }}</p>
+                      }
+                      @if (replySendError) {
+                        <p class="pp-file-error pp-send-error">{{ replySendError }}</p>
                       }
 
                       @if (replyFiles.length > 0) {

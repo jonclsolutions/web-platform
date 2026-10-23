@@ -14,6 +14,19 @@
  * sdílený trait nepodporuje - diff se teď stejně jako u SiteConfigurationController
  * (viz @refactor-note 2026-08-2 tamtéž) vkládá přímo do čitelného `$description`, ne do
  * zvláštního parametru. `context_data` necháváme na traitu (automaticky ořízne velikost).
+ *
+ * @bugfix-note (2026-10-23) Found by the API tests:
+ * - SECURITY (path traversal): `{module}`, the `lang` body field and the language `code`s of
+ *   saveLanguages() became parts of file paths without any check ('..' allowed) - e.g. module
+ *   '..' wrote `storage/app/public/{lang}.json`, the public GET read it back. Routes now only
+ *   match MODULE_PATTERN / LANG_PATTERN and the body values are validated the same way.
+ * - SECURITY: the 500 answer of save() contained the exception text (server paths) → generic.
+ * - storeLanguageIcon() searched the language code in ALL modules - an icon uploaded for 'en'
+ *   of the shop replaced the icon of 'en' of the web. Now limited to the module in the URL.
+ * - Without languages.json the defaults had no `module`: getLanguages() / destroyLanguage()
+ *   treated them as no module (empty list), saveLanguages() as 'web'. All methods now use the
+ *   same default module 'web' (moduleOf()).
+ * - saveLanguages() crashed (500) on an entry without `code`; entries are validated now.
  */
 
 namespace App\Http\Controllers\Api;
@@ -45,13 +58,33 @@ class TranslationController extends Controller
      */
     private const ICON_FOLDER = 'translation_images';
 
+    /** @var string Route / input pattern of a translation module ('web', 'shop', …) - no dots or slashes. */
+    public const MODULE_PATTERN = '[a-z][a-z0-9_-]{0,31}';
+
+    /** @var string Route / input pattern of a language code ('cz', 'en', 'en-gb', …). */
+    public const LANG_PATTERN = '[a-zA-Z]{2}(?:[-_][a-zA-Z0-9]{2,3})?';
+
+    /** @var string Module of language entries stored without one (the original web-only format). */
+    private const DEFAULT_MODULE = 'web';
+
+    /**
+     * @var array<int, array<string, mixed>> Language list used while no languages.json exists.
+     * @refactor-note (2026-10-23) Was the method defaultLanguages() returning this literal; a
+     *   constant has no executable lines (PHP 8.5 + pcov reported the returned array lines as
+     *   uncovered although the method ran).
+     */
+    private const DEFAULT_LANGUAGES = [
+        ['code' => 'cz', 'name' => 'Čeština', 'active' => true, 'isBuiltIn' => true, 'icon_path' => null],
+        ['code' => 'en', 'name' => 'English',  'active' => true, 'isBuiltIn' => false, 'icon_path' => null],
+    ];
+
     /**
      * Saves translation data to a JSON file for a specific module and language.
      */
     public function save(Request $request, string $module): JsonResponse
     {
         $request->validate([
-            'lang' => 'required|string|max:5',
+            'lang' => ['required', 'string', 'max:6', 'regex:/^' . self::LANG_PATTERN . '$/'],
             'data' => 'required|array',
         ]);
 
@@ -79,7 +112,8 @@ class TranslationController extends Controller
 
             return response()->json(['status' => 'success', 'detected_changes' => count($changes)]);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            Log::error("Saving translations {$module}/{$lang} failed: " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Saving translations failed.'], 500);
         }
     }
 
@@ -104,7 +138,7 @@ class TranslationController extends Controller
     {
         $allMeta = $this->readLanguagesMeta();
 
-        $filtered = array_values(array_filter($allMeta, fn($l) => ($l['module'] ?? '') === $module));
+        $filtered = array_values(array_filter($allMeta, fn($l) => $this->moduleOf($l) === $module));
 
         foreach ($filtered as &$lang) {
             $lang['iconUrl'] = !empty($lang['icon_path']) ? Storage::disk(self::ICON_DISK)->url($lang['icon_path']) : null;
@@ -122,15 +156,24 @@ class TranslationController extends Controller
         $request->validate([
             'languages'   => 'required|json',
             'icon'        => 'nullable|file|image|mimes:png,jpg,jpeg,webp,svg|max:512',
-            'target_code' => 'required_with:icon|string|max:5',
+            'target_code' => 'required_with:icon|string|max:6',
         ]);
 
         $incoming = json_decode($request->input('languages'), true);
+        $entries = validator(['languages' => $incoming], [
+            'languages'        => 'required|array',
+            'languages.*'      => 'array',
+            'languages.*.code' => ['required', 'string', 'distinct', 'regex:/^' . self::LANG_PATTERN . '$/'],
+            'languages.*.name' => 'required|string|max:50',
+        ]);
+        if ($entries->fails()) {
+            return response()->json(['message' => 'Invalid language list.', 'errors' => $entries->errors()], 422);
+        }
         $allMeta  = $this->readLanguagesMeta();
 
-        $otherModulesMeta = array_filter($allMeta, fn($l) => ($l['module'] ?? 'web') !== $module);
+        $otherModulesMeta = array_filter($allMeta, fn($l) => $this->moduleOf($l) !== $module);
 
-        $currentModuleMeta = collect(array_filter($allMeta, fn($l) => ($l['module'] ?? 'web') === $module))
+        $currentModuleMeta = collect(array_filter($allMeta, fn($l) => $this->moduleOf($l) === $module))
             ->keyBy('code');
 
         $mergedCurrent = [];
@@ -175,7 +218,7 @@ class TranslationController extends Controller
         ]);
 
         $meta = $this->readLanguagesMeta();
-        $idx  = $this->findLangIndex($meta, $code);
+        $idx  = $this->findLangIndex($meta, $code, $module);
 
         if ($idx === null) {
             return response()->json(['message' => "Language '{$code}' not found."], 404);
@@ -206,12 +249,7 @@ class TranslationController extends Controller
     public function destroyLanguage(Request $request, string $module, string $code): JsonResponse
     {
         $allMeta = $this->readLanguagesMeta();
-        $idx = null;
-        foreach ($allMeta as $i => $lang) {
-            if ($lang['code'] === $code && ($lang['module'] ?? '') === $module) {
-                $idx = $i; break;
-            }
-        }
+        $idx = $this->findLangIndex($allMeta, $code, $module);
 
         if ($idx === null) {
             return response()->json(['message' => "Language '{$code}' in module '{$module}' not found."], 404);
@@ -260,9 +298,9 @@ class TranslationController extends Controller
     {
         $path = $this->languagesMetaPath();
         if (File::exists($path)) {
-            return json_decode(File::get($path), true) ?? $this->defaultLanguages();
+            return json_decode(File::get($path), true) ?? self::DEFAULT_LANGUAGES;
         }
-        return $this->defaultLanguages();
+        return self::DEFAULT_LANGUAGES;
     }
 
     /**
@@ -281,25 +319,29 @@ class TranslationController extends Controller
     }
 
     /**
-     * Default language configuration.
+     * @description Finds the index of a language code within the metadata array, optionally
+     *   only among the entries of one module.
+     * @param array $meta Language entries.
+     * @param string $code Language code.
+     * @param string|null $module Module filter (null = the array is already one module).
+     * @return int|null
      */
-    private function defaultLanguages(): array
+    private function findLangIndex(array $meta, string $code, ?string $module = null): ?int
     {
-        return [
-            ['code' => 'cz', 'name' => 'Čeština', 'active' => true, 'isBuiltIn' => true, 'icon_path' => null],
-            ['code' => 'en', 'name' => 'English',  'active' => true, 'isBuiltIn' => false, 'icon_path' => null],
-        ];
+        foreach ($meta as $i => $lang) {
+            if ($lang['code'] === $code && ($module === null || $this->moduleOf($lang) === $module)) return $i;
+        }
+        return null;
     }
 
     /**
-     * Finds index of a specific language code within the metadata array.
+     * @description Module of a language entry - entries without one belong to DEFAULT_MODULE.
+     * @param array $lang Language entry.
+     * @return string
      */
-    private function findLangIndex(array $meta, string $code): ?int
+    private function moduleOf(array $lang): string
     {
-        foreach ($meta as $i => $lang) {
-            if ($lang['code'] === $code) return $i;
-        }
-        return null;
+        return $lang['module'] ?? self::DEFAULT_MODULE;
     }
 
     /**

@@ -13,6 +13,11 @@
  *   sám na AuthService nijak nezávisí.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `setUserEmail`.
+ * @bugfix-note (2026-10-23) The fallback error texts ('Přihlášení se nezdařilo.', 'Příliš mnoho
+ *   pokusů…', …) were hardcoded Czech and shown as they are on the login page in every language.
+ *   The service has no translations (it is used by the HTTP interceptor), so the errors now
+ *   carry a `messageKey` (AuthErrorKey) and an empty message when the backend sent none; the
+ *   login page shows the backend message or its own translation `login.errors.<messageKey>`.
  */
 
 import { Injectable } from '@angular/core';
@@ -23,14 +28,37 @@ import { environment } from '../../../environments/environment';
 import { PermissionService } from './services/permission.service';
 import { GenericTableService } from '../services/generic-table.service';
 
+/** Translation key (login.errors.*) of an auth error the backend sent no message for. */
+export type AuthErrorKey = 'too_many_attempts' | 'login_failed' | 'verification_failed' | 'request_failed';
+
+/** Auth error: `message` = backend message ('' when none), `messageKey` = fallback text key. */
+export interface AuthError extends Error {
+  messageKey?: AuthErrorKey;
+}
+
 /** Chyba loginu obohacená o informaci, zda je od teď nutná captcha. */
-export interface LoginError extends Error {
+export interface LoginError extends AuthError {
   captchaRequired?: boolean;
 }
 
 /** Chyba 2FA endpointů obohacená o dobu, po které lze zkusit resend znovu (sekundy). */
-export interface TwoFactorError extends Error {
+export interface TwoFactorError extends AuthError {
   retryAfter?: number;
+}
+
+/**
+ * @description Builds an AuthError from the backend message or the fallback key.
+ * @param backendMessage `error.error.message` of the API (may be missing).
+ * @param fallbackKey Key used when the backend sent no message.
+ * @returns Error with `message` (backend text or '') and `messageKey` (only without backend text).
+ */
+function authError(backendMessage: unknown, fallbackKey: AuthErrorKey): AuthError {
+  const message = typeof backendMessage === 'string' ? backendMessage : '';
+  const err: AuthError = new Error(message);
+  if (!message) {
+    err.messageKey = fallbackKey;
+  }
+  return err;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -248,10 +276,7 @@ export class AuthService {
    * `captcha_required` flag z backendu, ať komponenta ví, kdy zobrazit widget.
    */
   private handleLoginError = (error: HttpErrorResponse) => {
-    const err: LoginError = new Error(
-      error.error?.message ||
-      (error.status === 429 ? 'Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.' : 'Přihlášení se nezdařilo.')
-    );
+    const err: LoginError = authError(error.error?.message, error.status === 429 ? 'too_many_attempts' : 'login_failed');
     err.captchaRequired = !!error.error?.captcha_required;
     return throwError(() => err);
   };
@@ -261,9 +286,7 @@ export class AuthService {
    * `retry_after` (sekundy) z 429 odpovědi pro zobrazení countdownu na resend tlačítku.
    */
   private handleTwoFactorError = (error: HttpErrorResponse) => {
-    const err: TwoFactorError = new Error(
-      error.error?.message || 'Ověření se nezdařilo. Zkuste to prosím znovu.'
-    );
+    const err: TwoFactorError = authError(error.error?.message, 'verification_failed');
     if (error.status === 429 && error.error?.retry_after) {
       err.retryAfter = Number(error.error.retry_after);
     }
@@ -271,10 +294,9 @@ export class AuthService {
   };
 
   private handlePasswordResetError(error: HttpErrorResponse) {
-    if (error.status === 429) {
-      return throwError(() => new Error('Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.'));
-    }
-    const backendMessage = error.error?.message;
-    return throwError(() => new Error(backendMessage || 'Požadavek se nepodařilo odeslat. Zkuste to prosím znovu.'));
+    // 429 always uses the own text (the throttle message of the API is generic).
+    return throwError(() => error.status === 429
+      ? authError(undefined, 'too_many_attempts')
+      : authError(error.error?.message, 'request_failed'));
   }
 }

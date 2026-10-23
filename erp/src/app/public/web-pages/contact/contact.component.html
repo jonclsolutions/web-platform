@@ -12,6 +12,9 @@
         `Validators.pattern('^\\+?[0-9]*$')` + `Validators.maxLength(20)`). Přidán i
         native `maxlength="20"` atribut na input, ať se nedá napsat víc znaků, než
         validátor stejně povolí - stejný vzor jako u order-form.
+    @bugfix-note (2026-10-23): the phone link called `settings.contact_phone.replace()` -
+        site settings without a phone (allowed in the admin) crashed the whole contact block
+        (TypeError during rendering). It now uses the null-safe `phoneHref` of BasePublicComponent.
 -->
 <div *ngIf="t">
 
@@ -41,7 +44,7 @@
 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
 </svg>
 </span>
-<a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="info-link">{{ settings.contact_phone }}</a>
+<a [href]="phoneHref" class="info-link">{{ settings.contact_phone }}</a>
 </li>
 @if (settings.address) {
 <li class="info-item">

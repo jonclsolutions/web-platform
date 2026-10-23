@@ -8,6 +8,7 @@
   "login_button": "Log in",
   "error_project_not_found": "Project not found or unavailable.",
   "error_invalid_password": "Invalid password.",
+  "error_send_failed": "The message could not be sent. Please try again.",
 
   "supplier_contact_title": "Supplier contact",
   "refreshing": "Refreshing…",

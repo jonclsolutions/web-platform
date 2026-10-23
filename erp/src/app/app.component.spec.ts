@@ -4,71 +4,107 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2025
- * @description Unit tests for AppComponent.
+ * @description Unit tests of AppComponent (root shell): session check on start, favicon from
+ *   the site logo (created once, then updated), the initial loader fades out and is removed
+ *   once the app is stable, and the router outlet.
+ * @refactor-note (2026-10-23) The old spec mocked `PublicDataService.get('public/legal/config')`,
+ *   which the component no longer calls (settings come through `siteSettingsValue$`, filled by
+ *   AppBootstrapService) - three tests failed on `undefined.subscribe`. Rewritten to the real
+ *   contract.
+ * @dependencies
+ * - AuthService / PublicDataService stubs; ApplicationRef.isStable replaced by a Subject.
  */
 
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ApplicationRef } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
+
 import { AppComponent } from './app.component';
 import { AuthService } from './core/auth/auth.service';
 import { PublicDataService } from './shared/services/public-data.service';
 
 describe('AppComponent', () => {
-  let component: AppComponent;
   let fixture: ComponentFixture<AppComponent>;
-  let authServiceSpy: jasmine.SpyObj<AuthService>;
-  let publicDataServiceSpy: jasmine.SpyObj<PublicDataService>;
+  let auth: { checkAuth: jasmine.Spy };
+  let settings$: BehaviorSubject<any>;
+  let stable$: Subject<boolean>;
 
-  beforeEach(async () => {
-    // Vytvoření mocků pro služby volané v ngOnInit
-    const authSpy = jasmine.createSpyObj('AuthService', ['checkAuth']);
-    authSpy.checkAuth.and.returnValue(of({}));
-
-    const publicSpy = jasmine.createSpyObj('PublicDataService', ['get', 'getStorageUrl']);
-    publicSpy.get.and.returnValue(of({ settings: { logo_path: 'path/to/logo.png' } }));
-    publicSpy.getStorageUrl.and.returnValue('http://localhost/storage/path/to/logo.png');
-
-    await TestBed.configureTestingModule({
+  beforeEach(() => {
+    document.getElementById('dynamic-favicon')?.remove();
+    auth = { checkAuth: jasmine.createSpy('checkAuth').and.returnValue(of(true)) };
+    settings$ = new BehaviorSubject<any>(null);
+    stable$ = new Subject<boolean>();
+    TestBed.configureTestingModule({
       imports: [AppComponent],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: authSpy },
-        { provide: PublicDataService, useValue: publicSpy }
+        { provide: AuthService, useValue: auth },
+        { provide: PublicDataService, useValue: { siteSettingsValue$: settings$, getStorageUrl: (p: string) => `/storage/${p}` } }
       ]
-    }).compileComponents();
-
+    });
+    Object.defineProperty(TestBed.inject(ApplicationRef), 'isStable', { value: stable$ });
     fixture = TestBed.createComponent(AppComponent);
-    component = fixture.componentInstance;
-    authServiceSpy = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
-    publicDataServiceSpy = TestBed.inject(PublicDataService) as jasmine.SpyObj<PublicDataService>;
+  });
+  afterEach(() => {
+    document.getElementById('dynamic-favicon')?.remove();
+    document.getElementById('initial-loader')?.remove();
   });
 
-  it('should create the app', () => {
-    expect(component).toBeTruthy();
-  });
-
-  it('should call checkAuth and fetch public settings on init', () => {
-    fixture.detectChanges(); // Spustí ngOnInit
-
-    expect(authServiceSpy.checkAuth).toHaveBeenCalled();
-    expect(publicDataServiceSpy.get).toHaveBeenCalledWith('public/legal/config');
-  });
-
-  it('should update favicon when logo_path is present in settings', () => {
+  /**
+   * @description Start: session checked, router outlet rendered.
+   * @input detectChanges().
+   * @output checkAuth called once; <router-outlet> present.
+   */
+  it('checks the session and renders the router outlet', () => {
     fixture.detectChanges();
-
-    expect(publicDataServiceSpy.getStorageUrl).toHaveBeenCalledWith('path/to/logo.png');
-    
-    const faviconLink = document.querySelector('#dynamic-favicon') as HTMLLinkElement;
-    expect(faviconLink).toBeTruthy();
-    expect(faviconLink.rel).toBe('icon');
-    expect(faviconLink.href).toContain('path/to/logo.png');
+    expect(auth.checkAuth).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
   });
 
-  it('should render router-outlet', () => {
+  /**
+   * @description Favicon follows the site logo; one <link> element reused; settings without a
+   *   logo do not touch it.
+   * @input settings null; logo 'a.png'; logo 'b.png'; settings without logo.
+   * @output No link; one #dynamic-favicon rel icon href …/storage/a.png → …/b.png; still b.png.
+   */
+  it('sets the favicon from the site logo', () => {
     fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('router-outlet')).not.toBeNull();
+    expect(document.getElementById('dynamic-favicon')).toBeNull();
+
+    settings$.next({ settings: { logo_path: 'a.png' } });
+    const link = document.getElementById('dynamic-favicon') as HTMLLinkElement;
+    expect(link.rel).toBe('icon');
+    expect(link.href).toContain('/storage/a.png');
+
+    settings$.next({ settings: { logo_path: 'b.png' } });
+    settings$.next({ settings: {} });
+    expect(document.querySelectorAll('#dynamic-favicon').length).toBe(1);
+    expect(link.href).toContain('/storage/b.png');
+  });
+
+  /**
+   * @description The initial loader fades out at the first stable state and is removed after
+   *   its transition; a missing loader is fine.
+   * @input #initial-loader present; isStable false, true; transitionend. Second app without loader.
+   * @output 'fade-out' only after true; element removed after transitionend; no error.
+   */
+  it('removes the initial loader once the app is stable', () => {
+    const loader = document.createElement('div');
+    loader.id = 'initial-loader';
+    document.body.appendChild(loader);
+
+    fixture.detectChanges();
+    stable$.next(false);
+    expect(loader.classList.contains('fade-out')).toBeFalse();
+    stable$.next(true);
+    expect(loader.classList.contains('fade-out')).toBeTrue();
+    expect(document.getElementById('initial-loader')).not.toBeNull();
+    loader.dispatchEvent(new Event('transitionend'));
+    expect(document.getElementById('initial-loader')).toBeNull();
+
+    const second = TestBed.createComponent(AppComponent);
+    second.detectChanges();
+    expect(() => stable$.next(true)).not.toThrow();
   });
 });

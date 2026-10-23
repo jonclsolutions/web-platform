@@ -15,6 +15,11 @@
  *   this component renders, the value — and the logo image bytes — are already available.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `en_flag_link`, `tel_icon`, `mail_icon`.
+ * @bugfix-note (2026-10-23) The router.events subscription was never closed: after leaving the
+ *   web layout (e.g. to /shop or /admin) every navigation still ran handleRouteChange() of the
+ *   destroyed header (scrollTo + detectChanges on a destroyed view → NG0911 errors in the
+ *   console, one more leaked subscriber per visit). It now ends with destroy$, and the initial
+ *   route sync timeout is cleared on destroy.
  */
 
 import {
@@ -57,6 +62,8 @@ isDrawerLangOpen: boolean = false;
   showIndicator: boolean = false;
   isAnimatingTransition: boolean = false;
   private animationTimeout: any;
+  /** Initial route sync of ngOnInit (cleared on destroy). */
+  private initialRouteTimeout: any;
 
 // Constants for indicator layout
   private readonly LINK_WIDTH = 100;
@@ -116,7 +123,7 @@ isDrawerLangOpen: boolean = false;
 
     this.checkMobileView();
 
-    this.router.events.pipe(filter(event => event instanceof NavigationEnd))
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntil(this.destroy$))
       .subscribe((event: NavigationEnd) => {
         window.scrollTo(0, 0);
         this.currentActiveRoute = (event as NavigationEnd).urlAfterRedirects;
@@ -124,7 +131,7 @@ isDrawerLangOpen: boolean = false;
       });
 
     // Initial check for current route
-    setTimeout(() => {
+    this.initialRouteTimeout = setTimeout(() => {
       this.currentActiveRoute = this.router.url;
       this.handleRouteChange();
     }, 0);
@@ -257,6 +264,7 @@ isDrawerLangOpen: boolean = false;
   ngOnDestroy(): void {
     if (this.resizeObserver) this.resizeObserver.disconnect();
     clearTimeout(this.animationTimeout);
+    clearTimeout(this.initialRouteTimeout);
     this.destroy$.next();
     this.destroy$.complete();
   }

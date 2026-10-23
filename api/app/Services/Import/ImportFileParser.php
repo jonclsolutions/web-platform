@@ -27,6 +27,13 @@
  * sloupců. Důvod: nejednoznačné mapování sloupců je nejčastější příčina tichého
  * zapsání dat do špatného pole při hromadných importech - radši tvrdé odmítnutí
  * s jasnou hláškou než hádání.
+ *
+ * @bugfix-note (2026-10-23) parseDelimited(): an unreadable file ended in a PHP warning turned
+ *   into a 500 ErrorException instead of the intended "Failed to open the file." (422) - the
+ *   warning is suppressed now so the check is effective.
+ * @refactor-note (2026-10-23) Removed the unreachable `$header === false` branch (an empty
+ *   file is rejected by the MIME check before parsing) and the `default` arm of the format
+ *   match (an unknown format is already refused by assertRealMimeType()).
  */
 
 namespace App\Services\Import;
@@ -62,7 +69,6 @@ class ImportFileParser
             'csv'  => $this->parseDelimited($file, ';'),
             'txt'  => $this->parseDelimited($file, "\t"),
             'json' => $this->parseJson($file),
-            default => throw new RuntimeException("Unsupported file format: {$format}"),
         };
 
         if (empty($rows)) {
@@ -135,17 +141,17 @@ class ImportFileParser
      */
     private function parseDelimited(UploadedFile $file, string $delimiter): array
     {
-        $handle = fopen($file->getRealPath(), 'r');
+        // `@`: Laravel turns the PHP warning of a failed fopen() into an ErrorException (500),
+        // the check below is meant to answer with the readable message instead.
+        $handle = @fopen($file->getRealPath(), 'r');
         if ($handle === false) {
             throw new RuntimeException('Failed to open the file.');
         }
 
         try {
-            $header = fgetcsv($handle, 0, $delimiter);
-            if ($header === false) {
-                return [];
-            }
-            $header = array_map('trim', $header);
+            // An empty file never gets here (its MIME type is application/x-empty), so the
+            // header line always exists; `?: []` only keeps the types safe.
+            $header = array_map('trim', fgetcsv($handle, 0, $delimiter) ?: []);
 
             $rows = [];
             while (($line = fgetcsv($handle, 0, $delimiter)) !== false) {

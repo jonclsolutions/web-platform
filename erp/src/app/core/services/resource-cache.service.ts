@@ -17,7 +17,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable, catchError, shareReplay, throwError } from 'rxjs';
 
 interface CacheEntry<T> {
   obs$: Observable<T>;
@@ -43,7 +43,17 @@ export class ResourceCacheService {
       return cached.obs$ as Observable<T>;
     }
 
-    const obs$ = loader().pipe(shareReplay(1));
+    // @bugfix-note (2026-10-23) A failed load stayed cached for the whole TTL (shareReplay
+    // replays the error) - the entry is dropped when the load fails, the next get() retries.
+    const obs$: Observable<T> = loader().pipe(
+      catchError(err => {
+        if (this.cache.get(key)?.obs$ === obs$) {
+          this.cache.delete(key);
+        }
+        return throwError(() => err);
+      }),
+      shareReplay(1)
+    );
     this.cache.set(key, { obs$, timestamp: Date.now() });
     return obs$;
   }

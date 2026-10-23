@@ -1153,7 +1153,11 @@
         },
         "errors": {
             "captcha_required": "Potvrďte prosím, že nejste robot.",
-            "captcha_load": "Nepodařilo se načíst ověření zabezpečení. Zkuste stránku obnovit."
+            "captcha_load": "Nepodařilo se načíst ověření zabezpečení. Zkuste stránku obnovit.",
+            "too_many_attempts": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu.",
+            "login_failed": "Přihlášení se nezdařilo.",
+            "verification_failed": "Ověření se nezdařilo. Zkuste to prosím znovu.",
+            "request_failed": "Požadavek se nepodařilo odeslat. Zkuste to prosím znovu."
         },
         "otp": {
             "subtitle": "Na váš e-mail byl odeslán 6místný ověřovací kód.",

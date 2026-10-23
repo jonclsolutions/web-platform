@@ -4,6 +4,8 @@
     @project: RPSW Web
     @author: RPSW
     @created: 2025
+    @bugfix-note (2026-10-23): `settings.contact_phone.replace()` crashed the job detail
+        when the site settings have no phone (allowed in the admin) - now null-safe.
 -->
     
 @if (t) {
@@ -32,7 +34,7 @@
         @if (settings) {
           <div class="job-contact-strip">
             <span class="job-contact-label">{{ t?.item_contact_label }}</span>
-            <a [href]="'tel:' + settings.contact_phone.replace(/\s/g, '')" class="job-contact-link">{{ settings.contact_phone }}</a>
+            <a [href]="'tel:' + (settings.contact_phone || '').replace(/\s/g, '')" class="job-contact-link">{{ settings.contact_phone }}</a>
             <span class="job-contact-sep" aria-hidden="true">•</span>
             <a [href]="'mailto:' + settings.contact_email" class="job-contact-link">{{ settings.contact_email }}</a>
           </div>

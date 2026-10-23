@@ -35,7 +35,7 @@ describe('EntityCrudService', () => {
 
   beforeEach(() => {
     dataHandlerSpy = jasmine.createSpyObj<DataHandler>('DataHandler', [
-      'get',
+      'getOne',
       'getCollection',
       'post',
       'put',
@@ -64,23 +64,23 @@ describe('EntityCrudService', () => {
       let currentEndpoint = 'first-endpoint';
       const providerSpy = jasmine.createSpy('endpointProvider').and.callFake(() => currentEndpoint);
       const svc = new EntityCrudService(dataHandlerSpy, providerSpy, destroy$);
-      dataHandlerSpy.get.and.returnValue(of({ id: 1 }));
+      dataHandlerSpy.getOne.and.returnValue(of({ id: 1 }));
 
       svc.getOne(1).subscribe();
-      expect(dataHandlerSpy.get).toHaveBeenCalledWith('first-endpoint/1');
+      expect(dataHandlerSpy.getOne).toHaveBeenCalledWith('first-endpoint/1');
 
       currentEndpoint = 'second-endpoint';
       svc.getOne(2).subscribe();
-      expect(dataHandlerSpy.get).toHaveBeenCalledWith('second-endpoint/2');
+      expect(dataHandlerSpy.getOne).toHaveBeenCalledWith('second-endpoint/2');
 
       expect(providerSpy).toHaveBeenCalledTimes(2);
     });
 
     it('nemělo by selhat, pokud endpointProvider vrátí prázdný string (jen zdokumentované chování)', () => {
       const svc = new EntityCrudService(dataHandlerSpy, () => '', destroy$);
-      dataHandlerSpy.get.and.returnValue(of({}));
+      dataHandlerSpy.getOne.and.returnValue(of({}));
       svc.getOne(1).subscribe();
-      expect(dataHandlerSpy.get).toHaveBeenCalledWith('/1');
+      expect(dataHandlerSpy.getOne).toHaveBeenCalledWith('/1');
     });
   });
 
@@ -88,24 +88,24 @@ describe('EntityCrudService', () => {
   // getOne
   // ---------------------------------------------------------------------
   describe('getOne', () => {
-    it('by mělo zavolat dataHandler.get se správnou URL a vrátit data', () => {
+    it('by mělo zavolat dataHandler.getOne se správnou URL a vrátit data', () => {
       const mockEntity = { id: 5, name: 'foo' };
-      dataHandlerSpy.get.and.returnValue(of(mockEntity));
+      dataHandlerSpy.getOne.and.returnValue(of(mockEntity));
 
       let result: any;
       service.getOne(5).subscribe(r => (result = r));
 
-      expect(dataHandlerSpy.get).toHaveBeenCalledWith(`${endpoint}/5`);
+      expect(dataHandlerSpy.getOne).toHaveBeenCalledWith(`${endpoint}/5`);
       expect(result).toEqual(mockEntity);
     });
 
-    it('by nemělo zavolat dataHandler.get a mělo by emitovat chybu, pokud id je undefined', () => {
+    it('by nemělo zavolat dataHandler.getOne a mělo by emitovat chybu, pokud id je undefined', () => {
       let error: Error | undefined;
       service.getOne(undefined).subscribe({
         error: e => (error = e),
       });
 
-      expect(dataHandlerSpy.get).not.toHaveBeenCalled();
+      expect(dataHandlerSpy.getOne).not.toHaveBeenCalled();
       expect(error?.message).toBe('ID undefined.');
     });
 
@@ -115,31 +115,31 @@ describe('EntityCrudService', () => {
         error: e => (error = e),
       });
 
-      expect(dataHandlerSpy.get).not.toHaveBeenCalled();
+      expect(dataHandlerSpy.getOne).not.toHaveBeenCalled();
       expect(error?.message).toBe('ID undefined.');
     });
 
     it('by mělo zavolat onSettled po úspěšném dokončení', () => {
-      dataHandlerSpy.get.and.returnValue(of({ id: 1 }));
+      dataHandlerSpy.getOne.and.returnValue(of({ id: 1 }));
       service.getOne(1).subscribe();
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
 
     it('by mělo zavolat onSettled i po chybě z HTTP vrstvy (finalize běží i na error cestě)', () => {
-      dataHandlerSpy.get.and.returnValue(throwError(() => new Error('network error')));
+      dataHandlerSpy.getOne.and.returnValue(throwError(() => new Error('network error')));
       service.getOne(1).subscribe({ error: () => {} });
       expect(onSettledSpy).toHaveBeenCalledTimes(1);
     });
 
     it('by nemělo spadnout, pokud onSettled není poskytnut', () => {
       const svc = new EntityCrudService(dataHandlerSpy, () => endpoint, destroy$);
-      dataHandlerSpy.get.and.returnValue(of({ id: 1 }));
+      dataHandlerSpy.getOne.and.returnValue(of({ id: 1 }));
       expect(() => svc.getOne(1).subscribe()).not.toThrow();
     });
 
     it('by se mělo odhlásit z requestu při emitu na destroy$ (takeUntil)', () => {
       const source$ = new Subject<any>();
-      dataHandlerSpy.get.and.returnValue(source$.asObservable());
+      dataHandlerSpy.getOne.and.returnValue(source$.asObservable());
 
       let completed = false;
       let emittedValue: any;

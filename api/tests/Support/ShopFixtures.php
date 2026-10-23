@@ -122,7 +122,7 @@ trait ShopFixtures
      */
     protected function imageUpload(string $name = 'photo.jpg'): UploadedFile
     {
-        return UploadedFile::fake()->image($name, 10, 10);
+        return $this->fakeImage($name);
     }
 
     /**

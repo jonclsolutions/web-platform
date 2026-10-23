@@ -87,6 +87,23 @@ describe('AuthTokenInterceptor', () => {
 
   describe('A) Token injection', () => {
 
+    /**
+     * @description Public project-portal requests bypass the interceptor (no token, no 401 handling).
+     * @input Token present; GET /api/projects/public/abc answered 401.
+     * @output No Authorization header, error passed through, no refresh attempt.
+     */
+    it('by mělo public projektové requesty propustit bez tokenu i bez refresh', () => {
+      authService.getAccessToken.and.returnValue('test-jwt-token');
+      let status = 0;
+      http.get('/api/projects/public/abc').subscribe({ error: e => (status = e.status) });
+
+      const req = httpMock.expectOne('/api/projects/public/abc');
+      expect(req.request.headers.has('Authorization')).toBeFalse();
+      req.flush({}, { status: 401, statusText: 'Unauthorized' });
+      expect(status).toBe(401);
+      expect(authService.refreshAccessToken).not.toHaveBeenCalled();
+    });
+
     it('by mělo přidat Authorization header, pokud existuje access token', () => {
       authService.getAccessToken.and.returnValue('test-jwt-token');
 

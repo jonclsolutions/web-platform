@@ -1,23 +1,88 @@
+/**
+ * @file cookies-policy.component.spec.ts
+ * @path src/app/public/web-pages/cookies-policy/cookies-policy.component.spec.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2026
+ * @description Unit tests of CookiesPolicyComponent (Cookies policy page): the document 'cookies' is loaded in the
+ *   current language through LegalDocsService, reloaded on a language switch and rendered with
+ *   its sections, sub-sections and bullet lists; a failed load is logged.
+ * @dependencies
+ * - createPublicPageContext (translations / language), LegalDocsService spy.
+ */
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 
 import { CookiesPolicyComponent } from './cookies-policy.component';
+import { LegalDocsService } from '../../../shared/services/legal-docs.service';
+import { CookieConsentService } from '../../../shared/services/cookie-consent.service';
+import { PublicPageContext, createPublicPageContext } from '../../../../testing/public-test-helpers';
 
 describe('CookiesPolicyComponent', () => {
-  let component: CookiesPolicyComponent;
+  let ctx: PublicPageContext;
   let fixture: ComponentFixture<CookiesPolicyComponent>;
+  let legal: jasmine.SpyObj<LegalDocsService>;
+  const doc = (lang: string) => ({
+    last_update_date: '1. 1. 2026', footer_effective: 'Effective ' + lang,
+    sections: [{ heading: 'Section ' + lang, subsections: [{ heading: 'Sub', text: 'Text', list: ['Bullet A', 'Bullet B'] }] }, { heading: 'Empty', subsections: [] }]
+  });
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [CookiesPolicyComponent]
-    })
-    .compileComponents();
-
+  beforeEach(() => {
+    ctx = createPublicPageContext({ translations: { cookies_policy: { header_main: 'Header', last_update_text: 'Updated', change_settings_text: 'Settings:', change_settings_link_text: 'Change' } } });
+    legal = jasmine.createSpyObj('LegalDocsService', ['getDocument']);
+    legal.getDocument.and.callFake(((_slug: string, lang: string) => of(doc(lang))) as any);
+    TestBed.configureTestingModule({
+      imports: [CookiesPolicyComponent],
+      providers: [...ctx.providers, { provide: LegalDocsService, useValue: legal }]
+    });
     fixture = TestBed.createComponent(CookiesPolicyComponent);
-    component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  /**
+   * @description Document of the current language rendered; a language switch reloads it.
+   * @input Language cz; then en.
+   * @output getDocument('cookies', 'cz') → sections + bullets rendered; getDocument('cookies', 'en').
+   */
+  it('loads and renders the document per language', () => {
+    expect(legal.getDocument).toHaveBeenCalledWith('cookies', 'cz');
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Header');
+    expect(text).toContain('Section cz');
+    expect(text).toContain('Bullet B');
+    expect(text).toContain('Effective cz');
+
+    ctx.localization.currentLanguage$.next('en');
+    fixture.detectChanges();
+    expect(legal.getDocument).toHaveBeenCalledWith('cookies', 'en');
+    expect(fixture.nativeElement.textContent).toContain('Section en');
+  });
+
+  /**
+   * @description A failing load is logged and leaves the page without a document.
+   * @input getDocument errors on the language switch to 'de'.
+   * @output console.error; previous document kept (data not replaced by an error).
+   */
+  it('logs a failed document load', () => {
+    spyOn(console, 'error');
+    legal.getDocument.and.returnValue(throwError(() => new Error('down')));
+    ctx.localization.currentLanguage$.next('de');
+    expect(console.error).toHaveBeenCalled();
+    expect(fixture.componentInstance.data.footer_effective).toBe('Effective cz');
+  });
+
+  /**
+   * @description The "change settings" link re-opens the cookie consent dialog.
+   * @input openCookieSettings() and a click on the rendered link.
+   * @output CookieConsentService.openSettings called twice.
+   */
+  it('re-opens the cookie settings', () => {
+    const consent = TestBed.inject(CookieConsentService);
+    spyOn(consent, 'openSettings');
+    fixture.componentInstance.openCookieSettings();
+    const clickable = Array.from(fixture.nativeElement.querySelectorAll('a, button')) as HTMLElement[];
+    clickable.find(el => el.textContent!.includes('Change'))?.click();
+    expect(consent.openSettings).toHaveBeenCalledTimes(2);
   });
 });

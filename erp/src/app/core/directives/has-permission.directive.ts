@@ -28,31 +28,35 @@ import { PermissionService } from '../auth/services/permission.service';
  * @note The directive interacts directly with the ViewContainerRef to manage template instantiation.
  */
 @Directive({
-selector: '[appHasPermission]',
-standalone: true
+  selector: '[appHasPermission]',
+  standalone: true
 })
 export class HasPermissionDirective {
-constructor(
-private templateRef: TemplateRef<any>,
-private viewContainer: ViewContainerRef,
-private permissionService: PermissionService
+  /** Whether the content is currently rendered. */
+  private hasView = false;
+
+  constructor(
+    private templateRef: TemplateRef<any>,
+    private viewContainer: ViewContainerRef,
+    private permissionService: PermissionService
   ) {}
 
-/**
-   * @description Setter for the structural directive input.
-   * @param permission Jeden permission klíč, nebo víc klíčů oddělených `|` (OR - stačí mít
-   * kterýkoliv z nich). Stejná syntaxe jako `permission:klic1|klic2` middleware na backendu.
-   * @note If any of the given permissions is granted, an embedded view is created; otherwise,
-   * the container is cleared to prevent unauthorized UI exposure.
+  /**
+   * @description Shows the content when the user has at least one of the permissions
+   *   ('a|b' = OR, spaces around keys ignored - same as AuthGuard).
+   * @bugfix-note (2026-10-23) A second value that is also granted created the content a SECOND
+   *   time (createEmbeddedView without checking an existing view); keys were not trimmed.
+   * @param permission Permission key(s).
    */
   @Input() set appHasPermission(permission: string) {
-const requiredPermissions = permission.split('|');
-const hasAny = requiredPermissions.some(p => this.permissionService.hasPermission(p));
+    const hasAny = permission.split('|').some(p => this.permissionService.hasPermission(p.trim()));
 
-if (hasAny) {
-this.viewContainer.createEmbeddedView(this.templateRef);
-    } else {
-this.viewContainer.clear();
+    if (hasAny && !this.hasView) {
+      this.viewContainer.createEmbeddedView(this.templateRef);
+      this.hasView = true;
+    } else if (!hasAny && this.hasView) {
+      this.viewContainer.clear();
+      this.hasView = false;
     }
   }
 }

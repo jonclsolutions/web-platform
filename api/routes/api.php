@@ -73,8 +73,15 @@ if (app()->environment('local')) {
 |--------------------------------------------------------------------------
 | Only GET for language lists and translations — no mutations without authorization.
 */
-Route::get('languages/{module}', [TranslationController::class, 'getLanguages']);
-Route::get('translations/{module}/{lang}', [TranslationController::class, 'show']);
+// @bugfix-note (2026-10-23) SECURITY - {module} / {lang} / {code} are parts of file paths in
+// TranslationController (storage/app/public/translations/{module}/{lang}.json). They accepted
+// anything without a slash, incl. '..' (e.g. module '..' wrote / read JSON files one folder up).
+// Now restricted to a module name and a language code (TranslationController::MODULE_PATTERN /
+// LANG_PATTERN) - anything else is 404.
+Route::get('languages/{module}', [TranslationController::class, 'getLanguages'])
+    ->where('module', TranslationController::MODULE_PATTERN);
+Route::get('translations/{module}/{lang}', [TranslationController::class, 'show'])
+    ->where(['module' => TranslationController::MODULE_PATTERN, 'lang' => TranslationController::LANG_PATTERN]);
 
 /*
 |--------------------------------------------------------------------------
@@ -285,13 +292,16 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
     Route::get('/user',    [AuthController::class, 'user']);
 
         Route::post('/save_translations/{module}', [TranslationController::class, 'save'])
+            ->where('module', TranslationController::MODULE_PATTERN)
             ->middleware('permission:web-edit-website-update|shop-edit-eshop-update');
 
-    Route::prefix('languages')->middleware('permission:web-edit-website-update|shop-edit-eshop-update')->group(function () {
-        Route::post('/{module}',     [TranslationController::class, 'saveLanguages']);
-        Route::post('/{module}/{code}/icon', [TranslationController::class, 'storeLanguageIcon']);
-        Route::delete('/{module}/{code}',    [TranslationController::class, 'destroyLanguage']);
-    });
+    Route::prefix('languages')->middleware('permission:web-edit-website-update|shop-edit-eshop-update')
+        ->where(['module' => TranslationController::MODULE_PATTERN, 'code' => TranslationController::LANG_PATTERN])
+        ->group(function () {
+            Route::post('/{module}',     [TranslationController::class, 'saveLanguages']);
+            Route::post('/{module}/{code}/icon', [TranslationController::class, 'storeLanguageIcon']);
+            Route::delete('/{module}/{code}',    [TranslationController::class, 'destroyLanguage']);
+        });
 
     /*
     |----------------------------------------------------------------------

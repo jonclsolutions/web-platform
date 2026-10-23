@@ -22,6 +22,11 @@
  * žádný nový stav), text celý žije v i18n JSON (`help_*` klíče), stejně jako zbytek
  * portálu. `setActiveTab()` beze změny - help záložka nepotřebuje lazy-loading jako
  * `contacts`.
+ * @bugfix-note (2026-10-23) (1) A failed reply / new thread was silent - the customer saw the
+ *   spinner stop and nothing else (the text stayed, no message). Both now show
+ *   `error_send_failed` (`replySendError` / `newThreadSendError`), cleared on the next attempt.
+ *   (2) The translations$ subscription of the constructor was never closed (one leaked
+ *   subscription per opened portal) - it now ends with destroy$.
  */
 
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
@@ -147,11 +152,15 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   newThreadSending = false;
   newThreadFiles: File[] = [];
   newThreadFileError: string | null = null;
+  /** Error of the last failed new thread (bugfix-note 2026-10-23). */
+  newThreadSendError: string | null = null;
 
   replyBody = '';
   replySending = false;
   replyFiles: File[] = [];
   replyFileError: string | null = null;
+  /** Error of the last failed reply (bugfix-note 2026-10-23). */
+  replySendError: string | null = null;
 
   isRefreshing = false;
   closingThread = false;
@@ -175,7 +184,7 @@ export class ProjectPortalComponent implements OnInit, OnDestroy {
   }
 
   constructor() {
-    this.portalI18n.translations$.subscribe(() => {
+    this.portalI18n.translations$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.checkpointStatusLabels = {
         new: this.t('checkpoint_status_new'),
         active: this.t('checkpoint_status_active'),
@@ -690,6 +699,7 @@ updateThreadStatus(status: string): void {
     if (!body || !this.selectedThread || this.replySending) return;
 
     this.replySending = true;
+    this.replySendError = null;
     this.cdr.markForCheck();
 
     const payload: FormData | { body: string } = this.replyFiles.length > 0
@@ -708,6 +718,9 @@ updateThreadStatus(status: string): void {
         this.replyFiles = [];
         this.openThread(this.selectedThread!);
         this.loadThreads();
+      },
+      error: () => {
+        this.replySendError = this.t('error_send_failed');
       }
     });
   }
@@ -731,6 +744,7 @@ updateThreadStatus(status: string): void {
     if (!this.newThreadSubject.trim() || !this.newThreadBody.trim() || this.newThreadSending) return;
 
     this.newThreadSending = true;
+    this.newThreadSendError = null;
     this.cdr.markForCheck();
 
     const base = { subject: this.newThreadSubject, priority: this.newThreadPriority, body: this.newThreadBody };
@@ -749,6 +763,9 @@ updateThreadStatus(status: string): void {
         this.newThreadMode = false;
         this.newThreadFiles = [];
         this.loadThreads();
+      },
+      error: () => {
+        this.newThreadSendError = this.t('error_send_failed');
       }
     });
   }

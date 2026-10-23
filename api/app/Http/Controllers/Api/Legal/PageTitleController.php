@@ -11,6 +11,9 @@
  *              PageTitleStrategy.
  * @refactor-note (2026-09-30b) Area 'admin' (one title for the whole administration,
  *              see 2026-09-30b_legal_page_titles_admin.sql) – listed after web and e-shop.
+ *
+ * @refactor-note (2026-10-23) sanitizeTitles(): removed the unreachable non-array branch - the
+ *   request validation (`titles.*.title_i18n` present|array) guarantees an array.
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -78,9 +81,14 @@ class PageTitleController extends Controller
         DB::transaction(function () use ($rows, $items, &$changed) {
             foreach ($rows as $id => $row) {
                 $sanitized = $this->sanitizeTitles($items[$id]['title_i18n'] ?? []);
-                $row->title_i18n = array_merge($row->title_i18n ?? [], $sanitized);
+                $current   = $row->title_i18n ?? [];
+                $merged    = array_merge($current, $sanitized);
 
-                if ($row->isDirty('title_i18n')) {
+                // @bugfix-note (2026-10-23) Compared via isDirty(): a row without titles (NULL)
+                // and nothing sent became [] → "dirty" → saved and logged as changed. Now only a
+                // real difference of the title map is saved and logged.
+                if ($merged !== $current) {
+                    $row->title_i18n = $merged;
                     $row->save();
                     $changed[] = $row;
                 }
@@ -145,12 +153,8 @@ class PageTitleController extends Controller
      * @param mixed $raw Map { lang: title } from the request.
      * @return array<string, string>
      */
-    private function sanitizeTitles($raw): array
+    private function sanitizeTitles(array $raw): array
     {
-        if (!is_array($raw)) {
-            return [];
-        }
-
         $clean = [];
 
         foreach ($raw as $lang => $value) {

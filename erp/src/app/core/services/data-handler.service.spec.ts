@@ -4,466 +4,252 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Unit tests for {@link DataHandler}.
- *
- * `DataHandler` is a thin, centralized wrapper around `HttpClient` used
- * throughout the admin module. It has two responsibilities worth testing in
- * isolation:
- *
- *   1. **Request shaping** — building the right headers (JSON vs. multipart
- *      `FormData`), appending query params while skipping `null`/`undefined`
- *      values, and unwrapping the Laravel-style `{ data: T }` / `{ data: T[] }`
- *      envelope where the API uses one.
- *   2. **Error normalization** (`handleError`) — translating raw
- *      `HttpErrorResponse` objects (by status code, or a client-side
- *      `ErrorEvent`) into a single human-readable string, surfacing that
- *      string via `AlertDialogService.open(...)`, and re-throwing a plain
- *      `Error` so callers can still `catchError`/`subscribe({ error })`.
- *
- * We use `HttpClientTestingModule` / `HttpTestingController` to intercept
- * every outgoing request without touching the network, and a Jasmine spy for
- * `AlertDialogService` so we can assert exactly what gets shown to the user.
- *
+ * @description Unit tests of DataHandler (admin HTTP wrapper): request shaping (headers, query
+ *   params, `{data}` unwrapping, multipart PUT / PATCH via POST + `_method`) and the single error
+ *   dialog of handleError (translated texts with placeholders, original error rethrown).
  * @dependencies
- * - HttpClientTestingModule / HttpTestingController: Intercepts and flushes
- *   HTTP requests synchronously inside each test.
- * - AlertDialogService: Stubbed out; only `open(...)` is asserted on.
- *
- * @note `DataHandler` has no dependency on `ActivatedRoute`, so the
- * `PROVIDE_ACTIVATED_ROUTE` / `getRouterProviders()` helpers supplied
- * alongside this task are not required here and are intentionally not wired
- * into `TestBed.configureTestingModule`. They're kept available for sibling
- * spec files (e.g. route-parameter-driven components) that do need them.
+ * - HttpTestingController (no real request), AlertDialogService spy, AdminLocalizationService stub
+ *   whose templates contain the placeholders the service fills in.
  */
 
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpClientTestingModule,
-  HttpTestingController
-} from '@angular/common/http/testing';
+import { provideHttpClient, HttpErrorResponse } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
 import { DataHandler } from './data-handler.service';
 import { AlertDialogService } from './alert-dialog.service';
+import { AdminLocalizationService } from './admin-localization.service';
 import { environment } from '../../../environments/environment';
-import { HttpErrorResponse } from '@angular/common/http';
+
+/** Translation templates of the `data-handler` section used by the stub. */
+const TEMPLATES: Record<string, string> = {
+  'data-handler.unknown_error': 'Unknown error',
+  'data-handler.client_side_error': 'Client-side error: {message}',
+  'data-handler.network_error': 'No connection',
+  'data-handler.cannot_delete_own_account': 'Cannot delete own account',
+  'data-handler.forbidden_fallback': 'Forbidden',
+  'data-handler.validation_error': 'Validation ({status}): {errors}',
+  'data-handler.client_error_with_message': 'Client ({status}): {message}',
+  'data-handler.client_error': 'Client error {status} {statusText}',
+  'data-handler.server_error': 'Server ({status}): {statusText}',
+  'data-handler.server_error_default_text': 'Internal error',
+  'data-handler.dialog_title': 'Error'
+};
+
 describe('DataHandler', () => {
   let service: DataHandler;
-  let httpMock: HttpTestingController;
-  let alertDialogServiceSpy: jasmine.SpyObj<AlertDialogService>;
-
-  const baseUrl = environment.base_api_url;
-
-  /** Shape used for entity-typed responses across the suite. */
-  interface TestEntity {
-    id?: number;
-    name?: string;
-  }
+  let http: HttpTestingController;
+  let alert: jasmine.SpyObj<AlertDialogService>;
+  let getValue: jasmine.Spy;
+  const base = environment.base_api_url;
 
   beforeEach(() => {
-    alertDialogServiceSpy = jasmine.createSpyObj<AlertDialogService>('AlertDialogService', ['open']);
-
+    alert = jasmine.createSpyObj<AlertDialogService>('AlertDialogService', ['open']);
+    getValue = jasmine.createSpy('getValue').and.callFake((key: string) => TEMPLATES[key] ?? key);
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
-        DataHandler,
-        { provide: AlertDialogService, useValue: alertDialogServiceSpy }
+        provideHttpClient(), provideHttpClientTesting(),
+        { provide: AlertDialogService, useValue: alert },
+        { provide: AdminLocalizationService, useValue: { getValue } }
       ]
     });
-
     service = TestBed.inject(DataHandler);
-    httpMock = TestBed.inject(HttpTestingController);
+    http = TestBed.inject(HttpTestingController);
+    spyOn(console, 'error');
+  });
+
+  afterEach(() => http.verify());
+
+  /**
+   * @description Fails a GET with the given error and returns what reached the subscriber.
+   * @param error HttpErrorResponse init (status, statusText, error body).
+   * @returns The error passed to the subscriber's error callback.
+   */
+  function failWith(error: { status: number; statusText?: string; error?: any }): any {
+    let received: any;
+    service.get('items').subscribe({ error: e => (received = e) });
+    http.expectOne(`${base}/items`).flush(error.error ?? null, { status: error.status, statusText: error.statusText ?? '' });
+    return received;
+  }
+
+  /**
+   * @description Collections: JSON headers, params without null / undefined, `{data}` unwrapped
+   *   when present, plain arrays returned as they are.
+   * @input getCollection('items', {page: 2, search: null, sort: undefined}) answered {data: [A]};
+   *        getCollection('items') answered [B].
+   * @output GET with Accept + Content-Type JSON and only page=2; results [A] and [B].
+   */
+  it('getCollection unwraps data and skips empty params', () => {
+    let first: any; let second: any;
+    service.getCollection('items', { page: 2, search: null, sort: undefined }).subscribe(r => (first = r));
+    const req = http.expectOne(r => r.url === `${base}/items`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('Accept')).toBe('application/json');
+    expect(req.request.headers.get('Content-Type')).toBe('application/json');
+    expect(req.request.params.keys()).toEqual(['page']);
+    expect(req.request.params.get('page')).toBe('2');
+    req.flush({ data: [{ id: 1 }] });
+
+    service.getCollection('items').subscribe(r => (second = r));
+    http.expectOne(`${base}/items`).flush([{ id: 2 }]);
+
+    expect(first).toEqual([{ id: 1 }]);
+    expect(second).toEqual([{ id: 2 }]);
   });
 
   /**
-   * @description Ensures no unmatched/unflushed requests leak between tests,
-   * which would otherwise silently mask assertions in later specs.
+   * @description get / getPaginatedCollection return the raw body; getOne unwraps `{data}` only
+   *   when the backend wrapped it.
+   * @input get → {a: 1}; getPaginatedCollection → {data: [], total: 0}; getOne → {data: {id: 1}}; getOne → {id: 2}.
+   * @output {a: 1}; the full paginated object; {id: 1}; {id: 2}.
    */
-  afterEach(() => {
-    httpMock.verify();
+  it('get, getPaginatedCollection and getOne', () => {
+    const results: any[] = [];
+    service.get('a').subscribe(r => results.push(r));
+    http.expectOne(`${base}/a`).flush({ a: 1 });
+    service.getPaginatedCollection('p').subscribe(r => results.push(r));
+    http.expectOne(`${base}/p`).flush({ data: [], total: 0 });
+    service.getOne('o').subscribe(r => results.push(r));
+    http.expectOne(`${base}/o`).flush({ data: { id: 1 } });
+    service.getOne('o').subscribe(r => results.push(r));
+    http.expectOne(`${base}/o`).flush({ id: 2 });
+
+    expect(results).toEqual([{ a: 1 }, { data: [], total: 0 }, { id: 1 }, { id: 2 }]);
   });
 
-  it('should create', () => {
-    expect(service).toBeTruthy();
+  /**
+   * @description post / put / patch send JSON and unwrap `{data}`; delete sends DELETE.
+   * @input post({n: 1}), put({n: 2}), patch({n: 3}) answered {data: {...}}; delete('items/1').
+   * @output Methods POST / PUT / PATCH / DELETE with the bodies; unwrapped results.
+   */
+  it('post, put, patch and delete with JSON bodies', () => {
+    const results: any[] = [];
+    service.post('items', { n: 1 }).subscribe(r => results.push(r));
+    service.put('items/1', { n: 2 }).subscribe(r => results.push(r));
+    service.patch('items/1', { n: 3 }).subscribe(r => results.push(r));
+    service.delete('items/1').subscribe(() => results.push('deleted'));
+
+    const reqs = http.match(() => true);
+    expect(reqs.map(r => [r.request.method, r.request.body])).toEqual([
+      ['POST', { n: 1 }], ['PUT', { n: 2 }], ['PATCH', { n: 3 }], ['DELETE', null]
+    ]);
+    reqs[0].flush({ data: 'created' });
+    reqs[1].flush({ data: 'replaced' });
+    reqs[2].flush({ data: 'patched' });
+    reqs[3].flush(null);
+
+    expect(results).toEqual(['created', 'replaced', 'patched', 'deleted']);
   });
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // getCollection()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('getCollection()', () => {
-    it('should GET the resource and return the array as-is when the response has no "data" wrapper', () => {
-      const rows: TestEntity[] = [{ id: 1, name: 'Alpha' }, { id: 2, name: 'Beta' }];
-      let result: TestEntity[] | undefined;
+  /**
+   * @description Multipart bodies: PUT / PATCH with FormData go as POST with `_method` (PHP does
+   *   not parse multipart PUT), without a JSON Content-Type (browser sets the boundary);
+   *   upload / uploadPut POST the FormData and return the raw body.
+   * @input put('items/1', FormData), patch('items/1', FormData), upload('files', FormData), uploadPut('files/1', FormData).
+   * @output 4 × POST; `_method` PUT / PATCH; no Content-Type; results unwrapped / raw.
+   */
+  it('sends FormData as POST with a method override', () => {
+    const results: any[] = [];
+    const form = () => { const f = new FormData(); f.append('file', new Blob(['x']), 'a.txt'); return f; };
+    service.put('items/1', form()).subscribe(r => results.push(r));
+    service.patch('items/1', form()).subscribe(r => results.push(r));
+    service.upload('files', form()).subscribe(r => results.push(r));
+    service.uploadPut('files/1', form()).subscribe(r => results.push(r));
 
-      service.getCollection<TestEntity>('items').subscribe(res => (result = res));
+    const reqs = http.match(() => true);
+    expect(reqs.map(r => r.request.method)).toEqual(['POST', 'POST', 'POST', 'POST']);
+    expect((reqs[0].request.body as FormData).get('_method')).toBe('PUT');
+    expect((reqs[1].request.body as FormData).get('_method')).toBe('PATCH');
+    expect(reqs.every(r => r.request.headers.has('Content-Type'))).toBeFalse();
+    reqs[0].flush({ data: 'put' });
+    reqs[1].flush({ data: 'patch' });
+    reqs[2].flush({ id: 9 });
+    reqs[3].flush({ id: 10 });
 
-      const req = httpMock.expectOne(`${baseUrl}/items`);
-      expect(req.request.method).toBe('GET');
-      expect(req.request.headers.get('Accept')).toBe('application/json');
-      expect(req.request.headers.get('Content-Type')).toBe('application/json');
-      req.flush(rows);
-
-      expect(result).toEqual(rows);
-    });
-
-    it('should unwrap the "data" key when the response is wrapped', () => {
-      const rows: TestEntity[] = [{ id: 3, name: 'Gamma' }];
-      let result: TestEntity[] | undefined;
-
-      service.getCollection<TestEntity>('items').subscribe(res => (result = res));
-
-      const req = httpMock.expectOne(`${baseUrl}/items`);
-      req.flush({ data: rows });
-
-      expect(result).toEqual(rows);
-    });
-
-    it('should append provided query params to the request URL', () => {
-      service.getCollection<TestEntity>('items', { page: 2, per_page: 10 }).subscribe();
-
-      const req = httpMock.expectOne(
-        r => r.url === `${baseUrl}/items` &&
-             r.params.get('page') === '2' &&
-             r.params.get('per_page') === '10'
-      );
-      expect(req.request.method).toBe('GET');
-      req.flush([]);
-    });
-
-    it('should skip params whose value is null or undefined', () => {
-      service.getCollection<TestEntity>('items', { page: 1, search: null, sort: undefined }).subscribe();
-
-      // Parametr page=1 je přítomen, takže URL obsahuje query string
-      const req = httpMock.expectOne(`${baseUrl}/items?page=1`);
-      expect(req.request.params.has('page')).toBeTrue();
-      expect(req.request.params.has('search')).toBeFalse();
-      expect(req.request.params.has('sort')).toBeFalse();
-      req.flush([]);
-    });
-
-    it('should not attach any params when none are provided', () => {
-      service.getCollection<TestEntity>('items').subscribe();
-
-      const req = httpMock.expectOne(`${baseUrl}/items`);
-      expect(req.request.params.keys().length).toBe(0);
-      req.flush([]);
-    });
+    expect(results).toEqual(['put', 'patch', { id: 9 }, { id: 10 }]);
   });
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // getPaginatedCollection()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('getPaginatedCollection()', () => {
-    it('should GET the resource and return the raw (unwrapped) response', () => {
-      const payload = { data: [{ id: 1 }], meta: { total: 1, per_page: 10 } };
-      let result: any;
+  /**
+   * @description Network / client-side failures: status 0 shows the connection text, an
+   *   ErrorEvent its message; the ORIGINAL HttpErrorResponse reaches the caller.
+   * @input Request failing with status 0; request failing with an ErrorEvent('reset').
+   * @output Dialog ('Error', 'No connection', 'danger'); dialog 'Client-side error: reset'; the
+   *   subscriber gets the HttpErrorResponse.
+   */
+  it('reports network and client-side errors', () => {
+    const received = failWith({ status: 0 });
+    expect(alert.open).toHaveBeenCalledWith('Error', 'No connection', 'danger');
+    expect(received instanceof HttpErrorResponse).toBeTrue();
+    expect(received.status).toBe(0);
 
-      service.getPaginatedCollection('items').subscribe(res => (result = res));
-
-      const req = httpMock.expectOne(`${baseUrl}/items`);
-      expect(req.request.method).toBe('GET');
-      req.flush(payload);
-
-      expect(result).toEqual(payload);
-    });
+    service.get('items').subscribe({ error: () => undefined });
+    http.expectOne(`${base}/items`).error(new ErrorEvent('network', { message: 'reset' }));
+    expect(alert.open).toHaveBeenCalledWith('Error', 'Client-side error: reset', 'danger');
   });
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // get()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('get()', () => {
-    it('should GET the resource and return the raw response untouched', () => {
-      const payload = { foo: 'bar' };
-      let result: any;
+  /**
+   * @description 403: own-account code, backend message, fallback text.
+   * @input 403 {error_code: CANNOT_DELETE_OWN_ACCOUNT}; 403 {message: 'No access'}; 403 without body.
+   * @output 'Cannot delete own account'; 'No access'; 'Forbidden'.
+   */
+  it('reports forbidden errors', () => {
+    failWith({ status: 403, error: { error_code: 'CANNOT_DELETE_OWN_ACCOUNT' } });
+    failWith({ status: 403, error: { message: 'No access' } });
+    failWith({ status: 403 });
 
-      service.get('config').subscribe(res => (result = res));
-
-      const req = httpMock.expectOne(`${baseUrl}/config`);
-      expect(req.request.method).toBe('GET');
-      req.flush(payload);
-
-      expect(result).toEqual(payload);
-    });
+    expect(alert.open.calls.allArgs().map(a => a[1])).toEqual(['Cannot delete own account', 'No access', 'Forbidden']);
   });
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // getOne()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('getOne()', () => {
-    it('should GET the resource and unwrap the "data" property', () => {
-      const entity: TestEntity = { id: 5, name: 'Delta' };
-      let result: TestEntity | undefined;
+  /**
+   * @description 4xx: validation errors joined, backend message, errors without 422, status
+   *   text only (trimmed when empty). Placeholder values from the backend are inserted literally.
+   * @input 422 {errors: {name: [a], email: [b]}}; 409 {message: 'Locked $1 {status}'}; 400 {errors: {x: [c]}};
+   *        404 'Not Found' without body; 404 with a blank status text (HTTP/2 sends none).
+   * @output 'Validation (422): a; b'; 'Client (409): Locked $1 {status}'; 'Validation (400): c';
+   *   'Client error 404 Not Found'; 'Client error 404'.
+   */
+  it('reports client errors', () => {
+    failWith({ status: 422, error: { errors: { name: ['a'], email: ['b'] } } });
+    failWith({ status: 409, error: { message: 'Locked $1 {status}' } });
+    failWith({ status: 400, error: { errors: { x: ['c'] } } });
+    failWith({ status: 404, statusText: 'Not Found' });
+    failWith({ status: 404, statusText: ' ' });
 
-      service.getOne<TestEntity>('items/5').subscribe(res => (result = res));
-
-      const req = httpMock.expectOne(`${baseUrl}/items/5`);
-      expect(req.request.method).toBe('GET');
-      req.flush({ data: entity });
-
-      expect(result).toEqual(entity);
-    });
+    expect(alert.open.calls.allArgs().map(a => a[1])).toEqual([
+      'Validation (422): a; b', 'Client (409): Locked $1 {status}', 'Validation (400): c', 'Client error 404 Not Found', 'Client error 404'
+    ]);
   });
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // post()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('post()', () => {
-    it('should POST a JSON body with a JSON Content-Type header and unwrap "data"', () => {
-      const payload = { name: 'New item' };
-      const created: TestEntity = { id: 10, name: 'New item' };
-      let result: TestEntity | undefined;
+  /**
+   * @description 5xx: status text or the default text; an unexpected status (3xx) keeps the
+   *   unknown-error text; a template placeholder without value stays visible.
+   * @input 500 'Internal Server Error'; 503 with blank status text; 302; server_error template
+   *        changed to contain {unknown}.
+   * @output 'Server (500): Internal Server Error'; 'Server (503): Internal error'; 'Unknown error';
+   *   '{unknown} 500'.
+   */
+  it('reports server errors and keeps unknown placeholders', () => {
+    failWith({ status: 500, statusText: 'Internal Server Error' });
+    failWith({ status: 503, statusText: '  ' });
+    failWith({ status: 302 });
+    TEMPLATES['data-handler.server_error'] = '{unknown} {status}';
+    failWith({ status: 500, statusText: 'X' });
+    TEMPLATES['data-handler.server_error'] = 'Server ({status}): {statusText}';
 
-      service.post<TestEntity>('items', payload).subscribe(res => (result = res));
-
-      const req = httpMock.expectOne(`${baseUrl}/items`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(payload);
-      expect(req.request.headers.get('Content-Type')).toBe('application/json');
-      expect(req.request.headers.get('Accept')).toBe('application/json');
-      req.flush({ data: created });
-
-      expect(result).toEqual(created);
-    });
-
-    it('should omit the Content-Type header when the payload is FormData', () => {
-      const formData = new FormData();
-      formData.append('name', 'New item');
-
-      service.post<TestEntity>('items', formData).subscribe();
-
-      const req = httpMock.expectOne(`${baseUrl}/items`);
-      expect(req.request.body).toBe(formData);
-      expect(req.request.headers.has('Content-Type')).toBeFalse();
-      expect(req.request.headers.get('Accept')).toBe('application/json');
-      req.flush({ data: {} });
-    });
+    expect(alert.open.calls.allArgs().map(a => a[1])).toEqual([
+      'Server (500): Internal Server Error', 'Server (503): Internal error', 'Unknown error', '{unknown} 500'
+    ]);
   });
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // put()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('put()', () => {
-    it('should PUT a JSON body and unwrap "data"', () => {
-      const payload: TestEntity = { id: 11, name: 'Updated' };
-      let result: TestEntity | undefined;
-
-      service.put<TestEntity>('items/11', payload).subscribe(res => (result = res));
-
-      const req = httpMock.expectOne(`${baseUrl}/items/11`);
-      expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual(payload);
-      expect(req.request.headers.get('Content-Type')).toBe('application/json');
-      req.flush({ data: payload });
-
-      expect(result).toEqual(payload);
-    });
-
-    it('should omit the Content-Type header when the payload is FormData', () => {
-      const formData = new FormData();
-      formData.append('name', 'Updated');
-
-      service.put<TestEntity>('items/11', formData).subscribe();
-
-      const req = httpMock.expectOne(`${baseUrl}/items/11`);
-      expect(req.request.method).toBe('PUT');
-      expect(req.request.headers.has('Content-Type')).toBeFalse();
-      req.flush({ data: {} });
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // patch()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('patch()', () => {
-    it('should PATCH a JSON body and unwrap "data"', () => {
-      const payload: Partial<TestEntity> = { name: 'Patched' };
-      const patched: TestEntity = { id: 12, name: 'Patched' };
-      let result: TestEntity | undefined;
-
-      service.patch<TestEntity>('items/12', payload).subscribe(res => (result = res));
-
-      const req = httpMock.expectOne(`${baseUrl}/items/12`);
-      expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual(payload);
-      expect(req.request.headers.get('Content-Type')).toBe('application/json');
-      req.flush({ data: patched });
-
-      expect(result).toEqual(patched);
-    });
-
-    it('should omit the Content-Type header when the payload is FormData', () => {
-      const formData = new FormData();
-      formData.append('name', 'Patched');
-
-      service.patch<TestEntity>('items/12', formData).subscribe();
-
-      const req = httpMock.expectOne(`${baseUrl}/items/12`);
-      expect(req.request.headers.has('Content-Type')).toBeFalse();
-      req.flush({ data: {} });
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // delete()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('delete()', () => {
-   it('should send a DELETE request to the resource and complete with void', () => {
-      let completed = false;
-
-      service.delete('items/9').subscribe(res => {
-        expect(res).toBeNull(); // Změněno z toBeUndefined() na toBeNull() dle req.flush(null)
-        completed = true;
-      });
-
-      const req = httpMock.expectOne(`${baseUrl}/items/9`);
-      expect(req.request.method).toBe('DELETE');
-      expect(req.request.headers.get('Content-Type')).toBe('application/json');
-      req.flush(null);
-
-      expect(completed).toBeTrue();
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // upload()
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('upload()', () => {
-    it('should POST the FormData payload without a Content-Type header and return the raw response', () => {
-      const formData = new FormData();
-      formData.append('file', new Blob(['content']), 'file.png');
-      const response = { url: 'https://example.com/file.png' };
-      let result: any;
-
-      service.upload<{ url: string }>('items/9/upload', formData).subscribe(res => (result = res));
-
-      const req = httpMock.expectOne(`${baseUrl}/items/9/upload`);
-      expect(req.request.method).toBe('POST');
-      expect(req.request.body).toBe(formData);
-      expect(req.request.headers.has('Content-Type')).toBeFalse();
-      expect(req.request.headers.get('Accept')).toBe('application/json');
-      req.flush(response);
-
-      expect(result).toEqual(response);
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // handleError() — exercised indirectly through every public method's
-  // catchError(this.handleError) pipe. get() is used as the vehicle for
-  // most cases since the error path is identical regardless of verb.
-  // ═══════════════════════════════════════════════════════════════════════
-  describe('error normalization (handleError)', () => {
-    /**
-     * @description Fires a GET request through the service, flushes it as an
-     * error with the given status/body/statusText, and returns the message
-     * the resulting Observable errors with.
-     */
-    function triggerHttpError(
-      httpMockRef: HttpTestingController,
-      errorBody: any,
-      status: number,
-      statusText: string = ''
-    ): Promise<string> {
-      return new Promise(resolve => {
-        service.get('items').subscribe({
-          error: (err: Error) => resolve(err.message)
-        });
-
-        const req = httpMockRef.expectOne(`${baseUrl}/items`);
-        req.flush(errorBody, { status, statusText });
-      });
-    }
-
-    it('should report a client-side error (ErrorEvent) with its message', (done) => {
-      service.get('items').subscribe({
-        error: (err: Error) => {
-          expect(err.message).toBe('Client-side error: connection reset');
-          expect(alertDialogServiceSpy.open).toHaveBeenCalledWith(
-            'API Error',
-            'Client-side error: connection reset',
-            'danger'
-          );
-          done();
-        }
-      });
-
-      const req = httpMock.expectOne(`${baseUrl}/items`);
-      req.error(new ErrorEvent('Network error', { message: 'connection reset' }));
-    });
-
-    it('should report a connection-level failure for status 0', async () => {
-      const message = await triggerHttpError(httpMock, {}, 0);
-      expect(message).toBe('Unable to connect to the server. Please check your network connection or if the API is running.');
-      expect(alertDialogServiceSpy.open).toHaveBeenCalledWith('API Error', message, 'danger');
-    });
-
-    it('should report the dedicated message for a 403 CANNOT_DELETE_OWN_ACCOUNT error_code', async () => {
-      const message = await triggerHttpError(
-        httpMock,
-        { error_code: 'CANNOT_DELETE_OWN_ACCOUNT' },
-        403
-      );
-      expect(message).toBe('Cannot delete the user you are currently logged in as.');
-    });
-
-    it('should surface the backend "message" for a generic 403 with an explicit message', async () => {
-      const message = await triggerHttpError(httpMock, { message: 'Forbidden resource' }, 403);
-      expect(message).toBe('Forbidden resource');
-    });
-
-    it('should fall back to a generic delete-error message for a 403 with no message/error_code', async () => {
-      const message = await triggerHttpError(httpMock, {}, 403);
-      expect(message).toBe('An error occurred while deleting the item.');
-    });
-
-    it('should join validation errors for a 422 response', async () => {
-      const message = await triggerHttpError(
-        httpMock,
-        { errors: { name: ['Name is required'], email: ['Email is invalid'] } },
-        422
-      );
-      expect(message).toBe('Validation error (422): Name is required; Email is invalid');
-    });
-
-    it('should surface the backend "message" for a generic 4xx (non-403/422) error', async () => {
-      const message = await triggerHttpError(httpMock, { message: 'Item is locked' }, 409);
-      expect(message).toBe('Client error (409): Item is locked');
-    });
-
-    it('should join validation errors for a generic 4xx error that has "errors" but no "message"', async () => {
-      const message = await triggerHttpError(
-        httpMock,
-        { errors: { quantity: ['Must be positive'] } },
-        400
-      );
-      expect(message).toBe('Validation error (400): Must be positive');
-    });
-
-    it('should fall back to status/statusText for a 4xx error with neither "message" nor "errors"', async () => {
-      const message = await triggerHttpError(httpMock, {}, 404, 'Not Found');
-      expect(message).toBe('Client error: 404 Not Found');
-    });
-
-    it('should report a generic server error for a 5xx response', async () => {
-      const message = await triggerHttpError(httpMock, {}, 500, 'Internal Server Error');
-      expect(message).toBe('Server error (500): Internal Server Error');
-    });
-
-    it('should always display the normalized message via AlertDialogService.open(...)', async () => {
-      const message = await triggerHttpError(httpMock, { message: 'Boom' }, 400);
-      expect(alertDialogServiceSpy.open).toHaveBeenCalledWith('API Error', message, 'danger');
-      expect(alertDialogServiceSpy.open).toHaveBeenCalledTimes(1);
-    });
-
-    it('should propagate the normalized error to every calling method\'s pipe, not just get()', (done) => {
-      service.post('items', { name: 'x' }).subscribe({
-        error: (err: Error) => {
-          expect(err.message).toBe('Client error (422): Bad payload');
-          done();
-        }
-      });
-
-      const req = httpMock.expectOne(`${baseUrl}/items`);
-      req.flush({ message: 'Bad payload' }, { status: 422, statusText: 'Unprocessable Entity' });
-    });
+  /**
+   * @description The localization service is resolved lazily on the first error and reused.
+   * @input Two failing requests.
+   * @output getValue called for both dialogs (same stub instance), dialog_title read per error.
+   */
+  it('resolves the localization lazily', () => {
+    expect(getValue).not.toHaveBeenCalled();
+    failWith({ status: 0 });
+    failWith({ status: 0 });
+    expect(getValue.calls.allArgs().filter(a => a[0] === 'data-handler.dialog_title').length).toBe(2);
   });
 });

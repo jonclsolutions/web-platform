@@ -11,10 +11,14 @@
  * v `importable_columns`. Žádná duplicitní validační logika - import tak vždy
  * respektuje stejná byznys pravidla jako ruční vytvoření záznamu přes formulář.
  *
- * @security Validace probíhá jak při dry-run (`ImportController::validate()`), tak
- * ZNOVU při commitu (`ImportController::commit()`/`ImportRowsJob`) - nikdy se
- * nespoléhá na to, že mezi validací a zápisem se stav (např. existující záznamy pro
- * kontrolu duplicit) nezměnil.
+ * @security Validace probíhá jak při dry-run (`importValidate()` importujícího
+ * controlleru), tak ZNOVU při commitu (`importCommit()`) - nikdy se nespoléhá na to,
+ * že mezi validací a zápisem se stav (např. existující záznamy pro kontrolu duplicit)
+ * nezměnil.
+ *
+ * @refactor-note (2026-10-23) Comment updated: the generic ImportController / ImportRowsJob
+ * (and config importable_resources.php) do not exist - the queued job was removed as
+ * unreachable; every resource controller imports synchronously via HandlesImportBatches.
  */
 
 namespace App\Services\Import;

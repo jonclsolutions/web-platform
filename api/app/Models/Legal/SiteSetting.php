@@ -12,6 +12,9 @@
  * SiteConfigurationController::updateSettings(), i když by request sám o sobě
  * doběhl úspěšně (žádná validační chyba, jen mass-assignment ochrana v tichosti
  * ignoruje neznámé pole).
+ *
+ * @bugfix-note (2026-10-23) legal_site_settings has no `created_at` column (only updated_at),
+ * so creating a row failed with "no such column created_at" - CREATED_AT = null like PageTitle.
  */
 
 namespace App\Models\Legal;
@@ -34,6 +37,9 @@ class SiteSetting extends Model
      * @var string The table associated with the model.
      */
     protected $table = 'legal_site_settings';
+
+    /** @var null The table has no created_at column. */
+    const CREATED_AT = null;
 
     /**
      * @var array<int, string> The attributes that are mass assignable.

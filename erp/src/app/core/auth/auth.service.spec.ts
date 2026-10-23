@@ -289,28 +289,6 @@ describe('AuthService', () => {
       discardPeriodicTasks();
     }));
 
-    it('by mělo transformovat 401 chybu na "Invalid credentials."', () => {
-      let errorMessage = '';
-      service.login({ email: 'a@b.cz', password: 'wrong' }).subscribe({
-        error: err => (errorMessage = err.message),
-      });
-      const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
-
-      expect(errorMessage).toBe('Invalid credentials.');
-    });
-
-    it('by mělo transformovat jakoukoli jinou chybu na "Login failed."', () => {
-      let errorMessage = '';
-      service.login({ email: 'a@b.cz', password: 'x' }).subscribe({
-        error: err => (errorMessage = err.message),
-      });
-      const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
-
-      expect(errorMessage).toBe('Login failed.');
-    });
-
     it('NEMĚLO by při neúspěšném loginu měnit sessionStorage ani isLoggedIn$', () => {
       let loggedIn = false;
       service.isLoggedIn$.subscribe(v => (loggedIn = v));
@@ -576,6 +554,103 @@ describe('AuthService', () => {
       expect(result).toBeNull();
       expect(sessionStorage.getItem('accessToken')).toBeNull();
       expect(permissionServiceMock.clearPermissions).toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // Error mapping + 2FA / password reset (bugfix-note 2026-10-23: no hardcoded texts)
+  // ---------------------------------------------------------------------
+  describe('error mapping and 2FA / password reset', () => {
+    /**
+     * @description Collects the error of a request answered with the given status / body.
+     * @param call Request to start.
+     * @param url Expected endpoint.
+     * @param status HTTP status.
+     * @param body Response body.
+     * @returns The AuthError received by the subscriber.
+     */
+    function errorOf(call: () => any, url: string, status: number, body: any = null): any {
+      let error: any;
+      call().subscribe({ error: (e: any) => (error = e) });
+      httpMock.expectOne(`${baseUrl}/${url}`).flush(body, { status, statusText: 'x' });
+      return error;
+    }
+
+    /**
+     * @description Login errors keep the backend message, else a translation key; 429 has its own
+     *   key; captcha_required is passed on.
+     * @input 401 {message: 'Bad password', captcha_required: true}; 500 without body; 429 without body.
+     * @output 'Bad password' without key + captchaRequired; '' + login_failed; '' + too_many_attempts.
+     */
+    it('maps login errors', () => {
+      createService();
+      const backend = errorOf(() => service.login({ email: 'a@b.cz', password: 'x' }), 'login', 401, { message: 'Bad password', captcha_required: true });
+      expect([backend.message, backend.messageKey, backend.captchaRequired]).toEqual(['Bad password', undefined, true]);
+      const failed = errorOf(() => service.login({ email: 'a@b.cz', password: 'x' }), 'login', 500);
+      expect([failed.message, failed.messageKey, failed.captchaRequired]).toEqual(['', 'login_failed', false]);
+      expect(errorOf(() => service.login({ email: 'a@b.cz', password: 'x' }), 'login', 429).messageKey).toBe('too_many_attempts');
+    });
+
+    /**
+     * @description A 2FA challenge stores nothing; verifyTwoFactor stores the session; errors map
+     *   to verification_failed with retry_after from a 429.
+     * @input login → {requires_2fa, login_token}; verify-2fa → session; verify 400 {}; resend 429 {retry_after: 30};
+     *        resend 200.
+     * @output No token after step 1; token + email after step 2; key verification_failed;
+     *   retryAfter 30; resend response passed through.
+     */
+    it('handles the two-factor flow', () => {
+      createService();
+      let challenge: any;
+      service.login({ email: 'a@b.cz', password: 'x' }).subscribe(r => (challenge = r));
+      httpMock.expectOne(`${baseUrl}/login`).flush({ requires_2fa: true, login_token: 'lt' });
+      expect(challenge.login_token).toBe('lt');
+      expect(sessionStorage.getItem('accessToken')).toBeNull();
+
+      service.verifyTwoFactor('lt', '123456').subscribe();
+      const verify = httpMock.expectOne(`${baseUrl}/login/verify-2fa`);
+      expect(verify.request.body).toEqual({ login_token: 'lt', code: '123456' });
+      verify.flush({ token: 't', refreshToken: 'r', user: { user_login_id: 5, user_email: 'a@b.cz' } });
+      expect(sessionStorage.getItem('accessToken')).toBe('t');
+      expect(sessionStorage.getItem('userId')).toBe('5');
+      service.clearAuthData();
+
+      const wrong = errorOf(() => service.verifyTwoFactor('lt', '000000'), 'login/verify-2fa', 400, {});
+      expect([wrong.message, wrong.messageKey, wrong.retryAfter]).toEqual(['', 'verification_failed', undefined]);
+      const throttled = errorOf(() => service.resendTwoFactor('lt'), 'login/resend-2fa', 429, { message: 'Wait', retry_after: '30' });
+      expect([throttled.message, throttled.retryAfter]).toEqual(['Wait', 30]);
+      const noRetry = errorOf(() => service.resendTwoFactor('lt'), 'login/resend-2fa', 429, {});
+      expect(noRetry.retryAfter).toBeUndefined();
+
+      let resent: any;
+      service.resendTwoFactor('lt').subscribe(r => (resent = r));
+      httpMock.expectOne(`${baseUrl}/login/resend-2fa`).flush({ message: 'sent', expires_in: 300 });
+      expect(resent).toEqual({ message: 'sent', expires_in: 300 });
+    });
+
+    /**
+     * @description Password reset: request and reset send the bodies; 429 always uses the own key
+     *   (even with a backend message), other errors the backend message or request_failed.
+     * @input forgot-password ok; reset-password ok; 429 {message}; 422 {message: 'Token expired'}; 500.
+     * @output Bodies; too_many_attempts; 'Token expired'; request_failed.
+     */
+    it('handles the password reset requests', () => {
+      createService();
+      let sent: any; let reset: any;
+      service.requestPasswordReset('a@b.cz').subscribe(r => (sent = r));
+      const forgot = httpMock.expectOne(`${baseUrl}/forgot-password`);
+      expect(forgot.request.body).toEqual({ email: 'a@b.cz' });
+      forgot.flush({ message: 'ok' });
+      service.resetPassword('tok', 'Pw1!', 'Pw1!').subscribe(r => (reset = r));
+      const resetReq = httpMock.expectOne(`${baseUrl}/reset-password`);
+      expect(resetReq.request.body).toEqual({ token: 'tok', password: 'Pw1!', password_confirmation: 'Pw1!' });
+      resetReq.flush({ message: 'done', email: 'a@b.cz' });
+      expect([sent.message, reset.email]).toEqual(['ok', 'a@b.cz']);
+
+      const throttled = errorOf(() => service.requestPasswordReset('a@b.cz'), 'forgot-password', 429, { message: 'Too Many Attempts.' });
+      expect([throttled.message, throttled.messageKey]).toEqual(['', 'too_many_attempts']);
+      expect(errorOf(() => service.resetPassword('t', 'p', 'p'), 'reset-password', 422, { message: 'Token expired' }).message).toBe('Token expired');
+      expect(errorOf(() => service.resetPassword('t', 'p', 'p'), 'reset-password', 500).messageKey).toBe('request_failed');
     });
   });
 });

@@ -275,7 +275,8 @@ final class TestSchema
     }
 
     /**
-     * @description Company details used in e-mail footers (CompanyContactInfo).
+     * @description Legal / site configuration: company details (also e-mail footers via
+     *   CompanyContactInfo), social links, page titles, legal documents (GDPR, TOS, cookies).
      * @return void
      */
     private static function legal(): void
@@ -296,6 +297,46 @@ final class TestSchema
             $t->string('footer_text')->nullable();
             $t->string('logo_path')->nullable();
             $t->timestamp('updated_at')->useCurrent();
+        });
+
+        Schema::create('legal_social_links', function (Blueprint $t) {
+            $t->increments('id');
+            $t->string('name', 50);
+            $t->string('url');
+            $t->string('icon_path');
+            $t->integer('position')->default(0);
+            $t->timestamp('created_at')->useCurrent();
+            $t->timestamp('updated_at')->nullable();
+        });
+
+        // Not in database/db.sql (added later) - columns follow the PageTitle model / controller.
+        Schema::create('legal_page_titles', function (Blueprint $t) {
+            $t->increments('id');
+            $t->string('area', 20);
+            $t->string('page_key', 100);
+            $t->string('route_path')->nullable();
+            $t->longText('title_i18n')->nullable();
+            $t->integer('sort_order')->default(0);
+            $t->timestamp('updated_at')->nullable();
+            $t->unique(['area', 'page_key']);
+        });
+
+        Schema::create('document_types', function (Blueprint $t) {
+            $t->increments('id');
+            $t->string('slug', 100)->unique();
+            $t->string('title');
+            $t->timestamps();
+        });
+
+        Schema::create('document_sections', function (Blueprint $t) {
+            $t->increments('id');
+            $t->unsignedInteger('document_type_id');
+            $t->integer('position')->default(0);
+            $t->string('heading')->nullable();
+            $t->text('content');
+            $t->string('lang', 5)->default('cz');
+            $t->timestamps();
+            $t->foreign('document_type_id')->references('id')->on('document_types')->cascadeOnDelete();
         });
     }
 
@@ -355,6 +396,8 @@ final class TestSchema
             $t->string('state', 50)->nullable()->default('new');
             $t->string('subject');
             $t->text('description');
+            $t->string('attachment_path')->nullable();
+            $t->string('attachment_original_name')->nullable();
             $t->timestamps();
             $t->timestamp('deleted_at')->nullable();
             $t->foreign('user_id')->references('id')->on('users')->nullOnDelete();

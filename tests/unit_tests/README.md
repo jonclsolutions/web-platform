@@ -139,7 +139,8 @@ Target **100 %**:
 | `api/run_core.sh` | 100 % (lines, methods) – 186 tests |
 | `api/run_web.sh` | 100 % (lines, methods) – 107 tests |
 | `api/run_shop.sh` | 100 % (lines, methods) – 64 tests |
-| `api/run_other.sh` | no tests yet |
+| `api/run_other.sh` | 100 % (lines, methods) – 28 tests |
+| `api/run_all_api.sh` | 100 % (lines, methods) of all `api/app` – 385 tests |
 
 Code that can never run (e.g. a branch for a button the page does not have) is removed instead of
 being excluded from the coverage.

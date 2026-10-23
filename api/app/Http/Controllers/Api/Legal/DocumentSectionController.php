@@ -19,6 +19,8 @@
  * tabulky) na sdílený `LogsActivity` trait, zapisující do `CoreLog::class`. Právní
  * dokumenty jsou dle dohodnutého rozdělení Core/Web/Shop doménou Core (sdílené napříč
  * Web a Shop), stejně jako auth, uživatelé, role a site settings.
+ *
+ * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy (findOrFail inside try).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -104,8 +106,9 @@ class DocumentSectionController extends Controller
      */
     public function update(UpdateDocumentSectionRequest $request, $id): JsonResponse
     {
+        $section = DocumentSection::findOrFail($id);
+
         try {
-            $section = DocumentSection::findOrFail($id);
             $section->update($request->validated());
 
             $this->logAction($request, CoreLog::class, 'update', 'Legal', "Updated section: {$section->heading} ({$section->lang})", $section->id, 'DocumentSection');
@@ -170,8 +173,9 @@ class DocumentSectionController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
+        $section = DocumentSection::findOrFail($id);
+
         try {
-            $section = DocumentSection::findOrFail($id);
             $heading = $section->heading;
             $section->delete();
             $this->logAction($request, CoreLog::class, 'delete', 'Legal', "Deleted section: {$heading}", (int)$id, 'DocumentSection');

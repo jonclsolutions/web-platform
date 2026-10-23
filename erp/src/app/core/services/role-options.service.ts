@@ -10,7 +10,7 @@
  */
 
 import { Injectable } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable, catchError, shareReplay, throwError } from 'rxjs';
 import { DataHandler } from './data-handler.service';
 
 interface RoleOption { id: number; role_name: string; }
@@ -28,10 +28,21 @@ export class RoleOptionsService {
     if (isFresh) return this.cached$!;
 
     this.cachedAt = Date.now();
-    this.cached$ = this.dataHandler
+    // @bugfix-note (2026-10-23) A failed load stayed cached for 5 minutes (role select stayed
+    // empty / broken) - the cache is reset when the load fails, the next call retries.
+    const roles$: Observable<RoleOption[]> = this.dataHandler
       .getCollection<RoleOption>('core/roles?no_pagination=true')
-      .pipe(shareReplay(1));
-    return this.cached$;
+      .pipe(
+        catchError(err => {
+          if (this.cached$ === roles$) {
+            this.cached$ = null;
+          }
+          return throwError(() => err);
+        }),
+        shareReplay(1)
+      );
+    this.cached$ = roles$;
+    return roles$;
   }
 
   /** Zavolat po vytvoření/smazání role na edit-roles stránce, ať se cache neukazuje zastarale. */

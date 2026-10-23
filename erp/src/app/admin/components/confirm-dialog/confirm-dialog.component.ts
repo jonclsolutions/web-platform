@@ -63,8 +63,13 @@ export class ConfirmDialogComponent {
 
   /**
    * @description Hides the dialog and restores background scroll.
+   * @bugfix-note (2026-10-23) confirm() / cancel() call hide() and ConfirmDialogService closes the
+   *   dialog with hide() as well - the scroll lock was released TWICE, which also released the
+   *   lock of another still open overlay (body started to scroll under it). hide() of an already
+   *   hidden dialog is now a no-op.
    */
   public hide(): void {
+    if (!this.isVisible) return;
     this.isVisible = false;
     this.scrollLock.unlock();
   }

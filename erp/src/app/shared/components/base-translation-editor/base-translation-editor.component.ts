@@ -29,6 +29,12 @@
  * - BaseDataComponent: CRUD state, i18n, alert dialog, permission service.
  * - DataHandler: multipart/form-data and REST requests for language assets.
  * - ResourceCacheService: TTL cache for the languages / translations fetch.
+ * @bugfix-note (2026-10-23) (1) The editor edited the translations object served by
+ *   ResourceCacheService IN PLACE (the cached response itself): unsaved edits survived
+ *   "refresh / discard" and a language switch (the cache returned the already edited object
+ *   with isDirty = false), and editing Czech also changed the Czech reference. Loaded data is
+ *   now deep-copied before it is edited. (2) The translations$ subscription of the constructor
+ *   was never closed (leaked one subscription per opened editor) - it now ends with destroy$.
  */
 
 import { ChangeDetectorRef, Directive, inject, OnInit, OnDestroy } from '@angular/core';
@@ -145,7 +151,7 @@ export abstract class BaseTranslationEditorComponent
     protected override genericTableService: Core.GenericTableService,
   ) {
     super(dataHandler, cd, genericTableService);
-    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+    this.i18n.translations$.pipe(Core.takeUntil(this.destroy$)).subscribe(() => this.cd.markForCheck());
   }
 
   override ngOnInit(): void {
@@ -229,7 +235,7 @@ export abstract class BaseTranslationEditorComponent
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          this.czTranslations = data;
+          this.czTranslations = structuredClone(data ?? {});
           callback?.();
         },
         error: () => {
@@ -268,7 +274,8 @@ export abstract class BaseTranslationEditorComponent
       )
       .subscribe({
         next: (data) => {
-          this.translations = data;
+          // a private copy - the cached response must stay untouched (see bugfix-note 2026-10-23)
+          this.translations = structuredClone(data ?? {});
           this.buildFlatList();
           this.applyFilter();
         },

@@ -25,6 +25,8 @@ import { first } from 'rxjs';
 })
 export class ConfirmDialogService {
   private componentRef?: ComponentRef<ConfirmDialogComponent>;
+  /** Resolver of the promise of the currently open dialog (settled as `false` when replaced). */
+  private pendingResolve?: (confirmed: boolean) => void;
 
   constructor(
     private environmentInjector: EnvironmentInjector,
@@ -37,8 +39,11 @@ export class ConfirmDialogService {
    * @param message The confirmation question/body text.
    * @returns {Promise<boolean>} Resolves to 'true' on confirm, 'false' on cancel.
    * @note If a dialog is already active, it is destroyed before the new one is initialized.
+   * @bugfix-note (2026-10-23) The promise of a dialog replaced by a newer open() never settled
+   *   (the awaiting caller hung forever and leaked) - it now resolves to `false` (= not confirmed).
    */
   open(title: string, message: string): Promise<boolean> {
+    this.settle(false);
     this.closeDialog();
 
     this.componentRef = createComponent(ConfirmDialogComponent, {
@@ -54,16 +59,28 @@ export class ConfirmDialogService {
     this.componentRef.instance.show();
 
     return new Promise<boolean>((resolve) => {
+      this.pendingResolve = resolve;
+
       this.componentRef?.instance.onConfirm.pipe(first()).subscribe(() => {
         this.closeDialog();
-        resolve(true);
+        this.settle(true);
       });
 
       this.componentRef?.instance.onCancel.pipe(first()).subscribe(() => {
         this.closeDialog();
-        resolve(false);
+        this.settle(false);
       });
     });
+  }
+
+  /**
+   * @description Settles the promise of the open dialog (once).
+   * @param confirmed Result handed to the caller.
+   */
+  private settle(confirmed: boolean): void {
+    const resolve = this.pendingResolve;
+    this.pendingResolve = undefined;
+    resolve?.(confirmed);
   }
 
   /**

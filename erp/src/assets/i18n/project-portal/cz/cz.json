@@ -8,6 +8,7 @@
   "login_button": "Přihlásit se",
   "error_project_not_found": "Projekt nebyl nalezen nebo není dostupný.",
   "error_invalid_password": "Neplatné heslo.",
+  "error_send_failed": "Zprávu se nepodařilo odeslat. Zkuste to prosím znovu.",
 
   "supplier_contact_title": "Kontakt na dodavatele",
   "refreshing": "Obnovuji…",

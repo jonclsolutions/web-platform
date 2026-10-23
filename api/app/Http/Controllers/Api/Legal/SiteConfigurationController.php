@@ -28,6 +28,16 @@
  * seznam skutečně změněných klíčů (`array_keys($data)` proti hodnotám PŘED update() voláním),
  * hodnoty samotné zůstávají jen v `context_data` jako dřív - popis je čitelný souhrn, ne
  * duplicitní úložiště dat.
+ *
+ * @bugfix-note (2026-10-23) Found by the API tests:
+ * - SECURITY (mass assignment): updateSettings() saved `$request->except(...)` instead of the
+ *   validated data, so any fillable column could be set unchecked - e.g. `logo_path` pointing to
+ *   another file of the public disk, which the next logo upload then DELETED. Now only
+ *   validated fields are stored (logo_path only from an uploaded logo).
+ * - Validation limits longer than the columns (MySQL strict mode → 500 "Data too long"):
+ *   contact_phone 30 → 20, footer_text 1000 → 255, social link name 100 → 50, url 500 → 255.
+ * - The first save on an empty table used firstOrCreate([]) = INSERT without the required
+ *   columns (and with the missing created_at) → 500; now a new row is filled and saved once.
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -81,14 +91,15 @@ class SiteConfigurationController extends Controller
             'copyright_text'       => 'nullable|string|max:255',
             'copyright_text_i18n'  => 'nullable',
             'contact_email'        => 'required|email|max:255',
-            'contact_phone'        => 'nullable|string|max:30',
+            'contact_phone'        => 'nullable|string|max:20',
             'address'              => 'required|string|max:500',
-            'footer_text'          => 'nullable|string|max:1000',
+            'footer_text'          => 'nullable|string|max:255',
             'logo_file'            => 'nullable|file|image|max:2048',
         ]);
 
-        $settings = SiteSetting::firstOrCreate([]);
-        $data = $request->except(['logo_file', 'brand_tagline_i18n', 'copyright_text_i18n']);
+        $settings = SiteSetting::first() ?? new SiteSetting();
+        // Only validated fields - see bugfix-note (2026-10-23).
+        $data = collect($validated)->except(['logo_file', 'brand_tagline_i18n', 'copyright_text_i18n'])->all();
 
         // Normalize i18n fields for consistency
         $data['brand_tagline_i18n'] = $this->normalizeI18nField(
@@ -162,8 +173,8 @@ class SiteConfigurationController extends Controller
     public function storeSocial(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name'      => 'required|string|max:100',
-            'url'       => 'required|url|max:500',
+            'name'      => 'required|string|max:50',
+            'url'       => 'required|url|max:255',
             'position'  => 'nullable|integer|min:0',
             'icon_file' => 'nullable|file|image|max:2048',
         ]);
@@ -195,8 +206,8 @@ class SiteConfigurationController extends Controller
     {
         $social = SocialLink::findOrFail($id);
         $validated = $request->validate([
-            'name'      => 'required|string|max:100',
-            'url'       => 'required|url|max:500',
+            'name'      => 'required|string|max:50',
+            'url'       => 'required|url|max:255',
             'position'  => 'nullable|integer|min:0',
             'icon_file' => 'nullable|file|image|max:2048',
         ]);

@@ -32,6 +32,13 @@
  *   překlady dorazí, emituje `currentTranslations$` hodnotu `null`, aby stránka nového modulu
  *   nikdy nezobrazila stejně pojmenovanou sekci (`footer`, `navigation`) z druhého modulu.
  *   Odpověď, která dorazí až po dalším přepnutí modulu, se zahodí.
+ * @bugfix-note (2026-10-23) (1) initTranslations() stored the Czech FALLBACK texts (loaded
+ *   because the requested language failed) in the cache under the requested language - the
+ *   language then showed Czech for the rest of the session even after the API recovered; the
+ *   cache is now filled only by loadTranslations$() under the language really loaded.
+ *   (2) Switching languages quickly (cz → en → de) let a slower older response overwrite the
+ *   newer one (wrong language on screen); a response for a language that is no longer
+ *   selected is now dropped, same as for a module that is no longer active.
  */
 
 import { Injectable } from '@angular/core';
@@ -91,7 +98,6 @@ export class LocalizationService {
     const lang = this.currentLanguageSource.getValue();
     return firstValueFrom(this.loadTranslations$(lang)).then(data => {
       if (data) {
-        this.translationsCache.set(lang, data);
         this.currentTranslationsSource.next(data);
       }
       return data;
@@ -172,8 +178,8 @@ export class LocalizationService {
   public loadTranslations(lang: string): void {
     const module = this.currentModule;
     this.loadTranslations$(lang).subscribe(data => {
-      // a response for a module that is no longer active is dropped (see refactor-note)
-      if (data && module === this.currentModule) {
+      // a response for a module / language that is no longer active is dropped (see notes)
+      if (data && module === this.currentModule && lang === this.currentLanguageSource.getValue()) {
         this.currentTranslationsSource.next(data);
       }
     });
