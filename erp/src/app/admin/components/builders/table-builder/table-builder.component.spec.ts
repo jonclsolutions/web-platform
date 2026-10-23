@@ -477,4 +477,132 @@ describe('TableBuilderComponent', () => {
       expect(text).toContain('C');
     });
   });
+  describe('remaining actions and exports', () => {
+    /**
+     * @description Every other row action emits its own event; unknown actions only warn.
+     * @input handleAction with generate_form, resend_activation, custom_prod_var, custom_prod_img, customer_orders, unknown.
+     * @output Each event emitted once with the row; console.warn for 'unknown'.
+     */
+    it('emits the remaining row action events', fakeAsync(() => {
+      const got: string[] = [];
+      component.generateFormOpened.subscribe(() => got.push('generate_form'));
+      component.resendActivationOpened.subscribe(() => got.push('resend_activation'));
+      component.openVariantsModal.subscribe(() => got.push('custom_prod_var'));
+      component.openImagesModal.subscribe(() => got.push('custom_prod_img'));
+      component.customerOrdersOpened.subscribe(() => got.push('customer_orders'));
+      spyOn(console, 'warn');
+      ['generate_form', 'resend_activation', 'custom_prod_var', 'custom_prod_img', 'customer_orders', 'unknown']
+        .forEach((action, i) => component.handleAction({ id: 10 + i }, action));
+      tick(600);
+      expect(got).toEqual(['generate_form', 'resend_activation', 'custom_prod_var', 'custom_prod_img', 'customer_orders']);
+      expect(console.warn).toHaveBeenCalledWith('Unknown action type:', 'unknown');
+    }));
+
+    /**
+     * @description A failed delete and a rejected confirm release the row lock (row stays).
+     * @input delete API error; confirm promise rejected.
+     * @output 3 rows; processing set empty both times.
+     */
+    it('releases the row after a failed or aborted delete', fakeAsync(() => {
+      (ctx.dataHandler as any).delete.and.returnValue(throwError(() => new Error('x')));
+      (component as any).processingItemIds.add(2);
+      component.onDeleteAction({ id: 2 });
+      flush();
+      expect(component.data.length).toBe(3);
+      expect((component as any).processingItemIds.size).toBe(0);
+
+      ctx.confirm.open.and.returnValue(Promise.reject(new Error('closed')));
+      (component as any).processingItemIds.add(3);
+      component.onDeleteAction({ id: 3 });
+      flush();
+      expect((component as any).processingItemIds.size).toBe(0);
+    }));
+
+    /**
+     * @description Selection helpers: untick a row, clear all, bulk menu toggled and closed by a document click.
+     * @input select 1 + 2, untick 2; toggleBulkMenu; document click; clearSelection.
+     * @output {1}; menu open → closed on click; selection empty and menu closed.
+     */
+    it('manages the selection and the bulk menu', () => {
+      component.toggleSelection(1, { target: { checked: true } } as any);
+      component.toggleSelection(2, { target: { checked: true } } as any);
+      component.toggleSelection(2, { target: { checked: false } } as any);
+      expect([...component.selectedIds]).toEqual([1]);
+      component.toggleBulkMenu();
+      expect(component.showBulkMenu).toBeTrue();
+      component.onDocumentClick();
+      expect(component.showBulkMenu).toBeFalse();
+      component.onDocumentClick();
+      component.toggleBulkMenu();
+      component.clearSelection();
+      expect([component.selectedIds.size, component.showBulkMenu]).toEqual([0, false]);
+    });
+
+    /**
+     * @description Currency that cannot be formatted falls back to "value CODE".
+     * @input value 'abc' with currency.
+     * @output 'abc EUR'.
+     */
+    it('falls back for unformattable currency values', () => {
+      expect(component.getCellValue({ p: 'abc' }, { key: 'p', type: 'currency' } as any)).toBe('abc EUR');
+    });
+
+    /**
+     * @description Export values: checkbox → 'true' / 'false', select → option label, dates
+     *   formatted (invalid kept), nested arrays redacted; raw export keeps objects as JSON.
+     * @input Rows with flag 1 / 0, role 1, date valid / invalid, list [{password}]; JSON + raw JSON.
+     * @output 'true', 'false', 'Admin', '4.3.2026', 'bad-date', redacted list; raw: object JSON string.
+     */
+    it('maps values for the export', async () => {
+      component.tableCaption = 'users';
+      component.detailsColumns = [
+        { key: 'flag', displayName: 'Flag' }, { key: 'role', displayName: 'Role' },
+        { key: 'day', displayName: 'Day', type: 'date' }, { key: 'list', displayName: 'List', importable: true }
+      ] as any;
+      component.inputDefinitions = [{ column_name: 'flag', type: 'checkbox' }, { column_name: 'role', options: [{ value: 1, label: 'Admin' }] }] as any;
+      (ctx.dataHandler as any).getCollection.and.returnValue(of([
+        { id: 1, flag: 1, role: 1, day: '2026-03-04', list: [{ password: 'x', a: 1 }] },
+        { id: 2, flag: 0, role: 9, day: 'bad-date', list: null }
+      ]));
+      await component.handleExportFormatSelected({ format: 'json', columnKeys: null, rawFormat: false });
+      expect(JSON.parse(await downloads[0].blob.text())).toEqual([
+        { Flag: 'true', Role: 'Admin', Day: '4.3.2026', List: '[{"password":"••••••••","a":1}]' },
+        { Flag: 'false', Role: 9, Day: 'bad-date', List: '' }
+      ]);
+      await component.handleExportFormatSelected({ format: 'json', columnKeys: null, rawFormat: true });
+      expect(JSON.parse(await downloads[1].blob.text())).toEqual([{ list: '[{"password":"x","a":1}]' }, { list: '' }]);
+    });
+
+    /**
+     * @description XLSX export writes a workbook download named after the table; a failing
+     *   audit log is only logged; popup close / import popup state.
+     * @input XLSX export (anchor download captured); log POST failing; closeExportPopup; importData / closeImportPopup.
+     * @output a download 'users.xlsx'; console.error; popup closed; import popup open → closed; hasImportableColumns true.
+     */
+    it('exports XLSX and handles the popups', async () => {
+      component.tableCaption = 'users';
+      component.detailsColumns = [{ key: 'name', displayName: 'Name', importable: true }] as any;
+      const names: string[] = [];
+      spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) { names.push(this.download); });
+      spyOn(HTMLAnchorElement.prototype, 'dispatchEvent').and.callFake(function (this: HTMLAnchorElement) { names.push(this.download); return true; });
+      spyOn(URL, 'createObjectURL').and.returnValue('blob:x');
+      spyOn(console, 'error');
+      (ctx.dataHandler as any).getCollection.and.returnValue(of([{ id: 1, name: 'A' }]));
+      (ctx.dataHandler as any).post.and.returnValue(throwError(() => new Error('log down')));
+      await component.handleExportFormatSelected({ format: 'xlsx', columnKeys: null, rawFormat: false });
+      await new Promise(resolve => setTimeout(resolve, 20));
+      expect(names).toContain('users.xlsx');
+      expect(console.error).toHaveBeenCalledWith('Failed to log export:', jasmine.anything());
+
+      component.showExportPopup = true;
+      component.exportSelectedOnly = true;
+      component.closeExportPopup();
+      expect([component.showExportPopup, component.exportSelectedOnly]).toEqual([false, false]);
+      expect(component.hasImportableColumns).toBeTrue();
+      component.importData();
+      expect(component.showImportPopup).toBeTrue();
+      component.closeImportPopup();
+      expect(component.showImportPopup).toBeFalse();
+    });
+  });
 });

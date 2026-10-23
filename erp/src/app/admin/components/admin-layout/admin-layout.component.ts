@@ -159,6 +159,8 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    * nikdy nezůstane "za pravdou" - viz hlavička souboru.
    */
   private routerSubscription: Subscription | undefined;
+  /** Re-render on admin language change (bugfix-note 2026-10-23). */
+  private i18nSubscription: Subscription | undefined;
 
   constructor(
     private router: Router,
@@ -172,7 +174,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     // Po přepnutí admin jazyka donutí i tenhle persistentní layout shell přehodnotit
     // `strings` výstup - stejný důvod jako u BaseDataComponent, jen řešeno ručně
     // (tahle komponenta ji nedědí).
-    this.i18n.translations$.subscribe(() => this.cdr.markForCheck());
+    // @bugfix-note (2026-10-23) This subscription was never closed (a new one per login, the layout
+    // is re-created after every logout / login) - kept and unsubscribed in ngOnDestroy.
+    this.i18nSubscription = this.i18n.translations$.subscribe(() => this.cdr.markForCheck());
 
     /**
      * @bugfix-note (2026-09e) Jediné autoritativní místo, které nastavuje
@@ -506,6 +510,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.authSubscription?.unsubscribe();
     this.userEmailSubscription?.unsubscribe();
     this.routerSubscription?.unsubscribe();
+    this.i18nSubscription?.unsubscribe();
 
     // Release the background scroll lock if this component still holds it
     // (e.g. logout / leaving /admin while a mobile panel is open).

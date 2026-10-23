@@ -117,4 +117,22 @@ describe('ActionMenuBuilderComponent', () => {
     expect(component.isOpen).toBeFalse();
     expect(component.menuPosition).toBeNull();
   }));
+  /**
+   * @description While open, scrolling and resizing re-position the menu; closed it does nothing.
+   * @input open menu; scroll + resize; close; scroll + resize.
+   * @output positionMenu called twice while open, not after closing.
+   */
+  it('follows scroll and resize while open', fakeAsync(() => {
+    fixture.nativeElement.querySelector('.action-menu-trigger').click();
+    fixture.detectChanges();
+    tick();
+    const position = spyOn(component as any, 'positionMenu');
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('resize'));
+    expect(position).toHaveBeenCalledTimes(2);
+    component.isOpen = false;
+    window.dispatchEvent(new Event('scroll'));
+    window.dispatchEvent(new Event('resize'));
+    expect(position).toHaveBeenCalledTimes(2);
+  }));
 });

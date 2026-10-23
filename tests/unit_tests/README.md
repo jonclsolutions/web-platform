@@ -13,7 +13,7 @@ tests/unit_tests/
 │   └── run_all.js       combined runner used by run_all.sh
 ├── erp/
 │   ├── run_all_erp.sh   every *.spec.ts in erp/src
-│   ├── run_admin_core.sh  admin/core-pages + admin/components + admin/auth
+│   ├── run_admin_core.sh  admin/core-pages + admin/components + admin/auth + admin/intranet
 │   ├── run_admin_web.sh   admin/web-pages
 │   ├── run_admin_shop.sh  admin/shop-pages
 │   ├── run_public_web.sh  public/web-pages
@@ -30,7 +30,7 @@ tests/unit_tests/
     └── report/          result of the last run (git-ignored)
 ```
 
-`admin/intranet`, `core/` and `shared/` specs only run with `erp/run_all_erp.sh` (and `run_all.sh`).
+`core/` and `shared/` specs only run with `erp/run_all_erp.sh` (and `run_all.sh`).
 
 ## Running
 
@@ -135,7 +135,9 @@ Target **100 %**:
 |---|---|
 | `erp/run_admin_web.sh` | 100 % (statements, branches, functions, lines) |
 | `erp/run_admin_shop.sh` | 100 % |
-| `erp/run_admin_core.sh` | ~85 % statements / ~70 % branches (tests written before coverage was measured) |
+| `erp/run_admin_core.sh` | 99 % lines / 98 % statements – 430 tests (the rest: downloads via `window.location`, ResizeObserver callbacks) |
+| `erp/run_public_web.sh` + `run_public_shop.sh` | 99.6 % lines |
+| `erp/run_all_erp.sh` | 99.5 % lines / 99 % statements – 1093 tests (core 100 %, shared ≥ 99.6 % per file) |
 | `api/run_core.sh` | 100 % (lines, methods) – 186 tests |
 | `api/run_web.sh` | 100 % (lines, methods) – 107 tests |
 | `api/run_shop.sh` | 100 % (lines, methods) – 64 tests |

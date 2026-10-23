@@ -39,9 +39,13 @@
  * načtení JSONu po HTTP requestu, i budoucí přepnutí jazyka) - pole se tak naplní
  * správnými texty, jakmile JSON skutečně dorazí, i když v okamžiku prvního
  * spuštění subscribe callbacku ještě `null` byl.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -199,7 +203,7 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
      * Díky tomu i konzumenti (TableBuilderComponent), kteří dřív viděli
      * "Cannot load text" natrvalo, dostanou správný text hned, jak JSON dorazí.
      */
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createUserRequestButtons(this.i18n);
       this.formFields = Config.createUserRequestFormFields(this.i18n);

@@ -456,9 +456,14 @@ protected override translationSection: string = 'edit-legal';
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Adds a new section in the active document / language.
+   * @bugfix-note (2026-10-23) The validation / success / error alerts were hardcoded Czech (open
+   *   finding #20) - now `edit-legal.add_*` keys (cz + en).
+   */
   submitAdd(): void {
     if (!this.newContent?.trim() || !this.newHeading?.trim()) {
-      this.alertDialog.open('Validace', 'Nadpis i obsah musí být vyplněny.', 'warning');
+      this.alertDialog.open(this.t('edit-legal.add_validation_title'), this.t('edit-legal.add_required_error'), 'warning');
       return;
     }
     if (this.activeTabId === null) return;
@@ -477,11 +482,11 @@ protected override translationSection: string = 'edit-legal';
         this.saving = false;
         this.invalidateCurrentSections();
         this.refreshData();
-        this.alertDialog.open('Úspěch', 'Sekce byla úspěšně přidána.', 'success');
+        this.alertDialog.open(this.t('shared.success'), this.t('edit-legal.add_success'), 'success');
       },
       error: () => {
         this.saving = false;
-        this.alertDialog.open('Chyba', 'Nepodařilo se přidat sekci.', 'danger');
+        this.alertDialog.open(this.t('shared.error'), this.t('edit-legal.add_error'), 'danger');
         this.cd.markForCheck();
       }
     });

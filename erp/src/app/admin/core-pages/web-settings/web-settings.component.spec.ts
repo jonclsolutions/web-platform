@@ -308,4 +308,175 @@ describe('WebSettingsComponent', () => {
     expect(values).toContain('RPSW');
     discardPeriodicTasks();
   }));
+  describe('remaining paths', () => {
+    const file = (name: string, type: string, size = 100) => { const f = new File(['x'], name, { type }); Object.defineProperty(f, 'size', { value: size }); return f; };
+    const input = (f?: File) => ({ target: { files: f ? [f] : [], value: 'x' } } as any);
+
+    /**
+     * @description Languages: the current language missing in the list switches to the first;
+     *   a failed language load falls back to Czech; inactive languages are hidden; tab / language
+     *   switches and language names.
+     * @input languages [en, de inactive] (current cz); then languages error; switchLang / switchTab; getLangName.
+     * @output currentLang 'en', ['en']; fallback [cz]; switches applied once; 'English' / 'XX'.
+     */
+    it('handles languages, tabs and names', fakeAsync(() => {
+      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages/web'
+        ? of({ languages: [{ code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }] })
+        : of(JSON.parse(JSON.stringify(config))));
+      init();
+      expect(component.languages.map(l => l.code)).toEqual(['en']);
+      expect(component.currentLang).toBe('en');
+      expect(component.getLangName('en')).toBe('English');
+      expect(component.getLangName('xx')).toBe('XX');
+      component.switchLang('en');
+      component.switchLang('cz');
+      expect(component.currentLang).toBe('cz');
+      component.switchTab('company');
+      expect(component.activeTab).toBe('company');
+
+      (component as any).resourceCache.invalidate('web-settings:languages:web');
+      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages/web' ? throwError(() => new Error('x')) : of({}));
+      (component as any).loadLanguages();
+      expect(component.languages.map(l => l.code)).toEqual(['cz']);
+      expect(component.settings.brand_tagline_i18n).toEqual({ cz: 'Tag' });
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Logo: no file ignored, valid image previewed, a second one replaces the preview,
+     *   cancel removes it; a failed save stops the spinner; refresh reloads from the API.
+     * @input onLogoSelected without / with png twice; cancel; save with PUT error; refreshData().
+     * @output preview blob URL revoked on replace / cancel; logoSrc preview → stored; settingsSaving false; legal/config requested again.
+     */
+    it('manages the logo preview and failed saves', fakeAsync(() => {
+      init();
+      spyOn(URL, 'createObjectURL').and.returnValues('blob:1', 'blob:2');
+      const revoke = spyOn(URL, 'revokeObjectURL');
+      component.onLogoSelected(input());
+      component.onLogoSelected(input(file('a.png', 'image/png')));
+      component.onLogoSelected(input(file('b.png', 'image/png')));
+      expect(revoke).toHaveBeenCalledWith('blob:1');
+      expect(component.logoSrc).toBe('blob:2');
+      component.cancelLogoSelection();
+      expect(revoke).toHaveBeenCalledWith('blob:2');
+      expect(component.logoSrc).toBe(`${environment.public_storage_url}/logo.png`);
+      component.cancelLogoSelection();
+
+      (ctx.dataHandler as any).put.and.returnValue(throwError(() => new Error('x')));
+      component.saveSettings();
+      expect(component.settingsSaving).toBeFalse();
+      component.settingsSaving = true;
+      component.saveSettings();
+      component.settingsSaving = false;
+
+      (ctx.dataHandler as any).get.calls.reset();
+      component.refreshData();
+      expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('legal/config');
+      component.settings.logo_path = '';
+      expect([component.logoSrc, component.hasLogo]).toEqual([null, false]);
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Social links: new row added (scrolls to the anchor), icon validation (size,
+     *   type, replaces a preview), URL required, double save ignored, failed save keeps the row,
+     *   a new unsaved row is removed without the API, cancelled delete keeps the link.
+     * @input addSocialLink; icons too big / text / png ×2; save without url; save twice; upload error; delete new; confirm false.
+     * @output 2 links; 2 warnings; preview replaced; url warning; one request; _saving false; row removed; no DELETE.
+     */
+    it('validates and saves social links', fakeAsync(async () => {
+      init();
+      const anchor = document.createElement('div');
+      anchor.id = 'social-add-anchor';
+      anchor.scrollIntoView = jasmine.createSpy('scrollIntoView');
+      document.body.appendChild(anchor);
+      component.addSocialLink();
+      flush();
+      expect(anchor.scrollIntoView).toHaveBeenCalled();
+      anchor.remove();
+      expect(component.socialLinks.length).toBe(2);
+
+      spyOn(URL, 'createObjectURL').and.returnValues('blob:a', 'blob:b');
+      const revoke = spyOn(URL, 'revokeObjectURL');
+      component.onIconSelected(input(), 1);
+      component.onIconSelected(input(file('big.png', 'image/png', 3 * 1024 * 1024)), 1);
+      component.onIconSelected(input(file('a.txt', 'text/plain')), 1);
+      expect(ctx.alert.open).toHaveBeenCalledWith('web-settings.logo_too_large_title', 'web-settings.social_icon_too_large_message', 'warning');
+      expect(ctx.alert.open).toHaveBeenCalledWith('web-settings.logo_invalid_format_title', 'web-settings.social_icon_invalid_format_message', 'warning');
+      component.onIconSelected(input(file('a.png', 'image/png')), 1);
+      component.onIconSelected(input(file('b.png', 'image/png')), 1);
+      expect(revoke).toHaveBeenCalledWith('blob:a');
+      expect(component.iconSrc(component.socialLinks[1])).toBe('blob:b');
+      expect(component.iconSrc({ icon_path: '' } as any)).toBeNull();
+
+      component.socialLinks[1].name = 'X';
+      component.saveSocialLink(1);
+      expect(ctx.alert.open).toHaveBeenCalledWith('web-settings.social_validation_title', 'web-settings.social_validation_url_message', 'warning');
+      component.socialLinks[1].url = 'https://x';
+      (ctx.dataHandler as any).upload.and.returnValue(throwError(() => new Error('x')));
+      component.socialLinks[1]._saving = true;
+      component.saveSocialLink(1);
+      expect((ctx.dataHandler as any).upload).not.toHaveBeenCalled();
+      component.socialLinks[1]._saving = false;
+      component.saveSocialLink(1);
+      expect(component.socialLinks[1]._saving).toBeFalse();
+      expect((ctx.dataHandler as any).upload.calls.mostRecent().args[0]).toBe('legal/config/social');
+
+      await component.deleteSocialLink(1);
+      expect(revoke).toHaveBeenCalledWith('blob:b');
+      expect(component.socialLinks.length).toBe(1);
+      ctx.confirm.open.and.resolveTo(false);
+      await component.deleteSocialLink(0);
+      expect((ctx.dataHandler as any).delete).not.toHaveBeenCalled();
+      expect(component.trackByIndex(3)).toBe(3);
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Page titles: missing language falls back to the first one; area labels,
+     *   placeholder, length, area dirtiness; switching area / language; saving errors; save guarded.
+     * @input Languages without the current 'xx'; edit a title; ptSave failing; ptSave without changes.
+     * @output ptCurrentLang = first code; labels from strings or the area key; dirty area; ptSaving false.
+     */
+    it('edits page titles per area and language', fakeAsync(() => {
+      ctx.i18n.getMergedSection.and.returnValue({ pt_area_web: 'Web', pt_input_placeholder: 'Title ({lang})', pt_unsaved_count: '{count} unsaved', pt_page_web_home: 'Home page' });
+      init();
+      (component as any).ptCurrentLang = { web: 'xx', shop: 'cz', admin: 'cz' };
+      component.switchTab('page_titles');
+      expect(component.ptLang).toBe('cz');
+      expect(component.ptAreaLabel('web')).toBe('Web');
+      expect(component.ptAreaLabel('shop')).toBe('shop');
+      expect(component.ptAreaLabel('admin')).toBe('admin');
+      expect(component.ptPlaceholderFor()).toBe('Title (Čeština)');
+      const home = component.ptVisibleRows[0];
+      expect(component.ptLabelFor(home)).toBe('Home page');
+      expect(component.ptLabelFor(component.ptVisibleRows[1])).toBe('/faq');
+      home.title_i18n['cz'] = 'Úvod';
+      component.ptOnInput(home);
+      expect(component.ptLengthOf(home)).toBe(4);
+      expect(component.ptAreaDirty('web')).toBeTrue();
+      expect(component.ptAreaDirty('admin')).toBeFalse();
+      expect(component.ptUnsavedLabel).toBe('1 unsaved');
+
+      component.ptSwitchArea('web');
+      component.ptSwitchArea('admin');
+      component.ptSwitchLang('en');
+      expect(component.ptLang).toBe('en');
+      component.ptOnFocus(component.ptVisibleRows[0]);
+      expect(component.ptPreviewText).toBe('');
+      component.ptSwitchArea('web');
+
+      (ctx.dataHandler as any).put.and.returnValue(throwError(() => new Error('x')));
+      component.ptSave();
+      expect(component.ptSaving).toBeFalse();
+      expect(component.ptIsDirty).toBeTrue();
+      component.ptDiscard();
+      (ctx.dataHandler as any).put.calls.reset();
+      component.ptSave();
+      expect((ctx.dataHandler as any).put).not.toHaveBeenCalled();
+      discardPeriodicTasks();
+    }));
+  });
 });

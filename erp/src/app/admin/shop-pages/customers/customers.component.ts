@@ -27,9 +27,13 @@
  * beze změny - jde o technické CSS class názvy, ne uživatelský text (skutečný
  * label přichází z `order.status_label`/`order.payment_status_label`, které vrací
  * backend).
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
@@ -89,7 +93,7 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   ) {
     super(dataHandler, cd, genericTableService);
 
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createCustomerButtons(this.i18n);
       this.formFields = Config.createCustomerFormFields(this.i18n);

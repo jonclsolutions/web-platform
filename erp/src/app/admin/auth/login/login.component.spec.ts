@@ -247,4 +247,34 @@ describe('LoginComponent', () => {
     expect(component.otpCode).toBe('');
     expect(turnstile.remove).toHaveBeenCalledWith('widget-1');
   }));
+  /**
+   * @description CAPTCHA lifecycle: a second required CAPTCHA resets the existing widget; the
+   *   widget callbacks set / clear the token; a failed widget load shows the translated error.
+   * @input captchaRequired twice; render callbacks; render rejecting.
+   * @output reset('widget-1'); token 'tok' then null; errorMessage 'Captcha failed'.
+   */
+  it('resets, fills and reports the CAPTCHA widget', fakeAsync(() => {
+    ctx.auth.login.and.returnValue(throwError(() => ({ message: 'x', captchaRequired: true })));
+    component.onLogin();
+    fixture.detectChanges();
+    tick();
+    const [, onToken, onExpired] = turnstile.render.calls.mostRecent().args as any[];
+    onToken('tok');
+    expect((component as any).captchaToken).toBe('tok');
+    onExpired();
+    expect((component as any).captchaToken).toBeNull();
+
+    (component as any).captchaToken = 'tok';
+    component.onLogin();
+    expect(turnstile.reset).toHaveBeenCalledWith('widget-1');
+    expect(component.captchaRequired).toBeTrue();
+
+    (component as any).captchaWidgetId = null;
+    turnstile.render.and.callFake(() => Promise.reject(new Error('blocked')));
+    (component as any).captchaToken = 'tok';
+    component.onLogin();
+    fixture.detectChanges();
+    tick();
+    expect(component.errorMessage).toBe('Captcha failed');
+  }));
 });

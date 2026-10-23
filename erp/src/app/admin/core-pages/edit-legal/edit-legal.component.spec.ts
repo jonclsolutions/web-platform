@@ -160,6 +160,7 @@ describe('EditLegalComponent', () => {
     component.submitAdd();
     expect((ctx.dataHandler as any).post.calls.mostRecent().args[1]).toEqual(jasmine.objectContaining({ position: 2, lang: 'en' }));
     expect(component.showAddForm).toBeFalse();
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'edit-legal.add_success', 'success');
     flush();
     discardPeriodicTasks();
   }));
@@ -174,7 +175,7 @@ describe('EditLegalComponent', () => {
     component.newHeading = '';
     component.newContent = 'C';
     component.submitAdd();
-    expect(ctx.alert.open.calls.mostRecent().args[2]).toBe('warning');
+    expect(ctx.alert.open).toHaveBeenCalledWith('edit-legal.add_validation_title', 'edit-legal.add_required_error', 'warning');
     expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
     discardPeriodicTasks();
   }));
@@ -234,6 +235,43 @@ describe('EditLegalComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Terms');
     expect(fixture.nativeElement.textContent).toContain('Privacy');
+    flush();
+    discardPeriodicTasks();
+  }));
+  /**
+   * @description Failures: document types / languages / sections unavailable, add and delete
+   *   errors (translated alerts), no tab → nothing sent; the current language missing in the list
+   *   switches to the first one; missing-position helpers.
+   * @input types error; languages without 'cz'; sections error; post error; delete error; activeTabId null.
+   * @output types []; activeLang 'en'; data []; alerts add_error / delete_error; no post without a tab.
+   */
+  it('handles failing requests', fakeAsync(async () => {
+    (ctx.dataHandler as any).getCollection.and.callFake((url: string) => {
+      if (url === 'legal/document-types') return throwError(() => new Error('x'));
+      if (url === 'languages/web') return of({ languages: [{ code: 'en', name: 'English', active: true }] });
+      return throwError(() => new Error('x'));
+    });
+    init();
+    expect(component.documentTypes).toEqual([]);
+    expect(component.activeLang).toBe('en');
+    expect(component.data).toEqual([]);
+    expect(component.missingPositionsForCurrentLang).toEqual([]);
+    expect(component.positionFillTagText(4)).toBe('Position 4');
+
+    component.newHeading = 'H';
+    component.newContent = 'C';
+    component.activeTabId = null;
+    component.submitAdd();
+    expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
+    component.activeTabId = 1;
+    (ctx.dataHandler as any).post.and.returnValue(throwError(() => new Error('x')));
+    component.submitAdd();
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.error', 'edit-legal.add_error', 'danger');
+    expect(component.saving).toBeFalse();
+
+    (ctx.dataHandler as any).delete.and.returnValue(throwError(() => new Error('x')));
+    await component.confirmDelete({ id: 5, heading: 'X', position: 1 } as any);
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.error', 'edit-legal.delete_error', 'danger');
     flush();
     discardPeriodicTasks();
   }));

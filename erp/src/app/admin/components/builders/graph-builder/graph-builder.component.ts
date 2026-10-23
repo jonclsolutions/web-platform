@@ -64,7 +64,7 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, firstValueFrom } from 'rxjs';
+import { Subject, firstValueFrom, takeUntil } from 'rxjs';
 
 import { DataHandler } from '../../../../core/services/data-handler.service';
 import { EntityCrudService } from '../../../../core/services/entitiy-crud.service';
@@ -345,7 +345,9 @@ export class GraphBuilderComponent implements OnInit, OnChanges, OnDestroy, Afte
     // Po přepnutí admin jazyka donutí OnPush komponentu přehodnotit `strings`/gettery -
     // stejný vzor jako TableBuilderComponent. Zároveň přestaví přeložené volby typů
     // grafů (viz graph-format.ts refactor-note 2026-09-25).
-    this.i18n.translations$.subscribe(() => {
+    // @bugfix-note (2026-10-23) The subscription was never closed (one leaked subscriber per opened
+    // report popup on the root i18n service) - it now ends with destroy$.
+    this.i18n.translations$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.columnChartModeOptions = createColumnChartModeOptions(this.i18n);
       this.metricChartModeOptions = createMetricChartModeOptions(this.i18n);
       this.cd.markForCheck();

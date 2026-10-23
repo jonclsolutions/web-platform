@@ -52,9 +52,13 @@
  * souboru, ne až po odeslání na server. Odmítnuté soubory se do `replyFiles`/
  * `threadModalReplyFiles` vůbec nedostanou, chybová hláška se zobrazí okamžitě pod
  * file inputem (`replyFileError`/`threadModalReplyFileError`).
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -247,7 +251,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   ) {
     super(dataHandler, cd, genericTableService);
 
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.threadsTableCaption = this.t('thread_table_header');
       this.buttons = Config.createProjectButtons(this.i18n);

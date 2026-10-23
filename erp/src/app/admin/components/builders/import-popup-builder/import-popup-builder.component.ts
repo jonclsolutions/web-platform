@@ -43,9 +43,13 @@
  * porušovala pravidlo žádného tichého českého fallbacku). `readonly formatOptions`
  * pole nahrazeno getterem volajícím `createExportFormatOptions(this.i18n)` - viz
  * export-format.ts refactor-note (2026-09v2).
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DataHandler } from '../../../../core/services/data-handler.service';
@@ -143,7 +147,7 @@ export class ImportPopupBuilderComponent implements OnInit, OnDestroy {
   constructor() {
     // Po přepnutí admin jazyka donutí OnPush komponentu přehodnotit `strings`/gettery -
     // stejný vzor jako TableBuilderComponent/GraphBuilderComponent.
-    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
   ngOnInit(): void {

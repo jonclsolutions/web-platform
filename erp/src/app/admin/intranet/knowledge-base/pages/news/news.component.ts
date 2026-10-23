@@ -27,6 +27,7 @@ import { CommonModule } from '@angular/common';
 import { GenericTableService, PaginatedResponse } from '../../../../../core/services/generic-table.service';
 import { BaseDataComponent } from '../../../../components/base-data/base-data.component';
 import { DataHandler } from '../../../../../core/services/data-handler.service';
+import { finalize } from 'rxjs/operators';
 
 /**
  * @description Manages the display and incremental loading of news content.
@@ -61,6 +62,8 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
 
   /** * @description Buffer storing all loaded news items for the infinite scroll list. */
   accumulatedNews: any[] = [];
+  /** A page request is running (guards against double "load more"). */
+  private loadingMore = false;
 
   constructor(
     protected override dataHandler: DataHandler,
@@ -82,10 +85,13 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
 
   loadMore(): void {
     // 1. Zkontroluj, zda už nenačítáme nebo nejsme na konci
-    const isCurrentlyLoading = (this.loadingService.isLoading$ as any).value;
-    if (isCurrentlyLoading || (this.currentPage > this.totalPages && this.totalPages !== 0)) {
+    // @bugfix-note (2026-10-23) The guard read `.value` of `isLoading$` - an asObservable() without a
+    // value, so it was always undefined: a second click while a page was loading requested the
+    // same page again and the news appeared twice. Own in-flight flag instead.
+    if (this.loadingMore || (this.currentPage > this.totalPages && this.totalPages !== 0)) {
       return;
     }
+    this.loadingMore = true;
 
     // 2. Voláme fetchPaginatedData přes delegovanou službu 'list'
     this.list.fetchPaginatedData(
@@ -93,7 +99,7 @@ export class NewsComponent extends BaseDataComponent<any> implements OnInit {
       this.currentPage, 
       this.itemsPerPage, 
       { sort_by: 'created_at', sort_direction: 'desc' }
-    ).subscribe({
+    ).pipe(finalize(() => { this.loadingMore = false; })).subscribe({
       next: (response: PaginatedResponse<any>) => {
         if (response && response.data) {
           // 3. Akumulujeme data

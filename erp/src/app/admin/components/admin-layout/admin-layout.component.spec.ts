@@ -245,4 +245,114 @@ describe('AdminLayoutComponent', () => {
     expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
     fixture.destroy();
   }));
+  /**
+   * @description Viewport changes: starting on mobile closes the menu; growing restores the
+   *   saved state, shrinking closes menu + actions; the same size does nothing.
+   * @input width 500 + init; resize to 1200 (saved 'false'); resize 1200 again; resize to 500.
+   * @output closed + mobile; isMenuOpen false (saved); unchanged; closed, actions closed, scroll unlocked.
+   */
+  it('adapts the menu to viewport changes', () => {
+    const width = spyOnProperty(window, 'innerWidth', 'get').and.returnValue(500);
+    localStorage.setItem('admin_menu_open', 'true');
+    component.ngOnInit();
+    expect([component.isMenuOpen, (component as any).isMobileViewport]).toEqual([false, true]);
+
+    component.toggleMobileActions();
+    expect(component.isMobileActionsOpen).toBeTrue();
+    expect(scrollLock.lock).toHaveBeenCalledTimes(1);
+    component.closeMobileActions();
+    expect(scrollLock.unlock).toHaveBeenCalledTimes(1);
+
+    localStorage.setItem('admin_menu_open', 'false');
+    width.and.returnValue(1200);
+    component.onWindowResize();
+    expect([(component as any).isMobileViewport, component.isMenuOpen]).toEqual([false, false]);
+    localStorage.removeItem('admin_menu_open');
+    component.onWindowResize();
+    expect(component.isMenuOpen).toBeFalse();
+
+    width.and.returnValue(500);
+    component.toggleMobileActions();
+    component.onWindowResize();
+    expect([(component as any).isMobileViewport, component.isMenuOpen, component.isMobileActionsOpen]).toEqual([true, false, false]);
+    width.and.returnValue(1200);
+    component.onWindowResize();
+    expect(component.isMenuOpen).toBeTrue();
+  });
+
+  /**
+   * @description Mobile: a menu link closes the menu, resizing by drag is disabled; desktop:
+   *   links keep the menu open.
+   * @input width 500: menu open + onLinkClick; startResizing. width 1200: onLinkClick.
+   * @output menu closed, no resizing (preventDefault not called); desktop menu stays open.
+   */
+  it('handles links and resizing on mobile', () => {
+    const width = spyOnProperty(window, 'innerWidth', 'get').and.returnValue(500);
+    component.ngOnInit();
+    component.toggleMenu();
+    expect(component.isMenuOpen).toBeTrue();
+    component.onLinkClick();
+    expect(component.isMenuOpen).toBeFalse();
+    const event = jasmine.createSpyObj<MouseEvent>('MouseEvent', ['preventDefault']);
+    component.startResizing(event);
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    component.onMouseMove({ clientX: 300 } as MouseEvent);
+    component.onMouseUp();
+    expect(localStorage.getItem('admin_sidebar_width')).toBeNull();
+
+    width.and.returnValue(1200);
+    component.isMenuOpen = true;
+    component.onLinkClick();
+    expect(component.isMenuOpen).toBeTrue();
+  });
+
+  /**
+   * @description Navigation events switch the module; language menu toggles; metadata of the
+   *   current language; failed logout still goes to the login page.
+   * @input NavigationEnd to /admin/shop/orders; toggle / close lang menu; logout() error.
+   * @output module 'shop' stored; open → closed; meta code cz, dateLocale cs-CZ; navigate login, permissions kept.
+   */
+  it('follows navigation, the language menu and a failed logout', async () => {
+    component.ngOnInit();
+    router.resetConfig([{ path: '**', component: AdminLayoutComponent }]);
+    await router.navigateByUrl('/admin/shop/orders');
+    expect(component.currentModule).toBe('shop');
+    expect(localStorage.getItem('admin_current_module')).toBe('shop');
+
+    component.toggleLangMenu();
+    expect(component.isLangMenuOpen).toBeTrue();
+    component.closeLangMenu();
+    expect(component.isLangMenuOpen).toBeFalse();
+    expect(component.currentLanguageMeta?.code).toBe('cz');
+    expect(component.dateLocale).toBe('cs-CZ');
+
+    ctx.auth.logout.and.returnValue(throwError(() => new Error('x')));
+    component.logout();
+    expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
+    expect(ctx.permissions.clearPermissions).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @description Every menu group appears exactly with its permissions.
+   * @input Each group's permission granted alone.
+   * @output That group shown, all others hidden.
+   */
+  it('shows every menu group only with its permission', () => {
+    const groups: Record<string, string> = {
+      showWebOverviewGroup: 'web-view-dashboard', showWebBusinessGroup: 'web-projects-view', showWebContentGroup: 'web-news-view',
+      showWebPeopleGroup: 'web-support-tickets-view', showWebSystemGroup: 'web-view-web-logs', showCoreOverviewGroup: 'core-view-welcome-page',
+      showCoreLegalGroup: 'core-external-links-view', showCoreUsersGroup: 'core-administrators-view', showShopOverviewGroup: 'shop-view-dashboard',
+      showShopCatalogGroup: 'shop-suppliers-view', showShopTransactionsGroup: 'shop-coupons-view', showShopCustomersGroup: 'shop-customers-view',
+      showShopLogisticsGroup: 'shop-payment-methods-view', showShopContentGroup: 'shop-edit-eshop-view', showShopSystemGroup: 'shop-view-logs'
+    };
+    for (const [group, permission] of Object.entries(groups)) {
+      ctx.permissions.granted = new Set([permission]);
+      const shown = Object.keys(groups).filter(g => (component as any)[g]);
+      expect(shown).withContext(permission).toEqual([group]);
+    }
+    ctx.permissions.granted = new Set(['view-core']);
+    expect([component.showCoreOverviewGroup, component.showCoreSystemGroup]).toEqual([true, true]);
+    ctx.permissions.granted = new Set(['core-legal-documents-view']);
+    expect(component.showCoreLegalGroup).toBeTrue();
+  });
 });

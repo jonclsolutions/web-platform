@@ -226,7 +226,11 @@
   "delete_confirm_title": "Smazat sekci",
   "delete_confirm_message": "Opravdu chcete smazat sekci „{heading}“ ({lang})? Tato akce je nevratná.",
   "delete_success": "Sekce byla smazána.",
-  "delete_error": "Nepodařilo se smazat sekci."
+  "delete_error": "Nepodařilo se smazat sekci.",
+  "add_validation_title": "Validace",
+  "add_required_error": "Nadpis i obsah musí být vyplněny.",
+  "add_success": "Sekce byla úspěšně přidána.",
+  "add_error": "Nepodařilo se přidat sekci."
 },
 "form-builder": {
   "create_header": "Vytvořit nový záznam",

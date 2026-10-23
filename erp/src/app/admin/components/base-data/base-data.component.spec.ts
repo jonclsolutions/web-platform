@@ -416,6 +416,25 @@ describe('BaseDataComponent', () => {
      * @input  handleToolbarAction('doesNotExist')
      * @output no exception, state unchanged
      */
+    /**
+     * @description Export and the active / trash switch are dispatched as well.
+     * @input  handleToolbarAction('exportActiveTable'), ('toggleTable')
+     * @output exportActiveTable() and toggleTable() called once each
+     */
+    it('handleToolbarAction() dispatches export and table toggling', () => {
+      const exportSpy = spyOn(component, 'exportActiveTable');
+      const toggleSpy = spyOn(component, 'toggleTable');
+      component.handleToolbarAction('exportActiveTable');
+      component.handleToolbarAction('toggleTable');
+      expect(exportSpy).toHaveBeenCalledTimes(1);
+      expect(toggleSpy).toHaveBeenCalledTimes(1);
+    });
+
+    /**
+     * @description Unknown toolbar actions are ignored silently.
+     * @input  handleToolbarAction('doesNotExist')
+     * @output no exception, state unchanged
+     */
     it('handleToolbarAction() ignores unknown actions', () => {
       expect(() => component.handleToolbarAction('doesNotExist')).not.toThrow();
       expect(component.isFilterVisible).toBeFalse();

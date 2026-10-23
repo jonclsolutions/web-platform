@@ -39,9 +39,13 @@
  * user-request.config.ts.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `helpSection`, `currentDateTime`.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -82,7 +86,7 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
     // Po přepnutí admin jazyka donutí komponentu přehodnotit `strings`/`helpSection`/
     // `currentDateTime` výstup - stejný důvod jako u AdminLayoutComponent, jen řešeno
     // ručně (tahle komponenta i18n službu nedědí přes BaseDataComponent).
-    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
   ngOnInit(): void {

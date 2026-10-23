@@ -19,4 +19,4 @@
 
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec node "$DIR/lib/run.js" "$@" --group "Admin core" --command "run_admin_core.sh" src/app/admin/core-pages src/app/admin/components src/app/admin/auth
+exec node "$DIR/lib/run.js" "$@" --group "Admin core" --command "run_admin_core.sh" src/app/admin/core-pages src/app/admin/components src/app/admin/auth src/app/admin/intranet

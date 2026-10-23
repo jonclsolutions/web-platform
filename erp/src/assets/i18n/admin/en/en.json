@@ -226,7 +226,11 @@
   "delete_confirm_title": "Delete section",
   "delete_confirm_message": "Are you sure you want to delete section \"{heading}\" ({lang})? This action is irreversible.",
   "delete_success": "Section was deleted.",
-  "delete_error": "Failed to delete section."
+  "delete_error": "Failed to delete section.",
+  "add_validation_title": "Validation",
+  "add_required_error": "Both heading and content are required.",
+  "add_success": "The section was added.",
+  "add_error": "The section could not be added."
 },
 "form-builder": {
   "create_header": "Create new record",

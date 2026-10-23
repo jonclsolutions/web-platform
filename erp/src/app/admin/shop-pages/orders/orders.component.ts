@@ -30,9 +30,13 @@
  * - měna zůstává EUR (obchodní rozhodnutí, nesouvisí s jazykem UI).
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `summaryTaxAmount`, `editingItemIdx`, `getTrashToolbarButtons`, `getShippingMethodName`, `getProductName`, `getPaymentStatusLabel`.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
@@ -120,7 +124,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
   ) {
     super(dataHandler, cd, genericTableService);
 
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createOrderButtons(this.i18n);
       this.orderColumns = Config.createOrderColumns(this.i18n);

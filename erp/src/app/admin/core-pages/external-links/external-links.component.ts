@@ -23,9 +23,13 @@
  * stejný vzor jako web-pages stránky. `graphColumns` přestalo být `readonly`.
  * `'Úspěch'`/`'Požadavek byl upraven.'`/`'Požadavek byl vytvořen.'` (dřív natvrdo česky)
  * nahrazeny `t()` voláním.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
@@ -78,7 +82,7 @@ export class ExternalLinksComponent extends BaseDataComponent<any> implements Co
   ) {
     super(dataHandler, cd, genericTableService);
 
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createExternalLinkButtons(this.i18n);
       this.formFields = Config.createExternalLinkFormFields(this.i18n);

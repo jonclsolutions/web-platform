@@ -198,4 +198,34 @@ describe('CoreDashboardComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('core-dashboard.nav_administrators_title');
   });
+  /**
+   * @description Without any statistic permission the stats finish loading at once (bugfix
+   *   2026-10-23, was stuck in loading); failing stats / activity streams stop their spinners;
+   *   an array answer of the activity is taken as is; the hero dropdown closes.
+   * @input granted []; stats cache loader erroring; activity answering an array; closeHeroDropdown.
+   * @output quickStats [], loadingStats false, no stat request; loading flags false; activity array kept.
+   */
+  it('finishes loading without stats and on errors', () => {
+    ctx.permissions.granted = new Set();
+    component.ngOnInit();
+    expect([component.quickStats, component.loadingStats]).toEqual([[], false]);
+    expect((ctx.dataHandler as any).getPaginatedCollection).not.toHaveBeenCalled();
+
+    ctx.permissions.granted = 'all';
+    const cache = (component as any).resourceCache;
+    const get = spyOn(cache, 'get').and.returnValue(throwError(() => new Error('x')));
+    (component as any).loadStats();
+    (component as any).loadRecentActivity();
+    expect([component.loadingStats, component.loadingActivity, component.isRefreshing]).toEqual([false, false, false]);
+
+    get.and.callThrough();
+    cache.invalidate((component as any).ACTIVITY_CACHE_KEY);
+    (ctx.dataHandler as any).getPaginatedCollection.and.returnValue(of([{ id: 1, event_type: 'create' }]));
+    (component as any).loadRecentActivity();
+    expect(component.recentActivity.length).toBe(1);
+
+    component.heroDropdownOpen = true;
+    component.closeHeroDropdown();
+    expect(component.heroDropdownOpen).toBeFalse();
+  });
 });

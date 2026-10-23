@@ -151,4 +151,31 @@ describe('TrashTableBuilderComponent', () => {
     component.handleToolbarAction('other');
     expect(ctx.confirm.open).not.toHaveBeenCalled();
   });
+  /**
+   * @description Remaining cell types: currency (column code / EUR default / empty / fallback),
+   *   dates (default shortDate, empty), boolean false, images with the base URL, non-array /
+   *   non-object values unchanged, nested keys; texts from the trash section.
+   * @input getCellValue for each type and edge value.
+   * @output Formatted strings as listed; strings proxy and t() use 'trash-table-builder'.
+   */
+  it('formats every cell type', () => {
+    const cell = (v: any, column: any) => component.getCellValue({ v, n: { x: 'deep' } }, { key: 'v', ...column });
+    expect(cell(12.5, { type: 'currency', currencyCode: 'czk' })).toContain('Kč');
+    expect(cell(12.5, { type: 'currency' })).toContain('€');
+    expect(cell('', { type: 'currency' })).toBe('');
+    expect(cell('abc', { type: 'currency' })).toBe('abc EUR');
+    expect(cell('2026-03-04', { type: 'date', format: 'd.M.yyyy' })).toBe('4.3.2026');
+    expect(cell('2026-03-04', { type: 'date' })).toBeTruthy();
+    expect(cell(null, { type: 'date' })).toBe('');
+    expect(cell(0, { type: 'boolean' })).toBe('shared.no');
+    component.uploadsBaseUrl = 'https://cdn/';
+    expect(cell('a.png', { type: 'image' })).toBe('https://cdn/a.png');
+    expect(cell('', { type: 'image' })).toBe('');
+    expect(cell('x', { type: 'array' })).toBe('x');
+    expect(cell('x', { type: 'object' })).toBe('x');
+    expect(cell('plain', {})).toBe('plain');
+    expect(component.getCellValue({ n: { x: 'deep' } }, { key: 'n.x' } as any)).toBe('deep');
+    expect(component.strings.title).toBe('trash-table-builder.title');
+    expect(component.t('a')).toBe('trash-table-builder.a');
+  });
 });

@@ -259,4 +259,82 @@ describe('SecurityEventsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('security-events.table_header');
     discardPeriodicTasks();
   }));
+  /**
+   * @description Toolbar actions dispatch (filters, graph, export; unknown ignored); details
+   *   open / close; edit and delete events go to the triage modal / reload.
+   * @input handleToolbarAction each; handleViewDetails(row 5); handleCloseDetails; handleEditFormOpened; handleItemDeleted.
+   * @output toggleFilters / openGraphBuilder / exportActiveTable called; details shown → hidden; triage item; refresh + stats.
+   */
+  it('dispatches toolbar, details and row events', () => {
+    answer();
+    const spies = ['toggleFilters', 'openGraphBuilder', 'exportActiveTable'].map(m => spyOn(component as any, m));
+    ['toggleFilters', 'openGraphBuilder', 'exportActiveTable', 'nothing'].forEach(a => component.handleToolbarAction(a));
+    spies.forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
+
+    (ctx.dataHandler as any).getOne.and.returnValue(of({ id: 5, event_type: 'login_failed' }));
+    component.handleViewDetails({ id: 5 });
+    expect([component.showDetails, component.selectedItemForDetails?.id]).toEqual([true, 5]);
+    component.handleCloseDetails();
+    expect([component.showDetails, component.selectedItemForDetails]).toEqual([false, null]);
+
+    component.handleEditFormOpened({ id: 7, status: 'reviewed', notes: 'ok' });
+    expect([component.triageItem.id, component.triageStatus, component.triageNotes]).toEqual([7, 'reviewed', 'ok']);
+    const refresh = spyOn(component, 'refreshData');
+    component.handleItemDeleted();
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  /**
+   * @description Triage explanation fills the template with the row data and falls back for
+   *   unknown types / missing values; no triage item → null.
+   * @input Templates with every placeholder; row with ip / route / e-mail / user / occurrences; unknown type without data.
+   * @output Filled text; fallback label + 'explain_unknown_*' / '?' texts; null.
+   */
+  it('explains the triaged event', () => {
+    answer();
+    ctx.i18n.getValue.and.callFake((key: string) => key.endsWith('_what') ? 'IP {ip} on {route} for {email} user {user_id} ×{occurrences}' : key);
+    expect(component.triageExplanation).toBeNull();
+    component.handleEditTriage({ id: 1, event_type: 'login_failed', ip_address: '1.2.3.4', route: 'api/login', context_data: { email: 'a@b.cz' }, user_id: 9, occurrences: 3 });
+    expect(component.triageExplanation!.whatHappened).toBe('IP 1.2.3.4 on api/login for a@b.cz user 9 ×3');
+    expect(component.triageStatus).toBe('new');
+
+    component.handleEditTriage({ id: 2, event_type: 'unknown_type' });
+    const info = component.triageExplanation!;
+    expect(info.label).toBe('security-events.explain_fallback_label');
+    expect(info.whatHappened).toBe('IP security-events.explain_unknown_ip on security-events.explain_unknown_endpoint for security-events.explain_unknown_account user security-events.explain_unknown ×?');
+  });
+
+  /**
+   * @description Failed saves / loads stop the spinners: triage update error, retention load
+   *   and save errors (value kept), purge error, response without retention keeps the value.
+   * @input updateData error; settings GET error; PUT error; PUT {}; DELETE purge error.
+   * @output triageSaving / settingsLoading / settingsSaving / purging false; retention unchanged.
+   */
+  it('recovers from failed settings, triage and purge requests', async () => {
+    (ctx.dataHandler as any).get.and.callFake((url: string) => url.startsWith('core/security_events/stats') ? of({ data: [] }) : throwError(() => new Error('x')));
+    fixture.detectChanges();
+    expect(component.settingsLoading).toBeFalse();
+
+    component.handleEditTriage({ id: 1, status: 'new' });
+    component.triageStatus = 'reviewed';
+    (ctx.dataHandler as any).put.and.returnValue(throwError(() => new Error('x')));
+    await component.saveTriage();
+    expect(component.triageSaving).toBeFalse();
+    expect(component.triageItem).not.toBeNull();
+
+    component.retentionDays = 45;
+    component.saveRetention();
+    expect([component.settingsSaving, component.retentionDays]).toEqual([false, 45]);
+    (ctx.dataHandler as any).put.and.returnValue(of({}));
+    component.saveRetention();
+    expect(component.retentionDays).toBe(45);
+
+    ctx.confirm.open.and.resolveTo(true);
+    (ctx.dataHandler as any).delete.and.returnValue(throwError(() => new Error('x')));
+    await component.purgeOldEvents();
+    expect(component.purging).toBeFalse();
+    (ctx.dataHandler as any).delete.and.returnValue(of({}));
+    await component.purgeOldEvents();
+    expect(ctx.alert.open).toHaveBeenCalledWith('security-events.purge_done_title', 'security-events.purge_done_default_message', 'success');
+  });
 });

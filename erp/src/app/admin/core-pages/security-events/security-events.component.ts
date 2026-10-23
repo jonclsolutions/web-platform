@@ -29,9 +29,13 @@
  * `formatChartDayLabelFull()` respektují `i18n.getDateLocale()` místo natvrdo
  * `'cs-CZ'`. `triageExplanation` getter teď volá `Config.buildEventExplanation(item, this.i18n)`
  * (nová signatura vyžaduje i18n parametr).
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
@@ -132,7 +136,7 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
   ) {
     super(dataHandler, cd, genericTableService);
 
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createButtons(this.i18n);
       this.tableColumns = Config.createTableColumns(this.i18n);

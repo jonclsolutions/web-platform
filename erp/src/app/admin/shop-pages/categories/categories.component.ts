@@ -30,9 +30,13 @@
  * `confirmDialogService.open()` volání a natvrdo psané texty ve `getEditButtons()`
  * nahrazeny `t()` voláním. `console.error()` volání (dev diagnostika) ZÁMĚRNĚ
  * ponechána nepřeložená.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, OnInit, ViewChildren, QueryList, ElementRef, ChangeDetectionStrategy, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as Core from '../../../shared/imports/core-providers';
@@ -106,7 +110,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
      * není potřeba. Stačí OnPush komponentu donutit přehodnotit šablonu (a tedy
      * znovu zavolat tyhle gettery/metody) při přepnutí jazyka.
      */
-    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
   override ngOnInit(): void {

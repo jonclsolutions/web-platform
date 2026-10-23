@@ -211,4 +211,34 @@ describe('ImportPopupBuilderComponent', () => {
     component.onClose();
     expect(closed).toBe(1);
   });
+  /**
+   * @description Remaining wizard paths: scroll lock on open, file cleared, failed commit
+   *   releases the button, overlay click closes only on the backdrop, texts of the section.
+   * @input ngOnInit; clearSelectedFile; commit error; overlay click on the backdrop / inside.
+   * @output lock(); file null; isCommitting false, step not done; closed once; t('x') 'import-popup.x'.
+   */
+  it('handles the remaining wizard paths', () => {
+    component.ngOnInit();
+    expect(TestBed.inject(ScrollLockService).lock).toHaveBeenCalled();
+    withFile();
+    component.clearSelectedFile();
+    expect(component.selectedFile).toBeNull();
+
+    (ctx.dataHandler as any).upload.and.returnValue(of(validation));
+    (ctx.dataHandler as any).post.and.returnValue(throwError(() => new Error('x')));
+    withFile();
+    component.runValidation();
+    component.confirmCommit();
+    expect(component.isCommitting).toBeFalse();
+    expect(component.step).not.toBe('done');
+
+    let closed = 0;
+    component.closed.subscribe(() => closed++);
+    const backdrop = {};
+    component.onOverlayClick({ target: backdrop, currentTarget: backdrop } as any);
+    component.onOverlayClick({ target: {}, currentTarget: backdrop } as any);
+    expect(closed).toBe(1);
+    expect(component.t('x')).toBe('import-popup.x');
+    expect(component.strings.title).toBe('import-popup.title');
+  });
 });

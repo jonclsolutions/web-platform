@@ -13,8 +13,9 @@
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { jsPDF } from 'jspdf';  // same module instance as the component's dynamic import
 import { SimpleChange } from '@angular/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { GraphBuilderComponent } from './graph-builder.component';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
@@ -283,5 +284,199 @@ describe('GraphBuilderComponent', () => {
     component.ngOnDestroy();
     expect(closed).toBe(1);
     expect(scrollLock.unlock).toHaveBeenCalled();
+  });
+  /** Renders the popup and waits until Chart.js drew every section. */
+  const renderAll = async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await (component as any).renderCharts();
+    (component as any).chartInstances.forEach((chart: any) => chart.draw());
+  };
+
+  /**
+   * @description Every section kind is drawn with Chart.js: bar / pie (outside labels plugin) /
+   *   doughnut / radar / polarArea distributions, category trend, metric bar + line, overall trend.
+   * @input status in each distribution mode, status2 as trend, price as bar metric; rendered popup.
+   * @output One chart per section with the matching type; pie gets the outsideLabels plugin and padding;
+   *   charts destroyed and recreated on the next render and on destroy.
+   */
+  it('draws every section with Chart.js', async () => {
+    const cols: any[] = [
+      ...['bar', 'pie', 'doughnut', 'radar', 'polarArea'].map(mode => ({ key: `s_${mode}`, label: mode, aggregation: 'count', mode })),
+      { key: 'status', label: 'Status', aggregation: 'count', mode: 'trend' },
+      { key: 'price', label: 'Price', aggregation: 'sum' },
+      { key: 'score', label: 'Score', aggregation: 'avg' }
+    ];
+    setColumns(cols);
+    cols.filter(c => c.mode).forEach(c => component.setColumnChartMode(c.key, c.mode));
+    component.setMetricChartMode('price', 'bar');
+    const data = rows.map(r => ({ ...r, s_bar: r.status, s_pie: r.status, s_doughnut: r.status, s_radar: r.status, s_polarArea: r.status }));
+    await generate(data);
+    await renderAll();
+
+    const charts = (component as any).chartInstances as any[];
+    expect(charts.map(c => c.config.type)).toEqual(['bar', 'pie', 'doughnut', 'radar', 'polarArea', 'line', 'bar', 'line', 'line']);
+    const pie = charts[1];
+    expect(pie.config.options.plugins.outsideLabels.enabled).toBeTrue();
+    expect(pie.config.plugins.map((pl: any) => pl.id)).toEqual(['outsideLabels']);
+    expect(charts[4].config.data.datasets[0].backgroundColor[0]).toMatch(/^rgba\(/);
+    expect(charts[3].config.options.scales.r).toBeDefined();
+    expect(charts[0].config.options.scales.y.beginAtZero).toBeTrue();
+
+    const destroy = spyOn(charts[0], 'destroy').and.callThrough();
+    await (component as any).renderCharts();
+    expect(destroy).toHaveBeenCalled();
+    component.ngOnDestroy();
+    expect((component as any).chartInstances.length).toBe(0);
+  });
+
+  /**
+   * @description Sidebar actions rebuild the generated report: column toggle / select-all,
+   *   chart modes, overall trend, value filter panel and its select-all.
+   * @input Generated report; each toggle once.
+   * @output Sections / selection follow; panel open state; values deselected → summary meta line.
+   */
+  it('rebuilds the report from the sidebar settings', async () => {
+    setColumns();
+    await generate();
+    component.toggleColumn('price', { target: { checked: false } } as any);
+    expect(component.reportSections.some(s => s.kind === 'metricTrend' && (s.section as any).columnKey === 'price')).toBeFalse();
+    expect(component.isAllColumnsSelected).toBeFalse();
+    component.toggleSelectAllColumns();
+    expect(component.isAllColumnsSelected).toBeTrue();
+    component.toggleSelectAllColumns();
+    expect(component.selectedColumnKeys.size).toBe(0);
+    expect(component.selectedColumnSummary).toBe('—');
+    component.toggleSelectAllColumns();
+    component.toggleColumn('price', { target: { checked: true } } as any);
+
+    component.toggleShowOverallTrend({ target: { checked: false } } as any);
+    expect(component.reportSections.some(s => s.kind === 'overallTrend')).toBeFalse();
+
+    expect(component.isValueFilterExpanded('status')).toBeFalse();
+    component.toggleValueFilterPanel('status');
+    expect(component.isValueFilterExpanded('status')).toBeTrue();
+    component.toggleValueFilterPanel('status');
+    expect(component.isValueFilterExpanded('status')).toBeFalse();
+
+    expect(component.isAllColumnValuesSelected('status')).toBeTrue();
+    component.toggleAllColumnValues('status');
+    expect(component.isAllColumnValuesSelected('status')).toBeFalse();
+    expect(component.reportMetaLines.some(l => l.startsWith('graph-builder.meta_excluded_values'))).toBeTrue();
+    component.toggleAllColumnValues('status');
+    expect(component.isAllColumnValuesSelected('status')).toBeTrue();
+    expect(component.isAllColumnValuesSelected('nope')).toBeFalse();
+    expect(component.isColumnValueSelected('nope', 'x')).toBeTrue();
+    component.toggleColumnValue('nope', 'x', { target: { checked: true } } as any);
+    expect(component.isColumnValueSelected('nope', 'x')).toBeTrue();
+
+    expect(component.aggregationLabel('count')).toBe('graph-builder.agg_count');
+    expect(component.aggregationLabel('sum')).toBe('graph-builder.agg_sum');
+    expect(component.aggregationLabel('avg')).toBe('graph-builder.agg_avg');
+  });
+
+  /**
+   * @description Texts of the report: descriptions of every section kind, legend only for the
+   *   category trend, title and meta lines, setting a mode before generation does not rebuild.
+   * @input Generated report with status as trend.
+   * @output desc_* keys; legend items with counts; title 'prefix — Orders'; 4 meta lines.
+   */
+  it('describes the sections and the report', async () => {
+    setColumns();
+    component.setColumnChartMode('status', 'trend');
+    component.setMetricChartMode('price', 'bar');
+    component.toggleShowOverallTrend({ target: { checked: true } } as any);
+    expect(component.reportSections).toEqual([]);
+    await generate();
+    const kinds = component.reportSections.map(d => d.kind);
+    expect(kinds).toEqual(['categoryTrend', 'metricTrend', 'metricTrend', 'overallTrend']);
+    expect(component.reportSections.map(d => component.sectionDescription(d))).toEqual([
+      'graph-builder.desc_category_trend', 'graph-builder.desc_metric_trend', 'graph-builder.desc_metric_trend', 'graph-builder.desc_overall_trend'
+    ]);
+    expect(component.sectionTitle(component.reportSections[2])).toBe('graph-builder.title_metric_trend');
+    expect(component.sectionTitle(component.reportSections[3])).toBe('graph-builder.title_overall_trend');
+    expect(component.legendItemsFor(component.reportSections[0])!.map(i => i.label)).toEqual(['open (2×)', 'closed (1×)', 'graph-builder.unfilled_value_label (1×)']);
+    expect(component.legendItemsFor(component.reportSections[1])).toBeNull();
+
+    component.setColumnChartMode('status', 'bar');
+    expect(component.sectionDescription(component.reportSections[0])).toBe('graph-builder.desc_distribution');
+    expect(component.reportTitle).toBe('graph-builder.report_title_prefix — Orders');
+    expect(component.reportMetaLines.length).toBe(4);
+    expect(component.selectedColumnSummary).toContain('Status (');
+    component.tableCaption = undefined;
+    expect(component.reportTitle).toContain('core/orders');
+  });
+
+  /**
+   * @description Load errors leave no report; a non-array answer counts as no rows; no rows
+   *   without dates → one-day range; both dates given → their range decides the granularity.
+   * @input getCollection error; {} answer; rows without dates; dateFrom/dateTo 2026-01-01..2026-12-31.
+   * @output reportGenerated false + loading false; 0 rows; granularity 'day'; 'month'.
+   */
+  it('handles load errors and unusual data', async () => {
+    setColumns();
+    (ctx.dataHandler as any).getCollection.and.returnValue(throwError(() => new Error('x')));
+    await component.generateReport();
+    expect(component.reportGenerated).toBeFalse();
+    expect(component.isLoading).toBeFalse();
+
+    await generate({} as any);
+    expect(component.lastRowCount).toBe(0);
+    await generate([{ status: 'a' }, { status: 'b', created_at: 'not a date' }]);
+    expect(component.trendGranularityLabel).toBe('graph-builder.granularity_day');
+    component.dateFrom = '2026-01-01';
+    component.dateTo = '2026-12-31';
+    await generate();
+    expect(component.trendGranularityLabel).toBe('graph-builder.granularity_month');
+    expect(component.periodLabel).toBe('2026-01-01 – 2026-12-31');
+  });
+
+  /**
+   * @description PDF export: nothing before a report; rendered report → html2canvas + jsPDF,
+   *   file name with the range, audit log 'export_report_pdf'; a failure shows the error alert.
+   * @input exportToPdf() before generation; after render (save spied); addImage throwing.
+   * @output no save; save('report-orders-2026-01-01_az_….pdf') + log; alert export_error_*.
+   */
+  it('exports the report as PDF', async () => {
+    setColumns();
+    await component.exportToPdf();
+    // jsPDF.save() is created per instance and downloads through an <a download> click
+    const downloads: string[] = [];
+    spyOn(HTMLAnchorElement.prototype, 'dispatchEvent').and.callFake(function (this: HTMLAnchorElement) { downloads.push(this.download); return true; });
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:test');
+    component.dateFrom = '2026-01-01';
+    await generate();
+    await component.exportToPdf();
+    expect(downloads).toEqual([]);
+
+    await renderAll();
+    await component.exportToPdf();
+    await new Promise(resolve => setTimeout(resolve, 20));  // FileSaver clicks the link in a timeout
+    expect(downloads).toEqual(['report-orders-2026-01-01_az_graph-builder.filename_end_fallback.pdf']);
+    expect((ctx.dataHandler as any).post.calls.mostRecent().args[1].event_type).toBe('export_report_pdf');
+    expect(component.isExportingPdf).toBeFalse();
+
+    spyOn(jsPDF.API as any, 'addImage').and.throwError('canvas');
+    await component.exportToPdf();
+    expect(ctx.alert.open).toHaveBeenCalledWith('graph-builder.export_error_title', 'graph-builder.export_error_message', 'danger');
+    component.ngOnDestroy();
+  }, 20000);
+  /**
+   * @description Trend with more than 8 categories folds the rest into "other" (respecting the
+   *   value filter); possible values without rows are listed with count 0.
+   * @input 10 categories c0..c9 (one row each) + possibleValues ['zero']; c9 deselected.
+   * @output 8 series (7 + other); other counts c7, c8 only (c9 filtered, zero has no rows); 'zero' in the catalog with 0.
+   */
+  it('folds trend categories into "other"', async () => {
+    setColumns([{ key: 'cat', label: 'Cat', aggregation: 'count', possibleValues: ['zero'] } as any]);
+    component.setColumnChartMode('cat', 'trend');
+    await generate(Array.from({ length: 10 }, (_, i) => ({ created_at: '2026-01-05', cat: `c${i}` })));
+    expect(component.columnValueCatalog.get('cat')!.find(e => e.value === 'zero')!.count).toBe(0);
+    component.toggleColumnValue('cat', 'c9', { target: { checked: false } } as any);
+    const trend = section('categoryTrend', 'cat');
+    expect(trend.series.length).toBe(8);
+    expect(trend.series[7].label).toBe('graph-builder.other_category_label');
+    expect(trend.series[7].values).toEqual([2]);
   });
 });

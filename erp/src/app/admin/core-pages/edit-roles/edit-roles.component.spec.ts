@@ -389,4 +389,126 @@ describe('EditRolesComponent', () => {
     expect(text).toContain('sysadmin');
     expect(text).toContain('editor');
   });
+  /**
+   * @description Failed role load → error alert; whole module toggle on / off; edits are
+   *   ignored without a role or for protected roles; single permission unticked again.
+   * @input roles request error; editor role: toggleModuleGroup(web) ×2; togglePermission ×2; protected role edits.
+   * @output alert load_roles_error; module full → empty; permission back to the original; protected unchanged.
+   */
+  it('handles load errors and module toggles', () => {
+    (ctx.dataHandler as any).getCollection.and.returnValue(throwError(() => new Error('x')));
+    component.ngOnInit();
+    expect(component.isLoading).toBeFalse();
+    expect(ctx.alert.open).toHaveBeenCalledWith('edit-roles.error_title', 'edit-roles.load_roles_error', 'danger');
+
+    component.togglePermission('web-news-view');
+    (ctx.dataHandler as any).getCollection.and.callFake(() => of(makeRoles()));
+    (component as any).resourceCache.invalidate((component as any).ROLES_CACHE_KEY);
+    component.ngOnInit();
+    component.selectRole(role(2));
+    const web = component.permissionGroups.find(g => g.module === 'web')!;
+    component.toggleModuleGroup(web);
+    expect(component.isModuleFullyChecked(web)).toBeTrue();
+    expect(component.isModulePartiallyChecked(web)).toBeFalse();
+    component.toggleModuleGroup(web);
+    expect(component.isModulePartiallyChecked(web)).toBeFalse();
+    expect(component.isChecked('web-news-view')).toBeFalse();
+    component.togglePermission('web-news-view');
+    component.togglePermission('web-news-view');
+    expect(component.isChecked('web-news-view')).toBeFalse();
+
+    spyOn(window, 'confirm').and.returnValue(true);  // unsaved changes → native confirm before switching
+    component.selectRole(role(1));
+    expect(window.confirm).toHaveBeenCalledWith('edit-roles.confirm_unsaved_switch');
+    component.toggleModuleGroup(web);
+    component.toggleResourceGroup(web.resources[0]);
+    expect(component.isModuleFullyChecked(web)).toBeFalse();
+  });
+
+  /**
+   * @description Saving details fails: API message or the translated fallback; the new role form
+   *   closes; a pending delete can be cancelled; texts of the page section.
+   * @input put error with / without message; open + close new role form; openDeleteConfirm + cancelDelete.
+   * @output alerts 'Name taken' / save_details_error; form closed; pendingDeleteRole null.
+   */
+  it('reports failed detail saves and cancels forms', () => {
+    component.ngOnInit();
+    component.selectRole(role(2));
+    component.startEditingDetails();
+    (ctx.dataHandler as any).put.and.returnValue(throwError(() => ({ error: { message: 'Name taken' } })));
+    component.saveDetails();
+    expect(ctx.alert.open).toHaveBeenCalledWith('edit-roles.error_title', 'Name taken', 'danger');
+    expect(component.isSavingDetails).toBeFalse();
+    (ctx.dataHandler as any).put.and.returnValue(throwError(() => ({})));
+    component.saveDetails();
+    expect(ctx.alert.open).toHaveBeenCalledWith('edit-roles.error_title', 'edit-roles.save_details_error', 'danger');
+
+    component.openNewRoleForm();
+    component.closeNewRoleForm();
+    expect(component.showNewRoleForm).toBeFalse();
+    component.openDeleteConfirm(role(2));
+    expect(component.pendingDeleteRole).toBe(role(2));
+    component.cancelDelete();
+    expect([component.pendingDeleteRole, component.deleteError]).toEqual([null, '']);
+    expect(component.t('x')).toBe('edit-roles.x');
+  });
+
+  /**
+   * @description Export formats: TXT (tab separated), JSON (keys as property names), XLSX download,
+   *   CSV escaping of separators / quotes; all columns when none chosen; an error during the
+   *   export shows the generic error; the popup cannot be closed while exporting.
+   * @input txt / json with columnKeys null; xlsx; csv with a description 'a,"b"'; failing row builder; closeExportPopup.
+   * @output headers from the column labels; JSON objects keyed by column key; '.xlsx' download; '"a,""b"""'; alert export_generic_error.
+   */
+  it('exports roles in every format', async () => {
+    component.ngOnInit();
+    const files: { name: string; blob: Blob }[] = [];
+    spyOn(component as any, 'triggerDownload').and.callFake((blob: Blob, name: string) => files.push({ name, blob }));
+    const keys = component.exportColumnOptions.map(c => c.key);
+
+    component.handleExportFormatSelected({ format: 'txt', columnKeys: null } as any);
+    const txt = await files[0].blob.text();
+    expect(txt.split('\n')[0].split('\t').length).toBe(keys.length);
+    component.handleExportFormatSelected({ format: 'json', columnKeys: ['role_name', 'permissions', 'forces_2fa'] } as any);
+    expect(JSON.parse(await files[1].blob.text())[1]).toEqual({ role_name: 'editor', permissions: 'web-news-view', forces_2fa: 'edit-roles.export_bool_no' });
+
+    role(2).description = 'a,"b"';
+    component.handleExportFormatSelected({ format: 'csv', columnKeys: ['description'] } as any);
+    expect(await files[2].blob.text()).toContain('"a,""b"""');
+
+    const names: string[] = [];
+    spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) { names.push(this.download); });
+    spyOn(HTMLAnchorElement.prototype, 'dispatchEvent').and.callFake(function (this: HTMLAnchorElement) { names.push(this.download); return true; });
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:x');
+    component.handleExportFormatSelected({ format: 'xlsx', columnKeys: ['role_name'] } as any);
+    await new Promise(resolve => setTimeout(resolve, 20));
+    expect(names.some(n => n.endsWith('.xlsx'))).toBeTrue();
+
+    spyOn(component as any, 'buildExportRows').and.throwError('boom');
+    component.handleExportFormatSelected({ format: 'csv', columnKeys: null } as any);
+    expect(ctx.alert.open).toHaveBeenCalledWith('edit-roles.error_title', 'edit-roles.export_generic_error', 'danger');
+    component.showExportPopup = true;
+    component.isExporting = true;
+    component.closeExportPopup();
+    expect(component.showExportPopup).toBeTrue();
+    component.isExporting = false;
+    component.closeExportPopup();
+    expect(component.showExportPopup).toBeFalse();
+  });
+
+  /**
+   * @description The real download helper creates a temporary link, clicks it and cleans up.
+   * @input triggerDownload(blob, 'roles.csv') with click / object URL spied.
+   * @output click on a link 'roles.csv'; link removed; URL revoked.
+   */
+  it('downloads through a temporary link', () => {
+    const clicked: string[] = [];
+    spyOn(HTMLAnchorElement.prototype, 'click').and.callFake(function (this: HTMLAnchorElement) { clicked.push(this.download); });
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:roles');
+    const revoke = spyOn(URL, 'revokeObjectURL');
+    (component as any).triggerDownload(new Blob(['x']), 'roles.csv');
+    expect(clicked).toEqual(['roles.csv']);
+    expect(revoke).toHaveBeenCalledWith('blob:roles');
+    expect(document.querySelector('a[download="roles.csv"]')).toBeNull();
+  });
 });

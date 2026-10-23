@@ -14,7 +14,7 @@
  */
 
 import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { AdministratorsComponent } from './administrators.component';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
@@ -362,5 +362,88 @@ describe('AdministratorsComponent', () => {
       component.handleResendActivation({ id: 8 });
       expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('core/users/8/resend-activation', {});
     });
+  });
+  describe('page plumbing', () => {
+    beforeEach(async () => { await setup('sysadmin'); });
+
+    /**
+     * @description Toolbar dispatch, filters, details and the caption.
+     * @input handleToolbarAction for each action + unknown; applyFilters / clearFilters; handleViewDetails without / with id.
+     * @output each handler once; filters set / reset + refresh; details only for an id; caption key.
+     */
+    it('dispatches toolbar actions, filters and details', fakeAsync(() => {
+      component.ngOnInit();
+      const handlers = ['toggleFilters', 'handleCreateFormOpened', 'exportActiveTable', 'openGraphBuilder', 'openEmailAccessPolicyModal', 'toggleTable']
+        .map(m => spyOn(component as any, m));
+      ['toggleFilters', 'handleCreateFormOpened', 'exportActiveTable', 'openGraphBuilder', 'openEmailAccessPolicy', 'toggleTable', 'nope']
+        .forEach(a => component.handleToolbarAction(a));
+      handlers.forEach(h => expect(h).toHaveBeenCalledTimes(1));
+
+      const refresh = spyOn(component, 'refreshData');
+      component.applyFilters({ role_id: 2 });
+      expect(component.filters).toEqual({ role_id: 2 });
+      component.clearFilters();
+      expect(component.filters).toEqual({ sort_by: 'id', sort_direction: 'desc' });
+      expect(refresh).toHaveBeenCalledTimes(2);
+
+      component.handleViewDetails({});
+      expect((ctx.dataHandler as any).getOne).not.toHaveBeenCalled();
+      (ctx.dataHandler as any).getOne.and.returnValue(of({ id: 4, user_email: 'x@firma.cz' }));
+      component.handleViewDetails({ id: 4 });
+      expect([component.showDetails, component.selectedItemForDetails.id]).toEqual([true, 4]);
+      expect(component.tableCaption).toBe('administrators.table_header_accounts');
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Saving a sysadmin account never sends is_blocked; a 2FA-forced role drops the 2FA fields.
+     * @input handleFormSubmitted for an existing sysadmin (is_blocked true) and a new editor (forces 2FA).
+     * @output PUT payload without is_blocked; POST payload without enable_2fa / two_fa_forced_by_admin.
+     */
+    it('strips fields the role does not allow', fakeAsync(() => {
+      component.ngOnInit();
+      component.handleEditFormOpened({ id: 9, role_id: 1, roles: [{ id: 1 }], user_email: 'root@firma.cz' });
+      (ctx.dataHandler as any).put.and.returnValue(of({ id: 9 }));
+      component.handleFormSubmitted({ id: 9, role_id: 1, user_email: 'root@firma.cz', is_blocked: true });
+      expect((ctx.dataHandler as any).put.calls.mostRecent().args[1].is_blocked).toBeUndefined();
+
+      component.handleCreateFormOpened();
+      (ctx.dataHandler as any).post.and.returnValue(of({ data: { id: 10 } }));
+      component.handleFormSubmitted({ role_id: 2, user_email: 'new@firma.cz', enable_2fa: false, two_fa_forced_by_admin: false });
+      const created = (ctx.dataHandler as any).post.calls.mostRecent().args[1];
+      expect(created.enable_2fa).toBeUndefined();
+      expect(created.two_fa_forced_by_admin).toBeUndefined();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Policy load / save failures stop the spinners; the modal cannot close while
+     *   saving; destroying the page with an open modal releases the scroll lock; the activation
+     *   button only for accounts without activation.
+     * @input policy GET error; PUT error; close while saving; destroy with modal open; visibleWhen.
+     * @output loading / saving false; modal stays open while saving; unlock on destroy; visibleWhen false / true.
+     */
+    it('recovers from e-mail policy errors', fakeAsync(() => {
+      (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'core/email-access-policy' ? throwError(() => new Error('x')) : of(rolesMeta));
+      component.ngOnInit();
+      component.openEmailAccessPolicyModal();
+      expect(component.emailAccessPolicyLoading).toBeFalse();
+      (ctx.dataHandler as any).put.and.returnValue(throwError(() => new Error('x')));
+      component.savePrimaryDomain();
+      expect(component.emailAccessPolicySaving).toBeFalse();
+      component.emailAccessPolicySaving = true;
+      component.savePrimaryDomain();
+      component.closeEmailAccessPolicyModal();
+      expect(component.showEmailAccessPolicyModal).toBeTrue();
+      component.emailAccessPolicySaving = false;
+
+      scrollLock.unlock.calls.reset();
+      fixture.destroy();
+      expect(scrollLock.unlock).toHaveBeenCalled();
+      const activate = component.buttons.find((b: any) => b.action === 'resend_activation') as any;
+      expect(activate.visibleWhen({ activated_at: '2026-01-01' })).toBeFalse();
+      expect(activate.visibleWhen({})).toBeTrue();
+      discardPeriodicTasks();
+    }));
   });
 });

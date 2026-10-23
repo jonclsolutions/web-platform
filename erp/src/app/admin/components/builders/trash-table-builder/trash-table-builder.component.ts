@@ -28,12 +28,16 @@
  * - PermissionService: Vyhodnocení `deletePermission` pro restore/delete/delete-all.
  * - IconComponent: Sdílená sada SVG ikon pro řádková tlačítka.
  * - AdminLocalizationService: i18n admin UI - viz refactor-note výše.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import {
   Component, Input, ChangeDetectionStrategy, Output, EventEmitter,
   ChangeDetectorRef, OnDestroy, OnChanges, SimpleChanges, inject
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -119,7 +123,7 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
     private cd: ChangeDetectorRef,
     private confirmDialogService: ConfirmDialogService,
   ) {
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.buttons = [
         { display_name: this.t('btn_restore'), header_name: this.t('btn_restore'), isActive: true, type: 'confirm_button', action: 'restore', icon: 'restore' },
         { display_name: this.t('btn_delete_permanently'), header_name: this.t('btn_delete_permanently'), isActive: true, type: 'delete_button', action: 'delete', icon: 'purge' },

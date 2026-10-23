@@ -13,9 +13,13 @@
  *   `permission_ids` multiselect (explicit extra permissions).
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the dashboard.
  * - ScrollLockService: Blocks page scrolling behind the e-mail access policy modal.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
@@ -128,7 +132,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
   ) {
     super(dataHandler, cd, genericTableService);
 
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.buttons = Config.createTableButtons(this.i18n).map(button => this.restrictRowButton(button));
       this.resetPasswordFormFields = Config.createResetPasswordFormFields(this.i18n);
       this.tableColumns = Config.createTableColumns(this.i18n);

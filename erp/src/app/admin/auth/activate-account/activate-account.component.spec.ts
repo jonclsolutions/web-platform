@@ -159,4 +159,22 @@ describe('ActivateAccountComponent', () => {
     component.onSubmit();
     http.expectNone(r => r.method === 'POST');
   });
+  /**
+   * @description Other server errors give the generic message; the password fields can be shown.
+   * @input POST answered 500; toggle both visibility switches.
+   * @output fieldError 'Setting the password failed…'; showPassword / showPasswordConfirmation true.
+   */
+  it('reports other errors and toggles the password fields', async () => {
+    await setup('tok');
+    http.expectOne(url('tok')).flush({ email: 'e', full_name: 'n' });
+    component.password = VALID;
+    component.passwordConfirmation = VALID;
+    component.onSubmit();
+    http.expectOne(r => r.method === 'POST').flush({}, { status: 500, statusText: 'Error' });
+    expect(component.fieldError).toContain('Setting the password failed');
+
+    component.togglePasswordVisibility();
+    component.toggleConfirmationVisibility();
+    expect([component.showPassword, component.showPasswordConfirmation]).toEqual([true, true]);
+  });
 });

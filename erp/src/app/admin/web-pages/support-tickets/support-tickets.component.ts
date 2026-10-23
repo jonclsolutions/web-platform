@@ -38,9 +38,13 @@
  * `toolbarButtons` getteru taky přes `t()` - getter samotný je bezpečný (nevrací
  * pole objektů čtené přes `track`, jde o `.map()` nad JIŽ přeloženými `buttons`, viz
  * `toolbarButtons` getter beze změny struktury).
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
@@ -102,7 +106,7 @@ export class SupportTicketsComponent extends BaseDataComponent<any> implements C
      * stejném místě - žádná zvláštní logika navíc, jen `.filter()/.map()` nad
      * čerstvě přiřazeným polem.
      */
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.buttons = Config.createSupportTicketButtons(this.i18n);
       this.formFields = Config.createSupportTicketFormFields(this.i18n);

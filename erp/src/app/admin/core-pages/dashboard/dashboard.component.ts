@@ -59,9 +59,13 @@
  *   activity požadavky se vůbec pošlou.
  * - ResourceCacheService: TTL cache pro stats/activity fetch.
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -404,7 +408,7 @@ statBarPct(stat: QuickStat): number {
      * donutit přehodnotit šablonu při přepnutí jazyka - stejný minimalistický vzor
      * jako `GraphBuilderComponent`.
      */
-    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
   override ngOnInit(): void {
@@ -476,6 +480,18 @@ statBarPct(stat: QuickStat): number {
     this.loadingStats = true;
 
     const allowedDefs = this.STAT_DEFS.filter(def => def.isAllowed());
+
+    // @bugfix-note (2026-10-23) Without any statistic permission `forkJoin({})` completed WITHOUT
+    // emitting - `next` never ran and the stats stayed in the loading state forever (open finding
+    // #14, same bug the web dashboard had). Nothing to load → done immediately.
+    if (allowedDefs.length === 0) {
+      this.quickStats = [];
+      this.loadingStats = false;
+      this.isRefreshing = false;
+      this.lastUpdatedAt = new Date();
+      this.cd.markForCheck();
+      return;
+    }
 
     this.resourceCache.get(this.STATS_CACHE_KEY, () => {
       const calls: Record<string, ReturnType<typeof this.dataHandler.getPaginatedCollection<any>>> = {};

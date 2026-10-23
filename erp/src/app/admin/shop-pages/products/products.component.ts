@@ -32,9 +32,13 @@
  *   nepřeložená - jde o dev diagnostiku, ne uživatelský text.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `getTrashToolbarButtons`.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
@@ -108,7 +112,7 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
   ) {
     super(dataHandler, cd, genericTableService);
 
-    this.i18n.translations$.subscribe(() => {
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.tableCaption = this.t('table_header');
       this.toolbarButtons = Config.createToolbarButtons(this.i18n).map(btn =>
         btn.permission && !this.permissionService.hasPermission(btn.permission) ? { ...btn, showIf: false } : btn);

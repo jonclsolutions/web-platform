@@ -60,9 +60,13 @@
  * - RxJS: Handles asynchronous data aggregation using forkJoin.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `currentDateTime`.
+ * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
+ *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
+ *   the component (`takeUntilDestroyed()`).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -407,7 +411,7 @@ get distributionSegments(): DistributionSegment[] {
      * `CoreDashboardComponent`/`GraphBuilderComponent` - žádné pole se nepřestavuje,
      * jen se OnPush komponenta donutí přehodnotit šablonu při přepnutí jazyka.
      */
-    this.i18n.translations$.subscribe(() => this.cd.markForCheck());
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
   }
 
   override ngOnInit(): void {
