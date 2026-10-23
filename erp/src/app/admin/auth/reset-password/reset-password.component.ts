@@ -23,6 +23,9 @@
  * - Router: redirects back to sign-in after a successful reset.
  * - PasswordRequirementsChecklistComponent: live visual checklist of the password rules.
  * - shared/utils/password-validation: `isPasswordValid()` - same rules as the backend.
+ * @bugfix-note (2026-10-23) Open finding #39: the page was English-only (template texts and the
+ *   error messages); everything comes from the admin translations `reset-password` now. API error
+ *   texts (English) are no longer shown - the status decides the translated message.
  */
 
 import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
@@ -33,11 +36,11 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { isPasswordValid } from '../../../shared/utils/password-validation';
+import { fillPasswordLimits } from '../../../shared/constants/password-policy';
+import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 /** Delay before the automatic redirect to sign-in after a successful reset (ms). */
 const REDIRECT_DELAY_MS = 4000;
 
-/** Fallback message when the API error carries no usable text. */
-const GENERIC_ERROR = 'The link is invalid or has expired. Please request a new one.';
 
 /**
  * @description Handles the "set a new password" step of the reset flow: validates the
@@ -65,7 +68,8 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
   tokenMissing = false;
   isSubmitting = false;
   success = false;
-  errorMessage = '';
+  /** Translation key (section `reset-password`) of the error shown under the form, '' = none. */
+  errorKey = '';
 
   readonly minLength = PASSWORD_MIN_LENGTH;
   readonly maxLength = PASSWORD_MAX_LENGTH;
@@ -80,8 +84,23 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private i18n: AdminLocalizationService
   ) {}
+
+  /**
+   * @description Text of the page in the admin language (finding #39 - was English-only).
+   * @param key Key inside the `reset-password` section.
+   * @returns Translated text.
+   */
+  t(key: string): string {
+    return this.i18n.getValue(`reset-password.${key}`);
+  }
+
+  /** Placeholder of the password field with the length limits filled in. */
+  get lengthPlaceholder(): string {
+    return fillPasswordLimits(this.t('placeholder_password'));
+  }
 
   ngOnInit(): void {
     this.token = this.route.snapshot.queryParamMap.get('token') ?? '';
@@ -143,20 +162,20 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
    * @note Backend errors (invalid/expired token, policy violation) are shown to the user.
    */
   onSubmit(): void {
-    this.errorMessage = '';
+    this.errorKey = '';
 
     if (this.tokenMissing) {
-      this.errorMessage = 'This link is invalid. Please request a new password reset from the sign-in page.';
+      this.errorKey = 'error_token_missing';
       return;
     }
 
     if (!this.passwordValid) {
-      this.errorMessage = 'The password does not meet all the requirements listed above.';
+      this.errorKey = 'error_policy';
       return;
     }
 
     if (!this.passwordConfirmation || this.passwordsMismatch) {
-      this.errorMessage = "The passwords don't match.";
+      this.errorKey = 'error_mismatch';
       return;
     }
 
@@ -183,32 +202,27 @@ export class ResetPasswordComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.isSubmitting = false;
-          this.errorMessage = this.extractErrorMessage(error);
+          this.errorKey = this.errorKeyFor(error);
           this.cdr.detectChanges();
         }
       });
   }
 
   /**
-   * @description Turns an API error into one user-facing sentence.
-   * @param error Either an HttpErrorResponse or an already-normalised `{ message }` object
-   *              (depending on how AuthService maps errors).
-   * @returns The first Laravel validation error (422), else the API message, else a
-   *          generic fallback.
-   * @note Laravel 422 bodies look like `{ message, errors: { field: [msg, ...] } }`; the
-   *       first field message is clearer than the summary "(and 2 more errors)".
+   * @description Translation key of the message for a failed reset (finding #39: the API texts are
+   *   English, the page shows its own translated messages).
+   * @param error HttpErrorResponse (or an already-normalised `{ status, errors }` object).
+   * @returns 'error_network' (no connection), 'error_policy' (422 for the password), else
+   *   'error_generic' (invalid / expired link, server error).
    */
-  private extractErrorMessage(error: any): string {
+  private errorKeyFor(error: any): string {
     const body = error?.error ?? error;
-    const fieldErrors = body?.errors;
-
-    if (fieldErrors && typeof fieldErrors === 'object') {
-      const first = Object.values(fieldErrors).flat()[0];
-      if (typeof first === 'string' && first) {
-        return first;
-      }
+    if (error?.status === 0) {
+      return 'error_network';
     }
-
-    return body?.message || error?.message || GENERIC_ERROR;
+    if (body?.errors?.password) {
+      return 'error_policy';
+    }
+    return 'error_generic';
   }
 }

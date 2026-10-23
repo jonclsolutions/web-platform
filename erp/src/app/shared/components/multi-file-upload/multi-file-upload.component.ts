@@ -100,22 +100,22 @@ export interface MultiFileUploadTexts {
 }
 
 /**
- * @description Výchozí (fallback) texty - české, zachovávají PŮVODNÍ chování komponenty
- * pro jakéhokoliv konzumenta, který `textOverrides` zatím nepředává (aby tahle změna
- * nikde nic nerozbila). Noví/upravovaní konzumenti by měli předat plnou lokalizovanou
- * sadu ze svojí i18n vrstvy.
+ * @description Neutral English fallback texts - only for a consumer without `textOverrides`
+ * (every current consumer passes its own translated set: admin form builder, contact, order form).
+ * @bugfix-note (2026-10-23) Were Czech (also the `label` default 'Přílohy') - shown in any language
+ *   to a consumer without overrides (open finding #44).
  */
 export const DEFAULT_MULTI_FILE_UPLOAD_TEXTS: MultiFileUploadTexts = {
-  limitsHint: '(max. {max} souborů, {maxMb} MB/soubor, {totalMb} MB celkem)',
-  existingSectionTitle: 'Již nahrané přílohy ({count})',
-  removeExistingTitle: 'Odebrat přílohu',
-  dropzoneLabel: '↑ Vyberte soubory nebo je přetáhněte sem',
-  errorMaxFilesWithExisting: 'Můžete mít nahráno maximálně {max} souborů (včetně {existing} již existujících).',
-  errorMaxFiles: 'Můžete nahrát maximálně {max} souborů.',
-  errorFileTooLarge: 'Soubor "{filename}" přesahuje limit {maxMb} MB.',
-  errorTotalSizeExceeded: 'Celková velikost příloh nesmí přesáhnout {maxMb} MB.',
-  totalLabel: 'Celkem: {count} / {max} souborů',
-  totalNewSuffix: ' ({size} nových)',
+  limitsHint: '(max. {max} files, {maxMb} MB per file, {totalMb} MB in total)',
+  existingSectionTitle: 'Uploaded attachments ({count})',
+  removeExistingTitle: 'Remove attachment',
+  dropzoneLabel: '↑ Choose files or drop them here',
+  errorMaxFilesWithExisting: 'You can have at most {max} files (including {existing} already uploaded).',
+  errorMaxFiles: 'You can upload at most {max} files.',
+  errorFileTooLarge: 'The file "{filename}" exceeds the {maxMb} MB limit.',
+  errorTotalSizeExceeded: 'The attachments must not exceed {maxMb} MB in total.',
+  totalLabel: 'Total: {count} / {max} files',
+  totalNewSuffix: ' ({size} new)',
 };
 
 @Component({
@@ -130,7 +130,7 @@ export class MultiFileUploadComponent {
   @Input() maxFiles = 10;
   @Input() maxFileSizeMb = 20;
   @Input() maxTotalSizeMb = 50;
-  @Input() label = 'Přílohy';
+  @Input() label = 'Attachments';
 
   /**
    * @description Read-only přílohy, které záznam už má (z API) - komponenta je sama

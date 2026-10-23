@@ -4,8 +4,8 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Unit tests of PublicFooterComponent: link groups (translated titles with the
- *   Czech fallback), legal and login links, the copyright / tagline per language (localized
+ * @description Unit tests of PublicFooterComponent: link groups (translated titles, no Czech
+ *   fallback any more - finding #44), legal and login links, the copyright / tagline per language (localized
  *   setting → plain setting → translation) and rendering without a contact phone (bugfix
  *   2026-10-23 - the footer is on every web page).
  * @dependencies
@@ -36,15 +36,16 @@ describe('PublicFooterComponent', () => {
   });
 
   /**
-   * @description Groups with translated / fallback titles, link texts from getText (key when
-   *   missing), legal and login links; renders without a phone in the settings.
+   * @description Groups with translated titles (an untranslated group title stays empty instead of
+   *   a Czech fallback, finding #44), link texts from getText (key when missing), legal and login
+   *   links; renders without a phone in the settings.
    * @input Translations with group_offer only.
-   * @output ['Offer', 'Společnost', 'Podpora']; 'Services', key for missing; /shop external;
+   * @output ['Offer', '', '']; 'Services', key for missing; /shop external;
    *   legal 3 links; login '/auth/login' 'Login'; 'RPSW' + 'a@b.cz' rendered.
    */
   it('builds the link groups and renders without a phone', () => {
     expect(ctx.localization.setModule).toHaveBeenCalledWith('web');
-    expect(footer.footerLinkGroups.map(g => g.title)).toEqual(['Offer', 'Společnost', 'Podpora']);
+    expect(footer.footerLinkGroups.map(g => g.title)).toEqual(['Offer', '', '']);
     expect(footer.footerLinkGroups[0].links.map(l => [l.route, l.text, l.external])).toEqual([
       ['/services', 'Services', false], ['/references', 'navigation.references_full', false], ['/shop', 'navigation.shop', true]
     ]);

@@ -8,6 +8,10 @@
  * @dependencies
  * - BehaviorSubject: Reactive stream for maintaining and broadcasting current permission sets.
  * - Injectable: Angular decorator for service lifecycle management.
+ * @refactor-note (2026-10-23) Removed the restore from `localStorage.userPermissions` (open finding
+ *   #38): nothing writes that key - AuthService keeps the permissions in sessionStorage and calls
+ *   setPermissions() on start / login. A stale or hand-written localStorage value could only
+ *   show UI the API refuses anyway.
  */
 
 import { Injectable } from '@angular/core';
@@ -16,7 +20,7 @@ import { BehaviorSubject } from 'rxjs';
 /**
  * @description Centralized service for role-based access control (RBAC).
  * @usage Used across the application to guard UI components, toolbar buttons, and navigation routes based on user credentials.
- * @note Initializes state from localStorage to persist authorization during browser refreshes.
+ * @note The state is filled by AuthService (session restore / login), never from browser storage.
  */
 @Injectable({
   providedIn: 'root'
@@ -24,17 +28,6 @@ import { BehaviorSubject } from 'rxjs';
 export class PermissionService {
   /** Reactive store for the user's active permission keys */
   private userPermissions$ = new BehaviorSubject<string[]>([]);
-
-  constructor() {
-    const savedPermissions = localStorage.getItem('userPermissions');
-    if (savedPermissions) {
-      try {
-        this.userPermissions$.next(JSON.parse(savedPermissions));
-      } catch (e) {
-        console.error('Parsing error in userPermissions', e);
-      }
-    }
-  }
 
   /**
    * @description Updates the current user's permission set.

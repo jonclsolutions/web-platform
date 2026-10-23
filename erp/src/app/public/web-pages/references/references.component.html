@@ -13,6 +13,8 @@
         tech stack, result). Accordion rewritten to grid-rows animation (no
         fixed max-height), accessible accordion pattern (h2 > button,
         aria-controls, region, inert when collapsed).
+    @bugfix-note (2026-10-23) Czech fallbacks of the detail labels removed (open finding #44) - the
+        texts are in the `projects` translations (label_features … label_result).
 -->
 @if (t) {
 <div class="ref-page content-page">
@@ -81,7 +83,7 @@
                   <!-- Key features -->
                   @if (project.features?.length) {
                     <div class="ref-section">
-                      <h3 class="ref-section-title">{{ t.label_features ?? 'Klíčové funkce' }}</h3>
+                      <h3 class="ref-section-title">{{ t.label_features }}</h3>
                       <ul class="ref-features">
                         @for (feature of project.features; track feature) {
                           <li>{{ feature }}</li>
@@ -94,35 +96,35 @@
 
                     <!-- Fact sheet -->
                     <div class="ref-panel">
-                      <h3 class="ref-section-title">{{ t.label_facts ?? 'O projektu' }}</h3>
+                      <h3 class="ref-section-title">{{ t.label_facts }}</h3>
                       <dl class="ref-dl">
                         @if (project.category) {
                           <div class="ref-dl-row">
-                            <dt>{{ t.label_category ?? 'Oblast' }}</dt>
+                            <dt>{{ t.label_category }}</dt>
                             <dd>{{ getCategoryLabel(project.category) }}</dd>
                           </div>
                         }
                         @if (project.size) {
                           <div class="ref-dl-row">
-                            <dt>{{ t.label_scope ?? 'Rozsah' }}</dt>
+                            <dt>{{ t.label_scope }}</dt>
                             <dd>{{ project.size }}</dd>
                           </div>
                         }
                         @if (project.role) {
                           <div class="ref-dl-row">
-                            <dt>{{ t.label_role ?? 'Naše role' }}</dt>
+                            <dt>{{ t.label_role }}</dt>
                             <dd>{{ project.role }}</dd>
                           </div>
                         }
                         @if (project.duration) {
                           <div class="ref-dl-row">
-                            <dt>{{ t.label_duration ?? 'Realizace' }}</dt>
+                            <dt>{{ t.label_duration }}</dt>
                             <dd>{{ project.duration }}</dd>
                           </div>
                         }
                         @if (project.client) {
                           <div class="ref-dl-row">
-                            <dt>{{ t.label_client ?? 'Klient' }}</dt>
+                            <dt>{{ t.label_client }}</dt>
                             <dd>{{ project.client }}</dd>
                           </div>
                         }
@@ -132,7 +134,7 @@
                     <!-- Technology stack -->
                     @if (project.stack?.length) {
                       <div class="ref-panel">
-                        <h3 class="ref-section-title">{{ t.label_stack ?? 'Technologický stack' }}</h3>
+                        <h3 class="ref-section-title">{{ t.label_stack }}</h3>
                         <dl class="ref-dl">
                           @for (layer of project.stack; track layer.label) {
                             <div class="ref-dl-row">
@@ -148,7 +150,7 @@
                   <!-- Result -->
                   @if (project.result) {
                     <p class="ref-result">
-                      <span class="ref-result-label">{{ t.label_result ?? 'Výsledek' }}</span>
+                      <span class="ref-result-label">{{ t.label_result }}</span>
                       {{ project.result }}
                     </p>
                   }

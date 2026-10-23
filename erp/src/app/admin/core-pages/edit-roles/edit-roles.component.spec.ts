@@ -155,20 +155,24 @@ describe('EditRolesComponent', () => {
   });
 
   /**
-   * @description Switching roles with unsaved changes asks first; "cancel" keeps the current role.
-   * @input  editor with a toggled permission; window.confirm → false, then → true; selectRole(manager)
-   * @output still editor after cancel; manager after confirm; dirty reset
+   * @description Switching roles with unsaved changes asks first in the app dialog (not the native
+   *   window.confirm, finding #48); "cancel" keeps the current role.
+   * @input  editor with a toggled permission; dialog → false, then → true; selectRole(manager)
+   * @output dialog ('…confirm_unsaved_switch_title', '…confirm_unsaved_switch'); still editor after cancel;
+   *   manager after confirm; dirty reset; window.confirm never used
    */
-  it('asks before leaving unsaved changes', () => {
+  it('asks before leaving unsaved changes', async () => {
     component.ngOnInit();
-    component.selectRole(role(2));
+    await component.selectRole(role(2));
     component.togglePermission('web-about-view');
-    const confirmSpy = spyOn(window, 'confirm').and.returnValue(false);
-    component.selectRole(role(3));
-    expect(confirmSpy).toHaveBeenCalledWith('edit-roles.confirm_unsaved_switch');
+    const nativeConfirm = spyOn(window, 'confirm');
+    ctx.confirm.open.and.returnValue(Promise.resolve(false));
+    await component.selectRole(role(3));
+    expect(ctx.confirm.open).toHaveBeenCalledWith('edit-roles.confirm_unsaved_switch_title', 'edit-roles.confirm_unsaved_switch');
     expect(component.selectedRole?.id).toBe(2);
-    confirmSpy.and.returnValue(true);
-    component.selectRole(role(3));
+    ctx.confirm.open.and.returnValue(Promise.resolve(true));
+    await component.selectRole(role(3));
+    expect(nativeConfirm).not.toHaveBeenCalled();
     expect(component.selectedRole?.id).toBe(3);
     expect(component.isPermissionsDirty).toBeFalse();
   });
@@ -359,9 +363,12 @@ describe('EditRolesComponent', () => {
   });
 
   /**
-   * @description Export with no roles shows an error; a CSV export downloads a file and closes the popup.
-   * @input  roles []; openExportPopup(); then roles loaded; handleExportFormatSelected({ format: 'csv', columnKeys: ['role_name'] })
-   * @output alert 'edit-roles.export_empty_error'; triggerDownload called with 'edit-roles.export_filename_prefix-<date>.csv'; popup closed
+   * @description Export with no roles shows an error; a CSV export downloads a file, closes the popup and is
+   *   written to the core audit log (finding #49); a failing log write only goes to the console.
+   * @input  roles []; openExportPopup(); then roles loaded; handleExportFormatSelected({ format: 'csv', columnKeys: ['role_name'] });
+   *         log post fails
+   * @output alert 'edit-roles.export_empty_error'; triggerDownload called with 'edit-roles.export_filename_prefix-<date>.csv'; popup closed;
+   *   post('core/logs', { event_type 'export_csv', module 'core/roles', description with the role count }); console.error
    */
   it('exports the roles', () => {
     component.roles = [];
@@ -376,6 +383,13 @@ describe('EditRolesComponent', () => {
     expect(download).toHaveBeenCalledWith(jasmine.any(Blob), `edit-roles.export_filename_prefix-${new Date().toISOString().slice(0, 10)}.csv`);
     expect(component.showExportPopup).toBeFalse();
     expect(component.isExporting).toBeFalse();
+    expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('core/logs', {
+      event_type: 'export_csv', module: 'core/roles', description: `User exported ${component.roles.length} roles (CSV).`
+    });
+    const err = spyOn(console, 'error');
+    (ctx.dataHandler as any).post.and.returnValue(throwError(() => new Error('x')));
+    component.handleExportFormatSelected({ format: 'csv', columnKeys: ['role_name'] } as any);
+    expect(err).toHaveBeenCalledWith('Failed to log export:', jasmine.any(Error));
   });
 
   /**
@@ -395,7 +409,7 @@ describe('EditRolesComponent', () => {
    * @input roles request error; editor role: toggleModuleGroup(web) ×2; togglePermission ×2; protected role edits.
    * @output alert load_roles_error; module full → empty; permission back to the original; protected unchanged.
    */
-  it('handles load errors and module toggles', () => {
+  it('handles load errors and module toggles', async () => {
     (ctx.dataHandler as any).getCollection.and.returnValue(throwError(() => new Error('x')));
     component.ngOnInit();
     expect(component.isLoading).toBeFalse();
@@ -417,9 +431,9 @@ describe('EditRolesComponent', () => {
     component.togglePermission('web-news-view');
     expect(component.isChecked('web-news-view')).toBeFalse();
 
-    spyOn(window, 'confirm').and.returnValue(true);  // unsaved changes → native confirm before switching
-    component.selectRole(role(1));
-    expect(window.confirm).toHaveBeenCalledWith('edit-roles.confirm_unsaved_switch');
+    ctx.confirm.open.and.returnValue(Promise.resolve(true));  // unsaved changes → app dialog before switching (finding #48)
+    await component.selectRole(role(1));
+    expect(ctx.confirm.open).toHaveBeenCalledWith('edit-roles.confirm_unsaved_switch_title', 'edit-roles.confirm_unsaved_switch');
     component.toggleModuleGroup(web);
     component.toggleResourceGroup(web.resources[0]);
     expect(component.isModuleFullyChecked(web)).toBeFalse();

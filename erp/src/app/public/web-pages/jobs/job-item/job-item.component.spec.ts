@@ -6,9 +6,10 @@
  * @created 2026
  * @description Unit tests of JobItemComponent (job detail + application form): job content by the route id,
  *   form validation (Unicode names, e-mail, phone, consent), the CV size limit (20 MB) and the
- *   multipart submit with success / API error.
+ *   multipart submit with success / API error; a public page (BasePublicComponent, finding #47) with
+ *   translated texts only (finding #44).
  * @dependencies
- * - createAdminTestContext (BaseDataComponent services) + createPublicPageContext; ActivatedRoute with paramMap id.
+ * - createPublicPageContext (translations, site settings cache); ActivatedRoute with paramMap id.
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -16,24 +17,20 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { JobItemComponent } from './job-item.component';
-import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
 import { PublicPageContext, createPublicPageContext } from '../../../../../testing/public-test-helpers';
 
 describe('JobItemComponent', () => {
-  let admin: AdminTestContext;
   let ctx: PublicPageContext;
   let fixture: ComponentFixture<JobItemComponent>;
   let component: JobItemComponent;
-  const jobs = { dev: { title: 'Developer', content: '<p>Code</p>' }, form_error_generic: 'Try again' };
+  const jobs = { dev: { title: 'Developer', content: '<p>Code</p>' }, form_error_generic: 'Try again', form_too_many_requests: 'Slow down' };
 
   /** Creates the page for the job id in the route. */
   function create(id: string | null = 'dev'): void {
-    admin = createAdminTestContext();
-    ctx = createPublicPageContext({ translations: { jobs } });
-    ctx.publicData.get.and.returnValue(of({ settings: { contact_email: 'hr@x.cz' } }));
+    ctx = createPublicPageContext({ translations: { jobs }, settings: { settings: { contact_email: 'hr@x.cz' } } });
     TestBed.configureTestingModule({
       imports: [JobItemComponent],
-      providers: [...admin.providers, ...ctx.providers.slice(3), { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } } }]
+      providers: [...ctx.providers, { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } } }]
     });
     fixture = TestBed.createComponent(JobItemComponent);
     component = fixture.componentInstance;
@@ -47,15 +44,16 @@ describe('JobItemComponent', () => {
   const cv = (size = 1000) => { const f = new File(['cv'], 'cv.pdf'); Object.defineProperty(f, 'size', { value: size }); return f; };
 
   /**
-   * @description Job content of the route id and the site settings are loaded; an unknown id
-   *   leaves the job empty.
+   * @description Job content of the route id and the site settings (startup cache, no own request)
+   *   are loaded; an unknown id leaves the job empty; no admin services / i18n (finding #47).
    * @input id 'dev'; id 'missing'.
-   * @output job {Developer, <p>Code</p>}, settings from public/legal/config; job null.
+   * @output job {Developer, <p>Code</p>}, settings from the cache, no GET; web module; job null.
    */
   it('loads the job by the route id', () => {
     create();
     expect(component.job).toEqual({ title: 'Developer', fullContent: '<p>Code</p>' });
-    expect(ctx.publicData.get).toHaveBeenCalledWith('public/legal/config');
+    expect(ctx.publicData.get).not.toHaveBeenCalled();
+    expect(ctx.localization.setModule).toHaveBeenCalledWith('web');
     expect(component.settings).toEqual({ contact_email: 'hr@x.cz' });
     expect(fixture.nativeElement.textContent).toContain('Developer');
 
@@ -106,9 +104,9 @@ describe('JobItemComponent', () => {
   /**
    * @description Submit: invalid form or missing CV only marks the fields; a valid application
    *   is posted as FormData (consent '1', position name, CV); success shows the thank-you state;
-   *   errors show the API message or the translated fallback.
-   * @input Submit empty; valid without CV; valid + CV ok; API error with message; without message.
-   * @output No post + touched; no post; post job_applications with fields; isSubmitted; 'Bad CV'; 'Try again'.
+   *   errors show the translated text (never the English API message, findings #44 / #53).
+   * @input Submit empty; valid without CV; valid + CV ok; API error with message; without message; 429.
+   * @output No post + touched; no post; post job_applications with fields; isSubmitted; 'Try again' twice; 'Slow down'.
    */
   it('submits the application', () => {
     create();
@@ -131,9 +129,12 @@ describe('JobItemComponent', () => {
 
     ctx.publicData.post.and.returnValue(throwError(() => ({ error: { message: 'Bad CV' } })));
     component.onSubmit();
-    expect(component.errorMessage).toBe('Bad CV');
+    expect(component.errorMessage).toBe('Try again');
     ctx.publicData.post.and.returnValue(throwError(() => ({})));
     component.onSubmit();
     expect(component.errorMessage).toBe('Try again');
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 429 })));
+    component.onSubmit();
+    expect(component.errorMessage).toBe('Slow down');
   });
 });

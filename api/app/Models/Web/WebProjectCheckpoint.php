@@ -12,6 +12,8 @@
  * (nezahájeno / rozpracováno / hotovo), ne jen binárnímu hotovo/nehotovo.
  * `status_changed_at` se aktualizuje při KAŽDÉ změně stavu (ne jen při přechodu na
  * 'done') - viz `setStatus()`.
+ * @refactor-note (2026-10-23) Open finding #52: the exception of `setStatus()` is English
+ *   ("Invalid checkpoint status") like the other API messages; it reaches only logs / tests.
  */
 
 namespace App\Models\Web;
@@ -50,7 +52,7 @@ class WebProjectCheckpoint extends Model
     public function setStatus(string $status): void
     {
         if (!in_array($status, self::STATUSES, true)) {
-            throw new \InvalidArgumentException("Neplatný stav checkpointu: {$status}");
+            throw new \InvalidArgumentException("Invalid checkpoint status: {$status}");
         }
         $this->status = $status;
         $this->status_changed_at = now();

@@ -18,23 +18,18 @@ import { createPublicPageContext } from '../../../../testing/public-test-helpers
 
 describe('WebLayoutComponent', () => {
   /**
-   * @description Layout start initialises analytics (consent mode); menu open / close toggles
-   *   the 'no-scroll' class on <html>.
-   * @input detectChanges(); toggleRootScroll(true); toggleRootScroll(false).
-   * @output AnalyticsService.init once; class added; class removed.
+   * @description Layout start initialises analytics (consent mode) and renders the header.
+   * @input detectChanges().
+   * @output AnalyticsService.init once; app-public-header rendered.
    */
-  it('initialises analytics and locks the page scroll for the menu', () => {
+  it('initialises analytics and renders the header', () => {
     const analytics = jasmine.createSpyObj('AnalyticsService', ['init']);
     const ctx = createPublicPageContext();
     TestBed.configureTestingModule({ imports: [WebLayoutComponent], providers: [...ctx.providers, { provide: AnalyticsService, useValue: analytics }] });
     const fixture = TestBed.createComponent(WebLayoutComponent);
     fixture.detectChanges();
     expect(analytics.init).toHaveBeenCalledTimes(1);
-
-    fixture.componentInstance.toggleRootScroll(true);
-    expect(document.documentElement.classList.contains('no-scroll')).toBeTrue();
-    fixture.componentInstance.toggleRootScroll(false);
-    expect(document.documentElement.classList.contains('no-scroll')).toBeFalse();
+    expect(fixture.nativeElement.querySelector('app-public-header')).not.toBeNull();
     fixture.destroy();
   });
 });

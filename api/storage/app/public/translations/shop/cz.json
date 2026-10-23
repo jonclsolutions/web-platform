@@ -70,7 +70,8 @@
         "loading": "Načítám detail produktu...",
         "errors": {
             "unavailable": "Produkt je momentálně nedostupný.",
-            "max_stock": "Nelze objednat více než {count} ks."
+            "max_stock": "Nelze objednat více než {count} ks.",
+            "alert_title": "Nelze přidat do košíku"
         }
     },
     "cart": {
@@ -165,21 +166,28 @@
             "postal_code_invalid": "Zadejte platné PSČ (např. 110 00 nebo 11000).",
             "shipping_required": "Vyberte způsob dopravy.",
             "payment_required": "Vyberte způsob platby.",
-            "terms_required": "Pro dokončení musíte souhlasit s obchodními podmínkami."
+            "terms_required": "Pro dokončení musíte souhlasit s obchodními podmínkami.",
+            "invalid_value": "Zkontrolujte prosím tuto hodnotu."
         },
         "alerts": {
             "form_incomplete_title": "Formulář je nekompletní",
             "form_incomplete_message": "Zkontrolujte prosím červeně označená pole.",
             "stock_title": "Skladová zásoba",
             "error_title": "Chyba",
-            "order_failed_message": "Objednávku se nepodařilo vytvořit. Zkuste to prosím znovu."
-        }
+            "order_failed_message": "Objednávku se nepodařilo vytvořit. Zkuste to prosím znovu.",
+            "price_invalid_message": "Produkt „{product}“ nemá platnou cenu a nelze ho objednat. Odeberte ho prosím z košíku.",
+            "stock_message": "Některá položka košíku už není v požadovaném množství dostupná. Upravte prosím košík.",
+            "order_rejected_message": "Objednávku nelze dokončit – některá položka už není dostupná nebo se změnila. Zkontrolujte prosím košík.",
+            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
+        },
+        "coupon_too_many": "Příliš mnoho pokusů o zadání kódu. Zkuste to prosím za chvíli."
     },
     "api_errors": {
         "generic": "Při komunikaci s e-shopem nastala chyba.",
         "network": "Chyba sítě: {message}",
         "not_found": "Požadovaná data nebyla nalezena.",
         "quantity_unavailable": "Požadované množství není dostupné.",
-        "server": "Chyba na straně serveru."
+        "server": "Chyba na straně serveru.",
+        "too_many_requests": "Příliš mnoho požadavků. Zkuste to prosím za chvíli znovu."
     }
 }

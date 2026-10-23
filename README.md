@@ -267,6 +267,41 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
    - public web, e-shop, admin login, sending an e-mail
    - `curl -I https://<domain>/laravel/.env` must return **403 or 404**, never 200
 
+### One-time steps of the October 2026 fixes (findings-fixes 1–3)
+
+Run once on the first release that contains them (back up the database first):
+
+1. **SQL migrations** (`database/migrations/`, in this order, phpMyAdmin → *Import* or
+   `mysql -u <user> -p <db> < file.sql`):
+   - `2026_10_23_shop_orders_vat_contact_retention.sql` – VAT rate per order line, buyer
+     snapshot on the order, orders kept when a customer is deleted
+   - `2026_10_24_enum_slug_column_defaults.sql` – English slug defaults of status / priority /
+     state (raw requests, sales leads, job applications)
+2. **Legacy attachments to the private disk** (GDPR, in `laravel/`):
+   `php artisan attachments:migrate-legacy --dry-run`, check the output, then without `--dry-run`
+3. **Clear caches**: `php artisan optimize:clear`, then the `config:cache` / `route:cache` /
+   `view:cache` of step 6
+4. **Runtime translations** – the public web / shop texts live in
+   `laravel/storage/app/public/translations/{web,shop}/<lang>.json` on the server and are **not**
+   part of the package (they are edited in the admin). Add the new keys to every language file
+   there (admin → translations, or copy the values from the repo `cz.json`); a missing key shows
+   an empty text:
+   - web: `login.errors.{too_many_attempts, login_failed, verification_failed, request_failed}`,
+     `tos` / `privacy_policy` / `cookies_policy.effective_from_text`,
+     `contact.errors.{submit_error_title, too_many_requests}`, `faq.empty_state_text`,
+     `jobs.{form_first_name_pattern_error, form_last_name_pattern_error, form_phone_pattern_error,
+     form_cv_size_error, form_too_many_requests}`, `order_form.errors.too_many_requests`,
+     `order_form.link_states.{loading, invalid_title, invalid_text, used_title, used_text}`,
+     `projects.label_{category, client, duration, facts, features, result, role, scope, stack}`,
+     `services.cards.{admin, auth, custom, hosting, integrations, security, seo, support}_tags`
+   - shop: `cart.{confirm_remove_confirm, confirm_remove_cancel}`,
+     `checkout.alerts.{price_invalid_message, stock_message, order_rejected_message, too_many_requests}`,
+     `checkout.errors.invalid_value`, `checkout.coupon_too_many`,
+     `product_detail.errors.alert_title`, `api_errors.too_many_requests`
+5. **Deploy SSH key** – the key that was committed in `docs/scripts/` must be treated as leaked:
+   generate a new one (`bash docs/scripts/generate-ssh.sh`, writes to `~/.ssh`), put the new
+   public key into the server's `~/.ssh/authorized_keys` and **remove the old one** there.
+
 ### Uploading the package
 
 **`www.zip`** is a plain, unencrypted ZIP archive – no key or password is needed to upload

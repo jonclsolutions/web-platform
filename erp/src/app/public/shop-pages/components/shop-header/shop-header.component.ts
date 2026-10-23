@@ -4,7 +4,7 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Presentational component for the e-shop header, handling UI state for navigation, language/currency selection, and cart access.
+ * @description Presentational component for the e-shop header, handling UI state for navigation, language selection and cart access.
  * @dependencies
  * - CartService: Provides reactive access to cart item counts and status.
  * - PublicDataService: Fetches global site branding and configuration.
@@ -15,6 +15,8 @@
  *   `setModule('shop')`, texty ze sekce `header` v `translations/shop/{lang}.json`, přepínač
  *   jazyků plní `fetchLanguages()` (jazyky modulu shop) a volá `setLanguage()`. Natvrdo psané
  *   volby CZ/EN a `selectedLang` odstraněny - aktivní jazyk je `currentLanguage$`.
+ * @refactor-note (2026-10-23) Removed the currency switch (`showCurrency`, `selectedCurrency`,
+ *   `toggleCurrency()`, `selectCurrency()`) - it changed nothing, all prices are EUR (open finding #43).
  */
 
 import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
@@ -28,7 +30,7 @@ import { CommonModule } from '@angular/common';
 
 /**
  * @description Component for the e-shop navigation header.
- * @usage Provides a persistent navigation bar with user preferences (lang/currency) and cart status.
+ * @usage Provides a persistent navigation bar with user preferences (language) and cart status.
  * @note Implements HostListeners to react to scroll events for sticky UI effects and global clicks for closing dropdown menus.
  */
 @Component({
@@ -41,9 +43,7 @@ import { CommonModule } from '@angular/common';
 export class ShopHeaderComponent implements OnInit, OnDestroy {
   isScrolled = false;
   showLang = false;
-  showCurrency = false;
 
-  selectedCurrency = 'EUR'; // Default system currency
 
   siteSettings: any = null;
 
@@ -108,12 +108,10 @@ export class ShopHeaderComponent implements OnInit, OnDestroy {
   clickout(event: any) {
     if (!event.target.closest('.custom-dropdown')) {
       this.showLang = false;
-      this.showCurrency = false;
     }
   }
 
-  toggleLang() { this.showLang = !this.showLang; this.showCurrency = false; }
-  toggleCurrency() { this.showCurrency = !this.showCurrency; this.showLang = false; }
+  toggleLang() { this.showLang = !this.showLang; }
 
   /**
    * @description Switches the shop language (reloads the shop translations).
@@ -121,13 +119,6 @@ export class ShopHeaderComponent implements OnInit, OnDestroy {
    */
   selectLang(code: string) { this.localizationService.setLanguage(code); }
 
-  /**
-   * @description Updates selected currency. 
-   * @note Placeholder for future application-wide currency conversion logic.
-   */
-  selectCurrency(val: string) { 
-    this.selectedCurrency = val; 
-  }
   
   /**
    * @description Navigates to the shopping cart interface.

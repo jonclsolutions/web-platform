@@ -8,13 +8,14 @@
  *   home texts, attachment texts for the uploader, the multipart submit (language, optional
  *   phone, attachments) with success, error and double-submit protection.
  * @dependencies
- * - createPublicPageContext (post spy); window.alert spied (the page reports errors with alert()).
+ * - createPublicPageContext (post spy); AlertDialogService spied (errors are shown in the app dialog).
  */
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 
 import { ContactComponent } from './contact.component';
+import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { PublicPageContext, createPublicPageContext } from '../../../../testing/public-test-helpers';
 
 describe('ContactComponent', () => {
@@ -22,7 +23,7 @@ describe('ContactComponent', () => {
   let fixture: ComponentFixture<ContactComponent>;
   let component: ContactComponent;
   const contact = {
-    buttons: { send: 'Send', sending: 'Sending…' }, errors: { submit_error: 'Failed' },
+    buttons: { send: 'Send', sending: 'Sending…' }, errors: { submit_error: 'Failed', submit_error_title: 'Not sent', too_many_requests: 'Slow down' },
     attachment_uploader: { dropzone_label: 'Drop', error_max_files: 'Max {max}', total_label: 'Total' }
   };
   const home = { stats_projects_count: '50', stats_projects_text: 'Projects', stats_years_count: '5', stats_years_text: 'Years', stats_solutions_count: '9', stats_solutions_text: 'Solutions' };
@@ -85,9 +86,10 @@ describe('ContactComponent', () => {
 
   /**
    * @description Without a phone it is not sent; while sending a second submit is ignored and
-   *   the button says "sending"; errors are reported (API message, translated fallback).
-   * @input Pending request + second submit; error with message; error without message.
-   * @output One post, no contact_phone, 'Sending…'; alert('Spam'); alert('Failed').
+   *   the button says "sending"; errors are shown translated in the app dialog - never the English API
+   *   message, no window.alert (findings #45 / #53); 429 has its own text.
+   * @input Pending request + second submit; error with API message; error without; 429.
+   * @output One post, no contact_phone, 'Sending…'; dialog ('Not sent', 'Failed') twice; ('Not sent', 'Slow down').
    */
   it('prevents double submits and reports errors', () => {
     const pending = new Subject<any>();
@@ -101,13 +103,18 @@ describe('ContactComponent', () => {
     pending.complete();
     expect(component.isLoading()).toBeFalse();
 
-    const alertSpy = spyOn(window, 'alert');
+    const nativeAlert = spyOn(window, 'alert');
+    const alertSpy = spyOn(TestBed.inject(AlertDialogService), 'open');
     ctx.publicData.post.and.returnValue(throwError(() => ({ error: { message: 'Spam' } })));
     component.onSubmit();
-    expect(alertSpy).toHaveBeenCalledWith('Spam');
+    expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Failed', 'danger');
     ctx.publicData.post.and.returnValue(throwError(() => ({})));
     component.onSubmit();
-    expect(alertSpy).toHaveBeenCalledWith('Failed');
+    expect(alertSpy.calls.count()).toBe(2);
+    ctx.publicData.post.and.returnValue(throwError(() => ({ status: 429 })));
+    component.onSubmit();
+    expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Slow down', 'danger');
+    expect(nativeAlert).not.toHaveBeenCalled();
     expect(component.isSubmitted()).toBeFalse();
   });
 });

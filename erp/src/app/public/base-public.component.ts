@@ -40,6 +40,8 @@
  *   a page always reads its own module's JSON regardless of where the user came from
  *   (web -> shop, shop -> web, shop -> admin login). Missing keys behave the same for both
  *   modules: `t?.key` renders empty, no hardcoded fallback texts.
+ * @refactor-note (2026-10-23) `formatEur()` - one EUR price formatter in the current language for
+ *   every shop page (open finding #44).
  */
 
 import { Directive, inject, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
@@ -169,5 +171,21 @@ export abstract class BasePublicComponent implements OnInit, OnDestroy {
 
   get currentLanguage$(): Observable<string> {
     return this.localizationService.currentLanguage$;
+  }
+
+  /**
+   * @description Formats an EUR amount in the number format of the current language (finding #44:
+   *   prices were always formatted with cs-CZ).
+   * @param value Amount in EUR.
+   * @returns E.g. "1 234,50 €" (cz) / "€1,234.50" (en).
+   */
+  formatEur(value: number): string {
+    const lang = this.localizationService.getCurrentLanguage();
+    const locale = lang === 'cz' ? 'cs-CZ' : lang === 'en' ? 'en-GB' : lang;
+    try {
+      return new Intl.NumberFormat(locale, { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(value);
+    } catch {
+      return new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(value);
+    }
   }
 }

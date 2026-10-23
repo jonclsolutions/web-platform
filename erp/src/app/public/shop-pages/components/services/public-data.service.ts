@@ -15,6 +15,8 @@
  *   překladů (`LocalizationService.getText()`, chybějící klíč se chová jako všude jinde - vrátí
  *   se klíč). `handleError` je teď arrow funkce, protože se předává do `catchError()` bez
  *   `bind` a nově používá `this`.
+ * @bugfix-note (2026-10-23) Open finding #53: a 422 showed the English API message; 422 / 429 map to
+ *   the translated `api_errors` texts now.
  */
 
 import { Injectable } from '@angular/core';
@@ -126,7 +128,9 @@ export class ShopPublicService {
       console.error(`Status: ${error.status}, Body:`, error.error);
       switch (error.status) {
         case 404: errorMessage = text('not_found'); break;
-        case 422: errorMessage = error.error?.message || text('quantity_unavailable'); break;
+        // Translated only - the API message is English (finding #53).
+        case 422: errorMessage = text('quantity_unavailable'); break;
+        case 429: errorMessage = text('too_many_requests'); break;
         case 500: errorMessage = text('server'); break;
       }
     }

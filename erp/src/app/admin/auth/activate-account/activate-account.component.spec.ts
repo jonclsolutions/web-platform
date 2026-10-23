@@ -48,12 +48,12 @@ describe('ActivateAccountComponent', () => {
   /**
    * @description A missing token shows the invalid state without any request.
    * @input  route without :token
-   * @output state 'invalid'; errorMessage 'The activation token is missing.'; no HTTP request
+   * @output state 'invalid'; errorKey 'error_token_missing' (translated, finding #39); no HTTP request
    */
   it('shows invalid without token', async () => {
     await setup('');
     expect(component.state).toBe('invalid');
-    expect(component.errorMessage).toBe('The activation token is missing.');
+    expect(component.errorKey).toBe('error_token_missing');
   });
 
   /**
@@ -72,15 +72,15 @@ describe('ActivateAccountComponent', () => {
   });
 
   /**
-   * @description An invalid or expired token shows the server message (or a default).
+   * @description An invalid or expired token shows the translated invalid-link text (not the English API text).
    * @input  GET answered 410 { message: 'Expired.' }
-   * @output state 'invalid'; errorMessage 'Expired.'
+   * @output state 'invalid'; errorKey 'error_invalid_link'
    */
-  it('shows the server message for a bad token', async () => {
+  it('shows the invalid-link text for a bad token', async () => {
     await setup('tok');
     http.expectOne(url('tok')).flush({ message: 'Expired.' }, { status: 410, statusText: 'Gone' });
     expect(component.state).toBe('invalid');
-    expect(component.errorMessage).toBe('Expired.');
+    expect(component.errorKey).toBe('error_invalid_link');
   });
 
   /**
@@ -125,7 +125,7 @@ describe('ActivateAccountComponent', () => {
   /**
    * @description Submit errors: 410 → invalid state, 422 → password not accepted, 0 → no connection.
    * @input  POST answered 410, then 422, then status 0
-   * @output state 'invalid'; fieldError about the password; fieldError about the connection
+   * @output fieldErrorKey 'error_password_rejected'; 'error_network'; state 'invalid' with 'error_invalid_link'
    */
   it('maps submit errors', async () => {
     await setup('tok');
@@ -135,16 +135,16 @@ describe('ActivateAccountComponent', () => {
 
     component.onSubmit();
     http.expectOne(r => r.method === 'POST').flush({}, { status: 422, statusText: 'Unprocessable' });
-    expect(component.fieldError).toContain('could not be accepted');
+    expect(component.fieldErrorKey).toBe('error_password_rejected');
 
     component.onSubmit();
     http.expectOne(r => r.method === 'POST').error(new ProgressEvent('error'), { status: 0 });
-    expect(component.fieldError).toContain('Unable to connect');
+    expect(component.fieldErrorKey).toBe('error_network');
 
     component.onSubmit();
     http.expectOne(r => r.method === 'POST').flush({ message: 'Used already.' }, { status: 410, statusText: 'Gone' });
     expect(component.state).toBe('invalid');
-    expect(component.errorMessage).toBe('Used already.');
+    expect(component.errorKey).toBe('error_invalid_link');
   });
 
   /**
@@ -162,7 +162,7 @@ describe('ActivateAccountComponent', () => {
   /**
    * @description Other server errors give the generic message; the password fields can be shown.
    * @input POST answered 500; toggle both visibility switches.
-   * @output fieldError 'Setting the password failed…'; showPassword / showPasswordConfirmation true.
+   * @output fieldErrorKey 'error_generic'; showPassword / showPasswordConfirmation true.
    */
   it('reports other errors and toggles the password fields', async () => {
     await setup('tok');
@@ -171,10 +171,34 @@ describe('ActivateAccountComponent', () => {
     component.passwordConfirmation = VALID;
     component.onSubmit();
     http.expectOne(r => r.method === 'POST').flush({}, { status: 500, statusText: 'Error' });
-    expect(component.fieldError).toContain('Setting the password failed');
+    expect(component.fieldErrorKey).toBe('error_generic');
 
     component.togglePasswordVisibility();
     component.toggleConfirmationVisibility();
     expect([component.showPassword, component.showPasswordConfirmation]).toEqual([true, true]);
+  });
+
+  /**
+   * @description The page renders its texts from the `activate-account` translations (no English copy).
+   * @input  token 'tok', form state; detectChanges(); invalid state; success countdown text '{seconds}'.
+   * @output title / labels / submit keys; invalid text with errorKey; countdown with the seconds filled in.
+   */
+  it('renders translated texts', async () => {
+    await setup('tok');
+    fixture.detectChanges();  // first render runs ngOnInit once more → answer both token checks
+    http.match(url('tok')).forEach(r => r.flush({ email: 'e@x.cz', full_name: 'n' }));
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    for (const key of ['title_form', 'label_password', 'label_confirmation', 'submit']) {
+      expect(el.textContent).toContain(`activate-account.${key}`);
+    }
+    expect(el.textContent).not.toContain('Set your password');
+    expect(component.lengthPlaceholder).toBe('activate-account.placeholder_password');
+
+    component.state = 'success';
+    component.redirectCountdown = 3;
+    (component as any).cd.markForCheck();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('activate-account.success_message');
   });
 });

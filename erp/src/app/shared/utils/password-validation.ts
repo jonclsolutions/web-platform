@@ -9,11 +9,14 @@
  *              `Password::min(MIN)->max(MAX)->letters()->numbers()->symbols()` so the
  *              frontend can block obviously invalid submits before they hit the API.
  *              The backend remains authoritative - this is a UX pre-check, not security.
+ * @refactor-note (2026-10-23) The rules themselves live in `PASSWORD_RULE_CHECKS` of
+ *   shared/constants/password-policy (one rule set, finding #37); this file only gives the
+ *   per-rule result object used by reset-password.
  * @dependencies
- * - shared/constants/password-policy: PASSWORD_MIN_LENGTH / PASSWORD_MAX_LENGTH.
+ * - shared/constants/password-policy: PASSWORD_RULE_CHECKS.
  */
 
-import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from '../constants/password-policy';
+import { PASSWORD_RULE_CHECKS } from '../constants/password-policy';
 
 /** Result of checking one password against every policy rule. */
 export interface PasswordRuleResult {
@@ -27,31 +30,20 @@ export interface PasswordRuleResult {
   symbol: boolean;
 }
 
-/*
- * Unicode property regexes - identical character classes to Laravel's
- * Illuminate\Validation\Rules\Password, so FE and BE never disagree on e.g. "ž" or "€".
- */
-const LETTER_RE = /\p{L}/u;
-const DIGIT_RE  = /\p{N}/u;
-const SYMBOL_RE = /[\p{Z}\p{S}\p{P}]/u;
-
 /**
  * @description Evaluates each policy rule separately so the UI (checklist, submit
  *              button) can show exactly which rule is still missing.
  * @param password Raw password as typed by the user.
  * @returns Per-rule pass/fail map.
- * @note Length counts Unicode code points (`[...str]`), the same way PHP `mb_strlen`
- *       does in Laravel's `min`/`max` rules - `str.length` would count UTF-16 units and
- *       miscount emoji.
+ * @note Length counts Unicode code points, the same way PHP `mb_strlen` does in Laravel's
+ *       `min`/`max` rules (see PASSWORD_RULE_CHECKS).
  */
 export function checkPasswordRules(password: string): PasswordRuleResult {
-  const length = [...(password ?? '')].length;
-
   return {
-    length: length >= PASSWORD_MIN_LENGTH && length <= PASSWORD_MAX_LENGTH,
-    letter: LETTER_RE.test(password ?? ''),
-    digit:  DIGIT_RE.test(password ?? ''),
-    symbol: SYMBOL_RE.test(password ?? ''),
+    length: PASSWORD_RULE_CHECKS.length(password),
+    letter: PASSWORD_RULE_CHECKS.letter(password),
+    digit:  PASSWORD_RULE_CHECKS.digit(password),
+    symbol: PASSWORD_RULE_CHECKS.symbol(password),
   };
 }
 

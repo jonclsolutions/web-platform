@@ -57,13 +57,13 @@ export class PublicFooterComponent extends BasePublicComponent {
 
   /**
    * @description Footer link groups by what the visitor is looking for.
-   *   titleKey = key inside the `footer` translation object (this.t),
-   *   fallback = text used when the translation key is missing.
+   *   titleKey = key inside the `footer` translation object (this.t).
+   * @bugfix-note (2026-10-23) The Czech `fallback` titles ('Nabídka', 'Společnost', 'Podpora')
+   *   were removed (open finding #44) - the keys exist in the `footer` translations.
    */
-  private readonly linkGroupDefs: { titleKey: string; fallback: string; links: FooterLinkDef[] }[] = [
+  private readonly linkGroupDefs: { titleKey: string; links: FooterLinkDef[] }[] = [
     {
       titleKey: 'group_offer',
-      fallback: 'Nabídka',
       links: [
         { route: '/services',   key: 'navigation.services',        ext: false },
         { route: '/references', key: 'navigation.references_full', ext: false },
@@ -72,7 +72,6 @@ export class PublicFooterComponent extends BasePublicComponent {
     },
     {
       titleKey: 'group_company',
-      fallback: 'Společnost',
       links: [
         { route: '/about-us', key: 'navigation.about-us', ext: false },
         { route: '/jobs',     key: 'navigation.jobs',     ext: false },
@@ -81,7 +80,6 @@ export class PublicFooterComponent extends BasePublicComponent {
     },
     {
       titleKey: 'group_support',
-      fallback: 'Podpora',
       links: [
         { route: '/faq',            key: 'navigation.faq_full',                  ext: false },
         { route: '/knowledge-base', key: 'knowledge-base.knowledge-base_footer', ext: false },
@@ -135,7 +133,7 @@ export class PublicFooterComponent extends BasePublicComponent {
 
   private loadFooterLinkGroups(): void {
     this.footerLinkGroups = this.linkGroupDefs.map(group => ({
-      title: this.t?.[group.titleKey] || group.fallback,
+      title: this.t?.[group.titleKey] ?? '',
       links: group.links.map(def => this.toNavLink(def)),
     }));
   }

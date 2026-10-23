@@ -54,15 +54,16 @@ describe('MultiFileUploadComponent', () => {
    * @description Files from the input are added and emitted, the list and total are rendered;
    *   an input without files is ignored.
    * @input choose(a.txt 10 B, b.txt 2 KB); input change without files.
-   * @output emitted [a, b]; 2 list items; total 'Celkem: 2 / 3 souborů (2 KB nových)'; hint with limits.
+   * @output emitted [a, b]; 2 list items; total 'Total: 2 / 3 files (2 KB new)'; hint with limits (English
+   *   defaults - the Czech ones were removed, finding #44).
    */
   it('adds chosen files and shows the totals', () => {
-    expect(text('.mfu-hint')).toBe('(max. 3 souborů, 1 MB/soubor, 2 MB celkem)');
+    expect(text('.mfu-hint')).toBe('(max. 3 files, 1 MB per file, 2 MB in total)');
     choose(file('a.txt'), file('b.txt', 2048));
     expect(emitted.length).toBe(1);
     expect(emitted[0].map(f => f.name)).toEqual(['a.txt', 'b.txt']);
     expect(fixture.nativeElement.querySelectorAll('.mfu-file-list li').length).toBe(2);
-    expect(text('.mfu-total')).toBe('Celkem: 2 / 3 souborů (2 KB nových)');
+    expect(text('.mfu-total')).toBe('Total: 2 / 3 files (2 KB new)');
 
     const input = fixture.nativeElement.querySelector('input[type=file]') as HTMLInputElement;
     Object.defineProperty(input, 'files', { configurable: true, value: null });
@@ -100,20 +101,20 @@ describe('MultiFileUploadComponent', () => {
    */
   it('enforces the file count and size limits', () => {
     choose(file('1'), file('2'), file('3'), file('4'));
-    expect(text('.mfu-error')).toBe('Můžete nahrát maximálně 3 souborů.');
+    expect(text('.mfu-error')).toBe('You can upload at most 3 files.');
     expect(component.files.length).toBe(0);
 
     component.existingFiles = [{ id: 7, original_filename: 'old.pdf', size_bytes: 3 * MB }];
     choose(file('1'), file('2'), file('3'));
-    expect(text('.mfu-error')).toBe('Můžete mít nahráno maximálně 3 souborů (včetně 1 již existujících).');
+    expect(text('.mfu-error')).toBe('You can have at most 3 files (including 1 already uploaded).');
 
     component.existingFiles = [];
     choose(file('big', 1.5 * MB));
-    expect(text('.mfu-error')).toBe('Soubor "big" přesahuje limit 1 MB.');
+    expect(text('.mfu-error')).toBe('The file "big" exceeds the 1 MB limit.');
 
     choose(file('x', 0.9 * MB), file('y', 0.9 * MB));
     choose(file('z', 0.9 * MB));
-    expect(text('.mfu-error')).toBe('Celková velikost příloh nesmí přesáhnout 2 MB.');
+    expect(text('.mfu-error')).toBe('The attachments must not exceed 2 MB in total.');
     expect(component.files.length).toBe(2);
     expect(component.totalSizeLabel).toBe('1.8 MB');
 
@@ -135,14 +136,14 @@ describe('MultiFileUploadComponent', () => {
       { id: 2, original_filename: 'b.pdf', size_bytes: 1024 }
     ]);
     fixture.detectChanges();
-    expect(text('.mfu-existing-title')).toBe('Již nahrané přílohy (2)');
+    expect(text('.mfu-existing-title')).toBe('Uploaded attachments (2)');
     expect(fixture.nativeElement.querySelector('.mfu-existing-link').getAttribute('href')).toBe('/v/1');
     expect(fixture.nativeElement.querySelectorAll('.mfu-existing-item span.mfu-file-name').length).toBe(1);
 
     (fixture.nativeElement.querySelector('.mfu-existing-item .mfu-remove-btn') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(text('.mfu-existing-title')).toBe('Již nahrané přílohy (1)');
-    expect(text('.mfu-total')).toBe('Celkem: 1 / 3 souborů');
+    expect(text('.mfu-existing-title')).toBe('Uploaded attachments (1)');
+    expect(text('.mfu-total')).toBe('Total: 1 / 3 files');
 
     component.removeExistingFile(2);
     fixture.detectChanges();
@@ -163,7 +164,7 @@ describe('MultiFileUploadComponent', () => {
     expect(text('.mfu-dropzone-label')).toBe('Drop');
     choose(file('1'), file('2'), file('3'), file('4'));
     expect(text('.mfu-error')).toBe('Max 3!');
-    expect(component.t.totalLabel).toBe('Celkem: {count} / {max} souborů');
+    expect(component.t.totalLabel).toBe('Total: {count} / {max} files');
     expect(component.formatSize(512)).toBe('1 KB');
     expect(component.formatSize(1.5 * MB)).toBe('1.5 MB');
   });

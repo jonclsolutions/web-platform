@@ -110,9 +110,9 @@ describe('OrderFormComponent', () => {
 
   /**
    * @description Texts: '...' before translations, "sending" while loading, {} without uploader texts;
-   *   the generic English fallback when the translation has no error text.
+   *   no English fallback when the translation has no error text (finding #44).
    * @input t null; isLoading true; t without attachment_uploader / errors + 500.
-   * @output '...'; 'Sending'; {}; 'Submission error.'.
+   * @output '...'; 'Sending'; {}; errorMessage null.
    */
   it('falls back for missing texts', () => {
     create('abc');
@@ -126,6 +126,6 @@ describe('OrderFormComponent', () => {
     component.orderForm.patchValue({ order_description: 'X', dataProcessingAgreement: true, tosAgreement: true });
     ctx.publicData.post.and.returnValue(throwError(() => ({ status: 500 })));
     component.onSubmit();
-    expect(component.errorMessage).toBe('Submission error.');
+    expect(component.errorMessage).toBeNull();
   });
 });

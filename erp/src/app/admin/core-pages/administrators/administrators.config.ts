@@ -12,7 +12,7 @@
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
-import { PASSWORD_PATTERN, getPasswordErrorMessage } from '../../../shared/constants/password-policy';
+import { getPasswordErrorMessage } from '../../../shared/constants/password-policy';
 
 const SECTION = 'administrators';
 
@@ -57,7 +57,7 @@ export function createResetPasswordFormFields(i18n: AdminLocalizationService): C
       placeholder: `8-16 ${i18n.getValue(`${SECTION}.reset_new_password_chars_suffix`)}`,
       type: 'confirm-password',
       required: true,
-      pattern: PASSWORD_PATTERN,
+      passwordPolicy: true,  // Unicode rules of the API (finding #37), was the ASCII PASSWORD_PATTERN
       errorMessage: getPasswordErrorMessage(path => i18n.getValue(path)),
       editable: true, show_in_edit: true, show_in_create: true,
     },

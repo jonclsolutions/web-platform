@@ -108,15 +108,18 @@ describe('PersonalInfoComponent', () => {
   });
 
   /**
-   * @description The password form requires all fields, the policy pattern and equal confirmation.
-   * @input  ('', '', ''); ('old', 'weak', 'weak'); ('old', VALID, 'Other123!'); ('old', VALID, VALID)
-   * @output invalid; invalid; passwordMismatch true; valid
+   * @description The password form requires all fields, the password policy (Unicode rules like the
+   *   API, finding #37) and equal confirmation.
+   * @input  ('', '', ''); ('old', 'weak', 'weak'); ('old', 'žluťoučký1€', same); ('old', VALID, 'Other123!'); ('old', VALID, VALID)
+   * @output invalid; pattern error; valid (non-ASCII password accepted); passwordMismatch true; valid
    */
   it('validates the password form', () => {
     fillPasswords('', '', '');
     expect(component.passwordForm.invalid).toBeTrue();
     fillPasswords('old', 'weak', 'weak');
     expect(component.passwordForm.get('new_password')!.hasError('pattern')).toBeTrue();
+    fillPasswords('old', 'žluťoučký1€', 'žluťoučký1€');
+    expect(component.passwordForm.valid).toBeTrue();
     fillPasswords('old', VALID, 'Other123!');
     expect(component.passwordMismatch).toBeTrue();
     fillPasswords('old', VALID, VALID);

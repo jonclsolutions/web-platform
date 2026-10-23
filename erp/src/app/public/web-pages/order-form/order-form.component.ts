@@ -194,7 +194,8 @@ export class OrderFormComponent extends BasePublicComponent {
           this.linkState = 'used';
           this.errorMessage = null;
         } else {
-          this.errorMessage = this.t?.errors?.submit_error || 'Submission error.';
+          // Translated by status, no English fallback (findings #44 / #53).
+          this.errorMessage = (err?.status === 429 ? this.t?.errors?.too_many_requests : this.t?.errors?.submit_error) ?? null;
         }
         console.error('Submission failed:', err);
         this.cdr.markForCheck();

@@ -72,8 +72,9 @@ describe('ShopPublicService', () => {
 
   /**
    * @description Errors become an Error with a translated message.
-   * @input Network ErrorEvent; 404; 422 with message; 422 without; 500; 403.
-   * @output 'Network: offline'; 'api_errors.not_found'; 'Out of stock'; 'api_errors.quantity_unavailable'; 'api_errors.server'; 'api_errors.generic'.
+   * @input Network ErrorEvent; 404; 422 with message; 422 without; 429; 500; 403.
+   * @output 'Network: offline'; 'api_errors.not_found'; 'api_errors.quantity_unavailable' twice (the English API
+   *   message is not shown, finding #53); 'api_errors.too_many_requests'; 'api_errors.server'; 'api_errors.generic'.
    */
   it('maps errors to translated messages', () => {
     spyOn(console, 'error');
@@ -85,7 +86,8 @@ describe('ShopPublicService', () => {
     };
     expect(message(r => r.error(new ErrorEvent('error', { message: 'offline' })))).toBe('Network: offline');
     expect(message(r => r.flush({}, { status: 404, statusText: 'x' }))).toBe('api_errors.not_found');
-    expect(message(r => r.flush({ message: 'Out of stock' }, { status: 422, statusText: 'x' }))).toBe('Out of stock');
+    expect(message(r => r.flush({ message: 'Out of stock' }, { status: 422, statusText: 'x' }))).toBe('api_errors.quantity_unavailable');
+    expect(message(r => r.flush({}, { status: 429, statusText: 'x' }))).toBe('api_errors.too_many_requests');
     expect(message(r => r.flush({}, { status: 422, statusText: 'x' }))).toBe('api_errors.quantity_unavailable');
     expect(message(r => r.flush({}, { status: 500, statusText: 'x' }))).toBe('api_errors.server');
     expect(message(r => r.flush({}, { status: 403, statusText: 'x' }))).toBe('api_errors.generic');

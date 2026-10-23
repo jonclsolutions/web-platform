@@ -8,7 +8,7 @@
  *   primary / first / placeholder), variants with own price and stock, quantity limits, adding to
  *   the cart (unavailable / over-stock alerts, "added" flash) and the in-cart state.
  * @dependencies
- * - createPublicPageContext; ShopPublicService spy; real CartService; ActivatedRoute paramMap Subject; window.alert spied.
+ * - createPublicPageContext; ShopPublicService spy; real CartService; ActivatedRoute paramMap Subject; AlertDialogService spied.
  */
 
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
@@ -18,6 +18,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ProductDetailComponent } from './product-detail.component';
 import { ShopPublicService } from '../components/services/public-data.service';
 import { CartService } from '../components/services/cart.service';
+import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 import { createPublicPageContext } from '../../../../testing/public-test-helpers';
 
 describe('ProductDetailComponent', () => {
@@ -26,7 +27,7 @@ describe('ProductDetailComponent', () => {
   let shop: jasmine.SpyObj<ShopPublicService>;
   let params$: BehaviorSubject<ParamMap>;
   let cart: CartService;
-  const t = { errors: { unavailable: 'Sold out', max_stock: 'Max {count}' } };
+  const t = { errors: { unavailable: 'Sold out', max_stock: 'Max {count}', alert_title: 'Cannot add' } };
   const simple = { id: 1, name: 'Mug', slug: 'mug', stock_quantity: 2, prices: { price_eur_with_vat: 12.1, price_eur_without_vat: 10, vat_rate: 21 },
     images: [{ url: 'a.jpg' }, { url: 'p.jpg', is_primary: true }, { url: 'v.jpg', variant_id: 9 }] };
   const withVariants = { ...simple, id: 2, variants: [
@@ -137,21 +138,25 @@ describe('ProductDetailComponent', () => {
   }));
 
   /**
-   * @description Add to cart: unavailable and over-stock alerts (translated), success adds the
-   *   item, flashes "added" for 2 s and marks the item as in the cart.
+   * @description Add to cart: unavailable and over-stock messages in the app's alert dialog (was the
+   *   native window.alert, finding #45), success adds the item, flashes "added" for 2 s and marks the
+   *   item as in the cart.
    * @input Blue (stock 0) add; Red with quantity 7 forced; Red quantity 2 add.
-   * @output alert 'Sold out'; alert 'Max 5'; cart item '2_10' ×2, addedToCart true → false, isInCart.
+   * @output dialog ('Cannot add', 'Sold out'); ('Cannot add', 'Max 5'); no window.alert; cart item '2_10' ×2,
+   *   addedToCart true → false, isInCart.
    */
   it('adds the selection to the cart', fakeAsync(() => {
     create(withVariants);
-    const alertSpy = spyOn(window, 'alert');
+    const nativeAlert = spyOn(window, 'alert');
+    const alertSpy = spyOn(TestBed.inject(AlertDialogService), 'open');
     page.addToCart();
-    expect(alertSpy).toHaveBeenCalledWith('Sold out');
+    expect(alertSpy).toHaveBeenCalledWith('Cannot add', 'Sold out', 'warning');
 
     page.onVariantChange({ target: { value: '10' } } as any);
     page.selectedQuantity.set(7);
     page.addToCart();
-    expect(alertSpy).toHaveBeenCalledWith('Max 5');
+    expect(alertSpy).toHaveBeenCalledWith('Cannot add', 'Max 5', 'warning');
+    expect(nativeAlert).not.toHaveBeenCalled();
 
     page.selectedQuantity.set(2);
     expect(page.isInCart()).toBeFalse();

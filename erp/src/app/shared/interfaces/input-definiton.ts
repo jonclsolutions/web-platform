@@ -7,6 +7,8 @@ export interface InputDefinition {
   min?: number;
   max?: number;
   pattern?: string;
+  /** Validate the value with the password policy (Unicode rules, finding #37) instead of `pattern`. */
+  passwordPolicy?: boolean;
   errorMessage?: string;
   options?: { value: string; label: string }[];
   defaultValue?: any;

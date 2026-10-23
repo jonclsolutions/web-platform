@@ -3,14 +3,27 @@
     @path: /src/app/public/web-pages/not-found/not-found.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2026 
+    @created: 2026
+    @bugfix-note (2026-10-23) The image `assets/images/svg/not-found.svg` did not exist (broken image
+        without alt, open finding #46) - replaced by an inline decorative SVG (aria-hidden), styled by
+        `.svg-placeholder svg` in the component CSS.
 -->
     
 <div class="main-content full-height">
   <div class="not-found-container">
     <div class="error-box">
       <div class="svg-placeholder">
-        <img [src]="icon_path">
+        <svg viewBox="0 0 240 160" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <!-- "4" -->
+          <path d="M28 40 L12 100 H56 M44 70 V128" />
+          <!-- magnifier as the "0" -->
+          <circle cx="120" cy="84" r="34" />
+          <path d="M144 110 L164 132" />
+          <path d="M110 74 a10 10 0 1 1 14 9 c-4 2 -4 5 -4 9" />
+          <circle cx="120" cy="102" r="1.5" fill="currentColor" />
+          <!-- "4" -->
+          <path d="M200 40 L184 100 H228 M216 70 V128" />
+        </svg>
       </div>
       
       @if (t) {

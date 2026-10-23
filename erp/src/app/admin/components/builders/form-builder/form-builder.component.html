@@ -149,7 +149,7 @@
                   @case ('confirm-password') {
                     <div class="confirm-password-container">
                       <input type="password" [id]="input.column_name" [placeholder]="input.placeholder || strings.password_placeholder_default"
-                        [required]="!!input.required" [pattern]="input.pattern || ''" [maxlength]="input.max || 16" [name]="input.column_name"
+                        [required]="!!input.required" [pattern]="input.pattern || ''" [appPasswordPolicy]="!!input.passwordPolicy" [maxlength]="input.max || 16" [name]="input.column_name"
                         [(ngModel)]="formData[input.column_name]" class="custom-input" [disabled]="input.editable === false" />
                       <app-password-requirements-checklist [password]="formData[input.column_name] || ''"></app-password-requirements-checklist>
                       <label [for]="input.column_name + '_confirm'" class="field-label sub-label" style="margin-top: 10px; display: block;">{{ strings.confirm_password_label }} @if (input.required) {

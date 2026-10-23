@@ -433,6 +433,7 @@
   "empty_state_text": "Select a role from the list on the left, or create a new one.",
 
   "confirm_unsaved_switch": "You have unsaved changes on the current role. Switching will discard them. Continue?",
+  "confirm_unsaved_switch_title": "Unsaved changes",
 
   "delete_modal_title": "Delete role?",
   "delete_modal_confirm_text": "Are you sure you want to permanently delete the role {name}?",
@@ -908,7 +909,8 @@
     "ev_label_restore": "Restored",
     "ev_label_error": "Error",
 
-    "footer_help_text": "Need help? Contact technical support or your system administrator."
+    "footer_help_text": "Need help? Contact technical support or your system administrator.",
+    "export_selected_suffix": "selected"
   },
   "web-dashboard": {
     "hero_select_aria": "Choose displayed metric",
@@ -3078,5 +3080,56 @@
   "digit": "At least one digit",
   "special": "At least one special character",
   "error_message": "The password must be {min}-{max} characters long and contain at least one letter, one digit and one special character."
-}
+},
+  "reset-password": {
+    "title_form": "Set a new password",
+    "title_success": "Password changed",
+    "subtitle": "Enter a new password for your administrator account",
+    "invalid_link_before": "This link is invalid. Please go back to the",
+    "login_link": "sign-in page",
+    "invalid_link_after": "and request a new one.",
+    "label_password": "New password",
+    "placeholder_password": "{min}-{max} characters",
+    "show_password": "Show password",
+    "hide_password": "Hide password",
+    "label_confirmation": "Confirm new password",
+    "placeholder_confirmation": "Repeat the password",
+    "error_mismatch": "The passwords don't match.",
+    "submit": "Set new password",
+    "submitting": "Saving…",
+    "success_message": "Your password has been changed successfully.",
+    "success_message_for": "Your password has been changed successfully for",
+    "redirect_note": "You'll be redirected to the sign-in page shortly…",
+    "go_to_login": "Go to sign in now",
+    "error_token_missing": "This link is invalid. Please request a new password reset from the sign-in page.",
+    "error_policy": "The password does not meet all the requirements listed above.",
+    "error_network": "Unable to connect to the server. Please check your connection and try again.",
+    "error_generic": "The link is invalid or has expired. Please request a new one."
+  },
+  "activate-account": {
+    "title_loading": "Verifying link…",
+    "title_invalid": "This link can't be used",
+    "title_success": "Account activated",
+    "title_form": "Set your password",
+    "invalid_link_before": "Please go back to the",
+    "login_link": "sign-in page",
+    "invalid_link_after": "and ask your administrator for a new link.",
+    "label_password": "New password",
+    "placeholder_password": "{min}-{max} characters",
+    "show_password": "Show password",
+    "hide_password": "Hide password",
+    "label_confirmation": "Confirm new password",
+    "placeholder_confirmation": "Repeat the password",
+    "error_mismatch": "The passwords don't match.",
+    "submit": "Set password and activate account",
+    "submitting": "Saving…",
+    "success_message": "Your password has been set successfully.",
+    "redirect_countdown": "Redirecting you to sign in in {seconds} s…",
+    "go_to_login": "Go to sign in now",
+    "error_token_missing": "The activation token is missing.",
+    "error_invalid_link": "The link is invalid or has expired.",
+    "error_network": "Unable to connect to the server. Please check your connection and try again.",
+    "error_password_rejected": "The password could not be accepted. Please choose a different one.",
+    "error_generic": "Setting the password failed. Please try again later."
+  }
 }

@@ -11,6 +11,9 @@
  * - CookieConsentComponent: Globální lišta souhlasu s cookies (2026).
  * - AnalyticsService: Google Analytics 4 + Consent Mode v2 (2026) - spuštěno tady, protože
  *   tenhle layout obaluje celý veřejný web bez ohledu na aktuální podstránku.
+ * @refactor-note (2026-10-23) Removed `toggleRootScroll()` (open finding #41): it was bound to the
+ *   header's `menuToggled` output, which the header never emitted - the header locks the page
+ *   scroll itself (ScrollLockService).
  */
 
 import { Component, OnInit, inject } from '@angular/core';
@@ -41,19 +44,5 @@ export class WebLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     this.analyticsService.init();
-  }
-
-  /**
-   * @description Toggles the 'no-scroll' class on the document root to block page scrolling when a mobile menu is active.
-   * @param isMenuOpen Boolean flag indicating the visibility state of the navigation menu.
-   * @note Manipulating document.documentElement is necessary here to ensure the browser's root scroll is disabled regardless of container layout.
-   */
-  toggleRootScroll(isMenuOpen: boolean): void {
-    const htmlElement = document.documentElement;
-    if (isMenuOpen) {
-      htmlElement.classList.add('no-scroll');
-    } else {
-      htmlElement.classList.remove('no-scroll');
-    }
   }
 }

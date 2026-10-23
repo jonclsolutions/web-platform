@@ -4,6 +4,8 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
+ * @refactor-note (2026-10-23) `icon_path` removed - pointed to a non-existing file with a dev path
+ *   (`/erp/src/assets/...`); the illustration is inline SVG in the template now (open finding #46).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -22,8 +24,6 @@ export class NotFoundComponent extends BasePublicComponent {
   
   protected readonly translationKey = 'not_found';
   
-  icon_path: string = "/erp/src/assets/images/svg/not-found.svg";
-
   private router = inject(Router);
   attemptedUrl: string = '';
 

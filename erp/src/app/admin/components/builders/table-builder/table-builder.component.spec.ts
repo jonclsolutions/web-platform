@@ -6,7 +6,7 @@
  * @created 2026
  * @description Unit tests of TableBuilderComponent – the main admin data table: cell formatting,
  *   button visibility by permission, row actions, delete with confirmation, bulk selection /
- *   bulk delete, and export (columns, excluded and redacted values, CSV/JSON/TXT, audit log).
+ *   bulk delete, locale-aware formatting (finding #50) and export (columns, excluded and redacted values, CSV/JSON/TXT, audit log).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, auth & permission stubs)
  */
@@ -41,14 +41,15 @@ describe('TableBuilderComponent', () => {
 
   describe('cell values', () => {
     /**
-     * @description Dotted keys read nested values; booleans become Yes/No.
+     * @description Dotted keys read nested values; booleans are translated (`shared.yes` /
+     *   `shared.no`, finding #50 - were English 'Yes' / 'No' in every language).
      * @input  getCellValue({ role: { name: 'admin' } }, 'role.name'); boolean 1 / 0
-     * @output 'admin', 'Yes', 'No'
+     * @output 'admin', 'shared.yes', 'shared.no' (the i18n stub returns the key)
      */
     it('reads nested values and formats booleans', () => {
       expect(component.getCellValue({ role: { name: 'admin' } }, { key: 'role.name' } as any)).toBe('admin');
-      expect(component.getCellValue({ a: 1 }, { key: 'a', type: 'boolean' } as any)).toBe('Yes');
-      expect(component.getCellValue({ a: 0 }, { key: 'a', type: 'boolean' } as any)).toBe('No');
+      expect(component.getCellValue({ a: 1 }, { key: 'a', type: 'boolean' } as any)).toBe('shared.yes');
+      expect(component.getCellValue({ a: 0 }, { key: 'a', type: 'boolean' } as any)).toBe('shared.no');
     });
 
     /**
@@ -59,6 +60,17 @@ describe('TableBuilderComponent', () => {
     it('formats dates', () => {
       expect(component.getCellValue({ d: '2026-03-04' }, { key: 'd', type: 'date' } as any)).toBe('4.3.2026');
       expect(component.getCellValue({ d: null }, { key: 'd', type: 'date' } as any)).toBe('');
+    });
+
+    /**
+     * @description Dates and currency follow the admin language (finding #50 - were always cs-CZ).
+     * @input  getDateLocale() → 'en-US'; date '2026-03-04' with format 'MMM d, y'; 1234.5 EUR
+     * @output 'Mar 4, 2026'; '€1,234.50'
+     */
+    it('formats dates and currency in the admin locale', () => {
+      ctx.i18n.getDateLocale.and.returnValue('en-US');
+      expect(component.getCellValue({ d: '2026-03-04' }, { key: 'd', type: 'date', format: 'MMM d, y' } as any)).toBe('Mar 4, 2026');
+      expect(component.getCellValue({ p: 1234.5 }, { key: 'p', type: 'currency' } as any)).toBe('€1,234.50');
     });
 
     /**
@@ -346,11 +358,13 @@ describe('TableBuilderComponent', () => {
     });
 
     /**
-     * @description Exporting selected rows uses only the loaded selected rows (no API call) and adds '-vybrane'.
-     * @input  selection [2]; onBulkExportClick(); JSON export
+     * @description Exporting selected rows uses only the loaded selected rows (no API call) and adds the
+     *   translated suffix `table-builder.export_selected_suffix` (finding #50 - was always '-vybrane').
+     * @input  selection [2]; suffix 'vybrane'; onBulkExportClick(); JSON export
      * @output getCollection not called; file 'users-vybrane.json' with 1 row (Name 'B')
      */
     it('exports only the selected rows', async () => {
+      ctx.i18n.getValue.and.callFake((p: string) => (p === 'table-builder.export_selected_suffix' ? 'vybrane' : p));
       component.selectedIds = new Set([2]);
       component.onBulkExportClick();
       await component.handleExportFormatSelected({ format: 'json', columnKeys: ['name'], rawFormat: false });

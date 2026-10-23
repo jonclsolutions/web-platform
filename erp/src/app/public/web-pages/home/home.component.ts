@@ -13,6 +13,8 @@
  * @dependencies BasePublicComponent, RouterLink, tech-stack.config
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `web_desk`, `desktop_desk`, `mobile_desk`, `ai_desk`, `server_resp_1`, `server_resp_2`, `server_mobile`, `web_mob`, `desktop_mob`, `mobile_mob`, `ai_mob`, `check_mark`, `toggleTechStackPaused`, `getTechIcon`, `getHeroBackground`, `getServiceBackground`, `getServiceOverlayStyles`, `getTextStyles`, `getArrowStyles`, `setHoverState`, `heroBackgroundImageUrl`, `serviceBackgrounds`, `c_sharp`, `python`, `cpp`, `kotlin`, `hoverState`.
+ * @refactor-note (2026-10-23) Removed `server` - it pointed to a missing assets/images/svg/server.svg
+ *   and no template used it (open finding #46).
  */
 import {
   Component,
@@ -39,7 +41,6 @@ export class HomeComponent extends BasePublicComponent {
   graphs_1: string = "assets/images/home/graphs_1.png";
   stats_1: string = "assets/images/home/stats_1.png";
 
-  server: string = "assets/images/svg/server.svg";
   ts: string = 'assets/images/services-img/ts.png';
   php: string = 'assets/images/services-img/php.png';
 

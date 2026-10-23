@@ -10,6 +10,8 @@
  * - RouterModule: Enables navigation to specific product detail pages via templates.
  * @refactor-note (2026-10-21) Dědí `BasePublicComponent` kvůli lokalizaci (sekce `product_card`, modul
  *   `shop`) - stejný mechanismus jako stránky, žádné vlastní předávání textů přes @Input.
+ * @bugfix-note (2026-10-23) Prices were formatted with cs-CZ in every language (open finding #44) -
+ *   BasePublicComponent.formatEur() now.
  */
 
 import { Component, Input } from '@angular/core';
@@ -66,12 +68,6 @@ export class ProductBuilderComponent extends BasePublicComponent {
    * @note Uses bracket notation for price lookup to avoid TS4111 indexing errors when accessing dynamic property keys.
    */
   getFormattedPrice(): string {
-    const price = this.product?.prices?.['price_eur_with_vat'] || 0;
-    
-    return new Intl.NumberFormat('cs-CZ', { 
-      style: 'currency', 
-      currency: 'EUR',
-      minimumFractionDigits: 2
-    }).format(price);
+    return this.formatEur(this.product?.prices?.['price_eur_with_vat'] || 0);
   }
 }

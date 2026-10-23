@@ -21,6 +21,10 @@
  * - AdminLocalizationService: Statické i18n admin UI (NE obsah webu/eshopu) - viz
  *   refactor-note (2026-09) níže.
  *
+ * @bugfix-note (2026-10-23) Open finding #50: table cells and exports formatted currency / dates
+ *   always with cs-CZ, booleans as English 'Yes' / 'No' and named selected-rows files '-vybrane' in
+ *   every admin language - now the admin locale (`getDateLocale()`), `shared.yes` / `shared.no` and
+ *   the translated `table-builder.export_selected_suffix` (like TrashTableBuilder already did).
  */
 
 import {
@@ -255,7 +259,7 @@ get importEnumHints(): ImportEnumHint[] {
       case 'currency': {
         if (value === undefined || value === null || value === '') return '';
         const currency = column.currencyCode ? column.currencyCode.toUpperCase() : 'EUR';
-        const locale = 'cs-CZ';
+        const locale = this.i18n.getDateLocale();  // admin language, was 'cs-CZ' (finding #50)
         try {
           return (new CurrencyPipe(locale)).transform(value, currency, 'symbol-narrow', '1.2-2');
         } catch (e) {
@@ -263,9 +267,11 @@ get importEnumHints(): ImportEnumHint[] {
         }
       }
       case 'date':
-        return value ? (new DatePipe('cs-CZ')).transform(value, column.format || 'd.M.yyyy') : '';
+        return value ? (new DatePipe(this.i18n.getDateLocale())).transform(value, column.format || 'd.M.yyyy') : '';
       case 'boolean':
-        return (value == true || value === 'true' || value == 1) ? 'Yes' : 'No';
+        return (value == true || value === 'true' || value == 1)
+          ? this.i18n.getValue('shared.yes')
+          : this.i18n.getValue('shared.no');
       case 'image':
         return value ? `${this.uploadsBaseUrl}${value}` : '';
       default:
@@ -668,7 +674,8 @@ get importEnumHints(): ImportEnumHint[] {
         : this.buildExportRows(allData, columnKeys);
 
       const baseFilename = this.tableCaption || 'export';
-      const suffix = (selectedOnly ? '-vybrane' : '') + (rawFormat ? '-raw' : '');
+      // Suffix in the admin language (was the Czech '-vybrane' always, finding #50).
+      const suffix = (selectedOnly ? `-${this.i18n.getValue('table-builder.export_selected_suffix')}` : '') + (rawFormat ? '-raw' : '');
       const filename = `${baseFilename}${suffix}`;
 
       switch (format) {
@@ -764,7 +771,7 @@ get importEnumHints(): ImportEnumHint[] {
 
     if (detailCol.type === 'date') {
       try {
-        return (new DatePipe('cs-CZ')).transform(value, detailCol.format || 'd.M.yyyy') ?? String(value);
+        return (new DatePipe(this.i18n.getDateLocale())).transform(value, detailCol.format || 'd.M.yyyy') ?? String(value);
       } catch {
         return String(value);
       }

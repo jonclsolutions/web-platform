@@ -32,7 +32,7 @@ import { AlertDialogService } from '../../../core/services/alert-dialog.service'
 import { CurrentUserProfileService } from '../../../core/services/current-user-profile.service';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { LoadingService } from '../../../core/services/loading.service';
-import { PASSWORD_PATTERN } from '../../../shared/constants/password-policy';
+import { passwordPolicyValidator } from '../../../shared/constants/password-policy';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 
@@ -77,7 +77,8 @@ export class PersonalInfoComponent implements OnInit, OnDestroy {
   ) {
     this.passwordForm = this.fb.group({
       old_password: ['', [Validators.required]],
-      new_password: ['', [Validators.required, Validators.pattern(PASSWORD_PATTERN)]],
+      // Unicode rules of the API (finding #37) - was Validators.pattern(PASSWORD_PATTERN), ASCII only.
+      new_password: ['', [Validators.required, passwordPolicyValidator()]],
       new_password_confirmation: ['', [Validators.required]]
     }, {
       validators: [this.passwordsMatchValidator]

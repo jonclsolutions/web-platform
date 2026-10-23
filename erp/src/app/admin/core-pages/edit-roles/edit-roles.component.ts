@@ -47,6 +47,7 @@ import * as XLSX from 'xlsx';
 import * as Core from '../../../shared/imports/core-providers';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
 import { ExportPopupBuilderComponent, ExportColumnOption, ExportSelection } from '../../components/builders/export-popup-builder/export-popup-builder.component';
 
@@ -115,6 +116,8 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   protected override translationSection: string = 'edit-roles';
 
   private resourceCache = inject(ResourceCacheService);
+  /** App confirmation dialog (replaces window.confirm, finding #48). */
+  private confirmDialog = inject(ConfirmDialogService);
   private readonly PERMISSIONS_CACHE_KEY = 'edit-roles:permissions';
   private readonly PERMISSIONS_TTL_MS = 10 * 60 * 1000;
   private readonly ROLES_CACHE_KEY = 'edit-roles:roles';
@@ -415,9 +418,16 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
 
   // ── Výběr role v levém seznamu ─────────────────────────────────────────
 
-  selectRole(role: CoreRole): void {
+  /**
+   * @description Shows a role in the editor; with unsaved changes the user is asked first.
+   * @param role Role from the list.
+   * @returns Promise settled after the (optional) confirmation.
+   * @bugfix-note (2026-10-23) Asked with the native, page-blocking `window.confirm()` (open finding
+   *   #48) - the app's ConfirmDialogService now (styled, translated buttons).
+   */
+  async selectRole(role: CoreRole): Promise<void> {
     if (this.isPermissionsDirty || this.isEditingDetails) {
-      const confirmed = window.confirm(this.t('confirm_unsaved_switch'));
+      const confirmed = await this.confirmDialog.open(this.t('confirm_unsaved_switch_title'), this.t('confirm_unsaved_switch'));
       if (!confirmed) return;
     }
 
@@ -810,6 +820,7 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
         case 'xlsx': this.downloadXlsx(rows, labels, filename); break;
       }
 
+      this.logExport(rows.length, selection.format);
       this.showExportPopup = false;
     } catch {
       this.alertDialogService.open(this.t('error_title'), this.t('export_generic_error'), 'danger');
@@ -817,6 +828,20 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
       this.isExporting = false;
       this.cd.markForCheck();
     }
+  }
+
+  /**
+   * @description Writes the export to the core audit log, like the table exports do (open finding
+   *   #49 - exporting the roles left no trace). A failed log write only goes to the console.
+   * @param rowCount Number of exported roles.
+   * @param format Export format.
+   */
+  private logExport(rowCount: number, format: string): void {
+    this.dataHandler.post<any>('core/logs', {
+      event_type: `export_${format}`,
+      module: 'core/roles',
+      description: `User exported ${rowCount} roles (${format.toUpperCase()}).`,
+    }).subscribe({ error: (err) => console.error('Failed to log export:', err) });
   }
 
   /** @description Vrátí pole řádků (pole stringů, ve stejném pořadí jako `keys`) - jedna položka pole = jedna role. */

@@ -4,13 +4,19 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Manages the e-shop shopping cart state, including item persistence, quantity management, stock reservation timers, and order creation workflows.
+ * @description Manages the e-shop shopping cart state: item persistence (LocalStorage), quantities
+ *   limited by the shown stock, totals and tax.
  * @dependencies
  * - Angular Core: For signals, computed properties, and effects to handle reactive state.
  * - HttpClient: For communicating with the checkout API endpoints.
  * - environment: Provides API configuration URLs.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `timeRemaining`, `isExpired`, `createOrder`, expiredNotificationPending (write-only flag).
+ * @refactor-note (2026-10-23) Removed the "15-minute reservation" (open finding #42): the backend
+ *   reserves no stock (availability is checked when the order is placed), the private
+ *   `timerSignal` / `isExpiredSignal` were read by nobody, a 1-second interval ran forever and an
+ *   "expired" cart was kept as is anyway. Gone: RESERVATION_TIME, the timer, `expiresAt` of the cart
+ *   and `reservedAt` of the items (old stored carts still load - the fields are ignored).
  */
 
 import { Injectable, signal, computed, effect } from '@angular/core';
@@ -32,7 +38,6 @@ export interface CartItem {
   total_price: number; // Derived as unit_price * quantity
   vat_rate: number;
   stock_quantity: number;
-  reservedAt: number;
   /** Full database pricing object used for server-side verification */
   prices?: {
     price_eur_with_vat: number;
@@ -45,31 +50,25 @@ export interface CartItem {
 /** Root interface for the entire cart state */
 export interface Cart {
   items: CartItem[];
-  expiresAt: number;
   createdAt: number;
 }
 
 /**
  * @description Service for handling global cart operations.
  * @usage Provides a single source of truth for the cart state accessible by multiple components.
- * @note Utilizes Signals for reactive UI updates and persists state via LocalStorage. Implements a 15-minute reservation TTL.
+ * @note Utilizes Signals for reactive UI updates and persists state via LocalStorage. No stock
+ *   reservation - the checkout checks availability.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
   private readonly CART_STORAGE_KEY = 'shop_cart';
-  private readonly RESERVATION_TIME = 15 * 60 * 1000; // 15 minutes in milliseconds
 
   private cartSignal = signal<Cart>({
     items: [],
-    expiresAt: 0,
     createdAt: Date.now()
   });
-
-  private timerSignal = signal<number>(0);
-  private isExpiredSignal = signal<boolean>(false);
-  
 
   cartItems = computed(() => this.cartSignal().items);
   cartCount = computed(() => this.cartItems().length);
@@ -94,11 +93,8 @@ export class CartService {
 
   totalPrice = computed(() => this.subtotal());
 
-  private timerInterval: any;
-
   constructor(private http: HttpClient) {
     this.loadCart();
-    this.startTimer();
 
     effect(() => {
       const cart = this.cartSignal();
@@ -108,21 +104,14 @@ export class CartService {
 
   /**
    * @description Attempts to load the cart from LocalStorage on initialization.
-   * @note Checks expiry status immediately; if expired, maintains cart items but flags expiration.
+   * @note Carts stored by older versions (with `expiresAt` / `reservedAt`) load the same way.
    */
   private loadCart(): void {
     const stored = localStorage.getItem(this.CART_STORAGE_KEY);
     if (stored) {
       try {
-        const cart: Cart = JSON.parse(stored);
-        const now = Date.now();
-
-        if (now > cart.expiresAt) {
-          this.cartSignal.set(cart);
-          this.isExpiredSignal.set(true);
-        } else {
-          this.cartSignal.set(cart);
-        }
+        const cart = JSON.parse(stored);
+        this.cartSignal.set({ items: Array.isArray(cart?.items) ? cart.items : [], createdAt: cart?.createdAt ?? Date.now() });
       } catch (e) {
         console.error('Error loading cart from storage:', e);
       }
@@ -178,19 +167,12 @@ export class CartService {
         total_price: unitPrice * finalQty,
         vat_rate: vatRate,
         stock_quantity: stockQuantity,
-        reservedAt: Date.now(),
         prices: activePrices
       };
 
       const cart = this.cartSignal();
-      this.cartSignal.set({
-        ...cart,
-        items: [...cart.items, newItem],
-        expiresAt: Date.now() + this.RESERVATION_TIME
-      });
+      this.cartSignal.set({ ...cart, items: [...cart.items, newItem] });
     }
-
-    this.resetTimer();
   }
 
   /**
@@ -217,29 +199,16 @@ export class CartService {
       return item;
     });
 
-    this.cartSignal.set({
-      ...cart,
-      items: updatedItems,
-      expiresAt: Date.now() + this.RESERVATION_TIME
-    });
-
-    this.resetTimer();
+    this.cartSignal.set({ ...cart, items: updatedItems });
   }
 
   /**
-   * @description Removes an item from the cart and resets expiration timer if the cart becomes empty.
+   * @description Removes an item from the cart.
+   * @param itemId Unique cart identifier.
    */
   removeItem(itemId: string): void {
     const cart = this.cartSignal();
-    const updatedItems = cart.items.filter(item => item.id !== itemId);
-    
-    this.cartSignal.set({
-      ...cart,
-      items: updatedItems,
-      expiresAt: updatedItems.length > 0 ? Date.now() + this.RESERVATION_TIME : 0
-    });
-
-    this.resetTimer();
+    this.cartSignal.set({ ...cart, items: cart.items.filter(item => item.id !== itemId) });
   }
 
   /**
@@ -248,53 +217,9 @@ export class CartService {
   clear(): void {
     this.cartSignal.set({
       items: [],
-      expiresAt: 0,
       createdAt: Date.now()
     });
     localStorage.removeItem(this.CART_STORAGE_KEY);
-    this.isExpiredSignal.set(false);
-    this.timerSignal.set(0);
-  }
-
-  /**
-   * @description Initializes the 1-second interval timer for tracking reservation TTL.
-   */
-  private startTimer(): void {
-    if (this.timerInterval) clearInterval(this.timerInterval);
-
-    this.timerInterval = setInterval(() => {
-      const now = Date.now();
-      const cart = this.cartSignal();
-      
-      if (cart.items.length === 0 || cart.expiresAt === 0) {
-        this.timerSignal.set(0);
-        return;
-      }
-
-      const remaining = Math.max(0, Math.floor((cart.expiresAt - now) / 1000));
-      this.timerSignal.set(remaining);
-
-      if (remaining <= 0 && cart.items.length > 0) {
-        this.isExpiredSignal.set(true);
-      }
-    }, 1000);
-  }
-
-  /**
-   * @description Resets the reservation TTL timer whenever a cart mutation occurs.
-   */
-  private resetTimer(): void {
-    const cart = this.cartSignal();
-    if (cart.items.length === 0) {
-      this.cartSignal.set({ ...cart, expiresAt: 0 });
-      this.timerSignal.set(0);
-      return;
-    }
-    this.cartSignal.set({
-      ...cart,
-      expiresAt: Date.now() + this.RESERVATION_TIME
-    });
-    this.isExpiredSignal.set(false);
   }
 
   private generateItemId(productId: number, variantId: number | null): string {

@@ -7,6 +7,10 @@
  * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
  *   `product_detail`. Odstraněny anglické fallbacky v `alert()`; `errors.max_stock` je teď jedna
  *   věta s `{count}` místo skládání tří kusů textu.
+ * @bugfix-note (2026-10-23) Prices were formatted with cs-CZ in every language (open finding #44) -
+ *   BasePublicComponent.formatEur() now.
+ * @bugfix-note (2026-10-23) The add-to-cart errors used the blocking native `window.alert()` (open
+ *   finding #45) - the app's alert dialog with the title `errors.alert_title` now.
  */
 
 import { Component, OnInit, signal, computed, effect, inject } from '@angular/core';
@@ -16,6 +20,7 @@ import { ShopPublicService } from '../components/services/public-data.service';
 import { CartService } from '../components/services/cart.service';
 import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
+import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -32,6 +37,8 @@ export class ProductDetailComponent extends BasePublicComponent implements OnIni
   private route = inject(ActivatedRoute);
   private shopService = inject(ShopPublicService);
   public cartService = inject(CartService);
+  /** Dialog of the add-to-cart errors (was `window.alert()`, finding #45). */
+  private alertDialogService = inject(AlertDialogService);
 
   // Signály pro reaktivní UI
   product = signal<any>(null);
@@ -150,17 +157,13 @@ export class ProductDetailComponent extends BasePublicComponent implements OnIni
     return this.getFormattedPrice(variant.prices?.['price_eur_with_vat'] || 0); 
   }
 
-  getFormattedPrice(value: number): string { 
-    return new Intl.NumberFormat('cs-CZ', { 
-      style: 'currency', 
-      currency: 'EUR', 
-      minimumFractionDigits: 2 
-    }).format(value); 
+  getFormattedPrice(value: number): string {
+    return this.formatEur(value);
   }
 
   addToCart(): void {
     if (!this.isAvailable()) {
-      alert(this.t?.errors?.unavailable);
+      this.alertDialogService.open(this.t?.errors?.alert_title, this.t?.errors?.unavailable, 'warning');
       return;
     }
     const product = this.product();
@@ -168,7 +171,7 @@ export class ProductDetailComponent extends BasePublicComponent implements OnIni
     const quantity = this.selectedQuantity();
     
     if (quantity > this.currentStock()) {
-      alert(this.t?.errors?.max_stock?.replace('{count}', String(this.currentStock())));
+      this.alertDialogService.open(this.t?.errors?.alert_title, this.t?.errors?.max_stock?.replace('{count}', String(this.currentStock())), 'warning');
       return;
     }
     

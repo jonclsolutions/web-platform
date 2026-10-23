@@ -4,7 +4,7 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Unit tests of PermissionService: restore from localStorage (valid / broken JSON),
+ * @description Unit tests of PermissionService: never restored from localStorage (finding #38),
  *   set / check / clear of the permission list.
  * @dependencies
  * - Real localStorage (key 'userPermissions' cleared around every test).
@@ -18,19 +18,14 @@ describe('PermissionService', () => {
   afterEach(() => localStorage.removeItem('userPermissions'));
 
   /**
-   * @description Permissions saved in localStorage are restored on creation; broken JSON is
-   *   logged and ignored.
-   * @input '["a","b"]'; then '{broken'.
-   * @output hasPermission('a') true; with broken JSON nothing granted + console.error.
+   * @description A permission list in localStorage grants nothing - the list comes only from
+   *   AuthService (finding #38).
+   * @input localStorage userPermissions '["a","b"]'; new service.
+   * @output hasPermission('a') false.
    */
-  it('restores saved permissions and ignores broken JSON', () => {
+  it('ignores permissions in localStorage', () => {
     localStorage.setItem('userPermissions', '["a","b"]');
-    expect(new PermissionService().hasPermission('a')).toBeTrue();
-
-    spyOn(console, 'error');
-    localStorage.setItem('userPermissions', '{broken');
     expect(new PermissionService().hasPermission('a')).toBeFalse();
-    expect(console.error).toHaveBeenCalled();
   });
 
   /**

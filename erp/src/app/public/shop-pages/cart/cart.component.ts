@@ -8,6 +8,8 @@
  *   string literals): `alertDialogService`.
  * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
  *   `cart`. Odstraněny české fallbacky v potvrzovacím dialogu.
+ * @bugfix-note (2026-10-23) Prices were formatted with cs-CZ in every language (open finding #44) -
+ *   BasePublicComponent.formatEur() now.
  */
 
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
@@ -116,10 +118,6 @@ export class CartComponent extends BasePublicComponent {
    * @description Formats a numeric price into a localized EUR currency string.
    */
   formatPrice(price: number): string {
-    return new Intl.NumberFormat('cs-CZ', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2
-    }).format(price);
+    return this.formatEur(price);
   }
 }

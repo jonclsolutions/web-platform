@@ -7,6 +7,9 @@
  * @created 2025
  * @description Manages user authentication, token-based session lifecycle (Access/Refresh
  * tokens), CAPTCHA-gated brute-force protection, and mandatory/optional 2FA verification.
+ * @refactor-note (2026-10-23) Open finding #52: the audit log descriptions (core_logs) were Czech
+ *   while every other module logs in English - the log is read in the admin in any language and
+ *   searched / exported as one dataset. The descriptions are English now; event types are unchanged.
  * @refactor-note (2026-10-09) SECURITY: login and token refresh refuse an account whose
  * e-mail is no longer allowed by the e-mail access policy (sysadmin exempt). Checked only
  * after the password matched, with a generic message that reveals nothing about the
@@ -88,7 +91,7 @@ class AuthController extends Controller
 
             if (!$this->captcha->verify($captchaToken, $request->ip(), $context)) {
                 // Captcha selhání samo zapisuje CaptchaVerificationService::verify().
-                $this->logAction($request, CoreLog::class, 'login_captcha_failed', 'Auth', "Neplatná/chybějící captcha pro: {$email}", null, 'User');
+                $this->logAction($request, CoreLog::class, 'login_captcha_failed', 'Auth', "Invalid or missing captcha for: {$email}", null, 'User');
 
                 return response()->json([
                     'message'          => 'Captcha verification failed. Please try again.',
@@ -111,7 +114,7 @@ class AuthController extends Controller
                     $request->ip(),
                     CoreSecurityEvent::contextFromRequest($request, ['email' => $email])
                 );
-                $this->logAction($request, CoreLog::class, 'login_blocked', 'Auth', "Pokus o přihlášení na zablokovaný účet: {$email}", $targetUser->id, 'User');
+                $this->logAction($request, CoreLog::class, 'login_blocked', 'Auth', "Login attempt on a blocked account: {$email}", $targetUser->id, 'User');
 
                 return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
             }
@@ -168,7 +171,7 @@ class AuthController extends Controller
             CoreSecurityEvent::record('login_brute_force_suspected', 'critical', $request->ip(), $securityContext);
         }
 
-        $this->logAction($request, CoreLog::class, 'login_failed', 'Auth', "Neúspěšný pokus o přihlášení na login: {$email}", null, 'User');
+        $this->logAction($request, CoreLog::class, 'login_failed', 'Auth', "Failed login attempt for: {$email}", null, 'User');
 
         return response()->json([
             'message'          => 'Invalid credentials.',
@@ -225,7 +228,7 @@ class AuthController extends Controller
             new TwoFactorCodeMail($user, $code, TwoFactorCode::CODE_TTL_MINUTES)
         );
 
-        $this->logAction($request, CoreLog::class, 'login_2fa_challenge_sent', 'Auth', "2FA kód odeslán: {$user->user_email}", $user->id, 'User');
+        $this->logAction($request, CoreLog::class, 'login_2fa_challenge_sent', 'Auth', "2FA code sent: {$user->user_email}", $user->id, 'User');
 
         return response()->json([
             'message'      => 'Enter the verification code sent to your email.',
@@ -270,7 +273,7 @@ class AuthController extends Controller
             $securityContext = CoreSecurityEvent::contextFromRequest($request, ['user_id' => $pending->user_id]);
             CoreSecurityEvent::record('login_2fa_invalid', 'warning', $request->ip(), $securityContext);
 
-            $this->logAction($request, CoreLog::class, 'login_2fa_code_invalid', 'Auth', "Neplatný 2FA kód (user_id: {$pending->user_id})", $pending->user_id, 'User');
+            $this->logAction($request, CoreLog::class, 'login_2fa_code_invalid', 'Auth', "Invalid 2FA code (user_id: {$pending->user_id})", $pending->user_id, 'User');
 
             if ($pending->attempts >= TwoFactorCode::MAX_ATTEMPTS) {
                 CoreSecurityEvent::record('login_2fa_exhausted', 'critical', $request->ip(), $securityContext);
@@ -370,7 +373,7 @@ class AuthController extends Controller
             new TwoFactorCodeMail($user, $code, TwoFactorCode::CODE_TTL_MINUTES)
         );
 
-        $this->logAction($request, CoreLog::class, 'login_2fa_code_resent', 'Auth', "2FA kód znovu odeslán (user_id: {$user->id})", $user->id, 'User');
+        $this->logAction($request, CoreLog::class, 'login_2fa_code_resent', 'Auth', "2FA code resent (user_id: {$user->id})", $user->id, 'User');
 
         return response()->json([
             'message'    => 'A new code has been sent.',
@@ -396,7 +399,7 @@ class AuthController extends Controller
             'expires_at' => now()->addDays(7),
         ]);
 
-        $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "Uživatel se úspěšně přihlásil: {$user->user_email}", $user->id, 'User');
+        $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "User logged in: {$user->user_email}", $user->id, 'User');
 
         return response()->json([
             'message'          => 'Login successful!',
@@ -515,7 +518,7 @@ class AuthController extends Controller
 
         if ($user) {
             $request->merge(['user_agent' => $request->userAgent()]);
-            $this->logAction($request, CoreLog::class, 'logout', 'Auth', "Uživatel se odhlásil: {$user->user_email}", $user->id, 'User');
+            $this->logAction($request, CoreLog::class, 'logout', 'Auth', "User logged out: {$user->user_email}", $user->id, 'User');
             $user->currentAccessToken()->delete();
         }
 

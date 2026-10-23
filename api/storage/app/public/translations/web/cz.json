@@ -152,7 +152,8 @@
                     "answer": "E-mailem, přes helpdesk nebo telefonicky."
                 }
             ]
-        }
+        },
+        "empty_state_text": "Pro tuto kategorii zatím nemáme žádné otázky. Zkuste jinou kategorii, nebo se nám ozvěte přímo."
     },
     "navigation": {
         "home": "Domů",
@@ -281,7 +282,16 @@
                 }
             ],
             "result": "Komunikace školy s rodiči a studenty se zjednodušila – rozvrhy, akce i materiály jsou dostupné online na jednom místě."
-        }
+        },
+        "label_features": "Klíčové funkce",
+        "label_facts": "O projektu",
+        "label_category": "Oblast",
+        "label_scope": "Rozsah",
+        "label_role": "Naše role",
+        "label_duration": "Realizace",
+        "label_client": "Klient",
+        "label_stack": "Technologický stack",
+        "label_result": "Výsledek"
     },
     "footer": {
         "group_offer": "Nabídka",
@@ -324,7 +334,15 @@
             "admin_title": "Administrace a správa obsahu",
             "admin_text": "Webová a systémová řešení mají vlastní administrační rozhraní. Texty, produkty, objednávky nebo uživatele si spravujete sami, bez programátora.",
             "support_title": "Podpora a údržba",
-            "support_text": "Po spuštění nezmizneme. Nabízíme průběžnou technickou podporu, bezpečnostní aktualizace a monitoring. Pokud se cokoliv pokazí, víte na koho se obrátit."
+            "support_text": "Po spuštění nezmizneme. Nabízíme průběžnou technickou podporu, bezpečnostní aktualizace a monitoring. Pokud se cokoliv pokazí, víte na koho se obrátit.",
+            "custom_tags": ["Web", "Desktop", "Mobil"],
+            "auth_tags": ["Přihlášení", "Role", "Oprávnění"],
+            "seo_tags": ["Meta tagy", "Sitemap", "Core Web Vitals"],
+            "hosting_tags": ["Server", "CI/CD", "SSL"],
+            "integrations_tags": ["API", "Platební brána", "ERP"],
+            "security_tags": ["HTTPS", "Šifrování", "GDPR"],
+            "admin_tags": ["CMS", "Dashboard", "Správa obsahu"],
+            "support_tags": ["Údržba", "Aktualizace", "Monitoring"]
         },
         "pricing": {
             "eyebrow": "Co projekt zahrnuje",
@@ -681,7 +699,8 @@
             "phone_pattern": "Pouze číslice a \"+\" na začátku.",
             "phone_max": "Maximální délka je 20 znaků.",
             "email_invalid": "Zadejte platný email.",
-            "submit_error": "Omlouváme se, objednávku se nepodařilo odeslat."
+            "submit_error": "Omlouváme se, objednávku se nepodařilo odeslat.",
+            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
         },
         "buttons": {
             "send": "Odeslat poptávku",
@@ -691,6 +710,13 @@
         "thank_you": {
             "title": "Děkujeme za odeslání poptávky",
             "text": "V nejbližší době vás bude kontaktovat technik, který s vámi dohodne konkrétní řešení."
+        },
+        "link_states": {
+            "loading": "Ověřuji odkaz…",
+            "invalid_title": "Odkaz je neplatný",
+            "invalid_text": "Tento odkaz na objednávkový formulář neexistuje nebo byl odstraněn. Kontaktujte prosím svého obchodního zástupce.",
+            "used_title": "Formulář již byl odeslán",
+            "used_text": "Tento odkaz je jednorázový a už byl použit. Pokud potřebujete něco doplnit, kontaktujte prosím svého obchodního zástupce."
         }
     },
     "jobs": {
@@ -751,7 +777,12 @@
         "sales-rep": {
             "title": "Obchodní zástupce",
             "content": "Hledáme energického a samostatného kolegu pro Business Development, který nám pomůže identifikovat nové obchodní příležitosti a rozšiřovat naše klientské portfolio. Pokud máte vynikající komunikační dovednosti a baví vás propojovat technická řešení s potřebami klientů, hledáme právě vás.<br><br><strong>Vaše hlavní úkoly:<\/strong><br>• Aktivní vyhledávání nových klientských segmentů a navazování prvotních obchodních kontaktů.<br>• Profesionální sjednávání nabídek a prezentace našich služeb jako moderního technologického partnera.<br>• Budování vztahů s klíčovými klienty a partnery.<br><br><strong>Očekávaný profil kandidáta:<\/strong><br>• Věk 18+ a reprezentativní vystupování v online i osobní komunikaci.<br>• Vysoká míra vnitřní disciplíny, samostatnosti a schopnost efektivního self-managementu.<br>• Znalost prostředí sociálních sítí jako nástroje pro moderní obchod je velkou výhodou.<br>• Schopnost jasně a srozumitelně interpretovat i složitější technická řešení.<br><br><strong>Na co se můžete těšit:<\/strong><br>• Flexibilní spolupráce na DPP s možností plné práce z domova (home-office).<br>• Volný pracovní rozvrh, který si plně přizpůsobíte svým časovým možnostem."
-        }
+        },
+        "form_first_name_pattern_error": "Jméno nesmí obsahovat čísla ani speciální znaky.",
+        "form_last_name_pattern_error": "Příjmení nesmí obsahovat čísla ani speciální znaky.",
+        "form_phone_pattern_error": "Telefon smí obsahovat jen číslice a běžné oddělovače (+, mezera, závorky, pomlčka).",
+        "form_cv_size_error": "Soubor je příliš velký. Maximální velikost je 20 MB.",
+        "form_too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
     },
     "contact": {
         "attachment_uploader": {
@@ -798,7 +829,9 @@
             "message_required": "Zpráva je povinná.",
             "message_minlength": "Zpráva musí mít alespoň 10 znaků.",
             "message_maxlength": "Zpráva nesmí mít více než 10 000 znaků.",
-            "submit_error": "Odeslání se nezdařilo. Zkuste to prosím znovu."
+            "submit_error": "Odeslání se nezdařilo. Zkuste to prosím znovu.",
+            "submit_error_title": "Odeslání se nezdařilo",
+            "too_many_requests": "Příliš mnoho pokusů. Zkuste to prosím za chvíli znovu."
         },
         "buttons": {
             "send": "Odeslat poptávku",

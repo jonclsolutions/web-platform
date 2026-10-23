@@ -65,7 +65,7 @@
                     @if (applicationForm.get('first_name')?.errors?.['required']) {
                       <span class="field-error">{{ t?.form_first_name_error }}</span>
                     } @else if (applicationForm.get('first_name')?.errors?.['pattern']) {
-                      <span class="field-error">{{ t?.form_first_name_pattern_error || 'Jméno nesmí obsahovat čísla ani speciální znaky.' }}</span>
+                      <span class="field-error">{{ t?.form_first_name_pattern_error }}</span>
                     }
                   }
                 </div>
@@ -85,7 +85,7 @@
                     @if (applicationForm.get('last_name')?.errors?.['required']) {
                       <span class="field-error">{{ t?.form_last_name_error }}</span>
                     } @else if (applicationForm.get('last_name')?.errors?.['pattern']) {
-                      <span class="field-error">{{ t?.form_last_name_pattern_error || 'Příjmení nesmí obsahovat čísla ani speciální znaky.' }}</span>
+                      <span class="field-error">{{ t?.form_last_name_pattern_error }}</span>
                     }
                   }
                 </div>
@@ -123,7 +123,7 @@
                   [class.is-error]="applicationForm.get('phone')?.invalid && (applicationForm.get('phone')?.dirty || applicationForm.get('phone')?.touched)"
                   autocomplete="tel">
                 @if (applicationForm.get('phone')?.errors?.['pattern'] && (applicationForm.get('phone')?.dirty || applicationForm.get('phone')?.touched)) {
-                  <span class="field-error">{{ t?.form_phone_pattern_error || 'Telefon smí obsahovat jen číslice a běžné oddělovače (+, mezera, závorky, pomlčka).' }}</span>
+                  <span class="field-error">{{ t?.form_phone_pattern_error }}</span>
                 }
               </div>
 
@@ -161,7 +161,7 @@
                   <span class="field-error">{{ t?.form_cv_error }}</span>
                 }
                 @if (fileSizeError) {
-                  <span class="field-error">{{ t?.form_cv_size_error || 'Soubor je příliš velký. Maximální velikost je 20 MB.' }}</span>
+                  <span class="field-error">{{ t?.form_cv_size_error }}</span>
                 }
               </div>
 

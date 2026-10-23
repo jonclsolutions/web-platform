@@ -20,12 +20,14 @@
  *   destroyed header (scrollTo + detectChanges on a destroyed view → NG0911 errors in the
  *   console, one more leaked subscriber per visit). It now ends with destroy$, and the initial
  *   route sync timeout is cleared on destroy.
+ * @refactor-note (2026-10-23) Removed the `menuToggled` output (open finding #41) - it was never
+ *   emitted; the header locks the page scroll for its menus itself.
  */
 
 import {
   Component, OnInit, HostListener, AfterViewInit,
   QueryList, ElementRef, ViewChildren,
-  ChangeDetectorRef, NgZone, OnDestroy, Output, EventEmitter
+  ChangeDetectorRef, NgZone, OnDestroy
 } from '@angular/core';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -48,7 +50,6 @@ import * as Web from '../../../../shared/imports/web-providers';
   styleUrls: ['./public-header.component.css']
 })
 export class PublicHeaderComponent implements OnInit, AfterViewInit, OnDestroy {
-  @Output() menuToggled = new EventEmitter<boolean>();
   @ViewChildren('homeLink, servicesLink, shopLink, academyLink')
   navLinks!: QueryList<ElementRef<HTMLAnchorElement>>;
 isDrawerLangOpen: boolean = false;

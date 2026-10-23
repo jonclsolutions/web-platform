@@ -16,6 +16,7 @@
 import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
+import { createResetPasswordFormFields } from './administrators.config';
 import { AdministratorsComponent } from './administrators.component';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
 import { PermissionOptionsService } from '../../../core/services/permission-options.service';
@@ -342,6 +343,18 @@ describe('AdministratorsComponent', () => {
       expect(component.toolbarButtons.find(b => b.action === 'openEmailAccessPolicy')!.showIf).toBeFalse();
       discardPeriodicTasks();
     }));
+
+    /**
+     * @description The reset form checks the new password with the shared Unicode policy, not an
+     *   ASCII pattern (finding #37).
+     * @input  createResetPasswordFormFields(i18n)
+     * @output new_password: passwordPolicy true, no pattern
+     */
+    it('validates the reset password with the password policy', () => {
+      const field = createResetPasswordFormFields(ctx.i18n as any).find(f => f.column_name === 'new_password')!;
+      expect(field.passwordPolicy).toBeTrue();
+      expect(field.pattern).toBeUndefined();
+    });
 
     /**
      * @description Password reset sends the new password as its own confirmation.

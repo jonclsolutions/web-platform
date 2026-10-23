@@ -16,6 +16,7 @@
 namespace Tests\Feature\Web;
 
 use App\Models\Core\CoreSecurityEvent;
+use App\Http\Resources\Web\WebSalesLeadResource;
 use App\Models\Web\WebSalesLead;
 use Tests\Support\WebFixtures;
 use Tests\TestCase;
@@ -199,5 +200,19 @@ class SalesLeadTest extends TestCase
         $this->getJson('/api/public/sales-leads/token-u')->assertStatus(410);
         $this->getJson('/api/public/sales-leads/nope')->assertStatus(404);
         $this->assertSame(2, (int) CoreSecurityEvent::where('event_type', 'sales_lead_token_invalid')->sum('occurrences'));
+    }
+
+    /**
+     * @description A lead without priority / status is returned with the slug defaults (finding #52 -
+     *   were the Czech 'Neutrální' / 'nové', outside the validated vocabulary).
+     * @input WebSalesLeadResource of an unsaved lead with priority and status null.
+     * @output priority 'neutral', status 'new'.
+     */
+    public function test_resource_defaults_are_slugs(): void
+    {
+        $data = (new WebSalesLeadResource(new WebSalesLead()))->toArray(request());
+
+        $this->assertSame('neutral', $data['priority']);
+        $this->assertSame('new', $data['status']);
     }
 }

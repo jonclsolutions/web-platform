@@ -20,7 +20,19 @@
  * `{min}` / `{max}` placeholders are filled from the length constants, so the numbers stay
  * defined only here. The hardcoded Czech `label` and `PASSWORD_ERROR_MESSAGE` were removed
  * (no callers left); use `labelKey` and `getPasswordErrorMessage()`.
+ *
+ * @bugfix-note (2026-10-23) Open finding #37 - there were TWO rule sets: this file checked ASCII
+ *   letters, a fixed list of special characters and the UTF-16 length (`PASSWORD_PATTERN`,
+ *   compiled by Angular WITHOUT the `u` flag), `utils/password-validation.ts` the Unicode rules of
+ *   the Laravel `Password` rule. Activation, personal info, administrators and the checklist
+ *   refused passwords the API accepts (`§`, `€`, `ž`-only letters, …). Now ONE rule set
+ *   (`PASSWORD_RULE_CHECKS`, Unicode like Laravel `letters()->numbers()->symbols()`, length in code
+ *   points like `mb_strlen`) used everywhere; forms validate with `passwordPolicyValidator()` /
+ *   the `appPasswordPolicy` directive instead of a string pattern. `PASSWORD_PATTERN` and
+ *   `PASSWORD_SPECIAL_CHARS` were removed.
  */
+
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 export interface PasswordRequirement {
   id: string;
@@ -32,25 +44,33 @@ export interface PasswordRequirement {
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 16;
 
-/** Povolené speciální znaky - čistý řetězec, žádné regex escapování zde není potřeba. */
-export const PASSWORD_SPECIAL_CHARS = `!@#$%^&*()_+-=[]{};:'",.<>/?~`;
+/*
+ * Unicode property regexes - the character classes of Laravel's
+ * Illuminate\Validation\Rules\Password, so FE and BE never disagree on e.g. "ž" or "€".
+ */
+const LETTER_RE = /\p{L}/u;
+const DIGIT_RE  = /\p{N}/u;
+const SYMBOL_RE = /[\p{Z}\p{S}\p{P}]/u;
 
 /**
- * @description Escapuje znaky, které mají v regex znakové třídě `[...]` speciální
- * význam (`]`, `\`, `^`, `-`), aby šel `PASSWORD_SPECIAL_CHARS` bezpečně vložit do
- * regexu jako literál.
+ * @description Length in Unicode code points (`mb_strlen` of Laravel's min / max), not UTF-16 units.
+ * @param password Raw password.
+ * @returns Number of code points.
  */
-function escapeForRegexClass(chars: string): string {
-  return chars.replace(/[\]\\^-]/g, '\\$&');
+function codePointLength(password: string): number {
+  return [...(password ?? '')].length;
 }
 
 /**
- * @description Regex string pro `[pattern]` binding na `<input>` (HTML5/Angular
- * PatternValidator). Vyžaduje: 8-16 znaků, alespoň jedno písmeno, jednu číslici a
- * jeden speciální znak.
+ * @description The single implementation of every password rule (finding #37).
+ * @note `symbol` = separator, symbol or punctuation (Laravel `symbols()`).
  */
-export const PASSWORD_PATTERN =
-  `^(?=.*[0-9])(?=.*[A-Za-z])(?=.*[${escapeForRegexClass(PASSWORD_SPECIAL_CHARS)}]).{${PASSWORD_MIN_LENGTH},${PASSWORD_MAX_LENGTH}}$`;
+export const PASSWORD_RULE_CHECKS = {
+  length: (p: string) => codePointLength(p) >= PASSWORD_MIN_LENGTH && codePointLength(p) <= PASSWORD_MAX_LENGTH,
+  letter: (p: string) => LETTER_RE.test(p ?? ''),
+  digit:  (p: string) => DIGIT_RE.test(p ?? ''),
+  symbol: (p: string) => SYMBOL_RE.test(p ?? ''),
+} as const;
 
 /**
  * @description Fills the `{min}` / `{max}` placeholders of a translated password text with
@@ -79,26 +99,10 @@ export function getPasswordErrorMessage(translate: (path: string) => string): st
  * aby šlo v UI zeleně/šedě odlišit KTERÝ konkrétní požadavek je/není splněný.
  */
 export const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
-  {
-    id: 'length',
-    labelKey: 'password-policy.length',
-    test: (p) => p.length >= PASSWORD_MIN_LENGTH && p.length <= PASSWORD_MAX_LENGTH,
-  },
-  {
-    id: 'letter',
-    labelKey: 'password-policy.letter',
-    test: (p) => /[A-Za-z]/.test(p),
-  },
-  {
-    id: 'digit',
-    labelKey: 'password-policy.digit',
-    test: (p) => /[0-9]/.test(p),
-  },
-  {
-    id: 'special',
-    labelKey: 'password-policy.special',
-    test: (p) => PASSWORD_SPECIAL_CHARS.split('').some(ch => p.includes(ch)),
-  },
+  { id: 'length',  labelKey: 'password-policy.length',  test: PASSWORD_RULE_CHECKS.length },
+  { id: 'letter',  labelKey: 'password-policy.letter',  test: PASSWORD_RULE_CHECKS.letter },
+  { id: 'digit',   labelKey: 'password-policy.digit',   test: PASSWORD_RULE_CHECKS.digit },
+  { id: 'special', labelKey: 'password-policy.special', test: PASSWORD_RULE_CHECKS.symbol },
 ];
 
 /**
@@ -109,4 +113,19 @@ export const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
  */
 export function meetsPasswordRequirements(password: string): boolean {
   return PASSWORD_REQUIREMENTS.every(requirement => requirement.test(password || ''));
+}
+
+/**
+ * @description Angular validator of the password policy for reactive forms (replaces the string
+ *   `Validators.pattern(PASSWORD_PATTERN)`, which cannot express the Unicode rules).
+ * @returns Validator: null for an empty value (leave that to `required`) or a valid password,
+ *   `{ pattern: { requiredPattern: 'password-policy' } }` otherwise (same error key as before, so
+ *   existing error messages keep working).
+ */
+export function passwordPolicyValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (value === null || value === undefined || value === '') return null;
+    return meetsPasswordRequirements(String(value)) ? null : { pattern: { requiredPattern: 'password-policy' } };
+  };
 }

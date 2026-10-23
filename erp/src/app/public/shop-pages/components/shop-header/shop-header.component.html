@@ -41,16 +41,8 @@
           }
         </div>
 
-        <div class="custom-dropdown" (click)="toggleCurrency()">
-          <span class="selected-val">{{ selectedCurrency }}</span>
-          <svg class="chevron" [class.open]="showCurrency" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          @if (showCurrency) {
-            <div class="dropdown-menu">
-              <div class="dropdown-item" (click)="selectCurrency('CZK')">CZK</div>
-              <div class="dropdown-item" (click)="selectCurrency('EUR')">EUR</div>
-            </div>
-          }
-        </div>
+        <!-- @refactor-note (2026-10-23) The EUR / CZK switch changed nothing - every price is EUR
+             (open finding #43). Removed; the shop shows EUR only. -->
       </div>
 
       <div class="divider"></div>

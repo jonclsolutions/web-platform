@@ -12,6 +12,11 @@
  * @refactor-note (2026-10-21) Dědí `BasePublicComponent` (`translationModule = 'shop'`, sekce
  *   `checkout`). Validační hlášky (`errors.*`), kupóny a alerty (`alerts.*`) jdou z překladů;
  *   odstraněny natvrdo psané české fallbacky. Hláška ze serveru (`e.error.message`) má dál přednost.
+ * @bugfix-note (2026-10-23) Prices were formatted with cs-CZ in every language (open finding #44) -
+ *   BasePublicComponent.formatEur() now; an unpriced cart line shows a translated alert instead of an
+ *   uncaught Czech exception.
+ * @bugfix-note (2026-10-23) Open finding #53: order / coupon errors showed the English API messages
+ *   on the Czech shop - translated texts by status now (stock / rejected order / too many requests).
  */
 
 import { Component, OnInit, signal, computed } from '@angular/core';
@@ -340,7 +345,8 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
         this.couponStatus.set(this.t?.coupon_applied?.replace('{code}', response.coupon.code));
       },
       error: (e) => {
-        this.couponStatus.set(this.t?.coupon_error?.replace('{message}', e.error?.message || this.t?.coupon_invalid || ''));
+        // Translated reason only - the API text is English (finding #53).
+        this.couponStatus.set(this.t?.coupon_error?.replace('{message}', (e?.status === 429 ? this.t?.coupon_too_many : this.t?.coupon_invalid) ?? ''));
         this.appliedCoupon.set(null);
       }
     });
@@ -358,15 +364,19 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
       return;
     }
     
+    // A cart line without a valid EUR price cannot be ordered: translated alert instead of the
+    // former uncaught Czech `throw` (finding #44). The API prices the order itself anyway.
+    const items = this.cartService.cartItems() || [];
+    const unpriced = items.find(item => !((item.prices?.price_eur_with_vat ?? item.unit_price) > 0));
+    if (unpriced) {
+      this.alertDialogService.open(this.t?.alerts?.error_title, (this.t?.alerts?.price_invalid_message ?? '').replace('{product}', unpriced.product_name), 'danger');
+      return;
+    }
+
     this.isProcessing.set(true);
 
-    const formattedItems = (this.cartService.cartItems() || []).map(item => {
+    const formattedItems = items.map(item => {
       const confirmedEurPrice = item.prices?.price_eur_with_vat ?? item.unit_price;
-
-      if (!confirmedEurPrice || confirmedEurPrice <= 0) {
-        this.isProcessing.set(false);
-        throw new Error(`Kritická chyba měny: Produkt ${item.product_name} nemá platnou EUR cenu!`);
-      }
 
       return {
         product_id: Number(item.product_id || item.id), 
@@ -410,17 +420,20 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
           if (e.status === 422 && e.error?.errors) {
             const backendErrors = e.error.errors;
             Object.keys(backendErrors).forEach(key => {
+              // Translated texts instead of the English API messages (finding #53).
               if (key.startsWith('items.')) {
-                this.alertDialogService.open(this.t?.alerts?.stock_title, backendErrors[key][0], 'danger');
+                this.alertDialogService.open(this.t?.alerts?.stock_title, this.t?.alerts?.stock_message, 'danger');
               } else {
                 const camelKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
                 if (this.errors.hasOwnProperty(camelKey)) {
-                  this.errors[camelKey] = backendErrors[key][0];
+                  this.errors[camelKey] = this.t?.errors?.invalid_value;
                 }
               }
             });
           } else {
-            const errorMsg = e.error?.message || this.t?.alerts?.order_failed_message;
+            const errorMsg = e?.status === 422 ? this.t?.alerts?.order_rejected_message
+              : e?.status === 429 ? this.t?.alerts?.too_many_requests
+              : this.t?.alerts?.order_failed_message;
             this.alertDialogService.open(this.t?.alerts?.error_title, errorMsg, 'danger');
           }
           this.isProcessing.set(false);
@@ -433,10 +446,6 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
   }
 
   formatPrice(price: number): string {
-    return new Intl.NumberFormat('cs-CZ', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2
-    }).format(price);
+    return this.formatEur(price);
   }
 }

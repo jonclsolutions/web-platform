@@ -1,13 +1,28 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
+/**
+ * @file job-item.component.ts
+ * @path src/app/public/web-pages/jobs/job-item/job-item.component.ts
+ * @project RPSW Web
+ * @author RPSW
+ * @created 2026
+ * @description Job detail page with the public application form (CV upload).
+ * @refactor-note (2026-10-23) Open finding #47: the public page extended the admin
+ *   `BaseDataComponent` - the public job page loaded the admin i18n JSON and admin services
+ *   (DataHandler, GenericTableService, auth / permission services). It extends BasePublicComponent
+ *   now (web translations `jobs`, site settings from the startup cache) like every public page.
+ * @bugfix-note (2026-10-23) Open finding #44: hardcoded Czech / English fallbacks of the form
+ *   errors were removed - the texts are in the `jobs` translations; the API error text (English)
+ *   is no longer shown, the translated generic error is.
+ * @dependencies
+ * - BasePublicComponent (translations, site settings), PublicDataService (submit), LoadingService.
+ */
+
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
-import { BaseDataComponent } from '../../../../admin/components/base-data/base-data.component';
-import { DataHandler } from '../../../../core/services/data-handler.service';
-import { GenericTableService } from '../../../../core/services/generic-table.service';
-import { LocalizationService } from '../../../../shared/services/localization.service';
-import { PublicDataService } from '../../../../shared/services/public-data.service';
+import { BasePublicComponent } from '../../../base-public.component';
+import { LoadingService } from '../../../../core/services/loading.service';
 
 /**
  * @description Povolené znaky pro jméno/příjmení - písmena (včetně diakritiky přes \p{L}
@@ -40,52 +55,38 @@ const MAX_FILE_SIZE_BYTES = 20480 * 1024;
   styleUrls: ['../../shared-styles/theme.css', '../../shared-styles/form-fields.css', '../../../../shared/styles/base.css', '../../shared-styles/animations.css', './job-item.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class JobItemComponent extends BaseDataComponent<any> implements OnInit {
-  // Endpoint pro PublicDataService
-  override apiEndpoint: string = 'job_applications';
+export class JobItemComponent extends BasePublicComponent {
+  protected readonly translationKey = 'jobs';
+  protected override readonly loadSiteSettings = true;
+
+  /** Public endpoint of the application form. */
+  private readonly apiEndpoint = 'job_applications';
 
   applicationForm!: FormGroup;
   job: any = null;
-  override t: any = null;
-  settings: any = null;
   isSubmitted = false;
   selectedFile: File | null = null;
   /** Nastaveno, pokud uživatel vybere soubor přes limit MAX_FILE_SIZE_BYTES. */
   fileSizeError = false;
+  /** Translated error of a failed submit (null = none). */
+  errorMessage: string | null = null;
 
-  private localizationService = inject(LocalizationService);
-  private publicDataService = inject(PublicDataService);
+  public loadingService = inject(LoadingService);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
-  constructor(
-    protected override dataHandler: DataHandler,
-    protected override cd: ChangeDetectorRef,
-    protected override genericTableService: GenericTableService
-  ) {
-    super(dataHandler, cd, genericTableService);
-  }
-
-  override ngOnInit(): void {
-    super.ngOnInit(); 
+  /**
+   * @description Builds the form (the base class loads translations and site settings).
+   */
+  protected override onInit(): void {
     this.initForm();
-    this.loadPublicData();
   }
 
-  private loadPublicData(): void {
-    this.publicDataService.get<{settings: any}>('public/legal/config')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(res => { this.settings = res.settings; this.cd.markForCheck(); });
-
-    this.localizationService.currentTranslations$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(translations => {
-        if (translations?.jobs) {
-          this.t = translations.jobs;
-          this.loadJobData();
-          this.cd.markForCheck();
-        }
-      });
+  /**
+   * @description Resolves the job of the route id from the `jobs` translations.
+   */
+  protected override onTranslationsLoaded(): void {
+    this.loadJobData();
   }
 
   private initForm(): void {
@@ -113,16 +114,18 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit {
       this.selectedFile = null;
       this.fileSizeError = true;
       event.target.value = '';
-      this.cd.markForCheck();
+      this.cdr.markForCheck();
       return;
     }
 
     this.fileSizeError = false;
     this.selectedFile = file;
-    this.cd.markForCheck();
+    this.cdr.markForCheck();
   }
 
-  // ZDE POUŽÍVÁME PUBLIC DATA SERVICE MÍSTO BASEDATACOMPONENT
+  /**
+   * @description Sends the application (multipart, CV attached) to the public endpoint.
+   */
   onSubmit(): void {
     if (this.applicationForm.invalid || !this.selectedFile) {
       this.applicationForm.markAllAsTouched();
@@ -147,12 +150,12 @@ export class JobItemComponent extends BaseDataComponent<any> implements OnInit {
         next: () => {
           this.isSubmitted = true;
           this.loadingService.hide();
-          this.cd.markForCheck();
+          this.cdr.markForCheck();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message || this.t?.form_error_generic || 'Error';
+          this.errorMessage = (err?.status === 429 ? this.t?.form_too_many_requests : this.t?.form_error_generic) ?? null;
           this.loadingService.hide();
-          this.cd.markForCheck();
+          this.cdr.markForCheck();
         }
       });
   }

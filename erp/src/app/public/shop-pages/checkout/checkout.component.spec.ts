@@ -35,11 +35,12 @@ describe('CheckoutComponent', () => {
     last_name_digits: 'No digits (last)', address_required: 'Address required', address_too_long: 'Address too long',
     city_required: 'City required', city_too_long: 'City too long', postal_code_required: 'ZIP required',
     postal_code_too_long: 'ZIP too long', postal_code_invalid: 'ZIP invalid', shipping_required: 'Shipping required',
-    payment_required: 'Payment required', terms_required: 'Terms required'
+    payment_required: 'Payment required', terms_required: 'Terms required', invalid_value: 'Check this value'
   };
   const checkout = {
-    errors, coupon_applied: 'Coupon {code} applied', coupon_error: 'Coupon error: {message}', coupon_invalid: 'Invalid code',
-    alerts: { form_incomplete_title: 'Incomplete', form_incomplete_message: 'Fill in', stock_title: 'Stock', error_title: 'Error', order_failed_message: 'Order failed' }
+    errors, coupon_applied: 'Coupon {code} applied', coupon_error: 'Coupon error: {message}', coupon_invalid: 'Invalid code', coupon_too_many: 'Slow down',
+    alerts: { form_incomplete_title: 'Incomplete', form_incomplete_message: 'Fill in', stock_title: 'Stock', error_title: 'Error', order_failed_message: 'Order failed',
+      stock_message: 'Not in stock', order_rejected_message: 'Order rejected', too_many_requests: 'Too many', price_invalid_message: 'No price: {product}' }
   };
 
   /** Creates the page; `items` = true puts a 121 EUR (21 % VAT) mug ×1 and a 110 EUR (10 %) book ×1 in the cart. */
@@ -169,10 +170,10 @@ describe('CheckoutComponent', () => {
   }));
 
   /**
-   * @description Coupon: empty ignored; valid → applied + message; invalid → error message with
-   *   the API text or the translated fallback, coupon removed.
-   * @input ''; 'SAVE' ok; error with message; error without.
-   * @output No request; 'Coupon SAVE applied'; 'Coupon error: Expired'; 'Coupon error: Invalid code'.
+   * @description Coupon: empty ignored; valid → applied + message; invalid → translated error (never
+   *   the English API text, finding #53), 429 → slow-down text; coupon removed.
+   * @input ''; 'SAVE' ok; error with API message; error without; 429.
+   * @output No request; 'Coupon SAVE applied'; 'Coupon error: Invalid code' twice; 'Coupon error: Slow down'.
    */
   it('validates coupons', fakeAsync(() => {
     create();
@@ -189,11 +190,14 @@ describe('CheckoutComponent', () => {
 
     shop.validateCoupon.and.returnValue(throwError(() => ({ error: { message: 'Expired' } })));
     page.applyCoupon();
-    expect(page.couponStatus()).toBe('Coupon error: Expired');
+    expect(page.couponStatus()).toBe('Coupon error: Invalid code');
     expect(page.appliedCoupon()).toBeNull();
     shop.validateCoupon.and.returnValue(throwError(() => ({})));
     page.applyCoupon();
     expect(page.couponStatus()).toBe('Coupon error: Invalid code');
+    shop.validateCoupon.and.returnValue(throwError(() => ({ status: 429 })));
+    page.applyCoupon();
+    expect(page.couponStatus()).toBe('Coupon error: Slow down');
     discardPeriodicTasks();
   }));
 
@@ -231,10 +235,12 @@ describe('CheckoutComponent', () => {
   }));
 
   /**
-   * @description Order errors: 422 field errors mapped to the form (snake → camel, unknown
-   *   ignored), stock errors as alert; other errors alert the API message or the fallback.
-   * @input 422 {first_name, unknown_field, items.0.quantity}; 500 with message; 500 without.
-   * @output errors.firstName set; stock alert; 'Error' alerts 'Down' / 'Order failed'; processing stops.
+   * @description Order errors are shown with translated texts, never the English API messages
+   *   (finding #53): 422 field errors mark the field (snake → camel, unknown ignored), stock errors
+   *   alert the stock text; 422 without field errors → rejected; 429 → too many; others → failed.
+   * @input 422 {first_name, unknown_field, items.0.quantity}; 500 with message; 422 {}; 429.
+   * @output errors.firstName 'Check this value'; alert Stock / 'Not in stock'; 'Order failed'; 'Order rejected';
+   *   'Too many'; processing stops; price in the current language.
    */
   it('reports order errors', fakeAsync(() => {
     create();
@@ -244,19 +250,39 @@ describe('CheckoutComponent', () => {
       first_name: ['Too short'], unknown_field: ['x'], 'items.0.quantity': ['Only 1 left']
     } } })));
     page.simulatePayment();
-    expect(page.errors['firstName']).toBe('Too short');
-    expect(alert.open).toHaveBeenCalledWith('Stock', 'Only 1 left', 'danger');
+    expect(page.errors['firstName']).toBe('Check this value');
+    expect(alert.open).toHaveBeenCalledWith('Stock', 'Not in stock', 'danger');
     expect(page.isProcessing()).toBeFalse();
 
     shop.createOrder.and.returnValue(throwError(() => ({ status: 500, error: { message: 'Down' } })));
     page.errors['firstName'] = '';
     page.simulatePayment();
-    expect(alert.open).toHaveBeenCalledWith('Error', 'Down', 'danger');
+    expect(alert.open).toHaveBeenCalledWith('Error', 'Order failed', 'danger');
     shop.createOrder.and.returnValue(throwError(() => ({ status: 422, error: {} })));
     page.simulatePayment();
-    expect(alert.open).toHaveBeenCalledWith('Error', 'Order failed', 'danger');
+    expect(alert.open).toHaveBeenCalledWith('Error', 'Order rejected', 'danger');
+    shop.createOrder.and.returnValue(throwError(() => ({ status: 429, error: {} })));
+    page.simulatePayment();
+    expect(alert.open).toHaveBeenCalledWith('Error', 'Too many', 'danger');
     expect(page.currentStep()).toBe(1);
     expect(page.formatPrice(5).replace(/\s/g, ' ')).toBe('5,00 €');
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description A cart line without a valid EUR price stops the order with a translated alert
+   *   (was an uncaught Czech exception, finding #44); nothing is sent.
+   * @input Cart line Mug with price 0; valid form; simulatePayment().
+   * @output alert ('Error', 'No price: Mug', 'danger'); no createOrder; not processing.
+   */
+  it('refuses a cart line without price', fakeAsync(() => {
+    create();
+    fill();
+    (cart as any).cartSignal.update((c: any) => ({ ...c, items: c.items.map((i: any) => i.product_id === 1 ? { ...i, unit_price: 0, prices: { price_eur_with_vat: 0 } } : i) }));
+    page.simulatePayment();
+    expect(alert.open).toHaveBeenCalledWith('Error', 'No price: Mug', 'danger');
+    expect(shop.createOrder).not.toHaveBeenCalled();
+    expect(page.isProcessing()).toBeFalse();
     discardPeriodicTasks();
   }));
 });

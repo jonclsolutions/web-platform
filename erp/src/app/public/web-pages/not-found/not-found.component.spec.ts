@@ -33,6 +33,9 @@ describe('NotFoundComponent', () => {
     expect(fixture.componentInstance.attemptedUrl).toBe('/');
     expect(fixture.nativeElement.textContent).toContain('Missing');
     expect(fixture.nativeElement.querySelector('a').getAttribute('href')).toBe('/home');
+    // Inline decorative illustration instead of the missing image file (finding #46).
+    expect(fixture.nativeElement.querySelector('img')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.svg-placeholder svg').getAttribute('aria-hidden')).toBe('true');
   });
 
   /**

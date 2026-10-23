@@ -21,6 +21,7 @@ import { FormsModule, NgForm, FormControl } from '@angular/forms';
 import { AlertDialogService } from '../../../../core/services/alert-dialog.service';
 import { InputDefinition } from '../../../../shared/interfaces/input-definiton';
 import { PasswordRequirementsChecklistComponent } from '../../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
+import { PasswordPolicyDirective } from '../../../../shared/directives/password-policy.directive';
 import { MultiFileUploadComponent } from '../../../../shared/components/multi-file-upload/multi-file-upload.component';
 import { ScrollLockService } from '../../../../core/services/scroll-lock.service';
 import { AdminLocalizationService } from '../../../../core/services/admin-localization.service';
@@ -33,7 +34,7 @@ import { AdminLocalizationService } from '../../../../core/services/admin-locali
 @Component({
   selector: 'app-form-builder',
   standalone: true,
-  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent],
+  imports: [FormsModule, PasswordRequirementsChecklistComponent, MultiFileUploadComponent, PasswordPolicyDirective],
   templateUrl: './form-builder.component.html',
   styleUrl: './form-builder.component.css',
 })

@@ -433,6 +433,7 @@
   "empty_state_text": "Vyberte roli ze seznamu vlevo, nebo vytvořte novou.",
 
   "confirm_unsaved_switch": "Máte neuložené změny u aktuální role. Přepnutím o ně přijdete. Pokračovat?",
+  "confirm_unsaved_switch_title": "Neuložené změny",
 
   "delete_modal_title": "Smazat roli?",
   "delete_modal_confirm_text": "Opravdu chcete trvale smazat roli {name}?",
@@ -908,7 +909,8 @@
     "ev_label_restore": "Obnova",
     "ev_label_error": "Chyba",
 
-    "footer_help_text": "Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému."
+    "footer_help_text": "Potřebujete pomoc? Kontaktujte technickou podporu nebo svého správce systému.",
+    "export_selected_suffix": "vybrane"
   },
   "web-dashboard": {
     "hero_select_aria": "Zvolit zobrazenou metriku",
@@ -3078,5 +3080,56 @@
   "digit": "Alespoň jedna číslice",
   "special": "Alespoň jeden speciální znak",
   "error_message": "Heslo musí mít {min}-{max} znaků a obsahovat alespoň jedno písmeno, jednu číslici a jeden speciální znak."
-}
+},
+  "reset-password": {
+    "title_form": "Nastavte nové heslo",
+    "title_success": "Heslo změněno",
+    "subtitle": "Zadejte nové heslo ke svému administrátorskému účtu",
+    "invalid_link_before": "Tento odkaz je neplatný. Vraťte se na",
+    "login_link": "přihlašovací stránku",
+    "invalid_link_after": "a vyžádejte si nový.",
+    "label_password": "Nové heslo",
+    "placeholder_password": "{min}–{max} znaků",
+    "show_password": "Zobrazit heslo",
+    "hide_password": "Skrýt heslo",
+    "label_confirmation": "Potvrzení nového hesla",
+    "placeholder_confirmation": "Zopakujte heslo",
+    "error_mismatch": "Hesla se neshodují.",
+    "submit": "Nastavit nové heslo",
+    "submitting": "Ukládám…",
+    "success_message": "Vaše heslo bylo úspěšně změněno.",
+    "success_message_for": "Heslo bylo úspěšně změněno pro účet",
+    "redirect_note": "Za chvíli budete přesměrováni na přihlašovací stránku…",
+    "go_to_login": "Přejít na přihlášení",
+    "error_token_missing": "Tento odkaz je neplatný. Na přihlašovací stránce si vyžádejte nové obnovení hesla.",
+    "error_policy": "Heslo nesplňuje všechny požadavky uvedené výše.",
+    "error_network": "Nelze se připojit k serveru. Zkontrolujte připojení a zkuste to znovu.",
+    "error_generic": "Odkaz je neplatný nebo vypršel. Vyžádejte si prosím nový."
+  },
+  "activate-account": {
+    "title_loading": "Ověřuji odkaz…",
+    "title_invalid": "Tento odkaz nelze použít",
+    "title_success": "Účet aktivován",
+    "title_form": "Nastavte si heslo",
+    "invalid_link_before": "Vraťte se na",
+    "login_link": "přihlašovací stránku",
+    "invalid_link_after": "a požádejte administrátora o nový odkaz.",
+    "label_password": "Nové heslo",
+    "placeholder_password": "{min}–{max} znaků",
+    "show_password": "Zobrazit heslo",
+    "hide_password": "Skrýt heslo",
+    "label_confirmation": "Potvrzení nového hesla",
+    "placeholder_confirmation": "Zopakujte heslo",
+    "error_mismatch": "Hesla se neshodují.",
+    "submit": "Nastavit heslo a aktivovat účet",
+    "submitting": "Ukládám…",
+    "success_message": "Vaše heslo bylo úspěšně nastaveno.",
+    "redirect_countdown": "Přesměrování na přihlášení za {seconds} s…",
+    "go_to_login": "Přejít na přihlášení",
+    "error_token_missing": "Chybí aktivační token.",
+    "error_invalid_link": "Odkaz je neplatný nebo vypršel.",
+    "error_network": "Nelze se připojit k serveru. Zkontrolujte připojení a zkuste to znovu.",
+    "error_password_rejected": "Heslo nebylo přijato. Zvolte prosím jiné.",
+    "error_generic": "Nastavení hesla se nezdařilo. Zkuste to prosím později."
+  }
 }

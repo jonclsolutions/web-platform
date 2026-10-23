@@ -5,7 +5,8 @@
  * @author RPSW
  * @created 2026
  * @description Unit tests of ResetPasswordComponent – setting a new password from the e-mailed
- *   link: token from the URL, password policy, confirmation, API errors and redirect to login.
+ *   link: token from the URL, password policy, confirmation, API errors and redirect to login;
+ *   all texts from the admin translations `reset-password` (finding #39, the i18n double returns key paths).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (auth stub), ActivatedRoute (stub with query params)
  */
@@ -54,7 +55,7 @@ describe('ResetPasswordComponent', () => {
   /**
    * @description Without token the form cannot be submitted and explains why.
    * @input  URL without token; onSubmit()
-   * @output tokenMissing true; canSubmit false; errorMessage about an invalid link; no API call
+   * @output tokenMissing true; canSubmit false; errorKey 'error_token_missing'; no API call
    */
   it('rejects a link without token', async () => {
     await setup(null);
@@ -62,14 +63,14 @@ describe('ResetPasswordComponent', () => {
     component.passwordConfirmation = VALID;
     expect(component.canSubmit).toBeFalse();
     component.onSubmit();
-    expect(component.errorMessage).toContain('This link is invalid');
+    expect(component.errorKey).toBe('error_token_missing');
     expect(ctx.auth.resetPassword).not.toHaveBeenCalled();
   });
 
   /**
    * @description A weak password is rejected before calling the API.
    * @input  password 'short' (no digit/symbol, < 8 chars)
-   * @output passwordValid false; errorMessage about the requirements; no API call
+   * @output passwordValid false; errorKey 'error_policy'; no API call
    */
   it('rejects a password that breaks the policy', async () => {
     await setup('abc');
@@ -77,14 +78,14 @@ describe('ResetPasswordComponent', () => {
     component.passwordConfirmation = 'short';
     component.onSubmit();
     expect(component.passwordValid).toBeFalse();
-    expect(component.errorMessage).toContain('does not meet all the requirements');
+    expect(component.errorKey).toBe('error_policy');
     expect(ctx.auth.resetPassword).not.toHaveBeenCalled();
   });
 
   /**
    * @description Different confirmation is detected and blocks submit.
    * @input  password VALID, confirmation 'Heslo123?'
-   * @output passwordsMismatch true; errorMessage "The passwords don't match."
+   * @output passwordsMismatch true; errorKey 'error_mismatch'
    */
   it('detects a different confirmation', async () => {
     await setup('abc');
@@ -92,7 +93,7 @@ describe('ResetPasswordComponent', () => {
     component.passwordConfirmation = 'Heslo123?';
     expect(component.passwordsMismatch).toBeTrue();
     component.onSubmit();
-    expect(component.errorMessage).toBe("The passwords don't match.");
+    expect(component.errorKey).toBe('error_mismatch');
   });
 
   /**
@@ -118,16 +119,18 @@ describe('ResetPasswordComponent', () => {
   }));
 
   /**
-   * @description The first field error from Laravel (422) is shown; otherwise the message or a generic text.
-   * @input  error { error: { errors: { password: ['Too common.'] } } }; then { error: { message: 'Expired' } }; then {}
-   * @output 'Too common.'; 'Expired'; generic "The link is invalid or has expired…"
+   * @description API errors map to translated messages (the English API texts are not shown): a password
+   *   error → policy, no connection → network, anything else → invalid / expired link.
+   * @input  error { error: { errors: { password: ['Too common.'] } } }; { status: 0 }; { error: { message: 'Expired' } }; {}
+   * @output 'error_policy'; 'error_network'; 'error_generic'; 'error_generic'
    */
-  it('shows the most specific API error', async () => {
+  it('maps API errors to translated messages', async () => {
     await setup('abc');
     component.password = VALID;
     component.passwordConfirmation = VALID;
     const errors = [
       { error: { errors: { password: ['Too common.'] } } },
+      { status: 0 },
       { error: { message: 'Expired' } },
       {}
     ];
@@ -135,11 +138,9 @@ describe('ResetPasswordComponent', () => {
     for (const e of errors) {
       ctx.auth.resetPassword.and.returnValue(throwError(() => e));
       component.onSubmit();
-      shown.push(component.errorMessage);
+      shown.push(component.errorKey);
     }
-    expect(shown[0]).toBe('Too common.');
-    expect(shown[1]).toBe('Expired');
-    expect(shown[2]).toContain('The link is invalid or has expired');
+    expect(shown).toEqual(['error_policy', 'error_network', 'error_generic', 'error_generic']);
   });
 
   /**
@@ -170,5 +171,35 @@ describe('ResetPasswordComponent', () => {
     fixture.destroy();
     tick(5000);
     expect(router.navigate).not.toHaveBeenCalled();
+  }));
+
+  /**
+   * @description The page renders its texts from the `reset-password` translations (no English copy).
+   * @input  token 'abc'; detectChanges(); then token missing; then success with e-mail
+   * @output title / labels / submit / placeholders are reset-password keys; invalid-link text; success for the e-mail
+   */
+  it('renders translated texts', fakeAsync(() => {
+    setup('abc');
+    tick();
+    const el: HTMLElement = fixture.nativeElement;
+    const text = el.textContent!;
+    for (const key of ['title_form', 'subtitle', 'label_password', 'label_confirmation', 'submit']) {
+      expect(text).toContain(`reset-password.${key}`);
+    }
+    expect(text).not.toContain('Set a new password');
+    expect(el.querySelector('#passwordConfirmation')!.getAttribute('placeholder')).toBe('reset-password.placeholder_confirmation');
+    component.password = 'short';
+    component.onSubmit();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('reset-password.error_policy');
+
+    ctx.auth.resetPassword.and.returnValue(of({ email: 'a@b.cz' }));
+    component.password = VALID;
+    component.passwordConfirmation = VALID;
+    component.onSubmit();
+    fixture.detectChanges();
+    expect(el.textContent).toContain('reset-password.success_message_for');
+    expect(el.textContent).toContain('a@b.cz');
+    tick(4000);
   }));
 });

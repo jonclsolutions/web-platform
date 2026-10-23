@@ -38,15 +38,20 @@
  * match. `fieldError` no longer repeats the password rules - it is only used for a lost
  * connection or an unexpected failure; an invalid / expired link switches to the
  * 'invalid' state.
+ * @bugfix-note (2026-10-23) Open finding #39: the page was English-only; every text comes from the
+ *   admin translations `activate-account` now. API error texts (English) are no longer shown - the
+ *   status decides the translated message.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { environment } from '../../../../environments/environment';
-import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, meetsPasswordRequirements } from '../../../shared/constants/password-policy';
+import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, meetsPasswordRequirements, fillPasswordLimits } from '../../../shared/constants/password-policy';
+import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
 
 /** Řídí, který blok šablony se vykresluje - ověřování odkazu, formulář, chyba, hotovo. */
@@ -71,12 +76,14 @@ export class ActivateAccountComponent implements OnInit {
   private router = inject(Router);
   private http = inject(HttpClient);
   private cd = inject(ChangeDetectorRef);
+  private i18n = inject(AdminLocalizationService);
 
   /** JSON-only headers; the endpoints are public, so no Authorization header is needed. */
   private readonly headers = new HttpHeaders({ 'Accept': 'application/json' });
 
   state: ViewState = 'loading';
-  errorMessage = '';
+  /** Translation key (section `activate-account`) of the invalid-link reason. */
+  errorKey = '';
   email = '';
 
   password = '';
@@ -84,7 +91,8 @@ export class ActivateAccountComponent implements OnInit {
   showPassword = false;
   showPasswordConfirmation = false;
   submitting = false;
-  fieldError = '';
+  /** Translation key of the error under the form, '' = none. */
+  fieldErrorKey = '';
 
   readonly minLength = PASSWORD_MIN_LENGTH;
   readonly maxLength = PASSWORD_MAX_LENGTH;
@@ -94,12 +102,31 @@ export class ActivateAccountComponent implements OnInit {
 
   private token = '';
 
+  constructor() {
+    // OnPush: re-render once the admin translations are (re)loaded.
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => this.cd.markForCheck());
+  }
+
+  /**
+   * @description Text of the page in the admin language (finding #39 - was English-only).
+   * @param key Key inside the `activate-account` section.
+   * @returns Translated text.
+   */
+  t(key: string): string {
+    return this.i18n.getValue(`activate-account.${key}`);
+  }
+
+  /** Placeholder of the password field with the length limits filled in. */
+  get lengthPlaceholder(): string {
+    return fillPasswordLimits(this.t('placeholder_password'));
+  }
+
   ngOnInit(): void {
     this.token = this.route.snapshot.paramMap.get('token') || '';
 
     if (!this.token) {
       this.state = 'invalid';
-      this.errorMessage = 'The activation token is missing.';
+      this.errorKey = 'error_token_missing';
       return;
     }
 
@@ -111,7 +138,7 @@ export class ActivateAccountComponent implements OnInit {
       },
       error: (err) => {
         this.state = 'invalid';
-        this.errorMessage = err?.error?.message || 'The link is invalid or has expired.';
+        this.errorKey = 'error_invalid_link';
         this.cd.markForCheck();
       }
     });
@@ -146,7 +173,7 @@ export class ActivateAccountComponent implements OnInit {
   }
 
   onSubmit(): void {
-    this.fieldError = '';
+    this.fieldErrorKey = '';
 
     // The button is disabled in this case; this also covers a submit by the Enter key.
     if (!this.canSubmit || this.submitting) {
@@ -170,9 +197,9 @@ export class ActivateAccountComponent implements OnInit {
         // The link expired or was used while the form was open: same view as on entry.
         if ([403, 404, 410].includes(err?.status)) {
           this.state = 'invalid';
-          this.errorMessage = err?.error?.message || 'The link is invalid or has expired.';
+          this.errorKey = 'error_invalid_link';
         } else {
-          this.fieldError = this.describeSubmitError(err);
+          this.fieldErrorKey = this.submitErrorKey(err);
         }
         this.cd.markForCheck();
       }
@@ -192,17 +219,17 @@ export class ActivateAccountComponent implements OnInit {
    * other than an invalid link. Never lists the password rules - the checklist above already
    * shows them, and the button is disabled until they are met.
    * @param err The HttpErrorResponse of the failed request.
-   * @returns Human-readable message.
+   * @returns Translation key of the message.
    */
-  private describeSubmitError(err: any): string {
+  private submitErrorKey(err: any): string {
     if (err?.status === 0) {
-      return 'Unable to connect to the server. Please check your connection and try again.';
+      return 'error_network';
     }
     if (err?.status === 422) {
       // Only reachable if the server's rules differ from the checklist (e.g. a stale app version).
-      return 'The password could not be accepted. Please choose a different one.';
+      return 'error_password_rejected';
     }
-    return 'Setting the password failed. Please try again later.';
+    return 'error_generic';
   }
 
   /**

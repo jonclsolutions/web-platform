@@ -106,4 +106,20 @@ describe('BasePublicComponent', () => {
     expect(lang).toBe('cz');
     fixture.destroy();
   });
+
+  /**
+   * @description EUR prices follow the current language (finding #44: always cs-CZ before); an
+   *   unknown locale falls back to cs-CZ.
+   * @input formatEur(1234.5) with language cz; en; 'xx-invalid-locale!'.
+   * @output '1 234,50 €'; '€1,234.50'; the cs-CZ format.
+   */
+  it('formats EUR prices in the current language', () => {
+    const page = TestBed.createComponent(WebPageComponent).componentInstance;
+    const plain = (v: string) => v.replace(/\s/g, ' ');
+    expect(plain(page.formatEur(1234.5))).toBe('1 234,50 €');
+    ctx.localization.currentLanguage$.next('en');
+    expect(page.formatEur(1234.5)).toBe('€1,234.50');
+    ctx.localization.currentLanguage$.next('xx-invalid-locale!');
+    expect(plain(page.formatEur(1234.5))).toBe('1 234,50 €');
+  });
 });

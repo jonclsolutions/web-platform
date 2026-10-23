@@ -6,14 +6,12 @@
  * @created 2026
  * @description Unit tests of CartService: adding products / variants (EUR price with VAT
  *   required, image fallbacks, stock cap, merge of the same item), quantity changes, removal,
- *   totals incl. VAT, persistence in localStorage (restored, broken JSON ignored), clear, the
- *   15 min reservation timestamp and the payment simulation request.
- * @note The reservation countdown (`timerSignal` / `isExpiredSignal`) is private and read by
- *   nobody - see open finding "cart reservation timer is not used"; it is checked through the
- *   private signals only to pin the current behaviour.
+ *   totals incl. VAT, persistence in localStorage (restored also from old carts with the removed
+ *   reservation fields, broken JSON ignored), clear, no reservation timer (finding #42) and the
+ *   payment simulation request.
  * @dependencies
  * - HttpTestingController; real localStorage ('shop_cart' cleared around tests); fakeAsync for
- *   the 1 s interval and the effect that saves the cart.
+ *   the effect that saves the cart.
  */
 
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
@@ -42,18 +40,17 @@ describe('CartService', () => {
 
   /**
    * @description New product: price / VAT from the product, image fallbacks (primary → first →
-   *   placeholder), quantity capped by stock, totals and the reservation timestamp; saved.
+   *   placeholder), quantity capped by stock, totals; saved; no reservation fields (finding #42).
    * @input addItem(mug, null, 7) with stock 5 and a primary image; product without images.
    * @output quantity 5, total 60.5, image of the primary, id '1_novariant'; placeholder; stored items.
    */
   it('adds products with price, image and stock cap', fakeAsync(() => {
     service = create();
-    jasmine.clock().install();
-    jasmine.clock().mockDate(new Date(2026, 0, 1));
     service.addItem(product({ images: [{ url: 'a.jpg' }, { url: 'p.jpg', is_primary: true }] }), null, 7);
     const item = service.cartItems()[0];
     expect([item.id, item.quantity, item.total_price, item.product_image, item.vat_rate]).toEqual(['1_novariant', 5, 60.5, 'p.jpg', 21]);
-    expect((service as any).cartSignal().expiresAt).toBe(Date.now() + 15 * 60 * 1000);
+    expect('reservedAt' in item).toBeFalse();
+    expect('expiresAt' in (service as any).cartSignal()).toBeFalse();
 
     service.addItem(product({ id: 2, images: [{ url: 'first.jpg' }] }), null);
     service.addItem(product({ id: 3, images: undefined, stock_quantity: undefined }), null);
@@ -63,7 +60,6 @@ describe('CartService', () => {
     expect(service.totalQuantity()).toBe(7);
     TestBed.tick();
     expect(stored().items.length).toBe(3);
-    jasmine.clock().uninstall();
     discardPeriodicTasks();
   }));
 
@@ -91,10 +87,9 @@ describe('CartService', () => {
   }));
 
   /**
-   * @description Quantity update (capped by stock), 0 removes, remove the last item resets the
-   *   expiry; totals and VAT.
+   * @description Quantity update (capped by stock), 0 removes, remove the last item; totals and VAT.
    * @input 2 items (12.10 VAT 21 ×2, 11 VAT 10 ×1); update to 9; update to 0; remove the last.
-   * @output subtotal 35.2; tax 4.2 + 1; capped at 5; item removed; empty cart expiresAt 0.
+   * @output subtotal 35.2; tax 4.2 + 1; capped at 5; item removed; empty cart.
    */
   it('updates quantities, removes items and computes totals', fakeAsync(() => {
     service = create();
@@ -112,31 +107,36 @@ describe('CartService', () => {
     service.updateItemQuantity('missing', 3);
     service.removeItem('2_novariant');
     expect(service.cartCount()).toBe(0);
-    expect((service as any).cartSignal().expiresAt).toBe(0);
     discardPeriodicTasks();
   }));
 
   /**
-   * @description The stored cart is restored (also an expired one, flagged expired); broken JSON
-   *   is logged and ignored; clear() empties memory and storage.
-   * @input Stored valid cart; stored expired cart; '{broken'; clear().
-   * @output Items restored, not expired; expired flag; empty + console.error; storage removed.
+   * @description The stored cart is restored - also an old one with the removed `expiresAt` in the
+   *   past (no "expiry" any more, finding #42); broken JSON or a cart without items is ignored;
+   *   clear() empties memory and storage.
+   * @input Stored cart; stored old cart with expiresAt in the past; clear(); stored {}; '{broken'.
+   * @output Items restored twice; storage without the item after clear; empty; empty + console.error.
    */
   it('restores, ignores broken data and clears the cart', fakeAsync(() => {
     const item = { id: '1_novariant', quantity: 1, total_price: 10, vat_rate: 21, unit_price: 10, stock_quantity: 3 };
     localStorage.setItem('shop_cart', JSON.stringify({ items: [item], expiresAt: Date.now() + 60000, createdAt: 1 }));
     service = create();
     expect(service.cartCount()).toBe(1);
-    expect((service as any).isExpiredSignal()).toBeFalse();
     discardPeriodicTasks();
 
     TestBed.resetTestingModule();
     localStorage.setItem('shop_cart', JSON.stringify({ items: [item], expiresAt: Date.now() - 1, createdAt: 1 }));
     service = create();
-    expect((service as any).isExpiredSignal()).toBeTrue();
+    expect(service.cartCount()).toBe(1);
     service.clear();
     expect(service.cartCount()).toBe(0);
     expect(localStorage.getItem('shop_cart')).not.toContain('1_novariant');
+    discardPeriodicTasks();
+
+    TestBed.resetTestingModule();
+    localStorage.setItem('shop_cart', '{}');
+    service = create();
+    expect(service.cartCount()).toBe(0);
     discardPeriodicTasks();
 
     TestBed.resetTestingModule();
@@ -149,22 +149,15 @@ describe('CartService', () => {
   }));
 
   /**
-   * @description Countdown: 0 for an empty cart, remaining seconds otherwise, expired at 0.
-   * @input Empty → tick 1 s; item added → tick 1 s; expiresAt in the past → tick 1 s.
-   * @output 0; ~899; 0 + expired.
+   * @description No reservation timer runs any more (finding #42) - nothing is scheduled.
+   * @input create(); add an item; flush timers.
+   * @output no pending periodic timer (fakeAsync would fail on leftovers otherwise).
    */
-  it('counts down the reservation', fakeAsync(() => {
+  it('runs no reservation timer', fakeAsync(() => {
     service = create();
-    tick(1000);
-    expect((service as any).timerSignal()).toBe(0);
     service.addItem(product(), null);
-    tick(1000);
-    expect((service as any).timerSignal()).toBeGreaterThan(890);
-    (service as any).cartSignal.update((c: any) => ({ ...c, expiresAt: Date.now() - 1000 }));
-    tick(1000);
-    expect((service as any).timerSignal()).toBe(0);
-    expect((service as any).isExpiredSignal()).toBeTrue();
-    discardPeriodicTasks();
+    tick(60_000);
+    expect(service.cartCount()).toBe(1);
   }));
 
   /**

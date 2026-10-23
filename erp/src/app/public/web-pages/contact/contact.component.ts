@@ -26,14 +26,18 @@
  * zachytává JEDNOU při inicializaci komponenty (`onInit()`), ne až při submitu -
  * `currentLanguage$` je observable, potřebujeme lokální snapshot hodnoty k FormData.
  * @refactor-note (2026-10-21) Removed unused getter `fc` (no reference in TS or template).
+ * @bugfix-note (2026-10-23) Open findings #44 / #45 / #53: a failed submit showed the raw API message
+ *   (English) with a hardcoded English fallback in a blocking `window.alert()`. Now the translated
+ *   `errors.submit_error` (or `errors.too_many_requests` for 429) in the app's alert dialog.
  */
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BasePublicComponent } from '../../base-public.component';
 import { MultiFileUploadComponent } from '../../../shared/components/multi-file-upload/multi-file-upload.component';
 import * as Web from '../../../shared/imports/web-providers';
+import { AlertDialogService } from '../../../core/services/alert-dialog.service';
 
 @Component({
 selector: 'app-contact',
@@ -55,6 +59,9 @@ stats: { value: string; label: string }[] = [];
 
 /** Aktuální jazyk veřejné stránky v okamžiku načtení formuláře - viz refactor-note. */
 currentLang = 'cz';
+
+/** Error dialog of a failed submit (was `window.alert()`, finding #45). */
+private alertDialogService = inject(AlertDialogService);
 
 constructor(private fb: FormBuilder) {
 super();
@@ -164,8 +171,9 @@ this.isSubmitted.set(true);
 this.cdr.markForCheck();
         },
 error: (err) => {
-const msg = err.error?.message || this.t?.errors?.submit_error || 'Submission failed.';
-alert(msg);
+// Translated text by status, never the (English) API message (findings #45 / #53).
+const msg = err?.status === 429 ? this.t?.errors?.too_many_requests : this.t?.errors?.submit_error;
+this.alertDialogService.open(this.t?.errors?.submit_error_title, msg, 'danger');
         },
       });
   }
