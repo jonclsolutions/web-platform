@@ -157,8 +157,11 @@ class DocumentSectionController extends Controller
         return response()->json([
             'header_main' => $documentType->title,
             'last_update_date' => $lastUpdate?->format('d.m.Y') ?? date('d.m.Y'),
+            // @bugfix-note (2026-10-23) Was a hardcoded Czech sentence in every language (open
+            // finding #35). English fallback text now; the web shows its own translation
+            // (`effective_from_text` + last_update_date, LegalDocsService.effectiveFooter()).
             'footer_effective' => $lastUpdate
-                ? 'Tyto zásady jsou účinné od ' . $lastUpdate->format('d.m.Y') . '.'
+                ? 'This policy is effective from ' . $lastUpdate->format('d.m.Y') . '.'
                 : null,
             'sections' => DocumentSectionResource::collection($data)
         ]);

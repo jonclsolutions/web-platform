@@ -53,7 +53,8 @@ class ShopSiteSettingController extends Controller
     {
         $settings = ShopSiteSetting::first() ?? ShopSiteSetting::create([
             'is_shop_active'      => true,
-            'maintenance_message' => 'Omlouváme se, na systému momentálně probíhá údržba. Zkuste to prosím později.',
+            // English default like the web one (open finding #29) - the admin sets the real text.
+            'maintenance_message' => 'We apologize, the shop is currently undergoing maintenance. Please try again later.',
         ]);
 
         return response()->json($settings);

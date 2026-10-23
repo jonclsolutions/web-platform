@@ -279,9 +279,23 @@ export class TrashTableBuilderComponent implements OnDestroy, OnChanges {
       .then(result => {
         if (result) {
           this.crud.hardDeleteAllTrashed().subscribe({
-            next: () => {
-              this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('all_items_deleted_message'), 'success');
-              this.data = [];
+            next: (res: any) => {
+              // @bugfix-note (2026-10-23) The API may keep records that must not be deleted
+              //   (shop customers with orders, finding #22) and answers {deleted_count,
+              //   skipped_count}. The trash was cleared locally anyway and "all deleted" shown.
+              //   Now a warning with the counts; the page reloads the real trash content.
+              if (res?.skipped_count > 0) {
+                this.alertDialogService.open(
+                  this.t('warning_title'),
+                  this.t('some_items_kept_message')
+                    .replace('{deleted}', String(res.deleted_count ?? 0))
+                    .replace('{skipped}', String(res.skipped_count)),
+                  'warning'
+                );
+              } else {
+                this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('all_items_deleted_message'), 'success');
+                this.data = [];
+              }
               this.itemDeletedPermanently.emit();
               this.cd.markForCheck();
             }

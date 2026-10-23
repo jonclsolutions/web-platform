@@ -19,11 +19,28 @@ import { AdminLocalizationService } from '../../../core/services/admin-localizat
 
 const SECTION = 'shop-customers';
 
+/** @description Domain of the replacement e-mail of an anonymised customer (ShopCustomer::ANONYMIZED_EMAIL_DOMAIN). */
+export const ANONYMIZED_EMAIL_DOMAIN = 'anonymized.invalid';
+
+/**
+ * @description Whether a customer row was anonymised (GDPR erasure, finding #22).
+ * @param row Customer row.
+ * @returns True for the replacement e-mail domain.
+ */
+export function isAnonymizedCustomer(row: { email?: string | null } | null | undefined): boolean {
+  return !!row?.email?.endsWith('@' + ANONYMIZED_EMAIL_DOMAIN);
+}
+
 export function createCustomerButtons(i18n: AdminLocalizationService): Core.TableButtons[] {
   return [
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_details`), isActive: true, type: 'info_button', action: 'details', icon: 'search' },
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_edit`), isActive: true, type: 'neutral_button', action: 'edit', permission: 'shop-customers-update', icon: 'edit' },
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_orders`), isActive: true, type: 'neutral_button', action: 'customer_orders', permission: 'shop-orders-view', icon: 'package' },
+    // GDPR erasure that keeps the orders (finding #22) - hidden for already anonymised customers.
+    {
+      display_name: '', header_name: i18n.getValue(`${SECTION}.btn_anonymize`), isActive: true, type: 'neutral_button', action: 'anonymize',
+      permission: 'shop-customers-delete', icon: 'purge', visibleWhen: (row: any) => !isAnonymizedCustomer(row),
+    },
     { display_name: '', header_name: i18n.getValue(`${SECTION}.btn_delete`), isActive: true, type: 'delete_button', action: 'delete', permission: 'shop-customers-delete', icon: 'delete' },
   ];
 }
@@ -33,7 +50,7 @@ export function createCustomerToolbarButtons(i18n: AdminLocalizationService): Co
     { action: 'toggleFilters', label: i18n.getValue(`${SECTION}.toolbar_filters`), icon: '', class: 'btn-filter', isActive: false },
     { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'shop-customers-create' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
-    { action: 'triggerImport', label: i18n.getValue(`${SECTION}.toolbar_import_data`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-customers-create' },
+    // @refactor-note (2026-10-23) 'triggerImport' removed - the API has no customer import (finding #25, 404).
     { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'toggleTable', label: i18n.getValue(`${SECTION}.toolbar_show_trash`), icon: '', class: 'btn-trash', permission: 'view-deleted' },
   ];

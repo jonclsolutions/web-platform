@@ -141,7 +141,7 @@ class ShopModelsTest extends TestCase
     }
 
     /**
-     * @description Status labels (Czech texts of the admin) fall back to the raw value; product
+     * @description Status labels (English, finding #29) fall back to the raw value; product
      *   stock follows its variants (saved / deleted); a product without category is inactive;
      *   restoring stock ignores items whose product / variant no longer exist.
      * @input Order statuses; variants 2 + 3 then one deleted; product saved without category;
@@ -151,7 +151,8 @@ class ShopModelsTest extends TestCase
     public function test_labels_stock_and_product_rules(): void
     {
         $order = $this->order(null, ['status' => 'shipped', 'payment_status' => 'cod']);
-        $this->assertSame(['Odeslána', 'Dobírka'], [$order->getStatusLabel(), $order->getPaymentStatusLabel()]);
+        $this->assertSame(['Shipped', 'Cash on delivery'], [$order->getStatusLabel(), $order->getPaymentStatusLabel()]);
+        $this->assertSame(['Awaiting confirmation', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Returned', 'Canceled'], array_values(ShopOrder::getStatusOptions()));
         $order->forceFill(['status' => 'lost', 'payment_status' => 'unpaid']);
         $this->assertSame(['lost', 'unpaid'], [$order->getStatusLabel(), $order->getPaymentStatusLabel()]);
         $this->assertCount(7, ShopOrder::getStatusOptions());

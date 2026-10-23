@@ -36,7 +36,7 @@ class WebLogResource extends JsonResource
             'affected_entity_id'     => $this->affected_entity_id,
             'user' => [
                 'id'         => $this->user_id,
-                'user_email' => $this->user ? $this->user->user_email : 'Neznámý uživatel'
+                'user_email' => $this->user ? $this->user->user_email : 'Unknown user'  // was Czech (finding #29)
             ],
             'context_data'           => $this->context_data,
             'created_at'             => $this->created_at?->format('Y-m-d H:i:s'),

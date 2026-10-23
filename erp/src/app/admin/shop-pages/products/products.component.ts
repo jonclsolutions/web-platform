@@ -176,7 +176,7 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
       toggleTrash:            () => this.toggleTrash(),
       openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable:      () => this.exportActiveTable(),
-      triggerImport:          () => this.activeTable?.importData(),
+      // @refactor-note (2026-10-23) `triggerImport` removed with the button - no product import in the API (finding #25).
     };
     actions[action]?.();
   }

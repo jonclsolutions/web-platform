@@ -3,6 +3,8 @@ export interface Order {
   order_number?: string;
   customer_id?: number;
   customer?: Customer;
+  /** Buyer as given for this order (API snapshot, falls back to the customer for old orders). */
+  contact?: OrderContact;
   email?: string;
   first_name?: string;
   last_name?: string;
@@ -38,6 +40,16 @@ export interface Order {
   created_at?: string;
   updated_at?: string;
   deleted_at?: string;
+}
+
+/** Buyer contact stored on the order (ShopOrderResource `contact`). */
+export interface OrderContact {
+  first_name: string | null;
+  last_name: string | null;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
 }
 
 export interface OrderItem {

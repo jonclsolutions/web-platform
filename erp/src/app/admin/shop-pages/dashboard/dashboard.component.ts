@@ -127,6 +127,8 @@ interface RecentOrder {
   id: number;
   order_number: string;
   customer?: { full_name?: string; email?: string } | null;
+  /** Buyer as given for the order (snapshot, findings #22 / #23) - preferred over `customer`. */
+  contact?: { full_name?: string; email?: string | null } | null;
   status: string;
   payment_status: string;
   final_amount: number;

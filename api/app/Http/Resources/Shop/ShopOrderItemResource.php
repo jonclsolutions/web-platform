@@ -35,7 +35,7 @@ class ShopOrderItemResource extends JsonResource
             'quantity'           => (int) $this->quantity,
             'unit_price'         => (float) $this->unit_price,
             'total_price'        => (float) $this->total_price,
-            'vat_rate'           => (int) ($this->vat_rate ?? 21),
+            'vat_rate'           => (float) ($this->vat_rate ?? 21),  // stored rate of the sale (finding #21)
         ];
     }
 }

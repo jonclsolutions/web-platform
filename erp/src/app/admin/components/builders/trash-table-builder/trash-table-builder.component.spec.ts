@@ -10,6 +10,7 @@
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, permission stub, i18n stub)
  */
 
+import { of } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { TrashTableBuilderComponent } from './trash-table-builder.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../../testing/admin-test-helpers';
@@ -97,6 +98,26 @@ describe('TrashTableBuilderComponent', () => {
     flush();
     expect((ctx.dataHandler as any).delete).toHaveBeenCalledWith('core/links/force-delete-all');
     expect(component.data).toEqual([]);
+    expect(deleted).toBe(1);
+  }));
+
+  /**
+   * @description When the API keeps some rows (e.g. customers with orders, finding #22) the
+   *   trash is not cleared locally and a warning with the counts is shown.
+   * @input  delete answers { deleted_count: 1, skipped_count: 2 }; deleteAll() confirmed;
+   *         some_items_kept_message 'D {deleted} S {skipped}'
+   * @output alert ('trash-table-builder.warning_title', 'D 1 S 2', 'warning'); data kept; itemDeletedPermanently emitted
+   */
+  it('warns when the API kept some rows', fakeAsync(() => {
+    ctx.i18n.getValue.and.callFake((p: string) => (p === 'trash-table-builder.some_items_kept_message' ? 'D {deleted} S {skipped}' : p));
+    (ctx.dataHandler as any).delete.and.returnValue(of({ deleted_count: 1, skipped_count: 2 }));
+    const before = [...component.data];
+    let deleted = 0;
+    component.itemDeletedPermanently.subscribe(() => deleted++);
+    component.handleToolbarAction('deleteAll');
+    flush();
+    expect(ctx.alert.open).toHaveBeenCalledWith('trash-table-builder.warning_title', 'D 1 S 2', 'warning');
+    expect(component.data).toEqual(before);
     expect(deleted).toBe(1);
   }));
 

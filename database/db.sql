@@ -1126,6 +1126,11 @@ INSERT INTO `shop_logs` (`id`, `created_at`, `origin`, `event_type`, `module`, `
 CREATE TABLE `shop_orders` (
   `id` int(10) UNSIGNED NOT NULL,
   `customer_id` int(10) UNSIGNED NOT NULL,
+  `customer_first_name` varchar(100) DEFAULT NULL COMMENT 'Buyer as given for this order',
+  `customer_last_name` varchar(100) DEFAULT NULL,
+  `customer_email` varchar(150) DEFAULT NULL,
+  `customer_phone` varchar(20) DEFAULT NULL,
+  `customer_company` varchar(150) DEFAULT NULL,
   `order_number` varchar(50) NOT NULL,
   `status` varchar(50) DEFAULT 'pending' COMMENT 'pending, confirmed, processing, shipped, delivered, returned, canceled',
   `payment_status` varchar(50) DEFAULT 'pending' COMMENT 'pending, paid, failed, refunded, cod',
@@ -1166,6 +1171,7 @@ CREATE TABLE `shop_order_items` (
   `quantity` int(11) NOT NULL,
   `unit_price` decimal(10,2) NOT NULL,
   `total_price` decimal(10,2) NOT NULL,
+  `vat_rate` decimal(5,2) NOT NULL DEFAULT 21.00 COMMENT 'VAT rate in % at the time of the sale',
   `discount_amount` decimal(10,2) DEFAULT 0.00,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -2617,7 +2623,7 @@ ALTER TABLE `shop_logs`
 --
 ALTER TABLE `shop_orders`
   ADD CONSTRAINT `fk_shop_orders_coupon` FOREIGN KEY (`coupon_id`) REFERENCES `shop_coupons` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_shop_orders_customer` FOREIGN KEY (`customer_id`) REFERENCES `shop_customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_shop_orders_customer` FOREIGN KEY (`customer_id`) REFERENCES `shop_customers` (`id`) ON DELETE RESTRICT,
   ADD CONSTRAINT `fk_shop_orders_payment` FOREIGN KEY (`payment_method_id`) REFERENCES `shop_payment_methods` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_shop_orders_shipping` FOREIGN KEY (`shipping_method_id`) REFERENCES `shop_shipping_methods` (`id`) ON DELETE SET NULL;
 

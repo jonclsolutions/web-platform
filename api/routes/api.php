@@ -91,7 +91,8 @@ Route::prefix('shop/public')->group(function () {
         // Prefix 'shop-check-stock' - viz bugfix-note (2026-08-25) v hlavičce souboru.
         Route::get('products/{id}/check-stock', [ShopPublicController::class, 'checkStock'])
             ->middleware('throttle:15,1,shop-check-stock');
-        Route::get('categories', [ShopCategoryController::class, 'index']);
+        // @bugfix-note (2026-10-23) was the admin index (inactive categories, 15 per page) - finding #27.
+        Route::get('categories', [ShopCategoryController::class, 'publicIndex']);
         Route::get('shipping-methods', [ShopPublicController::class, 'getShippingMethods']);
         Route::get('payment-methods', [ShopPublicController::class, 'getPaymentMethods']);
         // @bugfix-note (2026-10-23) Own throttle bucket - without it coupon codes could be
@@ -496,6 +497,9 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
             Route::get('/{id}',                [ShopCustomerController::class, 'show'])
                 ->middleware('permission:shop-customers-view');
             Route::post('/{id}/restore',       [ShopCustomerController::class, 'restore'])
+                ->middleware('permission:shop-customers-delete');
+            // GDPR erasure that keeps the orders (open finding #22) - same permission as delete.
+            Route::post('/{id}/anonymize',     [ShopCustomerController::class, 'anonymize'])
                 ->middleware('permission:shop-customers-delete');
             Route::delete('/force-delete-all', [ShopCustomerController::class, 'forceDeleteAllTrashed'])
                 ->middleware('permission:shop-customers-delete');

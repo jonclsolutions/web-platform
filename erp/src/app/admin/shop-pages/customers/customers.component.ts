@@ -32,7 +32,7 @@
  *   the component (`takeUntilDestroyed()`).
  */
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import * as Core from '../../../shared/imports/core-providers';
@@ -42,6 +42,7 @@ import * as Config from './customers.config';
 import { ActionMenuBuilderComponent } from '../../components/builders/action-menu-builder/action-menu-builder.component';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-customers',
@@ -128,7 +129,6 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
-        case 'triggerImport':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
@@ -144,13 +144,13 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
   }
 
   override handleToolbarAction(action: string): void {
+    // @refactor-note (2026-10-23) `triggerImport` removed with the toolbar button: the API has no
+    //   customer import (open finding #25, the button answered 404).
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable: () => this.exportActiveTable(),
-      // @bugfix-note (2026-10-22) the "import data" button had no handler
-      triggerImport: () => this.activeTable?.importData(),
       toggleTable: () => this.toggleTable()
     };
     if (actions[action]) actions[action]();
@@ -169,6 +169,34 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
     this.filters = { sort_by: 'created_at', sort_direction: 'desc' };
     this.currentPage = 1;
     this.refreshData();
+  }
+
+  /** Confirmation of the anonymisation. */
+  private confirmDialog = inject(ConfirmDialogService);
+
+  /**
+   * @description GDPR erasure of a customer that keeps the orders (open finding #22): asks
+   *   first, then POST shop/customers/{id}/anonymize and reloads the table.
+   * @param item Customer row.
+   * @returns Promise settled when the dialog / request finished.
+   * @note A permanent delete of a customer with orders is refused by the API (409) - the
+   *   orders are accounting documents; this action is the alternative.
+   */
+  async anonymizeCustomer(item: any): Promise<void> {
+    if (!item?.id) return;
+    const confirmed = await this.confirmDialog.open(
+      this.t('anonymize_confirm_title'),
+      this.t('anonymize_confirm_message').replace('{name}', item.full_name ?? item.email ?? String(item.id)),
+      { confirm: this.t('btn_anonymize') }
+    );
+    if (!confirmed) return;
+
+    this.dataHandler.post<any>(`${this.apiEndpoint}/${item.id}/anonymize`, {}).subscribe({
+      next: () => {
+        this.alertDialogService.open(this.i18n.getValue('shared.success'), this.t('anonymize_done_message'), 'success');
+        this.refreshData();
+      }
+    });
   }
 
   // =============================================

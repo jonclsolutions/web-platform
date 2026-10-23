@@ -49,7 +49,7 @@ class ShopProductVariantResource extends JsonResource
                 'cost_price_eur'        => (float) $this->prices->cost_price_eur,
             ]) : null,
             'images'            => $this->whenLoaded('images', ShopProductImageResource::collection($this->images)),
-            'stock_quantity'    => $this->stock_quantity,
+            'stock_quantity'    => $this->stockFor($request, $this->stock_quantity),  // capped publicly (finding #26)
             'created_at'        => $this->created_at->toIso8601String(),
             'updated_at'        => $this->updated_at->toIso8601String(),
             'deleted_at'        => $this->deleted_at?->toIso8601String(),

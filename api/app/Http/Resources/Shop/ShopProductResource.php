@@ -64,8 +64,8 @@ class ShopProductResource extends JsonResource
                 'cost_price_eur'        => $this->prices->cost_price_eur,
             ]) : null,
             'sku'                 => $this->sku,
-            'stock_quantity'      => $this->stock_quantity,
-            'stock_warning_level' => $this->stock_warning_level,
+            'stock_quantity'      => $this->stockFor($request, $this->stock_quantity),  // capped publicly (finding #26)
+            'stock_warning_level' => $this->when(!$this->isPublicShopRequest($request), $this->stock_warning_level),
             'is_active'           => (bool) $this->is_active,
             'is_featured'         => (bool) $this->is_featured,
             'primary_image'       => new ShopProductImageResource($this->whenLoaded('primaryImage')),

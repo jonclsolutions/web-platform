@@ -106,10 +106,10 @@
           </div>
           <div class="detail-status-row">
             <span class="badge" [ngClass]="'status-' + selectedOrderForDetail.status">
-              {{ selectedOrderForDetail.status_label }}
+              {{ getStatusLabel(selectedOrderForDetail.status) }}
             </span>
             <span class="badge" [ngClass]="'payment-' + selectedOrderForDetail.payment_status">
-              {{ selectedOrderForDetail.payment_status_label }}
+              {{ getPaymentStatusLabel(selectedOrderForDetail.payment_status) }}
             </span>
             @if (selectedOrderForDetail.coupon) {
               <span class="badge badge-coupon">🎫 {{ selectedOrderForDetail.coupon.code }}</span>
@@ -161,33 +161,34 @@
               <span class="detail-card-title">{{ t('customer_card_title') }}</span>
             </div>
             <div class="detail-card-body">
-              @if (selectedOrderForDetail.customer) {
+              @if (selectedOrderForDetail.contact || selectedOrderForDetail.customer) {
+                <!-- Buyer as given for this order (snapshot, findings #22 / #23); city from the customer record -->
                 <div class="detail-customer-name">
-                  {{ selectedOrderForDetail.customer.full_name }}
+                  {{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.full_name }}
                 </div>
                 <div class="detail-info-rows">
-                  @if (selectedOrderForDetail.customer.email) {
+                  @if ((selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.email) {
                     <div class="detail-info-row">
                       <span class="dir-label">{{ t('label_email') }}</span>
-                      <span class="dir-value dir-value-link">{{ selectedOrderForDetail.customer.email }}</span>
+                      <span class="dir-value dir-value-link">{{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.email }}</span>
                     </div>
                   }
-                  @if (selectedOrderForDetail.customer.phone) {
+                  @if ((selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.phone) {
                     <div class="detail-info-row">
                       <span class="dir-label">{{ t('label_phone') }}</span>
-                      <span class="dir-value">{{ selectedOrderForDetail.customer.phone }}</span>
+                      <span class="dir-value">{{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.phone }}</span>
                     </div>
                   }
-                  @if (selectedOrderForDetail.customer.company) {
+                  @if ((selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.company) {
                     <div class="detail-info-row">
                       <span class="dir-label">{{ t('label_company') }}</span>
-                      <span class="dir-value">{{ selectedOrderForDetail.customer.company }}</span>
+                      <span class="dir-value">{{ (selectedOrderForDetail.contact ?? selectedOrderForDetail.customer)?.company }}</span>
                     </div>
                   }
-                  @if (selectedOrderForDetail.customer.city) {
+                  @if (selectedOrderForDetail.customer?.city) {
                     <div class="detail-info-row">
                       <span class="dir-label">{{ t('label_city') }}</span>
-                      <span class="dir-value">{{ selectedOrderForDetail.customer.city }}</span>
+                      <span class="dir-value">{{ selectedOrderForDetail.customer?.city }}</span>
                     </div>
                   }
                 </div>

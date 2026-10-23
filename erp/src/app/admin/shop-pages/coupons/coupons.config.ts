@@ -76,7 +76,7 @@ export function createCouponToolbarButtons(i18n: AdminLocalizationService): Core
     { action: 'toggleFilters', label: tr(i18n, 'toolbar_filters'), icon: '', class: 'btn-filter', isActive: false },
     { action: 'handleCreateFormOpened', label: tr(i18n, 'toolbar_add_record'), icon: '', class: 'btn-create', showIf: true, permission: 'shop-coupons-create' },
     { action: 'exportActiveTable', label: tr(i18n, 'toolbar_export_data'), icon: '', class: 'btn-export', showIf: true },
-    { action: 'triggerImport', label: tr(i18n, 'toolbar_import_data'), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-coupons-create' },
+    // @refactor-note (2026-10-23) no 'triggerImport' - the API has no import for this page (open finding #25, the button answered 404).
     { action: 'openGraphBuilder', label: tr(i18n, 'toolbar_generate_reports'), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'toggleTable', label: tr(i18n, 'toolbar_show_trash'), icon: '', class: 'btn-trash', permission: 'view-deleted' },
   ];

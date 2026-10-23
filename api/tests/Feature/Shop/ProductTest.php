@@ -229,11 +229,15 @@ class ProductTest extends TestCase
     }
 
     /**
-     * @description Edit rules: without a category in the form the product is saved inactive and
-     *   cannot be switched active; a variant SKU must be unique (its own SKU may stay).
+     * @description Edit rules: an edit WITHOUT `category_id` keeps the stored category and the active
+     *   state (finding #30); an explicitly emptied category saves the product inactive and it cannot be
+     *   switched active without one; a variant SKU must be unique (its own SKU may stay).
      * @input Product P (active, cat X) with variant V (sku V-1), other variant W (sku W-1).
-     *        PUT without category; PUT is_active without category; PUT variant sku W-1; PUT own sku V-1.
-     * @output 200 is_active false (categories kept); 422 is_active; 422 'Variant SKU "W-1" already exists.'; 200.
+     *        PUT without category (also with is_active true); PUT category_id null; PUT is_active true with
+     *        category_id null; PUT variant sku W-1; PUT own sku V-1.
+     * @output 200 category X kept (inactive: is_active not sent); 200 active (before: 422 + inactive);
+     *   200 is_active false (categories kept); 422 is_active;
+     *   422 'Variant SKU "W-1" already exists.'; 200.
      */
     public function test_update_rules(): void
     {
@@ -243,8 +247,12 @@ class ProductTest extends TestCase
         $this->variant($this->product(['name' => 'Q']), ['sku_variant' => 'W-1']);
         $price = ['vat_rate' => 21, 'price_eur_without_vat' => 1, 'price_eur_with_vat' => 1.21];
 
-        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P']))->assertOk()->assertJsonPath('is_active', false)->assertJsonCount(1, 'categories');
-        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'is_active' => true]))->assertStatus(422)
+        // is_active not sent = false (full-form semantics of the admin form), the category is kept.
+        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P']))->assertOk()
+            ->assertJsonPath('is_active', false)->assertJsonPath('category_id', $product->category_id)->assertJsonCount(1, 'categories');
+        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'is_active' => true]))->assertOk()->assertJsonPath('is_active', true);
+        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'category_id' => null]))->assertOk()->assertJsonPath('is_active', false)->assertJsonCount(1, 'categories');
+        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'is_active' => true, 'category_id' => null]))->assertStatus(422)
             ->assertJsonPath('errors.is_active.0', 'Product cannot be set as active without an assigned category.');
         $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'category_id' => $product->category_id,
             'variants' => [['id' => $variant->id, 'variant_name' => 'V', 'sku_variant' => 'W-1', 'prices' => $price]]]))

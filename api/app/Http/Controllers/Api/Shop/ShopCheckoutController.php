@@ -39,6 +39,14 @@
  * unreachable. Removed the unreachable non-duplicate branch of the customer insert
  * race handling (a failed insert now always re-reads the customer; if it still does
  * not exist the checkout fails with the generic error as before).
+ *
+ * @bugfix-note (2026-10-23) Open findings #21 / #23:
+ * - the VAT rate of every line is stored on the order item (was dropped → 21 % everywhere);
+ * - an anonymous checkout with the e-mail of an existing customer overwrote that customer's
+ *   stored name / phone / address and restored a trashed (possibly erased) customer. Now the
+ *   order is only linked to the existing record (only EMPTY master fields are filled in, a
+ *   trashed customer stays trashed) and the order keeps the contact given at checkout in
+ *   its own snapshot columns (`customer_*`).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -138,7 +146,7 @@ class ShopCheckoutController extends Controller
             $shippingAmount = (float) ShopShippingMethod::whereKey($validated['shipping_method_id'])->value('base_price');
             $finalAmount = max(0, $totalAmount + $shippingAmount - $discountAmount);
 
-            $order = ShopOrder::create([
+            $order = ShopOrder::create(ShopOrder::contactSnapshot($validated) + [
                 'customer_id' => $customer->id,
                 'order_number' => ShopOrder::generateOrderNumber(),
                 'status' => 'pending',
@@ -188,6 +196,7 @@ class ShopCheckoutController extends Controller
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
                     'total_price' => $line['line_price'],
+                    'vat_rate' => $vatRate,
                 ]);
             }
 
@@ -216,9 +225,10 @@ class ShopCheckoutController extends Controller
     }
 
     /**
-     * @description Finds the customer by e-mail (restoring a trashed one and refreshing
-     *   the contact data) or creates it. A parallel insert of the same e-mail is answered
-     *   by re-reading the row.
+     * @description Finds the customer by e-mail or creates it. An existing customer's master
+     *   data are not overwritten (only empty fields are filled in) and a trashed customer is
+     *   not restored - the order carries its own contact snapshot (finding #23). A parallel
+     *   insert of the same e-mail is answered by re-reading the row.
      * @param array $validated Validated checkout data.
      * @return ShopCustomer
      * @throws \Exception When the customer can neither be found nor created.
@@ -251,10 +261,13 @@ class ShopCheckoutController extends Controller
             }
         }
 
-        if ($customer->trashed()) {
-            $customer->restore();
+        if (!$customer->trashed()) {
+            $missing = array_filter($data, fn ($value, $field) => $value !== null && $value !== ''
+                && ($customer->{$field} === null || $customer->{$field} === ''), ARRAY_FILTER_USE_BOTH);
+            if ($missing) {
+                $customer->update($missing);
+            }
         }
-        $customer->update($data);
 
         return $customer;
     }

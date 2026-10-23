@@ -61,9 +61,11 @@ class SupportAndProvidersTest extends TestCase
 
     /**
      * @description Rate limiters: login is limited per IP and per (normalised) e-mail, 2FA resend
-     *   per IP, the api limiter per user, else per IP - 5 / 5 / 60 per minute.
-     * @input Request from 10.0.0.1 with e-mail ' Eva@X.cz '; the same signed in as user 7.
-     * @output Keys login-ip:10.0.0.1 / login-email:eva@x.cz, 2fa-resend-ip:10.0.0.1, api 10.0.0.1 / 7.
+     *   per IP - 5 / 5 per minute. The unused 'api' limiter of RouteServiceProvider is gone with the
+     *   provider registration (finding #33), the providers load routes only once.
+     * @input Request from 10.0.0.1 with e-mail ' Eva@X.cz '.
+     * @output Keys login-ip:10.0.0.1 / login-email:eva@x.cz, 2fa-resend-ip:10.0.0.1; no 'api' limiter;
+     *   RouteServiceProvider not registered.
      */
     public function test_rate_limiters(): void
     {
@@ -74,10 +76,8 @@ class SupportAndProvidersTest extends TestCase
         $this->assertSame([5, 5], array_map(fn (Limit $l) => $l->maxAttempts, $login));
         $this->assertSame('2fa-resend-ip:10.0.0.1', RateLimiter::limiter('login-2fa-resend')($request)[0]->key);
 
-        $api = RateLimiter::limiter('api');
-        $this->assertSame(['10.0.0.1', 60], [$api($request)->key, $api($request)->maxAttempts]);
-        $user = $this->user();
-        $request->setUserResolver(fn () => $user);
-        $this->assertSame($user->id, $api($request)->key);
+        $this->assertNull(RateLimiter::limiter('api'));
+        $this->assertNotContains('App\\Providers\\RouteServiceProvider', config('app.providers'));
+        $this->assertArrayNotHasKey('App\\Providers\\RouteServiceProvider', $this->app->getLoadedProviders());
     }
 }

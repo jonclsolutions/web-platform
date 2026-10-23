@@ -88,36 +88,33 @@ describe('CouponsComponent', () => {
   /**
    * @description Toolbar by permission and view.
    * @input  granted []; then all; then trash view with open filters
-   * @output create / import / report / trash hidden without permission; trash view: create, export, import hidden; labels toolbar_show_active / toolbar_hide_filters
+   * @output create / report / trash hidden without permission; trash view: create, export hidden; labels toolbar_show_active / toolbar_hide_filters
    */
   it('builds the toolbar by permission and view', () => {
     ctx.permissions.granted = new Set();
     let t = toolbar();
-    expect(['handleCreateFormOpened', 'triggerImport', 'openGraphBuilder', 'toggleTable'].map(a => t[a].showIf)).toEqual([false, false, false, false]);
+    expect(['handleCreateFormOpened', 'openGraphBuilder', 'toggleTable'].map(a => t[a].showIf)).toEqual([false, false, false]);
     ctx.permissions.granted = 'all';
     t = toolbar();
-    expect(['handleCreateFormOpened', 'exportActiveTable', 'triggerImport'].map(a => t[a].showIf)).toEqual([true, true, true]);
+    expect(['handleCreateFormOpened', 'exportActiveTable'].map(a => t[a].showIf)).toEqual([true, true]);
     expect(t['toggleTable'].label).toBe('shop-coupons.toolbar_show_trash');
     expect(t['toggleFilters'].label).toBe('shop-coupons.toolbar_filters');
     component.showTrashTable = true;
     component.isFilterVisible = true;
     t = toolbar();
-    expect(['handleCreateFormOpened', 'exportActiveTable', 'triggerImport'].map(a => t[a].showIf)).toEqual([false, false, false]);
+    expect(['handleCreateFormOpened', 'exportActiveTable'].map(a => t[a].showIf)).toEqual([false, false]);
     expect(t['toggleTable'].label).toBe('shop-coupons.toolbar_show_active');
     expect(t['toggleTable'].isActive).toBeTrue();
     expect(t['toggleFilters'].label).toBe('shop-coupons.toolbar_hide_filters');
   });
 
   /**
-   * @description The import button starts the import of the coupon table.
-   * @input  activeTable spy; handleToolbarAction('triggerImport')
-   * @output importData() called once
+   * @description No import button: the API has no coupon import (finding #25, the button answered 404).
+   * @input  toolbarButtons with all permissions
+   * @output no 'triggerImport' action
    */
-  it('starts the import from the toolbar', () => {
-    const table = jasmine.createSpyObj('TableBuilderComponent', ['importData']);
-    component.activeTable = table;
-    component.handleToolbarAction('triggerImport');
-    expect(table.importData).toHaveBeenCalledTimes(1);
+  it('offers no import', () => {
+    expect(component.toolbarButtons.map(b => b.action)).not.toContain('triggerImport');
   });
 
   /**

@@ -225,8 +225,8 @@
                       <span class="order-number-badge">#{{ order.order_number }}</span>
                     </td>
                     <td>
-                      <div class="customer-name">{{ order.customer?.full_name ?? '—' }}</div>
-                      <div class="customer-email">{{ order.customer?.email ?? '' }}</div>
+                      <div class="customer-name">{{ (order.contact ?? order.customer)?.full_name || '—' }}</div>
+                      <div class="customer-email">{{ (order.contact ?? order.customer)?.email ?? '' }}</div>
                     </td>
                     <td>
                       <span class="badge {{ statusClass(order.status) }}">

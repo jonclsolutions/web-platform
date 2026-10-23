@@ -106,7 +106,6 @@ export class ShippingMethodsComponent extends BaseDataComponent<any> implements 
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
-        case 'triggerImport':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }

@@ -71,7 +71,10 @@ class UpdateShopProductRequest extends FormRequest
             'is_active' => [
                 'boolean',
                 function ($attribute, $value, $fail) {
-                    $hasCategory = $this->filled('category_id') || ($this->filled('category_ids') && count((array)$this->input('category_ids')) > 0);
+                    // A request without `category_id` keeps the stored primary category (finding #30).
+                    $keepsStored = !$this->has('category_id') && !$this->has('category_ids')
+                        && \App\Models\Shop\ShopProduct::whereKey($this->route('id') ?? $this->route('product'))->value('category_id');
+                    $hasCategory = $keepsStored || $this->filled('category_id') || ($this->filled('category_ids') && count((array)$this->input('category_ids')) > 0);
                     if ($value && !$hasCategory) {
                         $fail('Product cannot be set as active without an assigned category.');
                     }

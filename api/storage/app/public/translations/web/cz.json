@@ -817,13 +817,15 @@
     },
     "privacy_policy": {
         "header_main": "Zásady Ochrany Osobních Údajů",
-        "last_update_text": "Poslední aktualizace:"
+        "last_update_text": "Poslední aktualizace:",
+        "effective_from_text": "Tyto zásady jsou účinné od {date}."
     },
     "tos": {
         "header_main": "Obchodní podmínky",
         "last_update_text": "Poslední aktualizace:",
         "more_info_text": "Více informací naleznete v",
-        "more_info_link_text": "Zásadách ochrany osobních údajů"
+        "more_info_link_text": "Zásadách ochrany osobních údajů",
+        "effective_from_text": "Tyto podmínky jsou účinné od {date}."
     },
     "cookie_consent": {
         "aria_label": "Nastavení souhlasu s cookies",
@@ -859,7 +861,8 @@
         "change_settings_text": "Svůj souhlas s jednotlivými kategoriemi cookies můžete kdykoli změnit přes",
         "change_settings_link_text": "nastavení cookies",
         "more_info_text": "Podrobnosti o zpracování osobních údajů najdete v našich",
-        "more_info_link_text": "zásadách ochrany osobních údajů"
+        "more_info_link_text": "zásadách ochrany osobních údajů",
+        "effective_from_text": "Tyto zásady jsou účinné od {date}."
     },
     "knowledge-base": {
         "knowledge-base_footer": "Centrum nápovědy",

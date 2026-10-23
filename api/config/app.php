@@ -47,7 +47,10 @@ return [
          * Application Service Providers...
          */
         App\Providers\AppServiceProvider::class,
-        App\Providers\RouteServiceProvider::class,
+        // @refactor-note (2026-10-23) App\Providers\RouteServiceProvider removed from the list (open
+        //   finding #33): Laravel 11 loads the routes through withRouting() in bootstrap/app.php, the
+        //   provider loaded routes/api.php + web.php a second time; its 'api' rate limiter is used by
+        //   no route. The provider file was deleted (approved 2026-10-23).
     ])->toArray(),
 
 

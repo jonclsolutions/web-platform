@@ -71,7 +71,7 @@ describe('OrdersComponent', () => {
     /**
      * @description The configuration is built from the 'shop-orders' translations; status filters get the translated options.
      * @input  component created
-     * @output caption; row buttons with shop-orders-* permissions; status / payment options = STATUS_VALUES / PAYMENT_STATUS_VALUES; filter options set; chartable status_label, payment_status_label
+     * @output caption; row buttons with shop-orders-* permissions; status / payment options = STATUS_VALUES / PAYMENT_STATUS_VALUES; filter options set; chartable status, payment_status (raw values, labels translated)
      */
     it('builds the configuration from translations', () => {
       expect(component.tableCaption).toBe('shop-orders.table_header');
@@ -80,7 +80,7 @@ describe('OrdersComponent', () => {
       expect(component.paymentStatusOptions.map(o => o.value)).toEqual(PAYMENT_STATUS_VALUES);
       expect((component.filterColumns.find(f => f.key === 'status') as any).options).toBe(component.statusOptions);
       expect((component.filterColumns.find(f => f.key === 'payment_status') as any).options).toBe(component.paymentStatusOptions);
-      expect(component.graphColumns.map(g => g.key)).toEqual(['status_label', 'payment_status_label']);
+      expect(component.graphColumns.map(g => g.key)).toEqual(['status', 'payment_status']);
       expect(component.orderColumns.length).toBeGreaterThan(0);
       expect(component.trashOrderColumns.length).toBeGreaterThan(0);
       expect(component.t('btn_edit')).toBe('shop-orders.btn_edit');
@@ -89,13 +89,14 @@ describe('OrdersComponent', () => {
     /**
      * @description Toolbar buttons without permission get showIf false; filter columns without status filters stay untouched.
      * @input  granted []; translations$.next({}); then filterColumns without status / payment_status
-     * @output create, reports, import hidden; export visible; no error without the filters
+     * @output create, reports hidden; no import button (finding #25); export visible; no error without the filters
      */
     it('hides toolbar buttons without permission', () => {
       ctx.permissions.granted = new Set();
       ctx.i18n.translations$.next({});
       const t = Object.fromEntries(component.toolbarButtons.map(b => [b.action, b]));
-      expect([t['handleCreateFormOpened'].showIf, t['openGraphBuilder'].showIf, t['triggerImport'].showIf]).toEqual([false, false, false]);
+      expect([t['handleCreateFormOpened'].showIf, t['openGraphBuilder'].showIf]).toEqual([false, false]);
+      expect(t['triggerImport']).toBeUndefined();
       expect(t['exportActiveTable'].showIf).toBeTrue();
       component.filterColumns = [];
       expect(() => (component as any).updateFilterOptions()).not.toThrow();
@@ -142,7 +143,7 @@ describe('OrdersComponent', () => {
     /**
      * @description Toolbar actions call their handlers; nothing runs while an order is loading.
      * @input  handleToolbarAction(each action) with an activeTable spy; then while processing
-     * @output filter panel toggled; create form open; graph builder open; export and import on the table; ignored while processing
+     * @output filter panel toggled; create form open; graph builder open; export on the table; no import; ignored while processing
      */
     it('dispatches the toolbar actions', () => {
       const table = jasmine.createSpyObj('TableBuilderComponent', ['exportToCSV', 'importData']);
@@ -152,7 +153,7 @@ describe('OrdersComponent', () => {
       expect(component.showOrderForm).toBeTrue();
       expect(component.showGraphBuilder).toBeTrue();
       expect(table.exportToCSV).toHaveBeenCalled();
-      expect(table.importData).toHaveBeenCalled();
+      expect(table.importData).not.toHaveBeenCalled();
       component.activeTable = undefined as any;
       expect(() => component.handleToolbarAction('triggerImport')).not.toThrow();
       (component as any).isProcessing = true;
@@ -220,6 +221,17 @@ describe('OrdersComponent', () => {
     });
 
     /**
+     * @description Table rows and the detail show status labels of the admin language, not the API text (finding #29).
+     * @input  mapListRow({ status: 'shipped', payment_status: 'paid', status_label: 'Shipped' }); unknown value
+     * @output status_label 'shop-orders.status_shipped', payment_status_label 'shop-orders.payment_status_paid'; raw value when unknown
+     */
+    it('translates the status labels', () => {
+      const row = (component as any).mapListRow({ id: 1, status: 'shipped', payment_status: 'paid', status_label: 'Shipped' });
+      expect([row.status_label, row.payment_status_label]).toEqual(['shop-orders.status_shipped', 'shop-orders.payment_status_paid']);
+      expect(component.getPaymentStatusLabel('x')).toBe('x');
+    });
+
+    /**
      * @description The status timeline marks every step up to the current one; cancelled / unknown states mark nothing.
      * @input  isStatusReached('shipped', 'confirmed' | 'shipped' | 'delivered'); ('canceled', 'pending'); ('pending', 'x')
      * @output true, true, false; false; false
@@ -251,18 +263,25 @@ describe('OrdersComponent', () => {
     });
 
     /**
-     * @description Editing loads the full order and copies the customer contact into the form; failures show an error.
-     * @input  handleEditFormOpened({ id: 4 }, click) with customer; order without customer; failure; guards
-     * @output email / names / phone / company from the customer; '' without customer; error 'shop-orders.load_order_failed_message'
+     * @description Editing loads the full order and copies the order's own contact (snapshot, findings #22 / #23)
+     *   into the form - the customer record only for orders without one; failures show an error.
+     * @input  handleEditFormOpened({ id: 4 }, click) with contact + different customer; order with customer only;
+     *         order without both; failure; guards
+     * @output email / names / phone / company from the contact; from the customer when no contact; '' without both;
+     *   error 'shop-orders.load_order_failed_message'
      */
     it('opens an existing order', fakeAsync(() => {
       loadLookups();
       const event = jasmine.createSpyObj('Event', ['stopPropagation']);
-      dh().getOne.and.returnValue(of({ id: 4, items: [], customer: { email: 'c@d.cz', first_name: 'Eva', last_name: 'Malá', phone: '1', company: 'ACME' } }));
+      dh().getOne.and.returnValue(of({ id: 4, items: [], customer: { email: 'old@d.cz', first_name: 'Old' },
+        contact: { email: 'c@d.cz', first_name: 'Eva', last_name: 'Malá', full_name: 'Eva Malá', phone: '1', company: 'ACME' } }));
       component.handleEditFormOpened({ id: 4 } as any, event);
       expect(event.stopPropagation).toHaveBeenCalled();
       expect([component.editingOrder!.email, component.editingOrder!.first_name, component.editingOrder!.last_name, component.editingOrder!.phone, component.editingOrder!.company])
         .toEqual(['c@d.cz', 'Eva', 'Malá', '1', 'ACME']);
+      dh().getOne.and.returnValue(of({ id: 8, items: [], customer: { email: 'k@d.cz', first_name: 'Karel' } }));
+      component.openEditOrderForm({ id: 8 } as any);
+      expect([component.editingOrder!.email, component.editingOrder!.first_name]).toEqual(['k@d.cz', 'Karel']);
       expect(component.showOrderForm).toBeTrue();
       dh().getOne.and.returnValue(of({ id: 5, items: [] }));
       component.handleEditFormOpened({ id: 5 } as any);
@@ -558,16 +577,24 @@ describe('OrdersComponent', () => {
   /**
    * @description The list, the detail modal and the order form render.
    * @input  detectChanges(); details of a shipped order; order form with one item and a coupon
-   * @output 'shop-orders.table_header'; timeline in the details; VAT summary in the form
+   * @output 'shop-orders.table_header'; detail with the order contact (not the customer name) and translated status;
+   *   VAT summary in the form
    */
   it('renders the page, details and form', fakeAsync(() => {
     loadLookups();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('shop-orders.table_header');
-    dh().getOne.and.returnValue(of({ id: 4, order_number: 'OBJ-4', status: 'shipped', payment_status: 'paid', items: [{ id: 1, product_name: 'Pixel', quantity: 1, unit_price: 5, total_price: 5, vat_rate: 21 }], customer: { email: 'c@d.cz' } }));
+    dh().getOne.and.returnValue(of({ id: 4, order_number: 'OBJ-4', status: 'shipped', payment_status: 'paid', items: [{ id: 1, product_name: 'Pixel', quantity: 1, unit_price: 5, total_price: 5, vat_rate: 21 }],
+      customer: { email: 'old@d.cz', full_name: 'Old Name', city: 'Brno' }, contact: { full_name: 'Eva Malá', email: 'c@d.cz', phone: '1', company: 'ACME' } }));
     component.handleViewDetails({ id: 4 } as any);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('OBJ-4');
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('OBJ-4');
+    expect(text).toContain('Eva Malá');            // order's own contact (findings #22 / #23)
+    expect(text).toContain('c@d.cz');
+    expect(text).not.toContain('Old Name');
+    expect(text).toContain('Brno');                // city from the customer record
+    expect(text).toContain('shop-orders.status_shipped');
     component.closeDetailsModal();
     component.handleCreateFormOpened();
     component.editingOrder!.items = [{ product_id: 1, product_variant_id: 11, quantity: 1, unit_price: 100, vat_rate: 21, total_price: 100 } as any];

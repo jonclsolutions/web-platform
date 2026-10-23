@@ -32,7 +32,8 @@ class TranslationTest extends TestCase
     private string $storage;
 
     /** @var string[] Permission of the translation editors. */
-    private const EDITOR = ['web-edit-website-update'];
+    /** @var string[] Editor of both modules (each write checks the module's own permission, finding #32). */
+    private const EDITOR = ['web-edit-website-update', 'shop-edit-eshop-update'];
 
     /**
      * @description Points storage_path() to an empty temporary folder and fakes the public disk.
@@ -240,9 +241,10 @@ class TranslationTest extends TestCase
 
     /**
      * @description Icon upload replaces the icon of the language in THIS module only (the same
-     *   code in another module keeps its icon); unknown code 404; validation.
-     * @input web en (icon web.png) + shop en (icon shop.png); POST languages/shop/en/icon; shop/xx; no file.
-     * @output shop en new icon, shop.png deleted, web en still web.png; iconUrl; 404; 422.
+     *   code in another module keeps its icon); unknown code 404; validation; raster only (finding #34).
+     * @input web en (icon web.png) + shop en (icon shop.png); POST languages/shop/en/icon; shop/xx; no file;
+     *        an SVG flag (with a script).
+     * @output shop en new icon, shop.png deleted, web en still web.png; iconUrl; 404; 422; 422 icon (SVG).
      */
     public function test_store_language_icon(): void
     {
@@ -266,6 +268,8 @@ class TranslationTest extends TestCase
 
         $this->post('/api/languages/shop/xx/icon', ['icon' => $this->fakeImage('x.png')], ['Accept' => 'application/json'])->assertStatus(404);
         $this->postJson('/api/languages/shop/en/icon', [])->assertStatus(422)->assertJsonValidationErrors(['icon']);
+        $svg = UploadedFile::fake()->createWithContent('flag.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+        $this->post('/api/languages/shop/en/icon', ['icon' => $svg], ['Accept' => 'application/json'])->assertStatus(422)->assertJsonValidationErrors(['icon']);
     }
 
     /**
@@ -317,5 +321,34 @@ class TranslationTest extends TestCase
         $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['a' => 1]])->assertStatus(403);
         $this->postJson('/api/languages/web', ['languages' => '[]'])->assertStatus(403);
         $this->deleteJson('/api/languages/web/de')->assertStatus(403);
+    }
+
+    /**
+     * @description SECURITY (finding #32): each write checks the permission of the module in the URL -
+     *   a web editor cannot change the shop translations / languages and vice versa; an unknown module
+     *   is sysadmin-only; the denial is logged.
+     * @input Web editor: save shop / save web; shop editor: languages web, icon web, delete web language,
+     *        save shop; editor of both: save module 'blog'; sysadmin: save 'blog'.
+     * @output 403 / 200; 403 ×3 / 200; 403 'blog'; 200 for sysadmin; web log 'update_denied'.
+     */
+    public function test_module_permission(): void
+    {
+        $this->signIn($this->userWith(['web-edit-website-update']));
+        $this->postJson('/api/save_translations/shop', ['lang' => 'cz', 'data' => ['a' => 1]])->assertStatus(403)
+            ->assertJson(['message' => 'You do not have permission to edit the translations of this module.']);
+        $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['a' => 1]])->assertOk();
+        $this->assertSame('Denied change of the shop translations (missing shop-edit-eshop-update).',
+            \App\Models\Web\WebLog::where('event_type', 'update_denied')->value('description'));
+
+        $this->signIn($this->userWith(['shop-edit-eshop-update']));
+        $this->postJson('/api/languages/web', ['languages' => json_encode([['code' => 'cz', 'name' => 'Čeština']])])->assertStatus(403);
+        $this->postJson('/api/languages/web/cz/icon', [])->assertStatus(403);
+        $this->deleteJson('/api/languages/web/de')->assertStatus(403);
+        $this->postJson('/api/save_translations/shop', ['lang' => 'cz', 'data' => ['a' => 1]])->assertOk();
+
+        $this->signIn($this->userWith(self::EDITOR));
+        $this->postJson('/api/save_translations/blog', ['lang' => 'cz', 'data' => ['a' => 1]])->assertStatus(403);
+        $this->signIn($this->sysadmin());
+        $this->postJson('/api/save_translations/blog', ['lang' => 'cz', 'data' => ['a' => 1]])->assertOk();
     }
 }

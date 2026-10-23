@@ -60,7 +60,8 @@
               (createFormOpened)="handleCreateFormOpened()"
               (editFormOpened)="handleEditFormOpened($event)"
               (viewDetailsOpened)="handleViewDetails($event)"
-              (customerOrdersOpened)="showCustomerOrders($event)">
+              (customerOrdersOpened)="showCustomerOrders($event)"
+              (anonymizeRequested)="anonymizeCustomer($event)">
             </app-table-builder>
           }
 
@@ -70,7 +71,8 @@
               [columns]="trashCustomerColumns"
               [tableCaption]="t('trash_table_caption')"
               [apiEndpoint]="apiEndpoint"
-              (itemRestored)="handleItemRestored()">
+              (itemRestored)="handleItemRestored()"
+              (itemDeletedPermanently)="handleItemDeleted()">
             </app-trash-table-builder>
           }
 

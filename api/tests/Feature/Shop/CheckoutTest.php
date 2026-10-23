@@ -177,10 +177,12 @@ class CheckoutTest extends TestCase
     }
 
     /**
-     * @description An existing (also trashed) customer is reused, restored and gets the new
-     *   contact details; a fixed coupon; total spent counts only confirmed+ orders.
-     * @input Trashed customer jan@example.com (old city); checkout with FIX20 (fixed 20 EUR).
-     * @output 201 same customer id, restored, city Praha; discount 20, final 106; total_spent 0.
+     * @description An existing (also trashed) customer is only linked (finding #23): the master
+     *   data are not overwritten and a trashed customer is not restored; the order keeps the
+     *   contact given at checkout; a fixed coupon; total spent counts only confirmed+ orders.
+     * @input Trashed customer jan@example.com (Eva, Brno); checkout as Jan / Praha / Acme with FIX20.
+     * @output 201 same customer id, still trashed, name / city unchanged; order contact Jan Novak, Acme;
+     *   discount 20, final 106; total_spent 0; one customer row.
      */
     public function test_existing_customer_is_reused(): void
     {
@@ -190,20 +192,43 @@ class CheckoutTest extends TestCase
         $this->coupon(['code' => 'FIX20', 'discount_type' => 'fixed', 'discount_value' => 20]);
 
         $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]], ['coupon_code' => 'FIX20', 'company' => 'Acme']))
-            ->assertCreated()->assertJsonPath('customer_id', $customer->id)->assertJsonPath('discount_amount', 20)->assertJsonPath('final_amount', 106);
+            ->assertCreated()->assertJsonPath('customer_id', $customer->id)->assertJsonPath('discount_amount', 20)->assertJsonPath('final_amount', 106)
+            ->assertJsonPath('contact.full_name', 'Jan Novak')->assertJsonPath('contact.company', 'Acme')->assertJsonPath('contact.email', 'jan@example.com');
 
         $customer->refresh();
-        $this->assertFalse($customer->trashed());
-        $this->assertSame(['Praha', 'Acme'], [$customer->city, $customer->company]);
+        $this->assertTrue($customer->trashed());
+        $this->assertSame(['Eva', 'Brno', null], [$customer->first_name, $customer->city, $customer->company]);
         $this->assertEquals(0, $customer->total_spent);
         $this->assertSame(1, ShopCustomer::withTrashed()->count());
     }
 
     /**
+     * @description An active existing customer keeps the stored data; only empty fields are
+     *   filled in from the checkout (finding #23). The line VAT rate is stored (finding #21).
+     * @input Customer jan@example.com Eva, phone 777123456, no address / company; checkout as Jan,
+     *        phone 777111222, address Main 1, company Acme; product at 10 %.
+     * @output Name / phone unchanged; address, city, postal code, country, company filled in;
+     *   order contact Jan / 777111222; item vat_rate 10.
+     */
+    public function test_existing_customer_only_gets_missing_fields(): void
+    {
+        $p = $this->product(['name' => 'P'], ['vat_rate' => 10]);
+        $customer = $this->customer(['email' => 'jan@example.com']);
+
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]], ['company' => 'Acme']))
+            ->assertCreated()->assertJsonPath('contact.first_name', 'Jan')->assertJsonPath('contact.phone', '777111222')->assertJsonPath('items.0.vat_rate', 10);
+
+        $customer->refresh();
+        $this->assertSame(['Eva', 'Nova', '777123456'], [$customer->first_name, $customer->last_name, $customer->phone]);
+        $this->assertSame(['Main 1', 'Praha', '11000', 'CZ', 'Acme'], [$customer->address, $customer->city, $customer->postal_code, $customer->country, $customer->company]);
+        $this->assertEquals(10, ShopOrder::sole()->items()->sole()->vat_rate);
+    }
+
+    /**
      * @description A parallel checkout that inserted the same e-mail first is handled by
-     *   re-reading that customer.
-     * @input The customer row is inserted by "someone else" right before our insert.
-     * @output 201 with that customer; one customer row.
+     *   re-reading that customer (its stored name is kept, the empty phone is filled in).
+     * @input The customer row (Other Tab, no phone) is inserted by "someone else" right before our insert.
+     * @output 201 with that customer; customer name Other, phone filled; order contact Jan; one customer row.
      */
     public function test_parallel_customer_insert(): void
     {
@@ -212,7 +237,8 @@ class CheckoutTest extends TestCase
             DB::table('shop_customers')->insert(['email' => 'jan@example.com', 'first_name' => 'Other', 'last_name' => 'Tab', 'created_at' => now(), 'updated_at' => now()]);
         });
 
-        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]]))->assertCreated()->assertJsonPath('customer.first_name', 'Jan');
+        $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]]))->assertCreated()
+            ->assertJsonPath('customer.first_name', 'Other')->assertJsonPath('customer.phone', '777111222')->assertJsonPath('contact.first_name', 'Jan');
         $this->assertSame(1, ShopCustomer::count());
     }
 

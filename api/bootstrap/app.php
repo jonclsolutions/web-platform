@@ -94,8 +94,9 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson()) {
                 $headers = $e->getHeaders();
 
+                // @bugfix-note (2026-10-23) English like every other API message (open finding #35).
                 return response()->json([
-                    'message' => 'Příliš mnoho požadavků. Zkuste to prosím později.',
+                    'message' => 'Too many requests. Please try again later.',
                 ], 429, $headers);
             }
         });

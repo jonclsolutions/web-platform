@@ -34,7 +34,8 @@ export class CookiesPolicyComponent extends BasePublicComponent {
   protected readonly translationKey = 'cookies_policy';
   data: any = null;
 
-  private legalDocsService = inject(LegalDocsService);
+  /** Protected: the template builds the translated footer with it (effectiveFooter()). */
+  protected legalDocsService = inject(LegalDocsService);
   private cookieConsentService = inject(CookieConsentService);
 
   protected override onInit(): void {

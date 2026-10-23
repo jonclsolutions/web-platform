@@ -94,21 +94,22 @@ describe('ShippingMethodsComponent', () => {
   /**
    * @description Toolbar by permission and view.
    * @input  granted []; then all; then trash view with open filters
-   * @output create / import / report / trash hidden without permission; trash view: create, export, import hidden; labels switched
+   * @output create / report / trash hidden without permission, no import (finding #25); trash view: create, export hidden; labels switched
    */
   it('builds the toolbar by permission and view', () => {
     ctx.permissions.granted = new Set();
     let t = toolbar();
-    expect(['handleCreateFormOpened', 'triggerImport', 'openGraphBuilder', 'toggleTable'].map(a => t[a].showIf)).toEqual([false, false, false, false]);
+    expect(['handleCreateFormOpened', 'openGraphBuilder', 'toggleTable'].map(a => t[a].showIf)).toEqual([false, false, false]);
+    expect(t['triggerImport']).toBeUndefined();  // no import in the API (finding #25)
     ctx.permissions.granted = 'all';
     t = toolbar();
-    expect(['handleCreateFormOpened', 'exportActiveTable', 'triggerImport'].map(a => t[a].showIf)).toEqual([true, true, true]);
+    expect(['handleCreateFormOpened', 'exportActiveTable'].map(a => t[a].showIf)).toEqual([true, true]);
     expect(t['toggleTable'].label).toBe('shop-shipping-methods.toolbar_show_trash');
     expect(t['toggleFilters'].label).toBe('shop-shipping-methods.toolbar_filters');
     component.showTrashTable = true;
     component.isFilterVisible = true;
     t = toolbar();
-    expect(['handleCreateFormOpened', 'exportActiveTable', 'triggerImport'].map(a => t[a].showIf)).toEqual([false, false, false]);
+    expect(['handleCreateFormOpened', 'exportActiveTable'].map(a => t[a].showIf)).toEqual([false, false]);
     expect(t['toggleTable'].label).toBe('shop-shipping-methods.toolbar_show_active');
     expect(t['toggleTable'].isActive).toBeTrue();
     expect(t['toggleFilters'].label).toBe('shop-shipping-methods.toolbar_hide_filters');

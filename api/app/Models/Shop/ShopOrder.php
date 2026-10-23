@@ -9,6 +9,13 @@
  *
  * @refactor-note (2026-10-23) restoreStock() shares the stock movement with the new
  * deductStock() (reopening a cancelled / returned order) - see ShopOrderController::update().
+ * @bugfix-note (2026-10-23) Buyer contact snapshot `customer_first_name` … `customer_company`
+ *   (open findings #22 / #23): the order is an accounting document and keeps the buyer as given
+ *   for THIS order - checkout no longer overwrites the customer master data and an anonymised
+ *   customer must not take the name off his invoices. `contact()` falls back to the customer
+ *   for rows without a snapshot.
+ * @bugfix-note (2026-10-23) Status labels were Czech (`status_label` of the API, open finding
+ *   #29) - English now; the admin translates the status values itself.
  */
 
 namespace App\Models\Shop;
@@ -40,6 +47,11 @@ class ShopOrder extends Model
      */
     protected $fillable = [
         'customer_id',
+        'customer_first_name',
+        'customer_last_name',
+        'customer_email',
+        'customer_phone',
+        'customer_company',
         'order_number',
         'status',
         'payment_status',
@@ -148,13 +160,13 @@ class ShopOrder extends Model
     public static function getStatusOptions(): array
     {
         return [
-            'pending' => 'Čeká na potvrzení',
-            'confirmed' => 'Potvrzena',
-            'processing' => 'Zpracovávání',
-            'shipped' => 'Odeslána',
-            'delivered' => 'Doručena',
-            'returned' => 'Vrácena',
-            'canceled' => 'Zrušena',
+            'pending' => 'Awaiting confirmation',
+            'confirmed' => 'Confirmed',
+            'processing' => 'Processing',
+            'shipped' => 'Shipped',
+            'delivered' => 'Delivered',
+            'returned' => 'Returned',
+            'canceled' => 'Canceled',
         ];
     }
 
@@ -164,11 +176,11 @@ class ShopOrder extends Model
     public static function getPaymentStatusOptions(): array
     {
         return [
-            'pending' => 'Čeká se na platbu',
-            'paid' => 'Zaplacena',
-            'failed' => 'Platba selhala',
-            'refunded' => 'Vráceny peníze',
-            'cod' => 'Dobírka',
+            'pending' => 'Awaiting payment',
+            'paid' => 'Paid',
+            'failed' => 'Payment failed',
+            'refunded' => 'Refunded',
+            'cod' => 'Cash on delivery',
         ];
     }
 
@@ -249,18 +261,48 @@ class ShopOrder extends Model
     private function moveStock(int $direction): void
     {
         foreach ($this->items as $item) {
-            if ($item->product_variant_id) {
-                $variant = ShopProductVariant::find($item->product_variant_id);
-                if ($variant) {
-                    $variant->increment('stock_quantity', $direction * $item->quantity);
-                    ShopProductVariant::forceSyncParentStock($variant->product_id);
-                }
-            } else {
-                $product = ShopProduct::find($item->product_id);
-                if ($product) {
-                    $product->increment('stock_quantity', $direction * $item->quantity);
-                }
+            $item->adjustStock($direction * $item->quantity);
+        }
+    }
+
+    /**
+     * @description Snapshot columns from contact form fields (first_name, last_name, email,
+     *   phone, company) - only the keys that are present.
+     * @param array<string, mixed> $data Validated request data.
+     * @return array<string, mixed> `customer_*` attributes.
+     */
+    public static function contactSnapshot(array $data): array
+    {
+        $snapshot = [];
+        foreach (['first_name', 'last_name', 'email', 'phone', 'company'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $value = $data[$field];
+                $snapshot["customer_{$field}"] = $field === 'email' && is_string($value) ? trim(strtolower($value)) : $value;
             }
         }
+        return $snapshot;
+    }
+
+    /**
+     * @description Buyer contact of this order: the snapshot, or the customer record for orders
+     *   without one.
+     * @return array{first_name: ?string, last_name: ?string, full_name: string, email: ?string, phone: ?string, company: ?string}
+     */
+    public function contact(): array
+    {
+        $hasSnapshot = $this->customer_first_name !== null || $this->customer_email !== null;
+        $source = $hasSnapshot ? null : $this->customer;
+
+        $first = $hasSnapshot ? $this->customer_first_name : $source?->first_name;
+        $last  = $hasSnapshot ? $this->customer_last_name : $source?->last_name;
+
+        return [
+            'first_name' => $first,
+            'last_name'  => $last,
+            'full_name'  => trim(($first ?? '') . ' ' . ($last ?? '')),
+            'email'      => $hasSnapshot ? $this->customer_email : $source?->email,
+            'phone'      => $hasSnapshot ? $this->customer_phone : $source?->phone,
+            'company'    => $hasSnapshot ? $this->customer_company : $source?->company,
+        ];
     }
 }

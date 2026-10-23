@@ -331,9 +331,8 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable: () => this.exportActiveTable(),
-      // @bugfix-note (2026-10-22) the "import data" button had no handler; the unused `toggleTable`
-      // entry was removed – the trash is a tab here (setTableMode)
-      triggerImport: () => this.activeTable?.importData()
+      // The unused `toggleTable` entry was removed (2026-10-22) – the trash is a tab here (setTableMode).
+      // @refactor-note (2026-10-23) `triggerImport` removed with the button - no order import in the API (finding #25).
     };
 
     if (actions[action]) actions[action]();
@@ -472,13 +471,15 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       Core.takeUntil(this.destroy$)
     ).subscribe({
       next: (fullOrder) => {
+        // The form edits the order's own contact (snapshot) - see the bugfix-note at getPaymentStatusLabel().
+        const contact = fullOrder.contact ?? fullOrder.customer;
         this.editingOrder = {
           ...fullOrder,
-          email: fullOrder.customer?.email || '',
-          first_name: fullOrder.customer?.first_name || '',
-          last_name: fullOrder.customer?.last_name || '',
-          phone: fullOrder.customer?.phone || '',
-          company: fullOrder.customer?.company || ''
+          email: contact?.email || '',
+          first_name: contact?.first_name || '',
+          last_name: contact?.last_name || '',
+          phone: contact?.phone || '',
+          company: contact?.company || ''
         };
         this.showOrderForm = true;
         this.toggleBodyScroll(true);
@@ -897,6 +898,28 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
 
   getStatusLabel(status: string): string {
     return this.statusOptions.find(o => o.value === status)?.label || status;
+  }
+
+  /**
+   * @description Translated label of a payment status.
+   * @param status Raw `payment_status`.
+   * @returns Label of the admin language, the raw value when unknown.
+   * @bugfix-note (2026-10-23) The table / detail showed the API `status_label` /
+   *   `payment_status_label` - Czech texts from the backend in every admin language (open finding
+   *   #29). The labels are translated here now (`mapListRow()` for the table) and the buyer is
+   *   the order's own `contact` snapshot (findings #22 / #23), not the customer master data.
+   */
+  getPaymentStatusLabel(status: string): string {
+    return this.paymentStatusOptions.find(o => o.value === status)?.label || status;
+  }
+
+  /**
+   * @description Table rows get translated status labels (see getPaymentStatusLabel()).
+   * @param row Order as returned by the API.
+   * @returns The row with `status_label` / `payment_status_label` of the admin language.
+   */
+  protected override mapListRow(row: any): any {
+    return { ...row, status_label: this.getStatusLabel(row.status), payment_status_label: this.getPaymentStatusLabel(row.payment_status) };
   }
 
   getVisibleItems(order: Order | null): OrderItem[] {

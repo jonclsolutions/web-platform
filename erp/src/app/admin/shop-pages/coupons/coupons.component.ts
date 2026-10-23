@@ -101,7 +101,6 @@ export class CouponsComponent extends BaseDataComponent<any> implements Core.OnI
           break;
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
-        case 'triggerImport':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }

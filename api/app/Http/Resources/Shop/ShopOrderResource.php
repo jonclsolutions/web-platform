@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2026
  * @description Resource transformation for complete sales orders.
+ * @bugfix-note (2026-10-23) `contact` = buyer as given for this order (snapshot columns, falling
+ *   back to the customer record for old rows) - open findings #22 / #23. The admin shows the
+ *   order's contact from here, not from the (changeable / anonymisable) customer master data.
  */
 
 namespace App\Http\Resources\Shop;
@@ -31,6 +34,7 @@ class ShopOrderResource extends JsonResource
             'order_number'         => $this->order_number,
             'customer_id'          => $this->customer_id,
             'customer'             => new ShopCustomerResource($this->whenLoaded('customer')),
+            'contact'              => $this->contact(),
             'status'               => $this->status,
             'status_label'         => $this->getStatusLabel(),
             'payment_status'       => $this->payment_status,

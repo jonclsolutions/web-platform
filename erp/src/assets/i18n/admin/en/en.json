@@ -2195,7 +2195,6 @@
     "toolbar_filters": "Open filters",
     "toolbar_create_record": "Add record",
     "toolbar_export_data": "Export data",
-    "toolbar_import_data": "Import data",
     "toolbar_generate_reports": "Generate charts & reports",
     "toolbar_show_trash": "Show trash",
     "filter_form_title": "Product filters",
@@ -2502,7 +2501,6 @@
     "toolbar_create_record": "Add record",
     "toolbar_generate_reports": "Generate charts & reports",
     "toolbar_export_data": "Export data",
-    "toolbar_import_data": "Import data",
     "filter_form_title": "Order filters",
 
     "tab_all": "All orders",
@@ -2701,7 +2699,6 @@
     "toolbar_hide_filters": "Hide filters",
     "toolbar_create_record": "Add record",
     "toolbar_export_data": "Export data",
-    "toolbar_import_data": "Import data",
     "toolbar_generate_reports": "Generate charts & reports",
     "toolbar_show_trash": "Show trash",
     "toolbar_show_active": "Show active",
@@ -2785,7 +2782,11 @@
     "of_label": "of",
     "load_orders_failed_message": "Failed to load customer orders.",
 
-    "graph_date_field_label": "Date created"
+    "graph_date_field_label": "Date created",
+    "btn_anonymize": "Anonymise",
+    "anonymize_confirm_title": "Anonymise customer",
+    "anonymize_confirm_message": "The personal data of {name} will be erased irreversibly (GDPR erasure). The orders are kept as accounting documents. Continue?",
+    "anonymize_done_message": "The customer was anonymised, the orders were kept."
   },
   "shop-shipping-methods": {
     "table_header": "Shipping methods",
@@ -2796,7 +2797,6 @@
     "toolbar_hide_filters": "Hide filters",
     "toolbar_create_record": "Add record",
     "toolbar_export_data": "Export data",
-    "toolbar_import_data": "Import data",
     "toolbar_generate_reports": "Generate charts & reports",
     "toolbar_show_trash": "Show trash",
     "toolbar_show_active": "Show active",
@@ -2916,7 +2916,6 @@
     "toolbar_hide_filters": "Hide filters",
     "toolbar_add_record": "Add record",
     "toolbar_export_data": "Export data",
-    "toolbar_import_data": "Import data",
     "toolbar_generate_reports": "Generate charts & reports",
     "toolbar_show_trash": "Trash",
     "toolbar_show_active": "Show active",
@@ -3052,7 +3051,8 @@
 
     "delete_all_confirm_title": "Delete All Permanently",
     "delete_all_confirm_message": "Are you sure you want to PERMANENTLY delete ALL items? This action is irreversible!",
-    "all_items_deleted_message": "All items permanently deleted."
+    "all_items_deleted_message": "All items permanently deleted.",
+    "some_items_kept_message": "Deleted: {deleted}. Kept: {skipped} – they have linked records that must be kept (e.g. a customer with orders – use the anonymisation)."
   },
   "base-data": {
   "api_endpoint_undefined": "API endpoint is not defined.",

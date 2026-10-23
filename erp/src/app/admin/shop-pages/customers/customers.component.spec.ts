@@ -15,6 +15,7 @@
 
 import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
+import { By } from '@angular/platform-browser';
 
 import { CustomersComponent } from './customers.component';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
@@ -40,12 +41,12 @@ describe('CustomersComponent', () => {
   /**
    * @description The configuration is built from the 'shop-customers' translations.
    * @input  component created
-   * @output caption; row buttons details / edit / orders (shop-orders-view) / delete; 12 form fields; 7 + 3 columns; filters search + is_active; 14 details
+   * @output caption; row buttons details / edit / orders (shop-orders-view) / anonymize / delete; 12 form fields; 7 + 3 columns; filters search + is_active; 14 details
    */
   it('builds the configuration from translations', () => {
     expect(component.tableCaption).toBe('shop-customers.table_header');
     expect(component.buttons.map(b => [b.action, b.permission])).toEqual([
-      ['details', undefined], ['edit', 'shop-customers-update'], ['customer_orders', 'shop-orders-view'], ['delete', 'shop-customers-delete']
+      ['details', undefined], ['edit', 'shop-customers-update'], ['customer_orders', 'shop-orders-view'], ['anonymize', 'shop-customers-delete'], ['delete', 'shop-customers-delete']
     ]);
     expect(component.formFields.length).toBe(12);
     expect(component.customerColumns.map(c => c.key)).toEqual(['id', 'last_name', 'first_name', 'email', 'phone', 'total_spent', 'is_active']);
@@ -99,30 +100,31 @@ describe('CustomersComponent', () => {
   /**
    * @description Toolbar by permission and view.
    * @input  granted []; then all; then trash view with open filters
-   * @output create / import / report / trash hidden without permission; trash view: create, export, import hidden; labels switched
+   * @output create / report / trash hidden without permission, no import (finding #25); trash view: create, export hidden; labels switched
    */
   it('builds the toolbar by permission and view', () => {
     ctx.permissions.granted = new Set();
     let t = toolbar();
-    expect(['handleCreateFormOpened', 'triggerImport', 'openGraphBuilder', 'toggleTable'].map(a => t[a].showIf)).toEqual([false, false, false, false]);
+    expect(['handleCreateFormOpened', 'openGraphBuilder', 'toggleTable'].map(a => t[a].showIf)).toEqual([false, false, false]);
+    expect(t['triggerImport']).toBeUndefined();
     ctx.permissions.granted = 'all';
     t = toolbar();
-    expect(['handleCreateFormOpened', 'exportActiveTable', 'triggerImport'].map(a => t[a].showIf)).toEqual([true, true, true]);
+    expect(['handleCreateFormOpened', 'exportActiveTable'].map(a => t[a].showIf)).toEqual([true, true]);
     expect(t['toggleTable'].label).toBe('shop-customers.toolbar_show_trash');
     expect(t['toggleFilters'].label).toBe('shop-customers.toolbar_filters');
     component.showTrashTable = true;
     component.isFilterVisible = true;
     t = toolbar();
-    expect(['handleCreateFormOpened', 'exportActiveTable', 'triggerImport'].map(a => t[a].showIf)).toEqual([false, false, false]);
+    expect(['handleCreateFormOpened', 'exportActiveTable'].map(a => t[a].showIf)).toEqual([false, false]);
     expect(t['toggleTable'].label).toBe('shop-customers.toolbar_show_active');
     expect(t['toggleTable'].isActive).toBeTrue();
     expect(t['toggleFilters'].label).toBe('shop-customers.toolbar_hide_filters');
   });
 
   /**
-   * @description Toolbar actions call their handlers; import goes to the active table.
-   * @input  handleToolbarAction(each action) with an activeTable spy; then without a table; 'unknown'
-   * @output handlers called once; importData() once; no error otherwise
+   * @description Toolbar actions call their handlers; there is no import any more (finding #25).
+   * @input  handleToolbarAction(each action) with an activeTable spy; 'triggerImport'; 'unknown'
+   * @output handlers called once; importData() never called; no error
    */
   it('dispatches the toolbar actions', () => {
     const names = ['toggleFilters', 'handleCreateFormOpened', 'openGraphBuilder', 'exportActiveTable', 'toggleTable'];
@@ -131,10 +133,8 @@ describe('CustomersComponent', () => {
     spies.forEach(s => expect(s).toHaveBeenCalledTimes(1));
     const table = jasmine.createSpyObj('TableBuilderComponent', ['importData']);
     component.activeTable = table;
-    component.handleToolbarAction('triggerImport');
-    expect(table.importData).toHaveBeenCalledTimes(1);
-    component.activeTable = undefined as any;
     expect(() => { component.handleToolbarAction('triggerImport'); component.handleToolbarAction('unknown'); }).not.toThrow();
+    expect(table.importData).not.toHaveBeenCalled();
   });
 
   /**
@@ -154,6 +154,63 @@ describe('CustomersComponent', () => {
     expect(ctx.genericTable.getPaginatedData.calls.mostRecent().args[3]).toEqual(jasmine.objectContaining({ sort_by: 'created_at' }));
     discardPeriodicTasks();
   }));
+
+  describe('anonymisation (finding #22)', () => {
+    /**
+     * @description The anonymise row button is hidden for already anonymised customers.
+     * @input  anonymize button visibleWhen for a normal and an anonymised row
+     * @output true for eva@example.com, false for customer-5@anonymized.invalid
+     */
+    it('hides the button for anonymised customers', () => {
+      const button = component.buttons.find(b => b.action === 'anonymize')!;
+      expect(button.visibleWhen!({ email: 'eva@example.com' })).toBeTrue();
+      expect(button.visibleWhen!({ email: 'customer-5@anonymized.invalid' })).toBeFalse();
+    });
+
+    /**
+     * @description Anonymising asks first, posts to the API and reloads; cancelling does nothing.
+     * @input  anonymizeCustomer({ id: 5, full_name: 'Eva Nova' }) with confirm false, then true; row without id
+     * @output confirm with the name and the anonymise label; no post when cancelled; post('shop/customers/5/anonymize', {}),
+     *   success alert, refreshData(); nothing for a row without id
+     */
+    it('anonymises after confirmation', async () => {
+      ctx.i18n.getValue.and.callFake((p: string) => (p === 'shop-customers.anonymize_confirm_message' ? 'Erase {name}?' : p));
+      const refresh = spyOn(component, 'refreshData');
+      ctx.confirm.open.and.returnValue(Promise.resolve(false));
+      await component.anonymizeCustomer({ id: 5, full_name: 'Eva Nova' });
+      expect(ctx.confirm.open).toHaveBeenCalledWith('shop-customers.anonymize_confirm_title', 'Erase Eva Nova?', { confirm: 'shop-customers.btn_anonymize' });
+      expect((ctx.dataHandler as any).post).not.toHaveBeenCalled();
+
+      ctx.confirm.open.and.returnValue(Promise.resolve(true));
+      await component.anonymizeCustomer({ id: 5, full_name: 'Eva Nova' });
+      expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('shop/customers/5/anonymize', {});
+      expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'shop-customers.anonymize_done_message', 'success');
+      expect(refresh).toHaveBeenCalledTimes(1);
+
+      await component.anonymizeCustomer({});
+      expect(ctx.confirm.open).toHaveBeenCalledTimes(2);
+    });
+
+    /**
+     * @description The table row action and the trash "deleted permanently" event are wired in the template.
+     * @input  detectChanges(); anonymizeRequested emitted by the table; trash view itemDeletedPermanently
+     * @output anonymizeCustomer() called with the row; handleItemDeleted() called
+     */
+    it('wires the table and trash events', fakeAsync(() => {
+      const anonymize = spyOn(component, 'anonymizeCustomer').and.resolveTo();
+      fixture.detectChanges();
+      const table = fixture.debugElement.query(By.css('app-table-builder')).componentInstance;
+      table.anonymizeRequested.emit({ id: 3 });
+      expect(anonymize).toHaveBeenCalledWith({ id: 3 });
+      const deleted = spyOn(component, 'handleItemDeleted');
+      component.showTrashTable = true;
+      fixture.componentRef.changeDetectorRef.markForCheck();
+      fixture.detectChanges();
+      fixture.debugElement.query(By.css('app-trash-table-builder')).componentInstance.itemDeletedPermanently.emit();
+      expect(deleted).toHaveBeenCalled();
+      discardPeriodicTasks();
+    }));
+  });
 
   describe('orders of a customer', () => {
     /**

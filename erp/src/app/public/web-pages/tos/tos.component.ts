@@ -29,7 +29,8 @@ export class TosComponent extends BasePublicComponent {
   protected readonly translationKey = 'tos';
   data: any = null;
 
-  private legalDocsService = inject(LegalDocsService);
+  /** Protected: the template builds the translated footer with it (effectiveFooter()). */
+  protected legalDocsService = inject(LegalDocsService);
 
   protected override onInit(): void {
     this.currentLanguage$

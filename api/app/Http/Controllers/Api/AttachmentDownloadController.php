@@ -25,51 +25,25 @@
  * takže "folder" segment sám o sobě může obsahovat lomítko a dva oddělené route
  * parametry by kolidovaly.
  *
- * Two independent sources are checked, in order:
- * 1. The polymorphic `web_attachments` table (WebAttachment model) - looked up
- *    directly by `path`, disk podle `$attachment->disk` (private i public).
- * 2. The legacy single-file-per-record models that still use a plain "*_path"
- *    column - WebJobApplication (cv_files) and WebSupportTicket (tickets), pro
- *    záznamy vzniklé PŘED přechodem na `web_attachments`. Tahle větev zůstává
- *    natrvalo na `public` disku (viz FOLDER_MAP `disk` klíč) - je to čistě
- *    zpětná kompatibilita se starými soubory, nová data touto větví neprochází.
+ * Files are resolved from the polymorphic `web_attachments` table (WebAttachment model),
+ * looked up by `path`, disk per row (`$attachment->disk`, private by default).
+ *
+ * @refactor-note (2026-10-23) Open finding #31 (GDPR): the second, legacy source - CVs
+ * (`web_job_applications.cv_path`) and ticket attachments (`web_support_tickets.attachment_path`)
+ * on the PUBLIC disk - was removed. Those files were reachable without a signed URL through the
+ * public storage link, and no resource generates links to them any more. The one-time command
+ * `php artisan attachments:migrate-legacy` moves them to the private disk as web_attachments.
  */
 
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Web\WebAttachment;
-use App\Models\Web\WebJobApplication;
-use App\Models\Web\WebSupportTicket;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttachmentDownloadController extends Controller
 {
-    /**
-     * @description Maps a legacy storage sub-folder to the Eloquent model / path
-     *              column / original-name column / disk that owns files stored
-     *              there. ONLY for legacy pre-migration records that store a single
-     *              file per row via a plain "*_path" column - multi-attachment
-     *              records (via `web_attachments`) are resolved generically before
-     *              this map is even consulted, regardless of disk.
-     * @var array<string, array{model: class-string, path_column: string, name_column: string, disk: string}>
-     */
-private const FOLDER_MAP = [
-    'cv_files' => [
-        'model'       => WebJobApplication::class,
-        'path_column' => 'cv_path',
-        'name_column' => 'cv_original_name',
-        'disk'        => 'public',
-    ],
-    'tickets' => [
-        'model'       => WebSupportTicket::class,
-        'path_column' => 'attachment_path',
-        'name_column' => 'attachment_original_name',
-        'disk'        => 'public',
-    ],
-];
-
     /**
      * @description Streams the requested file back to the caller under its
      *              original file name, forcing a browser download.
@@ -114,58 +88,18 @@ private const FOLDER_MAP = [
             abort(404);
         }
 
-        // 1) Polymorphic multi-attachment table - resolves disk (private/public) per row.
         $attachment = WebAttachment::where('path', $path)->first();
 
-        if ($attachment !== null) {
-            $disk = $attachment->disk ?: 'private';
-
-            if (!Storage::disk($disk)->exists($path)) {
-                abort(404);
-            }
-
-            $displayName = $attachment->original_filename ?: basename($path);
-
-            return [$disk, $path, $displayName];
-        }
-
-        // 2) Legacy single-file-per-record models - always on 'public' disk (see FOLDER_MAP).
-        $folder = dirname($path); // e.g. "cv_files" or "web/cv_files" pre/post prefixing
-        $mapping = self::FOLDER_MAP[$folder] ?? self::FOLDER_MAP[basename($folder)] ?? null;
-
-        if ($mapping === null || !Storage::disk($mapping['disk'])->exists($path)) {
+        if ($attachment === null) {
             abort(404);
         }
 
-        $displayName = $this->resolveOriginalName($mapping, $path) ?? basename($path);
+        $disk = $attachment->disk ?: 'private';
 
-        return [$mapping['disk'], $path, $displayName];
-    }
-
-    /**
-     * @description Looks up the human-readable original file name for a given stored
-     *              path using a resolved FOLDER_MAP entry. Includes soft-deleted rows
-     *              (withTrashed) since rejected/archived applications and tickets
-     *              must remain downloadable by staff who already have access.
-     * @param array{model: class-string, path_column: string, name_column: string, disk: string} $mapping
-     * @param string $relativePath
-     * @return string|null
-     */
-    private function resolveOriginalName(array $mapping, string $relativePath): ?string
-    {
-        /** @var class-string<\Illuminate\Database\Eloquent\Model> $modelClass */
-        $modelClass = $mapping['model'];
-
-        $record = $modelClass::withTrashed()
-            ->where($mapping['path_column'], $relativePath)
-            ->first();
-
-        if ($record === null) {
-            return null;
+        if (!Storage::disk($disk)->exists($path)) {
+            abort(404);
         }
 
-        $originalName = $record->{$mapping['name_column']} ?? null;
-
-        return ($originalName !== null && $originalName !== '') ? $originalName : null;
+        return [$disk, $path, $attachment->original_filename ?: basename($path)];
     }
 }

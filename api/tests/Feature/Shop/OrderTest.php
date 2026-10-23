@@ -127,7 +127,8 @@ class OrderTest extends TestCase
         ], ['coupon_id' => $coupon->id, 'status' => 'confirmed', 'payment_status' => 'paid']))->assertCreated()
             ->assertJsonPath('total_amount', 250)->assertJsonPath('discount_amount', 25)->assertJsonPath('shipping_amount', 5)
             ->assertJsonPath('final_amount', 230)->assertJsonCount(2, 'items')->assertJsonPath('items.1.variant_name', 'V')
-            ->assertJsonPath('paid_at', fn ($v) => $v !== null)->assertJsonPath('status_label', 'Potvrzena');
+            ->assertJsonPath('paid_at', fn ($v) => $v !== null)->assertJsonPath('status_label', 'Confirmed')
+            ->assertJsonPath('items.0.vat_rate', 21)->assertJsonPath('contact.full_name', 'Jan Novak')->assertJsonPath('contact.email', 'jan@example.com');
 
         $this->assertEqualsWithDelta(225 * 21 / 121, $response->json('tax_amount'), 0.01);
         $this->assertSame([8, 4, 4], [$p->fresh()->stock_quantity, $v->fresh()->stock_quantity, $q->fresh()->stock_quantity]);
@@ -199,7 +200,9 @@ class OrderTest extends TestCase
      *   detail; 404s.
      * @input Order O (coupon 10 %, items i1 P×1, i2 P×1), order X (item x1). PUT O {first_name Iva,
      *        items [{id i1, 3 × 100}, {id x1, 9 × 1}, {new P×1 @50}], delete_items [i2, x1]}; GET; /999.
-     * @output 200: customer Iva; items i1 (300) + new (50); total 350, discount 35, final 320; x1 unchanged.
+     * @output 200: order contact Iva (customer master data unchanged: Eva, finding #23); items i1 (300)
+     *   + new (50); total 350, discount 35, final 320; x1 unchanged; stock of the pending order moved by
+     *   the item edits (finding #24): 10 − 2 (1 → 3) + 1 (deleted) − 1 (new) = 8.
      */
     public function test_update_items_of_own_order_only(): void
     {
@@ -222,11 +225,13 @@ class OrderTest extends TestCase
                 ['product_id' => $p->id, 'quantity' => 1, 'unit_price' => 50],
             ],
             'delete_items' => [$i2->id, $x1->id],
-        ])->assertOk()->assertJsonPath('customer.first_name', 'Iva')->assertJsonCount(2, 'items')
+        ])->assertOk()->assertJsonPath('contact.first_name', 'Iva')->assertJsonPath('customer.first_name', 'Eva')->assertJsonCount(2, 'items')
             ->assertJsonPath('total_amount', 350)->assertJsonPath('discount_amount', 35)->assertJsonPath('shipping_amount', 5)->assertJsonPath('final_amount', 320);
 
         $this->assertSame([2, '242.00'], [$x1->fresh()->quantity, $x1->fresh()->total_price]);
         $this->assertNull(ShopOrderItem::find($i2->id));
+        $this->assertSame(8, $p->fresh()->stock_quantity);
+        $this->assertSame('Iva', $order->fresh()->customer_first_name);
         $this->assertShopLog('update', 'Updated order: ' . $order->order_number);
         $this->putJson('/api/shop/orders/999', ['notes' => 'x'])->assertStatus(404);
     }
@@ -325,5 +330,93 @@ class OrderTest extends TestCase
         $this->assertSame(10, $p->fresh()->stock_quantity);
         $this->failOn('shop_orders', 'UPDATE');
         $this->postJson("/api/shop/orders/{$e->id}/restore")->assertStatus(500)->assertJson(['message' => 'Order restoration failed.']);
+    }
+
+    /**
+     * @description EU VAT (finding #21): the rate of every line is stored from the catalogue
+     *   (variant price, else product price; the form value only without catalogue price) and the
+     *   order tax uses the stored rates - also after an edit.
+     * @input Product R price 110 EUR at 10 % (form sends 21 %), variant Z of R with own price at 0 %,
+     *        product N without price (form 12 %); PUT adding another R line.
+     * @output Items vat 10 / 0 / 12 stored; tax = 2×110×10/110 + 0 + 50×12/112; after the edit the
+     *   new line has 10 % and the tax is recomputed with the stored rates (not 21 %).
+     */
+    public function test_vat_rate_is_stored_per_item(): void
+    {
+        $this->signIn($this->userWith(['shop-orders-create', 'shop-orders-update']));
+        $reduced = $this->product(['name' => 'R'], ['vat_rate' => 10, 'price_eur_with_vat' => 110, 'price_eur_without_vat' => 100]);
+        $zero = $this->variant($reduced, ['variant_name' => 'Z'], ['vat_rate' => 0, 'price_eur_with_vat' => 30, 'price_eur_without_vat' => 30]);
+        $noPrice = $this->product(['name' => 'N'], null);
+
+        $response = $this->postJson('/api/shop/orders', $this->payload([
+            ['product_id' => $reduced->id, 'quantity' => 2, 'unit_price' => 110, 'vat_rate' => 21],
+            ['product_id' => $reduced->id, 'product_variant_id' => $zero->id, 'quantity' => 1, 'unit_price' => 30, 'vat_rate' => 21],
+            ['product_id' => $noPrice->id, 'quantity' => 1, 'unit_price' => 50, 'vat_rate' => 12],
+        ]))->assertCreated();
+
+        $this->assertSame([10.0, 0.0, 12.0], array_map('floatval', array_column($response->json('items'), 'vat_rate')));
+        $this->assertEquals([10, 0, 12], ShopOrderItem::orderBy('id')->pluck('vat_rate')->map(fn ($v) => (float) $v)->all());
+        $this->assertEqualsWithDelta(220 * 10 / 110 + 50 * 12 / 112, $response->json('tax_amount'), 0.01);
+
+        $id = $response->json('id');
+        $items = collect($response->json('items'))->map(fn ($i) => ['id' => $i['id'], 'product_id' => $i['product_id'], 'quantity' => $i['quantity'], 'unit_price' => $i['unit_price']])->all();
+        $items[] = ['product_id' => $reduced->id, 'quantity' => 1, 'unit_price' => 110];
+        $edited = $this->putJson("/api/shop/orders/{$id}", ['items' => $items])->assertOk();
+
+        $this->assertEquals(10, $edited->json('items.3.vat_rate'));
+        $this->assertEqualsWithDelta(330 * 10 / 110 + 50 * 12 / 112, $edited->json('tax_amount'), 0.01);
+    }
+
+    /**
+     * @description Item edits move stock only while the order holds it (finding #24): a cancelled
+     *   order's items can be changed without touching the stock; reopening then takes the edited
+     *   quantities; a variant line moves the variant (and the product sum).
+     * @input Cancelled order with P×1 (P 10) and V×1 (V 5); PUT P→4, V→2; PUT status pending; PUT V→1.
+     * @output Stock unchanged after the first edit; P 6 / V 3 after reopen; V 4 after lowering V to 1.
+     */
+    public function test_item_edits_move_stock_only_for_active_orders(): void
+    {
+        $this->signIn($this->userWith(['shop-orders-update']));
+        $p = $this->product(['name' => 'P']);
+        $q = $this->product(['name' => 'Q']);
+        $v = $this->variant($q, ['variant_name' => 'V', 'stock_quantity' => 5]);
+        $order = $this->order(null, ['status' => 'canceled'], [[$p, 1], [$q, 1, $v]]);
+        [$ip, $iv] = $order->items()->orderBy('id')->get()->all();
+        $line = fn ($item, $product, $qty, $variant = null) => array_filter(['id' => $item->id, 'product_id' => $product->id, 'product_variant_id' => $variant?->id, 'quantity' => $qty, 'unit_price' => 10]);
+
+        $this->putJson("/api/shop/orders/{$order->id}", ['items' => [$line($ip, $p, 4), $line($iv, $q, 2, $v)]])->assertOk();
+        $this->assertSame([10, 5], [$p->fresh()->stock_quantity, $v->fresh()->stock_quantity]);
+
+        $this->putJson("/api/shop/orders/{$order->id}", ['status' => 'pending'])->assertOk();
+        $this->assertSame([6, 3, 3], [$p->fresh()->stock_quantity, $v->fresh()->stock_quantity, $q->fresh()->stock_quantity]);
+
+        $this->putJson("/api/shop/orders/{$order->id}", ['items' => [$line($iv, $q, 1, $v)]])->assertOk();
+        $this->assertSame([4, 4], [$v->fresh()->stock_quantity, $q->fresh()->stock_quantity]);
+    }
+
+    /**
+     * @description The order keeps the buyer contact given for it (snapshot): an existing customer
+     *   is only linked (master data untouched, also a trashed one), the search finds the snapshot
+     *   e-mail, and an order without snapshot shows the customer's data.
+     * @input Trashed customer jan@example.com 'Old'; admin order for jan@example.com as Jan Novak;
+     *        order without snapshot of customer Eva; search 'jan@example'.
+     * @output Same customer id, still trashed, first_name Old; contact Jan Novak; Eva's order contact
+     *   from the customer; search finds the new order.
+     */
+    public function test_order_keeps_its_contact(): void
+    {
+        $this->signIn($this->userWith(['shop-orders-create', 'shop-orders-view']));
+        $p = $this->product(['name' => 'P']);
+        $old = $this->customer(['email' => 'jan@example.com', 'first_name' => 'Old']);
+        $old->delete();
+
+        $response = $this->postJson('/api/shop/orders', $this->payload([['product_id' => $p->id, 'quantity' => 1, 'unit_price' => 100]]))
+            ->assertCreated()->assertJsonPath('customer_id', $old->id)->assertJsonPath('contact.full_name', 'Jan Novak');
+        $this->assertTrue($old->fresh()->trashed());
+        $this->assertSame('Old', $old->fresh()->first_name);
+
+        $legacy = $this->order($this->customer());
+        $this->getJson("/api/shop/orders/{$legacy->id}")->assertJsonPath('contact.full_name', 'Eva Nova')->assertJsonPath('contact.email', 'eva@example.com');
+        $this->assertSame([$response->json('id')], array_column($this->getJson('/api/shop/orders?search=jan@example')->json('data'), 'id'));
     }
 }

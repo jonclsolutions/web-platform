@@ -21,6 +21,11 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @bugfix-note (2026-10-23) Open finding #22: a permanent delete removed all orders of the
+ *   customer (FK CASCADE) although orders / invoices must be kept for the accounting retention
+ *   period (CZ 10 years). A customer with orders is now refused (409, use the anonymisation),
+ *   emptying the trash keeps such customers (answer with deleted / skipped counts) and the new
+ *   `anonymize()` endpoint is the GDPR erasure that keeps the orders.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -140,6 +145,13 @@ class ShopCustomerController extends Controller
         $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
         $customer = ShopCustomer::withTrashed()->findOrFail($id);
 
+        if ($forceDelete && $customer->hasRetainedOrders()) {
+            return response()->json([
+                'message' => 'The customer has orders, which must be kept (accounting documents). Anonymise the customer instead of deleting it permanently.',
+                'code'    => 'customer_has_orders',
+            ], 409);
+        }
+
         try {
             $forceDelete ? $customer->forceDelete() : $customer->delete();
 
@@ -172,19 +184,61 @@ class ShopCustomerController extends Controller
     }
 
     /**
-     * Permanently purges all soft-deleted customers.
+     * @description GDPR erasure of a customer that keeps his orders (finding #22): personal
+     *   data of the master record are replaced, the orders keep their own contact snapshot.
+     * @param Request $request Current request.
+     * @param int|string $id Customer id (also a trashed one).
+     * @return JsonResponse 200 with the anonymised customer, 404 unknown, 409 already anonymised.
+     */
+    public function anonymize(Request $request, $id): JsonResponse
+    {
+        $customer = ShopCustomer::withTrashed()->findOrFail($id);
+
+        if ($customer->isAnonymized()) {
+            return response()->json(['message' => 'The customer is already anonymised.'], 409);
+        }
+
+        try {
+            $customer->anonymize();
+
+            // No personal data in the audit log - only the id.
+            $this->logAction($request, ShopLog::class, 'anonymize', 'ShopCustomer', "Anonymised customer ID: $id (GDPR erasure, orders kept).", (int) $id, 'ShopCustomer', ['first_name', 'last_name', 'email', 'phone']);
+            return response()->json(new ShopCustomerResource($customer->fresh()));
+        } catch (\Exception $e) {
+            Log::error("ShopCustomer anonymize error: " . $e->getMessage());
+            $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Anonymisation failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
+            return response()->json(['message' => 'Anonymisation failed.'], 500);
+        }
+    }
+
+    /**
+     * Permanently purges all soft-deleted customers (customers with orders are kept).
      */
     public function forceDeleteAllTrashed(Request $request): JsonResponse
     {
         try {
             $trashedCustomers = ShopCustomer::onlyTrashed()->get();
-            $count = $trashedCustomers->count();
+            $count = 0;
+            $skipped = 0;
 
             foreach ($trashedCustomers as $customer) {
+                if ($customer->hasRetainedOrders()) {
+                    $skipped++;  // orders must be kept - see the header (finding #22)
+                    continue;
+                }
                 $customer->forceDelete();
+                $count++;
             }
 
-            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopCustomer', "Customer bin cleanup. Count: $count");
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopCustomer', "Customer bin cleanup. Count: $count, kept (with orders): $skipped");
+
+            if ($skipped > 0) {
+                return response()->json([
+                    'message'       => "{$count} customers deleted, {$skipped} kept because they have orders (anonymise them instead).",
+                    'deleted_count' => $count,
+                    'skipped_count' => $skipped,
+                ]);
+            }
             return response()->json(null, 204);
         } catch (\Exception $e) {
             Log::error("ShopCustomer force delete all error: " . $e->getMessage());

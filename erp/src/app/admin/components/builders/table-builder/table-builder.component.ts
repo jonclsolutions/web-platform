@@ -135,6 +135,8 @@ export class TableBuilderComponent implements OnDestroy, OnChanges {
   @Output() openImagesModal = new EventEmitter<any>();
   @Output() openVariantsModal = new EventEmitter<any>();
   @Output() customerOrdersOpened = new EventEmitter<any>();
+  /** Row action 'anonymize' (GDPR erasure that keeps the orders, shop customers - finding #22). */
+  @Output() anonymizeRequested = new EventEmitter<any>();
 
   @Output() refreshRequested = new EventEmitter<void>();
 
@@ -355,6 +357,7 @@ get importEnumHints(): ImportEnumHint[] {
           case 'custom_prod_var': this.openVariantsModal.emit(item); break;
           case 'custom_prod_img': this.openImagesModal.emit(item); break;
           case 'customer_orders': this.customerOrdersOpened.emit(item); break;
+          case 'anonymize': this.anonymizeRequested.emit(item); break;
           default: console.warn('Unknown action type:', buttonAction);
         }
         this.cd.markForCheck();

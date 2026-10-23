@@ -196,13 +196,20 @@ class ShopProductController extends Controller
                 ->except(['prices', 'images', 'variants', 'delete_images', 'delete_variants', 'category_ids'])
                 ->toArray();
 
-            if (empty($updateData['category_id'])) {
+            // @bugfix-note (2026-10-23) Open finding #30: an update WITHOUT `category_id` in the body
+            // (e.g. only the price) saved the product inactive although its categories were kept.
+            // Only an explicitly emptied primary category deactivates it; a missing field keeps
+            // the current primary category.
+            $sendsCategory = array_key_exists('category_id', $updateData);
+            if ($sendsCategory && empty($updateData['category_id'])) {
                 $updateData['is_active'] = false;
             }
 
             $product->update($updateData);
 
-            $primaryId   = isset($updateData['category_id']) ? (int) $updateData['category_id'] : null;
+            $primaryId = $sendsCategory
+                ? (!empty($updateData['category_id']) ? (int) $updateData['category_id'] : null)
+                : ($product->category_id ? (int) $product->category_id : null);
             $categoryIds = $this->resolveCategoryIds($request, $primaryId);
             $product->syncCategories($categoryIds, $primaryId);
 

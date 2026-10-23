@@ -480,7 +480,7 @@ describe('TableBuilderComponent', () => {
   describe('remaining actions and exports', () => {
     /**
      * @description Every other row action emits its own event; unknown actions only warn.
-     * @input handleAction with generate_form, resend_activation, custom_prod_var, custom_prod_img, customer_orders, unknown.
+     * @input handleAction with generate_form, resend_activation, custom_prod_var, custom_prod_img, customer_orders, anonymize, unknown.
      * @output Each event emitted once with the row; console.warn for 'unknown'.
      */
     it('emits the remaining row action events', fakeAsync(() => {
@@ -490,11 +490,12 @@ describe('TableBuilderComponent', () => {
       component.openVariantsModal.subscribe(() => got.push('custom_prod_var'));
       component.openImagesModal.subscribe(() => got.push('custom_prod_img'));
       component.customerOrdersOpened.subscribe(() => got.push('customer_orders'));
+      component.anonymizeRequested.subscribe(() => got.push('anonymize'));
       spyOn(console, 'warn');
-      ['generate_form', 'resend_activation', 'custom_prod_var', 'custom_prod_img', 'customer_orders', 'unknown']
+      ['generate_form', 'resend_activation', 'custom_prod_var', 'custom_prod_img', 'customer_orders', 'anonymize', 'unknown']
         .forEach((action, i) => component.handleAction({ id: 10 + i }, action));
       tick(600);
-      expect(got).toEqual(['generate_form', 'resend_activation', 'custom_prod_var', 'custom_prod_img', 'customer_orders']);
+      expect(got).toEqual(['generate_form', 'resend_activation', 'custom_prod_var', 'custom_prod_img', 'customer_orders', 'anonymize']);
       expect(console.warn).toHaveBeenCalledWith('Unknown action type:', 'unknown');
     }));
 

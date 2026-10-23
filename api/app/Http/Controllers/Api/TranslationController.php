@@ -27,6 +27,14 @@
  *   treated them as no module (empty list), saveLanguages() as 'web'. All methods now use the
  *   same default module 'web' (moduleOf()).
  * - saveLanguages() crashed (500) on an entry without `code`; entries are validated now.
+ * @bugfix-note (2026-10-23) Open finding #32: the write routes accepted
+ *   `web-edit-website-update|shop-edit-eshop-update` for EVERY module - a web editor could change
+ *   the shop translations / languages and the other way round. Each write now checks the
+ *   permission of the module in the URL (MODULE_PERMISSIONS, sysadmin always); an unknown module
+ *   can be written by sysadmin only.
+ * @bugfix-note (2026-10-23) Open finding #34: the icon rules listed `svg` in `mimes`, but `image`
+ *   refuses SVG (Laravel 11+), so an SVG flag could never be uploaded. Decided raster only (an SVG
+ *   on the public disk can carry scripts) - `svg` removed, the admin file pickers no longer offer it.
  */
 
 namespace App\Http\Controllers\Api;
@@ -64,6 +72,15 @@ class TranslationController extends Controller
     /** @var string Route / input pattern of a language code ('cz', 'en', 'en-gb', …). */
     public const LANG_PATTERN = '[a-zA-Z]{2}(?:[-_][a-zA-Z0-9]{2,3})?';
 
+    /** @var array<string, string> Permission needed to change the translations / languages of a module. */
+    private const MODULE_PERMISSIONS = [
+        'web'  => 'web-edit-website-update',
+        'shop' => 'shop-edit-eshop-update',
+    ];
+
+    /** @var string Role that passes every permission check (see CheckPermission). */
+    private const SYSADMIN_ROLE_NAME = 'sysadmin';
+
     /** @var string Module of language entries stored without one (the original web-only format). */
     private const DEFAULT_MODULE = 'web';
 
@@ -79,10 +96,36 @@ class TranslationController extends Controller
     ];
 
     /**
+     * @description Refuses a write to a module the user may not edit (finding #32).
+     * @param Request $request Current request (authenticated user).
+     * @param string $module Module of the URL.
+     * @return JsonResponse|null 403 answer, or null when allowed.
+     */
+    private function denyModuleWrite(Request $request, string $module): ?JsonResponse
+    {
+        $user = $request->user();
+        if ($user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists()) {
+            return null;
+        }
+
+        $required = self::MODULE_PERMISSIONS[$module] ?? null;
+        if ($required !== null && in_array($required, $user->permissions ?? [], true)) {
+            return null;
+        }
+
+        $this->logAction($request, WebLog::class, 'update_denied', "Translation:{$module}", "Denied change of the {$module} translations (missing {$required}).", null, 'Translation');
+        return response()->json(['message' => 'You do not have permission to edit the translations of this module.'], 403);
+    }
+
+    /**
      * Saves translation data to a JSON file for a specific module and language.
      */
     public function save(Request $request, string $module): JsonResponse
     {
+        if ($denied = $this->denyModuleWrite($request, $module)) {
+            return $denied;
+        }
+
         $request->validate([
             'lang' => ['required', 'string', 'max:6', 'regex:/^' . self::LANG_PATTERN . '$/'],
             'data' => 'required|array',
@@ -153,9 +196,14 @@ class TranslationController extends Controller
      */
     public function saveLanguages(Request $request, string $module): JsonResponse
     {
+        if ($denied = $this->denyModuleWrite($request, $module)) {
+            return $denied;
+        }
+
         $request->validate([
             'languages'   => 'required|json',
-            'icon'        => 'nullable|file|image|mimes:png,jpg,jpeg,webp,svg|max:512',
+            // Raster only - SVG can carry scripts and `image` refuses it anyway (finding #34).
+            'icon'        => 'nullable|file|image|mimes:png,jpg,jpeg,webp|max:512',
             'target_code' => 'required_with:icon|string|max:6',
         ]);
 
@@ -213,8 +261,13 @@ class TranslationController extends Controller
      */
     public function storeLanguageIcon(Request $request, string $module, string $code): JsonResponse
     {
+        if ($denied = $this->denyModuleWrite($request, $module)) {
+            return $denied;
+        }
+
         $request->validate([
-            'icon' => 'required|file|image|mimes:png,jpg,jpeg,webp,svg|max:512',
+            // Raster only - SVG can carry scripts and `image` refuses it anyway (finding #34).
+            'icon' => 'required|file|image|mimes:png,jpg,jpeg,webp|max:512',
         ]);
 
         $meta = $this->readLanguagesMeta();
@@ -248,6 +301,10 @@ class TranslationController extends Controller
      */
     public function destroyLanguage(Request $request, string $module, string $code): JsonResponse
     {
+        if ($denied = $this->denyModuleWrite($request, $module)) {
+            return $denied;
+        }
+
         $allMeta = $this->readLanguagesMeta();
         $idx = $this->findLangIndex($allMeta, $code, $module);
 

@@ -15,6 +15,7 @@
 namespace Tests\Feature\Shop;
 
 use App\Models\Shop\ShopCustomer;
+use App\Models\Shop\ShopOrder;
 use Tests\Support\ShopFixtures;
 use Tests\TestCase;
 
@@ -127,5 +128,72 @@ class CustomerTest extends TestCase
         $this->postJson("/api/shop/customers/{$e->id}/restore")->assertStatus(500)->assertJson(['message' => 'Restoration failed.']);
         $this->failOn('shop_customers', 'DELETE');
         $this->deleteJson('/api/shop/customers/force-delete-all')->assertStatus(500)->assertJson(['message' => 'Cleanup failed.']);
+    }
+
+    /**
+     * @description Orders are accounting documents (finding #22): a customer with orders (also
+     *   trashed ones) cannot be deleted permanently, emptying the trash keeps such customers, the
+     *   foreign key refuses a direct delete; a customer without orders is deleted as before.
+     * @input Customer A with an order, B with a trashed order, C without orders - all trashed;
+     *        DELETE A ?force_delete=1; DELETE force-delete-all; direct forceDelete() of A.
+     * @output 409 customer_has_orders (A and its order kept); 200 {deleted 1, skipped 2}; C gone;
+     *   database refuses the direct delete (RESTRICT); orders still there.
+     */
+    public function test_customer_with_orders_is_never_deleted_permanently(): void
+    {
+        $this->signIn($this->userWith(self::ALL));
+        [$a, $b, $c] = array_map(fn ($i) => $this->customer(['email' => "k{$i}@x.cz"]), [1, 2, 3]);
+        $orderA = $this->order($a);
+        $this->order($b)->delete();
+        foreach ([$a, $b, $c] as $customer) { $customer->delete(); }
+
+        $this->deleteJson("/api/shop/customers/{$a->id}?force_delete=1")->assertStatus(409)->assertJsonPath('code', 'customer_has_orders');
+        $this->assertNotNull(ShopCustomer::withTrashed()->find($a->id));
+
+        $this->deleteJson('/api/shop/customers/force-delete-all')->assertOk()
+            ->assertJsonPath('deleted_count', 1)->assertJsonPath('skipped_count', 2);
+        $this->assertNull(ShopCustomer::withTrashed()->find($c->id));
+        $this->assertSame(2, ShopCustomer::onlyTrashed()->count());
+        $this->assertShopLog('force_delete_all', 'Count: 1, kept (with orders): 2');
+
+        $this->assertThrows(fn () => $a->forceDelete(), \Illuminate\Database\QueryException::class);
+        $this->assertSame(2, ShopOrder::withTrashed()->count());
+        $this->assertNotNull($orderA->fresh());
+    }
+
+    /**
+     * @description GDPR erasure keeps the orders (finding #22): every personal field of the
+     *   customer is replaced / cleared, the account deactivated; the order keeps its contact
+     *   snapshot; the audit log has no personal data; twice → 409; unknown → 404; permission.
+     * @input Customer Eva (phone, address, notes) with an order (snapshot Eva); POST anonymize twice;
+     *        POST /999/anonymize; user without shop-customers-delete.
+     * @output 200 email customer-{id}@anonymized.invalid, Anonymized customer, nulls, inactive; order
+     *   contact still Eva; log 'anonymize' without e-mail; 409; 404; 403.
+     */
+    public function test_anonymize(): void
+    {
+        $this->signIn($this->userWith(self::ALL));
+        $customer = $this->customer(['address' => 'Main 1', 'city' => 'Praha', 'notes' => 'VIP', 'company' => 'Acme']);
+        $order = $this->order($customer, ['customer_first_name' => 'Eva', 'customer_last_name' => 'Nova', 'customer_email' => 'eva@example.com']);
+
+        $this->postJson("/api/shop/customers/{$customer->id}/anonymize")->assertOk()
+            ->assertJsonPath('email', "customer-{$customer->id}@anonymized.invalid")->assertJsonPath('full_name', 'Anonymized customer');
+
+        $customer->refresh();
+        $this->assertSame([null, null, null, null, null, false], [$customer->phone, $customer->company, $customer->address, $customer->city, $customer->notes, $customer->is_active]);
+        $this->assertTrue($customer->isAnonymized());
+        $this->assertSame('Eva Nova', $order->fresh()->contact()['full_name']);
+        $this->assertShopLog('anonymize', "Anonymised customer ID: {$customer->id}");
+        $this->assertStringNotContainsString('eva@example.com', json_encode(\App\Models\Shop\ShopLog::where('event_type', 'anonymize')->sole()->toArray()));
+
+        $this->postJson("/api/shop/customers/{$customer->id}/anonymize")->assertStatus(409);
+        $this->postJson('/api/shop/customers/999/anonymize')->assertStatus(404);
+
+        $other = $this->customer(['email' => 'x@x.cz']);
+        $this->failOn('shop_customers', 'UPDATE');
+        $this->postJson("/api/shop/customers/{$other->id}/anonymize")->assertStatus(500)->assertJson(['message' => 'Anonymisation failed.']);
+
+        $this->signIn($this->userWith(['shop-customers-view']));
+        $this->postJson("/api/shop/customers/{$other->id}/anonymize")->assertForbidden();
     }
 }

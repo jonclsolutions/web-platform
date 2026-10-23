@@ -135,7 +135,7 @@ class LegalDocumentTest extends TestCase
         $this->getJson('/api/public/legal/gdpr?lang=en')->assertOk()->assertJsonPath('sections.0.heading', 'English')->assertJsonCount(1, 'sections');
         $this->getJson('/api/public/legal/gdpr?lang=de')->assertOk()
             ->assertJsonPath('header_main', 'GDPR policy')->assertJsonPath('last_update_date', '15.06.2026')
-            ->assertJsonPath('footer_effective', 'Tyto zásady jsou účinné od 15.06.2026.')->assertJsonPath('sections.*.heading', ['Old', 'New']);
+            ->assertJsonPath('footer_effective', 'This policy is effective from 15.06.2026.')->assertJsonPath('sections.*.heading', ['Old', 'New']);
         $this->getJson('/api/public/legal/gdpr')->assertJsonCount(2, 'sections');
         $this->getJson('/api/public/legal/tos')->assertOk()->assertJsonPath('sections', [])
             ->assertJsonPath('footer_effective', null)->assertJsonPath('last_update_date', now()->format('d.m.Y'));

@@ -37,6 +37,7 @@
       </div>
     }
 
-    <p class="last-update" style="margin-top: 40px;">{{ data.footer_effective }}</p>
+    <!-- Translated footer (finding #35), API text only as the fallback -->
+    <p class="last-update" style="margin-top: 40px;">{{ legalDocsService.effectiveFooter(data, t?.effective_from_text) }}</p>
   </div>
 }

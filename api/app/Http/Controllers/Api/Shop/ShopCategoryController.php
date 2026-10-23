@@ -75,6 +75,26 @@ class ShopCategoryController extends Controller
     }
 
     /**
+     * @description Public category list of the storefront (open finding #27): only active
+     *   categories whose parent (if any) is active too, always the whole list (it is the
+     *   navigation of the catalogue), ordered like the admin tree.
+     * @param Request $request Current request (sorting parameters are ignored).
+     * @return JsonResponse Array of categories.
+     * @note Before, the public route used the admin `index()`: inactive categories were listed
+     *   and only 15 per page without `no_pagination`.
+     */
+    public function publicIndex(Request $request): JsonResponse
+    {
+        $categories = ShopCategory::with('parent')->withCount('products')
+            ->where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('parent_id')->orWhereHas('parent', fn ($p) => $p->where('is_active', true)))
+            ->orderBy('sort_order')->orderBy('name')
+            ->get();
+
+        return response()->json(ShopCategoryResource::collection($categories));
+    }
+
+    /**
      * Persists a new category entry.
      */
     public function store(StoreShopCategoryRequest $request): JsonResponse

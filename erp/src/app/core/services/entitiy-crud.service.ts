@@ -148,8 +148,12 @@ getOne(id: number | undefined): Observable<T> {
     );
   }
 
-  /** DELETE /{endpoint}/force-delete-all */
-  hardDeleteAllTrashed(): Observable<void> {
+  /**
+   * DELETE /{endpoint}/force-delete-all
+   * @returns Nothing (204) or `{deleted_count, skipped_count, message}` when the API kept some
+   *   records (e.g. shop customers with orders, finding #22).
+   */
+  hardDeleteAllTrashed(): Observable<void | { deleted_count: number; skipped_count: number; message?: string }> {
     return this.dataHandler.delete(`${this.endpoint}/force-delete-all`).pipe(
       takeUntil(this.destroy$),
       finalize(() => this.onSettled?.())

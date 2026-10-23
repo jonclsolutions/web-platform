@@ -31,9 +31,11 @@ class CategoryTest extends TestCase
 
     /**
      * @description List: permission, sort order, search, filters, product count, parent name,
-     *   pagination, export; the same list is public for the storefront.
-     * @input Root 'Shoes' (sort 2, 1 product), child 'Boots' of Shoes (sort 1), 'Hats' inactive (sort 3).
-     * @output Order Boots, Shoes, Hats; filters; products_count 1; parent_name 'Shoes'; public 200.
+     *   pagination, export; the public storefront list has only active categories (finding #27).
+     * @input Root 'Shoes' (sort 2, 1 product), child 'Boots' of Shoes (sort 1), 'Hats' inactive (sort 3);
+     *        then active 'Caps' under Hats and 16 more active categories.
+     * @output Order Boots, Shoes, Hats; filters; products_count 1; parent_name 'Shoes'; public: 18 active
+     *   (Boots, Shoes first), without Hats and Caps, not paginated.
      */
     public function test_index(): void
     {
@@ -57,7 +59,15 @@ class CategoryTest extends TestCase
         $this->getJson('/api/shop/categories?no_pagination=1')->assertOk()->assertJsonCount(3);
 
         $this->app['auth']->forgetGuards();
-        $this->getJson('/api/shop/public/categories')->assertOk()->assertJsonPath('total', 3);
+        // Public list (finding #27): active only, also children of an active parent, never a child
+        // of an inactive parent; always the whole list.
+        $hidden = $this->category(['name' => 'Caps', 'parent_id' => $hats->id, 'is_active' => true]);
+        foreach (range(1, 16) as $i) { $this->category(['name' => "Extra {$i}", 'sort_order' => 10 + $i]); }
+        $public = array_column($this->getJson('/api/shop/public/categories')->assertOk()->json(), 'id');
+        $this->assertSame([$boots->id, $shoes->id], array_slice($public, 0, 2));
+        $this->assertCount(18, $public);
+        $this->assertNotContains($hats->id, $public);
+        $this->assertNotContains($hidden->id, $public);
     }
 
     /**
@@ -84,10 +94,13 @@ class CategoryTest extends TestCase
 
     /**
      * @description Detail with children; edit (slug re-generated from the name, uniqueness
-     *   checked on the stored parent level); a category cannot be its own parent; 404s; error.
+     *   checked on the stored parent level); a category cannot be its own parent nor be moved
+     *   under its own descendant (finding #28); 404s; error.
      * @input A with child C, B; GET A; PUT B {name 'A'}; PUT B {name 'B2'}; PUT B {parent_id B};
-     *        PUT B {parent A}; PUT B {name 'C', parent A} (C exists under A); PUT /999; failing UPDATE.
-     * @output children [C]; 422 slug; 200 slug 'b2'; 422 parent_id; 200; 422 slug; 404; 500.
+     *        PUT B {parent A}; PUT B {name 'C', parent A} (C exists under A); PUT A {parent C} and
+     *        PUT A {parent B} (both below A); PUT C {parent B} (sideways); PUT /999; failing UPDATE.
+     * @output children [C]; 422 slug; 200 slug 'b2'; 422 parent_id; 200; 422 slug; 422 parent_id ×2
+     *   (cycle message); 200; 404; 500.
      */
     public function test_show_and_update(): void
     {
@@ -104,6 +117,11 @@ class CategoryTest extends TestCase
         $this->putJson("/api/shop/categories/{$b->id}", ['parent_id' => $b->id])->assertStatus(422)->assertJsonValidationErrors(['parent_id']);
         $this->putJson("/api/shop/categories/{$b->id}", ['parent_id' => $a->id])->assertOk()->assertJsonPath('parent_id', $a->id);
         $this->putJson("/api/shop/categories/{$b->id}", ['name' => 'C', 'parent_id' => $a->id])->assertStatus(422)->assertJsonValidationErrors(['slug']);
+        $this->putJson("/api/shop/categories/{$a->id}", ['parent_id' => $child->id])->assertStatus(422)
+            ->assertJsonPath('errors.parent_id.0', 'A category cannot be moved under its own subcategory.');
+        $this->putJson("/api/shop/categories/{$a->id}", ['parent_id' => $b->id])->assertStatus(422)->assertJsonValidationErrors(['parent_id']);
+        $this->assertNull($a->fresh()->parent_id);
+        $this->putJson("/api/shop/categories/{$child->id}", ['parent_id' => $b->id])->assertOk()->assertJsonPath('parent_id', $b->id);
         $this->putJson('/api/shop/categories/999', ['sort_order' => 1])->assertStatus(404);
 
         $this->failOn('shop_categories', 'UPDATE');

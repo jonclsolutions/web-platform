@@ -61,9 +61,9 @@ class ShopLogTest extends TestCase
     }
 
     /**
-     * @description The detail names the actor's e-mail, or "Neznámý uživatel" without an account.
+     * @description The detail names the actor's e-mail, or "Unknown user" without an account (English, finding #29).
      * @input Row of an existing account with context, row without account; GET /999.
-     * @output user.user_email = e-mail / 'Neznámý uživatel', context_data decoded; 404.
+     * @output user.user_email = e-mail / 'Unknown user', context_data decoded; 404.
      */
     public function test_show(): void
     {
@@ -72,7 +72,7 @@ class ShopLogTest extends TestCase
         $anonymous = $this->log();
 
         $this->getJson("/api/shop/logs/{$own->id}")->assertOk()->assertJsonPath('user.user_email', $actor->user_email)->assertJsonPath('context_data.k', 'v');
-        $this->getJson("/api/shop/logs/{$anonymous->id}")->assertJsonPath('user.user_email', 'Neznámý uživatel');
+        $this->getJson("/api/shop/logs/{$anonymous->id}")->assertJsonPath('user.user_email', 'Unknown user');
         $this->getJson('/api/shop/logs/999')->assertStatus(404);
     }
 

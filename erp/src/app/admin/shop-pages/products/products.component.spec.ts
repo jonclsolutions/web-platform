@@ -92,7 +92,8 @@ describe('ProductsComponent', () => {
       ctx.permissions.granted = new Set();
       ctx.i18n.translations$.next({});
       const t = Object.fromEntries(component.toolbarButtons.map(b => [b.action, b]));
-      expect(['handleCreateFormOpened', 'triggerImport', 'openGraphBuilder', 'toggleTrash'].map(a => t[a].showIf)).toEqual([false, false, false, false]);
+      expect(['handleCreateFormOpened', 'openGraphBuilder', 'toggleTrash'].map(a => t[a].showIf)).toEqual([false, false, false]);
+      expect(t['triggerImport']).toBeUndefined();
       expect(t['exportActiveTable'].showIf).toBeTrue();
       expect(t['toggleFilters'].showIf).toBeUndefined();
     });
@@ -146,7 +147,7 @@ describe('ProductsComponent', () => {
     /**
      * @description Toolbar actions; nothing runs while a product is being loaded.
      * @input  handleToolbarAction(each action) with an activeTable spy; then while processing
-     * @output toggleFilters opens the filter panel; create opens the form; trash, report, export and import run; ignored while processing
+     * @output toggleFilters opens the filter panel; create opens the form; trash, report, export run; no import (finding #25); ignored while processing
      */
     it('dispatches the toolbar actions', () => {
       const table = jasmine.createSpyObj('TableBuilderComponent', ['exportToCSV', 'importData']);
@@ -159,7 +160,7 @@ describe('ProductsComponent', () => {
       expect(trash).toHaveBeenCalled();
       expect(component.showGraphBuilder).toBeTrue();
       expect(table.exportToCSV).toHaveBeenCalled();
-      expect(table.importData).toHaveBeenCalled();
+      expect(table.importData).not.toHaveBeenCalled();
       (component as any).isProcessing = true;
       component.handleToolbarAction('toggleFilters');
       expect(component.showFiltersPanel).toBeTrue();

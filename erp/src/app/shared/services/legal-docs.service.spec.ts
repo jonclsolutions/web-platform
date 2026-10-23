@@ -56,4 +56,18 @@ describe('LegalDocsService', () => {
     expect(docs).toEqual([null, { ok: true }]);
     expect(console.error).toHaveBeenCalled();
   });
+
+  /**
+   * @description The footer sentence comes from the translation with the date; the API text is
+   *   the fallback; no footer for a document without one.
+   * @input effectiveFooter(doc, 'Valid from {date}'); (doc, undefined); ({ footer_effective: null }); (null)
+   * @output 'Valid from 15.06.2026'; the API text; null; null.
+   */
+  it('builds the translated effective-from footer', () => {
+    const doc = { footer_effective: 'This policy is effective from 15.06.2026.', last_update_date: '15.06.2026' };
+    expect(service.effectiveFooter(doc, 'Valid from {date}')).toBe('Valid from 15.06.2026');
+    expect(service.effectiveFooter(doc, undefined)).toBe('This policy is effective from 15.06.2026.');
+    expect(service.effectiveFooter({ footer_effective: null }, 'x {date}')).toBeNull();
+    expect(service.effectiveFooter(null, 'x')).toBeNull();
+  });
 });

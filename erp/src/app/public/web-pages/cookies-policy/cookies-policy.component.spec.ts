@@ -30,7 +30,8 @@ describe('CookiesPolicyComponent', () => {
 
   beforeEach(() => {
     ctx = createPublicPageContext({ translations: { cookies_policy: { header_main: 'Header', last_update_text: 'Updated', change_settings_text: 'Settings:', change_settings_link_text: 'Change' } } });
-    legal = jasmine.createSpyObj('LegalDocsService', ['getDocument']);
+    legal = jasmine.createSpyObj('LegalDocsService', ['getDocument', 'effectiveFooter']);
+    legal.effectiveFooter.and.callFake(LegalDocsService.prototype.effectiveFooter);
     legal.getDocument.and.callFake(((_slug: string, lang: string) => of(doc(lang))) as any);
     TestBed.configureTestingModule({
       imports: [CookiesPolicyComponent],
@@ -84,5 +85,19 @@ describe('CookiesPolicyComponent', () => {
     const clickable = Array.from(fixture.nativeElement.querySelectorAll('a, button')) as HTMLElement[];
     clickable.find(el => el.textContent!.includes('Change'))?.click();
     expect(consent.openSettings).toHaveBeenCalledTimes(2);
+  });
+
+  /**
+   * @description The "effective from" footer uses the page translation with the date (finding #35);
+   *   without a translation the API text is shown.
+   * @input effective_from_text 'Valid from {date}' in the cookies_policy translations; then none.
+   * @output 'Valid from 1. 1. 2026'; then the API footer 'Effective cz'.
+   */
+  it('translates the effective-from footer', () => {
+    ctx.setTranslations({ cookies_policy: { effective_from_text: 'Valid from {date}' } });
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Valid from 1. 1. 2026');
+    expect(legal.effectiveFooter).toHaveBeenCalledWith(fixture.componentInstance.data, 'Valid from {date}');
   });
 });

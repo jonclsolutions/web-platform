@@ -11,6 +11,8 @@
  * to `App\Models\Shop\ShopSiteSetting` following the move of shop maintenance data out of
  * the Core domain - see ShopSiteSettingController for the accompanying admin endpoint.
  *
+ * @bugfix-note (2026-10-23) `validateCoupon()` returned the whole coupon model (usage counters,
+ *   limits, timestamps - open finding #26); only the fields the checkout needs are returned now.
  * @refactor-note (2026-10-23) `checkStock()`: removed the guessing of the variant foreign
  * key (`method_exists(..., 'product')` is always true, so the key is always `product_id`)
  * and the two QueryException fallbacks behind it - unreachable code.
@@ -136,12 +138,13 @@ class ShopPublicController extends Controller
 
         if ($coupon->min_order_amount > 0 && $validated['order_amount'] < (float)$coupon->min_order_amount) {
             return response()->json([
-                'message' => "Minimum order amount is " . number_format($coupon->min_order_amount, 2) . "EUR."
+                'message' => "Minimum order amount is " . number_format($coupon->min_order_amount, 2) . " EUR."
             ], 422);
         }
 
+        // Only what the checkout needs - not usage counters / limits / timestamps (finding #26).
         return response()->json([
-            'coupon' => $coupon,
+            'coupon' => $coupon->only(['code', 'discount_type', 'discount_value', 'min_order_amount', 'applies_to', 'valid_until']),
             'is_valid' => true
         ]);
     }

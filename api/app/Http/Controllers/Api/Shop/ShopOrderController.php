@@ -35,6 +35,16 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @bugfix-note (2026-10-23) Open findings #21 / #22 / #23 / #24:
+ * - VAT: the item rate is stored (`shop_order_items.vat_rate`) and taken from the catalogue
+ *   (variant price, else product price; the form value only when the catalogue has none) -
+ *   `$product->vat_rate` does not exist, so every admin order was taxed at 21 %.
+ * - Buyer contact: the order keeps its own contact snapshot (`customer_*` columns, set on
+ *   create, changed by the order edit). The edit no longer rewrites the customer master data
+ *   - an old order corrected by the admin must not rename the customer everywhere.
+ * - Stock: adding, changing the quantity of or deleting items of an order that holds stock
+ *   (pending … delivered) moves the difference in / out of stock. Before only status changes
+ *   did, so stock drifted after every item edit.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -87,6 +97,8 @@ class ShopOrderController extends Controller
                 $q->where('id', $s)
                   ->orWhere('order_number', 'like', "%$s%")
                   ->orWhere('shipping_address', 'like', "%$s%")
+                  ->orWhere('customer_email', 'like', "%$s%")
+                  ->orWhere('customer_last_name', 'like', "%$s%")
                   ->orWhereHas('customer', fn($cq) =>
                       $cq->where('email', 'like', "%$s%")
                         ->orWhere('first_name', 'like', "%$s%")
@@ -167,9 +179,11 @@ class ShopOrderController extends Controller
         try {
             DB::beginTransaction();
 
-            $customer = ShopCustomer::firstOrCreate(
-                ['email' => $validated['email']],
-                [
+            // An existing customer (also a trashed one - the e-mail is unique) is only linked:
+            // the order keeps its own contact snapshot, the master data stay untouched.
+            $customer = ShopCustomer::withTrashed()->where('email', $validated['email'])->first()
+                ?? ShopCustomer::create([
+                    'email'       => $validated['email'],
                     'first_name'  => $validated['first_name'],
                     'last_name'   => $validated['last_name'],
                     'phone'       => $validated['phone'],
@@ -179,8 +193,7 @@ class ShopOrderController extends Controller
                     'city'        => $validated['shipping_city'],
                     'postal_code' => $validated['shipping_postal_code'],
                     'country'     => $validated['shipping_country'],
-                ]
-            );
+                ]);
 
             $shippingAmount = 0;
             if (!empty($validated['shipping_method_id'])) {
@@ -194,7 +207,7 @@ class ShopOrderController extends Controller
             $totalTax = 0;
             $finalAmount = max(0, $totalAmount + $shippingAmount - $discountAmount);
 
-            $order = ShopOrder::create([
+            $order = ShopOrder::create(ShopOrder::contactSnapshot($validated) + [
                 'customer_id'          => $customer->id,
                 'order_number'         => ShopOrder::generateOrderNumber(),
                 'status'               => $validated['status'] ?? 'pending',
@@ -219,13 +232,12 @@ class ShopOrderController extends Controller
                 $quantity = (int)$itemData['quantity'];
                 $product = ShopProduct::lockForUpdate()->findOrFail($itemData['product_id']);
                 $variantName = null;
-                $vatRate = $itemData['vat_rate'] ?? $product->vat_rate ?? 21;
+                $vatRate = ShopOrderItem::catalogueVatRate($product->id, $itemData['product_variant_id'] ?? null, $itemData['vat_rate'] ?? null);
 
                 if (!empty($itemData['product_variant_id'])) {
                     $variant = ShopProductVariant::lockForUpdate()->findOrFail($itemData['product_variant_id']);
                     $variant->decrement('stock_quantity', $quantity);
                     $variantName = $variant->variant_name;
-                    if (isset($variant->vat_rate)) { $vatRate = $variant->vat_rate; }
                     ShopProductVariant::forceSyncParentStock($product->id);
                 } else {
                     $product->decrement('stock_quantity', $quantity);
@@ -288,20 +300,24 @@ class ShopOrderController extends Controller
             $validated = $request->validated();
             $oldStatus = $order->status;
 
-            if ($order->customer_id && $request->hasAny(['first_name', 'last_name', 'email', 'phone', 'company'])) {
-                $customerData = collect($validated)->only(['first_name', 'last_name', 'email', 'phone', 'company'])->toArray();
-                $order->customer->update($customerData);
-            }
-
+            // Contact fields change this order's snapshot only, not the customer master data.
             $updateData = collect($validated)->except(['items', 'delete_items', 'first_name', 'last_name', 'email', 'phone', 'company'])->toArray();
-            $order->update($updateData);
+            $order->update(ShopOrder::contactSnapshot($validated) + $updateData);
+
+            // Item edits move stock only while the order (still in its old status) holds it;
+            // a status change below then moves the whole - already edited - item set.
+            $holdsStock = in_array($oldStatus, ShopOrder::STOCK_HOLDING_STATUSES, true);
 
             if ($request->has('delete_items')) {
-                $order->items()->whereIn('id', $request->input('delete_items'))->delete();
+                $deleted = $order->items()->whereIn('id', $request->input('delete_items'))->get();
+                foreach ($deleted as $item) {
+                    if ($holdsStock) { $item->adjustStock($item->quantity); }
+                    $item->delete();
+                }
             }
 
             if ($request->has('items')) {
-                $this->updateOrderItems($order, $request->input('items'));
+                $this->updateOrderItems($order, $request->input('items'), $holdsStock);
             }
 
             $order->load('items');
@@ -424,35 +440,47 @@ class ShopOrderController extends Controller
     }
 
     /**
-     * Helper to update or add order items during an order update.
+     * @description Updates or adds order items during an order update.
+     * @param ShopOrder $order The edited order.
+     * @param array<int, array<string, mixed>> $items Validated items (with `id` = existing line).
+     * @param bool $holdsStock Whether the order holds stock (quantity changes / new lines move it).
+     * @return void
+     * @note An existing line keeps its stored VAT rate (rate of the sale); a new line gets the
+     *   catalogue rate (finding #21).
      */
-    private function updateOrderItems(ShopOrder $order, array $items): void
+    private function updateOrderItems(ShopOrder $order, array $items, bool $holdsStock): void
     {
         foreach ($items as $itemData) {
+            $quantity = (int) $itemData['quantity'];
+
             if (isset($itemData['id']) && $itemData['id'] > 0) {
                 // Only items of THIS order (IDOR, see header) - a foreign id is ignored.
                 $item = $order->items()->find($itemData['id']);
                 if ($item) {
+                    if ($holdsStock) { $item->adjustStock($item->quantity - $quantity); }
                     $item->update([
-                        'quantity' => $itemData['quantity'],
+                        'quantity' => $quantity,
                         'unit_price' => $itemData['unit_price'],
-                        'total_price' => $itemData['quantity'] * $itemData['unit_price'],
+                        'total_price' => $quantity * $itemData['unit_price'],
                     ]);
                 }
             } else {
                 $product = ShopProduct::find($itemData['product_id']);
-                $variant = !empty($itemData['product_variant_id']) ? ShopProductVariant::find($itemData['product_variant_id']) : null;
+                $variantId = !empty($itemData['product_variant_id']) ? (int) $itemData['product_variant_id'] : null;
+                $variant = $variantId ? ShopProductVariant::find($variantId) : null;
 
-                ShopOrderItem::create([
+                $item = ShopOrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $itemData['product_id'],
-                    'product_variant_id' => $itemData['product_variant_id'] ?? null,
+                    'product_variant_id' => $variantId,
                     'product_name' => $product->name,
                     'variant_name' => $variant?->variant_name,
-                    'quantity' => $itemData['quantity'],
+                    'quantity' => $quantity,
                     'unit_price' => $itemData['unit_price'],
-                    'total_price' => $itemData['quantity'] * $itemData['unit_price'],
+                    'total_price' => $quantity * $itemData['unit_price'],
+                    'vat_rate' => ShopOrderItem::catalogueVatRate($product->id, $variantId, $itemData['vat_rate'] ?? null),
                 ]);
+                if ($holdsStock) { $item->adjustStock(-$quantity); }
             }
         }
     }

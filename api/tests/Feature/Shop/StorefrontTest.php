@@ -137,7 +137,8 @@ class StorefrontTest extends TestCase
      * @description Coupon check: unknown / inactive 404, not yet valid, expired, exhausted and
      *   minimum amount 422, valid 200; validation; own rate limit (20 / minute).
      * @input Codes OK, OFF, SOON, OLD, USED, MIN (min 100); order_amount 50; then 20 calls.
-     * @output Messages per case; {is_valid true, coupon.code OK}; 422 fields; 21st call 429.
+     * @output Messages per case; {is_valid true, coupon.code OK} with only code / discount / minimum / scope /
+     *   validity (finding #26); 422 fields; 21st call 429.
      */
     public function test_validate_coupon(): void
     {
@@ -154,13 +155,38 @@ class StorefrontTest extends TestCase
         $check('SOON')->assertStatus(422)->assertJson(['message' => 'Coupon is not valid yet.']);
         $check('OLD')->assertStatus(422)->assertJson(['message' => 'Coupon has expired.']);
         $check('USED')->assertStatus(422)->assertJson(['message' => 'Coupon usage limit has been reached.']);
-        $check('MIN')->assertStatus(422)->assertJson(['message' => 'Minimum order amount is 100.00EUR.']);
-        $check('OK')->assertOk()->assertJsonPath('is_valid', true)->assertJsonPath('coupon.code', 'OK');
+        $check('MIN')->assertStatus(422)->assertJson(['message' => 'Minimum order amount is 100.00 EUR.']);
+        $ok = $check('OK')->assertOk()->assertJsonPath('is_valid', true)->assertJsonPath('coupon.code', 'OK')->json('coupon');
+        // Only the fields the checkout needs (finding #26) - no counters / limits / ids / timestamps.
+        $this->assertSame(['code', 'discount_type', 'discount_value', 'min_order_amount', 'applies_to', 'valid_until'], array_keys($ok));
         $this->postJson('/api/shop/public/coupons/validate', [])->assertStatus(422)->assertJsonValidationErrors(['code', 'order_amount']);
 
         foreach (range(1, 12) as $i) {
             $check('OK')->assertOk();
         }
         $check('OK')->assertStatus(429);
+    }
+
+    /**
+     * @description Public products show the stock capped at 99 (finding #26: no stock scraping)
+     *   and no warning level; low stock stays exact; the admin sees the real values.
+     * @input Product (warning level 10) with variants A 250 pcs and B 3 pcs (product = 253);
+     *        public detail and list; admin detail.
+     * @output Public product 99, variants 99 / 3, no stock_warning_level; admin 253, 250 / 3 and warning level 10.
+     */
+    public function test_public_stock_is_capped(): void
+    {
+        $product = $this->product(['name' => 'Bulk', 'stock_warning_level' => 10]);
+        $this->variant($product, ['variant_name' => 'A', 'stock_quantity' => 250]);
+        $this->variant($product, ['variant_name' => 'B', 'stock_quantity' => 3]);
+
+        $json = $this->getJson("/api/shop/public/products/{$product->id}")->assertOk()->json();
+        $this->assertSame([99, 99, 3], [$json['stock_quantity'], $json['variants'][0]['stock_quantity'], $json['variants'][1]['stock_quantity']]);
+        $this->assertArrayNotHasKey('stock_warning_level', $json);
+        $this->assertSame(99, $this->getJson('/api/shop/public/products')->json('data.0.stock_quantity'));
+
+        $this->signIn($this->userWith(['shop-products-view']));
+        $this->getJson("/api/shop/products/{$product->id}")->assertOk()->assertJsonPath('stock_quantity', 253)->assertJsonPath('stock_warning_level', 10)
+            ->assertJsonPath('variants.0.stock_quantity', 250);
     }
 }

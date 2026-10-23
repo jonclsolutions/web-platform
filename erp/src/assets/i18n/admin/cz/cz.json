@@ -2195,7 +2195,6 @@
     "toolbar_filters": "Otevřít filtry",
     "toolbar_create_record": "Přidat záznam",
     "toolbar_export_data": "Exportovat data",
-    "toolbar_import_data": "Importovat data",
     "toolbar_generate_reports": "Generovat grafy a reporty",
     "toolbar_show_trash": "Zobrazit koš",
     "filter_form_title": "Filtry produktů",
@@ -2502,7 +2501,6 @@
     "toolbar_create_record": "Přidat záznam",
     "toolbar_generate_reports": "Generovat grafy a reporty",
     "toolbar_export_data": "Exportovat data",
-    "toolbar_import_data": "Importovat data",
     "filter_form_title": "Filtry objednávek",
 
     "tab_all": "Všechny objednávky",
@@ -2701,7 +2699,6 @@
     "toolbar_hide_filters": "Skrýt filtry",
     "toolbar_create_record": "Přidat záznam",
     "toolbar_export_data": "Exportovat data",
-    "toolbar_import_data": "Importovat data",
     "toolbar_generate_reports": "Generovat grafy a reporty",
     "toolbar_show_trash": "Zobrazit koš",
     "toolbar_show_active": "Zobrazit aktivní",
@@ -2785,7 +2782,11 @@
     "of_label": "z",
     "load_orders_failed_message": "Nepodařilo se načíst objednávky zákazníka.",
 
-    "graph_date_field_label": "Datum vytvoření"
+    "graph_date_field_label": "Datum vytvoření",
+    "btn_anonymize": "Anonymizovat",
+    "anonymize_confirm_title": "Anonymizovat zákazníka",
+    "anonymize_confirm_message": "Osobní údaje zákazníka {name} budou nevratně odstraněny (výmaz podle GDPR). Objednávky zůstanou zachovány jako účetní doklady. Pokračovat?",
+    "anonymize_done_message": "Zákazník byl anonymizován, objednávky zůstaly zachovány."
   },
   "shop-shipping-methods": {
     "table_header": "Způsoby dopravy",
@@ -2796,7 +2797,6 @@
     "toolbar_hide_filters": "Skrýt filtry",
     "toolbar_create_record": "Přidat záznam",
     "toolbar_export_data": "Exportovat data",
-    "toolbar_import_data": "Importovat data",
     "toolbar_generate_reports": "Generovat grafy a reporty",
     "toolbar_show_trash": "Zobrazit koš",
     "toolbar_show_active": "Zobrazit aktivní",
@@ -2916,7 +2916,6 @@
     "toolbar_hide_filters": "Skrýt filtry",
     "toolbar_add_record": "Přidat záznam",
     "toolbar_export_data": "Exportovat data",
-    "toolbar_import_data": "Importovat data",
     "toolbar_generate_reports": "Generovat grafy a reporty",
     "toolbar_show_trash": "Koš",
     "toolbar_show_active": "Zobrazit aktivní",
@@ -3052,7 +3051,8 @@
 
     "delete_all_confirm_title": "Trvale smazat vše",
     "delete_all_confirm_message": "Opravdu chcete TRVALE smazat VŠECHNY položky? Tuto akci nelze vzít zpět!",
-    "all_items_deleted_message": "Všechny položky byly trvale smazány."
+    "all_items_deleted_message": "Všechny položky byly trvale smazány.",
+    "some_items_kept_message": "Smazáno: {deleted}. Ponecháno: {skipped} – mají navázané záznamy, které je nutné uchovat (např. zákazník s objednávkami – použijte anonymizaci)."
   },
   "base-data": {
   "api_endpoint_undefined": "API endpoint není definován.",

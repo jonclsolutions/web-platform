@@ -25,6 +25,10 @@
  *    úplně všem uživatelům bez ohledu na oprávnění. Sjednoceno na jeden zdroj
  *    (`createOrderTabButtons()`), permission kontrola aplikována v komponentě
  *    stejně jako u `toolbarButtons`.
+ * @bugfix-note (2026-10-23) Buyer columns read the order's own `contact` (snapshot, open findings
+ *   #22 / #23) instead of the customer master data. The chartable status columns used the
+ *   `*_status_label` text (Czech from the API) with the raw values as possible values - the chart
+ *   never matched; they use the raw `status` / `payment_status` now (labels translated here).
  */
 import * as Core from '../../../shared/imports/core-providers';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
@@ -73,7 +77,7 @@ export function createToolbarButtons(i18n: AdminLocalizationService): Core.Butto
     { action: 'handleCreateFormOpened', label: i18n.getValue(`${SECTION}.toolbar_create_record`), icon: '', class: 'btn-create', showIf: true, permission: 'shop-orders-create' },
     { action: 'openGraphBuilder', label: i18n.getValue(`${SECTION}.toolbar_generate_reports`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-view-reports' },
     { action: 'exportActiveTable', label: i18n.getValue(`${SECTION}.toolbar_export_data`), icon: '', class: 'btn-export', showIf: true },
-    { action: 'triggerImport', label: i18n.getValue(`${SECTION}.toolbar_import_data`), icon: '', class: 'btn-neutral', showIf: true, permission: 'shop-orders-create' },
+    // @refactor-note (2026-10-23) no 'triggerImport' - the API has no import for this page (open finding #25, the button answered 404).
   ];
 }
 
@@ -89,7 +93,7 @@ export function createOrderColumns(i18n: AdminLocalizationService): Core.ColumnD
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'order_number', header: i18n.getValue(`${SECTION}.col_order_number`), type: 'text' },
-    { key: 'customer.full_name', header: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
+    { key: 'contact.full_name', header: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
     { key: 'status_label', header: i18n.getValue(`${SECTION}.col_status`), type: 'text' },
     { key: 'payment_status_label', header: i18n.getValue(`${SECTION}.col_payment`), type: 'text' },
     { key: 'final_amount', header: i18n.getValue(`${SECTION}.col_total`), type: 'currency' },
@@ -101,7 +105,7 @@ export function createTrashOrderColumns(i18n: AdminLocalizationService): Core.Co
   return [
     { key: 'id', header: i18n.getValue(`${SECTION}.col_id`), type: 'text' },
     { key: 'order_number', header: i18n.getValue(`${SECTION}.col_order_number`), type: 'text' },
-    { key: 'customer.full_name', header: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
+    { key: 'contact.full_name', header: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
     { key: 'deleted_at', header: i18n.getValue(`${SECTION}.col_deleted`), type: 'date', format: 'short' },
   ];
 }
@@ -124,11 +128,11 @@ export function createOrderDetailsColumns(i18n: AdminLocalizationService): Core.
   return [
     { key: 'id', displayName: i18n.getValue(`${SECTION}.details_id`), type: 'text' },
     { key: 'order_number', displayName: i18n.getValue(`${SECTION}.col_order_number`), type: 'text' },
-    { key: 'customer.full_name', displayName: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
-    { key: 'customer.email', displayName: i18n.getValue(`${SECTION}.details_email`), type: 'text' },
-    { key: 'customer.phone', displayName: i18n.getValue(`${SECTION}.details_phone`), type: 'text' },
-    { key: 'status_label', displayName: i18n.getValue(`${SECTION}.filter_order_status_label`), type: 'text', chartable: true, chartPossibleValues: STATUS_VALUES },
-    { key: 'payment_status_label', displayName: i18n.getValue(`${SECTION}.filter_payment_status_label`), type: 'text', chartable: true, chartPossibleValues: PAYMENT_STATUS_VALUES },
+    { key: 'contact.full_name', displayName: i18n.getValue(`${SECTION}.col_customer`), type: 'text' },
+    { key: 'contact.email', displayName: i18n.getValue(`${SECTION}.details_email`), type: 'text' },
+    { key: 'contact.phone', displayName: i18n.getValue(`${SECTION}.details_phone`), type: 'text' },
+    { key: 'status', displayName: i18n.getValue(`${SECTION}.filter_order_status_label`), type: 'text', chartable: true, chartPossibleValues: STATUS_VALUES },
+    { key: 'payment_status', displayName: i18n.getValue(`${SECTION}.filter_payment_status_label`), type: 'text', chartable: true, chartPossibleValues: PAYMENT_STATUS_VALUES },
     { key: 'total_amount', displayName: i18n.getValue(`${SECTION}.details_goods_amount`), type: 'text' },
     { key: 'shipping_amount', displayName: i18n.getValue(`${SECTION}.details_shipping`), type: 'text' },
     { key: 'discount_amount', displayName: i18n.getValue(`${SECTION}.details_discount`), type: 'text' },

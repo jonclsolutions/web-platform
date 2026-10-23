@@ -757,6 +757,12 @@ final class TestSchema
         Schema::create('shop_orders', function (Blueprint $t) {
             $t->increments('id');
             $t->unsignedInteger('customer_id');
+            // Buyer contact snapshot (database/migrations/2026_10_23_shop_orders_vat_contact_retention.sql).
+            $t->string('customer_first_name', 100)->nullable();
+            $t->string('customer_last_name', 100)->nullable();
+            $t->string('customer_email', 150)->nullable();
+            $t->string('customer_phone', 20)->nullable();
+            $t->string('customer_company', 150)->nullable();
             $t->string('order_number', 50)->unique();
             $t->string('status', 50)->default('pending');
             $t->string('payment_status', 50)->default('pending');
@@ -778,7 +784,7 @@ final class TestSchema
             $t->dateTime('delivered_at')->nullable();
             $t->timestamps();
             $t->softDeletes();
-            $t->foreign('customer_id')->references('id')->on('shop_customers')->cascadeOnDelete();
+            $t->foreign('customer_id')->references('id')->on('shop_customers')->restrictOnDelete();  // orders are kept (finding #22)
             $t->foreign('coupon_id')->references('id')->on('shop_coupons')->nullOnDelete();
             $t->foreign('payment_method_id')->references('id')->on('shop_payment_methods')->nullOnDelete();
             $t->foreign('shipping_method_id')->references('id')->on('shop_shipping_methods')->nullOnDelete();
@@ -794,6 +800,7 @@ final class TestSchema
             $t->integer('quantity');
             $t->decimal('unit_price', 10, 2);
             $t->decimal('total_price', 10, 2);
+            $t->decimal('vat_rate', 5, 2)->default(21);  // finding #21
             $t->decimal('discount_amount', 10, 2)->default(0);
             $t->timestamp('created_at')->useCurrent();
             $t->timestamp('updated_at')->useCurrent();
