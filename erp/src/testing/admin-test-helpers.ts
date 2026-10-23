@@ -136,16 +136,17 @@ export function createAuthStub(loggedIn = true): AuthStub {
 
 /**
  * @description Creates a DataHandler spy; every request returns an empty successful response.
- * @returns jasmine spy object (get/getOne/getCollection/getPaginatedCollection/post/put/patch/delete/upload/uploadPut).
+ * @returns jasmine spy object (get/getOne/getCollection/getPaginatedCollection/post/postWithMeta/put/patch/delete/upload/uploadPut).
  */
 export function createDataHandlerSpy(): jasmine.SpyObj<DataHandler> {
   const spy = jasmine.createSpyObj<DataHandler>('DataHandler',
-    ['get', 'getOne', 'getCollection', 'getPaginatedCollection', 'post', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
+    ['get', 'getOne', 'getCollection', 'getPaginatedCollection', 'post', 'postWithMeta', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
   (spy as any).get.and.returnValue(of({}));
   (spy as any).getOne.and.returnValue(of({}));
   (spy as any).getCollection.and.returnValue(of([]));
   (spy as any).getPaginatedCollection.and.returnValue(of({}));
   (spy as any).post.and.returnValue(of({}));
+  (spy as any).postWithMeta.and.returnValue(of({ data: {} }));
   (spy as any).put.and.returnValue(of({}));
   (spy as any).patch.and.returnValue(of({}));
   (spy as any).delete.and.returnValue(of(undefined));
@@ -204,7 +205,7 @@ export function createAdminTestContext(options: { granted?: string[] | 'all'; lo
   const genericTable = createGenericTableSpy();
   const alert = jasmine.createSpyObj<AlertDialogService>('AlertDialogService', ['open']);
   alert.open.and.returnValue(Promise.resolve());
-  const confirm = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['open']);
+  const confirm = jasmine.createSpyObj<ConfirmDialogService>('ConfirmDialogService', ['open', 'setDefaultLabels']);
   confirm.open.and.returnValue(Promise.resolve(true));
   const refreshAll$ = new Subject<void>();
   const refreshBus = { refreshAll$: refreshAll$.asObservable(), triggerGlobalRefresh: jasmine.createSpy('triggerGlobalRefresh') };

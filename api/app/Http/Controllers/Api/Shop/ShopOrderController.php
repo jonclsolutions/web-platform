@@ -32,6 +32,9 @@
  * - `$product->lockForUpdate()` on a model locks nothing → the product row is loaded with
  *   the lock.
  * - unknown id → 500 instead of 404 (findOrFail inside try) in update, destroy, restore.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -51,6 +54,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Controller responsible for administrative order management.
@@ -58,7 +62,7 @@ use Illuminate\Support\Facades\DB;
  */
 class ShopOrderController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
 
     /**
      * Retrieves a paginated list of orders with flexible filtering options.
@@ -110,10 +114,7 @@ class ShopOrderController extends Controller
         if ($request->filled('date_from')) { $query->whereDate('created_at', '>=', $request->input('date_from')); }
         if ($request->filled('date_to')) { $query->whereDate('created_at', '<=', $request->input('date_to')); }
 
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        if (str_contains($sortBy, '.')) { $sortBy = 'created_at'; }
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'created_at', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         $data = $noPagination ? $query->get() : $query->paginate($perPage);

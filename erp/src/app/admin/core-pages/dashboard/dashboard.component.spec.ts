@@ -33,7 +33,6 @@ describe('CoreDashboardComponent', () => {
   ];
 
   beforeEach(async () => {
-    localStorage.removeItem('userRole');
     ctx = createAdminTestContext();
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
       url.startsWith('core/logs?per_page=8') ? of({ data: logs }) : of({ total: totals[url] }));
@@ -41,8 +40,6 @@ describe('CoreDashboardComponent', () => {
     fixture = TestBed.createComponent(CoreDashboardComponent);
     component = fixture.componentInstance;
   });
-
-  afterEach(() => localStorage.removeItem('userRole'));
 
   /**
    * @description Only statistics the user is allowed to see are requested and shown.
@@ -60,14 +57,32 @@ describe('CoreDashboardComponent', () => {
   });
 
   /**
-   * @description The roles statistic is shown only to sysadmin (role stored as 'userRole').
-   * @input  localStorage userRole 'sysadmin'; all permissions
+   * @description The roles statistic is shown to sysadmin - role from AuthService (session, finding #19).
+   * @input  AuthService role 'sysadmin'; all permissions
    * @output stats include roles = 3
    */
   it('shows the roles statistic to sysadmin', () => {
-    localStorage.setItem('userRole', 'sysadmin');
+    ctx.auth.session.role = 'sysadmin';
     component.ngOnInit();
     expect(component.quickStats.find(s => s.key === 'roles')?.value).toBe(3);
+  });
+
+  /**
+   * @description A stale `userRole` in localStorage does not make a non-sysadmin a sysadmin (finding #19).
+   * @input  AuthService role 'admin'; localStorage userRole 'sysadmin'
+   * @output no roles statistic and no core/roles request
+   */
+  it('ignores a userRole in localStorage', () => {
+    localStorage.setItem('userRole', 'sysadmin');
+    try {
+      ctx.auth.session.role = 'admin';
+      component.ngOnInit();
+      expect(component.quickStats.find(s => s.key === 'roles')).toBeUndefined();
+      const urls = (ctx.dataHandler as any).getPaginatedCollection.calls.allArgs().map((a: any[]) => a[0]);
+      expect(urls).not.toContain('core/roles?per_page=1');
+    } finally {
+      localStorage.removeItem('userRole');
+    }
   });
 
   /**

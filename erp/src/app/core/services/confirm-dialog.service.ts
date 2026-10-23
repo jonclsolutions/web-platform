@@ -9,11 +9,24 @@
  * - ConfirmDialogComponent: The UI component to be dynamically rendered.
  * - ApplicationRef: Required to manually attach/detach component views to the application tree.
  * - EnvironmentInjector: Required for dependency injection within dynamically created components.
+ * @bugfix-note (2026-10-23) Button labels (open finding #20): `open()` takes optional `labels`;
+ *   without them the defaults of the current surface are used (`setDefaultLabels()`, set by the
+ *   admin layout from the admin translations), and only then the neutral English defaults of the
+ *   component. The service itself stays independent of the admin / public translation services
+ *   (the dialog is used on both).
  */
 
 import { Injectable, ComponentRef, ApplicationRef, createComponent, EnvironmentInjector, EmbeddedViewRef } from '@angular/core';
 import { ConfirmDialogComponent } from '../../admin/components/confirm-dialog/confirm-dialog.component';
 import { first } from 'rxjs';
+
+/**
+ * @description Texts of the two dialog buttons; a missing / empty one falls back to the default.
+ */
+export interface ConfirmDialogLabels {
+  confirm?: string;
+  cancel?: string;
+}
 
 /**
  * @description Provides functionality to display global confirmation dialogs (Yes/No) without component template declaration.
@@ -27,6 +40,8 @@ export class ConfirmDialogService {
   private componentRef?: ComponentRef<ConfirmDialogComponent>;
   /** Resolver of the promise of the currently open dialog (settled as `false` when replaced). */
   private pendingResolve?: (confirmed: boolean) => void;
+  /** Labels used when the caller passes none (set by the surface layout, e.g. AdminLayoutComponent). */
+  private defaultLabels: ConfirmDialogLabels | null = null;
 
   constructor(
     private environmentInjector: EnvironmentInjector,
@@ -37,12 +52,13 @@ export class ConfirmDialogService {
    * @description Opens a confirmation dialog and returns a Promise resolving to a boolean.
    * @param title The dialog header text.
    * @param message The confirmation question/body text.
+   * @param labels Optional button texts; missing ones come from `setDefaultLabels()` / the component.
    * @returns {Promise<boolean>} Resolves to 'true' on confirm, 'false' on cancel.
    * @note If a dialog is already active, it is destroyed before the new one is initialized.
    * @bugfix-note (2026-10-23) The promise of a dialog replaced by a newer open() never settled
    *   (the awaiting caller hung forever and leaked) - it now resolves to `false` (= not confirmed).
    */
-  open(title: string, message: string): Promise<boolean> {
+  open(title: string, message: string, labels?: ConfirmDialogLabels): Promise<boolean> {
     this.settle(false);
     this.closeDialog();
 
@@ -56,6 +72,10 @@ export class ConfirmDialogService {
 
     this.componentRef.instance.title = title;
     this.componentRef.instance.message = message;
+    const confirmLabel = labels?.confirm || this.defaultLabels?.confirm;
+    const cancelLabel = labels?.cancel || this.defaultLabels?.cancel;
+    if (confirmLabel) this.componentRef.instance.confirmLabel = confirmLabel;
+    if (cancelLabel) this.componentRef.instance.cancelLabel = cancelLabel;
     this.componentRef.instance.show();
 
     return new Promise<boolean>((resolve) => {
@@ -71,6 +91,14 @@ export class ConfirmDialogService {
         this.settle(false);
       });
     });
+  }
+
+  /**
+   * @description Sets (or clears with `null`) the button labels used when `open()` gets none.
+   * @param labels Translated default labels of the current surface.
+   */
+  setDefaultLabels(labels: ConfirmDialogLabels | null): void {
+    this.defaultLabels = labels;
   }
 
   /**

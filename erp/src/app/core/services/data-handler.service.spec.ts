@@ -142,6 +142,33 @@ describe('DataHandler', () => {
   });
 
   /**
+   * @description Bare (unwrapped) answers of create / update endpoints are returned as they are
+   *   (bugfix 2026-10-23, finding #6 - they were `undefined` before); arrays are never unwrapped;
+   *   postWithMeta keeps the meta fields next to the record and wraps a bare answer.
+   * @input put / post / patch answered {id: 5, name: 'A'} (no wrapper), post answered [1, 2];
+   *   postWithMeta answered {data: {id: 1}, activation_email_sent: false} and {id: 2}.
+   * @output {id 5, name A} ×3; [1, 2]; {data {id 1}, activation_email_sent false}; {data {id 2}}.
+   */
+  it('accepts bare create / update answers and keeps meta fields', () => {
+    const results: any[] = [];
+    service.put('users/5', { name: 'A' }).subscribe(r => results.push(r));
+    service.post('users', { name: 'A' }).subscribe(r => results.push(r));
+    service.patch('users/5', { name: 'A' }).subscribe(r => results.push(r));
+    service.post('list', {}).subscribe(r => results.push(r));
+    service.postWithMeta('core/users', { a: 1 }).subscribe(r => results.push(r));
+    service.postWithMeta('core/users', { a: 2 }).subscribe(r => results.push(r));
+    const reqs = http.match(() => true);
+    [0, 1, 2].forEach(i => reqs[i].flush({ id: 5, name: 'A' }));
+    reqs[3].flush([1, 2]);
+    reqs[4].flush({ data: { id: 1 }, activation_email_sent: false });
+    reqs[5].flush({ id: 2 });
+    expect(results).toEqual([
+      { id: 5, name: 'A' }, { id: 5, name: 'A' }, { id: 5, name: 'A' }, [1, 2],
+      { data: { id: 1 }, activation_email_sent: false }, { data: { id: 2 } }
+    ]);
+  });
+
+  /**
    * @description Multipart bodies: PUT / PATCH with FormData go as POST with `_method` (PHP does
    *   not parse multipart PUT), without a JSON Content-Type (browser sets the boundary);
    *   upload / uploadPut POST the FormData and return the raw body.

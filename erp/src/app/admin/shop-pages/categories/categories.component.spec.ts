@@ -535,6 +535,32 @@ describe('CategoriesComponent', () => {
   });
 
   /**
+   * @description Without `shop-products-update` the product panel is read-only (finding #17).
+   * @input  granted shop-categories-view only; panel of Telefony; openAddProductSearch / add / remove called directly
+   * @output no add / remove buttons rendered; add panel stays closed; no confirm, no patch
+   */
+  it('hides and blocks product changes without shop-products-update', fakeAsync(async () => {
+    ctx.permissions.granted = new Set(['shop-categories-view']);
+    dh().getCollection.and.callFake((url: string) =>
+      of(url === TREE_URL ? flat() : [{ id: 10, name: 'Pixel 9', sku: 'PX9', categories: [{ id: 2 }] }]));
+    fixture.detectChanges();
+    component.openProductPanel(node(2)!, click);
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Pixel 9');
+    expect(el.querySelector('.btn-add-product')).toBeNull();
+    expect(el.querySelector('.btn-remove-product')).toBeNull();
+    component.openAddProductSearch();
+    expect(component.showAddProduct).toBeFalse();
+    component.addProductToCategory({ id: 10 });
+    await component.removeProductFromCategory({ id: 10, name: 'Pixel 9' });
+    expect(ctx.confirm.open).not.toHaveBeenCalled();
+    expect(dh().patch).not.toHaveBeenCalled();
+    flush();
+    discardPeriodicTasks();
+  }));
+
+  /**
    * @description The tree, the edit row and the product panel render.
    * @input  detectChanges() after loading; expand all; add a main category; open the panel of Telefony
    * @output names 'Elektro', 'Android' and 'Pixel 9' rendered; empty-name error 'shop-categories.error_name_empty'
@@ -552,6 +578,8 @@ describe('CategoriesComponent', () => {
     expect(text).toContain('Android');
     expect(text).toContain('Pixel 9');
     expect(text).toContain('shop-categories.error_name_empty');
+    expect(fixture.nativeElement.querySelector('.btn-add-product')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.btn-remove-product')).not.toBeNull();
     flush();
     discardPeriodicTasks();
   }));

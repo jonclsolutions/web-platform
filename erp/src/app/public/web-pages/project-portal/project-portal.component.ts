@@ -6,9 +6,9 @@
  * @created 2026
  * @description Customer-facing project portal - login (permanent access_token URL +
  * admin-generated password) followed by a 24h-sliding session. Session token stored
- * in localStorage (namespaced per project token) and sent to the backend as a
- * `session_token` param on every request (both GET query string and POST body) - see
- * CheckProjectSession middleware.
+ * in localStorage (namespaced per project token) and sent to the backend as
+ * `Authorization: Bearer` header on every request (see security-note below and the
+ * CheckProjectSession middleware).
  *
  * (Earlier refactor-notes for the refresh() silent-update pattern,
  * closeThreadAsCustomer(), ProjectPortalLocalizationService integration, the tabbed
@@ -27,13 +27,16 @@
  *   `error_send_failed` (`replySendError` / `newThreadSendError`), cleared on the next attempt.
  *   (2) The translations$ subscription of the constructor was never closed (one leaked
  *   subscription per opened portal) - it now ends with destroy$.
+ * @security-note (2026-10-23) The portal session is sent as `Authorization: Bearer` header
+ *   (portalGet / portalPost) instead of the `session_token` query parameter - the API accepts only
+ *   the header now (open finding #1).
  */
 
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil, finalize, timer, switchMap, filter } from 'rxjs';
+import { Observable, Subject, takeUntil, finalize, timer, switchMap, filter } from 'rxjs';
 import { PublicDataService } from '../../../shared/services/public-data.service';
 import { ProjectPortalLocalizationService } from './project-portal-localization.service';
 
@@ -206,8 +209,8 @@ updateThreadStatus(status: string): void {
   this.threadStatusChanging = true;
   this.cdr.markForCheck();
 
-  this.publicDataService.post<ProjectThread>(
-    `projects/public/${this.token}/threads/${this.selectedThread.id}/status?session_token=${encodeURIComponent(this.sessionToken!)}`,
+  this.portalPost<ProjectThread>(
+    `projects/public/${this.token}/threads/${this.selectedThread.id}/status`,
     { status }
   ).pipe(
     finalize(() => { this.threadStatusChanging = false; this.cdr.markForCheck(); }),
@@ -400,6 +403,24 @@ updateThreadStatus(status: string): void {
     this.cdr.markForCheck();
   }
 
+  /**
+   * @description Portal request headers: the session goes ONLY into `Authorization: Bearer`,
+   *   never into the URL (access logs / history leak, open finding #1).
+   */
+  private authHeaders(): Record<string, string> | undefined {
+    return this.sessionToken ? { Authorization: `Bearer ${this.sessionToken}` } : undefined;
+  }
+
+  /** GET of a portal endpoint with the session header. */
+  private portalGet<T>(path: string): Observable<T> {
+    return this.publicDataService.get<T>(path, undefined, this.authHeaders());
+  }
+
+  /** POST to a portal endpoint with the session header. */
+  private portalPost<T>(path: string, body: any): Observable<T> {
+    return this.publicDataService.post<T>(path, body, this.authHeaders());
+  }
+
   private clearSession(): void {
     localStorage.removeItem(this.storageKey);
     this.sessionToken = null;
@@ -407,7 +428,7 @@ updateThreadStatus(status: string): void {
 
   private loadProject(): void {
     this.state = 'loading';
-    this.publicDataService.get<PublicProject>(`projects/public/${this.token}/?session_token=${encodeURIComponent(this.sessionToken!)}`)
+    this.portalGet<PublicProject>(`projects/public/${this.token}`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (project) => {
@@ -432,7 +453,7 @@ updateThreadStatus(status: string): void {
     this.loginError = null;
     this.cdr.markForCheck();
 
-    this.publicDataService.post<{ session_token: string; project: PublicProject }>(
+    this.portalPost<{ session_token: string; project: PublicProject }>(
       `projects/public/${this.token}/login`,
       { password: this.loginPassword }
     ).pipe(
@@ -458,7 +479,7 @@ updateThreadStatus(status: string): void {
   logout(): void {
     if (!this.sessionToken) { this.state = 'login'; return; }
 
-    this.publicDataService.post(`projects/public/${this.token}/logout?session_token=${encodeURIComponent(this.sessionToken)}`, {})
+    this.portalPost(`projects/public/${this.token}/logout`, {})
       .pipe(takeUntil(this.destroy$))
       .subscribe({ complete: () => this.finishLogout(), error: () => this.finishLogout() });
   }
@@ -478,7 +499,7 @@ updateThreadStatus(status: string): void {
   }
 
   private loadThreads(): void {
-    this.publicDataService.get<ProjectThread[]>(`projects/public/${this.token}/threads?session_token=${encodeURIComponent(this.sessionToken!)}`)
+    this.portalGet<ProjectThread[]>(`projects/public/${this.token}/threads`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (threads) => { this.threads = threads; this.cdr.markForCheck(); },
@@ -501,8 +522,8 @@ updateThreadStatus(status: string): void {
 
     timer(this.POLL_INTERVAL_MS, this.POLL_INTERVAL_MS).pipe(
       switchMap(() =>
-        this.publicDataService.get<ProjectThread[]>(
-          `projects/public/${this.token}/threads?session_token=${encodeURIComponent(this.sessionToken!)}`
+        this.portalGet<ProjectThread[]>(
+          `projects/public/${this.token}/threads`
         )
       ),
       takeUntil(this.stopGlobalPolling$),
@@ -528,7 +549,7 @@ updateThreadStatus(status: string): void {
     this.isRefreshing = true;
     this.cdr.markForCheck();
 
-    this.publicDataService.get<PublicProject>(`projects/public/${this.token}/?session_token=${encodeURIComponent(this.sessionToken)}`)
+    this.portalGet<PublicProject>(`projects/public/${this.token}`)
       .pipe(finalize(() => { this.isRefreshing = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
       .subscribe({
         next: (project) => {
@@ -557,7 +578,7 @@ updateThreadStatus(status: string): void {
     this.replyFileError = null;
     this.cdr.markForCheck();
 
-    this.publicDataService.get<ProjectThread>(`projects/public/${this.token}/threads/${thread.id}?session_token=${encodeURIComponent(this.sessionToken!)}`)
+    this.portalGet<ProjectThread>(`projects/public/${this.token}/threads/${thread.id}`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (full) => {
@@ -590,8 +611,8 @@ updateThreadStatus(status: string): void {
       filter(() => !!this.selectedThread),
       switchMap(() => {
         const lastId = this.selectedThread?.messages?.[this.selectedThread.messages.length - 1]?.id ?? 0;
-        return this.publicDataService.get<{ data: ProjectThreadMessage[]; status: string }>(
-          `projects/public/${this.token}/threads/${this.selectedThread!.id}/new-messages?session_token=${encodeURIComponent(this.sessionToken!)}&after_id=${lastId}`
+        return this.portalGet<{ data: ProjectThreadMessage[]; status: string }>(
+          `projects/public/${this.token}/threads/${this.selectedThread!.id}/new-messages?after_id=${lastId}`
         );
       }),
       takeUntil(this.stopPolling$),
@@ -627,8 +648,8 @@ updateThreadStatus(status: string): void {
     this.olderMessagesLoading = true;
     this.cdr.markForCheck();
 
-    this.publicDataService.get<{ data: ProjectThreadMessage[]; has_more_older_messages: boolean }>(
-      `projects/public/${this.token}/threads/${this.selectedThread.id}/messages?session_token=${encodeURIComponent(this.sessionToken!)}&before_message_id=${oldestId}`
+    this.portalGet<{ data: ProjectThreadMessage[]; has_more_older_messages: boolean }>(
+      `projects/public/${this.token}/threads/${this.selectedThread.id}/messages?before_message_id=${oldestId}`
     ).pipe(finalize(() => { this.olderMessagesLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
@@ -673,8 +694,8 @@ updateThreadStatus(status: string): void {
     this.closingThread = true;
     this.cdr.markForCheck();
 
-    this.publicDataService.post<ProjectThread>(
-      `projects/public/${this.token}/threads/${this.selectedThread.id}/close?session_token=${encodeURIComponent(this.sessionToken!)}`,
+    this.portalPost<ProjectThread>(
+      `projects/public/${this.token}/threads/${this.selectedThread.id}/close`,
       {}
     ).pipe(
       finalize(() => { this.closingThread = false; this.cdr.markForCheck(); }),
@@ -706,8 +727,8 @@ updateThreadStatus(status: string): void {
       ? this.buildFormData({ body }, this.replyFiles)
       : { body };
 
-    this.publicDataService.post(
-      `projects/public/${this.token}/threads/${this.selectedThread.id}/messages?session_token=${encodeURIComponent(this.sessionToken!)}`,
+    this.portalPost(
+      `projects/public/${this.token}/threads/${this.selectedThread.id}/messages`,
       payload
     ).pipe(
       finalize(() => { this.replySending = false; this.cdr.markForCheck(); }),
@@ -752,8 +773,8 @@ updateThreadStatus(status: string): void {
       ? this.buildFormData(base, this.newThreadFiles)
       : base;
 
-    this.publicDataService.post<ProjectThread>(
-      `projects/public/${this.token}/threads?session_token=${encodeURIComponent(this.sessionToken!)}`,
+    this.portalPost<ProjectThread>(
+      `projects/public/${this.token}/threads`,
       payload
     ).pipe(
       finalize(() => { this.newThreadSending = false; this.cdr.markForCheck(); }),

@@ -10,14 +10,15 @@
  * @refactor-note (2026-08) `attachment` (jeden soubor) nahrazeno `attachments` (pole,
  * max. 10 souborů, každý max. 20 MB, souhrnně max. 50 MB) - sjednoceno se stejnou
  * politikou jako StoreWebRawRequestCommissionRequest.
+ * @security-note (2026-10-23) `lead_id` was validated with `exists` on this PUBLIC request - the
+ *   different 422 answers let anyone probe which lead ids exist (open finding #2). The field is
+ *   gone: the lead is resolved only from the unguessable `lead_token` in the controller.
  */
 
 namespace App\Http\Requests\Web\WebSalesOrder;
 
 use App\Rules\AttachmentsTotalSize;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use App\Models\Web\WebSalesLead;
 
 /**
  * @description Handles request validation for new sales order submission.
@@ -47,7 +48,6 @@ class StoreWebSalesOrderRequest extends FormRequest
         ];
 
         return [
-            'lead_id'           => ['nullable', Rule::exists(WebSalesLead::class, 'id')],
             'salesman_name'     => 'sometimes|nullable|string|max:255',
             'client_name'       => 'required|string|max:255',
             'client_email'      => 'required|email|max:255',

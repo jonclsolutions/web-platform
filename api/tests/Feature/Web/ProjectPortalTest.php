@@ -121,10 +121,11 @@ class ProjectPortalTest extends TestCase
     /**
      * @description The session guard: project must exist and be public on every request,
      *   a session is required, must be valid, unexpired and belong to this project; each
-     *   request slides the expiry; the token may also come as session_token input.
+     *   request slides the expiry; the token is accepted only as Bearer header (never as
+     *   session_token query / body input - it would end up in access logs, finding #1).
      * @input No token; unknown project; project switched to private; garbage token; another
-     *   project's session; expired session; session_token query input; valid request after 23h.
-     * @output 401 "Authentication required."; 404 (logged); 401 (logged ×3); 200; expiry moved; 401 after expiry (logged); 404 once private (logged).
+     *   project's session; expired session; session_token query / body input; valid request after 23h.
+     * @output 401 "Authentication required."; 404 (logged); 401 (logged ×3); 401 for query / body token; expiry moved; 401 after expiry (logged); 404 once private (logged).
      */
     public function test_session_guard(): void
     {
@@ -135,7 +136,9 @@ class ProjectPortalTest extends TestCase
             ->assertJson(['message' => 'The session has expired or is invalid. Please log in again.']);
         $foreign = $this->portalSession($this->project());
         $this->withToken($foreign)->getJson('/api/projects/public/portal-token')->assertStatus(401);
-        $this->withoutToken()->getJson("/api/projects/public/portal-token?session_token={$this->session}")->assertOk()->assertJsonPath('name', 'Eshop');
+        $this->withoutToken()->getJson("/api/projects/public/portal-token?session_token={$this->session}")->assertStatus(401)->assertJson(['message' => 'Authentication required.']);
+        $this->withoutToken()->postJson('/api/projects/public/portal-token/logout', ['session_token' => $this->session])->assertStatus(401);
+        $this->withToken($this->session)->getJson('/api/projects/public/portal-token')->assertOk()->assertJsonPath('name', 'Eshop');
 
         $this->travel(23)->hours();
         $this->portal('GET')->assertOk();

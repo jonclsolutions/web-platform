@@ -24,6 +24,9 @@
  * `Storage::delete($batch->temp_path)` was missing in the `catch` branch of importCommit()
  * (even after a failed import, the temporary file remained on disk forever), now this is
  * guaranteed by `try/finally` inside `runImportCommit()`, no manual deletion here.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -42,6 +45,7 @@ use App\Http\Resources\Web\WebSalesLeadResource;
 use App\Services\Import\ImportFileParser;
 use App\Services\Import\ImportRowValidator;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Manages sales lead data operations within the CRM subsystem.
@@ -49,7 +53,7 @@ use Illuminate\Support\Facades\DB;
  */
 class WebSalesLeadController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
     use HandlesImportBatches;
 
     /**
@@ -100,12 +104,7 @@ class WebSalesLeadController extends Controller
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
         if ($request->filled('last_contact_date')) $query->whereDate('last_contact_date', $request->last_contact_date);
 
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortDirection = in_array(strtolower($request->input('sort_direction')), ['asc', 'desc'])
-            ? $request->input('sort_direction')
-            : 'desc';
-
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'created_at', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 

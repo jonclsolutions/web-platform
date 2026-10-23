@@ -9,6 +9,10 @@
  * entitu (WebRawRequestCommission, WebSalesOrder, a v budoucnu i admin formuláře - viz
  * task "část 2"). Nahrazuje dřívější jednosouborová pole `file_path`/`attachment_path`
  * roztroušená po jednotlivých modelech.
+ * @refactor-note (2026-10-23) The `url` accessor (`asset('storage/' . path)`) was removed (open
+ *   finding #9): attachments live on the `private` disk without a public storage link, so the
+ *   URL was dead - and for a file on a public disk it would have bypassed the signed routes. Files
+ *   are reachable ONLY through the signed `download_url` / `view_url` of WebAttachmentResource.
  * @note Timestampy jen `created_at` (žádné `updated_at`) - příloha se po nahrání nikdy
  * needituje, jen přidává/maže.
  */
@@ -38,13 +42,5 @@ class WebAttachment extends Model
     public function attachable(): MorphTo
     {
         return $this->morphTo();
-    }
-
-    /**
-     * @description Veřejná URL k souboru na daném disku.
-     */
-    public function getUrlAttribute(): string
-    {
-        return asset('storage/' . $this->path);
     }
 }

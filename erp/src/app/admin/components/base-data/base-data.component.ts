@@ -258,6 +258,10 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
    * `usesPaginatedList = false` (viz refactor-note 2026-08-9) místo toho zavolají
    * přímo `this.refreshData()`. Zároveň napojuje globální "Aktualizovat vše" tlačítko
    * a volitelný periodický background refresh.
+   * @bugfix-note (2026-10-23) The first page was loaded with `defaultFilters` (id desc), so a
+   *   page with its own `filters` (business-logs / logs created_at, security-events last_seen_at,
+   *   external links name asc, shop customers / orders / shipping / payment methods) showed a
+   *   different order on mount than after any reload (open finding #13). Now the page's `filters`.
    */
   protected initWithAuthCheck(router: Core.Router): void {
     this.authService.isLoggedIn$
@@ -265,7 +269,7 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
       .subscribe(loggedIn => {
         if (loggedIn) {
           if (this.usesPaginatedList) {
-            this.list.loadInitial(this.defaultFilters);
+            this.list.loadInitial(this.filters);
           } else {
             this.refreshData();
           }

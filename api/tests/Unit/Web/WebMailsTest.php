@@ -72,7 +72,8 @@ class WebMailsTest extends TestCase
      *   links to the admin thread list on the frontend.
      * @input Project 'Eshop', thread 'Logo colours'; frontend https://admin.example.com/.
      * @output Subjects 'New request — Eshop: Logo colours' / 'New message — …'; HTML contains
-     *   https://admin.example.com/admin/web/project-threads and the subject.
+     *   https://admin.example.com/admin/web/project-threads, the subject and the English texts
+     *   (no Czech leftovers, finding #10).
      */
     public function test_project_thread_notification(): void
     {
@@ -85,7 +86,12 @@ class WebMailsTest extends TestCase
         $html = $new->render();
         $this->assertStringContainsString('https://admin.example.com/admin/web/project-threads', $html);
         $this->assertStringContainsString('Logo colours', $html);
+        $this->assertStringContainsString('The customer started a new thread:', $html);
+        $this->assertStringContainsString('Open in the administration', $html);
+        $this->assertStringNotContainsString('Zákazník', $html);
 
-        (new ProjectThreadActivityMail($project, $thread, false))->assertHasSubject('New message — Eshop: Logo colours');
+        $reply = new ProjectThreadActivityMail($project, $thread, false);
+        $reply->assertHasSubject('New message — Eshop: Logo colours');
+        $this->assertStringContainsString('The customer wrote a new message in the thread:', $reply->render());
     }
 }

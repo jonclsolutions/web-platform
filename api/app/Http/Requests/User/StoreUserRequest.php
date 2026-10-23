@@ -17,11 +17,15 @@
  * use across UserController/administrators.config.ts. If the project's actual
  * StoreUserRequest already contains additional rules, merge this diff into it
  * rather than overwriting wholesale.
+ * @security-note (2026-10-23) `role_id` must be an ACTIVE role - `exists:core_roles,id` also
+ *   accepted soft-deleted (trashed) roles, so an account could be given a role that was removed
+ *   (open finding #4).
  */
 
 namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreUserRequest extends FormRequest
 {
@@ -44,7 +48,7 @@ class StoreUserRequest extends FormRequest
         return [
             'user_email' => ['required', 'email', 'max:255', 'unique:users,user_email'],
             'full_name' => ['required', 'string', 'max:255'],
-            'role_id' => ['nullable', 'integer', 'exists:core_roles,id'],
+            'role_id' => ['nullable', 'integer', Rule::exists('core_roles', 'id')->whereNull('deleted_at')],
             'enable_2fa' => ['sometimes', 'boolean'],
             'internal_note' => ['nullable', 'string'],
             'dpp_hours_spent' => ['nullable', 'integer', 'min:0'],

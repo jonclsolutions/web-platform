@@ -663,6 +663,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * cache - viz refactor-note v hlavičce souboru) if necessary.
    */
   openAddProductSearch(): void {
+    if (!this.canManageCategoryProducts) return;
     this.showAddProduct = true;
     this.addProductSearch = '';
 
@@ -686,10 +687,23 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   }
 
   /**
+   * @description Whether the user may change the products of a category (add / remove in the
+   *   product panel) - the API route `PATCH shop/products/{id}/category` needs `shop-products-update`.
+   * @bugfix-note (2026-10-23) The add / remove buttons of the product panel were shown to every
+   *   user who could open the categories page and the API then refused the request (open finding
+   *   #17). The buttons are hidden and both actions do nothing without the permission.
+   * @returns True with `shop-products-update`.
+   */
+  get canManageCategoryProducts(): boolean {
+    return this.permissionService.hasPermission('shop-products-update');
+  }
+
+  /**
    * @description Removes an existing product assignment from the selected category.
    * @param product The product object to remove.
    */
   async removeProductFromCategory(product: any): Promise<void> {
+    if (!this.canManageCategoryProducts) return;
     const confirmed = await this.confirmDialogService.open(
       this.t('remove_product_confirm_title'),
       this.t('remove_product_confirm_message')
@@ -734,7 +748,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @param product The product object to add.
    */
   addProductToCategory(product: any): void {
-    if (!this.selectedCategory) return;
+    if (!this.selectedCategory || !this.canManageCategoryProducts) return;
 
     this.loadingProducts = true;
     this.cd.markForCheck();

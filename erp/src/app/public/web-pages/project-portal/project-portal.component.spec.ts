@@ -9,7 +9,8 @@
  *   thread list and of new messages, thread detail (older messages, status change, closing),
  *   replies and new threads incl. attachment validation and send errors (bugfix 2026-10-23),
  *   refresh, the lazily loaded contacts tab, derived labels and the language menu.
- * @refactor-note (2026-10-23) The old spec had no ActivatedRoute (NG0201) - rewritten.
+ * @refactor-note (2026-10-23) The old spec had no ActivatedRoute (NG0201) - rewritten. The session
+ *   is expected in the `Authorization` header, never in the URL (open finding #1).
  * @dependencies
  * - PublicDataService stub routing GET / POST by URL; ProjectPortalLocalizationService stub
  *   (texts = keys); ActivatedRoute with the token; fakeAsync for timers.
@@ -47,11 +48,14 @@ describe('ProjectPortalComponent', () => {
   const file = (name: string, size = 10) => { const f = new File(['x'], name); Object.defineProperty(f, 'size', { value: size }); return f; };
   const files = (...list: File[]) => ({ target: { files: list, value: 'x' } } as any);
 
-  /** URL → reply routing for GET / POST (longest matching key wins); unknown → {}. */
+  /** URL → reply routing for GET / POST: the path (query removed) ending with the longest key wins; unknown → {}. */
   const route = (url: string) => {
-    const key = Object.keys(replies).filter(k => url.includes(k)).sort((a, b) => b.length - a.length)[0];
+    const path = url.split('?')[0];
+    const key = Object.keys(replies).filter(k => path.endsWith(k)).sort((a, b) => b.length - a.length)[0];
     return key ? replies[key]() : of({});
   };
+  /** The portal session header (never in the URL - finding #1). */
+  const AUTH = { Authorization: 'Bearer sess' };
 
   /** Creates the portal for the token (null = none) with an optional stored session. */
   function create(token: string | null = 'tok', session: string | null = null): void {
@@ -78,10 +82,10 @@ describe('ProjectPortalComponent', () => {
   beforeEach(() => {
     localStorage.removeItem(SESSION);
     replies = {
-      '/tok/?session_token': () => of(project),
-      '/tok/threads?session_token': () => of(threads()),
-      '/threads/1?session_token': () => of(detail(1)),
-      '/threads/2?session_token': () => of(detail(2)),
+      '/tok': () => of(project),
+      '/tok/threads': () => of(threads()),
+      '/threads/1': () => of(detail(1)),
+      '/threads/2': () => of(detail(2)),
       '/new-messages': () => of({ data: [], status: 'active' })
     };
     get = jasmine.createSpy('get').and.callFake(route);
@@ -134,7 +138,9 @@ describe('ProjectPortalComponent', () => {
 
     replies['/tok/login'] = () => of({ session_token: 's1', project });
     portal.login();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/login', { password: 'pw' });
+    expect(post).toHaveBeenCalledWith('projects/public/tok/login', { password: 'pw' }, undefined);
+    expect(get).toHaveBeenCalledWith('projects/public/tok/threads', undefined, { Authorization: 'Bearer s1' });
+    expect(get.calls.allArgs().every((a: any[]) => !String(a[0]).includes('session_token'))).toBeTrue();
     expect(localStorage.getItem(SESSION)).toBe('s1');
     expect(portal.state).toBe('portal');
     expect(portal.threads.length).toBe(2);
@@ -149,13 +155,13 @@ describe('ProjectPortalComponent', () => {
    */
   it('restores or drops a stored session', fakeAsync(() => {
     loggedIn();
-    expect(get).toHaveBeenCalledWith('projects/public/tok/?session_token=sess');
+    expect(get).toHaveBeenCalledWith('projects/public/tok', undefined, AUTH);
     expect(portal.state).toBe('portal');
     fixture.destroy();
     discardPeriodicTasks();
 
     TestBed.resetTestingModule();
-    replies['/tok/?session_token'] = () => throwError(() => ({ status: 401 }));
+    replies['/tok'] = () => throwError(() => ({ status: 401 }));
     loggedIn();
     expect(portal.state).toBe('login');
     expect(localStorage.getItem(SESSION)).toBeNull();
@@ -170,12 +176,12 @@ describe('ProjectPortalComponent', () => {
   it('polls the thread list', fakeAsync(() => {
     loggedIn();
     portal.openThread(portal.threads[0]);
-    replies['/tok/threads?session_token'] = () => of([{ ...threads()[0], unread_count: 5 }, threads()[1]]);
+    replies['/tok/threads'] = () => of([{ ...threads()[0], unread_count: 5 }, threads()[1]]);
     tick(15000);
     expect(portal.threads[0].unread_count).toBe(0);
     expect(portal.totalUnreadCount).toBe(1);
 
-    replies['/tok/threads?session_token'] = () => throwError(() => new Error('x'));
+    replies['/tok/threads'] = () => throwError(() => new Error('x'));
     tick(15000);
     expect(portal.state).toBe('portal');
     fixture.destroy();
@@ -196,7 +202,7 @@ describe('ProjectPortalComponent', () => {
     expect(portal.selectedThread!.messages!.map(m => m.id)).toEqual([10]);
     expect(portal.threads[0].unread_count).toBe(0);
     expect(portal.threadDetailLoading).toBeFalse();
-    expect(get).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/new-messages\\?session_token=sess&after_id=10'));
+    expect(get).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/new-messages\\?after_id=10$'), undefined, AUTH);
 
     replies['/new-messages'] = () => of({ data: [{ id: 11, body: 'New', author_type: 'admin', author_label: 'PM', created_at: '' }], status: 'closed' });
     tick(15000);
@@ -208,7 +214,7 @@ describe('ProjectPortalComponent', () => {
     tick(15000);
     expect(console.error).toHaveBeenCalled();
 
-    replies['/threads/2?session_token'] = () => throwError(() => new Error('x'));
+    replies['/threads/2'] = () => throwError(() => new Error('x'));
     portal.openThread(portal.threads[1]);
     expect(portal.threadDetailLoading).toBeFalse();
     portal.closeThread();
@@ -227,10 +233,10 @@ describe('ProjectPortalComponent', () => {
     portal.loadOlderMessages();
     portal.openThread(portal.threads[0]);
     tick();
-    replies['/messages?session_token'] = () => of({ data: [{ id: 5, body: 'Old', author_type: 'admin', author_label: null, created_at: '' }], has_more_older_messages: false });
+    replies['/messages'] = () => of({ data: [{ id: 5, body: 'Old', author_type: 'admin', author_label: null, created_at: '' }], has_more_older_messages: false });
     portal.loadOlderMessages();
     tick();
-    expect(get).toHaveBeenCalledWith(jasmine.stringMatching('before_message_id=10'));
+    expect(get).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/messages\\?before_message_id=10$'), undefined, AUTH);
     expect(portal.selectedThread!.messages!.map(m => m.id)).toEqual([5, 10]);
     const calls = get.calls.count();
     portal.loadOlderMessages();
@@ -260,28 +266,28 @@ describe('ProjectPortalComponent', () => {
     portal.updateThreadStatus('active');
     expect(post).not.toHaveBeenCalled();
 
-    replies['/status?session_token'] = () => of({ status: 'closed' });
+    replies['/status'] = () => of({ status: 'closed' });
     portal.updateThreadStatus('closed');
-    expect(post).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/status\\?session_token=sess'), { status: 'closed' });
+    expect(post).toHaveBeenCalledWith('projects/public/tok/threads/1/status', { status: 'closed' }, AUTH);
     expect(portal.selectedThread!.status).toBe('closed');
     expect(portal.threads[0].status).toBe('closed');
 
-    replies['/status?session_token'] = () => throwError(() => ({ status: 500 }));
+    replies['/status'] = () => throwError(() => ({ status: 500 }));
     portal.updateThreadStatus('active');
     expect(portal.selectedThread).not.toBeNull();
-    replies['/status?session_token'] = () => throwError(() => ({ status: 404 }));
+    replies['/status'] = () => throwError(() => ({ status: 404 }));
     portal.updateThreadStatus('active');
     expect(portal.selectedThread).toBeNull();
 
     portal.openThread(portal.threads[0]);
     tick();
-    replies['/close?session_token'] = () => of({ status: 'closed' });
+    replies['/close'] = () => of({ status: 'closed' });
     portal.closeThreadAsCustomer();
     expect(portal.threads[0].status).toBe('closed');
-    replies['/close?session_token'] = () => throwError(() => ({ status: 500 }));
+    replies['/close'] = () => throwError(() => ({ status: 500 }));
     portal.closeThreadAsCustomer();
     expect(portal.selectedThread).not.toBeNull();
-    replies['/close?session_token'] = () => throwError(() => ({ status: 404 }));
+    replies['/close'] = () => throwError(() => ({ status: 404 }));
     portal.closeThreadAsCustomer();
     expect(portal.selectedThread).toBeNull();
     expect(portal.closingThread).toBeFalse();
@@ -337,7 +343,7 @@ describe('ProjectPortalComponent', () => {
 
     portal.replyBody = ' Thanks ';
     portal.sendReply();
-    expect(post).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/messages\\?session_token=sess'), { body: 'Thanks' });
+    expect(post).toHaveBeenCalledWith('projects/public/tok/threads/1/messages', { body: 'Thanks' }, AUTH);
     expect(portal.replyBody).toBe('');
 
     portal.replyBody = 'With file';
@@ -348,7 +354,7 @@ describe('ProjectPortalComponent', () => {
     expect((fd.get('attachments[]') as File).name).toBe('brief.pdf');
     tick();
 
-    replies['/messages?session_token'] = () => throwError(() => ({ status: 500 }));
+    replies['/messages'] = () => throwError(() => ({ status: 500 }));
     portal.replyBody = 'Fail';
     portal.sendReply();
     expect(portal.replySendError).toBe('error_send_failed');
@@ -380,14 +386,14 @@ describe('ProjectPortalComponent', () => {
     portal.newThreadSubject = 'Bug';
     portal.newThreadBody = 'Broken';
     portal.submitNewThread();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/threads?session_token=sess', { subject: 'Bug', priority: 'medium', body: 'Broken' });
+    expect(post).toHaveBeenCalledWith('projects/public/tok/threads', { subject: 'Bug', priority: 'medium', body: 'Broken' }, AUTH);
     expect(portal.newThreadMode).toBeFalse();
 
     portal.openNewThreadForm();
     portal.newThreadSubject = 'Files';
     portal.newThreadBody = 'See';
     portal.onNewThreadFilesSelected(files(file('a.png')));
-    replies['/tok/threads?session_token'] = () => throwError(() => ({ status: 500 }));
+    replies['/tok/threads'] = () => throwError(() => ({ status: 500 }));
     portal.submitNewThread();
     expect(post.calls.mostRecent().args[1] instanceof FormData).toBeTrue();
     expect(portal.newThreadSendError).toBe('error_send_failed');
@@ -409,13 +415,13 @@ describe('ProjectPortalComponent', () => {
     tick();
     get.calls.reset();
     portal.refresh();
-    expect(get).toHaveBeenCalledWith('projects/public/tok/?session_token=sess');
-    expect(get).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1\\?session_token'));
+    expect(get).toHaveBeenCalledWith('projects/public/tok', undefined, AUTH);
+    expect(get).toHaveBeenCalledWith('projects/public/tok/threads/1', undefined, AUTH);
     expect(portal.isRefreshing).toBeFalse();
     portal.closeThread();
     portal.refresh();
 
-    replies['/tok/?session_token'] = () => throwError(() => ({ status: 401 }));
+    replies['/tok'] = () => throwError(() => ({ status: 401 }));
     portal.refresh();
     expect(portal.state).toBe('login');
     get.calls.reset();
@@ -429,13 +435,13 @@ describe('ProjectPortalComponent', () => {
    * @description Logout ends the session on the server (also when that fails) and resets the
    *   portal; without a session it just shows the login.
    * @input logout() ok; login again + logout failing; logout without session.
-   * @output post …/logout?session_token=sess; state login, storage cleared, data reset.
+   * @output post …/logout with the Bearer header; state login, storage cleared, data reset.
    */
   it('logs out', fakeAsync(() => {
     loggedIn();
     portal.setActiveTab('checkpoints');
     portal.logout();
-    expect(post).toHaveBeenCalledWith('projects/public/tok/logout?session_token=sess', {});
+    expect(post).toHaveBeenCalledWith('projects/public/tok/logout', {}, AUTH);
     expect([portal.state, portal.project, portal.threads.length, portal.activeTab]).toEqual(['login', null, 0, 'description']);
     expect(localStorage.getItem(SESSION)).toBeNull();
 

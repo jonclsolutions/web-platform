@@ -27,6 +27,9 @@
  * `core_logs` - during an attack that would flood the audit log just as much as
  * unbucketed writes would flood `core_security_events` (see CoreSecurityEvent.php).
  * Only administrative ACTIONS over monitoring are logged, not the diagnostic data itself.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -41,10 +44,11 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Traits\AppliesSafeSorting;
 
 class CoreSecurityEventController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
 
     /**
      * @description Paginated overview of security events with filters for triage.
@@ -76,9 +80,7 @@ class CoreSecurityEventController extends Controller
             $query->where('last_seen_at', '<=', $request->input('date_to'));
         }
 
-        $sortBy = $request->input('sort_by', 'last_seen_at');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'last_seen_at', 'desc');
 $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
     if ($noPagination) {

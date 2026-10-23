@@ -11,9 +11,13 @@
  * @bugfix-note (2026-08-31) Odstraněny duplicitní `alertDialogService.open('Chyba', ...)`
  * volání z `error:` callbacků (handleFormSubmitted, handleViewDetails) -
  * `DataHandler.handleError()` je jediné autoritativní místo pro chybový toast.
+ * @refactor-note (2026-10-23) Localized (open finding #16): texts from the admin translation
+ *   section `shop-coupons` (`Config.create*()` factories rebuilt on every language change,
+ *   `takeUntilDestroyed()`), the success alerts use `shared.success` + `crud_*_message`.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
@@ -31,25 +35,25 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CouponsComponent extends BaseDataComponent<any> implements Core.OnInit {
-  tableCaption: string = 'Slevové kupóny';
+  protected override translationSection: string = 'shop-coupons';
+
+  /**
+   * @description Text of the page's translation section.
+   * @param key Key inside `shop-coupons`.
+   * @returns Translated text.
+   */
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-coupons.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'shop/coupons';
 
-  override buttons = Config.COUPON_BUTTONS;
-  override formFields = Config.COUPON_FORM_FIELDS;
-  couponColumns = Config.COUPON_COLUMNS;
-  trashCouponColumns = Config.COUPON_TRASH_COLUMNS;
-  override filterColumns = Config.COUPON_FILTER_COLUMNS;
-  override detailsColumns = Config.COUPON_DETAILS_COLUMNS;
+  couponColumns: Core.ColumnDefinition[] = [];
+  trashCouponColumns: Core.ColumnDefinition[] = [];
+  graphColumns: GraphColumnOption[] = [];
 
-  readonly graphColumns: GraphColumnOption[] = Config.COUPON_DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -57,37 +61,60 @@ export class CouponsComponent extends BaseDataComponent<any> implements Core.OnI
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createCouponButtons(this.i18n);
+      this.formFields = Config.createCouponFormFields(this.i18n);
+      this.couponColumns = Config.createCouponColumns(this.i18n);
+      this.trashCouponColumns = Config.createCouponTrashColumns(this.i18n);
+      this.filterColumns = Config.createCouponFilterColumns(this.i18n);
+      this.detailsColumns = Config.createCouponDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
- get toolbarButtons(): Core.Button[] {
-     return Config.COUPON_TOOLBAR_BUTTONS.map(btn => {
-       let updatedBtn = { ...btn };
- 
-       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
-         updatedBtn.showIf = false;
-       }
- 
-       switch (btn.action) {
-         case 'toggleFilters':
-           updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
-           updatedBtn.isActive = this.isFilterVisible;
-           break;
-         case 'handleCreateFormOpened':
-         case 'exportActiveTable':
-         case 'triggerImport':
-           if (updatedBtn.showIf !== false) {
-             updatedBtn.showIf = !this.showTrashTable;
-           }
-           break;
-         case 'toggleTable':
-           updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
-           updatedBtn.isActive = this.showTrashTable;
-           break;
-       }
- 
-       return updatedBtn;
-     });
-   }
+  /**
+   * @description Toolbar of the page, by permission and view (active / trash, filters open).
+   * @returns Toolbar buttons with labels, visibility and active state.
+   */
+  get toolbarButtons(): Core.Button[] {
+    return Config.createCouponToolbarButtons(this.i18n).map(btn => {
+      const updatedBtn = { ...btn };
+
+      if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
+        updatedBtn.showIf = false;
+      }
+
+      switch (btn.action) {
+        case 'toggleFilters':
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
+          updatedBtn.isActive = this.isFilterVisible;
+          break;
+        case 'handleCreateFormOpened':
+        case 'exportActiveTable':
+        case 'triggerImport':
+          if (updatedBtn.showIf !== false) {
+            updatedBtn.showIf = !this.showTrashTable;
+          }
+          break;
+        case 'toggleTable':
+          updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
+          updatedBtn.isActive = this.showTrashTable;
+          break;
+      }
+
+      return updatedBtn;
+    });
+  }
 
   override ngOnInit(): void {
     super.ngOnInit();
@@ -96,14 +123,21 @@ export class CouponsComponent extends BaseDataComponent<any> implements Core.OnI
 
   override refreshData(): void { this.forceFullRefresh(this.filters); }
 
+  /**
+   * @description Creates (no id) or updates (id) a coupon, then closes the form and reloads.
+   * @param formData Values of the coupon form.
+   */
   override handleFormSubmitted(formData: any): void {
     const request$ = formData.id ? this.updateData(formData.id, formData) : this.postData(formData);
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.cd.markForCheck(); })).subscribe({
       next: () => {
-        this.alertDialogService.open('Úspěch', formData.id ? 'Požadavek byl upraven.' : 'Požadavek byl vytvořen.', 'success');
+        this.alertDialogService.open(
+          this.i18n.getValue('shared.success'),
+          this.t(formData.id ? 'crud_updated_message' : 'crud_created_message'),
+          'success'
+        );
         this.refreshData();
       }
     });
   }
-
 }

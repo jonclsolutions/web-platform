@@ -47,6 +47,9 @@
  * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
  * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
  * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -67,6 +70,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Mail\Web\WebRawRequestCommissionReceived;
 use Illuminate\Support\Facades\Mail;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Controller responsible for processing raw commission inquiries submitted via the website.
@@ -74,7 +78,7 @@ use Illuminate\Support\Facades\Mail;
  */
 class WebRawRequestCommissionController extends Controller
 {
-    use HandlesAttachments;
+    use HandlesAttachments, AppliesSafeSorting;
     use HandlesImportBatches;
     use LogsActivity;
 
@@ -138,9 +142,7 @@ class WebRawRequestCommissionController extends Controller
             $query->whereDate('created_at', '<=', $request->input('date_to'));
         }
 
-        $sortBy = $request->input('sort_by', 'id');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'id', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         $data = $noPagination ? $query->get() : $query->paginate($perPage);

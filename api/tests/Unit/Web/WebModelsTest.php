@@ -80,19 +80,20 @@ class WebModelsTest extends TestCase
     }
 
     /**
-     * @description The legacy `url` attribute points into public storage (kept for backward
-     *   compatibility; private files are served through the signed download routes only).
-     * @input Attachment with path web/x/a.pdf; root URL https://api.example.com.
-     * @output Host api.example.com, path /storage/web/x/a.pdf.
+     * @description Attachments are reachable only through signed links (open finding #9): the
+     *   model no longer has the dead `url` storage accessor and the resource does not expose it.
+     * @input Attachment with path web/x/a.pdf; WebAttachmentResource of it.
+     * @output Model url null; resource without `url`, download_url / view_url signed (signature query).
      */
-    public function test_attachment_url(): void
+    public function test_attachment_has_signed_links_only(): void
     {
-        $this->app['url']->forceRootUrl('https://api.example.com');
-
         $attachment = new WebAttachment(['disk' => 'private', 'path' => 'web/x/a.pdf', 'original_filename' => 'a.pdf']);
+        $this->assertNull($attachment->url);
 
-        $this->assertSame('/storage/web/x/a.pdf', parse_url($attachment->url, PHP_URL_PATH));
-        $this->assertSame('api.example.com', parse_url($attachment->url, PHP_URL_HOST));
+        $json = (new \App\Http\Resources\Web\WebAttachmentResource($attachment))->toArray(request());
+        $this->assertArrayNotHasKey('url', $json);
+        $this->assertStringContainsString('signature=', $json['download_url']);
+        $this->assertStringContainsString('signature=', $json['view_url']);
     }
 
     /**

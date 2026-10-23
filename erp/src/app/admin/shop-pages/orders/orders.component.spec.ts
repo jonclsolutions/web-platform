@@ -165,11 +165,15 @@ describe('OrdersComponent', () => {
     /**
      * @description Init loads orders newest first and every lookup; variants are flattened with their product.
      * @input  ngOnInit()
-     * @output getPaginatedData('shop/orders', …); products 3; variants 2 with product_id 1 / product_name 'Pixel'; payment, shipping, coupons loaded
+     * @output getPaginatedData('shop/orders', …) exactly twice (active + trash, finding #18) sorted by
+     *   created_at desc; products 3; variants 2 with product_id 1 / product_name 'Pixel'; payment, shipping, coupons loaded
      */
     it('loads orders and lookups', fakeAsync(() => {
       loadLookups();
       expect(ctx.genericTable.getPaginatedData.calls.first().args[0]).toBe('shop/orders');
+      const orderCalls = ctx.genericTable.getPaginatedData.calls.allArgs().filter(a => a[0] === 'shop/orders');
+      expect(orderCalls.length).toBe(2);
+      orderCalls.forEach(a => expect(a[3]).toEqual(jasmine.objectContaining({ sort_by: 'created_at', sort_direction: 'desc' })));
       expect(component.filters).toEqual({ sort_by: 'created_at', sort_direction: 'desc' });
       expect(component.products.length).toBe(3);
       expect(component.variants.map(v => [v.id, v.product_id, v.product_name])).toEqual([[11, 1, 'Pixel'], [12, 1, 'Pixel']]);

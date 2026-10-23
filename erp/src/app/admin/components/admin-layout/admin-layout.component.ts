@@ -55,6 +55,7 @@ import { HasPermissionDirective } from '../../../core/directives/has-permission.
 import { LoadingService } from '../../../core/services/loading.service';
 import { AdminLocalizationService, AdminLanguageMeta } from '../../../core/services/admin-localization.service';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 
 /**
  * @description The layout shell for the administration area, handling sidebar controls and navigation.
@@ -105,6 +106,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
    * file header.
    */
   private scrollLock = inject(ScrollLockService);
+
+  /** Confirmation dialog - gets the admin button labels while the admin is shown (finding #20). */
+  private confirmDialog = inject(ConfirmDialogService);
 
   /**
    * @description Whether THIS component currently holds a lock in ScrollLockService.
@@ -176,7 +180,15 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     // (tahle komponenta ji nedědí).
     // @bugfix-note (2026-10-23) This subscription was never closed (a new one per login, the layout
     // is re-created after every logout / login) - kept and unsubscribed in ngOnDestroy.
-    this.i18nSubscription = this.i18n.translations$.subscribe(() => this.cdr.markForCheck());
+    // @bugfix-note (2026-10-23) The confirmation dialog had hardcoded Czech buttons (open finding
+    // #20): while the admin is shown, its default labels follow the admin language.
+    this.i18nSubscription = this.i18n.translations$.subscribe(() => {
+      this.confirmDialog.setDefaultLabels({
+        confirm: this.i18n.getValue('shared.confirm'),
+        cancel: this.i18n.getValue('shared.cancel'),
+      });
+      this.cdr.markForCheck();
+    });
 
     /**
      * @bugfix-note (2026-09e) Jediné autoritativní místo, které nastavuje
@@ -511,6 +523,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.userEmailSubscription?.unsubscribe();
     this.routerSubscription?.unsubscribe();
     this.i18nSubscription?.unsubscribe();
+    this.confirmDialog.setDefaultLabels(null);  // leaving the admin: no admin labels on the public web
 
     // Release the background scroll lock if this component still holds it
     // (e.g. logout / leaving /admin while a mobile panel is open).

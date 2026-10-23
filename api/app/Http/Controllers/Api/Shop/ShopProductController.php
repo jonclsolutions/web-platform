@@ -31,6 +31,9 @@
  *   destroy, restore.
  * - public list: `per_page` was unlimited (one request could load the whole catalogue with
  *   all relations) → capped at 100.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -51,6 +54,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Controller responsible for administrative and public product lifecycle management.
@@ -58,7 +62,7 @@ use Illuminate\Support\Str;
  */
 class ShopProductController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
 
     /**
      * Retrieves a paginated list of products based on applied filters.
@@ -107,7 +111,7 @@ class ShopProductController extends Controller
             $query->whereHas('prices', fn($q) => $q->where('price_eur_with_vat', '<=', $request->input('price_to')));
         }
 
-        $query->orderBy($request->input('sort_by', 'created_at'), $request->input('sort_direction', 'desc'));
+        $this->applySorting($query, $request, 'created_at', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         $data         = $noPagination ? $query->get() : $query->paginate($perPage);
@@ -385,7 +389,7 @@ class ShopProductController extends Controller
             $query->whereHas('prices', fn($q) => $q->where('price_eur_with_vat', '<=', $request->input('price_to')));
         }
 
-        $query->orderBy($request->input('sort_by', 'created_at'), $request->input('sort_direction', 'desc'));
+        $this->applySorting($query, $request, 'created_at', 'desc');
         $products = $query->paginate($perPage);
 
         return response()->json([

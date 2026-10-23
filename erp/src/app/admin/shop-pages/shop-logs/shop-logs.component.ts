@@ -9,9 +9,14 @@
  * - BaseDataComponent: Provides the base logic for data fetching, pagination, and state management.
  * - TableBuilderComponent: Used for rendering the data grid and supporting CSV exports.
  * - SHARED_UI_BUILDERS: Centralized collection of UI components for the administrative dashboard.
+ * @refactor-note (2026-10-23) Localized (open finding #16): texts from the admin translation
+ *   section `shop-logs` (`Config.create*()` factories rebuilt on every language change,
+ *   `takeUntilDestroyed()`). The no-op `buttons.filter(create / edit)` was removed (the log only
+ *   has the details button).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as Core from '../../../shared/imports/core-providers';
 import { SHARED_UI_BUILDERS } from '../../../shared/imports/shared-ui-builders';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
@@ -32,23 +37,24 @@ import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ShopLogsComponent extends BaseDataComponent<any> implements Core.OnInit {
-  tableCaption: string = 'E-Shop logy';
+  protected override translationSection: string = 'shop-logs';
+
+  /**
+   * @description Text of the page's translation section.
+   * @param key Key inside `shop-logs`.
+   * @returns Translated text.
+   */
+  public override t(key: string): string {
+    return this.i18n.getValue(`shop-logs.${key}`);
+  }
+
+  tableCaption: string = '';
 
   override apiEndpoint: string = 'shop/logs';
 
-  override buttons = Config.BUTTONS.filter(b => b.action !== 'create' && b.action !== 'edit');
-  tableColumns = Config.TABLE_COLUMNS;
-  override filterColumns = Config.FILTER_COLUMNS;
-  override detailsColumns = Config.DETAILS_COLUMNS;
+  tableColumns: Core.ColumnDefinition[] = [];
+  graphColumns: GraphColumnOption[] = [];
 
-  readonly graphColumns: GraphColumnOption[] = Config.DETAILS_COLUMNS
-     .filter(col => col.chartable === true)
-     .map(col => ({
-       key: col.key,
-       label: col.displayName,
-      aggregation: col.chartAggregation ?? 'count',
-      possibleValues: col.chartPossibleValues
-     }));
   constructor(
     protected override dataHandler: Core.DataHandler,
     protected override cd: Core.ChangeDetectorRef,
@@ -56,14 +62,31 @@ export class ShopLogsComponent extends BaseDataComponent<any> implements Core.On
     private router: Core.Router
   ) {
     super(dataHandler, cd, genericTableService);
+
+    this.i18n.translations$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.tableCaption = this.t('table_header');
+      this.buttons = Config.createShopLogButtons(this.i18n);
+      this.tableColumns = Config.createShopLogTableColumns(this.i18n);
+      this.filterColumns = Config.createShopLogFilterColumns(this.i18n);
+      this.detailsColumns = Config.createShopLogDetailsColumns(this.i18n);
+      this.graphColumns = this.detailsColumns
+        .filter(col => col.chartable === true)
+        .map(col => ({
+          key: col.key,
+          label: col.displayName,
+          aggregation: col.chartAggregation ?? 'count',
+          possibleValues: col.chartPossibleValues,
+        }));
+      this.cd.markForCheck();
+    });
   }
 
   /**
    * @description Generates toolbar buttons with dynamic state representation.
    * @returns List of buttons with active states applied based on filter visibility.
    */
-get toolbarButtons(): Core.Button[] {
-    return Config.TOOLBAR_BUTTONS.map(btn => {
+  get toolbarButtons(): Core.Button[] {
+    return Config.createShopLogToolbarButtons(this.i18n).map(btn => {
       let updatedBtn = { ...btn };
 
       if (updatedBtn.permission && !this.permissionService.hasPermission(updatedBtn.permission)) {
@@ -72,7 +95,7 @@ get toolbarButtons(): Core.Button[] {
 
       switch (btn.action) {
         case 'toggleFilters':
-          updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
+          updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
         // @refactor-note (2026-10-22) The log is read-only without a trash view (toolbar: filters,

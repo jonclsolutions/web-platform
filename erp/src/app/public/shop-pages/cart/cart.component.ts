@@ -86,11 +86,15 @@ export class CartComponent extends BasePublicComponent {
 
   /**
    * @description Triggers a confirmation dialog before permanently removing an item from the cart.
+   * @param itemId Cart item id.
+   * @bugfix-note (2026-10-23) The dialog buttons were the hardcoded Czech 'Zrušit' / 'Potvrdit' of the
+   *   admin dialog (open finding #20) - the cart passes its own labels from the shop translations.
    */
   removeItem(itemId: string): void {
     this.confirmDialogService.open(
       this.t?.confirm_remove_title,
-      this.t?.confirm_remove_text
+      this.t?.confirm_remove_text,
+      { confirm: this.t?.confirm_remove_confirm, cancel: this.t?.confirm_remove_cancel }
     )
     .then(confirmed => {
       if (confirmed) {

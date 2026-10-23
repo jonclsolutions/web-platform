@@ -19,6 +19,9 @@
  * všechny), a do odpovědi přidává `has_more_older_messages` flag. Nová
  * `olderMessages()` metoda + route obsluhuje tlačítko "Načíst starší zprávy" ve
  * frontendu (`before_message_id` = id aktuálně nejstarší načtené zprávy).
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -32,10 +35,11 @@ use App\Traits\HandlesAttachments;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Traits\AppliesSafeSorting;
 
 class WebProjectThreadController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
     use HandlesAttachments;
 
     /** Storage folder for thread message attachments within the private disk. */
@@ -50,9 +54,7 @@ class WebProjectThreadController extends Controller
         if ($request->filled('priority')) $query->where('priority', $request->input('priority'));
         if ($request->filled('status')) $query->where('status', $request->input('status'));
 
-        $sortBy = $request->input('sort_by', 'last_message_at');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'last_message_at', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         if ($noPagination) {

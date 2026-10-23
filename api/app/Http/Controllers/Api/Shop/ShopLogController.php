@@ -15,6 +15,9 @@
  * tyhle tři se nikde nezpracovávaly. Stejná díra byla nalezena a opravena souběžně u
  * WebLogController a CoreLogController (identická šablona, viz jejich bugfix-notes
  * stejné datum). Doplněno `id` (přesná shoda) a `user_plain`/`origin` (LIKE).
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -24,9 +27,12 @@ use App\Models\Shop\ShopLog;
 use App\Http\Resources\Shop\ShopLogResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Traits\AppliesSafeSorting;
 
 class ShopLogController extends Controller
 {
+    use AppliesSafeSorting;
+
     /**
      * Retrieves a paginated list of shop audit events with optional filtering.
      *
@@ -82,9 +88,7 @@ public function index(Request $request): JsonResponse
         });
     }
 
-    $sortBy = $request->input('sort_by', 'created_at');
-    $sortDirection = $request->input('sort_direction', 'desc');
-    $query->orderBy($sortBy, $sortDirection);
+    $this->applySorting($query, $request, 'created_at', 'desc');
 
     /**
      * @bugfix-note (2026-08-29) BACKLOG "graph builder vidí jen 15 z X záznamů" -

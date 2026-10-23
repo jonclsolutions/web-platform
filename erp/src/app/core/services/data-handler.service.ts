@@ -266,14 +266,45 @@ getOne<T>(apiUrl: string): Observable<T> {
 }
 
   /**
+   * @description Unwraps a `{data: …}` response; a response without the wrapper is returned as is.
+   * @bugfix-note (2026-10-23) post / put / patch read `response.data` unconditionally, but many
+   *   API create / update endpoints answer the bare resource (`response()->json(new XResource)`),
+   *   so callers got `undefined` (e.g. `PUT core/users/{id}`, open finding #6). Both shapes are
+   *   accepted now, the same way getOne() / getCollection() already did.
+   * @param response Raw response body.
+   * @returns The wrapped entity or the body itself.
+   */
+  private unwrap<T>(response: T | { data: T } | null): T {
+    if (response && typeof response === 'object' && !Array.isArray(response) && 'data' in response) {
+      return (response as { data: T }).data;
+    }
+    return response as T;
+  }
+
+  /**
+   * @description POST that keeps the whole answer: `{data, ...meta}` (bare resources are wrapped
+   *   as `{data: body}`) - for endpoints that send extra fields next to the record, e.g.
+   *   `activation_email_sent` of `POST core/users` (open finding #11).
+   * @param apiUrl The endpoint path.
+   * @param data The payload.
+   * @returns {Observable<{ data: T } & Record<string, any>>} Record plus meta fields.
+   */
+  postWithMeta<T>(apiUrl: string, data: any): Observable<{ data: T } & Record<string, any>> {
+    return this.http.post<any>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+      map(response => (response && typeof response === 'object' && 'data' in response) ? response : { data: response }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * @description Performs a POST request and unwraps the result from the 'data' property.
    * @param apiUrl The endpoint path.
    * @param data The payload.
    * @returns {Observable<T>} The created entity.
    */
   post<T>(apiUrl: string, data: any): Observable<T> {
-    return this.http.post<{ data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
-      map(response => response.data),
+    return this.http.post<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+      map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
   }
@@ -288,8 +319,8 @@ getOne<T>(apiUrl: string): Observable<T> {
     if (data instanceof FormData) {
       return this.postWithMethodOverride<T>(apiUrl, data, 'PUT');
     }
-    return this.http.put<{ data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
-      map(response => response.data),
+    return this.http.put<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+      map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
   }
@@ -304,8 +335,8 @@ getOne<T>(apiUrl: string): Observable<T> {
     if (data instanceof FormData) {
       return this.postWithMethodOverride<T>(apiUrl, data, 'PATCH');
     }
-    return this.http.patch<{ data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
-      map(response => response.data),
+    return this.http.patch<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+      map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
   }
@@ -323,8 +354,8 @@ getOne<T>(apiUrl: string): Observable<T> {
    */
   private postWithMethodOverride<T>(apiUrl: string, formData: FormData, method: 'PUT' | 'PATCH'): Observable<T> {
     formData.append('_method', method);
-    return this.http.post<{ data: T }>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
-      map(response => response.data),
+    return this.http.post<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
+      map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
   }

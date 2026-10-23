@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of CouponsComponent and coupons.config.ts – discount coupons:
  *   configuration, code validation, chartable / importable columns, toolbar by permission and
- *   view, toolbar actions (incl. import), loading and create / update.
+ *   view, toolbar actions (incl. import), loading and create / update; all texts come from the
+ *   `shop-coupons` translation section (finding #16, the i18n double returns the key path).
  * @dependencies
  * - src/testing/admin-test-helpers.ts (all admin doubles)
  */
@@ -36,9 +37,18 @@ describe('CouponsComponent', () => {
   /**
    * @description Table, form, filter and detail configuration.
    * @input  component created
-   * @output row buttons with shop-coupons-* permissions; 10 form fields; 7 + 3 columns; 3 filters; 13 detail columns
+   * @output row buttons with shop-coupons-* permissions; 10 form fields; 7 + 3 columns; 3 filters; 13 detail columns;
+   *   caption, headers and labels are shop-coupons keys; discount type filter with translated labels
    */
   it('builds the configuration', () => {
+    expect(component.tableCaption).toBe('shop-coupons.table_header');
+    expect(component.buttons.map(b => b.header_name)).toEqual(['shop-coupons.btn_details', 'shop-coupons.btn_edit', 'shop-coupons.btn_delete']);
+    expect(component.couponColumns[1].header).toBe('shop-coupons.col_code');
+    expect(field('code').label).toBe('shop-coupons.field_code_label');
+    expect((component.filterColumns[2] as any).options).toEqual([
+      { value: 'percent', label: 'shop-coupons.discount_type_percent' }, { value: 'fixed', label: 'shop-coupons.discount_type_fixed' }
+    ]);
+    expect(field('is_active').options.map((o: any) => o.label)).toEqual(['shared.yes', 'shared.no']);
     expect(component.buttons.map(b => b.permission)).toEqual([undefined, 'shop-coupons-update', 'shop-coupons-delete']);
     expect(component.formFields.length).toBe(10);
     expect(component.couponColumns.length).toBe(7);
@@ -78,7 +88,7 @@ describe('CouponsComponent', () => {
   /**
    * @description Toolbar by permission and view.
    * @input  granted []; then all; then trash view with open filters
-   * @output create / import / report / trash hidden without permission; trash view: create, export, import hidden; labels 'Zobrazit aktivní', 'Skrýt filtry'
+   * @output create / import / report / trash hidden without permission; trash view: create, export, import hidden; labels toolbar_show_active / toolbar_hide_filters
    */
   it('builds the toolbar by permission and view', () => {
     ctx.permissions.granted = new Set();
@@ -87,15 +97,15 @@ describe('CouponsComponent', () => {
     ctx.permissions.granted = 'all';
     t = toolbar();
     expect(['handleCreateFormOpened', 'exportActiveTable', 'triggerImport'].map(a => t[a].showIf)).toEqual([true, true, true]);
-    expect(t['toggleTable'].label).toBe('Koš');
-    expect(t['toggleFilters'].label).toBe('Filtry');
+    expect(t['toggleTable'].label).toBe('shop-coupons.toolbar_show_trash');
+    expect(t['toggleFilters'].label).toBe('shop-coupons.toolbar_filters');
     component.showTrashTable = true;
     component.isFilterVisible = true;
     t = toolbar();
     expect(['handleCreateFormOpened', 'exportActiveTable', 'triggerImport'].map(a => t[a].showIf)).toEqual([false, false, false]);
-    expect(t['toggleTable'].label).toBe('Zobrazit aktivní');
+    expect(t['toggleTable'].label).toBe('shop-coupons.toolbar_show_active');
     expect(t['toggleTable'].isActive).toBeTrue();
-    expect(t['toggleFilters'].label).toBe('Skrýt filtry');
+    expect(t['toggleFilters'].label).toBe('shop-coupons.toolbar_hide_filters');
   });
 
   /**
@@ -127,27 +137,28 @@ describe('CouponsComponent', () => {
   /**
    * @description A coupon with id is updated, a new one created; each shows its message and reloads.
    * @input  handleFormSubmitted({ id: 2, code: 'X' }), ({ code: 'NEW' })
-   * @output put('shop/coupons/2', …) + 'Požadavek byl upraven.'; post('shop/coupons', …) + 'Požadavek byl vytvořen.'; form closed
+   * @output put('shop/coupons/2', …) + crud_updated_message; post('shop/coupons', …) + crud_created_message; form closed
    */
   it('updates and creates coupons', () => {
     component.showCreateForm = true;
     component.handleFormSubmitted({ id: 2, code: 'X' });
     expect((ctx.dataHandler as any).put).toHaveBeenCalledWith('shop/coupons/2', { id: 2, code: 'X' });
-    expect(ctx.alert.open).toHaveBeenCalledWith('Úspěch', 'Požadavek byl upraven.', 'success');
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'shop-coupons.crud_updated_message', 'success');
     component.handleFormSubmitted({ code: 'NEW' });
     expect((ctx.dataHandler as any).post).toHaveBeenCalledWith('shop/coupons', { code: 'NEW' });
-    expect(ctx.alert.open).toHaveBeenCalledWith('Úspěch', 'Požadavek byl vytvořen.', 'success');
+    expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'shop-coupons.crud_created_message', 'success');
     expect(component.showCreateForm).toBeFalse();
   });
 
   /**
    * @description The page renders.
    * @input  detectChanges()
-   * @output text contains 'Slevové kupóny'
+   * @output text contains the translated header, no hardcoded Czech header
    */
   it('renders the page', fakeAsync(() => {
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Slevové kupóny');
+    expect(fixture.nativeElement.textContent).toContain('shop-coupons.table_header');
+    expect(fixture.nativeElement.textContent).not.toContain('Slevové kupóny');
     discardPeriodicTasks();
   }));
 });

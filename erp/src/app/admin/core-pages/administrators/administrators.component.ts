@@ -639,11 +639,20 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
       delete payload.is_blocked;
     }
 
-    const request$ = payload.id ? this.updateData(payload.id, payload) : this.postData(payload);
+    // @bugfix-note (2026-10-23) The API answers `{data, activation_email_sent}` on create, but the
+    // page never read the flag - a new account whose activation e-mail failed looked fully OK
+    // (open finding #11). Create uses postWithMeta() and warns when the e-mail was not sent.
+    const request$: Core.Observable<any> = payload.id
+      ? this.updateData(payload.id, payload)
+      : this.dataHandler.postWithMeta(this.apiEndpoint, payload).pipe(Core.takeUntil(this.destroy$));
     request$.pipe(Core.finalize(() => { this.showCreateForm = false; this.formFieldOverrides = null; this.cd.markForCheck(); }))
       .subscribe({
-        next: () => {
-          this.alertDialogService.open(this.t('success_title'), payload.id ? this.t('account_updated') : this.t('account_created'), 'success');
+        next: (res: any) => {
+          if (!payload.id && res?.activation_email_sent === false) {
+            this.alertDialogService.open(this.t('activation_email_failed_title'), this.t('activation_email_failed'), 'warning');
+          } else {
+            this.alertDialogService.open(this.t('success_title'), payload.id ? this.t('account_updated') : this.t('account_created'), 'success');
+          }
           this.refreshData();
         }
       });

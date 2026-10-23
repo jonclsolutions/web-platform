@@ -38,16 +38,24 @@ export class PublicDataService {
   }
 
   // ── Generic HTTP helpers ─────────────────────────────────────────
-  get<T>(endpoint: string, params?: any): Observable<T> {
-    return this.http.get<T>(`${this.apiUrl}/${endpoint}`, { params })
+  /**
+   * @description Generic GET.
+   * @param endpoint Path below the API base URL.
+   * @param params Optional query parameters.
+   * @param headers Optional request headers (e.g. the project portal `Authorization` - credentials
+   *   never go into the URL, see open finding #1).
+   */
+  get<T>(endpoint: string, params?: any, headers?: Record<string, string>): Observable<T> {
+    return this.http.get<T>(`${this.apiUrl}/${endpoint}`, { params, headers })
       .pipe(catchError(this.handleError));
   }
 
   /**
    * @description Generic POST method to support various endpoints including FormData.
+   * @param headers Optional request headers (see get()).
    */
-  post<T>(endpoint: string, body: any): Observable<T> {
-    return this.http.post<T>(`${this.apiUrl}/${endpoint}`, body)
+  post<T>(endpoint: string, body: any, headers?: Record<string, string>): Observable<T> {
+    return this.http.post<T>(`${this.apiUrl}/${endpoint}`, body, { headers })
       .pipe(catchError(this.handleError));
   }
 

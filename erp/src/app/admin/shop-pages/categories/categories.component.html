@@ -63,15 +63,18 @@
               [placeholder]="t('search_product_placeholder')"
               type="text">
           </div>
-          <button class="btn-add-product" (click)="openAddProductSearch()">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            {{ t('btn_add_product') }}
-          </button>
+          <!-- Add / remove only with shop-products-update (open finding #17, the API needs it) -->
+          @if (canManageCategoryProducts) {
+            <button class="btn-add-product" (click)="openAddProductSearch()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              {{ t('btn_add_product') }}
+            </button>
+          }
         </div>
 
-        @if (showAddProduct) {
+        @if (showAddProduct && canManageCategoryProducts) {
           <div class="add-product-section">
             <div class="add-product-header">
               <span class="add-product-title">{{ t('add_product_to_category_title') }}</span>
@@ -160,12 +163,14 @@
                     {{ product.is_active ? t('status_active') : t('status_inactive') }}
                   </span>
                 </div>
-                <button
-                  class="btn-remove-product"
-                  (click)="removeProductFromCategory(product)"
-                  [title]="t('remove_from_category_title')">
-                  ✕
-                </button>
+                @if (canManageCategoryProducts) {
+                  <button
+                    class="btn-remove-product"
+                    (click)="removeProductFromCategory(product)"
+                    [title]="t('remove_from_category_title')">
+                    ✕
+                  </button>
+                }
               </div>
             }
           }

@@ -117,6 +117,21 @@ describe('BaseDataComponent', () => {
     }));
 
     /**
+     * @description The first load uses the page's own filters, not the base default (finding #13).
+     * @input  filters = { sort_by: 'created_at', sort_direction: 'asc' }; isLoggedIn$ = true
+     * @output both getPaginatedData calls carry sort_by 'created_at' / sort_direction 'asc'
+     */
+    it('loads the first page with the page filters', fakeAsync(() => {
+      component.filters = { sort_by: 'created_at', sort_direction: 'asc' };
+      component.init(TestBed.inject(Router));
+      for (const args of ctx.genericTable.getPaginatedData.calls.allArgs()) {
+        expect(args[3]).toEqual(jasmine.objectContaining({ sort_by: 'created_at', sort_direction: 'asc' }));
+      }
+      expect(ctx.genericTable.getPaginatedData).toHaveBeenCalledTimes(2);
+      discardPeriodicTasks();
+    }));
+
+    /**
      * @description Pages without a paginated list (usesPaginatedList = false) use refreshData().
      * @input  isLoggedIn$ = true, usesPaginatedList = false
      * @output refreshData() called once, getPaginatedData not called

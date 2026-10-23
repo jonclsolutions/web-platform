@@ -15,7 +15,7 @@ import { ComponentFixture, TestBed, fakeAsync, discardPeriodicTasks } from '@ang
 import { of } from 'rxjs';
 
 import { ShopLogsComponent } from './shop-logs.component';
-import { DETAILS_COLUMNS, FORM_FIELDS } from './shop-logs.config';
+import { EVENT_TYPE_VALUES, FORM_FIELDS, MODULE_VALUES } from './shop-logs.config';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('ShopLogsComponent', () => {
@@ -37,32 +37,52 @@ describe('ShopLogsComponent', () => {
   /**
    * @description The log is read-only: only the details button, no form fields.
    * @input  component created
-   * @output buttons ['details']; FORM_FIELDS []; 7 columns; 5 filters; 11 detail columns; caption 'E-Shop logy'
+   * @output buttons ['details']; FORM_FIELDS []; 7 columns; 5 filters; 11 detail columns; caption and
+   *   headers from the shop-logs section (finding #16)
    */
   it('builds a read-only configuration', () => {
     expect(component.buttons.map(b => b.action)).toEqual(['details']);
     expect(FORM_FIELDS).toEqual([]);
     expect(component.tableColumns.map(c => c.key)).toEqual(['id', 'created_at', 'user_plain', 'event_type', 'module', 'description', 'origin']);
     expect(component.filterColumns.map(c => c.key)).toEqual(['id', 'user_plain', 'event_type', 'module', 'origin']);
-    expect(component.detailsColumns).toBe(DETAILS_COLUMNS);
-    expect(component.tableCaption).toBe('E-Shop logy');
+    expect(component.detailsColumns.length).toBe(11);
+    expect(component.tableCaption).toBe('shop-logs.table_header');
+    expect(component.tableColumns[1].header).toBe('shop-logs.col_time');
+    expect(component.buttons[0].header_name).toBe('shop-logs.btn_details');
   });
 
   /**
    * @description Event type and module can be charted (count) with their known values.
    * @input  graphColumns
-   * @output event_type (9 values) and module (6 values)
+   * @output event_type (14 values) and module (10 values)
    */
   it('offers chartable columns', () => {
     expect(component.graphColumns.map(g => [g.key, g.aggregation, g.possibleValues!.length])).toEqual([
-      ['event_type', 'count', 9], ['module', 'count', 6]
+      ['event_type', 'count', 14], ['module', 'count', 10]
     ]);
+  });
+
+  /**
+   * @description The event / module filters use the values the API writes (exact-match filter of
+   *   shop/logs), with translated labels (finding #16 bugfix: the old module values never matched).
+   * @input  filterColumns event_type / module
+   * @output modules ShopProduct … Shop with module_* labels; events with event_* labels; no old 'shop-products' / 'login'
+   */
+  it('filters by the real event types and modules', () => {
+    const opts = (key: string) => (component.filterColumns.find(c => c.key === key) as any).options;
+    expect(opts('module').map((o: any) => o.value)).toEqual(MODULE_VALUES);
+    expect(opts('module')[0]).toEqual({ value: 'ShopProduct', label: 'shop-logs.module_shop_product' });
+    expect(opts('module')[3]).toEqual({ value: 'ShopOrder (Checkout)', label: 'shop-logs.module_shop_order_checkout' });
+    expect(opts('event_type').map((o: any) => o.value)).toEqual(EVENT_TYPE_VALUES);
+    expect(opts('event_type')[0]).toEqual({ value: 'create', label: 'shop-logs.event_create' });
+    expect(MODULE_VALUES).not.toContain('shop-products');
+    expect(EVENT_TYPE_VALUES).not.toContain('login');
   });
 
   /**
    * @description Reports need 'shop-view-logs'; filters label follows the state.
    * @input  granted []; then all and filters open
-   * @output openGraphBuilder hidden without permission; 'Skrýt filtry' active when open, 'Filtry' when closed
+   * @output openGraphBuilder hidden without permission; toolbar_hide_filters active when open, toolbar_filters when closed
    */
   it('builds the toolbar by permission and filter state', () => {
     ctx.permissions.granted = new Set();
@@ -70,9 +90,9 @@ describe('ShopLogsComponent', () => {
     expect(toolbar()['exportActiveTable'].showIf).toBeTrue();
     ctx.permissions.granted = 'all';
     expect(toolbar()['openGraphBuilder'].showIf).toBeTrue();
-    expect(toolbar()['toggleFilters'].label).toBe('Filtry');
+    expect(toolbar()['toggleFilters'].label).toBe('shop-logs.toolbar_filters');
     component.isFilterVisible = true;
-    expect(toolbar()['toggleFilters'].label).toBe('Skrýt filtry');
+    expect(toolbar()['toggleFilters'].label).toBe('shop-logs.toolbar_hide_filters');
     expect(toolbar()['toggleFilters'].isActive).toBeTrue();
   });
 
@@ -122,11 +142,12 @@ describe('ShopLogsComponent', () => {
   /**
    * @description The page renders.
    * @input  detectChanges()
-   * @output text contains 'E-Shop logy'
+   * @output text contains the translated header, no hardcoded Czech header
    */
   it('renders the page', fakeAsync(() => {
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('E-Shop logy');
+    expect(fixture.nativeElement.textContent).toContain('shop-logs.table_header');
+    expect(fixture.nativeElement.textContent).not.toContain('E-Shop logy');
     discardPeriodicTasks();
   }));
 });

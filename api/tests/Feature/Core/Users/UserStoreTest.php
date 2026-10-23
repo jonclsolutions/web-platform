@@ -53,6 +53,24 @@ class UserStoreTest extends TestCase
     }
 
     /**
+     * @description A soft-deleted (trashed) role cannot be assigned on create or update (finding #4).
+     * @input Sysadmin; role 'old' moved to the trash; POST and PUT with its id.
+     * @output 422 'The selected role does not exist.' both times.
+     */
+    public function test_trashed_role_cannot_be_assigned(): void
+    {
+        $this->signIn($this->sysadmin());
+        $trashed = $this->role('old');
+        $trashed->delete();
+        $target = $this->user();
+
+        $this->postJson('/api/core/users', ['user_email' => 'x@example.com', 'full_name' => 'X', 'role_id' => $trashed->id])
+            ->assertStatus(422)->assertJsonPath('errors.role_id.0', 'The selected role does not exist.');
+        $this->putJson("/api/core/users/{$target->id}", ['role_id' => $trashed->id])
+            ->assertStatus(422)->assertJsonPath('errors.role_id.0', 'The selected role does not exist.');
+    }
+
+    /**
      * @description A sysadmin creates an account without a password: activation token
      *   issued, activation e-mail sent with the frontend link, role attached, audit logged.
      * @input Sysadmin, POST {user_email, full_name, role_id}.
@@ -151,9 +169,9 @@ class UserStoreTest extends TestCase
 
     /**
      * @description A role within the creator's own permissions may be assigned; a
-     *   soft-deleted role counts as unknown and cannot be assigned.
+     *   soft-deleted role counts as unknown and is refused by the validation (finding #4).
      * @input Creator with create + web-news-view; role 'reader' (web-news-view); trashed role.
-     * @output 201 for 'reader'; 403 for the trashed role.
+     * @output 201 for 'reader'; 422 for the trashed role.
      */
     public function test_can_assign_role_within_own_permissions(): void
     {
@@ -166,24 +184,25 @@ class UserStoreTest extends TestCase
         $this->postJson('/api/core/users', ['user_email' => 'r@example.com', 'full_name' => 'R', 'role_id' => $reader->id])
             ->assertCreated();
         $this->postJson('/api/core/users', ['user_email' => 't@example.com', 'full_name' => 'T', 'role_id' => $trashed->id])
-            ->assertStatus(403);
+            ->assertStatus(422)->assertJsonPath('errors.role_id.0', 'The selected role does not exist.');
     }
 
     /**
-     * @description A soft-deleted role passes validation (the row exists) but never forces
-     *   2FA - it is treated as an unknown role for the 2FA decision.
-     * @input Sysadmin, trashed role with forces_2fa, POST with that role and enable_2fa false.
-     * @output 201 with enable_2fa false.
+     * @description An account whose role was moved to the trash later keeps no 2FA enforcement
+     *   from it - the trashed role is treated as an unknown role for the 2FA decision (it can no
+     *   longer be ASSIGNED, finding #4, but existing accounts may still reference it).
+     * @input Account with role 'retired' (forces_2fa) + 2FA on; role trashed; sysadmin PUT enable_2fa false.
+     * @output 200 with enable_2fa false.
      */
     public function test_trashed_role_does_not_force_2fa(): void
     {
-        Mail::fake();
         $this->signIn($this->sysadmin());
         $role = $this->role('retired', [], ['forces_2fa' => true]);
+        $account = $this->user(['enable_2fa' => true], $role);
         $role->delete();
 
-        $this->postJson('/api/core/users', ['user_email' => 'q@example.com', 'full_name' => 'Q', 'role_id' => $role->id, 'enable_2fa' => false])
-            ->assertCreated()->assertJsonPath('data.enable_2fa', false);
+        $this->putJson("/api/core/users/{$account->id}", ['enable_2fa' => false])
+            ->assertOk()->assertJsonPath('enable_2fa', false);
     }
 
     /**

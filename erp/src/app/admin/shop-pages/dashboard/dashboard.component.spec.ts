@@ -271,12 +271,14 @@ describe('DashboardComponent (shop)', () => {
     /**
      * @description Money, dates, status labels and classes; stock bars.
      * @input  formatCurrency(1500), (NaN); formatDate(''), ('2026-03-04T05:06:00'); labels / classes for known and unknown states; stockPct
-     * @output cs-CZ CZK without decimals; '0 Kč' for NaN; '—'; cs-CZ date; translated or raw labels; classes; 8 % and capped 100 %
+     * @output cs-CZ EUR without decimals (finding #15, not CZK); '0 €' for NaN; '—'; cs-CZ date; translated or raw labels; classes; 8 % and capped 100 %
      */
     it('formats values', () => {
-      const czk = (v: number) => new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 }).format(v);
-      expect(component.formatCurrency(1500)).toBe(czk(1500));
-      expect(component.formatCurrency(NaN)).toBe(czk(0));
+      const eur = (v: number) => new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+      expect(component.formatCurrency(1500)).toBe(eur(1500));
+      expect(component.formatCurrency(1500)).toContain('€');
+      expect(component.formatCurrency(1500)).not.toContain('Kč');
+      expect(component.formatCurrency(NaN)).toBe(eur(0));
       expect(component.formatDate('')).toBe('—');
       expect(component.formatDate('2026-03-04T05:06:00')).toBe(new Date('2026-03-04T05:06:00').toLocaleDateString('cs-CZ',
         { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }));

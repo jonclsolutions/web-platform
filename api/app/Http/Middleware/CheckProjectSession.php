@@ -24,6 +24,11 @@
  * and the session's expiry is SLID FORWARD (not just checked) - see
  * WebProjectSession::slideExpiry(), the concrete implementation of consultation
  * note 1's "24h of inactivity, not a hard wall-clock timer from login".
+ *
+ * @security-note (2026-10-23) The session token is accepted ONLY as `Authorization: Bearer`.
+ *   The former `session_token` query / body fallback put a bearer credential into webserver and
+ *   proxy access logs and the browser history (open finding #1) and was removed; the portal
+ *   frontend sends the header.
  */
 
 namespace App\Http\Middleware;
@@ -56,10 +61,10 @@ class CheckProjectSession
             return response()->json(['message' => 'The project was not found or is not available.'], 404);
         }
 
-        $bearer = $request->bearerToken() ?: $request->input('session_token');
-         if (!$bearer) {
-             return response()->json(['message' => 'Authentication required.'], 401);
-         }
+        $bearer = $request->bearerToken();
+        if (!$bearer) {
+            return response()->json(['message' => 'Authentication required.'], 401);
+        }
 
         $session = WebProjectSession::findValidByPlaintextToken($bearer);
 

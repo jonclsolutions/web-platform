@@ -103,6 +103,20 @@ class SalesOrderTest extends TestCase
     }
 
     /**
+     * @description The public form ignores a `lead_id` (no existence check that could be used to
+     *   probe lead ids, finding #2) - only the lead_token binds an order to a lead.
+     * @input POST with lead_id of an existing lead; POST with an unknown lead_id 999999.
+     * @output both 201 with lead_id null (same answer for existing / unknown ids).
+     */
+    public function test_public_order_ignores_lead_id(): void
+    {
+        Mail::fake();
+        $lead = $this->lead();
+        $this->postJson('/api/sales_orders', $this->payload(['lead_id' => $lead->id]))->assertCreated()->assertJsonPath('lead_id', null);
+        $this->postJson('/api/sales_orders', $this->payload(['lead_id' => 999999]))->assertCreated()->assertJsonPath('lead_id', null);
+    }
+
+    /**
      * @description Validation: agreements required, attachment type and count.
      * @input POST without agreements and with an .exe attachment.
      * @output 422 dataProcessingAgreement, tosAgreement, attachments.0.

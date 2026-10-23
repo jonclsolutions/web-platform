@@ -21,6 +21,10 @@
  * takže se správně chová i když je confirm dialog otevřený NAD jiným už zamčeným
  * overlayem (např. potvrzení mazání nad export popupem) - zavření confirm dialogu pak
  * neodemkne scroll předčasně, dokud je pořád otevřený ten vnější overlay.
+ * @bugfix-note (2026-10-23) The button labels were hardcoded Czech ('Zrušit' / 'Potvrdit') - also on
+ *   the public cart and in the English admin (open finding #20). They are inputs now
+ *   (`confirmLabel` / `cancelLabel`), set by ConfirmDialogService from the caller's labels or the
+ *   defaults of the current surface (admin layout); neutral English only as the last fallback.
  */
 
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
@@ -43,6 +47,10 @@ export class ConfirmDialogComponent {
   @Input() title: string = 'Confirmation';
   /** * @description The descriptive message explaining the action to be confirmed. */
   @Input() message: string = 'Are you sure you want to perform this action?';
+  /** * @description Text of the confirm button (translated by the caller / ConfirmDialogService). */
+  @Input() confirmLabel: string = 'Confirm';
+  /** * @description Text of the cancel button (translated by the caller / ConfirmDialogService). */
+  @Input() cancelLabel: string = 'Cancel';
 
   /** * @description Event emitted when the user confirms the action. */
   @Output() onConfirm = new EventEmitter<void>();

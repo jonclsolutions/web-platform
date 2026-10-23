@@ -18,6 +18,9 @@
  *
  * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy / restore (findOrFail inside try);
  * SECURITY: the 500 answers of store / update contained the exception text → generic messages.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -32,6 +35,7 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Controller handling shop customer account administration.
@@ -39,7 +43,7 @@ use Illuminate\Support\Facades\Log;
  */
 class ShopCustomerController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
 
     /**
      * Retrieves a paginated list of customers with optional search and status filtering.
@@ -65,9 +69,7 @@ class ShopCustomerController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'created_at', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         $data = $noPagination ? $query->get() : $query->paginate($perPage);

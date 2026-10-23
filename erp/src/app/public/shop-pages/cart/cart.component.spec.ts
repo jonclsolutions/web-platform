@@ -28,7 +28,7 @@ describe('CartComponent', () => {
   /** Creates the page with a cart of one mug (12.10 EUR incl. 21 % VAT, stock 3, quantity 2). */
   function create(): void {
     localStorage.removeItem('shop_cart');
-    ctx = createPublicPageContext({ translations: { cart: { confirm_remove_title: 'Remove?', confirm_remove_text: 'Sure?' } } });
+    ctx = createPublicPageContext({ translations: { cart: { confirm_remove_title: 'Remove?', confirm_remove_text: 'Sure?', confirm_remove_confirm: 'Remove', confirm_remove_cancel: 'Keep' } } });
     confirm = jasmine.createSpyObj('ConfirmDialogService', ['open']);
     TestBed.configureTestingModule({ imports: [CartComponent], providers: [...ctx.providers, { provide: ConfirmDialogService, useValue: confirm }] });
     cart = TestBed.inject(CartService);
@@ -67,7 +67,7 @@ describe('CartComponent', () => {
   }));
 
   /**
-   * @description Removal only after confirmation (translated texts); a rejected dialog is
+   * @description Removal only after confirmation (translated texts and button labels, finding #20); a rejected dialog is
    *   swallowed; checkout navigation; price format.
    * @input confirm false; true; rejected promise; proceedToCheckout(); formatPrice(1234.5).
    * @output item kept, then removed; no error; navigate(['/shop/checkout']); '1 234,50 €'.
@@ -77,7 +77,7 @@ describe('CartComponent', () => {
     confirm.open.and.resolveTo(false);
     page.removeItem('1_novariant');
     flushMicrotasks();
-    expect(confirm.open).toHaveBeenCalledWith('Remove?', 'Sure?');
+    expect(confirm.open).toHaveBeenCalledWith('Remove?', 'Sure?', { confirm: 'Remove', cancel: 'Keep' });
     expect(cart.cartCount()).toBe(1);
     confirm.open.and.returnValue(Promise.reject(new Error('closed')));
     page.removeItem('1_novariant');

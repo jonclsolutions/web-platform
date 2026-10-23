@@ -22,6 +22,9 @@
  * use across UserController/administrators.config.ts. If the project's actual
  * UpdateUserRequest already contains additional rules, merge this diff into it
  * rather than overwriting wholesale.
+ * @security-note (2026-10-23) `role_id` must be an ACTIVE role - `exists:core_roles,id` also
+ *   accepted soft-deleted (trashed) roles, so an account could be given a role that was removed
+ *   (open finding #4).
  */
 
 namespace App\Http\Requests\User;
@@ -52,7 +55,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'user_email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'user_email')->ignore($userId)],
             'full_name' => ['sometimes', 'string', 'max:255'],
-            'role_id' => ['sometimes', 'integer', 'exists:core_roles,id'],
+            'role_id' => ['sometimes', 'integer', Rule::exists('core_roles', 'id')->whereNull('deleted_at')],
             'enable_2fa' => ['sometimes', 'boolean'],
             'two_fa_forced_by_admin' => ['sometimes', 'boolean'],
             'is_blocked' => ['sometimes', 'boolean'],

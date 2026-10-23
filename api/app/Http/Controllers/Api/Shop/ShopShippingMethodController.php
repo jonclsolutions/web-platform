@@ -17,6 +17,9 @@
  * pointed to a method that did not exist → 500. Implemented forceDeleteAllTrashed().
  *
  * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update (findOrFail inside try).
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -30,6 +33,7 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Manages CRUD operations for shop shipping configurations.
@@ -37,7 +41,7 @@ use Illuminate\Support\Facades\Log;
  */
 class ShopShippingMethodController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
 
     /**
      * Retrieves a paginated list of shipping methods with filtering support.
@@ -60,7 +64,7 @@ class ShopShippingMethodController extends Controller
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
 
-        $query->orderBy($request->input('sort_by', 'sort_order'), $request->input('sort_direction', 'asc'));
+        $this->applySorting($query, $request, 'sort_order', 'asc');
 
         $data = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN)
             ? $query->get()

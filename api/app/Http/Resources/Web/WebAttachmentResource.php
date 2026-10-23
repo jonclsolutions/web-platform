@@ -20,9 +20,9 @@
  * vygenerovaná, uživatel už prošel kontrolou oprávnění. 10minutová expirace omezuje
  * riziko sdílení/prosáknutí odkazu (screenshot, network log) - po vypršení je odkaz
  * mrtvý, admin si detail záznamu prostě znovu otevře pro čerstvou URL.
- * `url` pole (přímý storage odkaz) ZŮSTÁVÁ zachováno pro zpětnou kompatibilitu, ale u
- * příloh na `private` disku bude fakticky nefunkční (žádný symlink) - frontend musí
- * vždy používat `download_url`/`view_url`.
+ * @refactor-note (2026-10-23) The legacy `url` field (direct storage link, dead for files on
+ * the `private` disk) was removed (open finding #9) - the frontend uses only
+ * `download_url` / `view_url`.
  */
 
 namespace App\Http\Resources\Web;
@@ -43,7 +43,6 @@ class WebAttachmentResource extends JsonResource
             'original_filename' => $this->original_filename,
             'mime_type'         => $this->mime_type,
             'size_bytes'        => $this->size_bytes,
-            'url'               => $this->url,
             'download_url'      => $this->path ? $this->signedUrl('attachments.download') : null,
             'view_url'          => $this->path ? $this->signedUrl('attachments.view') : null,
             'created_at'        => $this->created_at?->format('Y-m-d H:i:s'),

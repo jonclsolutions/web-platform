@@ -15,7 +15,7 @@
  *
  * @refactor-note (2026-08) Přidán typ `'files'` (množné číslo) - zobrazuje seznam VÍCE
  * příloh (z `web_attachments` relace, pole objektů `{id, original_filename, mime_type,
- * size_bytes, url, download_url, view_url, created_at}`) místo jediného souboru, jak to
+ * size_bytes, download_url, view_url, created_at}`) místo jediného souboru, jak to
  * řešil dosavadní `'file'` case. `formatFileSize()` přidán jako pomocná metoda pro
  * čitelný výpis velikosti.
  *

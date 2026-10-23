@@ -165,6 +165,22 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
+   * @description While the admin is shown, the confirmation dialog buttons follow the admin
+   *   language; leaving the admin clears them (finding #20).
+   * @input  layout created (translations emitted); language change; ngOnDestroy()
+   * @output setDefaultLabels({ confirm: 'shared.confirm', cancel: 'shared.cancel' }) on create and on
+   *   every language change; setDefaultLabels(null) on destroy
+   */
+  it('sets the admin labels of the confirmation dialog', () => {
+    expect(ctx.confirm.setDefaultLabels).toHaveBeenCalledWith({ confirm: 'shared.confirm', cancel: 'shared.cancel' });
+    const calls = ctx.confirm.setDefaultLabels.calls.count();
+    ctx.i18n.translations$.next({});
+    expect(ctx.confirm.setDefaultLabels.calls.count()).toBe(calls + 1);
+    component.ngOnDestroy();
+    expect(ctx.confirm.setDefaultLabels).toHaveBeenCalledWith(null);
+  });
+
+  /**
    * @description The language menu switches the admin language and closes.
    * @input  toggleLangMenu(); selectLanguage('en')
    * @output i18n.setLanguage('en'); isLangMenuOpen false; currentLanguageCode 'en'; currentLanguageMeta.code 'en'

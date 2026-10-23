@@ -40,6 +40,9 @@
  * chyběl `Storage::delete($batch->temp_path)` v `catch` větvi importCommit()
  * (i po neúspěšném importu zůstal dočasný soubor navždy na disku), teď to
  * garantuje `try/finally` uvnitř `runImportCommit()`, ne ruční mazání zde.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -58,6 +61,7 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Controller responsible for processing customer support tickets.
@@ -65,7 +69,7 @@ use Illuminate\Support\Facades\DB;
  */
 class WebSupportTicketController extends Controller
 {
-    use HandlesAttachments;
+    use HandlesAttachments, AppliesSafeSorting;
     use HandlesImportBatches;
     use LogsActivity;
 
@@ -108,11 +112,7 @@ class WebSupportTicketController extends Controller
         if ($request->filled('status')) {
             $query->where('state', $request->input('status'));
         }
-        $sortBy = $request->input('sort_by', 'created_at');
-        $direction = strtolower($request->input('sort_direction', 'desc'));
-        $sortDirection = in_array($direction, ['asc', 'desc']) ? $direction : 'desc';
-
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'created_at', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 

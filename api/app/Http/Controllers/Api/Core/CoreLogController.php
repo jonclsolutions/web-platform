@@ -15,6 +15,9 @@
  * tyhle tři se nikde nezpracovávaly. Stejná díra byla nalezena a opravena souběžně u
  * WebLogController a ShopLogController (identická šablona, viz jejich bugfix-notes
  * stejné datum). Doplněno `id` (přesná shoda) a `user_plain`/`origin` (LIKE).
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -24,9 +27,12 @@ use App\Models\Core\CoreLog;
 use App\Http\Resources\Core\CoreLogResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Traits\AppliesSafeSorting;
 
 class CoreLogController extends Controller
 {
+    use AppliesSafeSorting;
+
     /**
      * Retrieves a paginated list of core audit events with optional filtering.
      *
@@ -89,9 +95,7 @@ class CoreLogController extends Controller
             });
         }
 
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'created_at', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 

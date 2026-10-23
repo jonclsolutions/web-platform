@@ -164,11 +164,16 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
     });
   }
 
+  /**
+   * @description Loads the first orders page (initWithAuthCheck) and the form lookups.
+   * @bugfix-note (2026-10-23) ngOnInit also called `refreshData()` after `initWithAuthCheck()` -
+   *   the list (active + trash) was requested twice on every visit and the cache was thrown away
+   *   (open finding #18). initWithAuthCheck alone loads it, with the page's filters.
+   */
   override ngOnInit(): void {
     super.ngOnInit();
     this.initWithAuthCheck(this.router);
     this.loadDependencies();
-    this.refreshData();
   }
 
   override ngOnDestroy(): void {

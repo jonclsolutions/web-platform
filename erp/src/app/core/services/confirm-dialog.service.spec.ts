@@ -51,6 +51,26 @@ describe('ConfirmDialogService', () => {
   });
 
   /**
+   * @description Button labels: the caller's labels win, then the surface defaults, then the
+   *   component's English fallback (finding #20).
+   * @input open() without labels; setDefaultLabels(Ano / Ne); open() without and with labels; setDefaultLabels(null).
+   * @output 'Confirm' / 'Cancel'; 'Ano' / 'Ne'; caller 'Remove' + default 'Ne' for the missing one; 'Confirm' / 'Cancel' again.
+   */
+  it('uses caller labels, then the defaults, then the fallback', () => {
+    service.open('T', 'M');
+    expect([current()!.confirmLabel, current()!.cancelLabel]).toEqual(['Confirm', 'Cancel']);
+    service.setDefaultLabels({ confirm: 'Ano', cancel: 'Ne' });
+    service.open('T', 'M');
+    expect([current()!.confirmLabel, current()!.cancelLabel]).toEqual(['Ano', 'Ne']);
+    service.open('T', 'M', { confirm: 'Remove' });
+    expect([current()!.confirmLabel, current()!.cancelLabel]).toEqual(['Remove', 'Ne']);
+    service.setDefaultLabels(null);
+    service.open('T', 'M', { confirm: '', cancel: undefined });
+    expect([current()!.confirmLabel, current()!.cancelLabel]).toEqual(['Confirm', 'Cancel']);
+    current()!.cancel();
+  });
+
+  /**
    * @description Cancel resolves false.
    * @input open(); cancel().
    * @output false, dialog removed.

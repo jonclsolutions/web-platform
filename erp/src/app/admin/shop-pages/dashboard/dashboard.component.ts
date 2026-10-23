@@ -657,15 +657,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Formats numeric amounts into CZK currency strings, respecting the
-   * current admin UI locale for digit grouping.
+   * @description Formats numeric amounts as EUR currency strings (whole euros on the KPI cards /
+   * chart), respecting the current admin UI locale for digit grouping.
    * @refactor-note (2026-09-07) BUGFIX - natvrdo `'cs-CZ'` nahrazeno
-   * `this.i18n.getDateLocale()` (currency kód `CZK` zůstává beze změny - multiměnová
-   * podpora není součástí tohoto úkolu).
+   * `this.i18n.getDateLocale()`.
+   * @bugfix-note (2026-10-23) The currency was CZK while the shop (prices, orders, customers in
+   *   the admin) is in EUR - the dashboard showed the EUR sums with a "Kč" sign (open finding #15).
+   * @param value Amount in EUR (NaN → 0).
+   * @returns Formatted amount, e.g. "1 500 €".
    */
   formatCurrency(value: number): string {
     if (isNaN(value)) value = 0;
-    return new Intl.NumberFormat(this.i18n.getDateLocale(), { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 }).format(value);
+    return new Intl.NumberFormat(this.i18n.getDateLocale(), { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
   }
 
   /**

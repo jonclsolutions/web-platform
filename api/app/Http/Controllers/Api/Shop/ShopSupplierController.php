@@ -19,6 +19,9 @@
  * the unique index on the second empty row).
  *
  * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy / restore (findOrFail inside try).
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -36,6 +39,7 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Handles supplier management.
@@ -43,7 +47,7 @@ use Illuminate\Support\Facades\DB;
  */
 class ShopSupplierController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
     use HandlesImportBatches;
 
     /** @var string[] Columns of the import file = fields of StoreShopSupplierRequest::rules(). */
@@ -98,9 +102,7 @@ class ShopSupplierController extends Controller
             $query->whereDate('created_at', $request->created_at);
         }
 
-        $sortBy = $request->input('sort_by', 'id');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'id', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         $data = $noPagination ? $query->get() : $query->paginate($perPage);

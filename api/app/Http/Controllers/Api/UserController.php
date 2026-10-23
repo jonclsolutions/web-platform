@@ -23,7 +23,10 @@
  * (422 "You cannot change your own role.") instead of being silently ignored - the admin UI
  * showed "saved" although nothing changed. The role was never actually applied on a
  * self-edit; this only makes the API say so.
- * */
+ * * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ */
 
 namespace App\Http\Controllers\Api;
 
@@ -42,10 +45,11 @@ use App\Http\Requests\PasswordChangeRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\{Request, JsonResponse};
 use Illuminate\Support\Facades\{Hash, Log, DB, Mail, RateLimiter};
+use App\Traits\AppliesSafeSorting;
 
 class UserController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
 
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
     private const PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS = 5;
@@ -98,8 +102,7 @@ class UserController extends Controller
         $onlyTrashed = filter_var($request->input('only_trashed', false), FILTER_VALIDATE_BOOLEAN)
                     || filter_var($request->input('is_deleted', false), FILTER_VALIDATE_BOOLEAN);
 
-        $sortBy = $request->input('sort_by', 'id');
-        $dir = in_array(strtolower($request->input('sort_direction')), ['asc', 'desc']) ? $request->input('sort_direction') : 'desc';
+        [$sortBy, $dir] = $this->resolveSorting($request, 'users', 'id', 'desc', ['role_name']);
 
         $query = User::query()->withTrashed();
 
@@ -138,8 +141,7 @@ class UserController extends Controller
                 ->leftJoin('core_roles as r', 'ur.role_id', '=', 'r.id')
                 ->orderBy('r.role_name', $dir);
         } else {
-            $sortColumn = str_contains($sortBy, '.') ? $sortBy : "users.$sortBy";
-            $query->orderBy($sortColumn, $dir);
+            $query->orderBy("users.$sortBy", $dir);
         }
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
@@ -735,10 +737,10 @@ class UserController extends Controller
             return true;
         }
 
-        $role = CoreRole::with('permissions')->find($roleId);
-        if (!$role) {
-            return false;
-        }
+        // @refactor-note (2026-10-23) `role_id` is validated as an existing, non-trashed role
+        // (finding #4), so the former `if (!$role) return false` was unreachable; a role removed
+        // between validation and this query fails the request (ModelNotFound) instead of passing.
+        $role = CoreRole::with('permissions')->findOrFail($roleId);
 
         $rolePermissionKeys = $role->permissions->pluck('permission_key')->all();
         $actorPermissionKeys = $request->user()->permissions ?? [];
@@ -947,6 +949,10 @@ class UserController extends Controller
      * @description Checks whether the given role forces 2FA - either because it is
      * sysadmin (hardcoded, see User::FORCED_2FA_ROLE_NAMES), or because sysadmin set
      * `forces_2fa=true` on a custom role (see CoreRole - backlog point 3).
+     * @refactor-note (2026-10-23) The separate `if (!$role) return false;` branch became unreachable
+     *   with open finding #4 (role_id validation refuses soft-deleted roles, `roles()->first()` skips
+     *   them) - only a role deleted between validation and this check could hit it. Kept as a
+     *   null-safe expression (fail-safe: a missing role forces nothing) instead of a dead branch.
      */
     private function isRoleForced2fa(?int $roleId): bool
     {
@@ -955,10 +961,7 @@ class UserController extends Controller
         }
 
         $role = CoreRole::find($roleId);
-        if (!$role) {
-            return false;
-        }
 
-        return in_array($role->role_name, User::FORCED_2FA_ROLE_NAMES, true) || (bool) $role->forces_2fa;
+        return $role !== null && (in_array($role->role_name, User::FORCED_2FA_ROLE_NAMES, true) || (bool) $role->forces_2fa);
     }
 }

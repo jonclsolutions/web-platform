@@ -24,6 +24,9 @@
  * disku. Nová `cascadeDeleteProjectRelations()` metoda uklízí vše v jednom místě,
  * volaná ze všech tří force-delete cest. SOFT delete (`->delete()`) ZÁMĚRNĚ beze
  * změny - projekt lze obnovit, takže vlákna/checkpointy musí zůstat netknuté.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -38,10 +41,11 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AppliesSafeSorting;
 
 class WebProjectController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
     use HandlesAttachments;
 
     public function index(Request $request): JsonResponse
@@ -64,9 +68,7 @@ class WebProjectController extends Controller
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
 
-        $sortBy = $request->input('sort_by', 'id');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'id', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         if ($noPagination) {

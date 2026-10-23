@@ -31,6 +31,9 @@
  * missing `Storage::delete($batch->temp_path)` in `catch` branch of `importCommit()`
  * (even after failed import, temporary file remained on disk forever), now
  * guaranteed by `try/finally` inside `runImportCommit()`, not manual deletion here.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -48,10 +51,11 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AppliesSafeSorting;
 
 class WebNewsController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
     use HandlesImportBatches;
 
     /**
@@ -91,9 +95,7 @@ class WebNewsController extends Controller
             $query->where('author', 'like', '%' . $request->author . '%');
         }
 
-        $sortBy = $request->input('sort_by', 'created_at');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'created_at', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         $data = $noPagination ? $query->get() : $query->paginate($perPage);

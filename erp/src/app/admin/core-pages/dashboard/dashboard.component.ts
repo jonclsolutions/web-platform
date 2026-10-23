@@ -578,16 +578,15 @@ statBarPct(stat: QuickStat): number {
   }
 
   /**
-   * @TODO-CONFIRM DOČASNÝ placeholder pro kontrolu role sysadmina - `core/roles` (a
-   * route `/admin/core/edit-roles`) nejsou gated permission klíčem, jen kontrolou
-   * `role_name === 'sysadmin'`. Zrcadlí vzor `PermissionService`
-   * (`localStorage.getItem('userPermissions')`), ale klíč `userRole` v localStorage NENÍ
-   * potvrzený. Fail-closed: dokud klíč v localStorage chybí nebo nesedí, nesysadmin
-   * kartu/nav položku nikdy neuvidí.
-   * @returns True, pokud aktuálně přihlášený uživatel má roli 'sysadmin'.
+   * @description Whether the signed-in user has the 'sysadmin' role - `core/roles` (and the
+   *   `/admin/core/edit-roles` route) are not gated by a permission key, only by the role name.
+   * @bugfix-note (2026-10-23) Read `localStorage.userRole`, which nothing writes (AuthService keeps
+   *   the role in sessionStorage) - the roles card / nav item was never shown, not even to the
+   *   sysadmin (open finding #19). Now `AuthService.getUserRole()`, like AuthGuard / administrators.
+   * @returns True when the current user's role is 'sysadmin'.
    */
   private isSysadmin(): boolean {
-    return localStorage.getItem('userRole') === 'sysadmin';
+    return this.authService.getUserRole() === 'sysadmin';
   }
 
   /**

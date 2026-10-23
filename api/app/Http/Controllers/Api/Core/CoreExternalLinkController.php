@@ -41,6 +41,9 @@
  *   `UpdateCoreExternalLinkRequest` (jen `name`/`url`, bez `position`/`is_active`).
  * - Všechny odpovědi teď jdou přes `CoreExternalLinkResource` (jednotný tvar,
  *   `user_id` se nikdy nevrací klientovi).
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -55,10 +58,11 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Traits\AppliesSafeSorting;
 
 class CoreExternalLinkController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
 
     /**
      * @description Vrátí seznam externích odkazů PATŘÍCÍCH PŘIHLÁŠENÉMU UŽIVATELI
@@ -116,9 +120,7 @@ class CoreExternalLinkController extends Controller
             });
         }
 
-        $sortBy  = $request->input('sort_by', 'name');
-        $sortDir = $request->input('sort_direction', 'asc');
-        $query->orderBy($sortBy, $sortDir);
+        $this->applySorting($query, $request, 'name', 'asc');
 
         if ($request->boolean('no_pagination')) {
             return response()->json(CoreExternalLinkResource::collection($query->get()));

@@ -8,6 +8,8 @@
  * @created 2025
  * @description Defines all application API endpoints, including public access for the
  * frontend, checkout processes, and protected administrative routes.
+ * @security-note (2026-10-23) Removed the `@TEMP-DEBUG` unprotected `debug/users` route (local env
+ *   only, bypassed CheckPermission - open finding #3).
  */
 
 use Illuminate\Http\Request;
@@ -56,16 +58,6 @@ use App\Models\Core\CoreSecurityEvent;
 use App\Http\Controllers\Api\Core\CoreEmailAccessPolicyController;
 use App\Http\Controllers\Api\Legal\PageTitleController;
 
-/**
- * @TEMP-DEBUG (2026-09-08) DOČASNÁ nechráněná route pro lokální ladění filtru
- * core/users?role_id=... - BEZ auth/permission middleware, záměrně obchází
- * CheckPermission. Zabalena v `app()->environment('local')`, ať se ani omylem
- * nezpřístupní mimo localhost. SMAŽ tenhle blok, jakmile bug doladíš - nikdy
- * nesmí zůstat v api.php trvale.
- */
-if (app()->environment('local')) {
-    Route::get('debug/users', [\App\Http\Controllers\Api\UserController::class, 'index']);
-}
 
 /*
 |--------------------------------------------------------------------------
@@ -147,7 +139,12 @@ Route::prefix('public/legal')->group(function () {
 | dostal od obchodníka (viz WebSalesLeadController::generateLink v chráněné
 | sekci níže). NIKDY nepřidávat sem přístup podle interního `id` - jen `token`.
 */
-Route::prefix('public')->group(function () {
+// @bugfix-note (2026-10-23) `web.active` (CheckWebActive) was registered but used on NO route -
+// with the web switched to maintenance the public web forms still accepted data (open finding #7).
+// It now guards the web-only public endpoints: lead prefill + the three public forms (503 with the
+// maintenance message). NOT on status / legal config / translations / languages - the maintenance
+// page itself and the e-shop need those.
+Route::prefix('public')->middleware('web.active')->group(function () {
     Route::get('sales-leads/{token}', [WebSalesLeadController::class, 'showByToken']);
 });
 
@@ -244,13 +241,13 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 // unlimited e-mails to any address. Now the same per-IP limit as sales_orders, each with
 // its own bucket prefix (see the bugfix-note (2026-08-25) in the file header).
 Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store'])
-    ->middleware('throttle:10,1,raw-request-commissions');
+    ->middleware(['web.active', 'throttle:10,1,raw-request-commissions']);
 // Prefix 'sales-orders' - viz bugfix-note (2026-08-25) v hlavičce souboru (tenhle
 // endpoint byl hlavní zdroj falešného křížení v reálném testu skriptu).
 Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
-    ->middleware('throttle:10,1,sales-orders');
+    ->middleware(['web.active', 'throttle:10,1,sales-orders']);
 Route::post('job_applications',        [WebJobApplicationController::class, 'store'])
-    ->middleware('throttle:10,1,job-applications');
+    ->middleware(['web.active', 'throttle:10,1,job-applications']);
 
 /*
 |--------------------------------------------------------------------------

@@ -26,6 +26,9 @@
  * an atomic binding to lead_token (lockForUpdate transaction consuming a single-use
  * link) and requires explicit GDPR consent (data_processing_agreement/tos_agreement),
  * which cannot be meaningfully "consented to" retroactively for historical imported data.
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -43,6 +46,7 @@ use Illuminate\Support\Facades\DB;
 use App\Mail\Web\WebSalesOrderReceived;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Controller responsible for orchestrating sales order processing and tracking.
@@ -50,7 +54,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class WebSalesOrderController extends Controller
 {
-    use HandlesAttachments;
+    use HandlesAttachments, AppliesSafeSorting;
     use LogsActivity;
 
     /**
@@ -85,9 +89,7 @@ class WebSalesOrderController extends Controller
 
         if ($request->filled('created_at')) $query->whereDate('created_at', $request->created_at);
 
-        $sortBy = $request->input('sort_by', 'id');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortBy, $sortDirection);
+        $this->applySorting($query, $request, 'id', 'desc');
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 

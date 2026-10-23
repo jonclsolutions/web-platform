@@ -86,7 +86,9 @@
         "checkout_button": "Zahájit checkout ⇾",
         "back_button": "← Návrat do hlavní nabídky",
         "confirm_remove_title": "Odstranit z košíku",
-        "confirm_remove_text": "Opravdu chcete odstranit tuto položku z košíku?"
+        "confirm_remove_text": "Opravdu chcete odstranit tuto položku z košíku?",
+        "confirm_remove_confirm": "Odstranit",
+        "confirm_remove_cancel": "Ponechat"
     },
     "checkout": {
         "title": "Zabezpečená pokladna",

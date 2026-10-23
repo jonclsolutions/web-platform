@@ -13,6 +13,9 @@
  * is trackable just like other Shop resources.
  *
  * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update (findOrFail inside try).
+ * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
+ *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
+ *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -28,6 +31,7 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use App\Traits\AppliesSafeSorting;
 
 /**
  * @description Controller responsible for managing shop coupon lifecycle and audit logs.
@@ -35,7 +39,7 @@ use Illuminate\Support\Facades\Log;
  */
 class ShopCouponController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, AppliesSafeSorting;
 
     /**
      * Retrieves a list of coupons with optional filtering and pagination.
@@ -57,7 +61,7 @@ class ShopCouponController extends Controller
             if ($request->filled($f)) $query->where($f, $request->input($f));
         }
 
-        $query->orderBy($request->input('sort_by', 'id'), $request->input('sort_direction', 'desc'));
+        $this->applySorting($query, $request, 'id', 'desc');
 
         $data = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN)
             ? $query->get()

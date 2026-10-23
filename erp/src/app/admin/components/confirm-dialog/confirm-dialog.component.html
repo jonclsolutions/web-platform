@@ -3,7 +3,8 @@
     @path: /src/app/admin/components/confirm-dialog/confirm-dialog.component.html
     @project: RPSW Web
     @author: RPSW
-    @created: 2025 
+    @created: 2025
+    @bugfix-note (2026-10-23) Button labels from the inputs instead of hardcoded Czech (open finding #20).
 -->
 
 @if (isVisible) {
@@ -17,8 +18,8 @@
       </div>
       <div class="dialog-footer">
         <div class="dialog-actions">
-          <button class="neutral_button" (click)="cancel()">Zrušit</button>
-          <button class="confirm_button" (click)="confirm()">Potvrdit</button>
+          <button class="neutral_button" (click)="cancel()">{{ cancelLabel }}</button>
+          <button class="confirm_button" (click)="confirm()">{{ confirmLabel }}</button>
         </div>
       </div>
     </div>

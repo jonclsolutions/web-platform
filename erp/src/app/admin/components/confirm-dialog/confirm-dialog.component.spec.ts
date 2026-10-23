@@ -72,6 +72,22 @@ describe('ConfirmDialogComponent', () => {
   });
 
   /**
+   * @description The buttons show the label inputs, not hardcoded Czech (finding #20).
+   * @input  defaults; then confirmLabel 'Odstranit', cancelLabel 'Ponechat'
+   * @output 'Confirm' / 'Cancel'; then 'Odstranit' / 'Ponechat'
+   */
+  it('renders the button labels from the inputs', () => {
+    component.show();
+    fixture.detectChanges();
+    const text = (sel: string) => fixture.nativeElement.querySelector(sel).textContent.trim();
+    expect([text('.confirm_button'), text('.neutral_button')]).toEqual(['Confirm', 'Cancel']);
+    fixture.componentRef.setInput('confirmLabel', 'Odstranit');
+    fixture.componentRef.setInput('cancelLabel', 'Ponechat');
+    fixture.detectChanges();
+    expect([text('.confirm_button'), text('.neutral_button')]).toEqual(['Odstranit', 'Ponechat']);
+  });
+
+  /**
    * @description The cancel button emits onCancel (not onConfirm) and hides the dialog.
    * @input  show(); click .neutral_button
    * @output onCancel emitted once; onConfirm not emitted; isVisible = false
