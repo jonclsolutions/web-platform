@@ -201,9 +201,12 @@ class WebRawRequestCommissionController extends Controller
      */
     public function update(UpdateWebRawRequestCommissionRequest $request, $id): JsonResponse
     {
-        try {
-            $rawRequestCommission = WebRawRequestCommission::findOrFail($id);
+        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
+        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
+        // and answered 500 instead of 404. Found by the unit tests.
+        $rawRequestCommission = WebRawRequestCommission::findOrFail($id);
 
+        try {
             $validated = $request->safe()->except(['attachments', 'attachments_removed_ids']);
             $rawRequestCommission->update($validated);
 
@@ -229,9 +232,10 @@ class WebRawRequestCommissionController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
+        $item = WebRawRequestCommission::withTrashed()->with('attachments')->findOrFail($id);
+
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebRawRequestCommission::withTrashed()->with('attachments')->findOrFail($id);
 
             if ($forceDelete) {
                 $this->deleteAllAttachments($item);
@@ -324,7 +328,10 @@ class WebRawRequestCommissionController extends Controller
         $baseFilename = 'import-template-web-raw_request_commissions';
 
         if ($format === 'csv' || $format === 'txt') {
-            $delimiter = $format === 'txt' ? "\t" : ',';
+            // @bugfix-note (2026-10-22) CSV delimiter ';' - the import parser
+            // (ImportFileParser) reads CSV with ';' like every other template; with ',' the
+            // downloaded template could not be imported back (header mismatch).
+            $delimiter = $format === 'txt' ? "\t" : ';';
             $mime = $format === 'txt' ? 'text/plain' : 'text/csv';
             return response(implode($delimiter, $columns) . "\n", 200, [
                 'Content-Type'        => "{$mime}; charset=UTF-8",
@@ -462,10 +469,16 @@ class WebRawRequestCommissionController extends Controller
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
             ]]);
-        } catch (\RuntimeException $e) {
-            // Expired temporary file - see runImportCommit(), code 410.
-            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
+            // Expired temporary file - see runImportCommit(), code 410.
+            // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
+            // own message and code: a database error (QueryException is a RuntimeException)
+            // put the SQL error text into the response and its SQLSTATE string as the HTTP
+            // status (crash), a parser error answered 500 without an error log. Now only the
+            // expired-file case passes through, everything else is logged and answered 500.
+            if ($e instanceof \RuntimeException && $e->getCode() === 410) {
+                return response()->json(['message' => $e->getMessage()], 410);
+            }
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }
@@ -476,8 +489,9 @@ class WebRawRequestCommissionController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
+        $item = WebRawRequestCommission::withTrashed()->findOrFail($id);
+
         try {
-            $item = WebRawRequestCommission::withTrashed()->findOrFail($id);
             $item->restore();
 
             $this->logAction($request, WebLog::class, 'restore', 'WebRawRequestCommission', "Restored request ID: $id", (int) $id, 'WebRawRequestCommission');

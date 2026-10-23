@@ -130,6 +130,15 @@ class StoreShopProductRequest extends FormRequest
             'stock_quantity'      => $this->input('stock_quantity', 0),
             'stock_warning_level' => $this->input('stock_warning_level', 10),
         ]);
+
+        // @bugfix-note (2026-10-23) Same as UpdateShopProductRequest: with only `category_ids`
+        // (no `category_id`) the controller treated the product as "without category" and saved
+        // it INACTIVE although is_active = true passed validation, and no category was marked
+        // primary. The first category of the list becomes the primary one.
+        if (! $this->filled('category_id') && $this->filled('category_ids')) {
+            $ids = (array) $this->input('category_ids');
+            $this->merge(['category_id' => (int) reset($ids)]);
+        }
     }
 
     /**

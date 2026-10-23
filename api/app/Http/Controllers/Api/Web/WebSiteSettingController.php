@@ -87,11 +87,10 @@ class WebSiteSettingController extends Controller
             'web_maintenance_message' => 'sometimes|nullable|string|max:500',
         ]);
 
-        $auth = $request->user() ?? auth('sanctum')->user();
-
-        if (!$auth) {
-            return response()->json(['message' => 'User is not authenticated.'], 401);
-        }
+        // @refactor-note (2026-10-22) The "not authenticated" branch was removed - the route is
+        // behind auth:sanctum + permission, so there is always a user here (unreachable code
+        // found by the unit tests).
+        $auth = $request->user();
 
         // Security check: Verify password against database hash
         if (!Hash::check($validated['confirm_password'], $auth->user_password_hash)) {

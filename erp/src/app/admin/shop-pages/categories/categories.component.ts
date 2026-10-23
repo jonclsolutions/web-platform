@@ -136,8 +136,17 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @description Provides the configuration for global category management toolbar buttons.
    * @returns {Button[]} List of toolbar buttons.
    */
+  /**
+   * @bugfix-note (2026-10-22) ButtonBuilderComponent only reads `showIf`, so the `permission` of
+   * the category buttons was ignored and add / edit / delete were shown to every admin (the API
+   * still refused the request). Buttons without the permission are hidden now, like on the other pages.
+   */
+  private withPermission(btn: Button): Button {
+    return btn.permission && !this.permissionService.hasPermission(btn.permission) ? { ...btn, showIf: false } : { ...btn };
+  }
+
   get toolbarButtons(): Button[] {
-    return Config.createCategoryToolbarButtons(this.i18n);
+    return Config.createCategoryToolbarButtons(this.i18n).map(btn => this.withPermission(btn));
   }
 
   /**
@@ -150,7 +159,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    */
   getRowButtons(node: CategoryNode): Button[] {
     return Config.createCategoryRowButtons(this.i18n).map(btn => {
-      const updatedBtn = { ...btn };
+      const updatedBtn = this.withPermission(btn);
       if (btn.action === 'toggleStatus') {
         updatedBtn.label = node.is_active ? this.t('row_btn_active') : this.t('row_btn_inactive');
         updatedBtn.class = node.is_active ? 'btn-export' : 'btn-filter';
@@ -242,7 +251,8 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
           if (n.id === parentId) {
             n.isExpanded = true;
             this.expandedStates.add(n.id);
-            n.children = [newNode, ...(n.children || [])];
+            // `children` is always an array (CategoryNode, built by buildTree())
+            n.children = [newNode, ...n.children];
             return;
           }
           if (n.children) findAndAdd(n.children);
@@ -288,7 +298,7 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
   private removeNewNodeFromParent(nodes: CategoryNode[], parentId: number): void {
     for (const node of nodes) {
       if (node.id === parentId) {
-        node.children = node.children?.filter(c => c.id !== 0) || [];
+        node.children = node.children.filter(c => c.id !== 0);
         return;
       }
       if (node.children?.length) {
@@ -302,6 +312,8 @@ export class CategoriesComponent extends BaseDataComponent<CategoryNode> impleme
    * @param node The category node to edit.
    */
   startEdit(node: CategoryNode): void {
+    // @bugfix-note (2026-10-22) a double click on the name started editing without the update permission
+    if (!this.permissionService.hasPermission('shop-categories-update')) return;
     this.backupNames.set(node.id, node.name);
     node.isEditing = true;
     this.cd.detectChanges();

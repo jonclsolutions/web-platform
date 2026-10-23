@@ -161,6 +161,12 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
   passwordRegenerating = false;
 
   revealedPassword: RevealedPassword | null = null;
+  /**
+   * @bugfix-note (2026-10-22) Project the in-memory `revealedPassword` belongs to. When
+   * sessionStorage refuses the entry (private mode, quota), `openManageModal()` used to reload
+   * the password only from storage and the one-time password was lost right after creation.
+   */
+  private revealedPasswordProjectId: number | null = null;
   passwordVisible = false;
 
   /** @refactor-note (2026-09-08) Přestalo být `readonly` field initializer - viz hlavička souboru. */
@@ -427,7 +433,8 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       next: (project: any) => {
         this.managingProject = project;
         this.managingCheckpoints = project.checkpoints ?? [];
-        this.revealedPassword = this.loadRevealedPassword(project.id);
+        this.revealedPassword = this.loadRevealedPassword(project.id)
+          ?? (this.revealedPasswordProjectId === project.id ? this.revealedPassword : null);
         this.manageLoading = false;
         this.loadManagingThreads(project.id);
         this.cd.markForCheck();
@@ -455,6 +462,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.managingThreads = [];
     this.selectedThread = null;
     this.revealedPassword = null;
+    this.revealedPasswordProjectId = null;
     this.unlockBackgroundScroll();
   }
 
@@ -464,6 +472,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
       sessionStorage.setItem(`${this.PASSWORD_STORAGE_PREFIX}${projectId}`, JSON.stringify(entry));
     } catch { /* ignore */ }
     this.revealedPassword = entry;
+    this.revealedPasswordProjectId = projectId;
   }
 
   private loadRevealedPassword(projectId: number): RevealedPassword | null {
@@ -680,7 +689,10 @@ changeThreadStatus(status: string): void {
         if (!errorSet) { onError(this.t('attachment_error_too_many').replace('{max}', String(this.MAX_THREAD_ATTACHMENTS))); errorSet = true; }
         break;
       }
-      const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+      // @refactor-note (2026-10-22) A name without a dot has no extension ('') – the former
+      // `split('.').pop() ?? ''` used the whole name as the extension (fallback never reached).
+      const dot = file.name.lastIndexOf('.');
+      const ext = dot >= 0 ? file.name.slice(dot + 1).toLowerCase() : '';
       if (!this.ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext)) {
         if (!errorSet) { onError(this.t('attachment_error_type').replace('{name}', file.name)); errorSet = true; }
         continue;

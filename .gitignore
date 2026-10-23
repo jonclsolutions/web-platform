@@ -2,3 +2,5 @@
 /build/
 /app_build/
 .~lock.*#
+tests/unit_tests/erp/report/
+tests/unit_tests/api/report/

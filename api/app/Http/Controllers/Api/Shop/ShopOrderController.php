@@ -15,6 +15,23 @@
  * `updateStatus()`, `destroy()`, `forceDeleteAllTrashed()` dosud NEMĚLY žádné auditní
  * volání do `shop_logs` (na rozdíl od store/update/restore) - doplněno, ať je změna
  * stavu objednávky a mazání stejně dohledatelné jako ostatní mutace.
+ *
+ * @bugfix-note (2026-10-23) Found by the API tests:
+ * - SECURITY (IDOR): `delete_items` and `items[].id` of `update()` were not limited to the
+ *   edited order - saving order A could delete or rewrite the items of order B. Now scoped
+ *   to the order in the URL; foreign ids are ignored.
+ * - SECURITY: the 500 answers of store / update contained the exception text → generic.
+ * - `restore()` always failed with 500: it called `restore()` on the items, which are not
+ *   soft-deletable (BadMethodCallException). Items are never soft-deleted with the order,
+ *   so only the order is restored.
+ * - Cancelling / returning an order through `update()` never returned the pieces to stock
+ *   (the stock logic lived in `updateStatus()`, which has no route) and a later permanent
+ *   delete skipped them because the status was already 'canceled' → stock was lost for good.
+ *   `update()` now restores the stock on active → canceled / returned and deducts it again
+ *   on canceled / returned → active. The unreachable `updateStatus()` was removed.
+ * - `$product->lockForUpdate()` on a model locks nothing → the product row is loaded with
+ *   the lock.
+ * - unknown id → 500 instead of 404 (findOrFail inside try) in update, destroy, restore.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -199,7 +216,7 @@ class ShopOrderController extends Controller
 
             foreach ($validated['items'] as $itemData) {
                 $quantity = (int)$itemData['quantity'];
-                $product = ShopProduct::findOrFail($itemData['product_id']);
+                $product = ShopProduct::lockForUpdate()->findOrFail($itemData['product_id']);
                 $variantName = null;
                 $vatRate = $itemData['vat_rate'] ?? $product->vat_rate ?? 21;
 
@@ -210,7 +227,6 @@ class ShopOrderController extends Controller
                     if (isset($variant->vat_rate)) { $vatRate = $variant->vat_rate; }
                     ShopProductVariant::forceSyncParentStock($product->id);
                 } else {
-                    $product->lockForUpdate();
                     $product->decrement('stock_quantity', $quantity);
                 }
 
@@ -246,7 +262,7 @@ class ShopOrderController extends Controller
             DB::rollBack();
             Log::error("ShopOrder creation error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Order creation failed: " . $e->getMessage());
-            return response()->json(['message' => 'Order creation failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Order creation failed.'], 500);
         }
     }
 
@@ -264,10 +280,12 @@ class ShopOrderController extends Controller
      */
     public function update(UpdateShopOrderRequest $request, $id): JsonResponse
     {
+        $order = ShopOrder::findOrFail($id);
+
         try {
             DB::beginTransaction();
-            $order = ShopOrder::findOrFail($id);
             $validated = $request->validated();
+            $oldStatus = $order->status;
 
             if ($order->customer_id && $request->hasAny(['first_name', 'last_name', 'email', 'phone', 'company'])) {
                 $customerData = collect($validated)->only(['first_name', 'last_name', 'email', 'phone', 'company'])->toArray();
@@ -278,13 +296,15 @@ class ShopOrderController extends Controller
             $order->update($updateData);
 
             if ($request->has('delete_items')) {
-                ShopOrderItem::whereIn('id', $request->input('delete_items'))->delete();
+                $order->items()->whereIn('id', $request->input('delete_items'))->delete();
             }
 
             if ($request->has('items')) {
                 $this->updateOrderItems($order, $request->input('items'));
             }
 
+            $order->load('items');
+            $this->moveStockOnStatusChange($order, $oldStatus, $order->status);
             $this->recalculateOrderTotals($order);
             DB::commit();
 
@@ -298,34 +318,28 @@ class ShopOrderController extends Controller
             DB::rollBack();
             Log::error("ShopOrder update error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');
-            return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Update failed.'], 500);
         }
     }
 
     /**
-     * Updates the status of an order and handles stock restoration if applicable.
+     * @description Returns the pieces to stock when an active order is cancelled /
+     *   returned, and takes them out again when such an order is reopened.
+     * @param ShopOrder $order Order with loaded items.
+     * @param string $oldStatus Status before the update.
+     * @param string $newStatus Status after the update.
+     * @return void
      */
-    public function updateStatus(Request $request, $id)
+    private function moveStockOnStatusChange(ShopOrder $order, string $oldStatus, string $newStatus): void
     {
-        $order = ShopOrder::with(['items', 'customer'])->findOrFail($id);
-        $oldStatus = $order->status;
-        $newStatus = $request->input('status');
+        $wasHolding = in_array($oldStatus, ShopOrder::STOCK_HOLDING_STATUSES, true);
+        $isHolding  = in_array($newStatus, ShopOrder::STOCK_HOLDING_STATUSES, true);
 
-        DB::transaction(function () use ($order, $oldStatus, $newStatus) {
-            $inventoryStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
-            $restoringStatuses = ['canceled', 'returned'];
-
-            if (in_array($oldStatus, $inventoryStatuses) && in_array($newStatus, $restoringStatuses)) {
-                $order->restoreStock();
-            }
-
-            $order->update(['status' => $newStatus]);
-            if ($order->customer) { $order->customer->recalculateTotalSpent(); }
-        });
-
-        $this->logAction($request, ShopLog::class, 'status_change', 'ShopOrder', "Order status changed {$order->order_number}: {$oldStatus} -> {$newStatus}", $order->id, 'ShopOrder');
-
-        return response()->json($order);
+        if ($wasHolding && in_array($newStatus, ShopOrder::STOCK_RELEASED_STATUSES, true)) {
+            $order->restoreStock();
+        } elseif (!$wasHolding && $isHolding) {
+            $order->deductStock();
+        }
     }
 
     /**
@@ -333,14 +347,14 @@ class ShopOrderController extends Controller
      */
     public function destroy(Request $request, $id)
     {
+        $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
+        $order = ShopOrder::withTrashed()->with(['items', 'customer'])->findOrFail($id);
+
         try {
             DB::beginTransaction();
-            $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $order = ShopOrder::withTrashed()->with(['items', 'customer'])->findOrFail($id);
-            $alreadyRestored = ['canceled', 'returned'];
 
             if ($forceDelete) {
-                if (!in_array($order->status, $alreadyRestored)) { $order->restoreStock(); }
+                if (!in_array($order->status, ShopOrder::STOCK_RELEASED_STATUSES, true)) { $order->restoreStock(); }
                 $order->items()->forceDelete();
                 $order->forceDelete();
             } else {
@@ -366,10 +380,10 @@ class ShopOrderController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
+        $order = ShopOrder::withTrashed()->findOrFail($id);
+
         try {
-            $order = ShopOrder::withTrashed()->findOrFail($id);
             $order->restore();
-            $order->items()->restore();
 
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
             $this->logAction($request, ShopLog::class, 'restore', 'ShopOrder', "Restored order ID: $id", (int) $id, 'ShopOrder');
@@ -393,8 +407,7 @@ class ShopOrderController extends Controller
             DB::beginTransaction();
 
             foreach ($trashedOrders as $order) {
-                $alreadyRestored = ['canceled', 'returned'];
-                if (!in_array($order->status, $alreadyRestored)) { $order->restoreStock(); }
+                if (!in_array($order->status, ShopOrder::STOCK_RELEASED_STATUSES, true)) { $order->restoreStock(); }
                 $order->items()->forceDelete();
                 $order->forceDelete();
             }
@@ -416,7 +429,8 @@ class ShopOrderController extends Controller
     {
         foreach ($items as $itemData) {
             if (isset($itemData['id']) && $itemData['id'] > 0) {
-                $item = ShopOrderItem::find($itemData['id']);
+                // Only items of THIS order (IDOR, see header) - a foreign id is ignored.
+                $item = $order->items()->find($itemData['id']);
                 if ($item) {
                     $item->update([
                         'quantity' => $itemData['quantity'],

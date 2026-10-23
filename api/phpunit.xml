@@ -4,12 +4,31 @@
          bootstrap="vendor/autoload.php"
          colors="true"
 >
+    <!--
+        Suites follow the API sections - which app/ files belong to which section (for the
+        coverage report) is defined in tests/unit_tests/api/lib/sections.js:
+          Core  = core administration + authentication (users, roles, login, 2FA, password reset, …)
+          Web   = web section, Shop = e-shop section, Other = everything else (legal, translations, import, …)
+        Runners: tests/unit_tests/api/run_{all_api,core,web,shop,other}.sh in the repository root.
+        Database: SQLite in-memory with the schema from tests/Support/TestSchema.php - the
+        DB_* values are forced, tests/TestCase.php refuses to run on anything else.
+    -->
     <testsuites>
-        <testsuite name="Unit">
-            <directory>tests/Unit</directory>
+        <testsuite name="Core">
+            <directory>tests/Unit/Core</directory>
+            <directory>tests/Feature/Core</directory>
         </testsuite>
-        <testsuite name="Feature">
-            <directory>tests/Feature</directory>
+        <testsuite name="Web">
+            <directory>tests/Unit/Web</directory>
+            <directory>tests/Feature/Web</directory>
+        </testsuite>
+        <testsuite name="Shop">
+            <directory>tests/Unit/Shop</directory>
+            <directory>tests/Feature/Shop</directory>
+        </testsuite>
+        <testsuite name="Other">
+            <directory>tests/Unit/Other</directory>
+            <directory>tests/Feature/Other</directory>
         </testsuite>
     </testsuites>
     <source>
@@ -22,8 +41,9 @@
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="DB_CONNECTION" value="sqlite" force="true"/>
+        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <env name="LOG_CHANNEL" value="null"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

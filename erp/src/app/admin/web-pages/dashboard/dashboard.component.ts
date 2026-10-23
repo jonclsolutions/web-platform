@@ -326,8 +326,9 @@ get distributionSegments(): DistributionSegment[] {
     weight: stat.value > 0 ? Math.log(stat.value + 1) : ZERO_WEIGHT,
   }));
 
+  // @refactor-note (2026-10-22) Every weight is > 0 (log(v + 1) for v > 0, ZERO_WEIGHT otherwise),
+  // so the former unreachable `totalWeight === 0` guard was removed.
   const totalWeight = weighted.reduce((sum, w) => sum + w.weight, 0);
-  if (totalWeight === 0) return [];
 
   const sorted = [...weighted].sort((a, b) => b.stat.value - a.stat.value);
   const OPACITY_STEPS = [1, 0.82, 0.66, 0.52, 0.4, 0.3, 0.22];
@@ -463,11 +464,22 @@ get distributionSegments(): DistributionSegment[] {
   /**
    * @description Aggregates statistical data from every website-content module the
    * current user is permitted to see, concurrently using forkJoin. Přes TTL cache.
+   * @bugfix-note (2026-10-22) Bez oprávnění k jakékoli statistice je `forkJoin({})` prázdný -
+   * dokončí se BEZ emise, `next` se nezavolá a dashboard zůstal navždy ve stavu načítání
+   * (a `isRefreshing` blokoval tlačítko obnovit). Prázdný seznam se teď vyřídí hned.
    */
   private loadStats(): void {
     this.loadingStats = true;
 
     const allowedDefs = this.STAT_DEFS.filter(def => this.permissionService.hasPermission(def.permission));
+    if (allowedDefs.length === 0) {
+      this.quickStats = [];
+      this.loadingStats = false;
+      this.isRefreshing = false;
+      this.lastUpdatedAt = new Date();
+      this.cd.markForCheck();
+      return;
+    }
 
     this.resourceCache.get(this.STATS_CACHE_KEY, () => {
       const calls: Record<string, ReturnType<typeof this.dataHandler.getPaginatedCollection<any>>> = {};
@@ -548,7 +560,8 @@ get distributionSegments(): DistributionSegment[] {
     this.activityBreakdown = Array.from(counts.entries())
       .map(([classKey, count]) => ({
         classKey,
-        labelKey: this.BREAKDOWN_LABEL_KEYS[classKey] ?? 'breakdown_default_label',
+        // every class from eventTypeClass() (incl. 'ev-default') has a label key
+        labelKey: this.BREAKDOWN_LABEL_KEYS[classKey],
         count,
       }))
       .sort((a, b) => b.count - a.count);
@@ -576,6 +589,8 @@ get distributionSegments(): DistributionSegment[] {
   /**
    * @description Načte aktuální stav režimu údržby webu z `web/settings`, přes krátkou
    * TTL cache (1 min). Volá se samostatně od `loadStats()`/`loadRecentActivity()`.
+   * @bugfix-note (2026-10-22) Doplněn `error` handler - chyba požadavku dřív skončila jako
+   * neošetřená RxJS chyba; teď se jen ponechá poslední známý stav (výchozí "web aktivní").
    */
   private loadWebMaintenanceStatus(): void {
     if (!this.permissionService.hasPermission(this.MAINTENANCE_PERMISSION)) {
@@ -593,7 +608,8 @@ get distributionSegments(): DistributionSegment[] {
           this.webMaintenanceMessage = res.web_maintenance_message || '';
           this.cd.markForCheck();
         }
-      }
+      },
+      error: () => this.cd.markForCheck()
     });
   }
 

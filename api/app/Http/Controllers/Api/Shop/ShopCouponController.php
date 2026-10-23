@@ -11,6 +11,8 @@
  * local duplicate logAction(). Domain-wise unchanged (ShopLog::class). `forceDeleteAllTrashed()`
  * previously had no audit call - added so that bulk coupon deletion from trash
  * is trackable just like other Shop resources.
+ *
+ * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update (findOrFail inside try).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -101,8 +103,9 @@ class ShopCouponController extends Controller
      */
     public function update(UpdateShopCouponRequest $request, $id): JsonResponse
     {
+        $coupon = ShopCoupon::withTrashed()->findOrFail($id);
+
         try {
-            $coupon = ShopCoupon::withTrashed()->findOrFail($id);
             $coupon->update($request->validated());
             $this->logAction($request, ShopLog::class, 'update', 'ShopCoupon', "Updated coupon: {$coupon->code}", $coupon->id, 'ShopCoupon');
             return response()->json(new ShopCouponResource($coupon));

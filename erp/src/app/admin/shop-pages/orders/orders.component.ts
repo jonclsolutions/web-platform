@@ -126,7 +126,9 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       this.orderColumns = Config.createOrderColumns(this.i18n);
       this.trashOrderColumns = Config.createTrashOrderColumns(this.i18n);
       this.filterColumns = Config.createFilterColumns(this.i18n);
-      this.toolbarButtons = Config.createToolbarButtons(this.i18n);
+      // @bugfix-note (2026-10-22) buttons without permission (create, import, reports) were shown to every admin
+      this.toolbarButtons = Config.createToolbarButtons(this.i18n).map(btn =>
+        btn.permission && !this.permissionService.hasPermission(btn.permission) ? { ...btn, showIf: false } : btn);
       this.detailsColumns = Config.createOrderDetailsColumns(this.i18n);
       this.orderTabButtons = Config.createOrderTabButtons(this.i18n);
       this.statusOptions = Config.createStatusOptions(this.i18n);
@@ -319,8 +321,10 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       openGraphBuilder: () => this.openGraphBuilder(),
-      toggleTable: () => this.setTableMode(this.currentMode === 'trash' ? 'all' : 'trash'),
-      exportActiveTable: () => this.exportActiveTable()
+      exportActiveTable: () => this.exportActiveTable(),
+      // @bugfix-note (2026-10-22) the "import data" button had no handler; the unused `toggleTable`
+      // entry was removed – the trash is a tab here (setTableMode)
+      triggerImport: () => this.activeTable?.importData()
     };
 
     if (actions[action]) actions[action]();
@@ -632,7 +636,8 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
       shipping_postal_code: this.editingOrder.shipping_postal_code,
       shipping_country: this.editingOrder.shipping_country,
       notes: this.editingOrder.notes,
-      items: (this.editingOrder.items || []).filter(i => !i._delete).map(i => ({
+      // items always exist here – validateOrder() refuses orders without items
+      items: this.editingOrder.items!.filter(i => !i._delete).map(i => ({
         id: i.id || null,
         product_id: Number(i.product_id),
         product_variant_id: i.product_variant_id ? Number(i.product_variant_id) : null,
@@ -646,7 +651,7 @@ export class OrdersComponent extends BaseDataComponent<Order> implements OnInit,
 
     let request;
     if (this.editingOrder.id) {
-      payload.delete_items = (this.editingOrder.items || [])
+      payload.delete_items = this.editingOrder.items!
         .filter(i => i._delete && i.id)
         .map(i => i.id!);
 

@@ -9,6 +9,12 @@
  *
  * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
  * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class).
+ *
+ * @refactor-note (2026-10-23) Removed `store()`, `destroy()` and `restore()`: payment methods
+ * are fixed gateway integrations, the routes expose only index / show / update (`store()`
+ * even referenced the non-existent StoreShopPaymentMethodRequest) - unreachable code.
+ *
+ * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update (findOrFail inside try).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -17,7 +23,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Shop\ShopPaymentMethod;
 use App\Models\Shop\ShopLog;
 use App\Http\Resources\Shop\ShopPaymentMethodResource;
-use App\Http\Requests\Shop\ShopPaymentMethod\StoreShopPaymentMethodRequest;
 use App\Http\Requests\Shop\ShopPaymentMethod\UpdateShopPaymentMethodRequest;
 use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
@@ -71,15 +76,6 @@ class ShopPaymentMethodController extends Controller
     }
 
     /**
-     * Attempts to create a new payment method.
-     * @note Creation is intentionally forbidden - payment methods are hardcoded gateway integrations.
-     */
-    public function store(StoreShopPaymentMethodRequest $request): JsonResponse
-    {
-        return response()->json(['message' => 'Creating new payment methods is forbidden.'], 403);
-    }
-
-    /**
      * Retrieves details for a specific payment method.
      */
     public function show($id): JsonResponse
@@ -93,8 +89,9 @@ class ShopPaymentMethodController extends Controller
      */
     public function update(UpdateShopPaymentMethodRequest $request, $id): JsonResponse
     {
+        $method = ShopPaymentMethod::withTrashed()->findOrFail($id);
+
         try {
-            $method = ShopPaymentMethod::withTrashed()->findOrFail($id);
             $validated = $request->validated();
 
             unset($validated['code']);
@@ -111,25 +108,5 @@ class ShopPaymentMethodController extends Controller
             $this->logAction($request, ShopLog::class, 'error', 'ShopPaymentMethod', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopPaymentMethod');
             return response()->json(['message' => 'Update failed.'], 500);
         }
-    }
-
-    /**
-     * Attempts to delete a payment method.
-     * @note Deletion is intentionally forbidden - use deactivation (is_active) instead.
-     */
-    public function destroy(Request $request, $id): JsonResponse
-    {
-        return response()->json(['message' => 'System payment methods cannot be deleted, only deactivated.'], 403);
-    }
-
-    /**
-     * Restores a previously soft-deleted payment method.
-     */
-    public function restore(Request $request, $id): JsonResponse
-    {
-        $item = ShopPaymentMethod::withTrashed()->findOrFail($id);
-        $item->restore();
-        $this->logAction($request, ShopLog::class, 'restore', 'ShopPaymentMethod', "Restored payment method ID: $id", (int) $id, 'ShopPaymentMethod');
-        return response()->json(new ShopPaymentMethodResource($item));
     }
 }

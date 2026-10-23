@@ -107,9 +107,9 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
             : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
-        case 'handleCreateFormOpened':
+        // @refactor-note (2026-10-22) Only export exists here (no create / import button in
+        // the config) – the dead `handleCreateFormOpened` / `triggerImport` cases were removed.
         case 'exportActiveTable':
-        case 'triggerImport':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
@@ -160,6 +160,8 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
   /**
    * @refactor-note (2026-09-08) Natvrdo česká 'Úspěch'/'Požadavek byl upraven.'/
    * 'Požadavek byl vytvořen.' nahrazeny `t()` voláním.
+   * @refactor-note (2026-10-22) Applications are only edited here (no create form, and
+   * `updateData()` without an id fails), so the unreachable "created" message was removed.
    */
   override handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
@@ -172,7 +174,7 @@ export class JobApplicationsComponent extends BaseDataComponent<any> implements 
       next: () => {
         this.alertDialogService.open(
           this.i18n.getValue('shared.success'),
-          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          this.t('crud_updated_message'),
           'success'
         );
         this.refreshData();

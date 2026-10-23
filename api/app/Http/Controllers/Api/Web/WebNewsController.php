@@ -133,9 +133,12 @@ class WebNewsController extends Controller
 
     public function update(UpdateWebNewsRequest $request, $id): JsonResponse
     {
-        try {
-            $news = WebNews::findOrFail($id);
+        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
+        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
+        // and answered 500 instead of 404. Found by the unit tests.
+        $news = WebNews::findOrFail($id);
 
+        try {
             $news->update($request->validated());
 
             $this->logAction($request, WebLog::class, 'update', 'WebNews', "News item updated: {$news->title}", $news->id, 'WebNews');
@@ -149,9 +152,10 @@ class WebNewsController extends Controller
 
     public function destroy(Request $request, $id): JsonResponse
     {
+        $news = WebNews::withTrashed()->findOrFail($id);
+
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $news = WebNews::withTrashed()->findOrFail($id);
             $title = $news->title;
 
             $forceDelete ? $news->forceDelete() : $news->delete();
@@ -366,10 +370,16 @@ class WebNewsController extends Controller
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
             ]]);
-        } catch (\RuntimeException $e) {
-            // Expired temporary file - see runImportCommit(), code 410.
-            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
+            // Expired temporary file - see runImportCommit(), code 410.
+            // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
+            // own message and code: a database error (QueryException is a RuntimeException)
+            // put the SQL error text into the response and its SQLSTATE string as the HTTP
+            // status (crash), a parser error answered 500 without an error log. Now only the
+            // expired-file case passes through, everything else is logged and answered 500.
+            if ($e instanceof \RuntimeException && $e->getCode() === 410) {
+                return response()->json(['message' => $e->getMessage()], 410);
+            }
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }
@@ -377,8 +387,9 @@ class WebNewsController extends Controller
 
     public function restore(Request $request, $id): JsonResponse
     {
+        $news = WebNews::withTrashed()->findOrFail($id);
+
         try {
-            $news = WebNews::withTrashed()->findOrFail($id);
             $news->restore();
 
             $this->logAction($request, WebLog::class, 'restore', 'WebNews', "Restored news item: {$news->title}", $news->id, 'WebNews');

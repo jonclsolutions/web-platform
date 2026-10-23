@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2026
  * @description Model representing a customer sales order.
+ *
+ * @refactor-note (2026-10-23) restoreStock() shares the stock movement with the new
+ * deductStock() (reopening a cancelled / returned order) - see ShopOrderController::update().
  */
 
 namespace App\Models\Shop;
@@ -174,7 +177,10 @@ class ShopOrder extends Model
      */
     public static function generateOrderNumber(): string
     {
-        $prefix = date('Ym'); 
+        // @bugfix-note (2026-10-23) date('Ym') used the PHP default timezone instead of the
+        // application timezone (wrong month around midnight of the 1st) - now(), which also
+        // follows the test clock.
+        $prefix = now()->format('Ym');
         
         $lastOrder = self::withTrashed()
             ->where('order_number', 'like', $prefix . '%')
@@ -206,28 +212,55 @@ class ShopOrder extends Model
         return self::getPaymentStatusOptions()[$this->payment_status] ?? $this->payment_status;
     }
 
+    /** @var string[] Statuses in which the ordered pieces are taken out of stock. */
+    public const STOCK_HOLDING_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+
+    /** @var string[] Statuses in which the ordered pieces are back in stock. */
+    public const STOCK_RELEASED_STATUSES = ['canceled', 'returned'];
+
     /**
-     * Restores stock levels for all items in the order.
-     *
+     * @description Restores stock levels for all items in the order (cancel / return /
+     *   permanent delete of a still active order).
      * @return void
      */
     public function restoreStock(): void
     {
+        $this->moveStock(+1);
+        Log::info("Stock restored for order: {$this->order_number}");
+    }
+
+    /**
+     * @description Takes the ordered pieces out of stock again - a cancelled / returned
+     *   order that is reopened (see ShopOrderController::update()).
+     * @return void
+     */
+    public function deductStock(): void
+    {
+        $this->moveStock(-1);
+        Log::info("Stock deducted again for order: {$this->order_number}");
+    }
+
+    /**
+     * @description Adds (+1) or removes (-1) the quantity of every item to / from the
+     *   variant (then re-sums the parent product) or the product.
+     * @param int $direction +1 = back to stock, -1 = out of stock.
+     * @return void
+     */
+    private function moveStock(int $direction): void
+    {
         foreach ($this->items as $item) {
             if ($item->product_variant_id) {
-                $variant = \App\Models\Shop\ShopProductVariant::find($item->product_variant_id);
+                $variant = ShopProductVariant::find($item->product_variant_id);
                 if ($variant) {
-                    $variant->increment('stock_quantity', $item->quantity);
-                    \App\Models\Shop\ShopProductVariant::forceSyncParentStock($variant->product_id);
+                    $variant->increment('stock_quantity', $direction * $item->quantity);
+                    ShopProductVariant::forceSyncParentStock($variant->product_id);
                 }
             } else {
-                $product = \App\Models\Shop\ShopProduct::find($item->product_id);
+                $product = ShopProduct::find($item->product_id);
                 if ($product) {
-                    $product->increment('stock_quantity', $item->quantity);
+                    $product->increment('stock_quantity', $direction * $item->quantity);
                 }
             }
         }
-        
-        Log::info("Stock restored for order: {$this->order_number}");
     }
 }

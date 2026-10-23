@@ -14,6 +14,23 @@
  * platební údaje, takže nejde o GDPR/bezpečnostní problém, jen technickou telemetrii.
  * `updateCategory()` dosud logovala bez `affected_entity_type` - doplněno pro konzistenci
  * se zbytkem controlleru.
+ *
+ * @bugfix-note (2026-10-23) Found by the API tests:
+ * - SECURITY: the 500 answers of store / update / destroy / emptying the trash contained the
+ *   exception text (SQL statements, table names) → generic messages, detail in the audit log.
+ * - SECURITY (IDOR): `delete_images`, `delete_variants`, `images[].id` and `variants[].id`
+ *   were not limited to the edited product - saving product A could delete or overwrite the
+ *   images / variants of product B. Now scoped to the product in the URL; foreign ids are
+ *   ignored.
+ * - `update()` always re-summed the stock from the variants, so saving a product WITHOUT
+ *   variants reset its stock to 0. Now only products with variants are re-summed.
+ * - `prices` were written from the raw request (`$request->input('prices')`), so any
+ *   fillable price column (e.g. the non-existent CZK columns → SQL error) could be sent.
+ *   `filterPriceData()` now keeps only the validated EUR / VAT fields.
+ * - unknown id → 500 instead of 404 (findOrFail inside try) in update, updateCategory,
+ *   destroy, restore.
+ * - public list: `per_page` was unlimited (one request could load the whole catalogue with
+ *   all relations) → capped at 100.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -148,7 +165,7 @@ class ShopProductController extends Controller
         } catch (\Exception $e) {
             Log::error('ShopProduct creation error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Product creation failed: " . $e->getMessage());
-            return response()->json(['message' => 'Product creation failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Product creation failed.'], 500);
         }
     }
 
@@ -167,9 +184,9 @@ class ShopProductController extends Controller
     public function update(UpdateShopProductRequest $request, $id): JsonResponse
     {
         Log::info('ShopProduct Update started', ['id' => $id]);
+        $product = ShopProduct::findOrFail($id);
 
         try {
-            $product    = ShopProduct::findOrFail($id);
             $validated  = $request->validated();
             $updateData = collect($validated)
                 ->except(['prices', 'images', 'variants', 'delete_images', 'delete_variants', 'category_ids'])
@@ -193,13 +210,13 @@ class ShopProductController extends Controller
             }
 
             if ($request->has('delete_images')) {
-                $this->deleteImages($request->input('delete_images'));
+                $this->deleteImages($product, $request->input('delete_images'));
             }
             if ($request->has('images')) {
                 $this->storeImages($product, $request->input('images', []), $request, 'images');
             }
             if ($request->has('delete_variants')) {
-                $variantsToDelete = ShopProductVariant::whereIn('id', $request->delete_variants)->get();
+                $variantsToDelete = $product->variants()->whereIn('id', $request->delete_variants)->get();
                 foreach ($variantsToDelete as $variant) {
                     $variant->prices()->delete();
                     $variant->delete();
@@ -209,7 +226,11 @@ class ShopProductController extends Controller
                 $this->updateVariants($product, $request->input('variants', []), $request);
             }
 
-            $this->syncProductStock($product);
+            // Stock of a product with variants = sum of the variants; a product without
+            // variants keeps its own stock_quantity (see bugfix-note 2026-10-23).
+            if ($request->has('variants') || $request->has('delete_variants') || $product->variants()->exists()) {
+                $this->syncProductStock($product);
+            }
             $this->clearProductCache($product);
 
             $product->load($this->defaultRelations());
@@ -220,7 +241,7 @@ class ShopProductController extends Controller
         } catch (\Exception $e) {
             Log::error('ShopProduct update error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
-            return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Update failed.'], 500);
         }
     }
 
@@ -235,8 +256,9 @@ class ShopProductController extends Controller
             'category_ids.*' => 'integer|exists:shop_categories,id',
         ]);
 
+        $product = ShopProduct::findOrFail($id);
+
         try {
-            $product     = ShopProduct::findOrFail($id);
             $primaryId   = $request->input('category_id') ? (int) $request->input('category_id') : null;
             $categoryIds = $this->resolveCategoryIds($request, $primaryId);
 
@@ -260,9 +282,10 @@ class ShopProductController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
+        $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
+        $product     = ShopProduct::withTrashed()->findOrFail($id);
+
         try {
-            $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $product     = ShopProduct::withTrashed()->findOrFail($id);
 
             if ($forceDelete) {
                 foreach ($product->images as $image) {
@@ -286,7 +309,7 @@ class ShopProductController extends Controller
         } catch (\Exception $e) {
             Log::error('ShopProduct delete error: ' . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Product deletion failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
-            return response()->json(['message' => 'Product deletion failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Product deletion failed.'], 500);
         }
     }
 
@@ -295,8 +318,9 @@ class ShopProductController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
+        $product = ShopProduct::withTrashed()->findOrFail($id);
+
         try {
-            $product = ShopProduct::withTrashed()->findOrFail($id);
             $product->restore();
             $product->load($this->defaultRelations());
             $this->logAction($request, ShopLog::class, 'restore', 'ShopProduct', "Restored product ID: $id", (int) $id, 'ShopProduct');
@@ -336,7 +360,7 @@ class ShopProductController extends Controller
         } catch (\Exception $e) {
             Log::error('ShopProduct force delete all error: ' . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Emptying trash failed: " . $e->getMessage());
-            return response()->json(['message' => 'Emptying trash failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
         }
     }
 
@@ -345,7 +369,7 @@ class ShopProductController extends Controller
      */
     public function publicIndex(Request $request): JsonResponse
     {
-        $perPage = $request->input('per_page', 20);
+        $perPage = min(max((int) $request->input('per_page', 20), 1), 100);
         $query   = ShopProduct::active()->with(['primaryImage', 'category', 'categories', 'prices']);
 
         if ($s = $request->input('search')) {
@@ -436,11 +460,14 @@ class ShopProductController extends Controller
     }
 
     /**
-     * Placeholder for price data normalization or validation.
+     * @description Keeps only the validated price fields (EUR prices + VAT rate) - see
+     *   bugfix-note (2026-10-23); anything else sent in `prices` is dropped.
+     * @param array $prices Raw `prices` object of a product or variant.
+     * @return array Price attributes for ShopProductPrice.
      */
     private function filterPriceData(array $prices): array
     {
-        return $prices;
+        return array_intersect_key($prices, array_flip(['vat_rate', 'price_eur_without_vat', 'price_eur_with_vat', 'cost_price_eur']));
     }
 
     /**
@@ -467,20 +494,27 @@ class ShopProductController extends Controller
             if (! $file || ! $file->isValid()) {
                 continue;
             }
+
+            // Replacing an existing image: only images of THIS product (IDOR, see header).
+            $oldImage = null;
+            if (! empty($imageData['id'])) {
+                $oldImage = ShopProductImage::where('product_id', $product->id)->find($imageData['id']);
+                if (! $oldImage) {
+                    continue;
+                }
+            }
+
             $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
             $file->storeAs('products', $fileName, 'public');
 
-            if (! empty($imageData['id'])) {
-                $oldImage = ShopProductImage::find($imageData['id']);
-                if ($oldImage) {
-                    Storage::disk('public')->delete('products/' . $oldImage->image_path);
-                    $oldImage->update([
-                        'image_path' => $fileName,
-                        'alt_text'   => $imageData['alt_text']   ?? $product->name,
-                        'sort_order' => $imageData['sort_order'] ?? $index,
-                        'is_primary' => filter_var($imageData['is_primary'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                    ]);
-                }
+            if ($oldImage) {
+                Storage::disk('public')->delete('products/' . $oldImage->image_path);
+                $oldImage->update([
+                    'image_path' => $fileName,
+                    'alt_text'   => $imageData['alt_text']   ?? $product->name,
+                    'sort_order' => $imageData['sort_order'] ?? $index,
+                    'is_primary' => filter_var($imageData['is_primary'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                ]);
             } else {
                 ShopProductImage::create([
                     'product_id' => $product->id,
@@ -495,11 +529,15 @@ class ShopProductController extends Controller
     }
 
     /**
-     * Removes images from storage and the database.
+     * @description Removes images of the product (file + row); ids of other products'
+     *   images are ignored (IDOR, see header).
+     * @param ShopProduct $product Owner product.
+     * @param array $imageIds Image ids to delete.
+     * @return void
      */
-    private function deleteImages(array $imageIds): void
+    private function deleteImages(ShopProduct $product, array $imageIds): void
     {
-        $images = ShopProductImage::whereIn('id', $imageIds)->get();
+        $images = ShopProductImage::where('product_id', $product->id)->whereIn('id', $imageIds)->get();
         foreach ($images as $image) {
             if (Storage::disk('public')->exists('products/' . $image->image_path)) {
                 Storage::disk('public')->delete('products/' . $image->image_path);
@@ -544,7 +582,11 @@ class ShopProductController extends Controller
     {
         foreach ($variants as $idx => $variantData) {
             if (isset($variantData['id']) && $variantData['id'] > 0) {
-                $variant = ShopProductVariant::findOrFail($variantData['id']);
+                // Only variants of THIS product (IDOR, see header) - a foreign id is skipped.
+                $variant = $product->variants()->find($variantData['id']);
+                if (! $variant) {
+                    continue;
+                }
                 $variant->update([
                     'variant_name'      => $variantData['variant_name'],
                     'attribute_1_name'  => $variantData['attribute_1_name']  ?? null,
@@ -564,7 +606,7 @@ class ShopProductController extends Controller
                 }
 
                 if (isset($variantData['delete_images']) && is_array($variantData['delete_images'])) {
-                    $this->deleteImages($variantData['delete_images']);
+                    $this->deleteImages($product, $variantData['delete_images']);
                 }
 
                 if (isset($variantData['images']) && is_array($variantData['images'])) {

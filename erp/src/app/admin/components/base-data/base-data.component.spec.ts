@@ -2,503 +2,560 @@
  * @file base-data.component.spec.ts
  * @path src/app/admin/components/base-data/base-data.component.spec.ts
  * @project RPSW Web
- * @description Unit tests for {@link BaseDataComponent}.
- *
- * `BaseDataComponent` is an abstract `@Directive()` class, so it cannot be
- * instantiated or bootstrapped directly by `TestBed.createComponent`. To test
- * it we declare a minimal, concrete **host component** (`TestHostComponent`)
- * that extends it and only supplies the abstract `apiEndpoint` member.
- *
- * The component delegates almost all of its behaviour to two lazily created
- * collaborators, exposed as protected getters:
- *   - `crud` → an `EntityCrudService<T>` instance (single-entity CRUD calls)
- *   - `list` → a `PaginatedListStore<T>` instance (pagination / cache / trash)
- *
- * Rather than re-testing those collaborators here (they have their own spec
- * files), we stub the `crud` / `list` getters with `spyOnProperty(...).and
- * .returnValue(...)`. This lets us verify, in isolation, that
- * `BaseDataComponent` delegates calls with the correct arguments and that its
- * own pass-through / error-handling logic behaves as documented.
+ * @author RPSW
+ * @created 2026
+ * @description Unit tests of BaseDataComponent – the abstract base of every admin table page.
+ *   A minimal host component supplies the abstract `apiEndpoint`; the real PaginatedListStore and
+ *   EntityCrudService run on top of DataHandler / GenericTableService spies, so the tests verify
+ *   what actually reaches the API layer (URLs, payloads, pagination) and the page state.
+ * @dependencies
+ * - src/testing/admin-test-helpers.ts (i18n, auth, permission, DataHandler, GenericTable doubles)
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ChangeDetectorRef } from '@angular/core';
-import { of, throwError, BehaviorSubject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { Component } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { Subject, of, throwError, config as rxjsConfig } from 'rxjs';
 
 import { BaseDataComponent } from './base-data.component';
-import * as Core from '../../../shared/imports/core-providers';
-import { EntityCrudService } from '../../../core/services/entitiy-crud.service';
-import { PaginatedListStore } from './paginated-list-store';
+import { AdminTestContext, createAdminTestContext, paginated } from '../../../../testing/admin-test-helpers';
 
-/**
- * @description Minimal shape used as the generic `T` for the test host.
- * Only the fields required by `BaseDataComponent<T>`'s constraint
- * (`{ id?: number; deleted_at?: string | null }`) plus a couple of extra
- * fields to make assertions more concrete.
- */
-interface TestEntity {
-  id?: number;
-  deleted_at?: string | null;
-  name?: string;
-}
+interface Row { id?: number; deleted_at?: string | null; name?: string; }
 
-/**
- * @description Concrete, standalone host component used purely for testing.
- * It contributes nothing beyond the mandatory `apiEndpoint`, so any behaviour
- * observed in the tests can be attributed to `BaseDataComponent` itself.
- */
-@Component({
-  standalone: true,
-  selector: 'app-test-base-data',
-  template: ''
-})
-class TestHostComponent extends BaseDataComponent<TestEntity> {
-  apiEndpoint = 'test-entities';
-
-  public getCdForTest() { return this.cd; }
-  public getDefaultFiltersForTest() { return this.defaultFilters; }
+@Component({ standalone: true, selector: 'app-base-data-host', template: '' })
+class HostComponent extends BaseDataComponent<Row> {
+  apiEndpoint = 'core/things';
+  protected override translationSection = 'things';
+  refreshCalls = 0;
+  override refreshData(): void { this.refreshCalls++; }
+  init(router: Router): void { this.initWithAuthCheck(router); }
+  setUsesPaginatedList(value: boolean): void { this.usesPaginatedList = value; }
+  subscribeCollection() { return this.crud.getCollection().subscribe(); }
 }
 
 describe('BaseDataComponent', () => {
-  let component: TestHostComponent;
-  let fixture: ComponentFixture<TestHostComponent>;
-
-  /** Spy standing in for the lazily built `EntityCrudService<TestEntity>`. */
-  let crudSpy: jasmine.SpyObj<EntityCrudService<TestEntity>>;
-  /** Spy standing in for the lazily built `PaginatedListStore<TestEntity>`. */
-  let listSpy: jasmine.SpyObj<PaginatedListStore<TestEntity>>;
-
-  /** Mock for `AuthService`, exposing a controllable `isLoggedIn$` stream. */
-  let authServiceMock: { isLoggedIn$: BehaviorSubject<boolean> };
-  /** Mock for `Router`, used to assert navigation on failed auth checks. */
-  let routerSpy: jasmine.SpyObj<Router>;
-
-  /**
-   * @description Builds a fresh `EntityCrudService` spy with every method the
-   * component delegates to (`getCollection`, `getOne`, `create`, `update`,
-   * `remove`, `restore`, `upload`, `updatePassword`, `loadAll`,
-   * `hardDeleteAllTrashed`), each defaulting to an empty/`of(...)` observable.
-   * @returns A jasmine spy object matching `EntityCrudService<TestEntity>`'s
-   * public surface.
-   */
-  function createCrudSpy(): jasmine.SpyObj<EntityCrudService<TestEntity>> {
-    const spy = jasmine.createSpyObj<EntityCrudService<TestEntity>>('EntityCrudService', [
-      'getCollection',
-      'getOne',
-      'create',
-      'update',
-      'remove',
-      'restore',
-      'upload',
-      'updatePassword',
-      'loadAll',
-      'hardDeleteAllTrashed'
-    ]);
-    spy.getCollection.and.returnValue(of([]));
-    spy.getOne.and.returnValue(of({} as TestEntity));
-    spy.create.and.returnValue(of({} as TestEntity));
-    spy.update.and.returnValue(of({} as TestEntity));
-    spy.remove.and.returnValue(of(undefined));
-    spy.restore.and.returnValue(of({} as TestEntity));
-    spy.upload.and.returnValue(of({}));
-    spy.updatePassword.and.returnValue(of({}));
-    spy.loadAll.and.returnValue(of([]));
-    spy.hardDeleteAllTrashed.and.returnValue(of(undefined));
-    return spy;
-  }
-
-  /**
-   * @description Builds a fresh `PaginatedListStore` spy with every method
-   * the component delegates to, plus every pass-through property the
-   * component re-exposes as getters/setters (`data`, `trashData`,
-   * `showTrashTable`, pagination counters, and active/trash filters).
-   *
-   * @remarks
-   * These properties are defined as **linked get/set accessors over a single
-   * shared state object**, rather than passing a plain properties object to
-   * `jasmine.createSpyObj`. When Jasmine builds property spies from a plain
-   * object, the generated getter and setter for each key are independent
-   * spies that don't talk to each other — the setter just records that it
-   * was called, but never actually updates what the getter returns. Since
-   * `BaseDataComponent`'s pass-through properties always go get → set → get
-   * through `this.list.xxx`, that mismatch silently breaks every read/write
-   * round-trip test. Wiring real accessors over shared `state` fixes that.
-   *
-   * @returns A jasmine spy object matching `PaginatedListStore<TestEntity>`'s
-   * public surface.
-   */
-  function createListSpy(): jasmine.SpyObj<PaginatedListStore<TestEntity>> {
-    const state: any = {
-      data: [],
-      trashData: [],
-      showTrashTable: false,
-      currentPage: 1,
-      itemsPerPage: 10,
-      totalItems: 0,
-      totalPages: 0,
-      trashCurrentPage: 1,
-      trashItemsPerPage: 10,
-      trashTotalItems: 0,
-      trashTotalPages: 0,
-      currentActiveFilters: { sort_by: 'id', sort_direction: 'desc' },
-      currentTrashFilters: { sort_by: 'id', sort_direction: 'desc' }
-    };
-
-    const spy = jasmine.createSpyObj<PaginatedListStore<TestEntity>>(
-      'PaginatedListStore',
-      ['forceFullRefresh', 'onHandlePageChange', 'onHandleItemsPerPageChange', 'toggleTable']
-    );
-
-    for (const key of Object.keys(state)) {
-      Object.defineProperty(spy, key, {
-        get: () => state[key],
-        set: (value: any) => { state[key] = value; },
-        enumerable: true,
-        configurable: true
-      });
-    }
-
-    return spy;
-  }
+  let ctx: AdminTestContext;
+  let fixture: ComponentFixture<HostComponent>;
+  let component: HostComponent;
 
   beforeEach(async () => {
-    authServiceMock = { isLoggedIn$: new BehaviorSubject<boolean>(false) };
-    routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
-
-    await TestBed.configureTestingModule({
-      imports: [TestHostComponent],
-      providers: [
-        { provide: Core.DataHandler, useValue: jasmine.createSpyObj('DataHandler', ['get', 'post', 'put', 'delete']) },
-        { provide: Core.GenericTableService, useValue: jasmine.createSpyObj('GenericTableService', ['getPage']) },
-        { provide: Core.LoadingService, useValue: jasmine.createSpyObj('LoadingService', ['show', 'hide']) },
-        { provide: Core.AlertDialogService, useValue: jasmine.createSpyObj('AlertDialogService', ['open', 'confirm']) },
-        { provide: Core.AuthService, useValue: authServiceMock },
-        { provide: Core.PermissionService, useValue: jasmine.createSpyObj('PermissionService', ['can']) },
-        { provide: Router, useValue: routerSpy }
-      ]
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(TestHostComponent);
+    ctx = createAdminTestContext();
+    await TestBed.configureTestingModule({ imports: [HostComponent], providers: ctx.providers }).compileComponents();
+    fixture = TestBed.createComponent(HostComponent);
     component = fixture.componentInstance;
-
-    // Replace the lazily-instantiated collaborators with test doubles
-    // *before* anything touches `component.data` / `component.crud`, so the
-    // real `EntityCrudService` / `PaginatedListStore` constructors never run.
-    crudSpy = createCrudSpy();
-    listSpy = createListSpy();
-    spyOnProperty<any>(component, 'crud', 'get').and.returnValue(crudSpy);
-    spyOnProperty<any>(component, 'list', 'get').and.returnValue(listSpy);
-
-    fixture.detectChanges();
   });
 
-  /** @description Sanity check that the host (and therefore the base class) instantiates. */
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+  afterEach(() => fixture.destroy());
 
-  /**
-   * @description Verifies the plain UI-state flags declared directly on
-   * `BaseDataComponent` (not delegated anywhere) start with their documented
-   * default values.
-   */
-  describe('initial UI state', () => {
-    it('should default isTableFullWidth to true', () => {
+  describe('initial state', () => {
+    /**
+     * @description A new page starts with the table full width and every panel closed.
+     * @input  freshly created host component
+     * @output isTableFullWidth = true; isFilterVisible, showCreateForm, showDetails, showGraphBuilder = false; errorMessage = null
+     */
+    it('starts with the table full width and all panels closed', () => {
       expect(component.isTableFullWidth).toBeTrue();
-    });
-
-    it('should default isFilterVisible, showCreateForm and showDetails to false', () => {
       expect(component.isFilterVisible).toBeFalse();
       expect(component.showCreateForm).toBeFalse();
       expect(component.showDetails).toBeFalse();
-    });
-
-    it('should default errorMessage to null', () => {
+      expect(component.showGraphBuilder).toBeFalse();
       expect(component.errorMessage).toBeNull();
     });
+
+    /**
+     * @description Default sorting of every table page is "newest id first".
+     * @input  freshly created host component
+     * @output filters = { sort_by: 'id', sort_direction: 'desc' }; buttons/filterColumns/detailsColumns/formFields = []
+     */
+    it('has default filters id desc and empty table configuration', () => {
+      expect(component.filters).toEqual({ sort_by: 'id', sort_direction: 'desc' });
+      expect(component.buttons).toEqual([]);
+      expect(component.filterColumns).toEqual([]);
+      expect(component.detailsColumns).toEqual([]);
+      expect(component.formFields).toEqual([]);
+    });
   });
 
-  /** @description `toggleFilters()` only flips a local boolean; nothing is delegated. */
-  describe('toggleFilters()', () => {
-    it('should flip isFilterVisible from false to true and back', () => {
-      expect(component.isFilterVisible).toBeFalse();
+  describe('i18n', () => {
+    /**
+     * @description `strings` merges 'shared' with the page's own translation section.
+     * @input  translationSection = 'things'; template reads strings.title
+     * @output getMergedSection('things') called; strings.title = 'things.title'
+     */
+    it('strings reads the page translation section', () => {
+      expect(component.strings.title).toBe('things.title');
+      expect(ctx.i18n.getMergedSection).toHaveBeenCalledWith('things');
+    });
 
+    /**
+     * @description `t(path)` is a full-path lookup (section included by the caller).
+     * @input  t('shared.save')
+     * @output 'shared.save' (value returned by AdminLocalizationService.getValue)
+     */
+    it('t() looks up the full path', () => {
+      expect(component.t('shared.save')).toBe('shared.save');
+      expect(ctx.i18n.getValue).toHaveBeenCalledWith('shared.save');
+    });
+  });
+
+  describe('initWithAuthCheck()', () => {
+    /**
+     * @description A logged-in user gets the first active and trash page loaded.
+     * @input  isLoggedIn$ = true, usesPaginatedList = true
+     * @output getPaginatedData called twice for 'core/things' (active + only_trashed), no navigation
+     */
+    it('loads active and trash data when the user is logged in', fakeAsync(() => {
+      const router = TestBed.inject(Router);
+      const nav = spyOn(router, 'navigate');
+      component.init(router);
+      expect(ctx.genericTable.getPaginatedData).toHaveBeenCalledTimes(2);
+      const calls = ctx.genericTable.getPaginatedData.calls.allArgs();
+      expect(calls[0][0]).toBe('core/things');
+      expect(calls[1][3]).toEqual(jasmine.objectContaining({ only_trashed: 'true' }));
+      expect(nav).not.toHaveBeenCalled();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Pages without a paginated list (usesPaginatedList = false) use refreshData().
+     * @input  isLoggedIn$ = true, usesPaginatedList = false
+     * @output refreshData() called once, getPaginatedData not called
+     */
+    it('calls refreshData() instead of the list for non-paginated pages', fakeAsync(() => {
+      component.setUsesPaginatedList(false);
+      component.init(TestBed.inject(Router));
+      expect(component.refreshCalls).toBe(1);
+      expect(ctx.genericTable.getPaginatedData).not.toHaveBeenCalled();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description A logged-out user is sent to the login page.
+     * @input  isLoggedIn$ = false
+     * @output router.navigate(['/auth/login'])
+     */
+    it('redirects to /auth/login when the user is not logged in', fakeAsync(() => {
+      ctx.auth.isLoggedIn$.next(false);
+      const router = TestBed.inject(Router);
+      const nav = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+      component.init(router);
+      expect(nav).toHaveBeenCalledWith(['/auth/login']);
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description The global "refresh all tables" event reloads the page data.
+     * @input  refreshAll$ emits once after init
+     * @output endpoint cache invalidated and both lists fetched again
+     */
+    it('reloads on the global refresh event', fakeAsync(() => {
+      component.init(TestBed.inject(Router));
+      ctx.genericTable.getPaginatedData.calls.reset();
+      ctx.refreshAll$.next();
+      expect(ctx.genericTable.invalidateEndpoint).toHaveBeenCalledWith('core/things');
+      expect(ctx.genericTable.getPaginatedData).toHaveBeenCalledTimes(2);
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Background refresh runs every 15 minutes while the tab is visible.
+     * @input  15 minutes pass after init
+     * @output invalidateEndpoint('core/things') called once
+     */
+    it('refreshes in the background every 15 minutes', fakeAsync(() => {
+      component.init(TestBed.inject(Router));
+      tick(15 * 60 * 1000);
+      expect(ctx.genericTable.invalidateEndpoint).toHaveBeenCalledTimes(1);
+      discardPeriodicTasks();
+    }));
+  });
+
+  describe('permissions', () => {
+    /**
+     * @description hasAnyPermission accepts "a|b" and passes when at least one is granted.
+     * @input  granted = ['b']; hasAnyPermission('a|b'), hasAnyPermission('a|c')
+     * @output true, false
+     */
+    it('hasAnyPermission() passes when any of the "|" separated permissions is granted', () => {
+      ctx.permissions.granted = new Set(['b']);
+      expect(component.hasAnyPermission('a|b')).toBeTrue();
+      expect(component.hasAnyPermission('a|c')).toBeFalse();
+    });
+  });
+
+  describe('filters and paging', () => {
+    /**
+     * @description Applying filters merges them, goes back to page 1 and reloads.
+     * @input  currentPage = 3; applyFilters({ name: 'abc' })
+     * @output filters = { sort_by: 'id', sort_direction: 'desc', name: 'abc' }; currentPage = 1; refreshData() called
+     */
+    it('applyFilters() merges the filters, resets the page and reloads', () => {
+      component.currentPage = 3;
+      component.applyFilters({ name: 'abc' });
+      expect(component.filters).toEqual({ sort_by: 'id', sort_direction: 'desc', name: 'abc' });
+      expect(component.currentPage).toBe(1);
+      expect(component.refreshCalls).toBe(1);
+    });
+
+    /**
+     * @description Clearing filters restores the default sorting and reloads from page 1.
+     * @input  filters with name 'abc', currentPage = 2; clearFilters()
+     * @output filters = { sort_by: 'id', sort_direction: 'desc' }; currentPage = 1; refreshData() called
+     */
+    it('clearFilters() restores the defaults and reloads', () => {
+      component.filters = { sort_by: 'name', sort_direction: 'asc', name: 'abc' };
+      component.currentPage = 2;
+      component.clearFilters();
+      expect(component.filters).toEqual({ sort_by: 'id', sort_direction: 'desc' });
+      expect(component.currentPage).toBe(1);
+      expect(component.refreshCalls).toBe(1);
+    });
+
+    /**
+     * @description Page change fetches the requested page with the current filters.
+     * @input  totalPages = 5, currentPage = 1, filters { name: 'x' }; handlePageChange(2)
+     * @output getPaginatedData('core/things', 2, 15, { name: 'x' }); currentPage = 2
+     */
+    it('handlePageChange() loads the requested page with the current filters', () => {
+      component.totalPages = 5;
+      component.filters = { name: 'x' };
+      ctx.genericTable.getPaginatedData.and.returnValue(of(paginated<Row>([{ id: 9 }], 2, 5)));
+      component.handlePageChange(2);
+      expect(ctx.genericTable.getPaginatedData).toHaveBeenCalledWith('core/things', 2, 15, { name: 'x' });
+      expect(component.currentPage).toBe(2);
+      expect(component.data).toEqual([{ id: 9 }]);
+    });
+
+    /**
+     * @description Items per page change reloads from page 1 with the new page size.
+     * @input  handleItemsPerPageChange(50)
+     * @output itemsPerPage = 50; getPaginatedData(..., 1, 50, filters)
+     */
+    it('handleItemsPerPageChange() reloads page 1 with the new size', () => {
+      component.handleItemsPerPageChange(50);
+      expect(component.itemsPerPage).toBe(50);
+      expect(ctx.genericTable.getPaginatedData).toHaveBeenCalledWith('core/things', 1, 50, component.filters);
+    });
+
+    /**
+     * @description toggleTable switches between the active table and the trash.
+     * @input  showTrashTable = false; toggleTable()
+     * @output showTrashTable = true and the lists are reloaded
+     */
+    it('toggleTable() switches to the trash and reloads', () => {
+      component.toggleTable();
+      expect(component.showTrashTable).toBeTrue();
+      expect(ctx.genericTable.getPaginatedData).toHaveBeenCalled();
+    });
+
+    /**
+     * @description toggleFilters opens and closes the filter panel.
+     * @input  toggleFilters() twice
+     * @output isFilterVisible true, then false
+     */
+    it('toggleFilters() flips the filter panel', () => {
       component.toggleFilters();
       expect(component.isFilterVisible).toBeTrue();
-
       component.toggleFilters();
       expect(component.isFilterVisible).toBeFalse();
     });
   });
 
-  /**
-   * @description Confirms every `data`/pagination/trash property is a thin
-   * pass-through to the `list` collaborator (`PaginatedListStore`), in both
-   * the getter and setter direction.
-   */
-  describe('list pass-through properties', () => {
-    it('should read "data" from the list store', () => {
-      const rows: TestEntity[] = [{ id: 1, name: 'Alpha' }];
-      (listSpy as any).data = rows;
-      expect(component.data).toEqual(rows);
+  describe('forms and details', () => {
+    /**
+     * @description Opening the create form clears any previously edited row.
+     * @input  selectedItemForEdit = { id: 1 }; handleCreateFormOpened()
+     * @output selectedItemForEdit = null; showCreateForm = true
+     */
+    it('handleCreateFormOpened() opens an empty form', () => {
+      component.selectedItemForEdit = { id: 1 };
+      component.handleCreateFormOpened();
+      expect(component.selectedItemForEdit).toBeNull();
+      expect(component.showCreateForm).toBeTrue();
     });
 
-    it('should write "data" through to the list store', () => {
-      const rows: TestEntity[] = [{ id: 2, name: 'Beta' }];
-      component.data = rows;
-      expect(listSpy.data).toEqual(rows);
+    /**
+     * @description The edit form gets a shallow copy, so editing does not change the table row.
+     * @input  row { id: 2, name: 'a' }; handleEditFormOpened(row)
+     * @output selectedItemForEdit equals the row but is a different object; showCreateForm = true
+     */
+    it('handleEditFormOpened() edits a copy of the row', () => {
+      const row = { id: 2, name: 'a' };
+      component.handleEditFormOpened(row);
+      expect(component.selectedItemForEdit).toEqual(row);
+      expect(component.selectedItemForEdit).not.toBe(row);
+      expect(component.showCreateForm).toBeTrue();
     });
 
-    it('should read/write "trashData"', () => {
-      const rows: TestEntity[] = [{ id: 3, deleted_at: '2025-01-01' }];
-      component.trashData = rows;
-      expect(listSpy.trashData).toEqual(rows);
-      (listSpy as any).trashData = rows;
-      expect(component.trashData).toEqual(rows);
+    /**
+     * @description Cancelling the form closes it and forgets the edited row.
+     * @input  open edit form; onCancelForm()
+     * @output showCreateForm = false; selectedItemForEdit = null
+     */
+    it('onCancelForm() closes the form', () => {
+      component.handleEditFormOpened({ id: 3 });
+      component.onCancelForm();
+      expect(component.showCreateForm).toBeFalse();
+      expect(component.selectedItemForEdit).toBeNull();
     });
 
-    it('should read/write "showTrashTable"', () => {
-      component.showTrashTable = true;
-      expect(listSpy.showTrashTable).toBeTrue();
+    /**
+     * @description Submitting a row without id creates it (POST) and shows the "created" alert.
+     * @input  handleFormSubmitted({ name: 'new' })
+     * @output DataHandler.post('core/things', { name: 'new' }); alert ('shared.success', 'crud_created_message', 'success'); form closed; refreshData()
+     */
+    it('handleFormSubmitted() creates a new row', async () => {
+      component.showCreateForm = true;
+      component.handleFormSubmitted({ name: 'new' });
+      expect(ctx.dataHandler.post).toHaveBeenCalledWith('core/things', { name: 'new' });
+      expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'crud_created_message', 'success');
+      expect(component.showCreateForm).toBeFalse();
+      expect(component.refreshCalls).toBe(1);
     });
 
-    it('should read/write pagination counters for the active table', () => {
-      component.currentPage = 3;
-      component.itemsPerPage = 25;
-      component.totalItems = 100;
-      component.totalPages = 4;
-
-      expect(listSpy.currentPage).toBe(3);
-      expect(listSpy.itemsPerPage).toBe(25);
-      expect(listSpy.totalItems).toBe(100);
-      expect(listSpy.totalPages).toBe(4);
+    /**
+     * @description Submitting a row with id updates it (PUT .../id) and shows the "updated" alert.
+     * @input  handleFormSubmitted({ id: 7, name: 'x' })
+     * @output DataHandler.put('core/things/7', row); alert message 'crud_updated_message'; refreshData()
+     */
+    it('handleFormSubmitted() updates an existing row', () => {
+      component.handleFormSubmitted({ id: 7, name: 'x' });
+      expect(ctx.dataHandler.put).toHaveBeenCalledWith('core/things/7', { id: 7, name: 'x' });
+      expect(ctx.alert.open).toHaveBeenCalledWith('shared.success', 'crud_updated_message', 'success');
+      expect(component.refreshCalls).toBe(1);
     });
 
-    it('should read/write pagination counters for the trash table', () => {
-      component.trashCurrentPage = 2;
-      component.trashItemsPerPage = 15;
-      component.trashTotalItems = 30;
-      component.trashTotalPages = 2;
-
-      expect(listSpy.trashCurrentPage).toBe(2);
-      expect(listSpy.trashItemsPerPage).toBe(15);
-      expect(listSpy.trashTotalItems).toBe(30);
-      expect(listSpy.trashTotalPages).toBe(2);
+    /**
+     * @description A failed save still closes the form but shows no success alert and does not reload.
+     * @input  DataHandler.post fails; handleFormSubmitted({ name: 'x' })
+     * @output showCreateForm = false; alert not called; refreshData() not called
+     */
+    it('handleFormSubmitted() closes the form without success alert on error', async () => {
+      // the page has no error callback (DataHandler shows the error itself) – silence rxjs' unhandled-error report
+      const previous = rxjsConfig.onUnhandledError;
+      rxjsConfig.onUnhandledError = () => {};
+      try {
+        (ctx.dataHandler as any).post.and.returnValue(throwError(() => new Error('fail')));
+        component.showCreateForm = true;
+        component.handleFormSubmitted({ name: 'x' });
+        await new Promise(resolve => setTimeout(resolve)); // rxjs reports unhandled errors in a macrotask
+      } finally {
+        rxjsConfig.onUnhandledError = previous;
+      }
+      expect(component.showCreateForm).toBeFalse();
+      expect(ctx.alert.open).not.toHaveBeenCalled();
+      expect(component.refreshCalls).toBe(0);
     });
 
-    it('should expose currentActiveFilters from the list store', () => {
-      expect((component as any).currentActiveFilters).toEqual(listSpy.currentActiveFilters);
+    /**
+     * @description Viewing details loads the row by id and opens the details panel.
+     * @input  getOne returns { id: 5, name: 'd' }; handleViewDetails({ id: 5 })
+     * @output getOne('core/things/5'); selectedItemForDetails = { id: 5, name: 'd' }; showDetails = true
+     */
+    it('handleViewDetails() loads the row and opens the details', () => {
+      (ctx.dataHandler as any).getOne.and.returnValue(of({ id: 5, name: 'd' }));
+      component.handleViewDetails({ id: 5 });
+      expect((ctx.dataHandler as any).getOne).toHaveBeenCalledWith('core/things/5');
+      expect(component.selectedItemForDetails).toEqual({ id: 5, name: 'd' });
+      expect(component.showDetails).toBeTrue();
+    });
+
+    /**
+     * @description Rows without id (e.g. placeholder rows) never open details.
+     * @input  handleViewDetails({})
+     * @output no request; showDetails = false
+     */
+    it('handleViewDetails() ignores rows without id', () => {
+      component.handleViewDetails({});
+      expect((ctx.dataHandler as any).getOne).not.toHaveBeenCalled();
+      expect(component.showDetails).toBeFalse();
+    });
+
+    /**
+     * @description Closing details clears the selected row.
+     * @input  details open; handleCloseDetails()
+     * @output selectedItemForDetails = null; showDetails = false
+     */
+    it('handleCloseDetails() closes the details', () => {
+      component.selectedItemForDetails = { id: 1 };
+      component.showDetails = true;
+      component.handleCloseDetails();
+      expect(component.selectedItemForDetails).toBeNull();
+      expect(component.showDetails).toBeFalse();
+    });
+
+    /**
+     * @description Deleting or restoring a row reloads the page data.
+     * @input  handleItemDeleted(), handleItemRestored()
+     * @output refreshData() called twice
+     */
+    it('handleItemDeleted() and handleItemRestored() reload the data', () => {
+      component.handleItemDeleted();
+      component.handleItemRestored();
+      expect(component.refreshCalls).toBe(2);
     });
   });
 
-  /**
-   * @description Verifies the pagination/trash-toggle methods are forwarded
-   * verbatim to the `list` collaborator, defaulting to the component's own
-   * `currentActiveFilters` when no explicit filters are supplied.
-   */
-  describe('pagination / trash delegation', () => {
-    it('forceFullRefresh() should delegate to list.forceFullRefresh with the given filters', () => {
-      const filters = { sort_by: 'name', sort_direction: 'asc' as const };
-      component.forceFullRefresh(filters);
-      expect(listSpy.forceFullRefresh).toHaveBeenCalledWith(filters);
+  describe('toolbar', () => {
+    /**
+     * @description Toolbar action names map to the page handlers.
+     * @input  handleToolbarAction('toggleFilters'), ('handleCreateFormOpened'), ('openGraphBuilder')
+     * @output isFilterVisible = true; showCreateForm = true; showGraphBuilder = true
+     */
+    it('handleToolbarAction() dispatches known actions', () => {
+      component.handleToolbarAction('toggleFilters');
+      component.handleToolbarAction('handleCreateFormOpened');
+      component.handleToolbarAction('openGraphBuilder');
+      expect(component.isFilterVisible).toBeTrue();
+      expect(component.showCreateForm).toBeTrue();
+      expect(component.showGraphBuilder).toBeTrue();
     });
 
-    it('forceFullRefresh() should fall back to defaultFilters when called without arguments', () => {
-      component.forceFullRefresh();
-      expect(listSpy.forceFullRefresh).toHaveBeenCalledWith(component.getDefaultFiltersForTest() as any);
+    /**
+     * @description Unknown toolbar actions are ignored silently.
+     * @input  handleToolbarAction('doesNotExist')
+     * @output no exception, state unchanged
+     */
+    it('handleToolbarAction() ignores unknown actions', () => {
+      expect(() => component.handleToolbarAction('doesNotExist')).not.toThrow();
+      expect(component.isFilterVisible).toBeFalse();
     });
 
-    it('onHandlePageChange() should delegate to list.onHandlePageChange', () => {
-      const filters = listSpy.currentActiveFilters;
-      component.onHandlePageChange(5, filters);
-      expect(listSpy.onHandlePageChange).toHaveBeenCalledWith(5, filters);
+    /**
+     * @description The import button opens the import of the active table; without a table nothing happens.
+     * @input  handleToolbarAction('triggerImport') with an activeTable spy, then without a table
+     * @output importData() called once; no error without a table
+     */
+    it('handleToolbarAction() starts the import of the active table', () => {
+      const table = jasmine.createSpyObj('TableBuilderComponent', ['importData']);
+      component.activeTable = table;
+      component.handleToolbarAction('triggerImport');
+      expect(table.importData).toHaveBeenCalledTimes(1);
+      component.activeTable = undefined as any;
+      expect(() => component.handleToolbarAction('triggerImport')).not.toThrow();
     });
 
-    it('onHandleItemsPerPageChange() should delegate to list.onHandleItemsPerPageChange', () => {
-      const filters = listSpy.currentActiveFilters;
-      component.onHandleItemsPerPageChange(50, filters);
-      expect(listSpy.onHandleItemsPerPageChange).toHaveBeenCalledWith(50, filters);
+    /**
+     * @description Export calls the table's CSV export; without a table nothing happens.
+     * @input  exportActiveTable() without a table, then with a table stub
+     * @output no error; then exportToCSV() called once
+     */
+    it('exportActiveTable() exports the table when it exists', () => {
+      expect(() => component.exportActiveTable()).not.toThrow();
+      const table = jasmine.createSpyObj('TableBuilderComponent', ['exportToCSV']);
+      component.activeTable = table;
+      component.exportActiveTable();
+      expect(table.exportToCSV).toHaveBeenCalledTimes(1);
     });
 
-    it('toggleTable() should delegate to list.toggleTable', () => {
-      component.toggleTable();
-      expect(listSpy.toggleTable).toHaveBeenCalledTimes(1);
+    /**
+     * @description The graph builder opens and closes.
+     * @input  openGraphBuilder(), closeGraphBuilder()
+     * @output showGraphBuilder true, then false
+     */
+    it('openGraphBuilder() / closeGraphBuilder() toggle the graph builder', () => {
+      component.openGraphBuilder();
+      expect(component.showGraphBuilder).toBeTrue();
+      component.closeGraphBuilder();
+      expect(component.showGraphBuilder).toBeFalse();
     });
   });
 
-  /**
-   * @description `loadData()` is the one method that talks to `crud`
-   * directly instead of going through `list`; it guards against a missing
-   * `apiEndpoint` and otherwise assigns the fetched collection to `data`.
-   */
-  describe('loadData()', () => {
-    it('should set errorMessage and skip the request when apiEndpoint is falsy', () => {
-      component.apiEndpoint = '' as any;
-
+  describe('CRUD helpers', () => {
+    /**
+     * @description loadData() without endpoint reports an error instead of calling the API.
+     * @input  apiEndpoint = ''; loadData()
+     * @output errorMessage = 'base-data.api_endpoint_undefined'; getCollection not called
+     */
+    it('loadData() reports a missing endpoint', () => {
+      component.apiEndpoint = '';
       component.loadData();
-
-      expect(component.errorMessage).toBe('Error: API endpoint undefined.');
-      expect(crudSpy.getCollection).not.toHaveBeenCalled();
+      expect(component.errorMessage).toBe('base-data.api_endpoint_undefined');
+      expect((ctx.dataHandler as any).getCollection).not.toHaveBeenCalled();
     });
 
-    it('should populate "data" from crud.getCollection() when apiEndpoint is set', () => {
-      const rows: TestEntity[] = [{ id: 1, name: 'Alpha' }, { id: 2, name: 'Beta' }];
-      crudSpy.getCollection.and.returnValue(of(rows));
-
+    /**
+     * @description loadData() stores the collection returned by the API.
+     * @input  getCollection returns [{ id: 1 }]; loadData()
+     * @output data = [{ id: 1 }]
+     */
+    it('loadData() stores the loaded collection', () => {
+      (ctx.dataHandler as any).getCollection.and.returnValue(of([{ id: 1 }]));
       component.loadData();
+      expect(component.data).toEqual([{ id: 1 }]);
+    });
 
-      expect(crudSpy.getCollection).toHaveBeenCalledTimes(1);
-      expect(listSpy.data).toEqual(rows);
+    /**
+     * @description deleteData() with forceDelete adds ?force_delete=true.
+     * @input  deleteData(4) and deleteData(4, true)
+     * @output delete('core/things/4') and delete('core/things/4?force_delete=true')
+     */
+    it('deleteData() builds soft and force delete URLs', () => {
+      component.deleteData(4).subscribe();
+      component.deleteData(4, true).subscribe();
+      expect((ctx.dataHandler as any).delete.calls.allArgs()).toEqual([['core/things/4'], ['core/things/4?force_delete=true']]);
+    });
+
+    /**
+     * @description updateData()/getItemDetails() without id fail without calling the API.
+     * @input  updateData(undefined, {}), getItemDetails(undefined)
+     * @output both observables error with 'ID undefined.'; put/getOne not called
+     */
+    it('updateData() and getItemDetails() reject a missing id', () => {
+      const errors: string[] = [];
+      component.updateData(undefined, {}).subscribe({ error: e => errors.push(e.message) });
+      component.getItemDetails(undefined).subscribe({ error: e => errors.push(e.message) });
+      expect(errors).toEqual(['ID undefined.', 'ID undefined.']);
+      expect((ctx.dataHandler as any).put).not.toHaveBeenCalled();
+    });
+
+    /**
+     * @description loadAllData() requests every row without pagination and skips empty filters.
+     * @input  loadAllData({ name: 'a', empty: '' })
+     * @output getCollection('core/things?no_pagination=true&name=a')
+     */
+    it('loadAllData() asks for all rows without pagination', () => {
+      component.loadAllData({ name: 'a', empty: '' }).subscribe();
+      expect((ctx.dataHandler as any).getCollection).toHaveBeenCalledWith('core/things?no_pagination=true&name=a');
+    });
+
+    /**
+     * @description loadAllData() without endpoint fails with the translated error.
+     * @input  apiEndpoint = ''; loadAllData()
+     * @output error message 'base-data.api_endpoint_undefined'
+     */
+    it('loadAllData() fails without endpoint', () => {
+      component.apiEndpoint = '';
+      let message = '';
+      component.loadAllData().subscribe({ error: e => (message = e.message) });
+      expect(message).toBe('base-data.api_endpoint_undefined');
+    });
+
+    /**
+     * @description uploadData() posts the form data to the given URL or the page endpoint.
+     * @input  uploadData(fd), uploadData(fd, 'core/things/import')
+     * @output upload('core/things', fd), upload('core/things/import', fd)
+     */
+    it('uploadData() uploads to the endpoint or a custom URL', () => {
+      const fd = new FormData();
+      component.uploadData(fd).subscribe();
+      component.uploadData(fd, 'core/things/import').subscribe();
+      expect((ctx.dataHandler as any).upload.calls.allArgs()).toEqual([['core/things', fd], ['core/things/import', fd]]);
     });
   });
 
-  /**
-   * @description Each single-entity CRUD method should be a one-to-one
-   * delegation to the matching `EntityCrudService` method, preserving both
-   * arguments and the returned observable's emitted value.
-   */
-  describe('single-entity CRUD delegation', () => {
-    it('getItemDetails() should delegate to crud.getOne(id)', (done) => {
-      const entity: TestEntity = { id: 7, name: 'Gamma' };
-      crudSpy.getOne.and.returnValue(of(entity));
-
-      component.getItemDetails(7).subscribe(result => {
-        expect(crudSpy.getOne).toHaveBeenCalledWith(7);
-        expect(result).toEqual(entity);
-        done();
-      });
-    });
-
-    it('postData() should delegate to crud.create(data)', (done) => {
-      const payload: TestEntity = { name: 'New item' };
-      const created: TestEntity = { id: 10, name: 'New item' };
-      crudSpy.create.and.returnValue(of(created));
-
-      component.postData(payload).subscribe(result => {
-        expect(crudSpy.create).toHaveBeenCalledWith(payload);
-        expect(result).toEqual(created);
-        done();
-      });
-    });
-
-    it('updateData() should delegate to crud.update(id, data)', (done) => {
-      const payload: TestEntity = { id: 11, name: 'Updated' };
-      crudSpy.update.and.returnValue(of(payload));
-
-      component.updateData(11, payload).subscribe(result => {
-        expect(crudSpy.update).toHaveBeenCalledWith(11, payload);
-        expect(result).toEqual(payload);
-        done();
-      });
-    });
-
-    it('deleteData() should delegate to crud.remove(id, { forceDelete, params })', (done) => {
-      const params = { reason: 'cleanup' };
-      crudSpy.remove.and.returnValue(of(undefined));
-
-      component.deleteData(12, true, params).subscribe(() => {
-        expect(crudSpy.remove).toHaveBeenCalledWith(12, { forceDelete: true, params });
-        done();
-      });
-    });
-
-    it('uploadData() should delegate to crud.upload(formData, targetUrl)', (done) => {
-      const formData = new FormData();
-      const response = { url: 'https://example.com/file.png' };
-      crudSpy.upload.and.returnValue(of(response));
-
-      component.uploadData(formData, '/custom-upload').subscribe(result => {
-        expect(crudSpy.upload).toHaveBeenCalledWith(formData, '/custom-upload');
-        expect(result).toEqual(response);
-        done();
-      });
-    });
-
-    it('loadAllData() should delegate to crud.loadAll(filters) when apiEndpoint is set', (done) => {
-      const rows: TestEntity[] = [{ id: 1 }, { id: 2 }];
-      const filters = { sort_by: 'name', sort_direction: 'asc' as const };
-      crudSpy.loadAll.and.returnValue(of(rows));
-
-      component.loadAllData(filters).subscribe(result => {
-        expect(crudSpy.loadAll).toHaveBeenCalledWith(filters);
-        expect(result).toEqual(rows);
-        done();
-      });
-    });
-
-    it('loadAllData() should error without calling crud.loadAll when apiEndpoint is missing', (done) => {
-      component.apiEndpoint = '' as any;
-
-      component.loadAllData().subscribe({
-        error: (err) => {
-          expect(err.message).toBe('API endpoint undefined.');
-          expect(crudSpy.loadAll).not.toHaveBeenCalled();
-          done();
-        }
-      });
-    });
-  });
-
-  /**
-   * @description `initWithAuthCheck()` subscribes to `AuthService.isLoggedIn$`
-   * and either reloads data or redirects to the login page, depending on the
-   * emitted authentication state.
-   */
-  describe('initWithAuthCheck()', () => {
-    it('should call refreshData() when the user is logged in', () => {
-      const refreshSpy = spyOn(component, 'refreshData');
-
-      // `isLoggedIn$` is a BehaviorSubject, so it replays its current value
-      // synchronously to any new subscriber. The value must be set to
-      // `true` *before* `initWithAuthCheck()` subscribes, otherwise the
-      // subscription would first synchronously receive the stale `false`
-      // default (triggering a spurious `router.navigate`) before this
-      // `next(true)` arrives.
-      authServiceMock.isLoggedIn$.next(true);
-      (component as any).initWithAuthCheck(routerSpy);
-
-      expect(refreshSpy).toHaveBeenCalledTimes(1);
-      expect(routerSpy.navigate).not.toHaveBeenCalled();
-    });
-
-    it('should navigate to /auth/login when the user is not logged in', () => {
-      const refreshSpy = spyOn(component, 'refreshData');
-
-      (component as any).initWithAuthCheck(routerSpy);
-      authServiceMock.isLoggedIn$.next(false);
-
-      expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
-      expect(refreshSpy).not.toHaveBeenCalled();
-    });
-
-    it('should unsubscribe once destroy$ has emitted, so later auth changes are ignored', () => {
-      const refreshSpy = spyOn(component, 'refreshData');
-
-      (component as any).initWithAuthCheck(routerSpy);
-      component.ngOnDestroy();
-      authServiceMock.isLoggedIn$.next(true);
-
-      expect(refreshSpy).not.toHaveBeenCalled();
-    });
-  });
-
-  /**
-   * @description `ngOnDestroy()` must complete the shared `destroy$` subject
-   * so that both the component's own subscriptions and any subscriptions
-   * held by `crud`/`list` (which receive the same subject) are torn down.
-   */
-  describe('ngOnDestroy()', () => {
-    it('should call next() and complete() on destroy$', () => {
-      const destroy$ = (component as any).destroy$;
-      const nextSpy = spyOn(destroy$, 'next').and.callThrough();
-      const completeSpy = spyOn(destroy$, 'complete').and.callThrough();
-
-      component.ngOnDestroy();
-
-      expect(nextSpy).toHaveBeenCalledTimes(1);
-      expect(completeSpy).toHaveBeenCalledTimes(1);
+  describe('destroy', () => {
+    /**
+     * @description Destroying the page stops pending requests (destroy$ completes).
+     * @input  request in flight (never-completing observable); fixture.destroy()
+     * @output subscription closed
+     */
+    it('ngOnDestroy() cancels running requests', () => {
+      const pending = new Subject<Row[]>();
+      (ctx.dataHandler as any).getCollection.and.returnValue(pending.asObservable());
+      const sub = component.subscribeCollection();
+      fixture.destroy();
+      expect(sub.closed).toBeTrue();
     });
   });
 });

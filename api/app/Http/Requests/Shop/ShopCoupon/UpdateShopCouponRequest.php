@@ -50,7 +50,11 @@ class UpdateShopCouponRequest extends FormRequest
             'applies_to' => 'required|in:all,products,categories',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
-            'is_active' => 'required|in:0,1,true,false,boolean',
+            // @bugfix-note (2026-10-23) Was `in:0,1,true,false,boolean`: prepareForValidation()
+            // turns the value into a PHP bool and `in` compares false as '' → an INACTIVE coupon
+            // could never be saved (422 "The selected is active is invalid."). `boolean` accepts
+            // the converted true / false.
+            'is_active' => 'required|boolean',
         ];
     }
 

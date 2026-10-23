@@ -37,6 +37,7 @@ use App\Traits\LogsActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Web\WebSalesLead\StoreWebSalesLeadRequest;
+use App\Http\Requests\Web\WebSalesLead\UpdateWebSalesLeadRequest;
 use App\Http\Resources\Web\WebSalesLeadResource;
 use App\Services\Import\ImportFileParser;
 use App\Services\Import\ImportRowValidator;
@@ -165,11 +166,19 @@ class WebSalesLeadController extends Controller
     /**
      * Updates an existing sales lead record.
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(UpdateWebSalesLeadRequest $request, $id): JsonResponse
     {
+        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
+        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
+        // and answered 500 instead of 404. Found by the unit tests.
+        $lead = WebSalesLead::findOrFail($id);
+
         try {
-            $lead = WebSalesLead::findOrFail($id);
-            $lead->update($request->all());
+            // @bugfix-note (2026-10-22) SECURITY: validated through UpdateWebSalesLeadRequest -
+            // the update used `$request->all()` with no validation at all (the request class
+            // existed but was never used), so any fillable column could be set to anything
+            // (e.g. user_id of a non-existing account, unchecked status / priority values).
+            $lead->update($request->validated());
 
             $this->logAction($request, WebLog::class, 'update', 'WebSalesLead', "Updated lead ID: {$lead->id} ({$lead->subject_name})", $lead->id, 'WebSalesLead');
 
@@ -185,9 +194,10 @@ class WebSalesLeadController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
+        $item = WebSalesLead::withTrashed()->findOrFail($id);
+
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebSalesLead::withTrashed()->findOrFail($id);
 
             $forceDelete ? $item->forceDelete() : $item->delete();
 
@@ -398,10 +408,16 @@ class WebSalesLeadController extends Controller
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
             ]]);
-        } catch (\RuntimeException $e) {
-            // Expired temporary file - see runImportCommit(), code 410.
-            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
+            // Expired temporary file - see runImportCommit(), code 410.
+            // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
+            // own message and code: a database error (QueryException is a RuntimeException)
+            // put the SQL error text into the response and its SQLSTATE string as the HTTP
+            // status (crash), a parser error answered 500 without an error log. Now only the
+            // expired-file case passes through, everything else is logged and answered 500.
+            if ($e instanceof \RuntimeException && $e->getCode() === 410) {
+                return response()->json(['message' => $e->getMessage()], 410);
+            }
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }
@@ -412,8 +428,9 @@ class WebSalesLeadController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
+        $item = WebSalesLead::withTrashed()->findOrFail($id);
+
         try {
-            $item = WebSalesLead::withTrashed()->findOrFail($id);
             $item->restore();
 
             $this->logAction($request, WebLog::class, 'restore', 'WebSalesLead', "Restored lead ID: $id", (int) $id, 'WebSalesLead');
@@ -450,8 +467,9 @@ class WebSalesLeadController extends Controller
      */
     public function generateLink(Request $request, $id): JsonResponse
     {
+        $lead = WebSalesLead::findOrFail($id);
+
         try {
-            $lead = WebSalesLead::findOrFail($id);
             $token = $lead->getOrCreatePublicToken();
 
             $this->logAction($request, WebLog::class, 'generate_link', 'WebSalesLead', "Generated order form link for lead ID: {$lead->id}", $lead->id, 'WebSalesLead');

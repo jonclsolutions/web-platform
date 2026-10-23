@@ -6,11 +6,15 @@
  * @author RPSW
  * @created 2026
  * @description Resource transformation for shop payment methods.
+ *
+ * @bugfix-note (2026-10-23) The gateway `config` is no longer part of public storefront /
+ * checkout responses - see DetectsPublicShopRequest.
  */
 
 namespace App\Http\Resources\Shop;
 
 use Illuminate\Http\Request;
+use App\Http\Resources\Shop\Concerns\DetectsPublicShopRequest;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -18,6 +22,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ShopPaymentMethodResource extends JsonResource
 {
+    use DetectsPublicShopRequest;
+
     /**
      * Transform the resource into an array.
      *
@@ -26,7 +32,7 @@ class ShopPaymentMethodResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
+        $data = [
             'id'                   => $this->id,
             'code'                 => $this->code,
             'name'                 => $this->name,
@@ -48,5 +54,11 @@ class ShopPaymentMethodResource extends JsonResource
             'updated_at'           => $this->updated_at?->toIso8601String(),
             'deleted_at'           => $this->deleted_at?->toIso8601String(),
         ];
+
+        if ($this->isPublicShopRequest($request)) {
+            unset($data['config']);
+        }
+
+        return $data;
     }
 }

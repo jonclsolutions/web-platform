@@ -33,7 +33,10 @@ web-platform/
 ├── deploy/
 │   ├── build.sh         production build → build/www.zip
 │   └── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
-├── docs/                project documentation, manual regression tests, DOCS templates
+├── docs/                project documentation, DOCS templates
+├── tests/
+│   ├── regression_tests/ manual regression tests (scripts + checklists)
+│   └── unit_tests/      runners for the erp (Karma) and api (PHPUnit) unit tests, see its README
 ├── init-workspace.sh    prepares a freshly cloned app for local development (repeatable)
 ├── dev.sh               starts / stops the whole local environment
 ├── .dev/                (git-ignored) logs and PID files of dev.sh
@@ -233,7 +236,7 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
 ## Deployment checklist (monthly release)
 
 1. **Prepare**
-   - all changes committed and pushed, tests and manual regression (`docs/manual_regression/`) done
+   - all changes committed and pushed, tests and manual regression (`tests/regression_tests/`) done
    - tag the release: `git tag -a vYYYY.MM -m "Release YYYY-MM" && git push --tags`
 2. **Build** – `deploy/build.sh`, check that it ends with `COMPLETE`
 3. **Back up production** – database dump, `laravel/.env`, `laravel/storage/app/`

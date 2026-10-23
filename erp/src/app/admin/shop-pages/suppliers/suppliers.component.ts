@@ -95,14 +95,18 @@ export class SuppliersComponent extends BaseDataComponent<any> implements Core.O
           updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
+        // @bugfix-note (2026-10-22) Import was offered in the trash view and the trash button was
+        // never highlighted – same rules as the other shop pages now.
         case 'handleCreateFormOpened':
         case 'exportActiveTable':
+        case 'triggerImport':
           if (updatedBtn.showIf !== false) {
             updatedBtn.showIf = !this.showTrashTable;
           }
           break;
         case 'toggleTable':
           updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
+          updatedBtn.isActive = this.showTrashTable;
           break;
       }
 

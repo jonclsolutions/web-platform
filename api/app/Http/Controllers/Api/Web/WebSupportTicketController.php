@@ -177,8 +177,12 @@ class WebSupportTicketController extends Controller
      */
     public function update(UpdateWebSupportTicketRequest $request, $id): JsonResponse
     {
+        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
+        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
+        // and answered 500 instead of 404. Found by the unit tests.
+        $ticket = WebSupportTicket::withTrashed()->findOrFail($id);
+
         try {
-            $ticket = WebSupportTicket::withTrashed()->findOrFail($id);
             $validated = $request->validated();
             unset($validated['attachment']);
 
@@ -200,9 +204,10 @@ class WebSupportTicketController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
+        $item = WebSupportTicket::withTrashed()->with('attachments')->findOrFail($id);
+
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebSupportTicket::withTrashed()->with('attachments')->findOrFail($id);
 
             if ($forceDelete) {
                 $this->deleteAllAttachments($item);
@@ -448,10 +453,16 @@ class WebSupportTicketController extends Controller
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
             ]]);
-        } catch (\RuntimeException $e) {
-            // Vypršelý dočasný soubor - viz runImportCommit(), kód 410.
-            return response()->json(['message' => $e->getMessage()], $e->getCode() ?: 500);
         } catch (\Exception $e) {
+            // Expired temporary file - see runImportCommit(), code 410.
+            // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
+            // own message and code: a database error (QueryException is a RuntimeException)
+            // put the SQL error text into the response and its SQLSTATE string as the HTTP
+            // status (crash), a parser error answered 500 without an error log. Now only the
+            // expired-file case passes through, everything else is logged and answered 500.
+            if ($e instanceof \RuntimeException && $e->getCode() === 410) {
+                return response()->json(['message' => $e->getMessage()], 410);
+            }
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error during import: " . $e->getMessage());
             return response()->json(['message' => 'Import failed.'], 500);
         }
@@ -462,8 +473,9 @@ class WebSupportTicketController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
+        $item = WebSupportTicket::withTrashed()->findOrFail($id);
+
         try {
-            $item = WebSupportTicket::withTrashed()->findOrFail($id);
             $item->restore();
 
             $this->logAction($request, WebLog::class, 'restore', 'WebSupportTicket', "Restore ticket ID: $id", (int) $id, 'WebSupportTicket');

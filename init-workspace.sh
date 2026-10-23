@@ -17,7 +17,7 @@
 #
 # Steps (each one is skipped when already done – safe to run again, nothing
 # existing is overwritten):
-#   1. System packages – PHP + extensions, Composer, Node.js, tools (dnf)
+#   1. System packages – PHP + extensions (incl. pcov for test coverage), Composer, Node.js, tools (dnf)
 #   2. Mailpit         – local SMTP catcher, verified release → ~/.local/bin
 #   3. Laravel         – api/.env, composer install, APP_KEY, storage symlink, permissions
 #   4. Angular         – npm ci, local SSL certificate for `ng serve`
@@ -168,6 +168,9 @@ preflight() {
 # 1. System packages (Fedora / dnf) – only missing packages are installed.
 # @note php-process = pcntl/posix (queue workers), php-mysqlnd = pdo_mysql,
 # libxcrypt-compat = libcrypt.so.1 needed by XAMPP on current Fedora.
+# Unit tests (tests/unit_tests/api): php-pdo = pdo_sqlite (the tests run on SQLite
+# in memory), php-pecl-pcov = code coverage driver (without it the tests still run,
+# only the coverage is missing).
 # -----------------------------------------------------------------------------
 install_system_packages() {
     step "System packages"
@@ -180,6 +183,7 @@ install_system_packages() {
     local wanted=(
         php-cli php-common php-mbstring php-xml php-mysqlnd php-intl php-pecl-zip
         php-gd php-bcmath php-process php-opcache php-sodium
+        php-pdo php-pecl-pcov
         composer nodejs npm
         git unzip zip rsync openssl curl tar libxcrypt-compat
     )

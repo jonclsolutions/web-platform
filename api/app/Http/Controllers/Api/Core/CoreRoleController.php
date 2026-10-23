@@ -73,9 +73,15 @@ class CoreRoleController extends Controller
             $query->onlyTrashed();
         }
 
+        // @bugfix-note (2026-10-22) Wrapped in its own where() group - the bare orWhere() broke
+        // out of the onlyTrashed() scope, so searching the trash also listed active roles
+        // whose description matched (same pitfall as described in CoreExternalLinkController).
+        // Found by the unit tests.
         if ($s = $request->input('search')) {
-            $query->where('role_name', 'like', "%$s%")
+            $query->where(function ($q) use ($s) {
+                $q->where('role_name', 'like', "%$s%")
                   ->orWhere('description', 'like', "%$s%");
+            });
         }
 
         if ($noPagination) {

@@ -157,9 +157,12 @@ class WebJobApplicationController extends Controller
      */
     public function update(UpdateWebJobApplicationRequest $request, $id): JsonResponse
     {
-        try {
-            $jobApplication = WebJobApplication::withTrashed()->findOrFail($id);
+        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
+        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
+        // and answered 500 instead of 404. Found by the unit tests.
+        $jobApplication = WebJobApplication::withTrashed()->findOrFail($id);
 
+        try {
             $validated = $request->validated();
             unset($validated['cv_file']);
 
@@ -197,9 +200,10 @@ class WebJobApplicationController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
+        $item = WebJobApplication::withTrashed()->with('attachments')->findOrFail($id);
+
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebJobApplication::withTrashed()->with('attachments')->findOrFail($id);
 
             if ($forceDelete) {
                 $this->deleteAllAttachments($item);
@@ -286,8 +290,9 @@ class WebJobApplicationController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
+        $item = WebJobApplication::withTrashed()->findOrFail($id);
+
         try {
-            $item = WebJobApplication::withTrashed()->findOrFail($id);
             $item->restore();
 
             $this->logAction($request, WebLog::class, 'restore', 'WebJobApplication', "Restored job application ID: $id", (int) $id, 'WebJobApplication');

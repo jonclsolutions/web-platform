@@ -1343,7 +1343,6 @@
     "details_created": "Date received",
 
     "crud_updated_message": "Application has been updated.",
-    "crud_created_message": "Application has been created.",
     "graph_date_field_label": "Date created"
   },
   "edit-news": {
@@ -1814,7 +1813,6 @@
     "details_updated": "Last modified",
 
     "crud_updated_message": "Order has been updated.",
-    "crud_created_message": "Order has been created.",
     "graph_date_field_label": "Date created"
   },
   "external-links": {
@@ -2860,8 +2858,6 @@
     "toolbar_hide_filters": "Hide filters",
     "toolbar_generate_reports": "Generate charts & reports",
     "toolbar_export_data": "Export data",
-    "toolbar_show_trash": "Trash",
-    "toolbar_show_active": "Show active",
 
     "btn_details": "Details",
     "btn_edit": "Edit",
@@ -2901,7 +2897,6 @@
     "details_created": "Created",
 
     "crud_updated_message": "Record has been updated.",
-    "crud_created_message": "Record has been created.",
     "update_failed_message": "Update failed.",
     "load_details_failed_message": "Failed to load details.",
     "graph_date_field_label": "Date created"

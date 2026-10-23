@@ -36,6 +36,7 @@
 namespace App\Traits;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -112,15 +113,43 @@ trait LogsActivity
      * @param Request $request
      * @param array $extraExcludedKeys
      * @return array
+     * @bugfix-note (2026-10-22) `$request->except()` also returns the uploaded files. An
+     *   UploadedFile cannot be JSON-encoded, so the model cast threw, logAction() swallowed
+     *   it and EVERY action with an attachment (contact form, orders, tickets, CVs, project
+     *   messages, imports) was missing from the audit log. Files are now logged as
+     *   {file, size}. A payload that still cannot be encoded (e.g. invalid UTF-8) is
+     *   replaced by a marker instead of losing the whole log row. Found by the unit tests.
      */
     private function safeContextData(Request $request, array $extraExcludedKeys = []): array
     {
         $excluded = array_merge(self::SENSITIVE_KEYS, $extraExcludedKeys);
-        $data = $request->except($excluded);
+        $data = $this->describeUploadedFiles($request->except($excluded));
 
         $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
-        if ($encoded !== false && strlen($encoded) > 60000) {
+        if ($encoded === false) {
+            return ['_omitted' => true, 'note' => 'Payload could not be encoded as JSON and was omitted.'];
+        }
+        if (strlen($encoded) > 60000) {
             return ['_truncated' => true, 'note' => 'Payload exceeded 60000 bytes and was omitted.'];
+        }
+
+        return $data;
+    }
+
+    /**
+     * @description Replaces uploaded files (also nested, e.g. `attachments[]`) by a short
+     *   description - the file itself is never part of the audit log.
+     * @param array $data Request payload.
+     * @return array The payload with every UploadedFile replaced by {file, size}.
+     */
+    private function describeUploadedFiles(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if ($value instanceof UploadedFile) {
+                $data[$key] = ['file' => $value->getClientOriginalName(), 'size' => $value->getSize()];
+            } elseif (is_array($value)) {
+                $data[$key] = $this->describeUploadedFiles($value);
+            }
         }
 
         return $data;

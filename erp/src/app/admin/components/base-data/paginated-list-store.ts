@@ -70,7 +70,12 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
     private endpointProvider: () => string,
     private destroy$: Subject<void>,
     private cd: ChangeDetectorRef,
-    public defaultFilters: FilterParams = { sort_by: 'id', sort_direction: 'desc' }
+    public defaultFilters: FilterParams = { sort_by: 'id', sort_direction: 'desc' },
+    /**
+     * @refactor-note (2026-10-22) Optional mapping of every loaded row (active and trash), e.g. to
+     * flatten nested API values into table columns. Identity by default.
+     */
+    private rowMapper: (row: T) => T = row => row
   ) {}
 
   private get endpoint(): string {
@@ -101,13 +106,13 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
       retry(1),
       tap(response => {
         if (isTrash) {
-          this.trashData = response.data;
+          this.trashData = response.data.map(row => this.rowMapper(row));
           this.trashTotalItems = response.total;
           this.trashTotalPages = response.last_page;
           this.trashCurrentPage = response.current_page;
           this.trashLastUpdatedAt.next(new Date());
         } else {
-          this.data = response.data;
+          this.data = response.data.map(row => this.rowMapper(row));
           this.totalItems = response.total;
           this.totalPages = response.last_page;
           this.currentPage = response.current_page;

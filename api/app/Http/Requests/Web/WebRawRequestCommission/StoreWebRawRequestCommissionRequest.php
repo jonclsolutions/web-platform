@@ -20,6 +20,7 @@
 
 namespace App\Http\Requests\Web\WebRawRequestCommission;
 
+use App\Rules\AttachmentsTotalSize;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -28,6 +29,15 @@ use Illuminate\Foundation\Http\FormRequest;
 class StoreWebRawRequestCommissionRequest extends FormRequest
 {
     use ValidatesAttachmentSecurity;
+
+    /** @var int Maximum number of files in one request (same as the update). */
+    private const MAX_ATTACHMENTS = 10;
+
+    /** @var int Maximum size of one file in KB (20 MB). */
+    private const MAX_FILE_SIZE_KB = 20480;
+
+    /** @var int Maximum size of all files together (50 MB). */
+    private const MAX_TOTAL_SIZE_BYTES = 50 * 1024 * 1024;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -55,7 +65,12 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
             'priority'          => ['sometimes', 'string', 'in:low,neutral,high'],
             'note'              => ['nullable', 'string'],
             'lang'              => ['sometimes', 'nullable', 'string', 'max:5'],
-            'attachment'        => ['nullable', 'file', 'max:10240', $this->attachmentExtensionRule()],
+            // @bugfix-note (2026-10-22) SECURITY: the public contact form (and the admin form)
+            // send `attachments[]`, which the controller stores - but only a single
+            // `attachment` field was validated, so the files of this PUBLIC endpoint were
+            // stored without any count, size or extension check. Same limits as the update.
+            'attachments'       => ['sometimes', 'nullable', 'array', 'max:' . self::MAX_ATTACHMENTS, new AttachmentsTotalSize(self::MAX_TOTAL_SIZE_BYTES)],
+            'attachments.*'     => ['file', 'max:' . self::MAX_FILE_SIZE_KB, $this->attachmentExtensionRule()],
         ];
     }
 
@@ -86,8 +101,9 @@ class StoreWebRawRequestCommissionRequest extends FormRequest
             'contact_email.email'           => 'Please provide a valid email address.',
             'contact_phone.regex'           => 'Please provide a valid phone number.',
             'order_description.required'    => 'The description is required for processing.',
-            'attachment.max'                => 'The file is too large. The maximum size is 10 MB.',
-            'attachment.file'               => 'The attachment must be a valid file.',
+            'attachments.max'               => 'You can upload a maximum of ' . self::MAX_ATTACHMENTS . ' files at once.',
+            'attachments.*.max'             => 'Each file may not be greater than 20 MB.',
+            'attachments.*.file'            => 'The attachment must be a valid file.',
         ];
     }
 }

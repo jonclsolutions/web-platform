@@ -40,4 +40,14 @@ return [
         'verify_url' => 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
     ],
 
+    /*
+    | @bugfix-note (2026-10-23) The public `POST shop/checkout/simulate-payment` endpoint
+    | marked ANY order as paid + confirmed for anyone who knew (or guessed) its id. It
+    | exists only as a stand-in for a real payment gateway, so it is now switched off in
+    | production by default; set SHOP_PAYMENT_SIMULATION=true only on dev / test systems.
+    */
+    'shop' => [
+        'payment_simulation' => (bool) env('SHOP_PAYMENT_SIMULATION', env('APP_ENV', 'production') !== 'production'),
+    ],
+
 ];

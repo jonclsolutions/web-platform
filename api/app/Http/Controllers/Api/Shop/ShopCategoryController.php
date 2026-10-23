@@ -9,6 +9,8 @@
  *
  * @refactor-note (2026-08-6) MIGRACE LOGOVÁNÍ na sdílený `LogsActivity` trait místo
  * lokální duplicitní logAction(). Doménově beze změny (ShopLog::class).
+ *
+ * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy (findOrFail inside try).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -97,8 +99,9 @@ class ShopCategoryController extends Controller
      */
     public function update(UpdateShopCategoryRequest $request, $id): JsonResponse
     {
+        $category = ShopCategory::findOrFail($id);
+
         try {
-            $category = ShopCategory::findOrFail($id);
             $category->update($request->validated());
             $this->logAction($request, ShopLog::class, 'update', 'ShopCategory', "Updated category ID: {$category->id}", $category->id, 'ShopCategory');
             return response()->json(new ShopCategoryResource($category));
@@ -113,9 +116,9 @@ class ShopCategoryController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
-        try {
-            $item = ShopCategory::findOrFail($id);
+        $item = ShopCategory::findOrFail($id);
 
+        try {
             if ($item->children()->exists()) {
                 return response()->json([
                     'message' => "Cannot delete '{$item->name}' because it contains subcategories. Please remove or move them first."

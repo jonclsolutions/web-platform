@@ -22,6 +22,9 @@
  *   dynamické přepínání labelu podle `showFiltersPanel`/`showTrashTable`, žádná
  *   runtime permission-based `showIf` filtrace). Přebudováno jen uvnitř i18n
  *   subscribe bloku, ať se text jazykově přepne.
+ *   @bugfix-note (2026-10-22) Pořád plain pole, jen tlačítka bez oprávnění (create, import,
+ *   reporty, koš) teď dostanou `showIf: false` - dřív je viděl každý admin (API požadavek
+ *   stejně odmítlo). Import tlačítko nemělo handler - doplněn `triggerImport`.
  * - `Config.PRODUCT_*` konstanty nahrazeny `Config.create*()` factory funkcemi.
  * - `formatCurrency()` natvrdo `'cs-CZ'` nahrazeno `this.i18n.getDateLocale()` -
  *   přímá součást i18n (formátování čísel dle jazyka), ne byznys logika.
@@ -107,7 +110,8 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
 
     this.i18n.translations$.subscribe(() => {
       this.tableCaption = this.t('table_header');
-      this.toolbarButtons = Config.createToolbarButtons(this.i18n);
+      this.toolbarButtons = Config.createToolbarButtons(this.i18n).map(btn =>
+        btn.permission && !this.permissionService.hasPermission(btn.permission) ? { ...btn, showIf: false } : btn);
       this.buttons = Config.createProductButtons(this.i18n);
       this.productColumns = Config.createProductColumns(this.i18n);
       this.trashProductColumns = Config.createTrashProductColumns(this.i18n);
@@ -141,19 +145,19 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     this.toggleBodyScroll(false);
   }
 
-  override loadData(): void {
-    this.list.fetchPaginatedData(this.showTrashTable, this.currentPage, this.itemsPerPage, this.filters)
-      .pipe(
-        Core.map((response) => {
-          response.data = response.data.map((product: any) => {
-            product.price_eur     = product.prices?.price_eur_with_vat ?? 0;
-            product.category_name = product.category?.name ?? '-';
-            product.supplier_name = product.supplier?.name ?? '-';
-            return product;
-          });
-          return response;
-        })
-      ).subscribe();
+  /**
+   * @bugfix-note (2026-10-22) The former `loadData()` override did this mapping, but nothing
+   *   calls `loadData()` (the table is loaded by PaginatedListStore), so the price, category and
+   *   supplier columns of the product table stayed empty. The mapping now runs for every loaded row.
+   * @description Derives the table columns price_eur / category_name / supplier_name from the
+   *   nested API data of a product row.
+   */
+  protected override mapListRow(product: Product): Product {
+    const row: any = { ...product };
+    row.price_eur     = row.prices?.price_eur_with_vat ?? 0;
+    row.category_name = row.category?.name ?? '-';
+    row.supplier_name = row.supplier?.name ?? '-';
+    return row;
   }
 
   private toggleBodyScroll(lock: boolean): void {
@@ -168,6 +172,7 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
       toggleTrash:            () => this.toggleTrash(),
       openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable:      () => this.exportActiveTable(),
+      triggerImport:          () => this.activeTable?.importData(),
     };
     actions[action]?.();
   }
@@ -607,8 +612,9 @@ export class ProductsComponent extends BaseDataComponent<Product> implements OnI
     const priceWithoutVat = Math.round((priceWithVat / (1 + vatRate / 100)) * 100) / 100;
 
     const fd = new FormData();
-    fd.append('name',                this.editingProduct.name ?? '');
-    fd.append('slug',                this.editingProduct.slug || this.generateSlug(this.editingProduct.name ?? ''));
+    // the name is always set here – validateProduct() refuses products without one
+    fd.append('name',                this.editingProduct.name);
+    fd.append('slug',                this.editingProduct.slug || this.generateSlug(this.editingProduct.name));
     fd.append('sku',                 this.editingProduct.sku ?? '');
     fd.append('short_description',   this.editingProduct.short_description ?? '');
     fd.append('description',         this.editingProduct.description ?? '');

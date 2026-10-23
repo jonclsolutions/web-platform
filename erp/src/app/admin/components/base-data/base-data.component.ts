@@ -168,10 +168,21 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
         () => this.apiEndpoint,
         this.destroy$,
         this.cd,
-        this.defaultFilters
+        this.defaultFilters,
+        row => this.mapListRow(row)
       );
     }
     return this._list;
+  }
+
+  /**
+   * @description Maps one loaded table row before it is shown (active and trash table).
+   *   Identity by default; pages override it to derive display columns from nested API data.
+   * @param row Row as returned by the API.
+   * @returns The row to display.
+   */
+  protected mapListRow(row: T): T {
+    return row;
   }
 
   constructor(
@@ -522,12 +533,15 @@ export abstract class BaseDataComponent<T extends { id?: number; deleted_at?: st
   /**
    * @description Dispatches a toolbar button action name to the matching handler; unknown names are ignored.
    * @param action Action name emitted by the toolbar.
+   * @bugfix-note (2026-10-22) `triggerImport` was missing - the "import data" toolbar button of
+   *   pages that rely on this default (shop coupons, suppliers, shipping methods) did nothing.
    */
   handleToolbarAction(action: string): void {
     const actions: { [key: string]: () => void } = {
       toggleFilters: () => this.toggleFilters(),
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       exportActiveTable: () => this.exportActiveTable(),
+      triggerImport: () => this.activeTable?.importData(),
       openGraphBuilder: () => this.openGraphBuilder(),
       toggleTable: () => this.toggleTable()
     };

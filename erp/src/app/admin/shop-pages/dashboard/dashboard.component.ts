@@ -768,13 +768,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * výpadek shop-KPI dat neblokuje zobrazení stavu údržby a naopak. BEZE ZMĚNY oproti
    * předchozí verzi.
    */
-  private loadMaintenanceStatus(force: boolean = false): void {
+  // @refactor-note (2026-10-22) The never used `force` parameter was removed (the cache is
+  // invalidated after a successful change in submitShopMaintenanceChange()).
+  // @bugfix-note (2026-10-22) Added the `error` handler – a failed request was an unhandled RxJS error.
+  private loadMaintenanceStatus(): void {
     if (!this.permissionService.hasPermission(this.PERM_MAINTENANCE)) {
       return;
-    }
-
-    if (force) {
-      this.resourceCache.invalidate(this.MAINTENANCE_CACHE_KEY);
     }
 
     this.resourceCache.get(
@@ -787,7 +786,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.isShopActive = !!res.is_shop_active;
           this.shopMaintenanceMessage = res.maintenance_message || '';
         }
-      }
+      },
+      error: () => { /* keep the last known state (default: shop active) */ }
     });
   }
 

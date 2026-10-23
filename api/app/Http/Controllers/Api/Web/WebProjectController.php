@@ -125,8 +125,12 @@ class WebProjectController extends Controller
 
     public function update(UpdateWebProjectRequest $request, $id): JsonResponse
     {
+        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
+        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
+        // and answered 500 instead of 404. Found by the unit tests.
+        $project = WebProject::findOrFail($id);
+
         try {
-            $project = WebProject::findOrFail($id);
             $project->update($request->validated());
 
             $this->logAction($request, WebLog::class, 'update', 'WebProject', "Updated project ID: {$project->id}", $project->id, 'WebProject');
@@ -146,9 +150,10 @@ class WebProjectController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
+        $item = WebProject::withTrashed()->findOrFail($id);
+
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebProject::withTrashed()->findOrFail($id);
 
             if ($forceDelete) {
                 $this->cascadeDeleteProjectRelations($item);

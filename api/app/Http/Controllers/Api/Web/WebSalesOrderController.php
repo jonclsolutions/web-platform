@@ -192,8 +192,12 @@ class WebSalesOrderController extends Controller
      */
     public function update(UpdateWebSalesOrderRequest $request, $id): JsonResponse
     {
+        // @bugfix-note (2026-10-22) findOrFail() outside the try block (all actions of this
+        // controller): inside it the "not found" exception was caught by `catch (\Exception)`
+        // and answered 500 instead of 404. Found by the unit tests.
+        $order = WebSalesOrder::findOrFail($id);
+
         try {
-            $order = WebSalesOrder::findOrFail($id);
             $validated = $request->safe()->except(['attachments']);
 
             $order->update($validated);
@@ -213,9 +217,10 @@ class WebSalesOrderController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
+        $item = WebSalesOrder::withTrashed()->with('attachments')->findOrFail($id);
+
         try {
             $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $item = WebSalesOrder::withTrashed()->with('attachments')->findOrFail($id);
 
             if ($forceDelete) {
                 $this->deleteAllAttachments($item);
@@ -297,8 +302,9 @@ class WebSalesOrderController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
+        $item = WebSalesOrder::withTrashed()->findOrFail($id);
+
         try {
-            $item = WebSalesOrder::withTrashed()->findOrFail($id);
             $item->restore();
             $this->logAction($request, WebLog::class, 'restore', 'WebSalesOrder', "Restored sales order ID: $id", (int) $id, 'WebSalesOrder');
             return response()->json(new WebSalesOrderResource($item->load(['lead', 'attachments'])));

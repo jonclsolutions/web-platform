@@ -145,6 +145,8 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
       handleCreateFormOpened: () => this.handleCreateFormOpened(),
       openGraphBuilder: () => this.openGraphBuilder(),
       exportActiveTable: () => this.exportActiveTable(),
+      // @bugfix-note (2026-10-22) the "import data" button had no handler
+      triggerImport: () => this.activeTable?.importData(),
       toggleTable: () => this.toggleTable()
     };
     if (actions[action]) actions[action]();

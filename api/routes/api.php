@@ -95,7 +95,10 @@ Route::prefix('shop/public')->group(function () {
         Route::get('categories', [ShopCategoryController::class, 'index']);
         Route::get('shipping-methods', [ShopPublicController::class, 'getShippingMethods']);
         Route::get('payment-methods', [ShopPublicController::class, 'getPaymentMethods']);
-        Route::post('coupons/validate', [ShopPublicController::class, 'validateCoupon']);
+        // @bugfix-note (2026-10-23) Own throttle bucket - without it coupon codes could be
+        // guessed by brute force (the endpoint answers which codes exist).
+        Route::post('coupons/validate', [ShopPublicController::class, 'validateCoupon'])
+            ->middleware('throttle:20,1,shop-coupon-validate');
     });
 });
 /*
@@ -109,9 +112,13 @@ Route::get('web/public/status', [WebPublicController::class, 'getStatus']);
 | CHECKOUT
 |--------------------------------------------------------------------------
 */
+// @bugfix-note (2026-10-23) The public checkout endpoints had no rate limit (order spam
+// that also blocks stock, payment-simulation id probing) - own buckets per endpoint.
 Route::prefix('shop/checkout')->middleware('shop.active')->group(function () {
-    Route::post('create-order', [ShopCheckoutController::class, 'createOrder']);
-    Route::post('simulate-payment', [ShopCheckoutController::class, 'simulatePayment']);
+    Route::post('create-order', [ShopCheckoutController::class, 'createOrder'])
+        ->middleware('throttle:10,1,shop-checkout-create');
+    Route::post('simulate-payment', [ShopCheckoutController::class, 'simulatePayment'])
+        ->middleware('throttle:10,1,shop-checkout-payment');
 });
 
 /*
@@ -224,12 +231,19 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
     ->middleware('throttle:10,1,password-reset');
 
 // Public web forms
-Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store']);
+// @bugfix-note (2026-10-22) SECURITY: the contact form (raw_request_commissions) and the job
+// application form had no rate limit - anyone could flood the database / storage with
+// records and attachments and, through the confirmation e-mail of the contact form, send
+// unlimited e-mails to any address. Now the same per-IP limit as sales_orders, each with
+// its own bucket prefix (see the bugfix-note (2026-08-25) in the file header).
+Route::post('raw_request_commissions', [WebRawRequestCommissionController::class, 'store'])
+    ->middleware('throttle:10,1,raw-request-commissions');
 // Prefix 'sales-orders' - viz bugfix-note (2026-08-25) v hlavičce souboru (tenhle
 // endpoint byl hlavní zdroj falešného křížení v reálném testu skriptu).
 Route::post('sales_orders', [WebSalesOrderController::class, 'store'])
     ->middleware('throttle:10,1,sales-orders');
-Route::post('job_applications',        [WebJobApplicationController::class, 'store']);
+Route::post('job_applications',        [WebJobApplicationController::class, 'store'])
+    ->middleware('throttle:10,1,job-applications');
 
 /*
 |--------------------------------------------------------------------------

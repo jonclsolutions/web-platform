@@ -65,7 +65,10 @@ class UpdateShopCategoryRequest extends FormRequest
                 })->ignore($id),
             ],
             'description' => 'nullable|string',
-            'parent_id' => 'nullable|integer|exists:shop_categories,id|different:id',
+            // @bugfix-note (2026-10-23) `different:id` compared with an `id` INPUT field that is never
+            // sent, so a category could be made its own parent (endless tree in the admin /
+            // storefront). Now the route id itself is excluded.
+            'parent_id' => ['nullable', 'integer', 'exists:shop_categories,id', Rule::notIn([(int) $id])],
             'image_path' => 'nullable|string|max:255',
             'is_active' => 'boolean',
             'sort_order' => 'integer',

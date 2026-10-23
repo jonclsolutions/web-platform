@@ -14,6 +14,9 @@
  * is now a Shop-domain concern with its own table (`shop_site_settings`), model
  * (`ShopSiteSetting`), and permission-gated routes under `/api/shop/settings`. Web
  * maintenance is untouched and remains in `CoreSiteSettingController`.
+ *
+ * @refactor-note (2026-10-23) update(): removed the unreachable `if (!$auth)` 401 branch
+ * (the route requires auth:sanctum + permission) - same as WebSiteSettingController.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -86,11 +89,8 @@ class ShopSiteSettingController extends Controller
             'maintenance_message' => 'sometimes|nullable|string|max:500',
         ]);
 
-        $auth = $request->user() ?? auth('sanctum')->user();
-
-        if (!$auth) {
-            return response()->json(['message' => 'User is not authenticated.'], 401);
-        }
+        // Route is behind auth:sanctum + permission - a user is always present.
+        $auth = $request->user();
 
         // Security check: Verify password against database hash
         if (!Hash::check($validated['confirm_password'], $auth->user_password_hash)) {

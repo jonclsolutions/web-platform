@@ -15,6 +15,9 @@
  * zákaznických dat (jméno, e-mail, adresa) navíc zbytečně duplikuje osobní údaje mimo
  * řízený audit trail (`shop_logs`), což je z pohledu GDPR/data minimalizace nežádoucí.
  * `forceDeleteAllTrashed()` dosud neměl žádné auditní volání do `shop_logs` - doplněno.
+ *
+ * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy / restore (findOrFail inside try);
+ * SECURITY: the 500 answers of store / update contained the exception text → generic messages.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -95,7 +98,7 @@ class ShopCustomerController extends Controller
         } catch (\Exception $e) {
             Log::error("ShopCustomer creation error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Customer creation failed: " . $e->getMessage());
-            return response()->json(['message' => 'Customer creation failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Customer creation failed.'], 500);
         }
     }
 
@@ -113,8 +116,9 @@ class ShopCustomerController extends Controller
      */
     public function update(UpdateShopCustomerRequest $request, $id): JsonResponse
     {
+        $customer = ShopCustomer::findOrFail($id);
+
         try {
-            $customer = ShopCustomer::findOrFail($id);
             $customer->update($request->validated());
 
             $this->logAction($request, ShopLog::class, 'update', 'ShopCustomer', "Updated customer: {$customer->getFullName()}", $customer->id, 'ShopCustomer');
@@ -122,7 +126,7 @@ class ShopCustomerController extends Controller
         } catch (\Exception $e) {
             Log::error("ShopCustomer update error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Update failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
-            return response()->json(['message' => 'Update failed: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Update failed.'], 500);
         }
     }
 
@@ -131,10 +135,10 @@ class ShopCustomerController extends Controller
      */
     public function destroy(Request $request, $id): JsonResponse
     {
-        try {
-            $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
-            $customer = ShopCustomer::withTrashed()->findOrFail($id);
+        $forceDelete = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
+        $customer = ShopCustomer::withTrashed()->findOrFail($id);
 
+        try {
             $forceDelete ? $customer->forceDelete() : $customer->delete();
 
             $this->logAction($request, ShopLog::class, $forceDelete ? 'hard_delete' : 'soft_delete', 'ShopCustomer', "Deleted customer ID: $id", (int) $id, 'ShopCustomer');
@@ -151,8 +155,9 @@ class ShopCustomerController extends Controller
      */
     public function restore(Request $request, $id): JsonResponse
     {
+        $customer = ShopCustomer::withTrashed()->findOrFail($id);
+
         try {
-            $customer = ShopCustomer::withTrashed()->findOrFail($id);
             $customer->restore();
 
             $this->logAction($request, ShopLog::class, 'restore', 'ShopCustomer', "Restored customer ID: $id", (int) $id, 'ShopCustomer');

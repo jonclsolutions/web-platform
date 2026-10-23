@@ -12,6 +12,11 @@
  * loguje jen v úspěšné větvi (chybová větev nyní také přes logAction() namísto
  * vraceného `debug_error`/`line` v odpovědi - viz poznámka u store() níže, `debug_error`
  * v produkci zbytečně odhaluje interní implementační detaily volajícímu).
+ *
+ * @bugfix-note (2026-10-23) `DELETE shipping_methods/force-delete-all` ("Empty trash" in the admin)
+ * pointed to a method that did not exist → 500. Implemented forceDeleteAllTrashed().
+ *
+ * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update (findOrFail inside try).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -105,9 +110,9 @@ class ShopShippingMethodController extends Controller
      */
     public function update(UpdateShopShippingMethodRequest $request, $id): JsonResponse
     {
-        try {
-            $method = ShopShippingMethod::withTrashed()->findOrFail($id);
+        $method = ShopShippingMethod::withTrashed()->findOrFail($id);
 
+        try {
             $data = $request->validated();
 
             if ($method->isHardcoded()) {
@@ -152,5 +157,25 @@ class ShopShippingMethodController extends Controller
         $item->restore();
         $this->logAction($request, ShopLog::class, 'restore', 'ShopShippingMethod', "Restored shipping method ID: $id", (int) $id, 'ShopShippingMethod');
         return response()->json(new ShopShippingMethodResource($item));
+    }
+
+    /**
+     * @description Permanently deletes all trashed shipping methods (system methods can never
+     *   be trashed, see destroy()). Orders keep their data - shop_orders.shipping_method_id is
+     *   set to NULL by the foreign key.
+     * @param Request $request
+     * @return JsonResponse 204 | 500.
+     */
+    public function forceDeleteAllTrashed(Request $request): JsonResponse
+    {
+        try {
+            $count = ShopShippingMethod::onlyTrashed()->count();
+            ShopShippingMethod::onlyTrashed()->forceDelete();
+            $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopShippingMethod', "Emptied shipping method trash. Count: $count");
+            return response()->json(null, 204);
+        } catch (\Exception $e) {
+            $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Error emptying shipping method trash: " . $e->getMessage());
+            return response()->json(['message' => 'Emptying trash failed.'], 500);
+        }
     }
 }

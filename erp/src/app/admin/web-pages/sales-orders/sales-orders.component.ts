@@ -162,6 +162,8 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
    * (beze změny oproti originálu) - tenhle resource nemá "vytvořit" cestu z UI (realizace
    * vznikají automaticky ze Sales Leadů, viz info-banner v šabloně), takže "byl vytvořen"
    * větev je fakticky nedosažitelná, ale ponechána pro konzistenci s ostatními stránkami.
+   * @refactor-note (2026-10-22) Orders are only edited here (no create button, and
+   * `updateData()` without an id fails), so the unreachable "created" message was removed.
    */
   override handleFormSubmitted(formData: any): void {
     this.updateData(formData.id, formData).pipe(
@@ -173,7 +175,7 @@ export class SalesOrdersComponent extends BaseDataComponent<any> implements Core
       next: () => {
         this.alertDialogService.open(
           this.i18n.getValue('shared.success'),
-          formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+          this.t('crud_updated_message'),
           'success'
         );
         this.refreshData();

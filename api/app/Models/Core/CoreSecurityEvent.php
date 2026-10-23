@@ -39,6 +39,14 @@
  * na to, kolik různých cest zkusila. Konkrétní poslední zkoušená cesta zůstává vidět
  * v `route`/`context_data` sloupci (jen se neediscriminuje pro účely agregace).
  *
+ * @refactor-note (2026-10-22) The upsert was rewritten from hand-written MySQL SQL
+ * (`ON DUPLICATE KEY UPDATE`, `NOW()`, `"new"` in double quotes) to Laravel's
+ * `DB::table()->upsert()`. On MariaDB it is still one atomic `INSERT ... ON DUPLICATE KEY
+ * UPDATE`, but the query now also runs on SQLite, which the unit tests use. The
+ * timestamps now come from PHP `now()` (application timezone) instead of the DB `NOW()`
+ * (DB session timezone) - the same clock the purge (PurgeSecurityEventsCommand,
+ * CoreSecurityEventController::purge) and the admin filters compare them with.
+ *
  * @refactor-note (2026-08-22v3) KROK 2 BEZPEČNOSTNÍHO MONITORINGU: přidán statický helper
  * `contextFromRequest()` - sjednocuje sestavení `$context` pole (route, method, user_agent,
  * user_id) na všech hook bodech (CaptchaVerificationService, AuthController, throttle
@@ -70,6 +78,9 @@ class CoreSecurityEvent extends Model
 
     /** @description Maximální délka context_data JSON - tvrdý strop proti PII/velkým payloadům. */
     private const CONTEXT_MAX_LENGTH = 500;
+
+    /** @description Max length of one string value when an over-long context is shortened. */
+    private const CONTEXT_VALUE_MAX_LENGTH = 60;
 
     protected $fillable = [
         'fingerprint', 'event_type', 'severity', 'ip_address', 'user_agent',
@@ -136,38 +147,87 @@ class CoreSecurityEvent extends Model
         $fingerprintRoute = in_array($eventType, self::ROUTE_AGNOSTIC_EVENT_TYPES, true) ? 'any' : $route;
         $fingerprint = hash('sha256', $eventType . '|' . ($ip ?? 'unknown') . '|' . $fingerprintRoute . '|' . $bucket);
 
-        $contextJson = null;
-        if (!empty($context)) {
-            $encoded = json_encode($context, JSON_UNESCAPED_UNICODE);
-            $contextJson = $encoded !== false
-                ? mb_substr($encoded, 0, self::CONTEXT_MAX_LENGTH)
-                : null;
-        }
+        $contextJson = self::encodeContext($context);
 
-        // Atomický upsert - MySQL specifické (projekt je čistě MySQL/InnoDB, viz db dump).
-        // Při souběžných requestech ze stejné IP/okna je tohle jediný způsob, jak
-        // inkrementovat `occurrences` bez race condition a bez SELECT-pak-UPDATE.
-        DB::statement(
-            'INSERT INTO core_security_events
-                (fingerprint, event_type, severity, ip_address, user_agent, route, method,
-                 user_id, occurrences, status, context_data, first_seen_at, last_seen_at,
-                 created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, "new", ?, NOW(), NOW(), NOW(), NOW())
-             ON DUPLICATE KEY UPDATE
-                occurrences = occurrences + 1,
-                last_seen_at = NOW(),
-                updated_at = NOW()',
+        // Atomic upsert - see refactor-note (2026-10-22) in the file header. Laravel builds
+        // `INSERT ... ON DUPLICATE KEY UPDATE` on MySQL/MariaDB and `INSERT ... ON CONFLICT
+        // (fingerprint) DO UPDATE` on SQLite (tests) - one atomic statement in both cases,
+        // no race condition and no SELECT-then-UPDATE. `occurrences + 1` refers to the
+        // stored row in both dialects.
+        $now = now();
+        DB::table('core_security_events')->upsert(
+            [[
+                'fingerprint'   => $fingerprint,
+                'event_type'    => $eventType,
+                'severity'      => $severity,
+                'ip_address'    => $ip,
+                'user_agent'    => self::limit($context['user_agent'] ?? null, 255),
+                'route'         => self::limit($context['route'] ?? null, 255),
+                'method'        => self::limit($context['method'] ?? null, 10),
+                'user_id'       => $context['user_id'] ?? null,
+                'occurrences'   => 1,
+                'status'        => 'new',
+                'context_data'  => $contextJson,
+                'first_seen_at' => $now,
+                'last_seen_at'  => $now,
+                'created_at'    => $now,
+                'updated_at'    => $now,
+            ]],
+            ['fingerprint'],
             [
-                $fingerprint,
-                $eventType,
-                $severity,
-                $ip,
-                $context['user_agent'] ?? null,
-                $context['route'] ?? null,
-                $context['method'] ?? null,
-                $context['user_id'] ?? null,
-                $contextJson,
+                'occurrences'  => DB::raw('occurrences + 1'),
+                'last_seen_at' => $now,
+                'updated_at'   => $now,
             ]
         );
+    }
+
+    /**
+     * @description Encodes the event context as JSON of at most CONTEXT_MAX_LENGTH characters.
+     *   An over-long context is shortened VALUE by value (every string cut to
+     *   CONTEXT_VALUE_MAX_LENGTH) instead of cutting the JSON text - see bugfix-note below.
+     * @param array $context Context from record().
+     * @return string|null JSON, or null for an empty / not encodable context.
+     * @bugfix-note (2026-10-22) The JSON used to be cut with mb_substr() at 500 characters,
+     *   which leaves invalid JSON - the model's `array` cast then returned null and the admin
+     *   saw no context at all for exactly the long (most suspicious) requests. Found by the
+     *   unit tests.
+     */
+    private static function encodeContext(array $context): ?string
+    {
+        if (empty($context)) {
+            return null;
+        }
+
+        $encoded = json_encode($context, JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return null;
+        }
+        if (mb_strlen($encoded) <= self::CONTEXT_MAX_LENGTH) {
+            return $encoded;
+        }
+
+        $shortened = array_map(
+            fn ($value) => is_string($value) ? self::limit($value, self::CONTEXT_VALUE_MAX_LENGTH) : $value,
+            $context
+        );
+        $encoded = json_encode($shortened, JSON_UNESCAPED_UNICODE);
+
+        return mb_strlen($encoded) <= self::CONTEXT_MAX_LENGTH ? $encoded : json_encode(['_truncated' => true]);
+    }
+
+    /**
+     * @description Cuts a string to the column length (null stays null).
+     * @param string|null $value Value to store.
+     * @param int $length Maximum length in characters.
+     * @return string|null
+     * @bugfix-note (2026-10-22) `user_agent` and `route` are varchar(255) and the client
+     *   controls both (User-Agent header, URL; `method` varchar(10) likewise). A longer value made the INSERT fail in MySQL
+     *   strict mode ("Data too long"), so record() threw and the request answered 500 - e.g.
+     *   a failed login with a 300-character User-Agent - and the event was never stored.
+     */
+    private static function limit(?string $value, int $length): ?string
+    {
+        return $value === null ? null : mb_substr($value, 0, $length);
     }
 }

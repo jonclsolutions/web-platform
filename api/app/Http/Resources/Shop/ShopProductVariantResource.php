@@ -6,11 +6,15 @@
  * @author RPSW
  * @created 2026
  * @description Resource transformation for product variants.
+ *
+ * @bugfix-note (2026-10-23) `prices.cost_price_eur` (purchase price) is no longer part of
+ * public storefront responses - see DetectsPublicShopRequest.
  */
 
 namespace App\Http\Resources\Shop;
 
 use Illuminate\Http\Request;
+use App\Http\Resources\Shop\Concerns\DetectsPublicShopRequest;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -18,6 +22,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ShopProductVariantResource extends JsonResource
 {
+    use DetectsPublicShopRequest;
+
     /**
      * Transform the resource into an array.
      *
@@ -35,12 +41,13 @@ class ShopProductVariantResource extends JsonResource
             'attribute_2_name'  => $this->attribute_2_name,
             'attribute_2_value' => $this->attribute_2_value,
             'sku_variant'       => $this->sku_variant,
-            'prices'            => $this->relationLoaded('prices') && $this->prices ? [
+            'prices'            => $this->relationLoaded('prices') && $this->prices ? array_merge([
                 'vat_rate'              => (float) $this->prices->vat_rate,
                 'price_eur_without_vat' => (float) $this->prices->price_eur_without_vat,
                 'price_eur_with_vat'    => (float) $this->prices->price_eur_with_vat,
+            ], $this->isPublicShopRequest($request) ? [] : [
                 'cost_price_eur'        => (float) $this->prices->cost_price_eur,
-            ] : null,
+            ]) : null,
             'images'            => $this->whenLoaded('images', ShopProductImageResource::collection($this->images)),
             'stock_quantity'    => $this->stock_quantity,
             'created_at'        => $this->created_at->toIso8601String(),

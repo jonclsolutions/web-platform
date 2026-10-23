@@ -106,17 +106,8 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
           updatedBtn.label = this.isFilterVisible ? this.t('toolbar_hide_filters') : this.t('toolbar_filters');
           updatedBtn.isActive = this.isFilterVisible;
           break;
-        case 'handleCreateFormOpened':
-        case 'exportActiveTable':
-        case 'triggerImport':
-          if (updatedBtn.showIf !== false) {
-            updatedBtn.showIf = !this.showTrashTable;
-          }
-          break;
-        case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? this.t('toolbar_show_active') : this.t('toolbar_show_trash');
-          updatedBtn.isActive = this.showTrashTable;
-          break;
+        // @refactor-note (2026-10-22) Payment methods are fixed (no create, import or trash in the
+        // toolbar) – those unreachable cases were removed.
       }
 
       return updatedBtn;
@@ -167,7 +158,7 @@ export class PaymentMethodsComponent extends BaseDataComponent<any> implements C
         next: () => {
           this.alertDialogService.open(
             this.i18n.getValue('shared.success'),
-            formData.id ? this.t('crud_updated_message') : this.t('crud_created_message'),
+            this.t('crud_updated_message'), // only existing methods are edited (see the guard above)
             'success'
           );
           this.refreshData();

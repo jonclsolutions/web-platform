@@ -10,6 +10,10 @@
  * @refactor-note (2026-08-15) `getStatus()` repointed from `App\Models\Core\CoreSiteSetting`
  * to `App\Models\Shop\ShopSiteSetting` following the move of shop maintenance data out of
  * the Core domain - see ShopSiteSettingController for the accompanying admin endpoint.
+ *
+ * @refactor-note (2026-10-23) `checkStock()`: removed the guessing of the variant foreign
+ * key (`method_exists(..., 'product')` is always true, so the key is always `product_id`)
+ * and the two QueryException fallbacks behind it - unreachable code.
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -81,38 +85,12 @@ class ShopPublicController extends Controller
         $stockQuantity = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($id, $variantId) {
             $product = ShopProduct::find($id);
             if (!$product) return 0;
-            
-            if ($variantId) {
-                $foreignKey = 'product_id';
-                $variantModel = new ShopProductVariant();
-                
-                if (method_exists($variantModel, 'product')) {
-                    $foreignKey = $variantModel->product()->getForeignKeyName();
-                } elseif (method_exists($variantModel, 'shopProduct')) {
-                    $foreignKey = $variantModel->shopProduct()->getForeignKeyName();
-                }
 
-                try {
-                    $variant = ShopProductVariant::where($foreignKey, $id)->find($variantId);
-                    return $variant ? $variant->stock_quantity : 0;
-                } catch (\Illuminate\Database\QueryException $e) {
-                    $fallbackKey = ($foreignKey === 'product_id') ? 'shop_product_id' : 'product_id';
-                    try {
-                        $variant = ShopProductVariant::where($fallbackKey, $id)->find($variantId);
-                        return $variant ? $variant->stock_quantity : 0;
-                    } catch (\Exception $ex) {
-                        $variant = ShopProductVariant::find($variantId);
-                        if ($variant) {
-                            $pId = $variant->product_id ?? $variant->shop_product_id ?? null;
-                            if ($pId == $id) {
-                                return $variant->stock_quantity;
-                            }
-                        }
-                        return 0;
-                    }
-                }
+            if ($variantId) {
+                $variant = ShopProductVariant::where('product_id', $product->id)->find($variantId);
+                return $variant ? $variant->stock_quantity : 0;
             }
-            
+
             return $product->stock_quantity;
         });
 

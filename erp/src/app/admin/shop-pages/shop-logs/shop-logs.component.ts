@@ -75,17 +75,8 @@ get toolbarButtons(): Core.Button[] {
           updatedBtn.label = this.isFilterVisible ? 'Skrýt filtry' : 'Filtry';
           updatedBtn.isActive = this.isFilterVisible;
           break;
-        case 'handleCreateFormOpened':
-        case 'exportActiveTable':
-        case 'triggerImport':
-          if (updatedBtn.showIf !== false) {
-            updatedBtn.showIf = !this.showTrashTable;
-          }
-          break;
-        case 'toggleTable':
-          updatedBtn.label = this.showTrashTable ? 'Zobrazit aktivní' : 'Koš';
-          updatedBtn.isActive = this.showTrashTable;
-          break;
+        // @refactor-note (2026-10-22) The log is read-only without a trash view (toolbar: filters,
+        // reports, export) – the unreachable create / import / trash cases were removed.
       }
 
       return updatedBtn;

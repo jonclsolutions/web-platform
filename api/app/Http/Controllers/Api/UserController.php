@@ -129,10 +129,13 @@ class UserController extends Controller
             });
         }
 
+        // @bugfix-note (2026-10-22) The join used the table `roles` (does not exist - the
+        // role table is `core_roles`, same bug as 2026-09-08v2 above), so sorting the
+        // administrators list by role failed with an SQL error. Found by the unit tests.
         if ($sortBy === 'role_name') {
             $query->select('users.*')
                 ->leftJoin('user_roles as ur', 'users.id', '=', 'ur.user_id')
-                ->leftJoin('roles as r', 'ur.role_id', '=', 'r.id')
+                ->leftJoin('core_roles as r', 'ur.role_id', '=', 'r.id')
                 ->orderBy('r.role_name', $dir);
         } else {
             $sortColumn = str_contains($sortBy, '.') ? $sortBy : "users.$sortBy";
@@ -239,8 +242,15 @@ class UserController extends Controller
                 'User'
             );
 
-            $response = new UserResource($user->load(['roles.permissions', 'explicitPermissions']));
-            return response()->json($response->additional(['activation_email_sent' => $emailSent]), 201);
+            // @bugfix-note (2026-10-22) Returned through the resource's own response() now:
+            // `response()->json($resource->additional(...))` serialized only the bare user -
+            // `additional()` and the `data` wrapper were dropped, so `activation_email_sent`
+            // never reached the client and `DataHandler.post()` (unwraps `.data`) got
+            // `undefined`. Shape: {data: user, activation_email_sent: bool}. Found by the unit tests.
+            return (new UserResource($user->load(['roles.permissions', 'explicitPermissions'])))
+                ->additional(['activation_email_sent' => $emailSent])
+                ->response()
+                ->setStatusCode(201);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logAction($request, CoreLog::class, 'error', 'User', "Error creating user: " . $e->getMessage());
@@ -544,8 +554,12 @@ class UserController extends Controller
             return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
+        // @bugfix-note (2026-10-22) findOrFail() moved out of the try block (also in restore()
+        // and destroy()): inside it the "not found" exception was caught by the generic
+        // `catch (\Exception)` and answered 500 "... failed" instead of 404.
+        $user = User::findOrFail($id);
+
         try {
-            $user = User::findOrFail($id);
             $validated = $request->validated();
             $auth = $request->user() ?? auth('sanctum')->user();
 
@@ -594,8 +608,9 @@ class UserController extends Controller
             return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
+        $user = User::withTrashed()->findOrFail($id);
+
         try {
-            $user = User::withTrashed()->findOrFail($id);
             $user->restore();
 
             $this->logAction(request(), CoreLog::class, 'restore', 'User', "Restored user: {$user->user_email}", $user->id, 'User');
@@ -617,10 +632,10 @@ class UserController extends Controller
             return response()->json(['message' => 'Invalid user ID.'], 422);
         }
 
-        try {
-            $user = User::withTrashed()->findOrFail($id);
+        $user = User::withTrashed()->findOrFail($id);
 
-            if ($request->user()?->id == $id) {
+        try {
+            if ($request->user()->id == $id) {
                 return response()->json(['message' => 'You cannot delete your own account.'], 403);
             }
 

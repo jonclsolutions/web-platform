@@ -226,21 +226,20 @@ class PasswordResetController extends Controller
      *   do čitelného textu `description`; `email_requested`/ostatní request pole se navíc
      *   automaticky objeví v `context_data` samotným `logAction()` (natahuje request
      *   payload sám, viz LogsActivity::safeContextData()).
+     * @refactor-note (2026-10-22) Removed unreachable code found by the unit tests: the
+     *   `default` arm (every caller passes one of the four event types above - an unknown
+     *   type is a programming error and now fails loudly with UnhandledMatchError) and the
+     *   `isset($context['email_requested'])` fallbacks (both callers always pass the e-mail).
      */
     private function logAttempt(string $eventType, $request, ?int $userId, array $context): void
     {
         $description = match ($eventType) {
-            'password_reset_requested' => isset($context['email_requested'])
-                ? "Password reset requested for email: {$context['email_requested']}"
-                : 'Password reset requested',
-            'password_reset_email_rate_limited' => isset($context['email_requested'])
-                ? "Password reset attempt limit exceeded for email: {$context['email_requested']}"
-                : 'Password reset attempt limit exceeded',
-            'password_reset_failed' => ($context['reason'] ?? null) === 'expired_or_used'
+            'password_reset_requested'          => "Password reset requested for email: {$context['email_requested']}",
+            'password_reset_email_rate_limited' => "Password reset attempt limit exceeded for email: {$context['email_requested']}",
+            'password_reset_failed'             => ($context['reason'] ?? null) === 'expired_or_used'
                 ? 'Password reset failed - the link has already been used or expired'
                 : 'Password reset failed - invalid link',
-            'password_reset_completed' => 'Password has been successfully changed',
-            default => "Password reset attempt (user_id: " . ($userId ?? 'unknown') . ')',
+            'password_reset_completed'          => 'Password has been successfully changed',
         };
 
         $this->logAction(

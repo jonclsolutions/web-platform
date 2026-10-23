@@ -6,11 +6,17 @@
  * @author RPSW
  * @created 2026
  * @description Resource transformation for products including categories, suppliers, and variants.
+ *
+ * @bugfix-note (2026-10-23) `prices.cost_price_eur` (purchase price) is no longer part of
+ * public storefront responses - see DetectsPublicShopRequest.
+ * @refactor-note (2026-10-23) Removed `reviews_count` / `average_rating`: they depended on a
+ * `reviews` relation whose model (ShopReview) does not exist - never loaded, unreachable.
  */
 
 namespace App\Http\Resources\Shop;
 
 use Illuminate\Http\Request;
+use App\Http\Resources\Shop\Concerns\DetectsPublicShopRequest;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -18,6 +24,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ShopProductResource extends JsonResource
 {
+    use DetectsPublicShopRequest;
+
     /**
      * Transform the resource into an array.
      *
@@ -48,12 +56,13 @@ class ShopProductResource extends JsonResource
             'name_en'              => $this->name_en,
             'description_en'       => $this->description_en,
             'short_description_en' => $this->short_description_en,
-            'prices' => $this->prices ? [
+            'prices' => $this->prices ? array_merge([
                 'vat_rate'              => $this->prices->vat_rate,
                 'price_eur_with_vat'    => $this->prices->price_eur_with_vat,
                 'price_eur_without_vat' => $this->prices->price_eur_without_vat,
+            ], $this->isPublicShopRequest($request) ? [] : [
                 'cost_price_eur'        => $this->prices->cost_price_eur,
-            ] : null,
+            ]) : null,
             'sku'                 => $this->sku,
             'stock_quantity'      => $this->stock_quantity,
             'stock_warning_level' => $this->stock_warning_level,
@@ -62,8 +71,6 @@ class ShopProductResource extends JsonResource
             'primary_image'       => new ShopProductImageResource($this->whenLoaded('primaryImage')),
             'images'              => ShopProductImageResource::collection($this->whenLoaded('images')),
             'variants'            => ShopProductVariantResource::collection($this->whenLoaded('variants')),
-            'reviews_count'       => $this->whenLoaded('reviews', fn() => $this->reviews->count()),
-            'average_rating'      => $this->whenLoaded('reviews', fn() => round($this->reviews->avg('rating'), 2)),
             'created_at'          => $this->created_at->toIso8601String(),
             'updated_at'          => $this->updated_at->toIso8601String(),
             'deleted_at'          => $this->deleted_at?->toIso8601String(),
