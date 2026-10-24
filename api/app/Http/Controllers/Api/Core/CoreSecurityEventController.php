@@ -30,6 +30,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -84,17 +86,11 @@ class CoreSecurityEventController extends Controller
 $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
     if ($noPagination) {
-        return response()->json(CoreSecurityEventResource::collection($query->get()));
+        return $this->respond(CoreSecurityEventResource::collection($query->get()));
     }
         $data = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => CoreSecurityEventResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, CoreSecurityEventResource::class);
     }
 
     /**
@@ -102,7 +98,7 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
      */
     public function show($id): JsonResponse
     {
-        return response()->json(new CoreSecurityEventResource(
+        return $this->respond(new CoreSecurityEventResource(
             CoreSecurityEvent::findOrFail($id)
         ));
     }
@@ -130,7 +126,7 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
         );
 
         // Wrapper {data: ...} - see bugfix-note in class header (DataHandler.put() unwrap).
-        return response()->json(['data' => new CoreSecurityEventResource($event)]);
+        return $this->respond(new CoreSecurityEventResource($event));
     }
 
     /**
@@ -182,10 +178,9 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
             'CoreSecurityEvent'
         );
 
-        return response()->json([
-            'message' => "Deleted {$deleted} records older than {$retentionDays} days.",
+        return $this->respond([
             'deleted' => $deleted,
-        ]);
+        ], 200, [], "Deleted {$deleted} records older than {$retentionDays} days.");
     }
 
     /**
@@ -210,6 +205,6 @@ $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALID
             ->orderBy('day')
             ->get();
 
-        return response()->json(['data' => $rows]);
+        return $this->respond($rows);
     }
 }

@@ -63,6 +63,8 @@
  * - ResourceCacheService: TTL cache pro stats/maintenance fetch.
  * - AdminLocalizationService: Statické i18n admin UI (sekce `shop-dashboard`).
  * - RxJS (forkJoin, interval): Manages concurrent data streams and polling mechanisms.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): KPI totals from
+ *  `meta.total`, lists from `data` of the pages.
  */
 
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
@@ -407,14 +409,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   private processData(res: any): void {
     this.recentOrders = res.orders?.data ?? [];
-    this.totalOrders = res.orders?.total ?? 0;
-    this.pendingOrders = res.pendingOrders?.total ?? 0;
+    this.totalOrders = res.orders?.meta?.total ?? 0;
+    this.pendingOrders = res.pendingOrders?.meta?.total ?? 0;
 
-    this.totalCustomers = res.customers?.total ?? 0;
-    this.activeProducts = res.products?.total ?? 0;
-    this.activeCoupons = res.coupons?.total ?? 0;
+    this.totalCustomers = res.customers?.meta?.total ?? 0;
+    this.activeProducts = res.products?.meta?.total ?? 0;
+    this.activeCoupons = res.coupons?.meta?.total ?? 0;
 
-    const allProds: any[] = Array.isArray(res.lowStock) ? res.lowStock : (res.lowStock?.data ?? []);
+    const allProds: any[] = res.lowStock?.data ?? [];
     this.lowStockProducts = allProds.slice(0, 8).map(p => ({
       id: p.id,
       name: p.name,
@@ -423,7 +425,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       stock_warning_level: p.stock_warning_level ?? 5,
     }));
 
-    const allOrds: any[] = Array.isArray(res.allOrders) ? res.allOrders : (res.allOrders?.data ?? []);
+    const allOrds: any[] = res.allOrders?.data ?? [];
     this.buildChartData(allOrds);
     this.buildStatusBreakdown(allOrds);
     this.buildRevenueStats(allOrds);

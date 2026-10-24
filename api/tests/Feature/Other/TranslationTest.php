@@ -93,26 +93,26 @@ class TranslationTest extends TestCase
     {
         $this->signIn($this->userWith(self::EDITOR));
 
-        $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['home' => ['title' => 'Domů']]])->assertOk()->assertJson(['status' => 'success', 'detected_changes' => 1]);
+        $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['home' => ['title' => 'Domů']]])->assertOk()->assertJson(['data' => ['detected_changes' => 1]]);
         $this->assertSame(['home' => ['title' => 'Domů']], json_decode(File::get($this->file('web/cz.json')), true));
         $this->assertTrue(WebLog::where('description', 'like', 'Update cz.json: NEW:home([Array])%')->exists());
 
         $long = str_repeat('x', 300);
         $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['home' => ['title' => 'Úvod', 'text' => $long], 'footer' => $long]])
-            ->assertOk()->assertJsonPath('detected_changes', 3);
+            ->assertOk()->assertJsonPath('data.detected_changes', 3);
         $description = WebLog::latest('id')->value('description');
         $this->assertStringContainsString('CHNG:home.title(Domů->Úvod)', $description);
         $this->assertStringContainsString('NEW:footer(xxxxxxxxxxxxxxx)', $description);
-        $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['home' => ['title' => 'Úvod', 'text' => $long], 'footer' => $long]])->assertJsonPath('detected_changes', 0);
+        $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['home' => ['title' => 'Úvod', 'text' => $long], 'footer' => $long]])->assertJsonPath('data.detected_changes', 0);
         $this->assertSame('Update cz.json (no value changes detected)', WebLog::latest('id')->value('description'));
         $many = array_fill_keys(array_map(fn ($i) => "key{$i}", range(1, 20)), 'value');
-        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'data' => $many])->assertJsonPath('detected_changes', 20);
+        $this->postJson('/api/save_translations/web', ['lang' => 'en', 'data' => $many])->assertJsonPath('data.detected_changes', 20);
         $summary = WebLog::latest('id')->value('description');
         $this->assertStringEndsWith('...', $summary);
         $this->assertSame(200, mb_strlen($summary) - mb_strlen('Update en.json: '));
 
         $this->app['auth']->forgetGuards();
-        $this->getJson('/api/translations/web/cz')->assertOk()->assertJsonPath('home.title', 'Úvod');
+        $this->getJson('/api/translations/web/cz')->assertOk()->assertJsonPath('data.home.title', 'Úvod');
         $this->getJson('/api/translations/web/de')->assertStatus(404)->assertJson(['message' => 'Not found']);
 
         $this->signIn($this->userWith(self::EDITOR));
@@ -153,7 +153,7 @@ class TranslationTest extends TestCase
     /**
      * @description A failing write answers 500 without the server path in the message and is logged.
      * @input A folder exists where web/cz.json should be written.
-     * @output 500 {status error, message 'Saving translations failed.'}; Log::error.
+     * @output 500 {message 'Saving translations failed.'}; Log::error.
      */
     public function test_save_failure(): void
     {
@@ -162,7 +162,7 @@ class TranslationTest extends TestCase
         Log::spy();
 
         $this->postJson('/api/save_translations/web', ['lang' => 'cz', 'data' => ['a' => 'b']])->assertStatus(500)
-            ->assertExactJson(['status' => 'error', 'message' => 'Saving translations failed.']);
+            ->assertExactJson(['message' => 'Saving translations failed.']);
         Log::shouldHaveReceived('error')->withArgs(fn ($m) => str_starts_with($m, 'Saving translations web/cz failed'))->once();
     }
 
@@ -178,7 +178,7 @@ class TranslationTest extends TestCase
     {
         $this->signIn($this->userWith(self::EDITOR));
         $this->assertFalse(File::isDirectory($this->file('')));
-        $this->postJson('/api/languages/shop', ['languages' => json_encode([['code' => 'en', 'name' => 'English']])])->assertOk();
+        $this->postJson('/api/languages/shop', ['languages' => json_encode([['code' => 'en', 'name' => 'English']])])->assertNoContent();
         // The defaults (web) are kept next to the new shop list in the newly created folder.
         $this->assertSame([['cz', 'web'], ['en', 'web'], ['en', 'shop']], array_map(
             fn ($l) => [$l['code'], $l['module'] ?? 'web'],
@@ -186,19 +186,19 @@ class TranslationTest extends TestCase
         ));
         File::deleteDirectory($this->file(''));
 
-        $this->getJson('/api/languages/web')->assertOk()->assertJsonPath('languages.*.code', ['cz', 'en']);
-        $this->getJson('/api/languages/shop')->assertOk()->assertJsonPath('languages', []);
+        $this->getJson('/api/languages/web')->assertOk()->assertJsonPath('data.*.code', ['cz', 'en']);
+        $this->getJson('/api/languages/shop')->assertOk()->assertJsonPath('data', []);
 
         $this->languages([
             ['code' => 'cz', 'name' => 'Čeština', 'module' => 'web', 'icon_path' => 'translation_images/web/cz.png'],
             ['code' => 'en', 'name' => 'English', 'module' => 'shop', 'icon_path' => null],
             ['code' => 'de', 'name' => 'Deutsch'],
         ]);
-        $web = $this->getJson('/api/languages/web')->assertOk()->assertJsonPath('languages.*.code', ['cz', 'de'])->json('languages');
+        $web = $this->getJson('/api/languages/web')->assertOk()->assertJsonPath('data.*.code', ['cz', 'de'])->json('data');
         $this->assertStringEndsWith('/storage/translation_images/web/cz.png', $web[0]['iconUrl']);
         $this->assertNull($web[1]['iconUrl']);
         $this->assertArrayNotHasKey('icon_path', $web[0]);
-        $this->getJson('/api/languages/shop')->assertJsonPath('languages.*.code', ['en']);
+        $this->getJson('/api/languages/shop')->assertJsonPath('data.*.code', ['en']);
     }
 
     /**
@@ -221,8 +221,8 @@ class TranslationTest extends TestCase
         $this->post('/api/languages/shop', [
             'languages' => json_encode([['code' => 'en', 'name' => 'English', 'active' => true], ['code' => 'de', 'name' => 'Deutsch', 'active' => false]]),
             'icon' => $this->fakeImage('de.png'), 'target_code' => 'de',
-        ], ['Accept' => 'application/json'])->assertOk()->assertJson(['status' => 'success']);
-        $this->postJson('/api/languages/web', ['languages' => json_encode([['code' => 'cz', 'name' => 'Česky', 'isBuiltIn' => false]])])->assertOk();
+        ], ['Accept' => 'application/json'])->assertNoContent();
+        $this->postJson('/api/languages/web', ['languages' => json_encode([['code' => 'cz', 'name' => 'Česky', 'isBuiltIn' => false]])])->assertNoContent();
 
         $meta = collect(json_decode(File::get($this->file('languages.json')), true));
         $de = $meta->firstWhere('code', 'de');
@@ -232,7 +232,7 @@ class TranslationTest extends TestCase
         $this->assertSame(3, $meta->count());
         $this->assertTrue(WebLog::where('module', 'Languages:shop')->exists());
 
-        $this->post('/api/languages/shop', ['languages' => json_encode([['code' => 'en', 'name' => 'English']]), 'icon' => $this->fakeImage('x.png'), 'target_code' => 'xx'], ['Accept' => 'application/json'])->assertOk();
+        $this->post('/api/languages/shop', ['languages' => json_encode([['code' => 'en', 'name' => 'English']]), 'icon' => $this->fakeImage('x.png'), 'target_code' => 'xx'], ['Accept' => 'application/json'])->assertNoContent();
         foreach ([[['name' => 'No code']], [['code' => '../x', 'name' => 'X']], [['code' => 'en', 'name' => 'A'], ['code' => 'en', 'name' => 'B']], []] as $invalid) {
             $this->postJson('/api/languages/shop', ['languages' => json_encode($invalid)])->assertStatus(422)->assertJson(['message' => 'Invalid language list.']);
         }
@@ -257,7 +257,7 @@ class TranslationTest extends TestCase
         ]);
 
         $url = $this->post('/api/languages/shop/en/icon', ['icon' => $this->fakeImage('flag.png')], ['Accept' => 'application/json'])
-            ->assertOk()->assertJsonPath('status', 'success')->json('iconUrl');
+            ->assertOk()->json('data.iconUrl');
         $this->assertStringContainsString('/storage/translation_images/shop/en_', $url);
 
         $meta = json_decode(File::get($this->file('languages.json')), true);

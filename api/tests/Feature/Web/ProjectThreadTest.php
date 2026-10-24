@@ -61,8 +61,8 @@ class ProjectThreadTest extends TestCase
         $this->assertSame([$a->id], $ids('priority=high'));
         $this->assertSame([$b->id], $ids('status=closed'));
         $this->getJson("/api/web/project-threads?project_id={$q->id}")->assertJsonPath('data.0.project_name', 'Portal Q');
-        $this->getJson('/api/web/project-threads?per_page=1')->assertJson(['total' => 2, 'last_page' => 2, 'per_page' => 1]);
-        $this->getJson('/api/web/project-threads?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/web/project-threads?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2, 'per_page' => 1]]);
+        $this->getJson('/api/web/project-threads?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
     }
 
     /**
@@ -78,16 +78,16 @@ class ProjectThreadTest extends TestCase
         $thread = $this->thread($this->project(), [], array_map(fn ($i) => ['customer', "Message {$i}"], range(1, 52)));
 
         $show = $this->getJson("/api/web/project-threads/{$thread->id}")->assertOk()
-            ->assertJsonPath('has_more_older_messages', true)->assertJsonPath('project_name', 'Client portal')
-            ->assertJsonCount(50, 'messages')->assertJsonPath('messages.0.body', 'Message 3')->assertJsonPath('messages.49.body', 'Message 52')->json();
+            ->assertJsonPath('meta.has_more_older_messages', true)->assertJsonPath('data.project_name', 'Client portal')
+            ->assertJsonCount(50, 'data.messages')->assertJsonPath('data.messages.0.body', 'Message 3')->assertJsonPath('data.messages.49.body', 'Message 52')->json('data');
 
         $this->getJson("/api/web/project-threads/{$thread->id}/messages?before_message_id={$show['messages'][0]['id']}")->assertOk()
-            ->assertJsonPath('has_more_older_messages', false)->assertJsonCount(2, 'data')->assertJsonPath('data.0.body', 'Message 1');
-        $this->getJson("/api/web/project-threads/{$thread->id}/messages?limit=500")->assertJsonCount(52, 'data')->assertJsonPath('has_more_older_messages', false);
-        $this->getJson("/api/web/project-threads/{$thread->id}/messages?limit=10")->assertJsonCount(10, 'data')->assertJsonPath('has_more_older_messages', true);
+            ->assertJsonPath('meta.has_more_older_messages', false)->assertJsonCount(2, 'data')->assertJsonPath('data.0.body', 'Message 1');
+        $this->getJson("/api/web/project-threads/{$thread->id}/messages?limit=500")->assertJsonCount(52, 'data')->assertJsonPath('meta.has_more_older_messages', false);
+        $this->getJson("/api/web/project-threads/{$thread->id}/messages?limit=10")->assertJsonCount(10, 'data')->assertJsonPath('meta.has_more_older_messages', true);
 
         $short = $this->thread($this->project(), [], [['admin', 'Only one']]);
-        $this->getJson("/api/web/project-threads/{$short->id}")->assertJsonPath('has_more_older_messages', false)->assertJsonPath('messages.0.author_type', 'admin');
+        $this->getJson("/api/web/project-threads/{$short->id}")->assertJsonPath('meta.has_more_older_messages', false)->assertJsonPath('data.messages.0.author_type', 'admin');
         $this->getJson('/api/web/project-threads/999')->assertStatus(404);
         $this->getJson('/api/web/project-threads/999/messages')->assertStatus(404);
     }

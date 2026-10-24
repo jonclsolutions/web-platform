@@ -18,13 +18,17 @@
  *   The service has no translations (it is used by the HTTP interceptor), so the errors now
  *   carry a `messageKey` (AuthErrorKey) and an empty message when the backend sent none; the
  *   login page shows the backend message or its own translation `login.errors.<messageKey>`.
+ * @refactor-note (2026-10-24) Open finding #6: login / 2FA / refresh / reset answer
+ *   `{data, message?}` - the methods return the payload (`data`), so the callers and
+ *   persistSession() keep reading `token`, `user`, `requires_2fa`, … as before.
  */
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError, timer, Subject } from 'rxjs';
-import { tap, catchError, switchMap, takeUntil } from 'rxjs/operators';
+import { tap, catchError, switchMap, takeUntil, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { ApiEnvelope } from '../../shared/interfaces/api-envelope';
 import { PermissionService } from './services/permission.service';
 import { GenericTableService } from '../services/generic-table.service';
 
@@ -93,7 +97,8 @@ export class AuthService {
    * se NIC neukládá do sessionStorage, session vznikne až po verifyTwoFactor().
    */
   login(credentials: { email: string; password: string; captcha_token?: string }): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/login`, credentials).pipe(
+    return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login`, credentials).pipe(
+      map(res => res.data),
       tap((response: any) => {
         if (response?.requires_2fa) {
           // Pending-2FA stav - záměrně se NEPERSISTUJE nikam (viz hlavička souboru).
@@ -113,7 +118,8 @@ export class AuthService {
    * @param code 6místný číselný kód z e-mailu.
    */
   verifyTwoFactor(loginToken: string, code: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code }).pipe(
+    return this.http.post<ApiEnvelope<any>>(`${this.baseUrl}/login/verify-2fa`, { login_token: loginToken, code }).pipe(
+      map(res => res.data),
       tap((response: any) => this.persistSession(response)),
       catchError(this.handleTwoFactorError)
     );
@@ -123,8 +129,9 @@ export class AuthService {
    * @description Vyžádá nový OTP kód pro probíhající pending-2FA session. Backend má
    * vlastní cooldown (60s) i strop počtu resendů - 429 odpověď obsahuje `retry_after`.
    */
-  resendTwoFactor(loginToken: string): Observable<{ message: string; expires_in: number }> {
-    return this.http.post<any>(`${this.baseUrl}/login/resend-2fa`, { login_token: loginToken }).pipe(
+  resendTwoFactor(loginToken: string): Observable<{ expires_in: number }> {
+    return this.http.post<ApiEnvelope<{ expires_in: number }>>(`${this.baseUrl}/login/resend-2fa`, { login_token: loginToken }).pipe(
+      map(res => res.data),
       catchError(this.handleTwoFactorError)
     );
   }
@@ -142,12 +149,13 @@ export class AuthService {
     token: string,
     password: string,
     passwordConfirmation: string
-  ): Observable<{ message: string; email?: string }> {
-    return this.http.post<{ message: string; email?: string }>(`${this.baseUrl}/reset-password`, {
+  ): Observable<{ email?: string }> {
+    return this.http.post<ApiEnvelope<{ email?: string }>>(`${this.baseUrl}/reset-password`, {
       token,
       password,
       password_confirmation: passwordConfirmation
     }).pipe(
+      map(res => res.data),
       catchError(this.handlePasswordResetError)
     );
   }
@@ -169,7 +177,8 @@ export class AuthService {
       return throwError(() => new Error('Refresh token missing'));
     }
 
-    return this.http.post<any>(`${this.baseUrl}/refresh`, { refreshToken }).pipe(
+    return this.http.post<ApiEnvelope<{ token: string; refreshToken: string }>>(`${this.baseUrl}/refresh`, { refreshToken }).pipe(
+      map(res => res.data),
       tap(res => {
         sessionStorage.setItem('accessToken', res.token);
         sessionStorage.setItem('refreshToken', res.refreshToken);

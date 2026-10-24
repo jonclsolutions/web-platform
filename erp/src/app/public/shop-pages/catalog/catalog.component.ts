@@ -9,6 +9,8 @@
  * @refactor-note (2026-10-21) Lokalizace 1:1 jako veřejný web: `translationModule = 'shop'`, všechny texty ze sekce
  *   `catalog` v `translations/shop/{lang}.json`. Odstraněno `CATALOG_CONFIG.TEXTS` (výchozí texty
  *   v kódu; HEADER/TOTAL_FOUND/ITEMS_UNIT se navíc nikde nepoužívaly).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): categories are
+ *  the payload list, the product page carries the pagination in `meta`.
  */
 
 import { Component, OnInit, signal, inject } from '@angular/core';
@@ -69,7 +71,7 @@ export class CatalogComponent extends BasePublicComponent implements OnInit {
     this.shopService.getCategories()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (res) => this.categories.set(res.data || res),
+        next: (res) => this.categories.set(Array.isArray(res) ? res : []),
         error: (err) => console.error('Chyba kategorií:', err)
       });
 
@@ -91,8 +93,8 @@ export class CatalogComponent extends BasePublicComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.products.set(response.data || []);
-          this.totalItems.set(response.total || 0);
-          this.totalPages.set(response.last_page || 1);
+          this.totalItems.set(response.meta?.total || 0);   // pagination in meta (finding #6)
+          this.totalPages.set(response.meta?.last_page || 1);
           this.isLoading.set(false);
           this.cdr.markForCheck();
         },

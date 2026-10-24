@@ -67,8 +67,8 @@ class SupportTicketTest extends TestCase
         $this->assertSame([$b->id], $ids('category=it'));
         $this->assertSame([$a->id], $ids('status=open'));
         $this->assertSame(['Gone'], array_column($this->getJson('/api/web/support_tickets?only_trashed=1')->json('data'), 'subject'));
-        $this->getJson('/api/web/support_tickets?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/web/support_tickets?no_pagination=true')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/web/support_tickets?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/web/support_tickets?no_pagination=true')->assertOk()->assertJsonCount(2, 'data');
         $this->assertWebLog('export', 'Bulk export of support tickets.');
     }
 
@@ -85,15 +85,15 @@ class SupportTicketTest extends TestCase
         $this->post('/api/web/support_tickets', [
             'category' => 'bug', 'subject' => 'Crash', 'description' => 'Boom', 'attachment' => $this->upload('log.txt', 2, 'text/plain'),
         ], ['Accept' => 'application/json'])->assertCreated()
-            ->assertJsonPath('user_id', $me->id)
-            ->assertJsonPath('user_name_plain', 'Jana')
-            ->assertJsonPath('user_plain', 'jana@corp.cz')
-            ->assertJsonPath('state', 'new')
-            ->assertJsonCount(1, 'attachments');
+            ->assertJsonPath('data.user_id', $me->id)
+            ->assertJsonPath('data.user_name_plain', 'Jana')
+            ->assertJsonPath('data.user_plain', 'jana@corp.cz')
+            ->assertJsonPath('data.state', 'new')
+            ->assertJsonCount(1, 'data.attachments');
 
         $this->postJson('/api/web/support_tickets', [
             'category' => 'it', 'subject' => 'For Petr', 'description' => 'x', 'user_name_plain' => 'Petr', 'user_plain' => 'petr@corp.cz',
-        ])->assertCreated()->assertJsonPath('user_plain', 'petr@corp.cz');
+        ])->assertCreated()->assertJsonPath('data.user_plain', 'petr@corp.cz');
         $this->assertWebLog('create', 'New ticket: Crash');
     }
 
@@ -127,15 +127,15 @@ class SupportTicketTest extends TestCase
         $ticket = $this->ticket();
         $this->attach($ticket, 'web/tickets/old.pdf');
 
-        $this->getJson("/api/web/support_tickets/{$ticket->id}")->assertOk()->assertJsonCount(1, 'attachments');
+        $this->getJson("/api/web/support_tickets/{$ticket->id}")->assertOk()->assertJsonCount(1, 'data.attachments');
         $this->getJson('/api/web/support_tickets/999')->assertStatus(404);
 
         $this->post("/api/web/support_tickets/{$ticket->id}", [
             '_method' => 'PUT', 'state' => 'closed', 'attachment' => $this->upload('new.pdf'),
         ], ['Accept' => 'application/json'])->assertOk()
-            ->assertJsonPath('state', 'closed')
-            ->assertJsonCount(1, 'attachments')
-            ->assertJsonPath('attachments.0.original_filename', 'new.pdf');
+            ->assertJsonPath('data.state', 'closed')
+            ->assertJsonCount(1, 'data.attachments')
+            ->assertJsonPath('data.attachments.0.original_filename', 'new.pdf');
         Storage::disk('private')->assertMissing('web/tickets/old.pdf');
         $this->assertWebLog('update', "Update ticket ID: {$ticket->id}");
 
@@ -162,7 +162,7 @@ class SupportTicketTest extends TestCase
         Storage::disk('private')->assertMissing('web/tickets/b.pdf');
         $this->deleteJson('/api/web/support_tickets/999')->assertStatus(404);
 
-        $this->postJson("/api/web/support_tickets/{$a->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
+        $this->postJson("/api/web/support_tickets/{$a->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null);
         $this->postJson('/api/web/support_tickets/999/restore')->assertStatus(404);
 
         $this->postJson('/api/web/support_tickets/bulk-delete', ['ids' => [$c->id, 999]])->assertOk()

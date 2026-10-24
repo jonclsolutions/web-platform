@@ -14,6 +14,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -62,16 +64,10 @@ class ShopCategoryController extends Controller
             : $query->paginate($perPage);
 
         if ($data instanceof \Illuminate\Support\Collection) {
-            return response()->json(ShopCategoryResource::collection($data));
+            return $this->respond(ShopCategoryResource::collection($data));
         }
 
-        return response()->json([
-            'data'         => ShopCategoryResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, ShopCategoryResource::class);
     }
 
     /**
@@ -91,7 +87,7 @@ class ShopCategoryController extends Controller
             ->orderBy('sort_order')->orderBy('name')
             ->get();
 
-        return response()->json(ShopCategoryResource::collection($categories));
+        return $this->respond(ShopCategoryResource::collection($categories));
     }
 
     /**
@@ -102,7 +98,7 @@ class ShopCategoryController extends Controller
         try {
             $category = ShopCategory::create($request->validated());
             $this->logAction($request, ShopLog::class, 'create', 'ShopCategory', "Created category: {$category->name}", $category->id, 'ShopCategory');
-            return response()->json(new ShopCategoryResource($category), 201);
+            return $this->respond(new ShopCategoryResource($category), 201);
         } catch (\Exception $e) {
             $this->logAction($request, ShopLog::class, 'error', 'ShopCategory', "Failed to create category: " . $e->getMessage());
             return response()->json(['message' => 'Failed to create category.'], 500);
@@ -115,7 +111,7 @@ class ShopCategoryController extends Controller
     public function show($id): JsonResponse
     {
         $category = ShopCategory::with(['parent', 'children'])->findOrFail($id);
-        return response()->json(new ShopCategoryResource($category));
+        return $this->respond(new ShopCategoryResource($category));
     }
 
     /**
@@ -128,7 +124,7 @@ class ShopCategoryController extends Controller
         try {
             $category->update($request->validated());
             $this->logAction($request, ShopLog::class, 'update', 'ShopCategory', "Updated category ID: {$category->id}", $category->id, 'ShopCategory');
-            return response()->json(new ShopCategoryResource($category));
+            return $this->respond(new ShopCategoryResource($category));
         } catch (\Exception $e) {
             $this->logAction($request, ShopLog::class, 'error', 'ShopCategory', "Failed to update category ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCategory');
             return response()->json(['message' => 'Failed to update category.'], 500);

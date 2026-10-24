@@ -61,11 +61,11 @@ class WebLogTest extends TestCase
         $b = $this->log(['created_at' => now()]);
 
         $this->getJson('/api/web/logs?per_page=1')->assertOk()
-            ->assertJson(['total' => 2, 'last_page' => 2])->assertJsonPath('data.0.id', $b->id);
+            ->assertJson(['meta' => ['total' => 2, 'last_page' => 2]])->assertJsonPath('data.0.id', $b->id);
         foreach (["id={$a->id}", 'event_type=create', 'module=WebSalesLead', 'user_plain=eve@', 'origin=10.1', 'search=Lead%20add'] as $filter) {
-            $this->getJson("/api/web/logs?{$filter}")->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $a->id);
+            $this->getJson("/api/web/logs?{$filter}")->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $a->id);
         }
-        $this->getJson('/api/web/logs?no_pagination=true&sort_by=id&sort_direction=asc')->assertJsonPath('*.id', [$a->id, $b->id]);
+        $this->getJson('/api/web/logs?no_pagination=true&sort_by=id&sort_direction=asc')->assertJsonPath('data.*.id', [$a->id, $b->id]);
     }
 
     /**
@@ -80,8 +80,8 @@ class WebLogTest extends TestCase
         $anonymous = $this->log();
 
         $this->getJson("/api/web/logs/{$own->id}")->assertOk()
-            ->assertJsonPath('user.user_email', $actor->user_email)->assertJsonPath('context_data.k', 'v');
-        $this->getJson("/api/web/logs/{$anonymous->id}")->assertJsonPath('user.user_email', 'Unknown user');
+            ->assertJsonPath('data.user.user_email', $actor->user_email)->assertJsonPath('data.context_data.k', 'v');
+        $this->getJson("/api/web/logs/{$anonymous->id}")->assertJsonPath('data.user.user_email', 'Unknown user');
         $this->getJson('/api/web/logs/999')->assertStatus(404);
     }
 
@@ -95,7 +95,7 @@ class WebLogTest extends TestCase
         $me = $this->signIn($this->user());
 
         $this->postJson('/api/web/logs', ['event_type' => 'export_csv', 'module' => 'web/news', 'description' => 'Exported'])
-            ->assertCreated()->assertJsonPath('user_plain', $me->user_email)->assertJsonPath('origin', '127.0.0.1');
+            ->assertCreated()->assertJsonPath('data.user_plain', $me->user_email)->assertJsonPath('data.origin', '127.0.0.1');
         $this->postJson('/api/web/logs', [])->assertStatus(422)->assertJsonValidationErrors(['event_type', 'module', 'description']);
     }
 }

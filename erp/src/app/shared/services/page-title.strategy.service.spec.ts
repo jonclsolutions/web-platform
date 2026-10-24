@@ -59,7 +59,7 @@ describe('PageTitleStrategy', () => {
    * @output 'Home', 'Dotazy', 'Über', 'RPSW', 'RPSW'; 'Domů'; one API request.
    */
   it('resolves titles by language with fallbacks', () => {
-    publicData.get.and.returnValue(of({ titles: { home: { en: 'Home', cz: 'Domů' }, faq: { cz: 'Dotazy' }, about: { en: '', de: 'Über' }, bad: ['x'], empty: { en: '' } } }) as any);
+    publicData.get.and.returnValue(of({ home: { en: 'Home', cz: 'Domů' }, faq: { cz: 'Dotazy' }, about: { en: '', de: 'Über' }, bad: ['x'], empty: { en: '' } }) as any);
     go('home');
     expect(title.getTitle()).toBe('Home');
     go('faq');
@@ -84,7 +84,7 @@ describe('PageTitleStrategy', () => {
   /**
    * @description Until the map arrives / when it fails / when it is not an object, the document
    *   title is used; the title is re-applied when the map arrives.
-   * @input Pending request then {titles: {home: {en: 'Home'}}}; failing request; titles as array.
+   * @input Pending request then the payload {home: {en: 'Home'}} (finding #6, was {titles}); failing request; titles as array.
    * @output 'RPSW' then 'Home'; 'RPSW'; 'RPSW'.
    */
   it('falls back to the document title without a usable map', () => {
@@ -92,10 +92,10 @@ describe('PageTitleStrategy', () => {
     publicData.get.and.returnValue(response as any);
     go('home');
     expect(title.getTitle()).toBe('RPSW');
-    response.next({ titles: { home: { en: 'Home' } } });
+    response.next({ home: { en: 'Home' } });
     expect(title.getTitle()).toBe('Home');
 
-    for (const reply of [throwError(() => new Error('x')), of({ titles: ['home'] }), of(null)]) {
+    for (const reply of [throwError(() => new Error('x')), of(['home']), of(null)]) {
       TestBed.resetTestingModule();
       document.title = 'RPSW';
       TestBed.configureTestingModule({

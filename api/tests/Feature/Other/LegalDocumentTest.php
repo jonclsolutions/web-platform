@@ -68,12 +68,12 @@ class LegalDocumentTest extends TestCase
         $this->section($gdpr, ['lang' => 'en']);
         $this->section($tos);
 
-        $this->getJson('/api/legal/document-types')->assertOk()->assertExactJson([
+        $this->getJson('/api/legal/document-types')->assertOk()->assertExactJson(['data' => [
             ['id' => $gdpr->id, 'slug' => 'gdpr', 'title' => 'GDPR policy'],
             ['id' => $tos->id, 'slug' => 'tos', 'title' => 'TOS policy'],
-        ]);
-        $this->getJson("/api/legal/document-sections?document_type_id={$gdpr->id}&lang=cz")->assertOk()->assertJsonPath('*.id', [$first->id, $second->id]);
-        $this->getJson('/api/legal/document-sections')->assertJsonCount(4);
+        ]]);
+        $this->getJson("/api/legal/document-sections?document_type_id={$gdpr->id}&lang=cz")->assertOk()->assertJsonPath('data.*.id', [$first->id, $second->id]);
+        $this->getJson('/api/legal/document-sections')->assertJsonCount(4, 'data');
     }
 
     /**
@@ -88,13 +88,13 @@ class LegalDocumentTest extends TestCase
         $type = $this->type();
 
         $id = $this->postJson('/api/legal/document-sections', ['document_type_id' => $type->id, 'heading' => 'Cookies', 'content' => 'We use…', 'lang' => 'en', 'position' => 3])
-            ->assertCreated()->assertJsonPath('heading', 'Cookies')->assertJsonPath('position', 3)->json('id');
+            ->assertCreated()->assertJsonPath('data.heading', 'Cookies')->assertJsonPath('data.position', 3)->json('data.id');
         $this->assertCoreLog('create', 'Created section: Cookies (en)');
         $this->postJson('/api/legal/document-sections', ['document_type_id' => 999, 'lang' => 'cz'])->assertStatus(422)->assertJsonValidationErrors(['document_type_id', 'content']);
 
-        $this->getJson("/api/legal/document-sections/{$id}")->assertOk()->assertJsonPath('content', 'We use…');
+        $this->getJson("/api/legal/document-sections/{$id}")->assertOk()->assertJsonPath('data.content', 'We use…');
         $this->getJson('/api/legal/document-sections/999')->assertStatus(404);
-        $this->putJson("/api/legal/document-sections/{$id}", ['heading' => 'Cookie policy'])->assertOk()->assertJsonPath('heading', 'Cookie policy');
+        $this->putJson("/api/legal/document-sections/{$id}", ['heading' => 'Cookie policy'])->assertOk()->assertJsonPath('data.heading', 'Cookie policy');
         $this->assertCoreLog('update', 'Updated section: Cookie policy (en)');
         $this->putJson("/api/legal/document-sections/{$id}", ['lang' => 'english'])->assertStatus(422);
         $this->putJson('/api/legal/document-sections/999', ['heading' => 'x'])->assertStatus(404);
@@ -132,13 +132,13 @@ class LegalDocumentTest extends TestCase
         $new->forceFill(['updated_at' => '2026-06-15 10:00:00'])->save();
         $this->section($gdpr, ['heading' => 'English', 'lang' => 'en']);
 
-        $this->getJson('/api/public/legal/gdpr?lang=en')->assertOk()->assertJsonPath('sections.0.heading', 'English')->assertJsonCount(1, 'sections');
+        $this->getJson('/api/public/legal/gdpr?lang=en')->assertOk()->assertJsonPath('data.sections.0.heading', 'English')->assertJsonCount(1, 'data.sections');
         $this->getJson('/api/public/legal/gdpr?lang=de')->assertOk()
-            ->assertJsonPath('header_main', 'GDPR policy')->assertJsonPath('last_update_date', '15.06.2026')
-            ->assertJsonPath('footer_effective', 'This policy is effective from 15.06.2026.')->assertJsonPath('sections.*.heading', ['Old', 'New']);
-        $this->getJson('/api/public/legal/gdpr')->assertJsonCount(2, 'sections');
-        $this->getJson('/api/public/legal/tos')->assertOk()->assertJsonPath('sections', [])
-            ->assertJsonPath('footer_effective', null)->assertJsonPath('last_update_date', now()->format('d.m.Y'));
+            ->assertJsonPath('data.header_main', 'GDPR policy')->assertJsonPath('data.last_update_date', '15.06.2026')
+            ->assertJsonPath('data.footer_effective', 'This policy is effective from 15.06.2026.')->assertJsonPath('data.sections.*.heading', ['Old', 'New']);
+        $this->getJson('/api/public/legal/gdpr')->assertJsonCount(2, 'data.sections');
+        $this->getJson('/api/public/legal/tos')->assertOk()->assertJsonPath('data.sections', [])
+            ->assertJsonPath('data.footer_effective', null)->assertJsonPath('data.last_update_date', now()->format('d.m.Y'));
         $this->getJson('/api/public/legal/nope')->assertStatus(404)->assertExactJson(['message' => 'Document not found.']);
     }
 }

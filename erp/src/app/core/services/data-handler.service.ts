@@ -30,6 +30,11 @@
  *   v `error.error.errors`) - jejich jazyk určuje Laravel API, ne tahle služba.
  * - Žádná změna logiky větvení, HTTP volání ani veřejného API - jen texty.
  *
+ * @refactor-note (2026-10-24) Open finding #6 - one response envelope: every read / write
+ *   method returns the `data` of `{data, meta?, message?}`; `getPaginatedCollection()` /
+ *   `getWithMeta()` / `postWithMeta()` return the whole envelope for callers that need `meta`
+ *   (pagination, `has_more_older_messages`, `activation_email_sent`). See `ApiEnvelope`.
+ *
  * @note Důsledek: pokud by první chyba přes `DataHandler` nastala dřív, než si
  * `AdminLocalizationService` vyžádá jakákoli admin komponenta (v administraci to dělá
  * `AdminLayoutComponent`/`BaseDataComponent`), služba teprve vznikne a JSON se teprve
@@ -44,6 +49,7 @@ import { catchError, map } from 'rxjs/operators';
 import { AlertDialogService } from './alert-dialog.service';
 import { AdminLocalizationService } from './admin-localization.service';
 import { environment } from '../../../environments/environment';
+import { ApiEnvelope, ApiPage } from '../../shared/interfaces/api-envelope';
 
 /**
  * @description Handles REST API interactions, including header management, serialization, and global error processing.
@@ -192,14 +198,17 @@ export class DataHandler {
   };
 
   /**
-   * @description Fetches a collection of items, automatically unwrapping the 'data' key if present.
+   * @description Fetches a list and returns its `data`.
+   * @refactor-note (2026-10-24) Open finding #6: the API answers every payload as `{data, meta?}`
+   *   (App\Traits\RespondsWithData), so `data` is read without guessing - the tolerance for bare
+   *   answers is gone (a bare answer would now be an API bug, caught by its tests).
    * @param apiUrl The relative path to the resource endpoint.
    * @param params Optional query parameters.
    * @returns {Observable<T[]>} A stream containing the item collection.
    */
   getCollection<T>(apiUrl: string, params?: any): Observable<T[]> {
     let httpParams = new HttpParams();
-    
+
     if (params) {
       Object.keys(params).forEach(key => {
         if (params[key] !== null && params[key] !== undefined) {
@@ -208,90 +217,85 @@ export class DataHandler {
       });
     }
 
-    return this.http.get<T[] | { data: T[] }>(`${this.baseUrl}/${apiUrl}`, { 
+    return this.http.get<ApiEnvelope<T[]>>(`${this.baseUrl}/${apiUrl}`, {
       headers: this.getHeaders(),
-      params: httpParams 
+      params: httpParams
     }).pipe(
-      map(response => {
-        if (response && typeof response === 'object' && 'data' in response) {
-          return (response as { data: T[] }).data;
-        }
-        return response as T[];
-      }),
+      map(response => this.unwrap<T[]>(response)),
       catchError(this.handleError)
     );
   }
 
   /**
-   * @description Fetches a paginated result set from the API.
-   * @param apiUrl The relative path to the resource.
-   * @returns {Observable<T>} The raw response object (e.g., paginated metadata).
+   * @description Fetches one page of a list: `{data: T[], meta: {total, per_page, current_page, last_page}}`.
+   * @param apiUrl The relative path to the resource (with page / filter query).
+   * @returns {Observable<ApiPage<T>>} Items and pagination.
    */
-  getPaginatedCollection<T>(apiUrl: string): Observable<T> {
-    return this.http.get<T>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
+  getPaginatedCollection<T>(apiUrl: string): Observable<ApiPage<T>> {
+    return this.http.get<ApiPage<T>>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError)
     );
   }
 
   /**
-   * @description Performs a generic GET request.
+   * @description GET returning the payload (`data`) of the answer.
+   * @refactor-note (2026-10-24) Returned the raw body before (each caller read its own shape -
+   *   `.languages`, `.page_titles`, `.data`, the bare record …, open finding #6); now the same as
+   *   getOne(). Callers that need `meta` use getWithMeta().
    * @param apiUrl The relative path to the resource.
-   * @returns {Observable<T>} The raw response object.
+   * @returns {Observable<T>} The payload.
    */
   get<T>(apiUrl: string): Observable<T> {
-    return this.http.get<T>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
+    return this.getOne<T>(apiUrl);
+  }
+
+  /**
+   * @description GET keeping the whole envelope `{data, meta?, message?}` - for answers with
+   *   extra information beside the payload (e.g. `has_more_older_messages` of a message page).
+   * @param apiUrl The relative path to the resource.
+   * @returns {Observable<ApiEnvelope<T, M>>} Payload and meta.
+   */
+  getWithMeta<T, M = Record<string, any>>(apiUrl: string): Observable<ApiEnvelope<T, M>> {
+    return this.http.get<ApiEnvelope<T, M>>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError)
     );
   }
 
   /**
- * @description Fetches a single resource, unwrapping it from the 'data' property
- * WHEN PRESENT. Defensive against backend inconsistency: some controllers wrap their
- * show() response in ['data' => ...], others return the resource directly - see
- * getCollection() above for the same defensive pattern. Without this check, a
- * non-wrapped response would silently resolve to `undefined` after unwrapping.
- * @param apiUrl The relative path to the resource.
- * @returns {Observable<T>} The unwrapped entity (or the raw response if it was never wrapped).
- */
-getOne<T>(apiUrl: string): Observable<T> {
-  return this.http.get<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
-    map(response => {
-      if (response && typeof response === 'object' && 'data' in response) {
-        return (response as { data: T }).data;
-      }
-      return response as T;
-    }),
-    catchError(this.handleError)
-  );
-}
-
-  /**
-   * @description Unwraps a `{data: …}` response; a response without the wrapper is returned as is.
-   * @bugfix-note (2026-10-23) post / put / patch read `response.data` unconditionally, but many
-   *   API create / update endpoints answer the bare resource (`response()->json(new XResource)`),
-   *   so callers got `undefined` (e.g. `PUT core/users/{id}`, open finding #6). Both shapes are
-   *   accepted now, the same way getOne() / getCollection() already did.
-   * @param response Raw response body.
-   * @returns The wrapped entity or the body itself.
+   * @description Fetches a single resource (the `data` of the answer).
+   * @param apiUrl The relative path to the resource.
+   * @returns {Observable<T>} The entity.
    */
-  private unwrap<T>(response: T | { data: T } | null): T {
-    if (response && typeof response === 'object' && !Array.isArray(response) && 'data' in response) {
-      return (response as { data: T }).data;
-    }
-    return response as T;
+  getOne<T>(apiUrl: string): Observable<T> {
+    return this.http.get<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
+      map(response => this.unwrap<T>(response)),
+      catchError(this.handleError)
+    );
   }
 
   /**
-   * @description POST that keeps the whole answer: `{data, ...meta}` (bare resources are wrapped
-   *   as `{data: body}`) - for endpoints that send extra fields next to the record, e.g.
-   *   `activation_email_sent` of `POST core/users` (open finding #11).
+   * @description Reads the payload of an answer.
+   * @bugfix-note (2026-10-23) post / put / patch read `response.data` unconditionally while many
+   *   endpoints answered the bare resource (open finding #6) - both shapes were accepted then.
+   * @refactor-note (2026-10-24) The API answers one envelope now (finding #6) - only `data` is
+   *   read; an answer without a body (204) gives null.
+   * @param response Raw response body (`{data, …}` or null for 204).
+   * @returns The payload, or null.
+   */
+  private unwrap<T>(response: ApiEnvelope<T> | null): T {
+    return (response?.data ?? null) as T;
+  }
+
+  /**
+   * @description POST keeping the whole envelope `{data, meta?, message?}` - for endpoints that
+   *   send extra information beside the record, e.g. `meta.activation_email_sent` of
+   *   `POST core/users` (open findings #11, #6).
    * @param apiUrl The endpoint path.
    * @param data The payload.
-   * @returns {Observable<{ data: T } & Record<string, any>>} Record plus meta fields.
+   * @returns {Observable<ApiEnvelope<T, M>>} Record plus meta.
    */
-  postWithMeta<T>(apiUrl: string, data: any): Observable<{ data: T } & Record<string, any>> {
-    return this.http.post<any>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
-      map(response => (response && typeof response === 'object' && 'data' in response) ? response : { data: response }),
+  postWithMeta<T, M = Record<string, any>>(apiUrl: string, data: any): Observable<ApiEnvelope<T, M>> {
+    return this.http.post<ApiEnvelope<T, M>>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
       catchError(this.handleError)
     );
   }
@@ -303,7 +307,7 @@ getOne<T>(apiUrl: string): Observable<T> {
    * @returns {Observable<T>} The created entity.
    */
   post<T>(apiUrl: string, data: any): Observable<T> {
-    return this.http.post<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+    return this.http.post<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
       map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
@@ -319,7 +323,7 @@ getOne<T>(apiUrl: string): Observable<T> {
     if (data instanceof FormData) {
       return this.postWithMethodOverride<T>(apiUrl, data, 'PUT');
     }
-    return this.http.put<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+    return this.http.put<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
       map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
@@ -335,7 +339,7 @@ getOne<T>(apiUrl: string): Observable<T> {
     if (data instanceof FormData) {
       return this.postWithMethodOverride<T>(apiUrl, data, 'PATCH');
     }
-    return this.http.patch<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
+    return this.http.patch<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, data, { headers: this.getHeaders(data) }).pipe(
       map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
@@ -354,32 +358,38 @@ getOne<T>(apiUrl: string): Observable<T> {
    */
   private postWithMethodOverride<T>(apiUrl: string, formData: FormData, method: 'PUT' | 'PATCH'): Observable<T> {
     formData.append('_method', method);
-    return this.http.post<T | { data: T }>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
+    return this.http.post<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
       map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
   }
 
   /**
-   * @description Performs a DELETE request.
+   * @description Performs a DELETE request; returns the payload (`data`) of an answer with a body
+   *   (e.g. `{deleted_count, skipped_count}` of a partly kept trash), null for 204 (finding #6).
    */
-  delete(apiUrl: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
+  delete<T = void>(apiUrl: string): Observable<T> {
+    return this.http.delete<ApiEnvelope<T> | null>(`${this.baseUrl}/${apiUrl}`, { headers: this.getHeaders() }).pipe(
+      map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
   }
 
   /**
-   * @description Performs a POST request specifically for multipart FormData (e.g., file uploads).
+   * @description Performs a POST request specifically for multipart FormData (e.g., file uploads)
+   *   and returns the payload (`data`) of the answer (finding #6).
    */
   upload<T>(apiUrl: string, formData: FormData): Observable<T> {
-    return this.http.post<T>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
+    return this.http.post<ApiEnvelope<T>>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
+      map(response => this.unwrap<T>(response)),
       catchError(this.handleError)
     );
   }
-uploadPut<T>(apiUrl: string, formData: FormData): Observable<T> {
-  return this.http.post<T>(`${this.baseUrl}/${apiUrl}`, formData, { headers: this.getHeaders(formData) }).pipe(
-    catchError(this.handleError)
-  );
-}
+
+  /**
+   * @description Multipart POST to an update endpoint (the caller adds `_method`), returns `data`.
+   */
+  uploadPut<T>(apiUrl: string, formData: FormData): Observable<T> {
+    return this.upload<T>(apiUrl, formData);
+  }
 }

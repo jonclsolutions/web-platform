@@ -34,6 +34,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -101,16 +103,10 @@ class WebNewsController extends Controller
         $data = $noPagination ? $query->get() : $query->paginate($perPage);
 
         if ($noPagination) {
-            return WebNewsResource::collection($data);
+            return $this->respond(WebNewsResource::collection($data));
         }
 
-        return response()->json([
-            'data'         => WebNewsResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, WebNewsResource::class);
     }
 
     public function store(StoreWebNewsRequest $request): JsonResponse
@@ -120,7 +116,7 @@ class WebNewsController extends Controller
 
             $this->logAction($request, WebLog::class, 'create', 'WebNews', "News item created: {$news->title}", $news->id, 'WebNews');
 
-            return response()->json(new WebNewsResource($news), 201);
+            return $this->respond(new WebNewsResource($news), 201);
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error creating news item: " . $e->getMessage());
             return response()->json(['message' => 'News creation failed.'], 500);
@@ -130,7 +126,7 @@ class WebNewsController extends Controller
     public function show($id): JsonResponse
     {
         $news = WebNews::withTrashed()->findOrFail($id);
-        return response()->json(new WebNewsResource($news));
+        return $this->respond(new WebNewsResource($news));
     }
 
     public function update(UpdateWebNewsRequest $request, $id): JsonResponse
@@ -145,7 +141,7 @@ class WebNewsController extends Controller
 
             $this->logAction($request, WebLog::class, 'update', 'WebNews', "News item updated: {$news->title}", $news->id, 'WebNews');
 
-            return response()->json(new WebNewsResource($news));
+            return $this->respond(new WebNewsResource($news));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error updating news item ID {$id}: " . $e->getMessage(), (int) $id, 'WebNews');
             return response()->json(['message' => 'News update failed.'], 500);
@@ -216,11 +212,11 @@ class WebNewsController extends Controller
             null,
             'WebNews'
         );
-        return response()->json(['data' => [
+        return $this->respond([
             'deleted_count' => $deletedCount,
             'skipped_count' => $skippedCount,
             'requested'     => $requestedCount,
-        ]]);
+        ]);
     }
 
     /**
@@ -302,7 +298,7 @@ class WebNewsController extends Controller
             $errors
         );
 
-        return response()->json([
+        return $this->respond([
             'import_token' => $batch->id,
             'total_rows'   => $batch->total_rows,
             'valid_rows'   => $batch->valid_rows,
@@ -366,12 +362,12 @@ class WebNewsController extends Controller
                 'WebNews'
             );
 
-            return response()->json(['data' => [
+            return $this->respond([
                 'queued'         => false,
                 'imported_count' => $result['imported_count'],
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
-            ]]);
+            ]);
         } catch (\Exception $e) {
             // Expired temporary file - see runImportCommit(), code 410.
             // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
@@ -396,7 +392,7 @@ class WebNewsController extends Controller
 
             $this->logAction($request, WebLog::class, 'restore', 'WebNews', "Restored news item: {$news->title}", $news->id, 'WebNews');
 
-            return response()->json(new WebNewsResource($news));
+            return $this->respond(new WebNewsResource($news));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebNews', "Error restoring news item ID $id: " . $e->getMessage(), (int) $id, 'WebNews');
             return response()->json(['message' => 'News restoration failed.'], 500);

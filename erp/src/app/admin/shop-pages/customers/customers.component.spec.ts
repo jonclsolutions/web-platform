@@ -215,13 +215,13 @@ describe('CustomersComponent', () => {
   describe('orders of a customer', () => {
     /**
      * @description Opening the modal loads the first page of the customer's orders, newest first.
-     * @input  showCustomerOrders({ id: 5 }); API { data: [2 orders], last_page 3, total 25, current_page 1 }
-     * @output get(ordersUrl(1)); 2 orders; totals 3 pages / 25 items; body has 'modal-open'; loading false
+     * @input  showCustomerOrders({ id: 5 }); API { data: [2 orders], meta: {last_page 3, total 25, current_page 1} }
+     * @output getPaginatedCollection(ordersUrl(1)); 2 orders; totals 3 pages / 25 items; body has 'modal-open'; loading false
      */
     it('opens the modal with the first page of orders', () => {
-      (ctx.dataHandler as any).get.and.returnValue(of({ data: [{ id: 1 }, { id: 2 }], last_page: 3, total: 25, current_page: 1 }));
+      (ctx.dataHandler as any).getPaginatedCollection.and.returnValue(of({ data: [{ id: 1 }, { id: 2 }], meta: { last_page: 3, total: 25, current_page: 1, per_page: 10 } }));
       component.showCustomerOrders({ id: 5 });
-      expect((ctx.dataHandler as any).get).toHaveBeenCalledWith(ordersUrl(1));
+      expect((ctx.dataHandler as any).getPaginatedCollection).toHaveBeenCalledWith(ordersUrl(1));
       expect(component.customerOrders.length).toBe(2);
       expect([component.ordersTotalPages, component.ordersTotalItems, component.ordersCurrentPage]).toEqual([3, 25, 1]);
       expect(component.showOrdersModal).toBeTrue();
@@ -236,17 +236,17 @@ describe('CustomersComponent', () => {
      * @output orders [], 1 page, 0 items; error 'shop-customers.load_orders_failed_message'; get not called again
      */
     it('handles empty, failed and missing data', () => {
-      (ctx.dataHandler as any).get.and.returnValue(of({}));
+      (ctx.dataHandler as any).getPaginatedCollection.and.returnValue(of({}));
       component.showCustomerOrders({ id: 5 });
       expect([component.customerOrders, component.ordersTotalPages, component.ordersTotalItems, component.ordersCurrentPage]).toEqual([[], 1, 0, 1]);
-      (ctx.dataHandler as any).get.and.returnValue(throwError(() => new Error('x')));
+      (ctx.dataHandler as any).getPaginatedCollection.and.returnValue(throwError(() => new Error('x')));
       component.loadCustomerOrders(1);
       expect(component.customerOrdersError).toBe('shop-customers.load_orders_failed_message');
       expect(component.customerOrdersLoading).toBeFalse();
       component.selectedCustomerForOrders = null;
-      (ctx.dataHandler as any).get.calls.reset();
+      (ctx.dataHandler as any).getPaginatedCollection.calls.reset();
       component.loadCustomerOrders(1);
-      expect((ctx.dataHandler as any).get).not.toHaveBeenCalled();
+      expect((ctx.dataHandler as any).getPaginatedCollection).not.toHaveBeenCalled();
     });
 
     /**
@@ -255,13 +255,13 @@ describe('CustomersComponent', () => {
      * @output only page 2 requested
      */
     it('changes the orders page', () => {
-      (ctx.dataHandler as any).get.and.callFake((url: string) => of({ data: [], last_page: 3, total: 25, current_page: Number(/[?&]page=(\d+)/.exec(url)![1]) }));
+      (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) => of({ data: [], meta: { last_page: 3, total: 25, per_page: 10, current_page: Number(/[?&]page=(\d+)/.exec(url)![1]) } }));
       component.showCustomerOrders({ id: 5 });
-      (ctx.dataHandler as any).get.calls.reset();
+      (ctx.dataHandler as any).getPaginatedCollection.calls.reset();
       [0, 4, 1].forEach(p => component.ordersChangePage(p));
-      expect((ctx.dataHandler as any).get).not.toHaveBeenCalled();
+      expect((ctx.dataHandler as any).getPaginatedCollection).not.toHaveBeenCalled();
       component.ordersChangePage(2);
-      expect((ctx.dataHandler as any).get).toHaveBeenCalledWith(ordersUrl(2));
+      expect((ctx.dataHandler as any).getPaginatedCollection).toHaveBeenCalledWith(ordersUrl(2));
       expect(component.ordersCurrentPage).toBe(2);
     });
 
@@ -337,7 +337,7 @@ describe('CustomersComponent', () => {
   it('renders the page and the orders modal', fakeAsync(() => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('shop-customers.table_header');
-    (ctx.dataHandler as any).get.and.returnValue(of({ data: [{ id: 1, order_number: 'OBJ-1', status: 'paid', payment_status: 'paid', total: 10, currency: 'EUR', items_count: 1, created_at: '2026-01-01' }], last_page: 1, total: 1, current_page: 1 }));
+    (ctx.dataHandler as any).getPaginatedCollection.and.returnValue(of({ data: [{ id: 1, order_number: 'OBJ-1', status: 'paid', payment_status: 'paid', total: 10, currency: 'EUR', items_count: 1, created_at: '2026-01-01' }], meta: { last_page: 1, total: 1, current_page: 1, per_page: 10 } }));
     component.showCustomerOrders({ id: 5, first_name: 'Jan', last_name: 'Novák', total_spent: 10 });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('shop-customers.stat_orders_label');

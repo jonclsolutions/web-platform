@@ -17,6 +17,8 @@
  *
  * @refactor-note (2026-10-23) update(): removed the unreachable `if (!$auth)` 401 branch
  * (the route requires auth:sanctum + permission) - same as WebSiteSettingController.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -57,7 +59,7 @@ class ShopSiteSettingController extends Controller
             'maintenance_message' => 'We apologize, the shop is currently undergoing maintenance. Please try again later.',
         ]);
 
-        return response()->json($settings);
+        return $this->respond($settings);
     }
 
     /**
@@ -70,7 +72,7 @@ class ShopSiteSettingController extends Controller
     {
         $settings = ShopSiteSetting::first();
 
-        return response()->json([
+        return $this->respond([
             'is_shop_active'      => (bool) ($settings->is_shop_active ?? true),
             'maintenance_message' => $settings->maintenance_message ?? null,
         ]);
@@ -133,9 +135,6 @@ class ShopSiteSettingController extends Controller
             );
         }
 
-        return response()->json([
-            'success' => true,
-            'data'    => $settings,
-        ]);
+        return $this->respond($settings);
     }
 }

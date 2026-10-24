@@ -63,6 +63,8 @@
  * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
  *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
  *   the component (`takeUntilDestroyed()`).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): stat totals from
+ *  `meta.total`, recent activity from `data`.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -73,6 +75,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { forkJoin, catchError, of } from 'rxjs';
 
 import * as Core from '../../../shared/imports/core-providers';
+import { ApiPage } from '../../../shared/interfaces/api-envelope';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
@@ -486,7 +489,7 @@ get distributionSegments(): DistributionSegment[] {
     }
 
     this.resourceCache.get(this.STATS_CACHE_KEY, () => {
-      const calls: Record<string, ReturnType<typeof this.dataHandler.getPaginatedCollection<any>>> = {};
+      const calls: Record<string, Core.Observable<ApiPage<any> | null>> = {};
       for (const def of allowedDefs) {
         calls[def.key] = this.dataHandler.getPaginatedCollection<any>(def.endpoint).pipe(catchError(() => of(null)));
       }
@@ -494,7 +497,7 @@ get distributionSegments(): DistributionSegment[] {
     }, this.STATS_TTL_MS).subscribe({
       next: (res: Record<string, any>) => {
         this.quickStats = allowedDefs.map((def): QuickStat => {
-          const total = res[def.key]?.total ?? '—';
+          const total = res[def.key]?.meta?.total ?? '—';
           return {
             key: def.key,
             labelKey: def.labelKey,
@@ -538,7 +541,7 @@ get distributionSegments(): DistributionSegment[] {
       this.STATS_TTL_MS
     ).subscribe({
       next: (res) => {
-        this.recentActivity = Array.isArray(res) ? res : (res?.data ?? []);
+        this.recentActivity = res?.data ?? [];
         this.computeActivityBreakdown();
         this.loadingActivity = false;
         this.cd.markForCheck();

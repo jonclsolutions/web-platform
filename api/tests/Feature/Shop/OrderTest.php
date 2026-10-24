@@ -100,8 +100,8 @@ class OrderTest extends TestCase
         $this->assertSame([$b->id, $a->id], $ids('sort_by=customer.email&sort_direction=desc'));
         $this->assertCount(1, $this->getJson('/api/shop/orders?only_trashed=1')->json('data'));
         $this->getJson("/api/shop/orders?id={$a->id}")->assertJsonPath('data.0.items_count', 1)->assertJsonPath('data.0.customer.email', 'eva@example.com');
-        $this->getJson('/api/shop/orders?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/shop/orders?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/shop/orders?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/shop/orders?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
     }
 
     /**
@@ -125,16 +125,16 @@ class OrderTest extends TestCase
             ['product_id' => $p->id, 'quantity' => 2, 'unit_price' => 100],
             ['product_id' => $q->id, 'product_variant_id' => $v->id, 'quantity' => 1, 'unit_price' => 50],
         ], ['coupon_id' => $coupon->id, 'status' => 'confirmed', 'payment_status' => 'paid']))->assertCreated()
-            ->assertJsonPath('total_amount', 250)->assertJsonPath('discount_amount', 25)->assertJsonPath('shipping_amount', 5)
-            ->assertJsonPath('final_amount', 230)->assertJsonCount(2, 'items')->assertJsonPath('items.1.variant_name', 'V')
-            ->assertJsonPath('paid_at', fn ($v) => $v !== null)->assertJsonPath('status_label', 'Confirmed')
-            ->assertJsonPath('items.0.vat_rate', 21)->assertJsonPath('contact.full_name', 'Jan Novak')->assertJsonPath('contact.email', 'jan@example.com');
+            ->assertJsonPath('data.total_amount', 250)->assertJsonPath('data.discount_amount', 25)->assertJsonPath('data.shipping_amount', 5)
+            ->assertJsonPath('data.final_amount', 230)->assertJsonCount(2, 'data.items')->assertJsonPath('data.items.1.variant_name', 'V')
+            ->assertJsonPath('data.paid_at', fn ($v) => $v !== null)->assertJsonPath('data.status_label', 'Confirmed')
+            ->assertJsonPath('data.items.0.vat_rate', 21)->assertJsonPath('data.contact.full_name', 'Jan Novak')->assertJsonPath('data.contact.email', 'jan@example.com');
 
-        $this->assertEqualsWithDelta(225 * 21 / 121, $response->json('tax_amount'), 0.01);
+        $this->assertEqualsWithDelta(225 * 21 / 121, $response->json('data.tax_amount'), 0.01);
         $this->assertSame([8, 4, 4], [$p->fresh()->stock_quantity, $v->fresh()->stock_quantity, $q->fresh()->stock_quantity]);
         $this->assertSame(1, $coupon->fresh()->usage_count);
         $this->assertEquals(225, ShopCustomer::where('email', 'jan@example.com')->sole()->total_spent);
-        $this->assertShopLog('create', 'Created order: ' . $response->json('order_number'));
+        $this->assertShopLog('create', 'Created order: ' . $response->json('data.order_number'));
     }
 
     /**
@@ -173,7 +173,7 @@ class OrderTest extends TestCase
         $existing = $this->customer(['email' => 'jan@example.com']);
         $fixed = $this->coupon(['code' => 'FIX30', 'discount_type' => 'fixed', 'discount_value' => 30]);
         $this->postJson('/api/shop/orders', $this->payload($line, ['coupon_id' => $fixed->id]))->assertCreated()
-            ->assertJsonPath('discount_amount', 30)->assertJsonPath('customer_id', $existing->id)->assertJsonPath('final_amount', 75);
+            ->assertJsonPath('data.discount_amount', 30)->assertJsonPath('data.customer_id', $existing->id)->assertJsonPath('data.final_amount', 75);
         $this->assertSame(1, ShopCustomer::count());
     }
 
@@ -214,7 +214,7 @@ class OrderTest extends TestCase
         $foreign = $this->order(null, [], [[$p, 2]]);
         $x1 = $foreign->items()->sole();
 
-        $this->getJson("/api/shop/orders/{$order->id}")->assertOk()->assertJsonCount(2, 'items');
+        $this->getJson("/api/shop/orders/{$order->id}")->assertOk()->assertJsonCount(2, 'data.items');
         $this->getJson('/api/shop/orders/999')->assertStatus(404);
 
         $this->putJson("/api/shop/orders/{$order->id}", [
@@ -225,8 +225,8 @@ class OrderTest extends TestCase
                 ['product_id' => $p->id, 'quantity' => 1, 'unit_price' => 50],
             ],
             'delete_items' => [$i2->id, $x1->id],
-        ])->assertOk()->assertJsonPath('contact.first_name', 'Iva')->assertJsonPath('customer.first_name', 'Eva')->assertJsonCount(2, 'items')
-            ->assertJsonPath('total_amount', 350)->assertJsonPath('discount_amount', 35)->assertJsonPath('shipping_amount', 5)->assertJsonPath('final_amount', 320);
+        ])->assertOk()->assertJsonPath('data.contact.first_name', 'Iva')->assertJsonPath('data.customer.first_name', 'Eva')->assertJsonCount(2, 'data.items')
+            ->assertJsonPath('data.total_amount', 350)->assertJsonPath('data.discount_amount', 35)->assertJsonPath('data.shipping_amount', 5)->assertJsonPath('data.final_amount', 320);
 
         $this->assertSame([2, '242.00'], [$x1->fresh()->quantity, $x1->fresh()->total_price]);
         $this->assertNull(ShopOrderItem::find($i2->id));
@@ -252,11 +252,11 @@ class OrderTest extends TestCase
         $fixed = $this->coupon(['code' => 'FIX20', 'discount_type' => 'fixed', 'discount_value' => 20]);
         $order = $this->order(null, ['coupon_id' => $fixed->id], [[$p, 2], [$q, 1, $v]]);
 
-        $this->putJson("/api/shop/orders/{$order->id}", ['status' => 'canceled'])->assertOk()->assertJsonPath('status', 'canceled')->assertJsonPath('discount_amount', 20);
+        $this->putJson("/api/shop/orders/{$order->id}", ['status' => 'canceled'])->assertOk()->assertJsonPath('data.status', 'canceled')->assertJsonPath('data.discount_amount', 20);
         $this->assertSame([10, 5, 5], [$p->fresh()->stock_quantity, $v->fresh()->stock_quantity, $q->fresh()->stock_quantity]);
         $this->putJson("/api/shop/orders/{$order->id}", ['status' => 'pending'])->assertOk();
         $this->assertSame([8, 4], [$p->fresh()->stock_quantity, $v->fresh()->stock_quantity]);
-        $this->putJson("/api/shop/orders/{$order->id}", ['status' => 'shipped', 'shipped_at' => '2026-10-23 10:00:00'])->assertOk()->assertJsonPath('shipped_at', fn ($t) => str_starts_with($t, '2026-10-23'));
+        $this->putJson("/api/shop/orders/{$order->id}", ['status' => 'shipped', 'shipped_at' => '2026-10-23 10:00:00'])->assertOk()->assertJsonPath('data.shipped_at', fn ($t) => str_starts_with($t, '2026-10-23'));
         $this->assertSame([8, 4], [$p->fresh()->stock_quantity, $v->fresh()->stock_quantity]);
         $this->putJson("/api/shop/orders/{$order->id}", ['status' => 'lost'])->assertStatus(422);
     }
@@ -312,7 +312,7 @@ class OrderTest extends TestCase
         $this->deleteJson('/api/shop/orders/999')->assertStatus(404);
 
         $d->delete();
-        $this->postJson("/api/shop/orders/{$d->id}/restore")->assertOk()->assertJsonPath('deleted_at', null)->assertJsonCount(1, 'items');
+        $this->postJson("/api/shop/orders/{$d->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null)->assertJsonCount(1, 'data.items');
         $this->assertShopLog('restore', "Restored order ID: {$d->id}");
         $this->postJson('/api/shop/orders/999/restore')->assertStatus(404);
 
@@ -354,17 +354,17 @@ class OrderTest extends TestCase
             ['product_id' => $noPrice->id, 'quantity' => 1, 'unit_price' => 50, 'vat_rate' => 12],
         ]))->assertCreated();
 
-        $this->assertSame([10.0, 0.0, 12.0], array_map('floatval', array_column($response->json('items'), 'vat_rate')));
+        $this->assertSame([10.0, 0.0, 12.0], array_map('floatval', array_column($response->json('data.items'), 'vat_rate')));
         $this->assertEquals([10, 0, 12], ShopOrderItem::orderBy('id')->pluck('vat_rate')->map(fn ($v) => (float) $v)->all());
-        $this->assertEqualsWithDelta(220 * 10 / 110 + 50 * 12 / 112, $response->json('tax_amount'), 0.01);
+        $this->assertEqualsWithDelta(220 * 10 / 110 + 50 * 12 / 112, $response->json('data.tax_amount'), 0.01);
 
-        $id = $response->json('id');
-        $items = collect($response->json('items'))->map(fn ($i) => ['id' => $i['id'], 'product_id' => $i['product_id'], 'quantity' => $i['quantity'], 'unit_price' => $i['unit_price']])->all();
+        $id = $response->json('data.id');
+        $items = collect($response->json('data.items'))->map(fn ($i) => ['id' => $i['id'], 'product_id' => $i['product_id'], 'quantity' => $i['quantity'], 'unit_price' => $i['unit_price']])->all();
         $items[] = ['product_id' => $reduced->id, 'quantity' => 1, 'unit_price' => 110];
         $edited = $this->putJson("/api/shop/orders/{$id}", ['items' => $items])->assertOk();
 
-        $this->assertEquals(10, $edited->json('items.3.vat_rate'));
-        $this->assertEqualsWithDelta(330 * 10 / 110 + 50 * 12 / 112, $edited->json('tax_amount'), 0.01);
+        $this->assertEquals(10, $edited->json('data.items.3.vat_rate'));
+        $this->assertEqualsWithDelta(330 * 10 / 110 + 50 * 12 / 112, $edited->json('data.tax_amount'), 0.01);
     }
 
     /**
@@ -411,12 +411,12 @@ class OrderTest extends TestCase
         $old->delete();
 
         $response = $this->postJson('/api/shop/orders', $this->payload([['product_id' => $p->id, 'quantity' => 1, 'unit_price' => 100]]))
-            ->assertCreated()->assertJsonPath('customer_id', $old->id)->assertJsonPath('contact.full_name', 'Jan Novak');
+            ->assertCreated()->assertJsonPath('data.customer_id', $old->id)->assertJsonPath('data.contact.full_name', 'Jan Novak');
         $this->assertTrue($old->fresh()->trashed());
         $this->assertSame('Old', $old->fresh()->first_name);
 
         $legacy = $this->order($this->customer());
-        $this->getJson("/api/shop/orders/{$legacy->id}")->assertJsonPath('contact.full_name', 'Eva Nova')->assertJsonPath('contact.email', 'eva@example.com');
-        $this->assertSame([$response->json('id')], array_column($this->getJson('/api/shop/orders?search=jan@example')->json('data'), 'id'));
+        $this->getJson("/api/shop/orders/{$legacy->id}")->assertJsonPath('data.contact.full_name', 'Eva Nova')->assertJsonPath('data.contact.email', 'eva@example.com');
+        $this->assertSame([$response->json('data.id')], array_column($this->getJson('/api/shop/orders?search=jan@example')->json('data'), 'id'));
     }
 }

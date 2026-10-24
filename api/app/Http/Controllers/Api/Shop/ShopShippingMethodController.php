@@ -20,6 +20,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -70,15 +72,9 @@ class ShopShippingMethodController extends Controller
             ? $query->get()
             : $query->paginate($perPage);
 
-        return response()->json($data instanceof \Illuminate\Support\Collection
-            ? ShopShippingMethodResource::collection($data)
-            : [
-                'data' => ShopShippingMethodResource::collection($data->items()),
-                'total' => $data->total(),
-                'per_page' => $data->perPage(),
-                'current_page' => $data->currentPage(),
-                'last_page' => $data->lastPage(),
-            ]);
+        return $data instanceof \Illuminate\Support\Collection
+            ? $this->respond(ShopShippingMethodResource::collection($data))
+            : $this->respondPaginated($data, ShopShippingMethodResource::class);
     }
 
     /**
@@ -92,7 +88,7 @@ class ShopShippingMethodController extends Controller
         try {
             $method = ShopShippingMethod::create($request->validated());
             $this->logAction($request, ShopLog::class, 'create', 'ShopShippingMethod', "Created shipping method: {$method->name}", $method->id, 'ShopShippingMethod');
-            return response()->json(new ShopShippingMethodResource($method), 201);
+            return $this->respond(new ShopShippingMethodResource($method), 201);
         } catch (\Exception $e) {
             Log::error("ShopShippingMethod store error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Error creating shipping method: " . $e->getMessage());
@@ -106,7 +102,7 @@ class ShopShippingMethodController extends Controller
     public function show($id): JsonResponse
     {
         $method = ShopShippingMethod::withTrashed()->findOrFail($id);
-        return response()->json(new ShopShippingMethodResource($method));
+        return $this->respond(new ShopShippingMethodResource($method));
     }
 
     /**
@@ -125,7 +121,7 @@ class ShopShippingMethodController extends Controller
 
             $method->update($data);
             $this->logAction($request, ShopLog::class, 'update', 'ShopShippingMethod', "Updated shipping method: {$method->name}", $method->id, 'ShopShippingMethod');
-            return response()->json(new ShopShippingMethodResource($method));
+            return $this->respond(new ShopShippingMethodResource($method));
         } catch (\Exception $e) {
             $this->logAction($request, ShopLog::class, 'error', 'ShopShippingMethod', "Update failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopShippingMethod');
             return response()->json(['message' => 'Update failed.'], 500);
@@ -160,7 +156,7 @@ class ShopShippingMethodController extends Controller
         $item = ShopShippingMethod::withTrashed()->findOrFail($id);
         $item->restore();
         $this->logAction($request, ShopLog::class, 'restore', 'ShopShippingMethod', "Restored shipping method ID: $id", (int) $id, 'ShopShippingMethod');
-        return response()->json(new ShopShippingMethodResource($item));
+        return $this->respond(new ShopShippingMethodResource($item));
     }
 
     /**

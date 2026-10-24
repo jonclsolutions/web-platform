@@ -30,6 +30,8 @@
  * settings - see DocumentSectionController/SiteConfigurationController, which log to CoreLog
  * correctly already earlier). Moreover, the new trait automatically truncates `description` to 990 characters
  * and safely strips sensitive fields from `context_data` - the local version had none of these protections.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -86,18 +88,12 @@ class CoreRoleController extends Controller
 
         if ($noPagination) {
             $roles = $query->orderBy('id')->get();
-            return response()->json(CoreRoleResource::collection($roles));
+            return $this->respond(CoreRoleResource::collection($roles));
         }
 
         $roles = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => CoreRoleResource::collection($roles->items()),
-            'total'        => $roles->total(),
-            'per_page'     => $roles->perPage(),
-            'current_page' => $roles->currentPage(),
-            'last_page'    => $roles->lastPage(),
-        ]);
+        return $this->respondPaginated($roles, CoreRoleResource::class);
     }
 
     /**
@@ -115,7 +111,7 @@ class CoreRoleController extends Controller
 
         $this->logAction($request, CoreLog::class, 'create', 'CoreRole', "Created role: {$role->role_name}", $role->id, 'CoreRole');
 
-        return response()->json(new CoreRoleResource($role->loadCount('users')->load('permissions')), 201);
+        return $this->respond(new CoreRoleResource($role->loadCount('users')->load('permissions')), 201);
     }
 
     /**
@@ -125,7 +121,7 @@ class CoreRoleController extends Controller
     public function show($id): JsonResponse
     {
         $role = CoreRole::findOrFail($id);
-        return response()->json(new CoreRoleResource($role->loadCount('users')->load('permissions')));
+        return $this->respond(new CoreRoleResource($role->loadCount('users')->load('permissions')));
     }
 
     /**
@@ -149,7 +145,7 @@ class CoreRoleController extends Controller
 
         $this->logAction($request, CoreLog::class, 'update', 'CoreRole', "Updated role: {$role->role_name}", $role->id, 'CoreRole');
 
-        return response()->json(new CoreRoleResource($role->loadCount('users')->load('permissions')));
+        return $this->respond(new CoreRoleResource($role->loadCount('users')->load('permissions')));
     }
 
     /**
@@ -185,7 +181,7 @@ class CoreRoleController extends Controller
             'CoreRole'
         );
 
-        return response()->json(new CoreRoleResource($role->loadCount('users')->load('permissions')));
+        return $this->respond(new CoreRoleResource($role->loadCount('users')->load('permissions')));
     }
 
     /**
@@ -237,7 +233,7 @@ class CoreRoleController extends Controller
 
         $this->logAction($request, CoreLog::class, 'restore', 'CoreRole', "Restored role: {$role->role_name}", $role->id, 'CoreRole');
 
-        return response()->json(new CoreRoleResource($role->loadCount('users')->load('permissions')));
+        return $this->respond(new CoreRoleResource($role->loadCount('users')->load('permissions')));
     }
 
     /**

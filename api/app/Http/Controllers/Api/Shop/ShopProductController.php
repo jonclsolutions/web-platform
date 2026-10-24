@@ -34,6 +34,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -117,16 +119,10 @@ class ShopProductController extends Controller
         $data         = $noPagination ? $query->get() : $query->paginate($perPage);
 
         if ($noPagination) {
-            return response()->json(ShopProductResource::collection($data));
+            return $this->respond(ShopProductResource::collection($data));
         }
 
-        return response()->json([
-            'data'         => ShopProductResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, ShopProductResource::class);
     }
 
     /**
@@ -164,7 +160,7 @@ class ShopProductController extends Controller
             $product->load($this->defaultRelations());
             $this->logAction($request, ShopLog::class, 'create', 'ShopProduct', "Created product: {$product->name}", $product->id, 'ShopProduct');
 
-            return response()->json(new ShopProductResource($product), 201);
+            return $this->respond(new ShopProductResource($product), 201);
 
         } catch (\Exception $e) {
             Log::error('ShopProduct creation error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
@@ -179,7 +175,7 @@ class ShopProductController extends Controller
     public function show($id): JsonResponse
     {
         $product = ShopProduct::with($this->defaultRelations())->findOrFail($id);
-        return response()->json(new ShopProductResource($product));
+        return $this->respond(new ShopProductResource($product));
     }
 
     /**
@@ -247,7 +243,7 @@ class ShopProductController extends Controller
             $product->load($this->defaultRelations());
             $this->logAction($request, ShopLog::class, 'update', 'ShopProduct', "Updated product: {$product->name}", $product->id, 'ShopProduct');
 
-            return response()->json(new ShopProductResource($product));
+            return $this->respond(new ShopProductResource($product));
 
         } catch (\Exception $e) {
             Log::error('ShopProduct update error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
@@ -279,7 +275,7 @@ class ShopProductController extends Controller
             $this->logAction($request, ShopLog::class, 'update', 'ShopProduct', "Quick update of product categories", $product->id, 'ShopProduct');
 
             $product->load($this->defaultRelations());
-            return response()->json(new ShopProductResource($product));
+            return $this->respond(new ShopProductResource($product));
 
         } catch (\Exception $e) {
             Log::error('ShopProduct quick category update error: ' . $e->getMessage());
@@ -335,7 +331,7 @@ class ShopProductController extends Controller
             $product->restore();
             $product->load($this->defaultRelations());
             $this->logAction($request, ShopLog::class, 'restore', 'ShopProduct', "Restored product ID: $id", (int) $id, 'ShopProduct');
-            return response()->json(new ShopProductResource($product));
+            return $this->respond(new ShopProductResource($product));
         } catch (\Exception $e) {
             Log::error('ShopProduct restore error: ' . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopProduct', "Restore failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopProduct');
@@ -399,13 +395,7 @@ class ShopProductController extends Controller
         $this->applySorting($query, $request, 'created_at', 'desc');
         $products = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => ShopProductResource::collection($products->items()),
-            'total'        => $products->total(),
-            'per_page'     => $products->perPage(),
-            'current_page' => $products->currentPage(),
-            'last_page'    => $products->lastPage(),
-        ]);
+        return $this->respondPaginated($products, ShopProductResource::class);
     }
 
     /**
@@ -425,7 +415,7 @@ class ShopProductController extends Controller
             return response()->json(['message' => 'Product not found or not active.'], 404);
         }
 
-        return response()->json(new ShopProductResource($product));
+        return $this->respond(new ShopProductResource($product));
     }
 
     /**

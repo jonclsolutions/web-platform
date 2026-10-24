@@ -149,18 +149,12 @@ class UserController extends Controller
         if ($noPagination) {
             $this->logAction($request, CoreLog::class, 'export', 'User', "Bulk export of users.");
             $users = $query->with(['roles.permissions', 'explicitPermissions'])->get();
-            return response()->json(UserResource::collection($users));
+            return $this->respond(UserResource::collection($users));
         }
 
         $users = $query->with(['roles.permissions', 'explicitPermissions'])->paginate($perPage);
 
-        return response()->json([
-            'data' => UserResource::collection($users->items()),
-            'total' => $users->total(),
-            'per_page' => $users->perPage(),
-            'current_page' => $users->currentPage(),
-            'last_page' => $users->lastPage(),
-        ]);
+        return $this->respondPaginated($users, UserResource::class);
     }
 
     /**
@@ -249,10 +243,12 @@ class UserController extends Controller
             // `additional()` and the `data` wrapper were dropped, so `activation_email_sent`
             // never reached the client and `DataHandler.post()` (unwraps `.data`) got
             // `undefined`. Shape: {data: user, activation_email_sent: bool}. Found by the unit tests.
-            return (new UserResource($user->load(['roles.permissions', 'explicitPermissions'])))
-                ->additional(['activation_email_sent' => $emailSent])
-                ->response()
-                ->setStatusCode(201);
+            // Shape since finding #6: {data: user, meta: {activation_email_sent}}.
+            return $this->respond(
+                new UserResource($user->load(['roles.permissions', 'explicitPermissions'])),
+                201,
+                ['activation_email_sent' => $emailSent]
+            );
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logAction($request, CoreLog::class, 'error', 'User', "Error creating user: " . $e->getMessage());
@@ -271,7 +267,7 @@ class UserController extends Controller
 
         $user = User::withTrashed()->findOrFail($id);
 
-        return response()->json(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
+        return $this->respond(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
     }
 
       /**
@@ -522,7 +518,7 @@ class UserController extends Controller
 
             DB::commit();
             $this->logAction($request, CoreLog::class, 'update', 'User', "User updated: {$user->user_email}", $user->id, 'User');
-            return response()->json(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
+            return $this->respond(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -616,7 +612,7 @@ class UserController extends Controller
             $user->restore();
 
             $this->logAction(request(), CoreLog::class, 'restore', 'User', "Restored user: {$user->user_email}", $user->id, 'User');
-            return response()->json(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
+            return $this->respond(new UserResource($user->load(['roles.permissions', 'explicitPermissions'])));
         } catch (\Exception $e) {
             $this->logAction(request(), CoreLog::class, 'error', 'User', "Error restoring user ID {$id}: " . $e->getMessage(), (int) $id, 'User');
             return response()->json(['message' => 'Restoring user failed.'], 500);

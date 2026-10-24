@@ -48,7 +48,7 @@ class AccountActivationTest extends TestCase
 
         $this->getJson("/api/account-activation/{$raw}")
             ->assertOk()
-            ->assertExactJson(['email' => $user->user_email, 'full_name' => $user->full_name]);
+            ->assertExactJson(['data' => ['email' => $user->user_email, 'full_name' => $user->full_name]]);
 
         $this->assertSame(1, AccountActivationToken::count());
     }

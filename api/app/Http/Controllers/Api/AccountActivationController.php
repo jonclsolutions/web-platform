@@ -28,6 +28,8 @@
  *   but the account was blocked in the meantime. Signals that someone holds a link to an account that
  *   the admin intentionally blocked in the meantime (e.g., employee left before setting
  *   a password).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api;
@@ -63,7 +65,7 @@ class AccountActivationController extends Controller
             return response()->json(['message' => 'The account is blocked or does not exist.'], 403);
         }
 
-        return response()->json([
+        return $this->respond([
             'email'     => $user->user_email,
             'full_name' => $user->full_name,
         ]);

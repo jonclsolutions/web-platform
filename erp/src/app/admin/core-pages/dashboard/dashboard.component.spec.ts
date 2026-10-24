@@ -35,7 +35,7 @@ describe('CoreDashboardComponent', () => {
   beforeEach(async () => {
     ctx = createAdminTestContext();
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
-      url.startsWith('core/logs?per_page=8') ? of({ data: logs }) : of({ total: totals[url] }));
+      url.startsWith('core/logs?per_page=8') ? of({ data: logs }) : of({ data: [], meta: { total: totals[url] } }));
     await TestBed.configureTestingModule({ imports: [CoreDashboardComponent], providers: ctx.providers }).compileComponents();
     fixture = TestBed.createComponent(CoreDashboardComponent);
     component = fixture.componentInstance;
@@ -92,7 +92,7 @@ describe('CoreDashboardComponent', () => {
    */
   it('shows a dash for a failed statistic', () => {
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
-      url === 'core/users?per_page=1' ? throwError(() => new Error('x')) : of({ total: totals[url] ?? 0, data: [] }));
+      url === 'core/users?per_page=1' ? throwError(() => new Error('x')) : of({ data: [], meta: { total: totals[url] ?? 0 } }));
     component.ngOnInit();
     expect(component.quickStats.find(s => s.key === 'users')?.value).toBe('—');
     expect(component.quickStats.find(s => s.key === 'externalLinks')?.value).toBe(5);
@@ -235,7 +235,7 @@ describe('CoreDashboardComponent', () => {
 
     get.and.callThrough();
     cache.invalidate((component as any).ACTIVITY_CACHE_KEY);
-    (ctx.dataHandler as any).getPaginatedCollection.and.returnValue(of([{ id: 1, event_type: 'create' }]));
+    (ctx.dataHandler as any).getPaginatedCollection.and.returnValue(of({ data: [{ id: 1, event_type: 'create' }] }));
     (component as any).loadRecentActivity();
     expect(component.recentActivity.length).toBe(1);
 

@@ -16,6 +16,8 @@
  * @refactor-note (2026-10-23) `checkStock()`: removed the guessing of the variant foreign
  * key (`method_exists(..., 'product')` is always true, so the key is always `product_id`)
  * and the two QueryException fallbacks behind it - unreachable code.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -51,7 +53,7 @@ class ShopPublicController extends Controller
             ->orderBy('sort_order', 'asc')
             ->get();
 
-        return response()->json(ShopShippingMethodResource::collection($methods));
+        return $this->respond(ShopShippingMethodResource::collection($methods));
     }
 
     /**
@@ -66,7 +68,7 @@ class ShopPublicController extends Controller
             ->orderBy('sort_order', 'asc')
             ->get();
 
-        return response()->json(ShopPaymentMethodResource::collection($methods));
+        return $this->respond(ShopPaymentMethodResource::collection($methods));
     }
 
     /**
@@ -96,7 +98,7 @@ class ShopPublicController extends Controller
             return $product->stock_quantity;
         });
 
-        return response()->json([
+        return $this->respond([
             'available' => $requestedQuantity <= $stockQuantity
         ]);
     }
@@ -143,7 +145,7 @@ class ShopPublicController extends Controller
         }
 
         // Only what the checkout needs - not usage counters / limits / timestamps (finding #26).
-        return response()->json([
+        return $this->respond([
             'coupon' => $coupon->only(['code', 'discount_type', 'discount_value', 'min_order_amount', 'applies_to', 'valid_until']),
             'is_valid' => true
         ]);
@@ -158,7 +160,7 @@ class ShopPublicController extends Controller
     {
         $settings = ShopSiteSetting::first();
 
-        return response()->json([
+        return $this->respond([
             'is_shop_active' => (bool) ($settings->is_shop_active ?? true)
         ]);
     }

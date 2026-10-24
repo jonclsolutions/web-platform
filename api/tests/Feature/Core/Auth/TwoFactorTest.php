@@ -172,8 +172,8 @@ class TwoFactorTest extends TestCase
 
         $this->postJson('/api/login/verify-2fa', ['login_token' => self::LOGIN_TOKEN, 'code' => self::CODE])
             ->assertOk()
-            ->assertJsonPath('user.id', $user->id)
-            ->assertJsonStructure(['token', 'refreshToken']);
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonStructure(['data' => ['token', 'refreshToken']]);
 
         $this->assertSame(0, TwoFactorCode::count());
         $this->assertSame(1, RefreshToken::where('user_id', $user->id)->count());
@@ -191,7 +191,7 @@ class TwoFactorTest extends TestCase
 
         $loginToken = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])
             ->assertOk()
-            ->json('login_token');
+            ->json('data.login_token');
 
         $code = null;
         Mail::assertSent(TwoFactorCodeMail::class, function (TwoFactorCodeMail $mail) use (&$code) {
@@ -201,7 +201,7 @@ class TwoFactorTest extends TestCase
 
         $this->postJson('/api/login/verify-2fa', ['login_token' => $loginToken, 'code' => $code])
             ->assertOk()
-            ->assertJsonStructure(['token', 'refreshToken']);
+            ->assertJsonStructure(['data' => ['token', 'refreshToken']]);
     }
 
     /**
@@ -289,7 +289,7 @@ class TwoFactorTest extends TestCase
 
         $this->postJson('/api/login/resend-2fa', ['login_token' => self::LOGIN_TOKEN])
             ->assertOk()
-            ->assertJson(['expires_in' => TwoFactorCode::CODE_TTL_MINUTES * 60]);
+            ->assertJson(['data' => ['expires_in' => TwoFactorCode::CODE_TTL_MINUTES * 60]]);
 
         $pending->refresh();
         $this->assertSame(1, $pending->resend_count);

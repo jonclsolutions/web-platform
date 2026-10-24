@@ -49,8 +49,8 @@ class CheckWebActive
         });
 
         if (!$settings->is_web_active) {
+            // Error shape {message} - no `success` flag, the status says it (finding #6).
             return response()->json([
-                'success' => false,
                 'message' => $settings->web_maintenance_message ?? 'We apologize, the website is currently undergoing maintenance.'
             ], 503);
         }

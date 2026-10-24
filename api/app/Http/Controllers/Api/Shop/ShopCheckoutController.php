@@ -47,6 +47,8 @@
  *   order is only linked to the existing record (only EMPTY master fields are filled in, a
  *   trashed customer stays trashed) and the order keeps the contact given at checkout in
  *   its own snapshot columns (`customer_*`).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -214,7 +216,7 @@ class ShopCheckoutController extends Controller
 
             $this->logAction($request, ShopLog::class, 'create', 'ShopOrder (Checkout)', "Created order: {$order->order_number}", $order->id, 'ShopOrder');
 
-            return response()->json(new ShopOrderResource($order), 201);
+            return $this->respond(new ShopOrderResource($order), 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -374,14 +376,11 @@ class ShopCheckoutController extends Controller
             $order = ShopOrder::findOrFail($validated['order_id']);
 
             if ($order->payment_status !== 'pending' || $order->status !== 'pending') {
-                return response()->json(['success' => false, 'message' => 'This order is not waiting for payment.'], 409);
+                return response()->json(['message' => 'This order is not waiting for payment.'], 409);
             }
 
             if (!Lottery::odds(9, 10)->choose()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Payment was declined (simulation)'
-                ], 402);
+                return response()->json(['message' => 'Payment was declined (simulation).'], 402);
             }
 
             $order->update([
@@ -392,11 +391,7 @@ class ShopCheckoutController extends Controller
 
             $this->logAction($request, ShopLog::class, 'payment', 'ShopOrder (Checkout)', "Payment simulated: {$order->order_number}", $order->id, 'ShopOrder');
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment was successfully processed',
-                'order' => new ShopOrderResource($order)
-            ]);
+            return $this->respond(new ShopOrderResource($order), 200, [], 'Payment was successfully processed.');
         } catch (\Exception $e) {
             Log::error("Payment simulation error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder (Checkout)', "Error during payment simulation: " . $e->getMessage());

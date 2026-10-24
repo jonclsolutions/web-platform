@@ -87,8 +87,8 @@ class SiteConfigurationTest extends TestCase
         ]);
 
         $this->putJson('/api/legal/config/settings', $body)->assertOk()
-            ->assertJsonPath('brand_tagline', 'Ahoj')->assertJsonPath('brand_tagline_i18n.en', 'Hello')
-            ->assertJsonPath('copyright_text', '© CZ')->assertJsonPath('google_analytics_id', 'G-ABC12345')->assertJsonPath('logo_path', null);
+            ->assertJsonPath('data.brand_tagline', 'Ahoj')->assertJsonPath('data.brand_tagline_i18n.en', 'Hello')
+            ->assertJsonPath('data.copyright_text', '© CZ')->assertJsonPath('data.google_analytics_id', 'G-ABC12345')->assertJsonPath('data.logo_path', null);
         $this->assertSame(1, SiteSetting::count());
         $this->assertCoreLog('update', 'Updated company details: ');
         $this->putJson('/api/legal/config/settings', $body)->assertOk();
@@ -96,7 +96,7 @@ class SiteConfigurationTest extends TestCase
 
         SocialLink::create(['name' => 'X', 'url' => 'https://x.com', 'icon_path' => '', 'position' => 2]);
         SocialLink::create(['name' => 'FB', 'url' => 'https://fb.com', 'icon_path' => '', 'position' => 1]);
-        $this->getJson('/api/legal/config')->assertOk()->assertJsonPath('settings.company_name', 'Acme s.r.o.')->assertJsonPath('social_links.*.name', ['FB', 'X']);
+        $this->getJson('/api/legal/config')->assertOk()->assertJsonPath('data.settings.company_name', 'Acme s.r.o.')->assertJsonPath('data.social_links.*.name', ['FB', 'X']);
     }
 
     /**
@@ -112,11 +112,11 @@ class SiteConfigurationTest extends TestCase
         SiteSetting::create($this->company(['brand_tagline_i18n' => ['cz' => 'Stary']]));
 
         $first = $this->put('/api/legal/config/settings', $this->company(['logo_file' => $this->fakeImage('logo.png')]), ['Accept' => 'application/json'])
-            ->assertOk()->assertJsonPath('brand_tagline', 'Stary')->json('logo_path');
+            ->assertOk()->assertJsonPath('data.brand_tagline', 'Stary')->json('data.logo_path');
         Storage::disk('public')->assertExists($first);
 
         $second = $this->put('/api/legal/config/settings', $this->company(['logo_file' => $this->fakeImage('new.png'), 'brand_tagline_i18n' => 'not json']), ['Accept' => 'application/json'])
-            ->assertOk()->assertJsonPath('brand_tagline_i18n.cz', 'Stary')->json('logo_path');
+            ->assertOk()->assertJsonPath('data.brand_tagline_i18n.cz', 'Stary')->json('data.logo_path');
         Storage::disk('public')->assertMissing($first);
         Storage::disk('public')->assertExists($second);
 
@@ -132,11 +132,11 @@ class SiteConfigurationTest extends TestCase
      */
     public function test_public_config(): void
     {
-        $this->getJson('/api/public/legal/config')->assertOk()->assertJsonPath('settings', null)->assertJsonPath('social_links', []);
+        $this->getJson('/api/public/legal/config')->assertOk()->assertJsonPath('data.settings', null)->assertJsonPath('data.social_links', []);
 
         SiteSetting::create($this->company(['brand_tagline_i18n' => ['cz' => 'Ahoj', 'en' => 'Hello']]));
-        $this->getJson('/api/public/legal/config?lang=en')->assertJsonPath('settings.brand_tagline', 'Hello')->assertJsonPath('settings.copyright_text', '© Acme');
-        $this->getJson('/api/public/legal/config?lang=de')->assertJsonPath('settings.brand_tagline', 'Ahoj');
+        $this->getJson('/api/public/legal/config?lang=en')->assertJsonPath('data.settings.brand_tagline', 'Hello')->assertJsonPath('data.settings.copyright_text', '© Acme');
+        $this->getJson('/api/public/legal/config?lang=de')->assertJsonPath('data.settings.brand_tagline', 'Ahoj');
     }
 
     /**
@@ -151,16 +151,16 @@ class SiteConfigurationTest extends TestCase
         $this->signIn($this->userWith(self::ALL));
 
         $link = $this->post('/api/legal/config/social', ['name' => 'Facebook', 'url' => 'https://fb.com/acme', 'position' => 3, 'icon_file' => $this->fakeImage('fb.png')], ['Accept' => 'application/json'])
-            ->assertCreated()->assertJsonPath('name', 'Facebook')->json();
+            ->assertCreated()->assertJsonPath('data.name', 'Facebook')->json('data');
         Storage::disk('public')->assertExists($link['icon_path']);
         $this->assertCoreLog('create', 'Added social network: Facebook');
-        $this->postJson('/api/legal/config/social', ['name' => 'X', 'url' => 'https://x.com'])->assertCreated()->assertJsonPath('icon_path', '')->assertJsonPath('position', 0);
+        $this->postJson('/api/legal/config/social', ['name' => 'X', 'url' => 'https://x.com'])->assertCreated()->assertJsonPath('data.icon_path', '')->assertJsonPath('data.position', 0);
 
         $updated = $this->post("/api/legal/config/social/{$link['id']}", ['name' => 'FB', 'url' => 'https://fb.com', 'icon_file' => $this->fakeImage('fb2.png')], ['Accept' => 'application/json'])
-            ->assertOk()->assertJsonPath('position', 3)->json('icon_path');
+            ->assertOk()->assertJsonPath('data.position', 3)->json('data.icon_path');
         Storage::disk('public')->assertMissing($link['icon_path']);
         Storage::disk('public')->assertExists($updated);
-        $this->putJson("/api/legal/config/social/{$link['id']}", ['name' => 'FB', 'url' => 'https://fb.com', 'position' => 1])->assertOk()->assertJsonPath('icon_path', $updated)->assertJsonPath('position', 1);
+        $this->putJson("/api/legal/config/social/{$link['id']}", ['name' => 'FB', 'url' => 'https://fb.com', 'position' => 1])->assertOk()->assertJsonPath('data.icon_path', $updated)->assertJsonPath('data.position', 1);
         $this->assertCoreLog('update', 'Updated social network: FB');
 
         $this->postJson('/api/legal/config/social', ['name' => str_repeat('n', 51), 'url' => 'javascript:alert(1)'])->assertStatus(422)->assertJsonValidationErrors(['name', 'url']);
@@ -195,12 +195,12 @@ class SiteConfigurationTest extends TestCase
         $home = $this->pageTitle('web', 'home', 2, ['cz' => 'Domů', 'en' => 'Home']);
         $about = $this->pageTitle('web', 'about', 1);
 
-        $this->getJson('/api/legal/config/page-titles')->assertOk()->assertJsonPath('page_titles.*.id', [$about->id, $home->id, $cart->id, $users->id]);
+        $this->getJson('/api/legal/config/page-titles')->assertOk()->assertJsonPath('data.*.id', [$about->id, $home->id, $cart->id, $users->id]);
 
         $this->putJson('/api/legal/config/page-titles', ['titles' => [
             ['id' => $home->id, 'title_i18n' => ['CZ' => "<b>Úvod</b>\n  x", 'de' => '<i>' . str_repeat('d', 110) . '</i>', 'bad key!' => 'x']],
             ['id' => $users->id, 'title_i18n' => []],
-        ]])->assertOk()->assertJsonCount(4, 'page_titles');
+        ]])->assertOk()->assertJsonCount(4, 'data');
 
         $titles = $home->fresh()->title_i18n;
         $this->assertSame(['Úvod x', 'Home', str_repeat('d', 110)], [$titles['cz'], $titles['en'], $titles['de']]);
@@ -214,7 +214,7 @@ class SiteConfigurationTest extends TestCase
         $this->putJson('/api/legal/config/page-titles', [])->assertStatus(422)->assertJsonValidationErrors(['titles']);
 
         $this->app['auth']->forgetGuards();
-        $public = $this->getJson('/api/public/legal/page-titles')->assertOk()->json('titles');
+        $public = $this->getJson('/api/public/legal/page-titles')->assertOk()->json('data');
         $this->assertSame(['cz' => 'Úvod x', 'en' => 'Home', 'de' => str_repeat('d', 110)], $public['web.home']);
         $this->assertSame([], $public['shop.cart']);
         $this->assertSame([], $public['web.about']);

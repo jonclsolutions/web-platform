@@ -49,7 +49,7 @@ class UserListTest extends TestCase
 
         $this->getJson('/api/core/users?per_page=2')
             ->assertOk()
-            ->assertJson(['total' => 3, 'per_page' => 2, 'current_page' => 1, 'last_page' => 2])
+            ->assertJson(['meta' => ['total' => 3, 'per_page' => 2, 'current_page' => 1, 'last_page' => 2]])
             ->assertJsonPath('data.0.id', $b->id)
             ->assertJsonPath('data.1.id', $a->id);
     }
@@ -68,7 +68,7 @@ class UserListTest extends TestCase
         foreach (['only_trashed=true', 'is_deleted=1'] as $query) {
             $this->getJson("/api/core/users?{$query}")
                 ->assertOk()
-                ->assertJsonPath('total', 1)
+                ->assertJsonPath('meta.total', 1)
                 ->assertJsonPath('data.0.id', $deleted->id);
         }
     }
@@ -85,10 +85,10 @@ class UserListTest extends TestCase
         $alice = $this->user(['full_name' => 'Alice Novak', 'user_email' => 'alice@corp.cz'], $editor);
         $bob = $this->user(['full_name' => 'Bob Dvorak', 'user_email' => 'bob@corp.cz', 'is_blocked' => true]);
 
-        $this->getJson('/api/core/users?full_name=Novak')->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $alice->id);
-        $this->getJson('/api/core/users?user_email=bob@')->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $bob->id);
-        $this->getJson("/api/core/users?role_id={$editor->id}")->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $alice->id);
-        $this->getJson('/api/core/users?is_blocked=true')->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $bob->id);
+        $this->getJson('/api/core/users?full_name=Novak')->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $alice->id);
+        $this->getJson('/api/core/users?user_email=bob@')->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $bob->id);
+        $this->getJson("/api/core/users?role_id={$editor->id}")->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $alice->id);
+        $this->getJson('/api/core/users?is_blocked=true')->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $bob->id);
     }
 
     /**
@@ -103,7 +103,7 @@ class UserListTest extends TestCase
         $this->user(['full_name' => 'Carla'])->delete();
 
         $this->getJson('/api/core/users?search=carl')
-            ->assertJsonPath('total', 1)
+            ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.id', $carl->id);
     }
 
@@ -118,7 +118,7 @@ class UserListTest extends TestCase
         $first = $this->user(['full_name' => 'Anna'], $this->role('b-role'));
         $second = $this->user(['full_name' => 'Bara'], $this->role('a-role'));
 
-        $byRole = $this->getJson('/api/core/users?sort_by=role_name&sort_direction=asc&no_pagination=true')->assertOk()->json();
+        $byRole = $this->getJson('/api/core/users?sort_by=role_name&sort_direction=asc&no_pagination=true')->assertOk()->json('data');
         $this->assertSame([$second->id, $first->id], array_slice(array_column($byRole, 'id'), 0, 2));
 
         $this->getJson('/api/core/users?sort_by=users.full_name&sort_direction=asc')
@@ -140,9 +140,9 @@ class UserListTest extends TestCase
 
         $this->getJson('/api/core/users?no_pagination=true')
             ->assertOk()
-            ->assertJsonCount(1)
-            ->assertJsonPath('0.id', $viewer->id)
-            ->assertJsonPath('0.permissions', ['core-administrators-view']);
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $viewer->id)
+            ->assertJsonPath('data.0.permissions', ['core-administrators-view']);
 
         $this->assertCoreLog('export', 'Bulk export of users.');
     }
@@ -161,8 +161,8 @@ class UserListTest extends TestCase
         $this->getJson('/api/core/users/abc')->assertStatus(422);
         $this->getJson("/api/core/users/{$deleted->id}")
             ->assertOk()
-            ->assertJsonPath('id', $deleted->id)
-            ->assertJsonPath('deleted_at', fn ($v) => $v !== null);
+            ->assertJsonPath('data.id', $deleted->id)
+            ->assertJsonPath('data.deleted_at', fn ($v) => $v !== null);
     }
 
     /**
@@ -175,6 +175,6 @@ class UserListTest extends TestCase
     {
         $me = $this->signIn($this->user());
 
-        $this->getJson("/api/core/users/{$me->id}")->assertOk()->assertJsonPath('id', $me->id);
+        $this->getJson("/api/core/users/{$me->id}")->assertOk()->assertJsonPath('data.id', $me->id);
     }
 }

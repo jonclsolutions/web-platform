@@ -37,37 +37,44 @@ describe('ShopPublicService', () => {
   afterEach(() => http.verify());
 
   /**
-   * @description Product list sends only non-empty filters; lists use no_pagination; detail,
-   *   coupon and order go to their endpoints.
+   * @description Product list sends only non-empty filters and returns the page `{data, meta}`;
+   *   lists use no_pagination; detail, coupon and order go to their endpoints; everything but the
+   *   page returns the payload (`data`) of the envelope (finding #6).
    * @input getProducts({page 2, search '', category_id null, x undefined, sort 'price'}); lists; detail 'mug'; coupon; order.
-   * @output ?page=2&sort=price; ?no_pagination=true ×3; /products/mug; POST coupons/validate {code, order_amount}; POST create-order.
+   * @output ?page=2&sort=price (page kept); ?no_pagination=true ×3 (lists); /products/mug {id 1}; POST coupons/validate {code, order_amount} → payload; POST create-order → payload.
    */
   it('calls the storefront endpoints', () => {
-    service.getProducts({ page: 2, search: '', category_id: null, x: undefined, sort: 'price' }).subscribe();
-    http.expectOne(`${API}/products?page=2&sort=price`).flush({ data: [] });
+    let page: any;
+    service.getProducts({ page: 2, search: '', category_id: null, x: undefined, sort: 'price' }).subscribe(p => (page = p));
+    http.expectOne(`${API}/products?page=2&sort=price`).flush({ data: [], meta: { total: 0 } });
+    expect(page).toEqual({ data: [], meta: { total: 0 } });
     service.getProducts().subscribe();
     http.expectOne(`${API}/products`).flush({ data: [] });
 
-    service.getCategories().subscribe();
-    service.getShippingMethods().subscribe();
-    service.getPaymentMethods().subscribe();
+    const lists: any[] = [];
+    service.getCategories().subscribe(r => lists.push(r));
+    service.getShippingMethods().subscribe(r => lists.push(r));
+    service.getPaymentMethods().subscribe(r => lists.push(r));
     for (const list of ['categories', 'shipping-methods', 'payment-methods']) {
-      http.expectOne(`${API}/${list}?no_pagination=true`).flush([]);
+      http.expectOne(`${API}/${list}?no_pagination=true`).flush({ data: [list] });
     }
+    expect(lists).toEqual([['categories'], ['shipping-methods'], ['payment-methods']]);
 
     let detail: any;
     service.getProductDetail('mug').subscribe(d => (detail = d));
-    http.expectOne(`${API}/products/mug`).flush({ id: 1 });
+    http.expectOne(`${API}/products/mug`).flush({ data: { id: 1 } });
     expect(detail).toEqual({ id: 1 });
 
-    service.validateCoupon('SAVE', 100).subscribe();
+    let valid: any; let created: any;
+    service.validateCoupon('SAVE', 100).subscribe(r => (valid = r));
     const coupon = http.expectOne(`${API}/coupons/validate`);
     expect(coupon.request.body).toEqual({ code: 'SAVE', order_amount: 100 });
-    coupon.flush({});
-    service.createOrder({ a: 1 }).subscribe();
+    coupon.flush({ data: { is_valid: true } });
+    service.createOrder({ a: 1 }).subscribe(r => (created = r));
     const order = http.expectOne(`${environment.base_api_url}/shop/checkout/create-order`);
     expect(order.request.method).toBe('POST');
-    order.flush({});
+    order.flush({ data: { order_number: 'O-1' } });
+    expect([valid, created]).toEqual([{ is_valid: true }, { order_number: 'O-1' }]);
   });
 
   /**

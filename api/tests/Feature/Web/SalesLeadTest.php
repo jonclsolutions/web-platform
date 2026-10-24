@@ -68,8 +68,8 @@ class SalesLeadTest extends TestCase
         $this->assertSame([$b->id], $ids('created_at=' . now()->subDay()->toDateString()));
         $this->assertSame([$a->id], $ids('last_contact_date=2026-10-01'));
         $this->assertSame(['Gone'], array_column($this->getJson('/api/web/sales_leads?only_trashed=1')->json('data'), 'subject_name'));
-        $this->getJson('/api/web/sales_leads?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/web/sales_leads?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/web/sales_leads?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/web/sales_leads?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
         $this->assertWebLog('export', 'Bulk export of sales leads.');
     }
 
@@ -84,9 +84,9 @@ class SalesLeadTest extends TestCase
         $me = $this->signIn($this->userWith(['web-sales-leads-create'], ['full_name' => 'Petr']));
 
         $this->postJson('/api/web/sales_leads', $this->payload())->assertCreated()
-            ->assertJsonPath('salesman_name', 'Petr')->assertJsonPath('user_id', $me->id)
-            ->assertJsonPath('salesman.name', 'Petr');
-        $this->postJson('/api/web/sales_leads', $this->payload(['salesman_name' => 'Other']))->assertCreated()->assertJsonPath('salesman_name', 'Other');
+            ->assertJsonPath('data.salesman_name', 'Petr')->assertJsonPath('data.user_id', $me->id)
+            ->assertJsonPath('data.salesman.name', 'Petr');
+        $this->postJson('/api/web/sales_leads', $this->payload(['salesman_name' => 'Other']))->assertCreated()->assertJsonPath('data.salesman_name', 'Other');
         $this->assertWebLog('create', 'Created new lead: Acme');
         $this->postJson('/api/web/sales_leads', ['subject_name' => 'A', 'source_channel' => 'tv'])
             ->assertStatus(422)->assertJsonValidationErrors(['subject_name', 'source_channel', 'priority', 'status']);
@@ -108,7 +108,7 @@ class SalesLeadTest extends TestCase
         $lead = $this->lead();
 
         $this->putJson("/api/web/sales_leads/{$lead->id}", ['status' => 'closed_won', 'next_step' => 'Invoice'])
-            ->assertOk()->assertJsonPath('status', 'closed_won')->assertJsonPath('next_step', 'Invoice');
+            ->assertOk()->assertJsonPath('data.status', 'closed_won')->assertJsonPath('data.next_step', 'Invoice');
         $this->assertWebLog('update', "Updated lead ID: {$lead->id}");
         $this->putJson("/api/web/sales_leads/{$lead->id}", ['status' => 'hacked', 'user_id' => 999])
             ->assertStatus(422)->assertJsonValidationErrors(['status', 'user_id']);
@@ -116,7 +116,7 @@ class SalesLeadTest extends TestCase
         $this->assertNull($lead->fresh()->public_token);
 
         $lead->delete();
-        $this->getJson("/api/web/sales_leads/{$lead->id}")->assertOk()->assertJsonPath('deleted_at', fn ($v) => $v !== null);
+        $this->getJson("/api/web/sales_leads/{$lead->id}")->assertOk()->assertJsonPath('data.deleted_at', fn ($v) => $v !== null);
         $this->getJson('/api/web/sales_leads/999')->assertStatus(404);
         $this->putJson('/api/web/sales_leads/999', ['next_step' => 'x'])->assertStatus(404);
 
@@ -194,9 +194,9 @@ class SalesLeadTest extends TestCase
         $lead = $this->lead(['public_token' => 'token-t']);
         $this->lead(['public_token' => 'token-u', 'public_token_used_at' => now()]);
 
-        $this->getJson('/api/public/sales-leads/token-t')->assertOk()->assertExactJson([
+        $this->getJson('/api/public/sales-leads/token-t')->assertOk()->assertExactJson(['data' => [
             'id' => $lead->id, 'subject_name' => 'Acme s.r.o.', 'contact_person' => 'Jan Acme', 'contact_email' => 'jan@acme.cz', 'contact_phone' => '777123456',
-        ]);
+        ]]);
         $this->getJson('/api/public/sales-leads/token-u')->assertStatus(410);
         $this->getJson('/api/public/sales-leads/nope')->assertStatus(404);
         $this->assertSame(2, (int) CoreSecurityEvent::where('event_type', 'sales_lead_token_invalid')->sum('occurrences'));

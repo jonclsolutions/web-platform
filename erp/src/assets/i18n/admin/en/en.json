@@ -2187,7 +2187,8 @@
 
     "explain_fallback_label": "Unknown event type",
     "explain_fallback_what": "No detailed description is available yet for this event type.",
-    "explain_fallback_recommendation": "Check the IP address, endpoint, and record context manually, or contact the developers about adding an explanation for this type."
+    "explain_fallback_recommendation": "Check the IP address, endpoint, and record context manually, or contact the developers about adding an explanation for this type.",
+    "purge_done_count_message": "Deleted {count} records older than the retention period."
   },
   "shop-products": {
     "table_header": "Products",

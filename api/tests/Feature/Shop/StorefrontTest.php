@@ -49,10 +49,10 @@ class StorefrontTest extends TestCase
         $this->assertSame([$a->id], $ids('price_to=200'));
         $this->assertSame([$a->id, $b->id], $ids('sort_by=name&sort_direction=desc'));
 
-        $response = $this->getJson('/api/shop/public/products?per_page=1000')->assertOk()->assertJsonPath('per_page', 100);
+        $response = $this->getJson('/api/shop/public/products?per_page=1000')->assertOk()->assertJsonPath('meta.per_page', 100);
         $this->assertArrayNotHasKey('cost_price_eur', $response->json('data.0.prices'));
         $this->assertSame(121.0, (float) $response->json('data.1.prices.price_eur_with_vat'));
-        $this->getJson('/api/shop/public/products?per_page=1')->assertJson(['per_page' => 1, 'last_page' => 2]);
+        $this->getJson('/api/shop/public/products?per_page=1')->assertJson(['meta' => ['per_page' => 1, 'last_page' => 2]]);
     }
 
     /**
@@ -72,11 +72,11 @@ class StorefrontTest extends TestCase
         $inactive->update(['is_active' => false]);
 
         $json = $this->getJson("/api/shop/public/products/{$product->id}")->assertOk()
-            ->assertJsonPath('images.0.image_path', 'a.jpg')->assertJsonPath('variants.0.prices.price_eur_with_vat', 99)->json();
+            ->assertJsonPath('data.images.0.image_path', 'a.jpg')->assertJsonPath('data.variants.0.prices.price_eur_with_vat', 99)->json('data');
         $this->assertArrayNotHasKey('cost_price_eur', $json['prices']);
         $this->assertArrayNotHasKey('cost_price_eur', $json['variants'][0]['prices']);
         $this->assertStringEndsWith('/storage/products/a.jpg', $json['images'][0]['url']);
-        $this->getJson('/api/shop/public/products/desk-lamp')->assertOk()->assertJsonPath('id', $product->id);
+        $this->getJson('/api/shop/public/products/desk-lamp')->assertOk()->assertJsonPath('data.id', $product->id);
         $this->getJson("/api/shop/public/products/{$inactive->id}")->assertStatus(404)->assertJson(['message' => 'Product not found or not active.']);
         $this->getJson('/api/shop/public/products/nope')->assertStatus(404);
     }
@@ -96,7 +96,7 @@ class StorefrontTest extends TestCase
         $w = $this->variant($other, ['stock_quantity' => 50]);
         Cache::flush();
 
-        $check = fn (string $q) => $this->getJson("/api/shop/public/products/{$q}")->assertOk()->json('available');
+        $check = fn (string $q) => $this->getJson("/api/shop/public/products/{$q}")->assertOk()->json('data.available');
         $this->assertTrue($check("{$product->id}/check-stock?quantity=3"));
         $this->assertFalse($check("{$product->id}/check-stock?quantity=4"));
         $this->assertTrue(Cache::has("product_stock_{$product->id}"));
@@ -104,7 +104,7 @@ class StorefrontTest extends TestCase
         $this->assertFalse($check("{$product->id}/check-stock?quantity=2&variant_id={$v->id}"));
         $this->assertFalse($check("{$product->id}/check-stock?quantity=1&variant_id={$w->id}"));
         $this->assertFalse($check('999/check-stock?quantity=1'));
-        $this->getJson("/api/shop/public/products/{$product->id}/check-stock?quantity=1")->assertExactJson(['available' => true]);
+        $this->getJson("/api/shop/public/products/{$product->id}/check-stock?quantity=1")->assertExactJson(['data' => ['available' => true]]);
 
         foreach (range(1, 8) as $i) {
             $this->getJson("/api/shop/public/products/{$product->id}/check-stock?quantity=1")->assertOk();
@@ -127,8 +127,8 @@ class StorefrontTest extends TestCase
         $this->paymentMethod(['code' => 'card', 'name' => 'Card', 'sort_order' => 1]);
         $this->paymentMethod(['code' => 'cod', 'name' => 'COD', 'is_active' => false]);
 
-        $this->getJson('/api/shop/public/shipping-methods')->assertOk()->assertJsonPath('*.code', ['packeta', 'ppl']);
-        $payments = $this->getJson('/api/shop/public/payment-methods')->assertOk()->assertJsonPath('*.code', ['bank_transfer', 'card'])->json();
+        $this->getJson('/api/shop/public/shipping-methods')->assertOk()->assertJsonPath('data.*.code', ['packeta', 'ppl']);
+        $payments = $this->getJson('/api/shop/public/payment-methods')->assertOk()->assertJsonPath('data.*.code', ['bank_transfer', 'card'])->json('data');
         $this->assertArrayNotHasKey('config', $payments[0]);
         $this->assertStringNotContainsString('secret-key', json_encode($payments));
     }
@@ -156,7 +156,7 @@ class StorefrontTest extends TestCase
         $check('OLD')->assertStatus(422)->assertJson(['message' => 'Coupon has expired.']);
         $check('USED')->assertStatus(422)->assertJson(['message' => 'Coupon usage limit has been reached.']);
         $check('MIN')->assertStatus(422)->assertJson(['message' => 'Minimum order amount is 100.00 EUR.']);
-        $ok = $check('OK')->assertOk()->assertJsonPath('is_valid', true)->assertJsonPath('coupon.code', 'OK')->json('coupon');
+        $ok = $check('OK')->assertOk()->assertJsonPath('data.is_valid', true)->assertJsonPath('data.coupon.code', 'OK')->json('data.coupon');
         // Only the fields the checkout needs (finding #26) - no counters / limits / ids / timestamps.
         $this->assertSame(['code', 'discount_type', 'discount_value', 'min_order_amount', 'applies_to', 'valid_until'], array_keys($ok));
         $this->postJson('/api/shop/public/coupons/validate', [])->assertStatus(422)->assertJsonValidationErrors(['code', 'order_amount']);
@@ -180,13 +180,13 @@ class StorefrontTest extends TestCase
         $this->variant($product, ['variant_name' => 'A', 'stock_quantity' => 250]);
         $this->variant($product, ['variant_name' => 'B', 'stock_quantity' => 3]);
 
-        $json = $this->getJson("/api/shop/public/products/{$product->id}")->assertOk()->json();
+        $json = $this->getJson("/api/shop/public/products/{$product->id}")->assertOk()->json('data');
         $this->assertSame([99, 99, 3], [$json['stock_quantity'], $json['variants'][0]['stock_quantity'], $json['variants'][1]['stock_quantity']]);
         $this->assertArrayNotHasKey('stock_warning_level', $json);
         $this->assertSame(99, $this->getJson('/api/shop/public/products')->json('data.0.stock_quantity'));
 
         $this->signIn($this->userWith(['shop-products-view']));
-        $this->getJson("/api/shop/products/{$product->id}")->assertOk()->assertJsonPath('stock_quantity', 253)->assertJsonPath('stock_warning_level', 10)
-            ->assertJsonPath('variants.0.stock_quantity', 250);
+        $this->getJson("/api/shop/products/{$product->id}")->assertOk()->assertJsonPath('data.stock_quantity', 253)->assertJsonPath('data.stock_warning_level', 10)
+            ->assertJsonPath('data.variants.0.stock_quantity', 250);
     }
 }

@@ -41,6 +41,8 @@
  * @bugfix-note (2026-10-23) Open finding #39: the page was English-only; every text comes from the
  *   admin translations `activate-account` now. API error texts (English) are no longer shown - the
  *   status decides the translated message.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): GET
+ *  account-activation/{token} answers `{data: {email, full_name}}` - the payload is read.
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
@@ -50,6 +52,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { map } from 'rxjs';
+import { ApiEnvelope } from '../../../shared/interfaces/api-envelope';
 import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, meetsPasswordRequirements, fillPasswordLimits } from '../../../shared/constants/password-policy';
 import { AdminLocalizationService } from '../../../core/services/admin-localization.service';
 import { PasswordRequirementsChecklistComponent } from '../../../shared/components/password-requirements-checklist/password-requirements-checklist.component';
@@ -130,7 +134,7 @@ export class ActivateAccountComponent implements OnInit {
       return;
     }
 
-    this.http.get<ActivationCheckResponse>(this.activationUrl(), { headers: this.headers }).subscribe({
+    this.http.get<ApiEnvelope<ActivationCheckResponse>>(this.activationUrl(), { headers: this.headers }).pipe(map(r => r.data)).subscribe({
       next: (res) => {
         this.email = res.email;
         this.state = 'form';

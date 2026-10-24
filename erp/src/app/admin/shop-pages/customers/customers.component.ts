@@ -30,6 +30,8 @@
  * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
  *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
  *   the component (`takeUntilDestroyed()`).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): orders of a
+ *  customer are read as a page (`getPaginatedCollection`, pagination in `meta`).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -234,14 +236,15 @@ export class CustomersComponent extends BaseDataComponent<any> implements Core.O
 
     const url = `shop/orders?customer_id=${this.selectedCustomerForOrders.id}&per_page=${this.ordersPerPage}&page=${page}&sort_by=created_at&sort_direction=desc`;
 
-    this.dataHandler.get<any>(url)
+    this.dataHandler.getPaginatedCollection<any>(url)
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
+        next: (response) => {
+          // Page = {data, meta} (finding #6).
           this.customerOrders = response.data ?? [];
-          this.ordersTotalPages = response.last_page ?? 1;
-          this.ordersTotalItems = response.total ?? 0;
-          this.ordersCurrentPage = response.current_page ?? 1;
+          this.ordersTotalPages = response.meta?.last_page ?? 1;
+          this.ordersTotalItems = response.meta?.total ?? 0;
+          this.ordersCurrentPage = response.meta?.current_page ?? 1;
           this.customerOrdersLoading = false;
           this.cd.markForCheck();
         },

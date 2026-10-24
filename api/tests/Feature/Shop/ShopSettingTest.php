@@ -49,7 +49,7 @@ class ShopSettingTest extends TestCase
         $this->getJson('/api/shop/settings')->assertStatus(403);
 
         $this->admin();
-        $this->getJson('/api/shop/settings')->assertOk()->assertJsonPath('is_shop_active', true);
+        $this->getJson('/api/shop/settings')->assertOk()->assertJsonPath('data.is_shop_active', true);
         $this->getJson('/api/shop/settings')->assertOk();
         $this->assertSame(1, ShopSiteSetting::count());
     }
@@ -73,7 +73,7 @@ class ShopSettingTest extends TestCase
         $this->putJson('/api/shop/settings', [])->assertStatus(422)->assertJsonValidationErrors(['confirm_password']);
 
         $this->putJson('/api/shop/settings', ['confirm_password' => $this->defaultPassword, 'is_shop_active' => false, 'maintenance_message' => 'Inventory'])
-            ->assertOk()->assertJsonPath('success', true)->assertJsonPath('data.is_shop_active', false)->assertJsonPath('data.maintenance_message', 'Inventory');
+            ->assertOk()->assertJsonPath('data.is_shop_active', false)->assertJsonPath('data.maintenance_message', 'Inventory');
         $this->assertFalse(Cache::has('site_setting_active_shop'));
         $this->assertShopLog('maintenance_status_changed', 'DISABLED (Maintenance)');
 
@@ -92,13 +92,13 @@ class ShopSettingTest extends TestCase
      */
     public function test_public_status_and_settings(): void
     {
-        $this->getJson('/api/shop/public/status')->assertExactJson(['is_shop_active' => true]);
-        $this->getJson('/api/shop/public/settings')->assertExactJson(['is_shop_active' => true, 'maintenance_message' => null]);
+        $this->getJson('/api/shop/public/status')->assertExactJson(['data' => ['is_shop_active' => true]]);
+        $this->getJson('/api/shop/public/settings')->assertExactJson(['data' => ['is_shop_active' => true, 'maintenance_message' => null]]);
 
         ShopSiteSetting::create(['is_shop_active' => false, 'maintenance_message' => 'Inventory']);
 
-        $this->getJson('/api/shop/public/status')->assertExactJson(['is_shop_active' => false]);
-        $this->getJson('/api/shop/public/settings')->assertExactJson(['is_shop_active' => false, 'maintenance_message' => 'Inventory']);
+        $this->getJson('/api/shop/public/status')->assertExactJson(['data' => ['is_shop_active' => false]]);
+        $this->getJson('/api/shop/public/settings')->assertExactJson(['data' => ['is_shop_active' => false, 'maintenance_message' => 'Inventory']]);
     }
 
     /**
@@ -115,7 +115,7 @@ class ShopSettingTest extends TestCase
         ShopSiteSetting::whereKey(1)->update(['is_shop_active' => false, 'maintenance_message' => 'Inventory']);
         Cache::forget('site_setting_active_shop');
 
-        $this->getJson('/api/shop/public/products')->assertStatus(503)->assertExactJson(['success' => false, 'message' => 'Inventory']);
+        $this->getJson('/api/shop/public/products')->assertStatus(503)->assertExactJson(['message' => 'Inventory']);
         $this->postJson('/api/shop/checkout/create-order', [])->assertStatus(503);
         $this->getJson('/api/shop/public/status')->assertOk();
 

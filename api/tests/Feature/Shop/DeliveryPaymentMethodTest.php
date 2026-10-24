@@ -62,8 +62,8 @@ class DeliveryPaymentMethodTest extends TestCase
         $this->assertSame([$packeta->id], $ids('allows_cod=1'));
         $this->assertSame([$ppl->id], $ids('is_active=1&allows_cod=0'));
         $this->assertSame(['dpd'], array_column($this->getJson('/api/shop/shipping_methods?only_trashed=1')->json('data'), 'code'));
-        $this->getJson('/api/shop/shipping_methods?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/shop/shipping_methods?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/shop/shipping_methods?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/shop/shipping_methods?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
     }
 
     /**
@@ -77,19 +77,19 @@ class DeliveryPaymentMethodTest extends TestCase
         $this->signIn($this->userWith(self::SHIPPING));
 
         $id = $this->postJson('/api/shop/shipping_methods', $this->shipping())->assertCreated()
-            ->assertJsonPath('cod_price', '0.00')->assertJsonPath('free_shipping_threshold', '0.00')->assertJsonPath('is_active', true)->json('id');
+            ->assertJsonPath('data.cod_price', '0.00')->assertJsonPath('data.free_shipping_threshold', '0.00')->assertJsonPath('data.is_active', true)->json('data.id');
         $this->assertShopLog('create', 'Created shipping method: DPD');
         $this->postJson('/api/shop/shipping_methods', $this->shipping())->assertStatus(422)->assertJsonValidationErrors(['code']);
         $this->postJson('/api/shop/shipping_methods', [])->assertStatus(422)->assertJsonValidationErrors(['code', 'name', 'shipping_type', 'base_price']);
 
-        $this->getJson("/api/shop/shipping_methods/{$id}")->assertOk()->assertJsonPath('code', 'dpd');
+        $this->getJson("/api/shop/shipping_methods/{$id}")->assertOk()->assertJsonPath('data.code', 'dpd');
         $this->getJson('/api/shop/shipping_methods/999')->assertStatus(404);
-        $this->putJson("/api/shop/shipping_methods/{$id}", $this->shipping(['base_price' => 6, 'is_active' => false]))->assertOk()->assertJsonPath('base_price', '6.00')->assertJsonPath('is_active', false);
+        $this->putJson("/api/shop/shipping_methods/{$id}", $this->shipping(['base_price' => 6, 'is_active' => false]))->assertOk()->assertJsonPath('data.base_price', '6.00')->assertJsonPath('data.is_active', false);
         $this->assertShopLog('update', 'Updated shipping method: DPD');
 
         $system = $this->shippingMethod(['code' => 'local_pickup', 'name' => 'Pickup']);
         $this->putJson("/api/shop/shipping_methods/{$system->id}", $this->shipping(['code' => 'renamed', 'name' => 'Own pickup']))
-            ->assertOk()->assertJsonPath('code', 'local_pickup')->assertJsonPath('name', 'Own pickup');
+            ->assertOk()->assertJsonPath('data.code', 'local_pickup')->assertJsonPath('data.name', 'Own pickup');
         $this->putJson('/api/shop/shipping_methods/999', $this->shipping(['code' => 'x1']))->assertStatus(404);
 
         $this->failOn('shop_shipping_methods', 'UPDATE');
@@ -116,7 +116,7 @@ class DeliveryPaymentMethodTest extends TestCase
         $this->deleteJson("/api/shop/shipping_methods/{$b->id}?force_delete=1")->assertNoContent();
         $this->assertNull(ShopShippingMethod::withTrashed()->find($b->id));
         $this->deleteJson('/api/shop/shipping_methods/999')->assertStatus(404);
-        $this->postJson("/api/shop/shipping_methods/{$a->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
+        $this->postJson("/api/shop/shipping_methods/{$a->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null);
         $this->assertShopLog('restore', "Restored shipping method ID: {$a->id}");
         $this->postJson('/api/shop/shipping_methods/999/restore')->assertStatus(404);
 
@@ -153,13 +153,13 @@ class DeliveryPaymentMethodTest extends TestCase
         $this->assertSame([$card->id], $ids('provider=stripe'));
         $this->assertSame([$bank->id], $ids('is_external=0&is_active=1'));
         $this->assertSame(['cod'], array_column($this->getJson('/api/shop/payment_methods?only_trashed=1')->json('data'), 'code'));
-        $this->getJson('/api/shop/payment_methods?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/shop/payment_methods?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
 
-        $this->getJson("/api/shop/payment_methods/{$bank->id}")->assertOk()->assertJsonPath('config.merchant_key', 'secret-key');
+        $this->getJson("/api/shop/payment_methods/{$bank->id}")->assertOk()->assertJsonPath('data.config.merchant_key', 'secret-key');
         $this->getJson('/api/shop/payment_methods/999')->assertStatus(404);
         $this->putJson("/api/shop/payment_methods/{$bank->id}", [
             'name' => 'Transfer', 'price' => 1, 'variable_symbol_type' => 'none', 'code' => 'hacked', 'provider' => 'evil', 'config' => ['iban' => 'CZ1'],
-        ])->assertOk()->assertJsonPath('name', 'Transfer')->assertJsonPath('code', 'bank_transfer')->assertJsonPath('provider', 'manual')->assertJsonPath('config.iban', 'CZ1');
+        ])->assertOk()->assertJsonPath('data.name', 'Transfer')->assertJsonPath('data.code', 'bank_transfer')->assertJsonPath('data.provider', 'manual')->assertJsonPath('data.config.iban', 'CZ1');
         $this->assertShopLog('update', 'Updated payment method: Transfer');
         $this->putJson("/api/shop/payment_methods/{$bank->id}", ['name' => 'X'])->assertStatus(422)->assertJsonValidationErrors(['price', 'variable_symbol_type']);
         $this->putJson('/api/shop/payment_methods/999', ['name' => 'X', 'price' => 0, 'variable_symbol_type' => 'none'])->assertStatus(404);

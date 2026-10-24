@@ -61,8 +61,8 @@ class CouponTest extends TestCase
         $this->assertSame([$b->id], $ids('is_active=0'));
         $this->assertSame([], $ids('applies_to=products'));
         $this->assertSame(['GONE'], array_column($this->getJson('/api/shop/coupons?only_trashed=1')->json('data'), 'code'));
-        $this->getJson('/api/shop/coupons?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/shop/coupons?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/shop/coupons?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/shop/coupons?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
     }
 
     /**
@@ -78,7 +78,7 @@ class CouponTest extends TestCase
         $this->signIn($this->userWith(self::ALL));
 
         $id = $this->postJson('/api/shop/coupons', $this->payload(['is_active' => 'false', 'valid_from' => '2026-11-01', 'valid_until' => '2026-12-01']))
-            ->assertCreated()->assertJsonPath('is_active', false)->assertJsonPath('valid_until', fn ($v) => str_starts_with($v, '2026-12-01'))->json('id');
+            ->assertCreated()->assertJsonPath('data.is_active', false)->assertJsonPath('data.valid_until', fn ($v) => str_starts_with($v, '2026-12-01'))->json('data.id');
         $this->assertShopLog('create', 'Created coupon: WINTER');
         $this->postJson('/api/shop/coupons', $this->payload())->assertStatus(422)->assertJsonPath('errors.code.0', 'This coupon code already exists.');
         $this->postJson('/api/shop/coupons', ['code' => 'AB', 'discount_type' => 'gift', 'valid_from' => '2026-12-01', 'valid_until' => '2026-11-01'])
@@ -86,9 +86,9 @@ class CouponTest extends TestCase
 
         $other = $this->coupon();
         ShopCoupon::find($id)->delete();
-        $this->getJson("/api/shop/coupons/{$id}")->assertOk()->assertJsonPath('deleted_at', fn ($v) => $v !== null);
+        $this->getJson("/api/shop/coupons/{$id}")->assertOk()->assertJsonPath('data.deleted_at', fn ($v) => $v !== null);
         $this->getJson('/api/shop/coupons/999')->assertStatus(404);
-        $this->putJson("/api/shop/coupons/{$id}", $this->payload(['discount_value' => 7]))->assertOk()->assertJsonPath('discount_value', '7.00');
+        $this->putJson("/api/shop/coupons/{$id}", $this->payload(['discount_value' => 7]))->assertOk()->assertJsonPath('data.discount_value', '7.00');
         $this->assertShopLog('update', 'Updated coupon: WINTER');
         $this->putJson("/api/shop/coupons/{$id}", $this->payload(['code' => 'SAVE10']))->assertStatus(422);
         $this->putJson('/api/shop/coupons/999', $this->payload(['code' => 'NEW1']))->assertStatus(404);
@@ -116,7 +116,7 @@ class CouponTest extends TestCase
         $this->deleteJson("/api/shop/coupons/{$b->id}?force_delete=1")->assertNoContent();
         $this->assertNull(ShopCoupon::withTrashed()->find($b->id));
         $this->deleteJson('/api/shop/coupons/999')->assertStatus(404);
-        $this->postJson("/api/shop/coupons/{$a->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
+        $this->postJson("/api/shop/coupons/{$a->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null);
         $this->assertShopLog('restore', "Restored coupon ID: {$a->id}");
         $this->postJson('/api/shop/coupons/999/restore')->assertStatus(404);
 

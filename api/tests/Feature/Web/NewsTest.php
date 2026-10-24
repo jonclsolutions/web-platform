@@ -52,7 +52,7 @@ class NewsTest extends TestCase
         $this->assertSame([$b->id], $ids('thema=update'));
         $this->assertSame([$a->id], $ids('author=Ev'));
         $this->assertSame(['Old'], array_column($this->getJson('/api/web/news?only_trashed=true')->json('data'), 'title'));
-        $this->getJson('/api/web/news?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
+        $this->getJson('/api/web/news?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
         $this->assertCount(2, $this->getJson('/api/web/news?no_pagination=1')->json('data'));
     }
 
@@ -66,14 +66,14 @@ class NewsTest extends TestCase
         $this->signIn($this->userWith(self::ALL));
 
         $id = $this->postJson('/api/web/news', ['title' => 'Hello', 'message' => 'World', 'author' => 'Me', 'thema' => 'info', 'bullet_1' => 'One'])
-            ->assertCreated()->assertJsonPath('bullet_1', 'One')->json('id');
+            ->assertCreated()->assertJsonPath('data.bullet_1', 'One')->json('data.id');
         $this->assertWebLog('create', 'News item created: Hello');
         $this->postJson('/api/web/news', ['title' => 'Hello', 'message' => 'World', 'author' => 'Me', 'thema' => 'x'])
             ->assertStatus(422)->assertJsonPath('errors.thema.0', 'The selected theme is invalid.');
 
-        $this->getJson("/api/web/news/{$id}")->assertOk()->assertJsonPath('title', 'Hello');
+        $this->getJson("/api/web/news/{$id}")->assertOk()->assertJsonPath('data.title', 'Hello');
         $this->getJson('/api/web/news/999')->assertStatus(404);
-        $this->putJson("/api/web/news/{$id}", ['title' => 'Hello again'])->assertOk()->assertJsonPath('title', 'Hello again');
+        $this->putJson("/api/web/news/{$id}", ['title' => 'Hello again'])->assertOk()->assertJsonPath('data.title', 'Hello again');
         $this->assertWebLog('update', 'Hello again');
         $this->putJson("/api/web/news/{$id}", ['title' => 'ab'])->assertStatus(422);
         $this->putJson('/api/web/news/999', ['title' => 'Nope'])->assertStatus(404);
@@ -100,7 +100,7 @@ class NewsTest extends TestCase
         $this->deleteJson("/api/web/news/{$b->id}?force_delete=true")->assertNoContent();
         $this->assertNull(WebNews::withTrashed()->find($b->id));
         $this->deleteJson('/api/web/news/999')->assertStatus(404);
-        $this->postJson("/api/web/news/{$a->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
+        $this->postJson("/api/web/news/{$a->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null);
         $this->assertWebLog('restore');
         $this->postJson('/api/web/news/999/restore')->assertStatus(404);
 

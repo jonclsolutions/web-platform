@@ -42,6 +42,8 @@
  * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
  *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
  *   the component (`takeUntilDestroyed()`).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`):
+ *  `dataHandler.get()` returns the payload - no `data ?? response` guessing.
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
@@ -114,7 +116,7 @@ export class WelcomePageComponent implements OnInit, OnDestroy {
 
     this.profileService.getProfile().subscribe({
       next: (response) => {
-        this.userData = (response as any)?.data ?? response;
+        this.userData = response;  // get() returns the payload (finding #6)
         this.isLoadingProfile = false;
         this.cd.markForCheck();
       },

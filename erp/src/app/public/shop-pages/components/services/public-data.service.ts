@@ -17,14 +17,18 @@
  *   `bind` a nově používá `this`.
  * @bugfix-note (2026-10-23) Open finding #53: a 422 showed the English API message; 422 / 429 map to
  *   the translated `api_errors` texts now.
+ * @refactor-note (2026-10-24) Open finding #6: the API answers `{data, meta?}`. getProducts()
+ *   returns the page (`data` + `meta` pagination); every other method returns the payload
+ *   (`data`), so the callers no longer guess (`res.data || res`).
  */
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import { LocalizationService } from '../../../../shared/services/localization.service';
+import { ApiEnvelope, ApiPage } from '../../../../shared/interfaces/api-envelope';
 
 /**
  * @description Service for handling all public e-shop API interactions.
@@ -43,9 +47,9 @@ export class ShopPublicService {
   /**
    * @description Fetches a paginated/filtered list of products.
    * @param params Key-value pairs representing filter criteria.
-   * @returns Observable of product result sets.
+   * @returns Observable of the page `{data, meta: {total, per_page, current_page, last_page}}`.
    */
-  getProducts(params: any = {}): Observable<any> {
+  getProducts(params: any = {}): Observable<ApiPage<any>> {
     let httpParams = new HttpParams();
     Object.keys(params).forEach(key => {
       const value = params[key];
@@ -54,7 +58,7 @@ export class ShopPublicService {
       }
     });
 
-    return this.http.get<any>(`${this.apiUrl}/products`, { params: httpParams })
+    return this.http.get<ApiPage<any>>(`${this.apiUrl}/products`, { params: httpParams })
       .pipe(catchError(this.handleError));
   }
 
@@ -62,27 +66,27 @@ export class ShopPublicService {
    * @description Retrieves the full list of categories for filter navigation.
    */
   getCategories(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/categories`, { 
+    return this.http.get<ApiEnvelope<any[]>>(`${this.apiUrl}/categories`, {
       params: new HttpParams().set('no_pagination', 'true') 
-    }).pipe(catchError(this.handleError));
+    }).pipe(map(r => r.data), catchError(this.handleError));
   }
 
   /**
    * @description Fetches active shipping methods for the current shop configuration.
    */
   getShippingMethods(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/shipping-methods`, {
+    return this.http.get<ApiEnvelope<any[]>>(`${this.apiUrl}/shipping-methods`, {
       params: new HttpParams().set('no_pagination', 'true')
-    }).pipe(catchError(this.handleError));
+    }).pipe(map(r => r.data), catchError(this.handleError));
   }
 
   /**
    * @description Fetches active payment methods for the checkout flow.
    */
   getPaymentMethods(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/payment-methods`, {
+    return this.http.get<ApiEnvelope<any[]>>(`${this.apiUrl}/payment-methods`, {
       params: new HttpParams().set('no_pagination', 'true')
-    }).pipe(catchError(this.handleError));
+    }).pipe(map(r => r.data), catchError(this.handleError));
   }
 
   /**
@@ -90,8 +94,8 @@ export class ShopPublicService {
    * @param slugOrId Identifier used to look up the product.
    */
   getProductDetail(slugOrId: string | number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/products/${slugOrId}`)
-      .pipe(catchError(this.handleError));
+    return this.http.get<ApiEnvelope<any>>(`${this.apiUrl}/products/${slugOrId}`)
+      .pipe(map(r => r.data), catchError(this.handleError));
   }
 
   /**
@@ -100,10 +104,10 @@ export class ShopPublicService {
    * @param orderAmount Total cart value for verification.
    */
   validateCoupon(code: string, orderAmount: number): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/coupons/validate`, {
+    return this.http.post<ApiEnvelope<any>>(`${this.apiUrl}/coupons/validate`, {
       code: code,
       order_amount: orderAmount
-    });
+    }).pipe(map(r => r.data));
   }
 
   /**
@@ -111,7 +115,7 @@ export class ShopPublicService {
    * @param payload User and order details.
    */
   createOrder(payload: any): Observable<any> {
-    return this.http.post<any>(`${environment.base_api_url}/shop/checkout/create-order`, payload);
+    return this.http.post<ApiEnvelope<any>>(`${environment.base_api_url}/shop/checkout/create-order`, payload).pipe(map(r => r.data));
   }
 
   /**

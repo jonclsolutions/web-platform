@@ -26,6 +26,8 @@
  *   period (CZ 10 years). A customer with orders is now refused (409, use the anonymisation),
  *   emptying the trash keeps such customers (answer with deleted / skipped counts) and the new
  *   `anonymize()` endpoint is the GDPR erasure that keeps the orders.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -80,16 +82,10 @@ class ShopCustomerController extends Controller
         $data = $noPagination ? $query->get() : $query->paginate($perPage);
 
         if ($noPagination) {
-            return response()->json(ShopCustomerResource::collection($data));
+            return $this->respond(ShopCustomerResource::collection($data));
         }
 
-        return response()->json([
-            'data' => ShopCustomerResource::collection($data->items()),
-            'total' => $data->total(),
-            'per_page' => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page' => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, ShopCustomerResource::class);
     }
 
     /**
@@ -101,7 +97,7 @@ class ShopCustomerController extends Controller
             $customer = ShopCustomer::create($request->validated());
 
             $this->logAction($request, ShopLog::class, 'create', 'ShopCustomer', "Created customer: {$customer->getFullName()}", $customer->id, 'ShopCustomer');
-            return response()->json(new ShopCustomerResource($customer), 201);
+            return $this->respond(new ShopCustomerResource($customer), 201);
         } catch (\Exception $e) {
             Log::error("ShopCustomer creation error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Customer creation failed: " . $e->getMessage());
@@ -115,7 +111,7 @@ class ShopCustomerController extends Controller
     public function show($id): JsonResponse
     {
         $customer = ShopCustomer::findOrFail($id);
-        return response()->json(new ShopCustomerResource($customer));
+        return $this->respond(new ShopCustomerResource($customer));
     }
 
     /**
@@ -129,7 +125,7 @@ class ShopCustomerController extends Controller
             $customer->update($request->validated());
 
             $this->logAction($request, ShopLog::class, 'update', 'ShopCustomer', "Updated customer: {$customer->getFullName()}", $customer->id, 'ShopCustomer');
-            return response()->json(new ShopCustomerResource($customer));
+            return $this->respond(new ShopCustomerResource($customer));
         } catch (\Exception $e) {
             Log::error("ShopCustomer update error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Update failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
@@ -175,7 +171,7 @@ class ShopCustomerController extends Controller
             $customer->restore();
 
             $this->logAction($request, ShopLog::class, 'restore', 'ShopCustomer', "Restored customer ID: $id", (int) $id, 'ShopCustomer');
-            return response()->json(new ShopCustomerResource($customer));
+            return $this->respond(new ShopCustomerResource($customer));
         } catch (\Exception $e) {
             Log::error("ShopCustomer restore error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Restoration failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
@@ -203,7 +199,7 @@ class ShopCustomerController extends Controller
 
             // No personal data in the audit log - only the id.
             $this->logAction($request, ShopLog::class, 'anonymize', 'ShopCustomer', "Anonymised customer ID: $id (GDPR erasure, orders kept).", (int) $id, 'ShopCustomer', ['first_name', 'last_name', 'email', 'phone']);
-            return response()->json(new ShopCustomerResource($customer->fresh()));
+            return $this->respond(new ShopCustomerResource($customer->fresh()));
         } catch (\Exception $e) {
             Log::error("ShopCustomer anonymize error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopCustomer', "Anonymisation failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCustomer');
@@ -233,11 +229,10 @@ class ShopCustomerController extends Controller
             $this->logAction($request, ShopLog::class, 'force_delete_all', 'ShopCustomer', "Customer bin cleanup. Count: $count, kept (with orders): $skipped");
 
             if ($skipped > 0) {
-                return response()->json([
-                    'message'       => "{$count} customers deleted, {$skipped} kept because they have orders (anonymise them instead).",
+                return $this->respond([
                     'deleted_count' => $count,
                     'skipped_count' => $skipped,
-                ]);
+                ], 200, [], "{$count} customers deleted, {$skipped} kept because they have orders (anonymise them instead).");
             }
             return response()->json(null, 204);
         } catch (\Exception $e) {

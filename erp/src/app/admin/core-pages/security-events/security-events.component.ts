@@ -32,6 +32,9 @@
  * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
  *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
  *   the component (`takeUntilDestroyed()`).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): stats are the
+ *  payload (array); the purge alert is the translated text with `deleted` of the payload instead of
+ *  the English API message.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
@@ -278,11 +281,11 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.statsLoading = true;
     this.cd.markForCheck();
 
-    this.dataHandler.get<{ data: SecurityStatRow[] }>(
+    this.dataHandler.get<SecurityStatRow[]>(
       `core/security_events/stats?days=${this.statsDays}`
     ).subscribe({
       next: (res) => {
-        this.chartDays = this.buildChartDays(res?.data ?? []);
+        this.chartDays = this.buildChartDays(Array.isArray(res) ? res : []);  // payload = rows (finding #6)
         this.chartMaxTotal = Math.max(1, ...this.chartDays.map(d => d.total));
         this.chartSegments = this.chartDays.map(d => this.computeSegmentHeights(d));
         this.statsLoading = false;
@@ -461,12 +464,15 @@ export class SecurityEventsComponent extends BaseDataComponent<any> implements O
     this.purging = true;
     this.cd.markForCheck();
 
-    this.dataHandler.delete('core/security_events/purge').subscribe({
-      next: (res: any) => {
+    this.dataHandler.delete<{ deleted: number } | null>('core/security_events/purge').subscribe({
+      next: (res) => {
         this.purging = false;
+        // Translated text with the count of the payload (finding #6) - not the English API message.
         this.alertDialogService.open(
           this.t('purge_done_title'),
-          res?.message ?? this.t('purge_done_default_message'),
+          typeof res?.deleted === 'number'
+            ? this.t('purge_done_count_message').replace('{count}', String(res.deleted))
+            : this.t('purge_done_default_message'),
           'success'
         );
         this.refreshData();

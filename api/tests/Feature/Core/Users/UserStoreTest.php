@@ -86,7 +86,7 @@ class UserStoreTest extends TestCase
         $response = $this->postJson('/api/core/users', [
             'user_email' => 'new@example.com', 'full_name' => 'New Person', 'role_id' => $role->id, 'dpp_hours_spent' => 3,
         ])->assertCreated()
-            ->assertJsonPath('activation_email_sent', true)
+            ->assertJsonPath('meta.activation_email_sent', true)
             ->assertJsonPath('data.roles.0.role_name', 'editor')
             ->assertJsonPath('data.enable_2fa', false);
 
@@ -202,7 +202,7 @@ class UserStoreTest extends TestCase
         $role->delete();
 
         $this->putJson("/api/core/users/{$account->id}", ['enable_2fa' => false])
-            ->assertOk()->assertJsonPath('enable_2fa', false);
+            ->assertOk()->assertJsonPath('data.enable_2fa', false);
     }
 
     /**
@@ -257,7 +257,7 @@ class UserStoreTest extends TestCase
 
         $this->postJson('/api/core/users', ['user_email' => 'm@example.com', 'full_name' => 'M'])
             ->assertCreated()
-            ->assertJsonPath('activation_email_sent', false);
+            ->assertJsonPath('meta.activation_email_sent', false);
 
         $this->assertCoreLog('create', 'ACTIVATION E-MAIL FAILED TO SEND');
     }

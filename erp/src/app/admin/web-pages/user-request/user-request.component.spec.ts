@@ -213,7 +213,7 @@ describe('UserRequestComponent', () => {
      * @output modal open; languages ['cz', 'en']; template texts loaded; labels of the current language present (others are prepared on switch); loading false
      */
     it('loads the languages and the saved template', () => {
-      answer(of({ languages: [{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }] }), of(template));
+      answer(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }]), of(template));
       component.openEmailTemplateEditor();
       expect(component.showEmailTemplateModal).toBeTrue();
       expect(component.emailTemplateLanguages.map(l => l.code)).toEqual(['cz', 'en']);
@@ -228,7 +228,7 @@ describe('UserRequestComponent', () => {
      * @output previewSubject 'Předmět' … previewLabelDate 'Datum'
      */
     it('previews the saved texts of the current language', () => {
-      answer(of({ languages: [{ code: 'cz', name: 'Čeština' }] }), of(template));
+      answer(of([{ code: 'cz', name: 'Čeština' }]), of(template));
       component.openEmailTemplateEditor();
       expect([component.previewSubject, component.previewTitle, component.previewIntro, component.previewOutro]).toEqual(['Předmět', 'Titulek', 'Úvod', 'Závěr']);
       expect([component.previewGreeting, component.previewSummaryHeader, component.previewLabelThema, component.previewLabelEmail,
@@ -244,7 +244,7 @@ describe('UserRequestComponent', () => {
     it('falls back to the translated defaults', () => {
       expect(component.previewSubject).toBe('user-request.email_tpl_default_subject');
       expect(component.previewGreeting).toBe('user-request.email_tpl_default_greeting');
-      answer(of({ languages: [{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }] }), of(template));
+      answer(of([{ code: 'cz', name: 'Čeština' }, { code: 'en', name: 'English' }]), of(template));
       component.openEmailTemplateEditor();
       component.switchEmailTemplateLang('en');
       expect(component.emailTemplateCurrentLang).toBe('en');
@@ -267,7 +267,7 @@ describe('UserRequestComponent', () => {
      * @output emailTemplateCurrentLang 'en'
      */
     it('switches to the first language when Czech is not offered', () => {
-      answer(of({ languages: [{ code: 'en', name: 'English' }, { code: 'de', name: 'Deutsch' }] }), of(null));
+      answer(of([{ code: 'en', name: 'English' }, { code: 'de', name: 'Deutsch' }]), of(null));
       component.openEmailTemplateEditor();
       expect(component.emailTemplateCurrentLang).toBe('en');
       expect(component.emailTemplate).toEqual({ subject_i18n: {}, title_i18n: {}, intro_i18n: {}, outro_i18n: {}, labels_i18n: { en: {} } });
@@ -295,7 +295,7 @@ describe('UserRequestComponent', () => {
      * @output one put('web/settings/raw-request-email-template', { raw_request_email_*_i18n }); modal still open while saving; closed with success alert
      */
     it('saves the template', () => {
-      answer(of({ languages: [{ code: 'cz', name: 'Čeština' }] }), of(template));
+      answer(of([{ code: 'cz', name: 'Čeština' }]), of(template));
       component.openEmailTemplateEditor();
       const response$ = new Subject<any>();
       (ctx.dataHandler as any).put.and.returnValue(response$);
@@ -356,7 +356,7 @@ describe('UserRequestComponent', () => {
   it('renders the page and the template modal', fakeAsync(() => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('user-request.table_header');
-    answer(of({ languages: [{ code: 'cz', name: 'Čeština' }] }), of({}));
+    answer(of([{ code: 'cz', name: 'Čeština' }]), of({}));
     component.openEmailTemplateEditor();
     fixture.componentRef.changeDetectorRef.markForCheck();
     fixture.detectChanges();

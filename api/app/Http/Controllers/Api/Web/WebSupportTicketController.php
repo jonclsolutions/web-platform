@@ -43,6 +43,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -119,18 +121,12 @@ class WebSupportTicketController extends Controller
         if ($noPagination) {
             $this->logAction($request, WebLog::class, 'export', 'WebSupportTicket', "Bulk export of support tickets.");
             $data = $query->get();
-            return response()->json(WebSupportTicketResource::collection($data));
+            return $this->respond(WebSupportTicketResource::collection($data));
         }
 
         $data = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => WebSupportTicketResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, WebSupportTicketResource::class);
     }
 
     /**
@@ -156,7 +152,7 @@ class WebSupportTicketController extends Controller
 
             $this->logAction($request, WebLog::class, 'create', 'WebSupportTicket', "New ticket: {$ticket->subject}", $ticket->id, 'WebSupportTicket');
 
-            return response()->json(new WebSupportTicketResource($ticket->load('attachments')), 201);
+            return $this->respond(new WebSupportTicketResource($ticket->load('attachments')), 201);
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error creating ticket: " . $e->getMessage());
             return response()->json(['message' => 'Ticket creation failed.'], 500);
@@ -169,7 +165,7 @@ class WebSupportTicketController extends Controller
     public function show($id): JsonResponse
     {
         $supportTicket = WebSupportTicket::withTrashed()->with('attachments')->findOrFail($id);
-        return response()->json(new WebSupportTicketResource($supportTicket));
+        return $this->respond(new WebSupportTicketResource($supportTicket));
     }
 
     /**
@@ -192,7 +188,7 @@ class WebSupportTicketController extends Controller
 
             $this->logAction($request, WebLog::class, 'update', 'WebSupportTicket', "Update ticket ID: {$id}", (int) $id, 'WebSupportTicket');
 
-            return response()->json(new WebSupportTicketResource($ticket->fresh()->load('attachments')));
+            return $this->respond(new WebSupportTicketResource($ticket->fresh()->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error updating ticket ID {$id}: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
             return response()->json(['message' => 'Ticket update failed.'], 500);
@@ -277,11 +273,11 @@ class WebSupportTicketController extends Controller
             'WebSupportTicket'
         );
 
-        return response()->json(['data' => [
+        return $this->respond([
             'deleted_count' => $deletedCount,
             'skipped_count' => $skippedCount,
             'requested'     => $requestedCount,
-        ]]);
+        ]);
     }
 
     /**
@@ -376,7 +372,7 @@ class WebSupportTicketController extends Controller
             $errors
         );
 
-        return response()->json([
+        return $this->respond([
             'import_token' => $batch->id,
             'total_rows'   => $batch->total_rows,
             'valid_rows'   => $batch->valid_rows,
@@ -447,12 +443,12 @@ class WebSupportTicketController extends Controller
                 'WebSupportTicket'
             );
 
-            return response()->json(['data' => [
+            return $this->respond([
                 'queued'         => false,
                 'imported_count' => $result['imported_count'],
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
-            ]]);
+            ]);
         } catch (\Exception $e) {
             // Expired temporary file - see runImportCommit(), code 410.
             // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
@@ -479,7 +475,7 @@ class WebSupportTicketController extends Controller
             $item->restore();
 
             $this->logAction($request, WebLog::class, 'restore', 'WebSupportTicket', "Restore ticket ID: $id", (int) $id, 'WebSupportTicket');
-            return response()->json(new WebSupportTicketResource($item->load('attachments')));
+            return $this->respond(new WebSupportTicketResource($item->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSupportTicket', "Error restoring ticket ID $id: " . $e->getMessage(), (int) $id, 'WebSupportTicket');
             return response()->json(['message' => 'Ticket restoration failed.'], 500);

@@ -144,7 +144,7 @@ describe('AuthService', () => {
       tick(20 * 60 * 1000);
       const req = httpMock.expectOne(`${baseUrl}/refresh`);
       expect(req.request.method).toBe('POST');
-      req.flush({ token: 'newtok', refreshToken: 'newreftok' });
+      req.flush({ data: { token: 'newtok', refreshToken: 'newreftok' } });
 
       service.clearAuthData();
       discardPeriodicTasks();
@@ -174,17 +174,17 @@ describe('AuthService', () => {
       const req = httpMock.expectOne(`${baseUrl}/login`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(credentials);
-      req.flush({ token: 't', refreshToken: 'r', user: { id: 1, user_email: 'a@b.cz' } });
+      req.flush({ data: { token: 't', refreshToken: 'r', user: { id: 1, user_email: 'a@b.cz' } } });
     });
 
     it('by mělo po úspěchu uložit accessToken, refreshToken, userEmail a userId do sessionStorage', () => {
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({
+      req.flush({ data: {
         token: 'tok123',
         refreshToken: 'reftok123',
         user: { id: 42, user_email: 'a@b.cz' },
-      });
+      } });
 
       expect(sessionStorage.getItem('accessToken')).toBe('tok123');
       expect(sessionStorage.getItem('refreshToken')).toBe('reftok123');
@@ -195,11 +195,11 @@ describe('AuthService', () => {
     it('by mělo použít user.user_login_id jako fallback, pokud user.id chybí', () => {
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({
+      req.flush({ data: {
         token: 't',
         refreshToken: 'r',
         user: { user_login_id: 99, user_email: 'a@b.cz' },
-      });
+      } });
 
       expect(sessionStorage.getItem('userId')).toBe('99');
     });
@@ -207,12 +207,12 @@ describe('AuthService', () => {
     it('by mělo uložit userRole z prvního prvku user_roles, pokud je pole neprázdné', () => {
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({
+      req.flush({ data: {
         token: 't',
         refreshToken: 'r',
         user: { id: 1, user_email: 'a@b.cz' },
         user_roles: ['admin', 'editor'],
-      });
+      } });
 
       expect(sessionStorage.getItem('userRole')).toBe('admin');
     });
@@ -220,12 +220,12 @@ describe('AuthService', () => {
     it('NEMĚLO by uložit userRole, pokud je user_roles prázdné pole', () => {
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({
+      req.flush({ data: {
         token: 't',
         refreshToken: 'r',
         user: { id: 1, user_email: 'a@b.cz' },
         user_roles: [],
-      });
+      } });
 
       expect(sessionStorage.getItem('userRole')).toBeNull();
     });
@@ -233,7 +233,7 @@ describe('AuthService', () => {
     it('NEMĚLO by uložit userRole, pokud user_roles v odpovědi vůbec chybí', () => {
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({ token: 't', refreshToken: 'r', user: { id: 1, user_email: 'a@b.cz' } });
+      req.flush({ data: { token: 't', refreshToken: 'r', user: { id: 1, user_email: 'a@b.cz' } } });
 
       expect(sessionStorage.getItem('userRole')).toBeNull();
     });
@@ -242,12 +242,12 @@ describe('AuthService', () => {
       const perms = ['view-web', 'view-eshop'];
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({
+      req.flush({ data: {
         token: 't',
         refreshToken: 'r',
         user: { id: 1, user_email: 'a@b.cz' },
         user_permissions: perms,
-      });
+      } });
 
       expect(sessionStorage.getItem('userPermissions')).toBe(JSON.stringify(perms));
       expect(permissionServiceMock.setPermissions).toHaveBeenCalledWith(perms);
@@ -256,7 +256,7 @@ describe('AuthService', () => {
     it('NEMĚLO by volat permissionService.setPermissions během loginu, pokud user_permissions chybí', () => {
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({ token: 't', refreshToken: 'r', user: { id: 1, user_email: 'a@b.cz' } });
+      req.flush({ data: { token: 't', refreshToken: 'r', user: { id: 1, user_email: 'a@b.cz' } } });
 
       expect(permissionServiceMock.setPermissions).not.toHaveBeenCalled();
     });
@@ -269,7 +269,7 @@ describe('AuthService', () => {
 
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({ token: 't', refreshToken: 'r', user: { id: 1, user_email: 'new@rpsw.cz' } });
+      req.flush({ data: { token: 't', refreshToken: 'r', user: { id: 1, user_email: 'new@rpsw.cz' } } });
 
       expect(email!).toBe('new@rpsw.cz'); // Přidán vykřičník (!) pro potlačení chyby
       expect(loggedIn).toBeTrue();
@@ -278,12 +278,12 @@ describe('AuthService', () => {
     it('by mělo spustit refresh timer po úspěšném přihlášení (ověřeno následným HTTP voláním)', fakeAsync(() => {
       service.login({ email: 'a@b.cz', password: 'p' }).subscribe();
       const req = httpMock.expectOne(`${baseUrl}/login`);
-      req.flush({ token: 't', refreshToken: 'r', user: { id: 1, user_email: 'a@b.cz' } });
+      req.flush({ data: { token: 't', refreshToken: 'r', user: { id: 1, user_email: 'a@b.cz' } } });
 
       tick(20 * 60 * 1000);
       const refreshReq = httpMock.expectOne(`${baseUrl}/refresh`);
       expect(refreshReq.request.method).toBe('POST');
-      refreshReq.flush({ token: 't2', refreshToken: 'r2' });
+      refreshReq.flush({ data: { token: 't2', refreshToken: 'r2' } });
 
       service.clearAuthData();
       discardPeriodicTasks();
@@ -367,7 +367,7 @@ describe('AuthService', () => {
       const req = httpMock.expectOne(`${baseUrl}/refresh`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ refreshToken: 'existing-refresh' });
-      req.flush({ token: 'newtok', refreshToken: 'newreftok' });
+      req.flush({ data: { token: 'newtok', refreshToken: 'newreftok' } });
     });
 
     it('by mělo po úspěchu aktualizovat tokeny v sessionStorage a isLoggedIn$', () => {
@@ -377,7 +377,7 @@ describe('AuthService', () => {
 
       service.refreshAccessToken().subscribe();
       const req = httpMock.expectOne(`${baseUrl}/refresh`);
-      req.flush({ token: 'newtok', refreshToken: 'newreftok' });
+      req.flush({ data: { token: 'newtok', refreshToken: 'newreftok' } });
 
       expect(sessionStorage.getItem('accessToken')).toBe('newtok');
       expect(sessionStorage.getItem('refreshToken')).toBe('newreftok');
@@ -513,7 +513,7 @@ describe('AuthService', () => {
       const req = httpMock.expectOne(`${baseUrl}/logout`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ refreshToken: 'ref-123' });
-      req.flush({});
+      req.flush({ message: 'Logout successful!' });
     });
 
     it('by mělo poslat POST s refreshToken: null, pokud v sessionStorage žádný není', () => {
@@ -521,7 +521,7 @@ describe('AuthService', () => {
 
       const req = httpMock.expectOne(`${baseUrl}/logout`);
       expect(req.request.body).toEqual({ refreshToken: null });
-      req.flush({});
+      req.flush({ message: 'Logout successful!' });
     });
 
     it('by mělo po úspěchu zavolat clearAuthData (vymazat sessionStorage a oprávnění)', () => {
@@ -530,7 +530,7 @@ describe('AuthService', () => {
 
       service.logout().subscribe();
       const req = httpMock.expectOne(`${baseUrl}/logout`);
-      req.flush({});
+      req.flush({ message: 'Logout successful!' });
 
       expect(sessionStorage.getItem('accessToken')).toBeNull();
       expect(permissionServiceMock.clearPermissions).toHaveBeenCalled();
@@ -603,14 +603,14 @@ describe('AuthService', () => {
       createService();
       let challenge: any;
       service.login({ email: 'a@b.cz', password: 'x' }).subscribe(r => (challenge = r));
-      httpMock.expectOne(`${baseUrl}/login`).flush({ requires_2fa: true, login_token: 'lt' });
+      httpMock.expectOne(`${baseUrl}/login`).flush({ data: { requires_2fa: true, login_token: 'lt' } });
       expect(challenge.login_token).toBe('lt');
       expect(sessionStorage.getItem('accessToken')).toBeNull();
 
       service.verifyTwoFactor('lt', '123456').subscribe();
       const verify = httpMock.expectOne(`${baseUrl}/login/verify-2fa`);
       expect(verify.request.body).toEqual({ login_token: 'lt', code: '123456' });
-      verify.flush({ token: 't', refreshToken: 'r', user: { user_login_id: 5, user_email: 'a@b.cz' } });
+      verify.flush({ data: { token: 't', refreshToken: 'r', user: { user_login_id: 5, user_email: 'a@b.cz' } } });
       expect(sessionStorage.getItem('accessToken')).toBe('t');
       expect(sessionStorage.getItem('userId')).toBe('5');
       service.clearAuthData();
@@ -624,8 +624,8 @@ describe('AuthService', () => {
 
       let resent: any;
       service.resendTwoFactor('lt').subscribe(r => (resent = r));
-      httpMock.expectOne(`${baseUrl}/login/resend-2fa`).flush({ message: 'sent', expires_in: 300 });
-      expect(resent).toEqual({ message: 'sent', expires_in: 300 });
+      httpMock.expectOne(`${baseUrl}/login/resend-2fa`).flush({ data: { expires_in: 300 }, message: 'A new code has been sent.' });
+      expect(resent).toEqual({ expires_in: 300 });
     });
 
     /**
@@ -644,7 +644,7 @@ describe('AuthService', () => {
       service.resetPassword('tok', 'Pw1!', 'Pw1!').subscribe(r => (reset = r));
       const resetReq = httpMock.expectOne(`${baseUrl}/reset-password`);
       expect(resetReq.request.body).toEqual({ token: 'tok', password: 'Pw1!', password_confirmation: 'Pw1!' });
-      resetReq.flush({ message: 'done', email: 'a@b.cz' });
+      resetReq.flush({ data: { email: 'a@b.cz' }, message: 'done' });
       expect([sent.message, reset.email]).toEqual(['ok', 'a@b.cz']);
 
       const throttled = errorOf(() => service.requestPasswordReset('a@b.cz'), 'forgot-password', 429, { message: 'Too Many Attempts.' });

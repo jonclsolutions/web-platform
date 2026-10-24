@@ -18,6 +18,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -100,18 +102,12 @@ class CoreLogController extends Controller
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
     if ($noPagination) {
-        return response()->json(CoreLogResource::collection($query->get()));
+        return $this->respond(CoreLogResource::collection($query->get()));
     }
 
         $data = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => CoreLogResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, CoreLogResource::class);
     }
 
     /**
@@ -138,7 +134,7 @@ class CoreLogController extends Controller
             'user_plain'    => $request->user()?->user_email ?? 'system',
         ]);
 
-        return response()->json(new CoreLogResource($log), 201);
+        return $this->respond(new CoreLogResource($log), 201);
     }
 
     /**
@@ -150,6 +146,6 @@ class CoreLogController extends Controller
     public function show($id): JsonResponse
     {
         $log = CoreLog::findOrFail($id);
-        return response()->json(new CoreLogResource($log));
+        return $this->respond(new CoreLogResource($log));
     }
 }

@@ -29,6 +29,8 @@
  * action like toggling the availability of the entire web. Gated by permission middleware
  * `web-user-requests-update` at route level (see api.php) - the same permission that
  * already controls editing an individual request on the admin page "Commission Requests".
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -70,7 +72,7 @@ class WebSiteSettingController extends Controller
             'web_maintenance_message' => 'We apologize, but the website is currently undergoing maintenance.',
         ]);
 
-        return response()->json($settings);
+        return $this->respond($settings);
     }
 
     /**
@@ -132,10 +134,7 @@ class WebSiteSettingController extends Controller
             );
         }
 
-        return response()->json([
-            'success' => true,
-            'data'    => $settings,
-        ]);
+        return $this->respond($settings);
     }
 
     /**
@@ -152,7 +151,7 @@ class WebSiteSettingController extends Controller
             'web_maintenance_message' => 'We apologize, but the website is currently undergoing maintenance.',
         ]);
 
-        return response()->json([
+        return $this->respond([
             'raw_request_email_subject_i18n' => $settings->raw_request_email_subject_i18n,
             'raw_request_email_title_i18n'   => $settings->raw_request_email_title_i18n,
             'raw_request_email_intro_i18n'   => $settings->raw_request_email_intro_i18n,
@@ -190,9 +189,6 @@ class WebSiteSettingController extends Controller
             'WebSiteSetting'
         );
 
-        return response()->json([
-            'success' => true,
-            'data'    => $settings,
-        ]);
+        return $this->respond($settings);
     }
 }

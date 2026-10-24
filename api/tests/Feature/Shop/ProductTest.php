@@ -88,8 +88,8 @@ class ProductTest extends TestCase
         $this->assertSame(['Gone'], array_column($this->getJson('/api/shop/products?only_trashed=1')->json('data'), 'name'));
         $this->getJson("/api/shop/products?id={$a->id}&search=Lamp")->assertJsonPath('data.0.prices.cost_price_eur', fn ($v) => $v == 60)
             ->assertJsonPath('data.0.supplier.id', $supplier->id)->assertJsonPath('data.0.categories.0.is_primary', true);
-        $this->getJson('/api/shop/products?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/shop/products?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/shop/products?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/shop/products?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
     }
 
     /**
@@ -116,11 +116,11 @@ class ProductTest extends TestCase
                 ['variant_name' => 'L', 'stock_quantity' => 4, 'prices' => $variantPrice],
             ],
         ]), ['Accept' => 'application/json'])->assertCreated()
-            ->assertJsonPath('slug', 'desk-lamp')->assertJsonPath('is_active', true)->assertJsonPath('category_id', $y->id)
-            ->assertJsonCount(2, 'categories')->assertJsonCount(2, 'variants')->assertJsonPath('stock_quantity', 7)
-            ->assertJsonPath('primary_image.alt_text', 'Front')->assertJsonPath('variants.0.prices.price_eur_with_vat', 60.5);
+            ->assertJsonPath('data.slug', 'desk-lamp')->assertJsonPath('data.is_active', true)->assertJsonPath('data.category_id', $y->id)
+            ->assertJsonCount(2, 'data.categories')->assertJsonCount(2, 'data.variants')->assertJsonPath('data.stock_quantity', 7)
+            ->assertJsonPath('data.primary_image.alt_text', 'Front')->assertJsonPath('data.variants.0.prices.price_eur_with_vat', 60.5);
 
-        $product = ShopProduct::findOrFail($response->json('id'));
+        $product = ShopProduct::findOrFail($response->json('data.id'));
         $this->assertSame($y->id, $product->primaryCategory()->sole()->id);
         $this->assertSame(['vat_rate' => 21.0, 'price_eur_with_vat' => 121.0], ShopProductPrice::whereNull('variant_id')->sole()->only(['vat_rate', 'price_eur_with_vat']));
         $this->assertSame(1, ShopProductImage::whereNotNull('variant_id')->count());
@@ -141,7 +141,7 @@ class ProductTest extends TestCase
     {
         $this->signIn($this->userWith(['shop-products-create']));
 
-        $this->postJson('/api/shop/products', $this->payload())->assertCreated()->assertJsonPath('is_active', false)->assertJsonPath('categories', []);
+        $this->postJson('/api/shop/products', $this->payload())->assertCreated()->assertJsonPath('data.is_active', false)->assertJsonPath('data.categories', []);
         $this->postJson('/api/shop/products', $this->payload(['name' => 'Other', 'is_active' => true]))->assertStatus(422)
             ->assertJsonPath('errors.is_active.0', 'Product cannot be set as active without an assigned category.');
         $this->postJson('/api/shop/products', [])->assertStatus(422)->assertJsonValidationErrors(['name', 'prices']);
@@ -165,17 +165,17 @@ class ProductTest extends TestCase
         $y = $this->category(['name' => 'Y']);
         $product = $this->product(['name' => 'Desk Lamp', 'category_id' => $x->id]);
 
-        $this->getJson("/api/shop/products/{$product->id}")->assertOk()->assertJsonPath('category.id', $x->id);
+        $this->getJson("/api/shop/products/{$product->id}")->assertOk()->assertJsonPath('data.category.id', $x->id);
         $this->getJson('/api/shop/products/999')->assertStatus(404);
 
         $this->putJson("/api/shop/products/{$product->id}", $this->payload(['category_id' => $x->id, 'is_active' => true, 'stock_quantity' => 25,
             'prices' => ['vat_rate' => 21, 'price_eur_without_vat' => 150, 'price_eur_with_vat' => 181.5]]))
-            ->assertOk()->assertJsonPath('stock_quantity', 25)->assertJsonPath('prices.price_eur_with_vat', 181.5)->assertJsonPath('categories.0.id', $x->id);
+            ->assertOk()->assertJsonPath('data.stock_quantity', 25)->assertJsonPath('data.prices.price_eur_with_vat', 181.5)->assertJsonPath('data.categories.0.id', $x->id);
         $this->assertSame(25, $product->fresh()->stock_quantity);
         $this->assertShopLog('update', 'Updated product: Desk Lamp');
 
         $this->putJson("/api/shop/products/{$product->id}", $this->payload(['category_ids' => [$y->id], 'is_active' => true]))
-            ->assertOk()->assertJsonPath('category_id', $y->id)->assertJsonCount(1, 'categories')->assertJsonPath('is_active', true);
+            ->assertOk()->assertJsonPath('data.category_id', $y->id)->assertJsonCount(1, 'data.categories')->assertJsonPath('data.is_active', true);
         $this->putJson('/api/shop/products/999', $this->payload(['name' => 'Unknown']))->assertStatus(404);
     }
 
@@ -211,7 +211,7 @@ class ProductTest extends TestCase
                 ['variant_name' => 'N', 'stock_quantity' => 1, 'prices' => $price],
             ],
             'delete_variants' => [$v2->id, $w->id],
-        ]), ['Accept' => 'application/json'])->assertOk()->assertJsonPath('stock_quantity', 7)->assertJsonCount(2, 'variants');
+        ]), ['Accept' => 'application/json'])->assertOk()->assertJsonPath('data.stock_quantity', 7)->assertJsonCount(2, 'data.variants');
 
         Storage::disk('public')->assertMissing('products/p1.jpg');
         Storage::disk('public')->assertExists('products/' . $p1->fresh()->image_path);
@@ -249,9 +249,9 @@ class ProductTest extends TestCase
 
         // is_active not sent = false (full-form semantics of the admin form), the category is kept.
         $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P']))->assertOk()
-            ->assertJsonPath('is_active', false)->assertJsonPath('category_id', $product->category_id)->assertJsonCount(1, 'categories');
-        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'is_active' => true]))->assertOk()->assertJsonPath('is_active', true);
-        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'category_id' => null]))->assertOk()->assertJsonPath('is_active', false)->assertJsonCount(1, 'categories');
+            ->assertJsonPath('data.is_active', false)->assertJsonPath('data.category_id', $product->category_id)->assertJsonCount(1, 'data.categories');
+        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'is_active' => true]))->assertOk()->assertJsonPath('data.is_active', true);
+        $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'category_id' => null]))->assertOk()->assertJsonPath('data.is_active', false)->assertJsonCount(1, 'data.categories');
         $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'is_active' => true, 'category_id' => null]))->assertStatus(422)
             ->assertJsonPath('errors.is_active.0', 'Product cannot be set as active without an assigned category.');
         $this->putJson("/api/shop/products/{$product->id}", $this->payload(['name' => 'P', 'category_id' => $product->category_id,
@@ -317,10 +317,10 @@ class ProductTest extends TestCase
         $product = $this->product(['category_id' => $x->id]);
 
         $this->patchJson("/api/shop/products/{$product->id}/category", ['category_id' => $y->id, 'category_ids' => [$x->id]])->assertOk()
-            ->assertJsonPath('category_id', $y->id)->assertJsonCount(2, 'categories');
+            ->assertJsonPath('data.category_id', $y->id)->assertJsonCount(2, 'data.categories');
         $this->assertShopLog('update', 'Quick update of product categories');
         $this->patchJson("/api/shop/products/{$product->id}/category", ['category_ids' => []])->assertOk()
-            ->assertJsonPath('categories', [])->assertJsonPath('category_id', null)->assertJsonPath('is_active', false);
+            ->assertJsonPath('data.categories', [])->assertJsonPath('data.category_id', null)->assertJsonPath('data.is_active', false);
         $this->patchJson("/api/shop/products/{$product->id}/category", ['category_ids' => [999]])->assertStatus(422);
         $this->patchJson('/api/shop/products/999/category', ['category_ids' => [$x->id]])->assertStatus(404);
 
@@ -361,7 +361,7 @@ class ProductTest extends TestCase
         $this->deleteJson('/api/shop/products/999')->assertStatus(404);
 
         $c->delete();
-        $this->postJson("/api/shop/products/{$c->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
+        $this->postJson("/api/shop/products/{$c->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null);
         $this->assertShopLog('restore', "Restored product ID: {$c->id}");
         $this->postJson('/api/shop/products/999/restore')->assertStatus(404);
 

@@ -58,8 +58,8 @@ class EmailAccessPolicyTest extends TestCase
 
         $this->getJson('/api/core/email-access-policy')
             ->assertOk()
-            ->assertJsonPath('primary_email_domain', 'company.cz')
-            ->assertJsonPath('rules.*.value', ['a.cz', 'b.cz', 'z@x.cz']);
+            ->assertJsonPath('data.primary_email_domain', 'company.cz')
+            ->assertJsonPath('data.rules.*.value', ['a.cz', 'b.cz', 'z@x.cz']);
     }
 
     /**

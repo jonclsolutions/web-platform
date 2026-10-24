@@ -66,7 +66,7 @@ describe('ActivateAccountComponent', () => {
     const req = http.expectOne(url('tok/1'));
     expect(req.request.method).toBe('GET');
     expect(req.request.url).toContain('tok%2F1');
-    req.flush({ email: 'new@x.cz', full_name: 'N' });
+    req.flush({ data: { email: 'new@x.cz', full_name: 'N' } });
     expect(component.state).toBe('form');
     expect(component.email).toBe('new@x.cz');
   });
@@ -90,7 +90,7 @@ describe('ActivateAccountComponent', () => {
    */
   it('canSubmit follows the password rules', async () => {
     await setup('tok');
-    http.expectOne(url('tok')).flush({ email: 'e', full_name: 'n' });
+    http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
     component.password = 'weak'; component.passwordConfirmation = 'weak';
     expect(component.canSubmit).toBeFalse();
     component.password = VALID; component.passwordConfirmation = 'other';
@@ -108,7 +108,7 @@ describe('ActivateAccountComponent', () => {
   it('activates the account and redirects to login', fakeAsync(() => {
     setup('tok');
     tick();
-    http.expectOne(url('tok')).flush({ email: 'e', full_name: 'n' });
+    http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
     component.password = VALID;
     component.passwordConfirmation = VALID;
     component.onSubmit();
@@ -129,7 +129,7 @@ describe('ActivateAccountComponent', () => {
    */
   it('maps submit errors', async () => {
     await setup('tok');
-    http.expectOne(url('tok')).flush({ email: 'e', full_name: 'n' });
+    http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
     component.password = VALID;
     component.passwordConfirmation = VALID;
 
@@ -154,7 +154,7 @@ describe('ActivateAccountComponent', () => {
    */
   it('does not post an invalid form', async () => {
     await setup('tok');
-    http.expectOne(url('tok')).flush({ email: 'e', full_name: 'n' });
+    http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
     component.password = 'weak';
     component.onSubmit();
     http.expectNone(r => r.method === 'POST');
@@ -166,7 +166,7 @@ describe('ActivateAccountComponent', () => {
    */
   it('reports other errors and toggles the password fields', async () => {
     await setup('tok');
-    http.expectOne(url('tok')).flush({ email: 'e', full_name: 'n' });
+    http.expectOne(url('tok')).flush({ data: { email: 'e', full_name: 'n' } });
     component.password = VALID;
     component.passwordConfirmation = VALID;
     component.onSubmit();
@@ -186,7 +186,7 @@ describe('ActivateAccountComponent', () => {
   it('renders translated texts', async () => {
     await setup('tok');
     fixture.detectChanges();  // first render runs ngOnInit once more → answer both token checks
-    http.match(url('tok')).forEach(r => r.flush({ email: 'e@x.cz', full_name: 'n' }));
+    http.match(url('tok')).forEach(r => r.flush({ data: { email: 'e@x.cz', full_name: 'n' } }));
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     for (const key of ['title_form', 'label_password', 'label_confirmation', 'submit']) {

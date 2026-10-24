@@ -29,6 +29,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -95,18 +97,12 @@ class WebSalesOrderController extends Controller
 
         if ($noPagination) {
             $this->logAction($request, WebLog::class, 'export', 'WebSalesOrder', "Bulk export of sales orders.");
-            return WebSalesOrderResource::collection($query->get());
+            return $this->respond(WebSalesOrderResource::collection($query->get()));
         }
 
         $data = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => WebSalesOrderResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, WebSalesOrderResource::class);
     }
 
     /**
@@ -167,7 +163,7 @@ class WebSalesOrderController extends Controller
                 $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Failed to send confirmation email: " . $e->getMessage(), $order->id, 'WebSalesOrder');
             }
 
-            return response()->json(new WebSalesOrderResource($order->load(['lead', 'attachments'])), 201);
+            return $this->respond(new WebSalesOrderResource($order->load(['lead', 'attachments'])), 201);
         } catch (HttpException $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Sales order creation rejected (token): " . $e->getMessage());
             return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
@@ -184,7 +180,7 @@ class WebSalesOrderController extends Controller
     public function show($id): JsonResponse
     {
         $sales_order = WebSalesOrder::withTrashed()->with(['lead', 'attachments'])->findOrFail($id);
-        return response()->json(new WebSalesOrderResource($sales_order));
+        return $this->respond(new WebSalesOrderResource($sales_order));
     }
 
     /**
@@ -207,7 +203,7 @@ class WebSalesOrderController extends Controller
             $this->storeAttachments($request, $order, self::ATTACHMENT_FOLDER);
 
             $this->logAction($request, WebLog::class, 'update', 'WebSalesOrder', "Updated sales order ID: {$order->id}", $order->id, 'WebSalesOrder');
-            return response()->json(new WebSalesOrderResource($order->fresh()->load(['lead', 'attachments'])));
+            return $this->respond(new WebSalesOrderResource($order->fresh()->load(['lead', 'attachments'])));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error updating sales order ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
             return response()->json(['message' => 'Sales order update failed.'], 500);
@@ -292,11 +288,11 @@ class WebSalesOrderController extends Controller
             'WebSalesOrder'
         );
 
-        return response()->json(['data' => [
+        return $this->respond([
             'deleted_count' => $deletedCount,
             'skipped_count' => $skippedCount,
             'requested'     => $requestedCount,
-        ]]);
+        ]);
     }
 
     /**
@@ -309,7 +305,7 @@ class WebSalesOrderController extends Controller
         try {
             $item->restore();
             $this->logAction($request, WebLog::class, 'restore', 'WebSalesOrder', "Restored sales order ID: $id", (int) $id, 'WebSalesOrder');
-            return response()->json(new WebSalesOrderResource($item->load(['lead', 'attachments'])));
+            return $this->respond(new WebSalesOrderResource($item->load(['lead', 'attachments'])));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesOrder', "Error restoring sales order ID $id: " . $e->getMessage(), (int) $id, 'WebSalesOrder');
             return response()->json(['message' => 'Sales order restoration failed.'], 500);

@@ -55,6 +55,9 @@
  * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
  *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
  *   the component (`takeUntilDestroyed()`).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): thread detail /
+ *  older messages via `getWithMeta()` - `has_more_older_messages` is in `meta`; threads table
+ *  totals in `meta`.
  */
 
 import { Component, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
@@ -580,6 +583,17 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
    * @refactor-note (2026-09-11v4) Po úspěšném načtení scrolluje `.pm-message-list`
    * na spodek (nejnovější zprávy) - viz `scrollMessagesToBottom()`.
    */
+  /**
+   * @description Loads a thread with its newest messages; `has_more_older_messages` comes in
+   *   `meta` of the answer (finding #6) and is kept on the thread object for the templates.
+   * @param id Thread id.
+   * @returns The thread incl. `has_more_older_messages`.
+   */
+  private fetchThread(id: number): Core.Observable<ProjectThread> {
+    return this.dataHandler.getWithMeta<ProjectThread, { has_more_older_messages: boolean }>(`web/project-threads/${id}`)
+      .pipe(Core.map(res => ({ ...res.data, has_more_older_messages: !!res.meta?.has_more_older_messages })));
+  }
+
   openThread(thread: ProjectThread): void {
     this.selectedThread = thread;
     this.threadDetailLoading = true;
@@ -588,7 +602,7 @@ export class ProjectsComponent extends BaseDataComponent<any> implements Core.On
     this.replyFileError = null;
     this.cd.markForCheck();
 
-    this.projectThreadsCrud.getOne(thread.id).subscribe({
+    this.fetchThread(thread.id).subscribe({
       next: (full) => {
         this.selectedThread = full;
         this.threadDetailLoading = false;
@@ -768,12 +782,12 @@ changeThreadStatus(status: string): void {
     this.olderMessagesLoading = true;
     this.cd.markForCheck();
 
-    this.dataHandler.get<{ data: ProjectThreadMessage[]; has_more_older_messages: boolean }>(
+    this.dataHandler.getWithMeta<ProjectThreadMessage[], { has_more_older_messages: boolean }>(
       `web/project-threads/${this.selectedThread.id}/messages?before_message_id=${oldestId}`
     ).subscribe({
       next: (res) => {
         this.selectedThread!.messages = [...res.data, ...(this.selectedThread!.messages || [])];
-        this.selectedThread!.has_more_older_messages = res.has_more_older_messages;
+        this.selectedThread!.has_more_older_messages = !!res.meta?.has_more_older_messages;
         this.olderMessagesLoading = false;
         this.cd.markForCheck();
         setTimeout(() => {
@@ -796,12 +810,12 @@ changeThreadStatus(status: string): void {
     this.threadModalOlderMessagesLoading = true;
     this.cd.markForCheck();
 
-    this.dataHandler.get<{ data: ProjectThreadMessage[]; has_more_older_messages: boolean }>(
+    this.dataHandler.getWithMeta<ProjectThreadMessage[], { has_more_older_messages: boolean }>(
       `web/project-threads/${this.activeThread.id}/messages?before_message_id=${oldestId}`
     ).subscribe({
       next: (res) => {
         this.activeThread.messages = [...res.data, ...(this.activeThread.messages || [])];
-        this.activeThread.has_more_older_messages = res.has_more_older_messages;
+        this.activeThread.has_more_older_messages = !!res.meta?.has_more_older_messages;
         this.threadModalOlderMessagesLoading = false;
         this.cd.markForCheck();
         setTimeout(() => {
@@ -819,8 +833,8 @@ changeThreadStatus(status: string): void {
       .subscribe({
         next: (res) => {
           this.threadsData = res.data;
-          this.threadsTotalItems = res.total;
-          this.threadsTotalPages = res.last_page;
+          this.threadsTotalItems = res.meta.total;
+          this.threadsTotalPages = res.meta.last_page;
           this.cd.markForCheck();
         }
       });
@@ -863,7 +877,7 @@ changeThreadStatus(status: string): void {
     this.lockBackgroundScroll();
     this.cd.markForCheck();
 
-    this.dataHandler.get<any>(`web/project-threads/${item.id}`).subscribe({
+    this.fetchThread(item.id).subscribe({
       next: (full) => {
         this.activeThread = full;
         this.threadModalLoading = false;

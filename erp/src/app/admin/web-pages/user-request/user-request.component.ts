@@ -42,6 +42,8 @@
  * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
  *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
  *   the component (`takeUntilDestroyed()`).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): the language list
+ *  is the payload itself (was `{languages}`).
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -327,9 +329,9 @@ export class UserRequestComponent extends BaseDataComponent<any> implements Core
     this.emailTemplateLoading = true;
     this.cd.markForCheck();
 
-    this.dataHandler.get<{ languages: EmailTemplateLang[] }>('languages/web').subscribe({
+    this.dataHandler.get<EmailTemplateLang[]>('languages/web').subscribe({
       next: (res) => {
-        this.emailTemplateLanguages = (res?.languages ?? []).filter(l => l.active !== false);
+        this.emailTemplateLanguages = (Array.isArray(res) ? res : []).filter(l => l.active !== false);
         if (
           this.emailTemplateLanguages.length > 0 &&
           !this.emailTemplateLanguages.find(l => l.code === this.emailTemplateCurrentLang)

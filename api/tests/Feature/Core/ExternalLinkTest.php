@@ -51,12 +51,12 @@ class ExternalLinkTest extends TestCase
         $this->link($this->user(), ['name' => 'Foreign']);
 
         $this->getJson('/api/core/external_links')->assertOk()
-            ->assertJson(['total' => 2, 'current_page' => 1, 'last_page' => 1])
+            ->assertJson(['meta' => ['total' => 2, 'current_page' => 1, 'last_page' => 1]])
             ->assertJsonPath('data.*.name', ['Alpha', 'Beta']);
         $this->getJson('/api/core/external_links?name=Bet')->assertJsonPath('data.*.name', ['Beta']);
         $this->getJson('/api/core/external_links?url=a.example')->assertJsonPath('data.*.name', ['Alpha']);
         $this->getJson('/api/core/external_links?search=b.example')->assertJsonPath('data.*.name', ['Beta']);
-        $this->getJson('/api/core/external_links?no_pagination=1&sort_direction=desc')->assertJsonPath('*.name', ['Beta', 'Alpha']);
+        $this->getJson('/api/core/external_links?no_pagination=1&sort_direction=desc')->assertJsonPath('data.*.name', ['Beta', 'Alpha']);
     }
 
     /**
@@ -85,7 +85,7 @@ class ExternalLinkTest extends TestCase
         $own->delete();
         $foreign = $this->link($this->user());
 
-        $this->getJson("/api/core/external_links/{$own->id}")->assertOk()->assertJsonPath('name', 'Docs');
+        $this->getJson("/api/core/external_links/{$own->id}")->assertOk()->assertJsonPath('data.name', 'Docs');
         $this->getJson("/api/core/external_links/{$foreign->id}")->assertStatus(404);
     }
 
@@ -100,7 +100,7 @@ class ExternalLinkTest extends TestCase
 
         $this->postJson('/api/core/external_links', ['name' => 'X', 'url' => 'not-a-url'])->assertStatus(422);
         $this->postJson('/api/core/external_links', ['name' => 'Analytics', 'url' => 'https://analytics.example.com'])
-            ->assertCreated()->assertJsonPath('name', 'Analytics');
+            ->assertCreated()->assertJsonPath('data.name', 'Analytics');
 
         $this->assertSame($me->id, CoreExternalLink::sole()->user_id);
         $this->assertTrue(WebLog::where('event_type', 'create')->where('description', 'like', '%Analytics%')->exists());
@@ -118,7 +118,7 @@ class ExternalLinkTest extends TestCase
         $foreign = $this->link($this->user());
 
         $this->putJson("/api/core/external_links/{$own->id}", ['name' => 'Renamed', 'url' => 'https://r.example.com'])
-            ->assertOk()->assertJsonPath('name', 'Renamed');
+            ->assertOk()->assertJsonPath('data.name', 'Renamed');
         $this->assertTrue(WebLog::where('event_type', 'update')->exists());
         $this->putJson("/api/core/external_links/{$foreign->id}", ['name' => 'Hack', 'url' => 'https://h.example.com'])->assertStatus(404);
     }

@@ -41,7 +41,7 @@ describe('DashboardComponent (web)', () => {
   beforeEach(async () => {
     ctx = createAdminTestContext();
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
-      url === ACTIVITY_URL ? of({ data: logs }) : of({ total: totals[url] }));
+      url === ACTIVITY_URL ? of({ data: logs }) : of({ data: [], meta: { total: totals[url] } }));
     (ctx.dataHandler as any).get.and.returnValue(of({ is_web_active: true, web_maintenance_message: 'Brzy zpět' }));
     await TestBed.configureTestingModule({ imports: [DashboardComponent], providers: ctx.providers }).compileComponents();
     fixture = TestBed.createComponent(DashboardComponent);
@@ -74,7 +74,7 @@ describe('DashboardComponent (web)', () => {
   it('requests only allowed statistics and survives a failed one', () => {
     ctx.permissions.granted = new Set(['web-news-view', 'web-support-tickets-view']);
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
-      url.startsWith('web/support_tickets') ? throwError(() => new Error('x')) : of({ total: totals[url] }));
+      url.startsWith('web/support_tickets') ? throwError(() => new Error('x')) : of({ data: [], meta: { total: totals[url] } }));
     component.ngOnInit();
     expect(component.quickStats.map(s => [s.key, s.value, s.urgent])).toEqual([['news', 12, false], ['openTickets', '—', false]]);
     expect(urls()).not.toContain('web/sales_leads?per_page=1');
@@ -196,11 +196,11 @@ describe('DashboardComponent (web)', () => {
    */
   it('accepts every activity response shape', () => {
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
-      url === ACTIVITY_URL ? of([{ id: 9, event_type: 'export' }]) : of({ total: 1 }));
+      url === ACTIVITY_URL ? of({ data: [{ id: 9, event_type: 'export' }] }) : of({ data: [], meta: { total: 1 } }));
     component.ngOnInit();
     expect(component.recentActivity.map(l => l.id)).toEqual([9]);
     (ctx.dataHandler as any).getPaginatedCollection.and.callFake((url: string) =>
-      url === ACTIVITY_URL ? throwError(() => new Error('x')) : of({ total: 1 }));
+      url === ACTIVITY_URL ? throwError(() => new Error('x')) : of({ data: [], meta: { total: 1 } }));
     component.refresh();
     expect(component.recentActivity).toEqual([]);
     expect(component.maxBreakdownCount).toBe(1);

@@ -27,6 +27,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -72,18 +74,12 @@ class WebProjectController extends Controller
 
         $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
         if ($noPagination) {
-            return response()->json(WebProjectResource::collection($query->get()));
+            return $this->respond(WebProjectResource::collection($query->get()));
         }
 
         $data = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => WebProjectResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, WebProjectResource::class);
     }
 
     /**
@@ -112,7 +108,7 @@ class WebProjectController extends Controller
             $response = (new WebProjectResource($project))->resolve();
             $response['generated_password'] = $plaintextPassword;
 
-            return response()->json(['data' => $response], 201);
+            return $this->respond($response, 201);
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error creating project: " . $e->getMessage());
             return response()->json(['message' => 'Project creation failed.'], 500);
@@ -122,7 +118,7 @@ class WebProjectController extends Controller
     public function show($id): JsonResponse
     {
         $project = WebProject::withTrashed()->with(['lead', 'order', 'checkpoints'])->findOrFail($id);
-        return response()->json(['data' => (new WebProjectResource($project))->resolve()]);
+        return $this->respond((new WebProjectResource($project))->resolve());
     }
 
     public function update(UpdateWebProjectRequest $request, $id): JsonResponse
@@ -138,7 +134,7 @@ class WebProjectController extends Controller
             $this->logAction($request, WebLog::class, 'update', 'WebProject', "Updated project ID: {$project->id}", $project->id, 'WebProject');
 
             $fresh = $project->fresh()->load(['lead', 'order', 'checkpoints']);
-            return response()->json(['data' => (new WebProjectResource($fresh))->resolve()]);
+            return $this->respond((new WebProjectResource($fresh))->resolve());
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebProject', "Error updating project ID {$id}: " . $e->getMessage(), (int) $id, 'WebProject');
             return response()->json(['message' => 'Project update failed.'], 500);
@@ -202,7 +198,7 @@ class WebProjectController extends Controller
 
         $this->logAction($request, WebLog::class, $forceDelete ? 'hard_delete_bulk' : 'soft_delete_bulk', 'WebProject', "Bulk deletion of {$deletedCount} projects.");
 
-        return response()->json(['data' => ['deleted_count' => $deletedCount, 'requested' => count($ids)]]);
+        return $this->respond(['deleted_count' => $deletedCount, 'requested' => count($ids)]);
     }
 
     public function restore(Request $request, $id): JsonResponse
@@ -210,7 +206,7 @@ class WebProjectController extends Controller
         $item = WebProject::withTrashed()->findOrFail($id);
         $item->restore();
         $this->logAction($request, WebLog::class, 'restore', 'WebProject', "Restored project ID: $id", (int) $id, 'WebProject');
-        return response()->json(['data' => (new WebProjectResource($item))->resolve()]);
+        return $this->respond((new WebProjectResource($item))->resolve());
     }
 
     /**
@@ -254,7 +250,7 @@ class WebProjectController extends Controller
             'WebProject'
         );
 
-        return response()->json(['data' => ['generated_password' => $plaintext]]);
+        return $this->respond(['generated_password' => $plaintext]);
     }
 
     // ── Checkpoints (nested under project) ───────────────────────────────────
@@ -270,7 +266,7 @@ class WebProjectController extends Controller
 
         $this->logAction($request, WebLog::class, 'create', 'WebProjectCheckpoint', "Added checkpoint '{$checkpoint->label}' to project ID: {$project->id}", $project->id, 'WebProject');
 
-        return response()->json(['data' => (new WebProjectCheckpointResource($checkpoint))->resolve()], 201);
+        return $this->respond((new WebProjectCheckpointResource($checkpoint))->resolve(), 201);
     }
 
     public function updateCheckpoint(UpdateProjectCheckpointRequest $request, $projectId, $checkpointId): JsonResponse
@@ -293,7 +289,7 @@ class WebProjectController extends Controller
 
         $this->logAction($request, WebLog::class, 'update', 'WebProjectCheckpoint', "Updated checkpoint ID: {$checkpoint->id} (project ID: {$projectId})", (int) $projectId, 'WebProject');
 
-        return response()->json(['data' => (new WebProjectCheckpointResource($checkpoint->fresh()))->resolve()]);
+        return $this->respond((new WebProjectCheckpointResource($checkpoint->fresh()))->resolve());
     }
 
     public function destroyCheckpoint(Request $request, $projectId, $checkpointId): JsonResponse

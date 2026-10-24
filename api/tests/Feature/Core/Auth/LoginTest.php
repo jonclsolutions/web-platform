@@ -58,11 +58,11 @@ class LoginTest extends TestCase
         $response = $this->postJson('/api/login', ['email' => $user->user_email, 'password' => $this->defaultPassword])
             ->assertOk()
             ->assertJsonPath('message', 'Login successful!')
-            ->assertJsonPath('user.id', $user->id)
-            ->assertJsonPath('user_permissions', ['core-administrators-view']);
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonPath('data.user_permissions', ['core-administrators-view']);
 
-        $this->assertNotEmpty($response->json('token'));
-        $refresh = $response->json('refreshToken');
+        $this->assertNotEmpty($response->json('data.token'));
+        $refresh = $response->json('data.refreshToken');
         $this->assertSame(hash('sha256', $refresh), RefreshToken::where('user_id', $user->id)->value('token'));
         $this->assertNotNull($user->fresh()->last_login_at);
         $this->assertSame(0, RateLimiter::attempts('login-fail:' . $user->user_email));
@@ -143,7 +143,7 @@ class LoginTest extends TestCase
 
         $this->postJson('/api/login', [
             'email' => $user->user_email, 'password' => $this->defaultPassword, 'captcha_token' => 'ok-token',
-        ])->assertOk()->assertJsonStructure(['token', 'refreshToken']);
+        ])->assertOk()->assertJsonStructure(['data' => ['token', 'refreshToken']]);
     }
 
     /**
@@ -233,10 +233,10 @@ class LoginTest extends TestCase
 
         $response = $this->postJson('/api/login', ['email' => $admin->user_email, 'password' => $this->defaultPassword])
             ->assertOk()
-            ->assertJson(['requires_2fa' => true, 'expires_in' => TwoFactorCode::CODE_TTL_MINUTES * 60]);
+            ->assertJson(['data' => ['requires_2fa' => true, 'expires_in' => TwoFactorCode::CODE_TTL_MINUTES * 60]]);
 
         $pending = TwoFactorCode::sole();
-        $this->assertSame(hash('sha256', $response->json('login_token')), $pending->login_token_hash);
+        $this->assertSame(hash('sha256', $response->json('data.login_token')), $pending->login_token_hash);
         $this->assertSame('127.0.0.1', $pending->ip_address);
         Mail::assertSent(TwoFactorCodeMail::class, fn ($mail) => $mail->hasTo($admin->user_email)
             && hash('sha256', $mail->code) === $pending->code_hash);
@@ -255,9 +255,9 @@ class LoginTest extends TestCase
 
         $this->getJson('/api/user')
             ->assertOk()
-            ->assertJsonPath('user.user_email', $user->user_email)
-            ->assertJsonPath('user_roles.0', $user->roles->first()->role_name)
-            ->assertJsonPath('user_permissions', ['core-security-view']);
+            ->assertJsonPath('data.user.user_email', $user->user_email)
+            ->assertJsonPath('data.user_roles.0', $user->roles->first()->role_name)
+            ->assertJsonPath('data.user_permissions', ['core-security-view']);
     }
 
     /**
@@ -402,9 +402,9 @@ class LoginTest extends TestCase
 
         $response = $this->postJson('/api/refresh', ['refreshToken' => 'raw'])->assertOk();
 
-        $this->assertNotSame('raw', $response->json('refreshToken'));
-        $this->assertSame(hash('sha256', $response->json('refreshToken')), RefreshToken::sole()->token);
+        $this->assertNotSame('raw', $response->json('data.refreshToken'));
+        $this->assertSame(hash('sha256', $response->json('data.refreshToken')), RefreshToken::sole()->token);
         $this->assertSame(1, PersonalAccessToken::count());
-        $this->assertTrue(PersonalAccessToken::findToken($response->json('token'))->expires_at->isFuture());
+        $this->assertTrue(PersonalAccessToken::findToken($response->json('data.token'))->expires_at->isFuture());
     }
 }

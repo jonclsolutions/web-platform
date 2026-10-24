@@ -35,6 +35,8 @@
  * existující, ale nikde nevolaná metoda.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `removeLocal`.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): a page is `{data,
+ *  meta}` - totals / pages are read from `meta`.
  */
 
 import { ChangeDetectorRef } from '@angular/core';
@@ -107,15 +109,15 @@ export class PaginatedListStore<T extends { id?: number; deleted_at?: string | n
       tap(response => {
         if (isTrash) {
           this.trashData = response.data.map(row => this.rowMapper(row));
-          this.trashTotalItems = response.total;
-          this.trashTotalPages = response.last_page;
-          this.trashCurrentPage = response.current_page;
+          this.trashTotalItems = response.meta.total;
+          this.trashTotalPages = response.meta.last_page;
+          this.trashCurrentPage = response.meta.current_page;
           this.trashLastUpdatedAt.next(new Date());
         } else {
           this.data = response.data.map(row => this.rowMapper(row));
-          this.totalItems = response.total;
-          this.totalPages = response.last_page;
-          this.currentPage = response.current_page;
+          this.totalItems = response.meta.total;
+          this.totalPages = response.meta.last_page;
+          this.currentPage = response.meta.current_page;
           this.activeLastUpdatedAt.next(new Date());
         }
         this.cd.markForCheck();

@@ -12,6 +12,8 @@ use Illuminate\Http\JsonResponse;
  * napsané jako `1 | 2` v TS kódu. Tenhle endpoint umožňuje taby v adminu vykreslovat
  * dynamicky podle skutečného obsahu `document_types` tabulky, takže přidání dalšího
  * typu dokumentu (jako teď "cookies") nevyžaduje žádnou další změnu kódu.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 class DocumentTypeController extends Controller
 {
@@ -24,6 +26,6 @@ class DocumentTypeController extends Controller
             ->orderBy('id')
             ->get(['id', 'slug', 'title']);
 
-        return response()->json($types);
+        return $this->respond($types);
     }
 }

@@ -16,6 +16,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -67,15 +69,9 @@ class ShopCouponController extends Controller
             ? $query->get()
             : $query->paginate($perPage);
 
-        return response()->json($data instanceof \Illuminate\Support\Collection
-            ? ShopCouponResource::collection($data)
-            : [
-                'data' => ShopCouponResource::collection($data->items()),
-                'total' => $data->total(),
-                'per_page' => $data->perPage(),
-                'current_page' => $data->currentPage(),
-                'last_page' => $data->lastPage(),
-            ]);
+        return $data instanceof \Illuminate\Support\Collection
+            ? $this->respond(ShopCouponResource::collection($data))
+            : $this->respondPaginated($data, ShopCouponResource::class);
     }
 
     /**
@@ -86,7 +82,7 @@ class ShopCouponController extends Controller
         try {
             $coupon = ShopCoupon::create($request->validated());
             $this->logAction($request, ShopLog::class, 'create', 'ShopCoupon', "Created coupon: {$coupon->code}", $coupon->id, 'ShopCoupon');
-            return response()->json(new ShopCouponResource($coupon), 201);
+            return $this->respond(new ShopCouponResource($coupon), 201);
         } catch (\Exception $e) {
             $this->logAction($request, ShopLog::class, 'error', 'ShopCoupon', "Error creating coupon: " . $e->getMessage());
             return response()->json(['message' => 'Error creating coupon.'], 500);
@@ -99,7 +95,7 @@ class ShopCouponController extends Controller
     public function show($id): JsonResponse
     {
         $coupon = ShopCoupon::withTrashed()->findOrFail($id);
-        return response()->json(new ShopCouponResource($coupon));
+        return $this->respond(new ShopCouponResource($coupon));
     }
 
     /**
@@ -112,7 +108,7 @@ class ShopCouponController extends Controller
         try {
             $coupon->update($request->validated());
             $this->logAction($request, ShopLog::class, 'update', 'ShopCoupon', "Updated coupon: {$coupon->code}", $coupon->id, 'ShopCoupon');
-            return response()->json(new ShopCouponResource($coupon));
+            return $this->respond(new ShopCouponResource($coupon));
         } catch (\Exception $e) {
             $this->logAction($request, ShopLog::class, 'error', 'ShopCoupon', "Update failed ID {$id}: " . $e->getMessage(), (int) $id, 'ShopCoupon');
             return response()->json(['message' => 'Update failed.'], 500);
@@ -167,6 +163,6 @@ class ShopCouponController extends Controller
         $item = ShopCoupon::withTrashed()->findOrFail($id);
         $item->restore();
         $this->logAction($request, ShopLog::class, 'restore', 'ShopCoupon', "Restored coupon ID: $id", (int) $id, 'ShopCoupon');
-        return response()->json(new ShopCouponResource($item));
+        return $this->respond(new ShopCouponResource($item));
     }
 }

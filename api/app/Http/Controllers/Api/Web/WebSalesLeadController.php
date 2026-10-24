@@ -27,6 +27,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -111,18 +113,12 @@ class WebSalesLeadController extends Controller
         if ($noPagination) {
             $this->logAction($request, WebLog::class, 'export', 'WebSalesLead', "Bulk export of sales leads.");
             $data = $query->get();
-            return response()->json(WebSalesLeadResource::collection($data));
+            return $this->respond(WebSalesLeadResource::collection($data));
         }
 
         $data = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => WebSalesLeadResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, WebSalesLeadResource::class);
     }
 
     /**
@@ -146,7 +142,7 @@ class WebSalesLeadController extends Controller
 
             $this->logAction($request, WebLog::class, 'create', 'WebSalesLead', "Created new lead: {$lead->subject_name}", $lead->id, 'WebSalesLead');
 
-            return response()->json(new WebSalesLeadResource($lead), 201);
+            return $this->respond(new WebSalesLeadResource($lead), 201);
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error creating lead: " . $e->getMessage());
             return response()->json(['message' => 'Lead creation failed.'], 500);
@@ -159,7 +155,7 @@ class WebSalesLeadController extends Controller
     public function show($id): JsonResponse
     {
         $lead = WebSalesLead::withTrashed()->findOrFail($id);
-        return response()->json(new WebSalesLeadResource($lead));
+        return $this->respond(new WebSalesLeadResource($lead));
     }
 
     /**
@@ -181,7 +177,7 @@ class WebSalesLeadController extends Controller
 
             $this->logAction($request, WebLog::class, 'update', 'WebSalesLead', "Updated lead ID: {$lead->id} ({$lead->subject_name})", $lead->id, 'WebSalesLead');
 
-            return response()->json(new WebSalesLeadResource($lead));
+            return $this->respond(new WebSalesLeadResource($lead));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error updating lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Lead update failed.'], 500);
@@ -253,11 +249,11 @@ class WebSalesLeadController extends Controller
             'WebSalesLead'
         );
 
-        return response()->json(['data' => [
+        return $this->respond([
             'deleted_count' => $deletedCount,
             'skipped_count' => $skippedCount,
             'requested'     => $requestedCount,
-        ]]);
+        ]);
     }
 
     /**
@@ -338,7 +334,7 @@ class WebSalesLeadController extends Controller
             $errors
         );
 
-        return response()->json([
+        return $this->respond([
             'import_token' => $batch->id,
             'total_rows'   => $batch->total_rows,
             'valid_rows'   => $batch->valid_rows,
@@ -401,12 +397,12 @@ class WebSalesLeadController extends Controller
                 'WebSalesLead'
             );
 
-            return response()->json(['data' => [
+            return $this->respond([
                 'queued'         => false,
                 'imported_count' => $result['imported_count'],
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
-            ]]);
+            ]);
         } catch (\Exception $e) {
             // Expired temporary file - see runImportCommit(), code 410.
             // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
@@ -434,7 +430,7 @@ class WebSalesLeadController extends Controller
 
             $this->logAction($request, WebLog::class, 'restore', 'WebSalesLead', "Restored lead ID: $id", (int) $id, 'WebSalesLead');
 
-            return response()->json(new WebSalesLeadResource($item));
+            return $this->respond(new WebSalesLeadResource($item));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error restoring lead ID $id: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Lead restoration failed.'], 500);
@@ -473,12 +469,10 @@ class WebSalesLeadController extends Controller
 
             $this->logAction($request, WebLog::class, 'generate_link', 'WebSalesLead', "Generated order form link for lead ID: {$lead->id}", $lead->id, 'WebSalesLead');
 
-            return response()->json([
-                'data' => [
+            return $this->respond([
                     'token' => $token,
                     'url'   => rtrim(config('app.frontend_url', $request->getSchemeAndHttpHost()), '/') . "/order_form/{$token}",
-                ],
-            ]);
+                ]);
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebSalesLead', "Error generating link for lead ID {$id}: " . $e->getMessage(), (int) $id, 'WebSalesLead');
             return response()->json(['message' => 'Link generation failed.'], 500);
@@ -518,7 +512,7 @@ class WebSalesLeadController extends Controller
             return response()->json(['message' => 'This form has already been submitted once and the link cannot be used again.'], 410);
         }
 
-        return response()->json([
+        return $this->respond([
             'id'             => $lead->id,
             'subject_name'   => $lead->subject_name,
             'contact_person' => $lead->contact_person,

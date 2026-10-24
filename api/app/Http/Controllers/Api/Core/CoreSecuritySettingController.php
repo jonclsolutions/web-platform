@@ -19,6 +19,8 @@
  * the security monitoring retention period, including the old and new values. This is
  * different from `core_security_events` (suspicious activity diagnostics) - it's an audit of
  * the administrator's action over the monitoring itself.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -36,7 +38,7 @@ class CoreSecuritySettingController extends Controller
 
     public function show(): JsonResponse
     {
-        return response()->json(CoreSecuritySetting::current());
+        return $this->respond(CoreSecuritySetting::current());
     }
 
     public function update(UpdateCoreSecuritySettingRequest $request): JsonResponse
@@ -57,6 +59,6 @@ class CoreSecuritySettingController extends Controller
         );
 
         // Wrapper {data: ...} - see bugfix-note above (DataHandler.put() unwrap).
-        return response()->json(['data' => $setting]);
+        return $this->respond($setting);
     }
 }

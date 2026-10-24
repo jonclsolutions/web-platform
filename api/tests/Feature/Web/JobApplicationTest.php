@@ -61,7 +61,7 @@ class JobApplicationTest extends TestCase
     public function test_public_application(): void
     {
         $this->post('/api/job_applications', $this->payload(), ['Accept' => 'application/json'])
-            ->assertCreated()->assertJsonPath('full_name', 'Eva Kralova')->assertJsonCount(1, 'attachments');
+            ->assertCreated()->assertJsonPath('data.full_name', 'Eva Kralova')->assertJsonCount(1, 'data.attachments');
 
         $cv = WebJobApplication::sole()->attachments->sole();
         $this->assertStringStartsWith('web/cv_files/', $cv->path);
@@ -124,7 +124,7 @@ class JobApplicationTest extends TestCase
         $this->assertSame([$b->id], $ids('email=jan@'));
         $this->assertSame([$a->id], $ids('created_at=' . now()->subDay()->toDateString()));
         $this->assertSame(['Gone'], array_column($this->getJson('/api/web/job_applications?only_trashed=1')->json('data'), 'first_name'));
-        $this->getJson('/api/web/job_applications?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
+        $this->getJson('/api/web/job_applications?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
         $this->assertCount(2, $this->getJson('/api/web/job_applications?no_pagination=1')->json('data'));
     }
 
@@ -142,11 +142,11 @@ class JobApplicationTest extends TestCase
 
         $application = $this->jobApplication();
         $this->attach($application, 'web/cv_files/old.pdf');
-        $this->getJson("/api/web/job_applications/{$application->id}")->assertOk()->assertJsonCount(1, 'attachments');
+        $this->getJson("/api/web/job_applications/{$application->id}")->assertOk()->assertJsonCount(1, 'data.attachments');
         $this->getJson('/api/web/job_applications/999')->assertStatus(404);
 
         $this->post("/api/web/job_applications/{$application->id}", ['_method' => 'PUT', 'state' => 'selected', 'cv_file' => $this->upload('new.pdf')], ['Accept' => 'application/json'])
-            ->assertOk()->assertJsonPath('state', 'selected')->assertJsonPath('attachments.0.original_filename', 'new.pdf')->assertJsonCount(1, 'attachments');
+            ->assertOk()->assertJsonPath('data.state', 'selected')->assertJsonPath('data.attachments.0.original_filename', 'new.pdf')->assertJsonCount(1, 'data.attachments');
         Storage::disk('private')->assertMissing('web/cv_files/old.pdf');
         $this->assertWebLog('update', 'State: selected');
         $this->putJson("/api/web/job_applications/{$application->id}", ['internal_note' => 'n'])->assertOk();

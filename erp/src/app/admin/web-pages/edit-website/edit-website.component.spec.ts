@@ -33,7 +33,7 @@ describe('EditWebsiteComponent', () => {
   const answer = (overrides: Record<string, any> = {}) => {
     (ctx.dataHandler as any).get.and.callFake((url: string) => {
       if (url in overrides) return overrides[url];
-      if (url === 'languages/web') return of({ languages: JSON.parse(JSON.stringify(languages)) });
+      if (url === 'languages/web') return of(JSON.parse(JSON.stringify(languages)));
       if (url === 'translations/web/cz') return of(JSON.parse(JSON.stringify(cz)));
       if (url === 'translations/web/en') return of(JSON.parse(JSON.stringify(en)));
       return throwError(() => new Error('404'));

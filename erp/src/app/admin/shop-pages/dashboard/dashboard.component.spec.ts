@@ -37,13 +37,13 @@ describe('DashboardComponent (shop)', () => {
   ];
   const answers = (overrides: Record<string, any> = {}) => {
     const base: Record<string, any> = {
-      'shop/orders?per_page=10&sort_by=created_at&sort_direction=desc': of({ data: [{ id: 1 }], total: 5 }),
-      'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of(allOrders()),
-      'shop/customers?per_page=1': of({ total: 12 }),
-      'shop/products?per_page=1&is_active=true': of({ total: 40 }),
-      'shop/products?low_stock=true&no_pagination=true': of([{ id: 9, name: 'Kabel', sku: 'K', stock_quantity: 1, stock_warning_level: 4 }, { id: 10, name: 'X', sku: 'X' }]),
-      'shop/coupons?is_active=true&per_page=1': of({ total: 3 }),
-      'shop/orders?status=pending&per_page=1': of({ total: 1 })
+      'shop/orders?per_page=10&sort_by=created_at&sort_direction=desc': of({ data: [{ id: 1 }], meta: { total: 5 } }),
+      'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of({ data: allOrders() }),
+      'shop/customers?per_page=1': of({ data: [], meta: { total: 12 } }),
+      'shop/products?per_page=1&is_active=true': of({ data: [], meta: { total: 40 } }),
+      'shop/products?low_stock=true&no_pagination=true': of({ data: [{ id: 9, name: 'Kabel', sku: 'K', stock_quantity: 1, stock_warning_level: 4 }, { id: 10, name: 'X', sku: 'X' }] }),
+      'shop/coupons?is_active=true&per_page=1': of({ data: [], meta: { total: 3 } }),
+      'shop/orders?status=pending&per_page=1': of({ data: [], meta: { total: 1 } })
     };
     dh().getPaginatedCollection.and.callFake((url: string) => (url in overrides ? overrides[url] : base[url]));
   };
@@ -103,10 +103,10 @@ describe('DashboardComponent (shop)', () => {
      * @output revenue this / last week 0; total 0; chart max 1; average 0; orders this / last week 1 / 1
      */
     it('treats missing amounts as zero', fakeAsync(() => {
-      answers({ 'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of([
+      answers({ 'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of({ data: [
         { id: 1, status: 'delivered', payment_status: 'paid', created_at: daysAgo(1) },
         { id: 2, status: 'delivered', payment_status: 'paid', created_at: daysAgo(9) }
-      ]) });
+      ] }) });
       component.ngOnInit();
       expect([component.revenueThisWeek, component.revenueLastWeek, component.totalRevenue, component.chartMax, component.avgOrderValueThisMonth]).toEqual([0, 0, 0, 1, 0]);
       expect([component.ordersThisWeek, component.ordersLastWeek]).toEqual([1, 1]);
@@ -137,7 +137,7 @@ describe('DashboardComponent (shop)', () => {
       expect([card('activeProducts').urgent, card('activeProducts').subParams]).toEqual([true, { count: '2' }]);
       expect(component.lowStockProducts[1]).toEqual({ id: 10, name: 'X', sku: 'X', stock_quantity: 0, stock_warning_level: 5 });
       answers({
-        'shop/orders?status=pending&per_page=1': of({ total: 0 }),
+        'shop/orders?status=pending&per_page=1': of({ data: [], meta: { total: 0 } }),
         'shop/products?low_stock=true&no_pagination=true': of({ data: [] }),
         'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of({ data: [] })
       });
@@ -205,7 +205,7 @@ describe('DashboardComponent (shop)', () => {
      * @output 30 points; last point (today) 0, yesterday 100; chartMax 100; first x = padding; line and area paths start with 'M'
      */
     it('builds the 30-day revenue chart', fakeAsync(() => {
-      answers({ 'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of([...allOrders(), { id: 6, status: 'delivered', payment_status: 'paid' }]) });
+      answers({ 'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of({ data: [...allOrders(), { id: 6, status: 'delivered', payment_status: 'paid' }] }) });
       component.ngOnInit();
       expect(component.chartPoints.length).toBe(30);
       expect(component.chartPoints[28].value).toBe(100);
@@ -235,7 +235,7 @@ describe('DashboardComponent (shop)', () => {
      * @output first delivered 2 (33 %); weird labelKey '' and dim colour; empty list → []
      */
     it('builds the status breakdown', fakeAsync(() => {
-      answers({ 'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of([...allOrders(), { id: 7, status: 'weird', payment_status: 'paid' }]) });
+      answers({ 'shop/orders?no_pagination=true&sort_by=created_at&sort_direction=desc': of({ data: [...allOrders(), { id: 7, status: 'weird', payment_status: 'paid' }] }) });
       component.ngOnInit();
       expect(component.statusBreakdown[0]).toEqual({ statusKey: 'delivered', labelKey: 'status_delivered', count: 2, color: 'var(--success, #059669)', pct: 33 });
       const weird = component.statusBreakdown.find(s => s.statusKey === 'weird')!;

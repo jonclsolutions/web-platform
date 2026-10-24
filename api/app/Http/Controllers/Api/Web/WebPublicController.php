@@ -12,7 +12,7 @@
  * @refactor-note (2026-08-15) `getStatus()` repointed from `App\Models\Core\CoreSiteSetting`
  * (table dropped) to `App\Models\Web\WebSiteSetting` following the move of web maintenance
  * data out of the Core domain - see WebSiteSettingController for the accompanying admin
- * endpoint. Cache key and response shape unchanged, so the frontend guard needs no changes.
+ * endpoint. Cache key unchanged; since 2026-10-24 the answer is `{data: {is_web_active}}` (finding #6).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -37,7 +37,7 @@ class WebPublicController extends Controller
             );
         });
 
-        return response()->json([
+        return $this->respond([
             'is_web_active' => (bool) $settings->is_web_active,
         ]);
     }

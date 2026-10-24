@@ -22,6 +22,8 @@
  *   3) Optional – translation key `pt_page_{area}_{page_key}` for the admin label.
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): `logoRemoving`, `markDirty`.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): language lists
+ *  and page-title rows are the payload itself (were `{languages}` / `{page_titles}`).
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -36,7 +38,7 @@ import { LangMeta, SiteSetting, SocialLink } from './'
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import {
-  PageTitleArea, PageTitleLang, PageTitleRow, PageTitlesResponse, PageTitlesUpdatePayload
+  PageTitleArea, PageTitleLang, PageTitleRow, PageTitlesUpdatePayload
 } from './page-titles.model';
 
 @Component({
@@ -132,11 +134,11 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   private loadLanguages(): void {
     this.resourceCache.get(
       `web-settings:languages:${this.LANG_MODULE}`,
-      () => this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.LANG_MODULE}`),
+      () => this.dataHandler.get<LangMeta[]>(`languages/${this.LANG_MODULE}`),
       this.LANG_TTL_MS
     ).subscribe({
       next: (res) => {
-        this.languages = (res?.languages ?? []).filter(l => l.active !== false);
+        this.languages = (Array.isArray(res) ? res : []).filter(l => l.active !== false);
 
         if (this.languages.length > 0 && !this.languages.find(l => l.code === this.currentLang)) {
           this.currentLang = this.languages[0].code;
@@ -506,7 +508,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     forkJoin({
       web:  this.ptLoadLanguages('web'),
       shop: this.ptLoadLanguages('shop'),
-      data: this.dataHandler.get<PageTitlesResponse>('legal/config/page-titles'),
+      data: this.dataHandler.get<PageTitleRow[]>('legal/config/page-titles'),  // payload = rows (finding #6)
     }).subscribe({
       next: ({ web, shop, data }) => {
         const fallback: PageTitleLang[] = [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }];
@@ -521,7 +523,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
             this.ptCurrentLang[area] = langs[0].code;
           }
         }
-        this.ptSetRows((data as any)?.page_titles ?? []);
+        this.ptSetRows(Array.isArray(data) ? data : []);
         this.ptLoaded  = true;
         this.ptLoading = false;
         this.cd.markForCheck();
@@ -541,10 +543,10 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
   private ptLoadLanguages(module: 'web' | 'shop'): Observable<PageTitleLang[]> {
     return this.resourceCache.get(
       `web-settings:languages:${module}`,
-      () => this.dataHandler.get<{ languages: PageTitleLang[] }>(`languages/${module}`),
+      () => this.dataHandler.get<PageTitleLang[]>(`languages/${module}`),
       this.LANG_TTL_MS
     ).pipe(
-      map((res: any) => ((res?.languages ?? []) as PageTitleLang[]).filter(l => l.active !== false)),
+      map((res: any) => ((Array.isArray(res) ? res : []) as PageTitleLang[]).filter(l => l.active !== false)),
       catchError(() => of([] as PageTitleLang[]))
     );
   }
@@ -674,9 +676,9 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.ptSaving = true;
     this.cd.markForCheck();
 
-    this.dataHandler.put<PageTitlesResponse>('legal/config/page-titles', payload as any).subscribe({
+    this.dataHandler.put<PageTitleRow[]>('legal/config/page-titles', payload as any).subscribe({
       next: (res: any) => {
-        this.ptSetRows(res?.page_titles ?? this.ptRows);
+        this.ptSetRows(Array.isArray(res) ? res : this.ptRows);  // payload = the fresh rows
         this.ptSaving = false;
         this.alertDialogService.open(this.t('save_success_title'), this.t('pt_saved_message'), 'success');
         this.cd.markForCheck();

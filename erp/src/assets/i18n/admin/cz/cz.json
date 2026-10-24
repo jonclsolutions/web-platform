@@ -2187,7 +2187,8 @@
 
     "explain_fallback_label": "Neznámý typ události",
     "explain_fallback_what": "Pro tento typ události zatím není k dispozici podrobný popis.",
-    "explain_fallback_recommendation": "Zkontrolujte IP adresu, endpoint a kontext záznamu ručně, nebo kontaktujte vývojáře ohledně doplnění vysvětlení pro tento typ."
+    "explain_fallback_recommendation": "Zkontrolujte IP adresu, endpoint a kontext záznamu ručně, nebo kontaktujte vývojáře ohledně doplnění vysvětlení pro tento typ.",
+    "purge_done_count_message": "Smazáno záznamů starších než doba uchování: {count}."
   },
   "shop-products": {
     "table_header": "Produkty",

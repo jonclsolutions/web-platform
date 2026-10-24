@@ -6,7 +6,8 @@
  * @created 2026
  * @description Unit tests of the public PublicDataService: GET / POST to the API base URL,
  *   storage URLs, site settings and the no-cache status endpoints; errors are logged and
- *   rethrown unchanged; the cached settings stream.
+ *   rethrown unchanged; the cached settings stream; every method returns the payload of the
+ *   envelope `{data, meta?}`, getWithMeta() the envelope itself (finding #6).
  * @dependencies
  * - HttpTestingController.
  */
@@ -39,17 +40,17 @@ describe('PublicDataService (shared)', () => {
   it('sends requests to the API base URL', () => {
     let got: any;
     service.get('public/faq', { lang: 'en' }).subscribe(r => (got = r));
-    http.expectOne(`${API}/public/faq?lang=en`).flush([1]);
+    http.expectOne(`${API}/public/faq?lang=en`).flush({ data: [1] });
     expect(got).toEqual([1]);
 
     service.post('public/contact', { a: 1 }).subscribe();
     const post = http.expectOne(`${API}/public/contact`);
     expect(post.request.method).toBe('POST');
     expect(post.request.body).toEqual({ a: 1 });
-    post.flush({});
+    post.flush({ data: {} });
 
     service.getSiteSettings().subscribe(r => (got = r));
-    http.expectOne(`${API}/public/legal/config`).flush({ settings: {} });
+    http.expectOne(`${API}/public/legal/config`).flush({ data: { settings: {} } });
     expect(got).toEqual({ settings: {} });
   });
 
@@ -59,15 +60,35 @@ describe('PublicDataService (shared)', () => {
    * @output Cache-Control 'no-cache, no-store, must-revalidate', Pragma, Expires on both.
    */
   it('requests the status endpoints without caching', () => {
-    service.getShopStatus().subscribe();
-    service.getWebStatus().subscribe();
-    for (const url of [`${API}/shop/public/status`, `${API}/web/public/status`]) {
+    const got: any[] = [];
+    service.getShopStatus().subscribe(r => got.push(r));
+    service.getWebStatus().subscribe(r => got.push(r));
+    for (const [url, body] of [[`${API}/shop/public/status`, { is_shop_active: false }], [`${API}/web/public/status`, { is_web_active: true }]] as const) {
       const req = http.expectOne(url);
       expect(req.request.headers.get('Cache-Control')).toBe('no-cache, no-store, must-revalidate');
       expect(req.request.headers.get('Pragma')).toBe('no-cache');
       expect(req.request.headers.get('Expires')).toBe('0');
-      req.flush({});
+      req.flush({ data: body });
     }
+    expect(got).toEqual([{ is_shop_active: false }, { is_web_active: true }]);
+  });
+
+  /**
+   * @description getWithMeta keeps the envelope (`meta` beside the payload, finding #6); a
+   *   POST answered 204 gives null.
+   * @input getWithMeta('portal/messages') answered {data: [1], meta: {has_more_older_messages: true}};
+   *   post('x') answered 204.
+   * @output The envelope; null.
+   */
+  it('keeps the envelope for answers with meta', () => {
+    let env: any; let posted: any = 'unset';
+    service.getWithMeta('portal/messages').subscribe(r => (env = r));
+    http.expectOne(`${API}/portal/messages`).flush({ data: [1], meta: { has_more_older_messages: true } });
+    expect(env).toEqual({ data: [1], meta: { has_more_older_messages: true } });
+
+    service.post('x', {}).subscribe(r => (posted = r));
+    http.expectOne(`${API}/x`).flush(null, { status: 204, statusText: 'No Content' });
+    expect(posted).toBeNull();
   });
 
   /**

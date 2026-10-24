@@ -32,7 +32,7 @@ describe('EditEshopComponent', () => {
     localStorage.removeItem('rpsw_languages');
     ctx = createAdminTestContext({ granted });
     (ctx.dataHandler as any).get.and.callFake((url: string) => {
-      if (url === 'languages/shop') return of({ languages: JSON.parse(JSON.stringify(languages)) });
+      if (url === 'languages/shop') return of(JSON.parse(JSON.stringify(languages)));
       if (url === 'translations/shop/cz') return of(JSON.parse(JSON.stringify(cz)));
       if (url === 'translations/shop/en') return of(JSON.parse(JSON.stringify(en)));
       return throwError(() => new Error('404'));

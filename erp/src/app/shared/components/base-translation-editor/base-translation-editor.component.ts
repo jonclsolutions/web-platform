@@ -35,6 +35,8 @@
  *   with isDirty = false), and editing Czech also changed the Czech reference. Loaded data is
  *   now deep-copied before it is edited. (2) The translations$ subscription of the constructor
  *   was never closed (leaked one subscription per opened editor) - it now ends with destroy$.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): languages are the
+ *  payload list (was `{languages}`); saving the language list answers 204.
  */
 
 import { ChangeDetectorRef, Directive, inject, OnInit, OnDestroy } from '@angular/core';
@@ -170,13 +172,13 @@ export abstract class BaseTranslationEditorComponent
 
     this.resourceCache.get(
       this.LANGUAGES_CACHE_KEY,
-      () => this.dataHandler.get<{ languages: LangMeta[] }>(`languages/${this.MODULE}`),
+      () => this.dataHandler.get<LangMeta[]>(`languages/${this.MODULE}`),
       this.LANGUAGES_TTL_MS
     )
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
-          this.languages = res.languages ?? this.getBuiltInLanguages();
+          this.languages = Array.isArray(res) ? res : this.getBuiltInLanguages();  // payload = the list (finding #6)
           this.persistMetaToLocalStorage();
           this.afterLanguagesLoaded();
         },
@@ -542,7 +544,7 @@ export abstract class BaseTranslationEditorComponent
       fd.append('target_code', code);
     }
 
-    this.dataHandler.upload<{ status: string }>(`languages/${this.MODULE}`, fd)
+    this.dataHandler.upload<null>(`languages/${this.MODULE}`, fd)  // 204 since finding #6
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -629,7 +631,7 @@ export abstract class BaseTranslationEditorComponent
     fd.append('languages', JSON.stringify(this.languages));
     fd.append('module', this.MODULE);
 
-    this.dataHandler.upload<{ status: string }>(`languages/${this.MODULE}`, fd)
+    this.dataHandler.upload<null>(`languages/${this.MODULE}`, fd)  // 204 since finding #6
       .pipe(Core.takeUntil(this.destroy$))
       .subscribe({
         next: () => {

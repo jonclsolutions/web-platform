@@ -30,6 +30,8 @@
  * @security-note (2026-10-23) The portal session is sent as `Authorization: Bearer` header
  *   (portalGet / portalPost) instead of the `session_token` query parameter - the API accepts only
  *   the header now (open finding #1).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): thread detail /
+ *  message pages via `getWithMeta()` - `has_more_older_messages` / `status` are in `meta`.
  */
 
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
@@ -38,6 +40,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, takeUntil, finalize, timer, switchMap, filter } from 'rxjs';
 import { PublicDataService } from '../../../shared/services/public-data.service';
+import { ApiEnvelope } from '../../../shared/interfaces/api-envelope';
 import { ProjectPortalLocalizationService } from './project-portal-localization.service';
 
 type PortalState = 'loading' | 'login' | 'portal' | 'invalid';
@@ -416,6 +419,11 @@ updateThreadStatus(status: string): void {
     return this.publicDataService.get<T>(path, undefined, this.authHeaders());
   }
 
+  /** GET of a portal endpoint keeping the envelope (`meta`, finding #6). */
+  private portalGetWithMeta<T, M>(path: string): Observable<ApiEnvelope<T, M>> {
+    return this.publicDataService.getWithMeta<T, M>(path, undefined, this.authHeaders());
+  }
+
   /** POST to a portal endpoint with the session header. */
   private portalPost<T>(path: string, body: any): Observable<T> {
     return this.publicDataService.post<T>(path, body, this.authHeaders());
@@ -578,10 +586,12 @@ updateThreadStatus(status: string): void {
     this.replyFileError = null;
     this.cdr.markForCheck();
 
-    this.portalGet<ProjectThread>(`projects/public/${this.token}/threads/${thread.id}`)
+    this.portalGetWithMeta<ProjectThread, { has_more_older_messages: boolean }>(`projects/public/${this.token}/threads/${thread.id}`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (full) => {
+        next: (res) => {
+          // `has_more_older_messages` comes in meta (finding #6), kept on the thread for the template.
+          const full: ProjectThread = { ...res.data, has_more_older_messages: !!res.meta?.has_more_older_messages };
           this.selectedThread = full;
           this.threadDetailLoading = false;
           const inList = this.threads.find(t => t.id === thread.id);
@@ -611,7 +621,7 @@ updateThreadStatus(status: string): void {
       filter(() => !!this.selectedThread),
       switchMap(() => {
         const lastId = this.selectedThread?.messages?.[this.selectedThread.messages.length - 1]?.id ?? 0;
-        return this.portalGet<{ data: ProjectThreadMessage[]; status: string }>(
+        return this.portalGetWithMeta<ProjectThreadMessage[], { status: string }>(
           `projects/public/${this.token}/threads/${this.selectedThread!.id}/new-messages?after_id=${lastId}`
         );
       }),
@@ -621,7 +631,7 @@ updateThreadStatus(status: string): void {
       next: (res) => {
         if (!this.selectedThread || res.data.length === 0) return;
         this.selectedThread.messages = [...this.selectedThread.messages!, ...res.data];
-        this.selectedThread.status = res.status;
+        this.selectedThread.status = res.meta?.status ?? this.selectedThread.status;
         this.cdr.markForCheck();
         this.scrollMessagesToBottom();
       },
@@ -648,13 +658,13 @@ updateThreadStatus(status: string): void {
     this.olderMessagesLoading = true;
     this.cdr.markForCheck();
 
-    this.portalGet<{ data: ProjectThreadMessage[]; has_more_older_messages: boolean }>(
+    this.portalGetWithMeta<ProjectThreadMessage[], { has_more_older_messages: boolean }>(
       `projects/public/${this.token}/threads/${this.selectedThread.id}/messages?before_message_id=${oldestId}`
     ).pipe(finalize(() => { this.olderMessagesLoading = false; this.cdr.markForCheck(); }), takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
           this.selectedThread!.messages = [...res.data, ...(this.selectedThread!.messages || [])];
-          this.selectedThread!.has_more_older_messages = res.has_more_older_messages;
+          this.selectedThread!.has_more_older_messages = !!res.meta?.has_more_older_messages;
           this.cdr.markForCheck();
           setTimeout(() => {
             if (container) {

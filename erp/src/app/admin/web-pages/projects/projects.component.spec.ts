@@ -213,7 +213,7 @@ describe('ProjectsComponent', () => {
      */
     it('loads projects and threads', fakeAsync(() => {
       ctx.genericTable.getPaginatedData.and.callFake((url: string) =>
-        of(url === 'web/project-threads' ? { ...paginated([{ id: 3 }]), total: 30, last_page: 2 } as any : paginated([])));
+        of(url === 'web/project-threads' ? { data: [{ id: 3 }], meta: { total: 30, last_page: 2, per_page: 15, current_page: 1 } } as any : paginated([])));
       component.ngOnInit();
       const calls = ctx.genericTable.getPaginatedData.calls.allArgs();
       expect(calls.filter(a => a[0] === 'web/projects').length).toBe(2);
@@ -540,14 +540,15 @@ describe('ProjectsComponent', () => {
     /**
      * @description Opening a thread loads its messages and scrolls the message list to the bottom.
      * @input  openThread(thread); full thread { id: 3, messages: [...] }; message list element 100 px high content
-     * @output getOne('web/project-threads/3'); selectedThread replaced; loading false; scrollTop set to 100 (bottom)
+     * @output getWithMeta('web/project-threads/3'); selectedThread replaced (has_more from meta); loading false; scrollTop set to 100 (bottom)
      */
     it('opens a thread and scrolls to the newest message', fakeAsync(() => {
       const list = scrollList(100);
       component.pmMessageListEl = { nativeElement: list.el };
-      dh().getOne.and.returnValue(of({ ...thread, messages: [{ id: 10, author_type: 'customer', body: 'Hi' }] }));
+      dh().getWithMeta.and.returnValue(of({ data: { ...thread, messages: [{ id: 10, author_type: 'customer', body: 'Hi' }] }, meta: { has_more_older_messages: true } }));
       component.openThread(thread as any);
-      expect(dh().getOne).toHaveBeenCalledWith('web/project-threads/3');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
+      expect(component.selectedThread?.has_more_older_messages).toBeTrue();  // from meta (finding #6)
       expect(component.selectedThread?.messages?.length).toBe(1);
       expect(component.threadDetailLoading).toBeFalse();
       tick();
@@ -555,7 +556,7 @@ describe('ProjectsComponent', () => {
       component.pmMessageListEl = undefined;
       component.openThread(thread as any);
       flush();
-      dh().getOne.and.returnValue(throwError(() => new Error('x')));
+      dh().getWithMeta.and.returnValue(throwError(() => new Error('x')));
       component.openThread(thread as any);
       expect(component.threadDetailLoading).toBeFalse();
       component.closeThread();
@@ -650,16 +651,16 @@ describe('ProjectsComponent', () => {
 
     /**
      * @description Older messages are prepended and the scroll position is kept.
-     * @input  thread with messages [id 20], has_more true; list scrollHeight 100; API { data: [id 10], has_more false }
+     * @input  thread with messages [id 20], has_more true; list scrollHeight 100; API { data: [id 10], meta: {has_more false} }
      * @output get('…/messages?before_message_id=20'); messages [10, 20]; has_more false; loading false; scrollTop = new height − old height (0 here)
      */
     it('loads older messages', fakeAsync(() => {
       const list = scrollList(100);
       component.pmMessageListEl = { nativeElement: list.el };
       component.selectedThread = { ...thread, has_more_older_messages: true, messages: [{ id: 20 } as any] } as any;
-      dh().get.and.returnValue(of({ data: [{ id: 10 }], has_more_older_messages: false }));
+      dh().getWithMeta.and.returnValue(of({ data: [{ id: 10 }], meta: { has_more_older_messages: false } }));
       component.loadOlderMessages();
-      expect(dh().get).toHaveBeenCalledWith('web/project-threads/3/messages?before_message_id=20');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3/messages?before_message_id=20');
       expect(component.selectedThread!.messages!.map(m => m.id)).toEqual([10, 20]);
       expect(component.selectedThread!.has_more_older_messages).toBeFalse();
       expect(component.olderMessagesLoading).toBeFalse();
@@ -686,17 +687,17 @@ describe('ProjectsComponent', () => {
       component.loadOlderMessages();
       component.selectedThread!.messages = undefined;
       component.loadOlderMessages();
-      expect(dh().get).not.toHaveBeenCalled();
+      expect(dh().getWithMeta).not.toHaveBeenCalled();
       component.selectedThread!.messages = [{ id: 20 } as any];
-      dh().get.and.returnValue(throwError(() => new Error('x')));
+      dh().getWithMeta.and.returnValue(throwError(() => new Error('x')));
       component.loadOlderMessages();
       expect(component.olderMessagesLoading).toBeFalse();
       const response$ = new Subject<any>();
-      dh().get.and.returnValue(response$);
+      dh().getWithMeta.and.returnValue(response$);
       component.pmMessageListEl = undefined;
       component.loadOlderMessages();
       component.selectedThread!.messages = undefined;
-      response$.next({ data: [{ id: 5 }], has_more_older_messages: false });
+      response$.next({ data: [{ id: 5 }], meta: { has_more_older_messages: false } });
       expect(component.selectedThread!.messages!.map(m => m.id)).toEqual([5]);
       flush();
     }));
@@ -792,15 +793,15 @@ describe('ProjectsComponent', () => {
     it('opens and closes the thread modal', fakeAsync(() => {
       const list = scrollList(80);
       component.threadModalMessageListEl = { nativeElement: list.el };
-      dh().get.and.returnValue(of({ id: 3, subject: 'Q', messages: [{ id: 1 }] }));
+      dh().getWithMeta.and.returnValue(of({ data: { id: 3, subject: 'Q', messages: [{ id: 1 }] }, meta: { has_more_older_messages: false } }));
       component.openThreadModal({ id: 3 });
-      expect(dh().get).toHaveBeenCalledWith('web/project-threads/3');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
       expect(component.activeThread.messages.length).toBe(1);
       expect(component.threadModalLoading).toBeFalse();
       expect(document.body.style.position).toBe('fixed');
       tick();
       expect(list.sets).toEqual([80]);
-      dh().get.and.returnValue(throwError(() => new Error('x')));
+      dh().getWithMeta.and.returnValue(throwError(() => new Error('x')));
       component.openThreadModal({ id: 3 });
       expect(component.threadModalLoading).toBeFalse();
       component.closeThreadModal();
@@ -815,13 +816,13 @@ describe('ProjectsComponent', () => {
      * @output post('web/project-threads/3/reply', { body: 'Hi' }); second post FormData; reply cleared; failure keeps the text
      */
     it('sends replies from the thread modal', async () => {
-      dh().get.and.returnValue(of({ id: 3, messages: [] }));
+      dh().getWithMeta.and.returnValue(of({ data: { id: 3, messages: [] }, meta: { has_more_older_messages: false } }));
       component.activeThread = { id: 3 };
       component.threadModalReplyBody = ' Hi ';
       await component.sendThreadModalReply();
       expect(dh().post).toHaveBeenCalledWith('web/project-threads/3/reply', { body: 'Hi' });
       expect(component.threadModalReplyBody).toBe('');
-      expect(dh().get).toHaveBeenCalledWith('web/project-threads/3');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3');
       component.threadModalReplyFiles = [file('a.pdf')];
       component.threadModalReplyBody = 'With file';
       await component.sendThreadModalReply();
@@ -860,13 +861,13 @@ describe('ProjectsComponent', () => {
       const list = scrollList(60);
       component.threadModalMessageListEl = { nativeElement: list.el };
       component.activeThread = { id: 3, has_more_older_messages: true, messages: [{ id: 20 }] };
-      dh().get.and.returnValue(of({ data: [{ id: 10 }], has_more_older_messages: false }));
+      dh().getWithMeta.and.returnValue(of({ data: [{ id: 10 }], meta: { has_more_older_messages: false } }));
       component.loadOlderThreadModalMessages();
-      expect(dh().get).toHaveBeenCalledWith('web/project-threads/3/messages?before_message_id=20');
+      expect(dh().getWithMeta).toHaveBeenCalledWith('web/project-threads/3/messages?before_message_id=20');
       expect(component.activeThread.messages.map((m: any) => m.id)).toEqual([10, 20]);
       tick();
       expect(list.sets).toEqual([0]);
-      dh().get.calls.reset();
+      dh().getWithMeta.calls.reset();
       component.activeThread = null;
       component.loadOlderThreadModalMessages();
       component.activeThread = { id: 3, has_more_older_messages: true, messages: [{ id: 20 }] };
@@ -878,17 +879,17 @@ describe('ProjectsComponent', () => {
       component.activeThread.has_more_older_messages = true;
       component.activeThread.messages = [];
       component.loadOlderThreadModalMessages();
-      expect(dh().get).not.toHaveBeenCalled();
+      expect(dh().getWithMeta).not.toHaveBeenCalled();
       component.activeThread.messages = [{ id: 20 }];
-      dh().get.and.returnValue(throwError(() => new Error('x')));
+      dh().getWithMeta.and.returnValue(throwError(() => new Error('x')));
       component.loadOlderThreadModalMessages();
       expect(component.threadModalOlderMessagesLoading).toBeFalse();
       const response$ = new Subject<any>();
-      dh().get.and.returnValue(response$);
+      dh().getWithMeta.and.returnValue(response$);
       component.threadModalMessageListEl = undefined;
       component.loadOlderThreadModalMessages();
       component.activeThread.messages = undefined;
-      response$.next({ data: [{ id: 5 }], has_more_older_messages: false });
+      response$.next({ data: [{ id: 5 }], meta: { has_more_older_messages: false } });
       expect(component.activeThread.messages.map((m: any) => m.id)).toEqual([5]);
       flush();
     }));
@@ -921,7 +922,7 @@ describe('ProjectsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Shop');
     expect(fixture.nativeElement.textContent).toContain('Question about launch');
     component.closeManageModal();
-    dh().get.and.returnValue(of({ id: 3, subject: 'Question about launch', messages: [{ id: 1, author_type: 'admin', body: 'Hello', created_at: '2026-01-01' }] }));
+    dh().getWithMeta.and.returnValue(of({ data: { id: 3, subject: 'Question about launch', messages: [{ id: 1, author_type: 'admin', body: 'Hello', created_at: '2026-01-01' }] }, meta: { has_more_older_messages: false } }));
     component.openThreadModal({ id: 3 });
     fixture.componentRef.changeDetectorRef.markForCheck();
     fixture.detectChanges();

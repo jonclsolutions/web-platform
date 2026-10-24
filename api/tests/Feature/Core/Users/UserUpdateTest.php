@@ -62,8 +62,8 @@ class UserUpdateTest extends TestCase
 
         $this->putJson("/api/core/users/{$target->id}", ['full_name' => 'Renamed', 'internal_note' => 'n', 'dpp_hours_spent' => 4])
             ->assertOk()
-            ->assertJsonPath('full_name', 'Renamed')
-            ->assertJsonPath('dpp_hours_spent', 4);
+            ->assertJsonPath('data.full_name', 'Renamed')
+            ->assertJsonPath('data.dpp_hours_spent', 4);
 
         $this->assertCoreLog('update', 'User updated: ' . $target->user_email);
     }
@@ -125,7 +125,7 @@ class UserUpdateTest extends TestCase
         $me = $this->editor();
 
         $this->putJson("/api/core/users/{$me->id}", ['user_email' => 'mine@example.com'])
-            ->assertOk()->assertJsonPath('user_email', 'mine@example.com');
+            ->assertOk()->assertJsonPath('data.user_email', 'mine@example.com');
     }
 
     /**
@@ -211,8 +211,8 @@ class UserUpdateTest extends TestCase
 
         $this->putJson("/api/core/users/{$target->id}", ['role_id' => $b->id])
             ->assertOk()
-            ->assertJsonPath('roles.0.role_name', 'b')
-            ->assertJsonPath('user_permissions', []);
+            ->assertJsonPath('data.roles.0.role_name', 'b')
+            ->assertJsonPath('data.user_permissions', []);
 
         $this->assertCoreLog('update', 'all explicit permission grants were reset to zero');
     }
@@ -235,7 +235,7 @@ class UserUpdateTest extends TestCase
             'permission_ids' => [$this->permission('web-news-view')->id, $this->permission('web-news-update')->id],
         ])->assertOk();
 
-        $this->assertEqualsCanonicalizing(['core-security-view', 'web-news-update'], $response->json('user_permissions'));
+        $this->assertEqualsCanonicalizing(['core-security-view', 'web-news-update'], $response->json('data.user_permissions'));
     }
 
     /**
@@ -263,7 +263,7 @@ class UserUpdateTest extends TestCase
         $this->editor();
         $target = $this->user(['two_fa_forced_by_admin' => true, 'enable_2fa' => false]);
 
-        $this->putJson("/api/core/users/{$target->id}", ['full_name' => 'Kept'])->assertOk()->assertJsonPath('enable_2fa', true);
+        $this->putJson("/api/core/users/{$target->id}", ['full_name' => 'Kept'])->assertOk()->assertJsonPath('data.enable_2fa', true);
     }
 
     /**
@@ -295,8 +295,8 @@ class UserUpdateTest extends TestCase
         $this->putJson("/api/core/users/{$a->id}", ['two_fa_forced_by_admin' => true])->assertStatus(422);
         $this->putJson("/api/core/users/{$b->id}", ['two_fa_forced_by_admin' => true])
             ->assertOk()
-            ->assertJsonPath('two_fa_forced_by_admin', true)
-            ->assertJsonPath('enable_2fa', true);
+            ->assertJsonPath('data.two_fa_forced_by_admin', true)
+            ->assertJsonPath('data.enable_2fa', true);
     }
 
     /**
@@ -343,7 +343,7 @@ class UserUpdateTest extends TestCase
         $target->createToken('access-token');
         RefreshToken::create(['user_id' => $target->id, 'token' => hash('sha256', 'r'), 'expires_at' => now()->addDay()]);
 
-        $this->putJson("/api/core/users/{$target->id}", ['is_blocked' => true])->assertOk()->assertJsonPath('is_blocked', true);
+        $this->putJson("/api/core/users/{$target->id}", ['is_blocked' => true])->assertOk()->assertJsonPath('data.is_blocked', true);
 
         $this->assertSame(0, PersonalAccessToken::where('tokenable_id', $target->id)->count());
         $this->assertSame(0, RefreshToken::count());
@@ -361,7 +361,7 @@ class UserUpdateTest extends TestCase
         $target = $this->user([], $this->role('a'));
         $b = $this->role('b', ['core-security-delete']);
 
-        $this->putJson("/api/core/users/{$target->id}", ['role_id' => $b->id])->assertOk()->assertJsonPath('roles.0.role_name', 'b');
+        $this->putJson("/api/core/users/{$target->id}", ['role_id' => $b->id])->assertOk()->assertJsonPath('data.roles.0.role_name', 'b');
     }
 
     /**

@@ -37,8 +37,8 @@ class RoleTest extends TestCase
 
         $this->getJson('/api/core/permissions')
             ->assertOk()
-            ->assertJsonPath('*.permission_key', ['a-key', 'z-key', 'b-key'])
-            ->assertJsonStructure([['id', 'permission_key', 'description', 'module']]);
+            ->assertJsonPath('data.*.permission_key', ['a-key', 'z-key', 'b-key'])
+            ->assertJsonStructure(['data' => [['id', 'permission_key', 'description', 'module']]]);
     }
 
     /**
@@ -54,7 +54,7 @@ class RoleTest extends TestCase
 
         $this->getJson('/api/core/roles?per_page=1')
             ->assertOk()
-            ->assertJson(['total' => 1, 'per_page' => 1, 'current_page' => 1, 'last_page' => 1])
+            ->assertJson(['meta' => ['total' => 1, 'per_page' => 1, 'current_page' => 1, 'last_page' => 1]])
             ->assertJsonPath('data.0.role_name', 'editor')
             ->assertJsonPath('data.0.users_count', 1)
             ->assertJsonPath('data.0.permissions', ['web-news-view'])
@@ -75,9 +75,9 @@ class RoleTest extends TestCase
         $this->signIn($this->user());
 
         $this->getJson('/api/core/roles?only_trashed=1&search=news')
-            ->assertJsonPath('total', 1)->assertJsonPath('data.0.role_name', 'beta');
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.role_name', 'beta');
         $this->getJson('/api/core/roles?no_pagination=true&search=news')
-            ->assertOk()->assertJsonCount(1)->assertJsonPath('0.role_name', 'alpha');
+            ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.role_name', 'alpha');
     }
 
     /**
@@ -90,7 +90,7 @@ class RoleTest extends TestCase
         $role = $this->role('viewer');
         $this->signIn($this->user());
 
-        $this->getJson("/api/core/roles/{$role->id}")->assertOk()->assertJsonPath('role_name', 'viewer');
+        $this->getJson("/api/core/roles/{$role->id}")->assertOk()->assertJsonPath('data.role_name', 'viewer');
         $this->getJson('/api/core/roles/999')->assertStatus(404);
     }
 
@@ -127,9 +127,9 @@ class RoleTest extends TestCase
 
         $this->postJson('/api/core/roles', ['role_name' => 'editor', 'description' => 'd', 'forces_2fa' => true])
             ->assertCreated()
-            ->assertJsonPath('role_name', 'editor')
-            ->assertJsonPath('forces_2fa', true)
-            ->assertJsonPath('users_count', 0);
+            ->assertJsonPath('data.role_name', 'editor')
+            ->assertJsonPath('data.forces_2fa', true)
+            ->assertJsonPath('data.users_count', 0);
         $this->assertCoreLog('create', 'Created role: editor');
 
         $this->postJson('/api/core/roles', ['role_name' => 'editor'])
@@ -148,7 +148,7 @@ class RoleTest extends TestCase
         $role = $this->role('editor');
 
         $this->putJson("/api/core/roles/{$role->id}", ['role_name' => 'editor', 'description' => 'new'])
-            ->assertOk()->assertJsonPath('description', 'new');
+            ->assertOk()->assertJsonPath('data.description', 'new');
         $this->assertCoreLog('update', 'Updated role: editor');
 
         $this->putJson('/api/core/roles/' . $admin->roles->first()->id, ['role_name' => 'sysadmin'])
@@ -169,7 +169,7 @@ class RoleTest extends TestCase
         $this->permission('b-key');
 
         $this->putJson("/api/core/roles/{$role->id}/permissions", ['permission_keys' => ['a-key', 'b-key']])
-            ->assertOk()->assertJsonPath('permissions', ['a-key', 'b-key']);
+            ->assertOk()->assertJsonPath('data.permissions', ['a-key', 'b-key']);
         $this->assertCoreLog('sync_permissions', '(2 permissions)');
 
         $this->putJson("/api/core/roles/{$role->id}/permissions", ['permission_keys' => ['nope']])
@@ -212,7 +212,7 @@ class RoleTest extends TestCase
         $role = $this->role('old');
         $role->delete();
 
-        $this->postJson("/api/core/roles/{$role->id}/restore")->assertOk()->assertJsonPath('role_name', 'old');
+        $this->postJson("/api/core/roles/{$role->id}/restore")->assertOk()->assertJsonPath('data.role_name', 'old');
 
         $this->assertFalse($role->fresh()->trashed());
         $this->assertCoreLog('restore', 'Restored role: old');

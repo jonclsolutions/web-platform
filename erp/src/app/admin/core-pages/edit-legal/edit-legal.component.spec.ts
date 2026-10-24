@@ -24,7 +24,7 @@ describe('EditLegalComponent', () => {
   let component: EditLegalComponent;
 
   const types = [{ id: 1, slug: 'tos', title: 'Terms' }, { id: 2, slug: 'gdpr', title: 'Privacy' }];
-  const languages = { languages: [{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }] };
+  const languages = [{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }];
   /** sections[typeId][lang] */
   let sections: Record<number, Record<string, any[]>>;
 
@@ -248,7 +248,7 @@ describe('EditLegalComponent', () => {
   it('handles failing requests', fakeAsync(async () => {
     (ctx.dataHandler as any).getCollection.and.callFake((url: string) => {
       if (url === 'legal/document-types') return throwError(() => new Error('x'));
-      if (url === 'languages/web') return of({ languages: [{ code: 'en', name: 'English', active: true }] });
+      if (url === 'languages/web') return of([{ code: 'en', name: 'English', active: true }]);
       return throwError(() => new Error('x'));
     });
     init();

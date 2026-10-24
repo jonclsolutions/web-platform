@@ -47,6 +47,8 @@
  * `invalidateCurrentSections()` + `refreshData()` (skutečný zdroj dat téhle komponenty).
  * @refactor-note (2026-10-21) Removed unused code (no reference in TS, templates or
  *   string literals): unused constructor dependency `fb: FormBuilder`.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): the language list
+ *  is the payload itself (was `{languages}`).
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
@@ -175,7 +177,7 @@ protected override translationSection: string = 'edit-legal';
     )
       .pipe(catchError(() => of({ languages: [] })))
       .subscribe((res: any) => {
-        this.languages = (res?.languages ?? []).filter((l: any) => l.active !== false);
+        this.languages = (Array.isArray(res) ? res : []).filter((l: any) => l.active !== false);  // payload = list (finding #6)
 
         if (this.languages.length > 0 && !this.languages.find(l => l.code === this.activeLang)) {
           this.activeLang = this.languages[0].code;

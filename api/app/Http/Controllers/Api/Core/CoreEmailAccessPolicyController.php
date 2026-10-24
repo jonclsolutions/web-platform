@@ -29,6 +29,8 @@
  * `response.data` (tedy `undefined`), frontend přidal do seznamu `undefined` a šablona
  * spadla na `{{ rule.value }}` - záznam se přitom do DB zapsal správně, chyba byla
  * čistě v přenosu odpovědi zpět.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -58,7 +60,7 @@ class CoreEmailAccessPolicyController extends Controller
             return $this->forbidden();
         }
 
-        return response()->json([
+        return $this->respond([
             'primary_email_domain' => CoreSecuritySetting::current()->primary_email_domain,
             'rules' => CoreEmailAccessRule::orderBy('type')->orderBy('value')->get(['id', 'type', 'value']),
         ]);
@@ -100,7 +102,7 @@ class CoreEmailAccessPolicyController extends Controller
             'CoreSecuritySetting'
         );
 
-        return response()->json(['data' => $setting]);
+        return $this->respond($setting);
     }
 
     /**
@@ -156,7 +158,7 @@ class CoreEmailAccessPolicyController extends Controller
             'CoreEmailAccessRule'
         );
 
-        return response()->json(['data' => $rule], 201);
+        return $this->respond($rule, 201);
     }
 
     /**

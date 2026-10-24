@@ -14,6 +14,8 @@
  *
  * @refactor-note (2026-10-23) sanitizeTitles(): removed the unreachable non-array branch - the
  *   request validation (`titles.*.title_i18n` present|array) guarantees an array.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -43,13 +45,11 @@ class PageTitleController extends Controller
     /**
      * Lists all pages with their titles for the admin (web, e-shop, administration).
      *
-     * @return JsonResponse { page_titles: PageTitle[] }
+     * @return JsonResponse { data: PageTitle[] }
      */
     public function index(): JsonResponse
     {
-        return response()->json([
-            'page_titles' => $this->orderedRows(),
-        ]);
+        return $this->respond($this->orderedRows());
     }
 
     /**
@@ -57,7 +57,7 @@ class PageTitleController extends Controller
      * are changed, other languages already stored stay untouched.
      *
      * @param Request $request { titles: [{ id: int, title_i18n: { lang: string } }] }
-     * @return JsonResponse { page_titles: PageTitle[] } – the fresh full list.
+     * @return JsonResponse { data: PageTitle[] } – the fresh full list.
      */
     public function update(Request $request): JsonResponse
     {
@@ -107,16 +107,14 @@ class PageTitleController extends Controller
             );
         }
 
-        return response()->json([
-            'page_titles' => $this->orderedRows(),
-        ]);
+        return $this->respond($this->orderedRows());
     }
 
     /**
      * Public map of titles for the Angular PageTitleStrategy.
      * Empty translations are left out, so the frontend can fall back cleanly.
      *
-     * @return JsonResponse { titles: { "web.home": { "cz": "...", "en": "..." }, ... } }
+     * @return JsonResponse { data: { "web.home": { "cz": "...", "en": "..." }, ... } }
      */
     public function publicIndex(): JsonResponse
     {
@@ -130,7 +128,7 @@ class PageTitleController extends Controller
             $titles["{$row->area}.{$row->page_key}"] = (object) $filled;
         }
 
-        return response()->json(['titles' => (object) $titles]);
+        return $this->respond((object) $titles);
     }
 
     /**

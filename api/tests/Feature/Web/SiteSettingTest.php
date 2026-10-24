@@ -49,7 +49,7 @@ class SiteSettingTest extends TestCase
         $this->getJson('/api/web/settings')->assertStatus(403);
 
         $this->admin();
-        $this->getJson('/api/web/settings')->assertOk()->assertJsonPath('is_web_active', true);
+        $this->getJson('/api/web/settings')->assertOk()->assertJsonPath('data.is_web_active', true);
         $this->assertSame(1, WebSiteSetting::count());
     }
 
@@ -118,7 +118,7 @@ class SiteSettingTest extends TestCase
         $this->admin();
 
         $this->getJson('/api/web/settings/raw-request-email-template')
-            ->assertOk()->assertJson(['raw_request_email_subject_i18n' => null, 'raw_request_email_labels_i18n' => null]);
+            ->assertOk()->assertJson(['data' => ['raw_request_email_subject_i18n' => null, 'raw_request_email_labels_i18n' => null]]);
 
         $this->putJson('/api/web/settings/raw-request-email-template', [
             'raw_request_email_subject_i18n' => ['cz' => 'Dekujeme', 'en' => 'Thank you'],
@@ -137,12 +137,12 @@ class SiteSettingTest extends TestCase
      */
     public function test_public_status(): void
     {
-        $this->getJson('/api/web/public/status')->assertOk()->assertExactJson(['is_web_active' => true]);
+        $this->getJson('/api/web/public/status')->assertOk()->assertExactJson(['data' => ['is_web_active' => true]]);
         WebSiteSetting::query()->update(['is_web_active' => false]);
 
-        $this->getJson('/api/web/public/status')->assertExactJson(['is_web_active' => true]);
+        $this->getJson('/api/web/public/status')->assertExactJson(['data' => ['is_web_active' => true]]);
         Cache::flush();
-        $this->getJson('/api/web/public/status')->assertExactJson(['is_web_active' => false]);
+        $this->getJson('/api/web/public/status')->assertExactJson(['data' => ['is_web_active' => false]]);
     }
 
     /**
@@ -159,11 +159,11 @@ class SiteSettingTest extends TestCase
         Cache::forget('site_setting_active_web');
 
         foreach (['raw_request_commissions', 'sales_orders', 'job_applications'] as $form) {
-            $this->postJson("/api/{$form}", [])->assertStatus(503)->assertExactJson(['success' => false, 'message' => 'Back soon']);
+            $this->postJson("/api/{$form}", [])->assertStatus(503)->assertExactJson(['message' => 'Back soon']);
         }
         $this->getJson('/api/public/sales-leads/any-token')->assertStatus(503);
 
-        $this->getJson('/api/web/public/status')->assertOk()->assertExactJson(['is_web_active' => false]);
+        $this->getJson('/api/web/public/status')->assertOk()->assertExactJson(['data' => ['is_web_active' => false]]);
         $this->getJson('/api/public/legal/config')->assertOk();
 
         WebSiteSetting::query()->update(['is_web_active' => true]);

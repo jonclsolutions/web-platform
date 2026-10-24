@@ -22,10 +22,10 @@ describe('CatalogComponent', () => {
   let fixture: ComponentFixture<CatalogComponent>;
   let page: CatalogComponent;
   let shop: jasmine.SpyObj<ShopPublicService>;
-  const products = { data: [{ id: 1, name: 'Mug', slug: 'mug', stock_quantity: 3, prices: { price_eur_with_vat: 10 }, images: [] }], total: 31, last_page: 3 };
+  const products = { data: [{ id: 1, name: 'Mug', slug: 'mug', stock_quantity: 3, prices: { price_eur_with_vat: 10 }, images: [] }], meta: { total: 31, last_page: 3, per_page: 12, current_page: 1 } };
 
   /** Creates the page with the given service answers. */
-  function create(categories: any = of({ data: [{ id: 1, name: 'Cups' }] }), list: any = of(products)): void {
+  function create(categories: any = of([{ id: 1, name: 'Cups' }]), list: any = of(products)): void {
     shop = jasmine.createSpyObj('ShopPublicService', ['getCategories', 'getProducts']);
     shop.getCategories.and.returnValue(categories);
     shop.getProducts.and.returnValue(list);
@@ -37,7 +37,7 @@ describe('CatalogComponent', () => {
   }
 
   /**
-   * @description Start: categories (paginated or plain list) and page 1 with default sorting;
+   * @description Start: categories (the payload list, finding #6) and page 1 with default sorting;
    *   empty filters are not sent; product cards rendered.
    * @input Default answers.
    * @output categories [Cups]; getProducts({page 1, per_page 15, sort_by, sort_direction}); total 31, pages 3; 'Mug' rendered.

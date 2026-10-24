@@ -63,7 +63,7 @@ class CoreLogTest extends TestCase
 
         $this->getJson('/api/core/logs?per_page=1')
             ->assertOk()
-            ->assertJson(['total' => 2, 'per_page' => 1, 'last_page' => 2])
+            ->assertJson(['meta' => ['total' => 2, 'per_page' => 1, 'last_page' => 2]])
             ->assertJsonPath('data.0.id', $today->id);
     }
 
@@ -80,7 +80,7 @@ class CoreLogTest extends TestCase
         $this->log();
 
         foreach (["id={$a->id}", 'event_type=login_failed', 'module=Auth', 'user_plain=eve@', 'origin=10.1', 'search=Bad%20pass'] as $filter) {
-            $this->getJson("/api/core/logs?{$filter}")->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $a->id);
+            $this->getJson("/api/core/logs?{$filter}")->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $a->id);
         }
     }
 
@@ -95,7 +95,7 @@ class CoreLogTest extends TestCase
         $a = $this->log();
         $b = $this->log();
 
-        $this->getJson('/api/core/logs?no_pagination=true&sort_by=id&sort_direction=asc')->assertOk()->assertJsonPath('*.id', [$a->id, $b->id]);
+        $this->getJson('/api/core/logs?no_pagination=true&sort_by=id&sort_direction=asc')->assertOk()->assertJsonPath('data.*.id', [$a->id, $b->id]);
     }
 
     /**
@@ -108,7 +108,7 @@ class CoreLogTest extends TestCase
         $this->signIn($this->userWith(['view-core']));
         $log = $this->log(['context_data' => ['k' => 'v']]);
 
-        $this->getJson("/api/core/logs/{$log->id}")->assertOk()->assertJsonPath('context_data.k', 'v');
+        $this->getJson("/api/core/logs/{$log->id}")->assertOk()->assertJsonPath('data.context_data.k', 'v');
         $this->getJson('/api/core/logs/999')->assertStatus(404);
     }
 
@@ -124,9 +124,9 @@ class CoreLogTest extends TestCase
 
         $this->postJson('/api/core/logs', ['event_type' => 'export_csv', 'module' => 'core/users', 'description' => 'Exported'])
             ->assertCreated()
-            ->assertJsonPath('user_plain', $me->user_email)
-            ->assertJsonPath('user_id', $me->id)
-            ->assertJsonPath('origin', '127.0.0.1');
+            ->assertJsonPath('data.user_plain', $me->user_email)
+            ->assertJsonPath('data.user_id', $me->id)
+            ->assertJsonPath('data.origin', '127.0.0.1');
 
         $this->postJson('/api/core/logs', [])->assertStatus(422)->assertJsonValidationErrors(['event_type', 'module', 'description']);
     }

@@ -57,7 +57,7 @@ describe('BaseTranslationEditorComponent', () => {
 
   /** The SAME objects are returned every time - like a shared cached response. */
   const shared = {
-    languages: { languages: [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }, { code: 'en', name: 'English', active: true }] },
+    languages: [{ code: 'cz', name: 'Čeština', active: true, isBuiltIn: true }, { code: 'en', name: 'English', active: true }],
     cz: { home: { title: 'Domů' } },
     en: { home: { title: 'Home' } }
   };

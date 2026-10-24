@@ -62,8 +62,8 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "ssl": true,
-            "sslKey": "ssl/laragon.key",
-            "sslCert": "ssl/laragon.crt",
+            "sslKey": "ssl/localhost.key",
+            "sslCert": "ssl/localhost.crt",
             "proxyConfig": "proxy.conf.json"
           },
           "configurations": {

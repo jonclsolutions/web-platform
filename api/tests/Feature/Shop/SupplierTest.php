@@ -81,8 +81,8 @@ class SupplierTest extends TestCase
         $this->assertSame([$a->id], $ids('ico=12'));
         $this->assertSame([$a->id], $ids('created_at=' . now()->subDay()->toDateString()));
         $this->assertSame(['Gone'], array_column($this->getJson('/api/shop/suppliers?only_trashed=1')->json('data'), 'name'));
-        $this->getJson('/api/shop/suppliers?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/shop/suppliers?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/shop/suppliers?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/shop/suppliers?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
     }
 
     /**
@@ -94,16 +94,16 @@ class SupplierTest extends TestCase
     {
         $this->signIn($this->userWith(self::ALL));
 
-        $id = $this->postJson('/api/shop/suppliers', ['name' => 'Acme', 'ico' => '123', 'is_active' => true])->assertCreated()->assertJsonPath('ico', '123')->json('id');
+        $id = $this->postJson('/api/shop/suppliers', ['name' => 'Acme', 'ico' => '123', 'is_active' => true])->assertCreated()->assertJsonPath('data.ico', '123')->json('data.id');
         $this->assertShopLog('create', 'Created supplier: Acme');
         $this->postJson('/api/shop/suppliers', ['name' => 'Other', 'ico' => '123', 'is_active' => true])
             ->assertStatus(422)->assertJsonPath('errors.ico.0', 'A supplier with this company ID already exists.');
         $this->postJson('/api/shop/suppliers', [])->assertStatus(422)->assertJsonValidationErrors(['name', 'is_active']);
 
         $other = $this->supplier(['ico' => '999']);
-        $this->getJson("/api/shop/suppliers/{$id}")->assertOk()->assertJsonPath('name', 'Acme');
+        $this->getJson("/api/shop/suppliers/{$id}")->assertOk()->assertJsonPath('data.name', 'Acme');
         $this->getJson('/api/shop/suppliers/999')->assertStatus(404);
-        $this->putJson("/api/shop/suppliers/{$id}", ['name' => 'Acme 2', 'ico' => '123', 'is_active' => false])->assertOk()->assertJsonPath('is_active', false);
+        $this->putJson("/api/shop/suppliers/{$id}", ['name' => 'Acme 2', 'ico' => '123', 'is_active' => false])->assertOk()->assertJsonPath('data.is_active', false);
         $this->assertShopLog('update', "Updated supplier ID: {$id}");
         $this->putJson("/api/shop/suppliers/{$id}", ['name' => 'Acme', 'ico' => '999', 'is_active' => true])->assertStatus(422);
         $this->putJson('/api/shop/suppliers/999', ['name' => 'X1', 'is_active' => true])->assertStatus(404);
@@ -129,7 +129,7 @@ class SupplierTest extends TestCase
         $this->deleteJson("/api/shop/suppliers/{$b->id}?force_delete=1")->assertNoContent();
         $this->assertNull(ShopSupplier::withTrashed()->find($b->id));
         $this->deleteJson('/api/shop/suppliers/999')->assertStatus(404);
-        $this->postJson("/api/shop/suppliers/{$a->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
+        $this->postJson("/api/shop/suppliers/{$a->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null);
         $this->postJson('/api/shop/suppliers/999/restore')->assertStatus(404);
 
         $this->postJson('/api/shop/suppliers/bulk-delete', ['ids' => [$a->id, 999]])->assertOk()
@@ -197,8 +197,8 @@ class SupplierTest extends TestCase
         $csv = $template . implode("\n", array_map(fn ($r) => implode(';', $r), $rows)) . "\n";
 
         $response = $this->post('/api/shop/suppliers/import/validate', ['format' => 'csv', 'file' => $this->importFile('csv', $csv)], ['Accept' => 'application/json'])
-            ->assertOk()->assertJson(['total_rows' => 5, 'valid_rows' => 4, 'invalid_rows' => 1, 'can_commit' => true])->assertJsonPath('errors.0.row', 6);
-        $batch = CoreImportBatch::findOrFail($response->json('import_token'));
+            ->assertOk()->assertJson(['data' => ['total_rows' => 5, 'valid_rows' => 4, 'invalid_rows' => 1, 'can_commit' => true]])->assertJsonPath('data.errors.0.row', 6);
+        $batch = CoreImportBatch::findOrFail($response->json('data.import_token'));
         $this->assertSame('shop/suppliers', $batch->resource);
         Storage::disk('local')->assertExists($batch->temp_path);
         $this->assertSame(0, ShopSupplier::count());
@@ -229,11 +229,11 @@ class SupplierTest extends TestCase
         $this->signIn($this->userWith(['shop-suppliers-create']));
         $file = fn () => $this->importFile('json', json_encode([$this->row(['name' => 'Alpha', 'is_active' => '1'])]));
 
-        $expired = $this->post('/api/shop/suppliers/import/validate', ['format' => 'json', 'file' => $file()], ['Accept' => 'application/json'])->json('import_token');
+        $expired = $this->post('/api/shop/suppliers/import/validate', ['format' => 'json', 'file' => $file()], ['Accept' => 'application/json'])->json('data.import_token');
         Storage::disk('local')->delete(CoreImportBatch::find($expired)->temp_path);
         $this->postJson('/api/shop/suppliers/import/commit', ['import_token' => $expired])->assertStatus(410)->assertJsonPath('message', fn ($m) => str_contains($m, 'has expired'));
 
-        $broken = $this->post('/api/shop/suppliers/import/validate', ['format' => 'json', 'file' => $file()], ['Accept' => 'application/json'])->json('import_token');
+        $broken = $this->post('/api/shop/suppliers/import/validate', ['format' => 'json', 'file' => $file()], ['Accept' => 'application/json'])->json('data.import_token');
         $this->failOn('shop_suppliers', 'INSERT');
         $this->postJson('/api/shop/suppliers/import/commit', ['import_token' => $broken])->assertStatus(500)->assertExactJson(['message' => 'Import failed.']);
         $this->assertSame('failed', CoreImportBatch::find($broken)->status);

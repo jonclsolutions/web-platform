@@ -77,8 +77,8 @@ class ProjectTest extends TestCase
             ->assertJsonPath('data.0.order.id', $order->id)
             ->assertJsonPath('data.0.public_url', "https://www.example.com/projects/{$a->access_token}");
         $this->assertSame(['Gone'], array_column($this->getJson('/api/web/projects?only_trashed=1')->json('data'), 'name'));
-        $this->getJson('/api/web/projects?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/web/projects?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/web/projects?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/web/projects?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
     }
 
     /**

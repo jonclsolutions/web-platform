@@ -38,6 +38,8 @@
  *   contact_phone 30 → 20, footer_text 1000 → 255, social link name 100 → 50, url 500 → 255.
  * - The first save on an empty table used firstOrCreate([]) = INSERT without the required
  *   columns (and with the missing created_at) → 500; now a new row is filled and saved once.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -67,7 +69,7 @@ class SiteConfigurationController extends Controller
      */
     public function index(): JsonResponse
     {
-        return response()->json([
+        return $this->respond([
             'settings'     => SiteSetting::first(),
             'social_links' => SocialLink::orderBy('position', 'asc')->get(),
         ]);
@@ -134,7 +136,7 @@ class SiteConfigurationController extends Controller
 
         $this->logAction($request, CoreLog::class, 'update', 'Legal', $description, $settings->id, 'SiteConfiguration', ['logo_file']);
 
-        return response()->json($settings);
+        return $this->respond($settings);
     }
 
     /**
@@ -158,7 +160,7 @@ class SiteConfigurationController extends Controller
             $settings->copyright_text = $copyrightI18n[$lang] ?? $copyrightI18n['cz'] ?? $settings->copyright_text;
         }
 
-        return response()->json([
+        return $this->respond([
             'settings'     => $settings,
             'social_links' => $socialLinks,
         ]);
@@ -192,7 +194,7 @@ class SiteConfigurationController extends Controller
         ]);
 
         $this->logAction($request, CoreLog::class, 'create', 'Legal', "Added social network: {$social->name}", $social->id, 'SocialLink', ['icon_file']);
-        return response()->json($social, 201);
+        return $this->respond($social, 201);
     }
 
     /**
@@ -229,7 +231,7 @@ class SiteConfigurationController extends Controller
         ]);
 
         $this->logAction($request, CoreLog::class, 'update', 'Legal', "Updated social network: {$social->name}", $social->id, 'SocialLink', ['icon_file']);
-        return response()->json($social);
+        return $this->respond($social);
     }
 
     /**

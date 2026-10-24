@@ -18,6 +18,8 @@
  * - App\Models\Core\CoreSecurityEvent: bezpečnostní monitoring, viz refactor-note
  *   (2026-08-24) níže - oddělené od `core_logs` (audit vs. diagnostika hrozeb).
  * - App\Mail\Auth\PasswordResetRequested / PasswordChangedNotification: e-mailové notifikace
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Auth;
@@ -202,12 +204,11 @@ class PasswordResetController extends Controller
             new PasswordChangedNotification($user, now()->format('d.m.Y H:i'))
         );
 
-        return response()->json([
-            'message' => 'Password has been successfully changed. You can now log in with your new password.',
+        return $this->respond([
             // E-mail vracíme jen pro zobrazení potvrzení na frontendu (např. "heslo změněno pro: x@y.cz"),
             // aby uživatel měl jistotu, že se změna týkala správného účtu.
             'email' => $user->user_email,
-        ]);
+        ], 200, [], 'Password has been successfully changed. You can now log in with your new password.');
     }
 
     /**

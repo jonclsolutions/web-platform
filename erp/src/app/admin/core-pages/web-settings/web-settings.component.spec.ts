@@ -28,19 +28,18 @@ describe('WebSettingsComponent', () => {
     settings: { company_name: 'RPSW', ico: '1', dic: 'CZ1', contact_email: 'a@b.cz', brand_tagline: 'Tag', copyright_text: '©', logo_path: 'logo.png' },
     social_links: [{ id: 5, name: 'LinkedIn', url: 'https://l', icon_path: 'li.png', position: 1 }]
   };
-  const pageTitles = {
-    page_titles: [
-      { id: 1, area: 'web', page_key: 'home', route_path: '/home', title_i18n: { cz: 'Domů' } },
-      { id: 2, area: 'web', page_key: 'faq', route_path: '/faq', title_i18n: { cz: 'FAQ', en: 'FAQ' } },
-      { id: 3, area: 'admin', page_key: 'login', route_path: '/auth/login', title_i18n: { cz: 'Přihlášení' } }
-    ]
-  };
+  /** Payload of GET legal/config/page-titles - the rows themselves (finding #6, was {page_titles}). */
+  const pageTitles = [
+    { id: 1, area: 'web', page_key: 'home', route_path: '/home', title_i18n: { cz: 'Domů' } },
+    { id: 2, area: 'web', page_key: 'faq', route_path: '/faq', title_i18n: { cz: 'FAQ', en: 'FAQ' } },
+    { id: 3, area: 'admin', page_key: 'login', route_path: '/auth/login', title_i18n: { cz: 'Přihlášení' } }
+  ];
 
   beforeEach(async () => {
     ctx = createAdminTestContext();
     (ctx.dataHandler as any).get.and.callFake((url: string) => {
-      if (url === 'languages/web') return of({ languages: [{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }] });
-      if (url === 'languages/shop') return of({ languages: [] });
+      if (url === 'languages/web') return of([{ code: 'cz', name: 'Čeština', active: true }, { code: 'en', name: 'English', active: true }]);
+      if (url === 'languages/shop') return of([]);
       if (url === 'legal/config') return of(JSON.parse(JSON.stringify(config)));
       if (url === 'legal/config/page-titles') return of(JSON.parse(JSON.stringify(pageTitles)));
       return of({});
@@ -143,7 +142,7 @@ describe('WebSettingsComponent', () => {
      */
     it('reports a failed load', fakeAsync(() => {
       (ctx.dataHandler as any).get.and.callFake((url: string) =>
-        url === 'legal/config' ? throwError(() => new Error('x')) : of({ languages: [] }));
+        url === 'legal/config' ? throwError(() => new Error('x')) : of([]));
       init();
       expect(component.errorMessage).toBe('web-settings.load_error_message');
       discardPeriodicTasks();
@@ -287,7 +286,7 @@ describe('WebSettingsComponent', () => {
     it('reports a failed page-titles load', fakeAsync(() => {
       init();
       (ctx.dataHandler as any).get.and.callFake((url: string) =>
-        url === 'legal/config/page-titles' ? throwError(() => new Error('x')) : of({ languages: [] }));
+        url === 'legal/config/page-titles' ? throwError(() => new Error('x')) : of([]));
       component.switchTab('page_titles');
       expect(component.ptLoadError).toBeTrue();
       expect(component.ptLoading).toBeFalse();
@@ -321,7 +320,7 @@ describe('WebSettingsComponent', () => {
      */
     it('handles languages, tabs and names', fakeAsync(() => {
       (ctx.dataHandler as any).get.and.callFake((url: string) => url === 'languages/web'
-        ? of({ languages: [{ code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }] })
+        ? of([{ code: 'en', name: 'English', active: true }, { code: 'de', name: 'Deutsch', active: false }])
         : of(JSON.parse(JSON.stringify(config))));
       init();
       expect(component.languages.map(l => l.code)).toEqual(['en']);

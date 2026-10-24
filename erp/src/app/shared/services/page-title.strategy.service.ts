@@ -26,6 +26,8 @@
  *   (circular DI) and the app did not start. Both services are now resolved lazily
  *   through the Injector on the FIRST updateTitle() call (after the first
  *   navigation, when DI is fully built). Nothing HTTP-related runs in the constructor.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): the titles map is
+ *  the payload itself (was `{titles}`).
  */
 
 import { Injectable, Injector, inject } from '@angular/core';
@@ -85,7 +87,7 @@ export class PageTitleStrategy extends TitleStrategy {
     publicData.get('public/legal/page-titles')
       .pipe(catchError(() => of(null)))
       .subscribe((res: any) => {
-        const map = res?.titles;
+        const map = res;  // payload = the titles map (finding #6, was {titles})
         this.titles = (map && typeof map === 'object' && !Array.isArray(map)) ? map : {};
         this.apply();
       });

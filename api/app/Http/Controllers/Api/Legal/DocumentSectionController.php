@@ -21,6 +21,8 @@
  * Web a Shop), stejně jako auth, uživatelé, role a site settings.
  *
  * @bugfix-note (2026-10-23) unknown id → 500 instead of 404 in update / destroy (findOrFail inside try).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Legal;
@@ -63,7 +65,7 @@ class DocumentSectionController extends Controller
         }
 
         $data = $query->orderBy('position', 'asc')->get();
-        return response()->json(DocumentSectionResource::collection($data));
+        return $this->respond(DocumentSectionResource::collection($data));
     }
 
     /**
@@ -77,7 +79,7 @@ class DocumentSectionController extends Controller
         try {
             $section = DocumentSection::create($request->validated());
             $this->logAction($request, CoreLog::class, 'create', 'Legal', "Created section: {$section->heading} ({$section->lang})", $section->id, 'DocumentSection');
-            return response()->json(new DocumentSectionResource($section), 201);
+            return $this->respond(new DocumentSectionResource($section), 201);
         } catch (\Exception $e) {
             $this->logAction($request, CoreLog::class, 'error', 'Legal', "Error creating section: " . $e->getMessage(), null, 'DocumentSection');
             Log::error("Legal Store Error: " . $e->getMessage());
@@ -94,7 +96,7 @@ class DocumentSectionController extends Controller
     public function show($id): JsonResponse
     {
         $section = DocumentSection::findOrFail($id);
-        return response()->json(new DocumentSectionResource($section));
+        return $this->respond(new DocumentSectionResource($section));
     }
 
     /**
@@ -112,7 +114,7 @@ class DocumentSectionController extends Controller
             $section->update($request->validated());
 
             $this->logAction($request, CoreLog::class, 'update', 'Legal', "Updated section: {$section->heading} ({$section->lang})", $section->id, 'DocumentSection');
-            return response()->json(new DocumentSectionResource($section));
+            return $this->respond(new DocumentSectionResource($section));
         } catch (\Exception $e) {
             $this->logAction($request, CoreLog::class, 'error', 'Legal', "Error updating section ID {$id}: " . $e->getMessage(), (int)$id, 'DocumentSection');
             Log::error("Legal Update Error: " . $e->getMessage());
@@ -154,7 +156,7 @@ class DocumentSectionController extends Controller
 
         $lastUpdate = $data->max('updated_at');
 
-        return response()->json([
+        return $this->respond([
             'header_main' => $documentType->title,
             'last_update_date' => $lastUpdate?->format('d.m.Y') ?? date('d.m.Y'),
             // @bugfix-note (2026-10-23) Was a hardcoded Czech sentence in every language (open

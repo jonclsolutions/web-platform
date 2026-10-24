@@ -24,6 +24,8 @@
  * omezení na posledních N zpráv by hledání ve starších zprávách tiše rozbilo.
  * Pokud se v budoucnu ukáže výkonnostní problém i tady, hledání bude muset přejít
  * na server-side endpoint místo klient-side filtru nad plně načtenými daty.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -73,7 +75,7 @@ class WebProjectPublicController extends Controller
 
         $sessionToken = WebProjectSession::issueFor($project, $request->ip(), $request->userAgent());
 
-        return response()->json([
+        return $this->respond([
             'session_token' => $sessionToken,
             'expires_in'    => WebProjectSession::LIFETIME_MINUTES * 60,
             'project'       => new WebProjectPublicResource($project->load('checkpoints')),
@@ -83,7 +85,7 @@ class WebProjectPublicController extends Controller
     public function me(Request $request): JsonResponse
     {
         $project = $request->attributes->get('current_project');
-        return response()->json(new WebProjectPublicResource($project->load('checkpoints')));
+        return $this->respond(new WebProjectPublicResource($project->load('checkpoints')));
     }
 
     public function logout(Request $request): JsonResponse
@@ -99,7 +101,7 @@ class WebProjectPublicController extends Controller
         $project = $request->attributes->get('current_project');
         $threads = $project->threads()->with('messages.attachments')->get();
 
-        return response()->json(WebProjectThreadResource::collection($threads));
+        return $this->respond(WebProjectThreadResource::collection($threads));
     }
 
     /**
@@ -122,10 +124,7 @@ class WebProjectPublicController extends Controller
 
         $thread->update(['customer_last_read_at' => now()]);
 
-        $response = (new WebProjectThreadResource($thread))->resolve();
-        $response['has_more_older_messages'] = $hasMore;
-
-        return response()->json($response);
+        return $this->respond(new WebProjectThreadResource($thread), 200, ['has_more_older_messages' => $hasMore]);
     }
 
     /**
@@ -149,10 +148,7 @@ public function olderMessages(Request $request): JsonResponse
 
     [$messages, $hasMore] = $thread->pagedMessages($beforeId ? (int) $beforeId : null, $limit);
 
-    return response()->json([
-        'data'                    => WebProjectThreadMessageResource::collection($messages),
-        'has_more_older_messages' => $hasMore,
-    ]);
+    return $this->respond(WebProjectThreadMessageResource::collection($messages), 200, ['has_more_older_messages' => $hasMore]);
 }
 /**
  * @description Polled every 15s by the customer portal while a thread is open -
@@ -178,10 +174,7 @@ public function newMessages(Request $request): JsonResponse
         $thread->update(['customer_last_read_at' => now()]);
     }
 
-    return response()->json([
-        'data'   => WebProjectThreadMessageResource::collection($messages),
-        'status' => $thread->status,
-    ]);
+    return $this->respond(WebProjectThreadMessageResource::collection($messages), 200, ['status' => $thread->status]);
 }
     /**
      * @bugfix-note (2026-09-08) `author_label` for the customer's first message is
@@ -211,7 +204,7 @@ public function newMessages(Request $request): JsonResponse
 
         $this->notifyProjectContact($project, $thread, isNewThread: true);
 
-        return response()->json(new WebProjectThreadResource($thread->load('messages.attachments')), 201);
+        return $this->respond(new WebProjectThreadResource($thread->load('messages.attachments')), 201);
     }
 
     /**
@@ -240,7 +233,7 @@ public function newMessages(Request $request): JsonResponse
 
         $this->notifyProjectContact($project, $thread, isNewThread: false);
 
-        return response()->json(new WebProjectThreadMessageResource($message->load('attachments')), 201);
+        return $this->respond(new WebProjectThreadMessageResource($message->load('attachments')), 201);
     }
 
     /**
@@ -271,7 +264,7 @@ public function updateStatus(Request $request): JsonResponse
 
     $thread->update(['status' => $validated['status']]);
 
-    return response()->json(new WebProjectThreadResource($thread->fresh()));
+    return $this->respond(new WebProjectThreadResource($thread->fresh()));
 }
 
     /**

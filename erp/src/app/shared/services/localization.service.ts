@@ -39,6 +39,8 @@
  *   (2) Switching languages quickly (cz → en → de) let a slower older response overwrite the
  *   newer one (wrong language on screen); a response for a language that is no longer
  *   selected is now dropped, same as for a module that is no longer active.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): languages /
+ *  translations are read from `data` of the envelope (were `{languages}` / the bare dictionary).
  */
 
 import { Injectable } from '@angular/core';
@@ -46,6 +48,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, firstValueFrom } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { ApiEnvelope } from '../interfaces/api-envelope';
 
 export interface ApiLanguage {
   code: string;
@@ -137,9 +140,10 @@ export class LocalizationService {
    *       se v přepínači jazyků na webu zobrazily i ty, co admin schválně vypnul.
    */
   public fetchLanguages(): Observable<{ languages: LangMeta[] }> {
-    return this.http.get<{ languages: ApiLanguage[] }>(`${this.API_URL}/languages/${this.currentModule}`).pipe(
+    // Payload = the language list (`{data: [...]}`, finding #6 - was `{languages: [...]}`).
+    return this.http.get<ApiEnvelope<ApiLanguage[]>>(`${this.API_URL}/languages/${this.currentModule}`).pipe(
       map(res => ({
-        languages: res.languages
+        languages: (res.data ?? [])
           .filter((l: ApiLanguage) => l.active)
           .map((l: ApiLanguage) => ({
             code: l.code,
@@ -164,7 +168,8 @@ export class LocalizationService {
     const module = this.currentModule;
     const url = `${this.API_URL}/translations/${module}/${lang}`;
 
-    return this.http.get(url).pipe(
+    return this.http.get<ApiEnvelope<any>>(url).pipe(
+      map(res => res.data),  // translation dictionary in `data` (finding #6)
       tap(data => { if (module === this.currentModule) this.translationsCache.set(lang, data); }),
       catchError(() => {
         if (lang !== 'cz') {

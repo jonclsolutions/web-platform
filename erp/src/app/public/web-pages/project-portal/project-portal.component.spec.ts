@@ -11,6 +11,8 @@
  *   refresh, the lazily loaded contacts tab, derived labels and the language menu.
  * @refactor-note (2026-10-23) The old spec had no ActivatedRoute (NG0201) - rewritten. The session
  *   is expected in the `Authorization` header, never in the URL (open finding #1).
+ * @refactor-note (2026-10-24) Finding #6: thread detail and message pages are read with
+ *   getWithMeta() - `has_more_older_messages` / `status` come in `meta` of the envelope.
  * @dependencies
  * - PublicDataService stub routing GET / POST by URL; ProjectPortalLocalizationService stub
  *   (texts = keys); ActivatedRoute with the token; fakeAsync for timers.
@@ -28,6 +30,7 @@ describe('ProjectPortalComponent', () => {
   let fixture: ComponentFixture<ProjectPortalComponent>;
   let portal: ProjectPortalComponent;
   let get: jasmine.Spy;
+  let getWithMeta: jasmine.Spy;
   let post: jasmine.Spy;
   let getSiteSettings: jasmine.Spy;
   let replies: Record<string, () => Observable<any>>;
@@ -44,7 +47,7 @@ describe('ProjectPortalComponent', () => {
     { id: 1, subject: 'Design', priority: 'medium', status: 'active', last_message_at: null, unread_count: 2, messages: [{ id: 1, body: 'logo colours', author_type: 'admin', author_label: null, created_at: '' }] },
     { id: 2, subject: 'Hosting', priority: 'low', status: 'active', last_message_at: null, unread_count: 1 }
   ];
-  const detail = (id = 1) => ({ ...threads()[0], id, has_more_older_messages: true, messages: [{ id: 10, body: 'Hi', author_type: 'customer', author_label: null, created_at: '' }] });
+  const detail = (id = 1) => ({ ...threads()[0], id, messages: [{ id: 10, body: 'Hi', author_type: 'customer', author_label: null, created_at: '' }] });
   const file = (name: string, size = 10) => { const f = new File(['x'], name); Object.defineProperty(f, 'size', { value: size }); return f; };
   const files = (...list: File[]) => ({ target: { files: list, value: 'x' } } as any);
 
@@ -64,7 +67,7 @@ describe('ProjectPortalComponent', () => {
       imports: [ProjectPortalComponent],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(token ? { token } : {}) } } },
-        { provide: PublicDataService, useValue: { get, post, getSiteSettings } },
+        { provide: PublicDataService, useValue: { get, getWithMeta, post, getSiteSettings } },
         { provide: ProjectPortalLocalizationService, useValue: {
           translations$, currentLanguage$: language$, availableLanguages: PROJECT_PORTAL_AVAILABLE_LANGUAGES,
           getValue: (k: string) => k, getCurrentLanguage: () => language$.value, setLanguage: jasmine.createSpy('setLanguage')
@@ -84,11 +87,13 @@ describe('ProjectPortalComponent', () => {
     replies = {
       '/tok': () => of(project),
       '/tok/threads': () => of(threads()),
-      '/threads/1': () => of(detail(1)),
-      '/threads/2': () => of(detail(2)),
-      '/new-messages': () => of({ data: [], status: 'active' })
+      // Envelopes of the getWithMeta() endpoints - extra information in `meta` (finding #6).
+      '/threads/1': () => of({ data: detail(1), meta: { has_more_older_messages: true } }),
+      '/threads/2': () => of({ data: detail(2), meta: { has_more_older_messages: true } }),
+      '/new-messages': () => of({ data: [], meta: { status: 'active' } })
     };
     get = jasmine.createSpy('get').and.callFake(route);
+    getWithMeta = jasmine.createSpy('getWithMeta').and.callFake(route);
     post = jasmine.createSpy('post').and.callFake(route);
     getSiteSettings = jasmine.createSpy('getSiteSettings').and.returnValue(of({ settings: { company_name: 'RPSW' } }));
     language$ = new BehaviorSubject('cz');
@@ -202,9 +207,9 @@ describe('ProjectPortalComponent', () => {
     expect(portal.selectedThread!.messages!.map(m => m.id)).toEqual([10]);
     expect(portal.threads[0].unread_count).toBe(0);
     expect(portal.threadDetailLoading).toBeFalse();
-    expect(get).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/new-messages\\?after_id=10$'), undefined, AUTH);
+    expect(getWithMeta).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/new-messages\\?after_id=10$'), undefined, AUTH);
 
-    replies['/new-messages'] = () => of({ data: [{ id: 11, body: 'New', author_type: 'admin', author_label: 'PM', created_at: '' }], status: 'closed' });
+    replies['/new-messages'] = () => of({ data: [{ id: 11, body: 'New', author_type: 'admin', author_label: 'PM', created_at: '' }], meta: { status: 'closed' } });
     tick(15000);
     expect(portal.selectedThread!.messages!.map(m => m.id)).toEqual([10, 11]);
     expect(portal.selectedThread!.status).toBe('closed');
@@ -233,10 +238,10 @@ describe('ProjectPortalComponent', () => {
     portal.loadOlderMessages();
     portal.openThread(portal.threads[0]);
     tick();
-    replies['/messages'] = () => of({ data: [{ id: 5, body: 'Old', author_type: 'admin', author_label: null, created_at: '' }], has_more_older_messages: false });
+    replies['/messages'] = () => of({ data: [{ id: 5, body: 'Old', author_type: 'admin', author_label: null, created_at: '' }], meta: { has_more_older_messages: false } });
     portal.loadOlderMessages();
     tick();
-    expect(get).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/messages\\?before_message_id=10$'), undefined, AUTH);
+    expect(getWithMeta).toHaveBeenCalledWith(jasmine.stringMatching('/threads/1/messages\\?before_message_id=10$'), undefined, AUTH);
     expect(portal.selectedThread!.messages!.map(m => m.id)).toEqual([5, 10]);
     const calls = get.calls.count();
     portal.loadOlderMessages();
@@ -416,7 +421,7 @@ describe('ProjectPortalComponent', () => {
     get.calls.reset();
     portal.refresh();
     expect(get).toHaveBeenCalledWith('projects/public/tok', undefined, AUTH);
-    expect(get).toHaveBeenCalledWith('projects/public/tok/threads/1', undefined, AUTH);
+    expect(getWithMeta).toHaveBeenCalledWith('projects/public/tok/threads/1', undefined, AUTH);
     expect(portal.isRefreshing).toBeFalse();
     portal.closeThread();
     portal.refresh();

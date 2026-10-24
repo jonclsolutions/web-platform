@@ -212,7 +212,7 @@ describe('AdministratorsComponent', () => {
      * @description A new account is created with POST; a failed activation e-mail is reported
      *   (finding #11).
      * @input  create form; submit { user_email: 'jan@firma.cz', full_name: 'Jan', role_id: '3' }; then
-     *   the API answers activation_email_sent false
+     *   the API answers meta.activation_email_sent false
      * @output postWithMeta('core/users', { …, role_id: 3 }); alert account_created; then warning activation_email_failed
      */
     it('creates a new account', fakeAsync(() => {
@@ -223,7 +223,7 @@ describe('AdministratorsComponent', () => {
       expect(ctx.alert.open).toHaveBeenCalledWith('administrators.success_title', 'administrators.account_created', 'success');
 
       // activation e-mail failed → warning instead of success (finding #11)
-      (ctx.dataHandler as any).postWithMeta.and.returnValue(of({ data: { id: 8 }, activation_email_sent: false }));
+      (ctx.dataHandler as any).postWithMeta.and.returnValue(of({ data: { id: 8 }, meta: { activation_email_sent: false } }));
       component.handleCreateFormOpened();
       component.handleFormSubmitted({ user_email: 'eva@firma.cz', full_name: 'Eva', role_id: '3' });
       expect(ctx.alert.open).toHaveBeenCalledWith('administrators.activation_email_failed_title', 'administrators.activation_email_failed', 'warning');
@@ -429,7 +429,7 @@ describe('AdministratorsComponent', () => {
       expect((ctx.dataHandler as any).put.calls.mostRecent().args[1].is_blocked).toBeUndefined();
 
       component.handleCreateFormOpened();
-      (ctx.dataHandler as any).postWithMeta.and.returnValue(of({ data: { id: 10 }, activation_email_sent: true }));
+      (ctx.dataHandler as any).postWithMeta.and.returnValue(of({ data: { id: 10 }, meta: { activation_email_sent: true } }));
       component.handleFormSubmitted({ role_id: 2, user_email: 'new@firma.cz', enable_2fa: false, two_fa_forced_by_admin: false });
       const created = (ctx.dataHandler as any).postWithMeta.calls.mostRecent().args[1];
       expect(created.enable_2fa).toBeUndefined();

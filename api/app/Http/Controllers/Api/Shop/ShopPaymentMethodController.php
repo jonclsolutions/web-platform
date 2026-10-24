@@ -18,6 +18,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -68,15 +70,9 @@ class ShopPaymentMethodController extends Controller
             ? $query->get()
             : $query->paginate($perPage);
 
-        return response()->json($data instanceof \Illuminate\Support\Collection
-            ? ShopPaymentMethodResource::collection($data)
-            : [
-                'data' => ShopPaymentMethodResource::collection($data->items()),
-                'total' => $data->total(),
-                'per_page' => $data->perPage(),
-                'current_page' => $data->currentPage(),
-                'last_page' => $data->lastPage(),
-            ]);
+        return $data instanceof \Illuminate\Support\Collection
+            ? $this->respond(ShopPaymentMethodResource::collection($data))
+            : $this->respondPaginated($data, ShopPaymentMethodResource::class);
     }
 
     /**
@@ -85,7 +81,7 @@ class ShopPaymentMethodController extends Controller
     public function show($id): JsonResponse
     {
         $method = ShopPaymentMethod::withTrashed()->findOrFail($id);
-        return response()->json(new ShopPaymentMethodResource($method));
+        return $this->respond(new ShopPaymentMethodResource($method));
     }
 
     /**
@@ -105,7 +101,7 @@ class ShopPaymentMethodController extends Controller
 
             $this->logAction($request, ShopLog::class, 'update', 'ShopPaymentMethod', "Updated payment method: {$method->name}", $method->id, 'ShopPaymentMethod');
 
-            return response()->json(new ShopPaymentMethodResource($method));
+            return $this->respond(new ShopPaymentMethodResource($method));
 
         } catch (\Exception $e) {
             Log::error("Payment method update error: " . $e->getMessage());

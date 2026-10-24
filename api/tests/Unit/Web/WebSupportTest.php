@@ -136,7 +136,7 @@ class WebSupportTest extends TestCase
         WebSiteSetting::whereKey(1)->update(['is_web_active' => false, 'web_maintenance_message' => 'Back at 10']);
         $response = $this->webActive();
         $this->assertSame(503, $response->getStatusCode());
-        $this->assertSame(['success' => false, 'message' => 'Back at 10'], $response->getData(true));
+        $this->assertSame(['message' => 'Back at 10'], $response->getData(true));
 
         WebSiteSetting::whereKey(1)->update(['web_maintenance_message' => null]);
         $this->assertSame('We apologize, the website is currently undergoing maintenance.', $this->webActive()->getData(true)['message']);

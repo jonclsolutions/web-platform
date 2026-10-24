@@ -13,6 +13,8 @@
  *   - jasmine spies for DataHandler, GenericTableService, AlertDialogService, ConfirmDialogService.
  * @dependencies
  * - jasmine (global in Karma), @angular/core, @angular/router, @angular/common/http(/testing), rxjs.
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): DataHandler spy
+ *  has `getWithMeta`; `paginated()` and the page default answer `{data, meta}`.
  */
 
 import { EnvironmentProviders, Provider } from '@angular/core';
@@ -136,15 +138,17 @@ export function createAuthStub(loggedIn = true): AuthStub {
 
 /**
  * @description Creates a DataHandler spy; every request returns an empty successful response.
- * @returns jasmine spy object (get/getOne/getCollection/getPaginatedCollection/post/postWithMeta/put/patch/delete/upload/uploadPut).
+ * @returns jasmine spy object (get/getOne/getCollection/getPaginatedCollection/getWithMeta/post/postWithMeta/put/patch/delete/upload/uploadPut);
+ *   envelope-returning methods answer `{data, meta}` (finding #6).
  */
 export function createDataHandlerSpy(): jasmine.SpyObj<DataHandler> {
   const spy = jasmine.createSpyObj<DataHandler>('DataHandler',
-    ['get', 'getOne', 'getCollection', 'getPaginatedCollection', 'post', 'postWithMeta', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
+    ['get', 'getOne', 'getCollection', 'getPaginatedCollection', 'getWithMeta', 'post', 'postWithMeta', 'put', 'patch', 'delete', 'upload', 'uploadPut'] as any);
   (spy as any).get.and.returnValue(of({}));
   (spy as any).getOne.and.returnValue(of({}));
   (spy as any).getCollection.and.returnValue(of([]));
-  (spy as any).getPaginatedCollection.and.returnValue(of({}));
+  (spy as any).getPaginatedCollection.and.returnValue(of({ data: [], meta: { total: 0, per_page: 15, current_page: 1, last_page: 1 } }));
+  (spy as any).getWithMeta.and.returnValue(of({ data: {}, meta: {} }));
   (spy as any).post.and.returnValue(of({}));
   (spy as any).postWithMeta.and.returnValue(of({ data: {} }));
   (spy as any).put.and.returnValue(of({}));
@@ -156,14 +160,15 @@ export function createDataHandlerSpy(): jasmine.SpyObj<DataHandler> {
 }
 
 /**
- * @description Builds a Laravel-style paginated response.
+ * @description Builds a page as the API answers it: `{data, meta: {total, per_page, current_page,
+ *   last_page}}` (one envelope, finding #6).
  * @param data Rows of the page.
  * @param page Current page (default 1).
  * @param lastPage Last page (default 1).
  * @returns PaginatedResponse<T>.
  */
 export function paginated<T>(data: T[], page = 1, lastPage = 1): PaginatedResponse<T> {
-  return { data, total: data.length, last_page: lastPage, current_page: page, per_page: 15 } as unknown as PaginatedResponse<T>;
+  return { data, meta: { total: data.length, last_page: lastPage, current_page: page, per_page: 15 } };
 }
 
 /**

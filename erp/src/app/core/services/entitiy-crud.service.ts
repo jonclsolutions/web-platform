@@ -17,6 +17,8 @@
  *
  * @note Toto NENÍ @Injectable — instance se vytváří ručně, per endpoint, tam kde je
  * potřeba (komponenta dodá vlastní DataHandler + destroy$ subject).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`):
+ *  `hardDeleteAllTrashed()` returns the payload `{deleted_count, skipped_count}` or null (204).
  */
 
 import { Observable, Subject, throwError } from 'rxjs';
@@ -150,11 +152,11 @@ getOne(id: number | undefined): Observable<T> {
 
   /**
    * DELETE /{endpoint}/force-delete-all
-   * @returns Nothing (204) or `{deleted_count, skipped_count, message}` when the API kept some
-   *   records (e.g. shop customers with orders, finding #22).
+   * @returns null (204) or the payload `{deleted_count, skipped_count}` when the API kept some
+   *   records (e.g. shop customers with orders, finding #22; envelope since finding #6).
    */
-  hardDeleteAllTrashed(): Observable<void | { deleted_count: number; skipped_count: number; message?: string }> {
-    return this.dataHandler.delete(`${this.endpoint}/force-delete-all`).pipe(
+  hardDeleteAllTrashed(): Observable<null | { deleted_count: number; skipped_count: number }> {
+    return this.dataHandler.delete<null | { deleted_count: number; skipped_count: number }>(`${this.endpoint}/force-delete-all`).pipe(
       takeUntil(this.destroy$),
       finalize(() => this.onSettled?.())
     );

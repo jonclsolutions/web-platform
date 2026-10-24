@@ -138,7 +138,7 @@ class WebImportTest extends TestCase
 
         $this->post("/api/{$endpoint}/import/validate", [
             'format' => 'csv', 'file' => $this->importFile('csv', $template . implode(';', $valid) . "\n"),
-        ], ['Accept' => 'application/json'])->assertOk()->assertJson(['valid_rows' => 1, 'invalid_rows' => 0]);
+        ], ['Accept' => 'application/json'])->assertOk()->assertJson(['data' => ['valid_rows' => 1, 'invalid_rows' => 0]]);
     }
 
     /**
@@ -157,10 +157,10 @@ class WebImportTest extends TestCase
         $response = $this->post("/api/{$endpoint}/import/validate", [
             'format' => 'csv', 'file' => $this->importFile('csv', $this->csv([$valid, $invalid])),
         ], ['Accept' => 'application/json'])->assertOk()
-            ->assertJson(['total_rows' => 2, 'valid_rows' => 1, 'invalid_rows' => 1, 'can_commit' => true])
-            ->assertJsonPath('errors.0.row', 3);
+            ->assertJson(['data' => ['total_rows' => 2, 'valid_rows' => 1, 'invalid_rows' => 1, 'can_commit' => true]])
+            ->assertJsonPath('data.errors.0.row', 3);
 
-        $batch = CoreImportBatch::findOrFail($response->json('import_token'));
+        $batch = CoreImportBatch::findOrFail($response->json('data.import_token'));
         $this->assertSame('validated', $batch->status);
         $this->assertSame($endpoint, $batch->resource);
         Storage::disk('local')->assertExists($batch->temp_path);
@@ -198,7 +198,7 @@ class WebImportTest extends TestCase
         $this->signIn($this->userWith([$permission]));
         $token = $this->post("/api/{$endpoint}/import/validate", [
             'format' => 'json', 'file' => $this->importFile('json', json_encode([$valid, $invalid])),
-        ], ['Accept' => 'application/json'])->json('import_token');
+        ], ['Accept' => 'application/json'])->json('data.import_token');
 
         $this->postJson("/api/{$endpoint}/import/commit", ['import_token' => $token])->assertOk()
             ->assertJson(['data' => ['queued' => false, 'imported_count' => 1, 'skipped_count' => 1, 'skip_reasons' => []]]);
@@ -223,17 +223,17 @@ class WebImportTest extends TestCase
     public function test_commit_failures(string $endpoint, string $permission, array $columns, array $valid, array $invalid, string $model): void
     {
         $this->signIn($this->userWith([$permission]));
-        $foreign = $this->post("/api/{$endpoint}/import/validate", ['format' => 'csv', 'file' => $this->importFile('csv', $this->csv([$valid]))], ['Accept' => 'application/json'])->json('import_token');
+        $foreign = $this->post("/api/{$endpoint}/import/validate", ['format' => 'csv', 'file' => $this->importFile('csv', $this->csv([$valid]))], ['Accept' => 'application/json'])->json('data.import_token');
 
         $this->signIn($this->userWith([$permission]));
         $this->postJson("/api/{$endpoint}/import/commit", ['import_token' => $foreign])->assertStatus(404);
 
-        $expired = $this->post("/api/{$endpoint}/import/validate", ['format' => 'csv', 'file' => $this->importFile('csv', $this->csv([$valid]))], ['Accept' => 'application/json'])->json('import_token');
+        $expired = $this->post("/api/{$endpoint}/import/validate", ['format' => 'csv', 'file' => $this->importFile('csv', $this->csv([$valid]))], ['Accept' => 'application/json'])->json('data.import_token');
         Storage::disk('local')->delete(CoreImportBatch::find($expired)->temp_path);
         $this->postJson("/api/{$endpoint}/import/commit", ['import_token' => $expired])
             ->assertStatus(410)->assertJsonPath('message', fn ($m) => str_contains($m, 'has expired'));
 
-        $broken = $this->post("/api/{$endpoint}/import/validate", ['format' => 'txt', 'file' => $this->importFile('txt', implode("\t", array_keys($valid)) . "\n" . implode("\t", $valid) . "\n")], ['Accept' => 'application/json'])->json('import_token');
+        $broken = $this->post("/api/{$endpoint}/import/validate", ['format' => 'txt', 'file' => $this->importFile('txt', implode("\t", array_keys($valid)) . "\n" . implode("\t", $valid) . "\n")], ['Accept' => 'application/json'])->json('data.import_token');
         $this->failOn((new $model())->getTable(), 'INSERT');
         $this->postJson("/api/{$endpoint}/import/commit", ['import_token' => $broken])
             ->assertStatus(500)->assertJson(['message' => 'Import failed.']);

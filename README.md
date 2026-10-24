@@ -69,7 +69,7 @@ already done are skipped and nothing existing is overwritten.
 | System packages | installs missing PHP extensions, Composer, Node.js and tools via `dnf` |
 | Mailpit | downloads the latest release to `~/.local/bin`, **only if its SHA-256 matches** the digest GitHub publishes |
 | Laravel | creates `api/.env` from `.env.example` with local defaults (only if missing), `composer install`, `APP_KEY` (only if empty), `public/storage` symlink (stale ones are fixed), writable `storage/` |
-| Angular | `npm ci`, local SSL certificate for `ng serve` (trusted if `mkcert` is installed) |
+| Angular | `npm ci`, local SSL certificate `erp/ssl/localhost.{crt,key}` for `ng serve` (trusted if `mkcert` is installed; per developer, git-ignored) |
 | Repository | required `.gitignore` rules, executable scripts, warns if a new app still pushes to web-platform |
 | Shell aliases | `<app>` (cd), `<app>-dev`, `<app>-build` in `~/.zshrc` / `~/.bashrc` – one block per app |
 
@@ -267,7 +267,7 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
    - public web, e-shop, admin login, sending an e-mail
    - `curl -I https://<domain>/laravel/.env` must return **403 or 404**, never 200
 
-### One-time steps of the October 2026 fixes (findings-fixes 1–3)
+### One-time steps of the October 2026 fixes (findings-fixes 1–4)
 
 Run once on the first release that contains them (back up the database first):
 
@@ -298,7 +298,10 @@ Run once on the first release that contains them (back up the database first):
      `checkout.alerts.{price_invalid_message, stock_message, order_rejected_message, too_many_requests}`,
      `checkout.errors.invalid_value`, `checkout.coupon_too_many`,
      `product_detail.errors.alert_title`, `api_errors.too_many_requests`
-5. **Deploy SSH key** – the key that was committed in `docs/scripts/` must be treated as leaked:
+5. **API + frontend together** – findings-fixes-4 changed the response format of the API
+   (one envelope `{data, meta?}`, see [API response format](#api-response-format)); deploy the
+   Laravel API and the Angular build of the same release at once, never one without the other.
+6. **Deploy SSH key** – the key that was committed in `docs/scripts/` must be treated as leaked:
    generate a new one (`bash docs/scripts/generate-ssh.sh`, writes to `~/.ssh`), put the new
    public key into the server's `~/.ssh/authorized_keys` and **remove the old one** there.
 
@@ -335,6 +338,28 @@ the server with the local one. The checksum file does not need to be deployed.
 - Retention of personal data is enforced by scheduled clean-up jobs (security events,
   import batches) – keep the production scheduler cron running.
 - `.dev/` and `build/` are git-ignored; check with `git status` before every commit.
+
+---
+
+## API response format
+
+Every successful answer of the Laravel API that carries a payload has ONE shape
+(`App\Traits\RespondsWithData`, used by every controller through the base `Controller`):
+
+| Answer | Shape | Controller |
+|---|---|---|
+| record / result | `{ "data": { … } }` (201 for a created record) | `$this->respond($resource, 201)` |
+| list | `{ "data": [ … ] }` | `$this->respond(XResource::collection($rows))` |
+| page | `{ "data": [ … ], "meta": { "total", "per_page", "current_page", "last_page" } }` | `$this->respondPaginated($page, XResource::class)` |
+| extra information | `"meta": { … }` beside `data` (e.g. `activation_email_sent`, `has_more_older_messages`) | `respond($data, 200, ['key' => …])` |
+| no payload | `204` without a body, or `{ "message" }` | `response()->json(null, 204)` |
+| error | `{ "message", "errors"? }` (+ `error_code`, `retry_after`) – never wrapped | `response()->json(['message' => …], 4xx)` |
+
+Rules: records always go through an API Resource (explicit field list, never a bare model);
+no hand-built `['data' => …]`, no `success` / `status` flags. `tests/Unit/Other/ResponseEnvelopeTest`
+fails on a success shape built by hand. On the frontend `DataHandler` / `PublicDataService` return
+the `data`; `getPaginatedCollection()`, `getWithMeta()` and `postWithMeta()` return the envelope
+(`ApiEnvelope` / `ApiPage` in `erp/src/app/shared/interfaces/api-envelope.ts`).
 
 ---
 

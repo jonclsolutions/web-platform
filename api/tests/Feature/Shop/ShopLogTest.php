@@ -53,11 +53,11 @@ class ShopLogTest extends TestCase
         $a = $this->log(['created_at' => now()->subDay(), 'event_type' => 'create', 'module' => 'ShopOrder', 'user_plain' => 'eve@x.cz', 'origin' => '10.1.1.1', 'description' => 'Order added']);
         $b = $this->log(['created_at' => now()]);
 
-        $this->getJson('/api/shop/logs?per_page=1')->assertOk()->assertJson(['total' => 2, 'last_page' => 2])->assertJsonPath('data.0.id', $b->id);
+        $this->getJson('/api/shop/logs?per_page=1')->assertOk()->assertJson(['meta' => ['total' => 2, 'last_page' => 2]])->assertJsonPath('data.0.id', $b->id);
         foreach (["id={$a->id}", 'event_type=create', 'module=ShopOrder', 'user_plain=eve@', 'origin=10.1', 'search=Order%20add'] as $filter) {
-            $this->getJson("/api/shop/logs?{$filter}")->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $a->id);
+            $this->getJson("/api/shop/logs?{$filter}")->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $a->id);
         }
-        $this->getJson('/api/shop/logs?no_pagination=true&sort_by=id&sort_direction=asc')->assertJsonPath('*.id', [$a->id, $b->id]);
+        $this->getJson('/api/shop/logs?no_pagination=true&sort_by=id&sort_direction=asc')->assertJsonPath('data.*.id', [$a->id, $b->id]);
     }
 
     /**
@@ -71,8 +71,8 @@ class ShopLogTest extends TestCase
         $own = $this->log(['user_id' => $actor->id, 'context_data' => ['k' => 'v']]);
         $anonymous = $this->log();
 
-        $this->getJson("/api/shop/logs/{$own->id}")->assertOk()->assertJsonPath('user.user_email', $actor->user_email)->assertJsonPath('context_data.k', 'v');
-        $this->getJson("/api/shop/logs/{$anonymous->id}")->assertJsonPath('user.user_email', 'Unknown user');
+        $this->getJson("/api/shop/logs/{$own->id}")->assertOk()->assertJsonPath('data.user.user_email', $actor->user_email)->assertJsonPath('data.context_data.k', 'v');
+        $this->getJson("/api/shop/logs/{$anonymous->id}")->assertJsonPath('data.user.user_email', 'Unknown user');
         $this->getJson('/api/shop/logs/999')->assertStatus(404);
     }
 
@@ -86,7 +86,7 @@ class ShopLogTest extends TestCase
         $me = $this->signIn($this->user());
 
         $this->postJson('/api/shop/logs', ['event_type' => 'export_csv', 'module' => 'shop/orders', 'description' => 'Exported'])
-            ->assertCreated()->assertJsonPath('user_plain', $me->user_email)->assertJsonPath('user_id_plain', (string) $me->id)->assertJsonPath('origin', '127.0.0.1');
+            ->assertCreated()->assertJsonPath('data.user_plain', $me->user_email)->assertJsonPath('data.user_id_plain', (string) $me->id)->assertJsonPath('data.origin', '127.0.0.1');
         $this->postJson('/api/shop/logs', [])->assertStatus(422)->assertJsonValidationErrors(['event_type', 'module', 'description']);
     }
 }

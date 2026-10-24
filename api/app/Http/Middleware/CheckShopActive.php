@@ -50,8 +50,8 @@ class CheckShopActive
 
         // Return 503 if the shop is inactive
         if (!$settings->is_shop_active) {
+            // Error shape {message} - no `success` flag, the status says it (finding #6).
             return response()->json([
-                'success' => false,
                 'message' => $settings->maintenance_message ?? 'We apologize, but order acceptance and e-shop operations are currently suspended..'
             ], 503);
         }

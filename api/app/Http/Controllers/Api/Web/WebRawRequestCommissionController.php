@@ -50,6 +50,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -148,16 +150,10 @@ class WebRawRequestCommissionController extends Controller
         $data = $noPagination ? $query->get() : $query->paginate($perPage);
 
         if ($noPagination) {
-            return WebRawRequestCommissionResource::collection($data);
+            return $this->respond(WebRawRequestCommissionResource::collection($data));
         }
 
-        return response()->json([
-            'data'         => WebRawRequestCommissionResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, WebRawRequestCommissionResource::class);
     }
 
     /**
@@ -181,7 +177,7 @@ class WebRawRequestCommissionController extends Controller
                 $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Failed to send confirmation email: " . $e->getMessage(), $commission->id, 'WebRawRequestCommission');
             }
 
-            return response()->json(new WebRawRequestCommissionResource($commission->load('attachments')), 201);
+            return $this->respond(new WebRawRequestCommissionResource($commission->load('attachments')), 201);
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error creating request: " . $e->getMessage());
             return response()->json(['message' => 'Request creation failed.'], 500);
@@ -194,7 +190,7 @@ class WebRawRequestCommissionController extends Controller
     public function show($id): JsonResponse
     {
         $rawRequestCommission = WebRawRequestCommission::withTrashed()->with('attachments')->findOrFail($id);
-        return response()->json(new WebRawRequestCommissionResource($rawRequestCommission));
+        return $this->respond(new WebRawRequestCommissionResource($rawRequestCommission));
     }
 
     /**
@@ -221,7 +217,7 @@ class WebRawRequestCommissionController extends Controller
 
             $this->logAction($request, WebLog::class, 'update', 'WebRawRequestCommission', "Updated request ID: {$rawRequestCommission->id}", $rawRequestCommission->id, 'WebRawRequestCommission');
 
-            return response()->json(new WebRawRequestCommissionResource($rawRequestCommission->fresh()->load('attachments')));
+            return $this->respond(new WebRawRequestCommissionResource($rawRequestCommission->fresh()->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error updating request ID {$id}: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
             return response()->json(['message' => 'Request update failed.'], 500);
@@ -308,11 +304,11 @@ class WebRawRequestCommissionController extends Controller
             'WebRawRequestCommission'
         );
 
-        return response()->json(['data' => [
+        return $this->respond([
             'deleted_count' => $deletedCount,
             'skipped_count' => $skippedCount,
             'requested'     => $requestedCount,
-        ]]);
+        ]);
     }
 
     /**
@@ -399,7 +395,7 @@ class WebRawRequestCommissionController extends Controller
             $errors
         );
 
-        return response()->json([
+        return $this->respond([
             'import_token' => $batch->id,
             'total_rows'   => $batch->total_rows,
             'valid_rows'   => $batch->valid_rows,
@@ -465,12 +461,12 @@ class WebRawRequestCommissionController extends Controller
                 'WebRawRequestCommission'
             );
 
-            return response()->json(['data' => [
+            return $this->respond([
                 'queued'         => false,
                 'imported_count' => $result['imported_count'],
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
-            ]]);
+            ]);
         } catch (\Exception $e) {
             // Expired temporary file - see runImportCommit(), code 410.
             // @bugfix-note (2026-10-22) Previously every RuntimeException was answered with its
@@ -498,7 +494,7 @@ class WebRawRequestCommissionController extends Controller
 
             $this->logAction($request, WebLog::class, 'restore', 'WebRawRequestCommission', "Restored request ID: $id", (int) $id, 'WebRawRequestCommission');
 
-            return response()->json(new WebRawRequestCommissionResource($item->load('attachments')));
+            return $this->respond(new WebRawRequestCommissionResource($item->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebRawRequestCommission', "Error restoring request ID $id: " . $e->getMessage(), (int) $id, 'WebRawRequestCommission');
             return response()->json(['message' => 'Request restoration failed.'], 500);

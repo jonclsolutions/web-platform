@@ -4,7 +4,8 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Unit tests of DataHandler (admin HTTP wrapper): request shaping (headers, query
+ * @description Unit tests of DataHandler (admin HTTP wrapper; one API envelope `{data, meta?}`,
+ *   finding #6): request shaping (headers, query
  *   params, `{data}` unwrapping, multipart PUT / PATCH via POST + `_method`) and the single error
  *   dialog of handleError (translated texts with placeholders, original error rethrown).
  * @dependencies
@@ -73,14 +74,13 @@ describe('DataHandler', () => {
   }
 
   /**
-   * @description Collections: JSON headers, params without null / undefined, `{data}` unwrapped
-   *   when present, plain arrays returned as they are.
-   * @input getCollection('items', {page: 2, search: null, sort: undefined}) answered {data: [A]};
-   *        getCollection('items') answered [B].
-   * @output GET with Accept + Content-Type JSON and only page=2; results [A] and [B].
+   * @description Collections: JSON headers, params without null / undefined, the `data` of the
+   *   envelope returned (finding #6 - one envelope, no guessing any more).
+   * @input getCollection('items', {page: 2, search: null, sort: undefined}) answered {data: [A]}.
+   * @output GET with Accept + Content-Type JSON and only page=2; result [A].
    */
   it('getCollection unwraps data and skips empty params', () => {
-    let first: any; let second: any;
+    let first: any;
     service.getCollection('items', { page: 2, search: null, sort: undefined }).subscribe(r => (first = r));
     const req = http.expectOne(r => r.url === `${base}/items`);
     expect(req.request.method).toBe('GET');
@@ -90,90 +90,77 @@ describe('DataHandler', () => {
     expect(req.request.params.get('page')).toBe('2');
     req.flush({ data: [{ id: 1 }] });
 
-    service.getCollection('items').subscribe(r => (second = r));
-    http.expectOne(`${base}/items`).flush([{ id: 2 }]);
-
     expect(first).toEqual([{ id: 1 }]);
-    expect(second).toEqual([{ id: 2 }]);
   });
 
   /**
-   * @description get / getPaginatedCollection return the raw body; getOne unwraps `{data}` only
-   *   when the backend wrapped it.
-   * @input get → {a: 1}; getPaginatedCollection → {data: [], total: 0}; getOne → {data: {id: 1}}; getOne → {id: 2}.
-   * @output {a: 1}; the full paginated object; {id: 1}; {id: 2}.
+   * @description get / getOne return the payload; getPaginatedCollection and getWithMeta keep
+   *   the envelope (`meta` = pagination / extra information, finding #6).
+   * @input get → {data: {a: 1}}; getPaginatedCollection → {data: [], meta: {total: 0, …}};
+   *   getOne → {data: {id: 1}}; getWithMeta → {data: [x], meta: {has_more_older_messages: true}}.
+   * @output {a: 1}; the page; {id: 1}; the envelope.
    */
-  it('get, getPaginatedCollection and getOne', () => {
+  it('get, getPaginatedCollection, getOne and getWithMeta', () => {
     const results: any[] = [];
+    const page = { data: [], meta: { total: 0, per_page: 15, current_page: 1, last_page: 1 } };
     service.get('a').subscribe(r => results.push(r));
-    http.expectOne(`${base}/a`).flush({ a: 1 });
+    http.expectOne(`${base}/a`).flush({ data: { a: 1 } });
     service.getPaginatedCollection('p').subscribe(r => results.push(r));
-    http.expectOne(`${base}/p`).flush({ data: [], total: 0 });
+    http.expectOne(`${base}/p`).flush(page);
     service.getOne('o').subscribe(r => results.push(r));
     http.expectOne(`${base}/o`).flush({ data: { id: 1 } });
-    service.getOne('o').subscribe(r => results.push(r));
-    http.expectOne(`${base}/o`).flush({ id: 2 });
+    service.getWithMeta('m').subscribe(r => results.push(r));
+    http.expectOne(`${base}/m`).flush({ data: ['x'], meta: { has_more_older_messages: true } });
 
-    expect(results).toEqual([{ a: 1 }, { data: [], total: 0 }, { id: 1 }, { id: 2 }]);
+    expect(results).toEqual([{ a: 1 }, page, { id: 1 }, { data: ['x'], meta: { has_more_older_messages: true } }]);
   });
 
   /**
-   * @description post / put / patch send JSON and unwrap `{data}`; delete sends DELETE.
-   * @input post({n: 1}), put({n: 2}), patch({n: 3}) answered {data: {...}}; delete('items/1').
-   * @output Methods POST / PUT / PATCH / DELETE with the bodies; unwrapped results.
+   * @description post / put / patch send JSON and return `data`; delete sends DELETE and returns
+   *   null for 204 or the payload of an answer with a body (e.g. kept trash records).
+   * @input post({n: 1}), put({n: 2}), patch({n: 3}) answered {data: …}; delete ×2 (204; {data: {skipped_count: 1}}).
+   * @output Methods POST / PUT / PATCH / DELETE with the bodies; 'created', 'replaced', 'patched', null, {skipped_count: 1}.
    */
   it('post, put, patch and delete with JSON bodies', () => {
     const results: any[] = [];
     service.post('items', { n: 1 }).subscribe(r => results.push(r));
     service.put('items/1', { n: 2 }).subscribe(r => results.push(r));
     service.patch('items/1', { n: 3 }).subscribe(r => results.push(r));
-    service.delete('items/1').subscribe(() => results.push('deleted'));
+    service.delete('items/1').subscribe(r => results.push(r));
+    service.delete('items/force-delete-all').subscribe(r => results.push(r));
 
     const reqs = http.match(() => true);
     expect(reqs.map(r => [r.request.method, r.request.body])).toEqual([
-      ['POST', { n: 1 }], ['PUT', { n: 2 }], ['PATCH', { n: 3 }], ['DELETE', null]
+      ['POST', { n: 1 }], ['PUT', { n: 2 }], ['PATCH', { n: 3 }], ['DELETE', null], ['DELETE', null]
     ]);
     reqs[0].flush({ data: 'created' });
     reqs[1].flush({ data: 'replaced' });
     reqs[2].flush({ data: 'patched' });
-    reqs[3].flush(null);
+    reqs[3].flush(null, { status: 204, statusText: 'No Content' });
+    reqs[4].flush({ data: { skipped_count: 1 }, message: 'kept' });
 
-    expect(results).toEqual(['created', 'replaced', 'patched', 'deleted']);
+    expect(results).toEqual(['created', 'replaced', 'patched', null, { skipped_count: 1 }]);
   });
 
   /**
-   * @description Bare (unwrapped) answers of create / update endpoints are returned as they are
-   *   (bugfix 2026-10-23, finding #6 - they were `undefined` before); arrays are never unwrapped;
-   *   postWithMeta keeps the meta fields next to the record and wraps a bare answer.
-   * @input put / post / patch answered {id: 5, name: 'A'} (no wrapper), post answered [1, 2];
-   *   postWithMeta answered {data: {id: 1}, activation_email_sent: false} and {id: 2}.
-   * @output {id 5, name A} ×3; [1, 2]; {data {id 1}, activation_email_sent false}; {data {id 2}}.
+   * @description postWithMeta returns the whole envelope - the record in `data`, extra information
+   *   in `meta` (e.g. `activation_email_sent` of a new account, findings #11 / #6).
+   * @input postWithMeta answered {data: {id: 1}, meta: {activation_email_sent: false}}.
+   * @output The same envelope.
    */
-  it('accepts bare create / update answers and keeps meta fields', () => {
-    const results: any[] = [];
-    service.put('users/5', { name: 'A' }).subscribe(r => results.push(r));
-    service.post('users', { name: 'A' }).subscribe(r => results.push(r));
-    service.patch('users/5', { name: 'A' }).subscribe(r => results.push(r));
-    service.post('list', {}).subscribe(r => results.push(r));
-    service.postWithMeta('core/users', { a: 1 }).subscribe(r => results.push(r));
-    service.postWithMeta('core/users', { a: 2 }).subscribe(r => results.push(r));
-    const reqs = http.match(() => true);
-    [0, 1, 2].forEach(i => reqs[i].flush({ id: 5, name: 'A' }));
-    reqs[3].flush([1, 2]);
-    reqs[4].flush({ data: { id: 1 }, activation_email_sent: false });
-    reqs[5].flush({ id: 2 });
-    expect(results).toEqual([
-      { id: 5, name: 'A' }, { id: 5, name: 'A' }, { id: 5, name: 'A' }, [1, 2],
-      { data: { id: 1 }, activation_email_sent: false }, { data: { id: 2 } }
-    ]);
+  it('postWithMeta keeps the meta', () => {
+    let result: any;
+    service.postWithMeta('core/users', { a: 1 }).subscribe(r => (result = r));
+    http.expectOne(`${base}/core/users`).flush({ data: { id: 1 }, meta: { activation_email_sent: false } });
+    expect(result).toEqual({ data: { id: 1 }, meta: { activation_email_sent: false } });
   });
 
   /**
    * @description Multipart bodies: PUT / PATCH with FormData go as POST with `_method` (PHP does
    *   not parse multipart PUT), without a JSON Content-Type (browser sets the boundary);
-   *   upload / uploadPut POST the FormData and return the raw body.
+   *   upload / uploadPut POST the FormData; all return the `data` of the answer.
    * @input put('items/1', FormData), patch('items/1', FormData), upload('files', FormData), uploadPut('files/1', FormData).
-   * @output 4 × POST; `_method` PUT / PATCH; no Content-Type; results unwrapped / raw.
+   * @output 4 × POST; `_method` PUT / PATCH; no Content-Type; results 'put', 'patch', {id 9}, {id 10}.
    */
   it('sends FormData as POST with a method override', () => {
     const results: any[] = [];
@@ -190,8 +177,8 @@ describe('DataHandler', () => {
     expect(reqs.every(r => r.request.headers.has('Content-Type'))).toBeFalse();
     reqs[0].flush({ data: 'put' });
     reqs[1].flush({ data: 'patch' });
-    reqs[2].flush({ id: 9 });
-    reqs[3].flush({ id: 10 });
+    reqs[2].flush({ data: { id: 9 } });
+    reqs[3].flush({ data: { id: 10 } });
 
     expect(results).toEqual(['put', 'patch', { id: 9 }, { id: 10 }]);
   });

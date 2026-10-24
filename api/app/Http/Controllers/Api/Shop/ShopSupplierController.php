@@ -22,6 +22,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -108,16 +110,10 @@ class ShopSupplierController extends Controller
         $data = $noPagination ? $query->get() : $query->paginate($perPage);
 
         if ($noPagination) {
-            return response()->json(ShopSupplierResource::collection($data));
+            return $this->respond(ShopSupplierResource::collection($data));
         }
 
-        return response()->json([
-            'data'         => ShopSupplierResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, ShopSupplierResource::class);
     }
     /**
      * Stores a new supplier entity.
@@ -128,7 +124,7 @@ class ShopSupplierController extends Controller
             $validated = $request->validated();
             $supplier = ShopSupplier::create($validated);
             $this->logAction($request, ShopLog::class, 'create', 'ShopSupplier', "Created supplier: {$supplier->name}", $supplier->id, 'ShopSupplier');
-            return response()->json(new ShopSupplierResource($supplier), 201);
+            return $this->respond(new ShopSupplierResource($supplier), 201);
         } catch (\Exception $e) {
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error creating supplier: " . $e->getMessage());
             return response()->json(['message' => 'Supplier creation failed.'], 500);
@@ -141,7 +137,7 @@ class ShopSupplierController extends Controller
     public function show($id): JsonResponse
     {
         $supplier = ShopSupplier::withTrashed()->findOrFail($id);
-        return response()->json(new ShopSupplierResource($supplier));
+        return $this->respond(new ShopSupplierResource($supplier));
     }
 
     /**
@@ -154,7 +150,7 @@ class ShopSupplierController extends Controller
         try {
             $supplier->update($request->validated());
             $this->logAction($request, ShopLog::class, 'update', 'ShopSupplier', "Updated supplier ID: {$supplier->id}", $supplier->id, 'ShopSupplier');
-            return response()->json(new ShopSupplierResource($supplier));
+            return $this->respond(new ShopSupplierResource($supplier));
         } catch (\Exception $e) {
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error updating supplier ID {$id}: " . $e->getMessage(), (int) $id, 'ShopSupplier');
             return response()->json(['message' => 'Supplier update failed.'], 500);
@@ -190,7 +186,7 @@ class ShopSupplierController extends Controller
         try {
             $item->restore();
             $this->logAction($request, ShopLog::class, 'restore', 'ShopSupplier', "Restored supplier ID: $id", (int) $id, 'ShopSupplier');
-            return response()->json(new ShopSupplierResource($item));
+            return $this->respond(new ShopSupplierResource($item));
         } catch (\Exception $e) {
             $this->logAction($request, ShopLog::class, 'error', 'ShopSupplier', "Error restoring supplier ID $id: " . $e->getMessage(), (int) $id, 'ShopSupplier');
             return response()->json(['message' => 'Supplier restoration failed.'], 500);
@@ -255,11 +251,11 @@ class ShopSupplierController extends Controller
             'ShopSupplier'
         );
 
-        return response()->json(['data' => [
+        return $this->respond([
             'deleted_count' => $deletedCount,
             'skipped_count' => $requestedCount - $deletedCount,
             'requested'     => $requestedCount,
-        ]]);
+        ]);
     }
 
     /**
@@ -299,7 +295,7 @@ class ShopSupplierController extends Controller
      * @param Request $request {format: csv|json|txt, file}.
      * @param ImportFileParser $parser
      * @param ImportRowValidator $rowValidator
-     * @return JsonResponse {import_token, total_rows, valid_rows, invalid_rows, errors, can_commit} | 422.
+     * @return JsonResponse {data: {import_token, total_rows, valid_rows, invalid_rows, errors, can_commit}} | 422.
      */
     public function importValidate(Request $request, ImportFileParser $parser, ImportRowValidator $rowValidator): JsonResponse
     {
@@ -329,7 +325,7 @@ class ShopSupplierController extends Controller
         $total = count($parsed['rows']);
         $batch = $this->startImportBatch($request, 'shop/suppliers', $validated['format'], $total, $validCount, $total - $validCount, $errors);
 
-        return response()->json([
+        return $this->respond([
             'import_token' => $batch->id,
             'total_rows'   => $batch->total_rows,
             'valid_rows'   => $batch->valid_rows,
@@ -386,12 +382,12 @@ class ShopSupplierController extends Controller
                 'ShopSupplier'
             );
 
-            return response()->json(['data' => [
+            return $this->respond([
                 'queued'         => false,
                 'imported_count' => $result['imported_count'],
                 'skipped_count'  => $result['skipped_count'],
                 'skip_reasons'   => [],
-            ]]);
+            ]);
         } catch (\Exception $e) {
             // Expired temporary file (runImportCommit, code 410) - everything else is logged + 500.
             if ($e instanceof \RuntimeException && $e->getCode() === 410) {

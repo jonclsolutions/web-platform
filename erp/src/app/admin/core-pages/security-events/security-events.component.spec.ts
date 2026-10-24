@@ -26,7 +26,7 @@ describe('SecurityEventsComponent', () => {
   /** DataHandler.get answers per URL: stats and settings. */
   const answer = (stats: any[] = [], retention: any = { id: 1, retention_days: 30 }) => {
     (ctx.dataHandler as any).get.and.callFake((url: string) =>
-      url.startsWith('core/security_events/stats') ? of({ data: stats }) : of(retention));
+      url.startsWith('core/security_events/stats') ? of(stats) : of(retention));  // get() returns the payload (finding #6)
   };
 
   beforeEach(async () => {
@@ -144,16 +144,22 @@ describe('SecurityEventsComponent', () => {
   });
 
   /**
-   * @description Purging old events asks first, then deletes and reloads table and stats.
-   * @input  confirm → true; purgeOldEvents(); API { message: 'Deleted 5' }
-   * @output delete('core/security_events/purge'); alert with 'Deleted 5'; stats reloaded
+   * @description Purging old events asks first, then deletes and reloads table and stats; the
+   *   alert is the translated text with the count of the payload (finding #6 - was the English
+   *   API message), the default text without a count.
+   * @input  confirm → true; purgeOldEvents() with payload {deleted: 5}; again with null.
+   * @output delete('core/security_events/purge'); alert 'purge_done_count_message' (5); stats reloaded;
+   *   then 'purge_done_default_message'
    */
   it('purges old events after confirmation', async () => {
     answer();
-    (ctx.dataHandler as any).delete.and.returnValue(of({ message: 'Deleted 5' }));
+    (ctx.dataHandler as any).delete.and.returnValue(of({ deleted: 5 }));
     await component.purgeOldEvents();
     expect((ctx.dataHandler as any).delete).toHaveBeenCalledWith('core/security_events/purge');
-    expect(ctx.alert.open).toHaveBeenCalledWith('security-events.purge_done_title', 'Deleted 5', 'success');
+    expect(ctx.alert.open).toHaveBeenCalledWith('security-events.purge_done_title', 'security-events.purge_done_count_message', 'success');
+    (ctx.dataHandler as any).delete.and.returnValue(of(null));
+    await component.purgeOldEvents();
+    expect(ctx.alert.open).toHaveBeenCalledWith('security-events.purge_done_title', 'security-events.purge_done_default_message', 'success');
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('core/security_events/stats?days=14');
   });
 
@@ -311,7 +317,7 @@ describe('SecurityEventsComponent', () => {
    * @output triageSaving / settingsLoading / settingsSaving / purging false; retention unchanged.
    */
   it('recovers from failed settings, triage and purge requests', async () => {
-    (ctx.dataHandler as any).get.and.callFake((url: string) => url.startsWith('core/security_events/stats') ? of({ data: [] }) : throwError(() => new Error('x')));
+    (ctx.dataHandler as any).get.and.callFake((url: string) => url.startsWith('core/security_events/stats') ? of([]) : throwError(() => new Error('x')));
     fixture.detectChanges();
     expect(component.settingsLoading).toBeFalse();
 

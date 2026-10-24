@@ -35,6 +35,8 @@
  * @bugfix-note (2026-10-23) Open finding #34: the icon rules listed `svg` in `mimes`, but `image`
  *   refuses SVG (Laravel 11+), so an SVG flag could never be uploaded. Decided raster only (an SVG
  *   on the public disk can carry scripts) - `svg` removed, the admin file pickers no longer offer it.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api;
@@ -153,10 +155,10 @@ class TranslationController extends Controller
 
             $this->logAction($request, WebLog::class, 'update', "Translation:{$module}", $description, null, 'Translation');
 
-            return response()->json(['status' => 'success', 'detected_changes' => count($changes)]);
+            return $this->respond(['detected_changes' => count($changes)]);
         } catch (\Exception $e) {
             Log::error("Saving translations {$module}/{$lang} failed: " . $e->getMessage());
-            return response()->json(['status' => 'error', 'message' => 'Saving translations failed.'], 500);
+            return response()->json(['message' => 'Saving translations failed.'], 500);
         }
     }
 
@@ -171,7 +173,7 @@ class TranslationController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
-        return response()->json(json_decode(File::get($filePath), true));
+        return $this->respond((object) (json_decode(File::get($filePath), true) ?? []));
     }
 
     /**
@@ -188,7 +190,7 @@ class TranslationController extends Controller
             unset($lang['icon_path']);
         }
 
-        return response()->json(['languages' => $filtered]);
+        return $this->respond($filtered);
     }
 
     /**
@@ -253,7 +255,7 @@ class TranslationController extends Controller
 
         $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", 'Language list and metadata update', null, 'Translation', ['icon']);
 
-        return response()->json(['status' => 'success']);
+        return response()->json(null, 204);
     }
 
     /**
@@ -290,10 +292,7 @@ class TranslationController extends Controller
 
         $this->logAction($request, WebLog::class, 'update', "Languages:{$module}", "Icon uploaded: {$code}", null, 'Translation', ['icon']);
 
-        return response()->json([
-            'status'   => 'success',
-            'iconUrl'  => Storage::disk(self::ICON_DISK)->url($iconPath),
-        ]);
+        return $this->respond(['iconUrl' => Storage::disk(self::ICON_DISK)->url($iconPath)]);
     }
 
     /**

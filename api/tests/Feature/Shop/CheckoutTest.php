@@ -98,11 +98,11 @@ class CheckoutTest extends TestCase
             ['product_id' => $b->id, 'product_variant_id' => $v1->id, 'quantity' => 1, 'unit_price' => 0.01],
             ['product_id' => $b->id, 'product_variant_id' => $v2->id, 'quantity' => 1],
         ], ['coupon_code' => 'SAVE10', 'notes' => 'Ring twice']))->assertCreated()
-            ->assertJsonPath('status', 'pending')->assertJsonPath('payment_status', 'pending')
-            ->assertJsonPath('items.0.unit_price', 121)->assertJsonPath('items.0.total_price', 242)
-            ->assertJsonPath('items.1.unit_price', 55)->assertJsonPath('items.1.variant_name', 'V1')->assertJsonPath('items.2.unit_price', 110)
-            ->assertJsonPath('total_amount', 407)->assertJsonPath('discount_amount', 40.7)->assertJsonPath('shipping_amount', 5)
-            ->assertJsonPath('final_amount', 371.3)->assertJsonPath('customer.email', 'jan@example.com')->assertJsonPath('notes', 'Ring twice')->json();
+            ->assertJsonPath('data.status', 'pending')->assertJsonPath('data.payment_status', 'pending')
+            ->assertJsonPath('data.items.0.unit_price', 121)->assertJsonPath('data.items.0.total_price', 242)
+            ->assertJsonPath('data.items.1.unit_price', 55)->assertJsonPath('data.items.1.variant_name', 'V1')->assertJsonPath('data.items.2.unit_price', 110)
+            ->assertJsonPath('data.total_amount', 407)->assertJsonPath('data.discount_amount', 40.7)->assertJsonPath('data.shipping_amount', 5)
+            ->assertJsonPath('data.final_amount', 371.3)->assertJsonPath('data.customer.email', 'jan@example.com')->assertJsonPath('data.notes', 'Ring twice')->json('data');
 
         $expectedTax = 242 * 0.9 * 21 / 121 + 55 * 0.9 * 10 / 110 + 110 * 0.9 * 10 / 110;
         $this->assertEqualsWithDelta($expectedTax, $json['tax_amount'], 0.01);
@@ -192,8 +192,8 @@ class CheckoutTest extends TestCase
         $this->coupon(['code' => 'FIX20', 'discount_type' => 'fixed', 'discount_value' => 20]);
 
         $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]], ['coupon_code' => 'FIX20', 'company' => 'Acme']))
-            ->assertCreated()->assertJsonPath('customer_id', $customer->id)->assertJsonPath('discount_amount', 20)->assertJsonPath('final_amount', 106)
-            ->assertJsonPath('contact.full_name', 'Jan Novak')->assertJsonPath('contact.company', 'Acme')->assertJsonPath('contact.email', 'jan@example.com');
+            ->assertCreated()->assertJsonPath('data.customer_id', $customer->id)->assertJsonPath('data.discount_amount', 20)->assertJsonPath('data.final_amount', 106)
+            ->assertJsonPath('data.contact.full_name', 'Jan Novak')->assertJsonPath('data.contact.company', 'Acme')->assertJsonPath('data.contact.email', 'jan@example.com');
 
         $customer->refresh();
         $this->assertTrue($customer->trashed());
@@ -216,7 +216,7 @@ class CheckoutTest extends TestCase
         $customer = $this->customer(['email' => 'jan@example.com']);
 
         $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]], ['company' => 'Acme']))
-            ->assertCreated()->assertJsonPath('contact.first_name', 'Jan')->assertJsonPath('contact.phone', '777111222')->assertJsonPath('items.0.vat_rate', 10);
+            ->assertCreated()->assertJsonPath('data.contact.first_name', 'Jan')->assertJsonPath('data.contact.phone', '777111222')->assertJsonPath('data.items.0.vat_rate', 10);
 
         $customer->refresh();
         $this->assertSame(['Eva', 'Nova', '777123456'], [$customer->first_name, $customer->last_name, $customer->phone]);
@@ -238,7 +238,7 @@ class CheckoutTest extends TestCase
         });
 
         $this->postJson('/api/shop/checkout/create-order', $this->payload([['product_id' => $p->id, 'quantity' => 1]]))->assertCreated()
-            ->assertJsonPath('customer.first_name', 'Other')->assertJsonPath('customer.phone', '777111222')->assertJsonPath('contact.first_name', 'Jan');
+            ->assertJsonPath('data.customer.first_name', 'Other')->assertJsonPath('data.customer.phone', '777111222')->assertJsonPath('data.contact.first_name', 'Jan');
         $this->assertSame(1, ShopCustomer::count());
     }
 
@@ -298,13 +298,13 @@ class CheckoutTest extends TestCase
         config(['services.shop.payment_simulation' => true]);
         Lottery::alwaysWin();
         $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $paid->id])->assertOk()
-            ->assertJsonPath('success', true)->assertJsonPath('order.payment_status', 'paid')->assertJsonPath('order.status', 'confirmed');
+            ->assertJsonPath('data.payment_status', 'paid')->assertJsonPath('data.status', 'confirmed');
         $this->assertNotNull($paid->fresh()->paid_at);
         $this->assertShopLog('payment', 'Payment simulated: ' . $paid->order_number);
-        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $paid->id])->assertStatus(409)->assertJsonPath('success', false);
+        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $paid->id])->assertStatus(409)->assertExactJson(['message' => 'This order is not waiting for payment.']);
 
         Lottery::alwaysLose();
-        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $declined->id])->assertStatus(402)->assertJson(['message' => 'Payment was declined (simulation)']);
+        $this->postJson('/api/shop/checkout/simulate-payment', ['order_id' => $declined->id])->assertStatus(402)->assertExactJson(['message' => 'Payment was declined (simulation).']);
         $this->assertSame('pending', $declined->fresh()->payment_status);
         $this->postJson('/api/shop/checkout/simulate-payment', [])->assertStatus(422);
 

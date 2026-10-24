@@ -32,11 +32,11 @@ describe('WelcomePageComponent', () => {
 
   /**
    * @description The profile of the logged-in user is loaded and used in the greeting.
-   * @input  user id '1'; GET core/users/1 returns { data: { full_name: 'Jana Nová' } }
+   * @input  user id '1'; dataHandler.get('core/users/1') returns the payload { full_name: 'Jana Nová' }
    * @output dataHandler.get('core/users/1'); userData.full_name 'Jana Nová'; welcomeMessage 'Hello Jana Nová'; isLoadingProfile false
    */
   it('loads the profile and greets by name', () => {
-    (ctx.dataHandler as any).get.and.returnValue(of({ data: { full_name: 'Jana Nová' } }));
+    (ctx.dataHandler as any).get.and.returnValue(of({ full_name: 'Jana Nová' }));
     component.ngOnInit();
     expect((ctx.dataHandler as any).get).toHaveBeenCalledWith('core/users/1');
     expect(component.userData?.full_name).toBe('Jana Nová');

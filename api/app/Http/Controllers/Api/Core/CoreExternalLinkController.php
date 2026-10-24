@@ -44,6 +44,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -123,19 +125,13 @@ class CoreExternalLinkController extends Controller
         $this->applySorting($query, $request, 'name', 'asc');
 
         if ($request->boolean('no_pagination')) {
-            return response()->json(CoreExternalLinkResource::collection($query->get()));
+            return $this->respond(CoreExternalLinkResource::collection($query->get()));
         }
 
         $perPage = (int) $request->input('per_page', 15);
         $paginated = $query->paginate($perPage);
 
-        return response()->json([
-            'data'         => CoreExternalLinkResource::collection($paginated->items()),
-            'total'        => $paginated->total(),
-            'per_page'     => $paginated->perPage(),
-            'current_page' => $paginated->currentPage(),
-            'last_page'    => $paginated->lastPage(),
-        ]);
+        return $this->respondPaginated($paginated, CoreExternalLinkResource::class);
     }
 
     /**
@@ -148,7 +144,7 @@ class CoreExternalLinkController extends Controller
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
-        return response()->json(new CoreExternalLinkResource($link));
+        return $this->respond(new CoreExternalLinkResource($link));
     }
 
     /**
@@ -166,7 +162,7 @@ class CoreExternalLinkController extends Controller
         ]);
 
         $this->logAction($request, WebLog::class, 'create', 'Web', "Created external link: {$link->name}", $link->id, 'CoreExternalLink');
-        return response()->json(new CoreExternalLinkResource($link), 201);
+        return $this->respond(new CoreExternalLinkResource($link), 201);
     }
 
     /**
@@ -180,7 +176,7 @@ class CoreExternalLinkController extends Controller
         $link->update($request->validated());
 
         $this->logAction($request, WebLog::class, 'update', 'Web', "Updated external link: {$link->name}", $link->id, 'CoreExternalLink');
-        return response()->json(new CoreExternalLinkResource($link));
+        return $this->respond(new CoreExternalLinkResource($link));
     }
 
     /**
@@ -252,11 +248,11 @@ class CoreExternalLinkController extends Controller
             'CoreExternalLink'
         );
 
-        return response()->json(['data' => [
+        return $this->respond([
             'deleted_count' => $deletedCount,
             'skipped_count' => $skippedCount,
             'requested'     => $requestedCount,
-        ]]);
+        ]);
     }
 
     /**
@@ -272,7 +268,7 @@ class CoreExternalLinkController extends Controller
         $link->restore();
 
         $this->logAction($request, WebLog::class, 'restore', 'Web', "Restored external link: {$link->name}", $link->id, 'CoreExternalLink');
-        return response()->json(new CoreExternalLinkResource($link));
+        return $this->respond(new CoreExternalLinkResource($link));
     }
 
     /**

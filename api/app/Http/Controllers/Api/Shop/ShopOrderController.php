@@ -45,6 +45,8 @@
  * - Stock: adding, changing the quantity of or deleting items of an order that holds stock
  *   (pending … delivered) moves the difference in / out of stock. Before only status changes
  *   did, so stock drifted after every item edit.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Shop;
@@ -132,16 +134,10 @@ class ShopOrderController extends Controller
         $data = $noPagination ? $query->get() : $query->paginate($perPage);
 
         if ($noPagination) {
-            return response()->json(ShopOrderResource::collection($data));
+            return $this->respond(ShopOrderResource::collection($data));
         }
 
-        return response()->json([
-            'data' => ShopOrderResource::collection($data->items()),
-            'total' => $data->total(),
-            'per_page' => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page' => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, ShopOrderResource::class);
     }
 
     /**
@@ -269,7 +265,7 @@ class ShopOrderController extends Controller
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
             $this->logAction($request, ShopLog::class, 'create', 'ShopOrder', "Created order: {$order->order_number}.", $order->id, 'ShopOrder');
 
-            return response()->json(new ShopOrderResource($order), 201);
+            return $this->respond(new ShopOrderResource($order), 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -285,7 +281,7 @@ class ShopOrderController extends Controller
     public function show($id): JsonResponse
     {
         $order = ShopOrder::with(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items'])->findOrFail($id);
-        return response()->json(new ShopOrderResource($order));
+        return $this->respond(new ShopOrderResource($order));
     }
 
     /**
@@ -330,7 +326,7 @@ class ShopOrderController extends Controller
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
             $this->logAction($request, ShopLog::class, 'update', 'ShopOrder', "Updated order: {$order->order_number}", $order->id, 'ShopOrder');
 
-            return response()->json(new ShopOrderResource($order));
+            return $this->respond(new ShopOrderResource($order));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("ShopOrder update error: " . $e->getMessage());
@@ -405,7 +401,7 @@ class ShopOrderController extends Controller
             $order->load(['customer', 'paymentMethod', 'shippingMethod', 'coupon', 'items']);
             $this->logAction($request, ShopLog::class, 'restore', 'ShopOrder', "Restored order ID: $id", (int) $id, 'ShopOrder');
 
-            return response()->json(new ShopOrderResource($order));
+            return $this->respond(new ShopOrderResource($order));
         } catch (\Exception $e) {
             Log::error("ShopOrder restore error: " . $e->getMessage());
             $this->logAction($request, ShopLog::class, 'error', 'ShopOrder', "Restoration failed for ID {$id}: " . $e->getMessage(), (int) $id, 'ShopOrder');

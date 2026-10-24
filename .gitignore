@@ -11,3 +11,5 @@ id_ecdsa*
 *.key
 *.p12
 *.pfx
+# Local dev certificate of ng serve - generated per developer by init-workspace.sh (finding #54)
+/erp/ssl/

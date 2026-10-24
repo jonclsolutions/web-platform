@@ -32,6 +32,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -111,16 +113,10 @@ class WebJobApplicationController extends Controller
         $data = $noPagination ? $query->get() : $query->paginate($perPage);
 
         if ($noPagination) {
-            return WebJobApplicationResource::collection($data);
+            return $this->respond(WebJobApplicationResource::collection($data));
         }
 
-        return response()->json([
-            'data'         => WebJobApplicationResource::collection($data->items()),
-            'total'        => $data->total(),
-            'per_page'     => $data->perPage(),
-            'current_page' => $data->currentPage(),
-            'last_page'    => $data->lastPage(),
-        ]);
+        return $this->respondPaginated($data, WebJobApplicationResource::class);
     }
 
     /**
@@ -138,7 +134,7 @@ class WebJobApplicationController extends Controller
 
             $this->logAction($request, WebLog::class, 'create', 'WebJobApplication', "New job application for position: {$application->position_name} ({$application->first_name} {$application->last_name})", $application->id, 'WebJobApplication');
 
-            return response()->json(new WebJobApplicationResource($application->load('attachments')), 201);
+            return $this->respond(new WebJobApplicationResource($application->load('attachments')), 201);
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error creating job application: " . $e->getMessage());
             return response()->json(['message' => 'Creation failed.'], 500);
@@ -151,7 +147,7 @@ class WebJobApplicationController extends Controller
     public function show($id): JsonResponse
     {
         $jobApplication = WebJobApplication::withTrashed()->with('attachments')->findOrFail($id);
-        return response()->json(new WebJobApplicationResource($jobApplication));
+        return $this->respond(new WebJobApplicationResource($jobApplication));
     }
 
     /**
@@ -182,7 +178,7 @@ class WebJobApplicationController extends Controller
                 'WebJobApplication'
             );
 
-            return response()->json(new WebJobApplicationResource($jobApplication->fresh()->load('attachments')));
+            return $this->respond(new WebJobApplicationResource($jobApplication->fresh()->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction(
                 $request,
@@ -280,11 +276,11 @@ class WebJobApplicationController extends Controller
             'WebJobApplication'
         );
 
-        return response()->json(['data' => [
+        return $this->respond([
             'deleted_count' => $deletedCount,
             'skipped_count' => $skippedCount,
             'requested'     => $requestedCount,
-        ]]);
+        ]);
     }
 
     /**
@@ -299,7 +295,7 @@ class WebJobApplicationController extends Controller
 
             $this->logAction($request, WebLog::class, 'restore', 'WebJobApplication', "Restored job application ID: $id", (int) $id, 'WebJobApplication');
 
-            return response()->json(new WebJobApplicationResource($item->load('attachments')));
+            return $this->respond(new WebJobApplicationResource($item->load('attachments')));
         } catch (\Exception $e) {
             $this->logAction($request, WebLog::class, 'error', 'WebJobApplication', "Error restoring job application ID: $id. Error: " . $e->getMessage(), (int) $id, 'WebJobApplication');
             return response()->json(['message' => 'Restoration failed.'], 500);

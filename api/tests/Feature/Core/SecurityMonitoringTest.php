@@ -75,7 +75,7 @@ class SecurityMonitoringTest extends TestCase
 
         $this->getJson('/api/core/security_events?per_page=1')
             ->assertOk()
-            ->assertJson(['total' => 2, 'per_page' => 1, 'current_page' => 1, 'last_page' => 2])
+            ->assertJson(['meta' => ['total' => 2, 'per_page' => 1, 'current_page' => 1, 'last_page' => 2]])
             ->assertJsonPath('data.0.id', $today->id);
     }
 
@@ -94,10 +94,10 @@ class SecurityMonitoringTest extends TestCase
             "id={$a->id}", 'event_type=scan_probe', 'severity=critical', 'status=reviewed', 'ip_address=168.1',
             'date_to=' . urlencode(now()->subDays(4)->toDateTimeString()),
         ] as $filter) {
-            $this->getJson("/api/core/security_events?{$filter}")->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $a->id);
+            $this->getJson("/api/core/security_events?{$filter}")->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $a->id);
         }
         $this->getJson('/api/core/security_events?date_from=' . urlencode(now()->subDay()->toDateTimeString()))
-            ->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $b->id);
+            ->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $b->id);
     }
 
     /**
@@ -112,7 +112,7 @@ class SecurityMonitoringTest extends TestCase
         $b = $this->event();
 
         $this->getJson('/api/core/security_events?no_pagination=true&sort_by=id&sort_direction=asc')
-            ->assertOk()->assertJsonPath('*.id', [$a->id, $b->id]);
+            ->assertOk()->assertJsonPath('data.*.id', [$a->id, $b->id]);
     }
 
     /**
@@ -126,7 +126,7 @@ class SecurityMonitoringTest extends TestCase
         $event = $this->event(['context_data' => ['route' => 'api/login']]);
 
         $this->getJson("/api/core/security_events/{$event->id}")
-            ->assertOk()->assertJsonPath('context_data.route', 'api/login');
+            ->assertOk()->assertJsonPath('data.context_data.route', 'api/login');
         $this->getJson('/api/core/security_events/999')->assertStatus(404);
     }
 
@@ -181,7 +181,7 @@ class SecurityMonitoringTest extends TestCase
         $recent = $this->event(['last_seen_at' => now()->subDays(29)]);
 
         $this->deleteJson('/api/core/security_events/purge')
-            ->assertOk()->assertJson(['deleted' => 1, 'message' => 'Deleted 1 records older than 30 days.']);
+            ->assertOk()->assertJson(['message' => 'Deleted 1 records older than 30 days.', 'data' => ['deleted' => 1]]);
 
         $this->assertNull($old->fresh());
         $this->assertNotNull($recent->fresh());
@@ -220,7 +220,7 @@ class SecurityMonitoringTest extends TestCase
     {
         $this->securityAdmin();
 
-        $this->getJson('/api/core/security_settings')->assertOk()->assertJsonPath('retention_days', 90);
+        $this->getJson('/api/core/security_settings')->assertOk()->assertJsonPath('data.retention_days', 90);
         $this->putJson('/api/core/security_settings', ['retention_days' => 30])
             ->assertOk()->assertJsonPath('data.retention_days', 30);
         $this->assertCoreLog('security_retention_updated', 'from 90 to 30 days');

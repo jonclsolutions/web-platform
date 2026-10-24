@@ -25,6 +25,9 @@
 #   6. Shell aliases   – <app>, <app>-dev, <app>-build in your shell profile
 #   7. Summary         – result + the manual steps: review api/.env, import the database
 #
+# @refactor-note (2026-10-24) Open finding #54: the dev certificate of `ng serve` was a committed
+#   Laragon key pair (`erp/ssl/laragon.*`). Laragon is no longer used (XAMPP); the pair is now
+#   generated per developer as `erp/ssl/localhost.{crt,key}` and the whole `erp/ssl/` is git-ignored.
 # @note THE DATABASE IS NOT CREATED BY THIS SCRIPT – create it and import the
 # SQL dump in phpMyAdmin (https://localhost/phpmyadmin/); the summary prints the
 # database name. Only one application runs at a time (all use ports 8000/4200).
@@ -66,8 +69,8 @@ APP_SLUG="${APP_SLUG:-app}"
 
 # Angular `ng serve` uses these (erp/angular.json → serve.options.sslKey/sslCert).
 SSL_DIR="$ERP_DIR/ssl"
-SSL_CERT="$SSL_DIR/laragon.crt"
-SSL_KEY="$SSL_DIR/laragon.key"
+SSL_CERT="$SSL_DIR/localhost.crt"   # per developer, git-ignored (finding #54)
+SSL_KEY="$SSL_DIR/localhost.key"
 
 SKIP_SYSTEM=0
 WITH_ALIASES=1
@@ -367,7 +370,7 @@ setup_repository() {
     step "Repository"
     local gi="$ROOT_DIR/.gitignore" rule added=()
     touch "$gi"
-    for rule in '.dev/' '/build/' '/app_build/' '.~lock.*#' '/erp/ssl/*.key'; do
+    for rule in '.dev/' '/build/' '/app_build/' '.~lock.*#' '/erp/ssl/'; do
         grep -qxF "$rule" "$gi" || { printf '%s\n' "$rule" >> "$gi"; added+=("$rule"); }
     done
     if [[ ${#added[@]} -gt 0 ]]; then done_ ".gitignore: added ${added[*]}"; else skip ".gitignore complete"; fi

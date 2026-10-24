@@ -63,8 +63,8 @@ class CustomerTest extends TestCase
         $this->assertSame([$b->id], $ids('is_active=0'));
         $this->getJson("/api/shop/customers?search=eva")->assertJsonPath('data.0.full_name', 'Eva Nova')->assertJsonPath('data.0.total_spent', 0);
         $this->assertSame(['gone@x.cz'], array_column($this->getJson('/api/shop/customers?only_trashed=1')->json('data'), 'email'));
-        $this->getJson('/api/shop/customers?per_page=1')->assertJson(['total' => 2, 'last_page' => 2]);
-        $this->getJson('/api/shop/customers?no_pagination=1')->assertOk()->assertJsonCount(2);
+        $this->getJson('/api/shop/customers?per_page=1')->assertJson(['meta' => ['total' => 2, 'last_page' => 2]]);
+        $this->getJson('/api/shop/customers?no_pagination=1')->assertOk()->assertJsonCount(2, 'data');
     }
 
     /**
@@ -79,14 +79,14 @@ class CustomerTest extends TestCase
         $this->signIn($this->userWith(self::ALL));
         $other = $this->customer();
 
-        $id = $this->postJson('/api/shop/customers', $this->payload())->assertCreated()->assertJsonPath('full_name', 'Jan Novak')->json('id');
+        $id = $this->postJson('/api/shop/customers', $this->payload())->assertCreated()->assertJsonPath('data.full_name', 'Jan Novak')->json('data.id');
         $this->assertShopLog('create', 'Created customer: Jan Novak');
         $this->postJson('/api/shop/customers', $this->payload())->assertStatus(422)->assertJsonPath('errors.email.0', 'This e-mail is already registered.');
         $this->postJson('/api/shop/customers', $this->payload(['email' => 'x@x.cz', 'phone' => 'call me']))->assertStatus(422)->assertJsonPath('errors.phone.0', 'Enter a valid phone number.');
 
-        $this->getJson("/api/shop/customers/{$id}")->assertOk()->assertJsonPath('email', 'jan@example.com');
+        $this->getJson("/api/shop/customers/{$id}")->assertOk()->assertJsonPath('data.email', 'jan@example.com');
         $this->getJson('/api/shop/customers/999')->assertStatus(404);
-        $this->putJson("/api/shop/customers/{$id}", $this->payload(['city' => 'Brno']))->assertOk()->assertJsonPath('city', 'Brno');
+        $this->putJson("/api/shop/customers/{$id}", $this->payload(['city' => 'Brno']))->assertOk()->assertJsonPath('data.city', 'Brno');
         $this->assertShopLog('update', 'Updated customer: Jan Novak');
         $this->putJson("/api/shop/customers/{$id}", $this->payload(['email' => $other->email]))->assertStatus(422)->assertJsonPath('errors.email.0', 'This e-mail is already used by another customer.');
         $this->putJson('/api/shop/customers/999', $this->payload(['email' => 'new@x.cz']))->assertStatus(404);
@@ -113,7 +113,7 @@ class CustomerTest extends TestCase
         $this->deleteJson("/api/shop/customers/{$b->id}?force_delete=1")->assertNoContent();
         $this->assertNull(ShopCustomer::withTrashed()->find($b->id));
         $this->deleteJson('/api/shop/customers/999')->assertStatus(404);
-        $this->postJson("/api/shop/customers/{$a->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
+        $this->postJson("/api/shop/customers/{$a->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null);
         $this->postJson('/api/shop/customers/999/restore')->assertStatus(404);
 
         $c->delete();
@@ -151,7 +151,7 @@ class CustomerTest extends TestCase
         $this->assertNotNull(ShopCustomer::withTrashed()->find($a->id));
 
         $this->deleteJson('/api/shop/customers/force-delete-all')->assertOk()
-            ->assertJsonPath('deleted_count', 1)->assertJsonPath('skipped_count', 2);
+            ->assertJsonPath('data.deleted_count', 1)->assertJsonPath('data.skipped_count', 2);
         $this->assertNull(ShopCustomer::withTrashed()->find($c->id));
         $this->assertSame(2, ShopCustomer::onlyTrashed()->count());
         $this->assertShopLog('force_delete_all', 'Count: 1, kept (with orders): 2');
@@ -177,7 +177,7 @@ class CustomerTest extends TestCase
         $order = $this->order($customer, ['customer_first_name' => 'Eva', 'customer_last_name' => 'Nova', 'customer_email' => 'eva@example.com']);
 
         $this->postJson("/api/shop/customers/{$customer->id}/anonymize")->assertOk()
-            ->assertJsonPath('email', "customer-{$customer->id}@anonymized.invalid")->assertJsonPath('full_name', 'Anonymized customer');
+            ->assertJsonPath('data.email', "customer-{$customer->id}@anonymized.invalid")->assertJsonPath('data.full_name', 'Anonymized customer');
 
         $customer->refresh();
         $this->assertSame([null, null, null, null, null, false], [$customer->phone, $customer->company, $customer->address, $customer->city, $customer->notes, $customer->is_active]);

@@ -20,6 +20,8 @@
  * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api\Web;
@@ -106,18 +108,12 @@ public function index(Request $request): JsonResponse
     $noPagination = filter_var($request->input('no_pagination', false), FILTER_VALIDATE_BOOLEAN);
 
     if ($noPagination) {
-        return response()->json(WebLogResource::collection($query->get()));
+        return $this->respond(WebLogResource::collection($query->get()));
     }
 
     $data = $query->paginate($perPage);
 
-    return response()->json([
-        'data'         => WebLogResource::collection($data->items()),
-        'total'        => $data->total(),
-        'per_page'     => $data->perPage(),
-        'current_page' => $data->currentPage(),
-        'last_page'    => $data->lastPage(),
-    ]);
+    return $this->respondPaginated($data, WebLogResource::class);
 }
 
     /**
@@ -144,7 +140,7 @@ public function index(Request $request): JsonResponse
             'user_plain'    => $request->user()?->user_email ?? 'system',
         ]);
 
-        return response()->json(new WebLogResource($log), 201);
+        return $this->respond(new WebLogResource($log), 201);
     }
 
     /**
@@ -156,6 +152,6 @@ public function index(Request $request): JsonResponse
     public function show($id): JsonResponse
     {
         $log = WebLog::findOrFail($id);
-        return response()->json(new WebLogResource($log));
+        return $this->respond(new WebLogResource($log));
     }
 }

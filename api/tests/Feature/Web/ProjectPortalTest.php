@@ -97,8 +97,8 @@ class ProjectPortalTest extends TestCase
         $this->postJson('/api/projects/public/portal-token/login', [])->assertStatus(422)->assertJsonValidationErrors(['password']);
 
         $json = $this->postJson('/api/projects/public/portal-token/login', ['password' => $this->projectPassword])
-            ->assertOk()->assertJsonPath('expires_in', 86400)->assertJsonPath('project.name', 'Eshop')
-            ->assertJsonPath('project.checkpoints.0.label', 'Design')->json();
+            ->assertOk()->assertJsonPath('data.expires_in', 86400)->assertJsonPath('data.project.name', 'Eshop')
+            ->assertJsonPath('data.project.checkpoints.0.label', 'Design')->json('data');
         $this->assertSame(64, strlen($json['session_token']));
         $this->assertArrayNotHasKey('access_token', $json['project']);
         $this->assertArrayNotHasKey('access_password_hash', $json['project']);
@@ -138,7 +138,7 @@ class ProjectPortalTest extends TestCase
         $this->withToken($foreign)->getJson('/api/projects/public/portal-token')->assertStatus(401);
         $this->withoutToken()->getJson("/api/projects/public/portal-token?session_token={$this->session}")->assertStatus(401)->assertJson(['message' => 'Authentication required.']);
         $this->withoutToken()->postJson('/api/projects/public/portal-token/logout', ['session_token' => $this->session])->assertStatus(401);
-        $this->withToken($this->session)->getJson('/api/projects/public/portal-token')->assertOk()->assertJsonPath('name', 'Eshop');
+        $this->withToken($this->session)->getJson('/api/projects/public/portal-token')->assertOk()->assertJsonPath('data.name', 'Eshop');
 
         $this->travel(23)->hours();
         $this->portal('GET')->assertOk();
@@ -164,7 +164,7 @@ class ProjectPortalTest extends TestCase
     {
         $this->portal->checkpoints()->create(['label' => 'Build']);
 
-        $this->portal('GET')->assertOk()->assertJsonPath('name', 'Eshop')->assertJsonPath('checkpoints.0.label', 'Build')->assertJsonMissingPath('access_token');
+        $this->portal('GET')->assertOk()->assertJsonPath('data.name', 'Eshop')->assertJsonPath('data.checkpoints.0.label', 'Build')->assertJsonMissingPath('data.access_token');
         $this->portal('POST', '/logout')->assertOk()->assertJson(['message' => 'Logout successful.']);
         $this->assertSame(0, WebProjectSession::count());
         $this->portal('GET')->assertStatus(401);
@@ -185,11 +185,11 @@ class ProjectPortalTest extends TestCase
         $unread = $this->thread($this->portal, ['subject' => 'Unread'], [['admin', 'Answer']]);
         $foreign = $this->thread($this->project(), [], [['admin', 'Secret']]);
 
-        $list = collect($this->portal('GET', '/threads')->assertOk()->assertJsonCount(2)->json())->keyBy('id');
+        $list = collect($this->portal('GET', '/threads')->assertOk()->assertJsonCount(2, 'data')->json('data'))->keyBy('id');
         $this->assertSame(1, $list[$read->id]['unread_count']);
         $this->assertSame(1, $list[$unread->id]['unread_count']);
 
-        $this->portal('GET', "/threads/{$unread->id}")->assertOk()->assertJsonPath('has_more_older_messages', false)->assertJsonPath('messages.0.body', 'Answer');
+        $this->portal('GET', "/threads/{$unread->id}")->assertOk()->assertJsonPath('meta.has_more_older_messages', false)->assertJsonPath('data.messages.0.body', 'Answer');
         $this->assertNotNull($unread->fresh()->customer_last_read_at);
         $this->portal('GET', "/threads/{$foreign->id}")->assertStatus(404)->assertJson(['message' => 'Thread not found.']);
     }
@@ -207,13 +207,13 @@ class ProjectPortalTest extends TestCase
         $foreign = $this->thread($this->project());
 
         $this->portal('GET', "/threads/{$thread->id}/messages?before_message_id={$ids[2]}&limit=1")
-            ->assertOk()->assertJsonPath('data.0.body', 'Two')->assertJsonPath('has_more_older_messages', true);
+            ->assertOk()->assertJsonPath('data.0.body', 'Two')->assertJsonPath('meta.has_more_older_messages', true);
         $this->portal('GET', "/threads/{$thread->id}/messages")->assertJsonCount(3, 'data');
 
         $this->portal('GET', "/threads/{$thread->id}/new-messages?after_id={$ids[2]}")->assertOk()->assertJsonCount(0, 'data');
         $this->assertNull($thread->fresh()->customer_last_read_at);
         $this->portal('GET', "/threads/{$thread->id}/new-messages?after_id={$ids[0]}")
-            ->assertOk()->assertJsonCount(2, 'data')->assertJsonPath('status', 'active');
+            ->assertOk()->assertJsonCount(2, 'data')->assertJsonPath('meta.status', 'active');
         $this->assertNotNull($thread->fresh()->customer_last_read_at);
 
         $this->portal('GET', "/threads/{$foreign->id}/messages")->assertStatus(404);
@@ -232,9 +232,9 @@ class ProjectPortalTest extends TestCase
         $this->withToken($this->session)->post('/api/projects/public/portal-token/threads', [
             'subject' => 'Logo', 'priority' => 'high', 'body' => 'Please change it', 'attachments' => [$this->upload('s.png', 1, 'image/png')],
         ], ['Accept' => 'application/json'])->assertCreated()
-            ->assertJsonPath('opened_by', 'customer')->assertJsonPath('status', 'active')->assertJsonPath('unread_count', 0)
-            ->assertJsonPath('messages.0.body', 'Please change it')->assertJsonPath('messages.0.author_type', 'customer')
-            ->assertJsonCount(1, 'messages.0.attachments');
+            ->assertJsonPath('data.opened_by', 'customer')->assertJsonPath('data.status', 'active')->assertJsonPath('data.unread_count', 0)
+            ->assertJsonPath('data.messages.0.body', 'Please change it')->assertJsonPath('data.messages.0.author_type', 'customer')
+            ->assertJsonCount(1, 'data.messages.0.attachments');
 
         $this->assertStringStartsWith('web/project_threads/', WebProjectThread::sole()->messages()->sole()->attachments->sole()->path);
         Mail::assertQueued(ProjectThreadActivityMail::class, fn ($mail) => $mail->hasTo('pm@example.com') && $mail->isNewThread);
@@ -253,7 +253,7 @@ class ProjectPortalTest extends TestCase
         $foreign = $this->thread($this->project());
 
         $this->portal('POST', "/threads/{$thread->id}/messages", ['body' => 'Any news?'])->assertCreated()
-            ->assertJsonPath('author_type', 'customer')->assertJsonPath('author_label', null);
+            ->assertJsonPath('data.author_type', 'customer')->assertJsonPath('data.author_label', null);
         $this->assertTrue($thread->fresh()->last_message_at->isToday());
         $this->assertNotNull($thread->fresh()->customer_last_read_at);
         Mail::assertQueued(ProjectThreadActivityMail::class, fn ($mail) => !$mail->isNewThread);
@@ -293,7 +293,7 @@ class ProjectPortalTest extends TestCase
         $thread = $this->thread($this->portal);
         $foreign = $this->thread($this->project());
 
-        $this->portal('POST', "/threads/{$thread->id}/status", ['status' => 'closed'])->assertOk()->assertJsonPath('status', 'closed');
+        $this->portal('POST', "/threads/{$thread->id}/status", ['status' => 'closed'])->assertOk()->assertJsonPath('data.status', 'closed');
         $this->portal('POST', "/threads/{$thread->id}/status", ['status' => 'x'])->assertStatus(422);
         $this->portal('POST', "/threads/{$foreign->id}/status", ['status' => 'closed'])->assertStatus(404);
         $this->assertSame('active', $foreign->fresh()->status);

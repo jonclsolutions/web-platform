@@ -70,10 +70,10 @@ class RawRequestCommissionTest extends TestCase
         $response = $this->post('/api/raw_request_commissions', $this->payload([
             'attachments' => [$this->upload('brief.pdf'), $this->upload('logo.png', 5, 'image/png')],
         ]), ['Accept' => 'application/json'])->assertCreated()
-            ->assertJsonPath('thema', 'New website')
-            ->assertJsonCount(2, 'attachments');
+            ->assertJsonPath('data.thema', 'New website')
+            ->assertJsonCount(2, 'data.attachments');
 
-        $this->assertStringContainsString('/api/attachments/download/', $response->json('attachments.0.download_url'));
+        $this->assertStringContainsString('/api/attachments/download/', $response->json('data.attachments.0.download_url'));
         $request = WebRawRequestCommission::sole();
         $this->assertSame('en', $request->lang);
         foreach ($request->attachments as $attachment) {
@@ -167,7 +167,7 @@ class RawRequestCommissionTest extends TestCase
         $this->rawRequest(['thema' => 'Old'])->delete();
 
         $this->getJson('/api/web/raw_request_commissions?per_page=1')->assertOk()
-            ->assertJson(['total' => 2, 'last_page' => 2])->assertJsonPath('data.0.id', $b->id);
+            ->assertJson(['meta' => ['total' => 2, 'last_page' => 2]])->assertJsonPath('data.0.id', $b->id);
         $ids = fn (string $query) => array_column($this->getJson("/api/web/raw_request_commissions?{$query}")->json('data'), 'id');
         $this->assertSame([$a->id], $ids('search=Logo'));
         $this->assertSame([$a->id], $ids("id={$a->id}"));
@@ -195,7 +195,7 @@ class RawRequestCommissionTest extends TestCase
         $this->signIn($this->userWith(['web-user-requests-create']));
 
         $this->postJson('/api/web/raw_request_commissions', $this->payload(['status' => 'in_progress']))
-            ->assertCreated()->assertJsonPath('status', 'in_progress');
+            ->assertCreated()->assertJsonPath('data.status', 'in_progress');
     }
 
     /**
@@ -211,7 +211,7 @@ class RawRequestCommissionTest extends TestCase
         $request->delete();
 
         $this->getJson("/api/web/raw_request_commissions/{$request->id}")->assertOk()
-            ->assertJsonCount(1, 'attachments')->assertJsonPath('deleted_at', fn ($v) => $v !== null);
+            ->assertJsonCount(1, 'data.attachments')->assertJsonPath('data.deleted_at', fn ($v) => $v !== null);
         $this->getJson('/api/web/raw_request_commissions/999')->assertStatus(404);
     }
 
@@ -231,7 +231,7 @@ class RawRequestCommissionTest extends TestCase
             '_method' => 'PUT', 'thema' => 'Renamed', 'status' => 'done', 'attachments_removed_ids' => [$old->id],
             'attachments' => [$this->upload('new.pdf')],
         ], ['Accept' => 'application/json'])->assertOk()
-            ->assertJsonPath('thema', 'Renamed')->assertJsonPath('attachments.0.original_filename', 'new.pdf');
+            ->assertJsonPath('data.thema', 'Renamed')->assertJsonPath('data.attachments.0.original_filename', 'new.pdf');
 
         $this->assertNull(WebAttachment::find($old->id));
         Storage::disk('private')->assertMissing('web/raw_request_commissions/old.pdf');
@@ -315,7 +315,7 @@ class RawRequestCommissionTest extends TestCase
         $this->attach($b, 'web/raw_request_commissions/b.pdf');
         $b->delete();
 
-        $this->postJson("/api/web/raw_request_commissions/{$a->id}/restore")->assertOk()->assertJsonPath('deleted_at', null);
+        $this->postJson("/api/web/raw_request_commissions/{$a->id}/restore")->assertOk()->assertJsonPath('data.deleted_at', null);
         $this->postJson('/api/web/raw_request_commissions/999/restore')->assertStatus(404);
         $this->deleteJson('/api/web/raw_request_commissions/force-delete-all')->assertNoContent();
         $this->assertNull(WebRawRequestCommission::withTrashed()->find($b->id));

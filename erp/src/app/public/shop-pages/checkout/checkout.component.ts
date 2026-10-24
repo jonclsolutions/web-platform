@@ -17,6 +17,8 @@
  *   uncaught Czech exception.
  * @bugfix-note (2026-10-23) Open finding #53: order / coupon errors showed the English API messages
  *   on the Czech shop - translated texts by status now (stock / rejected order / too many requests).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): shipping /
+ *  payment methods are the payload lists of ShopPublicService.
  */
 
 import { Component, OnInit, signal, computed } from '@angular/core';
@@ -176,7 +178,7 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
   loadShippingMethods(): void {
     this.shopPublicService.getShippingMethods().subscribe({
       next: (response) => {
-        const methods = response.data || response;
+        const methods = response ?? [];
         this.shippingMethods.set(methods);
         if (methods.length > 0) {
           this.selectShippingMethod(methods[0].id);
@@ -192,7 +194,7 @@ export class CheckoutComponent extends BasePublicComponent implements OnInit {
   loadPaymentMethods(): void {
     this.shopPublicService.getPaymentMethods().subscribe({
       next: (response) => {
-        const payments = response.data || response;
+        const payments = response ?? [];
         this.paymentMethods.set(payments);
         if (payments.length > 0) {
           this.selectPaymentMethod(payments[0].id);

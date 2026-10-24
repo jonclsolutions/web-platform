@@ -14,6 +14,8 @@
  * e-mail is no longer allowed by the e-mail access policy (sysadmin exempt). Checked only
  * after the password matched, with a generic message that reveals nothing about the
  * allowed domains - see `emailPolicyAllowsLogin()`.
+ * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
+ *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
 
 namespace App\Http\Controllers\Api;
@@ -192,7 +194,7 @@ class AuthController extends Controller
         $user = $request->user();
         $user->load('roles.permissions');
 
-        return response()->json([
+        return $this->respond([
             'user'             => new UserResource($user),
             'user_roles'       => $user->roles->pluck('role_name'),
             'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
@@ -230,12 +232,11 @@ class AuthController extends Controller
 
         $this->logAction($request, CoreLog::class, 'login_2fa_challenge_sent', 'Auth', "2FA code sent: {$user->user_email}", $user->id, 'User');
 
-        return response()->json([
-            'message'      => 'Enter the verification code sent to your email.',
+        return $this->respond([
             'requires_2fa' => true,
             'login_token'  => $rawLoginToken,
             'expires_in'   => TwoFactorCode::CODE_TTL_MINUTES * 60,
-        ], 200);
+        ], 200, [], 'Enter the verification code sent to your email.');
     }
 
     /**
@@ -375,10 +376,9 @@ class AuthController extends Controller
 
         $this->logAction($request, CoreLog::class, 'login_2fa_code_resent', 'Auth', "2FA code resent (user_id: {$user->id})", $user->id, 'User');
 
-        return response()->json([
-            'message'    => 'A new code has been sent.',
+        return $this->respond([
             'expires_in' => TwoFactorCode::CODE_TTL_MINUTES * 60,
-        ], 200);
+        ], 200, [], 'A new code has been sent.');
     }
 
     /**
@@ -401,14 +401,13 @@ class AuthController extends Controller
 
         $this->logAction($request, CoreLog::class, 'login_success', 'Auth', "User logged in: {$user->user_email}", $user->id, 'User');
 
-        return response()->json([
-            'message'          => 'Login successful!',
+        return $this->respond([
             'user'             => new UserResource($user),
             'user_roles'       => $user->roles->pluck('role_name'),
             'user_permissions' => method_exists($user, 'getPermissionsAttribute') ? $user->getPermissionsAttribute() : [],
             'token'            => $accessToken,
             'refreshToken'     => $refreshToken,
-        ], 200);
+        ], 200, [], 'Login successful!');
     }
 
     /**
@@ -486,7 +485,7 @@ class AuthController extends Controller
             'expires_at' => now()->addDays(7),
         ]);
 
-        return response()->json([
+        return $this->respond([
             'token'        => $newAccessToken,
             'refreshToken' => $newRefreshToken,
         ], 200);

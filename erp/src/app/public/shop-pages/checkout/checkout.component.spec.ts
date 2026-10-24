@@ -47,7 +47,7 @@ describe('CheckoutComponent', () => {
   function create(items = true): void {
     localStorage.removeItem('shop_cart');
     shop = jasmine.createSpyObj('ShopPublicService', ['getShippingMethods', 'getPaymentMethods', 'validateCoupon', 'createOrder']);
-    shop.getShippingMethods.and.returnValue(of({ data: [{ id: 3, name: 'PPL', base_price: 5 }, { id: 4, name: 'Pickup', base_price: 0 }] }));
+    shop.getShippingMethods.and.returnValue(of([{ id: 3, name: 'PPL', base_price: 5 }, { id: 4, name: 'Pickup', base_price: 0 }]));
     shop.getPaymentMethods.and.returnValue(of([{ id: 7, name: 'Card' }]));
     alert = jasmine.createSpyObj('AlertDialogService', ['open']);
     const ctx = createPublicPageContext({ translations: { checkout } });

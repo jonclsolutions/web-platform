@@ -210,7 +210,7 @@ class PasswordResetTest extends TestCase
 
         $this->postJson('/api/reset-password', [
             'token' => self::RAW_TOKEN, 'password' => self::NEW_PASSWORD, 'password_confirmation' => self::NEW_PASSWORD,
-        ])->assertOk()->assertJson(['email' => $user->user_email]);
+        ])->assertOk()->assertJson(['data' => ['email' => $user->user_email]]);
 
         $this->assertTrue(Hash::check(self::NEW_PASSWORD, $user->fresh()->user_password_hash));
         $this->assertNotNull($token->fresh()->used_at);

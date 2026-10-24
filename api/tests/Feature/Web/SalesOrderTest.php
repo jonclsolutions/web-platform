@@ -67,10 +67,10 @@ class SalesOrderTest extends TestCase
 
         $this->post('/api/sales_orders', $this->payload(['attachments' => [$this->upload('spec.pdf')]]), ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('salesman_name', 'Web inquiry (without lead)')
-            ->assertJsonPath('data_processing_agreement', true)
-            ->assertJsonPath('tos_agreement', true)
-            ->assertJsonCount(1, 'attachments');
+            ->assertJsonPath('data.salesman_name', 'Web inquiry (without lead)')
+            ->assertJsonPath('data.data_processing_agreement', true)
+            ->assertJsonPath('data.tos_agreement', true)
+            ->assertJsonCount(1, 'data.attachments');
 
         Mail::assertQueued(WebSalesOrderReceived::class, fn ($mail) => $mail->hasTo('order@acme.cz'));
         $this->assertWebLog('create', 'Created sales order for: Acme s.r.o.');
@@ -89,7 +89,7 @@ class SalesOrderTest extends TestCase
         $lead = $this->lead(['public_token' => 'lead-token', 'salesman_name' => 'Petr']);
 
         $this->postJson('/api/sales_orders', $this->payload(['lead_token' => 'lead-token']))
-            ->assertCreated()->assertJsonPath('lead_id', $lead->id)->assertJsonPath('salesman_name', 'Petr');
+            ->assertCreated()->assertJsonPath('data.lead_id', $lead->id)->assertJsonPath('data.salesman_name', 'Petr');
         $lead->refresh();
         $this->assertSame('Inquiry form submitted', $lead->status);
         $this->assertNotNull($lead->public_token_used_at);
@@ -112,8 +112,8 @@ class SalesOrderTest extends TestCase
     {
         Mail::fake();
         $lead = $this->lead();
-        $this->postJson('/api/sales_orders', $this->payload(['lead_id' => $lead->id]))->assertCreated()->assertJsonPath('lead_id', null);
-        $this->postJson('/api/sales_orders', $this->payload(['lead_id' => 999999]))->assertCreated()->assertJsonPath('lead_id', null);
+        $this->postJson('/api/sales_orders', $this->payload(['lead_id' => $lead->id]))->assertCreated()->assertJsonPath('data.lead_id', null);
+        $this->postJson('/api/sales_orders', $this->payload(['lead_id' => 999999]))->assertCreated()->assertJsonPath('data.lead_id', null);
     }
 
     /**
@@ -185,10 +185,10 @@ class SalesOrderTest extends TestCase
         $this->signIn($this->userWith(self::ALL));
         $order = $this->salesOrder();
 
-        $this->getJson("/api/web/sales_orders/{$order->id}")->assertOk()->assertJsonPath('client_name', 'Acme s.r.o.');
+        $this->getJson("/api/web/sales_orders/{$order->id}")->assertOk()->assertJsonPath('data.client_name', 'Acme s.r.o.');
         $this->getJson('/api/web/sales_orders/999')->assertStatus(404);
         $this->post("/api/web/sales_orders/{$order->id}", ['_method' => 'PUT', 'client_name' => 'Acme 2', 'attachments' => [$this->upload('a.pdf')]], ['Accept' => 'application/json'])
-            ->assertOk()->assertJsonPath('client_name', 'Acme 2')->assertJsonCount(1, 'attachments');
+            ->assertOk()->assertJsonPath('data.client_name', 'Acme 2')->assertJsonCount(1, 'data.attachments');
         $this->assertWebLog('update', "Updated sales order ID: {$order->id}");
         $this->putJson('/api/web/sales_orders/999', ['client_name' => 'x'])->assertStatus(404);
 

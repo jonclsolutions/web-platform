@@ -62,6 +62,8 @@
  * @bugfix-note (2026-10-23) The `translations$` subscription of the constructor was never
  *   closed (one leaked subscriber on the root i18n service per page visit) - it now ends with
  *   the component (`takeUntilDestroyed()`).
+ * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): stat totals are
+ *  read from `meta.total` of the pages.
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -72,6 +74,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { forkJoin, catchError, of } from 'rxjs';
 
 import * as Core from '../../../shared/imports/core-providers';
+import { ApiPage } from '../../../shared/interfaces/api-envelope';
 import { UserLogin } from '../../../shared/interfaces/user';
 import { BaseDataComponent } from '../../components/base-data/base-data.component';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
@@ -473,7 +476,7 @@ statBarPct(stat: QuickStat): number {
    * ResourceCacheService (2min TTL).
    * @note If an individual request fails, it defaults to null so the rest of the
    * dashboard remains functional. `getPaginatedCollection` is used deliberately (not
-   * `getCollection`) to keep `.total` from the response instead of just the unwrapped
+   * `getCollection`) to keep `meta.total` from the response instead of just the unwrapped
    * page of records.
    */
   private loadStats(): void {
@@ -494,7 +497,7 @@ statBarPct(stat: QuickStat): number {
     }
 
     this.resourceCache.get(this.STATS_CACHE_KEY, () => {
-      const calls: Record<string, ReturnType<typeof this.dataHandler.getPaginatedCollection<any>>> = {};
+      const calls: Record<string, Core.Observable<ApiPage<any> | null>> = {};
       for (const def of allowedDefs) {
         calls[def.key] = this.dataHandler.getPaginatedCollection<any>(def.endpoint).pipe(catchError(() => of(null)));
       }
@@ -503,7 +506,7 @@ statBarPct(stat: QuickStat): number {
       next: (res: Record<string, any>) => {
         this.quickStats = allowedDefs.map(def => ({
           key: def.key,
-          labelKey: def.labelKey, value: res[def.key]?.total ?? '—', icon: def.icon,
+          labelKey: def.labelKey, value: res[def.key]?.meta?.total ?? '—', icon: def.icon,
         }));
         this.loadingStats = false;
         this.isRefreshing = false;
@@ -544,7 +547,7 @@ statBarPct(stat: QuickStat): number {
       this.TTL_MS
     ).subscribe({
       next: (res) => {
-        this.recentActivity = Array.isArray(res) ? res : (res?.data ?? []);
+        this.recentActivity = res?.data ?? [];
         this.computeActivityBreakdown();
         this.loadingActivity = false;
         this.cd.markForCheck();

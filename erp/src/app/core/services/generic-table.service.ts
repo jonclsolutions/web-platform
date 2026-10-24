@@ -13,6 +13,8 @@
  *   the error, so for 3 minutes every reload / retry of that page answered the same error without
  *   asking the API again (also a failed preload poisoned the page the user opens next). The
  *   entry is now removed when its request fails.
+ * @refactor-note (2026-10-24) Open finding #6: a page is `{data, meta}` - `PaginatedResponse`
+ *   is the shared `ApiPage` type now (pagination in `meta`).
  */
 
 import { Injectable } from '@angular/core';
@@ -20,26 +22,18 @@ import { HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, shareReplay } from 'rxjs/operators';
 import { DataHandler } from './data-handler.service';
+import { ApiPage } from '../../shared/interfaces/api-envelope';
 
 export interface FilterParams {
   [key: string]: string | number | boolean | undefined | null;
 }
 
-export interface PaginatedResponse<T> {
-  current_page: number;
-  data: T[];
-  first_page_url: string;
-  from: number;
-  last_page: number;
-  last_page_url: string;
-  links: any[];
-  next_page_url: string | null;
-  path: string;
-  per_page: number;
-  prev_page_url: string | null;
-  to: number;
-  total: number;
-}
+/**
+ * @description One page of a list as the API answers it: items in `data`, pagination in `meta`
+ *   (`{total, per_page, current_page, last_page}`, open finding #6 - the keys were flat beside
+ *   `data` before).
+ */
+export type PaginatedResponse<T> = ApiPage<T>;
 
 interface CacheEntry {
   observable: Observable<PaginatedResponse<any>>;
@@ -110,7 +104,7 @@ export class GenericTableService {
     }
 
     const dataObservable = this.dataHandler
-      .getPaginatedCollection<PaginatedResponse<T>>(`${endpoint}?${params.toString()}`)
+      .getPaginatedCollection<T>(`${endpoint}?${params.toString()}`)
       .pipe(
         // A failed request must not be served from the cache (see bugfix-note 2026-10-23).
         catchError(err => {
