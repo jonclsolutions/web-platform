@@ -32,6 +32,17 @@
 # @note The scheduler (routes/console.php) currently contains only nightly
 # clean-up jobs, so it is OFF by default. Run once by hand: `php artisan schedule:test`.
 #
+# @bugfix-note (2026-10-24) A service that failed on start was invisible: dev.sh only waited
+#   for its port (ERP: 120 s) and printed a vague warning, while the real error stood in
+#   .dev/logs/<service>.log (e.g. `ng serve` without the TLS certificate:
+#   "ENOENT … ssl/localhost.crt" - visible only when running `ng serve` by hand). Now:
+#   - preflight checks the dev certificate of `ng serve` (paths from angular.json) and stops
+#     with the fix before anything is started;
+#   - while waiting for a port, the process and its log are watched: a crashed process or a
+#     fatal error line in the log stops the wait at once and prints the end of the log;
+#   - a failed required service (API, ERP) stops the whole environment with exit code 1;
+#     optional ones (Mailpit, queue, scheduler) only warn with their log.
+#
 # @security
 #   - All services bind to 127.0.0.1 only (not reachable from the LAN).
 #   - The script never reads or prints secrets from .env (reads QUEUE_CONNECTION only).
@@ -115,18 +126,120 @@ port_in_use() {
 }
 
 # -----------------------------------------------------------------------------
-# @description Waits until a service starts listening on a port.
-# @param $1 service name (for output), $2 port, $3 timeout in seconds
-# @return 0 = listening, 1 = timed out
+# Error lines in the service logs (ANSI colours are removed first - the Angular CLI
+# colours "[ERROR]"):
+#   FATAL   - the service cannot run (missing file, port taken, PHP fatal error, …)
+#             → waiting stops, the error is printed;
+#   COMPILE - `ng serve` keeps running and recompiles on save (TypeScript / template
+#             error) → the error is printed, waiting continues.
+# -----------------------------------------------------------------------------
+FATAL_LOG_PATTERN='An unhandled exception occurred|ENOENT|EADDRINUSE|Failed to listen|PHP (Fatal|Parse) error|SQLSTATE\[HY000\] \[2002\]|Cannot find module|command not found'
+COMPILE_LOG_PATTERN='Application bundle generation failed|\[ERROR\]|error TS[0-9]+'
+
+# -----------------------------------------------------------------------------
+# @description Log of a service without ANSI colour codes.
+# @param $1 service name (log .dev/logs/<name>.log)
+# -----------------------------------------------------------------------------
+plain_log() {
+    [[ -f "$LOG_DIR/$1.log" ]] && sed 's/\x1b\[[0-9;]*m//g' "$LOG_DIR/$1.log"
+}
+
+# -----------------------------------------------------------------------------
+# @description Whether a service log contains a line of the pattern.
+# @param $1 service name, $2 pattern (default FATAL_LOG_PATTERN)
+# @return 0 = found, 1 = not found / no log
+# -----------------------------------------------------------------------------
+log_has_fatal_error() {
+    plain_log "$1" | grep -Eq "${2:-$FATAL_LOG_PATTERN}"
+}
+
+# -----------------------------------------------------------------------------
+# @description Prints why a service failed: the given reason, the fatal lines of its
+# log (if any) and the last lines of the log - so the error is visible right in the
+# dev.sh output, not only in .dev/logs/.
+# @param $1 service name, $2 reason
+# -----------------------------------------------------------------------------
+report_failure() {
+    local name="$1" reason="$2" log="$LOG_DIR/$1.log"
+    printf '%s[err]%s %s\n' "$c_red" "$c_reset" "$reason" >&2
+    if [[ -s "$log" ]]; then
+        if log_has_fatal_error "$name" "$FATAL_LOG_PATTERN|$COMPILE_LOG_PATTERN"; then
+            printf '%s      error lines:%s\n' "$c_red" "$c_reset" >&2
+            plain_log "$name" | grep -E "$FATAL_LOG_PATTERN|$COMPILE_LOG_PATTERN" | tail -n 5 | sed 's/^/        /' >&2
+        fi
+        printf '      last lines of .dev/logs/%s.log:\n' "$name" >&2
+        plain_log "$name" | tail -n 15 | sed 's/^/        /' >&2
+    else
+        printf '      .dev/logs/%s.log is empty\n' "$name" >&2
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# @description Waits until a service starts listening on a port, while watching the
+# process and its log: stops at once when the process exits or its log shows a fatal
+# error (FATAL_LOG_PATTERN) and prints the reason with the log (report_failure); a
+# compile error (COMPILE_LOG_PATTERN) is printed once and the wait goes on.
+# @param $1 display name, $2 port, $3 timeout in seconds, $4 managed process name
+#   (PID file + log; empty = a service not started by this script, e.g. XAMPP MySQL)
+# @return 0 = listening, 1 = failed / timed out (already reported)
 # -----------------------------------------------------------------------------
 wait_for_port() {
-    local name="$1" port="$2" timeout="${3:-30}" i
+    local name="$1" port="$2" timeout="${3:-30}" proc="${4:-}" i compile_reported=0
     for ((i = 0; i < timeout; i++)); do
         port_in_use "$port" && { ok "$name is listening on :$port"; return 0; }
+        if [[ -n "$proc" ]]; then
+            if [[ "$compile_reported" == "0" ]] && log_has_fatal_error "$proc" "$COMPILE_LOG_PATTERN"; then
+                warn "$name: compile errors (it recompiles on save) –"
+                plain_log "$proc" | grep -E "$COMPILE_LOG_PATTERN" -A3 | head -n 20 | sed 's/^/        /' >&2
+                compile_reported=1
+            fi
+            if ! is_running "$proc"; then
+                report_failure "$proc" "$name exited before listening on :$port"
+                return 1
+            fi
+            if log_has_fatal_error "$proc"; then
+                report_failure "$proc" "$name failed to start"
+                return 1
+            fi
+        fi
         sleep 1
     done
-    warn "$name is not listening on :$port after ${timeout}s – check its log ($LOG_DIR/)"
+    if [[ -n "$proc" ]]; then
+        report_failure "$proc" "$name is not listening on :$port after ${timeout}s"
+    else
+        warn "$name is not listening on :$port after ${timeout}s"
+    fi
     return 1
+}
+
+# -----------------------------------------------------------------------------
+# @description Checks a service without a port (queue, scheduler) shortly after its
+# start: it must still run and its log must not show a fatal error.
+# @param $1 service name
+# @return 0 = fine, 1 = failed (already reported)
+# -----------------------------------------------------------------------------
+check_started() {
+    local name="$1"
+    sleep 2
+    if ! is_running "$name"; then
+        report_failure "$name" "$name exited right after the start"
+        return 1
+    fi
+    if log_has_fatal_error "$name"; then
+        report_failure "$name" "$name reports an error"
+        return 1
+    fi
+    ok "$name is running"
+}
+
+# -----------------------------------------------------------------------------
+# @description A required service failed: stop everything that was started and exit 1,
+# so nothing half-started keeps running in the background.
+# -----------------------------------------------------------------------------
+abort_up() {
+    printf '%s[err]%s %s – stopping the environment\n' "$c_red" "$c_reset" "$1" >&2
+    cmd_stop
+    exit 1
 }
 
 # -----------------------------------------------------------------------------
@@ -204,6 +317,7 @@ preflight() {
     command -v npx >/dev/null || die "npx (Node.js) is not in PATH"
     command -v setsid >/dev/null || die "setsid is not available (package util-linux)"
     [[ -d "$ERP_DIR/node_modules" ]] || die "$ERP_DIR/node_modules is missing – run ./init-workspace.sh"
+    check_erp_certificate
     [[ -x "$XAMPP_CTL" ]] || warn "XAMPP not found at $XAMPP_CTL – database will not be started (set XAMPP_CTL)"
     [[ -x "$MAILPIT_BIN" ]] || command -v "$MAILPIT_BIN" >/dev/null \
         || warn "mailpit not found ($MAILPIT_BIN) – e-mails will not be caught"
@@ -219,6 +333,30 @@ preflight() {
     port_in_use "$ERP_PORT" && ! is_running erp \
         && die "Port $ERP_PORT is in use – is another app's ./dev.sh still running? Stop it first."
     return 0
+}
+
+# -----------------------------------------------------------------------------
+# @description `ng serve` runs with TLS (angular.json → serve.options.ssl / sslKey /
+# sslCert). A missing certificate made `ng serve` fail without dev.sh showing it, so the
+# files are checked before anything is started. The paths are read from angular.json
+# with node (no hardcoded names); the certificate is per developer and git-ignored
+# (erp/ssl/, open finding #54).
+# -----------------------------------------------------------------------------
+check_erp_certificate() {
+    local files f missing=()
+    files="$(cd "$ERP_DIR" && node -e '
+        const a = require("./angular.json");
+        for (const p of Object.values(a.projects || {})) {
+          const o = (((p.architect || {}).serve || {}).options) || {};
+          if (o.ssl) { if (o.sslKey) console.log(o.sslKey); if (o.sslCert) console.log(o.sslCert); }
+        }' 2>/dev/null)" || return 0
+    while IFS= read -r f; do
+        [[ -n "$f" && ! -f "$ERP_DIR/$f" ]] && missing+=("erp/$f")
+    done <<< "$files"
+    [[ ${#missing[@]} -eq 0 ]] && return 0
+    die "dev TLS certificate of ng serve is missing: ${missing[*]}
+      fix: ./init-workspace.sh --skip-system   (creates erp/ssl/localhost.{crt,key})
+      or rename an existing pair, e.g. mv erp/ssl/laragon.crt erp/ssl/localhost.crt && mv erp/ssl/laragon.key erp/ssl/localhost.key"
 }
 
 # -----------------------------------------------------------------------------
@@ -277,7 +415,8 @@ start_mailpit() {
     fi
     start_proc mailpit "$ROOT_DIR" "$MAILPIT_BIN" \
         --smtp "127.0.0.1:$MAILPIT_SMTP_PORT" --listen "127.0.0.1:$MAILPIT_UI_PORT"
-    wait_for_port "Mailpit" "$MAILPIT_SMTP_PORT" 10 || true
+    wait_for_port "Mailpit" "$MAILPIT_SMTP_PORT" 10 mailpit \
+        || warn "continuing without Mailpit – e-mails will not be caught"
 }
 
 # -----------------------------------------------------------------------------
@@ -291,24 +430,26 @@ cmd_up() {
     start_mailpit
 
     start_proc api "$API_DIR" php artisan serve --host="$API_HOST" --port="$API_PORT" --no-reload
-    wait_for_port "API" "$API_PORT" 20 || true
+    wait_for_port "API" "$API_PORT" 20 api || abort_up "the API did not start"
 
     local qc; qc="$(queue_connection)"
     if [[ "$qc" == "sync" ]]; then
         info "QUEUE_CONNECTION=sync – no queue worker needed"
     else
         start_proc queue "$API_DIR" php artisan queue:listen --tries=3 --timeout=90
+        check_started queue || warn "continuing without the queue worker – queued jobs (e-mails) wait"
     fi
 
     if [[ "$WITH_SCHEDULER" == "1" ]]; then
         start_proc scheduler "$API_DIR" php artisan schedule:work
+        check_started scheduler || warn "continuing without the scheduler"
     else
         info "scheduler off (nightly jobs only) – enable with --with-scheduler"
     fi
 
     start_proc erp "$ERP_DIR" npx ng serve --host 127.0.0.1 --port "$ERP_PORT"
     info "ERP is compiling, the first build may take a while…"
-    wait_for_port "ERP" "$ERP_PORT" 120 || true
+    wait_for_port "ERP" "$ERP_PORT" 120 erp || abort_up "the ERP (ng serve) did not start"
 
     echo
     cmd_status

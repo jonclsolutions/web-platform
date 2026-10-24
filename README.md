@@ -169,6 +169,13 @@ Everything is started and stopped with one command from the repository root:
 ./dev.sh up --with-scheduler   # also run the Laravel scheduler
 ```
 
+Start errors are shown right in the `dev.sh` output: before starting it checks the dev
+certificate of `ng serve` (`erp/ssl/localhost.{crt,key}`, created by `./init-workspace.sh`);
+while a service starts, a crash or a fatal log line (missing file, port taken, PHP fatal
+error …) is printed with the end of its log at once. When the API or the ERP does not start,
+the whole environment is stopped (exit code 1); a TypeScript compile error is only printed –
+`ng serve` keeps running and recompiles on save.
+
 | Service | URL |
 |---|---|
 | ERP (Angular, SSL) | https://127.0.0.1:4200 |
@@ -206,11 +213,18 @@ The scheduler currently contains only nightly GDPR clean-up jobs (see `api/route
 ## Production build
 
 ```bash
-deploy/build.sh                         # full build
+deploy/build.sh                         # all unit tests first, then the full build
+deploy/build.sh --skip-tests            # build without running the tests
 deploy/build.sh --skip-angular          # reuse the existing Angular build
 deploy/build.sh --with-public-storage   # also ship storage/app/public (first install only)
 deploy/build.sh --no-zip                # skip the archive
 ```
+
+**Tests first:** every build starts with all unit tests (`tests/unit_tests/run_all.sh`, erp +
+api, report in `tests/unit_tests/report/`). When all of them pass, the build says
+`ALL TESTS PASSED – starting the production build` and continues; when one fails (or a part
+cannot run), the build stops with an error and the previous `build/` stays untouched.
+`--skip-tests` skips this gate.
 
 Output:
 
@@ -238,7 +252,7 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
 1. **Prepare**
    - all changes committed and pushed, tests and manual regression (`tests/regression_tests/`) done
    - tag the release: `git tag -a vYYYY.MM -m "Release YYYY-MM" && git push --tags`
-2. **Build** – `deploy/build.sh`, check that it ends with `COMPLETE`
+2. **Build** – `deploy/build.sh` (runs all unit tests first), check that it ends with `COMPLETE`
 3. **Back up production** – database dump, `laravel/.env`, `laravel/storage/app/`
 4. **Upload** `build/www.zip` – see [Uploading the package](#uploading-the-package):
    - use **SFTP or FTPS** (FTP over TLS), never plain FTP – it sends the hosting password unencrypted

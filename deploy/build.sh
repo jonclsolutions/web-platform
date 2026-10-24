@@ -40,8 +40,14 @@
 # under /laravel except the routed entry point, otherwise laravel/.env,
 # storage and vendor would be publicly reachable.
 #
+# @note TESTS FIRST (2026-10-24): every build runs all unit tests (tests/unit_tests/run_all.sh
+#   - erp + api) before anything is deleted or built. Only when all of them pass does the real
+#   build start; a failure stops the script (exit 1) and the previous build/ stays untouched.
+#   --skip-tests skips the gate (e.g. an urgent rebuild of an already tested commit).
+#
 # @usage
-#   deploy/build.sh                         full build (Angular + Laravel + zip)
+#   deploy/build.sh                         run all tests, then the full build (Angular + Laravel + zip)
+#   deploy/build.sh --skip-tests            build without running the tests first
 #   deploy/build.sh --with-public-storage   also ship storage/app/public (first install)
 #   deploy/build.sh --skip-angular          reuse existing erp/dist (faster rebuild)
 #   deploy/build.sh --no-zip                skip the archive step
@@ -71,13 +77,15 @@ DIST_DIR="$ERP_DIR/dist/$ANGULAR_PROJECT/browser"
 
 WITH_PUBLIC_STORAGE=0
 SKIP_ANGULAR=0
+SKIP_TESTS=0
+TESTS_RUNNER="$ROOT_DIR/tests/unit_tests/run_all.sh"
 MAKE_ZIP=1
 
 # -----------------------------------------------------------------------------
 # Output helpers
 # -----------------------------------------------------------------------------
 STEP=0
-TOTAL_STEPS=8
+TOTAL_STEPS=9
 step() { STEP=$((STEP + 1)); printf '\n\e[34m[%d/%d]\e[0m %s\n' "$STEP" "$TOTAL_STEPS" "$*"; }
 info() { printf '   - %s\n' "$*"; }
 warn() { printf '\e[33m   ! %s\e[0m\n' "$*" >&2; }
@@ -95,6 +103,7 @@ for arg in "$@"; do
     case "$arg" in
         --with-public-storage) WITH_PUBLIC_STORAGE=1 ;;
         --skip-angular)        SKIP_ANGULAR=1 ;;
+        --skip-tests)          SKIP_TESTS=1 ;;
         --no-zip)              MAKE_ZIP=0 ;;
         -h|--help) sed -n '/^# @usage/,/^# =====/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' | sed '$d'; exit 0 ;;
         *) die "unknown option: $arg (see --help)" ;;
@@ -268,6 +277,34 @@ verify_package() {
 }
 
 # -----------------------------------------------------------------------------
+# @description Test gate: runs ALL unit tests (erp + api, tests/unit_tests/run_all.sh) before
+# the build. Runs right after preflight - before build/ is wiped - so a failure leaves the
+# previous package in place. The ERR trap is suspended while the runner works (its non-zero
+# exit code is the expected "tests failed" answer, not a script error).
+# Exit codes of the runner: 0 all passed, 1 a test failed, 2 a part could not run (setup).
+# -----------------------------------------------------------------------------
+run_tests() {
+    step "Running all unit tests (erp + api)"
+    if [[ "$SKIP_TESTS" == "1" ]]; then
+        warn "skipped (--skip-tests) – the package is built WITHOUT running the tests"
+        return 0
+    fi
+    [[ -f "$TESTS_RUNNER" ]] || die "test runner not found: $TESTS_RUNNER (or use --skip-tests)"
+
+    local rc=0
+    trap - ERR
+    bash "$TESTS_RUNNER" || rc=$?
+    trap '[[ $BASH_SUBSHELL -eq 0 ]] && die "build failed at line $LINENO (command: $BASH_COMMAND)"; exit 1' ERR
+
+    echo
+    case "$rc" in
+        0) printf '\e[32m   ✓ ALL TESTS PASSED – starting the production build\e[0m\n' ;;
+        1) die "tests FAILED – the build was NOT started (details: tests/unit_tests/report/report.html; --skip-tests builds anyway)" ;;
+        *) die "the tests could not run (exit code $rc, setup problem – see above) – the build was NOT started (--skip-tests builds anyway)" ;;
+    esac
+}
+
+# -----------------------------------------------------------------------------
 # @description Archive + SHA-256 checksum so the upload can be verified.
 # -----------------------------------------------------------------------------
 make_archive() {
@@ -288,6 +325,7 @@ echo "------------------------------------------"
 echo "START: Production build"
 echo "------------------------------------------"
 preflight
+run_tests
 prepare_build_dir
 build_angular
 build_laravel

@@ -306,7 +306,8 @@ ${cases}
 
 /**
  * @description Writes report.html and report.xml into the given directory (overwrites the
- *   previous run) and prints a one-line summary. With env UNIT_TESTS_RUN_JSON set, the
+ *   previous run) and prints the summary, one value per line (total / passed / failed /
+ *   skipped / duration; changed 2026-10-24 from a single line). With env UNIT_TESTS_RUN_JSON set, the
  *   normalized run is also written to that file (used by the combined run_all.sh).
  * @param {object} run Normalized run.
  * @param {string} outDir Report directory (created when missing).
@@ -320,7 +321,15 @@ function writeReport(run, outDir) {
   // the combined runner (tests/unit_tests/run_all.sh) merges the parts from these JSON copies
   if (process.env.UNIT_TESTS_RUN_JSON) fs.writeFileSync(process.env.UNIT_TESTS_RUN_JSON, JSON.stringify(run));
   const errors = s.categories.map(([c, n]) => `${n} ${c}`).join(', ');
-  console.log(`\n${run.target} – ${run.group}: total ${s.total}, passed ${s.passed}, failed ${s.failed}, skipped ${s.skipped}${errors ? ` (${errors})` : ''}, ${formatDuration(run.durationMs)}`);
+  // One value per line (easier to read than one long line).
+  console.log([
+    `\n${run.target} – ${run.group}:`,
+    `Total: ${s.total}`,
+    `Passed: ${s.passed}`,
+    `Failed: ${s.failed}${errors ? ` (${errors})` : ''}`,
+    `Skipped: ${s.skipped}`,
+    `Duration: ${formatDuration(run.durationMs)}`,
+  ].join('\n'));
   for (const cov of coverageList(run)) {
     const label = cov.label ? ` (${cov.label})` : '';
     if (cov.unavailable) { console.log(`Coverage${label}: not available – ${cov.unavailable}`); continue; }
