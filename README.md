@@ -291,6 +291,8 @@ Run once on the first release that contains them (back up the database first):
      snapshot on the order, orders kept when a customer is deleted
    - `2026_10_24_enum_slug_column_defaults.sql` – English slug defaults of status / priority /
      state (raw requests, sales leads, job applications)
+   - `2026_10_26_normalize_user_emails.sql` – login e-mails lower case without surrounding
+     whitespace (run the duplicate check from its header first)
 2. **Legacy attachments to the private disk** (GDPR, in `laravel/`):
    `php artisan attachments:migrate-legacy --dry-run`, check the output, then without `--dry-run`
 3. **Clear caches**: `php artisan optimize:clear`, then the `config:cache` / `route:cache` /

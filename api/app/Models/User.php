@@ -42,6 +42,8 @@
  *   OWN explicit grants (id + permission_key pairs) separately from the
  *   effective union, so the admin edit form can show/prefill "extra permissions"
  *   without also re-listing everything the role already grants.
+ * @bugfix-note (2026-10-26) `user_email` is normalized on every write (trim incl. invisible
+ *   characters, lower case) - an e-mail with a trailing new line could not log in.
  */
 
 namespace App\Models;
@@ -91,6 +93,32 @@ class User extends Authenticatable
     ];
 
     protected $hidden = ['user_password_hash'];
+
+    /**
+     * @description Canonical form of a login e-mail: surrounding whitespace and invisible
+     *   characters (new line, tab, NBSP, zero-width space, BOM) removed, lower case. Used by the
+     *   mutator below and by every lookup (login, password reset), so the stored value and what
+     *   the user types always compare equal.
+     * @param string $email Raw e-mail.
+     * @return string Normalized e-mail.
+     */
+    public static function normalizeEmail(string $email): string
+    {
+        return mb_strtolower(\Illuminate\Support\Str::trim($email));
+    }
+
+    /**
+     * @description Every write of `user_email` is normalized (normalizeEmail()) - whatever path
+     *   sets it (admin form, import, tinker), the column never holds a trailing new line or an
+     *   upper-case variant. A value edited directly in the database is not covered - see the SQL
+     *   migration 2026_10_26_normalize_user_emails.sql.
+     * @param string|null $value Raw e-mail.
+     * @return void
+     */
+    public function setUserEmailAttribute(?string $value): void
+    {
+        $this->attributes['user_email'] = $value === null ? null : self::normalizeEmail($value);
+    }
 
     protected $appends = ['permissions', 'user_permissions'];
 

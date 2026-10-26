@@ -25,6 +25,9 @@
  *   server.
  * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
  *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
+ * @bugfix-note (2026-10-26) The login looks the account up by the normalized e-mail
+ *   (User::normalizeEmail() - trim incl. invisible characters, lower case), the same form the
+ *   column is stored in.
  */
 
 namespace App\Http\Controllers\Api;
@@ -88,7 +91,7 @@ class AuthController extends Controller
 
         $request->merge(['user_agent' => $request->userAgent()]);
 
-        $email = mb_strtolower(trim($request->input('email')));
+        $email = User::normalizeEmail((string) $request->input('email'));
         $failedAttemptsKey = 'login-fail:' . $email;
         $attemptsBefore = RateLimiter::attempts($failedAttemptsKey);
         $captchaRequired = $attemptsBefore >= self::CAPTCHA_THRESHOLD;
@@ -112,7 +115,7 @@ class AuthController extends Controller
         // ── Blokace / neaktivovaný účet - MUSÍ se ověřit PŘED Auth::attempt() ──────────
         // (viz refactor-note v hlavičce souboru - Auth::attempt by s NULL heslem mohlo
         // spadnout do Hash::check() s neplatným argumentem místo hezké JSON odpovědi).
-        $targetUser = User::where('user_email', $request->input('email'))->first();
+        $targetUser = User::where('user_email', $email)->first();
 
         if ($targetUser) {
             if ($targetUser->is_blocked) {
@@ -134,7 +137,7 @@ class AuthController extends Controller
             }
         }
 
-        if (Auth::attempt(['user_email' => $request->email, 'password' => $request->password])) {
+        if (Auth::attempt(['user_email' => $email, 'password' => $request->password])) {
             /** @var User $user */
             $user = Auth::user();
 

@@ -6,7 +6,8 @@
  * @project RPSW Web
  * @author RPSW
  * @created 2026
- * @description Feature tests of creating an administrator account (UserController::store):
+ * @description Feature tests of creating an administrator account (UserController::store; e-mail
+ *   normalized + strictly validated since 2026-10-26):
  *   e-mail access policy, sysadmin-only sysadmin role, no privilege escalation through the
  *   role or explicit permissions, 2FA forced by the role, activation e-mail and errors.
  * @dependencies
@@ -50,6 +51,32 @@ class UserStoreTest extends TestCase
             ->assertJsonPath('errors.user_email.0', 'An account with this e-mail already exists.')
             ->assertJsonPath('errors.full_name.0', 'Full name is required.')
             ->assertJsonPath('errors.role_id.0', 'The selected role does not exist.');
+    }
+
+    /**
+     * @description Account e-mails are stored in canonical form and checked strictly (2026-10-26):
+     *   surrounding whitespace / new line / zero-width space removed and lower case before the
+     *   unique check; a space or a quoted local part inside the address is refused; a different
+     *   case of an existing e-mail counts as a duplicate.
+     * @input Sysadmin: POST user_email "\u200B New.Person@Example.COM\n"; POST 'a @b.cz' and
+     *   '"a b"@b.cz'; POST 'NEW.PERSON@example.com' again.
+     * @output 201 stored 'new.person@example.com'; 422 'Enter a valid e-mail address.' ×2; 422 duplicate.
+     */
+    public function test_store_normalizes_and_strictly_validates_the_email(): void
+    {
+        Mail::fake();
+        $this->signIn($this->sysadmin());
+
+        $this->postJson('/api/core/users', ['user_email' => "\u{200B} New.Person@Example.COM\n", 'full_name' => 'N'])
+            ->assertCreated()->assertJsonPath('data.user_email', 'new.person@example.com');
+        $this->assertSame('new.person@example.com', User::latest('id')->value('user_email'));
+
+        foreach (['a @b.cz', '"a b"@b.cz'] as $invalid) {
+            $this->postJson('/api/core/users', ['user_email' => $invalid, 'full_name' => 'X'])
+                ->assertStatus(422)->assertJsonPath('errors.user_email.0', 'Enter a valid e-mail address.');
+        }
+        $this->postJson('/api/core/users', ['user_email' => 'NEW.PERSON@example.com', 'full_name' => 'Y'])
+            ->assertStatus(422)->assertJsonPath('errors.user_email.0', 'An account with this e-mail already exists.');
     }
 
     /**

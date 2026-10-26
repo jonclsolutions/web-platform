@@ -11,6 +11,8 @@
  * @refactor-note (2026-10-01) Comments translated to English; e-mail is trimmed and
  * lower-cased before validation so the rules, the per-e-mail rate limiter and the user
  * lookup in PasswordResetController all see the same normalised value.
+ * @bugfix-note (2026-10-26) The e-mail is normalized with User::normalizeEmail() (also invisible
+ *   characters) and validated with `email:rfc,strict` like the account e-mail itself.
  */
 
 namespace App\Http\Requests\Auth;
@@ -43,7 +45,7 @@ class ForgotPasswordRequest extends FormRequest
     {
         if (is_string($this->input('email'))) {
             $this->merge([
-                'email' => mb_strtolower(trim($this->input('email'))),
+                'email' => \App\Models\User::normalizeEmail($this->input('email')),
             ]);
         }
     }
@@ -55,7 +57,7 @@ class ForgotPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email:rfc', 'max:255'],
+            'email' => ['required', 'string', 'email:rfc,strict', 'max:255'],
         ];
     }
 }

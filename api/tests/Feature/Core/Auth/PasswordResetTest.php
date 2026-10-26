@@ -83,7 +83,7 @@ class PasswordResetTest extends TestCase
     /**
      * @description An existing account gets a new token (older ones invalidated) and a
      *   queued e-mail with the frontend reset link; the e-mail is matched case-insensitively.
-     * @input Account Jane@Example.com with an older token, POST forgot-password ' jane@example.com '.
+     * @input Account Jane@Example.com (stored as jane@example.com) with an older token, POST forgot-password ' JANE@example.com\u200B'.
      * @output 200 generic message; one token row; PasswordResetRequested queued with the link.
      */
     public function test_forgot_existing_account_queues_link(): void
@@ -93,7 +93,7 @@ class PasswordResetTest extends TestCase
         $user = $this->user(['user_email' => 'Jane@Example.com']);
         $this->resetToken($user);
 
-        $this->postJson('/api/forgot-password', ['email' => ' jane@example.com '])
+        $this->postJson('/api/forgot-password', ['email' => " JANE@example.com\u{200B}"])
             ->assertOk()->assertJson(['message' => self::GENERIC]);
 
         $token = PasswordResetToken::sole();

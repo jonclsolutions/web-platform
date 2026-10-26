@@ -25,6 +25,9 @@
  * @security-note (2026-10-23) `role_id` must be an ACTIVE role - `exists:core_roles,id` also
  *   accepted soft-deleted (trashed) roles, so an account could be given a role that was removed
  *   (open finding #4).
+ * @bugfix-note (2026-10-26) Account e-mails are normalized (trim incl. invisible characters,
+ *   lower case) before validation and checked with `email:rfc,strict`: the plain `email` rule let
+ *   `a @b.cz` / `"a b"@b.cz` through and the stored case varied (`TEST@x.cz`).
  */
 
 namespace App\Http\Requests\User;
@@ -53,7 +56,7 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('id');
 
         return [
-            'user_email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'user_email')->ignore($userId)],
+            'user_email' => ['sometimes', 'email:rfc,strict', 'max:255', Rule::unique('users', 'user_email')->ignore($userId)],
             'full_name' => ['sometimes', 'string', 'max:255'],
             'role_id' => ['sometimes', 'integer', Rule::exists('core_roles', 'id')->whereNull('deleted_at')],
             'enable_2fa' => ['sometimes', 'boolean'],
@@ -89,6 +92,12 @@ class UpdateUserRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        // Login e-mail: surrounding whitespace / invisible characters removed, lower case - the
+        // unique check and the stored value never differ only in case or whitespace (2026-10-26).
+        if (is_string($this->input('user_email'))) {
+            $this->merge(['user_email' => \App\Models\User::normalizeEmail($this->input('user_email'))]);
+        }
+
         if ($this->has('permission_ids') && is_array($this->input('permission_ids'))) {
             $normalized = array_values(array_filter(
                 array_map(

@@ -69,6 +69,24 @@ class UserUpdateTest extends TestCase
     }
 
     /**
+     * @description A changed login e-mail is normalized too (trim incl. new line, lower case) and
+     *   a space inside is refused (2026-10-26).
+     * @input Sysadmin (only it may change another account's login e-mail), PUT user_email
+     *   " Renamed@Example.com\r\n"; PUT 'bad mail@example.com'.
+     * @output 200 user_email 'renamed@example.com'; 422 'Enter a valid e-mail address.'.
+     */
+    public function test_update_normalizes_the_email(): void
+    {
+        $this->signIn($this->sysadmin());
+        $target = $this->user();
+
+        $this->putJson("/api/core/users/{$target->id}", ['user_email' => " Renamed@Example.com\r\n"])
+            ->assertOk()->assertJsonPath('data.user_email', 'renamed@example.com');
+        $this->putJson("/api/core/users/{$target->id}", ['user_email' => 'bad mail@example.com'])
+            ->assertStatus(422)->assertJsonPath('errors.user_email.0', 'Enter a valid e-mail address.');
+    }
+
+    /**
      * @description A non-sysadmin cannot edit a sysadmin account.
      * @input Editor, PUT on a sysadmin account.
      * @output 403; update_denied log "Denied edit of sysadmin account".

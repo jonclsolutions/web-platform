@@ -252,6 +252,22 @@ class LoginTest extends TestCase
     }
 
     /**
+     * @description The login finds the account whatever case / surrounding whitespace is typed,
+     *   and an account saved with a stray new line (e.g. written by a script) is stored without it
+     *   (User mutator, 2026-10-26).
+     * @input Account created with user_email "Mixed@Example.com\n"; POST /api/login ' MIXED@example.COM '.
+     * @output stored 'mixed@example.com'; 200 with tokens.
+     */
+    public function test_login_uses_the_normalized_email(): void
+    {
+        $user = $this->user(['user_email' => "Mixed@Example.com\n"]);
+        $this->assertSame('mixed@example.com', $user->user_email);
+
+        $this->postJson('/api/login', ['email' => ' MIXED@example.COM ', 'password' => $this->defaultPassword])
+            ->assertOk()->assertJsonStructure(['data' => ['token', 'refreshToken']]);
+    }
+
+    /**
      * @description GET /api/user returns the signed-in account with roles and permissions.
      * @input Account whose role grants core-security-view, signed in.
      * @output 200 {user, user_roles, user_permissions}.
