@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AccountActivationController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\Auth\PasswordConfirmationController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\Core\CoreRoleController;
@@ -288,6 +289,10 @@ Route::middleware(['auth:sanctum', 'throttle:300,1'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user',    [AuthController::class, 'user']);
+    // Step-up confirmation of the own password for one sensitive operation (sysadmin accounts,
+    // e-mail access policy) - see App\Traits\RequiresPasswordConfirmation (2026-10-26).
+    Route::post('/confirm-password', [PasswordConfirmationController::class, 'confirm'])
+        ->middleware('throttle:20,1,password-confirmation');
 
         Route::post('/save_translations/{module}', [TranslationController::class, 'save'])
             ->where('module', TranslationController::MODULE_PATTERN)

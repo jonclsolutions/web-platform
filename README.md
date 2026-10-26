@@ -293,6 +293,9 @@ Run once on the first release that contains them (back up the database first):
      state (raw requests, sales leads, job applications)
    - `2026_10_26_normalize_user_emails.sql` – login e-mails lower case without surrounding
      whitespace (run the duplicate check from its header first)
+   - `2026_10_26_scrub_logged_passwords.sql` – removes the maintenance confirmation password that
+     older releases wrote into the web / shop audit logs (run the SELECT from its header first:
+     every admin listed there must change the password)
 2. **Legacy attachments to the private disk** (GDPR, in `laravel/`):
    `php artisan attachments:migrate-legacy --dry-run`, check the output, then without `--dry-run`
 3. **Clear caches**: `php artisan optimize:clear`, then the `config:cache` / `route:cache` /
@@ -359,6 +362,15 @@ the server with the local one. The checksum file does not need to be deployed.
   open sessions end as soon as the policy excludes it. The editor refuses a change that would
   lock out the sysadmin making it. Emergency access when nobody can log in (shell on the server):
   `php artisan security:email-policy-allow admin@example.com`.
+- **Password confirmation of sysadmin operations** (step-up re-authentication, OWASP ASVS):
+  creating / promoting / demoting / editing / deleting / restoring a sysadmin account, emptying a
+  trash that contains one and changing the e-mail access policy need the own password
+  (`POST /api/confirm-password`). The confirmation is single-use, bound to the user, the login
+  token and the operation, and valid 10 minutes; 5 wrong passwords lock it for 15 minutes. A stolen
+  session alone therefore cannot add another sysadmin or remove the others - it does not protect
+  against a known password (sysadmin 2FA stays forced).
+- **Audit logs never contain secrets**: `LogsActivity` drops every key matching
+  `password|token|secret` (also nested) from `context_data`.
 
 ---
 

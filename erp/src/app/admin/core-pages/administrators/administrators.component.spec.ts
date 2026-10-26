@@ -21,6 +21,7 @@ import { AdministratorsComponent } from './administrators.component';
 import { RoleOptionsService } from '../../../core/services/role-options.service';
 import { PermissionOptionsService } from '../../../core/services/permission-options.service';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
+import { PasswordConfirmationService } from '../../../core/services/password-confirmation.service';
 import { AdminTestContext, createAdminTestContext } from '../../../../testing/admin-test-helpers';
 
 describe('AdministratorsComponent', () => {
@@ -28,6 +29,7 @@ describe('AdministratorsComponent', () => {
   let fixture: ComponentFixture<AdministratorsComponent>;
   let component: AdministratorsComponent;
   let scrollLock: jasmine.SpyObj<ScrollLockService>;
+  let passwordConfirmation: jasmine.SpyObj<PasswordConfirmationService>;
 
   const roles = [{ id: 1, role_name: 'sysadmin' }, { id: 2, role_name: 'editor' }, { id: 3, role_name: 'manager' }];
   const rolesMeta = [
@@ -55,13 +57,15 @@ describe('AdministratorsComponent', () => {
       return of({});
     });
     scrollLock = jasmine.createSpyObj<ScrollLockService>('ScrollLockService', ['lock', 'unlock']);
+    passwordConfirmation = jasmine.createSpyObj<PasswordConfirmationService>('PasswordConfirmationService', ['confirm']);
     await TestBed.configureTestingModule({
       imports: [AdministratorsComponent],
       providers: [
         ...ctx.providers,
         { provide: RoleOptionsService, useValue: { getRoles: () => of(roles) } },
         { provide: PermissionOptionsService, useValue: { getPermissions: () => of(permissions) } },
-        { provide: ScrollLockService, useValue: scrollLock }
+        { provide: ScrollLockService, useValue: scrollLock },
+        { provide: PasswordConfirmationService, useValue: passwordConfirmation }
       ]
     }).compileComponents();
     fixture = TestBed.createComponent(AdministratorsComponent);
@@ -132,6 +136,39 @@ describe('AdministratorsComponent', () => {
       expect(component.selectedItemForEdit.is_blocked).toBeFalse();
       discardPeriodicTasks();
     }));
+
+    /**
+     * @description The edit form of a sysadmin account opens only after the own password was
+     *   confirmed (step-up, scope user:{id}); cancelled = the form stays closed. Other accounts
+     *   open without a prompt.
+     * @input  handleEditFormOpened(sysadmin #9) with confirm → false; again with confirm → true;
+     *         handleEditFormOpened(editor #7).
+     * @output confirm('user:9') 2×; closed after the first, open with #9 after the second and the
+     *         OnPush view marked for check (bugfix 2026-10-26: the form appeared only on the next
+     *         click); #7 opens without another confirm.
+     */
+    it('asks for the password before editing a sysadmin', async () => {
+      component.ngOnInit();
+      const sysadmin = { id: 9, roles: [{ id: 1, role_name: 'sysadmin' }] };
+      const markForCheck = spyOn((component as any).cd, 'markForCheck').and.callThrough();
+
+      passwordConfirmation.confirm.and.resolveTo(false);
+      await component.handleEditFormOpened(sysadmin);
+      expect(passwordConfirmation.confirm).toHaveBeenCalledWith('user:9');
+      expect(component.showCreateForm).toBeFalse();
+
+      expect(markForCheck).not.toHaveBeenCalled();
+
+      passwordConfirmation.confirm.and.resolveTo(true);
+      await component.handleEditFormOpened(sysadmin);
+      expect(component.showCreateForm).toBeTrue();
+      expect(markForCheck).toHaveBeenCalled();
+      expect(component.selectedItemForEdit.id).toBe(9);
+
+      component.handleEditFormOpened({ id: 7, roles: [{ id: 2, role_name: 'editor' }] });
+      expect(component.selectedItemForEdit.id).toBe(7);
+      expect(passwordConfirmation.confirm).toHaveBeenCalledTimes(2);
+    });
 
     /**
      * @description Role permissions are pre-checked and disabled; explicit extra permissions are kept.

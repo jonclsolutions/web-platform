@@ -43,6 +43,10 @@
  *      once (access + refresh tokens, pending 2FA logins); before, an open session lived on
  *      until its access token expired (60 min). The count is returned in
  *      `meta.sessions_revoked` and written to the core log.
+ * @refactor-note (2026-10-26) SECURITY: changing the primary domain and deleting a rule (the two
+ *   changes that can exclude accounts - also other sysadmins) require a fresh single-use password
+ *   confirmation (RequiresPasswordConfirmation, scope `email-policy`). Adding a rule only widens
+ *   the policy and needs none.
  */
 
 namespace App\Http\Controllers\Api\Core;
@@ -55,13 +59,14 @@ use App\Models\RefreshToken;
 use App\Models\TwoFactorCode;
 use App\Models\User;
 use App\Traits\LogsActivity;
+use App\Traits\RequiresPasswordConfirmation;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CoreEmailAccessPolicyController extends Controller
 {
-    use LogsActivity;
+    use LogsActivity, RequiresPasswordConfirmation;
 
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
 
@@ -194,6 +199,7 @@ class CoreEmailAccessPolicyController extends Controller
         }
 
         $rule = CoreEmailAccessRule::findOrFail($id);
+
         $description = "Deleted whitelist item ({$rule->type}): {$rule->value}";
 
         $refusal = $this->applyUnlessSelfLockout($request, fn () => $rule->delete());
@@ -208,10 +214,11 @@ class CoreEmailAccessPolicyController extends Controller
 
     /**
      * @description Applies a policy change in a transaction and keeps it only when the acting
-     *   sysadmin's own e-mail is still allowed afterwards (no self lock-out, see the header).
+     *   sysadmin's own e-mail is still allowed afterwards (no self lock-out, see the header) and
+     *   the change is confirmed with the password (scope `email-policy`, 2026-10-26).
      * @param Request $request Request of the acting sysadmin.
      * @param \Closure $change The write (update / delete) to apply.
-     * @return JsonResponse|null The 422 refusal (change rolled back), or null when kept.
+     * @return JsonResponse|null The 422 / 403 refusal (change rolled back), or null when kept.
      */
     private function applyUnlessSelfLockout(Request $request, \Closure $change): ?JsonResponse
     {
@@ -231,6 +238,13 @@ class CoreEmailAccessPolicyController extends Controller
             $this->logAction($request, CoreLog::class, 'email_access_change_refused', 'Core', 'Refused an e-mail policy change that would lock out the acting sysadmin.', null, 'CoreEmailAccessRule');
 
             return response()->json(['message' => self::SELF_LOCKOUT_MESSAGE, 'error_code' => 'EMAIL_POLICY_SELF_LOCKOUT'], 422);
+        }
+
+        // Step-up confirmation (2026-10-26) - checked last, so a change refused for the lock-out
+        // does not use up the password confirmation.
+        if ($refusal = $this->requirePasswordConfirmation($request, 'email-policy')) {
+            DB::rollBack();
+            return $refusal;
         }
 
         DB::commit();

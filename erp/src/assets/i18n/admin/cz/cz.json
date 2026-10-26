@@ -3062,12 +3062,23 @@
   "password_change_error": "Chyba při změně hesla.",
   "mass_delete_error": "Chyba při hromadném mazání."
 },
+"password-confirm": {
+  "title": "Potvrďte heslem",
+  "message": "Tato operace se týká systémového administrátora nebo přístupové politiky. Pro potvrzení zadejte své heslo.",
+  "label": "Vaše heslo",
+  "confirm": "Potvrdit",
+  "cancel": "Zrušit",
+  "wrong_password": "Heslo není správné.",
+  "too_many": "Příliš mnoho chybných hesel. Zkuste to znovu za 15 minut.",
+  "failed": "Heslo se nepodařilo ověřit. Zkuste to prosím znovu."
+},
 "data-handler": {
   "dialog_title": "Chyba API",
   "unknown_error": "Došlo k neznámé chybě!",
   "client_side_error": "Chyba na straně klienta: {message}",
   "network_error": "Nelze se připojit k serveru. Zkontrolujte připojení k síti nebo zda API běží.",
   "cannot_delete_own_account": "Nelze smazat uživatele, pod kterým jste právě přihlášeni.",
+  "password_confirmation_required": "Operace nebyla provedena - je nutné ji potvrdit vaším heslem.",
   "email_policy_self_lockout": "Tuto změnu nelze uložit – zablokovala by vaše vlastní přihlášení (váš e-mail by už nebyl povolen). Nejdřív pro něj přidejte výjimku.",
   "forbidden_fallback": "Při mazání položky došlo k chybě.",
   "validation_error": "Chyba validace ({status}): {errors}",

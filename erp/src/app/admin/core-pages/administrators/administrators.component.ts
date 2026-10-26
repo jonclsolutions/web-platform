@@ -18,6 +18,13 @@
  *   the component (`takeUntilDestroyed()`).
  * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`):
  *  `activation_email_sent` of a new account is read from `meta` of the envelope.
+ * @refactor-note (2026-10-26) Step-up confirmation of sysadmin operations: the edit form of a
+ *   sysadmin account opens only after the own password was confirmed (scope `user:{id}`, the same
+ *   single-use confirmation the API then consumes on save). Create / promote / demote / delete /
+ *   restore of a sysadmin are refused by the API until confirmed - PasswordConfirmationInterceptor
+ *   asks for the password and repeats the request, nothing to do here.
+ * @bugfix-note (2026-10-26) The edit form of a sysadmin appeared only on the next click after the
+ *   password confirmation (OnPush view not marked for check after the await) - see handleEditFormOpened.
  */
 
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
@@ -33,6 +40,7 @@ import * as Config from './administrators.config';
 import { GraphBuilderComponent } from '../../components/builders/graph-builder/graph-builder.component';
 import { GraphColumnOption } from '../../../shared/interfaces/graph-format';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
+import { PasswordConfirmationService } from '../../../core/services/password-confirmation.service';
 
 /**
  * Name of the role with unrestricted access. Only a sysadmin may assign it; the API refuses it
@@ -79,6 +87,7 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     return this.i18n.getValue(`administrators.${key}`);
   }
   private scrollLock = inject(ScrollLockService);
+  private passwordConfirmation = inject(PasswordConfirmationService);
 
   get tableCaption(): string { return this.t('table_header_accounts'); }
 
@@ -515,7 +524,38 @@ export class AdministratorsComponent extends BaseDataComponent<any> implements O
     this.showCreateForm = true;
   }
 
-  override handleEditFormOpened(item: any): void {
+  /**
+   * @description Opens the edit form; a sysadmin account first needs the own password
+   *   (step-up confirmation, scope `user:{id}`). Cancelled = the form stays closed.
+   * @param item Row of the table.
+   * @returns Promise settled once the form is open (or the confirmation was cancelled).
+   * @bugfix-note (2026-10-26) After the confirmation the form did not appear (it showed only on the
+   *   next click, together with a new password prompt): the form state is set after the `await`,
+   *   outside any template event, and the OnPush view was never marked for check - it is now.
+   */
+  override async handleEditFormOpened(item: any): Promise<void> {
+    if (this.isSysadminAccount(item)) {
+      if (!(await this.passwordConfirmation.confirm(`user:${item.id}`))) return;
+      this.openEditForm(item);
+      this.cd.markForCheck();
+      return;
+    }
+    this.openEditForm(item);
+  }
+
+  /**
+   * @description Whether a table row is a sysadmin account.
+   * @param item Row of the table.
+   */
+  private isSysadminAccount(item: any): boolean {
+    return Array.isArray(item?.roles) && item.roles.some((role: any) => role?.role_name === SYSADMIN_ROLE_NAME);
+  }
+
+  /**
+   * @description Fills and shows the edit form of `item` (former body of handleEditFormOpened).
+   * @param item Row of the table.
+   */
+  private openEditForm(item: any): void {
     const itemToEdit = { ...item };
     if (itemToEdit.roles?.length > 0) itemToEdit.role_id = itemToEdit.roles[0].id;
 

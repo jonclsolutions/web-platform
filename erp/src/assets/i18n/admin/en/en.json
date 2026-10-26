@@ -3062,12 +3062,23 @@
   "password_change_error": "Error changing password.",
   "mass_delete_error": "Mass delete error."
 },
+"password-confirm": {
+  "title": "Confirm with your password",
+  "message": "This operation concerns a system administrator or the access policy. Enter your password to confirm it.",
+  "label": "Your password",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "wrong_password": "The password is incorrect.",
+  "too_many": "Too many wrong passwords. Try again in 15 minutes.",
+  "failed": "The password could not be verified. Please try again."
+},
 "data-handler": {
   "dialog_title": "API Error",
   "unknown_error": "An unknown error occurred!",
   "client_side_error": "Client-side error: {message}",
   "network_error": "Unable to connect to the server. Please check your network connection or if the API is running.",
   "cannot_delete_own_account": "Cannot delete the user you are currently logged in as.",
+  "password_confirmation_required": "The operation was not performed - it must be confirmed with your password.",
   "email_policy_self_lockout": "This change cannot be saved – it would block your own login (your e-mail would no longer be allowed). Add an exception for it first.",
   "forbidden_fallback": "An error occurred while deleting the item.",
   "validation_error": "Validation error ({status}): {errors}",

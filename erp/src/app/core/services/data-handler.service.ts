@@ -38,6 +38,10 @@
  * @refactor-note (2026-10-24) 422 `EMAIL_POLICY_SELF_LOCKOUT` (e-mail policy change that would lock
  *   out the acting sysadmin) shows the translated `data-handler.email_policy_self_lockout`.
  *
+ * @refactor-note (2026-10-26) 403 `PASSWORD_CONFIRMATION_REQUIRED` (the password dialog of the
+ *   step-up confirmation was cancelled, see PasswordConfirmationInterceptor) shows the translated
+ *   `data-handler.password_confirmation_required`.
+ *
  * @note Důsledek: pokud by první chyba přes `DataHandler` nastala dřív, než si
  * `AdminLocalizationService` vyžádá jakákoli admin komponenta (v administraci to dělá
  * `AdminLayoutComponent`/`BaseDataComponent`), služba teprve vznikne a JSON se teprve
@@ -164,6 +168,9 @@ export class DataHandler {
       } else if (error.status === 403) {
         if (error.error && error.error.error_code === 'CANNOT_DELETE_OWN_ACCOUNT') {
           errorMessage = this.t('cannot_delete_own_account');
+        } else if (error.error?.error_code === 'PASSWORD_CONFIRMATION_REQUIRED') {
+          // Step-up confirmation cancelled in the password dialog (2026-10-26).
+          errorMessage = this.t('password_confirmation_required');
         } else if (error.error && error.error.message) {
             errorMessage = error.error.message;
         } else {

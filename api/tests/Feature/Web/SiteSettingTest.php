@@ -75,7 +75,8 @@ class SiteSettingTest extends TestCase
      * @description With the right password the status and message change, the cached status
      *   is dropped and the change is logged.
      * @input Cached status; PUT {confirm_password, is_web_active: false, web_maintenance_message}.
-     * @output 200 {success, data}; cache key gone; web log 'maintenance_status_changed' "DISABLED".
+     * @output 200 {data}; cache key gone; web log 'maintenance_status_changed' "DISABLED"; no log row
+     *   holds the password (`confirm_password` stripped from context_data, 2026-10-26).
      */
     public function test_update_switches_maintenance(): void
     {
@@ -91,6 +92,12 @@ class SiteSettingTest extends TestCase
 
         $this->putJson('/api/web/settings', ['confirm_password' => $this->defaultPassword, 'is_web_active' => true])->assertOk();
         $this->assertWebLog('maintenance_status_changed', 'ENABLED (Operational)');
+
+        // The confirming password is never written into the audit log (2026-10-26 security fix).
+        foreach (WebLog::all() as $log) {
+            $this->assertArrayNotHasKey('confirm_password', $log->context_data ?? []);
+            $this->assertStringNotContainsString($this->defaultPassword, json_encode($log->context_data));
+        }
     }
 
     /**

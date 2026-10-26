@@ -34,6 +34,9 @@
  * `TitleStrategy`. Without it Angular's default strategy writes the route `title`
  * literally into the browser tab ("web.home" instead of the client's text).
  * Nothing else in this file changed.
+ *
+ * @refactor-note (2026-10-26) Registered `PasswordConfirmationInterceptor` (step-up password
+ * confirmation of sysadmin operations) as the first HTTP interceptor.
  */
 
 import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
@@ -43,6 +46,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { routes } from './app.routes';
 import { AuthTokenInterceptor } from './core/interceptors/auth-token.interceptor';
 import { LoadingInterceptor } from './core/interceptors/loading.interceptor';
+import { PasswordConfirmationInterceptor } from './core/interceptors/password-confirmation.interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeCs from '@angular/common/locales/cs';
 import localeEn from '@angular/common/locales/en';
@@ -93,6 +97,17 @@ export const appConfig: ApplicationConfig = {
     { provide: TitleStrategy, useClass: PageTitleStrategy },
 
     provideHttpClient(withInterceptorsFromDi()),
+
+    /**
+     * @description Step-up re-authentication (2026-10-26): a request refused with 403
+     *   PASSWORD_CONFIRMATION_REQUIRED asks for the password and is repeated once.
+     * @note FIRST on purpose - see the header of password-confirmation.interceptor.ts.
+     */
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: PasswordConfirmationInterceptor,
+      multi: true
+    },
 
     /**
      * @description Injects the AuthTokenInterceptor to secure API communication.

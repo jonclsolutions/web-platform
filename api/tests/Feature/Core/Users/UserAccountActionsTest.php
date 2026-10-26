@@ -256,9 +256,11 @@ class UserAccountActionsTest extends TestCase
 
     /**
      * @description Emptying the trash by a non-sysadmin spares trashed sysadmin accounts;
-     *   a sysadmin empties everything.
-     * @input Trashed plain account + trashed sysadmin; deleter empties, then sysadmin empties.
-     * @output 204 both; after the first only the sysadmin remains trashed, after the second nothing.
+     *   a sysadmin empties everything - after confirming its password (the trash holds a
+     *   sysadmin, 2026-10-26).
+     * @input Trashed plain account + trashed sysadmin; deleter empties; sysadmin empties without,
+     *   then with confirmation 'users:trash'.
+     * @output 204 (only the sysadmin remains trashed); 403 PASSWORD_CONFIRMATION_REQUIRED; 204 nothing left.
      */
     public function test_force_delete_all_trashed(): void
     {
@@ -272,7 +274,12 @@ class UserAccountActionsTest extends TestCase
         $this->assertSame([$root->id], User::onlyTrashed()->pluck('id')->all());
         $this->assertCoreLog('force_delete_all', 'Deleted: 1');
 
+        // The trash holds a sysadmin: emptying it needs the password confirmation (2026-10-26).
         $this->signIn($this->sysadmin());
+        $this->deleteJson('/api/core/users/force-delete-all')->assertStatus(403)
+            ->assertJsonPath('error_code', 'PASSWORD_CONFIRMATION_REQUIRED')->assertJsonPath('scope', 'users:trash');
+        $this->assertSame(1, User::onlyTrashed()->count());
+        $this->confirmPassword('users:trash');
         $this->deleteJson('/api/core/users/force-delete-all')->assertNoContent();
         $this->assertSame(0, User::onlyTrashed()->count());
     }

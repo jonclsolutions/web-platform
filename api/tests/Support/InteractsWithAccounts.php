@@ -119,6 +119,17 @@ trait InteractsWithAccounts
     }
 
     /**
+     * @description Step-up: the signed-in account confirms its password for one operation scope
+     *   (POST /api/confirm-password, App\Traits\RequiresPasswordConfirmation) - single use.
+     * @param string $scope Operation scope, e.g. 'user:25', 'user:new', 'email-policy'.
+     * @return void
+     */
+    protected function confirmPassword(string $scope): void
+    {
+        $this->postJson('/api/confirm-password', ['password' => $this->defaultPassword, 'scope' => $scope])->assertNoContent();
+    }
+
+    /**
      * @description Issues a real Sanctum access token and returns the Authorization header
      *   - for flows that need an actual token row (logout, token revocation).
      * @param User $user Token owner.

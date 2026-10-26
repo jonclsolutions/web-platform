@@ -26,6 +26,13 @@
  * * @bugfix-note (2026-10-23) `sort_by` / `sort_direction` went straight into `orderBy()` - an
  *   unknown column or direction answered 500 (open finding #5). Sorting now goes through
  *   AppliesSafeSorting (real table columns only, asc / desc only, default otherwise).
+ * @refactor-note (2026-10-26) SECURITY - step-up for the sysadmin role: creating a sysadmin,
+ *   promoting to / editing / demoting a sysadmin (any update of a sysadmin account, also the own
+ *   one), deleting and restoring a sysadmin and emptying a trash with sysadmins require a fresh
+ *   single-use password confirmation of the acting sysadmin (RequiresPasswordConfirmation; scope
+ *   `user:{id}`, `user:new`, `users:trash`). A stolen session alone can no longer add a second
+ *   sysadmin or remove the others. Checked AFTER the authorization checks (a non-sysadmin still
+ *   gets its 403 reason), BEFORE anything is written.
  */
 
 namespace App\Http\Controllers\Api;
@@ -46,10 +53,11 @@ use App\Http\Resources\UserResource;
 use Illuminate\Http\{Request, JsonResponse};
 use Illuminate\Support\Facades\{Hash, Log, DB, Mail, RateLimiter};
 use App\Traits\AppliesSafeSorting;
+use App\Traits\RequiresPasswordConfirmation;
 
 class UserController extends Controller
 {
-    use LogsActivity, AppliesSafeSorting;
+    use LogsActivity, AppliesSafeSorting, RequiresPasswordConfirmation;
 
     private const SYSADMIN_ROLE_NAME = 'sysadmin';
     private const PASSWORD_CHANGE_NOTIFY_MAX_ATTEMPTS = 5;
@@ -186,6 +194,12 @@ class UserController extends Controller
         if ($roleId && !$this->actorCanAssignRole($request, (int) $roleId)) {
             $this->logAction($request, CoreLog::class, 'create_denied', 'User', "Denied attempt to create an account with a role granting more than the actor's own permissions: {$validated['user_email']}");
             return response()->json(['message' => 'You cannot assign a role that grants permissions you do not yourself have.'], 403);
+        }
+
+        // New sysadmin: step-up password confirmation (see the header, 2026-10-26).
+        if ($roleId && $this->isSysadminRoleId((int) $roleId)
+            && ($refusal = $this->requirePasswordConfirmation($request, 'user:new'))) {
+            return $refusal;
         }
 
         // permission_ids is handled separately after the user exists (pivot needs a
@@ -455,6 +469,13 @@ class UserController extends Controller
             }
         }
 
+        // Editing / demoting a sysadmin or promoting to sysadmin: step-up password confirmation -
+        // the last check, so a request refused for another reason does not ask for the password.
+        if (($targetIsSysadmin || $promotingToSysadmin)
+            && ($refusal = $this->requirePasswordConfirmation($request, "user:{$user->id}"))) {
+            return $refusal;
+        }
+
         $wasBlocked = (bool) $user->is_blocked;
 
         // permission_ids is handled separately via applyExplicitPermissions() - strip
@@ -608,6 +629,12 @@ class UserController extends Controller
 
         $user = User::withTrashed()->findOrFail($id);
 
+        // A restored sysadmin is a sysadmin again: step-up password confirmation (2026-10-26).
+        if ($user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists()
+            && ($refusal = $this->requirePasswordConfirmation(request(), "user:{$user->id}"))) {
+            return $refusal;
+        }
+
         try {
             $user->restore();
 
@@ -644,6 +671,10 @@ class UserController extends Controller
                 return response()->json(['message' => 'Only another sysadmin may delete a sysadmin account.'], 403);
             }
 
+            if ($targetIsSysadmin && ($refusal = $this->requirePasswordConfirmation($request, "user:{$user->id}"))) {
+                return $refusal;
+            }
+
             $force = filter_var($request->input('force_delete', false), FILTER_VALIDATE_BOOLEAN);
             $force ? $user->forceDelete() : $user->delete();
 
@@ -670,6 +701,10 @@ class UserController extends Controller
                 $query->whereDoesntHave('roles', function ($q) {
                     $q->where('role_name', self::SYSADMIN_ROLE_NAME);
                 });
+            } elseif ((clone $query)->whereHas('roles', fn ($q) => $q->where('role_name', self::SYSADMIN_ROLE_NAME))->exists()
+                && ($refusal = $this->requirePasswordConfirmation(request(), 'users:trash'))) {
+                // The trash holds a sysadmin: emptying it deletes that sysadmin for good (2026-10-26).
+                return $refusal;
             }
 
             $count = $query->count();

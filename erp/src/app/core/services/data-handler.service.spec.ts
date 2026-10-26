@@ -246,6 +246,17 @@ describe('DataHandler', () => {
   });
 
   /**
+   * @description 403 PASSWORD_CONFIRMATION_REQUIRED (the step-up password dialog was cancelled,
+   *   2026-10-26) shows the translated text, not the English API message.
+   * @input 403 {message: 'Confirm this operation with your password.', error_code: 'PASSWORD_CONFIRMATION_REQUIRED', scope: 'user:1'}.
+   * @output dialog text = data-handler.password_confirmation_required.
+   */
+  it('translates a cancelled password confirmation', () => {
+    failWith({ status: 403, error: { message: 'Confirm this operation with your password.', error_code: 'PASSWORD_CONFIRMATION_REQUIRED', scope: 'user:1' } });
+    expect(alert.open.calls.mostRecent().args[1]).toBe('data-handler.password_confirmation_required');
+  });
+
+  /**
    * @description 5xx: status text or the default text; an unexpected status (3xx) keeps the
    *   unknown-error text; a template placeholder without value stays visible.
    * @input 500 'Internal Server Error'; 503 with blank status text; 302; server_error template

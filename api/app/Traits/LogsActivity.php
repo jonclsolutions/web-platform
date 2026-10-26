@@ -31,6 +31,12 @@
  *    file field (logo_file, icon_file, attachment, cv_file, ...) should use this instead
  *    of relying on the global SENSITIVE_KEYS list, since those are per-endpoint field
  *    names, not universally sensitive data.
+ * @bugfix-note (2026-10-26) SECURITY: `confirm_password` (the password confirming a maintenance
+ *   switch of the web / e-shop) was not in SENSITIVE_KEYS - the admin's real password was written
+ *   in plain text into web_logs / shop_logs `context_data`, readable by everyone with the log
+ *   permission. Besides the explicit list, every key whose name contains "password", "token" or
+ *   "secret" (any case, at any depth) is now removed, so a new field name cannot leak again.
+ *   Existing rows: SQL migration 2026_10_26_scrub_logged_passwords.sql.
  */
 
 namespace App\Traits;
@@ -55,6 +61,7 @@ trait LogsActivity
         'refreshToken',
         'refresh_token',
         'current_password',
+        'confirm_password',
         'old_password',
         'new_password',
         'new_password_confirmation',
@@ -123,7 +130,7 @@ trait LogsActivity
     private function safeContextData(Request $request, array $extraExcludedKeys = []): array
     {
         $excluded = array_merge(self::SENSITIVE_KEYS, $extraExcludedKeys);
-        $data = $this->describeUploadedFiles($request->except($excluded));
+        $data = $this->withoutSecretKeys($this->describeUploadedFiles($request->except($excluded)));
 
         $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
         if ($encoded === false) {
@@ -131,6 +138,25 @@ trait LogsActivity
         }
         if (strlen($encoded) > 60000) {
             return ['_truncated' => true, 'note' => 'Payload exceeded 60000 bytes and was omitted.'];
+        }
+
+        return $data;
+    }
+
+    /**
+     * @description Removes every key that names a secret (contains "password", "token" or
+     *   "secret", any case), also in nested arrays - the safety net behind SENSITIVE_KEYS.
+     * @param array $data Request payload.
+     * @return array The payload without secret-looking keys.
+     */
+    private function withoutSecretKeys(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($key) && preg_match('/password|token|secret/i', $key)) {
+                unset($data[$key]);
+            } elseif (is_array($value)) {
+                $data[$key] = $this->withoutSecretKeys($value);
+            }
         }
 
         return $data;

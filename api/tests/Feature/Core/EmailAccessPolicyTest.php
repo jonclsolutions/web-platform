@@ -76,6 +76,7 @@ class EmailAccessPolicyTest extends TestCase
     {
         $this->signIn($this->sysadmin(['user_email' => 'admin@company.cz']));
 
+        $this->confirmPassword('email-policy');
         $this->putJson('/api/core/email-access-policy/primary-domain', ['primary_email_domain' => 'Company.CZ'])
             ->assertOk()->assertJsonPath('data.primary_email_domain', 'company.cz');
         $this->assertCoreLog('email_access_primary_domain_updated', 'from (no restriction) to company.cz');
@@ -84,6 +85,7 @@ class EmailAccessPolicyTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('errors.primary_email_domain.0', 'Please enter a valid domain (e.g. rpsw.cz), without "@" or path.');
 
+        $this->confirmPassword('email-policy');
         $this->putJson('/api/core/email-access-policy/primary-domain', ['primary_email_domain' => null])
             ->assertOk()->assertJsonPath('data.primary_email_domain', null);
         $this->assertCoreLog('email_access_primary_domain_updated', 'from company.cz to (no restriction)');
@@ -121,6 +123,7 @@ class EmailAccessPolicyTest extends TestCase
         $this->signIn($this->sysadmin());
         $rule = CoreEmailAccessRule::create(['type' => 'domain', 'value' => 'gone.cz']);
 
+        $this->confirmPassword('email-policy');
         $this->deleteJson("/api/core/email-access-policy/rules/{$rule->id}")->assertOk();
         $this->assertNull($rule->fresh());
         $this->assertCoreLog('email_access_rule_deleted', '(domain): gone.cz');
@@ -153,6 +156,7 @@ class EmailAccessPolicyTest extends TestCase
         }
 
         $actor = $this->signIn($this->sysadmin(['user_email' => 'admin@company.cz']));
+        $this->confirmPassword('email-policy');
         $this->deleteJson("/api/core/email-access-policy/rules/{$rule->id}")
             ->assertOk()->assertJsonPath('meta.sessions_revoked', 2);
         $this->assertCoreLog('email_access_sessions_revoked', '2 account(s)');
@@ -200,9 +204,33 @@ class EmailAccessPolicyTest extends TestCase
         $this->signIn($me);
 
         $this->postJson('/api/core/email-access-policy/rules', ['type' => 'email', 'value' => 'me@partner.cz'])->assertCreated();
+        $this->confirmPassword('email-policy');
         $this->deleteJson("/api/core/email-access-policy/rules/{$rule->id}")
             ->assertOk()->assertJsonPath('meta.sessions_revoked', 0)->assertJsonPath('message', 'Item has been deleted.');
         $this->assertNull($rule->fresh());
+    }
+
+    /**
+     * @description Changes that can exclude accounts need the password confirmation (2026-10-26):
+     *   without it the change is rolled back; adding a rule needs none.
+     * @input Sysadmin admin@company.cz: PUT primary domain null (no restriction) and DELETE a rule without
+     *   confirmation; POST a rule.
+     * @output 403 PASSWORD_CONFIRMATION_REQUIRED scope email-policy ×2, primary domain and rule
+     *   unchanged; 201.
+     */
+    public function test_policy_changes_need_password_confirmation(): void
+    {
+        CoreSecuritySetting::current()->update(['primary_email_domain' => 'company.cz']);
+        $rule = CoreEmailAccessRule::create(['type' => 'domain', 'value' => 'partner.cz']);
+        $this->signIn($this->sysadmin(['user_email' => 'admin@company.cz']));
+
+        $this->putJson('/api/core/email-access-policy/primary-domain', ['primary_email_domain' => null])
+            ->assertStatus(403)->assertJson(['error_code' => 'PASSWORD_CONFIRMATION_REQUIRED', 'scope' => 'email-policy']);
+        $this->assertSame('company.cz', CoreSecuritySetting::current()->primary_email_domain);
+        $this->deleteJson("/api/core/email-access-policy/rules/{$rule->id}")->assertStatus(403);
+        $this->assertNotNull($rule->fresh());
+
+        $this->postJson('/api/core/email-access-policy/rules', ['type' => 'domain', 'value' => 'new.cz'])->assertCreated();
     }
 
     /**
