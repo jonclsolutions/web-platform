@@ -1061,8 +1061,8 @@ export const KB_PAGES: KBPage[] = [
           } },
           { type: 'grid', cards: [
             { title: { cz: 'Hlavní doména', en: 'Primary domain' }, text: {
-              cz: 'Základní firemní doména, například firma.cz. Jakmile je vyplněná, nové účty lze zakládat jen s adresami z této domény nebo z výjimek níže.',
-              en: 'The basic company domain, for example company.com. Once filled in, new accounts can be created only with addresses from this domain or from the exceptions below.'
+              cz: 'Základní firemní doména, například firma.cz. Jakmile je vyplněná, účty lze zakládat a přihlašovat se jen s adresami z této domény nebo z výjimek níže - platí pro všechny role včetně sysadmina.',
+              en: 'The basic company domain, for example company.com. Once filled in, accounts can be created and can log in only with addresses from this domain or from the exceptions below - for every role, sysadmin included.'
             } },
             { title: { cz: 'Bez omezení', en: 'No restriction' }, text: {
               cz: 'Pokud hlavní doménu necháte prázdnou a uložíte, omezení se vypne a účet lze založit s jakýmkoli e-mailem.',
@@ -1091,8 +1091,8 @@ export const KB_PAGES: KBPage[] = [
               en: 'The window shows two lists: allowed domains and allowed e-mails. An empty list is marked with a text saying nothing is in it yet.'
             } },
             { label: { cz: '4. Odebrání výjimky', en: '4. Removing an exception' }, text: {
-              cz: 'Křížkem u položky výjimku odeberete. Odebrání platí okamžitě.',
-              en: 'The cross next to an item removes the exception. The removal applies immediately.'
+              cz: 'Křížkem u položky výjimku odeberete. Odebrání platí okamžitě: účty, které tím přestanou být povolené, jsou hned odhlášené a už se nepřihlásí - týká se to všech rolí, i sysadmina. Změnu, která by zablokovala vás samotné, systém neuloží; nejdřív si přidejte výjimku pro svůj e-mail.',
+              en: 'The cross next to an item removes the exception. The removal applies immediately: accounts that are no longer allowed are logged out at once and cannot log in - this applies to every role, sysadmin included. A change that would block you yourself is not saved; add an exception for your own e-mail first.'
             } },
             { label: { cz: '5. Zavření okna', en: '5. Closing the window' }, text: {
               cz: 'Okno zavřete tlačítkem pro zavření, křížkem v rohu nebo kliknutím mimo okno. Během ukládání hlavní domény okno zavřít nelze.',

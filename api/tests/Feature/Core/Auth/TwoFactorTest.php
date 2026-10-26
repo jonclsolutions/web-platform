@@ -180,6 +180,27 @@ class TwoFactorTest extends TestCase
     }
 
     /**
+     * @description The e-mail policy is checked again in the 2FA step: when it changed while
+     *   the code was on its way, no tokens are issued (also for a sysadmin, 2026-10-24).
+     * @input Sysadmin root@other.cz with a pending session; then primary domain company.cz; correct code.
+     * @output 403 generic message; session deleted; no refresh token; login_email_not_allowed event.
+     */
+    public function test_verify_enforces_email_policy(): void
+    {
+        $admin = $this->sysadmin(['user_email' => 'root@other.cz']);
+        $this->pending($admin);
+        \App\Models\Core\CoreSecuritySetting::current()->update(['primary_email_domain' => 'company.cz']);
+
+        $this->postJson('/api/login/verify-2fa', ['login_token' => self::LOGIN_TOKEN, 'code' => self::CODE])
+            ->assertStatus(403)
+            ->assertJsonPath('message', 'Login is not allowed for this account. Please contact the administrator.');
+
+        $this->assertSame(0, TwoFactorCode::count());
+        $this->assertSame(0, RefreshToken::count());
+        $this->assertSecurityEvent('login_email_not_allowed');
+    }
+
+    /**
      * @description The full flow: login starts the challenge, the mailed code completes it.
      * @input Account with enable_2fa, POST /api/login, then verify-2fa with the mailed code.
      * @output 200 with tokens.

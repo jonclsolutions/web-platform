@@ -235,6 +235,17 @@ describe('DataHandler', () => {
   });
 
   /**
+   * @description 422 EMAIL_POLICY_SELF_LOCKOUT (e-mail policy change that would lock out the
+   *   acting sysadmin, 2026-10-24) shows the translated text, not the English API message.
+   * @input 422 {message: 'This change would block…', error_code: 'EMAIL_POLICY_SELF_LOCKOUT'}.
+   * @output dialog text = data-handler.email_policy_self_lockout.
+   */
+  it('translates the self lock-out refusal of the e-mail policy', () => {
+    failWith({ status: 422, error: { message: 'This change would block your own login', error_code: 'EMAIL_POLICY_SELF_LOCKOUT' } });
+    expect(alert.open.calls.mostRecent().args[1]).toBe('data-handler.email_policy_self_lockout');
+  });
+
+  /**
    * @description 5xx: status text or the default text; an unexpected status (3xx) keeps the
    *   unknown-error text; a template placeholder without value stays visible.
    * @input 500 'Internal Server Error'; 503 with blank status text; 302; server_error template

@@ -35,6 +35,9 @@
  *   `getWithMeta()` / `postWithMeta()` return the whole envelope for callers that need `meta`
  *   (pagination, `has_more_older_messages`, `activation_email_sent`). See `ApiEnvelope`.
  *
+ * @refactor-note (2026-10-24) 422 `EMAIL_POLICY_SELF_LOCKOUT` (e-mail policy change that would lock
+ *   out the acting sysadmin) shows the translated `data-handler.email_policy_self_lockout`.
+ *
  * @note Důsledek: pokud by první chyba přes `DataHandler` nastala dřív, než si
  * `AdminLocalizationService` vyžádá jakákoli admin komponenta (v administraci to dělá
  * `AdminLayoutComponent`/`BaseDataComponent`), služba teprve vznikne a JSON se teprve
@@ -166,6 +169,9 @@ export class DataHandler {
         } else {
           errorMessage = this.t('forbidden_fallback');
         }
+      } else if (error.status === 422 && error.error?.error_code === 'EMAIL_POLICY_SELF_LOCKOUT') {
+        // A policy change that would lock out the acting sysadmin (2026-10-24) - translated text.
+        errorMessage = this.t('email_policy_self_lockout');
       } else if (error.status === 422 && error.error && error.error.errors) {
         const validationErrors = Object.values(error.error.errors).flat().join('; ');
         errorMessage = this.t('validation_error', { status: error.status, errors: validationErrors });

@@ -11,9 +11,18 @@
  *   while every other module logs in English - the log is read in the admin in any language and
  *   searched / exported as one dataset. The descriptions are English now; event types are unchanged.
  * @refactor-note (2026-10-09) SECURITY: login and token refresh refuse an account whose
- * e-mail is no longer allowed by the e-mail access policy (sysadmin exempt). Checked only
+ * e-mail is no longer allowed by the e-mail access policy (no role exempt since 2026-10-24). Checked only
  * after the password matched, with a generic message that reveals nothing about the
  * allowed domains - see `emailPolicyAllowsLogin()`.
+ * @bugfix-note (2026-10-24) SECURITY: the sysadmin role was EXEMPT from the e-mail access
+ *   policy ("must never lock itself out"). Removing a domain / exception therefore cut off
+ *   every regular account of it but left the most privileged accounts of that domain working
+ *   - a former partner's or a private-mailbox sysadmin stayed a way in although the policy
+ *   said "no longer allowed". The policy now applies to every role, also in the 2FA step
+ *   (the policy may change between the password and the code). The lock-out risk is handled
+ *   where it arises: CoreEmailAccessPolicyController refuses a change that would exclude the
+ *   acting sysadmin, and `php artisan security:email-policy-allow` restores access from the
+ *   server.
  * @refactor-note (2026-10-24) Open finding #6: success answers go through `respond()` /
  *   `respondPaginated()` - one envelope `{data, meta?}` (App\Traits\RespondsWithData).
  */
@@ -48,9 +57,6 @@ class AuthController extends Controller
     /** Okno pro počítání neúspěšných pokusů per e-mail (sekundy). */
     private const FAILED_ATTEMPTS_DECAY_SECONDS = 900; // 15 min
 
-    /** Role exempt from the e-mail access policy at login - it must never lock itself out. */
-    private const SYSADMIN_ROLE_NAME = 'sysadmin';
-
     /**
      * Same message for every account the e-mail access policy refuses. It names neither
      * the domain nor the policy, so it tells nothing about which domains are allowed.
@@ -68,7 +74,7 @@ class AuthController extends Controller
      * ale založí pending-login session a pošle OTP e-mailem. Jinak přihlásí rovnou
      * (stávající chování).
      * @refactor-note (2026-10-09) SECURITY: an account whose e-mail is no longer allowed
-     * by the e-mail access policy cannot log in (403, sysadmin exempt). Checked only
+     * by the e-mail access policy cannot log in (403; every role since 2026-10-24). Checked only
      * AFTER the password matched and with a generic message, so the endpoint cannot be
      * used to probe which domains are allowed - see `emailPolicyAllowsLogin()`.
      */
@@ -302,6 +308,18 @@ class AuthController extends Controller
             return response()->json(['message' => 'This account has been blocked. Please contact the administrator.'], 403);
         }
 
+        // Same for the e-mail access policy: it may have changed while the code was on its way.
+        if (!$this->emailPolicyAllowsLogin($user)) {
+            $pending->delete();
+            CoreSecurityEvent::record(
+                'login_email_not_allowed',
+                'warning',
+                $request->ip(),
+                CoreSecurityEvent::contextFromRequest($request, ['user_id' => $user->id])
+            );
+            return response()->json(['message' => self::LOGIN_NOT_ALLOWED_MESSAGE], 403);
+        }
+
         $pending->used_at = now();
         $pending->save();
         $pending->delete();
@@ -493,17 +511,14 @@ class AuthController extends Controller
 
     /**
      * @description Whether the account may log in under the e-mail access policy
-     * (`CoreEmailAccessRule::isEmailAllowed()`). Sysadmin accounts are exempt: a policy
-     * change must never lock out the only role that can fix the policy.
-     * @param User $user The account that has just proved its credentials (or refresh token).
+     * (`CoreEmailAccessRule::isEmailAllowed()`) - the same rule for EVERY role.
+     * @bugfix-note (2026-10-24) SECURITY: sysadmin accounts were exempt here - see the file
+     *   header. No role is exempt any more; the lock-out protection is in the policy editor.
+     * @param User $user The account that has just proved its credentials (or refresh token / 2FA code).
      * @return bool True when the login may continue.
      */
     private function emailPolicyAllowsLogin(User $user): bool
     {
-        if ($user->roles()->where('role_name', self::SYSADMIN_ROLE_NAME)->exists()) {
-            return true;
-        }
-
         return CoreEmailAccessRule::isEmailAllowed((string) $user->user_email);
     }
 

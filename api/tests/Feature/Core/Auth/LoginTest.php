@@ -216,21 +216,28 @@ class LoginTest extends TestCase
     }
 
     /**
-     * @description Sysadmin is exempt from the e-mail policy (cannot lock itself out); its
-     *   forced 2FA starts the challenge instead of issuing tokens.
-     * @input Primary domain company.cz, sysadmin root@other.cz, correct password.
-     * @output 200 {requires_2fa:true, login_token}; code mailed; pending TwoFactorCode row.
+     * @description The e-mail policy applies to the sysadmin role as well (2026-10-24 security
+     *   fix - sysadmin was exempt): a sysadmin outside the allowed domains is refused like any
+     *   account (403, no tokens, no 2FA code); a sysadmin of the primary domain logs in and its
+     *   forced 2FA starts the challenge.
+     * @input Primary domain company.cz; sysadmin root@other.cz; sysadmin root@company.cz; correct passwords.
+     * @output 403 generic message + login_email_not_allowed, nothing mailed; then 200
+     *   {requires_2fa:true, login_token}, code mailed, pending TwoFactorCode row.
      */
-    public function test_sysadmin_is_exempt_from_email_policy_and_gets_2fa(): void
+    public function test_email_policy_applies_to_sysadmin_too(): void
     {
         Mail::fake();
         CoreSecuritySetting::current()->update(['primary_email_domain' => 'company.cz']);
-        $admin = $this->sysadmin(['user_email' => 'root@other.cz']);
-        TwoFactorCode::create([
-            'user_id' => $admin->id, 'login_token_hash' => str_repeat('a', 64), 'code_hash' => str_repeat('b', 64),
-            'expires_at' => now()->addMinutes(5), 'last_sent_at' => now(),
-        ]);
+        $outside = $this->sysadmin(['user_email' => 'root@other.cz']);
 
+        $this->postJson('/api/login', ['email' => $outside->user_email, 'password' => $this->defaultPassword])
+            ->assertStatus(403)
+            ->assertJsonPath('message', 'Login is not allowed for this account. Please contact the administrator.');
+        $this->assertSecurityEvent('login_email_not_allowed');
+        Mail::assertNothingSent();
+        $this->assertSame(0, TwoFactorCode::count());
+
+        $admin = $this->sysadmin(['user_email' => 'root@company.cz']);
         $response = $this->postJson('/api/login', ['email' => $admin->user_email, 'password' => $this->defaultPassword])
             ->assertOk()
             ->assertJson(['data' => ['requires_2fa' => true, 'expires_in' => TwoFactorCode::CODE_TTL_MINUTES * 60]]);

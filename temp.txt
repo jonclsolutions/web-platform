@@ -1,0 +1,3 @@
+otestovat to s tema domenama 
+je tam dalsi patch - ten dela aby nesli dat na konce nazvu neviditelne charaktery
+splnit issue #15

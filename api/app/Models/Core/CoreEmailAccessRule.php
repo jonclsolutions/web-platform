@@ -46,7 +46,7 @@ class CoreEmailAccessRule extends Model
             $rule->value = $value;
         });
     }
-        /**
+    /**
      * @description Whether an e-mail may hold an account under the current e-mail
      * access policy. An empty `primary_email_domain` means "no restriction". Otherwise
      * allowed when ANY of these matches:
@@ -54,7 +54,9 @@ class CoreEmailAccessRule extends Model
      * 2) the domain is whitelisted (rule of type `domain`),
      * 3) the whole e-mail is whitelisted as an exception (rule of type `email`).
      * Single source of the policy for account creation, login e-mail change
-     * (UserController) and login / token refresh (AuthController).
+     * (UserController), login / 2FA / token refresh (AuthController) and the session
+     * clean-up after a policy change (CoreEmailAccessPolicyController). It applies to EVERY
+     * role, sysadmin included (2026-10-24, see AuthController).
      * @param string $email The e-mail to check (case and surrounding spaces ignored).
      * @return bool True when the e-mail is allowed.
      * @refactor-note (2026-10-09) Moved here from UserController::assertEmailDomainAllowed()
@@ -62,25 +64,33 @@ class CoreEmailAccessRule extends Model
      */
     public static function isEmailAllowed(string $email): bool
     {
+        return static::policyChecker()($email);
+    }
+
+    /**
+     * @description The current policy as a reusable check: the primary domain and all rules
+     * are loaded ONCE, so checking many e-mails (every account after a policy change) costs
+     * two queries instead of two per account.
+     * @return \Closure(string): bool Same answer as isEmailAllowed() for the loaded policy.
+     */
+    public static function policyChecker(): \Closure
+    {
         $primaryDomain = strtolower(trim((string) CoreSecuritySetting::current()->primary_email_domain));
-
         if ($primaryDomain === '') {
-            return true;
+            return static fn (string $email): bool => true;
         }
 
-        $emailLower = strtolower(trim($email));
-        $atPosition = strrpos($emailLower, '@');
-        $domain = $atPosition !== false ? substr($emailLower, $atPosition + 1) : '';
+        $rules = static::query()->get(['type', 'value']);
+        $domains = $rules->where('type', 'domain')->pluck('value')->flip()->all();
+        $emails = $rules->where('type', 'email')->pluck('value')->flip()->all();
 
-        if ($domain !== '' && $domain === $primaryDomain) {
-            return true;
-        }
+        return static function (string $email) use ($primaryDomain, $domains, $emails): bool {
+            $emailLower = strtolower(trim($email));
+            $atPosition = strrpos($emailLower, '@');
+            $domain = $atPosition !== false ? substr($emailLower, $atPosition + 1) : '';
 
-        return static::query()
-            ->where(function ($query) use ($domain, $emailLower) {
-                $query->where(fn ($q) => $q->where('type', 'domain')->where('value', $domain))
-                      ->orWhere(fn ($q) => $q->where('type', 'email')->where('value', $emailLower));
-            })
-            ->exists();
+            return ($domain !== '' && ($domain === $primaryDomain || isset($domains[$domain])))
+                || isset($emails[$emailLower]);
+        };
     }
 }

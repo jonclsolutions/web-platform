@@ -352,6 +352,11 @@ the server with the local one. The checksum file does not need to be deployed.
 - Retention of personal data is enforced by scheduled clean-up jobs (security events,
   import batches) – keep the production scheduler cron running.
 - `.dev/` and `build/` are git-ignored; check with `git status` before every commit.
+- **E-mail access policy** (admin → Account management → E-mail domains) applies to every role,
+  sysadmin included: an account outside the allowed domains / exceptions cannot log in, and its
+  open sessions end as soon as the policy excludes it. The editor refuses a change that would
+  lock out the sysadmin making it. Emergency access when nobody can log in (shell on the server):
+  `php artisan security:email-policy-allow admin@example.com`.
 
 ---
 
