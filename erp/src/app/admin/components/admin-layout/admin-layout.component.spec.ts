@@ -71,15 +71,77 @@ describe('AdminLayoutComponent', () => {
   });
 
   /**
-   * @description Switching module navigates to its welcome page and remembers the choice.
-   * @input  switchModule('core')
-   * @output currentModule 'core'; localStorage module 'core'; navigate(['/admin/core/welcome-page'])
+   * @description A module tab opens the first page of the module the user may open (welcome page
+   *   first); the active tab is NOT changed by the click - only by the URL the router really
+   *   reaches (bugfix 2026-10-27: a refused navigation left the wrong tab active).
+   * @input  granted core-view-welcome-page: switchModule('core'); granted only shop-orders-view:
+   *         switchModule('shop'); no web page: switchModule('web').
+   * @output navigate(['/admin/core/welcome-page']); navigate(['/admin/shop/orders']); no navigation
+   *         for web; currentModule stays 'web' (default) and nothing stored until NavigationEnd.
    */
-  it('switchModule() navigates to the module welcome page', () => {
+  it('switchModule() opens the first page the user may open', () => {
+    ctx.permissions.granted = new Set(['core-view-welcome-page']);
     component.switchModule('core');
-    expect(component.currentModule).toBe('core');
-    expect(localStorage.getItem('admin_current_module')).toBe('core');
     expect(router.navigate).toHaveBeenCalledWith(['/admin/core/welcome-page']);
+
+    ctx.permissions.granted = new Set(['shop-orders-view']);
+    component.switchModule('shop');
+    expect(router.navigate).toHaveBeenCalledWith(['/admin/shop/orders']);
+
+    (router.navigate as jasmine.Spy).calls.reset();
+    component.switchModule('web');
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(component.currentModule).toBe('web');
+    expect(localStorage.getItem('admin_current_module')).toBeNull();
+  });
+
+  /**
+   * @description A module tab is shown only with its tab permission AND at least one page of the
+   *   module (bugfix 2026-10-27: `view-web` alone showed Web with every web permission removed);
+   *   a role-only page (edit roles) counts for the sysadmin only; the sysadmin sees every tab.
+   * @input  view-web alone; view-web + web-news-view; web-news-view without view-web;
+   *         view-core + nothing else; view-core role admin vs sysadmin for edit-roles only;
+   *         view-eshop + shop-coupons-view; sysadmin without any permission.
+   * @output false; true; false; core true (view-core opens the core dashboard); shop true;
+   *         sysadmin: every tab true; the rendered header shows exactly the available tabs.
+   */
+  it('shows a module tab only when the module has a page for the user', () => {
+    ctx.permissions.granted = new Set(['view-web']);
+    expect(component.isModuleAvailable('web')).toBeFalse();
+    ctx.permissions.granted = new Set(['view-web', 'web-news-view']);
+    expect(component.isModuleAvailable('web')).toBeTrue();
+    ctx.permissions.granted = new Set(['web-news-view']);
+    expect(component.isModuleAvailable('web')).toBeFalse();
+
+    ctx.permissions.granted = new Set(['view-core']);
+    expect(component.isModuleAvailable('core')).toBeTrue();
+    ctx.permissions.granted = new Set(['view-eshop', 'shop-coupons-view']);
+    expect(component.isModuleAvailable('shop')).toBeTrue();
+    expect(component.isModuleAvailable('core')).toBeFalse();
+
+    ctx.permissions.granted = new Set(['view-core', 'view-web']);
+    component.userRole = 'admin';
+    expect(component.isModuleAvailable('web')).toBeFalse();
+
+    ctx.permissions.granted = new Set([]);
+    component.userRole = 'sysadmin';
+    expect(['web', 'core', 'shop'].map(m => component.isModuleAvailable(m as any))).toEqual([true, true, true]);
+    component.switchModule('core');
+    expect(router.navigate).toHaveBeenCalledWith(['/admin/core/welcome-page']);
+  });
+
+  /**
+   * @description The rendered header shows only the available tabs (desktop switcher).
+   * @input  granted view-web, view-core, view-eshop, core-view-welcome-page, shop-orders-view; render.
+   * @output buttons of Core and E-shop only (no Web - no web page).
+   */
+  it('renders only the available module tabs', () => {
+    ctx.permissions.granted = new Set(['view-web', 'view-core', 'view-eshop', 'core-view-welcome-page', 'shop-orders-view']);
+    fixture.detectChanges();
+    const tabs = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.module-switcher button'))
+      .map(b => b.textContent!.trim());
+    expect(tabs.length).toBe(2);
+    expect(tabs.some(t => t.includes('module_web'))).toBeFalse();
   });
 
   /**
@@ -355,6 +417,7 @@ describe('AdminLayoutComponent', () => {
    */
   it('shows every menu group only with its permission', () => {
     const groups: Record<string, string> = {
+      showWebWelcomeGroup: 'web-welcome-page-view', showShopWelcomeGroup: 'shop-welcome-page-view',
       showWebOverviewGroup: 'web-view-dashboard', showWebBusinessGroup: 'web-projects-view', showWebContentGroup: 'web-news-view',
       showWebPeopleGroup: 'web-support-tickets-view', showWebSystemGroup: 'web-view-web-logs', showCoreOverviewGroup: 'core-view-welcome-page',
       showCoreLegalGroup: 'core-external-links-view', showCoreUsersGroup: 'core-administrators-view', showShopOverviewGroup: 'shop-view-dashboard',

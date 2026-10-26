@@ -16,6 +16,10 @@
         stejná funkcionalita, jaká dřív žila v PersonalInfoComponent, jen přesunutá
         sem, ať je dostupná odkudkoliv v adminu. Duplikováno i v mobilním vysouvacím
         panelu, stejný vzor jako moduly/hodiny.
+    @bugfix-note (2026-10-27) Module tabs (desktop + mobile panel) shown by
+        `isModuleAvailable()` (tab permission AND at least one page the user may open) instead
+        of the tab permission alone; the Web / E-shop welcome items have their own group
+        condition (`showWebWelcomeGroup` / `showShopWelcomeGroup`).
 -->
 
 <header class="admin-header">
@@ -63,7 +67,7 @@
 
   <div class="module-switcher">
     <button
-      *appHasPermission="'view-core'"
+      *ngIf="isModuleAvailable('core')"
       [class.active]="currentModule === 'core'"
       (click)="switchModule('core')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -74,7 +78,7 @@
       {{ strings.module_core }}
     </button>
     <button
-      *appHasPermission="'view-web'"
+      *ngIf="isModuleAvailable('web')"
       [class.active]="currentModule === 'web'"
       (click)="switchModule('web')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -85,7 +89,7 @@
       {{ strings.module_web }}
     </button>
     <button
-      *appHasPermission="'view-eshop'"
+      *ngIf="isModuleAvailable('shop')"
       [class.active]="currentModule === 'shop'"
       (click)="switchModule('shop')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -188,7 +192,7 @@
 
     <div class="map-module-switcher">
       <button
-        *appHasPermission="'view-core'"
+        *ngIf="isModuleAvailable('core')"
         [class.active]="currentModule === 'core'"
         (click)="switchModule('core'); closeMobileActions()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -199,7 +203,7 @@
         {{ strings.module_core }}
       </button>
       <button
-        *appHasPermission="'view-web'"
+        *ngIf="isModuleAvailable('web')"
         [class.active]="currentModule === 'web'"
         (click)="switchModule('web'); closeMobileActions()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -210,7 +214,7 @@
         {{ strings.module_web }}
       </button>
       <button
-        *appHasPermission="'view-eshop'"
+        *ngIf="isModuleAvailable('shop')"
         [class.active]="currentModule === 'shop'"
         (click)="switchModule('shop'); closeMobileActions()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -261,7 +265,7 @@
     <nav class="admin-nav">
 
       @if (currentModule === 'web') {
-        <div class="nav-group" *ngIf="showWebOverviewGroup">
+        <div class="nav-group" *ngIf="showWebWelcomeGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">{{ strings.nav_group_overview }}</div>
           <ul>
             <li *appHasPermission="'web-welcome-page-view'">
@@ -568,7 +572,7 @@
 
       @if (currentModule === 'shop') {
 
-        <div class="nav-group" *ngIf="showShopOverviewGroup">
+        <div class="nav-group" *ngIf="showShopWelcomeGroup">
           <div class="nav-group-label" [class.hidden]="!isMenuOpen">{{ strings.nav_group_overview }}</div>
           <ul>
             <li *appHasPermission="'shop-welcome-page-view'">

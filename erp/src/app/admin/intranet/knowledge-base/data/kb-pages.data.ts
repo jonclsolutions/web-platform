@@ -25,6 +25,8 @@
  *
  * @note `support-form` a `news` NEJSOU v tomhle poli - obě zůstávají vlastní
  * komponenty/routy (mají skutečnou logiku, ne statický text) - viz admin-routing.module.ts.
+ * @refactor-note (2026-10-27) devNote permission keys of Edit website and the E-shop pages
+ *   updated to the current keys (same as admin-navigation.config.ts and the routes).
  */
 
 import { KBPage } from "../../../../shared/interfaces/kb-content";
@@ -150,7 +152,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Editace webu', en: 'Website Editing' },
     navOrder: 10,
     header: { cz: 'Editace obsahu webu', en: 'Website Content Editing' },
-    devNote: "EditWebsiteComponent, route 'web/edit-website', permission 'web-view-edit-website'.",
+    devNote: "EditWebsiteComponent, route 'web/edit-website', permission 'web-edit-website-view'.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - editace obsahových částí veřejného webu.',
       en: 'Placeholder content - editing content sections of the public website.'
@@ -1260,7 +1262,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Produkty', en: 'Products' },
     navOrder: 26,
     header: { cz: 'Správa produktů', en: 'Product Management' },
-    devNote: "ProductsComponent, route 'shop/products', permission 'shop-manage-products'. Zahrnuje varianty a obrázky produktu (samostatné modaly).",
+    devNote: "ProductsComponent, route 'shop/products', permission 'shop-products-view'. Zahrnuje varianty a obrázky produktu (samostatné modaly).",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - správa produktového katalogu, variant a obrázků.',
       en: 'Placeholder content - management of the product catalog, variants, and images.'
@@ -1272,7 +1274,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Kategorie', en: 'Categories' },
     navOrder: 27,
     header: { cz: 'Správa kategorií', en: 'Category Management' },
-    devNote: "CategoriesComponent, route 'shop/categories', permission 'shop-manage-categories'. Stromová struktura kategorií + přiřazování produktů.",
+    devNote: "CategoriesComponent, route 'shop/categories', permission 'shop-categories-view'. Stromová struktura kategorií + přiřazování produktů.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - hierarchická správa kategorií produktů.',
       en: 'Placeholder content - hierarchical management of product categories.'
@@ -1284,7 +1286,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Objednávky', en: 'Orders' },
     navOrder: 28,
     header: { cz: 'Správa objednávek', en: 'Order Management' },
-    devNote: "OrdersComponent, route 'shop/orders', permission 'shop-view-orders'.",
+    devNote: "OrdersComponent, route 'shop/orders', permission 'shop-orders-view'.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - správa e-shopových objednávek, stavů a plateb.',
       en: 'Placeholder content - management of e-shop orders, statuses, and payments.'
@@ -1296,7 +1298,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Zákazníci', en: 'Customers' },
     navOrder: 29,
     header: { cz: 'Správa zákazníků', en: 'Customer Management' },
-    devNote: "CustomersComponent, route 'shop/customers', permission 'shop-manage-customers'.",
+    devNote: "CustomersComponent, route 'shop/customers', permission 'shop-customers-view'.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - správa zákaznických účtů a jejich historie objednávek.',
       en: 'Placeholder content - management of customer accounts and their order history.'
@@ -1308,7 +1310,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Způsoby dopravy', en: 'Shipping Methods' },
     navOrder: 30,
     header: { cz: 'Způsoby dopravy', en: 'Shipping Methods' },
-    devNote: "ShippingMethodsComponent, route 'shop/shipping-methods', permission 'shop-manage-shipping-methods'.",
+    devNote: "ShippingMethodsComponent, route 'shop/shipping-methods', permission 'shop-shipping-methods-view'.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - správa dostupných způsobů dopravy.',
       en: 'Placeholder content - management of available shipping methods.'
@@ -1320,7 +1322,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Platební metody', en: 'Payment Methods' },
     navOrder: 31,
     header: { cz: 'Platební metody', en: 'Payment Methods' },
-    devNote: "PaymentMethodsComponent, route 'shop/payment-methods', permission 'shop-manage-payment-methods'.",
+    devNote: "PaymentMethodsComponent, route 'shop/payment-methods', permission 'shop-payment-methods-view'.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - správa dostupných platebních metod.',
       en: 'Placeholder content - management of available payment methods.'
@@ -1332,7 +1334,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Dodavatelé', en: 'Suppliers' },
     navOrder: 32,
     header: { cz: 'Správa dodavatelů', en: 'Supplier Management' },
-    devNote: "SuppliersComponent, route 'shop/suppliers', permission 'shop-manage-suppliers'.",
+    devNote: "SuppliersComponent, route 'shop/suppliers', permission 'shop-suppliers-view'.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - evidence dodavatelů produktů.',
       en: 'Placeholder content - tracking of product suppliers.'
@@ -1344,7 +1346,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Slevové kupóny', en: 'Discount Coupons' },
     navOrder: 33,
     header: { cz: 'Slevové kupóny', en: 'Discount Coupons' },
-    devNote: "CouponsComponent, route 'shop/coupons', permission 'shop-view-reports'.",
+    devNote: "CouponsComponent, route 'shop/coupons', permission 'shop-coupons-view'.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - správa slevových kupónů a jejich podmínek.',
       en: 'Placeholder content - management of discount coupons and their conditions.'
@@ -1368,7 +1370,7 @@ export const KB_PAGES: KBPage[] = [
     navLabel: { cz: 'Nastavení e-shopu', en: 'E-shop Settings' },
     navOrder: 35,
     header: { cz: 'Globální nastavení e-shopu', en: 'Global E-shop Settings' },
-    devNote: "EditEshopComponent, route 'shop/edit-eshop', permission 'shop-view-edit-eshop'.",
+    devNote: "EditEshopComponent, route 'shop/edit-eshop', permission 'shop-edit-eshop-view'.",
     sections: [ { blocks: [ { type: 'lead', content: {
       cz: 'Testovací obsah - globální nastavení e-shopu.',
       en: 'Placeholder content - global e-shop settings.'

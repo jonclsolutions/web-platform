@@ -42,6 +42,14 @@
  * open form modal). On desktop the sidebar sits next to the content (not an overlay),
  * so no lock is applied there. The lock is released in `ngOnDestroy()`.
  * No other behavior of this component changed.
+ *
+ * @bugfix-note (2026-10-27) Module tabs of the header: a tab is shown only when the user may open
+ * at least one page of the module (`isModuleAvailable()`, pages and keys in
+ * `admin-navigation.config.ts`) - before, `view-web` alone showed Web even with every web
+ * permission removed (empty sidebar / "Access denied"). A click opens the first page the user may
+ * open; the active tab follows only the real URL (it stayed on the refused module before). The
+ * welcome page items of Web / E-shop have their own group condition (they were hidden behind the
+ * dashboard key).
  */
 
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, LOCALE_ID, inject } from '@angular/core';
@@ -56,6 +64,8 @@ import { LoadingService } from '../../../core/services/loading.service';
 import { AdminLocalizationService, AdminLanguageMeta } from '../../../core/services/admin-localization.service';
 import { ScrollLockService } from '../../../core/services/scroll-lock.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { ADMIN_MODULE_PAGES, ADMIN_MODULE_TAB_PERMISSION, AdminModule, AdminNavPage } from '../../admin-navigation.config';
+import { SYSADMIN_ROLE_NAME } from '../../../core/auth/guards/auth.guard';
 
 /**
  * @description The layout shell for the administration area, handling sidebar controls and navigation.
@@ -295,24 +305,46 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * @description Switches between main application modules ('web' / 'core' / 'shop') and updates navigation.
-   * @param module The target module to navigate into.
-   * @bugfix-note (2026-09e) Ruční nastavení `currentModule`/localStorage tady ZŮSTÁVÁ
-   * (okamžitá odezva na klik, ať uživatel nečeká na dokončení navigace) -
-   * `syncModuleFromUrl()` po dokončení `NavigationEnd` hodnotu jen znovu potvrdí,
-   * nepřepíše ji na nic jiného.
+   * @description Opens a module: navigates to the first page of it the user may open (welcome page
+   *   first, then the sidebar order - see ADMIN_MODULE_PAGES).
+   * @param module The target module.
+   * @bugfix-note (2026-09e) `syncModuleFromUrl()` after `NavigationEnd` sets the active module.
+   * @bugfix-note (2026-10-27) The tab was set active BEFORE the navigation; when the router refused
+   *   the fixed landing page (no permission → redirect to the page the user already was on, a
+   *   skipped navigation without NavigationEnd) the header kept the wrong module highlighted while
+   *   the URL stayed. The active module now follows ONLY the real URL, and the click opens a page
+   *   the user may open, so a tab never leads to "Access denied". A module without any page for
+   *   the user is not shown at all (`isModuleAvailable()`), the click does nothing for it.
    */
-  switchModule(module: 'web' | 'core' | 'shop'): void {
-    this.currentModule = module;
-    localStorage.setItem('admin_current_module', module);
+  switchModule(module: AdminModule): void {
+    const page = this.firstAccessiblePage(module);
+    if (!page) return;
+    this.router.navigate([`/admin/${module}/${page.path}`]);
+  }
 
-    const landingRoute: Record<'web' | 'core' | 'shop', string> = {
-      web: '/admin/web/welcome-page',
-      core: '/admin/core/welcome-page',
-      shop: '/admin/shop/welcome-page'
-    };
-    this.router.navigate([landingRoute[module]]);
-    this.cdr.markForCheck();
+  /**
+   * @description Whether the header shows the tab of a module: the tab permission (`view-web` /
+   *   `view-core` / `view-eshop`) AND at least one page of the module the user may open - so a
+   *   tab never opens an empty sidebar or an "Access denied" message. Sysadmin: always.
+   * @param module Module of the tab.
+   */
+  isModuleAvailable(module: AdminModule): boolean {
+    if (this.userRole === SYSADMIN_ROLE_NAME) return true;
+    return this.permissionService.hasPermission(ADMIN_MODULE_TAB_PERMISSION[module])
+      && this.firstAccessiblePage(module) !== null;
+  }
+
+  /**
+   * @description First page of a module the user may open (same rule as the AuthGuard: sysadmin
+   *   opens everything, a role-only page needs the sysadmin role, otherwise one of the keys).
+   * @param module Module.
+   * @returns The page, or null when there is none.
+   */
+  private firstAccessiblePage(module: AdminModule): AdminNavPage | null {
+    const isSysadmin = this.userRole === SYSADMIN_ROLE_NAME;
+    return ADMIN_MODULE_PAGES[module].find(page =>
+      isSysadmin || (!page.sysadminOnly && page.permission !== null && this.hasAnyPermission([page.permission]))
+    ) ?? null;
   }
 
   toggleMenu(): void {
@@ -433,6 +465,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
 
   // ── Web modul ────────────────────────────────────────────────────────
 
+  /** Group of the web welcome page (its own key - before 2026-10-27 it hid behind the dashboard key). */
+  get showWebWelcomeGroup(): boolean {
+    return this.hasAnyPermission(['web-welcome-page-view']);
+  }
+
   get showWebOverviewGroup(): boolean {
     return this.hasAnyPermission(['web-view-dashboard']);
   }
@@ -482,6 +519,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   // ── Shop modul ───────────────────────────────────────────────────────
+
+  /** Group of the shop welcome page (its own key - before 2026-10-27 it hid behind the dashboard key). */
+  get showShopWelcomeGroup(): boolean {
+    return this.hasAnyPermission(['shop-welcome-page-view']);
+  }
 
   get showShopOverviewGroup(): boolean {
     return this.hasAnyPermission(['shop-view-dashboard']);

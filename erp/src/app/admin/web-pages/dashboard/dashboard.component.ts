@@ -65,6 +65,8 @@
  *   the component (`takeUntilDestroyed()`).
  * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): stat totals from
  *  `meta.total`, recent activity from `data`.
+ * @bugfix-note (2026-10-27) The "Edit website" navigation card required the old key
+ *   `web-view-edit-website` - now `web-edit-website-view` (same as the route, sidebar and API).
  */
 
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -240,7 +242,7 @@ export class DashboardComponent extends BaseDataComponent<UserLogin> implements 
 
   readonly navSections: NavSectionWithPermission[] = [
     { titleKey: 'nav_news_title', icon: 'newspaper', route: '/admin/web/edit-news', descriptionKey: 'nav_news_desc', permission: 'web-news-view' },
-    { titleKey: 'nav_website_title', icon: 'globe', route: '/admin/web/edit-website', descriptionKey: 'nav_website_desc', permission: 'web-view-edit-website' },
+    { titleKey: 'nav_website_title', icon: 'globe', route: '/admin/web/edit-website', descriptionKey: 'nav_website_desc', permission: 'web-edit-website-view' },
     { titleKey: 'nav_requests_title', icon: 'mail', route: '/admin/web/user-request', descriptionKey: 'nav_requests_desc', permission: 'web-user-requests-view' },
     { titleKey: 'nav_sales_orders_title', icon: 'inbox', route: '/admin/web/sales-orders', descriptionKey: 'nav_sales_orders_desc', permission: 'web-sales-orders-view' },
     { titleKey: 'nav_leads_title', icon: 'briefcase', route: '/admin/web/sales-leads', descriptionKey: 'nav_leads_desc', permission: 'web-sales-leads-view' },

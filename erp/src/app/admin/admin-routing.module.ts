@@ -24,6 +24,14 @@
  * page could be opened by typing its URL (the API still answered 403, so no data leaked).
  * Both top-level routes now also register `canActivateChild: [AuthGuard]`, which checks the
  * `data.permission` of each child page on every navigation.
+ *
+ * @bugfix-note (2026-10-27) The E-shop pages and Web → Edit website still required the old
+ * permission keys (`shop-manage-products`, `shop-view-orders`, `shop-view-reports`,
+ * `web-view-edit-website`, …) while the sidebar, the welcome-page cards and the API use the
+ * current ones (`shop-products-view`, `shop-orders-view`, `shop-coupons-view`,
+ * `web-edit-website-view`, …): a non-sysadmin saw the menu item and got "Access denied" on click.
+ * The routes now require the same keys as `admin-navigation.config.ts` (checked by its spec); the
+ * duplicated `web/dashboard` route was removed. The route table is exported for that check.
  */
 
 import { NgModule } from '@angular/core';
@@ -83,7 +91,7 @@ import { WebWelcomePageComponent } from './web-pages/web-welcome-page/web-welcom
  *       A user without the permission is redirected to the first page they can open; the order
  *       of the routes below is therefore also the order of preference for that fallback.
  */
-const routes: Routes = [
+export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     component: AdminLayoutComponent,
@@ -98,12 +106,11 @@ const routes: Routes = [
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
-          { path: 'dashboard', component: DashboardComponent, data: { permission: 'web-view-dashboard' } },
           { path: 'user-request', component: UserRequestComponent, data: { permission: 'web-user-requests-view' } },
           { path: 'business-logs', component: BusinessLogsComponent, data: { permission: 'web-view-web-logs' } },
           { path: 'sales-leads', component: SalesLeadsComponent, data: { permission: 'web-sales-leads-view' } },
           { path: 'edit-news', component: EditNewsComponent, data: { permission: 'web-news-view' } },
-          { path: 'edit-website', component: EditWebsiteComponent, data: { permission: 'web-view-edit-website' } },
+          { path: 'edit-website', component: EditWebsiteComponent, data: { permission: 'web-edit-website-view' } },
           { path: 'sales-orders', component: SalesOrdersComponent, data: { permission: 'web-sales-orders-view' } },
           { path: 'support-tickets', component: SupportTicketsComponent, data: { permission: 'web-support-tickets-view' } },
           { path: 'job-applications', component: JobApplicationsComponent, data: { permission: 'web-job-applications-view' } },
@@ -138,16 +145,16 @@ const routes: Routes = [
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: ShopDashboardComponent, data: { permission: 'shop-view-dashboard' } },
-          { path: 'products', component: ProductsComponent, data: { permission: 'shop-manage-products' } },
-          { path: 'categories', component: CategoriesComponent, data: { permission: 'shop-manage-categories' } },
-          { path: 'orders', component: OrdersComponent, data: { permission: 'shop-view-orders' } },
-          { path: 'customers', component: CustomersComponent, data: { permission: 'shop-manage-customers' } },
-          { path: 'shipping-methods', component: ShippingMethodsComponent, data: { permission: 'shop-manage-shipping-methods' } },
-          { path: 'payment-methods', component: PaymentMethodsComponent, data: { permission: 'shop-manage-payment-methods' } },
-          { path: 'suppliers', component: SuppliersComponent, data: { permission: 'shop-manage-suppliers' } },
-          { path: 'coupons', component: CouponsComponent, data: { permission: 'shop-view-reports' } },
+          { path: 'products', component: ProductsComponent, data: { permission: 'shop-products-view' } },
+          { path: 'categories', component: CategoriesComponent, data: { permission: 'shop-categories-view' } },
+          { path: 'orders', component: OrdersComponent, data: { permission: 'shop-orders-view' } },
+          { path: 'customers', component: CustomersComponent, data: { permission: 'shop-customers-view' } },
+          { path: 'shipping-methods', component: ShippingMethodsComponent, data: { permission: 'shop-shipping-methods-view' } },
+          { path: 'payment-methods', component: PaymentMethodsComponent, data: { permission: 'shop-payment-methods-view' } },
+          { path: 'suppliers', component: SuppliersComponent, data: { permission: 'shop-suppliers-view' } },
+          { path: 'coupons', component: CouponsComponent, data: { permission: 'shop-coupons-view' } },
           { path: 'logs', component: ShopLogsComponent, data: { permission: 'shop-view-logs' } },
-          { path: 'edit-eshop', component: EditEshopComponent, data: { permission: 'shop-view-edit-eshop' } },
+          { path: 'edit-eshop', component: EditEshopComponent, data: { permission: 'shop-edit-eshop-view' } },
           { path: 'welcome-page', component: ShopWelcomePageComponent, data: { permission: 'shop-welcome-page-view' } }
         ]
       }
@@ -177,7 +184,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forChild(routes)],
+  imports: [RouterModule.forChild(ADMIN_ROUTES)],
   exports: [RouterModule]
 })
 export class AdminRoutingModule { }
