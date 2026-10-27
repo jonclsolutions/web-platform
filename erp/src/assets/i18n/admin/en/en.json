@@ -425,6 +425,8 @@
   "permission_search_empty": "No permission matches the search \"{term}\".",
 
   "unsaved_permissions_note": "You have unsaved permission changes.",
+  "permissions_heading": "Permissions of the role",
+  "permissions_hint": "Check the permissions below, then save them with “Save permissions”.",
   "btn_discard": "Discard",
   "btn_save_permissions": "Save permissions",
 

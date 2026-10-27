@@ -288,9 +288,11 @@ describe('EditRolesComponent', () => {
   /**
    * @description Only non-system roles without users can be deleted; the reason is shown otherwise.
    * @input  sysadmin, manager (3 users), editor (0 users)
-   * @output canDeleteRole false/false/true; reasons 'edit-roles.delete_blocked_system', 'edit-roles.delete_blocked_users', ''; openDeleteConfirm(manager) ignored
+   * @output canDeleteRole false/false/true; reasons 'edit-roles.delete_blocked_system', 'edit-roles.delete_blocked_users', '';
+   *   openDeleteConfirm(manager) ignored (no dialog, no request); the reason of manager is written
+   *   under the header (not only a tooltip, 2026-10-27) and its delete button is disabled.
    */
-  it('blocks deleting system roles and roles with users', () => {
+  it('blocks deleting system roles and roles with users', async () => {
     component.ngOnInit();
     expect(component.canDeleteRole(role(1))).toBeFalse();
     expect(component.canDeleteRole(role(3))).toBeFalse();
@@ -298,40 +300,105 @@ describe('EditRolesComponent', () => {
     expect(component.deleteBlockedReason(role(1))).toBe('edit-roles.delete_blocked_system');
     expect(component.deleteBlockedReason(role(3))).toBe('edit-roles.delete_blocked_users');
     expect(component.deleteBlockedReason(role(2))).toBe('');
-    component.openDeleteConfirm(role(3));
-    expect(component.pendingDeleteRole).toBeNull();
+    await component.openDeleteConfirm(role(3));
+    expect(ctx.confirm.open).not.toHaveBeenCalled();
+    expect((ctx.dataHandler as any).delete).not.toHaveBeenCalled();
+
+    fixture.detectChanges();
+    component.selectRole(role(3));
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('#role-delete-blocked')!.textContent!.trim()).toBe('edit-roles.delete_blocked_users');
+    const deleteButton = el.querySelector('.detail-header-actions .btn-danger') as HTMLButtonElement;
+    expect(deleteButton.disabled).toBeTrue();
+    expect(deleteButton.getAttribute('aria-describedby')).toBe('role-delete-blocked');
   });
 
   /**
-   * @description Deleting the selected role removes it and selects the first remaining role.
-   * @input  select editor; openDeleteConfirm(editor); confirmDelete()
-   * @output delete('core/roles/2'); roles without editor; selectedRole sysadmin; success alert
+   * @description Deleting asks with the standard confirm dialog (2026-10-27 - no own modal);
+   *   confirmed: the selected role is removed and the first remaining role selected.
+   * @input  select editor; openDeleteConfirm(editor) with the dialog confirmed.
+   * @output confirm.open(delete_modal_title, confirm text + warning, {confirm: btn_confirm_delete,
+   *   cancel: btn_cancel}); delete('core/roles/2'); roles without editor; selectedRole sysadmin;
+   *   success alert; no own modal in the page.
    */
-  it('deletes a role after confirmation', () => {
+  it('deletes a role after confirmation', async () => {
     component.ngOnInit();
     component.selectRole(role(2));
-    component.openDeleteConfirm(role(2));
-    component.confirmDelete();
+    await component.openDeleteConfirm(role(2));
+    expect(ctx.confirm.open).toHaveBeenCalledWith('edit-roles.delete_modal_title', 'edit-roles.delete_modal_confirm_text edit-roles.delete_modal_warning', {
+      confirm: 'edit-roles.btn_confirm_delete',
+      cancel: 'edit-roles.btn_cancel',
+    });
     expect((ctx.dataHandler as any).delete).toHaveBeenCalledWith('core/roles/2');
     expect(component.roles.map(r => r.id)).toEqual([1, 3]);
     expect(component.selectedRole?.id).toBe(1);
-    expect(component.pendingDeleteRole).toBeNull();
+    expect(component.isDeletingRole).toBeFalse();
     expect(ctx.alert.open).toHaveBeenCalledWith('edit-roles.deleted_title', 'edit-roles.role_deleted_success', 'success');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.delete-modal-overlay')).toBeNull();
   });
 
   /**
-   * @description A failed delete keeps the confirmation open with the error.
-   * @input  delete fails with { error: { message: 'In use' } }
-   * @output deleteError 'In use'; pendingDeleteRole still editor; roles unchanged
+   * @description Cancelled dialog = nothing deleted; a failed delete keeps the role (the error is
+   *   shown by DataHandler) and allows another attempt.
+   * @input  dialog cancelled; dialog confirmed + delete fails.
+   * @output no delete request; roles unchanged and isDeletingRole false after the failure.
    */
-  it('keeps the confirmation open when delete fails', () => {
+  it('does nothing when cancelled and keeps the role when delete fails', async () => {
     component.ngOnInit();
-    component.openDeleteConfirm(role(2));
+    ctx.confirm.open.and.resolveTo(false);
+    await component.openDeleteConfirm(role(2));
+    expect((ctx.dataHandler as any).delete).not.toHaveBeenCalled();
+
+    ctx.confirm.open.and.resolveTo(true);
     (ctx.dataHandler as any).delete.and.returnValue(throwError(() => ({ error: { message: 'In use' } })));
-    component.confirmDelete();
-    expect(component.deleteError).toBe('In use');
-    expect(component.pendingDeleteRole?.id).toBe(2);
+    await component.openDeleteConfirm(role(2));
+    expect((ctx.dataHandler as any).delete).toHaveBeenCalledTimes(1);
     expect(component.roles.length).toBe(3);
+    expect(component.isDeletingRole).toBeFalse();
+  });
+
+  /**
+   * @description UI of the detail (2026-10-27): the edit mode has labelled fields (role name,
+   *   description, require 2FA - each label tied to its control); the save bar has a heading and
+   *   a hint, the hint becomes the "unsaved changes" note once a permission changes; a second
+   *   delete while one runs is ignored.
+   * @input  select editor; render; startEditingDetails; render; mark permissions dirty; render;
+   *   isDeletingRole true + openDeleteConfirm(editor).
+   * @output savebar title permissions_heading + hint permissions_hint; labels new_role_name_label /
+   *   new_role_desc_label / force_2fa_checkbox for #role-detail-name / -desc / -2fa; dirty note
+   *   unsaved_permissions_note; no dialog while deleting.
+   */
+  it('labels the detail fields and explains the save bar', async () => {
+    fixture.detectChanges();
+    component.selectRole(role(2));
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.savebar-title')!.textContent!.trim()).toBe('edit-roles.permissions_heading');
+    expect(el.querySelector('.unsaved-note')!.textContent!.trim()).toBe('edit-roles.permissions_hint');
+    expect(el.querySelector('#role-delete-blocked')).toBeNull();
+
+    component.startEditingDetails();
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const label = (id: string) => el.querySelector(`label[for="${id}"]`)?.textContent?.trim();
+    expect(label('role-detail-name')).toBe('edit-roles.new_role_name_label');
+    expect(label('role-detail-desc')).toBe('edit-roles.new_role_desc_label');
+    expect(label('role-detail-2fa')).toBe('edit-roles.force_2fa_checkbox');
+    expect(el.querySelector('#role-detail-name')!.tagName).toBe('INPUT');
+    expect((el.querySelector('#role-detail-2fa') as HTMLInputElement).type).toBe('checkbox');
+
+    component.isPermissionsDirty = true;
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(el.querySelector('.unsaved-note')!.textContent!.trim()).toBe('edit-roles.unsaved_permissions_note');
+
+    component.isDeletingRole = true;
+    await component.openDeleteConfirm(role(2));
+    expect(ctx.confirm.open).not.toHaveBeenCalled();
   });
 
   /**
@@ -441,9 +508,9 @@ describe('EditRolesComponent', () => {
 
   /**
    * @description Saving details fails: API message or the translated fallback; the new role form
-   *   closes; a pending delete can be cancelled; texts of the page section.
-   * @input put error with / without message; open + close new role form; openDeleteConfirm + cancelDelete.
-   * @output alerts 'Name taken' / save_details_error; form closed; pendingDeleteRole null.
+   *   closes; texts of the page section.
+   * @input put error with / without message; open + close new role form.
+   * @output alerts 'Name taken' / save_details_error; form closed.
    */
   it('reports failed detail saves and cancels forms', () => {
     component.ngOnInit();
@@ -460,10 +527,6 @@ describe('EditRolesComponent', () => {
     component.openNewRoleForm();
     component.closeNewRoleForm();
     expect(component.showNewRoleForm).toBeFalse();
-    component.openDeleteConfirm(role(2));
-    expect(component.pendingDeleteRole).toBe(role(2));
-    component.cancelDelete();
-    expect([component.pendingDeleteRole, component.deleteError]).toEqual([null, '']);
     expect(component.t('x')).toBe('edit-roles.x');
   });
 

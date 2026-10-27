@@ -425,6 +425,8 @@
   "permission_search_empty": "Žádné oprávnění neodpovídá hledání „{term}\".",
 
   "unsaved_permissions_note": "Máte neuložené změny oprávnění.",
+  "permissions_heading": "Oprávnění role",
+  "permissions_hint": "Zaškrtněte oprávnění níže a uložte je tlačítkem „Uložit oprávnění“.",
   "btn_discard": "Zahodit",
   "btn_save_permissions": "Uložit oprávnění",
 

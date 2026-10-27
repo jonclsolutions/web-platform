@@ -38,6 +38,12 @@
  * `ROLE_EXPORT_COLUMNS` (statická konstanta) nahrazena `getRoleExportColumns()` metodou
  * - export labely i "Ano"/"Ne" hodnoty v `getExportValue()` i XLSX sheet název jsou teď
  * přeložené, protože jde o viditelný obsah stahovaného souboru, ne jen UI.
+ *
+ * @refactor-note (2026-10-27) UI of the role detail: deleting asks with the standard admin
+ *   confirm dialog (ConfirmDialogService) instead of an own modal; the edit mode of the details
+ *   has labelled fields (Role name / Description / Require 2FA); the reason why a role cannot be
+ *   deleted is written next to the disabled button (before only a tooltip); the permission save
+ *   bar has a heading and a hint, so it is not an empty box with two buttons.
  */
 
 import { Component, inject } from '@angular/core';
@@ -210,10 +216,8 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
   isCreatingRole = false;
   newRoleError = '';
 
-  // ── Potvrzovací modál pro smazání ───────────────────────────────────
-  pendingDeleteRole: CoreRole | null = null;
+  // ── Smazání role (standard confirm dialog, 2026-10-27) ──────────────
   isDeletingRole = false;
-  deleteError = '';
 
   // ── Vyhledávání v checklistu oprávnění ─────────────────────────────
   permissionSearch = '';
@@ -712,28 +716,27 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
     return '';
   }
 
-  openDeleteConfirm(role: CoreRole): void {
-    if (!this.canDeleteRole(role)) return;
-    this.deleteError = '';
-    this.pendingDeleteRole = role;
-  }
-
-  cancelDelete(): void {
-    this.pendingDeleteRole = null;
-    this.deleteError = '';
-  }
-
   /**
-   * @description Smaže roli. Po úspěchu invaliduje cache seznamu rolí i sdílenou
-   * `RoleOptionsService` cache (viz refactor-note 2026-08-8/10 v hlavičce souboru).
+   * @description Asks with the standard admin confirm dialog and deletes the role. After success
+   *   the role-list cache and the shared `RoleOptionsService` cache are invalidated (see
+   *   refactor-note 2026-08-8/10 in the file header).
+   * @param role Role to delete (a role that cannot be deleted is ignored).
+   * @returns Promise settled after the dialog (the delete request runs on).
+   * @refactor-note (2026-10-27) Own delete modal replaced by ConfirmDialogService (same look as
+   *   every other confirmation of the admin). An API error is shown by DataHandler's error dialog.
    */
-  confirmDelete(): void {
-    const role = this.pendingDeleteRole;
-    if (!role || this.isDeletingRole) return;
+  async openDeleteConfirm(role: CoreRole): Promise<void> {
+    if (!this.canDeleteRole(role) || this.isDeletingRole) return;
+
+    const message = `${this.t('delete_modal_confirm_text').replace('{name}', role.role_name)} ${this.t('delete_modal_warning')}`;
+    const confirmed = await this.confirmDialog.open(this.t('delete_modal_title'), message, {
+      confirm: this.t('btn_confirm_delete'),
+      cancel: this.t('btn_cancel'),
+    });
+    if (!confirmed) return;
 
     this.isDeletingRole = true;
-    this.deleteError = '';
-
+    this.cd.markForCheck();
     this.deleteData(role.id).subscribe({
       next: () => {
         this.isDeletingRole = false;
@@ -746,13 +749,11 @@ export class EditRolesComponent extends BaseDataComponent<CoreRole> implements C
           this.isPermissionsDirty = false;
           if (this.roles.length > 0) this.selectRole(this.roles[0]);
         }
-        this.pendingDeleteRole = null;
         this.alertDialogService.open(this.t('deleted_title'), this.t('role_deleted_success').replace('{name}', role.role_name), 'success');
         this.cd.markForCheck();
       },
-      error: (err) => {
+      error: () => {
         this.isDeletingRole = false;
-        this.deleteError = err?.error?.message || this.t('role_delete_error');
         this.cd.markForCheck();
       }
     });

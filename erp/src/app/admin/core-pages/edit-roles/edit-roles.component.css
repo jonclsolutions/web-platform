@@ -6,10 +6,13 @@
  * @created 2026
  * @description Styles of the role and permission management screen: page header, new-role form,
  * master-detail layout (role list + role detail), three-level permission checklist, the
- * permission save bar and the delete confirmation modal. Uses the visual language of the rest of
+ * permission save bar. Uses the visual language of the rest of
  * the admin: rounded cards, soft shadows, dark accent, fully rounded ("pill") buttons.
  * @dependencies
  * - None. All design tokens are declared locally on :host (no shared variables file).
+ * @refactor-note (2026-10-27) Delete modal styles removed (standard confirm dialog); labelled
+ * fields of the detail edit mode, the visible "cannot delete" note and the heading of the
+ * permission save bar added.
  */
 
 /**
@@ -290,7 +293,8 @@
  * @module Role detail (right panel)
  * @description Card with the selected role: header, description, notices and the checklist.
  * @usage .role-detail-panel, .empty-state, .detail-header, .detail-header-main, .detail-name,
- *        .detail-name-input, .detail-header-actions, .detail-desc, .detail-desc-input, .protected-notice
+ *        .detail-name-input, .detail-header-actions, .detail-desc, .detail-desc-input, .protected-notice,
+ *        .detail-field, .detail-field--inline, .detail-field-label, .delete-blocked-note
  * @note The panel must not get `overflow: hidden / auto`: that would turn it into the scroll
  * container of the sticky permission save bar and the bar would stop following the page scroll.
  */
@@ -358,7 +362,50 @@
 .detail-desc-input {
   width: 100%;
   max-width: 480px;
-  margin-top: 8px;
+}
+
+/* Labelled fields of the edit mode: label above the input, the 2FA checkbox after its label. */
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.role-detail-panel > .detail-field,
+.role-detail-panel > .detail-field--inline {
+  margin-top: 12px;
+}
+
+.detail-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.detail-field--inline .detail-field-label {
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.detail-field--inline input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Why the role cannot be deleted (next to the disabled delete button). */
+.delete-blocked-note {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .protected-notice {
@@ -377,10 +424,12 @@
 
 /**
  * @module Permission save bar
- * @description Bar above the permission checklist with the discard / save buttons. Always
- * visible for an editable role. Idle state: neutral background, empty note, disabled buttons.
- * Dirty state (--dirty): highlighted background, visible "unsaved changes" note with a dot.
- * @usage .permissions-savebar, .permissions-savebar--dirty, .unsaved-note, .unsaved-dot
+ * @description Heading of the permission checklist with the discard / save buttons. Always
+ * visible for an editable role. Idle state: neutral background, a hint how saving works,
+ * disabled buttons. Dirty state (--dirty): highlighted background, the "unsaved changes" note
+ * with a dot instead of the hint.
+ * @usage .permissions-savebar, .permissions-savebar--dirty, .savebar-text, .savebar-title,
+ *        .unsaved-note, .unsaved-dot
  * @note Sticky to the top so the actions stay reachable while the long checklist is scrolled.
  * Both backgrounds are opaque on purpose, otherwise the checklist would show through the stuck
  * bar. min-height keeps the bar the same size in both states, so toggling the first checkbox
@@ -409,13 +458,31 @@
   box-shadow: 0 6px 16px rgba(24, 24, 27, 0.08);
 }
 
-.unsaved-note {
+.savebar-text {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.savebar-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.unsaved-note {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.permissions-savebar--dirty .unsaved-note {
   color: var(--text);
   font-weight: 600;
 }
@@ -596,83 +663,6 @@
 }
 
 /**
- * @module Delete confirmation modal
- * @description Full-screen overlay with the confirmation card and its warning box.
- * @usage .delete-modal-overlay, .delete-modal-card, .delete-modal-header, .delete-modal-icon,
- *        .delete-modal-body, .warning-box, .delete-modal-footer
- */
-.delete-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(24, 24, 27, 0.45);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 16px;
-}
-
-.delete-modal-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 20px 50px rgba(24, 24, 27, 0.18);
-  overflow: hidden;
-  font-family: var(--ff);
-}
-
-.delete-modal-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--error-dim);
-}
-
-.delete-modal-icon {
-  width: 30px; height: 30px;
-  border-radius: var(--radius);
-  background: var(--color-white);
-  border: 1px solid var(--color-rose-200);
-  color: var(--error);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-
-.delete-modal-header h3 { margin: 0; font-size: 1rem; color: var(--text); }
-
-.delete-modal-body {
-  padding: 18px 20px;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  line-height: 1.55;
-}
-
-.warning-box {
-  margin-top: 12px;
-  padding: 10px 13px;
-  background: var(--warning-dim);
-  border: 1px solid var(--color-amber-200);
-  border-left: 3px solid var(--warning);
-  border-radius: var(--radius);
-  font-size: 0.83rem;
-  color: var(--color-amber-800);
-}
-
-.delete-modal-footer {
-  padding: 14px 20px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  background: var(--surface-2);
-}
-
-/**
  * @module Forced 2FA
  * @description Inline checkbox label ("require 2FA for this role"), the informational badge
  * shown when a role forces 2FA, and the small 2FA icon in the role list.
@@ -736,5 +726,5 @@
   .permission-resource { margin-left: 8px; padding-left: 9px; }
 
   .permissions-savebar { flex-wrap: wrap; justify-content: flex-end; padding: 10px 12px; }
-  .permissions-savebar--dirty .unsaved-note { flex-basis: 100%; }
+  .savebar-text { flex-basis: 100%; }
 }

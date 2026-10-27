@@ -12,6 +12,9 @@
         - ExportPopupBuilderComponent (app-export-popup-builder): format / column picker of the export.
         - CommonModule, FormsModule: structural directives and ngModel.
         - AdminLocalizationService: every visible text comes from `strings.*` (section 'edit-roles').
+    @refactor-note (2026-10-27) Own delete modal removed (standard confirm dialog, see the
+        component); labelled fields in the edit mode of the details; visible reason why a role
+        cannot be deleted; heading + hint in the permission save bar.
 -->
 
 <div class="roles-page">
@@ -145,7 +148,10 @@
       <div class="detail-header">
         <div class="detail-header-main">
           <ng-container *ngIf="isEditingDetails; else nameDisplay">
-            <input class="detail-name-input" type="text" [(ngModel)]="draftName" maxlength="50" />
+            <div class="detail-field">
+              <label class="detail-field-label" for="role-detail-name">{{ strings.new_role_name_label }}</label>
+              <input id="role-detail-name" class="detail-name-input" type="text" [(ngModel)]="draftName" maxlength="50" />
+            </div>
           </ng-container>
           <ng-template #nameDisplay>
             <h2 class="detail-name">
@@ -163,8 +169,8 @@
             </span>
           </div>
           <div class="detail-header-badges">
-          <span class="users-badge users-badge--zero">ID {{ selectedRole.id }}</span>
-        </div>
+            <span class="users-badge users-badge--zero">ID {{ selectedRole.id }}</span>
+          </div>
         </div>
 
         <div class="detail-header-actions">
@@ -173,10 +179,10 @@
               <button class="btn-secondary btn-small" (click)="startEditingDetails()">{{ strings.btn_edit_details }}</button>
               <button
                 class="btn-danger btn-small"
-                [disabled]="!canDeleteRole(selectedRole)"
-                [title]="canDeleteRole(selectedRole) ? strings.btn_delete_role : deleteBlockedReason(selectedRole)"
+                [disabled]="!canDeleteRole(selectedRole) || isDeletingRole"
+                [attr.aria-describedby]="canDeleteRole(selectedRole) ? null : 'role-delete-blocked'"
                 (click)="openDeleteConfirm(selectedRole)">
-                {{ strings.btn_delete_role }}
+                {{ isDeletingRole ? strings.btn_deleting : strings.btn_delete_role }}
               </button>
             </ng-container>
             <ng-template #editingActions>
@@ -188,16 +194,23 @@
           </ng-container>
         </div>
       </div>
+      <!-- Why the role cannot be deleted - visible at once, not only as a tooltip (2026-10-27). -->
+      <p class="delete-blocked-note" id="role-delete-blocked"
+         *ngIf="!selectedRole.is_protected && !isEditingDetails && !canDeleteRole(selectedRole)">
+        {{ deleteBlockedReason(selectedRole) }}
+      </p>
+
       <ng-container *ngIf="isEditingDetails">
-        <input class="detail-desc-input" type="text" [(ngModel)]="draftDescription" [placeholder]="strings.detail_desc_placeholder" maxlength="255" />
+        <div class="detail-field">
+          <label class="detail-field-label" for="role-detail-desc">{{ strings.new_role_desc_label }}</label>
+          <input id="role-detail-desc" class="detail-desc-input" type="text" [(ngModel)]="draftDescription" [placeholder]="strings.detail_desc_placeholder" maxlength="255" />
+        </div>
       </ng-container>
       <p class="detail-desc" *ngIf="!isEditingDetails && selectedRole.description">{{ selectedRole.description }}</p>
 
-      <div class="field-group" *ngIf="isEditingDetails">
-        <label class="checkbox-inline-label">
-          <input type="checkbox" [(ngModel)]="draftForcesTwoFa" />
-          {{ strings.force_2fa_checkbox }}
-        </label>
+      <div class="detail-field detail-field--inline" *ngIf="isEditingDetails">
+        <label class="detail-field-label" for="role-detail-2fa">{{ strings.force_2fa_checkbox }}</label>
+        <input id="role-detail-2fa" type="checkbox" [(ngModel)]="draftForcesTwoFa" />
       </div>
       <div class="forces-2fa-badge" *ngIf="!isEditingDetails && selectedRole.forces_2fa">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -217,10 +230,10 @@
 
       <!--
           @component: Permission save bar
-          @description: Discard / save actions of the permission checklist, placed ABOVE the
-              checklist so they are visible without scrolling. The bar is always rendered for an
-              editable role: both buttons are disabled until a permission changes, then they are
-              enabled and the "unsaved changes" note appears.
+          @description: Heading of the permission checklist with its discard / save actions, placed
+              ABOVE the checklist so they are visible without scrolling. The bar is always rendered
+              for an editable role: both buttons are disabled until a permission changes (a hint
+              says how saving works), then they are enabled and the "unsaved changes" note appears.
           @usage: State from isPermissionsDirty / isSavingPermissions; actions
               discardPermissionChanges() and savePermissions().
           @note: Sticks to the top of the viewport while the long checklist is scrolled. The note
@@ -232,12 +245,16 @@
         class="permissions-savebar"
         *ngIf="!selectedRole.is_protected"
         [class.permissions-savebar--dirty]="isPermissionsDirty">
-        <span class="unsaved-note" role="status" aria-live="polite">
-          <ng-container *ngIf="isPermissionsDirty">
-            <span class="unsaved-dot" aria-hidden="true"></span>
-            {{ strings.unsaved_permissions_note }}
-          </ng-container>
-        </span>
+        <div class="savebar-text">
+          <h3 class="savebar-title">{{ strings.permissions_heading }}</h3>
+          <span class="unsaved-note" role="status" aria-live="polite">
+            <ng-container *ngIf="isPermissionsDirty; else savebarHint">
+              <span class="unsaved-dot" aria-hidden="true"></span>
+              {{ strings.unsaved_permissions_note }}
+            </ng-container>
+            <ng-template #savebarHint>{{ strings.permissions_hint }}</ng-template>
+          </span>
+        </div>
         <button
           class="btn-secondary btn-small"
           (click)="discardPermissionChanges()"
@@ -354,40 +371,4 @@
     (formatSelected)="handleExportFormatSelected($event)"
     (closed)="closeExportPopup()">
   </app-export-popup-builder>
-}
-
-<!--
-    @component: Delete confirmation modal
-    @description: Asks for confirmation before a role is permanently deleted.
-    @usage: Shown while pendingDeleteRole is set; confirmDelete() / cancelDelete().
-    @note: An API error is shown inline through deleteError.
--->
-@if (pendingDeleteRole) {
-  <div class="delete-modal-overlay">
-    <div class="delete-modal-card">
-      <div class="delete-modal-header">
-        <div class="delete-modal-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        </div>
-        <h3>{{ strings.delete_modal_title }}</h3>
-      </div>
-      <div class="delete-modal-body">
-        <p>{{ strings.delete_modal_confirm_text.replace('{name}', '') }}<strong>{{ pendingDeleteRole.role_name }}</strong>?</p>
-        <div class="warning-box">
-          {{ strings.delete_modal_warning }}
-        </div>
-        <p class="error-text" *ngIf="deleteError">{{ deleteError }}</p>
-      </div>
-
-      <div class="delete-modal-footer">
-        <button class="btn-secondary" (click)="cancelDelete()" [disabled]="isDeletingRole">{{ strings.btn_cancel }}</button>
-        <button class="btn-danger" (click)="confirmDelete()" [disabled]="isDeletingRole">
-          {{ isDeletingRole ? strings.btn_deleting : strings.btn_confirm_delete }}
-        </button>
-      </div>
-    </div>
-  </div>
 }
