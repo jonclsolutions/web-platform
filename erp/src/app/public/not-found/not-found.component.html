@@ -1,0 +1,55 @@
+<!-- 
+    @file: not-found.component.html
+    @path: /src/app/public/not-found/not-found.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @bugfix-note (2026-10-23) The image `assets/images/svg/not-found.svg` did not exist (broken image
+        without alt, open finding #46) - replaced by an inline decorative SVG (aria-hidden), styled by
+        `.svg-placeholder svg` in the component CSS.
+    @refactor-note (2026-10-27) Shared by the public areas: the look follows the area
+        (`not-found--web` / `not-found--shop`), the button leads to the home page of the area, the
+        requested path is shown under the text.
+    @refactor-note (2026-10-27c) The requested path is no longer shown - it tells a visitor of
+        the public site nothing (the admin 404 / 403 keep it).
+    @refactor-note (2026-10-27b) Web: the illustration `assets/images/icons/404-error.svg` instead
+        of the inline drawing (the e-shop keeps the inline one).
+-->
+
+<div class="main-content not-found--{{ area }}">
+  <div class="not-found-container">
+    <div class="error-box">
+      @if (area === 'web') {
+        <!-- Web: illustration from the assets (decorative - the heading carries the message). -->
+        <img class="not-found-illustration" src="assets/images/icons/404-error.svg" alt="" aria-hidden="true" width="480" height="360" decoding="async">
+      } @else {
+        <div class="svg-placeholder">
+          <svg viewBox="0 0 240 160" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <!-- "4" -->
+            <path d="M28 40 L12 100 H56 M44 70 V128" />
+            <!-- magnifier as the "0" -->
+            <circle cx="120" cy="84" r="34" />
+            <path d="M144 110 L164 132" />
+            <path d="M110 74 a10 10 0 1 1 14 9 c-4 2 -4 5 -4 9" />
+            <circle cx="120" cy="102" r="1.5" fill="currentColor" />
+            <!-- "4" -->
+            <path d="M200 40 L184 100 H228 M216 70 V128" />
+          </svg>
+        </div>
+      }
+
+      @if (t) {
+        <h1 class="header-0-2-t">{{ t.header }}</h1>
+        <p class="text-1">
+          {{ t.text }}
+        </p>
+
+        <div class="btn-wrapper">
+          <a [routerLink]="config.homeLink" class="home-btn-404">
+            {{ t.button }}
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+</div>

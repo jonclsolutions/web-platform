@@ -23,6 +23,11 @@
         "secure_payments_header": "Bezpečné platby",
         "copyright_text": "© {year} Všechna práva vyhrazena."
     },
+    "not_found": {
+        "header": "Stránka nenalezena",
+        "text": "Tuto stránku v e-shopu nemáme. V katalogu ale najdete celou naši nabídku.",
+        "button": "Zpět do katalogu"
+    },
     "shop_maintenance": {
         "heading": "Vylepšujeme systém",
         "text": "Na e-shopu právě pracujeme, aby byl váš zážitek z nákupu ještě lepší.",

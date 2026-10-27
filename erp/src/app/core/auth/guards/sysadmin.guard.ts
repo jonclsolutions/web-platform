@@ -12,6 +12,7 @@
  * - AuthService: Provides the current user's role name.
  * - AuthGuard: Single definition of the sysadmin role name (`SYSADMIN_ROLE_NAME`) and the shared
  *   handling of a refused navigation (`denyAccess()`).
+ * @refactor-note (2026-10-27) Passes the refused URL to `denyAccess()` - shown on the admin 403 page.
  */
 
 import { inject } from '@angular/core';
@@ -23,15 +24,16 @@ import { AuthGuard, SYSADMIN_ROLE_NAME } from './auth.guard';
  * @description Allows the navigation for a sysadmin and refuses everyone else.
  * @usage `canActivate: [sysadminGuard]` on a route that has no `data.permission`.
  * @param route Snapshot of the route being activated.
- * @returns True for a sysadmin; otherwise whatever `AuthGuard.denyAccess()` decides (the
- *   "insufficient permissions" dialog plus a redirect to a page the user may open).
+ * @param state Router state (the refused URL for the 403 page).
+ * @returns True for a sysadmin; otherwise whatever `AuthGuard.denyAccess()` decides (the admin
+ *   403 page, see its refactor-note 2026-10-27).
  * @note The refusal is delegated to AuthGuard so it behaves exactly like a missing permission.
  * (The former fixed target `/admin/dashboard` stopped existing when the pages moved under
  * `web/`, `core/` and `shop/`.) The API enforces the same restriction; this guard only keeps the
  * page out of reach in the UI.
  */
-export const sysadminGuard: CanActivateFn = (route) => {
+export const sysadminGuard: CanActivateFn = (route, state) => {
   return inject(AuthService).getUserRole() === SYSADMIN_ROLE_NAME
     ? true
-    : inject(AuthGuard).denyAccess(route);
+    : inject(AuthGuard).denyAccess(route, state.url);
 };

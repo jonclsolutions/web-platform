@@ -296,6 +296,8 @@ Run once on the first release that contains them (back up the database first):
    - `2026_10_26_scrub_logged_passwords.sql` – removes the maintenance confirmation password that
      older releases wrote into the web / shop audit logs (run the SELECT from its header first:
      every admin listed there must change the password)
+   - `2026_10_27_not_found_page_titles.sql` – browser tab titles of the public 404 pages
+     (`web.not-found`, `shop.not-found`)
 2. **Legacy attachments to the private disk** (GDPR, in `laravel/`):
    `php artisan attachments:migrate-legacy --dry-run`, check the output, then without `--dry-run`
 3. **Clear caches**: `php artisan optimize:clear`, then the `config:cache` / `route:cache` /
@@ -316,7 +318,8 @@ Run once on the first release that contains them (back up the database first):
    - shop: `cart.{confirm_remove_confirm, confirm_remove_cancel}`,
      `checkout.alerts.{price_invalid_message, stock_message, order_rejected_message, too_many_requests}`,
      `checkout.errors.invalid_value`, `checkout.coupon_too_many`,
-     `product_detail.errors.alert_title`, `api_errors.too_many_requests`
+     `product_detail.errors.alert_title`, `api_errors.too_many_requests`,
+     `not_found.{header, text, button}` (404 page of the e-shop, 2026-10-27)
 5. **API + frontend together** – findings-fixes-4 changed the response format of the API
    (one envelope `{data, meta?}`, see [API response format](#api-response-format)); deploy the
    Laravel API and the Angular build of the same release at once, never one without the other.

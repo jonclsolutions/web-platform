@@ -32,6 +32,12 @@
  * `web-edit-website-view`, …): a non-sysadmin saw the menu item and got "Access denied" on click.
  * The routes now require the same keys as `admin-navigation.config.ts` (checked by its spec); the
  * duplicated `web/dashboard` route was removed. The route table is exported for that check.
+ *
+ * @refactor-note (2026-10-27) Admin error pages inside the layout: `forbidden` (403, where
+ * AuthGuard sends a refused page) and the catch-all `**` (404, an unknown /admin/... address).
+ * Unknown addresses inside a module (`/admin/shop/xyz`) fall through the module's children to the
+ * catch-all of the layout. Both need only a valid login (layout canActivate) - an anonymous
+ * visitor is still sent to the login page first and learns nothing about the admin addresses.
  */
 
 import { NgModule } from '@angular/core';
@@ -39,7 +45,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { AdminLayoutComponent } from './components/admin-layout/admin-layout.component';
 import { DashboardComponent } from './web-pages/dashboard/dashboard.component';
 import { UserRequestComponent } from './web-pages/user-request/user-request.component';
-import { AuthGuard } from '../core/auth/guards/auth.guard';
+import { ADMIN_ERROR_PAGE_KEY, AuthGuard } from '../core/auth/guards/auth.guard';
 import { sysadminGuard } from '../core/auth/guards/sysadmin.guard';
 import { BusinessLogsComponent } from './web-pages/business-logs/business-logs.component';
 import { SalesLeadsComponent } from './web-pages/sales-leads/sales-leads.component';
@@ -80,6 +86,7 @@ import { PaymentMethodsComponent } from './shop-pages/payment-methods/payment-me
 import { EditEshopComponent } from './shop-pages/edit-eshop/edit-eshop.component';
 import { ShopWelcomePageComponent } from './shop-pages/shop-welcome-page/shop-welcome-page.component';
 import { WebWelcomePageComponent } from './web-pages/web-welcome-page/web-welcome-page.component';
+import { AdminErrorPageComponent } from './error-pages/admin-error-page.component';
 /**
  * @description Defines the navigation hierarchy and access permissions for the administration interface.
  * @usage Acts as the master route table for the admin module. Adding a page only needs a new
@@ -157,7 +164,13 @@ export const ADMIN_ROUTES: Routes = [
           { path: 'edit-eshop', component: EditEshopComponent, data: { permission: 'shop-edit-eshop-view' } },
           { path: 'welcome-page', component: ShopWelcomePageComponent, data: { permission: 'shop-welcome-page-view' } }
         ]
-      }
+      },
+
+      // ⛔ ERROR PAGES of the admin (inside the layout, no permission needed - see AuthGuard).
+      // 403: target of AuthGuard.denyAccess() for an existing page the user may not open.
+      { path: 'forbidden', component: AdminErrorPageComponent, data: { [ADMIN_ERROR_PAGE_KEY]: 'forbidden' } },
+      // 404: any /admin/... address no route above knows - MUST STAY THE LAST CHILD.
+      { path: '**', component: AdminErrorPageComponent, data: { [ADMIN_ERROR_PAGE_KEY]: 'not-found' } }
     ]
   },
   {

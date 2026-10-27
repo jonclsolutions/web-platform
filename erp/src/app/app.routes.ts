@@ -32,12 +32,22 @@
  * @refactor-note (2026-09-30b) Administration and login pages share ONE tab title:
  * `title: 'admin.panel'` on `admin` (children without own title inherit it) and on the
  * `auth/*` routes. Editable in admin -> Firemní údaje -> Názvy stránek -> Administrace.
+ *
+ * @refactor-note (2026-10-27) 404 pages: there was no catch-all route - an unknown URL ended in a
+ * router error and an empty page; only `/404` existed (outside any layout). Now every public area
+ * ends its children with `publicNotFoundRoute('<area>')` (shared NotFoundComponent, see
+ * public/not-found/public-not-found.config.ts): the e-shop inside ShopLayout (`/shop/<unknown>`),
+ * the web inside WebLayout as the LAST top-level route (any other unknown URL). It matches only
+ * when no other route does - the router tries the routes in order and comes back to it last. The
+ * admin has its own 404 / 403 pages inside its layout (admin-routing.module.ts). `/404` stays as
+ * a known address of the web 404 page.
  */
 
 import { Routes } from '@angular/router';
 import { LoginComponent } from './admin/auth/login/login.component';
 import { shopMaintenanceGuard } from './public/shop-pages/components/guards/shop-maintenance.guard';
 import { webMaintenanceGuard } from './public/web-pages/components/guards/web-maintenance.guard';
+import { publicNotFoundRoute } from './public/not-found/public-not-found.config';
 /**
  * @description Main application routing configuration.
  * @usage Imported by the root application module/app config.
@@ -77,6 +87,8 @@ export const routes: Routes = [
       { path: 'jobs', title: 'web.jobs', loadComponent: () => import('./public/web-pages/jobs/jobs-list/jobs-list.component').then(m => m.JobsListComponent) },
       { path: 'jobs/:id', title: 'web.job-detail', loadComponent: () => import('./public/web-pages/jobs/job-item/job-item.component').then(m => m.JobItemComponent) },
       { path: 'order_form/:token', title: 'web.order-form', loadComponent: () => import('./public/web-pages/order-form/order-form.component').then(m => m.OrderFormComponent) },
+      // Known address of the web 404 page (e.g. for links); unknown URLs use the catch-all at the end.
+      { ...publicNotFoundRoute('web'), path: '404' },
     ]
   },
 
@@ -109,7 +121,9 @@ export const routes: Routes = [
         title: 'shop.checkout',
         canActivate: [shopMaintenanceGuard],
         loadComponent: () => import('./public/shop-pages/checkout/checkout.component').then(m => m.CheckoutComponent)
-      }
+      },
+      // Unknown /shop/... URL - LAST child of the e-shop (404 in the e-shop layout and language).
+      publicNotFoundRoute('shop', { canActivate: [shopMaintenanceGuard] })
     ]
   },
 
@@ -153,6 +167,13 @@ export const routes: Routes = [
   },
   { path: 'admin', title: 'admin.panel', loadChildren: () => import('./admin/admin-routing.module').then(m => m.AdminRoutingModule) },
 
-  // --- 5. ERROR PAGES ---
-  { path: '404', title: 'web.not-found', loadComponent: () => import('./public/web-pages/not-found/not-found.component').then(m => m.NotFoundComponent) }
+  // --- 5. 404 OF THE PUBLIC WEB - MUST STAY THE LAST ROUTE ---
+  // Any URL no route above knows: the web 404 inside the web layout (same maintenance guard as
+  // the web). Reached only after every other route failed to match.
+  {
+    path: '',
+    canActivateChild: [webMaintenanceGuard],
+    loadComponent: () => import('./public/web-pages/web-layout/web-layout.component').then(m => m.WebLayoutComponent),
+    children: [publicNotFoundRoute('web')]
+  }
 ];

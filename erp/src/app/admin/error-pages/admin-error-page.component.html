@@ -1,0 +1,31 @@
+<!--
+    @file: admin-error-page.component.html
+    @path: /src/app/admin/error-pages/admin-error-page.component.html
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026-10-27
+    @description: 404 / 403 page of the administration (inside the admin layout): status code,
+        title, explanation, the requested path and the way on (back, administration home).
+    @refactor-note (2026-10-27b) Icons removed - plain text card like the other admin pages.
+-->
+<section class="error-page" [class.error-page--forbidden]="kind === 'forbidden'" aria-labelledby="error-page-title">
+  <div class="error-card">
+    <p class="error-code">{{ code }}</p>
+    <h1 class="error-title" id="error-page-title">{{ text('title') }}</h1>
+    <p class="error-message">{{ text('message') }}</p>
+
+    @if (requestedPath) {
+      <p class="error-path">
+        <span class="error-path-label">{{ text('requested_address') }}</span>
+        <code>{{ requestedPath }}</code>
+      </p>
+    }
+
+    <p class="error-hint">{{ text('hint') }}</p>
+
+    <div class="error-actions">
+      <button type="button" class="error-btn error-btn--neutral" (click)="goBack()">{{ text('back') }}</button>
+      <a routerLink="/admin" class="error-btn error-btn--primary">{{ text('home') }}</a>
+    </div>
+  </div>
+</section>

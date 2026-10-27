@@ -1,0 +1,171 @@
+/*     
+    @file: not-found.component.css
+    @path: /src/app/public/not-found/not-found.component.css
+    @project: RPSW Web
+    @author: RPSW
+    @created: 2026
+    @description: Public 404 page. Own palette on purpose (like the maintenance pages - the page is
+        shared by web and e-shop and must not depend on either module's theme): `.not-found--web`
+        = the dark violet look of the web (the former look of this page), `.not-found--shop` =
+        light look matching the e-shop. A new area without its own block uses the web look.
+    @refactor-note (2026-10-27) Rendered inside the layout of its area now (header + footer) -
+        the full screen height became a minimum height of the content area.
+    @refactor-note (2026-10-27c) `.attempted-url` removed (the path is not shown any more).
+    @refactor-note (2026-10-27b) The button had no font of its own (a link outside the global
+        `button` rule = the browser's serif default) - it now uses the font of its area, the web one
+        is styled like the accent call-to-action of the web pages; the web texts use the web fonts;
+        `.not-found-illustration` = the web illustration (image).
+*/
+
+.main-content {
+    position: relative;
+    width: 100%;
+    min-height: calc(100vh - 200px);
+    padding: 48px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    background: radial-gradient(ellipse at center, rgba(128, 0, 128, 0.05) 15%, rgba(128, 0, 128, 0.02) 30%, rgba(17, 17, 31, 0) 50%),
+                repeating-linear-gradient(to bottom, transparent, transparent 49px, rgba(128, 0, 128, 0.4) 50px),
+                repeating-linear-gradient(to right, transparent, transparent 49px, rgba(128, 0, 128, 0.4) 50px);
+    background-color: #11111f;
+    overflow: hidden;
+}
+
+.main-content::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(17, 17, 31, 0.98) 80%);
+    z-index: 1;
+}
+
+.not-found-container {
+    position: relative;
+    z-index: 2;
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.svg-placeholder {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    justify-content: center;
+    color: #a67dff; /* the strokes use currentColor - black on the dark page before 2026-10-27 */
+}
+
+.svg-placeholder svg {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 15px rgba(166, 125, 255, 0.4));
+}
+
+.header-0-2-t {
+    font-family: 'Source Sans Pro', 'Segoe UI', sans-serif; /* = web --ff-display */
+    font-size: 1.8rem; 
+    color: var(--color-white);
+    margin: 10px 0;
+    font-weight: 700;
+}
+
+.text-1 {
+    font-family: 'Segoe UI', system-ui, sans-serif; /* = web --ff-body */
+    color: #979797;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+
+.main-content.not-found--web {
+    padding-top: 140px; /* clears the floating web navbar (the web pages use 180px above a title) */
+}
+
+.not-found-illustration {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    margin: 0 auto 1.5rem;
+}
+
+/* Same as the accent call-to-action of the web pages (.cta-btn.cta-btn--accent, about / services). */
+.home-btn-404 {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 24px;
+    border: 1px solid #a67dff;
+    border-radius: 999px;
+    background: #6b2e91;
+    color: var(--color-white);
+    font-family: 'Segoe UI', system-ui, sans-serif; /* = web --ff-body */
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.25s ease, transform 0.15s ease;
+}
+
+.home-btn-404:hover {
+    background: #7d35ae; /* = web --accent-hover */
+    transform: translateY(-2px);
+}
+
+.home-btn-404:focus-visible {
+    outline: 2px solid #a67dff;
+    outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+    .header-0-2-t { font-size: 1.4rem; }
+    .svg-placeholder { max-width: 200px; }
+    .not-found-illustration { max-width: 280px; }
+    .main-content.not-found--web { padding-top: 110px; }
+}
+
+/* ── E-shop look (light, black accent - same colours as the e-shop pages) ───────────────── */
+
+.main-content.not-found--shop {
+    background: var(--color-white);
+}
+
+.main-content.not-found--shop::before {
+    content: none;
+}
+
+.not-found--shop .svg-placeholder {
+    color: var(--color-zinc-900);
+}
+
+.not-found--shop .svg-placeholder svg {
+    filter: none;
+}
+
+.not-found--shop .header-0-2-t {
+    color: var(--color-zinc-900);
+}
+
+.not-found--shop .text-1 {
+    color: var(--color-zinc-500);
+}
+
+.not-found--shop .home-btn-404 {
+    padding: 12px 35px;
+    border: none;
+    background: var(--color-zinc-900);
+    border-radius: 6px;
+    /* the font of the e-shop pages (catalog, cart, checkout, product detail) */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.not-found--shop .home-btn-404:hover {
+    background: var(--color-zinc-900);
+    filter: brightness(1.2);
+    transform: none;
+}

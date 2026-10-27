@@ -9,6 +9,7 @@
 #   Result: tests/unit_tests/erp/report/report.html and report.xml (last run only).
 # @dependencies
 # - Node.js, erp/node_modules (npm install in erp/), Chrome/Chromium (CHROME_BIN or on PATH).
+# @refactor-note (2026-10-27) Also runs public/not-found (404 shared by web and e-shop).
 #
 # @usage
 #   ./run_public_shop.sh            (from any directory)
@@ -19,4 +20,4 @@
 
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec node "$DIR/lib/run.js" "$@" --group "Public shop" --command "run_public_shop.sh" src/app/public/shop-pages
+exec node "$DIR/lib/run.js" "$@" --group "Public shop" --command "run_public_shop.sh" src/app/public/shop-pages src/app/public/not-found

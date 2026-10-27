@@ -8,9 +8,7 @@
     "no": "Ne",
     "loading": "Načítání…",
     "error": "Chyba",
-    "success": "Úspěch",
-    "access_denied_title": "Přístup odepřen",
-"access_denied_message": "Pro zobrazení této stránky nemáte dostatečná oprávnění."
+    "success": "Úspěch"
   },
   "personal-info": {
 
@@ -3071,6 +3069,17 @@
   "wrong_password": "Heslo není správné.",
   "too_many": "Příliš mnoho chybných hesel. Zkuste to znovu za 15 minut.",
   "failed": "Heslo se nepodařilo ověřit. Zkuste to prosím znovu."
+},
+"error-pages": {
+  "not_found_title": "Stránka nenalezena",
+  "not_found_message": "Na této adrese v administraci žádná stránka není. Mohla být přesunuta, přejmenována, nebo je v adrese překlep.",
+  "not_found_hint": "Zkontrolujte adresu, nebo pokračujte z menu.",
+  "forbidden_title": "Přístup odepřen",
+  "forbidden_message": "Tato stránka existuje, ale váš účet nemá oprávnění ji otevřít.",
+  "forbidden_hint": "Pokud přístup potřebujete, požádejte administrátora o rozšíření oprávnění.",
+  "requested_address": "Požadovaná adresa",
+  "back": "Zpět",
+  "home": "Úvod administrace"
 },
 "data-handler": {
   "dialog_title": "Chyba API",

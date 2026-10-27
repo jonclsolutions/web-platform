@@ -8,9 +8,7 @@
     "no": "No",
     "loading": "Loading…",
     "error": "Error",
-    "success": "Success",
-    "access_denied_title": "Access denied",
-"access_denied_message": "You do not have sufficient permissions to view this page."
+    "success": "Success"
   },
     "personal-info": {
 
@@ -3071,6 +3069,17 @@
   "wrong_password": "The password is incorrect.",
   "too_many": "Too many wrong passwords. Try again in 15 minutes.",
   "failed": "The password could not be verified. Please try again."
+},
+"error-pages": {
+  "not_found_title": "Page not found",
+  "not_found_message": "There is no page at this address in the administration. It may have been moved, renamed, or the address contains a typo.",
+  "not_found_hint": "Check the address, or continue from the menu.",
+  "forbidden_title": "Access denied",
+  "forbidden_message": "This page exists, but your account does not have permission to open it.",
+  "forbidden_hint": "If you need access, ask your administrator to extend your permissions.",
+  "requested_address": "Requested address",
+  "back": "Back",
+  "home": "Administration home"
 },
 "data-handler": {
   "dialog_title": "API Error",

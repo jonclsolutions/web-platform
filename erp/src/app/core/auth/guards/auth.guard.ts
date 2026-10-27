@@ -5,27 +5,28 @@
  * @author RPSW
  * @created 2025
  * @description Route guard enforcing authentication and permission-based access control for
- * the whole admin area, including every child page of a guarded layout route. A denied user is
- * told so and redirected to a page they are allowed to open.
+ * the whole admin area, including every child page of a guarded layout route. A user refused a
+ * page is sent to the 403 page of the admin (`/admin/forbidden`).
  * @dependencies
  * - AuthService: Verifies the session and resolves the user's role.
  * - PermissionService: Tells whether the user holds a permission key.
- * - Router: Builds the redirects and reports when a navigation has settled.
- * - AlertDialogService: Shows the "insufficient permissions" message.
- * - AdminLocalizationService: Translated texts of that message (`shared.access_denied_*`).
+ * - Router: Builds the redirects.
+ * @refactor-note (2026-10-27) Admin 403 page: a refused page no longer shows the "Access denied"
+ *   dialog over a fallback page - the user lands on `/admin/forbidden` (AdminErrorPageComponent),
+ *   which names the refused address (passed in the navigation state, not in the URL). Only the
+ *   automatic entry page after login (`/admin` → welcome page) still redirects silently to the
+ *   first page the user may open, so a role without the welcome page does not see a 403 after
+ *   every login. The error pages themselves are never chosen as a fallback target.
  */
 
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
-  ActivatedRouteSnapshot, CanActivate, CanActivateChild, NavigationCancel, NavigationCancellationCode,
-  NavigationEnd, NavigationError, NavigationSkipped, Route, Router, RouterStateSnapshot, UrlTree
+  ActivatedRouteSnapshot, CanActivate, CanActivateChild, RedirectCommand, Route, Router, RouterStateSnapshot, UrlTree
 } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { filter, map, startWith, switchMap, take, timeout } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { AuthService } from '../auth.service';
 import { PermissionService } from '../services/permission.service';
-import { AlertDialogService } from '../../services/alert-dialog.service';
-import { AdminLocalizationService } from '../../services/admin-localization.service';
 
 /**
  * Role that bypasses every permission check. Must match `CheckPermission::SYSADMIN_ROLE_NAME`
@@ -36,22 +37,17 @@ export const SYSADMIN_ROLE_NAME = 'sysadmin';
 /** Where an unauthenticated visitor is sent. */
 const LOGIN_URL = '/auth/login';
 
-/**
- * Page a user is sent to after being denied access to another page. CHANGE THIS ONE LINE to
- * redirect elsewhere. If the user may not open this page either, the guard falls back to the
- * first page they can open (see `findAccessibleUrl()`), so no value here can cause a redirect loop.
- */
-const ACCESS_DENIED_URL = '/admin/core/welcome-page';
+/** URL of the admin 403 page (AdminErrorPageComponent, needs no permission - cannot loop). */
+export const ADMIN_FORBIDDEN_URL = '/admin/forbidden';
+
+/** Navigation state key carrying the refused address to the 403 page. */
+export const DENIED_URL_STATE_KEY = 'deniedUrl';
+
+/** Route data key marking an admin error page (404 / 403) - never used as a fallback target. */
+export const ADMIN_ERROR_PAGE_KEY = 'adminErrorPage';
 
 /** Key in a route's `data` holding the required permission, e.g. `data: { permission: 'x-view' }`. */
 const PERMISSION_DATA_KEY = 'permission';
-
-/** Translation paths of the "insufficient permissions" dialog (admin i18n, section `shared`). */
-const ACCESS_DENIED_TITLE_KEY = 'shared.access_denied_title';
-const ACCESS_DENIED_MESSAGE_KEY = 'shared.access_denied_message';
-
-/** Longest wait for the admin translations before the dialog is shown with whatever is available. */
-const TRANSLATIONS_WAIT_MS = 3000;
 
 /**
  * @description Security barrier of the admin routes.
@@ -72,9 +68,6 @@ const TRANSLATIONS_WAIT_MS = 3000;
 })
 export class AuthGuard implements CanActivate, CanActivateChild {
 
-  private alertDialogService = inject(AlertDialogService);
-  private i18n = inject(AdminLocalizationService);
-
   constructor(
     private authService: AuthService,
     private router: Router,
@@ -91,7 +84,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): Observable<boolean | UrlTree> {
+  ): Observable<boolean | UrlTree | RedirectCommand> {
     return this.authService.checkAuth().pipe(
       take(1),
       map(isLoggedIn => isLoggedIn ? this.authorize(route, state.url) : this.router.createUrlTree([LOGIN_URL]))
@@ -110,29 +103,32 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   canActivateChild(
     childRoute: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
-  ): boolean | UrlTree {
+  ): boolean | UrlTree | RedirectCommand {
     return this.authorize(childRoute, state.url);
   }
 
   /**
-   * @description Single exit for every refused navigation in the admin: informs the user and
-   * decides where they end up instead.
+   * @description Single exit for every refused navigation in the admin: decides where the user
+   * ends up instead.
    * @param route Snapshot of the route that was refused.
-   * @returns A UrlTree to `ACCESS_DENIED_URL` (or, when the user may not open it, to the first
-   *   page they can open); false (navigation cancelled) when the user can open no page at all.
-   * @note The dialog is skipped in exactly one case: the refused page is the admin's ENTRY page
-   * (the dashboard the application opens by itself right after login) and there is another page
-   * to send the user to. They did not ask for that page themselves, so a "no permission" message
-   * after every login would only confuse, e.g. a shop-only role.
+   * @param url Refused URL (default: built from the route snapshot).
+   * @returns The 403 page (`ADMIN_FORBIDDEN_URL`) with the refused address in the navigation
+   *   state; for the admin's ENTRY page (opened by the application itself right after login) a
+   *   silent redirect to the first page the user may open, when there is one.
+   * @note The 403 page is a page of its own instead of a dialog over another page: the user sees
+   * at once that the page exists but is closed to them, and Back returns to where they came from.
+   * The 403 route needs no permission, so the redirect can never loop.
    */
-  public denyAccess(route: ActivatedRouteSnapshot): UrlTree | false {
-    const fallbackUrl = this.findAccessibleUrl(route);
-
-    if (!fallbackUrl || !this.isDefaultLanding(route)) {
-      this.notifyAccessDenied();
+  public denyAccess(route: ActivatedRouteSnapshot, url?: string): UrlTree | RedirectCommand {
+    if (this.isDefaultLanding(route)) {
+      const fallbackUrl = this.findAccessibleUrl(route);
+      if (fallbackUrl) {
+        return this.router.createUrlTree([fallbackUrl]);
+      }
     }
 
-    return fallbackUrl ? this.router.createUrlTree([fallbackUrl]) : false;
+    const deniedUrl = url ?? '/' + route.pathFromRoot.flatMap(snapshot => snapshot.url.map(segment => segment.path)).join('/');
+    return new RedirectCommand(this.router.createUrlTree([ADMIN_FORBIDDEN_URL]), { state: { [DENIED_URL_STATE_KEY]: deniedUrl } });
   }
 
   /**
@@ -142,14 +138,14 @@ export class AuthGuard implements CanActivate, CanActivateChild {
    * @returns True when the route needs no permission or the user holds it; otherwise the result
    *   of `denyAccess()`.
    */
-  private authorize(route: ActivatedRouteSnapshot, url: string): boolean | UrlTree {
+  private authorize(route: ActivatedRouteSnapshot, url: string): boolean | UrlTree | RedirectCommand {
     const required = route.data[PERMISSION_DATA_KEY] as string | undefined;
     if (this.isAllowed(required)) {
       return true;
     }
 
     console.warn(`AuthGuard: Access to '${url}' denied. Missing permission: '${required}'.`);
-    return this.denyAccess(route);
+    return this.denyAccess(route, url);
   }
 
   /**
@@ -162,56 +158,6 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     if (!permission) return true;
     if (this.authService.getUserRole() === SYSADMIN_ROLE_NAME) return true;
     return permission.split('|').some(key => this.permissionService.hasPermission(key.trim()));
-  }
-
-  /**
-   * @description Shows the "insufficient permissions" dialog once the navigation has settled,
-   * i.e. on top of the page the user actually ends up on, and once its texts are available.
-   * @note Waiting matters on a full page load (URL typed into the address bar): the guard runs
-   * before the admin layout exists and before the translations are loaded. The cancellation that
-   * merely announces the redirect is skipped; the dialog opens when the redirected navigation
-   * ends, when the navigation was rejected without a redirect, or when the router skips the
-   * redirect because the user already is on the target page (e.g. a refused link clicked on the
-   * welcome page).
-   */
-  private notifyAccessDenied(): void {
-    this.router.events.pipe(
-      filter(event =>
-        event instanceof NavigationEnd ||
-        event instanceof NavigationSkipped ||
-        event instanceof NavigationError ||
-        (event instanceof NavigationCancel && event.code !== NavigationCancellationCode.Redirect)
-      ),
-      take(1),
-      switchMap(() => this.accessDeniedTexts())
-    ).subscribe(([title, message]) => this.alertDialogService.open(title, message, 'warning'));
-  }
-
-  /**
-   * @description Resolves the title and message of the dialog, waiting for the admin translations
-   * when they are not loaded yet.
-   * @returns Emits once: the translated pair as soon as it is available; after
-   *   `TRANSLATIONS_WAIT_MS` whatever the localization service returns at that moment, so a key
-   *   that is really missing from the JSON stays visible as a placeholder instead of the dialog
-   *   silently never appearing.
-   * @note "Not loaded yet" is recognised by both lookups returning the SAME text: the service
-   * answers every unknown path with one placeholder, whereas a real title and message differ.
-   * The lookup is repeated on each `translations$` emission, which is how the service announces
-   * that a language file has been loaded.
-   */
-  private accessDeniedTexts(): Observable<[string, string]> {
-    const read = (): [string, string] => [
-      this.i18n.getValue(ACCESS_DENIED_TITLE_KEY),
-      this.i18n.getValue(ACCESS_DENIED_MESSAGE_KEY),
-    ];
-
-    return this.i18n.translations$.pipe(
-      startWith(null),
-      map(read),
-      filter(([title, message]) => title !== message),
-      take(1),
-      timeout({ first: TRANSLATIONS_WAIT_MS, with: () => of(read()) })
-    );
   }
 
   /**
@@ -235,16 +181,17 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   }
 
   /**
-   * @description Finds where to send a user who may not open the requested page:
-   * `ACCESS_DENIED_URL` when they may open it, otherwise the first page they are allowed to open,
-   * looked up in the route configuration itself.
+   * @description Finds the first page the user is allowed to open, looked up in the route
+   * configuration itself (used when the automatic entry page of the admin is refused).
    * @param denied Snapshot of the route that was refused.
    * @returns Absolute URL of an accessible page, or null when the user can open no page at all.
    * @note The automatic search starts in the refused page's own section (its parent route) and
    * widens to the ancestors, so a user refused in Core lands on another Core page before a Web or
-   * Shop one. Every candidate, including `ACCESS_DENIED_URL`, is verified with the SAME check that
+   * Shop one. Every candidate is verified with the SAME check that
    * just refused the request, so the redirect can never bounce back and loop, and no list of
    * landing pages per role has to be maintained here.
+   * @refactor-note (2026-10-27) The preferred target (the core welcome page) was removed: the
+   * search runs only when that very page (the entry page) was refused, so it could never be chosen.
    */
   private findAccessibleUrl(denied: ActivatedRouteSnapshot): string | null {
     // Ancestors that own a route table, nearest first, each with the URL segments leading to it.
@@ -254,16 +201,6 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       if (routes) {
         anchors.push({ base: anchor.pathFromRoot.flatMap(snapshot => snapshot.url.map(segment => segment.path)), routes });
       }
-    }
-
-    const preferred = ACCESS_DENIED_URL.split('/').filter(Boolean);
-    const preferredIsAccessible = anchors.some(({ base, routes }) =>
-      base.length <= preferred.length &&
-      base.every((segment, index) => segment === preferred[index]) &&
-      this.isPathAccessible(routes, preferred.slice(base.length))
-    );
-    if (preferredIsAccessible) {
-      return ACCESS_DENIED_URL;
     }
 
     for (const { base, routes } of anchors) {
@@ -278,13 +215,15 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   /**
    * @description Tells whether a route may be considered as a redirect target at all.
    * @param route Route configuration entry.
-   * @returns False for redirects, wildcard and parameterised paths (no concrete URL), for routes
+   * @returns False for redirects, wildcard and parameterised paths (no concrete URL), the admin
+   *   error pages (404 / 403 are no destination of their own), for routes
    *   with guards of their own (`canActivate` / `canMatch`, e.g. the sysadmin-only page, whose
    *   outcome cannot be evaluated here) and for routes whose own permission the user lacks.
    */
   private isCandidate(route: Route): boolean {
     const path = route.path;
     if (path === undefined || route.redirectTo !== undefined || path === '**' || path.includes(':')) return false;
+    if (route.data?.[ADMIN_ERROR_PAGE_KEY]) return false;
     if (route.canActivate?.length || route.canMatch?.length) return false;
     return this.isAllowed(route.data?.[PERMISSION_DATA_KEY]);
   }
@@ -310,25 +249,5 @@ export class AuthGuard implements CanActivate, CanActivateChild {
       }
     }
     return null;
-  }
-
-  /**
-   * @description Tells whether one concrete page of a route table may be opened by the user.
-   * @param routes Route configuration the path is relative to.
-   * @param segments Path of the page split into URL segments.
-   * @returns True when the path leads to a page and every route on the way is a candidate.
-   */
-  private isPathAccessible(routes: Route[], segments: string[]): boolean {
-    return routes.some(route => {
-      if (!this.isCandidate(route)) return false;
-
-      const own = route.path!.split('/').filter(Boolean);
-      if (own.length > segments.length || own.some((part, index) => part !== segments[index])) return false;
-
-      const rest = segments.slice(own.length);
-      return rest.length === 0
-        ? !!(route.component || route.loadComponent)
-        : this.isPathAccessible(route.children ?? [], rest);
-    });
   }
 }

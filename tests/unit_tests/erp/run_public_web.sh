@@ -5,10 +5,11 @@
 # @project RPSW Web
 # @author RPSW
 # @created 2026
-# @description Runs the erp unit tests: public website – public/web-pages.
+# @description Runs the erp unit tests: public website – public/web-pages + the shared public 404 (public/not-found).
 #   Result: tests/unit_tests/erp/report/report.html and report.xml (last run only).
 # @dependencies
 # - Node.js, erp/node_modules (npm install in erp/), Chrome/Chromium (CHROME_BIN or on PATH).
+# @refactor-note (2026-10-27) Also runs public/not-found (404 shared by web and e-shop).
 #
 # @usage
 #   ./run_public_web.sh            (from any directory)
@@ -19,4 +20,4 @@
 
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec node "$DIR/lib/run.js" "$@" --group "Public web" --command "run_public_web.sh" src/app/public/web-pages
+exec node "$DIR/lib/run.js" "$@" --group "Public web" --command "run_public_web.sh" src/app/public/web-pages src/app/public/not-found
