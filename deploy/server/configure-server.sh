@@ -1,4 +1,28 @@
 #!/bin/bash
+# =============================================================================
+# @file configure-server.sh
+# @path deploy/server/configure-server.sh  (shipped into the webroot by deploy/build.sh)
+# @project RPSW Web
+# @author RPSW
+# @created 2026
+# @description Server-side setup of a deployed package, run from the webroot after upload:
+#   Composer dependencies, .env, application key, DATABASE (created + migrated + base data),
+#   the first sysadmin account, storage link, queue/scheduler cron, permissions, public
+#   storage symlink.
+# @refactor-note (2026-10-30) Database by Laravel instead of a manual SQL import:
+#   `db:create-if-missing` (creates the database when the account may - on shared hosting
+#   create the empty database in the hosting panel instead), `migrate --force` (the baseline
+#   migration creates the whole schema on an empty database, does nothing on a filled one),
+#   `db:seed --force` (base data only - APP_ENV=production never gets the local test account)
+#   and `security:create-sysadmin --if-none` (asks for the e-mail and the password of the first
+#   sysadmin; skipped when one exists). Safe to run on every deployment.
+# @bugfix-note (2026-10-30) `key:generate --force` ran on EVERY run and replaced APP_KEY: all
+#   sessions / tokens and everything encrypted with the old key became invalid after each
+#   deployment. The key is generated only when APP_KEY is empty now.
+# @note NOT TESTED ON THE SERVER YET (written 2026-10-30, tested only locally / by review).
+#   Run it the first time step by step and check every output; report anything unexpected.
+# @usage  cd <webroot> && bash configure-server.sh
+# =============================================================================
 set -e
 
 # --- 1. Variable Configuration ---
@@ -23,19 +47,37 @@ echo ""
 echo "!!! REMINDER: set TURNSTILE_SECRET_KEY in .env (captcha login protection) !!!"
 echo "    Get it from https://dash.cloudflare.com -> Turnstile -> your site."
 echo ""
-echo "!!! REMINDER: database schema/data comes from your own SQL dump import process"
-echo "    (separate from this script) - make sure it has already been applied before"
-echo "    continuing, including latest core_permissions/core_role_permissions and any"
-echo "    new tables (core_security_events, core_security_settings, core_import_batches, ...) !!!"
+echo "!!! REMINDER: set APP_ENV=production, APP_DEBUG=false, DB_* and MAIL_* in .env."
+echo "    The database itself is created and filled by this script (step 5b) - no SQL import."
+echo "    The first sysadmin logs in with a 2FA code sent by e-mail: MAIL_* must work. !!!"
 echo ""
 
 # Pause for .env configuration
-read -p "Have you edited the .env file AND imported the latest DB dump? Press [Enter] to continue..."
+read -p "Have you edited the .env file? Press [Enter] to continue..."
 
-# --- 5. Generate key and clear cache ---
-php artisan key:generate --force
+# --- 5. Generate key (only when missing) and clear cache ---
+# NEVER regenerate an existing key: it would invalidate sessions, tokens and encrypted data.
+if grep -qE '^APP_KEY=.+' .env; then
+    echo "APP_KEY already set - not regenerated."
+else
+    php artisan key:generate --force
+fi
 php artisan config:clear
 php artisan cache:clear
+
+# --- 5b. Database: create (if allowed), migrate, base data, first sysadmin ---
+# NOT TESTED ON THE SERVER YET - see the header. Every command is idempotent.
+echo "Preparing the database..."
+if ! php artisan db:create-if-missing --no-interaction; then
+    echo "The database could not be created by this account (usual on shared hosting)."
+    echo "Create the EMPTY database from DB_DATABASE in the hosting panel, then continue."
+    read -p "Press [Enter] once the database exists..."
+fi
+php artisan migrate --force --no-interaction
+php artisan db:seed --force --no-interaction
+# Asks for the e-mail, name and password of the first sysadmin (password hidden, never stored
+# in a file); does nothing when a sysadmin account exists already.
+php artisan security:create-sysadmin --if-none
 
 # --- 6. Storage link (within Laravel) ---
 php artisan storage:link --force

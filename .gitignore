@@ -14,3 +14,5 @@ id_ecdsa*
 # Local dev certificate of ng serve - generated per developer by init-workspace.sh (finding #54)
 /erp/ssl/
 temp.txt
+# Local scratch files of development (images, media, notes) - created by init-workspace.sh
+/.temp/

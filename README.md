@@ -74,8 +74,9 @@ already done are skipped and nothing existing is overwritten.
 | System packages | installs missing PHP extensions, Composer, Node.js and tools – **Fedora** via `dnf`, **Arch Linux** via `pacman` (plus the PHP extensions Arch ships disabled, enabled in `/etc/php/conf.d/20-laravel-dev.ini`; `pcov` for test coverage is AUR-only and only reported) |
 | Mailpit | downloads the latest release to `~/.local/bin`, **only if its SHA-256 matches** the digest GitHub publishes |
 | Laravel | creates `api/.env` from `.env.example` with local defaults (only if missing), `composer install`, `APP_KEY` (only if empty), `public/storage` symlink (stale ones are fixed), writable `storage/` |
+| Database | starts MariaDB of XAMPP if needed, **creates the database** (`DB_DATABASE`, `utf8mb4_unicode_ci`), runs the migrations and the seeders – base data plus, with `APP_ENV=local`, the test account and test roles (see [Local test login](#local-test-login)); an existing database is never dropped or overwritten |
 | Angular | `npm ci`, local SSL certificate `erp/ssl/localhost.{crt,key}` for `ng serve` (trusted if `mkcert` is installed; per developer, git-ignored) |
-| Repository | required `.gitignore` rules, executable scripts, warns if a new app still pushes to web-platform |
+| Repository | required `.gitignore` rules, executable scripts, the git-ignored `.temp/` folder for local scratch files (images, media, notes – see `.temp/info.txt`; do not keep anything important there), warns if a new app still pushes to web-platform |
 | Shell aliases | `<app>` (cd), `<app>-dev`, `<app>-build` in `~/.zshrc` / `~/.bashrc` – one block per app |
 
 It never touches the user crontab, and everything it writes belongs to the checkout itself
@@ -87,10 +88,10 @@ Other distributions: the script warns in step 1 and continues – install the pa
 
 The script ends with one of:
 
-- **`WORKSPACE SETUP COMPLETE`** – do the two manual steps below, then start with `./dev.sh`.
+- **`WORKSPACE SETUP COMPLETE`** – review `api/.env` (below), then start with `./dev.sh`.
 - **`WORKSPACE SETUP INCOMPLETE`** – fix the listed warnings and run the script again.
 
-### Manual step 1 – review `api/.env`
+### Manual step – review `api/.env`
 
 A new `api/.env` is created from `.env.example` with local defaults; an existing one is never
 changed. Either way, check it before the first start:
@@ -98,26 +99,49 @@ changed. Either way, check it before the first start:
 | Keys | What to check |
 |---|---|
 | `APP_NAME`, `APP_URL`, `FRONTEND_URL` | name and local URLs of this app (`http://127.0.0.1:8000`, `https://localhost:4200`) |
-| `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | the database created in step 2 (XAMPP default: `root`, no password) |
+| `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | the database the script creates (XAMPP default: `root`, no password) – after a change run `./init-workspace.sh` again |
 | `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | sender of e-mails – locally all mail is caught by Mailpit |
 | `TURNSTILE_SECRET_KEY` | captcha – Cloudflare's public **test** key is preset for local use |
 | other keys of the app | API keys, payment gateway, … – see `.env.example` |
 
 `api/.env` is git-ignored – never commit it.
 
-### Manual step 2 – database in phpMyAdmin
+### Database – created by Laravel
 
-The script does **not** create the database; its summary prints the name to use
-(`DB_DATABASE` in `api/.env` – for a new app the directory name, `app-two` → `app_two`):
+The script creates and fills the database itself (step *Database*); no phpMyAdmin import is
+needed. The same commands work by hand in `api/`:
 
-1. start XAMPP: `sudo /opt/lampp/lampp start`
-2. open https://localhost/phpmyadmin/
-3. create the database with the printed name, collation `utf8mb4_unicode_ci`
-4. tab **Import** → `database/db.sql`
+```bash
+php artisan db:create-if-missing   # CREATE DATABASE (utf8mb4_unicode_ci) only when it does not exist
+php artisan migrate                # empty database: the whole schema; filled database: only new migrations
+php artisan db:seed                # base data; with APP_ENV=local also the test account + test roles
+```
 
-> **Database schema:** `database/db.sql` is the authoritative schema; `api/database/migrations`
-> covers only part of it. Do not run `php artisan migrate:fresh` – review pending migrations with
-> `php artisan migrate:status` first.
+- **Schema:** `api/database/migrations/0000_00_00_000000_create_baseline_schema.php` creates the
+  whole schema (`api/database/schema/baseline.sql`, structure as of 2026-10-29) on an **empty**
+  database and does nothing on a database that already has the tables. Every later change of the
+  schema is a new Laravel migration – never edit `baseline.sql` for it.
+- **Base data** (`BaseDataSeeder`, every installation): permissions, the protected `sysadmin`
+  role with all permissions, page titles, legal document types, default web / e-shop settings.
+  Company details are entered in the admin.
+- **Development data** (`DevelopmentSeeder`, only `APP_ENV=local`): see below.
+- All seeders only **add what is missing** – edited texts, changed passwords and edited roles stay.
+- Do not run `php artisan migrate:fresh` / `db:wipe` on a database with data you need.
+- `database/db.sql` is no longer used by the setup.
+
+### Local test login
+
+With `APP_ENV=local` the seeders create:
+
+| | |
+|---|---|
+| e-mail | `sysadmin@sysadmin.sysadmin` (the domain `sysadmin.sysadmin` is allowed in the e-mail access policy) |
+| password | `123456Ab.` |
+| 2FA | always required for the sysadmin role – the code arrives in Mailpit, http://127.0.0.1:8025 |
+| test roles | `read-only-core`, `read-only-web`, `read-only-shop` (viewing only), `editor-web`, `editor-shop` (view, create, edit – no delete, no maintenance switch), `manager` (everything except accounts, roles and security) |
+
+The account and roles exist **only locally** – production never gets an account with a known
+password (see [Deployment checklist](#deployment-checklist-monthly-release)).
 
 ### Creating a new application from web-platform
 
@@ -131,7 +155,7 @@ cd app-two
 git remote rename origin upstream                       # web-platform = base for this app
 git remote add origin git@github.com:jonclsolutions/app-two.git
 ./init-workspace.sh
-# → WORKSPACE SETUP COMPLETE, then import the database in phpMyAdmin (see above)
+# → WORKSPACE SETUP COMPLETE (the database is created and filled by the script)
 ./dev.sh
 ```
 
@@ -148,8 +172,7 @@ Prerequisites: PHP + extensions required by `api/composer.lock` (check with
 
 ```bash
 cd api && composer install && cp .env.example .env && php artisan key:generate && php artisan storage:link && cd ..
-mysql -u root -e "CREATE DATABASE rp_website CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-mysql -u root rp_website < database/db.sql
+cd api && php artisan db:create-if-missing && php artisan migrate && php artisan db:seed && cd ..
 cd erp && npm ci && cd ..
 ```
 
@@ -270,7 +293,14 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
    `laravel/storage/` on the server – the package intentionally contains neither, so the
    production secrets and user uploads stay in place.
    - **First install only:** `cp .env.example .env`, fill in the production values and run
-     `php artisan key:generate`.
+     `bash configure-server.sh` in the webroot. It also prepares the database:
+     `db:create-if-missing` (on shared hosting create the empty database in the hosting panel
+     first), `migrate --force` (whole schema on an empty database), `db:seed --force` (base data
+     only – no test account in production) and `security:create-sysadmin --if-none`, which **asks
+     for the e-mail and password of the first sysadmin** (typed in the console, never stored in a
+     file; the e-mail is allowed in the e-mail access policy). 2FA by e-mail is forced for
+     sysadmins, so `MAIL_*` must work before the first login. *(The database part of
+     configure-server.sh is not tested on the server yet – go through its output carefully.)*
    - **Never regenerate `APP_KEY` on a running production** – it logs out all users and makes
      encrypted data unreadable.
    - Production `.env` must contain `APP_ENV=production` and `APP_DEBUG=false`; with debug on,
@@ -278,7 +308,8 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
 6. **On the server** (in `laravel/`):
    ```bash
    php artisan down
-   php artisan migrate --force
+   php artisan migrate --force       # existing database: only new migrations (the baseline is a no-op)
+   php artisan db:seed --force       # adds new base data (e.g. new permission keys), changes nothing else
    php artisan config:cache && php artisan route:cache && php artisan view:cache
    php artisan storage:link          # first install only
    php artisan queue:restart         # workers pick up the new code

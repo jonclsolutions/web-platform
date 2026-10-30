@@ -21,10 +21,12 @@
 #                        (Fedora: dnf, Arch Linux: pacman)
 #   2. Mailpit         – local SMTP catcher, verified release → ~/.local/bin
 #   3. Laravel         – api/.env, composer install, APP_KEY, storage symlink, permissions
-#   4. Angular         – npm ci, local SSL certificate for `ng serve`
-#   5. Repository      – .gitignore entries, executable scripts, git remote check
-#   6. Shell aliases   – <app>, <app>-dev, <app>-build in your shell profile
-#   7. Summary         – result + the manual steps: review api/.env, import the database
+#   4. Database        – creates the database (XAMPP MariaDB), runs the migrations and the seeders:
+#                        base data + the local test account sysadmin@sysadmin.sysadmin / 123456Ab.
+#   5. Angular         – npm ci, local SSL certificate for `ng serve`
+#   6. Repository      – .gitignore entries, executable scripts, .temp/ folder, git remote check
+#   7. Shell aliases   – <app>, <app>-dev, <app>-build in your shell profile
+#   8. Summary         – result + the manual step: review api/.env
 #
 # @refactor-note (2026-10-24) Open finding #54: the dev certificate of `ng serve` was a committed
 #   Laragon key pair (`erp/ssl/laragon.*`). Laragon is no longer used (XAMPP); the pair is now
@@ -33,6 +35,8 @@
 #   Arch ships disabled are enabled in /etc/php/conf.d/20-laravel-dev.ini, pcov (AUR only) is
 #   reported, not installed. Step 3 stops with a clear message when Composer / PHP is missing
 #   (before: "composer: command not found" from the ERR trap).
+# @refactor-note (2026-10-30d) New step 4 "Database" replaces the manual phpMyAdmin import of
+#   database/db.sql; step 6 creates the git-ignored .temp/ folder for local scratch files.
 # @bugfix-note (2026-10-30) This file was stored without the executable bit (mode 100644): after a
 #   clone / checkout `./init-workspace.sh` could not be started and git showed a mode change once
 #   the script had made itself executable. Stored as 100755 now; a trailing space removed.
@@ -42,9 +46,10 @@
 # @bugfix-note (2026-10-30c) Used Arch Linux: installed packages are checked with `pacman -T`
 #   (honours "provides") instead of `pacman -Q` (exact name) - with e.g. nodejs-lts-jod the script
 #   tried to install nodejs, which conflicts and stopped the step.
-# @note THE DATABASE IS NOT CREATED BY THIS SCRIPT – create it and import the
-# SQL dump in phpMyAdmin (https://localhost/phpmyadmin/); the summary prints the
-# database name. Only one application runs at a time (all use ports 8000/4200).
+# @note THE DATABASE IS CREATED BY THIS SCRIPT (step 4, since 2026-10-30): `db:create-if-missing`,
+# `migrate`, `db:seed` - an existing database is never dropped or overwritten, only missing
+# migrations and missing base data are added. Only one application runs at a time (all use
+# ports 8000/4200).
 #
 # @note ISOLATION: everything the script writes belongs to this checkout
 # (api/.env, vendor/, node_modules/, erp/ssl/, .dev/) or is a block named after
@@ -96,7 +101,7 @@ ENV_CREATED=0      # 1 = api/.env was created by this run (summary asks to revie
 # Output helpers and result tracking (printed in the summary)
 # -----------------------------------------------------------------------------
 STEP=0
-TOTAL_STEPS=7
+TOTAL_STEPS=8
 DONE=()
 SKIPPED=()
 WARNINGS=()
@@ -460,7 +465,103 @@ setup_laravel() {
 }
 
 # -----------------------------------------------------------------------------
-# 4. Angular: dependencies and the local SSL certificate used by `ng serve`.
+# 4. Database – created, migrated and seeded through Laravel (no phpMyAdmin step).
+# @note Only a LOCAL database (DB_HOST 127.0.0.1 / localhost) is handled here; MariaDB of XAMPP
+# is started for the step when it is not running and stopped again afterwards (dev.sh starts it
+# for the work itself). An existing database is never dropped: `migrate` adds only missing
+# migrations (the baseline migration is a no-op on a filled database) and the seeders add only
+# missing base data. With APP_ENV=local the seeders also create the test sysadmin
+# sysadmin@sysadmin.sysadmin / 123456Ab. and the test roles (DevelopmentSeeder).
+# -----------------------------------------------------------------------------
+MYSQL_STARTED=0
+
+setup_database() {
+    step "Database"
+    local db host port
+    db="$(env_get DB_DATABASE)"; host="$(env_get DB_HOST)"; port="$(env_get DB_PORT)"
+    port="${port:-3306}"
+    if [[ "$host" != "127.0.0.1" && "$host" != "localhost" ]]; then
+        warn "DB_HOST=$host is not local – the database is not created by this script (create it there, then run: cd api && php artisan migrate && php artisan db:seed)"
+        return 0
+    fi
+
+    if ! port_open "$port"; then
+        info "starting MariaDB of XAMPP for this step (sudo)"
+        sudo "$XAMPP_DIR/lampp" startmysql >/dev/null
+        MYSQL_STARTED=1
+        local _
+        for _ in $(seq 1 30); do port_open "$port" && break; sleep 1; done
+        port_open "$port" || { warn "MariaDB of XAMPP did not start on port $port – see $XAMPP_DIR/var/mysql/*.err, then run this script again"; return 0; }
+    fi
+
+    if ! (cd "$API_DIR" && php artisan db:create-if-missing --no-interaction); then
+        warn "database '${db:-?}' could not be created – check DB_* in api/.env, then run this script again"
+        stop_started_mysql; return 0
+    fi
+    if ! (cd "$API_DIR" && php artisan migrate --force --no-interaction); then
+        warn "migrations failed – see the output above, then run this script again"
+        stop_started_mysql; return 0
+    fi
+    if ! (cd "$API_DIR" && php artisan db:seed --force --no-interaction); then
+        warn "seeding the base data failed – see the output above, then run this script again"
+        stop_started_mysql; return 0
+    fi
+
+    if [[ "$(env_get APP_ENV)" == "local" ]]; then
+        done_ "database '$db' ready – test login: sysadmin@sysadmin.sysadmin / 123456Ab. (2FA code in Mailpit)"
+    else
+        done_ "database '$db' ready (APP_ENV is not local – no test account created)"
+    fi
+    stop_started_mysql
+}
+
+# @description Whether something listens on 127.0.0.1:<port> (bash /dev/tcp, no extra tools).
+port_open() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+
+# @description Stops MariaDB of XAMPP again when this script started it.
+stop_started_mysql() {
+    if [[ "$MYSQL_STARTED" == "1" ]]; then
+        sudo "$XAMPP_DIR/lampp" stopmysql >/dev/null || true
+        MYSQL_STARTED=0
+        info "MariaDB of XAMPP stopped again (./dev.sh starts it)"
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# @description Creates the git-ignored .temp/ folder for local scratch files (images, files,
+# media, notes) with an info.txt explaining it. An existing info.txt is left unchanged.
+# -----------------------------------------------------------------------------
+setup_temp_dir() {
+    local dir="$ROOT_DIR/.temp"
+    mkdir -p "$dir"
+    if [[ -f "$dir/info.txt" ]]; then
+        skip ".temp/ exists"
+        return 0
+    fi
+    cat > "$dir/info.txt" <<'TXT'
+.temp/ – DOČASNÉ LOKÁLNÍ SOUBORY PRO VÝVOJ
+==========================================
+
+Tato složka slouží pro dočasné lokální soubory používané při vývoji – obrázky,
+soubory, média a poznámky, které zůstávají jen na tomto počítači, ale vše na
+jednom místě.
+
+Složka je v .gitignore: nic odtud se necommitne ani nenasadí.
+
+UPOZORNĚNÍ: nenechávejte tu nic důležitého – obsah se může snadno smazat
+(úklid, nový checkout, nová instalace). Co je potřeba zachovat, patří do repozitáře
+nebo do zálohy.
+
+---
+Temporary local files for development (images, files, media, notes) – kept only on this
+machine, all in one place. Git-ignored. Do not keep anything important here: it can be
+deleted easily.
+TXT
+    done_ ".temp/ created (local scratch folder, git-ignored – see .temp/info.txt)"
+}
+
+# -----------------------------------------------------------------------------
+# 5. Angular: dependencies and the local SSL certificate used by `ng serve`.
 # -----------------------------------------------------------------------------
 setup_angular() {
     step "Angular (erp/)"
@@ -491,16 +592,18 @@ setup_angular() {
 }
 
 # -----------------------------------------------------------------------------
-# 5. Repository hygiene – ignore rules, executable scripts, remote check.
+# 6. Repository hygiene – ignore rules, executable scripts, .temp/ folder, remote check.
 # -----------------------------------------------------------------------------
 setup_repository() {
     step "Repository"
     local gi="$ROOT_DIR/.gitignore" rule added=()
     touch "$gi"
-    for rule in '.dev/' '/build/' '/app_build/' '.~lock.*#' '/erp/ssl/'; do
+    for rule in '.dev/' '/build/' '/app_build/' '.~lock.*#' '/erp/ssl/' '/.temp/'; do
         grep -qxF "$rule" "$gi" || { printf '%s\n' "$rule" >> "$gi"; added+=("$rule"); }
     done
     if [[ ${#added[@]} -gt 0 ]]; then done_ ".gitignore: added ${added[*]}"; else skip ".gitignore complete"; fi
+
+    setup_temp_dir
 
     local s
     for s in dev.sh deploy/build.sh init-workspace.sh; do
@@ -518,7 +621,7 @@ setup_repository() {
 }
 
 # -----------------------------------------------------------------------------
-# 6. Shell aliases – one marked block per application in ~/.zshrc or ~/.bashrc,
+# 7. Shell aliases – one marked block per application in ~/.zshrc or ~/.bashrc,
 # replaced on every run (so several cloned apps never overwrite each other).
 # -----------------------------------------------------------------------------
 setup_aliases() {
@@ -552,7 +655,7 @@ setup_aliases() {
 }
 
 # -----------------------------------------------------------------------------
-# 7. Summary – including the manual database step.
+# 8. Summary – including the manual review of api/.env.
 # -----------------------------------------------------------------------------
 summary() {
     step "Summary"
@@ -575,22 +678,22 @@ summary() {
 
     cat <<EOF
 
-LAST STEPS – BY HAND
+LAST STEP – BY HAND
   1. Review api/.env   ($env_state)
        APP_NAME, APP_URL, FRONTEND_URL      name and local URLs of this app
        DB_DATABASE=${db:-<name>}, DB_USERNAME, DB_PASSWORD
-                                            database used in step 2 (XAMPP default: root, no password)
+                                            database of step 4 (XAMPP default: root, no password)
        MAIL_FROM_ADDRESS, MAIL_FROM_NAME    sender of e-mails (caught locally by Mailpit)
        TURNSTILE_SECRET_KEY                 captcha – a public TEST key is preset for local use
        any other keys of this app (API keys, payment gateway, …) – see .env.example
      Never commit api/.env – it is git-ignored.
+     After changing DB_* run this script again – step 4 creates and fills the new database.
 
-  2. Import the database in phpMyAdmin
-       start XAMPP:     sudo $XAMPP_DIR/lampp start
-       open:            https://localhost/phpmyadmin/
-       create database: ${db:-<DB_DATABASE from api/.env>}   (collation utf8mb4_unicode_ci)
-       import into it:  database/db.sql   (tab "Import")
-     If you change DB_DATABASE in step 1, use the new name here.
+  LOCAL TEST LOGIN (APP_ENV=local only)
+       e-mail:   sysadmin@sysadmin.sysadmin
+       password: 123456Ab.
+       2FA code: in Mailpit – http://127.0.0.1:8025 (sysadmin always needs 2FA)
+       test roles: read-only-core, read-only-web, read-only-shop, editor-web, editor-shop, manager
 EOF
 
     echo
@@ -598,7 +701,7 @@ EOF
     if [[ ${#WARNINGS[@]} -eq 0 ]]; then
         printf '\e[32m WORKSPACE SETUP COMPLETE – %s\e[0m\n' "$APP_SLUG"
         echo "=========================================="
-        echo "Once api/.env is reviewed and the database '${db:-<name>}' is imported, start the application:"
+        echo "Once api/.env is reviewed, start the application:"
         echo "  ./dev.sh        (Ctrl+C stops everything)"
     else
         printf '\e[33m WORKSPACE SETUP INCOMPLETE – %s\e[0m\n' "$APP_SLUG"
@@ -617,6 +720,7 @@ preflight
 install_system_packages
 install_mailpit
 setup_laravel
+setup_database
 setup_angular
 setup_repository
 setup_aliases
