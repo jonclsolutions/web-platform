@@ -16,7 +16,7 @@
 return [
     'company_name'        => 'Company name Ltd.',
     'ico'                 => '00000000',
-    'dic'                 => null,
+    'dic'                 => 'CZ00000000',
     'google_analytics_id' => null,
     'brand_tagline'       => 'Your company tagline',
     'brand_tagline_i18n'  => ['cz' => 'Your company tagline', 'en' => 'Your company tagline'],
