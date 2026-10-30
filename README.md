@@ -47,6 +47,8 @@ web-platform/
 
 ## First-time setup
 
+**Supported systems:** Fedora and Arch Linux (other Linux distributions: see *Manual setup*).
+
 **Prerequisite (once per machine):** XAMPP installed in `/opt/lampp` –
 [download](https://www.apachefriends.org/download.html), then
 `chmod +x xampp-linux-*-installer.run && sudo ./xampp-linux-*-installer.run`.
@@ -66,7 +68,7 @@ already done are skipped and nothing existing is overwritten.
 
 | Step | What happens |
 |---|---|
-| System packages | installs missing PHP extensions, Composer, Node.js and tools via `dnf` |
+| System packages | installs missing PHP extensions, Composer, Node.js and tools – **Fedora** via `dnf`, **Arch Linux** via `pacman` (plus the PHP extensions Arch ships disabled, enabled in `/etc/php/conf.d/20-laravel-dev.ini`; `pcov` for test coverage is AUR-only and only reported) |
 | Mailpit | downloads the latest release to `~/.local/bin`, **only if its SHA-256 matches** the digest GitHub publishes |
 | Laravel | creates `api/.env` from `.env.example` with local defaults (only if missing), `composer install`, `APP_KEY` (only if empty), `public/storage` symlink (stale ones are fixed), writable `storage/` |
 | Angular | `npm ci`, local SSL certificate `erp/ssl/localhost.{crt,key}` for `ng serve` (trusted if `mkcert` is installed; per developer, git-ignored) |
@@ -76,7 +78,9 @@ already done are skipped and nothing existing is overwritten.
 It never touches the user crontab, and everything it writes belongs to the checkout itself
 (`api/.env`, `vendor/`, `node_modules/`, `erp/ssl/`, `.dev/`) or to the app's own alias block –
 any number of cloned apps can be set up on one machine without affecting each other.
-Options: `--skip-system` (no `dnf`), `--no-aliases`, `--help`.
+Options: `--skip-system` (no `dnf` / `pacman`), `--no-aliases`, `--help`.
+Other distributions: the script warns in step 1 and continues – install the packages yourself
+(see *Manual setup* below), then run it again.
 
 The script ends with one of:
 

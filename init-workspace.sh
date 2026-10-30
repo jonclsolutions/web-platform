@@ -17,7 +17,8 @@
 #
 # Steps (each one is skipped when already done – safe to run again, nothing
 # existing is overwritten):
-#   1. System packages – PHP + extensions (incl. pcov for test coverage), Composer, Node.js, tools (dnf)
+#   1. System packages – PHP + extensions (incl. pcov for test coverage), Composer, Node.js, tools
+#                        (Fedora: dnf, Arch Linux: pacman)
 #   2. Mailpit         – local SMTP catcher, verified release → ~/.local/bin
 #   3. Laravel         – api/.env, composer install, APP_KEY, storage symlink, permissions
 #   4. Angular         – npm ci, local SSL certificate for `ng serve`
@@ -28,6 +29,10 @@
 # @refactor-note (2026-10-24) Open finding #54: the dev certificate of `ng serve` was a committed
 #   Laragon key pair (`erp/ssl/laragon.*`). Laragon is no longer used (XAMPP); the pair is now
 #   generated per developer as `erp/ssl/localhost.{crt,key}` and the whole `erp/ssl/` is git-ignored.
+# @refactor-note (2026-10-30) Arch Linux support (step 1): packages via pacman, the PHP extensions
+#   Arch ships disabled are enabled in /etc/php/conf.d/20-laravel-dev.ini, pcov (AUR only) is
+#   reported, not installed. Step 3 stops with a clear message when Composer / PHP is missing
+#   (before: "composer: command not found" from the ERR trap).
 # @note THE DATABASE IS NOT CREATED BY THIS SCRIPT – create it and import the
 # SQL dump in phpMyAdmin (https://localhost/phpmyadmin/); the summary prints the
 # database name. Only one application runs at a time (all use ports 8000/4200).
@@ -40,12 +45,14 @@
 # @security
 #   - Never overwrites an existing api/.env and never regenerates an existing APP_KEY.
 #   - Mailpit is installed only if its SHA-256 matches the digest GitHub publishes.
-#   - Does not run as root; sudo is used only for dnf.
+#   - Does not run as root; sudo is used only for the package manager (dnf / pacman) and, on
+#     Arch Linux, to enable the required PHP extensions (/etc/php/conf.d/20-laravel-dev.ini).
+#   - Never installs from the AUR (user-submitted, unreviewed) – it only tells what is missing.
 #   - The generated SSL key is for localhost only and is git-ignored.
 #
 # @usage
 #   ./init-workspace.sh                full setup
-#   ./init-workspace.sh --skip-system  skip dnf package installation
+#   ./init-workspace.sh --skip-system  skip the system packages (dnf / pacman)
 #   ./init-workspace.sh --no-aliases   do not touch the shell profile
 #   ./init-workspace.sh --help
 # =============================================================================
@@ -161,28 +168,39 @@ preflight() {
         || die "XAMPP not found in $XAMPP_DIR – install it first (see above), then run this script again"
     printf '\e[32m   ✓ XAMPP found in %s\e[0m\n' "$XAMPP_DIR"
 
-    [[ "$EUID" -ne 0 ]] || die "do not run as root – the script uses sudo only for dnf"
+    [[ "$EUID" -ne 0 ]] || die "do not run as root – the script uses sudo only for the package manager"
     [[ -f "$API_DIR/composer.json" ]] || die "api/composer.json not found – run from the repository root"
     [[ -f "$ERP_DIR/package.json" ]]  || die "erp/package.json not found – run from the repository root"
     mkdir -p "$DEV_DIR"
 }
 
 # -----------------------------------------------------------------------------
-# 1. System packages (Fedora / dnf) – only missing packages are installed.
+# 1. System packages – only missing packages are installed.
+#    Fedora: dnf. Arch Linux: pacman (+ PHP extensions enabled in conf.d).
+# -----------------------------------------------------------------------------
+install_system_packages() {
+    step "System packages"
+    if [[ "$SKIP_SYSTEM" == "1" ]]; then skip "system packages (--skip-system)"; return 0; fi
+    if command -v dnf >/dev/null; then
+        install_packages_fedora
+    elif command -v pacman >/dev/null; then
+        install_packages_arch
+    else
+        warn "neither dnf (Fedora) nor pacman (Arch Linux) found – install PHP 8.2+ with the extensions of api/composer.lock, Composer, Node.js, zip, rsync, openssl manually"
+        return 0
+    fi
+    check_tool_versions
+}
+
+# -----------------------------------------------------------------------------
+# Fedora / dnf.
 # @note php-process = pcntl/posix (queue workers), php-mysqlnd = pdo_mysql,
 # libxcrypt-compat = libcrypt.so.1 needed by XAMPP on current Fedora.
 # Unit tests (tests/unit_tests/api): php-pdo = pdo_sqlite (the tests run on SQLite
 # in memory), php-pecl-pcov = code coverage driver (without it the tests still run,
 # only the coverage is missing).
 # -----------------------------------------------------------------------------
-install_system_packages() {
-    step "System packages"
-    if [[ "$SKIP_SYSTEM" == "1" ]]; then skip "system packages (--skip-system)"; return 0; fi
-    if ! command -v dnf >/dev/null; then
-        warn "dnf not found – not Fedora; install PHP, Composer, Node.js, zip, rsync, openssl manually"
-        return 0
-    fi
-
+install_packages_fedora() {
     local wanted=(
         php-cli php-common php-mbstring php-xml php-mysqlnd php-intl php-pecl-zip
         php-gd php-bcmath php-process php-opcache php-sodium
@@ -201,7 +219,96 @@ install_system_packages() {
         sudo dnf install -y "${missing[@]}"
         done_ "installed: ${missing[*]}"
     fi
+}
 
+# -----------------------------------------------------------------------------
+# Arch Linux / pacman.
+# @note The `php` package contains mbstring, xml, curl, openssl, pcntl, posix, … built in, but
+# ships bcmath, iconv, intl, mysqli, pdo_mysql and zip DISABLED; gd, sodium and sqlite
+# (pdo_sqlite + sqlite3, needed by the unit tests) are separate packages, also disabled after
+# installation. A package name the repositories do not know (renamed / merged) is reported, not
+# installed, so one rename cannot stop the whole step. The script enables exactly the missing ones in ONE file of its own,
+# /etc/php/conf.d/20-laravel-dev.ini (php.ini itself is never edited; delete the file to undo).
+# libxcrypt-compat = libcrypt.so.1 for XAMPP. No `-Sy`: a sync without upgrade is a partial
+# upgrade, which Arch does not support - when packages cannot be found, run `sudo pacman -Syu`.
+# pcov (coverage driver of the unit tests) exists only in the AUR, which this script never uses.
+# -----------------------------------------------------------------------------
+install_packages_arch() {
+    local wanted=(
+        php php-gd php-sodium php-sqlite
+        composer nodejs npm
+        git unzip zip rsync openssl curl tar libxcrypt-compat
+    )
+    local missing=() unknown=() p
+    for p in "${wanted[@]}"; do
+        pacman -Q "$p" >/dev/null 2>&1 && continue
+        if pacman -Si "$p" >/dev/null 2>&1; then missing+=("$p"); else unknown+=("$p"); fi
+    done
+    [[ ${#unknown[@]} -eq 0 ]] \
+        || warn "not found in the pacman repositories: ${unknown[*]} – update the package database (sudo pacman -Syu) or install them yourself" 
+    if [[ ${#missing[@]} -eq 0 ]]; then
+        skip "all system packages already installed"
+    else
+        info "installing: ${missing[*]} (sudo pacman)"
+        sudo pacman -S --needed --noconfirm "${missing[@]}" \
+            || die "pacman could not install the packages – update the system first (sudo pacman -Syu), then run this script again"
+        done_ "installed: ${missing[*]}"
+    fi
+
+    enable_php_extensions_arch
+
+    if php -m 2>/dev/null | grep -qix pcov; then
+        skip "pcov (test coverage) already available"
+    else
+        # Optional - not a warning (the setup is complete without it).
+        skip "pcov not installed (AUR only): the unit tests run, only their coverage is missing – for coverage install it yourself, e.g. 'yay -S php-pcov' (review the PKGBUILD first)"
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# @description Enables the PHP extensions Laravel / the tests need and Arch ships disabled.
+# Only extensions php -m does not list yet are written; an existing file of this script is
+# extended, never replaced.
+# -----------------------------------------------------------------------------
+enable_php_extensions_arch() {
+    local wanted=(bcmath gd iconv intl mysqli pdo_mysql pdo_sqlite sodium sqlite3 zip)
+    local scan_dir ini loaded missing=() e
+    scan_dir="$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;' 2>/dev/null || true)"
+    [[ -n "$scan_dir" ]] || scan_dir=/etc/php/conf.d
+    ini="$scan_dir/20-laravel-dev.ini"
+    loaded="$(php -m 2>/dev/null | tr '[:upper:]' '[:lower:]')"
+    for e in "${wanted[@]}"; do
+        grep -qx "$e" <<<"$loaded" || missing+=("$e")
+    done
+    if [[ ${#missing[@]} -eq 0 ]]; then
+        skip "PHP extensions already enabled"
+        return 0
+    fi
+
+    info "enabling PHP extensions in $ini: ${missing[*]} (sudo)"
+    sudo mkdir -p "$scan_dir"
+    if [[ ! -f "$ini" ]]; then
+        printf '; Written by init-workspace.sh (Laravel development) - extensions Arch ships disabled.\n; Delete this file to undo.\n' \
+            | sudo tee "$ini" >/dev/null
+    fi
+    for e in "${missing[@]}"; do
+        printf 'extension=%s\n' "$e" | sudo tee -a "$ini" >/dev/null
+    done
+
+    loaded="$(php -m 2>/dev/null | tr '[:upper:]' '[:lower:]')"
+    local still=()
+    for e in "${missing[@]}"; do grep -qx "$e" <<<"$loaded" || still+=("$e"); done
+    if [[ ${#still[@]} -eq 0 ]]; then
+        done_ "PHP extensions enabled: ${missing[*]}"
+    else
+        warn "PHP extensions still not loaded: ${still[*]} – check $ini and 'php -m'"
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# @description Prints / checks the versions of PHP, Composer and Node.js.
+# -----------------------------------------------------------------------------
+check_tool_versions() {
     # Angular 21 requires Node.js ^20.19 || ^22.12 || >=24.
     local node_major
     node_major="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
@@ -295,6 +402,8 @@ setup_laravel() {
         done_ "api/.env created with local defaults (database: ${APP_SLUG//-/_}) – review it, see the summary"
     fi
 
+    command -v php >/dev/null || die "PHP not found – install PHP 8.2+ (step 1), then run this script again"
+    command -v composer >/dev/null || die "Composer not found – install it (step 1), then run this script again"
     info "composer install"
     (cd "$API_DIR" && composer install --no-interaction --no-progress)
     done_ "Composer dependencies installed"
