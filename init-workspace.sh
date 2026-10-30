@@ -33,6 +33,9 @@
 #   Arch ships disabled are enabled in /etc/php/conf.d/20-laravel-dev.ini, pcov (AUR only) is
 #   reported, not installed. Step 3 stops with a clear message when Composer / PHP is missing
 #   (before: "composer: command not found" from the ERR trap).
+# @bugfix-note (2026-10-30) This file was stored without the executable bit (mode 100644): after a
+#   clone / checkout `./init-workspace.sh` could not be started and git showed a mode change once
+#   the script had made itself executable. Stored as 100755 now; a trailing space removed.
 # @note THE DATABASE IS NOT CREATED BY THIS SCRIPT – create it and import the
 # SQL dump in phpMyAdmin (https://localhost/phpmyadmin/); the summary prints the
 # database name. Only one application runs at a time (all use ports 8000/4200).
@@ -245,7 +248,7 @@ install_packages_arch() {
         if pacman -Si "$p" >/dev/null 2>&1; then missing+=("$p"); else unknown+=("$p"); fi
     done
     [[ ${#unknown[@]} -eq 0 ]] \
-        || warn "not found in the pacman repositories: ${unknown[*]} – update the package database (sudo pacman -Syu) or install them yourself" 
+        || warn "not found in the pacman repositories: ${unknown[*]} – update the package database (sudo pacman -Syu) or install them yourself"
     if [[ ${#missing[@]} -eq 0 ]]; then
         skip "all system packages already installed"
     else
