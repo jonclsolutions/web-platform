@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Logo">
+  <title>Logo</title>
+  <!-- Neutral placeholder logo of a new installation (BaseDataSeeder). Replace it in the admin:
+       Company details → Logo. Visible on the dark web and the light e-shop. -->
+  <circle cx="100" cy="100" r="96" fill="#6d4fc2"/>
+  <circle cx="100" cy="100" r="96" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="6"/>
+  <text x="100" y="117" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="50" font-weight="700" letter-spacing="2" fill="#ffffff">LOGO</text>
+</svg>

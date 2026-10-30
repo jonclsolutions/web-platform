@@ -25,7 +25,9 @@ use App\Models\Core\CoreEmailAccessRule;
 use App\Models\Core\CorePermission;
 use App\Models\Core\CoreRole;
 use App\Models\User;
+use App\Models\Legal\DocumentSection;
 use App\Models\Legal\DocumentType;
+use App\Models\Legal\SiteSetting;
 use App\Models\Shop\ShopSiteSetting;
 use App\Models\Web\WebSiteSetting;
 use Database\Seeders\BaseDataSeeder;
@@ -33,6 +35,7 @@ use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DevelopmentSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -285,6 +288,7 @@ class DatabaseSetupTest extends TestCase
      */
     public function test_development_seeder_creates_the_test_data(): void
     {
+        Storage::fake('public');
         $this->app['env'] = 'local';
         $this->role('sysadmin');
         $keys = [
@@ -366,11 +370,31 @@ class DatabaseSetupTest extends TestCase
      * @input empty database (test schema); BaseDataSeeder.
      * @output permissions = data/permissions.php (96 keys incl. view-core, core-administrators-view);
      *   sysadmin with every permission and protected; 23 titles incl. web.not-found and
-     *   admin.panel; types gdpr / tos / cookies; web + shop active; no account.
+     *   admin.panel; types gdpr / tos / cookies; web + shop active; placeholder company details
+     *   (English, example.com, no analytics ID) with the default logo; English legal templates
+     *   8 / 10 / 7 sections with placeholders; logo + flags on the public disk; no account.
      */
     public function test_base_data_seeder(): void
     {
+        Storage::fake('public');
         $this->seed(BaseDataSeeder::class);
+
+        $company = SiteSetting::firstOrFail();
+        $this->assertSame('Company name Ltd.', $company->company_name);
+        $this->assertSame('info@example.com', $company->contact_email);
+        $this->assertNull($company->google_analytics_id);
+        $this->assertSame(BaseDataSeeder::DEFAULT_LOGO_PATH, $company->logo_path);
+        $this->assertSame('Your company tagline', $company->brand_tagline_i18n['en']);
+        $counts = [];
+        foreach (['gdpr', 'tos', 'cookies'] as $slug) {
+            $sections = DocumentSection::where('document_type_id', DocumentType::where('slug', $slug)->value('id'))->orderBy('position')->get();
+            $counts[$slug] = $sections->count();
+            $this->assertSame(['en'], $sections->pluck('lang')->unique()->values()->all());
+            $this->assertSame(range(1, $sections->count()), $sections->pluck('position')->all());
+        }
+        $this->assertSame(['gdpr' => 8, 'tos' => 10, 'cookies' => 7], $counts);
+        $this->assertStringContainsString('[Company name]', DocumentSection::where('heading', '2. Controller of personal data')->value('content'));
+        Storage::disk('public')->assertExists([BaseDataSeeder::DEFAULT_LOGO_PATH, ...BaseDataSeeder::DEFAULT_FLAG_PATHS]);
 
         $expected = array_column(require database_path('seeders/data/permissions.php'), 'permission_key');
         $this->assertCount(96, $expected);
@@ -391,13 +415,22 @@ class DatabaseSetupTest extends TestCase
     /**
      * @description Running it again only adds: edited texts / settings stay, a deleted sysadmin role
      *   is restored, a new permission key goes to the sysadmin role, nothing is duplicated.
-     * @input seeded; title + permission description + shop setting edited; sysadmin soft-deleted;
-     *   one permission row removed; seeded again.
-     * @output edits kept; role restored with 96 permissions; 96 permissions, 23 titles, 1 settings row each.
+     * @input seeded; title + permission description + shop setting + company name edited; gdpr
+     *   sections replaced by an own Czech one; logo file replaced, one flag deleted; sysadmin
+     *   soft-deleted; one permission row removed; seeded again.
+     * @output edits kept (company, own gdpr section only, own logo); deleted flag restored; role
+     *   restored with 96 permissions; 96 permissions, 23 titles, 1 row in each settings table.
      */
     public function test_base_data_seeder_only_adds(): void
     {
+        Storage::fake('public');
         $this->seed(BaseDataSeeder::class);
+        SiteSetting::firstOrFail()->update(['company_name' => 'My company']);
+        $gdprId = DocumentType::where('slug', 'gdpr')->value('id');
+        DocumentSection::where('document_type_id', $gdprId)->delete();
+        DocumentSection::create(['document_type_id' => $gdprId, 'position' => 1, 'heading' => 'Mine', 'content' => 'My text', 'lang' => 'cz']);
+        Storage::disk('public')->put(BaseDataSeeder::DEFAULT_LOGO_PATH, 'my logo');
+        Storage::disk('public')->delete(BaseDataSeeder::DEFAULT_FLAG_PATHS[0]);
         DB::table('legal_page_titles')->where(['area' => 'web', 'page_key' => 'home'])->update(['title_i18n' => '{"cz":"Můj titulek"}']);
         CorePermission::where('permission_key', 'view-core')->update(['description' => 'edited']);
         ShopSiteSetting::firstOrFail()->update(['is_shop_active' => false]);
@@ -415,6 +448,11 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame(23, DB::table('legal_page_titles')->count());
         $this->assertSame(1, WebSiteSetting::count());
         $this->assertSame(1, ShopSiteSetting::count());
+        $this->assertSame('My company', SiteSetting::firstOrFail()->company_name);
+        $this->assertSame(1, SiteSetting::count());
+        $this->assertSame(['Mine'], DocumentSection::where('document_type_id', $gdprId)->pluck('heading')->all());
+        $this->assertSame('my logo', Storage::disk('public')->get(BaseDataSeeder::DEFAULT_LOGO_PATH));
+        Storage::disk('public')->assertExists(BaseDataSeeder::DEFAULT_FLAG_PATHS[0]);
     }
 
     /**
@@ -424,6 +462,7 @@ class DatabaseSetupTest extends TestCase
      */
     public function test_database_seeder_adds_development_data_only_locally(): void
     {
+        Storage::fake('public');
         $this->app['env'] = 'production';
         // --force: db:seed asks for a confirmation in production (as on the server).
         $this->artisan('db:seed', ['--class' => DatabaseSeeder::class, '--force' => true])->assertExitCode(0);

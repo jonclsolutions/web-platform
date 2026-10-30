@@ -122,8 +122,13 @@ php artisan db:seed                # base data; with APP_ENV=local also the test
   database and does nothing on a database that already has the tables. Every later change of the
   schema is a new Laravel migration – never edit `baseline.sql` for it.
 - **Base data** (`BaseDataSeeder`, every installation): permissions, the protected `sysadmin`
-  role with all permissions, page titles, legal document types, default web / e-shop settings.
-  Company details are entered in the admin.
+  role with all permissions, page titles, legal document types, default web / e-shop settings,
+  **placeholder company details** ("Company name Ltd.", info@example.com – the footer, contact
+  page and FAQ need them) with a neutral default logo, **English templates of the legal documents**
+  (privacy policy, terms of service, cookie policy – placeholders like `[Company name]`,
+  `[Contact e-mail]`) and the default files they refer to (logo, flag of the built-in language –
+  `storage/` is not in git). **Before going live:** fill in the company details and replace the
+  placeholders of the legal texts in the admin (and have the texts reviewed).
 - **Development data** (`DevelopmentSeeder`, only `APP_ENV=local`): see below.
 - All seeders only **add what is missing** – edited texts, changed passwords and edited roles stay.
 - Do not run `php artisan migrate:fresh` / `db:wipe` on a database with data you need.

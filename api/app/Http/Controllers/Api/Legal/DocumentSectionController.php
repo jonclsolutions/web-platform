@@ -6,6 +6,9 @@
  * @author RPSW
  * @created 2025
  * @description Manages CRUD operations and public delivery of legal document sections, featuring language-based fallback logic and audit logging.
+ * @refactor-note (2026-10-31) Public view: when neither the requested language nor 'cz' has
+ *   sections, the sections of any other language are shown (a new installation has only the
+ *   English templates of BaseDataSeeder - the Czech page was empty).
  *
  * @refactor-note (2026) `publicShow()` dřív mapovalo slug na document_type_id natvrdo
  * (`$slug === 'gdpr' ? 1 : ($slug === 'tos' ? 2 : null)`), takže nový typ dokumentu
@@ -152,6 +155,18 @@ class DocumentSectionController extends Controller
                 ->where('lang', 'cz')
                 ->orderBy('position', 'asc')
                 ->get();
+        }
+
+        // Last fallback (2026-10-31): any language the document has (e.g. only the English
+        // templates of a new installation) - a legal page is never empty while it has sections.
+        if ($data->isEmpty()) {
+            $anyLang = DocumentSection::where('document_type_id', $documentType->id)->orderBy('lang')->value('lang');
+            if ($anyLang !== null) {
+                $data = DocumentSection::where('document_type_id', $documentType->id)
+                    ->where('lang', $anyLang)
+                    ->orderBy('position', 'asc')
+                    ->get();
+            }
         }
 
         $lastUpdate = $data->max('updated_at');

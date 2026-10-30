@@ -141,4 +141,20 @@ class LegalDocumentTest extends TestCase
             ->assertJsonPath('data.footer_effective', null)->assertJsonPath('data.last_update_date', now()->format('d.m.Y'));
         $this->getJson('/api/public/legal/nope')->assertStatus(404)->assertExactJson(['message' => 'Document not found.']);
     }
+
+    /**
+     * @description A document with sections only in another language than the requested one and
+     *   'cz' (the English templates of a new installation) shows those sections (2026-10-31).
+     * @input cookies: only en sections (positions 2, 1); ?lang=cz; without lang.
+     * @output both answers: the en sections ordered by position.
+     */
+    public function test_public_document_falls_back_to_any_language(): void
+    {
+        $cookies = $this->type('cookies');
+        $this->section($cookies, ['heading' => 'Second', 'position' => 2, 'lang' => 'en']);
+        $this->section($cookies, ['heading' => 'First', 'position' => 1, 'lang' => 'en']);
+
+        $this->getJson('/api/public/legal/cookies?lang=cz')->assertOk()->assertJsonPath('data.sections.*.heading', ['First', 'Second']);
+        $this->getJson('/api/public/legal/cookies')->assertOk()->assertJsonPath('data.sections.*.heading', ['First', 'Second']);
+    }
 }
