@@ -39,6 +39,9 @@
 # @bugfix-note (2026-10-30b) Fresh Arch Linux (e.g. a VM): stops with instructions when sudo is
 #   missing (not in a base installation) or the pacman database was never synced; installs
 #   net-tools (netstat, used by XAMPP's lampp script).
+# @bugfix-note (2026-10-30c) Used Arch Linux: installed packages are checked with `pacman -T`
+#   (honours "provides") instead of `pacman -Q` (exact name) - with e.g. nodejs-lts-jod the script
+#   tried to install nodejs, which conflicts and stopped the step.
 # @note THE DATABASE IS NOT CREATED BY THIS SCRIPT – create it and import the
 # SQL dump in phpMyAdmin (https://localhost/phpmyadmin/); the summary prints the
 # database name. Only one application runs at a time (all use ports 8000/4200).
@@ -251,7 +254,9 @@ install_packages_arch() {
     )
     local missing=() unknown=() p
     for p in "${wanted[@]}"; do
-        pacman -Q "$p" >/dev/null 2>&1 && continue
+        # -T (deptest) also accepts a package that PROVIDES the name (nodejs-lts-* → nodejs, …),
+        # so an existing alternative is kept instead of being replaced (= conflict, abort).
+        pacman -T "$p" >/dev/null 2>&1 && continue
         if pacman -Si "$p" >/dev/null 2>&1; then missing+=("$p"); else unknown+=("$p"); fi
     done
     # `php` unknown = the package database was never synced (fresh installation) - nothing would work.
