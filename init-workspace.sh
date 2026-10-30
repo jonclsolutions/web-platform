@@ -36,6 +36,9 @@
 # @bugfix-note (2026-10-30) This file was stored without the executable bit (mode 100644): after a
 #   clone / checkout `./init-workspace.sh` could not be started and git showed a mode change once
 #   the script had made itself executable. Stored as 100755 now; a trailing space removed.
+# @bugfix-note (2026-10-30b) Fresh Arch Linux (e.g. a VM): stops with instructions when sudo is
+#   missing (not in a base installation) or the pacman database was never synced; installs
+#   net-tools (netstat, used by XAMPP's lampp script).
 # @note THE DATABASE IS NOT CREATED BY THIS SCRIPT – create it and import the
 # SQL dump in phpMyAdmin (https://localhost/phpmyadmin/); the summary prints the
 # database name. Only one application runs at a time (all use ports 8000/4200).
@@ -172,6 +175,9 @@ preflight() {
     printf '\e[32m   ✓ XAMPP found in %s\e[0m\n' "$XAMPP_DIR"
 
     [[ "$EUID" -ne 0 ]] || die "do not run as root – the script uses sudo only for the package manager"
+    # A minimal installation (e.g. Arch Linux base) has no sudo.
+    command -v sudo >/dev/null \
+        || die "sudo not found – install it as root (Arch: pacman -S sudo, then add your user to the wheel group: usermod -aG wheel <user>, and allow the group with EDITOR=nano visudo), then run this script again"
     [[ -f "$API_DIR/composer.json" ]] || die "api/composer.json not found – run from the repository root"
     [[ -f "$ERP_DIR/package.json" ]]  || die "erp/package.json not found – run from the repository root"
     mkdir -p "$DEV_DIR"
@@ -232,7 +238,8 @@ install_packages_fedora() {
 # installation. A package name the repositories do not know (renamed / merged) is reported, not
 # installed, so one rename cannot stop the whole step. The script enables exactly the missing ones in ONE file of its own,
 # /etc/php/conf.d/20-laravel-dev.ini (php.ini itself is never edited; delete the file to undo).
-# libxcrypt-compat = libcrypt.so.1 for XAMPP. No `-Sy`: a sync without upgrade is a partial
+# libxcrypt-compat = libcrypt.so.1 and net-tools = netstat, both needed by XAMPP (its `lampp`
+# script checks the ports with netstat; a base Arch has neither). No `-Sy`: a sync without upgrade is a partial
 # upgrade, which Arch does not support - when packages cannot be found, run `sudo pacman -Syu`.
 # pcov (coverage driver of the unit tests) exists only in the AUR, which this script never uses.
 # -----------------------------------------------------------------------------
@@ -240,13 +247,16 @@ install_packages_arch() {
     local wanted=(
         php php-gd php-sodium php-sqlite
         composer nodejs npm
-        git unzip zip rsync openssl curl tar libxcrypt-compat
+        git unzip zip rsync openssl curl tar libxcrypt-compat net-tools
     )
     local missing=() unknown=() p
     for p in "${wanted[@]}"; do
         pacman -Q "$p" >/dev/null 2>&1 && continue
         if pacman -Si "$p" >/dev/null 2>&1; then missing+=("$p"); else unknown+=("$p"); fi
     done
+    # `php` unknown = the package database was never synced (fresh installation) - nothing would work.
+    [[ " ${unknown[*]} " != *" php "* ]] \
+        || die "pacman does not know the package 'php' – the package database is not synced: run sudo pacman -Syu, then this script again"
     [[ ${#unknown[@]} -eq 0 ]] \
         || warn "not found in the pacman repositories: ${unknown[*]} – update the package database (sudo pacman -Syu) or install them yourself"
     if [[ ${#missing[@]} -eq 0 ]]; then

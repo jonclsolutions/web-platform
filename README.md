@@ -48,6 +48,9 @@ web-platform/
 ## First-time setup
 
 **Supported systems:** Fedora and Arch Linux (other Linux distributions: see *Manual setup*).
+On a fresh Arch Linux (e.g. a VM) first: `sudo` for your user (base Arch has none – as root
+`pacman -S sudo`, `usermod -aG wheel <user>`, allow `%wheel` with `EDITOR=nano visudo`) and a
+synced system (`sudo pacman -Syu`); the script stops with these instructions when one is missing.
 
 **Prerequisite (once per machine):** XAMPP installed in `/opt/lampp` –
 [download](https://www.apachefriends.org/download.html), then
