@@ -16,7 +16,6 @@
 #   │   └── laravel/         → Laravel API, production dependencies only
 #   ├── www.zip              → the same www/ as one archive
 #   ├── www.zip.sha256       → checksum to verify the upload
-#   ├── database/            → schema SQL (NOT part of www, never public)
 #   └── README.md, server_setup.* (preview only, NOT part of www)
 #
 # @note WHAT IS DELIBERATELY NOT SHIPPED (security / GDPR):
@@ -45,6 +44,10 @@
 #   build start; a failure stops the script (exit 1) and the previous build/ stays untouched.
 #   --skip-tests skips the gate (e.g. an urgent rebuild of an already tested commit).
 #
+# @refactor-note (2026-10-31) The root folder database/ (SQL dump + manual SQL scripts) was
+#   removed - the build no longer copies database/*.sql to build/database/. The schema reaches
+#   the server inside laravel/ (api/database: baseline SQL + migrations, run by configure-server.sh).
+#
 # @usage
 #   deploy/build.sh                         run all tests, then the full build (Angular + Laravel + zip)
 #   deploy/build.sh --skip-tests            build without running the tests first
@@ -64,7 +67,6 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 API_DIR="$ROOT_DIR/api"
 ERP_DIR="$ROOT_DIR/erp"
 SERVER_CONF_DIR="$SCRIPT_DIR/server"
-DATABASE_DIR="$ROOT_DIR/database"
 
 BUILD_DIR="$ROOT_DIR/build"
 WWW_DIR="$BUILD_DIR/www"
@@ -237,18 +239,11 @@ copy_server_conf() {
 }
 
 # -----------------------------------------------------------------------------
-# @description Database files and documentation go to the build ROOT only –
-# never into www/, so they cannot be downloaded from the website.
+# @description Documentation goes to the build ROOT only – never into www/, so it cannot be
+# downloaded from the website.
 # -----------------------------------------------------------------------------
 copy_extras() {
-    step "Copying database files and docs (outside www)"
-    if compgen -G "$DATABASE_DIR/*.sql" >/dev/null; then
-        mkdir -p "$BUILD_DIR/database"
-        cp "$DATABASE_DIR"/*.sql "$BUILD_DIR/database/"
-        info "database/*.sql copied to build/database/"
-    else
-        info "no SQL files in database/"
-    fi
+    step "Copying docs (outside www)"
     local f
     for f in README.md README.txt server_setup.md server_setup.txt; do
         [[ -f "$ROOT_DIR/$f" ]] && { cp "$ROOT_DIR/$f" "$BUILD_DIR/"; info "$f copied to build root"; }

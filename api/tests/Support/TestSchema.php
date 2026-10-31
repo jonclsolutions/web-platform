@@ -10,14 +10,13 @@
  *   production tables (MariaDB) that the tested code reads and writes - same table names,
  *   columns, defaults, unique keys and foreign keys - built with the Laravel schema
  *   builder so it runs on SQLite.
- * @note Why not the migrations: the production database is maintained through SQL
- *   (database/db.sql + manual ALTER scripts). database/migrations is out of date - it
- *   contains duplicate migrations (two create_roles_table, two create_user_logins_table)
- *   and lacks most core_*, web_*, shop_* and legal_* tables, so `migrate` fails on an
- *   empty database. Keep this file in sync with the production schema whenever a
- *   tested table changes. Tables are added per test round (Core + Auth, Web, Shop; Other
+ * @note Why not the migrations: the schema is the MariaDB SQL of the baseline migration
+ *   (api/database/schema/baseline.sql) plus later Laravel migrations - SQLite cannot load
+ *   that SQL. Keep this file in sync with the migrations whenever a tested table changes. Tables are added per test round (Core + Auth, Web, Shop; Other
  *   with its tests). The web_project* tables are not in database/db.sql (added
  *   later) - their columns follow the models and controllers.
+ * @refactor-note (2026-10-31b) The root database/ folder (db.sql + manual SQL scripts) was
+ *   removed; mentions of it below are historical (where a column came from).
  * @refactor-note (2026-10-31) legal_site_settings follows migration
  *   2026_10_31_000000_make_company_details_optional (hidden_fields, nullable optional columns).
  */

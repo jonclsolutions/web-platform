@@ -29,7 +29,6 @@ The solution is developed and operated in line with EU law (GDPR, ePrivacy).
 web-platform/
 ├── api/                 Laravel API
 ├── erp/                 Angular application (public web, shop, admin)
-├── database/            SQL files: schema and code lists – NO real personal data
 ├── deploy/
 │   ├── build.sh         production build → build/www.zip
 │   └── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
@@ -139,7 +138,9 @@ php artisan db:seed                # base data; with APP_ENV=local also the test
 - **Development data** (`DevelopmentSeeder`, only `APP_ENV=local`): see below.
 - All seeders only **add what is missing** – edited texts, changed passwords and edited roles stay.
 - Do not run `php artisan migrate:fresh` / `db:wipe` on a database with data you need.
-- `database/db.sql` is no longer used by the setup.
+- The former root folder `database/` (the SQL dump `db.sql` and the manual SQL scripts) was removed
+  on 2026-10-31: the setup does not use it and every script had been run on the server. The
+  schema lives in `api/database/schema/baseline.sql` + the Laravel migrations.
 
 ### Local test login
 
@@ -278,7 +279,6 @@ build/
 │   └── laravel/          (API with production dependencies only)
 ├── www.zip               → the same www/ as one archive
 ├── www.zip.sha256        → checksum to verify the upload
-├── database/             → SQL files (never part of www)
 └── README.md             → preview only (never part of www)
 ```
 

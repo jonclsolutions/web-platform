@@ -119,10 +119,10 @@ off). PHP coverage is line based: the report shows **lines** (executable lines) 
 The api tests run on **SQLite in memory** – a fresh database for every test, nothing touches the
 MariaDB dev database (`api/tests/TestCase.php` refuses to run on anything else, `phpunit.xml`
 forces `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`). The schema comes from
-`api/tests/Support/TestSchema.php`, not from the migrations: `api/database/migrations` is out of
-date (duplicate `create_roles_table` / `create_user_logins_table`, most `core_*`, `web_*`,
-`shop_*`, `legal_*` tables missing), the real schema is maintained in SQL. When a tested table
-changes in production, change `TestSchema.php` the same way. Helpers for tests:
+`api/tests/Support/TestSchema.php`, not from the migrations: the schema of the application is
+the MariaDB SQL `api/database/schema/baseline.sql` (loaded by the baseline migration) plus the
+later Laravel migrations, which SQLite cannot run as they are. When a migration changes a tested
+table, change `TestSchema.php` the same way. Helpers for tests:
 `api/tests/Support/InteractsWithAccounts.php` (permissions, roles, accounts, `signIn()`,
 `assertSecurityEvent()`, `assertCoreLog()`) and `TestCase::failOn($table, 'INSERT|UPDATE|DELETE')`
 to force a database error.
