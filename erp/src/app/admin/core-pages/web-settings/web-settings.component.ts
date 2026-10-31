@@ -24,6 +24,11 @@
  *   string literals): `logoRemoving`, `markDirty`.
  * @refactor-note (2026-10-24) Open finding #6 (one API envelope `{data, meta?}`): language lists
  *  and page-title rows are the payload itself (were `{languages}` / `{page_titles}`).
+ * @refactor-note (2026-10-31) Optional company details: every field except the company name and
+ *   the contact e-mail has a checkbox. A switched-off field is greyed out and struck through,
+ *   its value stays stored but the public pages do not get it (`settings.hidden_fields`, sent on
+ *   save). A switched-on field must be filled in - checked before saving (`missingFieldLabels`),
+ *   the API checks the same. The GA hint was removed (the checkbox says it).
  */
 
 import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -34,7 +39,7 @@ import { BaseDataComponent } from '../../components/base-data/base-data.componen
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { ResourceCacheService } from '../../../core/services/resource-cache.service';
 import { environment } from '../../../../environments/environment';
-import { LangMeta, SiteSetting, SocialLink } from './'
+import { CompanyOptionalField, LangMeta, SiteSetting, SocialLink } from './'
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import {
@@ -104,6 +109,19 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     logo_path: null,
     brand_tagline: '', brand_tagline_i18n: {},
     copyright_text: '', copyright_text_i18n: {},
+    hidden_fields: [],
+  };
+
+  /** Label key (strings.field_*) of every optional field - order of the validation message. */
+  private readonly optionalFieldLabels: Record<CompanyOptionalField, string> = {
+    brand_tagline: 'field_brand_tagline',
+    copyright_text: 'field_copyright_text',
+    ico: 'field_ico',
+    dic: 'field_dic',
+    google_analytics_id: 'field_ga_label',
+    contact_phone: 'field_phone',
+    address: 'field_address',
+    footer_text: 'field_footer_text',
   };
 
   settingsLoading = true;
@@ -272,8 +290,63 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
     this.cd.markForCheck();
   }
 
+  /**
+   * @description Whether an optional field is switched on (shown on the public pages).
+   * @param field Optional field key.
+   * @returns True unless the field is in `settings.hidden_fields`.
+   */
+  isFieldOn(field: CompanyOptionalField): boolean {
+    return !(this.settings.hidden_fields ?? []).includes(field);
+  }
+
+  /**
+   * @description Switches an optional field on / off (checkbox next to its label).
+   * @param field Optional field key.
+   * @param on New state of the checkbox.
+   */
+  setFieldOn(field: CompanyOptionalField, on: boolean): void {
+    const hidden = (this.settings.hidden_fields ?? []).filter(f => f !== field);
+    this.settings = { ...this.settings, hidden_fields: on ? hidden : [...hidden, field] };
+    this.cd.markForCheck();
+  }
+
+  /**
+   * @description Labels of the required fields that are empty: company name, contact e-mail and
+   *   every switched-on optional field (an i18n field needs a text in at least one language).
+   * @returns Labels without the "*" mark; empty when everything is filled in.
+   */
+  missingFieldLabels(): string[] {
+    const filled = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
+    const anyText = (map: Record<string, string> | undefined): boolean => Object.values(map ?? {}).some(filled);
+    const label = (key: string): string => (this.strings[key] ?? key).replace(/\s*\*$/, '');
+
+    const missing: string[] = [];
+    if (!filled(this.settings.company_name))  missing.push(label('field_company_name'));
+    if (!filled(this.settings.contact_email)) missing.push(label('field_email'));
+
+    for (const [field, labelKey] of Object.entries(this.optionalFieldLabels) as [CompanyOptionalField, string][]) {
+      if (!this.isFieldOn(field)) continue;
+      const ok = field === 'brand_tagline'  ? anyText(this.settings.brand_tagline_i18n)
+               : field === 'copyright_text' ? anyText(this.settings.copyright_text_i18n)
+               : filled(this.settings[field]);
+      if (!ok) missing.push(label(labelKey));
+    }
+    return missing;
+  }
+
   saveSettings(): void {
     if (this.settingsSaving) return;
+
+    const missing = this.missingFieldLabels();
+    if (missing.length) {
+      this.alertDialogService.open(
+        this.t('validation_required_title'),
+        this.t('validation_required_message').replace('{fields}', missing.join(', ')),
+        'warning'
+      );
+      return;
+    }
+
     this.settingsSaving = true;
     this.settingsSaved  = false;
 
@@ -289,6 +362,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
       fd.append('contact_phone', this.settings.contact_phone ?? '');
       fd.append('address',       this.settings.address       ?? '');
       fd.append('footer_text',   this.settings.footer_text   ?? '');
+      fd.append('hidden_fields', JSON.stringify(this.settings.hidden_fields ?? []));
       fd.append('logo_file',     this.logoFile, this.logoFile.name);
       fd.append('_method', 'PUT');
 
@@ -308,6 +382,7 @@ export class WebSettingsComponent extends BaseDataComponent<any> implements OnIn
         contact_phone:        this.settings.contact_phone,
         address:              this.settings.address,
         footer_text:          this.settings.footer_text,
+        hidden_fields:        this.settings.hidden_fields ?? [],
       };
 
       this.dataHandler.put<SiteSetting>('legal/config/settings', payload as any).subscribe({

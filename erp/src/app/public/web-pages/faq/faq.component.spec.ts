@@ -6,6 +6,7 @@
  * @created 2026
  * @description Unit tests of FaqComponent: categories and their questions from the translations, the
  *   default category, switching categories (answers collapsed again) and expanding a question.
+ * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (translations + site settings).
  */
@@ -68,5 +69,19 @@ describe('FaqComponent', () => {
     ctx.setTranslations({ faq: { header_1: 'FAQ' } });
     expect(component.categories).toEqual([]);
     expect(component.filteredItems).toEqual([]);
+  });
+
+  /**
+   * @description Open finding #64: both contact sidebars show the phone only when there is one.
+   * @input Settings with phone '1'; then settings without a phone.
+   * @output tel: links present; then none.
+   */
+  it('shows the phone rows only with a phone', () => {
+    const component = fixture.componentInstance as any;
+    expect(fixture.nativeElement.querySelectorAll('a[href^="tel:"]').length).toBeGreaterThan(0);
+    component.settings = { contact_email: 'info@x.cz', contact_phone: null };
+    component.cdr.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('a[href^="tel:"]').length).toBe(0);
   });
 });

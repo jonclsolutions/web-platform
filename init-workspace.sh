@@ -46,6 +46,8 @@
 # @bugfix-note (2026-10-30c) Used Arch Linux: installed packages are checked with `pacman -T`
 #   (honours "provides") instead of `pacman -Q` (exact name) - with e.g. nodejs-lts-jod the script
 #   tried to install nodejs, which conflicts and stopped the step.
+# @refactor-note (2026-10-31) Summary lists the new test role set (full-web-core, full-shop-core,
+#   all-permissions instead of editor-web, editor-shop, manager).
 # @note THE DATABASE IS CREATED BY THIS SCRIPT (step 4, since 2026-10-30): `db:create-if-missing`,
 # `migrate`, `db:seed` - an existing database is never dropped or overwritten, only missing
 # migrations and missing base data are added. Only one application runs at a time (all use
@@ -693,7 +695,7 @@ LAST STEP – BY HAND
        e-mail:   sysadmin@sysadmin.sysadmin
        password: 123456Ab.
        2FA code: in Mailpit – http://127.0.0.1:8025 (sysadmin always needs 2FA)
-       test roles: read-only-core, read-only-web, read-only-shop, editor-web, editor-shop, manager
+       test roles: read-only-core, read-only-web, read-only-shop, full-web-core, full-shop-core, all-permissions
 EOF
 
     echo

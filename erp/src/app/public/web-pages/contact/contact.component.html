@@ -15,6 +15,8 @@
     @bugfix-note (2026-10-23): the phone link called `settings.contact_phone.replace()` -
         site settings without a phone (allowed in the admin) crashed the whole contact block
         (TypeError during rendering). It now uses the null-safe `phoneHref` of BasePublicComponent.
+    @bugfix-note (2026-10-31): open finding #64 - the phone row renders only with a phone (none
+        set, or switched off in the admin → no empty row with a dead tel: link).
 -->
 <div *ngIf="t">
 
@@ -38,6 +40,7 @@
 </span>
 <a [href]="'mailto:' + settings.contact_email" class="info-link">{{ settings.contact_email }}</a>
 </li>
+@if (settings.contact_phone) {
 <li class="info-item">
 <span class="info-icon" aria-hidden="true">
 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -46,6 +49,7 @@
 </span>
 <a [href]="phoneHref" class="info-link">{{ settings.contact_phone }}</a>
 </li>
+}
 @if (settings.address) {
 <li class="info-item">
 <span class="info-icon" aria-hidden="true">

@@ -7,6 +7,7 @@
  * @description Unit tests of ShopHeaderComponent: shop module texts, languages and site data, scrolled
  *   state, the language dropdown (closed by outside clicks), language
  *   switch and opening the cart.
+ * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (get spy answers the site config); real CartService.
  */
@@ -94,6 +95,21 @@ describe('ShopHeaderComponent', () => {
     header.openCart();
     expect(router.navigate).toHaveBeenCalledWith(['/shop/cart']);
     fixture.destroy();
+    discardPeriodicTasks();
+  }));
+
+  /**
+   * @description Open finding #64: the phone link renders only with a phone.
+   * @input Default settings (phone '+420 777 1'); settings without a phone.
+   * @output tel:+4207771; then no tel: link.
+   */
+  it('shows the phone link only with a phone', fakeAsync(() => {
+    create();
+    expect(fixture.nativeElement.querySelector('a[href^="tel:"]')?.getAttribute('href')).toBe('tel:+4207771');
+    fixture.destroy();
+    TestBed.resetTestingModule();
+    create(of({ settings: { contact_email: 'a@b.cz' } }));
+    expect(fixture.nativeElement.querySelector('a[href^="tel:"]')).toBeNull();
     discardPeriodicTasks();
   }));
 });

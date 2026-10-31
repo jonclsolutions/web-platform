@@ -12,14 +12,17 @@
  *   - the domain `sysadmin.sysadmin` allowed in the e-mail access policy, so the account keeps
  *     logging in after a company domain is set;
  *   - roles for testing permissions: read-only-core / -web / -shop (only viewing),
- *     editor-web / editor-shop (view, create, update - no delete, no maintenance switch) and
- *     manager (everything except account and security administration).
+ *     full-web-core / full-shop-core (every permission of the module and of Core) and
+ *     all-permissions (every permission - an ordinary user with full rights, not sysadmin).
  * @note Idempotent and never destructive: an existing account keeps its (possibly changed)
  *   password, an existing role keeps its (possibly edited) permissions - only what is missing
  *   is created. The permissions of a new role are chosen from the permission keys in the
  *   database, so a new permission is picked up by a role created later.
  * @security NEVER run in production: a known password. DatabaseSeeder guards the call and this
  *   seeder refuses itself outside APP_ENV=local.
+ * @refactor-note (2026-10-31) Test role set changed: editor-web, editor-shop and manager
+ *   replaced by full-web-core, full-shop-core and all-permissions. The former test roles are
+ *   soft-deleted when they still carry the test note and no user has them (OBSOLETE_TEST_ROLES).
  * @dependencies
  * - BaseDataSeeder (permissions, sysadmin role) must have run first.
  */
@@ -43,6 +46,9 @@ class DevelopmentSeeder extends Seeder
 
     /** Note in the description of every test role. */
     private const TEST_ROLE_NOTE = 'Test role (local development).';
+
+    /** Test roles of the former set (until 2026-10-31) - removed when unused, see removeObsoleteTestRoles(). */
+    private const OBSOLETE_TEST_ROLES = ['editor-web', 'editor-shop', 'manager'];
 
     /**
      * @description Creates the missing test account, policy rule and test roles.
@@ -81,12 +87,30 @@ class DevelopmentSeeder extends Seeder
             $role = CoreRole::create(['role_name' => $name, 'description' => "{$description} " . self::TEST_ROLE_NOTE, 'forces_2fa' => false]);
             $role->permissions()->sync(CorePermission::whereIn('permission_key', $permissionKeys)->pluck('id')->all());
         }
+
+        $this->removeObsoleteTestRoles();
+    }
+
+    /**
+     * @description Soft-deletes the test roles of the former set - only a role that still carries
+     *   the test note (= created by this seeder, not a real role of the same name) and that no
+     *   user has. Anything else stays untouched.
+     * @return void
+     */
+    private function removeObsoleteTestRoles(): void
+    {
+        CoreRole::whereIn('role_name', self::OBSOLETE_TEST_ROLES)
+            ->where('description', 'like', '%' . self::TEST_ROLE_NOTE)
+            ->whereDoesntHave('users')
+            ->get()
+            ->each(fn (CoreRole $role) => $role->delete());
     }
 
     /**
      * @description Test roles and their permission keys, chosen from the existing keys.
      *   Module of a key = its prefix (`core-`, `web-`, `shop-`); the tab permissions
-     *   (`view-core`, `view-web`, `view-eshop`) belong to their module.
+     *   (`view-core`, `view-web`, `view-eshop`) belong to their module. A key of no module
+     *   (e.g. `view-deleted`) is only in all-permissions.
      * @param array<int, string> $keys All permission keys of the database.
      * @return array<string, array{0: string, 1: array<int, string>}> name => [description, keys]
      */
@@ -106,15 +130,14 @@ class DevelopmentSeeder extends Seeder
             ];
         }
         foreach (['web', 'shop'] as $module) {
-            $roles["editor-{$module}"] = [
-                "Can view, create and edit in the {$module} module (no deleting, no maintenance switch).",
-                $pick(fn ($k) => $k === 'view-core' || $k === 'core-view-welcome-page'
-                    || ($inModule($k, $module) && ($isRead($k) || $isWrite($k)) && !str_contains($k, 'maintenance'))),
+            $roles["full-{$module}-core"] = [
+                "Every permission of the {$module} and core modules.",
+                $pick(fn ($k) => $inModule($k, $module) || $inModule($k, 'core')),
             ];
         }
-        $roles['manager'] = [
-            'Everything except account, role and security administration.',
-            $pick(fn ($k) => !str_starts_with($k, 'core-administrators-') && !str_starts_with($k, 'core-security-')),
+        $roles['all-permissions'] = [
+            'Every permission - an ordinary user with full rights (not the protected sysadmin role).',
+            $keys,
         ];
 
         return $roles;

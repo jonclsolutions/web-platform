@@ -18,6 +18,8 @@
  *   tested table changes. Tables are added per test round (Core + Auth, Web, Shop; Other
  *   with its tests). The web_project* tables are not in database/db.sql (added
  *   later) - their columns follow the models and controllers.
+ * @refactor-note (2026-10-31) legal_site_settings follows migration
+ *   2026_10_31_000000_make_company_details_optional (hidden_fields, nullable optional columns).
  */
 
 namespace Tests\Support;
@@ -284,18 +286,19 @@ final class TestSchema
         Schema::create('legal_site_settings', function (Blueprint $t) {
             $t->increments('id');
             $t->string('company_name');
-            $t->string('ico', 20);
+            $t->string('ico', 20)->nullable();
             $t->string('dic', 20)->nullable();
             $t->string('google_analytics_id', 20)->nullable();
-            $t->string('brand_tagline');
+            $t->string('brand_tagline')->nullable();
             $t->longText('brand_tagline_i18n')->nullable();
-            $t->string('copyright_text');
+            $t->string('copyright_text')->nullable();
             $t->longText('copyright_text_i18n')->nullable();
             $t->string('contact_email');
             $t->string('contact_phone', 20)->nullable();
-            $t->text('address');
+            $t->text('address')->nullable();
             $t->string('footer_text')->nullable();
             $t->string('logo_path')->nullable();
+            $t->longText('hidden_fields')->nullable();
             $t->timestamp('updated_at')->useCurrent();
         });
 

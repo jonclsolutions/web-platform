@@ -143,7 +143,7 @@ With `APP_ENV=local` the seeders create:
 | e-mail | `sysadmin@sysadmin.sysadmin` (the domain `sysadmin.sysadmin` is allowed in the e-mail access policy) |
 | password | `123456Ab.` |
 | 2FA | always required for the sysadmin role – the code arrives in Mailpit, http://127.0.0.1:8025 |
-| test roles | `read-only-core`, `read-only-web`, `read-only-shop` (viewing only), `editor-web`, `editor-shop` (view, create, edit – no delete, no maintenance switch), `manager` (everything except accounts, roles and security) |
+| test roles | `read-only-core`, `read-only-web`, `read-only-shop` (viewing only), `full-web-core`, `full-shop-core` (every permission of the module and of Core), `all-permissions` (every permission – an ordinary user, not the protected sysadmin) |
 
 The account and roles exist **only locally** – production never gets an account with a known
 password (see [Deployment checklist](#deployment-checklist-monthly-release)).

@@ -6,6 +6,8 @@
     @created: 2026 
     @refactor-note (2026-10-21): Texty ze sekce `header` (shop překlady), volby jazyka
         z `availableLanguages` (jazyky modulu shop) místo natvrdo psaných CZ/EN.
+    @bugfix-note (2026-10-31): open finding #64 - the phone link renders only with a phone (none
+        set, or switched off in the admin).
 -->
     
 <header class="shop-header" [class.scrolled]="isScrolled">
@@ -20,9 +22,11 @@
       @if (siteSettings) {
         <div class="contact-info">
           <a [href]="'mailto:' + siteSettings.contact_email" class="contact-link">{{ siteSettings.contact_email }}</a>
-          <a [href]="'tel:' + (siteSettings.contact_phone ? siteSettings.contact_phone.replace(/\s/g, '') : '')" class="contact-link">
-            {{ siteSettings.contact_phone }}
-          </a>
+          @if (siteSettings.contact_phone) {
+            <a [href]="'tel:' + siteSettings.contact_phone.replace(/\s/g, '')" class="contact-link">
+              {{ siteSettings.contact_phone }}
+            </a>
+          }
         </div>
       }
 

@@ -8,6 +8,7 @@
  *   form validation (Unicode names, e-mail, phone, consent), the CV size limit (20 MB) and the
  *   multipart submit with success / API error; a public page (BasePublicComponent, finding #47) with
  *   translated texts only (finding #44).
+ * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (translations, site settings cache); ActivatedRoute with paramMap id.
  */
@@ -136,5 +137,25 @@ describe('JobItemComponent', () => {
     ctx.publicData.post.and.returnValue(throwError(() => ({ status: 429 })));
     component.onSubmit();
     expect(component.errorMessage).toBe('Slow down');
+  });
+
+  /**
+   * @description Open finding #64: the contact strip shows the phone (and its separator) only
+   *   when there is one.
+   * @input Settings with e-mail only; then with phone '+420 1'.
+   * @output no tel: link / separator; then tel:+4201 and one separator.
+   */
+  it('shows the phone in the contact strip only with a phone', () => {
+    create();
+    expect(fixture.nativeElement.querySelector('.job-contact-strip')).not.toBeNull();
+    const el: HTMLElement = fixture.nativeElement;
+    const component = fixture.componentInstance as any;
+    expect(el.querySelector('a[href^="tel:"]')).toBeNull();
+    expect(el.querySelector('.job-contact-sep')).toBeNull();
+    component.settings = { contact_email: 'hr@x.cz', contact_phone: '+420 1' };
+    component.cdr.markForCheck();
+    fixture.detectChanges();
+    expect(el.querySelector('a[href^="tel:"]')?.getAttribute('href')).toBe('tel:+4201');
+    expect(el.querySelectorAll('.job-contact-sep').length).toBe(1);
   });
 });

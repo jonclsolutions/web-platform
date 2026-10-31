@@ -6,6 +6,10 @@
     @created: 2026 
     @refactor-note (2026-10-21): Všechny texty ze sekce `footer` shop překladů, bez natvrdo
         psaných fallbacků (`|| 'Odkazy'`, `|| 'Informace'`, "Bezpečné platby").
+    @bugfix-note (2026-10-31): open finding #64 + optional company details - address, IČO, DIČ and
+        phone render only with a value (a field switched off in the admin comes as null); the
+        generic copyright line is only the fallback for missing company details, not for a
+        switched-off footer text.
 -->
     
 @if (t) {
@@ -14,9 +18,15 @@
       <div class="footer-section company-info">
         @if (siteSettings) {
           <h3>{{ siteSettings.company_name }}</h3>
-          <p><strong>{{ t?.address_label }}:</strong> {{ siteSettings.address }}</p>
-          <p><strong>{{ t?.ico_label }}:</strong> {{ siteSettings.ico }}</p>
-          <p><strong>{{ t?.dic_label }}:</strong> {{ siteSettings.dic }}</p>
+          @if (siteSettings.address) {
+            <p><strong>{{ t?.address_label }}:</strong> {{ siteSettings.address }}</p>
+          }
+          @if (siteSettings.ico) {
+            <p><strong>{{ t?.ico_label }}:</strong> {{ siteSettings.ico }}</p>
+          }
+          @if (siteSettings.dic) {
+            <p><strong>{{ t?.dic_label }}:</strong> {{ siteSettings.dic }}</p>
+          }
         }
         <div class="social-links">
           @for (link of socialLinks; track link.url) {
@@ -42,7 +52,9 @@
         <h3>{{ t?.contact_header }}</h3>
         @if (siteSettings) {
           <p><strong>{{ t?.email_label }}: </strong> <a [href]="'mailto:' + siteSettings.contact_email" class="dynamic-email">{{ siteSettings.contact_email }}</a></p>
-          <p><strong>{{ t?.phone_label }}:</strong> {{ siteSettings.contact_phone }}</p>
+          @if (siteSettings.contact_phone) {
+            <p><strong>{{ t?.phone_label }}:</strong> {{ siteSettings.contact_phone }}</p>
+          }
         }
       </div>
 
@@ -70,7 +82,7 @@
     <div class="footer-bottom">
       @if (siteSettings?.footer_text) {
         <p>{{ siteSettings.footer_text }}</p>
-      } @else {
+      } @else if (!siteSettings) {
         <p>{{ t?.copyright_text?.replace('{year}', currentYear.toString()) }}</p>
       }
     </div>

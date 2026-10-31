@@ -7,6 +7,7 @@
  * @description Unit tests of ContactComponent (contact / inquiry form): form validation, stats from the
  *   home texts, attachment texts for the uploader, the multipart submit (language, optional
  *   phone, attachments) with success, error and double-submit protection.
+ * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (post spy); AlertDialogService spied (errors are shown in the app dialog).
  */
@@ -116,5 +117,16 @@ describe('ContactComponent', () => {
     expect(alertSpy).toHaveBeenCalledWith('Not sent', 'Slow down', 'danger');
     expect(nativeAlert).not.toHaveBeenCalled();
     expect(component.isSubmitted()).toBeFalse();
+  });
+
+  /**
+   * @description Open finding #64: without a phone (none set or switched off in the admin) the
+   *   contact list has no phone row.
+   * @input Settings {} (no phone, no address).
+   * @output No tel: link, no address element.
+   */
+  it('renders no phone row without a phone', () => {
+    expect(fixture.nativeElement.querySelector('a[href^="tel:"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.info-address')).toBeNull();
   });
 });

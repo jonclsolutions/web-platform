@@ -7,6 +7,9 @@
  * @description Unit tests of WebSettingsComponent – company settings (incl. logo upload and
  *   per-language texts), social links (add / save / delete with icon upload) and the page-titles
  *   tab (load, dirty tracking, save only changed rows, discard, permission).
+ * @refactor-note (2026-10-31) Optional company details: the test settings switch off GA, phone,
+ *   address and footer text; new tests of the field checkboxes, the required-field check and
+ *   the switched-off look of a field.
  * @dependencies
  * - src/testing/admin-test-helpers.ts (DataHandler spy, confirm/alert spies, permission stub),
  *   ResourceCacheService (real)
@@ -25,7 +28,10 @@ describe('WebSettingsComponent', () => {
   let component: WebSettingsComponent;
 
   const config = {
-    settings: { company_name: 'RPSW', ico: '1', dic: 'CZ1', contact_email: 'a@b.cz', brand_tagline: 'Tag', copyright_text: '©', logo_path: 'logo.png' },
+    settings: {
+      company_name: 'RPSW', ico: '1', dic: 'CZ1', contact_email: 'a@b.cz', brand_tagline: 'Tag', copyright_text: '©', logo_path: 'logo.png',
+      hidden_fields: ['google_analytics_id', 'contact_phone', 'address', 'footer_text']
+    },
     social_links: [{ id: 5, name: 'LinkedIn', url: 'https://l', icon_path: 'li.png', position: 1 }]
   };
   /** Payload of GET legal/config/page-titles - the rows themselves (finding #6, was {page_titles}). */
@@ -106,6 +112,90 @@ describe('WebSettingsComponent', () => {
       expect(JSON.parse(fd.get('brand_tagline_i18n'))).toEqual({ cz: 'Tag', en: '' });
       expect(component.logoFile).toBeNull();
       flush();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Optional fields: on unless listed in hidden_fields; the checkbox switches them
+     *   and the list is sent on save (JSON body and multipart).
+     * @input  loaded settings (GA, phone, address, footer off); setFieldOn('dic', false),
+     *   setFieldOn('address', true) + address 'Praha'; saveSettings(); then a logo + saveSettings()
+     * @output isFieldOn dic true / GA false; body.hidden_fields [GA, phone, footer, dic];
+     *   FormData hidden_fields the same list as JSON
+     */
+    it('switches optional fields on and off and sends them', fakeAsync(() => {
+      init();
+      expect(component.isFieldOn('dic')).toBeTrue();
+      expect(component.isFieldOn('google_analytics_id')).toBeFalse();
+      component.setFieldOn('dic', false);
+      component.setFieldOn('address', true);
+      component.settings.address = 'Praha';
+      (ctx.dataHandler as any).put.and.returnValue(of({ company_name: 'RPSW' }));
+      component.saveSettings();
+      const expected = ['google_analytics_id', 'contact_phone', 'footer_text', 'dic'];
+      expect((ctx.dataHandler as any).put.calls.mostRecent().args[1].hidden_fields).toEqual(expected);
+      flush();
+
+      component.setFieldOn('dic', false);
+      component.setFieldOn('address', true);
+      component.settings.address = 'Praha';
+      component.onLogoSelected({ target: { files: [new File([new Uint8Array(10)], 'l.png', { type: 'image/png' })], value: 'x' } } as any);
+      component.saveSettings();
+      const fd = (ctx.dataHandler as any).upload.calls.mostRecent().args[1] as FormData;
+      expect(JSON.parse(fd.get('hidden_fields') as string)).toEqual(expected);
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description Saving is refused while a required field is empty: name, e-mail and every
+     *   switched-on optional field (i18n: a text in some language); switched-off fields do not count.
+     * @input  name '', phone switched on and empty, tagline texts empty, GA off and empty; saveSettings()
+     * @output warning 'validation_required_title' listing name, tagline and phone (no "*", no GA); no PUT;
+     *   with everything filled / off → missingFieldLabels() []
+     */
+    it('refuses to save empty required fields', fakeAsync(() => {
+      init();
+      component.settings.company_name = ' ';
+      component.setFieldOn('contact_phone', true);
+      component.settings.brand_tagline_i18n = { cz: '', en: ' ' };
+      component.saveSettings();
+      const [title, message, type] = ctx.alert.open.calls.mostRecent().args;
+      expect([title, type]).toEqual(['web-settings.validation_required_title', 'warning']);
+      expect(message).toBe('web-settings.validation_required_message');
+      expect(component.missingFieldLabels()).toEqual(['web-settings.field_company_name', 'web-settings.field_brand_tagline', 'web-settings.field_phone']);
+      expect((ctx.dataHandler as any).put).not.toHaveBeenCalled();
+
+      component.settings.company_name = 'RPSW';
+      component.settings.brand_tagline_i18n = { cz: '', en: 'Tag' };
+      component.setFieldOn('contact_phone', false);
+      expect(component.missingFieldLabels()).toEqual([]);
+      discardPeriodicTasks();
+    }));
+
+    /**
+     * @description A switched-off field is shown greyed out (struck through) with a disabled input;
+     *   unticking a checkbox switches its field off.
+     * @input  rendered company tab; GA off, DIČ on; untick the DIČ checkbox
+     * @output GA field .ws-field--off with disabled input; DIČ field not off, input enabled;
+     *   after the click DIČ off
+     */
+    it('renders switched-off fields disabled', fakeAsync(() => {
+      fixture.detectChanges();
+      flush();
+      fixture.detectChanges();
+      const field = (name: string): HTMLElement =>
+        (fixture.nativeElement.querySelector(`[name="${name}"]`) as HTMLElement).closest('.ws-field') as HTMLElement;
+      expect(field('google_analytics_id').classList).toContain('ws-field--off');
+      expect((field('google_analytics_id').querySelector('.ws-input') as HTMLInputElement).disabled).toBeTrue();
+      expect(field('dic').classList).not.toContain('ws-field--off');
+
+      const box = field('dic').querySelector('.ws-field-toggle') as HTMLInputElement;
+      box.checked = false;
+      box.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+      expect(component.isFieldOn('dic')).toBeFalse();
+      expect(field('dic').classList).toContain('ws-field--off');
       discardPeriodicTasks();
     }));
 

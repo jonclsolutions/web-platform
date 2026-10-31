@@ -17,6 +17,7 @@ namespace Tests\Feature\Other;
 
 use App\Models\Legal\PageTitle;
 use App\Models\Legal\SiteSetting;
+use App\Support\Mail\CompanyContactInfo;
 use App\Models\Legal\SocialLink;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -47,7 +48,11 @@ class SiteConfigurationTest extends TestCase
      */
     private function company(array $overrides = []): array
     {
-        return array_merge(['company_name' => 'Acme s.r.o.', 'ico' => '12345678', 'contact_email' => 'info@acme.cz', 'address' => 'Praha 1', 'brand_tagline' => 'Base', 'copyright_text' => '© Acme'], $overrides);
+        return array_merge([
+            'company_name' => 'Acme s.r.o.', 'ico' => '12345678', 'dic' => 'CZ12345678', 'contact_email' => 'info@acme.cz',
+            'contact_phone' => '+420 111 222 333', 'address' => 'Praha 1', 'brand_tagline' => 'Base', 'copyright_text' => '© Acme',
+            'footer_text' => 'Footer', 'google_analytics_id' => 'G-ABC12345',
+        ], $overrides);
     }
 
     /**
@@ -122,6 +127,53 @@ class SiteConfigurationTest extends TestCase
 
         $this->putJson('/api/legal/config/settings', $this->company(['ico' => '', 'contact_email' => 'x', 'contact_phone' => str_repeat('1', 21), 'footer_text' => str_repeat('a', 256), 'google_analytics_id' => 'UA-1']))
             ->assertStatus(422)->assertJsonValidationErrors(['ico', 'contact_email', 'contact_phone', 'footer_text', 'google_analytics_id']);
+    }
+
+    /**
+     * @description Optional company details (hidden_fields): a switched-off field is not validated
+     *   and keeps its stored value, a switched-on one is required (i18n: a text in any language);
+     *   hidden_fields comes as an array or a JSON string (multipart), unknown keys are refused,
+     *   not sending it keeps the stored choice; the public config and the mail contact info get
+     *   switched-off fields as null.
+     * @input Stored full row; PUT with dic/phone/GA/tagline switched off and empty / invalid values;
+     *        PUT without hidden_fields and without dic; PUT hidden_fields JSON string; invalid keys;
+     *        switched-on empty fields; GET public config; CompanyContactInfo::get().
+     * @output 200, dic/phone/GA/tagline values kept, hidden_fields stored; 200 with the stored choice;
+     *   422 hidden_fields; 422 dic, address, brand_tagline; public dic/phone/GA/tagline(+i18n) null,
+     *   no hidden_fields key; contactPhone null.
+     */
+    public function test_optional_fields(): void
+    {
+        $this->signIn($this->userWith(['core-legal-config-view', 'core-legal-config-update']));
+        SiteSetting::create($this->company(['brand_tagline_i18n' => ['cz' => 'Ahoj']]));
+        $hidden = ['dic', 'contact_phone', 'google_analytics_id', 'brand_tagline'];
+
+        $this->putJson('/api/legal/config/settings', $this->company([
+            'hidden_fields' => $hidden, 'dic' => '', 'contact_phone' => str_repeat('9', 40), 'google_analytics_id' => 'UA-1',
+            'brand_tagline_i18n' => ['cz' => ''],
+        ]))->assertOk()->assertJsonPath('data.hidden_fields', $hidden);
+        $row = SiteSetting::first();
+        $this->assertSame(['CZ12345678', '+420 111 222 333', 'G-ABC12345', ['cz' => 'Ahoj']], [$row->dic, $row->contact_phone, $row->google_analytics_id, $row->brand_tagline_i18n]);
+
+        // Not sent = stored choice stays (dic still switched off, so an empty dic is fine).
+        $this->putJson('/api/legal/config/settings', array_merge($this->company(), ['dic' => null]))->assertOk()->assertJsonPath('data.hidden_fields', $hidden);
+        $this->putJson('/api/legal/config/settings', $this->company(['hidden_fields' => json_encode(['dic'])]))->assertOk()->assertJsonPath('data.hidden_fields', ['dic']);
+
+        $this->putJson('/api/legal/config/settings', $this->company(['hidden_fields' => ['company_name']]))->assertStatus(422)->assertJsonValidationErrors(['hidden_fields']);
+        $this->putJson('/api/legal/config/settings', $this->company(['hidden_fields' => 'not json']))->assertStatus(422)->assertJsonValidationErrors(['hidden_fields']);
+        $this->putJson('/api/legal/config/settings', $this->company(['hidden_fields' => [], 'dic' => '', 'address' => '']))->assertStatus(422)->assertJsonValidationErrors(['dic', 'address']);
+        $this->putJson('/api/legal/config/settings', $this->company(['hidden_fields' => [], 'brand_tagline' => '', 'brand_tagline_i18n' => ['cz' => ' ', 'en' => '']]))
+            ->assertStatus(422)->assertJsonValidationErrors(['brand_tagline']);
+
+        SiteSetting::first()->update(['hidden_fields' => $hidden]);
+        $public = $this->getJson('/api/public/legal/config')->assertOk()->json('data.settings');
+        foreach (['dic', 'contact_phone', 'google_analytics_id', 'brand_tagline', 'brand_tagline_i18n'] as $column) {
+            $this->assertNull($public[$column], $column);
+        }
+        $this->assertSame(['12345678', 'Praha 1'], [$public['ico'], $public['address']]);
+        $this->assertArrayNotHasKey('hidden_fields', $public);
+        $this->assertNull(CompanyContactInfo::get()['contactPhone']);
+        $this->getJson('/api/legal/config')->assertJsonPath('data.settings.dic', 'CZ12345678');
     }
 
     /**

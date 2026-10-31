@@ -299,9 +299,7 @@
         "group_support": "Podpora",
         "ico_label": "IČO",
         "dic_label": "DIČ",
-        "contact_header": "Kontakt",
-        "copyright_text": "© {year} Všechna práva vyhrazena.",
-        "brand_tagline": null
+        "contact_header": "Kontakt"
     },
     "legal": {
         "privacy_policy": "Zásady ochrany osobních údajů",

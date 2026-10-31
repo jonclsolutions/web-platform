@@ -6,6 +6,7 @@
  * @created 2026
  * @description Unit tests of ShopFooterComponent: shop module, site data (footer text with {year}), social
  *   links, navigation / legal links, payment method icons (image or icon) and request errors.
+ * @refactor-note (2026-10-31) Open finding #64: test of the hidden phone / company rows.
  * @dependencies
  * - createPublicPageContext (get spy routed by URL).
  */
@@ -68,5 +69,28 @@ describe('ShopFooterComponent', () => {
     create(throwError(() => new Error('x')));
     expect(console.error).toHaveBeenCalled();
     expect(footer.siteSettings).toBeNull();
+  });
+
+  /**
+   * @description Open finding #64 + optional company details: address, IČO, DIČ and phone render
+   *   only with a value; a switched-off footer text (null) shows no line, the generic copyright
+   *   is only for missing company details.
+   * @input Settings with IČO only; then no settings (config without settings).
+   * @output one company row (IČO), no phone row, empty footer bottom; then the translated copyright.
+   */
+  it('renders only the filled-in company details', () => {
+    create(of({ settings: { company_name: 'Shop s.r.o.', ico: '123', contact_email: 'a@b.cz' }, social_links: [] }));
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('.company-info p').length).toBe(1);
+    expect(el.querySelector('.company-info p')?.textContent).toContain('123');
+    expect(el.querySelectorAll('.contact-info p').length).toBe(1);
+    expect(el.querySelector('.footer-bottom p')).toBeNull();
+    fixture.destroy();
+
+    TestBed.resetTestingModule();
+    create(of({ settings: null, social_links: [] }));
+    ctx.setTranslations({ footer: { title: 'Shop', copyright_text: '© {year} All' }, navigation: {}, legal: {} });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.footer-bottom p')?.textContent).toContain(`© ${new Date().getFullYear()} All`);
   });
 });

@@ -11,6 +11,9 @@
     @refactor-note (2026-09-30) Added page tabs (.ws-tabs / .ws-tab / .ws-tab-dot)
                for "Company details" / "Page titles" and the page titles block
                (`pt-` classes, appended at the end of this file). Nothing else changed.
+    @refactor-note (2026-10-31) Optional company details: .ws-fields-note, the checkbox in
+               the label (.ws-label--toggle, .ws-field-toggle) and the switched-off state
+               (.ws-field--off: muted label, disabled struck-through input).
 */
 
 .ws-container {
@@ -361,6 +364,43 @@
   display: flex;
   align-items: center;
 }
+/*
+ * @component: Optional company detail fields
+ * @description Note above the fields; checkbox inside the label (clicking the label text toggles
+ *   it); a switched-off field: muted label, greyed-out struck-through input - the value is kept.
+ * @usage .ws-fields-note, .ws-label.ws-label--toggle > input.ws-field-toggle, .ws-field.ws-field--off
+ */
+.ws-fields-note {
+  margin: 0 0 14px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-zinc-500);
+}
+.ws-label--toggle {
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+}
+.ws-field-toggle {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--color-zinc-900);
+  cursor: pointer;
+}
+.ws-field--off .ws-label {
+  color: var(--color-zinc-400);
+}
+.ws-field--off .ws-input,
+.ws-field--off .ws-textarea {
+  background: var(--color-zinc-50);
+  color: var(--color-zinc-400);
+  text-decoration: line-through;
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
 .ws-input,
 .ws-textarea {
   padding: 9px 13px;

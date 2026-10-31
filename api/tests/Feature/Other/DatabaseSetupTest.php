@@ -284,7 +284,8 @@ class DatabaseSetupTest extends TestCase
      * @input APP_ENV local; role sysadmin; permissions of core / web / shop (view, create, update,
      *   delete, maintenance, tab permissions, administrators, security).
      * @output user sysadmin@sysadmin.sysadmin (activated, password 123456Ab., role sysadmin);
-     *   domain rule sysadmin.sysadmin; six roles with exactly the expected keys.
+     *   domain rule sysadmin.sysadmin; six test roles with exactly the expected keys
+     *   (read-only-*, full-web-core, full-shop-core, all-permissions).
      */
     public function test_development_seeder_creates_the_test_data(): void
     {
@@ -314,20 +315,41 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame(['core-administrators-view', 'core-external-links-view', 'core-security-view', 'core-view-welcome-page', 'view-core'], $roleKeys('read-only-core'));
         $this->assertSame(['view-web', 'web-news-view', 'web-view-dashboard'], $roleKeys('read-only-web'));
         $this->assertSame(['shop-products-view', 'view-eshop'], $roleKeys('read-only-shop'));
-        $this->assertSame(['core-view-welcome-page', 'view-core', 'view-web', 'web-news-create', 'web-news-update', 'web-news-view', 'web-view-dashboard'], $roleKeys('editor-web'));
-        $this->assertSame(['core-view-welcome-page', 'shop-products-update', 'shop-products-view', 'view-core', 'view-eshop'], $roleKeys('editor-shop'));
-        $manager = $roleKeys('manager');
-        $this->assertNotContains('core-administrators-view', $manager);
-        $this->assertNotContains('core-security-view', $manager);
-        $this->assertContains('web-news-delete', $manager);
-        $this->assertStringContainsString('Test role (local development).', CoreRole::where('role_name', 'manager')->value('description'));
+        $core = ['core-administrators-update', 'core-administrators-view', 'core-external-links-create', 'core-external-links-view', 'core-security-view', 'core-view-welcome-page', 'view-core'];
+        $this->assertSame([...$core, 'view-web', 'web-news-create', 'web-news-delete', 'web-news-update', 'web-news-view', 'web-set-maintenance-mode', 'web-view-dashboard'], $roleKeys('full-web-core'));
+        $this->assertSame([...array_slice($core, 0, 6), 'shop-products-delete', 'shop-products-update', 'shop-products-view', 'view-core', 'view-eshop'], $roleKeys('full-shop-core'));
+        $this->assertSame(collect($keys)->sort()->values()->all(), $roleKeys('all-permissions'));
+        $this->assertStringContainsString('Test role (local development).', CoreRole::where('role_name', 'all-permissions')->value('description'));
+        $this->assertSame(7, CoreRole::count());
+    }
+
+    /**
+     * @description The test roles of the former set (editor-web, editor-shop, manager) are removed
+     *   only when created by the seeder (test note) and unused; anything else stays.
+     * @input APP_ENV local; roles editor-web (test note, no user), editor-shop (test note, has a user),
+     *   manager (own description, no user); run DevelopmentSeeder.
+     * @output editor-web soft-deleted; editor-shop and manager kept.
+     */
+    public function test_development_seeder_removes_unused_former_test_roles(): void
+    {
+        $this->app['env'] = 'local';
+        $this->role('sysadmin');
+        $this->role('editor-web', [], ['description' => 'Old. Test role (local development).']);
+        $this->user([], $this->role('editor-shop', [], ['description' => 'Old. Test role (local development).']));
+        $this->role('manager', [], ['description' => 'Our real manager role']);
+
+        $this->seed(DevelopmentSeeder::class);
+
+        $this->assertSoftDeleted('core_roles', ['role_name' => 'editor-web']);
+        $this->assertNotSoftDeleted('core_roles', ['role_name' => 'editor-shop']);
+        $this->assertNotSoftDeleted('core_roles', ['role_name' => 'manager']);
     }
 
     /**
      * @description Running it again changes nothing that exists: a changed password and an edited
      *   role stay; nothing is duplicated.
-     * @input seeded once; password changed; manager permissions removed; seeded again.
-     * @output password unchanged; manager still without permissions; one user, one domain rule, six roles + sysadmin.
+     * @input seeded once; password changed; all-permissions permissions removed; seeded again.
+     * @output password unchanged; all-permissions still without permissions; one user, one domain rule, six roles + sysadmin.
      */
     public function test_development_seeder_never_overwrites(): void
     {
@@ -337,11 +359,11 @@ class DatabaseSetupTest extends TestCase
         $this->seed(DevelopmentSeeder::class);
 
         User::where('user_email', DevelopmentSeeder::TEST_EMAIL)->update(['user_password_hash' => Hash::make('Changed1!')]);
-        CoreRole::where('role_name', 'manager')->firstOrFail()->permissions()->sync([]);
+        CoreRole::where('role_name', 'all-permissions')->firstOrFail()->permissions()->sync([]);
         $this->seed(DevelopmentSeeder::class);
 
         $this->assertTrue(Hash::check('Changed1!', User::where('user_email', DevelopmentSeeder::TEST_EMAIL)->value('user_password_hash')));
-        $this->assertSame(0, CoreRole::where('role_name', 'manager')->firstOrFail()->permissions()->count());
+        $this->assertSame(0, CoreRole::where('role_name', 'all-permissions')->firstOrFail()->permissions()->count());
         $this->assertSame(1, User::where('user_email', DevelopmentSeeder::TEST_EMAIL)->count());
         $this->assertSame(1, CoreEmailAccessRule::where('value', 'sysadmin.sysadmin')->count());
         $this->assertSame(7, CoreRole::count());
@@ -371,7 +393,8 @@ class DatabaseSetupTest extends TestCase
      * @output permissions = data/permissions.php (96 keys incl. view-core, core-administrators-view);
      *   sysadmin with every permission and protected; 23 titles incl. web.not-found and
      *   admin.panel; types gdpr / tos / cookies; web + shop active; placeholder company details
-     *   (English, example.com, no analytics ID) with the default logo; English legal templates
+     *   (English, example.com, no analytics ID - the GA field switched off) with the default logo;
+     *   neutral page titles ("Company name", no brand); English legal templates
      *   8 / 10 / 7 sections with placeholders; logo + flags on the public disk; no account.
      */
     public function test_base_data_seeder(): void
@@ -383,6 +406,10 @@ class DatabaseSetupTest extends TestCase
         $this->assertSame('Company name Ltd.', $company->company_name);
         $this->assertSame('info@example.com', $company->contact_email);
         $this->assertNull($company->google_analytics_id);
+        $this->assertSame(['google_analytics_id'], $company->hidden_fields);
+        $homeTitle = json_decode((string) DB::table('legal_page_titles')->where('area', 'web')->where('page_key', 'home')->value('title_i18n'), true);
+        $this->assertSame('Home | Company name', $homeTitle['en']);
+        $this->assertSame(0, DB::table('legal_page_titles')->where('title_i18n', 'like', '%JonclSolutions%')->count());
         $this->assertSame(BaseDataSeeder::DEFAULT_LOGO_PATH, $company->logo_path);
         $this->assertSame('Your company tagline', $company->brand_tagline_i18n['en']);
         $counts = [];

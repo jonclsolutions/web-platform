@@ -11,6 +11,8 @@
  *   example.com is a domain reserved for examples (RFC 2606) - no real mailbox.
  * @note No Google Analytics ID: analytics may run only with consent and only once the operator
  *   sets their own ID. The logo is set by BaseDataSeeder (copied default logo).
+ * @refactor-note (2026-10-31) `hidden_fields`: the GA field starts switched off (no ID yet);
+ *   every other placeholder is switched on so it is visible as "to be filled in".
  */
 
 return [
@@ -26,4 +28,5 @@ return [
     'contact_phone'       => '+420 000 000 000',
     'address'             => 'Street 1, 100 00 City',
     'footer_text'         => '© Company name Ltd. All rights reserved.',
+    'hidden_fields'       => ['google_analytics_id'],
 ];

@@ -53,6 +53,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * @description Controller responsible for site metadata, branding, and social connectivity.
@@ -83,23 +86,29 @@ class SiteConfigurationController extends Controller
      */
     public function updateSettings(Request $request): JsonResponse
     {
+        $settings = SiteSetting::first() ?? new SiteSetting();
+        // Not sent (older client / partial update) = the stored choice stays.
+        $hidden = $request->has('hidden_fields')
+            ? $this->validatedHiddenFields($request)
+            : array_values($settings->hidden_fields ?? []);
+        $rule = fn (string $field, string $rules): string => in_array($field, $hidden, true) ? 'nullable' : $rules;
+
         $validated = $request->validate([
             'company_name'         => 'required|string|max:255',
-            'ico'                  => 'required|string|max:20',
-            'dic'                  => 'nullable|string|max:20',
-            'google_analytics_id'  => 'nullable|string|max:20|regex:/^G-[A-Z0-9]{6,10}$/',
+            'ico'                  => $rule('ico', 'required|string|max:20'),
+            'dic'                  => $rule('dic', 'required|string|max:20'),
+            'google_analytics_id'  => $rule('google_analytics_id', 'required|string|max:20|regex:/^G-[A-Z0-9]{6,10}$/'),
             'brand_tagline'        => 'nullable|string|max:255',
             'brand_tagline_i18n'   => 'nullable',
             'copyright_text'       => 'nullable|string|max:255',
             'copyright_text_i18n'  => 'nullable',
             'contact_email'        => 'required|email|max:255',
-            'contact_phone'        => 'nullable|string|max:20',
-            'address'              => 'required|string|max:500',
-            'footer_text'          => 'nullable|string|max:255',
+            'contact_phone'        => $rule('contact_phone', 'required|string|max:20'),
+            'address'              => $rule('address', 'required|string|max:500'),
+            'footer_text'          => $rule('footer_text', 'required|string|max:255'),
             'logo_file'            => 'nullable|file|image|max:2048',
         ]);
 
-        $settings = SiteSetting::first() ?? new SiteSetting();
         // Only validated fields - see bugfix-note (2026-10-23).
         $data = collect($validated)->except(['logo_file', 'brand_tagline_i18n', 'copyright_text_i18n'])->all();
 
@@ -116,6 +125,22 @@ class SiteConfigurationController extends Controller
         // Fallback: Ensure primary columns match the Czech (cz) translation
         $data['brand_tagline']  = $data['brand_tagline_i18n']['cz']  ?? ($data['brand_tagline']  ?? $settings->brand_tagline);
         $data['copyright_text'] = $data['copyright_text_i18n']['cz'] ?? ($data['copyright_text'] ?? $settings->copyright_text);
+
+        // A switched-on i18n field needs a text in at least one language (the stored base column
+        // does not count - the admin form shows only the translations).
+        foreach (['brand_tagline', 'copyright_text'] as $field) {
+            if (!in_array($field, $hidden, true) && !$this->hasAnyText($data["{$field}_i18n"], $validated[$field] ?? null)) {
+                throw ValidationException::withMessages([$field => __('validation.required', ['attribute' => str_replace('_', ' ', $field)])]);
+            }
+        }
+
+        // Switched-off fields keep their stored value (switching on restores it).
+        foreach ($hidden as $field) {
+            foreach (SiteSetting::HIDEABLE_FIELDS[$field] as $column) {
+                unset($data[$column]);
+            }
+        }
+        $data['hidden_fields'] = $hidden;
 
         // Logo handling
         if ($request->hasFile('logo_file')) {
@@ -161,7 +186,8 @@ class SiteConfigurationController extends Controller
         }
 
         return $this->respond([
-            'settings'     => $settings,
+            // Switched-off fields are null - see refactor-note (2026-10-31).
+            'settings'     => $settings?->toPublicArray(),
             'social_links' => $socialLinks,
         ]);
     }
@@ -254,6 +280,48 @@ class SiteConfigurationController extends Controller
 
         $this->logAction($request, CoreLog::class, 'delete', 'Legal', "Deleted social network: {$name}", $id, 'SocialLink');
         return response()->json(null, 204);
+    }
+
+    /**
+     * @description Reads and validates `hidden_fields` - an array, or a JSON string (multipart
+     *   upload with a logo sends it like the i18n fields); null = nothing switched off.
+     * @param Request $request The update request.
+     * @return array<int, string> Unique keys of SiteSetting::HIDEABLE_FIELDS.
+     * @throws ValidationException When the value is not a list of known field keys.
+     */
+    private function validatedHiddenFields(Request $request): array
+    {
+        $raw = $request->input('hidden_fields') ?? [];
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        $validator = Validator::make(['hidden_fields' => $raw], [
+            'hidden_fields'   => 'present|array',
+            'hidden_fields.*' => ['string', Rule::in(array_keys(SiteSetting::HIDEABLE_FIELDS))],
+        ]);
+        if ($validator->fails()) {
+            throw ValidationException::withMessages(['hidden_fields' => __('validation.in', ['attribute' => 'hidden fields'])]);
+        }
+
+        return array_values(array_unique($raw));
+    }
+
+    /**
+     * @description Whether an i18n field has a non-empty text in any language (or the base column).
+     * @param array<string, mixed> $i18n Texts by language.
+     * @param mixed $base The base column value sent in the request.
+     * @return bool True when some text is filled in.
+     */
+    private function hasAnyText(array $i18n, mixed $base): bool
+    {
+        foreach ([...array_values($i18n), $base] as $text) {
+            if (is_string($text) && trim($text) !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -9,6 +9,9 @@
  * @refactor-note (2026-09-30) Flat `footerNavLinks` list replaced by
  *   `footerLinkGroups` (3 topic groups). "Home" removed (logo links home).
  *   Login moved to the bottom bar (`footerLoginLink`).
+ * @refactor-note (2026-10-31) Optional company details: `copyrightText` / `brandTagline` no
+ *   longer fall back to the translation texts - the footer renders only with the company details,
+ *   and a field switched off in the admin (null from the API) must stay hidden.
  */
 
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -102,24 +105,28 @@ export class PublicFooterComponent extends BasePublicComponent {
     this.loadFooterLoginLink();
   }
 
+  /**
+   * @description Copyright line of the current language ('{year}' replaced); '' when the company
+   *   details have none (switched off in the admin) - the template then leaves the line out.
+   * @returns The copyright text or ''.
+   */
   get copyrightText(): string {
     const lang = this.localizationService.getCurrentLanguage();
     const i18n = this.settings?.copyright_text_i18n;
-
-    const text = (i18n && i18n[lang])
-      ? i18n[lang]
-      : (this.settings?.copyright_text || this.t?.copyright_text || '');
+    const text = (i18n && i18n[lang]) ? i18n[lang] : (this.settings?.copyright_text || '');
 
     return text.replace('{year}', this.currentYear.toString());
   }
 
+  /**
+   * @description Brand tagline of the current language; '' when switched off in the admin.
+   * @returns The tagline or ''.
+   */
   get brandTagline(): string {
     const lang = this.localizationService.getCurrentLanguage();
     const i18n = this.settings?.brand_tagline_i18n;
 
-    return (i18n && i18n[lang])
-      ? i18n[lang]
-      : (this.settings?.brand_tagline || this.t?.brand_tagline);
+    return (i18n && i18n[lang]) ? i18n[lang] : (this.settings?.brand_tagline || '');
   }
 
   /** @description Translates one link definition. */

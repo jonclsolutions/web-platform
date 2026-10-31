@@ -13,6 +13,8 @@
  * stránka v adminu, `SiteConfigurationController::updateSettings()`).
  * @dependencies
  * - App\Models\Legal\SiteSetting: Singleton řádek s firemní konfigurací.
+ * @refactor-note (2026-10-31) A phone switched off in the admin (SiteSetting::hidden_fields)
+ *   is returned as null - the mail footer leaves it out like a missing phone.
  */
 
 namespace App\Support\Mail;
@@ -38,7 +40,8 @@ class CompanyContactInfo
         return [
             'companyName'  => $settings->company_name ?? config('app.name'),
             'contactEmail' => $settings->contact_email ?? null,
-            'contactPhone' => $settings->contact_phone ?? null,
+            // A phone switched off in the admin is not shown in the e-mails either.
+            'contactPhone' => $settings?->isFieldHidden('contact_phone') ? null : ($settings->contact_phone ?? null),
         ];
     }
 }
