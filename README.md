@@ -55,7 +55,8 @@ synced system (`sudo pacman -Syu`); the script stops with these instructions whe
 **Prerequisite (once per machine):** XAMPP installed in `/opt/lampp` –
 [download](https://www.apachefriends.org/download.html), then
 `chmod +x xampp-linux-*-installer.run && sudo ./xampp-linux-*-installer.run`.
-`init-workspace.sh` checks this first and stops without changing anything if XAMPP is missing.
+`init-workspace.sh` checks this right after the GitHub step and stops without installing anything if
+XAMPP is missing.
 
 Then a freshly cloned application is prepared by one script:
 
@@ -65,18 +66,24 @@ cd web-platform
 ./init-workspace.sh
 ```
 
+No SSH key on GitHub yet (`Permission denied (publickey)`)? Clone over HTTPS
+(`git clone https://github.com/jonclsolutions/web-platform.git`) – the first step of the script
+connects this computer to GitHub over SSH and then offers to switch the remote to SSH.
+
 The script is universal – the same unchanged file works for web-platform and every app cloned
 from it (the app name is the directory name). It is safe to run again any time; steps that are
 already done are skipped and nothing existing is overwritten.
 
 | Step | What happens |
 |---|---|
+| GitHub (SSH) | checks `ssh -T git@github.com`; when not connected it asks whether to connect: uses the existing default key or creates one with `ssh-keygen` (asks for a passphrase), shows the **public** key with the GitHub page to add it and checks again – can be skipped. github.com is trusted only with the host key GitHub publishes. Offers to switch an HTTPS `origin` to SSH |
+| Temp folder | the git-ignored `.temp/` folder for local scratch files (media, notes, … – see `.temp/temp.txt`): not backed up, may be deleted any time, keep nothing important there |
 | System packages | installs missing PHP extensions, Composer, Node.js and tools – **Fedora** via `dnf`, **Arch Linux** via `pacman` (plus the PHP extensions Arch ships disabled, enabled in `/etc/php/conf.d/20-laravel-dev.ini`; `pcov` for test coverage is AUR-only and only reported) |
 | Mailpit | downloads the latest release to `~/.local/bin`, **only if its SHA-256 matches** the digest GitHub publishes |
 | Laravel | creates `api/.env` from `.env.example` with local defaults (only if missing), `composer install`, `APP_KEY` (only if empty), `public/storage` symlink (stale ones are fixed), writable `storage/` |
 | Database | starts MariaDB of XAMPP if needed, **creates the database** (`DB_DATABASE`, `utf8mb4_unicode_ci`), runs the migrations and the seeders – base data plus, with `APP_ENV=local`, the test account and test roles (see [Local test login](#local-test-login)); an existing database is never dropped or overwritten |
 | Angular | `npm ci`, local SSL certificate `erp/ssl/localhost.{crt,key}` for `ng serve` (trusted if `mkcert` is installed; per developer, git-ignored) |
-| Repository | required `.gitignore` rules, executable scripts, the git-ignored `.temp/` folder for local scratch files (images, media, notes – see `.temp/info.txt`; do not keep anything important there), warns if a new app still pushes to web-platform |
+| Repository | required `.gitignore` rules, executable scripts, warns if a new app still pushes to web-platform |
 | Shell aliases | `<app>` (cd), `<app>-dev`, `<app>-build` in `~/.zshrc` / `~/.bashrc` – one block per app |
 
 It never touches the user crontab, and everything it writes belongs to the checkout itself

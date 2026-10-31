@@ -12,21 +12,27 @@
 #   git clone git@github.com:jonclsolutions/web-platform.git my-app
 #   cd my-app && ./init-workspace.sh
 #
-# PREREQUISITE (checked first – the script stops without it):
+# (No SSH key on GitHub yet? Clone over HTTPS - https://github.com/jonclsolutions/web-platform.git -
+#  and let step 1 connect this computer over SSH; it then offers to switch the remote to SSH.)
+#
+# PREREQUISITE (checked right after step 1 – the script stops without it):
 #   XAMPP installed in /opt/lampp – https://www.apachefriends.org/download.html
 #
 # Steps (each one is skipped when already done – safe to run again, nothing
 # existing is overwritten):
-#   1. System packages – PHP + extensions (incl. pcov for test coverage), Composer, Node.js, tools
+#   1. GitHub (SSH)    – checks the SSH connection to GitHub; when missing it offers to connect
+#                        (SSH key, adding it on GitHub, check) – may be skipped
+#   2. Temp folder     – .temp/ with temp.txt: local scratch space (media, notes, …), git-ignored
+#   3. System packages – PHP + extensions (incl. pcov for test coverage), Composer, Node.js, tools
 #                        (Fedora: dnf, Arch Linux: pacman)
-#   2. Mailpit         – local SMTP catcher, verified release → ~/.local/bin
-#   3. Laravel         – api/.env, composer install, APP_KEY, storage symlink, permissions
-#   4. Database        – creates the database (XAMPP MariaDB), runs the migrations and the seeders:
+#   4. Mailpit         – local SMTP catcher, verified release → ~/.local/bin
+#   5. Laravel         – api/.env, composer install, APP_KEY, storage symlink, permissions
+#   6. Database        – creates the database (XAMPP MariaDB), runs the migrations and the seeders:
 #                        base data + the local test account sysadmin@sysadmin.sysadmin / 123456Ab.
-#   5. Angular         – npm ci, local SSL certificate for `ng serve`
-#   6. Repository      – .gitignore entries, executable scripts, .temp/ folder, git remote check
-#   7. Shell aliases   – <app>, <app>-dev, <app>-build in your shell profile
-#   8. Summary         – result + the manual step: review api/.env
+#   7. Angular         – npm ci, local SSL certificate for `ng serve`
+#   8. Repository      – .gitignore entries, executable scripts, git remote check
+#   9. Shell aliases   – <app>, <app>-dev, <app>-build in your shell profile
+#  10. Summary         – result + the manual step: review api/.env
 #
 # @refactor-note (2026-10-24) Open finding #54: the dev certificate of `ng serve` was a committed
 #   Laragon key pair (`erp/ssl/laragon.*`). Laragon is no longer used (XAMPP); the pair is now
@@ -48,7 +54,12 @@
 #   tried to install nodejs, which conflicts and stopped the step.
 # @refactor-note (2026-10-31) Summary lists the new test role set (full-web-core, full-shop-core,
 #   all-permissions instead of editor-web, editor-shop, manager).
-# @note THE DATABASE IS CREATED BY THIS SCRIPT (step 4, since 2026-10-30): `db:create-if-missing`,
+# @refactor-note (2026-10-31b) New first step "GitHub (SSH)" (check, optional connection, optional
+#   switch of an HTTPS remote to SSH); the XAMPP prerequisite is checked right after it; the
+#   .temp/ folder is created as step 2 (right after the clone, before the long installs) and its
+#   description file is now .temp/temp.txt (an older .temp/info.txt is left as it is). Steps
+#   renumbered (10 in total). Step numbers in the notes above refer to the old numbering.
+# @note THE DATABASE IS CREATED BY THIS SCRIPT (step 6, since 2026-10-30): `db:create-if-missing`,
 # `migrate`, `db:seed` - an existing database is never dropped or overwritten, only missing
 # migrations and missing base data are added. Only one application runs at a time (all use
 # ports 8000/4200).
@@ -59,6 +70,10 @@
 # machine without affecting each other. The user crontab is never touched.
 #
 # @security
+#   - GitHub SSH: github.com is trusted only with the host key GitHub publishes (pinned below, no
+#     "trust on first use"); a new key pair is created only after asking, with ssh-keygen (it asks
+#     for a passphrase); only the PUBLIC key is ever printed / copied, the private key never leaves
+#     ~/.ssh. An existing key, ~/.ssh/config or known_hosts entry is never changed.
 #   - Never overwrites an existing api/.env and never regenerates an existing APP_KEY.
 #   - Mailpit is installed only if its SHA-256 matches the digest GitHub publishes.
 #   - Does not run as root; sudo is used only for the package manager (dnf / pacman) and, on
@@ -95,6 +110,14 @@ SSL_DIR="$ERP_DIR/ssl"
 SSL_CERT="$SSL_DIR/localhost.crt"   # per developer, git-ignored (finding #54)
 SSL_KEY="$SSL_DIR/localhost.key"
 
+# GitHub over SSH. Host key of github.com as published by GitHub
+# (https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints,
+# Ed25519 SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU) - added to ~/.ssh/known_hosts only
+# when github.com is not there yet, so the first connection needs no "trust on first use".
+GITHUB_SSH="git@github.com"
+GITHUB_HOST_KEY="github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
+GITHUB_KEYS_URL="https://github.com/settings/ssh/new"
+
 SKIP_SYSTEM=0
 WITH_ALIASES=1
 ENV_CREATED=0      # 1 = api/.env was created by this run (summary asks to review it)
@@ -103,7 +126,7 @@ ENV_CREATED=0      # 1 = api/.env was created by this run (summary asks to revie
 # Output helpers and result tracking (printed in the summary)
 # -----------------------------------------------------------------------------
 STEP=0
-TOTAL_STEPS=8
+TOTAL_STEPS=10
 DONE=()
 SKIPPED=()
 WARNINGS=()
@@ -173,17 +196,10 @@ env_set() {
 }
 
 # -----------------------------------------------------------------------------
-# @description Prerequisites. XAMPP is installed once per machine by hand, so
-# its absence stops the script before anything is changed.
+# @description Basic checks before anything is changed: not root, sudo available, run from the
+# repository root.
 # -----------------------------------------------------------------------------
 preflight() {
-    printf '\nPREREQUISITE: XAMPP must be installed in %s before running this script.\n' "$XAMPP_DIR"
-    printf '  Download: https://www.apachefriends.org/download.html\n'
-    printf '  Install:  chmod +x xampp-linux-*-installer.run && sudo ./xampp-linux-*-installer.run\n\n'
-    [[ -x "$XAMPP_DIR/lampp" ]] \
-        || die "XAMPP not found in $XAMPP_DIR – install it first (see above), then run this script again"
-    printf '\e[32m   ✓ XAMPP found in %s\e[0m\n' "$XAMPP_DIR"
-
     [[ "$EUID" -ne 0 ]] || die "do not run as root – the script uses sudo only for the package manager"
     # A minimal installation (e.g. Arch Linux base) has no sudo.
     command -v sudo >/dev/null \
@@ -194,7 +210,147 @@ preflight() {
 }
 
 # -----------------------------------------------------------------------------
-# 1. System packages – only missing packages are installed.
+# @description Prerequisite XAMPP (checked right after step 1). XAMPP is installed once per
+# machine by hand, so its absence stops the script before anything is installed.
+# -----------------------------------------------------------------------------
+require_xampp() {
+    printf '\nPREREQUISITE: XAMPP must be installed in %s before running this script.\n' "$XAMPP_DIR"
+    printf '  Download: https://www.apachefriends.org/download.html\n'
+    printf '  Install:  chmod +x xampp-linux-*-installer.run && sudo ./xampp-linux-*-installer.run\n\n'
+    [[ -x "$XAMPP_DIR/lampp" ]] \
+        || die "XAMPP not found in $XAMPP_DIR – install it first (see above), then run this script again"
+    printf '\e[32m   ✓ XAMPP found in %s\e[0m\n' "$XAMPP_DIR"
+}
+
+# -----------------------------------------------------------------------------
+# 1. GitHub (SSH) – checks that this computer can reach GitHub over SSH. When it cannot (and a
+#    terminal is attached) it offers to connect: uses the existing default key or creates one
+#    with ssh-keygen, shows the PUBLIC key with the GitHub page to add it, and checks again until
+#    it works or the user skips. Skipping never stops the script (GitHub is needed only to push /
+#    pull, not to run the app).
+# -----------------------------------------------------------------------------
+setup_github_ssh() {
+    step "GitHub (SSH)"
+    if ! command -v ssh >/dev/null || ! command -v ssh-keygen >/dev/null; then
+        skip "ssh not installed – GitHub SSH check skipped (Fedora: sudo dnf install openssh-clients, Arch: sudo pacman -S openssh)"
+        return 0
+    fi
+    pin_github_host_key
+
+    local user
+    if user="$(github_ssh_user batch)"; then
+        done_ "connected to GitHub over SSH as $user"
+        offer_ssh_remote
+        return 0
+    fi
+    if [[ ! -t 0 ]]; then
+        skip "not connected to GitHub over SSH (no terminal to ask) – run the script in a terminal to connect"
+        return 0
+    fi
+
+    local answer
+    printf '   This computer is not connected to GitHub over SSH (needed to push / pull with git@github.com).\n'
+    read -r -p "   Connect now? [y/N] " answer || answer=""
+    if [[ ! "$answer" =~ ^[YyAa]$ ]]; then
+        skip "GitHub SSH connection skipped – run the script again to connect later"
+        return 0
+    fi
+
+    local pub
+    pub="$(github_public_key)" || { warn "no SSH key created – GitHub SSH connection skipped"; return 0; }
+
+    printf '\n   Add this PUBLIC key on GitHub (Settings → SSH and GPG keys → New SSH key):\n'
+    printf '     %s\n' "$GITHUB_KEYS_URL"
+    printf '     Title: %s, Key type: Authentication Key, Key:\n\n' "$(uname -n)"
+    printf '%s\n\n' "$(cat "$pub")"
+    if copy_to_clipboard < "$pub"; then info "the public key is also in the clipboard"; fi
+
+    while true; do
+        read -r -p "   Press Enter once the key is added on GitHub (s = skip): " answer || answer="s"
+        if [[ "$answer" =~ ^[Ss]$ ]]; then
+            skip "GitHub SSH connection skipped – the key ${pub/#$HOME/\~} stays, add it on GitHub later"
+            return 0
+        fi
+        if user="$(github_ssh_user)"; then
+            done_ "connected to GitHub over SSH as $user"
+            offer_ssh_remote
+            return 0
+        fi
+        printf '\e[33m   ! GitHub does not accept the key yet – check that the whole line above was pasted, then try again\e[0m\n'
+    done
+}
+
+# @description Adds GitHub's published Ed25519 host key to ~/.ssh/known_hosts when github.com is
+# not known yet (an existing entry is never changed).
+pin_github_host_key() {
+    local kh="$HOME/.ssh/known_hosts"
+    if [[ -f "$kh" ]] && ssh-keygen -F github.com -f "$kh" >/dev/null 2>&1; then return 0; fi
+    mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+    printf '%s\n' "$GITHUB_HOST_KEY" >> "$kh"
+    chmod 600 "$kh"
+    info "GitHub host key (published by GitHub) added to ~/.ssh/known_hosts"
+}
+
+# @description Prints the GitHub user name when `ssh -T git@github.com` authenticates.
+# @param $1 'batch' = never ask anything (no passphrase prompt) - for the silent first check.
+# @return 0 connected (user name printed), 1 not connected.
+github_ssh_user() {
+    local opts=(-T -o ConnectTimeout=15 -o StrictHostKeyChecking=yes) out
+    [[ "${1:-}" == "batch" ]] && opts+=(-o BatchMode=yes)
+    # GitHub answers "Hi <user>! You've successfully authenticated…" and exits with 1 (no shell).
+    out="$(ssh "${opts[@]}" "$GITHUB_SSH" 2>&1 </dev/null)" || true
+    [[ "$out" =~ Hi\ ([^!]+)!\ You\'ve\ successfully\ authenticated ]] || return 1
+    printf '%s' "${BASH_REMATCH[1]}"
+}
+
+# @description Path of the public key to add on GitHub: the first default key that exists
+# (id_ed25519, id_ecdsa, id_rsa), else a new Ed25519 pair created by ssh-keygen (it asks for a
+# passphrase - recommended). Only the .pub path is printed.
+# @return 0 path printed, 1 no key (ssh-keygen cancelled / failed).
+github_public_key() {
+    local k
+    for k in id_ed25519 id_ecdsa id_rsa; do
+        if [[ -f "$HOME/.ssh/$k" && -f "$HOME/.ssh/$k.pub" ]]; then
+            info "using the existing key ~/.ssh/$k" >&2
+            printf '%s' "$HOME/.ssh/$k.pub"
+            return 0
+        fi
+    done
+    local comment
+    comment="$(git config --get user.email 2>/dev/null || true)"
+    comment="${comment:-$USER@$(uname -n)}"
+    mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+    info "creating a new SSH key ~/.ssh/id_ed25519 ($comment) – choose a passphrase (recommended)" >&2
+    ssh-keygen -t ed25519 -C "$comment" -f "$HOME/.ssh/id_ed25519" </dev/tty >&2 || return 1
+    printf '%s' "$HOME/.ssh/id_ed25519.pub"
+}
+
+# @description Copies stdin to the clipboard when a clipboard tool exists (Wayland / X11).
+copy_to_clipboard() {
+    if command -v wl-copy >/dev/null && [[ -n "${WAYLAND_DISPLAY:-}" ]]; then wl-copy 2>/dev/null; return; fi
+    if command -v xclip >/dev/null && [[ -n "${DISPLAY:-}" ]]; then xclip -selection clipboard 2>/dev/null; return; fi
+    return 1
+}
+
+# @description When `origin` is a GitHub HTTPS URL, offers to switch it to SSH (asked, never
+# automatic) - with a working SSH key git then needs no password / token.
+offer_ssh_remote() {
+    local origin ssh_url answer
+    origin="$(git -C "$ROOT_DIR" remote get-url origin 2>/dev/null || true)"
+    [[ "$origin" =~ ^https://github\.com/([^/]+/[^/]+)$ ]] || return 0
+    ssh_url="$GITHUB_SSH:${BASH_REMATCH[1]%.git}.git"
+    [[ -t 0 ]] || { info "origin uses HTTPS – switch to SSH with: git remote set-url origin $ssh_url"; return 0; }
+    read -r -p "   origin uses HTTPS ($origin). Switch it to SSH ($ssh_url)? [y/N] " answer || answer=""
+    if [[ "$answer" =~ ^[YyAa]$ ]]; then
+        git -C "$ROOT_DIR" remote set-url origin "$ssh_url"
+        done_ "origin switched to $ssh_url"
+    else
+        skip "origin left on HTTPS"
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# 3. System packages – only missing packages are installed.
 #    Fedora: dnf. Arch Linux: pacman (+ PHP extensions enabled in conf.d).
 # -----------------------------------------------------------------------------
 install_system_packages() {
@@ -345,7 +501,7 @@ check_tool_versions() {
 }
 
 # -----------------------------------------------------------------------------
-# 2. Mailpit – latest GitHub release, installed only after checksum verification.
+# 4. Mailpit – latest GitHub release, installed only after checksum verification.
 # Mailpit ships no checksums file; GitHub publishes a SHA-256 `digest` for every
 # release asset in its REST API – that is what is verified. Nothing unverified runs.
 # -----------------------------------------------------------------------------
@@ -394,7 +550,7 @@ install_mailpit() {
 }
 
 # -----------------------------------------------------------------------------
-# 3. Laravel: .env, dependencies, application key, storage symlink, permissions.
+# 5. Laravel: .env, dependencies, application key, storage symlink, permissions.
 # -----------------------------------------------------------------------------
 setup_laravel() {
     step "Laravel (api/)"
@@ -427,8 +583,8 @@ setup_laravel() {
         done_ "api/.env created with local defaults (database: ${APP_SLUG//-/_}) – review it, see the summary"
     fi
 
-    command -v php >/dev/null || die "PHP not found – install PHP 8.2+ (step 1), then run this script again"
-    command -v composer >/dev/null || die "Composer not found – install it (step 1), then run this script again"
+    command -v php >/dev/null || die "PHP not found – install PHP 8.2+ (step 3), then run this script again"
+    command -v composer >/dev/null || die "Composer not found – install it (step 3), then run this script again"
     info "composer install"
     (cd "$API_DIR" && composer install --no-interaction --no-progress)
     done_ "Composer dependencies installed"
@@ -467,7 +623,7 @@ setup_laravel() {
 }
 
 # -----------------------------------------------------------------------------
-# 4. Database – created, migrated and seeded through Laravel (no phpMyAdmin step).
+# 6. Database – created, migrated and seeded through Laravel (no phpMyAdmin step).
 # @note Only a LOCAL database (DB_HOST 127.0.0.1 / localhost) is handled here; MariaDB of XAMPP
 # is started for the step when it is not running and stopped again afterwards (dev.sh starts it
 # for the work itself). An existing database is never dropped: `migrate` adds only missing
@@ -530,40 +686,44 @@ stop_started_mysql() {
 }
 
 # -----------------------------------------------------------------------------
-# @description Creates the git-ignored .temp/ folder for local scratch files (images, files,
-# media, notes) with an info.txt explaining it. An existing info.txt is left unchanged.
+# 2. Temp folder – the git-ignored .temp/ folder for local scratch files (media, notes, …),
+#    created right after the clone, with temp.txt explaining it. An existing temp.txt is left
+#    unchanged; an .temp/info.txt of an older version of this script is left as it is.
 # -----------------------------------------------------------------------------
 setup_temp_dir() {
+    step "Temp folder (.temp/)"
     local dir="$ROOT_DIR/.temp"
     mkdir -p "$dir"
-    if [[ -f "$dir/info.txt" ]]; then
+    if [[ -f "$dir/temp.txt" ]]; then
         skip ".temp/ exists"
         return 0
     fi
-    cat > "$dir/info.txt" <<'TXT'
-.temp/ – DOČASNÉ LOKÁLNÍ SOUBORY PRO VÝVOJ
-==========================================
+    cat > "$dir/temp.txt" <<'TXT'
+.temp/ – VYGENEROVANÉ DOČASNÉ PROSTŘEDÍ
+======================================
 
-Tato složka slouží pro dočasné lokální soubory používané při vývoji – obrázky,
-soubory, média a poznámky, které zůstávají jen na tomto počítači, ale vše na
-jednom místě.
+Tuto složku vytvořil skript init-workspace.sh. Je to dočasné lokální prostředí pro
+ukládání médií, obrázků, souborů, poznámek apod. při vývoji – vše na jednom místě
+jen na tomto počítači.
 
-Složka je v .gitignore: nic odtud se necommitne ani nenasadí.
+Nic odtud nejde do gitu (složka je v .gitignore) ani na server.
 
-UPOZORNĚNÍ: nenechávejte tu nic důležitého – obsah se může snadno smazat
-(úklid, nový checkout, nová instalace). Co je potřeba zachovat, patří do repozitáře
-nebo do zálohy.
+UPOZORNĚNÍ: nedávejte sem nic důležitého. Obsah se může kdykoliv smazat (úklid,
+nový checkout, nová instalace) a NENÍ ZÁLOHOVANÝ. Co je potřeba zachovat, patří
+do repozitáře nebo do zálohy.
 
 ---
-Temporary local files for development (images, files, media, notes) – kept only on this
-machine, all in one place. Git-ignored. Do not keep anything important here: it can be
-deleted easily.
+.temp/ – GENERATED TEMPORARY WORKSPACE
+Created by init-workspace.sh: a temporary local place for media, images, files, notes, …
+used during development, on this computer only. Git-ignored, never deployed.
+WARNING: keep nothing important here – the content may be deleted at any time and is
+NOT BACKED UP.
 TXT
-    done_ ".temp/ created (local scratch folder, git-ignored – see .temp/info.txt)"
+    done_ ".temp/ created (local scratch folder, git-ignored – see .temp/temp.txt)"
 }
 
 # -----------------------------------------------------------------------------
-# 5. Angular: dependencies and the local SSL certificate used by `ng serve`.
+# 7. Angular: dependencies and the local SSL certificate used by `ng serve`.
 # -----------------------------------------------------------------------------
 setup_angular() {
     step "Angular (erp/)"
@@ -594,7 +754,7 @@ setup_angular() {
 }
 
 # -----------------------------------------------------------------------------
-# 6. Repository hygiene – ignore rules, executable scripts, .temp/ folder, remote check.
+# 8. Repository hygiene – ignore rules, executable scripts, remote check.
 # -----------------------------------------------------------------------------
 setup_repository() {
     step "Repository"
@@ -604,8 +764,6 @@ setup_repository() {
         grep -qxF "$rule" "$gi" || { printf '%s\n' "$rule" >> "$gi"; added+=("$rule"); }
     done
     if [[ ${#added[@]} -gt 0 ]]; then done_ ".gitignore: added ${added[*]}"; else skip ".gitignore complete"; fi
-
-    setup_temp_dir
 
     local s
     for s in dev.sh deploy/build.sh init-workspace.sh; do
@@ -623,7 +781,7 @@ setup_repository() {
 }
 
 # -----------------------------------------------------------------------------
-# 7. Shell aliases – one marked block per application in ~/.zshrc or ~/.bashrc,
+# 9. Shell aliases – one marked block per application in ~/.zshrc or ~/.bashrc,
 # replaced on every run (so several cloned apps never overwrite each other).
 # -----------------------------------------------------------------------------
 setup_aliases() {
@@ -657,7 +815,7 @@ setup_aliases() {
 }
 
 # -----------------------------------------------------------------------------
-# 8. Summary – including the manual review of api/.env.
+# 10. Summary – including the manual review of api/.env.
 # -----------------------------------------------------------------------------
 summary() {
     step "Summary"
@@ -684,12 +842,12 @@ LAST STEP – BY HAND
   1. Review api/.env   ($env_state)
        APP_NAME, APP_URL, FRONTEND_URL      name and local URLs of this app
        DB_DATABASE=${db:-<name>}, DB_USERNAME, DB_PASSWORD
-                                            database of step 4 (XAMPP default: root, no password)
+                                            database of step 6 (XAMPP default: root, no password)
        MAIL_FROM_ADDRESS, MAIL_FROM_NAME    sender of e-mails (caught locally by Mailpit)
        TURNSTILE_SECRET_KEY                 captcha – a public TEST key is preset for local use
        any other keys of this app (API keys, payment gateway, …) – see .env.example
      Never commit api/.env – it is git-ignored.
-     After changing DB_* run this script again – step 4 creates and fills the new database.
+     After changing DB_* run this script again – step 6 creates and fills the new database.
 
   LOCAL TEST LOGIN (APP_ENV=local only)
        e-mail:   sysadmin@sysadmin.sysadmin
@@ -719,6 +877,9 @@ echo "------------------------------------------"
 echo "Workspace setup – $APP_SLUG"
 echo "------------------------------------------"
 preflight
+setup_github_ssh
+require_xampp
+setup_temp_dir
 install_system_packages
 install_mailpit
 setup_laravel
