@@ -1,0 +1,20 @@
+# =============================================================================
+# @file .gitattributes
+# @path .gitattributes (root of the web-platform monorepo)
+# @project RPSW Web
+# @author RPSW
+# @created 2026-10-31
+# @description Line endings that must not depend on the platform of the checkout: shell
+#   scripts, Docker and dotenv files run inside Linux containers / WSL and break with CRLF
+#   ("bad interpreter: /usr/bin/env: bash\r"), so they are always LF - also when the repository
+#   is cloned on Windows with core.autocrlf=true. The Windows launchers are always CRLF.
+# =============================================================================
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+compose.yaml    text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+.env.example    text eol=lf
+api/artisan     text eol=lf
+*.ps1           text eol=crlf
+*.cmd           text eol=crlf

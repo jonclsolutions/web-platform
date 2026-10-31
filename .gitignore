@@ -1,4 +1,10 @@
-.dev/
+# Local runtime data of dev.sh / init-workspace (logs, PID files, Windows marker, Docker settings)
+/dev/logs/
+/dev/pids/
+/dev/wsl-workspace
+/dev/.env
+# Former location of the logs (before 2026-10-31) - the folder can be deleted
+/.dev/
 /build/
 /app_build/
 .~lock.*#
@@ -15,4 +21,6 @@ id_ecdsa*
 /erp/ssl/
 temp.txt
 # Local scratch files of development (images, media, notes) - created by init-workspace.sh
+/temp/
+# Former name of the scratch folder (before 2026-10-31) - renamed to temp/ by init-workspace.sh
 /.temp/

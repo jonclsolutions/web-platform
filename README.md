@@ -6,6 +6,12 @@
   @created 2026
   @description Developer guide for the web-platform monorepo: structure, first-time
   setup, daily local workflow, background jobs, production build and deployment.
+  @refactor-note (2026-10-31) Local development in Docker (compose.yaml, docker/app/Dockerfile):
+  setup, daily workflow, tools, troubleshooting rewritten; XAMPP / host packages removed.
+  @refactor-note (2026-10-31b) Every platform: Linux, macOS, Windows (WSL 2 - init-workspace.cmd,
+  dev.cmd).
+  @refactor-note (2026-10-31c) Root clean-up: the local environment lives in dev/ (compose.yaml,
+  .env, docker/, windows/, logs/).
 -->
 
 # RPSW Web – web-platform
@@ -16,10 +22,10 @@ The solution is developed and operated in line with EU law (GDPR, ePrivacy).
 
 | Part | Technology | Directory |
 |---|---|---|
-| Frontend – public web, e-shop, admin | Angular 21 | `erp/` |
-| Backend – REST API, queue, scheduler | Laravel 11+ | `api/` |
-| Database | MySQL / MariaDB (XAMPP locally) | `database/` |
-| Local e-mail catcher | Mailpit | – |
+| Frontend – public web, e-shop, admin | Angular 21 (Node.js 24) | `erp/` |
+| Backend – REST API, queue, scheduler | Laravel 12 (PHP 8.5) | `api/` |
+| Database | MariaDB (locally a Docker container) | `api/database/` (schema, migrations, seeders) |
+| Local environment | Docker – PHP 8.5, Node.js 24, MariaDB, Mailpit, phpMyAdmin | `dev/` |
 
 ---
 
@@ -29,6 +35,12 @@ The solution is developed and operated in line with EU law (GDPR, ePrivacy).
 web-platform/
 ├── api/                 Laravel API
 ├── erp/                 Angular application (public web, shop, admin)
+├── dev/                 everything of the LOCAL environment (used by the scripts below):
+│   ├── compose.yaml       services api, queue, scheduler, erp, db, mailpit, phpmyadmin
+│   ├── docker/Dockerfile  development image (PHP 8.5, Composer, Node.js, Chromium)
+│   ├── .env.example       settings of the Docker environment (→ dev/.env, git-ignored)
+│   ├── windows/           init-workspace.ps1, dev.ps1 – behind the .cmd launchers
+│   └── logs/, pids/       (git-ignored) one log file per service, PIDs of the log writers
 ├── deploy/
 │   ├── build.sh         production build → build/www.zip
 │   └── server/          server config shipped into the webroot (.htaccess, .user.ini, configure-server.sh)
@@ -37,8 +49,11 @@ web-platform/
 │   ├── regression_tests/ manual regression tests (scripts + checklists)
 │   └── unit_tests/      runners for the erp (Karma) and api (PHPUnit) unit tests, see its README
 ├── init-workspace.sh    prepares a freshly cloned app for local development (repeatable)
-├── dev.sh               starts / stops the whole local environment
-├── .dev/                (git-ignored) logs and PID files of dev.sh
+├── init-workspace.cmd   Windows: WSL 2 + Docker Desktop + project in WSL, then init-workspace.sh
+├── dev.cmd              Windows: runs dev.sh inside WSL
+├── .gitattributes       fixed line endings (*.sh LF, *.cmd / *.ps1 CRLF)
+├── dev.sh               starts / stops the local environment, runs artisan / composer / npm / tests in Docker
+├── temp/                (git-ignored) local scratch files – not backed up
 └── build/               (git-ignored) output of deploy/build.sh, wiped on every build
 ```
 
@@ -46,24 +61,36 @@ web-platform/
 
 ## First-time setup
 
-**Supported systems:** Fedora and Arch Linux (other Linux distributions: see *Manual setup*).
-On a fresh Arch Linux (e.g. a VM) first: `sudo` for your user (base Arch has none – as root
-`pacman -S sudo`, `usermod -aG wheel <user>`, allow `%wheel` with `EDITOR=nano visudo`) and a
-synced system (`sudo pacman -Syu`); the script stops with these instructions when one is missing.
+**Everything runs in Docker** – the computer needs only **Docker** (Engine + Compose + buildx
+plugins) and **git**. PHP 8.5 (the same version as the FORPSI hosting), Composer, Node.js 24,
+Chromium (unit tests), MariaDB, Mailpit and phpMyAdmin are containers, so the application is the
+same on every computer and never conflicts with packages of the system. On every platform it is
+**clone → init → dev**:
 
-**Prerequisite (once per machine):** XAMPP installed in `/opt/lampp` –
-[download](https://www.apachefriends.org/download.html), then
-`chmod +x xampp-linux-*-installer.run && sudo ./xampp-linux-*-installer.run`.
-`init-workspace.sh` checks this right after the GitHub step and stops without installing anything if
-XAMPP is missing.
-
-Then a freshly cloned application is prepared by one script:
+| | Linux (any distribution) | macOS | Windows 10 / 11 |
+|---|---|---|---|
+| 1. clone | `git clone <repo>` | `git clone <repo>` | `git clone <repo>` (Git for Windows) |
+| 2. set up | `./init-workspace.sh` | `./init-workspace.sh` | `init-workspace.cmd` (double-click or `.\init-workspace.cmd`) |
+| 3. work | `./dev.sh` | `./dev.sh` | `dev.cmd` (or `./dev.sh` in the WSL terminal) |
+| Docker | installed by the script with the package manager (Arch, Debian / Ubuntu, Fedora, openSUSE – asked), other distributions: [docs.docker.com](https://docs.docker.com/engine/install/) | Docker Desktop – installed by the script with Homebrew (asked) | WSL 2 + Docker Desktop – installed by `init-workspace.cmd` (`wsl --install`, `winget` – asked) |
+| notes | Docker starts on demand (`docker.socket`) | needs [Homebrew](https://brew.sh) and `brew install bash` (macOS ships bash 3.2; the scripts switch to the newer one themselves) | the project is cloned **into WSL** (`~/<folder>`) – Docker is very slow on `C:\` and `ng serve` does not see changes there; edit it with VS Code + the WSL extension (the script offers to open it) |
 
 ```bash
 git clone git@github.com:jonclsolutions/web-platform.git
 cd web-platform
-./init-workspace.sh
+./init-workspace.sh        # Windows: init-workspace.cmd
+./dev.sh                   # Windows: dev.cmd
 ```
+
+**Windows in detail:** `init-workspace.cmd` checks WSL 2 (offers `wsl --install -d Ubuntu`, then a
+restart and one start of Ubuntu to create the Linux user), Docker Desktop (offers
+`winget install Docker.DockerDesktop`, then logging out and in), starts Docker Desktop and checks
+its WSL integration, clones the project into the Linux home (`\\wsl.localhost\Ubuntu\home\<you>\<folder>`
+– only committed work is copied) and runs `./init-workspace.sh` there. `dev.cmd` in the Windows
+folder then starts that WSL copy (path stored in the git-ignored `dev/wsl-workspace`); the Windows
+folder itself is only the launcher – work in the WSL copy. Line endings are fixed by
+`.gitattributes` (`*.sh` always LF), so a checkout with `core.autocrlf=true` does not break the
+scripts.
 
 No SSH key on GitHub yet (`Permission denied (publickey)`)? Clone over HTTPS
 (`git clone https://github.com/jonclsolutions/web-platform.git`) – the first step of the script
@@ -76,52 +103,77 @@ already done are skipped and nothing existing is overwritten.
 | Step | What happens |
 |---|---|
 | GitHub (SSH) | checks `ssh -T git@github.com`; when not connected it asks whether to connect: uses the existing default key or creates one with `ssh-keygen` (asks for a passphrase), shows the **public** key with the GitHub page to add it and checks again – can be skipped. github.com is trusted only with the host key GitHub publishes. Offers to switch an HTTPS `origin` to SSH |
-| Temp folder | the git-ignored `.temp/` folder for local scratch files (media, notes, … – see `.temp/temp.txt`): not backed up, may be deleted any time, keep nothing important there |
-| System packages | installs missing PHP extensions, Composer, Node.js and tools – **Fedora** via `dnf`, **Arch Linux** via `pacman` (plus the PHP extensions Arch ships disabled, enabled in `/etc/php/conf.d/20-laravel-dev.ini`; `pcov` for test coverage is AUR-only and only reported) |
-| Mailpit | downloads the latest release to `~/.local/bin`, **only if its SHA-256 matches** the digest GitHub publishes |
-| Laravel | creates `api/.env` from `.env.example` with local defaults (only if missing), `composer install`, `APP_KEY` (only if empty), `public/storage` symlink (stale ones are fixed), writable `storage/` |
-| Database | starts MariaDB of XAMPP if needed, **creates the database** (`DB_DATABASE`, `utf8mb4_unicode_ci`), runs the migrations and the seeders – base data plus, with `APP_ENV=local`, the test account and test roles (see [Local test login](#local-test-login)); an existing database is never dropped or overwritten |
-| Angular | `npm ci`, local SSL certificate `erp/ssl/localhost.{crt,key}` for `ng serve` (trusted if `mkcert` is installed; per developer, git-ignored) |
+| Temp folder | the git-ignored `temp/` folder for local scratch files (media, notes, … – see `temp/temp.txt`): not backed up, may be deleted any time, keep nothing important there |
+| Docker | checks Docker, Compose and buildx; when missing offers to install them – Linux with the package manager (Arch, Debian / Ubuntu, Fedora, openSUSE), macOS Docker Desktop with Homebrew, inside WSL it needs Docker Desktop (prepared by `init-workspace.cmd`). Linux: sets Docker **on demand** (`docker.socket` – the daemon starts on the first use, not with the computer; an enabled `docker.service` is offered the switch); offers to add you to the `docker` group (log out and in afterwards) – all asked first |
+| Docker settings | `dev/.env` (git-ignored) from `dev/.env.example`: project name = app directory, your UID / GID (files written by the containers belong to you), a random local database password |
+| Images | builds the dev image `dev/docker/Dockerfile` and pulls MariaDB, Mailpit, phpMyAdmin |
+| Laravel | `api/.env` from `api/.env.example` with local defaults (only if missing), `composer install`, `APP_KEY` (only if empty), storage folders, relative `public/storage` symlink |
+| Database | starts the MariaDB container, **creates the database** (`DB_DATABASE`, `utf8mb4_unicode_ci`), runs the migrations and the seeders – base data plus, with `APP_ENV=local`, the test account and test roles (see [Local test login](#local-test-login)); an existing database is never dropped or overwritten |
+| Angular | `npm ci`, local SSL certificate `erp/ssl/localhost.{crt,key}` for `ng serve` (browser-trusted if `mkcert` is installed on the host; per developer, git-ignored) |
 | Repository | required `.gitignore` rules, executable scripts, warns if a new app still pushes to web-platform |
 | Shell aliases | `<app>` (cd), `<app>-dev`, `<app>-build` in `~/.zshrc` / `~/.bashrc` – one block per app |
 
-It never touches the user crontab, and everything it writes belongs to the checkout itself
-(`api/.env`, `vendor/`, `node_modules/`, `erp/ssl/`, `.dev/`) or to the app's own alias block –
-any number of cloned apps can be set up on one machine without affecting each other.
-Options: `--skip-system` (no `dnf` / `pacman`), `--no-aliases`, `--help`.
-Other distributions: the script warns in step 1 and continues – install the packages yourself
-(see *Manual setup* below), then run it again.
+Every PHP / Composer / Node.js command of the script runs in a container – nothing is installed
+on the host except Docker (asked first). It never touches the user crontab; everything it writes
+belongs to the checkout (`dev/.env`, `api/.env`, `vendor/`, `node_modules/`, `erp/ssl/`, `temp/`)
+or carries the app's name (Docker containers / volumes / network `<app>_*`, the alias block),
+so any number of cloned apps can live on one machine. Options: `--no-aliases`, `--help`.
 
 The script ends with one of:
 
 - **`WORKSPACE SETUP COMPLETE`** – review `api/.env` (below), then start with `./dev.sh`.
 - **`WORKSPACE SETUP INCOMPLETE`** – fix the listed warnings and run the script again.
 
+**Coming from XAMPP?** The old local database is not moved automatically:
+`/opt/lampp/bin/mysqldump -uroot <database> > temp/xampp.sql`, then
+`./dev.sh db-import temp/xampp.sql && ./dev.sh artisan migrate`. Afterwards XAMPP, Mailpit in
+`~/.local/bin`, `/etc/php/conf.d/20-laravel-dev.ini` and the PHP / Node.js packages installed for
+this app are no longer needed (keep them if other projects use them).
+
+### Docker settings – `dev/.env`
+
+| Keys | Meaning |
+|---|---|
+| `COMPOSE_PROJECT_NAME` | prefix of this app's containers and volumes (= directory name) |
+| `HOST_UID`, `HOST_GID` | your user – kept current by `init-workspace.sh` |
+| `PHP_VERSION`, `NODE_VERSION`, `MARIADB_VERSION` | keep PHP and MariaDB **equal to the hosting** (FORPSI: PHP up to 8.5; the database version is shown by phpMyAdmin on the hosting); after a change: `./dev.sh rebuild` |
+| `API_PORT`, `ERP_PORT`, `DB_PORT`, `MAILPIT_PORT`, `PMA_PORT`, `BIND_IP` | ports on your computer, published on 127.0.0.1 only (the Angular app calls the API at `http://127.0.0.1:8000` – change both together) |
+| `DB_ROOT_PASSWORD` | random root password of the **local** database container (phpMyAdmin login: `root` + this password) |
+
 ### Manual step – review `api/.env`
 
-A new `api/.env` is created from `.env.example` with local defaults; an existing one is never
+A new `api/.env` is created from `api/.env.example` with local defaults; an existing one is never
 changed. Either way, check it before the first start:
 
 | Keys | What to check |
 |---|---|
 | `APP_NAME`, `APP_URL`, `FRONTEND_URL` | name and local URLs of this app (`http://127.0.0.1:8000`, `https://localhost:4200`) |
-| `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | the database the script creates (XAMPP default: `root`, no password) – after a change run `./init-workspace.sh` again |
+| `DB_DATABASE` | the database the script creates – after a change run `./init-workspace.sh` again. Host, port, user and password of the database and of Mailpit are set by `dev/compose.yaml` inside Docker (`db:3306`, `mailpit:1025`) and win over `api/.env` |
 | `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | sender of e-mails – locally all mail is caught by Mailpit |
 | `TURNSTILE_SECRET_KEY` | captcha – Cloudflare's public **test** key is preset for local use |
-| other keys of the app | API keys, payment gateway, … – see `.env.example` |
+| other keys of the app | API keys, payment gateway, … – see `api/.env.example` |
 
-`api/.env` is git-ignored – never commit it.
+`api/.env` and `dev/.env` are git-ignored – never commit them.
 
 ### Database – created by Laravel
 
 The script creates and fills the database itself (step *Database*); no phpMyAdmin import is
-needed. The same commands work by hand in `api/`:
+needed. The same commands work by hand (in the container):
 
 ```bash
-php artisan db:create-if-missing   # CREATE DATABASE (utf8mb4_unicode_ci) only when it does not exist
-php artisan migrate                # empty database: the whole schema; filled database: only new migrations
-php artisan db:seed                # base data; with APP_ENV=local also the test account + test roles
+./dev.sh artisan db:create-if-missing   # CREATE DATABASE (utf8mb4_unicode_ci) only when it does not exist
+./dev.sh artisan migrate                # empty database: the whole schema; filled database: only new migrations
+./dev.sh artisan db:seed                # base data; with APP_ENV=local also the test account + test roles
+./dev.sh db-dump                        # backup to temp/<db>-<date>.sql (personal data – never commit)
+./dev.sh db-import <file.sql>           # import a dump (asks first)
 ```
+
+**Nothing runs in the background after a restart:** the containers have no restart policy, so
+they run only between `./dev.sh` and Ctrl+C / `./dev.sh stop`, and Docker itself starts on demand
+(`docker.socket`) – with many projects the computer starts with none of them running.
+
+The data live in the Docker volume `<app>_db-data` – `./dev.sh stop` / `down` keep them; only
+`docker compose -f dev/compose.yaml down -v` deletes them (Docker by hand always with `-f dev/compose.yaml`).
 
 - **Schema:** `api/database/migrations/0000_00_00_000000_create_baseline_schema.php` creates the
   whole schema (`api/database/schema/baseline.sql`, structure as of 2026-10-29) on an **empty**
@@ -167,35 +219,24 @@ git clone git@github.com:jonclsolutions/web-platform.git app-two
 cd app-two
 git remote rename origin upstream                       # web-platform = base for this app
 git remote add origin git@github.com:jonclsolutions/app-two.git
-./init-workspace.sh
+./init-workspace.sh       # Windows: init-workspace.cmd
 # → WORKSPACE SETUP COMPLETE (the database is created and filled by the script)
-./dev.sh
+./dev.sh                  # Windows: dev.cmd
 ```
 
 Later, to take over changes from the base: `git fetch upstream && git merge upstream/main`.
 
-Only **one application runs at a time** – all apps use the same ports (API 8000, ERP 4200).
-Stop one (`./dev.sh stop`) before starting another; `dev.sh` refuses to start while the ports are taken.
+Each app has its own containers, network and database volume (Docker project = directory name).
+By default all apps use the same ports (API 8000, ERP 4200, …), so **one runs at a time** – stop
+one (`./dev.sh stop`) before starting another. To run two at once, give the second other ports in
+its `dev/.env` and its `erp/src/environments/environment.ts`.
 
-### Manual setup (other systems)
+### Without Docker (not supported)
 
-Prerequisites: PHP + extensions required by `api/composer.lock` (check with
-`composer check-platform-reqs --lock`), Composer, Node.js 20.19+/22.12+/24+, MySQL/MariaDB,
-[Mailpit](https://mailpit.axllent.org/), `rsync`, `zip`, `openssl`.
-
-```bash
-cd api && composer install && cp .env.example .env && php artisan key:generate && php artisan storage:link && cd ..
-cd api && php artisan db:create-if-missing && php artisan migrate && php artisan db:seed && cd ..
-cd erp && npm ci && cd ..
-```
-
-Mail settings for local development in `api/.env`:
-
-```dotenv
-MAIL_MAILER=smtp
-MAIL_HOST=127.0.0.1   # not "localhost" – it may resolve to IPv6 ::1, where Mailpit does not listen
-MAIL_PORT=1025
-```
+The project is set up and tested only with Docker. Running it directly on the host needs PHP 8.4+
+(api/composer.lock) with the extensions of `dev/docker/Dockerfile`, Composer, Node.js 24,
+MariaDB, Mailpit and Chromium – the old host-based scripts are in the git history
+(before 2026-10-31); `deploy/build.sh` builds on the host with `BUILD_ON_HOST=1`.
 
 ---
 
@@ -204,51 +245,52 @@ MAIL_PORT=1025
 Everything is started and stopped with one command from the repository root:
 
 ```bash
-./dev.sh                       # start everything, follow logs; Ctrl+C or closing the terminal/editor stops everything
+./dev.sh                       # start everything, follow logs; Ctrl+C stops everything
 ./dev.sh up -d                 # start in the background – keeps running after the terminal is closed
-./dev.sh stop                  # stop everything started by dev.sh
+./dev.sh stop                  # stop the containers (data kept)
 ./dev.sh status                # what is running + URLs
-./dev.sh logs                  # follow logs (.dev/logs/*.log)
+./dev.sh logs [service]        # follow dev/logs/<service>.log (api, queue, erp, db, mailpit, …)
 ./dev.sh up --with-scheduler   # also run the Laravel scheduler
 ```
 
-Start errors are shown right in the `dev.sh` output: before starting it checks the dev
-certificate of `ng serve` (`erp/ssl/localhost.{crt,key}`, created by `./init-workspace.sh`);
-while a service starts, a crash or a fatal log line (missing file, port taken, PHP fatal
-error …) is printed with the end of its log at once. When the API or the ERP does not start,
-the whole environment is stopped (exit code 1); a TypeScript compile error is only printed –
-`ng serve` keeps running and recompiles on save.
+Every service writes its own log file **`dev/logs/<service>.log`** (api, queue, erp, db, mailpit,
+phpmyadmin, scheduler – plain text with timestamps, emptied on every start, git-ignored); the
+console of `./dev.sh` shows all of them together. `./dev.sh up -d` waits until the API and the ERP
+answer and prints the end of the log of a service that failed.
 
 | Service | URL |
 |---|---|
-| ERP (Angular, SSL) | https://127.0.0.1:4200 |
+| ERP (Angular, SSL) | https://localhost:4200 |
 | API | http://127.0.0.1:8000 |
 | Mailpit (caught e-mails) | http://127.0.0.1:8025 |
+| phpMyAdmin | http://127.0.0.1:8080 (`root` + `DB_ROOT_PASSWORD` from `dev/.env`) |
+| Database from the host (DBeaver, …) | `127.0.0.1:3307` (inside Docker: `db:3306`) |
 
-`dev.sh` starts XAMPP (asks for sudo), Mailpit, `php artisan serve`, the queue worker
-(`queue:listen`, only when `QUEUE_CONNECTION` is not `sync`) and `ng serve`. Services that
-are already running (e.g. Mailpit started by hand) are detected and left untouched.
-XAMPP and Mailpit are stopped on exit only if `dev.sh` started them.
+Project tools run in the dev container – no PHP / Node.js needed on the host:
 
-**Closing the terminal or VSCodium** while `./dev.sh` runs in the foreground stops everything,
-the same as Ctrl+C (the shutdown is logged to `.dev/logs/dev.log`). The one exception is XAMPP:
-stopping it needs sudo, and with no terminal there is nowhere to type the password – if sudo has
-no cached credentials, XAMPP is left running and the next `./dev.sh stop` stops it.
-With `./dev.sh up -d` the environment deliberately keeps running after the terminal is closed.
+```bash
+./dev.sh artisan migrate          # php artisan … (tinker, queue:failed, …)
+./dev.sh composer require x/y     # composer … in api/
+./dev.sh npm install x            # npm … in erp/      (./dev.sh npx ng generate …)
+./dev.sh test                     # all unit tests (erp + api) – tests/unit_tests/run_all.sh
+./dev.sh shell                    # bash in the dev container   (./dev.sh shell api – in the running API)
+./dev.sh rebuild                  # rebuild the image after changing PHP_VERSION / NODE_VERSION in .env
+./dev.sh help                     # everything else
+```
 
-Overrides via environment variables, e.g. `API_PORT=8001 ./dev.sh` or
-`STOP_XAMPP_ON_EXIT=0 ./dev.sh`. Full list: header of `dev.sh`.
+The repository is mounted into the containers, so changes in the editor apply at once
+(`ng serve` recompiles, the API answers with the new code). Files the containers create
+(`vendor/`, `node_modules/`, `build/`, logs) belong to your user.
 
 ### Background jobs (queue and scheduler)
 
 | | Local development | Production |
 |---|---|---|
-| Queue | `queue:listen` started by `dev.sh` | `queue:work` under Supervisor / systemd |
-| Scheduler | off by default, `--with-scheduler` or `php artisan schedule:test` | system cron: `* * * * * php artisan schedule:run` |
+| Queue | container `queue` (`queue:listen`), runs with `./dev.sh` | `queue:work` under Supervisor / systemd |
+| Scheduler | off by default, `./dev.sh up --with-scheduler` or `./dev.sh artisan schedule:test` | system cron: `* * * * * php artisan schedule:run` |
 
-`dev.sh` runs the queue worker (and optionally the scheduler) only while you work. Neither
-`dev.sh` nor `init-workspace.sh` ever adds or removes cron jobs – existing entries in your crontab
-keep working as they are.
+The queue worker (and optionally the scheduler) run only while the environment runs. Neither
+`dev.sh` nor `init-workspace.sh` ever adds or removes cron jobs.
 The scheduler currently contains only nightly GDPR clean-up jobs (see `api/routes/console.php`).
 
 ---
@@ -262,6 +304,10 @@ deploy/build.sh --skip-angular          # reuse the existing Angular build
 deploy/build.sh --with-public-storage   # also ship storage/app/public (first install only)
 deploy/build.sh --no-zip                # skip the archive
 ```
+
+The build runs **inside the dev container** (same PHP as the hosting, Composer, Node.js,
+Chromium for the tests) – `deploy/build.sh` started on the host re-runs itself there
+(`./dev.sh build` does the same; `BUILD_ON_HOST=1` builds with the host tools).
 
 **Tests first:** every build starts with all unit tests (`tests/unit_tests/run_all.sh`, erp +
 api, report in `tests/unit_tests/report/`). When all of them pass, the build says
@@ -335,19 +381,9 @@ uploads. A final check aborts the build if any `.env`, `.sql`, key or log file e
 
 Run once on the first release that contains them (back up the database first):
 
-1. **SQL migrations** (`database/migrations/`, in this order, phpMyAdmin → *Import* or
-   `mysql -u <user> -p <db> < file.sql`):
-   - `2026_10_23_shop_orders_vat_contact_retention.sql` – VAT rate per order line, buyer
-     snapshot on the order, orders kept when a customer is deleted
-   - `2026_10_24_enum_slug_column_defaults.sql` – English slug defaults of status / priority /
-     state (raw requests, sales leads, job applications)
-   - `2026_10_26_normalize_user_emails.sql` – login e-mails lower case without surrounding
-     whitespace (run the duplicate check from its header first)
-   - `2026_10_26_scrub_logged_passwords.sql` – removes the maintenance confirmation password that
-     older releases wrote into the web / shop audit logs (run the SELECT from its header first:
-     every admin listed there must change the password)
-   - `2026_10_27_not_found_page_titles.sql` – browser tab titles of the public 404 pages
-     (`web.not-found`, `shop.not-found`)
+1. ~~**SQL migrations** (`database/migrations/*.sql`)~~ – **done on the server**; the scripts were
+   removed with the root `database/` folder on 2026-10-31. Later schema changes are Laravel
+   migrations, run by `php artisan migrate --force` (step 6 above).
 2. **Legacy attachments to the private disk** (GDPR, in `laravel/`):
    `php artisan attachments:migrate-legacy --dry-run`, check the output, then without `--dry-run`
 3. **Clear caches**: `php artisan optimize:clear`, then the `config:cache` / `route:cache` /
@@ -376,6 +412,11 @@ Run once on the first release that contains them (back up the database first):
 6. **Deploy SSH key** – the key that was committed in `docs/scripts/` must be treated as leaked:
    generate a new one (`bash docs/scripts/generate-ssh.sh`, writes to `~/.ssh`), put the new
    public key into the server's `~/.ssh/authorized_keys` and **remove the old one** there.
+7. **`APP_KEY` check** (open finding #67) – `api/.env.example` contained a real `APP_KEY` until
+   2026-10-31. Make sure the production `laravel/.env` does **not** use that key
+   (`git log -p -- api/.env.example` shows it); if it does, generate a new one in a planned window
+   (`php artisan key:generate --force` – everyone is logged out, data encrypted with the old key
+   can no longer be read).
 
 ### Uploading the package
 
@@ -404,12 +445,12 @@ the server with the local one. The checksum file does not need to be deployed.
 ## Security and GDPR rules
 
 - **Never commit secrets**: `.env`, passwords, API keys, SSH/TLS private keys. Keys belong in `~/.ssh`.
-- **No real personal data in the repository**: `database/` contains schema and code lists only;
-  dumps with customer data stay outside git.
+- **No real personal data in the repository**: `api/database/` contains the schema, migrations
+  and seeders only (placeholder data); database dumps (`./dev.sh db-dump` → `temp/`) stay outside git.
 - User uploads (`storage/app/private`) are personal data – never copied into builds or shared.
 - Retention of personal data is enforced by scheduled clean-up jobs (security events,
   import batches) – keep the production scheduler cron running.
-- `.dev/` and `build/` are git-ignored; check with `git status` before every commit.
+- `dev/.env`, `dev/logs/`, `dev/pids/` and `build/` are git-ignored; check with `git status` before every commit.
 - **E-mail access policy** (admin → Account management → E-mail domains) applies to every role,
   sysadmin included: an account outside the allowed domains / exceptions cannot log in, and its
   open sessions end as soon as the policy excludes it. The editor refuses a change that would
@@ -472,7 +513,10 @@ All code must be documented using the DOCS templates in `docs/`:
 | Problem | Solution |
 |---|---|
 | Terminal keeps printing *"You have new mail"* | A cron job is failing and cron mails its output. Check `crontab -l` and `tail -50 /var/mail/$USER` – usually a job whose directory no longer exists; fix or remove that entry, or add `MAILTO=""` to the crontab. |
-| `Port 8000/4200 is used by another process` | Something else runs on the port: `ss -ltnp \| grep 8000`, stop it or use `API_PORT=8001 ./dev.sh`. |
-| E-mails do not arrive in Mailpit | `MAIL_HOST=127.0.0.1`, `MAIL_PORT=1025` in `api/.env`; check `.dev/logs/queue.log`. |
-| Queued jobs are not processed | `QUEUE_CONNECTION` must not be `sync` for queued jobs; check `./dev.sh status` and `php artisan queue:failed`. |
+| *port is already allocated* / *address already in use* | Something else uses the port (another app of web-platform, an old XAMPP / `php artisan serve`): `ss -ltnp \| grep 8000`, stop it, or change the port in `dev/.env`. |
+| E-mails do not arrive in Mailpit | Inside Docker the mail goes to `mailpit:1025` (set by `dev/compose.yaml`); check `./dev.sh logs queue` and http://127.0.0.1:8025. |
+| Queued jobs are not processed | `QUEUE_CONNECTION` must not be `sync` for queued jobs; check `./dev.sh status` and `./dev.sh artisan queue:failed`. |
+| *permission denied … docker.sock* | Your user is not in the `docker` group yet: `sudo usermod -aG docker $USER`, log out and in (`./init-workspace.sh` offers it). |
+| Files in the repository owned by root / another user | `HOST_UID` / `HOST_GID` in `dev/.env` do not match `id -u` / `id -g` – run `./init-workspace.sh` (fixes them), then `./dev.sh rebuild`; fix existing files with `sudo chown -R $USER: .` |
+| *the input device is not a TTY* | Run the command in a terminal (not from a script / pipe) or use `docker compose run -T …`. |
 | Build fails with *"Angular output not found"* | The output path is read from `outputPath` in `erp/angular.json`; override with `ANGULAR_OUTPUT=dist/<name> deploy/build.sh`. |

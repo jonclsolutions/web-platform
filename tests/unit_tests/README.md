@@ -34,7 +34,16 @@ tests/unit_tests/
 
 ## Running
 
-From any directory, for example:
+**In Docker (the normal way):** the dev image has everything (PHP 8.5 + pcov, Node.js,
+Chromium) – run the scripts through `./dev.sh`:
+
+```bash
+./dev.sh test                                         # = tests/unit_tests/run_all.sh in the container
+./dev.sh test --no-coverage
+./dev.sh shell                                        # then any script below inside the container
+```
+
+Inside the dev container (or on a host with the tools), from any directory, for example:
 
 ```bash
 tests/unit_tests/run_all.sh                           # all erp + all api tests, combined report
@@ -45,10 +54,10 @@ tests/unit_tests/api/run_all_api.sh                   # all api tests only
 tests/unit_tests/api/run_core.sh --no-coverage        # one api section without coverage
 ```
 
-Requirements: Node.js, `npm install` in `erp/`, Chrome or Chromium (found via `CHROME_BIN` or on
-PATH), PHP 8.2+ with `pdo_sqlite` and `composer install` in `api/`. For the api code coverage a
-PHP coverage driver: **pcov** (recommended – Fedora `sudo dnf install php-pecl-pcov`,
-Debian/Ubuntu `sudo apt install php-pcov`) or Xdebug. Without a driver the api tests still run and
+Requirements (all in the dev image): Node.js, `npm ci` in `erp/`, Chrome or Chromium (found via
+`CHROME_BIN` or on PATH), PHP 8.4+ (api/composer.lock) with `pdo_sqlite` and `composer install` in
+`api/`. For the api code coverage a PHP coverage driver: **pcov** (installed in the dev image when
+available for its PHP version) or Xdebug. Without a driver the api tests still run and
 the report says "coverage not available".
 
 Exit code: `0` all passed, `1` at least one test failed, `2` setup problem (missing
@@ -129,7 +138,8 @@ to force a database error.
 
 ### Current state
 
-Target **100 %**:
+Target **100 %**. The per-section counts below are from the last full measurement; the totals
+were updated on 2026-10-31. Run them with `./dev.sh test` (Docker).
 
 | Script | Coverage |
 |---|---|
@@ -137,12 +147,12 @@ Target **100 %**:
 | `erp/run_admin_shop.sh` | 100 % |
 | `erp/run_admin_core.sh` | 99 % lines / 98 % statements – 430 tests (the rest: downloads via `window.location`, ResizeObserver callbacks) |
 | `erp/run_public_web.sh` + `run_public_shop.sh` | 99.6 % lines |
-| `erp/run_all_erp.sh` | 99.5 % lines / 99 % statements – 1093 tests (core 100 %, shared ≥ 99.6 % per file) |
+| `erp/run_all_erp.sh` | 99.5 % lines / 99 % statements (last coverage measurement) – 1158 tests on 2026-10-31 (core 100 %, shared ≥ 99.6 % per file) |
 | `api/run_core.sh` | 100 % (lines, methods) – 186 tests |
 | `api/run_web.sh` | 100 % (lines, methods) – 107 tests |
 | `api/run_shop.sh` | 100 % (lines, methods) – 64 tests |
 | `api/run_other.sh` | 100 % (lines, methods) – 28 tests |
-| `api/run_all_api.sh` | 100 % (lines, methods) of all `api/app` – 385 tests |
+| `api/run_all_api.sh` | 100 % (lines, methods) of all `api/app` – 434 tests on 2026-10-31 |
 
 Code that can never run (e.g. a branch for a button the page does not have) is removed instead of
 being excluded from the coverage.

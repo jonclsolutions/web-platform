@@ -5,88 +5,107 @@
 # @project RPSW Web
 # @author RPSW
 # @created 2026
-# @description Prepares a freshly cloned application for LOCAL development on
-# Fedora. It is universal – the same unchanged script works for web-platform and
+# @description Prepares a freshly cloned application for LOCAL development - in DOCKER, so it
+# runs the same on every machine (any Linux, macOS, Windows via WSL 2): the host needs only Docker and
+# git, PHP / Composer / Node.js / MariaDB / Mailpit run in containers (dev/compose.yaml,
+# dev/docker/Dockerfile). It is universal – the same unchanged script works for web-platform and
 # for every application cloned from it (the app name is taken from the directory):
 #
 #   git clone git@github.com:jonclsolutions/web-platform.git my-app
-#   cd my-app && ./init-workspace.sh
+#   cd my-app && ./init-workspace.sh          (Linux, macOS)
+#   init-workspace.cmd                         (Windows - prepares WSL 2 + Docker Desktop, then runs
+#                                               this script inside WSL)
 #
 # (No SSH key on GitHub yet? Clone over HTTPS - https://github.com/jonclsolutions/web-platform.git -
 #  and let step 1 connect this computer over SSH; it then offers to switch the remote to SSH.)
-#
-# PREREQUISITE (checked right after step 1 – the script stops without it):
-#   XAMPP installed in /opt/lampp – https://www.apachefriends.org/download.html
 #
 # Steps (each one is skipped when already done – safe to run again, nothing
 # existing is overwritten):
 #   1. GitHub (SSH)    – checks the SSH connection to GitHub; when missing it offers to connect
 #                        (SSH key, adding it on GitHub, check) – may be skipped
-#   2. Temp folder     – .temp/ with temp.txt: local scratch space (media, notes, …), git-ignored
-#   3. System packages – PHP + extensions (incl. pcov for test coverage), Composer, Node.js, tools
-#                        (Fedora: dnf, Arch Linux: pacman)
-#   4. Mailpit         – local SMTP catcher, verified release → ~/.local/bin
-#   5. Laravel         – api/.env, composer install, APP_KEY, storage symlink, permissions
-#   6. Database        – creates the database (XAMPP MariaDB), runs the migrations and the seeders:
-#                        base data + the local test account sysadmin@sysadmin.sysadmin / 123456Ab.
-#   7. Angular         – npm ci, local SSL certificate for `ng serve`
-#   8. Repository      – .gitignore entries, executable scripts, git remote check
-#   9. Shell aliases   – <app>, <app>-dev, <app>-build in your shell profile
-#  10. Summary         – result + the manual step: review api/.env
+#   2. Temp folder     – temp/ with temp.txt: local scratch space (media, notes, …), git-ignored
+#   3. Docker          – Docker + Compose + buildx present and usable: Linux – installed with the
+#                        package manager (asked), on demand (docker.socket), docker group;
+#                        macOS – Docker Desktop (brew, asked) started; WSL – Docker Desktop
+#   4. Docker settings – dev/.env from dev/.env.example: project name, your UID / GID, random local
+#                        database password
+#   5. Images          – builds the dev image (PHP 8.5, Composer, Node.js, Chromium) and pulls
+#                        MariaDB, Mailpit, phpMyAdmin
+#   6. Laravel         – api/.env, composer install, APP_KEY, storage folders + symlink
+#   7. Database        – creates the database in the MariaDB container, runs the migrations and
+#                        the seeders: base data + the local test account sysadmin@sysadmin.sysadmin
+#   8. Angular         – npm ci, local SSL certificate for `ng serve`
+#   9. Repository      – .gitignore entries, executable scripts, git remote check
+#  10. Shell aliases   – <app>, <app>-dev, <app>-build in your shell profile
+#  11. Summary         – result + the manual step: review api/.env
 #
 # @refactor-note (2026-10-24) Open finding #54: the dev certificate of `ng serve` was a committed
-#   Laragon key pair (`erp/ssl/laragon.*`). Laragon is no longer used (XAMPP); the pair is now
-#   generated per developer as `erp/ssl/localhost.{crt,key}` and the whole `erp/ssl/` is git-ignored.
-# @refactor-note (2026-10-30) Arch Linux support (step 1): packages via pacman, the PHP extensions
-#   Arch ships disabled are enabled in /etc/php/conf.d/20-laravel-dev.ini, pcov (AUR only) is
-#   reported, not installed. Step 3 stops with a clear message when Composer / PHP is missing
-#   (before: "composer: command not found" from the ERR trap).
-# @refactor-note (2026-10-30d) New step 4 "Database" replaces the manual phpMyAdmin import of
-#   database/db.sql; step 6 creates the git-ignored .temp/ folder for local scratch files.
-# @bugfix-note (2026-10-30) This file was stored without the executable bit (mode 100644): after a
-#   clone / checkout `./init-workspace.sh` could not be started and git showed a mode change once
-#   the script had made itself executable. Stored as 100755 now; a trailing space removed.
-# @bugfix-note (2026-10-30b) Fresh Arch Linux (e.g. a VM): stops with instructions when sudo is
-#   missing (not in a base installation) or the pacman database was never synced; installs
-#   net-tools (netstat, used by XAMPP's lampp script).
-# @bugfix-note (2026-10-30c) Used Arch Linux: installed packages are checked with `pacman -T`
-#   (honours "provides") instead of `pacman -Q` (exact name) - with e.g. nodejs-lts-jod the script
-#   tried to install nodejs, which conflicts and stopped the step.
-# @refactor-note (2026-10-31) Summary lists the new test role set (full-web-core, full-shop-core,
-#   all-permissions instead of editor-web, editor-shop, manager).
-# @refactor-note (2026-10-31b) New first step "GitHub (SSH)" (check, optional connection, optional
-#   switch of an HTTPS remote to SSH); the XAMPP prerequisite is checked right after it; the
-#   .temp/ folder is created as step 2 (right after the clone, before the long installs) and its
-#   description file is now .temp/temp.txt (an older .temp/info.txt is left as it is). Steps
-#   renumbered (10 in total). Step numbers in the notes above refer to the old numbering.
-# @note THE DATABASE IS CREATED BY THIS SCRIPT (step 6, since 2026-10-30): `db:create-if-missing`,
-# `migrate`, `db:seed` - an existing database is never dropped or overwritten, only missing
-# migrations and missing base data are added. Only one application runs at a time (all use
-# ports 8000/4200).
+#   Laragon key pair (`erp/ssl/laragon.*`); it is generated per developer as
+#   `erp/ssl/localhost.{crt,key}` and the whole `erp/ssl/` is git-ignored.
+# @refactor-note (2026-10-30) Arch Linux support (pacman packages, PHP extensions in conf.d).
+# @refactor-note (2026-10-30d) Database created by Laravel (db:create-if-missing, migrate,
+#   db:seed) instead of the manual phpMyAdmin import; .temp/ folder for local scratch files.
+# @bugfix-note (2026-10-30) Stored as 100755 (it was 100644 – `./init-workspace.sh` could not start).
+# @refactor-note (2026-10-31b) GitHub (SSH) as the first step; .temp/temp.txt right after the clone.
+# @refactor-note (2026-10-31c) DOCKER instead of host packages: the steps "System packages"
+#   (dnf / pacman, PHP extensions, pcov from the AUR) and "Mailpit" (~/.local/bin) and the XAMPP
+#   prerequisite are gone - PHP 8.5 (like the FORPSI hosting), Composer, Node.js 24, Chromium,
+#   MariaDB, Mailpit and phpMyAdmin are containers. Every PHP / Node.js command of this script
+#   runs in the dev container; the host is not changed except Docker itself (asked first).
+#   The database of a former XAMPP installation is NOT moved automatically - see the summary
+#   (`./dev.sh db-import`). The storage symlink is relative now (valid on the host and in the
+#   container).
+# @refactor-note (2026-10-31e) EVERY PLATFORM: Linux (Docker installed with the package manager of
+#   Arch, Debian / Ubuntu, Fedora, openSUSE - asked), macOS (Docker Desktop via Homebrew, bash 4+
+#   from Homebrew - the script re-runs itself with it) and Windows (WSL 2 + Docker Desktop:
+#   init-workspace.cmd prepares them and runs this script inside WSL). Platform detected by
+#   `uname` / /proc/version - no menu.
+# @refactor-note (2026-10-31g) The scratch folder is temp/ (was .temp/ - hidden on some systems);
+#   an existing .temp/ is renamed once, with its content.
+# @refactor-note (2026-10-31f) Root clean-up: everything of the local environment lives in dev/
+#   (compose.yaml, .env / .env.example, docker/Dockerfile, windows/*.ps1, logs/, pids/); the
+#   root keeps only the entry points. A root .env of the previous layout is moved to dev/.env.
+# @refactor-note (2026-10-31d) Docker on demand: step 3 enables docker.socket instead of
+#   docker.service (asked; an enabled docker.service is offered the switch) - the daemon starts
+#   on the first docker command, not with the computer.
+# @note THE DATABASE IS CREATED BY THIS SCRIPT (step 7): `db:create-if-missing`, `migrate`,
+#   `db:seed` - an existing database is never dropped or overwritten, only missing migrations and
+#   missing base data are added. Its data live in the Docker volume <app>_db-data.
 #
-# @note ISOLATION: everything the script writes belongs to this checkout
-# (api/.env, vendor/, node_modules/, erp/ssl/, .dev/) or is a block named after
-# the app (shell aliases), so any number of cloned apps can be set up on one
-# machine without affecting each other. The user crontab is never touched.
+# @note ISOLATION: everything the script writes belongs to this checkout (dev/.env, api/.env,
+# vendor/, node_modules/, erp/ssl/, temp/) or is named after the app (Docker project
+# <app>: containers, volumes, network; shell alias block), so any number of cloned apps can be
+# set up on one machine without affecting each other. The user crontab is never touched.
 #
 # @security
 #   - GitHub SSH: github.com is trusted only with the host key GitHub publishes (pinned below, no
 #     "trust on first use"); a new key pair is created only after asking, with ssh-keygen (it asks
 #     for a passphrase); only the PUBLIC key is ever printed / copied, the private key never leaves
 #     ~/.ssh. An existing key, ~/.ssh/config or known_hosts entry is never changed.
-#   - Never overwrites an existing api/.env and never regenerates an existing APP_KEY.
-#   - Mailpit is installed only if its SHA-256 matches the digest GitHub publishes.
-#   - Does not run as root; sudo is used only for the package manager (dnf / pacman) and, on
-#     Arch Linux, to enable the required PHP extensions (/etc/php/conf.d/20-laravel-dev.ini).
-#   - Never installs from the AUR (user-submitted, unreviewed) – it only tells what is missing.
+#   - Never overwrites an existing .env / api/.env and never regenerates an existing APP_KEY.
+#   - The local database password is random (openssl / /dev/urandom), stored only in the
+#     git-ignored dev/.env and never printed; every port of the containers is bound to 127.0.0.1.
+#   - Docker starts on demand (docker.socket), never with the computer; the app containers have
+#     no restart policy - nothing of the app runs unless ./dev.sh was started.
+#   - Does not run as root; sudo is used only to install / start Docker and to add you to the
+#     docker group (all asked first). Membership of the docker group equals root access on this
+#     machine – that is how Docker works; rootless Docker is an alternative (see README).
 #   - The generated SSL key is for localhost only and is git-ignored.
 #
 # @usage
 #   ./init-workspace.sh                full setup
-#   ./init-workspace.sh --skip-system  skip the system packages (dnf / pacman)
 #   ./init-workspace.sh --no-aliases   do not touch the shell profile
 #   ./init-workspace.sh --help
 # =============================================================================
+
+# macOS ships bash 3.2 (too old for this script) - re-run with bash 4+ from Homebrew.
+if [ -z "${BASH_VERSINFO:-}" ] || [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    for _bash in /opt/homebrew/bin/bash /usr/local/bin/bash; do
+        [ -x "$_bash" ] && exec "$_bash" "$0" "$@"
+    done
+    echo "ERROR: bash 4 or newer is needed (this is bash ${BASH_VERSION:-?}). macOS: install Homebrew (https://brew.sh), then: brew install bash – and run ./init-workspace.sh again" >&2
+    exit 1
+fi
 
 set -Eeuo pipefail
 
@@ -96,12 +115,10 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 API_DIR="$ROOT_DIR/api"
 ERP_DIR="$ROOT_DIR/erp"
-DEV_DIR="$ROOT_DIR/.dev"
-XAMPP_DIR="${XAMPP_DIR:-/opt/lampp}"
-LOCAL_BIN="$HOME/.local/bin"
+DOCKER_ENV="$ROOT_DIR/dev/.env"
 
-# Application name = directory name (lower-case, [a-z0-9-]); used for aliases
-# and as the suggested database name of a new app.
+# Application name = directory name (lower-case, [a-z0-9-]); used for the Docker project,
+# the aliases and as the suggested database name of a new app.
 APP_SLUG="$(basename "$ROOT_DIR" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')"
 APP_SLUG="${APP_SLUG:-app}"
 
@@ -118,7 +135,12 @@ GITHUB_SSH="git@github.com"
 GITHUB_HOST_KEY="github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
 GITHUB_KEYS_URL="https://github.com/settings/ssh/new"
 
-SKIP_SYSTEM=0
+# Platform: linux, macos or wsl (Linux inside WSL 2 on Windows - Docker Desktop provides Docker).
+case "$(uname -s)" in
+    Darwin) OS_KIND=macos ;;
+    *) if grep -qi microsoft /proc/version 2>/dev/null; then OS_KIND=wsl; else OS_KIND=linux; fi ;;
+esac
+
 WITH_ALIASES=1
 ENV_CREATED=0      # 1 = api/.env was created by this run (summary asks to review it)
 
@@ -126,7 +148,7 @@ ENV_CREATED=0      # 1 = api/.env was created by this run (summary asks to revie
 # Output helpers and result tracking (printed in the summary)
 # -----------------------------------------------------------------------------
 STEP=0
-TOTAL_STEPS=10
+TOTAL_STEPS=11
 DONE=()
 SKIPPED=()
 WARNINGS=()
@@ -142,7 +164,6 @@ trap '[[ $BASH_SUBSHELL -eq 0 ]] && die "setup failed at line $LINENO (command: 
 
 for arg in "$@"; do
     case "$arg" in
-        --skip-system) SKIP_SYSTEM=1 ;;
         --no-aliases)  WITH_ALIASES=0 ;;
         -h|--help) sed -n '/^# @usage/,/^# =====/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' | sed '$d'; exit 0 ;;
         *) die "unknown option: $arg (see --help)" ;;
@@ -150,21 +171,13 @@ for arg in "$@"; do
 done
 
 # -----------------------------------------------------------------------------
-# @description Reads one value from api/.env with the same semantics as Laravel:
-# vlucas/phpdotenv when vendor/ exists, a simple parser otherwise.
-# @param $1 key
+# @description Reads one value from a dotenv file (KEY=VALUE; quotes and trailing comments
+# removed). No PHP needed - the host has none.
+# @param $1 key, $2 file (default api/.env)
 # -----------------------------------------------------------------------------
 env_get() {
-    local key="$1"
-    if [[ -f "$API_DIR/vendor/vlucas/phpdotenv/src/Dotenv.php" ]]; then
-        (cd "$API_DIR" && php -r '
-            require "vendor/autoload.php";
-            $env = Dotenv\Dotenv::parse(file_get_contents(".env"));
-            echo $env[$argv[1]] ?? "";' "$key")
-        return
-    fi
-    local v
-    v="$(grep -E "^[[:space:]]*$key=" "$API_DIR/.env" 2>/dev/null | tail -n1 | cut -d= -f2- || true)"
+    local key="$1" file="${2:-$API_DIR/.env}" v
+    v="$(grep -E "^[[:space:]]*$key=" "$file" 2>/dev/null | tail -n1 | cut -d= -f2- || true)"
     if [[ "$v" == \"* ]]; then
         v="${v#\"}"; v="${v%\"*}"; v="${v//\\\"/\"}"; v="${v//\\\\/\\}"
     elif [[ "$v" == \'* ]]; then
@@ -176,12 +189,11 @@ env_get() {
 }
 
 # -----------------------------------------------------------------------------
-# @description Sets KEY=VALUE in api/.env (replaces the line or appends).
-# Used only on a freshly created .env, never on an existing one.
-# @param $1 key, $2 value
+# @description Sets KEY=VALUE in a dotenv file (replaces the line or appends).
+# @param $1 key, $2 value, $3 file (default api/.env)
 # -----------------------------------------------------------------------------
 env_set() {
-    local key="$1" value="$2" file="$API_DIR/.env" tmp
+    local key="$1" value="$2" file="${3:-$API_DIR/.env}" tmp
     tmp="$(mktemp)"
     if grep -qE "^[[:space:]]*#?[[:space:]]*$key=" "$file"; then
         awk -v k="$key" -v v="$value" '
@@ -195,31 +207,28 @@ env_set() {
     rm -f "$tmp"
 }
 
-# -----------------------------------------------------------------------------
-# @description Basic checks before anything is changed: not root, sudo available, run from the
-# repository root.
-# -----------------------------------------------------------------------------
-preflight() {
-    [[ "$EUID" -ne 0 ]] || die "do not run as root – the script uses sudo only for the package manager"
-    # A minimal installation (e.g. Arch Linux base) has no sudo.
-    command -v sudo >/dev/null \
-        || die "sudo not found – install it as root (Arch: pacman -S sudo, then add your user to the wheel group: usermod -aG wheel <user>, and allow the group with EDITOR=nano visudo), then run this script again"
-    [[ -f "$API_DIR/composer.json" ]] || die "api/composer.json not found – run from the repository root"
-    [[ -f "$ERP_DIR/package.json" ]]  || die "erp/package.json not found – run from the repository root"
-    mkdir -p "$DEV_DIR"
-}
+# @description docker compose of this repository (from the root, with the root .env).
+dc() { docker compose -f "$ROOT_DIR/dev/compose.yaml" "$@"; }
+
+# @description Runs a command in a new dev container (removed afterwards), without the database.
+# @param $1 directory inside the repository (api, erp or .), rest = command
+in_app() { local dir="$1"; shift; dc run --rm --no-deps -T -w "/workspace/${dir#.}" api "$@"; }
+
+# @description Same, with the database and Mailpit started (artisan commands that need them).
+in_app_db() { local dir="$1"; shift; dc run --rm -T -w "/workspace/${dir#.}" api "$@"; }
 
 # -----------------------------------------------------------------------------
-# @description Prerequisite XAMPP (checked right after step 1). XAMPP is installed once per
-# machine by hand, so its absence stops the script before anything is installed.
+# @description Basic checks before anything is changed: not root, run from the repository root.
 # -----------------------------------------------------------------------------
-require_xampp() {
-    printf '\nPREREQUISITE: XAMPP must be installed in %s before running this script.\n' "$XAMPP_DIR"
-    printf '  Download: https://www.apachefriends.org/download.html\n'
-    printf '  Install:  chmod +x xampp-linux-*-installer.run && sudo ./xampp-linux-*-installer.run\n\n'
-    [[ -x "$XAMPP_DIR/lampp" ]] \
-        || die "XAMPP not found in $XAMPP_DIR – install it first (see above), then run this script again"
-    printf '\e[32m   ✓ XAMPP found in %s\e[0m\n' "$XAMPP_DIR"
+preflight() {
+    [[ "$EUID" -ne 0 ]] || die "do not run as root – the script asks for sudo only where it is needed"
+    [[ -f "$API_DIR/composer.json" ]] || die "api/composer.json not found – run from the repository root"
+    [[ -f "$ERP_DIR/package.json" ]]  || die "erp/package.json not found – run from the repository root"
+    [[ -f "$ROOT_DIR/dev/compose.yaml" ]] || die "dev/compose.yaml not found – run from the repository root"
+    if [[ "$OS_KIND" == "wsl" && "$ROOT_DIR" == /mnt/[a-z]/* ]]; then
+        printf '\e[33m   ! The project is on a Windows drive (%s): Docker is very slow there and ng serve does not\n     notice changes. Clone it inside WSL (e.g. ~/%s) – init-workspace.cmd on Windows does it for you.\e[0m\n' "$ROOT_DIR" "$APP_SLUG" >&2
+        WARNINGS+=("project on a Windows drive (slow) – clone it inside WSL")
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -327,6 +336,8 @@ github_public_key() {
 
 # @description Copies stdin to the clipboard when a clipboard tool exists (Wayland / X11).
 copy_to_clipboard() {
+    if command -v pbcopy >/dev/null; then pbcopy 2>/dev/null; return; fi
+    if command -v clip.exe >/dev/null; then clip.exe 2>/dev/null; return; fi
     if command -v wl-copy >/dev/null && [[ -n "${WAYLAND_DISPLAY:-}" ]]; then wl-copy 2>/dev/null; return; fi
     if command -v xclip >/dev/null && [[ -n "${DISPLAY:-}" ]]; then xclip -selection clipboard 2>/dev/null; return; fi
     return 1
@@ -350,357 +361,28 @@ offer_ssh_remote() {
 }
 
 # -----------------------------------------------------------------------------
-# 3. System packages – only missing packages are installed.
-#    Fedora: dnf. Arch Linux: pacman (+ PHP extensions enabled in conf.d).
-# -----------------------------------------------------------------------------
-install_system_packages() {
-    step "System packages"
-    if [[ "$SKIP_SYSTEM" == "1" ]]; then skip "system packages (--skip-system)"; return 0; fi
-    if command -v dnf >/dev/null; then
-        install_packages_fedora
-    elif command -v pacman >/dev/null; then
-        install_packages_arch
-    else
-        warn "neither dnf (Fedora) nor pacman (Arch Linux) found – install PHP 8.2+ with the extensions of api/composer.lock, Composer, Node.js, zip, rsync, openssl manually"
-        return 0
-    fi
-    check_tool_versions
-}
-
-# -----------------------------------------------------------------------------
-# Fedora / dnf.
-# @note php-process = pcntl/posix (queue workers), php-mysqlnd = pdo_mysql,
-# libxcrypt-compat = libcrypt.so.1 needed by XAMPP on current Fedora.
-# Unit tests (tests/unit_tests/api): php-pdo = pdo_sqlite (the tests run on SQLite
-# in memory), php-pecl-pcov = code coverage driver (without it the tests still run,
-# only the coverage is missing).
-# -----------------------------------------------------------------------------
-install_packages_fedora() {
-    local wanted=(
-        php-cli php-common php-mbstring php-xml php-mysqlnd php-intl php-pecl-zip
-        php-gd php-bcmath php-process php-opcache php-sodium
-        php-pdo php-pecl-pcov
-        composer nodejs npm
-        git unzip zip rsync openssl curl tar libxcrypt-compat
-    )
-    local missing=() p
-    for p in "${wanted[@]}"; do
-        rpm -q --whatprovides "$p" >/dev/null 2>&1 || missing+=("$p")
-    done
-    if [[ ${#missing[@]} -eq 0 ]]; then
-        skip "all system packages already installed"
-    else
-        info "installing: ${missing[*]} (sudo)"
-        sudo dnf install -y "${missing[@]}"
-        done_ "installed: ${missing[*]}"
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# Arch Linux / pacman.
-# @note The `php` package contains mbstring, xml, curl, openssl, pcntl, posix, … built in, but
-# ships bcmath, iconv, intl, mysqli, pdo_mysql and zip DISABLED; gd, sodium and sqlite
-# (pdo_sqlite + sqlite3, needed by the unit tests) are separate packages, also disabled after
-# installation. A package name the repositories do not know (renamed / merged) is reported, not
-# installed, so one rename cannot stop the whole step. The script enables exactly the missing ones in ONE file of its own,
-# /etc/php/conf.d/20-laravel-dev.ini (php.ini itself is never edited; delete the file to undo).
-# libxcrypt-compat = libcrypt.so.1 and net-tools = netstat, both needed by XAMPP (its `lampp`
-# script checks the ports with netstat; a base Arch has neither). No `-Sy`: a sync without upgrade is a partial
-# upgrade, which Arch does not support - when packages cannot be found, run `sudo pacman -Syu`.
-# pcov (coverage driver of the unit tests) exists only in the AUR, which this script never uses.
-# -----------------------------------------------------------------------------
-install_packages_arch() {
-    local wanted=(
-        php php-gd php-sodium php-sqlite
-        composer nodejs npm
-        git unzip zip rsync openssl curl tar libxcrypt-compat net-tools
-    )
-    local missing=() unknown=() p
-    for p in "${wanted[@]}"; do
-        # -T (deptest) also accepts a package that PROVIDES the name (nodejs-lts-* → nodejs, …),
-        # so an existing alternative is kept instead of being replaced (= conflict, abort).
-        pacman -T "$p" >/dev/null 2>&1 && continue
-        if pacman -Si "$p" >/dev/null 2>&1; then missing+=("$p"); else unknown+=("$p"); fi
-    done
-    # `php` unknown = the package database was never synced (fresh installation) - nothing would work.
-    [[ " ${unknown[*]} " != *" php "* ]] \
-        || die "pacman does not know the package 'php' – the package database is not synced: run sudo pacman -Syu, then this script again"
-    [[ ${#unknown[@]} -eq 0 ]] \
-        || warn "not found in the pacman repositories: ${unknown[*]} – update the package database (sudo pacman -Syu) or install them yourself"
-    if [[ ${#missing[@]} -eq 0 ]]; then
-        skip "all system packages already installed"
-    else
-        info "installing: ${missing[*]} (sudo pacman)"
-        sudo pacman -S --needed --noconfirm "${missing[@]}" \
-            || die "pacman could not install the packages – update the system first (sudo pacman -Syu), then run this script again"
-        done_ "installed: ${missing[*]}"
-    fi
-
-    enable_php_extensions_arch
-
-    if php -m 2>/dev/null | grep -qix pcov; then
-        skip "pcov (test coverage) already available"
-    else
-        # Optional - not a warning (the setup is complete without it).
-        skip "pcov not installed (AUR only): the unit tests run, only their coverage is missing – for coverage install it yourself, e.g. 'yay -S php-pcov' (review the PKGBUILD first)"
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# @description Enables the PHP extensions Laravel / the tests need and Arch ships disabled.
-# Only extensions php -m does not list yet are written; an existing file of this script is
-# extended, never replaced.
-# -----------------------------------------------------------------------------
-enable_php_extensions_arch() {
-    local wanted=(bcmath gd iconv intl mysqli pdo_mysql pdo_sqlite sodium sqlite3 zip)
-    local scan_dir ini loaded missing=() e
-    scan_dir="$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;' 2>/dev/null || true)"
-    [[ -n "$scan_dir" ]] || scan_dir=/etc/php/conf.d
-    ini="$scan_dir/20-laravel-dev.ini"
-    loaded="$(php -m 2>/dev/null | tr '[:upper:]' '[:lower:]')"
-    for e in "${wanted[@]}"; do
-        grep -qx "$e" <<<"$loaded" || missing+=("$e")
-    done
-    if [[ ${#missing[@]} -eq 0 ]]; then
-        skip "PHP extensions already enabled"
-        return 0
-    fi
-
-    info "enabling PHP extensions in $ini: ${missing[*]} (sudo)"
-    sudo mkdir -p "$scan_dir"
-    if [[ ! -f "$ini" ]]; then
-        printf '; Written by init-workspace.sh (Laravel development) - extensions Arch ships disabled.\n; Delete this file to undo.\n' \
-            | sudo tee "$ini" >/dev/null
-    fi
-    for e in "${missing[@]}"; do
-        printf 'extension=%s\n' "$e" | sudo tee -a "$ini" >/dev/null
-    done
-
-    loaded="$(php -m 2>/dev/null | tr '[:upper:]' '[:lower:]')"
-    local still=()
-    for e in "${missing[@]}"; do grep -qx "$e" <<<"$loaded" || still+=("$e"); done
-    if [[ ${#still[@]} -eq 0 ]]; then
-        done_ "PHP extensions enabled: ${missing[*]}"
-    else
-        warn "PHP extensions still not loaded: ${still[*]} – check $ini and 'php -m'"
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# @description Prints / checks the versions of PHP, Composer and Node.js.
-# -----------------------------------------------------------------------------
-check_tool_versions() {
-    # Angular 21 requires Node.js ^20.19 || ^22.12 || >=24.
-    local node_major
-    node_major="$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
-    if (( node_major < 20 )); then
-        warn "Node.js $(node -v 2>/dev/null || echo 'missing') is too old for Angular 21 (need 20.19+, 22.12+ or 24+)"
-    else
-        info "PHP $(php -r 'echo PHP_VERSION;'), Composer $(composer --version 2>/dev/null | awk '{print $3}'), Node.js $(node -v)"
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# 4. Mailpit – latest GitHub release, installed only after checksum verification.
-# Mailpit ships no checksums file; GitHub publishes a SHA-256 `digest` for every
-# release asset in its REST API – that is what is verified. Nothing unverified runs.
-# -----------------------------------------------------------------------------
-install_mailpit() {
-    step "Mailpit"
-    if command -v mailpit >/dev/null || [[ -x "$LOCAL_BIN/mailpit" ]]; then
-        skip "Mailpit already installed"
-        return 0
-    fi
-
-    local arch
-    case "$(uname -m)" in
-        x86_64)  arch=amd64 ;;
-        aarch64) arch=arm64 ;;
-        *) warn "unsupported CPU $(uname -m) – install Mailpit manually"; return 0 ;;
-    esac
-
-    local tmp asset="mailpit-linux-$arch.tar.gz" meta tag url digest
-    tmp="$(mktemp -d)"
-    if ! curl -fsSL -o "$tmp/release.json" https://api.github.com/repos/axllent/mailpit/releases/latest; then
-        rm -rf "$tmp"; warn "cannot reach GitHub – install Mailpit manually"; return 0
-    fi
-    meta="$(php -r '
-        $r = json_decode(file_get_contents($argv[1]), true);
-        foreach ($r["assets"] ?? [] as $a) {
-            if ($a["name"] === $argv[2]) {
-                echo $r["tag_name"], " ", $a["browser_download_url"], " ", preg_replace("/^sha256:/", "", $a["digest"] ?? ""), "\n";
-            }
-        }' "$tmp/release.json" "$asset")"
-    read -r tag url digest <<< "$meta"
-    if [[ -z "${url:-}" || ! "${digest:-}" =~ ^[0-9a-f]{64}$ ]]; then
-        rm -rf "$tmp"; warn "Mailpit release has no verifiable $asset – NOT installed, install it manually"; return 0
-    fi
-    if ! curl -fsSL -o "$tmp/$asset" "$url"; then
-        rm -rf "$tmp"; warn "Mailpit $tag download failed – install it manually"; return 0
-    fi
-    if ! printf '%s  %s\n' "$digest" "$tmp/$asset" | sha256sum -c --status -; then
-        rm -rf "$tmp"; warn "Mailpit checksum mismatch – NOT installed"; return 0
-    fi
-
-    mkdir -p "$LOCAL_BIN"
-    tar -xzf "$tmp/$asset" -C "$tmp" mailpit
-    install -m 0755 "$tmp/mailpit" "$LOCAL_BIN/mailpit"
-    rm -rf "$tmp"
-    done_ "Mailpit $tag installed to ~/.local/bin (checksum verified)"
-}
-
-# -----------------------------------------------------------------------------
-# 5. Laravel: .env, dependencies, application key, storage symlink, permissions.
-# -----------------------------------------------------------------------------
-setup_laravel() {
-    step "Laravel (api/)"
-
-    if [[ -f "$API_DIR/.env" ]]; then
-        skip "api/.env exists – left unchanged"
-    else
-        [[ -f "$API_DIR/.env.example" ]] || die "api/.env.example is missing"
-        cp "$API_DIR/.env.example" "$API_DIR/.env"
-        chmod 600 "$API_DIR/.env"
-        # Local development defaults – applied only to this freshly created file.
-        env_set APP_ENV local
-        env_set APP_DEBUG true
-        env_set APP_URL "http://127.0.0.1:8000"
-        env_set FRONTEND_URL "https://localhost:4200"
-        env_set DB_CONNECTION mysql
-        env_set DB_HOST 127.0.0.1
-        env_set DB_PORT 3306
-        env_set DB_DATABASE "${APP_SLUG//-/_}"
-        env_set DB_USERNAME root
-        env_set DB_PASSWORD ""
-        env_set QUEUE_CONNECTION database
-        env_set MAIL_MAILER smtp
-        env_set MAIL_HOST 127.0.0.1      # not "localhost": may resolve to ::1 where Mailpit does not listen
-        env_set MAIL_PORT 1025
-        env_set ANGULAR_I18N_PATH ../erp/src/assets/i18n
-        # Cloudflare Turnstile official always-pass TEST secret (public, local only).
-        [[ -n "$(env_get TURNSTILE_SECRET_KEY)" ]] || env_set TURNSTILE_SECRET_KEY 1x0000000000000000000000000000000AA
-        ENV_CREATED=1
-        done_ "api/.env created with local defaults (database: ${APP_SLUG//-/_}) – review it, see the summary"
-    fi
-
-    command -v php >/dev/null || die "PHP not found – install PHP 8.2+ (step 3), then run this script again"
-    command -v composer >/dev/null || die "Composer not found – install it (step 3), then run this script again"
-    info "composer install"
-    (cd "$API_DIR" && composer install --no-interaction --no-progress)
-    done_ "Composer dependencies installed"
-
-    # Never regenerate an existing key: it would invalidate sessions and encrypted data.
-    if [[ -z "$(env_get APP_KEY)" ]]; then
-        (cd "$API_DIR" && php artisan key:generate --no-interaction >/dev/null)
-        done_ "APP_KEY generated"
-    else
-        skip "APP_KEY already set – not regenerated"
-    fi
-
-    # Git does not keep empty directories – create the storage skeleton Laravel
-    # expects BEFORE checking the symlink (its target must exist to be resolved).
-    mkdir -p "$API_DIR"/storage/{logs,app/private,app/public} \
-             "$API_DIR"/storage/framework/{cache/data,sessions,views} "$API_DIR"/bootstrap/cache
-    chmod -R u+rwX,g+rwX "$API_DIR/storage" "$API_DIR/bootstrap/cache"
-    info "storage/ and bootstrap/cache are writable"
-
-    # The repository may contain a stale symlink from an old checkout path:
-    # dangling, or resolving somewhere else than this checkout's storage.
-    local link="$API_DIR/public/storage" target="$API_DIR/storage/app/public"
-    if [[ -L "$link" ]] && { [[ ! -e "$link" ]] || [[ "$(readlink -f "$link")" != "$(readlink -f "$target")" ]]; }; then
-        info "removing stale storage symlink → $(readlink "$link")"
-        rm "$link"
-    fi
-    if [[ -L "$link" ]]; then
-        skip "public/storage symlink OK"
-    else
-        (cd "$API_DIR" && php artisan storage:link --no-interaction >/dev/null)
-        done_ "public/storage symlink created"
-    fi
-
-    # Config cache only – the cache store may be the database, which may not exist yet.
-    (cd "$API_DIR" && php artisan config:clear --no-interaction >/dev/null 2>&1) || true
-}
-
-# -----------------------------------------------------------------------------
-# 6. Database – created, migrated and seeded through Laravel (no phpMyAdmin step).
-# @note Only a LOCAL database (DB_HOST 127.0.0.1 / localhost) is handled here; MariaDB of XAMPP
-# is started for the step when it is not running and stopped again afterwards (dev.sh starts it
-# for the work itself). An existing database is never dropped: `migrate` adds only missing
-# migrations (the baseline migration is a no-op on a filled database) and the seeders add only
-# missing base data. With APP_ENV=local the seeders also create the test sysadmin
-# sysadmin@sysadmin.sysadmin / 123456Ab. and the test roles (DevelopmentSeeder).
-# -----------------------------------------------------------------------------
-MYSQL_STARTED=0
-
-setup_database() {
-    step "Database"
-    local db host port
-    db="$(env_get DB_DATABASE)"; host="$(env_get DB_HOST)"; port="$(env_get DB_PORT)"
-    port="${port:-3306}"
-    if [[ "$host" != "127.0.0.1" && "$host" != "localhost" ]]; then
-        warn "DB_HOST=$host is not local – the database is not created by this script (create it there, then run: cd api && php artisan migrate && php artisan db:seed)"
-        return 0
-    fi
-
-    if ! port_open "$port"; then
-        info "starting MariaDB of XAMPP for this step (sudo)"
-        sudo "$XAMPP_DIR/lampp" startmysql >/dev/null
-        MYSQL_STARTED=1
-        local _
-        for _ in $(seq 1 30); do port_open "$port" && break; sleep 1; done
-        port_open "$port" || { warn "MariaDB of XAMPP did not start on port $port – see $XAMPP_DIR/var/mysql/*.err, then run this script again"; return 0; }
-    fi
-
-    if ! (cd "$API_DIR" && php artisan db:create-if-missing --no-interaction); then
-        warn "database '${db:-?}' could not be created – check DB_* in api/.env, then run this script again"
-        stop_started_mysql; return 0
-    fi
-    if ! (cd "$API_DIR" && php artisan migrate --force --no-interaction); then
-        warn "migrations failed – see the output above, then run this script again"
-        stop_started_mysql; return 0
-    fi
-    if ! (cd "$API_DIR" && php artisan db:seed --force --no-interaction); then
-        warn "seeding the base data failed – see the output above, then run this script again"
-        stop_started_mysql; return 0
-    fi
-
-    if [[ "$(env_get APP_ENV)" == "local" ]]; then
-        done_ "database '$db' ready – test login: sysadmin@sysadmin.sysadmin / 123456Ab. (2FA code in Mailpit)"
-    else
-        done_ "database '$db' ready (APP_ENV is not local – no test account created)"
-    fi
-    stop_started_mysql
-}
-
-# @description Whether something listens on 127.0.0.1:<port> (bash /dev/tcp, no extra tools).
-port_open() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
-
-# @description Stops MariaDB of XAMPP again when this script started it.
-stop_started_mysql() {
-    if [[ "$MYSQL_STARTED" == "1" ]]; then
-        sudo "$XAMPP_DIR/lampp" stopmysql >/dev/null || true
-        MYSQL_STARTED=0
-        info "MariaDB of XAMPP stopped again (./dev.sh starts it)"
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# 2. Temp folder – the git-ignored .temp/ folder for local scratch files (media, notes, …),
+# 2. Temp folder – the git-ignored temp/ folder for local scratch files (media, notes, …),
 #    created right after the clone, with temp.txt explaining it. An existing temp.txt is left
-#    unchanged; an .temp/info.txt of an older version of this script is left as it is.
+#    unchanged; an info.txt of an older version of this script is left as it is.
 # -----------------------------------------------------------------------------
 setup_temp_dir() {
-    step "Temp folder (.temp/)"
-    local dir="$ROOT_DIR/.temp"
+    step "Temp folder (temp/)"
+    local dir="$ROOT_DIR/temp"
+    # Layout before 2026-10-31: the folder was .temp/ (hidden on some systems) - moved once,
+    # with its content.
+    if [[ -d "$ROOT_DIR/.temp" && ! -e "$dir" ]]; then
+        mv "$ROOT_DIR/.temp" "$dir"
+        done_ ".temp/ renamed to temp/ (content kept)"
+    fi
     mkdir -p "$dir"
-    if [[ -f "$dir/temp.txt" ]]; then
-        skip ".temp/ exists"
+    # temp.txt of this script with the old name in its title is rewritten; any other is kept.
+    if [[ -f "$dir/temp.txt" ]] && ! head -n 1 "$dir/temp.txt" | grep -q '^\.temp/'; then
+        skip "temp/ exists"
         return 0
     fi
     cat > "$dir/temp.txt" <<'TXT'
-.temp/ – VYGENEROVANÉ DOČASNÉ PROSTŘEDÍ
-======================================
+temp/ – VYGENEROVANÉ DOČASNÉ PROSTŘEDÍ
+=====================================
 
 Tuto složku vytvořil skript init-workspace.sh. Je to dočasné lokální prostředí pro
 ukládání médií, obrázků, souborů, poznámek apod. při vývoji – vše na jednom místě
@@ -713,26 +395,366 @@ nový checkout, nová instalace) a NENÍ ZÁLOHOVANÝ. Co je potřeba zachovat, 
 do repozitáře nebo do zálohy.
 
 ---
-.temp/ – GENERATED TEMPORARY WORKSPACE
+temp/ – GENERATED TEMPORARY WORKSPACE
 Created by init-workspace.sh: a temporary local place for media, images, files, notes, …
 used during development, on this computer only. Git-ignored, never deployed.
 WARNING: keep nothing important here – the content may be deleted at any time and is
 NOT BACKED UP.
 TXT
-    done_ ".temp/ created (local scratch folder, git-ignored – see .temp/temp.txt)"
+    done_ "temp/ created (local scratch folder, git-ignored – see temp/temp.txt)"
 }
 
 # -----------------------------------------------------------------------------
-# 7. Angular: dependencies and the local SSL certificate used by `ng serve`.
+# 3. Docker – Docker Engine, the Compose plugin and buildx must be usable by your user.
+#    Arch Linux: missing packages are installed with pacman (asked first); other systems get the
+#    official instructions. The service is started (asked) and your user is added to the docker
+#    group (asked; takes effect after logging out and in).
+# -----------------------------------------------------------------------------
+setup_docker() {
+    step "Docker"
+    if ! docker_complete; then
+        case "$OS_KIND" in
+            macos) install_docker_macos ;;
+            wsl)   die "Docker is not available in WSL – on Windows run init-workspace.cmd (it installs / starts Docker Desktop), or in Docker Desktop: Settings → Resources → WSL integration → enable it for this distribution ($(wsl_distro)), then run this script again" ;;
+            *)     install_docker_linux ;;
+        esac
+        docker_complete || die "Docker with the Compose and buildx plugins is still missing – install them (https://docs.docker.com/engine/install/), then run this script again"
+    fi
+
+    case "$OS_KIND" in
+        macos) start_docker_desktop ;;
+        wsl)   docker info >/dev/null 2>&1 || die "Docker does not answer in WSL – start Docker Desktop on Windows (and check Settings → Resources → WSL integration for $(wsl_distro)), then run this script again" ;;
+        *)     setup_docker_linux_access ;;
+    esac
+    done_ "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null || echo '?'), Compose $(docker compose version --short 2>/dev/null || echo '?')"
+}
+
+# @description Whether the docker CLI with the Compose and buildx plugins exists.
+docker_complete() {
+    command -v docker >/dev/null && docker compose version >/dev/null 2>&1 && docker buildx version >/dev/null 2>&1
+}
+
+# @description Name of the WSL distribution (WSL only).
+wsl_distro() { printf '%s' "${WSL_DISTRO_NAME:-your WSL distribution}"; }
+
+# -----------------------------------------------------------------------------
+# @description Linux: installs Docker Engine + Compose + buildx with the package manager of the
+# distribution (asked first). Packages of the distribution itself - no extra repository:
+#   Arch / Manjaro / EndeavourOS  pacman  docker docker-compose docker-buildx
+#   Debian / Ubuntu / Mint / Pop  apt     docker.io docker-buildx + docker-compose-v2 (Ubuntu)
+#                                         or docker-compose (Debian)
+#   Fedora                        dnf     moby-engine docker-compose docker-buildx
+#   openSUSE                      zypper  docker docker-compose docker-buildx
+# Other distributions (or a failed install): the official instructions.
+# -----------------------------------------------------------------------------
+install_docker_linux() {
+    local family answer cmd=()
+    family="$(linux_family)"
+    case "$family" in
+        arch)   cmd=(sudo pacman -S --needed --noconfirm docker docker-compose docker-buildx) ;;
+        debian) cmd=(sh -c 'sudo apt-get update -q && sudo apt-get install -y docker.io docker-buildx && { sudo apt-get install -y docker-compose-v2 || sudo apt-get install -y docker-compose; }') ;;
+        fedora) cmd=(sudo dnf install -y moby-engine docker-compose docker-buildx) ;;
+        suse)   cmd=(sudo zypper --non-interactive install docker docker-compose docker-buildx) ;;
+        *) die "Docker Engine with the Compose and buildx plugins is required – install it for your distribution (https://docs.docker.com/engine/install/), then run this script again" ;;
+    esac
+    [[ -t 0 ]] || die "Docker is not installed – run this script in a terminal (it offers to install it) or install Docker yourself"
+    command -v sudo >/dev/null || die "sudo not found – install Docker as root (https://docs.docker.com/engine/install/), then run this script again"
+    printf '   Docker (engine, compose, buildx) is not installed.\n'
+    read -r -p "   Install it now with the package manager of your system ($family)? [y/N] " answer || answer=""
+    [[ "$answer" =~ ^[YyAa]$ ]] || die "Docker is required – install it (https://docs.docker.com/engine/install/), then run this script again"
+    "${cmd[@]}" || die "the package manager could not install Docker – update the system first, or follow https://docs.docker.com/engine/install/ – then run this script again"
+    done_ "Docker installed ($family packages)"
+}
+
+# @description Family of the Linux distribution from /etc/os-release: arch, debian, fedora,
+# suse or other.
+linux_family() {
+    local id="" like=""
+    if [[ -r /etc/os-release ]]; then
+        id="$(. /etc/os-release && printf '%s' "${ID:-}")"
+        like="$(. /etc/os-release && printf '%s' "${ID_LIKE:-}")"
+    fi
+    case " $id $like " in
+        *" arch "*|*" manjaro "*|*" endeavouros "*) echo arch ;;
+        *" debian "*|*" ubuntu "*)                  echo debian ;;
+        *" fedora "*)                               echo fedora ;;
+        *" suse "*|*" opensuse "*|*opensuse-*)      echo suse ;;
+        *)                                          echo other ;;
+    esac
+}
+
+# -----------------------------------------------------------------------------
+# @description Linux: Docker on demand (docker.socket) and permission of your user (docker
+# group) - both asked first.
+# -----------------------------------------------------------------------------
+setup_docker_linux_access() {
+    local answer
+    setup_docker_on_demand
+
+    docker info >/dev/null 2>&1 && return 0
+    # Not running, or no permission to use it.
+    if command -v systemctl >/dev/null && ! systemctl is-active --quiet docker.socket && ! systemctl is-active --quiet docker; then
+        die "Docker is not running – enable it: sudo systemctl enable --now docker.socket (starts Docker when it is used), then run this script again"
+    fi
+    docker info >/dev/null 2>&1 && return 0
+    if ! id -nG "$USER" 2>/dev/null | tr ' ' '\n' | grep -qx docker; then
+        if [[ -t 0 ]]; then
+            printf '   Your user may not use Docker yet. The docker group gives this access (equal to root on this machine).\n'
+            read -r -p "   Add $USER to the docker group (sudo usermod -aG docker $USER)? [y/N] " answer || answer=""
+            if [[ "$answer" =~ ^[YyAa]$ ]]; then
+                sudo usermod -aG docker "$USER"
+                die "$USER added to the docker group – LOG OUT AND IN (or restart), then run ./init-workspace.sh again"
+            fi
+        fi
+        die "your user may not use Docker – add it to the docker group (sudo usermod -aG docker $USER, then log out and in) or set up rootless Docker, then run this script again"
+    fi
+    die "Docker does not answer (docker info failed) – check: sudo systemctl status docker"
+}
+
+# -----------------------------------------------------------------------------
+# @description macOS: Docker Desktop through Homebrew (asked first), otherwise the download page.
+# -----------------------------------------------------------------------------
+install_docker_macos() {
+    local answer
+    if [[ -d /Applications/Docker.app ]]; then
+        # Installed, but the CLI is not on PATH yet (Docker Desktop was never started).
+        start_docker_desktop
+        return 0
+    fi
+    command -v brew >/dev/null && [[ -t 0 ]] \
+        || die "Docker Desktop is required – install it (https://docs.docker.com/desktop/setup/install/mac-install/ or: brew install --cask docker), start it once, then run this script again"
+    read -r -p "   Docker Desktop is not installed. Install it now (brew install --cask docker)? [y/N] " answer || answer=""
+    [[ "$answer" =~ ^[YyAa]$ ]] || die "Docker Desktop is required – install it, start it once, then run this script again"
+    brew install --cask docker || die "brew could not install Docker Desktop – install it from https://docs.docker.com/desktop/setup/install/mac-install/"
+    done_ "Docker Desktop installed (brew)"
+    start_docker_desktop
+}
+
+# @description macOS: starts Docker Desktop when it does not answer and waits for it (the first
+# start asks to accept its terms in its window).
+start_docker_desktop() {
+    docker info >/dev/null 2>&1 && return 0
+    info "starting Docker Desktop (the first start shows its terms – accept them in its window)"
+    open -a Docker || die "Docker Desktop could not be started – start it yourself, then run this script again"
+    local i
+    # The CLI of a never-started Docker Desktop is not linked into PATH yet.
+    PATH="$PATH:/usr/local/bin:/Applications/Docker.app/Contents/Resources/bin"
+    for ((i = 0; i < 180; i++)); do
+        docker info >/dev/null 2>&1 && return 0
+        sleep 1
+    done
+    die "Docker Desktop did not start within 3 minutes – start it, wait until it says 'running', then run this script again"
+}
+
+# -----------------------------------------------------------------------------
+# @description Docker ON DEMAND (systemd): docker.socket is enabled and docker.service is not,
+# so the Docker daemon does NOT start with the computer - systemd starts it on the first use
+# (./dev.sh, any docker command). The containers of the apps never start by themselves anyway
+# (dev/compose.yaml has no restart policy). Asked first; a machine where docker.service starts at
+# boot is offered the switch. Without systemd (macOS, WSL without systemd) nothing is done.
+# -----------------------------------------------------------------------------
+setup_docker_on_demand() {
+    command -v systemctl >/dev/null || return 0
+    systemctl cat docker.socket >/dev/null 2>&1 || return 0
+    local answer
+    if systemctl is-enabled --quiet docker.service 2>/dev/null; then
+        if [[ -t 0 ]]; then
+            printf '   Docker starts with the computer (docker.service) and keeps running in the background.\n'
+            read -r -p "   Start it only when it is used instead (disable docker.service, enable docker.socket)? [Y/n] " answer || answer="n"
+            if [[ ! "$answer" =~ ^[Nn]$ ]]; then
+                sudo systemctl disable docker.service >/dev/null 2>&1 || true
+                sudo systemctl enable --now docker.socket >/dev/null
+                done_ "Docker starts on demand now (docker.socket) – not with the computer"
+                return 0
+            fi
+        fi
+        skip "Docker keeps starting with the computer (docker.service) – switch: sudo systemctl disable docker.service && sudo systemctl enable --now docker.socket"
+    elif systemctl is-enabled --quiet docker.socket 2>/dev/null; then
+        systemctl is-active --quiet docker.socket || sudo systemctl start docker.socket
+        skip "Docker starts on demand (docker.socket)"
+    else
+        if [[ -t 0 ]]; then
+            read -r -p "   Enable Docker on demand – it starts when used, not with the computer (sudo systemctl enable --now docker.socket)? [Y/n] " answer || answer="n"
+            if [[ ! "$answer" =~ ^[Nn]$ ]]; then
+                sudo systemctl enable --now docker.socket >/dev/null
+                done_ "Docker enabled on demand (docker.socket) – it does not start with the computer"
+                return 0
+            fi
+        fi
+        warn "Docker is not enabled – run: sudo systemctl enable --now docker.socket"
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# 4. Docker settings – dev/.env of dev/compose.yaml (git-ignored), created from dev/.env.example.
+#    Always kept current: HOST_UID / HOST_GID (your user - files written by the containers belong
+#    to it). Only when missing: COMPOSE_PROJECT_NAME (= app directory) and a random
+#    DB_ROOT_PASSWORD. Everything else (ports, versions) is never changed by the script.
+# -----------------------------------------------------------------------------
+setup_docker_env() {
+    step "Docker settings (dev/.env)"
+    # Layout before 2026-10-31: the Docker settings were the root .env - moved once.
+    if [[ -f "$ROOT_DIR/.env" && ! -f "$DOCKER_ENV" ]]; then
+        mv "$ROOT_DIR/.env" "$DOCKER_ENV"
+        done_ "Docker settings moved: .env → dev/.env"
+    fi
+    if [[ -f "$DOCKER_ENV" ]]; then
+        skip "dev/.env exists – ports / versions left unchanged"
+    else
+        [[ -f "$ROOT_DIR/dev/.env.example" ]] || die "dev/.env.example is missing"
+        cp "$ROOT_DIR/dev/.env.example" "$DOCKER_ENV"
+        chmod 600 "$DOCKER_ENV"
+        env_set COMPOSE_PROJECT_NAME "$APP_SLUG" "$DOCKER_ENV"
+        done_ "dev/.env created (Docker project '$APP_SLUG')"
+    fi
+
+    local uid gid
+    uid="$(id -u)"; gid="$(id -g)"
+    if [[ "$(env_get HOST_UID "$DOCKER_ENV")" != "$uid" || "$(env_get HOST_GID "$DOCKER_ENV")" != "$gid" ]]; then
+        env_set HOST_UID "$uid" "$DOCKER_ENV"
+        env_set HOST_GID "$gid" "$DOCKER_ENV"
+        done_ "HOST_UID / HOST_GID set to your user ($uid:$gid)"
+    fi
+    [[ -n "$(env_get COMPOSE_PROJECT_NAME "$DOCKER_ENV")" ]] || env_set COMPOSE_PROJECT_NAME "$APP_SLUG" "$DOCKER_ENV"
+
+    if [[ -z "$(env_get DB_ROOT_PASSWORD "$DOCKER_ENV")" ]]; then
+        env_set DB_ROOT_PASSWORD "$(random_secret)" "$DOCKER_ENV"
+        done_ "random local database password stored in dev/.env (DB_ROOT_PASSWORD)"
+    fi
+}
+
+# @description 32 random alphanumeric characters (no shell / dotenv special characters).
+random_secret() {
+    if command -v openssl >/dev/null; then
+        openssl rand -base64 48 | tr -dc 'A-Za-z0-9' | head -c 32
+    else
+        LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# 5. Images – the dev image is built (cached after the first time), the others are pulled.
+# -----------------------------------------------------------------------------
+setup_images() {
+    step "Images"
+    info "building the dev image (PHP $(env_get PHP_VERSION "$DOCKER_ENV"), Node.js $(env_get NODE_VERSION "$DOCKER_ENV")) – the first time takes a few minutes"
+    dc build api || die "the dev image could not be built – see the output above"
+    info "pulling MariaDB, Mailpit, phpMyAdmin"
+    dc pull --quiet db mailpit phpmyadmin || die "the images could not be pulled – check the internet connection"
+    done_ "images ready"
+}
+
+# -----------------------------------------------------------------------------
+# 6. Laravel: .env, dependencies, application key, storage skeleton and symlink.
+# -----------------------------------------------------------------------------
+setup_laravel() {
+    step "Laravel (api/)"
+
+    if [[ -f "$API_DIR/.env" ]]; then
+        skip "api/.env exists – left unchanged (inside Docker DB_* / MAIL_* come from dev/compose.yaml)"
+    else
+        [[ -f "$API_DIR/.env.example" ]] || die "api/.env.example is missing"
+        cp "$API_DIR/.env.example" "$API_DIR/.env"
+        chmod 600 "$API_DIR/.env"
+        # Local development defaults – applied only to this freshly created file.
+        env_set APP_ENV local
+        env_set APP_DEBUG true
+        env_set APP_URL "http://127.0.0.1:8000"
+        env_set FRONTEND_URL "https://localhost:4200"
+        env_set DB_CONNECTION mysql
+        env_set DB_DATABASE "${APP_SLUG//-/_}"
+        # Host / port / user / password of the database and Mailpit: set by dev/compose.yaml.
+        env_set DB_HOST db
+        env_set DB_PORT 3306
+        env_set QUEUE_CONNECTION database
+        env_set MAIL_MAILER smtp
+        env_set MAIL_HOST mailpit
+        env_set MAIL_PORT 1025
+        env_set ANGULAR_I18N_PATH ../erp/src/assets/i18n
+        # Cloudflare Turnstile official always-pass TEST secret (public, local only).
+        [[ -n "$(env_get TURNSTILE_SECRET_KEY)" ]] || env_set TURNSTILE_SECRET_KEY 1x0000000000000000000000000000000AA
+        ENV_CREATED=1
+        done_ "api/.env created with local defaults (database: ${APP_SLUG//-/_}) – review it, see the summary"
+    fi
+
+    # Git does not keep empty directories – the storage skeleton Laravel expects.
+    mkdir -p "$API_DIR"/storage/{logs,app/private,app/public} \
+             "$API_DIR"/storage/framework/{cache/data,sessions,views} "$API_DIR"/bootstrap/cache
+    chmod -R u+rwX,g+rwX "$API_DIR/storage" "$API_DIR/bootstrap/cache"
+
+    info "composer install (container)"
+    in_app api composer install --no-interaction --no-progress || die "composer install failed – see the output above"
+    done_ "Composer dependencies installed"
+
+    # Never regenerate an existing key: it would invalidate sessions and encrypted data.
+    if [[ -z "$(env_get APP_KEY)" ]]; then
+        in_app api php artisan key:generate --no-interaction >/dev/null
+        done_ "APP_KEY generated"
+    else
+        skip "APP_KEY already set – not regenerated"
+    fi
+
+    # RELATIVE symlink: valid on the host and inside the container (/workspace). An absolute or
+    # dangling one (old checkout path, `artisan storage:link` of a former host setup) is replaced.
+    local link="$API_DIR/public/storage" rel="../storage/app/public"
+    if [[ -L "$link" && "$(readlink "$link")" == "$rel" ]]; then
+        skip "public/storage symlink OK"
+    else
+        [[ -L "$link" ]] && { info "replacing the storage symlink → $(readlink "$link")"; rm "$link"; }
+        [[ -e "$link" ]] && die "api/public/storage exists and is not a symlink – move it away, then run this script again"
+        ln -s "$rel" "$link"
+        done_ "public/storage symlink created (relative)"
+    fi
+
+    in_app api php artisan config:clear --no-interaction >/dev/null 2>&1 || true
+}
+
+# -----------------------------------------------------------------------------
+# 7. Database – created, migrated and seeded through Laravel in the MariaDB container.
+# @note An existing database is never dropped: `migrate` adds only missing migrations (the
+# baseline migration is a no-op on a filled database) and the seeders add only missing base
+# data. With APP_ENV=local the seeders also create the test sysadmin
+# sysadmin@sysadmin.sysadmin / 123456Ab. and the test roles (DevelopmentSeeder).
+# -----------------------------------------------------------------------------
+setup_database() {
+    step "Database"
+    local db; db="$(env_get DB_DATABASE)"
+    info "starting MariaDB (container) and waiting until it is ready"
+    dc up -d --wait db || { warn "the MariaDB container did not become ready – see: ./dev.sh logs db"; return 0; }
+
+    if ! in_app_db api php artisan db:create-if-missing --no-interaction; then
+        warn "database '${db:-?}' could not be created – check DB_DATABASE in api/.env, then run this script again"
+        return 0
+    fi
+    if ! in_app_db api php artisan migrate --force --no-interaction; then
+        warn "migrations failed – see the output above, then run this script again"
+        return 0
+    fi
+    if ! in_app_db api php artisan db:seed --force --no-interaction; then
+        warn "seeding the base data failed – see the output above, then run this script again"
+        return 0
+    fi
+
+    if [[ "$(env_get APP_ENV)" == "local" ]]; then
+        done_ "database '$db' ready – test login: sysadmin@sysadmin.sysadmin / 123456Ab. (2FA code in Mailpit)"
+    else
+        done_ "database '$db' ready (APP_ENV is not local – no test account created)"
+    fi
+    dc stop >/dev/null 2>&1 || true
+    info "containers stopped again (./dev.sh starts them)"
+}
+
+# -----------------------------------------------------------------------------
+# 8. Angular: dependencies and the local SSL certificate used by `ng serve`.
 # -----------------------------------------------------------------------------
 setup_angular() {
     step "Angular (erp/)"
 
-    info "installing npm dependencies"
+    info "installing npm dependencies (container)"
     if [[ -f "$ERP_DIR/package-lock.json" ]]; then
-        (cd "$ERP_DIR" && npm ci --no-audit --no-fund)
+        in_app erp npm ci --no-audit --no-fund || die "npm ci failed – see the output above"
     else
-        (cd "$ERP_DIR" && npm install --no-audit --no-fund)
+        in_app erp npm install --no-audit --no-fund || die "npm install failed – see the output above"
     fi
     done_ "npm dependencies installed"
 
@@ -741,26 +763,28 @@ setup_angular() {
     else
         mkdir -p "$SSL_DIR"
         if command -v mkcert >/dev/null; then
+            # mkcert on the host: the certificate is trusted by your browsers.
             mkcert -cert-file "$SSL_CERT" -key-file "$SSL_KEY" localhost 127.0.0.1 ::1 >/dev/null 2>&1
             done_ "trusted local SSL certificate created with mkcert"
         else
-            openssl req -x509 -newkey rsa:2048 -sha256 -nodes -days 825 \
-                -keyout "$SSL_KEY" -out "$SSL_CERT" -subj "/CN=localhost" \
-                -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1" >/dev/null 2>&1
-            done_ "self-signed local SSL certificate created (install mkcert for a browser-trusted one)"
+            in_app erp openssl req -x509 -newkey rsa:2048 -sha256 -nodes -days 825 \
+                -keyout ssl/localhost.key -out ssl/localhost.crt -subj "/CN=localhost" \
+                -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1" >/dev/null 2>&1 \
+                || die "the dev certificate could not be created"
+            done_ "self-signed local SSL certificate created (install mkcert on the host for a browser-trusted one)"
         fi
         chmod 600 "$SSL_KEY"
     fi
 }
 
 # -----------------------------------------------------------------------------
-# 8. Repository hygiene – ignore rules, executable scripts, remote check.
+# 9. Repository hygiene – ignore rules, executable scripts, remote check.
 # -----------------------------------------------------------------------------
 setup_repository() {
     step "Repository"
     local gi="$ROOT_DIR/.gitignore" rule added=()
     touch "$gi"
-    for rule in '.dev/' '/build/' '/app_build/' '.~lock.*#' '/erp/ssl/' '/.temp/'; do
+    for rule in '/build/' '/app_build/' '.~lock.*#' '/erp/ssl/' '/temp/' '/dev/.env' '/dev/logs/' '/dev/pids/' '/dev/wsl-workspace'; do
         grep -qxF "$rule" "$gi" || { printf '%s\n' "$rule" >> "$gi"; added+=("$rule"); }
     done
     if [[ ${#added[@]} -gt 0 ]]; then done_ ".gitignore: added ${added[*]}"; else skip ".gitignore complete"; fi
@@ -781,7 +805,7 @@ setup_repository() {
 }
 
 # -----------------------------------------------------------------------------
-# 9. Shell aliases – one marked block per application in ~/.zshrc or ~/.bashrc,
+# 10. Shell aliases – one marked block per application in ~/.zshrc or ~/.bashrc,
 # replaced on every run (so several cloned apps never overwrite each other).
 # -----------------------------------------------------------------------------
 setup_aliases() {
@@ -802,8 +826,6 @@ setup_aliases() {
         $0 == e || $0 == le {skip = 0}' "$rc" > "$tmp"
     {
         printf '%s\n' "$start"
-        # shellcheck disable=SC2016  # $HOME/$PATH are expanded by the shell profile, not here
-        printf 'case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac\n'
         printf "alias %s='cd %q'\n" "$APP_SLUG" "$ROOT_DIR"
         printf "alias %s-dev='%q/dev.sh'\n" "$APP_SLUG" "$ROOT_DIR"
         printf "alias %s-build='%q/deploy/build.sh'\n" "$APP_SLUG" "$ROOT_DIR"
@@ -815,14 +837,14 @@ setup_aliases() {
 }
 
 # -----------------------------------------------------------------------------
-# 10. Summary – including the manual review of api/.env.
+# 11. Summary – including the manual review of api/.env.
 # -----------------------------------------------------------------------------
 summary() {
     step "Summary"
-    if (cd "$API_DIR" && composer check-platform-reqs --lock --no-interaction >/dev/null 2>&1); then
-        info "PHP satisfies api/composer.lock"
+    if in_app api composer check-platform-reqs --lock --no-interaction >/dev/null 2>&1; then
+        info "PHP of the dev image satisfies api/composer.lock"
     else
-        warn "PHP does not satisfy api/composer.lock – run 'composer check-platform-reqs --lock' in api/"
+        warn "PHP of the dev image does not satisfy api/composer.lock – run './dev.sh composer check-platform-reqs --lock'"
     fi
 
     local db; db="$(env_get DB_DATABASE)"
@@ -836,25 +858,29 @@ summary() {
     local env_state="existing file – check it still matches this app"
     [[ "$ENV_CREATED" == "1" ]] && env_state="CREATED NOW from .env.example – review it before the first start"
 
-    cat <<EOF
+    cat <<TXT
 
 LAST STEP – BY HAND
   1. Review api/.env   ($env_state)
        APP_NAME, APP_URL, FRONTEND_URL      name and local URLs of this app
-       DB_DATABASE=${db:-<name>}, DB_USERNAME, DB_PASSWORD
-                                            database of step 6 (XAMPP default: root, no password)
+       DB_DATABASE=${db:-<name>}             the database (host, user and password come from Docker)
        MAIL_FROM_ADDRESS, MAIL_FROM_NAME    sender of e-mails (caught locally by Mailpit)
        TURNSTILE_SECRET_KEY                 captcha – a public TEST key is preset for local use
        any other keys of this app (API keys, payment gateway, …) – see .env.example
-     Never commit api/.env – it is git-ignored.
-     After changing DB_* run this script again – step 6 creates and fills the new database.
+     Never commit api/.env or dev/.env – both are git-ignored.
+     After changing DB_DATABASE run this script again – step 7 creates and fills the new database.
 
   LOCAL TEST LOGIN (APP_ENV=local only)
        e-mail:   sysadmin@sysadmin.sysadmin
        password: 123456Ab.
-       2FA code: in Mailpit – http://127.0.0.1:8025 (sysadmin always needs 2FA)
+       2FA code: in Mailpit – http://127.0.0.1:$(env_get MAILPIT_PORT "$DOCKER_ENV") (sysadmin always needs 2FA)
        test roles: read-only-core, read-only-web, read-only-shop, full-web-core, full-shop-core, all-permissions
-EOF
+
+  COMING FROM XAMPP? Your old database is not moved automatically:
+       /opt/lampp/bin/mysqldump -uroot <database> > temp/xampp.sql
+       ./dev.sh db-import temp/xampp.sql && ./dev.sh artisan migrate
+     XAMPP and the PHP / Node.js packages of the host are no longer needed by this app.
+TXT
 
     echo
     echo "=========================================="
@@ -862,7 +888,7 @@ EOF
         printf '\e[32m WORKSPACE SETUP COMPLETE – %s\e[0m\n' "$APP_SLUG"
         echo "=========================================="
         echo "Once api/.env is reviewed, start the application:"
-        echo "  ./dev.sh        (Ctrl+C stops everything)"
+        echo "  ./dev.sh        (Ctrl+C stops everything; ./dev.sh help lists every command)"
     else
         printf '\e[33m WORKSPACE SETUP INCOMPLETE – %s\e[0m\n' "$APP_SLUG"
         echo "=========================================="
@@ -874,14 +900,14 @@ EOF
 # Main
 # -----------------------------------------------------------------------------
 echo "------------------------------------------"
-echo "Workspace setup – $APP_SLUG"
+echo "Workspace setup (Docker) – $APP_SLUG"
 echo "------------------------------------------"
 preflight
 setup_github_ssh
-require_xampp
 setup_temp_dir
-install_system_packages
-install_mailpit
+setup_docker
+setup_docker_env
+setup_images
 setup_laravel
 setup_database
 setup_angular

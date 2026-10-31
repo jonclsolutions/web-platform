@@ -47,6 +47,11 @@
 # @refactor-note (2026-10-31) The root folder database/ (SQL dump + manual SQL scripts) was
 #   removed - the build no longer copies database/*.sql to build/database/. The schema reaches
 #   the server inside laravel/ (api/database: baseline SQL + migrations, run by configure-server.sh).
+# @refactor-note (2026-10-31b) Docker: started on the host, the script runs itself inside the dev
+#   container (dev/docker/Dockerfile: PHP 8.5 like the hosting, Composer, Node.js, Chromium for the
+#   tests, zip, rsync) - the host needs no PHP / Node.js and every machine builds with the same
+#   versions. BUILD_ON_HOST=1 skips that (host tools are used, as before).
+# @refactor-note (2026-10-31c) macOS: re-runs itself with bash 4+ from Homebrew (macOS ships 3.2).
 #
 # @usage
 #   deploy/build.sh                         run all tests, then the full build (Angular + Laravel + zip)
@@ -56,6 +61,15 @@
 #   deploy/build.sh --no-zip                skip the archive step
 # =============================================================================
 
+# macOS ships bash 3.2 (too old for this script) - re-run with bash 4+ from Homebrew.
+if [ -z "${BASH_VERSINFO:-}" ] || [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    for _bash in /opt/homebrew/bin/bash /usr/local/bin/bash; do
+        [ -x "$_bash" ] && exec "$_bash" "$0" "$@"
+    done
+    echo "ERROR: bash 4 or newer is needed (this is bash ${BASH_VERSION:-?}). macOS: install Homebrew (https://brew.sh), then: brew install bash" >&2
+    exit 1
+fi
+
 set -Eeuo pipefail
 
 # -----------------------------------------------------------------------------
@@ -63,6 +77,14 @@ set -Eeuo pipefail
 # -----------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Docker: run inside the dev container unless already there (see refactor-note 2026-10-31b).
+if [[ -z "${IN_DEV_CONTAINER:-}" && "${BUILD_ON_HOST:-0}" != "1" ]] \
+    && command -v docker >/dev/null && [[ -f "$ROOT_DIR/dev/compose.yaml" && -f "$ROOT_DIR/dev/.env" ]]; then
+    echo "[build] running inside the dev container (docker compose run api) – BUILD_ON_HOST=1 to build on the host"
+    exec docker compose -f "$ROOT_DIR/dev/compose.yaml" \
+        run --rm --no-deps -w /workspace api deploy/build.sh "$@"
+fi
 
 API_DIR="$ROOT_DIR/api"
 ERP_DIR="$ROOT_DIR/erp"

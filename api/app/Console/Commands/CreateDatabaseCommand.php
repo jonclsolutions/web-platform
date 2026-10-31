@@ -8,13 +8,14 @@
  * @description Creates the database of the configured connection when it does not exist yet
  *   (`CREATE DATABASE … utf8mb4_unicode_ci`), so a fresh installation needs no phpMyAdmin step:
  *   `php artisan db:create-if-missing && php artisan migrate && php artisan db:seed`.
- *   Used by init-workspace.sh (local XAMPP) and deploy/server/configure-server.sh (server).
+ *   Used by init-workspace.sh (local MariaDB container) and deploy/server/configure-server.sh (server).
  *   An existing database is never touched (no drop, no change of its collation).
  * @note It connects to the database SERVER without selecting a database (Laravel itself
  *   cannot connect before the database exists). Only MySQL / MariaDB connections are handled;
  *   other drivers (SQLite of the tests) have nothing to create. On shared hosting the database
  *   account usually may not create databases - then create the empty database in the hosting
  *   panel; the command reports that and exits with an error code.
+ * @refactor-note (2026-10-31) Local development moved from XAMPP to Docker (doc only).
  * @security The database name is validated against [A-Za-z0-9_] (it cannot be bound as a
  *   parameter in CREATE DATABASE); the password is never printed.
  * @dependencies

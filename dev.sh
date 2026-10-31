@@ -5,547 +5,369 @@
 # @project RPSW Web
 # @author RPSW
 # @created 2026
-# @description Starts / stops the whole LOCAL development environment with one
-# command instead of starting each service by hand in separate terminals:
-#   1. XAMPP (MySQL/MariaDB, optionally Apache) – sudo /opt/lampp/lampp
-#   2. Mailpit (catches outgoing e-mails)        – SMTP :1025, UI :8025
-#   3. API – `php artisan serve`                 – api/
-#   4. Queue worker – `php artisan queue:listen` (only if QUEUE_CONNECTION != sync)
-#   5. Scheduler – `php artisan schedule:work`   (optional, --with-scheduler)
-#   6. ERP – `ng serve`                          – erp/
+# @description Starts / stops the LOCAL development environment and runs the project tools -
+# everything in Docker (dev/compose.yaml), nothing installed on the host except Docker and git:
+#   api        Laravel API – `php artisan serve`            http://127.0.0.1:8000
+#   queue      `php artisan queue:listen`
+#   scheduler  `php artisan schedule:work`                  (only with --with-scheduler)
+#   erp        Angular – `ng serve`                          https://localhost:4200
+#   db         MariaDB                                       127.0.0.1:3307 (from the host)
+#   mailpit    catches every e-mail                          http://127.0.0.1:8025
+#   phpmyadmin                                               http://127.0.0.1:8080
+# (ports from the root .env). First run ./init-workspace.sh once.
 #
-# @note One application runs at a time; every app created from web-platform
-# uses the same ports. Services already running (e.g. Mailpit started by hand)
-# are detected and left untouched; XAMPP and Mailpit are stopped on exit only
-# if this script started them.
-#
-# @note WHY NOT CRON: during development the queue and scheduler should run
-# only while you are working. Nothing is written to crontab or systemd, so
-# nothing keeps running in the background afterwards (see the orphaned
-# `rpsw-queue-worker` cron incident, 2026-10-19).
-#
-# @note queue:listen vs. queue:work: locally `queue:listen` reboots the
-# application for every job, so code changes apply without a worker restart.
-# In PRODUCTION use `queue:work` and the scheduler via cron
-# (deploy/server/configure-server.sh, routes/console.php).
-#
-# @note The scheduler (routes/console.php) currently contains only nightly
-# clean-up jobs, so it is OFF by default. Run once by hand: `php artisan schedule:test`.
-#
-# @bugfix-note (2026-10-24) A service that failed on start was invisible: dev.sh only waited
-#   for its port (ERP: 120 s) and printed a vague warning, while the real error stood in
-#   .dev/logs/<service>.log (e.g. `ng serve` without the TLS certificate:
-#   "ENOENT … ssl/localhost.crt" - visible only when running `ng serve` by hand). Now:
-#   - preflight checks the dev certificate of `ng serve` (paths from angular.json) and stops
-#     with the fix before anything is started;
-#   - while waiting for a port, the process and its log are watched: a crashed process or a
-#     fatal error line in the log stops the wait at once and prints the end of the log;
-#   - a failed required service (API, ERP) stops the whole environment with exit code 1;
-#     optional ones (Mailpit, queue, scheduler) only warn with their log.
+# @refactor-note (2026-10-31) Rewritten for Docker: XAMPP, Mailpit in ~/.local/bin and the PHP /
+#   Node.js of the host are no longer used; the services are containers of compose.yaml (one dev
+#   image docker/app/Dockerfile). The former PID files / logs in .dev/ are replaced by
+#   `docker compose ps` / `logs`; Ctrl+C in the foreground mode stops the containers like before.
+#   New: tool commands (artisan, composer, npm, npx, shell), tests, build, db-import / db-dump.
+# @refactor-note (2026-10-31d) Root clean-up: the Docker files live in dev/ (dev/compose.yaml,
+#   dev/.env, dev/docker/Dockerfile), the logs in dev/logs/, PID files in dev/pids/. A root .env of
+#   the previous layout is moved to dev/.env once; the scratch folder .temp/ is renamed to temp/.
+# @refactor-note (2026-10-31b) Log files are back: every service writes its own
+#   dev/logs/<service>.log again (api, queue, scheduler, erp, db, mailpit, phpmyadmin - plain
+#   text with Docker timestamps, emptied on every start). A background `docker compose logs -f`
+#   per service writes them (PID files in .dev/pids/); they end with their container. The
+#   console shows all services together as before; `./dev.sh logs [service]` follows the files.
+#   `up -d` waits until the API and the ERP answer and prints the end of the log of a service
+#   that failed.
+# @note WHY NOT CRON (unchanged): the queue and the scheduler run only while the environment
+#   runs - nothing is written to crontab or systemd. Production: queue:work + cron
+#   (deploy/server/configure-server.sh).
+# @note The database data live in the Docker volume <app>_db-data: `stop` / `down` keep them,
+#   only `docker compose -f dev/compose.yaml down -v` deletes them.
+# @refactor-note (2026-10-31c) macOS: re-runs itself with bash 4+ from Homebrew (macOS ships 3.2);
+#   no setsid there - the log writers use nohup. Windows: dev.cmd runs this script inside WSL.
 #
 # @security
-#   - All services bind to 127.0.0.1 only (not reachable from the LAN).
-#   - The script never reads or prints secrets from .env (reads QUEUE_CONNECTION only).
-#   - sudo is used exclusively to control XAMPP.
-#   - The .dev/ directory (logs, PID files) must be git-ignored.
+#   - Every port is published on 127.0.0.1 only (dev/compose.yaml, BIND_IP).
+#   - The script never prints secrets; db-import / db-dump use the root password from inside the
+#     db container (its environment), it is not passed on the command line of the host.
 #
 # @usage
-#   ./dev.sh                       start everything and follow logs; Ctrl+C or closing
-#                                  the terminal / editor stops everything
-#   ./dev.sh up --with-scheduler   same, plus the scheduler (schedule:work)
-#   ./dev.sh up -d                 start in the background – keeps running after the
-#                                  terminal is closed, stop with ./dev.sh stop
-#   ./dev.sh stop                  stop everything this script started
-#   ./dev.sh status                show running services and URLs
-#   ./dev.sh logs                  follow the logs of running services
-#
-# @config Override with environment variables, e.g. `API_PORT=8001 ./dev.sh`:
-#   API_HOST, API_PORT, ERP_PORT, DB_PORT, MAILPIT_BIN, XAMPP_CTL,
-#   XAMPP_START_CMD, XAMPP_STOP_CMD, STOP_XAMPP_ON_EXIT (1/0)
+#   ./dev.sh                         start everything, follow the logs; Ctrl+C stops everything
+#   ./dev.sh up -d                   start in the background (stop with ./dev.sh stop)
+#   ./dev.sh up --with-scheduler     also the scheduler (schedule:work)
+#   ./dev.sh stop                    stop the containers (data stay)
+#   ./dev.sh down                    stop and remove the containers (data stay in the volume)
+#   ./dev.sh status                  running services and URLs
+#   ./dev.sh logs [service]          follow dev/logs/<service>.log (api, queue, erp, db, mailpit, …)
+#   ./dev.sh artisan <args>          php artisan … in the api container (e.g. migrate, tinker)
+#   ./dev.sh composer <args>         composer … in api/
+#   ./dev.sh npm <args>              npm … in erp/        ./dev.sh npx <args>   npx … in erp/
+#   ./dev.sh shell [service]         bash in a container (default: a new dev container)
+#   ./dev.sh test [args]             all unit tests (tests/unit_tests/run_all.sh) in the container
+#   ./dev.sh build [args]            production build (deploy/build.sh) in the container
+#   ./dev.sh db-import <file.sql>    import an SQL dump into the app database (DB_DATABASE of api/.env)
+#   ./dev.sh db-dump [file.sql]      dump the app database (default temp/<db>-<date>.sql)
+#   ./dev.sh rebuild                 rebuild the dev image (after changing PHP / Node.js / UID in .env)
+#   ./dev.sh help
 # =============================================================================
+
+# macOS ships bash 3.2 (too old for this script) - re-run with bash 4+ from Homebrew.
+if [ -z "${BASH_VERSINFO:-}" ] || [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    for _bash in /opt/homebrew/bin/bash /usr/local/bin/bash; do
+        [ -x "$_bash" ] && exec "$_bash" "$0" "$@"
+    done
+    echo "ERROR: bash 4 or newer is needed (this is bash ${BASH_VERSION:-?}). macOS: install Homebrew (https://brew.sh), then: brew install bash" >&2
+    exit 1
+fi
 
 set -Eeuo pipefail
 
-# -----------------------------------------------------------------------------
-# Paths – derived from the script location, so it works from any directory.
-# -----------------------------------------------------------------------------
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 API_DIR="$ROOT_DIR/api"
 ERP_DIR="$ROOT_DIR/erp"
-DEV_DIR="$ROOT_DIR/.dev"
-LOG_DIR="$DEV_DIR/logs"
-PID_DIR="$DEV_DIR/pids"
+LOG_DIR="$ROOT_DIR/dev/logs"      # one log file per service (git-ignored)
+PID_DIR="$ROOT_DIR/dev/pids"      # PIDs of the log writers (git-ignored)
+DOCKER_ENV="$ROOT_DIR/dev/.env"   # settings of the Docker environment (git-ignored)
 
-# -----------------------------------------------------------------------------
-# Configuration (defaults; overridable from the environment)
-# -----------------------------------------------------------------------------
-API_HOST="${API_HOST:-127.0.0.1}"
-API_PORT="${API_PORT:-8000}"
-ERP_PORT="${ERP_PORT:-4200}"
-DB_PORT="${DB_PORT:-3306}"
-MAILPIT_SMTP_PORT="${MAILPIT_SMTP_PORT:-1025}"
-MAILPIT_UI_PORT="${MAILPIT_UI_PORT:-8025}"
-# init-workspace.sh installs Mailpit to ~/.local/bin, which is not always in PATH.
-if [[ -z "${MAILPIT_BIN:-}" ]]; then
-    if command -v mailpit >/dev/null; then MAILPIT_BIN=mailpit
-    else MAILPIT_BIN="$HOME/.local/bin/mailpit"; fi
-fi
+# Services of dev/compose.yaml (scheduler only with --with-scheduler).
+SERVICES=(api queue erp db mailpit phpmyadmin)
 
-# XAMPP: "start" = MySQL + Apache (+ phpMyAdmin). If Apache is not needed,
-# use XAMPP_START_CMD=startmysql XAMPP_STOP_CMD=stopmysql.
-XAMPP_CTL="${XAMPP_CTL:-/opt/lampp/lampp}"
-XAMPP_START_CMD="${XAMPP_START_CMD:-start}"
-XAMPP_STOP_CMD="${XAMPP_STOP_CMD:-stop}"
-STOP_XAMPP_ON_EXIT="${STOP_XAMPP_ON_EXIT:-1}"
-
-WITH_SCHEDULER=0
-DETACH=0
-HANGUP=0    # 1 = the terminal was closed (SIGHUP) – no tty for output or sudo prompts
-TAIL_PID="" # log viewer of the foreground mode
-
-# Stop order = reverse start order.
-MANAGED_PROCS=(erp scheduler queue api mailpit)
-
-# -----------------------------------------------------------------------------
-# Output helpers
-# -----------------------------------------------------------------------------
 c_reset=$'\e[0m'; c_green=$'\e[32m'; c_yellow=$'\e[33m'; c_red=$'\e[31m'; c_blue=$'\e[34m'
-
 info() { printf '%s[dev]%s %s\n' "$c_blue" "$c_reset" "$*"; }
 ok()   { printf '%s[ ok]%s %s\n' "$c_green" "$c_reset" "$*"; }
 warn() { printf '%s[!!!]%s %s\n' "$c_yellow" "$c_reset" "$*" >&2; }
 die()  { printf '%s[err]%s %s\n' "$c_red" "$c_reset" "$*" >&2; exit 1; }
 
 # -----------------------------------------------------------------------------
-# @description Checks whether something listens on 127.0.0.1:<port> (bash /dev/tcp).
-# @param $1 port
-# @return 0 = port in use, 1 = free
+# @description Value of KEY from a dotenv file (simple KEY=VALUE lines, quotes removed).
+# @param $1 file, $2 key, $3 default
 # -----------------------------------------------------------------------------
-port_in_use() {
-    (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
+env_value() {
+    local v
+    v="$(grep -E "^[[:space:]]*$2=" "$1" 2>/dev/null | tail -n1 | cut -d= -f2- || true)"
+    v="${v%%[[:space:]]#*}"; v="${v%\"}"; v="${v#\"}"; v="${v%\'}"; v="${v#\'}"
+    printf '%s' "${v:-${3:-}}"
 }
 
-# -----------------------------------------------------------------------------
-# Error lines in the service logs (ANSI colours are removed first - the Angular CLI
-# colours "[ERROR]"):
-#   FATAL   - the service cannot run (missing file, port taken, PHP fatal error, …)
-#             → waiting stops, the error is printed;
-#   COMPILE - `ng serve` keeps running and recompiles on save (TypeScript / template
-#             error) → the error is printed, waiting continues.
-# -----------------------------------------------------------------------------
-FATAL_LOG_PATTERN='An unhandled exception occurred|ENOENT|EADDRINUSE|Failed to listen|PHP (Fatal|Parse) error|SQLSTATE\[HY000\] \[2002\]|Cannot find module|command not found'
-COMPILE_LOG_PATTERN='Application bundle generation failed|\[ERROR\]|error TS[0-9]+'
+# @description docker compose of this repository (always from the root, whatever the cwd).
+DC=(docker compose -f "$ROOT_DIR/dev/compose.yaml")
+dc() { "${DC[@]}" "$@"; }
 
 # -----------------------------------------------------------------------------
-# @description Log of a service without ANSI colour codes.
-# @param $1 service name (log .dev/logs/<name>.log)
+# @description Starts one background log writer per service: `docker compose logs -f` of the
+# service since the start of this run → dev/logs/<service>.log (emptied first, no colours).
+# A writer ends by itself when its container stops; stop_log_writers ends it earlier. The
+# writers run in their own session, so Ctrl+C / closing the terminal does not kill them before
+# the containers are stopped.
+# @param $1 start time (RFC 3339, UTC), rest = services
 # -----------------------------------------------------------------------------
-plain_log() {
-    [[ -f "$LOG_DIR/$1.log" ]] && sed 's/\x1b\[[0-9;]*m//g' "$LOG_DIR/$1.log"
-}
-
-# -----------------------------------------------------------------------------
-# @description Whether a service log contains a line of the pattern.
-# @param $1 service name, $2 pattern (default FATAL_LOG_PATTERN)
-# @return 0 = found, 1 = not found / no log
-# -----------------------------------------------------------------------------
-log_has_fatal_error() {
-    plain_log "$1" | grep -Eq "${2:-$FATAL_LOG_PATTERN}"
-}
-
-# -----------------------------------------------------------------------------
-# @description Prints why a service failed: the given reason, the fatal lines of its
-# log (if any) and the last lines of the log - so the error is visible right in the
-# dev.sh output, not only in .dev/logs/.
-# @param $1 service name, $2 reason
-# -----------------------------------------------------------------------------
-report_failure() {
-    local name="$1" reason="$2" log="$LOG_DIR/$1.log"
-    printf '%s[err]%s %s\n' "$c_red" "$c_reset" "$reason" >&2
-    if [[ -s "$log" ]]; then
-        if log_has_fatal_error "$name" "$FATAL_LOG_PATTERN|$COMPILE_LOG_PATTERN"; then
-            printf '%s      error lines:%s\n' "$c_red" "$c_reset" >&2
-            plain_log "$name" | grep -E "$FATAL_LOG_PATTERN|$COMPILE_LOG_PATTERN" | tail -n 5 | sed 's/^/        /' >&2
+start_log_writers() {
+    local since="$1" s; shift
+    mkdir -p "$LOG_DIR" "$PID_DIR"
+    stop_log_writers
+    for s in "$@"; do
+        : > "$LOG_DIR/$s.log"
+        if command -v setsid >/dev/null; then
+            setsid "${DC[@]}" logs -f --no-color --no-log-prefix --timestamps --since "$since" "$s" \
+                >> "$LOG_DIR/$s.log" 2>&1 < /dev/null &
+        else
+            nohup "${DC[@]}" logs -f --no-color --no-log-prefix --timestamps --since "$since" "$s" \
+                >> "$LOG_DIR/$s.log" 2>&1 < /dev/null &
         fi
-        printf '      last lines of .dev/logs/%s.log:\n' "$name" >&2
-        plain_log "$name" | tail -n 15 | sed 's/^/        /' >&2
-    else
-        printf '      .dev/logs/%s.log is empty\n' "$name" >&2
-    fi
+        printf '%s\n' "$!" > "$PID_DIR/$s.pid"
+    done
 }
 
+# @description Ends the log writers of a previous start (if any are still running).
+stop_log_writers() {
+    local f
+    for f in "$PID_DIR"/*.pid; do
+        [[ -f "$f" ]] || continue
+        kill "$(cat "$f")" 2>/dev/null || true
+        rm -f "$f"
+    done
+}
+
+# @description Whether something listens on 127.0.0.1:<port> (bash /dev/tcp, no extra tools).
+port_in_use() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
+
 # -----------------------------------------------------------------------------
-# @description Waits until a service starts listening on a port, while watching the
-# process and its log: stops at once when the process exits or its log shows a fatal
-# error (FATAL_LOG_PATTERN) and prints the reason with the log (report_failure); a
-# compile error (COMPILE_LOG_PATTERN) is printed once and the wait goes on.
-# @param $1 display name, $2 port, $3 timeout in seconds, $4 managed process name
-#   (PID file + log; empty = a service not started by this script, e.g. XAMPP MySQL)
-# @return 0 = listening, 1 = failed / timed out (already reported)
+# @description Waits until a service answers on its port; stops at once when its container is
+# no longer running and prints the end of its log file.
+# @param $1 display name, $2 host port, $3 timeout in seconds, $4 service
+# @return 0 ready, 1 failed / timed out (reported)
 # -----------------------------------------------------------------------------
-wait_for_port() {
-    local name="$1" port="$2" timeout="${3:-30}" proc="${4:-}" i compile_reported=0
+wait_for_service() {
+    local name="$1" port="$2" timeout="$3" svc="$4" i
     for ((i = 0; i < timeout; i++)); do
-        port_in_use "$port" && { ok "$name is listening on :$port"; return 0; }
-        if [[ -n "$proc" ]]; then
-            if [[ "$compile_reported" == "0" ]] && log_has_fatal_error "$proc" "$COMPILE_LOG_PATTERN"; then
-                warn "$name: compile errors (it recompiles on save) –"
-                plain_log "$proc" | grep -E "$COMPILE_LOG_PATTERN" -A3 | head -n 20 | sed 's/^/        /' >&2
-                compile_reported=1
-            fi
-            if ! is_running "$proc"; then
-                report_failure "$proc" "$name exited before listening on :$port"
-                return 1
-            fi
-            if log_has_fatal_error "$proc"; then
-                report_failure "$proc" "$name failed to start"
-                return 1
-            fi
+        port_in_use "$port" && { ok "$name is ready on :$port"; return 0; }
+        if ! dc ps --status running --services 2>/dev/null | grep -qx "$svc"; then
+            warn "$name ($svc) is not running – end of dev/logs/$svc.log:"
+            tail -n 20 "$LOG_DIR/$svc.log" 2>/dev/null | sed 's/^/        /' >&2
+            return 1
         fi
         sleep 1
     done
-    if [[ -n "$proc" ]]; then
-        report_failure "$proc" "$name is not listening on :$port after ${timeout}s"
-    else
-        warn "$name is not listening on :$port after ${timeout}s"
-    fi
+    warn "$name did not answer on :$port within ${timeout}s – see ./dev.sh logs $svc"
     return 1
 }
 
 # -----------------------------------------------------------------------------
-# @description Checks a service without a port (queue, scheduler) shortly after its
-# start: it must still run and its log must not show a fatal error.
-# @param $1 service name
-# @return 0 = fine, 1 = failed (already reported)
-# -----------------------------------------------------------------------------
-check_started() {
-    local name="$1"
-    sleep 2
-    if ! is_running "$name"; then
-        report_failure "$name" "$name exited right after the start"
-        return 1
-    fi
-    if log_has_fatal_error "$name"; then
-        report_failure "$name" "$name reports an error"
-        return 1
-    fi
-    ok "$name is running"
-}
-
-# -----------------------------------------------------------------------------
-# @description A required service failed: stop everything that was started and exit 1,
-# so nothing half-started keeps running in the background.
-# -----------------------------------------------------------------------------
-abort_up() {
-    printf '%s[err]%s %s – stopping the environment\n' "$c_red" "$c_reset" "$1" >&2
-    cmd_stop
-    exit 1
-}
-
-# -----------------------------------------------------------------------------
-# @description Returns 0 if the named process (via its PID file) is running.
-# @param $1 service name
-# -----------------------------------------------------------------------------
-is_running() {
-    local pidfile="$PID_DIR/$1.pid" pid
-    [[ -f "$pidfile" ]] || return 1
-    pid="$(<"$pidfile")"
-    [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null
-}
-
-# -----------------------------------------------------------------------------
-# @description Starts a background process in its own session (setsid) so it
-# can later be stopped together with its children (ng serve and artisan serve
-# spawn subprocesses), and so the Ctrl+C meant for the log viewer does not hit
-# it directly – the script performs the clean-up itself.
-# @param $1 service name, $2 working directory, $3.. command
-# -----------------------------------------------------------------------------
-start_proc() {
-    local name="$1" dir="$2"; shift 2
-    if is_running "$name"; then
-        ok "$name already running (PID $(<"$PID_DIR/$name.pid")) – skipping"
-        return 0
-    fi
-    : > "$LOG_DIR/$name.log"
-    (cd "$dir" && exec setsid "$@" >>"$LOG_DIR/$name.log" 2>&1 </dev/null) &
-    echo $! > "$PID_DIR/$name.pid"
-    info "started $name (PID $!) → .dev/logs/$name.log"
-}
-
-# -----------------------------------------------------------------------------
-# @description Stops a service's whole process group: SIGTERM, then SIGKILL after 8 s.
-# @param $1 service name
-# -----------------------------------------------------------------------------
-stop_proc() {
-    local name="$1" pidfile="$PID_DIR/$1.pid" pid i
-    [[ -f "$pidfile" ]] || return 0
-    pid="$(<"$pidfile")"
-    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
-        kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
-        for ((i = 0; i < 16; i++)); do
-            kill -0 "$pid" 2>/dev/null || break
-            sleep 0.5
-        done
-        if kill -0 "$pid" 2>/dev/null; then
-            warn "$name ignores SIGTERM – sending SIGKILL"
-            kill -KILL -- "-$pid" 2>/dev/null || true
-        fi
-        ok "stopped $name"
-    fi
-    rm -f "$pidfile"
-}
-
-# -----------------------------------------------------------------------------
-# @description Reads QUEUE_CONNECTION from api/.env (this single value only; no
-# secrets are read or printed). Laravel's default value is "database".
-# -----------------------------------------------------------------------------
-queue_connection() {
-    local v
-    v="$(grep -E '^[[:space:]]*QUEUE_CONNECTION=' "$API_DIR/.env" 2>/dev/null | tail -n1 | cut -d= -f2- || true)"
-    v="${v%%#*}"; v="${v//[\"\' ]/}"
-    echo "${v:-database}"
-}
-
-# -----------------------------------------------------------------------------
-# @description Prerequisite checks before starting – fail early and clearly.
+# @description Docker and the files of ./init-workspace.sh must exist before anything starts -
+# a clear message instead of a compose / container error.
+# @param $1 'full' = also the dependencies and the dev certificate (needed to start the app)
 # -----------------------------------------------------------------------------
 preflight() {
-    [[ -d "$API_DIR" ]] || die "Directory $API_DIR is missing"
-    [[ -d "$ERP_DIR" ]] || die "Directory $ERP_DIR is missing"
-    [[ -f "$API_DIR/.env" ]] || die "$API_DIR/.env is missing – run ./init-workspace.sh"
-    command -v php >/dev/null || die "php is not in PATH"
-    command -v npx >/dev/null || die "npx (Node.js) is not in PATH"
-    command -v setsid >/dev/null || die "setsid is not available (package util-linux)"
-    [[ -d "$ERP_DIR/node_modules" ]] || die "$ERP_DIR/node_modules is missing – run ./init-workspace.sh"
-    check_erp_certificate
-    [[ -x "$XAMPP_CTL" ]] || warn "XAMPP not found at $XAMPP_CTL – database will not be started (set XAMPP_CTL)"
-    [[ -x "$MAILPIT_BIN" ]] || command -v "$MAILPIT_BIN" >/dev/null \
-        || warn "mailpit not found ($MAILPIT_BIN) – e-mails will not be caught"
+    # Layout before 2026-10-31: the Docker settings were the root .env - moved once.
+    if [[ -f "$ROOT_DIR/.env" && ! -f "$DOCKER_ENV" && -f "$ROOT_DIR/dev/.env.example" ]]; then
+        mv "$ROOT_DIR/.env" "$DOCKER_ENV"
+        info "the Docker settings moved: .env → dev/.env"
+    fi
+    # Same for the scratch folder: .temp/ (hidden on some systems) became temp/.
+    if [[ -d "$ROOT_DIR/.temp" && ! -e "$ROOT_DIR/temp" ]]; then
+        mv "$ROOT_DIR/.temp" "$ROOT_DIR/temp"
+        info "the scratch folder renamed: .temp/ → temp/ (content kept)"
+    fi
+    command -v docker >/dev/null || die "Docker is not installed – run ./init-workspace.sh"
+    docker compose version >/dev/null 2>&1 || die "the Docker Compose plugin is missing – run ./init-workspace.sh"
+    if ! docker info >/dev/null 2>&1 && [[ "$(uname -s)" == "Darwin" ]]; then
+        # macOS: start Docker Desktop and wait for it.
+        info "starting Docker Desktop…"
+        open -a Docker 2>/dev/null || true
+        local i; for ((i = 0; i < 120; i++)); do docker info >/dev/null 2>&1 && break; sleep 1; done
+    fi
+    if ! docker info >/dev/null 2>&1; then
+        if grep -qi microsoft /proc/version 2>/dev/null; then
+            die "Docker does not answer – start Docker Desktop on Windows (dev.cmd starts it for you) and check Settings → Resources → WSL integration"
+        fi
+        [[ "$(uname -s)" == "Darwin" ]] && die "Docker Desktop does not answer – start it and wait until it is running"
+        die "Docker is not running or you may not use it (start it: sudo systemctl start docker.socket; group: sudo usermod -aG docker \$USER, then log out and in)"
+    fi
+    [[ -f "$DOCKER_ENV" ]] || die "dev/.env (Docker settings) is missing – run ./init-workspace.sh"
+    [[ "${1:-}" == "full" ]] || return 0
+    [[ -f "$API_DIR/.env" ]] || die "api/.env is missing – run ./init-workspace.sh"
+    [[ -d "$API_DIR/vendor" ]] || die "api/vendor is missing – run ./init-workspace.sh (or ./dev.sh composer install)"
+    [[ -d "$ERP_DIR/node_modules" ]] || die "erp/node_modules is missing – run ./init-workspace.sh (or ./dev.sh npm ci)"
+    [[ -f "$ERP_DIR/ssl/localhost.crt" && -f "$ERP_DIR/ssl/localhost.key" ]] \
+        || die "the dev certificate of ng serve (erp/ssl/localhost.*) is missing – run ./init-workspace.sh"
+}
 
-    # Make sure logs/PID files never end up in git (git itself decides; skipped outside git).
-    if git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
-        && ! git -C "$ROOT_DIR" check-ignore -q .dev/; then
-        warn "'.dev/' is not git-ignored – add it: echo '.dev/' >> .gitignore"
+# @description Prints the URLs of the environment (ports from the root .env).
+print_urls() {
+    local e="$DOCKER_ENV"
+    cat <<EOF
+
+  Application  https://localhost:$(env_value "$e" ERP_PORT 4200)   (self-signed certificate - accept it once)
+  API          http://127.0.0.1:$(env_value "$e" API_PORT 8000)
+  Mailpit      http://127.0.0.1:$(env_value "$e" MAILPIT_PORT 8025)
+  phpMyAdmin   http://127.0.0.1:$(env_value "$e" PMA_PORT 8080)   (root / DB_ROOT_PASSWORD from dev/.env)
+  Database     127.0.0.1:$(env_value "$e" DB_PORT 3307)           (from the host; containers use db:3306)
+
+EOF
+}
+
+# @description Name of the app database (DB_DATABASE of api/.env).
+app_database() {
+    local db; db="$(env_value "$API_DIR/.env" DB_DATABASE)"
+    [[ -n "$db" ]] || die "DB_DATABASE is not set in api/.env"
+    printf '%s' "$db"
+}
+
+# -----------------------------------------------------------------------------
+# Commands
+# -----------------------------------------------------------------------------
+cmd_up() {
+    local detach=0 profiles=() services=("${SERVICES[@]}") arg since e="$DOCKER_ENV"
+    for arg in "$@"; do
+        case "$arg" in
+            -d|--detach)      detach=1 ;;
+            --with-scheduler) profiles=(--profile scheduler); services+=(scheduler) ;;
+            *) die "unknown option for up: $arg (see ./dev.sh help)" ;;
+        esac
+    done
+    preflight full
+    since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    dc "${profiles[@]}" up -d --build || die "the containers could not be started – see the output above"
+    start_log_writers "$since" "${services[@]}"
+    info "logs: dev/logs/<service>.log (${services[*]})"
+
+    if [[ "$detach" == "1" ]]; then
+        local failed=0
+        wait_for_service "API" "$(env_value "$e" API_PORT 8000)" 90 api || failed=1
+        wait_for_service "ERP" "$(env_value "$e" ERP_PORT 4200)" 240 erp || failed=1
+        print_urls
+        [[ "$failed" == "0" ]] || die "a service did not start – fix it, then ./dev.sh up -d again (./dev.sh stop to stop the rest)"
+        ok "running in the background – ./dev.sh logs [service] | ./dev.sh stop"
+        return 0
     fi
 
-    port_in_use "$API_PORT" && ! is_running api \
-        && die "Port $API_PORT is in use – is another app's ./dev.sh still running? Stop it first."
-    port_in_use "$ERP_PORT" && ! is_running erp \
-        && die "Port $ERP_PORT is in use – is another app's ./dev.sh still running? Stop it first."
+    print_urls
+    info "following the logs – Ctrl+C or closing the terminal stops everything"
+    # Ctrl+C / closing the terminal: stop the containers (data stay) and the log writers.
+    # Output may fail once the terminal is gone (HUP) - the containers are stopped regardless.
+    trap 'trap - INT TERM HUP; { echo; info "stopping…"; } 2>/dev/null || true
+          dc "${profiles[@]}" stop >/dev/null 2>&1 || true; stop_log_writers
+          ok "stopped (data kept)" 2>/dev/null || true; exit 0' INT TERM HUP
+    dc "${profiles[@]}" logs -f --since "$since" "${services[@]}" || true
+    # The log stream ended by itself (every container stopped from elsewhere).
+    trap - INT TERM HUP
+    stop_log_writers
+}
+
+cmd_status() {
+    preflight
+    dc --profile scheduler ps
+    print_urls
+    [[ -d "$LOG_DIR" ]] && info "logs: dev/logs/ ($(cd "$LOG_DIR" && ls -- *.log 2>/dev/null | tr '\n' ' '))"
     return 0
 }
 
 # -----------------------------------------------------------------------------
-# @description `ng serve` runs with TLS (angular.json → serve.options.ssl / sslKey /
-# sslCert). A missing certificate made `ng serve` fail without dev.sh showing it, so the
-# files are checked before anything is started. The paths are read from angular.json
-# with node (no hardcoded names); the certificate is per developer and git-ignored
-# (erp/ssl/, open finding #54).
+# @description Follows the log files of dev/logs/ (all, or the given services); without log
+# files (environment started elsewhere) the logs of Docker itself.
+# @param $@ services (optional)
 # -----------------------------------------------------------------------------
-check_erp_certificate() {
-    local files f missing=()
-    files="$(cd "$ERP_DIR" && node -e '
-        const a = require("./angular.json");
-        for (const p of Object.values(a.projects || {})) {
-          const o = (((p.architect || {}).serve || {}).options) || {};
-          if (o.ssl) { if (o.sslKey) console.log(o.sslKey); if (o.sslCert) console.log(o.sslCert); }
-        }' 2>/dev/null)" || return 0
-    while IFS= read -r f; do
-        [[ -n "$f" && ! -f "$ERP_DIR/$f" ]] && missing+=("erp/$f")
-    done <<< "$files"
-    [[ ${#missing[@]} -eq 0 ]] && return 0
-    die "dev TLS certificate of ng serve is missing: ${missing[*]}
-      fix: ./init-workspace.sh --skip-system   (creates erp/ssl/localhost.{crt,key})
-      or rename an existing pair, e.g. mv erp/ssl/laragon.crt erp/ssl/localhost.crt && mv erp/ssl/laragon.key erp/ssl/localhost.key"
-}
-
-# -----------------------------------------------------------------------------
-# @description XAMPP is controlled via sudo. The .dev/xampp.started marker makes
-# sure XAMPP is stopped on exit only if this script actually started it.
-# -----------------------------------------------------------------------------
-start_xampp() {
-    [[ -x "$XAMPP_CTL" ]] || return 0
-    if port_in_use "$DB_PORT"; then
-        ok "database already running on :$DB_PORT – not starting XAMPP"
-        return 0
-    fi
-    info "starting XAMPP ($XAMPP_START_CMD) – may ask for your sudo password"
-    # Validate sudo first so the password prompt is not hidden by the redirected output.
-    sudo -v || die "sudo was not confirmed – cannot start XAMPP"
-    # Intentional: the log is written by the normal user (not root), so .dev/
-    # can be removed without sudo.
-    # shellcheck disable=SC2024
-    sudo "$XAMPP_CTL" "$XAMPP_START_CMD" >"$LOG_DIR/xampp.log" 2>&1 \
-        || die "XAMPP failed to start – see .dev/logs/xampp.log"
-    touch "$DEV_DIR/xampp.started"
-    wait_for_port "MySQL" "$DB_PORT" 30 || die "Database did not come up"
-}
-
-stop_xampp() {
-    [[ -f "$DEV_DIR/xampp.started" ]] || return 0
-    [[ "$STOP_XAMPP_ON_EXIT" == "1" ]] || { rm -f "$DEV_DIR/xampp.started"; return 0; }
-
-    # After the terminal was closed there is no tty to type a sudo password into:
-    # only cached sudo credentials can be used (-n). Otherwise XAMPP is left
-    # running and the marker kept, so a later `./dev.sh stop` still stops it.
-    local sudo_args=()
-    if [[ "$HANGUP" == "1" ]]; then
-        sudo_args=(-n)
-    else
-        info "stopping XAMPP ($XAMPP_STOP_CMD) – may ask for your sudo password"
-    fi
-    # shellcheck disable=SC2024  # see start_xampp – the log stays user-owned
-    if sudo "${sudo_args[@]}" "$XAMPP_CTL" "$XAMPP_STOP_CMD" >>"$LOG_DIR/xampp.log" 2>&1; then
-        ok "stopped XAMPP"
-        rm -f "$DEV_DIR/xampp.started"
-    else
-        warn "XAMPP left running (sudo password needed) – stop it with ./dev.sh stop"
-    fi
-}
-
-# -----------------------------------------------------------------------------
-# @description Starts Mailpit unless something already holds the SMTP port
-# (e.g. Mailpit started by hand or as a service) – that one is left untouched.
-# -----------------------------------------------------------------------------
-start_mailpit() {
-    [[ -x "$MAILPIT_BIN" ]] || command -v "$MAILPIT_BIN" >/dev/null || return 0
-    if port_in_use "$MAILPIT_SMTP_PORT" && ! is_running mailpit; then
-        ok "Mailpit (or another SMTP server) already running on :$MAILPIT_SMTP_PORT – skipping"
-        return 0
-    fi
-    start_proc mailpit "$ROOT_DIR" "$MAILPIT_BIN" \
-        --smtp "127.0.0.1:$MAILPIT_SMTP_PORT" --listen "127.0.0.1:$MAILPIT_UI_PORT"
-    wait_for_port "Mailpit" "$MAILPIT_SMTP_PORT" 10 mailpit \
-        || warn "continuing without Mailpit – e-mails will not be caught"
-}
-
-# -----------------------------------------------------------------------------
-# Main actions
-# -----------------------------------------------------------------------------
-cmd_up() {
-    mkdir -p "$LOG_DIR" "$PID_DIR"
-    preflight
-
-    start_xampp
-    start_mailpit
-
-    start_proc api "$API_DIR" php artisan serve --host="$API_HOST" --port="$API_PORT" --no-reload
-    wait_for_port "API" "$API_PORT" 20 api || abort_up "the API did not start"
-
-    local qc; qc="$(queue_connection)"
-    if [[ "$qc" == "sync" ]]; then
-        info "QUEUE_CONNECTION=sync – no queue worker needed"
-    else
-        start_proc queue "$API_DIR" php artisan queue:listen --tries=3 --timeout=90
-        check_started queue || warn "continuing without the queue worker – queued jobs (e-mails) wait"
-    fi
-
-    if [[ "$WITH_SCHEDULER" == "1" ]]; then
-        start_proc scheduler "$API_DIR" php artisan schedule:work
-        check_started scheduler || warn "continuing without the scheduler"
-    else
-        info "scheduler off (nightly jobs only) – enable with --with-scheduler"
-    fi
-
-    start_proc erp "$ERP_DIR" npx ng serve --host 127.0.0.1 --port "$ERP_PORT"
-    info "ERP is compiling, the first build may take a while…"
-    wait_for_port "ERP" "$ERP_PORT" 120 erp || abort_up "the ERP (ng serve) did not start"
-
-    echo
-    cmd_status
-
-    if [[ "$DETACH" == "1" ]]; then
-        info "running in the background. Stop: ./dev.sh stop · logs: ./dev.sh logs"
-        return 0
-    fi
-
-    # Foreground: follow the logs; Ctrl+C, kill or closing the terminal/editor
-    # => clean up everything we started.
-    trap 'echo; info "shutting down…"; cmd_stop; exit 0' INT TERM
-    trap on_hangup HUP
-    info "following logs – Ctrl+C (or closing this terminal) stops the whole environment"
-    # The log viewer runs in the background and the script waits for it with
-    # `wait`: unlike a foreground command, `wait` is interrupted immediately by
-    # a trapped signal, so the clean-up runs even if the viewer itself is not
-    # signalled (e.g. the terminal window or the editor is closed).
-    tail -n 0 -F "$LOG_DIR"/*.log &
-    TAIL_PID=$!
-    wait "$TAIL_PID" || true
-    cmd_stop
-}
-
-# -----------------------------------------------------------------------------
-# @description Closing the terminal window or the editor (VSCodium) sends SIGHUP.
-# The services run in their own sessions (setsid) and would not receive it, so
-# without this handler they would keep running orphaned in the background.
-# The terminal is gone: output goes to .dev/logs/dev.log instead.
-# -----------------------------------------------------------------------------
-on_hangup() {
-    HANGUP=1
-    exec >>"$LOG_DIR/dev.log" 2>&1 </dev/null
-    info "$(date '+%F %T') terminal closed (SIGHUP) – shutting down"
-    cmd_stop
-    exit 0
-}
-
-cmd_stop() {
-    trap '' HUP          # do not interrupt the clean-up itself
-    trap - INT TERM
-    if [[ -n "$TAIL_PID" ]]; then kill "$TAIL_PID" 2>/dev/null || true; TAIL_PID=""; fi
-    local p
-    for p in "${MANAGED_PROCS[@]}"; do stop_proc "$p"; done
-    stop_xampp
-    if [[ -f "$DEV_DIR/xampp.started" ]]; then
-        ok "environment stopped – only XAMPP is still running (./dev.sh stop to stop it)"
-    else
-        ok "environment stopped – nothing is running in the background"
-    fi
-}
-
-cmd_status() {
-    local p state
-    printf '%-10s %s\n' "SERVICE" "STATE"
-    for p in api queue scheduler erp mailpit; do
-        if is_running "$p"; then state="${c_green}running${c_reset} (PID $(<"$PID_DIR/$p.pid"))"
-        else state="${c_yellow}stopped${c_reset}"; fi
-        printf '%-10s %s\n' "$p" "$state"
-    done
-    if port_in_use "$DB_PORT"; then state="${c_green}running${c_reset} (:$DB_PORT)"; else state="${c_yellow}stopped${c_reset}"; fi
-    printf '%-10s %s\n' "database" "$state"
-    echo
-    echo "  API      http://$API_HOST:$API_PORT"
-    # ng serve runs with SSL (erp/angular.json → serve.options.ssl)
-    echo "  ERP      https://127.0.0.1:$ERP_PORT"
-    echo "  Mailpit  http://127.0.0.1:$MAILPIT_UI_PORT"
-}
-
 cmd_logs() {
-    compgen -G "$LOG_DIR/*.log" >/dev/null || die "No logs – the environment is not running"
-    tail -n 50 -F "$LOG_DIR"/*.log
+    preflight
+    local files=() s
+    if [[ $# -eq 0 ]]; then
+        for s in "$LOG_DIR"/*.log; do [[ -f "$s" ]] && files+=("$s"); done
+    else
+        for s in "$@"; do
+            [[ -f "$LOG_DIR/$s.log" ]] || die "no log file dev/logs/$s.log (services: ${SERVICES[*]} scheduler)"
+            files+=("$LOG_DIR/$s.log")
+        done
+    fi
+    if [[ ${#files[@]} -eq 0 ]]; then
+        info "no log files in dev/logs/ – showing the Docker logs"
+        dc --profile scheduler logs -f --tail=100
+        return
+    fi
+    tail -n 100 -F "${files[@]}"
 }
 
-usage() {
-    sed -n '/^# @usage/,/^# @config/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' | sed '$d'
+# @description Runs a command in a new dev container (removed afterwards).
+# @param $1 working directory inside the repository (api, erp or .), rest = command
+dev_run() {
+    local dir="$1"; shift
+    preflight
+    dc run --rm -w "/workspace/${dir#.}" api "$@"
+}
+
+# @description Same without starting the database / Mailpit (tools that do not need them).
+dev_run_nodeps() {
+    local dir="$1"; shift
+    preflight
+    dc run --rm --no-deps -w "/workspace/${dir#.}" api "$@"
+}
+
+cmd_db_import() {
+    local file="${1:-}" db
+    [[ -n "$file" && -f "$file" ]] || die "usage: ./dev.sh db-import <file.sql>"
+    preflight
+    db="$(app_database)"
+    warn "importing $file into the database '$db' – tables in the file REPLACE the existing ones"
+    read -r -p "Continue? [y/N] " answer || answer=""
+    [[ "$answer" =~ ^[YyAa]$ ]] || die "cancelled"
+    dc up -d --wait db
+    # shellcheck disable=SC2016  # $MARIADB_ROOT_PASSWORD is expanded inside the db container
+    dc exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS \`$1\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" && mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" "$1"' _ "$db" < "$file"
+    ok "imported into '$db' – then run: ./dev.sh artisan migrate"
+}
+
+cmd_db_dump() {
+    local db file
+    preflight
+    db="$(app_database)"
+    file="${1:-$ROOT_DIR/temp/$db-$(date +%Y%m%d-%H%M%S).sql}"
+    mkdir -p "$(dirname "$file")"
+    dc up -d --wait db
+    # shellcheck disable=SC2016  # expanded inside the db container
+    dc exec -T db sh -c 'mariadb-dump -uroot -p"$MARIADB_ROOT_PASSWORD" --single-transaction --routines "$1"' _ "$db" > "$file"
+    chmod 600 "$file"
+    ok "database '$db' dumped to ${file#"$ROOT_DIR"/} (contains personal data – never commit it)"
+}
+
+cmd_help() {
+    sed -n '/^# @usage/,/^# =====/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' | sed '$d'
 }
 
 # -----------------------------------------------------------------------------
-# Argument parsing
+# Main
 # -----------------------------------------------------------------------------
-ACTION="${1:-up}"
+command="${1:-up}"
 [[ $# -gt 0 ]] && shift
-for arg in "$@"; do
-    case "$arg" in
-        --with-scheduler) WITH_SCHEDULER=1 ;;
-        -d|--detach)      DETACH=1 ;;
-        *) die "Unknown option: $arg (see ./dev.sh help)" ;;
-    esac
-done
 
-case "$ACTION" in
-    up|start)  cmd_up ;;
-    stop|down) cmd_stop ;;
-    status)    cmd_status ;;
-    logs)      cmd_logs ;;
-    help|-h|--help) usage ;;
-    *) die "Unknown action: $ACTION (see ./dev.sh help)" ;;
+case "$command" in
+    up|start)    cmd_up "$@" ;;
+    stop)        preflight; dc --profile scheduler stop; stop_log_writers; ok "stopped (data kept)" ;;
+    down)        preflight; dc --profile scheduler down; stop_log_writers; ok "containers removed (the database volume is kept)" ;;
+    status|ps)   cmd_status ;;
+    logs)        cmd_logs "$@" ;;
+    artisan)     dev_run api php artisan "$@" ;;
+    composer)    dev_run_nodeps api composer "$@" ;;
+    npm)         dev_run_nodeps erp npm "$@" ;;
+    npx)         dev_run_nodeps erp npx "$@" ;;
+    shell)
+        if [[ $# -gt 0 ]]; then preflight; dc exec "$1" bash; else dev_run . bash; fi ;;
+    test)        dev_run_nodeps . tests/unit_tests/run_all.sh "$@" ;;
+    build)       dev_run_nodeps . deploy/build.sh "$@" ;;
+    db-import)   cmd_db_import "$@" ;;
+    db-dump)     cmd_db_dump "$@" ;;
+    rebuild)     preflight; dc build --pull; ok "image rebuilt – ./dev.sh up recreates the containers" ;;
+    help|-h|--help) cmd_help ;;
+    *) die "unknown command: $command (see ./dev.sh help)" ;;
 esac

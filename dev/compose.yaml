@@ -1,0 +1,133 @@
+# =============================================================================
+# @file compose.yaml
+# @path dev/compose.yaml
+# @project RPSW Web
+# @author RPSW
+# @created 2026-10-31
+# @description LOCAL development environment in Docker - replaces XAMPP, Mailpit in ~/.local/bin
+#   and the PHP / Node.js installed on the host. Services:
+#     api        Laravel API - `php artisan serve`                 http://127.0.0.1:${API_PORT}
+#     queue      queue worker - `php artisan queue:listen`
+#     scheduler  `php artisan schedule:work` (profile "scheduler", off by default)
+#     erp        Angular - `ng serve` with the dev certificate     https://localhost:${ERP_PORT}
+#     db         MariaDB (data in the volume db-data)              127.0.0.1:${DB_PORT}
+#     mailpit    catches every outgoing e-mail                      http://127.0.0.1:${MAILPIT_PORT}
+#     phpmyadmin database UI                                        http://127.0.0.1:${PMA_PORT}
+#   api / queue / scheduler / erp use the one development image dev/docker/Dockerfile with the
+#   repository mounted at /workspace, so changes in the editor apply at once.
+#   Use it through ./dev.sh (start, stop, logs, artisan, composer, npm, tests, build);
+#   ./init-workspace.sh prepares everything (.env files, images, dependencies, database).
+# @note Paths here are relative to this folder (dev/ = the Compose project directory), so it
+#   also works by hand: `docker compose -f dev/compose.yaml ps`; Compose reads dev/.env itself.
+# @refactor-note (2026-10-31) Moved from the repository root to dev/ (root clean-up): build
+#   context `docker`, repository mount `..`.
+# @note Configuration: dev/.env (from dev/.env.example, git-ignored) - ports, PHP / Node.js /
+#   MariaDB versions, the UID / GID of your user and the local database root password.
+#   The project name (COMPOSE_PROJECT_NAME = app directory name) keeps containers, volumes and
+#   networks of several apps cloned from web-platform apart.
+# @note Inside the containers the API reaches the database as db:3306 and Mailpit as
+#   mailpit:1025 - set here in `environment` (it wins over api/.env, so an api/.env written for
+#   XAMPP still works). The browser reaches the API on the published 127.0.0.1:${API_PORT}.
+# @security Every port is published on 127.0.0.1 only (BIND_IP) - nothing is reachable from
+#   the LAN. The database root password exists only in the local .env. Never use this file
+#   for production (FORPSI hosting: deploy/build.sh + deploy/server/configure-server.sh).
+# =============================================================================
+
+name: ${COMPOSE_PROJECT_NAME:-web-platform}
+
+x-app: &app
+  image: ${COMPOSE_PROJECT_NAME:-web-platform}-dev:php${PHP_VERSION:-8.5}
+  build:
+    context: docker
+    args:
+      PHP_VERSION: ${PHP_VERSION:-8.5}
+      NODE_VERSION: ${NODE_VERSION:-24}
+      HOST_UID: ${HOST_UID:-1000}
+      HOST_GID: ${HOST_GID:-1000}
+  volumes:
+    - ..:/workspace
+    - dev-cache:/home/dev/.cache
+  environment: &app-env
+    DB_HOST: db
+    DB_PORT: "3306"
+    DB_USERNAME: root
+    DB_PASSWORD: ${DB_ROOT_PASSWORD:?run ./init-workspace.sh first - DB_ROOT_PASSWORD is missing in .env}
+    MAIL_MAILER: smtp
+    MAIL_HOST: mailpit
+    MAIL_PORT: "1025"
+  init: true
+
+services:
+  api:
+    <<: *app
+    working_dir: /workspace/api
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${API_PORT:-8000}:8000"
+    depends_on:
+      db: { condition: service_healthy }
+      mailpit: { condition: service_started }
+
+  queue:
+    <<: *app
+    working_dir: /workspace/api
+    command: ["php", "artisan", "queue:listen", "--tries=3", "--timeout=90"]
+    depends_on:
+      db: { condition: service_healthy }
+      mailpit: { condition: service_started }
+
+  scheduler:
+    <<: *app
+    working_dir: /workspace/api
+    command: ["php", "artisan", "schedule:work"]
+    profiles: ["scheduler"]
+    depends_on:
+      db: { condition: service_healthy }
+
+  erp:
+    <<: *app
+    working_dir: /workspace/erp
+    command: ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4200"]
+    environment:
+      <<: *app-env
+      # proxy.conf.js: /api, /storage, /erp of ng serve go to the api container.
+      API_PROXY_TARGET: http://api:8000
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${ERP_PORT:-4200}:4200"
+    depends_on:
+      api: { condition: service_started }
+
+  db:
+    image: mariadb:${MARIADB_VERSION:-10.11}
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?run ./init-workspace.sh first - DB_ROOT_PASSWORD is missing in .env}
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${DB_PORT:-3307}:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  mailpit:
+    image: axllent/mailpit:${MAILPIT_VERSION:-latest}
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${MAILPIT_PORT:-8025}:8025"
+
+  phpmyadmin:
+    image: phpmyadmin:${PHPMYADMIN_VERSION:-5.2}
+    environment:
+      PMA_HOST: db
+      UPLOAD_LIMIT: 128M
+    ports:
+      - "${BIND_IP:-127.0.0.1}:${PMA_PORT:-8080}:80"
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  db-data:
+  dev-cache:
